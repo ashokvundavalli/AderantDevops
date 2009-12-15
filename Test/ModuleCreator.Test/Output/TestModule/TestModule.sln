@@ -1,0 +1,24 @@
+
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{9A29B994-DF10-4C6E-82EA-B45F79915A3D}"
+	ProjectSection(SolutionItems) = preProject
+		Doc\readme.txt = Doc\readme.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{C1CE4CE6-EB6E-4F74-8CF1-3D361BC1C46E}"
+	ProjectSection(SolutionItems) = preProject
+		Build\CommonAssemblyInfo.cs = Build\CommonAssemblyInfo.cs
+		Build\CustomDictionary.xml = Build\CustomDictionary.xml
+		Build\DependencyManifest.xml = Build\DependencyManifest.xml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{}"
+EndProject
+#{projects}
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	#{NestedProjects}
+EndGlobal

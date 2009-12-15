@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ProductManifest Name="Expert">
+  <Modules>
+    <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.Workflow" AssemblyVersion="1.8.0.0"  />
+
+    <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Integration" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
+
+    <Module Name="Services.Entities.Bill" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.Client" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.Disbursement" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.Employee" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.Firm" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.Marketing" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Entities.Matter" AssemblyVersion="1.8.0.0" />
+
+    <!--<Module Name="Services.Applications.Employee" AssemblyVersion="1.8.0.0" />-->
+    <!--<Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />-->
+
+    <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Configuration" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Identity" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Monitoring" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Notes" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Lookup" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Query" AssemblyVersion="1.8.0.0" />
+
+    <Module Name="SDK" AssemblyVersion="1.8.0.0"  />
+
+    <Module Name="Expert.Help" />
+
+    <Module Name="Thirdparty.ICSharpCode"  />
+    <Module Name="Thirdparty.Infragistics"  />
+    <Module Name="Thirdparty.DevComponents" />
+    <Module Name="Thirdparty.MadCap"  />
+    <Module Name="Thirdparty.Xceed.3" />
+    <Module Name="Thirdparty.IronPython.1.1"  />
+    <Module Name="Thirdparty.IronPython.2.6"  />
+    <Module Name="Thirdparty.Mindscape"  />
+    <Module Name="Thirdparty.Microsoft"  />
+    <Module Name="Thirdparty.Microsoft.Practices"  />
+    <Module Name="Thirdparty.Microsoft.WcfRest" />
+    <Module Name="Thirdparty.NHibernate" />
+    <Module Name="Thirdparty.NVelocity"/>
+    <Module Name="Thirdparty.log4net" />
+    <Module Name="Thirdparty.NMock" />
+    <Module Name="Thirdparty.Wintellect" />
+    <Module Name="Thirdparty.Xenocode" />
+    <Module Name="Thirdparty.Microsoft.Office11.Interop" />
+  </Modules>
+</ProductManifest>
+

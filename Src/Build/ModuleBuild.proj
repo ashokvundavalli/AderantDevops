@@ -1,0 +1,779 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project    
+    xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+    ToolsVersion="3.5">
+
+    <!-- 
+    =========================================================================================================
+        Team Build Script - Modularisation Prototype.
+        Another Change.
+        
+        Maintained by Global DBA And Release Management.  DBARM monitors and approves all modifications.  
+        Guidelines:
+            * All Imports, Calls to external commands/tasks/tools/utilities must be approved by DBARM  
+            * Retain structure and formatting for easier merge between Team Build project scripts 
+            * Tabs converted to 4 spaces for easier reading outside of VS.
+    =========================================================================================================
+    -->
+
+    <ProjectExtensions>
+        <ProjectFileVersion>2</ProjectFileVersion>
+    </ProjectExtensions>    
+
+    <PropertyGroup>
+        <RunTest>true</RunTest>
+        <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
+        <RunCodeAnalysis>Never</RunCodeAnalysis>        
+        <SolutionDirectoryPath Condition="('$(IsDesktopBuild)'=='true')">$(SolutionRoot)\$(ModuleName)</SolutionDirectoryPath>
+        <SolutionDirectoryPath Condition="('$(IsDesktopBuild)'!='true')">$(SolutionRoot)</SolutionDirectoryPath>        
+        <BuildScriptsDirectory>$(SolutionDirectoryPath)\CommonBuild</BuildScriptsDirectory>
+        <!-- This is required as the T4 and compile is done via BuildUsingMSBuild4.ps1, so it runs as a desktopbuild -->
+        <SolutionDirectoryPath Condition="('$(SolutionDirectoryPathForMSBuild4)'!='')">$(SolutionDirectoryPathForMSBuild4)</SolutionDirectoryPath>
+        <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
+        <TestBinDirectory>$(SolutionDirectoryPath)\Bin\Test\</TestBinDirectory>
+        <ModuleBinDirectory>$(SolutionDirectoryPath)\Bin\Module\</ModuleBinDirectory>
+        <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
+    </PropertyGroup>
+
+    <Import Condition="('$(IsDesktopBuild)'=='true')" Project="..\CommonBuild\RM.TransformTemplates.Targets"/>
+    <Import Condition="('$(IsDesktopBuild)'!='true')" Project="$(MSBuildExtensionsPath)\Aderant\RM.TransformTemplates.Targets"/>
+
+    <!--Copied from Aderant.Build.targets-->
+    <UsingTask
+      AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
+      TaskName="NDependTask"
+        />
+    
+    <!-- 
+    ==========================================================================================
+        Build Configurations
+    ==========================================================================================
+    -->
+    <ItemGroup>
+        <ConfigurationToBuild
+            Condition="'$(BuildFlavor)'=='Release'"
+            Include="Release|Any CPU">
+            <FlavorToBuild>Release</FlavorToBuild>
+            <PlatformToBuild>Any CPU</PlatformToBuild>
+        </ConfigurationToBuild>
+        <ConfigurationToBuild
+            Condition="'$(BuildFlavor)'=='Debug'"
+            Include="Debug|Any CPU">
+            <FlavorToBuild>Debug</FlavorToBuild>
+            <PlatformToBuild>Any CPU</PlatformToBuild>
+        </ConfigurationToBuild>
+    </ItemGroup>
+
+    <!--
+    ==========================================================================================
+        Team / Desktop Build Sequences - Begin
+    ==========================================================================================
+  -->
+
+    <PropertyGroup>
+        <OnBuildBreakDependsOn>
+            BeforeOnBuildBreak;
+            GetChangeSetsOnBuildBreak;
+            DropBuild;
+            AfterOnBuildBreak;
+        </OnBuildBreakDependsOn>
+    </PropertyGroup>
+
+    <Target
+        Name="OnBuildBreak"
+        Condition="('$(IsDesktopBuild)'!='true')"
+        DependsOnTargets="$(OnBuildBreakDependsOn)"
+        >
+    </Target>
+
+
+    <Target Name="AfterCompile">
+        <CallTarget Targets="ModuleBuild" />
+    </Target>
+
+    <!--
+    ==========================================================================================
+        Solutions To Build in the correct build order 
+    ==========================================================================================
+  -->
+    <Target Name="ModuleBuild">
+        <CallTarget Targets="CleanBin" />
+        <CallTarget Targets="GetModuleDependencies" />
+        <CallTarget Targets="GetModels" />
+        <CallTarget Targets="SetBuildNumbers" />
+        <CallTarget Targets="UpdateModuleFileVersion"/>
+        <CallTarget Targets="Build" />
+        <CallTarget Targets="NDepend" />
+        <CallTarget Targets="RunUnitTests"/>
+        <CallTarget Targets="SignFiles" />
+        <CallTarget Targets="ZipSource" />
+        <CallTarget Targets="CopyToDrop" />
+    </Target>
+
+    <!--
+    ==========================================================================================
+        Version Numbers
+    ==========================================================================================
+  -->
+
+    <Target Name="SetBuildNumbers">
+        <Version BuildType="Automatic"
+                 RevisionType="Automatic"
+                 Major="$(VersionMajor)"
+                 Minor="$(VersionMinor)" >
+            <Output TaskParameter="Major"
+                    PropertyName="Major" />
+            <Output TaskParameter="Minor"
+                    PropertyName="Minor" />
+            <Output TaskParameter="Build"
+                    PropertyName="Build" />
+            <Output TaskParameter="Revision"
+                    PropertyName="Revision" />
+        </Version>
+
+        <CreateProperty
+            Value="$(Major).$(Minor).$(Build).$(Revision)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="FileVersion" />
+        </CreateProperty>
+
+        <CreateProperty
+            Value="$(VersionMajor).$(VersionMinor).$(VersionBuild).$(VersionRevision)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="AssemblyVersion" />
+        </CreateProperty>
+    </Target>
+
+    <Target Name="BuildNumberOverrideTarget"
+            DependsOnTargets="SetBuildNumbers">
+        <PropertyGroup>
+            <BuildNumber>$(FileVersion)</BuildNumber>
+        </PropertyGroup>
+    </Target>
+
+    <Target Name="BeforeEndToEndIteration"
+            DependsOnTargets="SetBuildNumbers">
+        <CreateProperty Value="$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\" >
+            <Output TaskParameter="Value"
+                    PropertyName="DropLocation"/>
+        </CreateProperty>
+    </Target>
+
+    <!--
+    ==========================================================================================
+        Clean
+    ==========================================================================================
+  -->
+    <ItemGroup>
+        <ModuleBinFiles Include="$(SolutionDirectoryPath)\Bin\**\*.*"/>
+    </ItemGroup>
+
+    <Target Name="CleanBin" >
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Clean Module Bin"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <Delete Files="@(ModuleBinFiles)"/>
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+
+    <!--
+    ==========================================================================================
+        Get Module Dependencies
+    ==========================================================================================
+  -->
+
+    <Target Name ="GetModuleDependencies"
+            Condition="('$(DropLocation)'!='')">
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Getting Module Dependencies"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <Exec ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command='"Powershell" "$(BuildScriptsDirectory)\LoadDependancies.ps1" $(SolutionDirectoryPath) $(BaseDropDirectory)'>
+        </Exec>
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!-- 
+    ==========================================================================================
+        Get Models 
+    ==========================================================================================
+  -->
+
+  <Target Name="GetModels"
+          Condition="('$(ProductManifestPathForModels)'!='') and ('$(IsDesktopBuild)'!='true')"
+          >
+
+      <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Gathering Models for $(ModuleName)"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)"
+            >
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"
+                />
+    </BuildStep>
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" "$(BuildScriptsDirectory)\LoadModels.ps1" "$(ProductManifestPathForModels)" "$(BaseDropDirectory)" "$(BuildScriptsDirectory)\..\Dependencies" "$(BuildScriptsDirectory)"'>
+    </Exec>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+    <!-- 
+    ==========================================================================================
+    T4 Template Transformation
+    ========================================================================================== 
+    -->
+    <Target Name="rmBeforeTransformTemplates" >
+
+        <PropertyGroup>
+            <rmT4AssemblyReferencePaths>
+                $(OutDir);
+                $(SolutionDirectoryPath)\Dependencies;
+            </rmT4AssemblyReferencePaths>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <rmT4TextTemplates Condition="('$(ModuleName)'=='Libraries.SoftwareFactory')"
+                Include="
+                    $(SolutionDirectoryPath)\src\**\Dsl\GeneratedCode\**\*.tt;
+                    $(SolutionDirectoryPath)\src\**\Dsl\Integration\**\*.tt;
+                    $(SolutionDirectoryPath)\src\**\DslPackage\*.tt;
+                    $(SolutionDirectoryPath)\src\**\DslPackage\GeneratedCode\**\*.tt;
+                    $(SolutionDirectoryPath)\src\**\DslPackage\ProjectItemTemplates\*.tt;
+                    $(SolutionDirectoryPath)\src\Setup\SoftwareFactorySetup\*.tt;
+                    "
+                Exclude="
+                    $(SolutionDirectoryPath)\Src\**\Templates\*.tt;
+                    ">
+                <Generator>TextTemplatingFileGenerator</Generator>
+            </rmT4TextTemplates>
+            <rmT4TextTemplates Condition="('$(ModuleName)'!='Libraries.SoftwareFactory')"
+                               Include="
+                    $(SolutionDirectoryPath)\src\**\*.tt;
+                    $(SolutionDirectoryPath)\test\**\*.tt;
+                    ">
+                <Generator>TextTemplatingFileGenerator</Generator>
+            </rmT4TextTemplates>            
+        </ItemGroup>
+
+        <Message Text="IsDesktopBuild = $(IsDesktopBuild)"/>
+        <Message Text="SolutionDirectoryPathForMSBuild4 = $(SolutionDirectoryPathForMSBuild4)"/>
+        <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
+        <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0 = $(AderantBuildClientTasksV100Lib-1_0_0_0)"/>
+        <Message Text="rmT4AssemblyReferencePaths = $(rmT4AssemblyReferencePaths)"/>
+        <Message Text="rmT4TextTemplates = @(rmT4TextTemplates)"/>
+        <Message
+            Text="
+DSLDirectiveLoadMethod&#xA;$(DSLDirectiveLoadMethod)&#xA;
+AderantBuildClientTasksV100Lib-1_0_0_0&#xA;$(AderantBuildClientTasksV100Lib-1_0_0_0)&#xA;
+rmT4AssemblyReferencePaths&#xA;$(rmT4AssemblyReferencePaths)&#xA;
+rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
+            "/>
+
+    </Target>
+
+    <!--
+    ==========================================================================================
+        Versioning 
+    ==========================================================================================
+  -->
+
+    <PropertyGroup>
+        <TfCommand>$(TeamBuildRefPath)\..\tf.exe</TfCommand>
+    </PropertyGroup>
+
+    <Target Name="UpdateModuleFileVersion"
+            Condition="('$(IsDesktopBuild)'!='true')">
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Updating file version in CommonAssemblyInfo.cs"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <CreateItem Include="$(SolutionDirectoryPath)\Build\CommonAssemblyInfo.cs;">
+            <Output TaskParameter="Include"
+                    ItemName="AssemblyInfoFile" />
+        </CreateItem>
+
+        <!-- Get latest version of AssemblyInfo -->
+        <Exec WorkingDirectory="$(SolutionRoot)"
+              ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command="&quot;$(TfCommand)&quot; get @(AssemblyInfoFile) /version:T"/>
+
+        <!--Checkout AssemblyInfo and lock-->
+        <Exec WorkingDirectory="$(SolutionRoot)"
+              ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command="&quot;$(TfCommand)&quot; checkout @(AssemblyInfoFile) /lock:Checkout"/>
+
+        <FileUpdate Files="@(AssemblyInfoFile)"
+                    IgnoreCase="true"
+                    Multiline="true"
+                    Singleline="false"
+                    Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
+                    ReplacementText="${section1}$(FileVersion)${section2}"/>
+
+        <!--Checkin AssemblyInfo-->
+        <Exec WorkingDirectory="$(SolutionRoot)"
+              ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command="&quot;$(TfCommand)&quot; checkin /comment:&quot;***NO_CI***&quot; /noprompt /override:&quot;Auto-Build: Version Update&quot; @(AssemblyInfoFile)"/>
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!--
+    ==========================================================================================================================
+        Compile - rmTransformTemplates is only run here for a desktop build, on the server is is handled by BuildUsingMSBuild4 
+    ==========================================================================================================================
+  -->
+    <PropertyGroup>
+        <BuildDependsOn Condition="('$(IsDesktopBuild)'=='true')">
+            rmTransformTemplates;
+        </BuildDependsOn>
+    </PropertyGroup>
+    <Target Name="Build"
+            DependsOnTargets="$(BuildDependsOn)" >
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Building Module $(ModuleName)"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <Message Text="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"/>
+        <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
+
+        <MSBuild Condition="('$(IsDesktopBuild)'=='true')"
+                 Projects="$(SolutionDirectoryPath)\$(ModuleName).sln"
+                 Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
+                 Targets="Build"  />
+
+        <Exec Condition="('$(IsDesktopBuild)'!='true')"
+              ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command='"Powershell" "$(BuildScriptsDirectory)\BuildUsingMSBuild4.ps1" $(SolutionDirectoryPath)'>
+        </Exec>
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!--
+    ==========================================================================================
+        BuildUsingMSBuild4 
+    ==========================================================================================
+  -->
+    <Target Name="BuildUsingMSBuild4"
+            DependsOnTargets="rmTransformTemplates" >
+
+        <Message Text="
+      BuildUsingMSBuild4 Starting.
+      This is a temporary solution to the problem that we are using a VS2008 build agent
+      on the build servers .  A server build calls BuildUsingMSBuild4.ps1 (see above)
+      which uses the MSBuild4 engine to run this target.
+      "/>
+
+        <Message Text="Solution File = $(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"/>
+
+        <MSBuild
+            Projects="$(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"
+            Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
+            Targets="Build"  />
+
+        <Message Text="BuildUsingMSBuild4 Finished"/>
+
+    </Target>
+
+    <!--
+    ==========================================================================================
+        Zip Source 
+    ==========================================================================================
+  -->
+
+  <Target Name="ZipSource"
+          Condition="('$(ZipSource)'=='true')"
+          >
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Zipping Source for $(ModuleName)"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)"
+            >
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"
+                />
+    </BuildStep>
+    
+    <PropertyGroup>
+      <ZipFile>$(SolutionDirectoryPath)\bin\module\QueryService.zip</ZipFile>
+    </PropertyGroup>
+    
+    <Delete
+      Files="$(ZipFile)"
+      Condition="Exists('$(ZipFile)')"
+            />
+
+    <ItemGroup>
+      
+       <ZipSourceFiles
+        Include="
+                      $(SolutionDirectoryPath)\**\*.Custom.sln;
+  					          "/> 
+      
+      <ZipSourceFiles
+        Include="
+  					          $(SolutionDirectoryPath)\Src\**\*.*;
+  					          "
+        Exclude="
+                      $(SolutionDirectoryPath)\Src\**\*.sln;
+                      $(SolutionDirectoryPath)\Src\**\*.vssscc;
+                      $(SolutionDirectoryPath)\Src\**\*.vspscc;
+                      $(SolutionDirectoryPath)\Src\**\*.sln.cache;
+                      $(SolutionDirectoryPath)\Src\**\*.vsmdi;
+                      $(SolutionDirectoryPath)\Src\**\*.testrunconfig;
+                      $(SolutionDirectoryPath)\Src\**\*.suo;
+                      $(SolutionDirectoryPath)\Src\**\*.sln.Debug.vsprops;
+                      $(SolutionDirectoryPath)\Src\**\bin\**;
+                      $(SolutionDirectoryPath)\Src\**\obj\**;
+                      $(SolutionDirectoryPath)\Src\**\UnitTest*\**;
+                      $(SolutionDirectoryPath)\Src\**\IntegrationTest*\**;
+  			              $(SolutionDirectoryPath)\Src\**\TestResults\**;
+                      $(SolutionDirectoryPath)\Src\**\Release.txt;
+                      $(SolutionDirectoryPath)\Src\**\Debug.txt;
+                      $(SolutionDirectoryPath)\Src\**\_Resharper*\**;
+                      $(SolutionDirectoryPath)\Src\**\*resharper.user;
+  				    "/>
+
+    </ItemGroup>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ZipFile)"
+      WorkingDirectory="$(SolutionDirectoryPath)"
+            />    
+    
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Unit Test 
+    ==========================================================================================
+  -->
+
+    <Target Name="RunUnitTests"
+            DependsOnTargets="Build">
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Running Unit Tests"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <CreateItem
+            Include="$(TestBinDirectory)\%2aUnitTest%2a.dll"
+            Exclude="$(TestBinDirectory)\%2aHelpers%2a.dll"
+            AdditionalMetadata="TestContainerPrefix=/testcontainer:"
+          >
+            <Output TaskParameter="Include"
+                    ItemName="TestAssemblies" />
+        </CreateItem>
+
+        <PropertyGroup>
+            <UnitTestAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</UnitTestAssemblies>
+            <ResultsFileSwitch>/resultsfile:$(TestBinDirectory)\UnitTestResults.trx</ResultsFileSwitch>
+            <PublishBuildSwitch>/publishbuild:$(FileVersion)</PublishBuildSwitch>
+            <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
+            <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
+            <PublishSwitch>/publish:$(TeamFoundationServerUrl)</PublishSwitch>
+            <TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
+            <PathToMSTest10>$(VS100COMNTOOLS)..\IDE\MSTest.exe</PathToMSTest10>
+        </PropertyGroup>
+
+        <Exec Condition="(('$(IsDesktopBuild)'!='true') and ('$(UnitTestAssemblies)' != ''))"
+              ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command='"$(PathToMSTest10)" $(UnitTestAssemblies)' />
+
+        <Exec Condition="(('$(IsDesktopBuild)'=='true') and ('$(UnitTestAssemblies)' != ''))"
+              ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command='"$(PathToMSTest10)" $(UnitTestAssemblies) $(ResultsFileSwitch) ' />
+
+        <Message
+            Condition="('$(UnitTestAssemblies)' == '')"
+            Text="** NO UNIT TESTS ! ** (Your pay has been docked)"/>
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!--
+    ==========================================================================================
+        Sign Files
+    ==========================================================================================
+  -->
+
+    <PropertyGroup>
+        <SignToolCommand>$(WindowsSdkDir)\Bin\signtool.exe</SignToolCommand>
+    </PropertyGroup>
+
+    <Target Name="SignFiles"
+            DependsOnTargets="RunUnitTests"
+            Condition="('$(FilesToSign)' !='')">
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Signing Files"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <ItemGroup>
+            <FileToSign Include="$(FilesToSign)" />
+        </ItemGroup>
+
+        <Exec Command='"$(SignToolCommand)" sign /p "rugby ball" /f .\aderant.pfx $(ModuleBinDirectory)%(FileToSign.Filename)%(FileToSign.Extension)' />
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+
+    <!--
+    ==========================================================================================
+        Copy Build to Drop Location 
+    ==========================================================================================
+  -->
+
+    <Target Name="CopyToDrop"
+            Condition="('$(IsDesktopBuild)'!='true')" >
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Copy Output to $(DropLocation)"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+        </BuildStep>
+
+        <Exec ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command='"Powershell" "$(BuildScriptsDirectory)\CopyToDrop.ps1" $(ModuleName) $(SolutionDirectoryPath) $(DropLocation) $(FileVersion)' />
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!--
+    ==========================================================================================
+        NDepend post build analysis
+    ==========================================================================================
+  -->
+    <PropertyGroup>
+        <NDependPath>c:\Program Files (x86)\NDepend</NDependPath>
+        <NDpendOutputDir>$(SolutionDirectoryPath)\bin\NDependOut</NDpendOutputDir>
+        <NDependWarn>0</NDependWarn>
+    </PropertyGroup>
+
+    <Target Name="NDepend"
+            Condition="('$(IsDesktopBuild)'!='true')" >
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="NDepend"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+              >
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                  />
+        </BuildStep>
+
+        <Message Text="*** NDepend " />
+        <Message Text="NDependConsoleExePath : $(NDependPath)" />
+        <Message Text="ProjectFilePath       : $(BuildScriptsDirectory)\NDependFramework.xml" />
+
+        <!-- Lets first remove the ld NDependOut directory -->
+        <RemoveDir Directories="$(SolutionDirectoryPath)\NDependOut" />
+
+        <NDependTask
+            NDependConsoleExePath="$(NDependPath)"
+            ProjectFilePath="$(BuildScriptsDirectory)\NDependFramework.xml"
+            OutDir="$(NDpendOutputDir)"
+            />
+
+        <!-- Scan the NDepend Report Files to see if a braking change has been identified -->
+
+        <XmlRead ContinueOnError="True"
+                 XmlFileName="$(SolutionDirectoryPath)\NDependout\CQLResult.xml"
+                 XPath="string(count(//Group[@Status='Warn']))">
+            <Output TaskParameter="Value"
+                    PropertyName="NDependWarn" />
+        </XmlRead>
+
+
+        <!-- If braking change identified then need to mark build step as Failed -->
+
+        <Error Text="NDepend Breaking Change"
+               Condition="$(NDependWarn) &gt; 0"/>
+
+
+        <BuildStep
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+
+    <Target Name="MarkBuildStepAsFailed">
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Failed"
+            />
+        <SetBuildProperties
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            CompilationStatus="Failed"
+            />
+        <Error Condition="('$(IsDesktopBuild)'=='true')"/>
+    </Target>
+
+</Project>

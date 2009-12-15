@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project
+    DefaultTargets="RunTests"
+    xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+    ToolsVersion="3.5">
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />    
+
+  <!--
+    ==========================================================================================
+        Intergration Tests
+    ==========================================================================================
+  -->
+  <Target Name ="RunTests">
+    <CallTarget Targets="IntegrationTests" Condition="('$(TestType)'=='Integration')"/>
+    <CallTarget Targets="UnitTests" Condition="('$(TestType)'=='Unit')"/>    
+  </Target>
+  
+  <Target Name="IntegrationTests">
+
+    <PropertyGroup>
+      <VSTestHostDirectory>'$(TeamBuildRefPath)\..\'</VSTestHostDirectory>
+      <AderantBinLinkDirectory>'$(TeamBuildRefPath)\..\AderantBin\'</AderantBinLinkDirectory>
+    </PropertyGroup>
+    
+    <CreateItem Include="$(TestBinariesDirectory)\%2a$(TestFilter)%2a.dll" AdditionalMetadata="TestContainerPrefix=/testcontainer:">
+      <Output TaskParameter="Include"  ItemName="TestAssemblies" />
+    </CreateItem>
+           
+    <PropertyGroup>
+      <TestAssemblyList>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</TestAssemblyList>
+    </PropertyGroup>
+    
+    <!--Setup for integration environment-->
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" ".\SetupIntegrationEnvironment.ps1" "$(AderantBinLinkDirectory)" $(TestBinariesDirectory) "$(VSTestHostDirectory)"' />
+
+    <Exec Command='"$(TeamBuildRefPath)\..\mstest.exe" $(TestAssemblyList) /resultsfile:$(TestBinariesDirectory)\$(TestFilter)Results.trx' />
+    
+  </Target>
+
+  <Target Name="UnitTests" >    
+
+    <CreateItem Include="$(TestBinariesDirectory)\%2a$(TestFilter)%2a.dll" AdditionalMetadata="TestContainerPrefix=/testcontainer:">
+      <Output TaskParameter="Include"  ItemName="TestAssemblies" />
+    </CreateItem>
+
+    <PropertyGroup>
+      <TestAssemblyList>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</TestAssemblyList>
+    </PropertyGroup>
+
+    <Exec Command='"$(TeamBuildRefPath)\..\mstest.exe" $(TestAssemblyList) /resultsfile:$(TestBinariesDirectory)\$(TestFilter)Results.trx' />
+  </Target>
+
+</Project>

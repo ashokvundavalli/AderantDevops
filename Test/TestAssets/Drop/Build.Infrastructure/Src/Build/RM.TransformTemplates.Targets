@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- 
+    ***********************************************************************
+    ***  Aderant Build Tools                                            ***
+    ***  Local edits to this file will be lost on Refresh Build Tools.  ***
+    ***  This file is maintained by Global DBA And Release Management.  ***
+    ***  Contact DBARM for all changes.  Please retain formatting,      ***
+    ***  tabs converted to 4 spaces for easier reading outside of VS.   ***
+    ***********************************************************************
+    -->
+
+
+  <Target Name="rmBeforeTransformTemplates">
+    <!--  Example:
+        <CreateProperty Value="$(AderantDependencies)\ExpertFramework;
+                               $(AderantDependencies)\FileOpening;">
+            <Output TaskParameter="Value" PropertyName="rmT4AssemblyReferencePaths"/>
+        </CreateProperty>
+        <CreateItem Include="$(SolutionRoot)\TimeEntryService\**\*.tt"
+                    AdditionalMetadata="Generator=TextTemplatingFileGenerator">
+            <Output TaskParameter="Include" ItemName="rmT4TextTemplates" />
+        </CreateItem>
+        -->
+  </Target>
+
+  <!-- 
+    *************************************************************************************************************
+      This target is called to transform all templates in the solution
+      Also used in DesktopBuild
+    *************************************************************************************************************
+    -->
+  <PropertyGroup Condition="('$(DSLDirectiveLoadMethod)'=='')">
+    <DSLDirectiveLoadMethod>registry</DSLDirectiveLoadMethod>
+    <DSLDirectiveLoadMethod Condition="('$(IsDesktopBuild)'=='true')">registry</DSLDirectiveLoadMethod>
+    <DSLDirectiveLoadMethod Condition="('$(IsDesktopBuild)'!='true')">dynamic</DSLDirectiveLoadMethod>
+  </PropertyGroup>
+  <PropertyGroup>
+    <rmSoftwareFactoryVersion>NOT_INSTALLED</rmSoftwareFactoryVersion>
+    <rmSoftwareFactoryDRVersion>NOT_INSTALLED</rmSoftwareFactoryDRVersion>
+    <rmSoftwareFactoryPFVersion>NOT_INSTALLED</rmSoftwareFactoryPFVersion>
+    <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')"></rmT4TemplateIncludeFolders>
+    <rmTransformTemplatesWorkerDependsOn>
+      rmBeforeTransformTemplates;
+      rmT4AssemblyReferencePaths;
+      rmT4RKeyTemplateIncludes;
+      rmT4DslDirectiveProcessors;
+    </rmTransformTemplatesWorkerDependsOn>
+  </PropertyGroup>
+  <Target
+      Name="rmTransformTemplates"
+      DependsOnTargets="$(rmTransformTemplatesDependsOn)"
+        >
+    <CallTarget Targets="rmTransformTemplatesWorker"/>
+  </Target>
+  <Target
+      Name="rmTransformTemplatesWorker"
+      Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')"
+      DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)"
+        >
+    <Error
+        Condition="('$(rmT4AssemblyReferencePaths)'=='')"
+        Text="Missing required property 'rmT4AssemblyReferencePaths'"
+            />
+    <Error
+        Condition="('$(rmT4RKeyTemplateIncludes)'=='')"
+        Text="Missing required property 'rmT4RKeyTemplateIncludes'"
+            />
+    <Error
+        Condition="('@(rmT4DslDirectiveProcessors)'=='')"
+        Text="Missing required item group 'rmT4DslDirectiveProcessors'"
+            />
+    <Error
+        Condition="('@(rmT4TextTemplates)'=='')"
+        Text="Missing required item group 'rmT4TextTemplates'"
+            />
+    <BuildStep
+        Condition="('$(IsDesktopBuild)'!='true')"
+        Message="rmT4TransformTemplates"
+        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+        BuildUri="$(BuildURI)"
+            >
+      <Output
+          TaskParameter="id"
+          PropertyName="BuildStepId"
+                />
+    </BuildStep>
+    <Message
+        Condition="('$(IsDesktopBuild)'=='true')"
+        Importance="$(MessageImportance)"
+        Text="rmT4TransformTemplates"
+            />
+    <Message
+    Text="&#xA;[DSLDirectiveLoadMethod=$(DSLDirectiveLoadMethod)]&#xA;
+rmT4DslDirectiveProcessors&#xA;$(rmT4DslDirectiveProcessors)&#xA;
+rmT4AssemblyReferencePaths&#xA;$(rmT4AssemblyReferencePaths)&#xA;
+rmT4RKeyTemplateIncludes&#xA;$(rmT4RKeyTemplateIncludes)&#xA;
+rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
+"/>
+    <ItemGroup>
+      <rmT4TransformItems
+          Include="
+                    @(rmT4TextTemplates);
+                    ">
+        <KnownDslDirectiveProcessors>$(rmT4DslDirectiveProcessors);</KnownDslDirectiveProcessors>
+        <AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);</AssemblyReferencePaths>
+        <TemplateIncludeRegistryKeys>$(rmT4RKeyTemplateIncludes);</TemplateIncludeRegistryKeys>
+        <TemplateIncludeFolders>$(rmT4TemplateIncludeFolders);</TemplateIncludeFolders>
+      </rmT4TransformItems>
+    </ItemGroup>
+
+    <!--
+            The TextTransform uses the location of TMP environment variable to output temporary
+            files in the code generation.  We will redirect this to reduce the clutter.  Now that 
+            we redirect to our folder, we clean up before Transform.
+        -->
+    <PropertyGroup>
+      <TempABT Condition="('$(TempABT)'=='')">$(OutDir)\_ABT</TempABT>
+      <TMP_SAVE>$(TMP)</TMP_SAVE>
+      <TMP>$(TempABT)\T4</TMP>
+    </PropertyGroup>
+    <RemoveDir
+        Directories="$(TMP)"
+        Condition="Exists('$(TMP)')"
+        ContinueOnError="true"
+            />
+    <MakeDir
+        Directories="$(TMP)"
+        ContinueOnError="true"
+            />
+    <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
+        Action="Set"
+        Variable="TMP"
+        Value="$(TMP)"
+        Target="Process"
+            />
+    <!-- Do the Transform  -->
+    <ADERANT.Build.Client.Tasks.v100.Transform
+        Templates="@(rmT4TransformItems)"
+            />
+    <!-- Restore TMP -->
+    <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
+        Action="Set"
+        Variable="TMP"
+        Value="$(TMP_SAVE)"
+        Target="Process"
+            />
+    <BuildStep
+        Condition="('$(IsDesktopBuild)'!='true')"
+        Id="$(BuildStepId)"
+        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+        BuildUri="$(BuildURI)"
+        Status="Succeeded"
+            />
+  </Target>
+
+
+  <!--
+    *************************************************************************************************************
+    
+    *************************************************************************************************************
+    -->
+  <PropertyGroup>
+    <rmGetSoftwareFactoryVersionDependsOn>
+      rmGetSoftwareFactoryDRVersion;
+      rmGetSoftwareFactoryPFVersion;
+    </rmGetSoftwareFactoryVersionDependsOn>
+  </PropertyGroup>
+  <Target
+      Name="rmGetSoftwareFactoryVersion"
+      DependsOnTargets="$(rmGetSoftwareFactoryVersionDependsOn)"
+        >
+    <Error
+        Condition="('$(rmSoftwareFactoryPFVersion)'!='NOT_INSTALLED') 
+                   and ('$(rmSoftwareFactoryDRVersion)'!='NOT_INSTALLED')
+                   and ('$(rmSoftwareFactoryPFVersion)'!='$(rmSoftwareFactoryDRVersion)')"
+        Text="Software Factory Version Error &#xA;[Installed=$(rmSoftwareFactoryPFVersion)] &#xA;[DependencyReplicator=$(rmSoftwareFactoryDRVersion)] "/>
+    <Error
+        Condition="('$(rmSoftwareFactoryVersion)'=='') or ('$(rmSoftwareFactoryVersion)'=='NOT_INSTALLED')"
+        Text="Missing Software Factory"
+            />
+    <PropertyGroup>
+      <DSLDirectiveLoadMethod Condition="('$(rmSoftwareFactoryPFVersion)'=='NOT_INSTALLED') and ('$(rmSoftwareFactoryDRVersion)'!='NOT_INSTALLED')">dynamic</DSLDirectiveLoadMethod>
+    </PropertyGroup>
+    <Message
+        Importance="high"
+        Text="&#xA;Software Factory Version = $(rmSoftwareFactoryVersion)&#xA;"
+            />
+  </Target>
+  <Target
+      Name="rmGetSoftwareFactoryDRVersion"
+        >
+    <PropertyGroup>
+      <rmSoftwareFactoryDR>$(SolutionDirectoryPath)\Dependencies\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryDR>
+    </PropertyGroup>
+    <GetAssemblyIdentity
+        Condition="Exists('$(rmSoftwareFactoryDR)')"
+        AssemblyFiles="$(rmSoftwareFactoryDR)">
+      <Output
+          TaskParameter="Assemblies"
+          ItemName="rmSoftwareFactoryDRIdentity"/>
+    </GetAssemblyIdentity>
+    <PropertyGroup Condition="'@(rmSoftwareFactoryDRIdentity)'!=''">
+      <rmSoftwareFactoryDRVersion>%(rmSoftwareFactoryDRIdentity.Version)</rmSoftwareFactoryDRVersion>
+      <rmSoftwareFactoryVersion>$(rmSoftwareFactoryDRVersion)</rmSoftwareFactoryVersion>
+    </PropertyGroup>
+  </Target>
+
+
+  <Target
+      Name="rmGetSoftwareFactoryPFVersion"
+        >
+    <PropertyGroup>
+      <rmSoftwareFactoryIncludeFolder>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\IncludeFolders\.tt@IncludeExpertSF)</rmSoftwareFactoryIncludeFolder>
+      <rmSoftwareFactoryPF>$(rmSoftwareFactoryIncludeFolder)\..\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryPF>
+    </PropertyGroup>
+    <GetAssemblyIdentity
+        Condition="Exists('$(rmSoftwareFactoryPF)')"
+        AssemblyFiles="$(rmSoftwareFactoryPF)">
+      <Output
+          TaskParameter="Assemblies"
+          ItemName="rmSoftwareFactoryPFIdentity"/>
+    </GetAssemblyIdentity>
+    <PropertyGroup Condition="'@(rmSoftwareFactoryPFIdentity)'!=''">
+      <rmSoftwareFactoryPFVersion>%(rmSoftwareFactoryPFIdentity.Version)</rmSoftwareFactoryPFVersion>
+      <rmSoftwareFactoryVersion>$(rmSoftwareFactoryPFVersion)</rmSoftwareFactoryVersion>
+    </PropertyGroup>
+  </Target>
+
+
+  <Target
+      Name="rmT4AssemblyReferencePaths"
+        >
+    <!-- Path to reference dlls required by DSLs -->
+    <PropertyGroup>
+      <DSLToolsAssemblyDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\DSLTools\2.1@AssemblyDir)</DSLToolsAssemblyDir>
+      <DSLToolsIncludeDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\DSLTools\2.1@IncludeDir)</DSLToolsIncludeDir>
+      <DSLToolsTemplateDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\DSLTools\2.1@TemplateDir)</DSLToolsTemplateDir>
+      <DSLToolsWiXToolsDir>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\DSLTools\2.1@WixToolsDir)</DSLToolsWiXToolsDir>
+      <rmT4AssemblyReferencePaths Condition="('$(DSLDirectiveLoadMethod)'=='registry')">$(rmT4AssemblyReferencePaths)</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths Condition="('$(DSLDirectiveLoadMethod)'=='dynamic')">$(SolutionDirectoryPath)\Dependencies;$(rmT4AssemblyReferencePaths)</rmT4AssemblyReferencePaths>
+    </PropertyGroup>
+    <ItemGroup>
+      <rmT4AssemblyReferencePaths
+          Include="
+                    $(rmT4AssemblyReferencePaths);
+                    $(DSLToolsAssemblyDir);
+                    $(DSLToolsIncludeDir);
+                    $(DSLToolsTemplateDir);
+                    $(DSLToolsWiXToolsDir);
+                    "/>
+    </ItemGroup>
+    <PropertyGroup>
+      <rmT4AssemblyReferencePaths>@(rmT4AssemblyReferencePaths, '%3B')</rmT4AssemblyReferencePaths>
+    </PropertyGroup>
+  </Target>
+
+
+  <!--
+    *************************************************************************************************************
+    
+    *************************************************************************************************************
+    -->
+  <Target
+      Name="rmT4RKeyTemplateIncludes"
+        >
+    <PropertyGroup>
+      <!-- Microsoft -->
+      <rmT4RKeyTemplateIncludes>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\IncludeFolders\.tt</rmT4RKeyTemplateIncludes>
+    </PropertyGroup>
+  </Target>
+
+
+  <!--
+    *************************************************************************************************************
+    
+    *************************************************************************************************************
+    -->
+  <Target
+      Name="rmT4DslDirectiveProcessors"
+        >
+    <PropertyGroup>
+      <InstallerDefinitionClass>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\InstallerDefinitionDirectiveProcessor@Class)</InstallerDefinitionClass>
+      <InstallerDefinitionAssembly>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\InstallerDefinitionDirectiveProcessor@Assembly)</InstallerDefinitionAssembly>
+      <DslClass>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\DslDirectiveProcessor@Class)</DslClass>
+      <DslAssembly>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\DslDirectiveProcessor@Assembly)</DslAssembly>
+    </PropertyGroup>
+    <!-- Old Way -->
+    <PropertyGroup Condition="('$(DSLDirectiveLoadMethod)'=='registry')">
+      <!-- Aderant Domain Model -->
+      <DomainModelDslClass>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\DomainModelDslDirectiveProcessor@Class)</DomainModelDslClass>
+      <DomainModelDslAssembly>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\DomainModelDslDirectiveProcessor@Assembly)</DomainModelDslAssembly>
+      <!-- Aderant View Model -->
+      <ViewModelDslClass>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\ViewModelDslDirectiveProcessor@Class)</ViewModelDslClass>
+      <ViewModelDslAssembly>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\ViewModelDslDirectiveProcessor@Assembly)</ViewModelDslAssembly>
+      <!--Aderant Service Model-->
+      <ServiceDslClass>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\ServiceDslDirectiveProcessor@Class)</ServiceDslClass>
+      <ServiceDslAssembly>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\TextTemplating\DirectiveProcessors\ServiceDslDirectiveProcessor@Assembly)</ServiceDslAssembly>
+    </PropertyGroup>
+    <!-- New Way after SF 1.0.302.0 -->
+    <PropertyGroup Condition="('$(DSLDirectiveLoadMethod)'=='dynamic')">
+      <!-- Aderant Domain Model -->
+      <DomainModelDslClass>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</DomainModelDslClass>
+      <DomainModelDslAssembly>Aderant.Framework.SoftwareFactory.Domain, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</DomainModelDslAssembly>
+      <!-- Aderant View Model -->
+      <ViewModelDslClass>Aderant.Framework.SoftwareFactory.ViewModel.ViewModelDslDirectiveProcessor</ViewModelDslClass>
+      <ViewModelDslAssembly>Aderant.Framework.SoftwareFactory.ViewModel, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</ViewModelDslAssembly>
+      <!--Aderant Service Model-->
+      <ServiceDslClass>Aderant.Framework.SoftwareFactory.Service.ServiceDslDirectiveProcessor</ServiceDslClass>
+      <ServiceDslAssembly>Aderant.Framework.SoftwareFactory.Service, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</ServiceDslAssembly>
+    </PropertyGroup>
+    <ItemGroup>
+      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)'!='NOT_INSTALLED'"
+          Include="
+                    $(InstallerDefinitionClass), $(InstallerDefinitionAssembly);
+                    $(DslClass), $(DslAssembly);
+                    $(DomainModelDslClass), $(DomainModelDslAssembly);
+                    $(ViewModelDslClass), $(ViewModelDslAssembly);
+                    $(ServiceDslClass), $(ServiceDslAssembly);
+                    "/>
+      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)'=='NOT_INSTALLED'"
+          Include="
+                    $(InstallerDefinitionClass), $(InstallerDefinitionAssembly);
+                    $(DslClass), $(DslAssembly);
+                    "/>
+    </ItemGroup>
+    <!-- T4 items need to be escaped ';' with '%3B' and converted to a property -->
+    <PropertyGroup>
+      <rmT4DslDirectiveProcessors>@(rmT4DslDirectiveProcessors, '%3B')</rmT4DslDirectiveProcessors>
+    </PropertyGroup>
+  </Target>
+
+
+</Project>

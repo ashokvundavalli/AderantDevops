@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DependencyManifest>
+  <ReferencedModules>    
+      <ReferencedModule Name="Thirdparty.Test"/>
+	  <ReferencedModule Name="THiRdPArty.Stuff"/>
+	  <ReferencedModule Name="expert.help"/>
+	  <ReferencedModule Name="exPErt.hELP"/>
+	  <ReferencedModule Name="libraries.other"/>
+  </ReferencedModules>
+</DependencyManifest>
+

@@ -1,0 +1,1 @@
+The doc folder is for adding any technical documentation, such as Enterprise Architect diagrams
