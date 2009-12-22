@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DefaultPath>
   <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\VS2010" />
-  <devBranchFolder Value="C:\Source\VS2010" />
+  <!-- NB: devBranchFolder must end in '\'-->
+  <devBranchFolder Value="C:\Source\ExpertSuite\Main\" />
   <visualStudioVersion Value="2010" />
   <dependencyManifestOverride Value="MyDependencyManifest.xml" />
 </DefaultPath>
