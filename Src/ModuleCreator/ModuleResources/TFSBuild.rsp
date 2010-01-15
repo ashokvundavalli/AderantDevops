@@ -3,8 +3,10 @@
 #
 /p:"T4TransformEnabled=false"
 /p:"ModuleName=GivenModuleName"
+/p:"ZipCustomSource=False"
 /p:VersionMajor=1
 /p:VersionMinor=8
 /p:VersionBuild=0
 /p:VersionRevision=0
 /p:BuildFlavor=Release
+/p:"AderantBranchDrop=\\na.aderant.com\expertsuite\Dev\branch"

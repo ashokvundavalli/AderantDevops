@@ -7,6 +7,8 @@
     <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.Workflow" AssemblyVersion="1.8.0.0"  />
 
+    <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0"  />
+    
     <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
@@ -44,6 +46,8 @@
 
     <Module Name="SDK" AssemblyVersion="1.8.0.0"  />
 
+    <Module Name="Packages" AssemblyVersion="1.8.0.0"/>
+
     <Module Name="Expert.Help" />
 
     <Module Name="Thirdparty.ICSharpCode"  />
@@ -56,6 +60,7 @@
     <Module Name="Thirdparty.Mindscape"  />
     <Module Name="Thirdparty.Microsoft"  />
     <Module Name="Thirdparty.Microsoft.Practices"  />
+    <Module Name="Thirdparty.Microsoft.VisualStudio"  />
     <Module Name="Thirdparty.Microsoft.WcfRest" />
     <Module Name="Thirdparty.NHibernate" />
     <Module Name="Thirdparty.NVelocity"/>
