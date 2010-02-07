@@ -20,18 +20,17 @@
     <Module Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
 
-    <Module Name="Services.Entities.Bill" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.Client" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.Disbursement" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.Employee" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.Firm" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.Marketing" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Entities.Matter" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.Firm" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.Employee" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" />
 
-    <!--<Module Name="Services.Applications.Employee" AssemblyVersion="1.8.0.0" />-->
-    <!--<Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />-->
+    <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Applications.FirmControl" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />
 
     <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Configuration" AssemblyVersion="1.8.0.0" />
