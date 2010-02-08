@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DefaultPath>
-  <dropRootUNCPath Value="\\na.aderant.com\expertsuite\main" />
-  <devBranchFolder Value="C:\Source\ExpertSuite\Main" />
-  <visualStudioVersion Value="2010" />
+  <!--dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\StatlerAndWaldorf" />
+  <devBranchFolder Value="C:\TFS\Dev\StatlerAndWaldorf" /-->
+
+  <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\Product" />
+  <devBranchFolder Value="C:\TFS\Dev\Product" />
+
+  <!--dropRootUNCPath Value="\\na.aderant.com\expertsuite\Main" />
+  <devBranchFolder Value="C:\TFS\Main" /-->
+
   <dependencyManifestOverride Value="MyDependencyManifest.xml" />
 </DefaultPath>
