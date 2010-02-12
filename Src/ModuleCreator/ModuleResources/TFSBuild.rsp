@@ -8,5 +8,5 @@
 /p:VersionMinor=8
 /p:VersionBuild=0
 /p:VersionRevision=0
-/p:BuildFlavor=Release
-/p:"AderantBranchDrop=\\na.aderant.com\expertsuite\Dev\branch"
+/p:BuildFlavor=Debug
+/p:AderantBranchDrop=\\na.aderant.com\expertsuite\<BranchName>

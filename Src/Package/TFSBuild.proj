@@ -109,7 +109,7 @@
     <CallTarget Targets="DeployProduct" />
     <CallTarget Targets="WaitForServiceStartUp" />    
     <CallTarget Targets="IntegrationTests" Condition="('$(RunTests)'=='true')" />
-  </Target>
+  </Target>  
 
   <!--
     ==========================================================================================
