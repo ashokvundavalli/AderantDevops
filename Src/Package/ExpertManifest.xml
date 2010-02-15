@@ -81,7 +81,9 @@
 
     <Module Name="SDK"
             AssemblyVersion="1.8.0.0"  />
-
+    <Module Name="SDK.Workflow"
+            AssemblyVersion="1.8.0.0"/>
+    
     <Module Name="Packages"
             AssemblyVersion="1.8.0.0"/>
 
