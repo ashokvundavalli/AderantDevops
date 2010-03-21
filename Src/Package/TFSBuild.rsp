@@ -2,9 +2,9 @@
 # Add custom MSBuild command line options in this file
 /p:ProductManifestPath=.\ExpertManifest.xml
 /p:InstanceFilePath=.\ExpertFramework.instance
-/p:ExpertProductDirectory=\\na.aderant.com\expertsuite\Main\Product\Expert
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
-/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Main.environment.xml
+/p:ExpertProductDirectory=\\na.aderant.com\expertsuite\Dev\StatlerAndWaldorf\Product\Expert
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\StatlerAndWaldorf
+/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\StatlerAndWaldorf.environment.xml
 /p:BuildFlavor=Release
 /p:RunTests=false
 /P:ExpertAssistantAssemblyVersion=1.8.0.0

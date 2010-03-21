@@ -5,8 +5,13 @@
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
-  <Import Condition="('$(IsDesktopBuild)'=='true')"
-          Project="..\CommonBuild\ModuleBuild.proj"/>
-  <Import Condition="('$(IsDesktopBuild)'!='true')"
-          Project="$(AderantBranchDrop)\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
+  <!--Server build for all moduled-->
+  <Import Condition="('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true')"
+          Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
+  <!--Server build for a module-->
+  <Import Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true')"
+          Project="..\src\Build\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
+  <!--Desktop build for a module-->
+  <Import Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')"
+          Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
 </Project>

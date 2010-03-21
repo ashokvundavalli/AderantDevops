@@ -9,4 +9,3 @@
 /p:VersionBuild=0
 /p:VersionRevision=0
 /p:BuildFlavor=Debug
-/p:AderantBranchDrop=\\na.aderant.com\expertsuite\<BranchName>
