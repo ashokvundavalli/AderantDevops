@@ -34,12 +34,15 @@
     <!--Desktop build for a module-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionDirectoryPath)..\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
-   
+
     <!-- This is required as the T4 and compile is done via BuildUsingMSBuild4.ps1, so it runs as a desktopbuild -->
     <SolutionDirectoryPath Condition="('$(SolutionDirectoryPathForMSBuild4)'!='')">$(SolutionDirectoryPathForMSBuild4)</SolutionDirectoryPath>
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
-    <TestBinDirectory>$(SolutionDirectoryPath)Bin\Test\</TestBinDirectory>
-    <ModuleBinDirectory>$(SolutionDirectoryPath)Bin\Module\</ModuleBinDirectory>    
+    <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
+    <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
+    <ModuleSourceDirectory>$(SolutionDirectoryPath)\src</ModuleSourceDirectory>
+    <ModuleTestDirectory> $(SolutionDirectoryPath)\test</ModuleTestDirectory>
+    <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>
   </PropertyGroup>
 
   <Import Project="RM.TransformTemplates.Targets"/>
@@ -104,25 +107,28 @@
   -->
   <Target Name="ModuleBuild">
     <CallTarget Targets="CleanBin" />
-    <CallTarget Targets="GetModuleDependencies" />    
+    <CallTarget Targets="GetModuleDependencies" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="Build" />
+    <CallTarget Targets="CreateMSI" />
     <CallTarget Targets="BuildHelpFiles" />
     <CallTarget Targets="NDepend" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="SignFiles" />
     <CallTarget Targets="CopyToDrop" />
-    <!--<CallTarget Targets ="Testing" />-->
+    <CallTarget Targets ="Testing" />
   </Target>
 
   <Target Name="Testing">
-    <Message Text="Solution Root = $(SolutionRoot)" />   
+    <Message Text="Solution Root = $(SolutionRoot)" />
     <Message Text="Solution Directory = $(SolutionDirectoryPath)" />
     <Message Text="Build Scripts Directory = $(BuildScriptsDirectory) " />
     <Message Text="Module Name = $(ModuleName) " />
     <Message Text="Drop Location = $(DropLocation) " />
+    <Message Text="Create MSI? = $(CreateMSI) " />
+    <Message Text="BuildType MSI? = $(BuildType) " />
   </Target>
 
   <!--
@@ -241,7 +247,7 @@
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)LoadDependancies.ps1" $(SolutionDirectoryPath) $(BaseDropDirectory)'>
+          Command='"Powershell" "$(BuildScriptsDirectory)LoadDependancies.ps1" -modulesRootPath $(SolutionDirectoryPath) -dropPath $(BaseDropDirectory) -buildScriptsDirectory $(BuildScriptsDirectory)'>
     </Exec>
 
     <BuildStep
@@ -254,7 +260,7 @@
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
-  
+
   <!-- 
     ==========================================================================================
     T4 Template Transformation
@@ -272,22 +278,22 @@
     <ItemGroup>
       <rmT4TextTemplates Condition="('$(ModuleName)'=='Libraries.SoftwareFactory')"
                          Include="
-                    $(SolutionDirectoryPath)\src\**\Dsl\GeneratedCode\**\*.tt;
-                    $(SolutionDirectoryPath)\src\**\Dsl\Integration\**\*.tt;
-                    $(SolutionDirectoryPath)\src\**\DslPackage\*.tt;
-                    $(SolutionDirectoryPath)\src\**\DslPackage\GeneratedCode\**\*.tt;
-                    $(SolutionDirectoryPath)\src\**\DslPackage\ProjectItemTemplates\*.tt;
-                    $(SolutionDirectoryPath)\src\Setup\SoftwareFactorySetup\*.tt;
+                    $(ModuleSourceDirectory)\**\Dsl\GeneratedCode\**\*.tt;
+                    $(ModuleSourceDirectory)\**\Dsl\Integration\**\*.tt;
+                    $(ModuleSourceDirectory)\**\DslPackage\*.tt;
+                    $(ModuleSourceDirectory)\**\DslPackage\GeneratedCode\**\*.tt;
+                    $(ModuleSourceDirectory)\**\DslPackage\ProjectItemTemplates\*.tt;
+                    $(ModuleSourceDirectory)\Setup\SoftwareFactorySetup\*.tt;
                     "
                          Exclude="
-                    $(SolutionDirectoryPath)\Src\**\Templates\*.tt;
+                    $(ModuleSourceDirectory)\**\Templates\*.tt;
                     ">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
       <rmT4TextTemplates Condition="('$(ModuleName)'!='Libraries.SoftwareFactory')"
                          Include="
-                    $(SolutionDirectoryPath)\src\**\*.tt;
-                    $(SolutionDirectoryPath)\test\**\*.tt;
+                    $(ModuleSourceDirectory)\**\*.tt;
+                    $(ModuleTestDirectory)\**\*.tt;
                     ">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
@@ -296,6 +302,8 @@
     <Message Text="IsDesktopBuild = $(IsDesktopBuild)"/>
     <Message Text="SolutionDirectoryPathForMSBuild4 = $(SolutionDirectoryPathForMSBuild4)"/>
     <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
+    <Message Text="ModuleSourceDirectory = $(ModuleSourceDirectory)"/>
+    <Message Text="ModuleTestDirectory = $(ModuleTestDirectory)"/>
     <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0 = $(AderantBuildClientTasksV100Lib-1_0_0_0)"/>
     <Message Text="rmT4AssemblyReferencePaths = $(rmT4AssemblyReferencePaths)"/>
     <Message Text="rmT4TextTemplates = @(rmT4TextTemplates)"/>
@@ -316,7 +324,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   -->
 
   <PropertyGroup>
-    <TfCommand>$(TeamBuildRefPath)\..\tf.exe</TfCommand>    
+    <TfCommand>$(TeamBuildRefPath)\..\tf.exe</TfCommand>
   </PropertyGroup>
 
   <Target Name="UpdateModuleFileVersion"
@@ -334,7 +342,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
                 />
     </BuildStep>
 
-    <CreateItem Include="$(SolutionDirectoryPath)\Build\CommonAssemblyInfo.cs;">
+    <CreateItem Include="$(ModuleBuildDirectory)\CommonAssemblyInfo.cs;">
       <Output TaskParameter="Include"
               ItemName="AssemblyInfoFile" />
     </CreateItem>
@@ -388,7 +396,8 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <SolutionFileName Condition="('$(IsCustomBuild)'!='true')">$(SolutionDirectoryPath)\$(ModuleName).sln</SolutionFileName>
   </PropertyGroup>
   <Target Name="Build"
-          DependsOnTargets="$(BuildDependsOn)" >
+          DependsOnTargets="$(BuildDependsOn)"
+          Condition="('$(CreateMSI)'!='true')">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -413,7 +422,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <Exec Condition="('$(IsDesktopBuild)'!='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)BuildUsingMSBuild4.ps1" $(SolutionDirectoryPath) $(BuildScriptsDirectory)'>
+          Command='"Powershell" "$(BuildScriptsDirectory)BuildUsingMSBuild4.ps1" -moduleToBuildPath $(SolutionDirectoryPath) -buildInfrastructurePath $(BuildScriptsDirectory)'>
     </Exec>
 
     <BuildStep
@@ -425,6 +434,33 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
+
+
+  <!--
+    ==========================================================================================================================
+        CreateMSI - target is called to create an MSI
+    ==========================================================================================================================
+  -->
+
+  <PropertyGroup>
+    <BuildType>(Debug|Any CPU)</BuildType>
+  </PropertyGroup>
+
+  <Target Name="CreateMSI"
+          Condition="('$(CreateMSI)'=='true')">
+
+    <Message Text="MSI BuildType [$(BuildType)]"/>
+    <Message Text="MSI created for module [$(SolutionFileName)]"/>
+    <Message Text="MSI created in directory [$(SolutionDirectoryPath)]"/>
+
+    <Exec
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"Powershell" "$(BuildScriptsDirectory)CreateMSIUsingMSBuild4.ps1" -moduleSolution $(SolutionFileName) -moduleDirectory $(SolutionDirectoryPath) -buildType &quot;$(BuildType)&quot;'>
+    </Exec>
+
+  </Target>
+
 
   <!--
    ==========================================================================================
@@ -515,7 +551,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     </BuildStep>
 
     <PropertyGroup>
-      <ZipFileDirectory>$(SolutionDirectoryPath)\bin\module\Customization</ZipFileDirectory>
+      <ZipFileDirectory>$(BinModuleDirectory)Customization</ZipFileDirectory>
       <ZipFile>$(ZipFileDirectory)\$(ModuleName).Custom.zip</ZipFile>
     </PropertyGroup>
 
@@ -573,7 +609,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <!-- Create property that lists the project folders as an MSBuild include string-->
     <PropertyGroup>
-      <ProjectFoldersIncludeString>$(SolutionDirectoryPath)\Src\@(CustomProjects,'\**\*.*;$(SolutionDirectoryPath)\Src\')\**\*.*;</ProjectFoldersIncludeString>
+      <ProjectFoldersIncludeString>$(ModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(ModuleSourceDirectory')\**\*.*;</ProjectFoldersIncludeString>
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
@@ -591,38 +627,36 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   					          $(ProjectFoldersIncludeString)
   					          "
         Exclude="
-                      $(SolutionDirectoryPath)\Src\**\*.sln;
-                      $(SolutionDirectoryPath)\Src\**\*.vssscc;
-                      $(SolutionDirectoryPath)\Src\**\*.vspscc;
-                      $(SolutionDirectoryPath)\Src\**\*.sln.cache;
-                      $(SolutionDirectoryPath)\Src\**\*.vsmdi;
-                      $(SolutionDirectoryPath)\Src\**\*.testrunconfig;
-                      $(SolutionDirectoryPath)\Src\**\*.suo;
-                      $(SolutionDirectoryPath)\Src\**\*.sln.Debug.vsprops;
-                      $(SolutionDirectoryPath)\Src\**\bin\**;
-                      $(SolutionDirectoryPath)\Src\**\obj\**;
-                      $(SolutionDirectoryPath)\Src\**\UnitTest*\**;
-                      $(SolutionDirectoryPath)\Src\**\IntegrationTest*\**;
-  			              $(SolutionDirectoryPath)\Src\**\TestResults\**;
-                      $(SolutionDirectoryPath)\Src\**\Release.txt;
-                      $(SolutionDirectoryPath)\Src\**\Debug.txt;
-                      $(SolutionDirectoryPath)\Src\**\_Resharper*\**;
-                      $(SolutionDirectoryPath)\Src\**\*resharper.user;
+                      $(ModuleSourceDirectory)\**\*.sln;
+                      $(ModuleSourceDirectory)\**\*.vssscc;
+                      $(ModuleSourceDirectory)\**\*.vspscc;
+                      $(ModuleSourceDirectory)\**\*.sln.cache;
+                      $(ModuleSourceDirectory)\**\*.vsmdi;
+                      $(ModuleSourceDirectory)\**\*.testrunconfig;
+                      $(ModuleSourceDirectory)\**\*.suo;
+                      $(ModuleSourceDirectory)\**\*.sln.Debug.vsprops;
+                      $(ModuleSourceDirectory)\**\bin\**;
+                      $(ModuleSourceDirectory)\**\obj\**;
+                      $(ModuleSourceDirectory)\**\UnitTest*\**;
+                      $(ModuleSourceDirectory)\**\IntegrationTest*\**;
+  			              $(ModuleSourceDirectory)\**\TestResults\**;
+                      $(ModuleSourceDirectory)\**\Release.txt;
+                      $(ModuleSourceDirectory)\**\Debug.txt;
+                      $(ModuleSourceDirectory)\**\_Resharper*\**;
+                      $(ModuleSourceDirectory)\**\*resharper.user;
   				    "/>
-<!--CHECK WITH ANDY-->
+      <!--CHECK WITH ANDY-->
       <ZipSourceFiles
         Include="
-  					          $(SolutionDirectoryPath)\Build\*.*;
+  					          $(ModuleBuildDirectory)\*.*;
   					          "
               />
       <ZipSourceFiles
         Include="
   					          $(SolutionDirectoryPath)\CommonBuild\*.*;
   					          "
-        Exclude="
-                      $(SolutionDirectoryPath)\Build\*.ps1;
-  				    "/>
-<!--CHECK WITH ANDY-->
+         />
+      <!--CHECK WITH ANDY-->
     </ItemGroup>
 
     <MakeDir
@@ -665,8 +699,8 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     </BuildStep>
 
     <CreateItem
-      Include="$(TestBinDirectory)\%2aUnitTest%2a.dll"
-      Exclude="$(TestBinDirectory)\%2aHelpers%2a.dll"
+      Include="$(BinTestDirectory)\%2aUnitTest%2a.dll"
+      Exclude="$(BinTestDirectory)\%2aHelpers%2a.dll"
       AdditionalMetadata="TestContainerPrefix=/testcontainer:"
           >
       <Output TaskParameter="Include"
@@ -675,7 +709,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</UnitTestAssemblies>
-      <ResultsFileSwitch>/resultsfile:$(TestBinDirectory)\UnitTestResults.trx</ResultsFileSwitch>
+      <ResultsFileSwitch>/resultsfile:$(BinTestDirectory)\UnitTestResults.trx</ResultsFileSwitch>
       <PublishBuildSwitch>/publishbuild:$(FileVersion)</PublishBuildSwitch>
       <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
       <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
@@ -711,7 +745,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   -->
 
   <PropertyGroup>
-    <SignToolCommand>$(WindowsSdkDir)\Bin\signtool.exe</SignToolCommand>
+    <SignToolCommand>$(BuildScriptsDirectory)\signtool.exe</SignToolCommand>
   </PropertyGroup>
 
   <Target Name="SignFiles"
@@ -734,7 +768,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       <FileToSign Include="$(FilesToSign)" />
     </ItemGroup>
 
-    <Exec Command='"$(SignToolCommand)" sign /p "rugby ball" /f .\aderant.pfx $(ModuleBinDirectory)%(FileToSign.Filename)%(FileToSign.Extension)' />
+    <Exec Command='"$(SignToolCommand)" sign /p "rugby ball" /f (BuildScriptsDirectory)\aderant.pfx $(BinModuleDirectory)%(FileToSign.Filename)%(FileToSign.Extension)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -743,8 +777,6 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    
-    
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
@@ -755,10 +787,10 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
         Copy Build to Drop Location 
     ==========================================================================================
   -->
-    
+
   <Target Name="CopyToDrop"
-          Condition="('$(IsDesktopBuild)'!='true')" >  
-    
+          Condition="('$(IsDesktopBuild)'!='true')" >
+
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Copy Output to $(DropLocation)"
@@ -769,20 +801,20 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
         TaskParameter="id"
         PropertyName="BuildStepId"
                 />
-    </BuildStep>    
-    
+    </BuildStep>
+
     <!--We have differing ways of determining the drop location depending on the type of build. 
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
-    
+
     <Exec Condition="('$(BuildAll)'=='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" $(ModuleName) $(SolutionDirectoryPath) $(DropLocation)\$(ModuleName)\$(AssemblyVersion) $(FileVersion)' />
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)-dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion)' />
 
     <Exec Condition="('$(BuildAll)'!='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" $(ModuleName) $(SolutionDirectoryPath) $(DropLocation) $(FileVersion)' />
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"

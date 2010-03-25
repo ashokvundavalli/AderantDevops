@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert">
   <Modules>
+    <Module Name="Libraries.Roles"
+            AssemblyVersion="1.8.0.0"/>
     <Module Name="Applications.Administration"
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.Customization"

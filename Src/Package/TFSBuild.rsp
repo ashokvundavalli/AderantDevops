@@ -5,6 +5,7 @@
 /p:ExpertProductDirectory=\\na.aderant.com\expertsuite\Dev\StatlerAndWaldorf\Product\Expert
 /p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\StatlerAndWaldorf
 /p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\StatlerAndWaldorf.environment.xml
+/p:ExpertDatabaseConnectionStringForSystemMap="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"
 /p:BuildFlavor=Release
 /p:RunTests=false
 /P:ExpertAssistantAssemblyVersion=1.8.0.0
