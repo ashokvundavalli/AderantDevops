@@ -42,7 +42,7 @@
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
     <ModuleSourceDirectory>$(SolutionDirectoryPath)\src</ModuleSourceDirectory>
     <ModuleTestDirectory> $(SolutionDirectoryPath)\test</ModuleTestDirectory>
-    <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>
+    <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>    
   </PropertyGroup>
 
   <Import Project="RM.TransformTemplates.Targets"/>
@@ -745,7 +745,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   -->
 
   <PropertyGroup>
-    <SignToolCommand>$(BuildScriptsDirectory)\signtool.exe</SignToolCommand>
+    <SignToolCommand>$(BuildScriptsDirectory)..\Build.Tools\signtool.exe</SignToolCommand>
   </PropertyGroup>
 
   <Target Name="SignFiles"
