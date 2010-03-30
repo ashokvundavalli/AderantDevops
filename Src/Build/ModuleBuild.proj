@@ -34,6 +34,9 @@
     <!--Desktop build for a module-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionDirectoryPath)..\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
+    <!--Custom build for a module-->
+    <!--<SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
+    <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)\Build\Common\</BuildScriptsDirectory>-->
 
     <!-- This is required as the T4 and compile is done via BuildUsingMSBuild4.ps1, so it runs as a desktopbuild -->
     <SolutionDirectoryPath Condition="('$(SolutionDirectoryPathForMSBuild4)'!='')">$(SolutionDirectoryPathForMSBuild4)</SolutionDirectoryPath>
@@ -552,6 +555,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization</ZipFileDirectory>
+      <CustomBuildFilesDirectory>$(SolutionDirectoryPath)BuildScripts</CustomBuildFilesDirectory>
       <ZipFile>$(ZipFileDirectory)\$(ModuleName).Custom.zip</ZipFile>
     </PropertyGroup>
 
@@ -609,11 +613,26 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <!-- Create property that lists the project folders as an MSBuild include string-->
     <PropertyGroup>
-      <ProjectFoldersIncludeString>$(ModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(ModuleSourceDirectory')\**\*.*;</ProjectFoldersIncludeString>
+      <ProjectFoldersIncludeString>$(ModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(ModuleSourceDirectory)')\**\*.*;</ProjectFoldersIncludeString>
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
+    
+    <!--Create CommonBuild Dir-->
+    
+    <MakeDir
+      Directories="$(CustomBuildFilesDirectory)"/>
 
+    <ItemGroup>
+      <CommonBuildFiles Include="$(BuildScriptsDirectory)\**\*.*"/>
+    </ItemGroup>
+    
+    <!--Copy Build scripts to CustomBuildFilesDirectory -->    
+    <Copy
+      SourceFiles="@(CommonBuildFiles)"
+      DestinationFolder="$(CustomBuildFilesDirectory)"
+        />    
+    
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
 
@@ -644,8 +663,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
                       $(ModuleSourceDirectory)\**\Debug.txt;
                       $(ModuleSourceDirectory)\**\_Resharper*\**;
                       $(ModuleSourceDirectory)\**\*resharper.user;
-  				    "/>
-      <!--CHECK WITH ANDY-->
+  				    "/>      
       <ZipSourceFiles
         Include="
   					          $(ModuleBuildDirectory)\*.*;
@@ -653,10 +671,9 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
               />
       <ZipSourceFiles
         Include="
-  					          $(SolutionDirectoryPath)\CommonBuild\*.*;
+  					          $(CustomBuildFilesDirectory)\*.*;
   					          "
          />
-      <!--CHECK WITH ANDY-->
     </ItemGroup>
 
     <MakeDir
