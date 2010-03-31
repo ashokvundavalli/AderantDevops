@@ -613,7 +613,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <!-- Create property that lists the project folders as an MSBuild include string-->
     <PropertyGroup>
-      <ProjectFoldersIncludeString>$(ModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(ModuleSourceDirectory)')\**\*.*;</ProjectFoldersIncludeString>
+      <ProjectFoldersIncludeString>$(ModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(ModuleSourceDirectory)\')\**\*.*;</ProjectFoldersIncludeString>
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
