@@ -9,7 +9,7 @@ Defaults File Setup
 
 Profile Setup
   > $/ExpertSuite/<Branch>/Modules/Build.Infrastructure/Src/Profile/WindowsPowerShell
-  > WindowsPowershell folder goes in your Documents folder. e.g. C:\Users\jamie.bate\Documents\WindowsPowerShell  
+  > WindowsPowershell folder goes in your Documents folder. e.g. C:\Users\jamie.bate\Documents
 
 PSUnit Setup
   # You need to ensure that you have downloaded the module Thirdparty.PsUnit for the branch you are working on.
