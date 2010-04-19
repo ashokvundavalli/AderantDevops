@@ -826,7 +826,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <Exec Condition="('$(BuildAll)'=='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)-dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion)' />
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion)' />
 
     <Exec Condition="('$(BuildAll)'!='true')"
           ContinueOnError="false"
