@@ -751,7 +751,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+    <OnError ExecuteTargets="CopyToDrop;MarkBuildStepAsFailed" />
 
   </Target>
 
