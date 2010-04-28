@@ -151,7 +151,15 @@
         IgnoreExitCode="true"
         Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'  />
 
-      <!--Copy to drop-->
+    <!-- Zip up and place in root of drop folder-->
+    <ItemGroup>
+      <ZipFiles Include="$(LocalExpertBinariesDirectory)\**\*.*" />
+    </ItemGroup>
+    <Zip Files="@(ZipFiles)"
+         ZipFileName="$(ExpertProductDropDirectory)\ExpertBinaries.zip"
+         />
+    
+    <!--Copy to drop-->
     <Exec ContinueOnError="false"
          IgnoreExitCode="false"
          Command='"Powershell" Copy-Item -Path $(LocalExpertBinariesDirectory)\* -Destination $(DropExpertBinariesDirectory) -Recurse'/>
