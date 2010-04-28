@@ -49,6 +49,8 @@
             AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Entities.Matter"
             AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Models"
+            AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.EmployeeIntake"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.FirmControl"
