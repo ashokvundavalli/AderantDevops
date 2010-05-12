@@ -34,9 +34,6 @@
     <!--Desktop build for a module-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionDirectoryPath)..\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
-    <!--Custom build for a module-->
-    <!--<SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
-    <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)\Build\Common\</BuildScriptsDirectory>-->
 
     <!-- This is required as the T4 and compile is done via BuildUsingMSBuild4.ps1, so it runs as a desktopbuild -->
     <SolutionDirectoryPath Condition="('$(SolutionDirectoryPathForMSBuild4)'!='')">$(SolutionDirectoryPathForMSBuild4)</SolutionDirectoryPath>
@@ -45,7 +42,7 @@
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
     <ModuleSourceDirectory>$(SolutionDirectoryPath)\src</ModuleSourceDirectory>
     <ModuleTestDirectory> $(SolutionDirectoryPath)\test</ModuleTestDirectory>
-    <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>    
+    <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>
   </PropertyGroup>
 
   <Import Project="RM.TransformTemplates.Targets"/>
@@ -62,6 +59,9 @@
     ==========================================================================================
     -->
   <ItemGroup>
+    <!--<ConfigurationToBuild
+      Condition="'$(BuildFlavor)'=='Release' Or ('$(BuildAll)'=='true')"
+      Include="Release|Any CPU">-->
     <ConfigurationToBuild
       Condition="'$(BuildFlavor)'=='Release'"
       Include="Release|Any CPU">
@@ -116,6 +116,7 @@
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="Build" />
     <CallTarget Targets="CreateMSI" />
+    <CallTarget Targets="ZipTemplateModule" />
     <CallTarget Targets="BuildHelpFiles" />
     <CallTarget Targets="NDepend" />
     <CallTarget Targets="RunUnitTests" />
@@ -131,7 +132,7 @@
     <Message Text="Module Name = $(ModuleName) " />
     <Message Text="Drop Location = $(DropLocation) " />
     <Message Text="Create MSI? = $(CreateMSI) " />
-    <Message Text="BuildType MSI? = $(BuildType) " />
+    <Message Text="BuildType MSI? = $(BuildFlavor) " />
   </Target>
 
   <!--
@@ -395,12 +396,11 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <BuildDependsOn Condition="('$(IsDesktopBuild)'=='true')">
       rmTransformTemplates;
     </BuildDependsOn>
-    <SolutionFileName Condition="('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)\$(ModuleName).Custom.sln</SolutionFileName>
-    <SolutionFileName Condition="('$(IsCustomBuild)'!='true')">$(SolutionDirectoryPath)\$(ModuleName).sln</SolutionFileName>
+    <SolutionFileName Condition="('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)$(ModuleName).Custom.sln</SolutionFileName>
+    <SolutionFileName Condition="('$(IsCustomBuild)'!='true')">$(SolutionDirectoryPath)$(ModuleName).sln</SolutionFileName>
   </PropertyGroup>
   <Target Name="Build"
-          DependsOnTargets="$(BuildDependsOn)"
-          Condition="('$(CreateMSI)'!='true')">
+          DependsOnTargets="$(BuildDependsOn)">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -446,20 +446,28 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   -->
 
   <PropertyGroup>
-    <BuildType>(Debug|Any CPU)</BuildType>
+    <PathToDevEnv10>$(VS100COMNTOOLS)..\IDE</PathToDevEnv10>
+    <MSILog>$(BinModuleDirectory)MCIBuild.log</MSILog>
   </PropertyGroup>
 
   <Target Name="CreateMSI"
+          DependsOnTargets="Build"
           Condition="('$(CreateMSI)'=='true')">
 
-    <Message Text="MSI BuildType [$(BuildType)]"/>
-    <Message Text="MSI created for module [$(SolutionFileName)]"/>
-    <Message Text="MSI created in directory [$(SolutionDirectoryPath)]"/>
+    <Message Text="Solution to create MSI for [$(SolutionFileName)]"/>
+    <Message Text="MSI BuildType [$(BuildFlavor)]"/>
+    <Message Text="Devenv path [$(PathToDevEnv10)]"/>
+    <Message Text="MSI Log [$(MSILog)]"/>
+
+    <!--Iritating issue here were as part of the msi creation there are error produced but the MSI is succesfully created.
+        Because of this error's and exit code are being ignored.
+    -->
 
     <Exec
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)CreateMSIUsingMSBuild4.ps1" -moduleSolution $(SolutionFileName) -moduleDirectory $(SolutionDirectoryPath) -buildType &quot;$(BuildType)&quot;'>
+      ContinueOnError="true"
+      IgnoreExitCode="true"
+      WorkingDirectory="$(PathToDevEnv10)"
+      Command='devenv.com &quot;$(SolutionFileName)&quot; /build &quot;$(BuildFlavor)&quot; /out &quot;$(MSILog)&quot;'>
     </Exec>
 
   </Target>
@@ -617,22 +625,22 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
-    
+
     <!--Create CommonBuild Dir-->
-    
+
     <MakeDir
       Directories="$(CustomBuildFilesDirectory)"/>
 
     <ItemGroup>
       <CommonBuildFiles Include="$(BuildScriptsDirectory)\**\*.*"/>
     </ItemGroup>
-    
-    <!--Copy Build scripts to CustomBuildFilesDirectory -->    
+
+    <!--Copy Build scripts to CustomBuildFilesDirectory -->
     <Copy
       SourceFiles="@(CommonBuildFiles)"
       DestinationFolder="$(CustomBuildFilesDirectory)"
-        />    
-    
+        />
+
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
 
@@ -663,7 +671,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
                       $(ModuleSourceDirectory)\**\Debug.txt;
                       $(ModuleSourceDirectory)\**\_Resharper*\**;
                       $(ModuleSourceDirectory)\**\*resharper.user;
-  				    "/>      
+  				    "/>
       <ZipSourceFiles
         Include="
   					          $(ModuleBuildDirectory)\*.*;
@@ -751,7 +759,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    <OnError ExecuteTargets="CopyToDrop;MarkBuildStepAsFailed" />
+    <OnError ExecuteTargets="CopyToDropOnTestFailure;MarkBuildStepAsFailed" />
 
   </Target>
 
@@ -801,6 +809,124 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
   <!--
     ==========================================================================================
+        Zip Sample Module 
+    ==========================================================================================
+  -->
+
+  <Target Name="ZipTemplateModule"
+          Condition="('$(IsTemplateModule)'=='true')"
+          >
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Zipping Source for $(ModuleName)"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)"
+            >
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"
+                />
+    </BuildStep>
+
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)\Workflow\Templates</ZipFileDirectory>
+      <ZipFile>$(ZipFileDirectory)\$(ModuleName).Template.zip</ZipFile>      
+    </PropertyGroup>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Include="
+  			$(SolutionDirectoryPath)\**;
+        "
+        Exclude="
+        $(BinTestDirectory)\**;
+        $(BinModuleDirectory)\**;                
+        $(ModuleBuildDirectory)\**;
+        $(ModuleSourceDirectory)\**\*.csproj.user;        
+        $(ModuleSourceDirectory)\**\obj\**;
+        $(SolutionDirectoryPath)\$(ModuleName).sln;
+        $(SolutionDirectoryPath)\CommonBuild\**;
+        $(SolutionDirectoryPath)\Dependencies\**;
+        $(SolutionDirectoryPath)\**\*.vssscc;
+        $(SolutionDirectoryPath)\**\*.vspscc;        
+        $(SolutionDirectoryPath)\**\*.sln.cache;
+        $(SolutionDirectoryPath)\**\*.vsmdi;        
+        $(SolutionDirectoryPath)\**\*.testrunconfig;
+        $(SolutionDirectoryPath)\**\*.suo;
+        $(SolutionDirectoryPath)\**\*.sln.Debug.vsprops;
+        $(SolutionDirectoryPath)\**\TestResults\**;
+        $(SolutionDirectoryPath)\**\Release.txt;
+        $(SolutionDirectoryPath)\**\Debug.txt;
+        $(SolutionDirectoryPath)\**\_Resharper*\**;
+        $(SolutionDirectoryPath)\**\*resharper.user;
+        "/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ZipFile)"
+      WorkingDirectory="$(SolutionDirectoryPath)"
+            />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Copy Build to Drop Location for unit test failure
+    ==========================================================================================
+  -->
+  <Target Name="CopyToDropOnTestFailure"
+          Condition="('$(IsDesktopBuild)'!='true')" >
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Copy Output to $(DropLocation)"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)"
+            >
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"
+                />
+    </BuildStep>
+
+    <!--We have differing ways of determining the drop location depending on the type of build. 
+        The simplest way was to have a condition on whether we are build all modules of a single module.-->
+
+    <Exec Condition="('$(BuildAll)'=='true')"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion)' />
+
+    <Exec Condition="('$(BuildAll)'!='true')"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+  <!--
+    ==========================================================================================
         Copy Build to Drop Location 
     ==========================================================================================
   -->
@@ -832,6 +958,14 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
+
+    <!--At the moment we check for successful builtds in the build logs where there are 0 Error(s). The BuildAll only has one build log
+        so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
+    -->
+    <WriteLinesToFile
+      Condition ="('$(BuildAll)'=='true')"
+      File="$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\$(FileVersion)\BuildLog.txt"
+      Lines="Build succeeded via BuildAll - 0 Error(s)"/>
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"

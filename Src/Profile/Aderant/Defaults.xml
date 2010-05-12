@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DefaultPath>
-  <!--dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\StatlerAndWaldorf" />
-  <devBranchFolder Value="C:\TFS\Dev\StatlerAndWaldorf" /-->
-
-  <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\Beaker" />
-  <devBranchFolder Value="C:\tfs\ExpertSuite\Dev\Beaker" />
-  <systemMapConnectionString Value="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"/>
-
-  <!--dropRootUNCPath Value="\\na.aderant.com\expertsuite\Main" />
-  <devBranchFolder Value="C:\TFS\Main" /-->
+  <!--Change to your relavent branch-->
+  <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\Test" />
+  <devBranchFolder Value="C:\tfs\ExpertSuite\Dev\Test" />
+  <!--Add your database details for the automatic creation of the systemmap for customisation-->
+  <!--<systemMapConnectionString Value="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"/>-->  
 
   <dependencyManifestOverride Value="MyDependencyManifest.xml" />
 </DefaultPath>

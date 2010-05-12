@@ -14,7 +14,7 @@
   <databaseBackupFile Value="AKL_MASTER_75SP2_32BIT"/> 
   
   <cmsNetLocalPath Value="C:\ExpertPrerequisites\CMSNet"/>    
-  <cmsNetDownloadPath Value="\\svbld312\CMS.Net\75SP2"/>    
+  <cmsNetDownloadPath Value="\\svbld312\CMS.Net\75SP3"/>    
   
   <msDotNetFrameworkInstaller Value="C:\ExpertPrerequisites\MS .Net Framework\dotNetFx40_Full_x86_x64.exe"/>
   <msDotNetVersion Value="4.0"/>        
