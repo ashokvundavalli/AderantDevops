@@ -2,13 +2,12 @@
 <ProductManifest Name="Expert">
   <Modules>
 
-    <!--<Module Name="Applications.ExpertTimer"
+    <Module Name="Applications.ExpertTimer"
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Libraries.Entities.Time"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.Time"
-            AssemblyVersion="1.8.0.0" />-->
-
+            AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Roles"
             AssemblyVersion="1.8.0.0"/>
     <Module Name="Applications.Administration"

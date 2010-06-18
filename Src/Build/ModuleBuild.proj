@@ -23,7 +23,7 @@
   <PropertyGroup>
     <RunTest>true</RunTest>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-    <RunCodeAnalysis>Never</RunCodeAnalysis>
+    <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
     <!--Server Build for all modules-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true')">$(SolutionRoot)\..\</SolutionDirectoryPath>
@@ -59,9 +59,6 @@
     ==========================================================================================
     -->
   <ItemGroup>
-    <!--<ConfigurationToBuild
-      Condition="'$(BuildFlavor)'=='Release' Or ('$(BuildAll)'=='true')"
-      Include="Release|Any CPU">-->
     <ConfigurationToBuild
       Condition="'$(BuildFlavor)'=='Release'"
       Include="Release|Any CPU">
@@ -845,6 +842,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
         $(ModuleBuildDirectory)\**;
         $(ModuleSourceDirectory)\**\*.csproj.user;        
         $(ModuleSourceDirectory)\**\obj\**;
+        $(ModuleSourceDirectory)\**\bin\**;
         $(SolutionDirectoryPath)\$(ModuleName).sln;
         $(SolutionDirectoryPath)\CommonBuild\**;
         $(SolutionDirectoryPath)\Dependencies\**;

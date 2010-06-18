@@ -8,3 +8,4 @@
 /p:VersionBuild=0
 /p:VersionRevision=0
 /p:BuildFlavor=Release
+/p:RunCodeAnalysisSetting=Default
