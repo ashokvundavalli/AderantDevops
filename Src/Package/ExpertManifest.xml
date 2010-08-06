@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert">
   <Modules>
-
+    <Module Name="Applications.Marketing"
+            AssemblyVersion="7.7.0.0"  />
     <Module Name="Applications.ExpertTimer"
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Libraries.Entities.Time"
@@ -9,7 +10,7 @@
     <Module Name="Services.Applications.Time"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Roles"
-            AssemblyVersion="1.8.0.0"/>
+            AssemblyVersion="1.8.0.0"/>        
     <Module Name="Applications.Administration"
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.Customization"
@@ -100,6 +101,7 @@
             AssemblyVersion="1.8.0.0"/>
 
     <Module Name="Expert.Help"/>
+    <Module Name="Marketing.Help"/>
 
     <Module Name="Thirdparty.ICSharpCode"  />
     <Module Name="Thirdparty.Infragistics"  />
@@ -123,6 +125,9 @@
     <Module Name="Thirdparty.Xenocode" />
     <Module Name="Thirdparty.Microsoft.Office11.Interop" />
     <Module Name="Thirdparty.AutoMapper" />
+    <Module Name="ThirdParty.TimerCompatibility.1.0" />
+    <Module Name="ThirdParty.Marketing.Interop" />
+    <Module Name="Thirdparty.LLBLGen" />
   </Modules>
 </ProductManifest>
 

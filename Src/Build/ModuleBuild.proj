@@ -118,6 +118,7 @@
     <CallTarget Targets="NDepend" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="SignFiles" />
+    <CallTarget Targets="PublishModule" />
     <CallTarget Targets="CopyToDrop" />
     <CallTarget Targets ="Testing" />
   </Target>
@@ -790,7 +791,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       <FileToSign Include="$(FilesToSign)" />
     </ItemGroup>
 
-    <Exec Command='"$(SignToolCommand)" sign /p "rugby ball" /f (BuildScriptsDirectory)\aderant.pfx $(BinModuleDirectory)%(FileToSign.Filename)%(FileToSign.Extension)' />
+    <Exec Command='"$(SignToolCommand)" sign /p "rugby ball" /f $(BuildScriptsDirectory)\aderant.pfx $(BinModuleDirectory)%(FileToSign.Filename)%(FileToSign.Extension)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -799,6 +800,72 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Create the modules package to be Published
+    ==========================================================================================
+  -->
+
+  <Target Name="PublishModule"
+          DependsOnTargets="RunUnitTests"
+          Condition="('$(PublishModule)' == 'true')">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Create Package to publish"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)"
+            >
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"
+                />
+    </BuildStep>
+
+    <Message Condition="('$(IsDesktopBuild)'=='true')"
+             Text="Create package to publish" />
+    <Message Text="## Publish as version $(FileVersion)" />
+
+    <MSBuild Condition="('$(IsDesktopBuild)'=='true')"
+             Projects="$(SolutionFileName)"
+             Properties="ApplicationVersion=$(FileVersion)"
+             Targets="Publish"  />
+
+    <Exec Condition="('$(IsDesktopBuild)'!='true')"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" "$(BuildScriptsDirectory)PublishClickOnceProjectUsingMSBuild4.ps1" -pathForModuleToPublish $(SolutionFileName) -applicationVersion $(FileVersion)'/>
+    
+    <Message Condition="('$(IsDesktopBuild)'=='true')"
+             Text="Zip package" />
+
+    <PropertyGroup>
+      <ClickOnceZipFileDirectory>$(BinModuleDirectory)\$(ModuleName).ClickOnce</ClickOnceZipFileDirectory>
+      <ClickOnceZipFile>$(ClickOnceZipFileDirectory)\ClickOnce.zip</ClickOnceZipFile>
+      <PublishDirectory>$(BinModuleDirectory)\app.publish</PublishDirectory>
+    </PropertyGroup>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Include="$(PublishDirectory)\**; "/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ClickOnceZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ClickOnceZipFile)"
+      WorkingDirectory="$(PublishDirectory)"      
+            />
+
+    <RemoveDir Directories="$(PublishDirectory)"/>
+    
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
@@ -827,7 +894,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)\Workflow\Templates</ZipFileDirectory>
-      <ZipFile>$(ZipFileDirectory)\$(ModuleName).Template.zip</ZipFile>      
+      <ZipFile>$(ZipFileDirectory)\$(ModuleName).Template.zip</ZipFile>
     </PropertyGroup>
 
     <!-- Create ItemGroup used in Zip task.-->
