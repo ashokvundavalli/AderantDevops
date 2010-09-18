@@ -21,6 +21,10 @@
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.ExpertAssistant"
             AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.FoundTime"
+            AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.FoundTimeOutlookAddIn"
+            AssemblyVersion="1.8.0.0"  />
     <Module Name="Build.T4Task"
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Libraries.Foundation"
@@ -66,6 +70,8 @@
     <Module Name="Services.Applications.FirmControl"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.FileOpening"
+            AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.FoundTime"
             AssemblyVersion="1.8.0.0" />
 
     <Module Name="Services.Communication"
