@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert">
   <Modules>
-    <Module Name="Installs.Marketing"
-            AssemblyVersion="1.8.0.0"  />
+    <!--Module Name="Installs.Marketing"
+            AssemblyVersion="1.8.0.0"  /-->
     <Module Name="Applications.Marketing"
             AssemblyVersion="7.7.0.0"  />
     <Module Name="Applications.ExpertTimer"
@@ -124,7 +124,8 @@
     <Module Name="Thirdparty.Microsoft.Linq.Dynamic"/>
     <Module Name="Thirdparty.Microsoft.Practices"  />
     <Module Name="Thirdparty.Microsoft.VisualStudio"  />
-    <Module Name="Thirdparty.Microsoft.WcfRest" />
+    <Module Name="Thirdparty.Microsoft.VisualStudio"  />
+    <Module Name="Thirdparty.MSExchange" />
     <Module Name="Thirdparty.NHibernate" />
     <Module Name="Thirdparty.NVelocity"/>
     <Module Name="Thirdparty.log4net" />
