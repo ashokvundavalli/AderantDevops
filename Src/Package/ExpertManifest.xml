@@ -5,6 +5,8 @@
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.Marketing"
             AssemblyVersion="7.7.0.0"  />
+    <Module Name="Applications.MatterPlanning"
+            AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.ExpertTimer"
             AssemblyVersion="1.8.0.0"  />
     <Module Name="Libraries.Entities.Time"
@@ -70,6 +72,8 @@
     <Module Name="Services.Applications.FirmControl"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.FileOpening"
+            AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Applications.MatterPlanning"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.FoundTime"
             AssemblyVersion="1.8.0.0" />
