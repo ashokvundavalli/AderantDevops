@@ -118,6 +118,7 @@
     <Module Name="Thirdparty.ICSharpCode"  />
     <Module Name="Thirdparty.Infragistics"  />
     <Module Name="Thirdparty.DevComponents" />
+    <Module Name="Thirdparty.ExtremeML" />
     <Module Name="Thirdparty.MadCap"  />
     <Module Name="Thirdparty.Xceed.3" />
     <Module Name="Thirdparty.IronPython.1.1"  />
@@ -125,6 +126,7 @@
     <Module Name="Thirdparty.Mindscape"  />
     <Module Name="Thirdparty.Microsoft"  />
     <Module Name="Thirdparty.Microsoft.Build"/>
+    <Module Name="Thirdparty.Microsoft.ExpressionBlendSdk"/>
     <Module Name="Thirdparty.Microsoft.Linq.Dynamic"/>
     <Module Name="Thirdparty.Microsoft.Practices"  />
     <Module Name="Thirdparty.Microsoft.VisualStudio"  />
@@ -134,6 +136,7 @@
     <Module Name="Thirdparty.NVelocity"/>
     <Module Name="Thirdparty.log4net" />
     <Module Name="Thirdparty.NMock" />
+    <Module Name="Thirdparty.OpenXML" />
     <Module Name="Thirdparty.Wintellect" />
     <Module Name="Thirdparty.Xenocode" />
     <Module Name="Thirdparty.Microsoft.Office11.Interop" />
