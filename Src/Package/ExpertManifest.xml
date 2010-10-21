@@ -80,8 +80,6 @@
 
     <Module Name="Services.Communication"
             AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Configuration"
-            AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Foundation"
             AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Identity"
