@@ -137,6 +137,7 @@
     <Module Name="Thirdparty.Wintellect" />
     <Module Name="Thirdparty.Xenocode" />
     <Module Name="Thirdparty.Microsoft.Office11.Interop" />
+    <Module Name="Thirdparty.Microsoft.Office12.Interop" />
     <Module Name="Thirdparty.AutoMapper" />
     <Module Name="ThirdParty.TimerCompatibility.1.0" />
     <Module Name="ThirdParty.Marketing.Interop" />
