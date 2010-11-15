@@ -118,7 +118,7 @@
     <Module Name="Thirdparty.DevComponents" />
     <Module Name="Thirdparty.ExtremeML" />
     <Module Name="Thirdparty.MadCap"  />
-    <Module Name="Thirdparty.Xceed.3" />
+    <Module Name="Thirdparty.Xceed.4" />
     <Module Name="Thirdparty.IronPython.1.1"  />
     <Module Name="Thirdparty.IronPython.2.6"  />
     <Module Name="Thirdparty.Mindscape"  />
