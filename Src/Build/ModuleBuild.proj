@@ -359,7 +359,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <Exec WorkingDirectory="$(SolutionRoot)"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="&quot;$(TfCommand)&quot; checkout @(AssemblyInfoFile) /lock:Checkout"/>
+          Command="&quot;$(TfCommand)&quot; checkout @(AssemblyInfoFile) /lock:Checkin"/>
 
     <FileUpdate Files="@(AssemblyInfoFile)"
                 IgnoreCase="true"
