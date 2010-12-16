@@ -707,7 +707,9 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   -->
 
   <Target Name="RunUnitTests"
-          DependsOnTargets="Build">
+          DependsOnTargets="Build"
+          Condition="('$(RunTest)'!='false')"
+  >
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
