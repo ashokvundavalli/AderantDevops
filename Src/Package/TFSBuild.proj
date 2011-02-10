@@ -231,7 +231,6 @@
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Succeeded" />
-
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 

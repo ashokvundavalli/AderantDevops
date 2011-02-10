@@ -13,7 +13,7 @@ process{
 
     $currentDirectory = (Get-Location).Path
 
-    write "$currentDirectory"
+    write "Current directory is $currentDirectory"
 
     if ([System.IO.Directory]::Exists("$currentDirectory\Expert")) {
         remove-item -path "$currentDirectory\Expert" -recurse -force

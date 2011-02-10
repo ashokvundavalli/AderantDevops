@@ -1,0 +1,54 @@
+# This is a response file for MSBuild
+# Add custom MSBuild command line options in this file
+
+###################################
+# Package and PackageTests targets
+###################################
+# Product manifest that is used when running GetProduct.ps1 and GetProductTests.ps1.
+# This does not change unless the mapping in the build definition is changed.
+/p:ProductManifestPath=..\src\ExpertManifest.xml
+
+# Each branch will have its own drop root.
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\SkadLove
+
+
+
+##########################################
+# DeployProduct and RemoveProduct targets
+##########################################
+# Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
+# Also used by WaitForServiceStartUp target, passed to PingDeploymentEngine.
+
+#/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\ExpertTestAssets\Dev\SkadLove\RestoreDBTestLocal.environment.xml
+/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Dev\SkadLove\SkadLove.IntegrationTest.environment.xml
+
+
+##########################################
+# RestoreDB targets
+##########################################
+#Path where the database files are stored on the database server.
+/p:directory=D:\FileOpening\Databases
+
+#Database backup file location (backup used for testing:)
+/p:dbBackupFile=\\svsql303\FileopeningBackups\VMAKLSP2ITE.bak
+
+#Database Owner
+#/p:dbowner="cmsdbo"
+
+#Replace DB boolean?
+#/p:replace
+
+#Close
+#/p:closeExisting
+
+
+
+
+
+
+# Microsoft Build Configuration
+/p:BuildFlavor=Release
+
+
+#Unused - need to find source before removing.
+/p:ExpertDatabaseConnectionStringForSystemMap="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"
