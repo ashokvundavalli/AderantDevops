@@ -24,7 +24,7 @@
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
 
     <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
-    <Import Project="\\na.aderant.com\expertsuite\Dev\LoveBird\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
+    <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
   <!--
     ==========================================================================================
         Begin

@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\SkadLove
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
 
 
@@ -20,7 +20,7 @@
 # Also used by WaitForServiceStartUp target, passed to PingDeploymentEngine.
 
 #/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\ExpertTestAssets\Dev\SkadLove\RestoreDBTestLocal.environment.xml
-/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Dev\SkadLove\SkadLove.IntegrationTest.environment.xml
+/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Main\Main.IntegrationTest.environment.xml
 
 
 ##########################################
