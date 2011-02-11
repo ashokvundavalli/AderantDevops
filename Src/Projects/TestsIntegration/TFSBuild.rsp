@@ -9,23 +9,15 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\SkadLove
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
-
-##########################################
-# DeployProduct and RemoveProduct targets
-##########################################
-# Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
-# Also used by WaitForServiceStartUp target, passed to PingDeploymentEngine.
-/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Dev\SkadLove\SkadLove.IntegrationTest.environment.xml
-/p:RemoteTestMachineName=vmaklexpdevb03
 
 ##########################
 # IntegrationTests target
 ##########################
 # This is passed to MsTest.exe as the test settings switch.
 # The test settings allow you to specify test controllers, data collection settings and other goodness.
-/p:TestSettingsFile=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Dev\SkadLove\SkadLove.Remote.Integration.testsettings
+/p:TestSettingsFile=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Main\Main.Remote.Integration.testsettings
 
 # Used in the Include when creating list of test assemblies.  A semi-colon seperated list of files to include.
 # For example use %2aIntegrationTest%2a.dll for all dlls containing the word IntegrationTest.  %2a = *
