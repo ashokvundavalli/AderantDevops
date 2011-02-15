@@ -365,11 +365,54 @@
   <!--  
     
     ==========================================================================================
+        Deploy the database project.
+        Include the following parameter in your rsp to deploy the database project
+            /p:DeployDbProject=true
+    ==========================================================================================
+  -->
+
+    <Target Name="DeployDatabaseProject"
+            Condition="('$(IsDesktopBuild)' != 'true') and ('$(DeployDbProject)' == 'true')" >
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)' != 'true')"
+            Message="Deploying database project"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+
+        </BuildStep>
+
+        <Exec
+            ContinueOnError="false"
+            IgnoreExitCode="false"
+            Command='"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Deploy\vsdbcmd.exe" /a:deploy /dd /cs:"Integrated Security=SSPI;Initial Catalog=$(DbProjectTargetDatabase);Data Source=$(DbProjectTargetServer)" /model:$(LocalExpertBinariesDirectory)\Expert.dbschema /dsp:sql /p:TargetDatabase="$(DbProjectTargetDatabase)" /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false' />
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
+
+    <!--  
+    
+    ==========================================================================================
         Deploy the Product
     ==========================================================================================
   -->
 
-    <Target Name="DeployProduct">
+    <Target Name="DeployProduct"
+            DependsOnTargets="DeployDatabaseProject" >
 
         <BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
@@ -486,22 +529,7 @@
     <Target Name="IntegrationTests"
             DependsOnTargets="CommonPackagingProperties" >
         
-        <!-- This resulted in empty IntegrationAsseblies-->
-        <!--<CreateItem Include="@(AderantTestAssembliesInclude->'%(FileName)',';')" Exclude="$(ExpertTestsDirectory)\$(AderantTestAssembliesExclude)" AdditionalMetadata="TestContainerPrefix=/testcontainer:">
-            <Output TaskParameter="Include" ItemName="TestAssemblies" />
-        </CreateItem>-->
-        
-        <CreateItem Include="$(ExpertTestsDirectory)\$(AderantTestAssembliesInclude)" Exclude="$(ExpertTestsDirectory)\$(AderantTestAssembliesExclude)" AdditionalMetadata="TestContainerPrefix=/testcontainer:">
-            <Output TaskParameter="Include" ItemName="TestAssemblies" />
-        </CreateItem>
-        
-        <!-- Only use IntegrationTest.MatterForecast.dll -->
-        <!--<CreateItem Include="$(ExpertTestsDirectory)\IntegrationTest.MatterForecast.dll" Exclude="$(ExpertTestsDirectory)\%2aHelpers%2a.dll" AdditionalMetadata="TestContainerPrefix=/testcontainer:">
-            <Output TaskParameter="Include" ItemName="TestAssemblies" />
-        </CreateItem>-->
-
         <PropertyGroup>
-            <IntergrationAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</IntergrationAssemblies>
             <PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
             <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
             <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
@@ -529,10 +557,12 @@
         </BuildStep>
 
         <!-- Run the integration tests using MSTest controller. -->
-        <Exec Condition="(('$(IsDesktopBuild)'!='true') and ('$(IntergrationAssemblies)' != ''))"
+        <Exec Condition="('$(IsDesktopBuild)'!='true')"
               ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"$(PathToVS2010MSTest)" $(IntergrationAssemblies) $(TestSettingsSwitch) $(ResultsFileSwitch)' />
+              Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch)'
+              WorkingDirectory='$(ExpertTestsDirectory)'
+              />        
 
         <BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
