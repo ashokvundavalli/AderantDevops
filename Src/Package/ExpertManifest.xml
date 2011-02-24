@@ -159,6 +159,7 @@
 		<Module Name="Thirdparty.LLBLGen" />
 		<Module Name="Thirdparty.Microsoft.WcfRest" />
 		<Module Name="Thirdparty.LocalSecurityAuthority" />
+    <Module Name="Thirdparty.NTFSStreams" />
 	</Modules>
 </ProductManifest>
 
