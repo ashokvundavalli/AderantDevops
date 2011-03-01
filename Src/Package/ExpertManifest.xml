@@ -99,6 +99,8 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Integration"
 						AssemblyVersion="1.8.0.0" />
+		<Module Name="Services.Metadata"
+						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Monitoring"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Notes"
@@ -160,6 +162,8 @@
 		<Module Name="Thirdparty.Microsoft.WcfRest" />
 		<Module Name="Thirdparty.LocalSecurityAuthority" />
     <Module Name="Thirdparty.NTFSStreams" />
+		<Module Name="Thirdparty.Keyoti.RapidSpell" />
+		<Module Name="Thirdparty.PDF" />
 	</Modules>
 </ProductManifest>
 
