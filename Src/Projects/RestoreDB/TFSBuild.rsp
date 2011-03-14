@@ -32,18 +32,6 @@
 #Database backup file location (backup used for testing:)
 /p:dbBackupFile=\\svsql303\FileopeningBackups\VMAKLSP2ITE.bak
 
-#Database Owner
-#/p:dbowner="cmsdbo"
-
-#Replace DB boolean?
-#/p:replace
-
-#Close
-#/p:closeExisting
-
-
-
-
 
 
 # Microsoft Build Configuration
