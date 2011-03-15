@@ -23,8 +23,6 @@
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.FoundTime"
 						AssemblyVersion="1.8.0.0"  />
-    <Module Name="Applications.Workflow"
-            AssemblyVersion="1.8.0.0"  />
     <Module Name="Applications.FoundTimeOutlookAddIn"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Build.T4Task"
@@ -115,8 +113,6 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="SDK"
 						AssemblyVersion="1.8.0.0"  />
-    <Module Name="SDK.API"
-            AssemblyVersion="1.8.0.0"  />
 		<Module Name="SDK.Workflow"
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Packages"
@@ -160,7 +156,6 @@
 		<Module Name="Thirdparty.Microsoft.Office11.Interop" />
 		<Module Name="Thirdparty.Microsoft.Office12.Interop" />
 		<Module Name="Thirdparty.AutoMapper" />
-    <Module Name="Thirdparty.Build" />
 		<Module Name="ThirdParty.TimerCompatibility.1.0" />
 		<Module Name="ThirdParty.Marketing.Interop" />
 		<Module Name="Thirdparty.LLBLGen" />
@@ -169,18 +164,6 @@
     <Module Name="Thirdparty.NTFSStreams" />
 		<Module Name="Thirdparty.Keyoti.RapidSpell" />
 		<Module Name="Thirdparty.PDF" />
-    <Module Name="Thirdparty.FOApi" />
-    <Module Name="Thirdparty.FWBS" />
-    <Module Name="Thirdparty.HtmlAgilityPack" />
-    <Module Name="Thirdparty.Moq" />
-    <Module Name="ThirdParty.NMock.2" />
-    <Module Name="ThirdParty.PsUnit" />
-    <Module Name="ThirdParty.RhinoMocks" />
-    <Module Name="ThirdParty.SpecFlow" />
-    <Module Name="Thirdparty.Xceed" />
-    <Module Name="Thirdparty.Xceed.3" />
-    <Module Name="Thirdparty.ZipLibrary" />
-
 	</Modules>
 </ProductManifest>
 
