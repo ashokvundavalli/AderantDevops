@@ -117,7 +117,8 @@
         <!--Merge and generate factory.bin-->
         <Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'  />
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+              WorkingDirectory="$(BuildScriptsDirectory)" />
 
         <!-- Zip up and place in root of drop folder-->
         <ItemGroup>
@@ -227,7 +228,8 @@
         <!--Copy test binaries to folder for execution.-->
         <Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)' />
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+              WorkingDirectory="$(BuildScriptsDirectory)" />
 
         <!--Copy to drop location for reference-->
         <MakeDir Directories="$(DropExpertTestsDirectory)" Condition="!Exists('$(DropExpertTestsDirectory)')" />
@@ -411,8 +413,7 @@
     ==========================================================================================
   -->
 
-    <Target Name="DeployProduct"
-            DependsOnTargets="DeployDatabaseProject" >
+    <Target Name="DeployProduct" >
 
         <BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
@@ -527,9 +528,11 @@
   -->
 
     <Target Name="IntegrationTests"
-            DependsOnTargets="CommonPackagingProperties" >
+            DependsOnTargets="CommonPackagingProperties"
+            Condition="('$(RunTests)'=='true')" >
         
         <PropertyGroup>
+            <IntergrationAssemblies>@(AderantTestAssembliesInclude->'%(TestContainerPrefix)%(Filename)',' ')</IntergrationAssemblies>
             <PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
             <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
             <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
