@@ -13,6 +13,8 @@
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.PrebillEditor"
 						AssemblyVersion="1.8.0.0"/>    
+		<Module Name="Applications.Rates"
+						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Applications.Administration"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.Customization"
@@ -29,8 +31,10 @@
 						AssemblyVersion="1.8.0.0"  />    
 		<Module Name="Libraries.Entities.Disbursement"
 						AssemblyVersion="1.8.0.0"/>
+	<!--
 		<Module Name="Libraries.Entities.QueryModels"
 						AssemblyVersion="1.8.0.0"/>
+	-->
 		<Module Name="Libraries.Entities.Bill"
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Libraries.Prebill"
@@ -75,6 +79,8 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Entities.Matter"
 						AssemblyVersion="1.8.0.0" />
+		<Module Name="Libraries.Entities.Rates"
+						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Libraries.Entities.TaskBasedBilling"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Models"
@@ -90,7 +96,10 @@
 		<Module Name="Services.Applications.MatterPlanning"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Applications.Prebill"
-						AssemblyVersion="1.8.0.0"/>    
+						AssemblyVersion="1.8.0.0"/>  
+ 
+		<Module Name="Services.Applications.Rates"
+						AssemblyVersion="1.8.0.0" /> 
 		<Module Name="Services.Applications.Time"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Communication"
