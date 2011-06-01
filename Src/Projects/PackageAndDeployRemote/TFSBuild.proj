@@ -70,19 +70,20 @@
   </Target>
 
   <Target Name="AfterCompile">
-    <CallTarget Targets="ProductPackageRemote" />
+    <CallTarget Targets="AutomatedTestingTargets" />
   </Target>
 
 
   <!--
     ==========================================================================================
-        Packaging Tasks
+        Automated Testing Targets
     ==========================================================================================
   -->
 
-  <Target Name="ProductPackageRemote">
-    <CallTarget Targets="PackageProduct" />
+  <Target Name="AutomatedTestingTargets">
     <CallTarget Targets="RemoveProductRemote" />
+    <CallTarget Targets="PackageProduct" Condition="('$(UseBuildAllOutput)'!='true')" />
+    <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
     <CallTarget Targets="DeployProductRemote" />
     <CallTarget Targets="WaitForServiceStartUp" />
   </Target>  

@@ -5,20 +5,26 @@
     RemoteDeploymentDeploy "vmaklexpdevb03.ap.aderant.com" ".\SkadLove.CustomizationTest.environment.xml" "C:\ExpertBinaries" "\\vmaklexpdevb03\ExpertBinaries"
 .Parameter $remoteMachineName is the fully qualified domain name of the remote machine
 .Parameter $environmentManifestpath is the path to the environment manifest file
-.Parameter $localBinaries is the path of the binaries folder
+.Parameter $localBinariesOnBuildMachine is the path of the binaries folder on the build machine
 .Parameter $remoteBinaries is the network location of the remote machine's binaries folder
+.Parameter $useBuildAllOutput is true if you want to use build all output, otherwise GetProduct.ps1 is used.
+.Parameter $DropSp_CmsCheckIndex is true if you want to drop SP_CMSCHECKINDEX. 
+.Parameter $DeployDbProject is true if you want to deploy the Database project before deploying expert.
 #>
 
-param ([string]$remoteMachineName, [string]$environmentManifestPath, [string]$localBinaries, [string]$remoteBinaries)
+param ( [string]$remoteMachineName, 
+        [string]$environmentManifestPath, 
+        [string]$localBinariesOnBuildMachine, 
+        [string]$remoteBinaries, 
+        [string]$useBuildAllOutput,
+        [string]$DropSp_CmsCheckIndex,
+        [string]$DeployDbProject,
+        [string]$DeployExpert='true')
 
 begin{
 	$modulePath = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) RemoteDeploymentHelper.psm1
     Import-Module $modulePath
 
-	Function CopyBinariesToRemoteMachine($localBinaries, $remoteBinaries) {
-		Remove-Item -Recurse $remoteBinaries\*
-		Copy-Item -Path "$localBinaries\*" -Destination "$remoteBinaries" -Recurse -Force
-	}
 }
 
 process{
@@ -26,7 +32,55 @@ process{
 	$session = Get-RemoteSession $remoteMachineName
 	$sourcePath = Get-SourceDirectory $environmentManifestPath
 
-	CopyBinariesToRemoteMachine $localBinaries $remoteBinaries
+    # Only copy binaries if we are NOT using build all output.
+	if (-not $useBuildAllOutput.ToUpper() -eq 'TRUE') {
+        CopyBinariesToRemoteMachine $localBinariesOnBuildMachine $remoteBinaries
+    }
+    
+    $dbProjectTargetServer = Get-DbProjectTargetDatabaseServer $environmentManifestPath
+    $dbProjectTargetDatabaseName = Get-DbProjectTargetDatabaseName $environmentManifestPath
+        
+    #Drop [dbo].[SP_CMSCHECKINDEX] so deploy database works.
+    if ($DropSp_CmsCheckIndex -and $DropSp_CmsCheckIndex.ToUpper() -eq 'TRUE') {
+        Write-Host "Dropping [dbo].[SP_CMSCHECKINDEX] so deploy database works."
+        $dropSP_CMSCHECKINDEX = "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_CMSCHECKINDEX]') AND type in (N'P', N'PC')) DROP PROCEDURE [dbo].[SP_CMSCHECKINDEX]"
+        $sqlSnapin = Get-PSSnapin | where {$_.Name -eq "SqlServerCmdletSnapin100"}
+    	if($sqlSnapin -eq $null)
+    	{
+    		 Add-PSSnapin SqlServerCmdletSnapin100
+    	}
+        Invoke-Sqlcmd -ServerInstance $dbProjectTargetServer -Database $dbProjectTargetDatabaseName -Username cmsdbo -Password cmsdbo -Query $dropSP_CMSCHECKINDEX
+    }
+    
+    #Run deploy database command on remote machine.
+    if ($DeployDbProject -and $DeployDbProject.ToUpper() -eq 'TRUE') {
+        Write-Host "Invoking deploy database command on remote machine $remoteMachineName."
+        Invoke-Command $session `
+            -ScriptBlock { 
+                param($dbProjectTargetServer, $dbProjectTargetDatabase, $sourcePath)
+                $vsdbcmd = ".\vsdbcmd.exe"
+                $params = "/a:deploy /cs:`"Integrated Security=SSPI;Initial Catalog=$dbProjectTargetDatabase;Data Source=$dbProjectTargetServer`" /ManifestFile:$sourcePath\Expert.deploymanifest /dsp:sql /p:TargetDatabase=$dbProjectTargetDatabase /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false"
+                Write-host "Command: $vsdbcmd $params"
+                pushd "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Deploy\"
+                cmd /C "$vsdbcmd $params"
+                popd
+            } `
+            -ArgumentList $dbProjectTargetServer, $dbProjectTargetDatabaseName, $sourcePath
+    }
+    
+    # Invoke DeploymentEngine.exe on remote machine.
+    if ($DeployExpert -and $DeployExpert.ToUpper() -eq 'TRUE') {
+        Write-Host "Invoking DeploymentEngine.exe command on remote machine $remoteMachineName."
+    	Invoke-Command $session `
+            -ScriptBlock { 
+                param($innerSourcePath, $innerManifestPath)
+                cd "$innerSourcePath\DeploymentManager"
+                .\DeploymentEngine.exe deploy "$innerManifestPath"
+            } `
+            -ArgumentList $sourcePath, $environmentManifestPath
+    }
 
-	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe deploy "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+    Write-Host "Exiting remote PS session."    
+    Remove-PSSession -Session $session
+    
 }

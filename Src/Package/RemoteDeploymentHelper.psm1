@@ -22,6 +22,16 @@ Function Get-SourceDirectory($environmentManifestPath){
 	return $sourcePath
 }
 
+Function Get-DbProjectTargetDatabaseServer($environmentManifestPath){    
+	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
+    return $environmentManifest.environment.expertDatabaseServer.serverName + "\" + $environmentManifest.environment.expertDatabaseServer.serverInstance
+}
+
+Function Get-DbProjectTargetDatabaseName($environmentManifestPath){    
+	[xml]$environmentManifest =  Get-Content $environmentManifestPath
+    return $environmentManifest.environment.expertDatabaseServer.databaseConnection.databaseName
+}
+
 Function Get-StoredCredential {
 	$k = [Byte[]]'71 43 121 203 174 13 87 21 153 38 212 235 190 140 224 147'.Split(" ")
 	$user = "aderant_ap\service.expert.ap"
@@ -36,6 +46,15 @@ Function Get-RemoteSession($remoteMachineName) {
 	return $session
 }
 
+Function CopyBinariesToRemoteMachine($localBinaries, $remoteBinaries) {
+    Write-Host "Copying Binaries [$localBinaries\*] to remote machine [$remoteBinaries]."
+	Remove-Item -Recurse $remoteBinaries\*
+	Copy-Item -Path "$localBinaries\*" -Destination "$remoteBinaries" -Recurse -Force
+}
+
+Export-ModuleMember -Function CopyBinariesToRemoteMachine
 Export-ModuleMember -Function Get-RemoteSession
 Export-ModuleMember -Function Get-SourceDirectory
+Export-ModuleMember -Function Get-DbProjectTargetDatabaseServer
+Export-ModuleMember -Function Get-DbProjectTargetDatabaseName
 Export-ModuleMember -Function TryKillProcess

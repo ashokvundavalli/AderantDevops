@@ -18,14 +18,26 @@ process{
 	$ErrorActionPreference = "Stop"
 	$session = Get-RemoteSession $remoteMachineName
 	$sourcePath = Get-SourceDirectory $environmentManifestPath
+    
+    #Only attempt a remove if the DeploymentEngine.exe file is present.
+    $binariesPresentOnRemote = Invoke-Command $session -ScriptBlock { param($innerSourcePath) test-path "$innerSourcePath\DeploymentManager\DeploymentEngine.exe"} -ArgumentList $sourcePath
+    if ($binariesPresentOnRemote ) {
+        Write-Host "Invoking DeploymentEngine to STOP on [$remoteMachineName]."
+    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath\DeploymentManager"; .\DeploymentEngine.exe stop "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
 
-	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe stop "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+        Write-Host "Waiting for services to stop on [$remoteMachineName]."
+    	Start-Sleep -s 120
 
-	Start-Sleep -s 60
-    TryKillProcess "Expert.Workflow.Service" $remoteMachineName
-    TryKillProcess "ExpertMatterPlanning" $remoteMachineName
-    TryKillProcess "ConfigurationManager" $remoteMachineName
-    Start-Sleep -s 30
+        # Need to get server info from environment so we kill processes on the right machine.
+        #TryKillProcess "Expert.Workflow.Service" $remoteMachineName
+        #TryKillProcess "ExpertMatterPlanning" $remoteMachineName
+        #TryKillProcess "ConfigurationManager" $remoteMachineName
+        #Start-Sleep -s 30
 
-	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe remove "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+        Write-Host "Invoking DeploymentEngine to REMOVE on [$remoteMachineName]."
+    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath\DeploymentManager"; .\DeploymentEngine.exe remove "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+
+    } else {
+        Write-Host "Could not find $sourcePath\DeploymentManager\DeploymentEngine.exe so not performing remove."
+    }
 }
