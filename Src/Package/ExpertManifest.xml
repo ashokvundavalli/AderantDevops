@@ -3,8 +3,6 @@
 	<Modules>
 		<Module Name="Database"
 				    AssemblyVersion="1.8.0.0"/> 
-		<!--<Module Name="Installs.Marketing"
-						AssemblyVersion="1.8.0.0"  />-->    
 		<Module Name="Applications.Marketing"
 						AssemblyVersion="7.7.0.0"  />
 		<Module Name="Applications.MatterPlanning"
@@ -25,16 +23,12 @@
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.FoundTime"
 						AssemblyVersion="1.8.0.0"  />
-    <Module Name="Applications.FoundTimeOutlookAddIn"
+    	<Module Name="Applications.FoundTimeOutlookAddIn"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Build.T4Task"
 						AssemblyVersion="1.8.0.0"  />    
 		<Module Name="Libraries.Entities.Disbursement"
 						AssemblyVersion="1.8.0.0"/>
-	<!--
-		<Module Name="Libraries.Entities.QueryModels"
-						AssemblyVersion="1.8.0.0"/>
-	-->
 		<Module Name="Libraries.Entities.Bill"
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Libraries.Prebill"
@@ -97,8 +91,7 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Applications.Prebill"
 						AssemblyVersion="1.8.0.0"/>  
- 
-		<Module Name="Services.Applications.Rates"
+ 		<Module Name="Services.Applications.Rates"
 						AssemblyVersion="1.8.0.0" /> 
 		<Module Name="Services.Applications.Time"
 						AssemblyVersion="1.8.0.0" />
@@ -136,6 +129,14 @@
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Workflow.PaperlessPrebill"
 						AssemblyVersion="1.8.0.0"/>    
+		<Module Name="Workflow.MatterPlanning"
+						AssemblyVersion="1.8.0.0"/>    
+	    <!-- commented as redundant
+		<Module Name="Installs.Marketing"
+						AssemblyVersion="1.8.0.0" />
+		<Module Name="Libraries.Entities.QueryModels"
+						AssemblyVersion="1.8.0.0" />
+	    -->
 		<Module Name="Expert.Help"/>
 		<Module Name="Marketing.Help"/>
 		<Module Name="Thirdparty.ICSharpCode"  />
@@ -172,9 +173,14 @@
 		<Module Name="Thirdparty.LLBLGen" />
 		<Module Name="Thirdparty.Microsoft.WcfRest" />
 		<Module Name="Thirdparty.LocalSecurityAuthority" />
-    <Module Name="Thirdparty.NTFSStreams" />
+        <Module Name="Thirdparty.NTFSStreams" />
 		<Module Name="Thirdparty.Keyoti.RapidSpell" />
 		<Module Name="Thirdparty.PDF" />
+		
+        <!-- FWBS and FOApi needed if MatterCenterIntegration enabled
+            <Module Name="ThirdParty.FWBS" />
+            <Module Name="ThirdParty.FOApi" />
+        -->  
 	</Modules>
 </ProductManifest>
 
