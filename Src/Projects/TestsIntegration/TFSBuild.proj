@@ -70,22 +70,19 @@
   </Target>
 
   <Target Name="AfterCompile">
-    <CallTarget Targets="ProductPackage" />
+    <CallTarget Targets="AutomatedTestingTargets" />
   </Target>
 
 
   <!--
     ==========================================================================================
-        Packaging Tasks
+        Automated Testing Targets
     ==========================================================================================
   -->
 
-  <Target Name="ProductPackage">
-    <CallTarget Targets="PackageProductTests"
-                Condition="('$(PackageProductTests)'=='true')"  />
-    <CallTarget Targets="IntegrationTests" 
-                Condition="('$(RunTests)'=='true')" />
+  <Target Name="AutomatedTestingTargets">
+    <CallTarget Targets="PackageProductTests" />
+    <CallTarget Targets="IntegrationTests" />
   </Target>  
-
 
 </Project>
