@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\Automation
 
 
 
@@ -18,9 +18,16 @@
 ##########################################
 # Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
 # Also used by WaitForServiceStartUp target, passed to PingDeploymentEngine.
+/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Dev\Automation\Tests.Assets\Automation.CustomizationTest.environment.xml
 
-#/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\ExpertTestAssets\Dev\SkadLove\RestoreDBTestLocal.environment.xml
-/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Main\Main.IntegrationTest.environment.xml
+# Tagert server for deploying database project.
+/p:DbProjectTargetServer=svsql303\mssql10
+
+# Tagert database for deploying database project.
+/p:DbProjectTargetDatabase=VmExpDevB306
+
+/p:RemoteTestMachineName=vmaklexpdevb03.ap.aderant.com
+/p:RemoteExpertBinariesDirectory=\\vmaklexpdevb03\ExpertBinaries
 
 
 ##########################################
@@ -30,7 +37,7 @@
 /p:directory=D:\FileOpening\Databases
 
 #Database backup file location (backup used for testing:)
-/p:dbBackupFile=\\svsql303\FileopeningBackups\VMAKLSP2ITE.bak
+/p:dbBackupFile=\\svnas301\Internal\team\Automation\DB15_ST_75SP4HF.bak
 
 
 
