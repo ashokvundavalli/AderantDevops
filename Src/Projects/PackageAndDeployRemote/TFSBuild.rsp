@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\Automation
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
 # Set this to 'true' to get the lates build all output, otherwise it just runs Get-Product to get the latest of each module.
 /p:UseBuildAllOutput=true
@@ -19,7 +19,7 @@
 # DeployProduct and RemoveProduct targets
 ##########################################
 # Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
-/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Dev\Automation\Tests.Assets\Automation.CustomizationTest.environment.xml
+/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.IntegrationTest.environment.xml
 
 # Set to true to deploy Expert, optional and defaults to true.
 /p:DeployExpert=true
@@ -31,14 +31,15 @@
 /p:DeployDbProject=true
 
 # Specify the remote test machine.  Binaries will be copied to this macine, and deployment runs on this machine too.
-/p:RemoteTestMachineName=vmaklexpdevb03.ap.aderant.com
+/p:RemoteTestMachineName=vmaklexpmain.ap.aderant.com
 
-# Used by remoteDeploymentDeploy.ps1 to copy files to test machine.  If DeployDbProject=true this is ignored.
+# Used by remoteDeploymentDeploy.ps1 to copy files to test machine.  When running get-product the binaries 
+# are copied to this location, so you need to setup this share on your test machine.  If UseBuildAllOutput=true this is ignored.
 /p:RemoteExpertBinariesDirectory=\\vmaklexpdevb03\ExpertBinaries
 
-# Local path of binaries folder on the remote machin, used by scripts executed on remote machine.
+# Local path of binaries folder on the remote machine, used by scripts executed on remote machine.
 #  If DeployDbProject=true this is ignored.
-/p:LocalExpertBinariesPathOnRemote=c:\ExpertBinaries
+/p:LocalExpertBinariesPathOnRemote=c:\ExpertSource
 
 
 ###########################
