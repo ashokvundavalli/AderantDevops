@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\Automation
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
 
 ##########################
@@ -17,7 +17,7 @@
 ##########################
 # This is passed to MsTest.exe as the test settings switch.
 # The test settings allow you to specify test controllers, data collection settings and other goodness.
-/p:TestSettingsFile=\\na.aderant.com\expertsuite\Dev\Automation\Tests.Assets\Automation.Remote.Integration.testsettings
+/p:TestSettingsFile=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.Remote.Integration.testsettings
 
 # List of test assemblies to include in the test run.  Space delimited list of test dlls, each one prefixed with "/testcontainer".
 /p:"AderantTestAssembliesInclude=/testcontainer:IntegrationTest.Client.Library.dll /testcontainer:IntegrationTest.Framework.Configuration.dll /testcontainer:IntegrationTest.Framework.Persistence.dll /testcontainer:IntegrationTest.Framework.Security.dll"
