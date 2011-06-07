@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\Automation
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
 
 
@@ -18,16 +18,13 @@
 ##########################################
 # Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
 # Also used by WaitForServiceStartUp target, passed to PingDeploymentEngine.
-/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Dev\Automation\Tests.Assets\Automation.CustomizationTest.environment.xml
+/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.IntegrationTest.environment.xml
 
 # Tagert server for deploying database project.
 /p:DbProjectTargetServer=svsql303\mssql10
 
 # Tagert database for deploying database project.
-/p:DbProjectTargetDatabase=VmExpDevB306
-
-/p:RemoteTestMachineName=vmaklexpdevb03.ap.aderant.com
-/p:RemoteExpertBinariesDirectory=\\vmaklexpdevb03\ExpertBinaries
+/p:DbProjectTargetDatabase=VmAklMain
 
 
 ##########################################
