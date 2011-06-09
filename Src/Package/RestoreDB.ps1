@@ -25,7 +25,7 @@ process {
 	$restoreCmd = "USE MASTER;"
 	$restoreCmd += "`nIF DB_ID('$dbName') > 0 `n`tALTER DATABASE $dbName SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" 
 	$restoreCmd += "`nRESTORE DATABASE [$dbName] FROM DISK = N'$dbBackupFile'" 
-    $restoreCmd += "`nwith replace," + "`nstats=10,"  #???
+    $restoreCmd += "`nwith replace,recovery," + "`nstats=10,"  #???
     $restoreCmd += "`n`tMOVE 'data01' TO '$directory\$dbName"+"_data01.mdf',"
     $restoreCmd += "`n`tMOVE 'log01' TO '$directory\$dbName"+"_log01.ldf',"
     $restoreCmd += "`n`tMOVE 'sysft_CMSFTICatalog' TO '$directory\$dbName"+"_sysft_CMSFTICatalog',"
