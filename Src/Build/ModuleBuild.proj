@@ -115,7 +115,7 @@
     <CallTarget Targets="CreateMSI" />
     <CallTarget Targets="ZipTemplateModule" />
     <CallTarget Targets="BuildHelpFiles" />
-    <CallTarget Targets="NDepend" />
+    <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="SignFiles" />
     <CallTarget Targets="PublishModule" />
