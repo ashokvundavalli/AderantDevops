@@ -349,30 +349,15 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
               ItemName="AssemblyInfoFile" />
     </CreateItem>
 
-    <!-- Get latest version of AssemblyInfo -->
-    <Exec WorkingDirectory="$(SolutionRoot)"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="&quot;$(TfCommand)&quot; get @(AssemblyInfoFile) /version:T"/>
-
-    <!--Checkout AssemblyInfo and lock-->
-    <Exec WorkingDirectory="$(SolutionRoot)"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="&quot;$(TfCommand)&quot; checkout @(AssemblyInfoFile) /lock:Checkin"/>
-
+    <Attrib Files="@(AssemblyInfoFile)"
+            ReadOnly="false" />
+            
     <FileUpdate Files="@(AssemblyInfoFile)"
                 IgnoreCase="true"
                 Multiline="true"
                 Singleline="false"
                 Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
                 ReplacementText="${section1}$(FileVersion)${section2}"/>
-
-    <!--Checkin AssemblyInfo-->
-    <Exec WorkingDirectory="$(SolutionRoot)"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="&quot;$(TfCommand)&quot; checkin /comment:&quot;***NO_CI***&quot; /noprompt /override:&quot;Auto-Build: Version Update&quot; @(AssemblyInfoFile)"/>
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
