@@ -331,7 +331,8 @@
     ==========================================================================================
   -->
 
-    <Target Name="RestoreDB">
+    <Target Name="RestoreDB"
+            Condition="('$(IsDesktopBuild)' != 'true') and ('$(RestoreDatabase)' == 'true')">
 
       <BuildStep
         Condition="('$(IsDesktopBuild)'!='true')"

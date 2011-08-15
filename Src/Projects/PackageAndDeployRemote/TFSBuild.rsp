@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\dev\Moa
 
 # Set this to 'true' to get the lates build all output, otherwise it just runs Get-Product to get the latest of each module.
 /p:UseBuildAllOutput=true
@@ -19,7 +19,7 @@
 # DeployProduct and RemoveProduct targets
 ##########################################
 # Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
-/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.IntegrationTest.environment.xml
+/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\dev\Moa\Tests.Assets\Moa.IntegrationTest.environment.xml
 
 # Set to true to deploy Expert, optional and defaults to true.
 /p:DeployExpert=true
@@ -31,15 +31,29 @@
 /p:DeployDbProject=true
 
 # Specify the remote test machine.  Binaries will be copied to this macine, and deployment runs on this machine too.
-/p:RemoteTestMachineName=vmaklexpmain.ap.aderant.com
+/p:RemoteTestMachineName=vmexpdevb306.ap.aderant.com
 
 # Used by remoteDeploymentDeploy.ps1 to copy files to test machine.  When running get-product the binaries 
 # are copied to this location, so you need to setup this share on your test machine.  If UseBuildAllOutput=true this is ignored.
-/p:RemoteExpertBinariesDirectory=\\vmaklexpdevb03\ExpertBinaries
+#/p:RemoteExpertBinariesDirectory=\\vmexpdevb306\ExpertBinaries
 
 # Local path of binaries folder on the remote machine, used by scripts executed on remote machine.
 #  If DeployDbProject=true this is ignored.
-/p:LocalExpertBinariesPathOnRemote=c:\ExpertSource
+/p:LocalExpertBinariesPathOnRemote=c:\ExpertBinaries
+
+
+##########################################
+# RestoreDB targets
+##########################################
+# Set to true to restore a backup db, optional and defaults to true.
+/p:RestoreDatabase=true
+
+#Path where the database files are stored on the database server.
+/p:directory=D:\FileOpening\Databases
+
+#Database backup file location (backup used for testing:)
+/p:dbBackupFile=\\svnas301\Internal\team\Automation\DB15_ST_75SP4HF.bak
+
 
 
 ###########################

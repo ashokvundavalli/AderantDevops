@@ -60,6 +60,7 @@ Castle.DynamicProxy2.xml
 CustomizationBuilder.exe
 CustomizationBuilder.exe.config
 CustomizationBuilder.exe.log4net.xml
+bindings.config
 DeploymentService.exe
 DeploymentService.exe.config
 DevComponents.WpfRibbon.dll
