@@ -42,6 +42,19 @@
 /p:LocalExpertBinariesPathOnRemote=c:\ExpertSource
 
 
+##########################################
+# RestoreDB targets
+##########################################
+# Set to true to restore a backup db, optional and defaults to true.
+/p:RestoreDatabase=true
+
+#Path where the database files are stored on the database server.
+/p:directory=D:\FileOpening\Databases
+
+#Database backup file location (backup used for testing:)
+/p:dbBackupFile=\\svnas301\Internal\team\Automation\DB15_ST_75SP4HF.bak
+
+
 ###########################
 # GenerateClickonce target
 ###########################
