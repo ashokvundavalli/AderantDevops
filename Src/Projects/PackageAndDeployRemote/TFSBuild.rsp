@@ -28,7 +28,7 @@
 /p:DropSp_CmsCheckIndex=true
 
 # Set this to true to deploy the database project before deploying expert.
-/p:DeployDbProject=true
+/p:DeployDbProject=false
 
 # Specify the remote test machine.  Binaries will be copied to this macine, and deployment runs on this machine too.
 /p:RemoteTestMachineName=vmaklexpmain.ap.aderant.com
@@ -46,7 +46,7 @@
 # RestoreDB targets
 ##########################################
 # Set to true to restore a backup db, optional and defaults to true.
-/p:RestoreDatabase=true
+/p:RestoreDatabase=false
 
 #Path where the database files are stored on the database server.
 /p:directory=D:\FileOpening\Databases
