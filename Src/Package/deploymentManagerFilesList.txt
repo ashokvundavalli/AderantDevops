@@ -30,6 +30,7 @@ Aderant.Framework.Security.dll
 Aderant.Framework.Security.ImportExport.dll
 Aderant.Framework.ServiceLibrary.dll
 Aderant.Framework.Scripting.dll
+Aderant.Framework.SmartForm.ProjectTemplates.dll
 Aderant.Framework.SoftwareFactory.Common.dll
 Aderant.Framework.SoftwareFactory.Domain.dll
 Aderant.Framework.SoftwareFactory.Domain.VSPackage.dll
