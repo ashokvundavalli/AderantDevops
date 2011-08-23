@@ -28,7 +28,7 @@
 /p:DropSp_CmsCheckIndex=true
 
 # Set this to true to deploy the database project before deploying expert.
-/p:DeployDbProject=false
+/p:DeployDbProject=true
 
 # Specify the remote test machine.  Binaries will be copied to this macine, and deployment runs on this machine too.
 /p:RemoteTestMachineName=vmaklexpmain.ap.aderant.com
