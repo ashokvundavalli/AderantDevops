@@ -42,6 +42,7 @@
 
   <PropertyGroup>
     <RunTest>true</RunTest>
+    <RestoreDatabase>true</RestoreDatabase>
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
