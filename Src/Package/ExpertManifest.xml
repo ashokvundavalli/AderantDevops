@@ -9,8 +9,6 @@
 						AssemblyVersion="7.7.0.0"  />
 		<Module Name="Applications.MatterPlanning"
 						AssemblyVersion="1.8.0.0"  />
-		<Module Name="Applications.ExpertTimer"
-						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.PrebillEditor"
 						AssemblyVersion="1.8.0.0"/>    
 		<Module Name="Applications.Rates"
