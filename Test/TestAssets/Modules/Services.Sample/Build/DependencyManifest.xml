@@ -6,7 +6,7 @@
       <ReferencedModule Name="Thirdparty.Test" GetAction="Local"/>
       
       <ReferencedModule Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" GetAction=""/>      
-      <ReferencedModule Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="VS2010"/>      
+      <ReferencedModule Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />      
       <ReferencedModule Name="Thirdparty.DevComponents"/>
   </ReferencedModules>
 </DependencyManifest>

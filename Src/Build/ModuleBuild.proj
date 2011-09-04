@@ -693,6 +693,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     ==========================================================================================
   -->
 
+    
   <Target Name="RunUnitTests"
           DependsOnTargets="Build"
           Condition="('$(RunTest)'!='false')"
@@ -730,14 +731,17 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       <PathToMSTest10>$(VS100COMNTOOLS)..\IDE\MSTest.exe</PathToMSTest10>
     </PropertyGroup>
 
+
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Condition="('$(UnitTestAssemblies)' != '')"
+          Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' == 'true')"
+          Command='"$(PathToMSTest10)" %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx ' />
+      
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' != 'true')"
           Command='"$(PathToMSTest10)" $(UnitTestAssemblies) $(ResultsFileSwitch) ' />
-
-    <Message
-      Condition="('$(UnitTestAssemblies)' == '')"
-      Text="** NO UNIT TESTS ! ** (Your pay has been docked)"/>
+      
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
