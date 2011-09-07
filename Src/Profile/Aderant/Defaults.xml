@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DefaultPath>
-  <!--Change to your relevant branch-->
-  <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\Hoiho" />
-  <devBranchFolder Value="C:\ExpertSuite\Dev\Hoiho" />
-  <!--Add your database details for the automatic creation of the systemmap for customisation-->
-  <!--<systemMapConnectionString Value="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"/>-->  
+    <!--Change to your relavent branch-->
+    <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\Test" />
+    <devBranchFolder Value="C:\tfs\ExpertSuite\Dev\Test" />
+    <!--Add your database details for the automatic creation of the systemmap for customisation-->
+    <!--<systemMapConnectionString Value="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"/>-->
 
-  <dependencyManifestOverride Value="MyDependencyManifest.xml" />
+    <dependencyManifestOverride Value="MyDependencyManifest.xml" />
 </DefaultPath>
