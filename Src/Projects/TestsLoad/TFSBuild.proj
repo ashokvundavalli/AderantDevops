@@ -146,7 +146,7 @@
   <Target Name="ProductPackage">
     <CallTarget Targets="PackageProductTests"
                 Condition="('$(PackageProductTests)'=='true')"  />
-    <CallTarget Targets="IntegrationTests" 
+    <CallTarget Targets="LoadTests" 
                 Condition="('$(RunTests)'=='true')" />
   </Target>  
 
