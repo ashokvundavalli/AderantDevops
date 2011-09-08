@@ -70,7 +70,8 @@
   </Target>
 
   <Target Name="AfterCompile">
-    <CallTarget Targets="ProductPackage" />
+    <CallTarget Targets="PackageLoadTests" />
+    <CallTarget Targets="LoadTests" />
   </Target>
 
   <!--
@@ -187,19 +188,6 @@
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
-
-  <!--
-    ==========================================================================================
-        Packaging Tasks
-    ==========================================================================================
-  -->
-
-  <Target Name="ProductPackage">
-    <CallTarget Targets="PackageProductTests"
-                Condition="('$(PackageProductTests)'=='true')"  />
-    <CallTarget Targets="LoadTests" 
-                Condition="('$(RunTests)'=='true')" />
-  </Target>  
 
 
 </Project>
