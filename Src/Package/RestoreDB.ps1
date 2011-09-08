@@ -40,13 +40,25 @@ process {
         write $error
     }
 
+	$restoreCmd = "`nRESTORE FILELISTONLY FROM DISK = N'$dbBackupFile'"
+    write "Running command: $restoreCmd"
+	$fileList = Invoke-SqlCmd -ServerInstance $dbServerInstance -Query $restoreCmd -ErrorAction Stop
+
 	$restoreCmd = "`nRESTORE DATABASE [$dbName] FROM DISK = N'$dbBackupFile'" 
-    $restoreCmd += "`nWITH REPLACE,"
-    $restoreCmd += "`n`tMOVE 'data01' TO '$directory\$dbName"+"_data01.mdf',"
-    $restoreCmd += "`n`tMOVE 'log01' TO '$directory\$dbName"+"_log01.ldf',"
-    $restoreCmd += "`n`tMOVE 'sysft_CMSFTICatalog' TO '$directory\$dbName"+"_sysft_CMSFTICatalog',"
-    $restoreCmd += "`n`tMOVE 'sysft_ExpertTimeFTICatalog' TO '$directory\$dbName"+"_sysft_ExpertTimeFTICatalog'"
+    $restoreCmd += "`nWITH REPLACE"
+    foreach ($file in $fileList) {
+        $restoreCmd += ",`n`tMOVE '$($file.LogicalName)' TO '$directory\$($dbName)_$($file.LogicalName)'"
+    }
 	$restoreCmd += ";"
+
+#	$restoreCmd = "`nRESTORE DATABASE [$dbName] FROM DISK = N'$dbBackupFile'" 
+#    $restoreCmd += "`nWITH REPLACE,"
+#    $restoreCmd += "`n`tMOVE 'data01' TO '$directory\$dbName"+"_data01.mdf',"
+#    $restoreCmd += "`n`tMOVE 'log01' TO '$directory\$dbName"+"_log01.ldf',"
+#    $restoreCmd += "`n`tMOVE 'sysft_CMSFTICatalog' TO '$directory\$dbName"+"_sysft_CMSFTICatalog',"
+#    $restoreCmd += "`n`tMOVE 'sysft_ExpertTimeFTICatalog' TO '$directory\$dbName"+"_sysft_ExpertTimeFTICatalog'"
+#	$restoreCmd += ";"
+
     write "Running command: $restoreCmd"
 	Invoke-SqlCmd -ServerInstance $dbServerInstance -Query $restoreCmd -ErrorAction Stop
     write "Restored database $dbName"
