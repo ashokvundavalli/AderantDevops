@@ -73,7 +73,57 @@
     <CallTarget Targets="ProductPackage" />
   </Target>
 
- 
+  <!--
+    ==========================================================================================
+        Package The Load Tests
+    ==========================================================================================
+  -->
+
+  <Target Name="PackageLoadTests"
+          DependsOnTargets="CommonPackagingProperties" >
+
+    <BuildStep
+        Condition="('$(IsDesktopBuild)'!='true')"
+        Message="Package Load Tests"
+        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+        BuildUri="$(BuildURI)"
+            >
+      <Output
+          TaskParameter="id"
+          PropertyName="BuildStepId"
+                />
+    </BuildStep>
+
+
+    <!-- Clear test directory. -->
+    <RemoveDir Directories="$(ExpertTestsDirectory)" Condition="Exists('$(ExpertTestsDirectory)')"/>
+    <MakeDir Directories="$(ExpertTestsDirectory)" Condition="!Exists('$(ExpertTestsDirectory)')" />
+
+
+    <!--Copy test binaries to folder for execution.-->
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(LoadTestManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+          WorkingDirectory="$(BuildScriptsDirectory)" />
+
+    <!--Copy to drop location for reference-->
+    <MakeDir Directories="$(DropExpertTestsDirectory)" Condition="!Exists('$(DropExpertTestsDirectory)')" />
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" Copy-Item -Path $(ExpertTestsDirectory)\* -Destination $(DropExpertTestsDirectory) -Recurse' />
+
+    <BuildStep
+        Condition="('$(IsDesktopBuild)'!='true')"
+        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+        BuildUri="$(BuildUri)"
+        Id="$(BuildStepId)"
+        Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+
   <!--
     ==========================================================================================
         Load Tests
@@ -145,8 +195,8 @@
   -->
 
   <Target Name="ProductPackage">
-    <CallTarget Targets="PackageProductTests"
-                Condition="('$(PackageProductTests)'=='true')"  />
+    <CallTarget Targets="PackageLoadTests"
+                Condition="('$(PackageLoadTests)'=='true')"  />
     <CallTarget Targets="LoadTests" 
                 Condition="('$(RunTests)'=='true')" />
   </Target>  
