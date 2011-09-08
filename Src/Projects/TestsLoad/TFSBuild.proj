@@ -73,6 +73,69 @@
     <CallTarget Targets="ProductPackage" />
   </Target>
 
+  <!--
+    ==========================================================================================
+        Load Tests
+    ==========================================================================================
+  -->
+  <Target Name="LoadTests"
+        DependsOnTargets="CommonPackagingProperties"
+        Condition="('$(RunTests)'=='true')" >
+
+    <PropertyGroup>
+      <IntergrationAssemblies>@(AderantTestAssembliesInclude->'%(TestContainerPrefix)%(Filename)',' ')</IntergrationAssemblies>
+      <PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
+      <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
+      <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
+      <PublishSwitch>/publish:$(TeamFoundationServerUrl)</PublishSwitch>
+      <TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
+      <TestSettingsSwitch>/testsettings:$(TestSettingsFile)</TestSettingsSwitch>
+      <ResultsFileSwitch>/resultsfile:$(ExpertProductDropDirectory)\LoadTestResults.trx</ResultsFileSwitch>
+
+      <!--VS2010 paths as we are using 2008 TFS-->
+      <VS2010TestHostDirectory>'$(VS100COMNTOOLS)..\IDE\'</VS2010TestHostDirectory>
+      <PathToVS2010MSTest>$(VS100COMNTOOLS)..\IDE\MSTest.exe</PathToVS2010MSTest>
+      <AderantBinLinkDirectory>'$(VS100COMNTOOLS)..\IDE\AderantBin\'</AderantBinLinkDirectory>
+
+      <!--Remote machine-->
+      <RemoteMachine>lrctl301.lr.aderant.com</RemoteMachine>
+      <RemoteTestBinariesFolder>\\$(RemoteMachine)\TESTBINARIES</RemoteTestBinariesFolder>
+    </PropertyGroup>
+
+    <BuildStep
+        Condition="('$(IsDesktopBuild)'!='true')"
+        Message="Running Load Tests"
+        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+        BuildUri="$(BuildURI)"
+            >
+      <Output
+          TaskParameter="id"
+          PropertyName="BuildStepId"
+                />
+    </BuildStep>
+
+    <!-- Copy the test settings file to the drop -->
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" Copy-Item -Path $(TestSettingsDirectory)\$(TestSettingsFile) -Destination $(DropExpertTestsDirectory) -Recurse' />
+
+    <!--Run remote powershell on controller to execute load test -->
+    <Exec
+        ContinueOnError="false"
+        IgnoreExitCode="false"
+        Command='"Powershell" "$(BuildScriptsDirectory)\RunRemoteLoadTest.ps1" $(RemoteMachine) $(DropExpertTestsDirectory) $(RemoteTestBinariesFolder) $(TestSettingsFile) $(LoadTestContainerFile)' />
+
+
+    <BuildStep
+        Condition="('$(IsDesktopBuild)'!='true')"
+        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+        BuildUri="$(BuildUri)"
+        Id="$(BuildStepId)"
+        Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
 
   <!--
     ==========================================================================================
