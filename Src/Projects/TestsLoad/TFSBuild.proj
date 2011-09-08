@@ -73,56 +73,7 @@
     <CallTarget Targets="ProductPackage" />
   </Target>
 
-  <!--
-    ==========================================================================================
-        Package The Product Tests
-    ==========================================================================================
-  -->
-
-  <Target Name="PackageProductTests"
-          DependsOnTargets="CommonPackagingProperties" >
-
-    <BuildStep
-        Condition="('$(IsDesktopBuild)'!='true')"
-        Message="Package Product Tests"
-        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-        BuildUri="$(BuildURI)"
-            >
-      <Output
-          TaskParameter="id"
-          PropertyName="BuildStepId"
-                />
-    </BuildStep>
-
-
-    <!-- Clear test directory. -->
-    <RemoveDir Directories="$(ExpertTestsDirectory)" Condition="Exists('$(ExpertTestsDirectory)')"/>
-    <MakeDir Directories="$(ExpertTestsDirectory)" Condition="!Exists('$(ExpertTestsDirectory)')" />
-
-
-    <!--Copy test binaries to folder for execution.-->
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
-          WorkingDirectory="$(BuildScriptsDirectory)" />
-
-    <!--Copy to drop location for reference-->
-    <MakeDir Directories="$(DropExpertTestsDirectory)" Condition="!Exists('$(DropExpertTestsDirectory)')" />
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command='"Powershell" Copy-Item -Path $(ExpertTestsDirectory)\* -Destination $(DropExpertTestsDirectory) -Recurse' />
-
-    <BuildStep
-        Condition="('$(IsDesktopBuild)'!='true')"
-        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-        BuildUri="$(BuildUri)"
-        Id="$(BuildStepId)"
-        Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
-  </Target>
-
+ 
   <!--
     ==========================================================================================
         Load Tests
