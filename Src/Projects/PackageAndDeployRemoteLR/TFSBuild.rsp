@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\src\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\Automation
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
 # Set this to 'true' to get the lates build all output, otherwise it just runs Get-Product to get the latest of each module.
 /p:UseBuildAllOutput=true
@@ -40,6 +40,18 @@
 #  If DeployDbProject=true this is ignored.
 /p:LocalExpertBinariesPathOnRemote=d:\aderant\automation\binaries
 
+
+##########################################
+# RestoreDB targets
+##########################################
+# Set to true to restore a backup db, optional and defaults to true.
+/p:RestoreDatabase=true
+
+#Path where the database files are stored on the database server.
+/p:directory=D:\DATA\MSSQL10.SQL2008\MSSQL\DATA
+
+#Database backup file location (backup used for testing:)
+/p:dbBackupFile=D:\DATA\MSSQL10.SQL2008\MSSQL\Backup\ExpertAutomation.bak
 
 ###########################
 # GenerateClickonce target

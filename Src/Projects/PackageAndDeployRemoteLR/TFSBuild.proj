@@ -82,6 +82,7 @@
 
   <Target Name="AutomatedTestingTargets">
     <CallTarget Targets="RemoveProductRemote" />
+    <CallTarget Targets="RestoreDB" />
     <CallTarget Targets="PackageProduct" Condition="('$(UseBuildAllOutput)'!='true')" />
     <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
     <CallTarget Targets="DeployProductRemote" />
