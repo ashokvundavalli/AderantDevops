@@ -51,7 +51,7 @@
 /p:directory=D:\DATA\MSSQL10.SQL2008\MSSQL\DATA
 
 #Database backup file location (backup used for testing:)
-/p:dbBackupFile=D:\DATA\MSSQL10.SQL2008\MSSQL\Backup\ExpertAutomation.bak
+/p:dbBackupFile=D:\DATA\MSSQL10.SQL2008\MSSQL\Backup\Expert.bak
 
 ###########################
 # GenerateClickonce target
