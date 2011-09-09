@@ -30,7 +30,7 @@
 /p:TestSettingsFile=Main.Remote.Load.testsettings
 
 # Test container for load test
-/p:LoadTestContainerFile=LoadTests\LoadTest50Plus1Users.loadtest
+/p:LoadTestContainerFile=LoadTests\LoadTestMAIN.loadtest
 
 # Used as condition for IntegrationTests target.
 /p:RunTests=true
