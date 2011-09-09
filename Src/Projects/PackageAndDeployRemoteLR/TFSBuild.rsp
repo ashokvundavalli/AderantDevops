@@ -19,7 +19,7 @@
 # DeployProduct and RemoveProduct targets
 ##########################################
 # Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
-/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Dev\Automation\Tests.Assets\Main.LR.environment.xml
+/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.LR.environment.xml
 
 # Set to true to deploy Expert, optional and defaults to true.
 /p:DeployExpert=true
