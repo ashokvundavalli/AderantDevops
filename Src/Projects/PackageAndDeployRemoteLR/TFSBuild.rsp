@@ -34,11 +34,11 @@
 /p:RemoteTestMachineName=lrctl301.lr.aderant.com
 
 # Used by remoteDeploymentDeploy.ps1 to copy files to test machine.  If DeployDbProject=true this is ignored.
-/p:RemoteExpertBinariesDirectory=\\lrctl301.lr.aderant.com\ExpertBinaries
+/p:RemoteExpertBinariesDirectory=\\lrctl301.lr.aderant.com\Binaries
 
 # Local path of binaries folder on the remote machine, used by scripts executed on remote machine.
 #  If DeployDbProject=true this is ignored.
-/p:LocalExpertBinariesPathOnRemote=d:\aderant\automation\binaries
+/p:LocalExpertBinariesPathOnRemote=d:\aderant\main\binaries
 
 
 ##########################################
