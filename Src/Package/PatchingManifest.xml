@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+    <!-- Controls the name of the package -->
+    <PatchName>GENU ABCD</PatchName>
+    
+    <!-- Controls how the change set list should be discovered. Only the first node with a value will be used. -->
+    <!-- If set the change set list will be taken from this Team Query -->
+    <TeamQuery></TeamQuery>
+    
+    <!-- If set the change set list will be taken between these two VersionSpec -->
+    <StartVersionSpec>C189486</StartVersionSpec>
+    <EndVersionSpec>C191133</EndVersionSpec>
+    
+    <!-- Example -->
+    <!-- 
+    <StartVersionSpec>D01/09/2011</StartVersionSpec>
+    <EndVersionSpec>D10/09/2011</EndVersionSpec>
+    
+    or
+    
+    <StartVersionSpec>C5000</StartVersionSpec>
+    <EndVersionSpec>C8000</EndVersionSpec>
+    -->    
+</Settings>
