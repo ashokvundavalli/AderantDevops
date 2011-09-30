@@ -11,10 +11,6 @@
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.PrebillEditor"
 						AssemblyVersion="1.8.0.0"/>    
-		<!--
-		<Module Name="Applications.Rates"
-						AssemblyVersion="1.8.0.0"/>
-		-->
 		<Module Name="Applications.Administration"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.Customization"
