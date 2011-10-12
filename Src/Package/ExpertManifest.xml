@@ -49,6 +49,8 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Deployment"
 						AssemblyVersion="1.8.0.0" />
+        <Module Name="SmartForms.ExpertTime"
+                        AssemblyVersion="1.8.0.0" />        
 		<Module Name="Libraries.Integration"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Customization"
@@ -133,10 +135,6 @@
 						AssemblyVersion="1.8.0.0"/>    
 		<Module Name="Workflow.MatterPlanning"
 						AssemblyVersion="1.8.0.0"/>    
-	    <!-- commented as redundant
-		<Module Name="Libraries.Entities.QueryModels"
-						AssemblyVersion="1.8.0.0" />
-	    -->
 		<Module Name="Expert.Help"/>
 		<Module Name="Marketing.Help"/>
 		<Module Name="Thirdparty.ICSharpCode"  />
