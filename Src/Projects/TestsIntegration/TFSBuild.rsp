@@ -20,7 +20,7 @@
 /p:TestSettingsFile=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.Integration.testsettings
 
 # List of test assemblies to include in the test run.  Space delimited list of test dlls, each one prefixed with "/testcontainer".
-/p:"AderantTestAssembliesInclude=/testcontainer:IntegrationTest.Framework.Configuration.dll /testcontainer:IntegrationTest.Framework.Persistence.dll /testcontainer:IntegrationTest.Framework.Security.dll"
+/p:"AderantTestAssembliesInclude=/testcontainer:IntegrationTest.Firm.Library.dll /testcontainer:IntegrationTest.Rates.dll  /testcontainer:IntegrationTest.Rates.Library.dll /testcontainer:IntegrationTest.Client.Library.dll /testcontainer:IntegrationTest.Matter.Library.dll /testcontainer:IntegrationTest.Query.dll /testcontainer:IntegrationTest.Query.Services.dll /testcontainer:IntegrationTest.EmployeeIntake.dll /testcontainer:IntegrationTest.FirmControl.dll /testcontainer:IntegrationTest.Time.Library.dll /testcontainer:IntegrationTest.Disbursement.Library.dll /testcontainer:IntegrationTest.BusinessEntity.Library.dll /testcontainer:IntegrationTest.Marketing.Library.dll"
 
 
 # Used as condition for IntegrationTests target.
