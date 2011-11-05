@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ProductManifest Name="Expert">
+<ProductManifest Name="Expert" ExpertVersion="8">
 	<Modules>
 		<Module Name="Database"
 				    AssemblyVersion="1.8.0.0"/> 
