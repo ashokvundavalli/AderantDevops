@@ -30,6 +30,8 @@ Aderant.Framework.Security.dll
 Aderant.Framework.Security.ImportExport.dll
 Aderant.Framework.ServiceLibrary.dll
 Aderant.Framework.Scripting.dll
+Aderant.Framework.SmartForm.dll
+Aderant.Framework.SmartForm.Dsl.dll
 Aderant.Framework.SmartForm.ProjectTemplates.dll
 Aderant.Framework.SoftwareFactory.Common.dll
 Aderant.Framework.SoftwareFactory.Domain.dll
@@ -46,6 +48,8 @@ Aderant.Framework.SoftwareFactory.Service.VSPackage.pkgdef
 Aderant.Framework.SoftwareFactory.ViewModel.dll
 Aderant.Framework.SoftwareFactory.ViewModel.VSPackage.dll
 Aderant.Framework.SoftwareFactory.ViewModel.VSPackage.pkgdef
+Aderant.Metadata.dll
+Aderant.Metadata.Service.dll
 Aderant.PresentationFramework.dll
 Aderant.PresentationFramework.Images.dll
 Aderant.PresentationFramework.Resources.dll
@@ -77,6 +81,8 @@ Keyoti4.RapidSpell.WPF.dll
 log4net.dll
 log4net.xml
 mage.exe
+metadatamanager.exe
+metadatamanager.exe.config
 Microsoft.VisualStudio.Data.dll
 Microsoft.VisualStudio.Data.xml
 Microsoft.VisualStudio.Modeling.Sdk.10.0.dll
@@ -121,3 +127,5 @@ IronPython\V2.6\IronPython.XML
 IronPython\V2.6\Microsoft.Dynamic.dll
 IronPython\V2.6\Microsoft.Scripting.Debugging.dll
 IronPython\V2.6\Microsoft.Scripting.dll
+SystemMapBuilder.exe
+SystemMapBuilder.exe.config
