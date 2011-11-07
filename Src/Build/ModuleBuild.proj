@@ -117,7 +117,6 @@
     <CallTarget Targets="BuildHelpFiles" />
     <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
     <CallTarget Targets="RunUnitTests" />
-    <CallTarget Targets="SignFiles" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="CopyToDrop" />
     <CallTarget Targets ="Testing" />
@@ -353,7 +352,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <Attrib Files="@(AssemblyInfoFile)"
             ReadOnly="false" />
-            
+
     <FileUpdate Files="@(AssemblyInfoFile)"
                 IgnoreCase="true"
                 Multiline="true"
@@ -651,7 +650,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
                       $(ModuleSourceDirectory)\**\obj\**;
                       $(ModuleSourceDirectory)\**\UnitTest*\**;
                       $(ModuleSourceDirectory)\**\IntegrationTest*\**;
-  			              $(ModuleSourceDirectory)\**\TestResults\**;
+  			          $(ModuleSourceDirectory)\**\TestResults\**;
                       $(ModuleSourceDirectory)\**\Release.txt;
                       $(ModuleSourceDirectory)\**\Debug.txt;
                       $(ModuleSourceDirectory)\**\_Resharper*\**;
@@ -666,6 +665,9 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
         Include="
   					          $(CustomBuildFilesDirectory)\*.*;
   					          "
+        Exclude="
+                    $(CustomBuildFilesDirectory)\**\*.pfx;
+                    "
          />
     </ItemGroup>
 
@@ -693,7 +695,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     ==========================================================================================
   -->
 
-    
+
   <Target Name="RunUnitTests"
           DependsOnTargets="Build"
           Condition="('$(RunTest)'!='false')"
@@ -736,12 +738,12 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
           IgnoreExitCode="false"
           Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' == 'true')"
           Command='"$(PathToMSTest10)" %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx ' />
-      
+
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' != 'true')"
           Command='"$(PathToMSTest10)" $(UnitTestAssemblies) $(ResultsFileSwitch) ' />
-      
+
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -751,49 +753,6 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Status="Succeeded" />
 
     <OnError ExecuteTargets="CopyToDropOnTestFailure;MarkBuildStepAsFailed" />
-
-  </Target>
-
-  <!--
-    ==========================================================================================
-        Sign Files
-    ==========================================================================================
-  -->
-
-  <PropertyGroup>
-    <SignToolCommand>$(BuildScriptsDirectory)..\Build.Tools\signtool.exe</SignToolCommand>
-  </PropertyGroup>
-
-  <Target Name="SignFiles"
-          DependsOnTargets="RunUnitTests"
-          Condition="('$(FilesToSign)' !='')">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Signing Files"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)"
-            >
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"
-                />
-    </BuildStep>
-
-    <ItemGroup>
-      <FileToSign Include="$(FilesToSign)" />
-    </ItemGroup>
-
-    <Exec Command='"$(SignToolCommand)" sign /p "rugby ball" /f $(BuildScriptsDirectory)\aderant.pfx $(BinModuleDirectory)%(FileToSign.Filename)%(FileToSign.Extension)' />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
 
@@ -832,7 +791,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)PublishClickOnceProjectUsingMSBuild4.ps1" -pathForModuleToPublish $(SolutionFileName) -applicationVersion $(FileVersion)'/>
-    
+
     <Message Condition="('$(IsDesktopBuild)'=='true')"
              Text="Zip package" />
 
@@ -854,11 +813,11 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipSourceFiles)"
       ZipFileName="$(ClickOnceZipFile)"
-      WorkingDirectory="$(PublishDirectory)"      
+      WorkingDirectory="$(PublishDirectory)"
             />
 
     <RemoveDir Directories="$(PublishDirectory)"/>
-    
+
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
