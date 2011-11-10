@@ -1,12 +1,13 @@
 <#  
 .Synopsis 
-    Constructs a collection of wrapped change sets (ChangeSetInfo) which contains the project information for building a patch.
+    Gets a filtered set of change sets for building a patch.
 .Parameter teamFoundationServer
     The hostname of the Team Foundation Server.
 .Parameter teamProject
     The team project to target.
 .Parameter solution
     The server Uri or solution to use as the root directory.
+    If a drop location is used, the last part of the name is assumed to be the branch name.
 .Example
     Build-Patch -teamFoundationServer "tfs" -teamProject "ExpertSuite" -solution "/$/ExpertSuite/Releases/MatterPlanning"
 .Notes
@@ -15,9 +16,8 @@
 param(
     [string]$teamFoundationServer = "http://tfs:8080",
     [string]$teamProject = "ExpertSuite",
-    [string]$solution = ""
+    [string]$branchPathOrName = ""
 )
-
 
 function Get-TeamFoundationServer([string]$serverName = $(Throw 'serverName is required')) {
     Write-Host "Connecting to Team Foundation Server $($serverName)."
@@ -74,12 +74,20 @@ function Get-AllQueries($project) {
     return $project.StoredQueries
 }
 
-
-function Get-ChangeSets($workitems) {
+<#  
+.Synopsis 
+    Gets the change sets for the specified work items.    
+.Parameter workitems
+    The workitems to process.
+.Parameter $branch
+    A full or partial branch path. This is used to make sure only change sets for the specified branch are returned.
+#>
+function Get-ChangeSets($workItems, $branch) {
+    $branch = (Get-BranchPath).ToLower()
     $changeSets = @()
 
-    foreach ($workitem in $workitems) {
-        $w = $tfs.WorkItems.GetWorkItem($workitem.Id)
+    foreach ($workItem in $workItems) {
+        $w = $tfs.WorkItems.GetWorkItem($workItem.Id)
         
         # Try and find any change sets that are attached to this work item 
         foreach ($link in $w.Links) {
@@ -88,15 +96,69 @@ function Get-ChangeSets($workitems) {
                 
                 if ([String]::Equals($artifact.ArtifactType, "Changeset", [StringComparison]::Ordinal)) {
                     # Convert the artifact URI to Changeset object.
-                    $changeSets += $tfs.VersionControl.ArtifactProvider.GetChangeset([Uri]($link.LinkedArtifactUri))
+                    [Microsoft.TeamFoundation.VersionControl.Client.Changeset]$changeSet = $tfs.VersionControl.ArtifactProvider.GetChangeset([Uri]($link.LinkedArtifactUri))
+					
+					# ensure the change set ServerItem matches our target branch or things will go badly wrong
+                    $isChangeSetValid = $true
+                    foreach ($change in $changeSet.Changes) {                        
+                        if (!($change.Item.ServerItem.ToLowerInvariant().Contains($branch.ToLowerInvariant()))) {                            
+                            Write-Host "Work item $($workItem.Id) has a change set $($changeSet.ChangesetId) with an invalid change location." -ForegroundColor Yellow
+                            Write-Host "Expected change for $branch but found $($change.Item.ServerItem)" -ForegroundColor Yellow
+                            Write-Host ""
+                            $isChangeSetValid = $false
+                        }                            
+                    }
+                    
+                    if ($isChangeSetValid) {
+                        $changeSets += $changeSet
+                    }                    
                 }
             }
         }        
     }
     Write-Host "Found $($changeSets.Count) change sets."
+    
+    WriteChangeSetInfo $changeSets   
+    
     return $changeSets
 }
 
+function WriteChangeSetInfo($changes) {
+    foreach ($change in $changes) {  
+        $id = $change.WorkItems[0].Id
+        $title = $change.WorkItems[0].Title
+        Write-Host "Work item: $id - $title"        
+        Write-Host "Changeset: $($change.ChangesetId) - $($change.Comment)"
+        Write-Host ""
+    }
+}
+
+function Get-BranchPath() {
+    $path = $null
+    if ([string]::IsNullOrEmpty($BranchName)) {
+        if ([string]::IsNullOrEmpty($branchPathOrName)) {
+            throw "`$BranchName or -branchPathOrName must be set. Cannot continue."
+        }
+        
+        # this is far from ideal
+        # TODO: Ask Andy how we can work out what branch we are on reliably
+        if ($branchPathOrName.ToLower().Contains("na.aderant.com")) {
+            $parts = $branchPathOrName.Split("\")
+            $path = $parts[$parts.Count-1]
+        } else {
+            $path = $branchPathOrName
+        }        
+    } else {
+        # BranchName comes from the Expert development PowerShell environment
+        $path = $serverPath = "$/" + $teamProject + "/" + $BranchName
+    }
+    $serverPath = $path.Replace("\", "/")
+    
+    if ($serverPath.StartsWith("/")) {
+        $serverPath = $serverPath.Remove(0, 1)
+    }
+    return $serverPath
+}
 
 <# 
 .Synopsis 
@@ -104,17 +166,7 @@ function Get-ChangeSets($workitems) {
 .Description
 #>
 function Get-ChangesByHistory([Microsoft.TeamFoundation.VersionControl.Client.VersionSpec]$start, [Microsoft.TeamFoundation.VersionControl.Client.VersionSpec]$end) {
-    $path = $null
-    if ([string]::IsNullOrEmpty($BranchName)) {
-        if ([string]::IsNullOrEmpty($solution)) {
-            throw "`$BranchName or -solution must be set. Cannot continue."
-        }
-        $path = $solution
-    } else {
-        # BranchName comes from the Expert development PowerShell environment
-        $path = $serverPath = "$/" + $teamProject + "/" + $BranchName
-    }
-    $serverPath = $path.Replace("\", "/")
+    $serverPath = Get-BranchPath
     
     Write-Host "Querying history on $serverPath from $($start.DisplayString) to $($end.DisplayString)"
     
@@ -190,7 +242,7 @@ function Read-ManifestAndExecute() {
         }
         
         $changes = Get-ChangesByHistory $startSpec $endSpec
-        Write-Output $changes
+        #Write-Output $changes
         return
     }
 }
