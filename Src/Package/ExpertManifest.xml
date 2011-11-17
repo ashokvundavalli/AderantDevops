@@ -6,7 +6,7 @@
 		<Module Name="Installs.Marketing"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.Marketing"
-						AssemblyVersion="7.7.0.0"  />
+						AssemblyVersion="8.0.0.0"  />
 		<Module Name="Applications.MatterPlanning"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.PrebillEditor"
