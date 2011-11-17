@@ -7,10 +7,12 @@
 /p:"PackageProductTests=true"
 # Product manifest that is used when running GetProduct.ps1 and GetProductTests.ps1.  This does not change unless the mapping in the build definition is changed.
 #/p:ProductManifestPath=..\src\ExpertManifest.xml
+
+#
 /p:LoadTestManifestPath=\\WSAKL001022\LoadTestShare\LoadTestManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\dev\titantime
 
 
 ##########################################
