@@ -25,6 +25,8 @@
 						AssemblyVersion="1.8.0.0"  />
     	<Module Name="Applications.FoundTimeOutlookAddIn"
 						AssemblyVersion="1.8.0.0"  />
+        <Module Name="Applications.FoundTimeOutlookAddIn64"
+						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Build.T4Task"
 						AssemblyVersion="1.8.0.0"  />    
 		<Module Name="Libraries.Entities.Disbursement"
