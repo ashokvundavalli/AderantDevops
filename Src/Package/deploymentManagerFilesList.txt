@@ -65,6 +65,7 @@ Castle.DynamicProxy2.xml
 CustomizationBuilder.exe
 CustomizationBuilder.exe.config
 CustomizationBuilder.exe.log4net.xml
+cmsmsgen.msg
 bindings.config
 DeploymentService.exe
 DeploymentService.exe.config
