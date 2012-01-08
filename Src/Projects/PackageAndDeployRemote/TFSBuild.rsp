@@ -11,48 +11,33 @@
 # Each branch will have its own drop root.
 /p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
-# Set this to 'true' to get the lates build all output, otherwise it just runs Get-Product to get the latest of each module.
-/p:UseBuildAllOutput=true
-
 
 ##########################################
 # DeployProduct and RemoveProduct targets
 ##########################################
 # Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
-/p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.IntegrationTest.environment.xml
+# Also used by WaitForServiceStartUp target, passed to PingDeploymentEngine.
+/p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Dev\SkadLove\SkadLove.CustomizationTest.environment.xml
+/p:RemoteTestMachineName=vmaklexpdevb03.ap.aderant.com
+/p:RemoteExpertBinariesDirectory=\\vmaklexpdevb03\ExpertBinaries
 
-# Set to true to deploy Expert, optional and defaults to true.
-/p:DeployExpert=true
+##########################
+# IntegrationTests target
+##########################
+# This is passed to MsTest.exe as the test settings switch.
+# The test settings allow you to specify test controllers, data collection settings and other goodness.
+/p:TestSettingsFile=\\na.aderant.com\ExpertSuite\ExpertTestAssets\Main\Main.Remote.Integration.testsettings
 
-# Set this to true to drop SP_CMSCHECKINDEX so that deploy database works.
-/p:DropSp_CmsCheckIndex=true
+# Used in the Include when creating list of test assemblies.  A semi-colon seperated list of files to include.
+# For example use %2aIntegrationTest%2a.dll for all dlls containing the word IntegrationTest.  %2a = *
+/p:"AderantTestAssembliesInclude=%2aIntegrationTest.MatterPlanning.dll"
 
-# Set this to true to deploy the database project before deploying expert.
-/p:DeployDbProject=false
+# Used in the Exclude when creating list of test assemblies.  A semi-colon seperated list of files to exclude.
+# For example %2aHelpers%2a.dll
+/p:AderantTestAssembliesExclude=%2aHelpers%2a.dll
 
-# Specify the remote test machine.  Binaries will be copied to this macine, and deployment runs on this machine too.
-/p:RemoteTestMachineName=vmaklexpmain.ap.aderant.com
-
-# Used by remoteDeploymentDeploy.ps1 to copy files to test machine.  When running get-product the binaries 
-# are copied to this location, so you need to setup this share on your test machine.  If UseBuildAllOutput=true this is ignored.
-/p:RemoteExpertBinariesDirectory=\\vmaklexpmain\ExpertBinaries
-
-# Local path of binaries folder on the remote machine, used by scripts executed on remote machine.
-#  If DeployDbProject=true this is ignored.
-/p:LocalExpertBinariesPathOnRemote=c:\ExpertSource
-
-
-##########################################
-# RestoreDB targets
-##########################################
-# Set to true to restore a backup db, optional and defaults to true.
-/p:RestoreDatabase=false
-
-#Path where the database files are stored on the database server.
-/p:directory=D:\FileOpening\Databases
-
-#Database backup file location (backup used for testing:)
-/p:dbBackupFile=\\svnas301\Internal\team\Automation\DB15_ST_75SP4HF.bak
+# Used as condition for IntegrationTests target.
+/p:RunTests=true
 
 
 ###########################
