@@ -74,7 +74,7 @@ process{
     	Invoke-Command $session `
             -ScriptBlock { 
                 param($innerSourcePath, $innerManifestPath)
-                cd "$innerSourcePath\Deployment"
+                cd "$innerSourcePath"
                 .\DeploymentEngine.exe deploy "$innerManifestPath"
             } `
             -ArgumentList $sourcePath, $environmentManifestPath
