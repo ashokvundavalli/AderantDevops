@@ -17,14 +17,14 @@ begin{
 process{
 	$ErrorActionPreference = "Stop"
 	$session = Get-RemoteSession $remoteMachineName
-    $sourcePath = $remoteMachineName
-	#$sourcePath = Get-SourceDirectory $environmentManifestPath
+    #$sourcePath = $remoteMachineName
+	$sourcePath = Get-SourceDirectory $environmentManifestPath
     
     #Only attempt a remove if the DeploymentEngine.exe file is present.
-    $binariesPresentOnRemote = Invoke-Command $session -ScriptBlock { param($innerSourcePath) test-path "\\$innerSourcePath\ExpertSource\Deployment\DeploymentEngine.exe"} -ArgumentList $sourcePath
+    $binariesPresentOnRemote = Invoke-Command $session -ScriptBlock { param($innerSourcePath) test-path "$innerSourcePath\DeploymentEngine.exe"} -ArgumentList $sourcePath
     if ($binariesPresentOnRemote ) {
         Write-Host "Invoking DeploymentEngine to STOP on [$remoteMachineName]."
-    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "\\$innerSourcePath\ExpertSource\Deployment"; .\DeploymentEngine.exe stop "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath\"; .\DeploymentEngine.exe stop   "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
 
         Write-Host "Waiting for services to stop on [$remoteMachineName]."
     	Start-Sleep -s 120
@@ -36,9 +36,9 @@ process{
         #Start-Sleep -s 30
 
         Write-Host "Invoking DeploymentEngine to REMOVE on [$remoteMachineName]."
-    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "\\$innerSourcePath\ExpertSource\Deployment"; .\DeploymentEngine.exe remove "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe remove "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
 
     } else {
-        Write-Host "Could not find \\$sourcePath\ExpertSource\DeploymentManager\DeploymentEngine.exe so not performing remove."
+        Write-Host "Could not find $sourcePath\DeploymentEngine.exe so not performing remove."
     }
 }
