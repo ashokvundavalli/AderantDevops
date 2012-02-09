@@ -26,7 +26,7 @@
 /p:DeployExpert=true
 
 # Set this to true to drop SP_CMSCHECKINDEX so that deploy database works.
-/p:DropSp_CmsCheckIndex=true
+/p:DropSp_CmsCheckIndex=false
 
 # Set this to true to deploy the database project before deploying expert.
 /p:DeployDbProject=false
