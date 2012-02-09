@@ -18,7 +18,7 @@ Function TryKillProcess([string] $processName, [string] $computerName){
 
 Function Get-SourceDirectory($environmentManifestPath){    
 	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
-	$sourcePath = $environmentManifest.environment.SourcePath    
+	$sourcePath = $environmentManifest.environment.deploymentBinariesPath    
 	return $sourcePath
 }
 
