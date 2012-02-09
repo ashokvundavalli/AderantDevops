@@ -17,10 +17,11 @@ begin{
 process{
 	$ErrorActionPreference = "Stop"
 	$session = Get-RemoteSession $remoteMachineName
-	$sourcePath = Get-SourceDirectory $environmentManifestPath
+    $sourcePath = $remoteMachineName
+	#$sourcePath = Get-SourceDirectory $environmentManifestPath
     
     #Only attempt a remove if the DeploymentEngine.exe file is present.
-    $binariesPresentOnRemote = Invoke-Command $session -ScriptBlock { param($innerSourcePath) test-path "$innerSourcePath\Deployment\DeploymentEngine.exe"} -ArgumentList $sourcePath
+    $binariesPresentOnRemote = Invoke-Command $session -ScriptBlock { param($innerSourcePath) test-path "$innerSourcePath\ExpertSource\Deployment\DeploymentEngine.exe"} -ArgumentList $sourcePath
     if ($binariesPresentOnRemote ) {
         Write-Host "Invoking DeploymentEngine to STOP on [$remoteMachineName]."
     	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath\Deployment"; .\DeploymentEngine.exe stop "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
