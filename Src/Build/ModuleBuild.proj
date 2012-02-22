@@ -118,10 +118,9 @@
     <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="PublishModule" />
-    <CallTarget Targets="CopyToDrop" />
     <CallTarget Targets ="Testing" />
     <CallTarget Targets="PostBuild" Condition="('$(PostBuild)'=='true')" />
-
+    <CallTarget Targets="CopyToDrop" />
   </Target>
 
   <Target Name="Testing">
