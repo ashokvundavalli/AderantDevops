@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
     ToolsVersion="3.5">
 
-    <!-- 
+	<!-- 
     =========================================================================================================
         Team Build Script - Workflow Prototype                                                 
         
@@ -15,167 +15,204 @@
     =========================================================================================================
     -->
 
-    <ProjectExtensions>
-        <ProjectFileVersion>2</ProjectFileVersion>
-    </ProjectExtensions>
+	<ProjectExtensions>
+		<ProjectFileVersion>2</ProjectFileVersion>
+	</ProjectExtensions>
 
-    <PropertyGroup>
-        <BuildScriptsDirectory>$(SolutionRoot)</BuildScriptsDirectory>
-        <CommonBuildScriptsDirectory>$(SolutionRoot)\CommonBuild</CommonBuildScriptsDirectory>
-    </PropertyGroup>
-    
-    <!--
+	<PropertyGroup>
+		<BuildScriptsDirectory>$(SolutionRoot)</BuildScriptsDirectory>
+		<CommonBuildScriptsDirectory>$(SolutionRoot)\CommonBuild</CommonBuildScriptsDirectory>
+	</PropertyGroup>
+
+	<!--
     ==========================================================================================
         Build Status
     ==========================================================================================
   -->
 
-    <Target Name="MarkBuildStepAsFailed">
-        <BuildStep
+	<Target Name="MarkBuildStepAsFailed">
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Failed"
             />
-        <SetBuildProperties
+		<SetBuildProperties
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             CompilationStatus="Failed"
             />
-        <Error Condition="('$(IsDesktopBuild)'=='true')"/>
-    </Target>
+		<Error Condition="('$(IsDesktopBuild)'=='true')"/>
+	</Target>
 
 
 
 
-    <!--
+	<!--
     ==========================================================================================
         Set up common packaging properties.
     ==========================================================================================
   -->
 
-    <Target Name="CommonPackagingProperties" >
-        <BuildStep
+	<Target Name="CommonPackagingProperties" >
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Packaging Properties Setup"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)">
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
-        </BuildStep>
+		</BuildStep>
 
-        <PropertyGroup>
-            <ExpertProductDropDirectory>$(DropLocation)\$(BuildNumber)</ExpertProductDropDirectory>
-            <!--Local for factory generation-->
-            <LocalExpertBinariesDirectory>$(SolutionRoot)\..\ExpertBinaries</LocalExpertBinariesDirectory>
-            <DropExpertBinariesDirectory>$(ExpertProductDropDirectory)\ExpertBinaries</DropExpertBinariesDirectory>
-            <!--Drop directories that we will copy too NB: BuildNumber is not set if this property is created outside the target.-->
-            <DropExpertTestsDirectory>$(ExpertProductDropDirectory)\TestingBinaries</DropExpertTestsDirectory>
-            <!--Copy test binaries, and run tests from this location.-->
-            <ExpertTestsDirectory>$(SolutionRoot)\..\TestBinaries</ExpertTestsDirectory>
-        </PropertyGroup>
-        
-        <BuildStep
+		<PropertyGroup>
+			<ExpertProductDropDirectory>$(DropLocation)\$(BuildNumber)</ExpertProductDropDirectory>
+			<!--Local for factory generation-->
+			<LocalExpertBinariesDirectory>$(SolutionRoot)\..\ExpertBinaries</LocalExpertBinariesDirectory>
+			<DropExpertBinariesDirectory>$(ExpertProductDropDirectory)\ExpertBinaries</DropExpertBinariesDirectory>
+			<!--Drop directories that we will copy too NB: BuildNumber is not set if this property is created outside the target.-->
+			<DropExpertTestsDirectory>$(ExpertProductDropDirectory)\TestingBinaries</DropExpertTestsDirectory>
+			<!--Copy test binaries, and run tests from this location.-->
+			<ExpertTestsDirectory>$(SolutionRoot)\..\TestBinaries</ExpertTestsDirectory>
+		</PropertyGroup>
+
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
-        
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-    </Target>
 
-    <!--
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+	</Target>
+
+	<!--
     ==========================================================================================
         Package The Product
     ==========================================================================================
   -->
 
-    <Target Name="PackageProduct" 
+	<Target Name="PackageProduct"
             DependsOnTargets="CommonPackagingProperties" >
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Package Product"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)">
 
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
-        </BuildStep>
+		</BuildStep>
 
-        <MakeDir Directories="$(DropExpertBinariesDirectory)" Condition="!Exists('$(DropExpertBinariesDirectory)')" />
-        <RemoveDir Directories="$(LocalExpertBinariesDirectory)" Condition="Exists('$(LocalExpertBinariesDirectory)')"/>
-        <MakeDir Directories="$(LocalExpertBinariesDirectory)" Condition="!Exists('$(LocalExpertBinariesDirectory)')"/>
+		<!--<MakeDir Directories="$(DropExpertBinariesDirectory)" Condition="!Exists('$(DropExpertBinariesDirectory)')" />-->
+		<RemoveDir Directories="$(LocalExpertBinariesDirectory)" Condition="Exists('$(LocalExpertBinariesDirectory)')"/>
+		<MakeDir Directories="$(LocalExpertBinariesDirectory)" Condition="!Exists('$(LocalExpertBinariesDirectory)')"/>
 
-        <!--Merge and generate factory.bin-->
-        <Exec ContinueOnError="false"
+		<!--Merge and generate factory.bin-->
+		<Exec ContinueOnError="false"
               IgnoreExitCode="false"
               Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
               WorkingDirectory="$(BuildScriptsDirectory)" />
 
-        <!-- Zip up and place in root of drop folder-->
-        <ItemGroup>
-            <ZipFiles Include="$(LocalExpertBinariesDirectory)\**\*.*" />
-        </ItemGroup>
-        <Zip Files="@(ZipFiles)"
+		<!-- Zip up and place in root of drop folder-->
+		<ItemGroup>
+			<ZipFiles Include="$(LocalExpertBinariesDirectory)\**\*.*" />
+		</ItemGroup>
+		<Zip Files="@(ZipFiles)"
              ZipFileName="$(ExpertProductDropDirectory)\ExpertBinaries.zip"/>
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-    </Target>
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+	</Target>
 
-    <!--
+	<!--
+    ==========================================================================================
+        GetProductZip to Target Machine
+    ==========================================================================================
+  -->
+
+	<Target Name="GetProductZip"
+            DependsOnTargets="CommonPackagingProperties" >
+
+		<BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Get Product Zip"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)">
+
+			<Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+		</BuildStep>
+
+		<!--Merge and generate factory.bin-->
+		<Exec ContinueOnError="false"
+              IgnoreExitCode="false"
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductZip.ps1" -remoteMachineName $(RemoteTestMachineName) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesPathOnRemote) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+              WorkingDirectory="$(BuildScriptsDirectory)" />
+
+
+		<BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+	</Target>
+	<!--
     ==========================================================================================
         Clickonce manifest
     ==========================================================================================
   -->
-    <Target
+	<Target
         Name="GenerateClickonce"
         >
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Generate Clickonce"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)">
 
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
-        </BuildStep>
-        <Message
+		</BuildStep>
+		<Message
             Text="Copying Clickonce files"
             />
 
-        <!--ExpertAssistant-->
-        <Exec
+		<!--ExpertAssistant-->
+		<Exec
             Command="mage.exe -New Deployment -ToFile $(DropExpertBinariesDirectory)\ExpertAssistantCO.application -Name ExpertAssistant -Version $(ExpertAssistantAssemblyVersion) -AppManifest $(DropExpertBinariesDirectory)\ExpertAssistantCO.exe.manifest -ProviderURL file://AderantExpert/ExpertShare/ExpertAssistantCO.application -Install true"
             ContinueOnError="false"
             />
-        <Exec
+		<Exec
             Command="mage.exe -Update $(DropExpertBinariesDirectory)\ExpertAssistantCO.application -Name ExpertAssistant -MinVersion $(ExpertAssistantAssemblyVersion)"
             ContinueOnError="false"
             />
-        <Exec
+		<Exec
             Command="$(MSBuild35) /target:publish /property:ApplicationVersion=$(ExpertAssistantAssemblyVersion) $(DropExpertBinariesDirectory)\ExpertAssistantCO.csproj"
             ContinueOnError="false"
             />
 
-        <!--Timer-->
-        <!--<Exec
+		<!--Timer-->
+		<!--<Exec
         Command="mage.exe -New Deployment -ToFile $(DropExpertBinariesDirectory)\ExpertTimerCO.application -Name ExpertTimer -Version $(TimerAssemblyVersion) -AppManifest $(DropExpertBinariesDirectory)\ExpertTimerCO.exe.manifest -ProviderURL file://AderantExpert/ExpertShare/ExpertTimerCO.application -Install true"
         ContinueOnError="false"
             />
@@ -188,184 +225,185 @@
         ContinueOnError="false"
             />-->
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-    </Target>
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+	</Target>
 
-    <!--
+	<!--
     ==========================================================================================
         Package The Product Tests
     ==========================================================================================
   -->
 
-    <Target Name="PackageProductTests"
+	<Target Name="PackageProductTests"
             DependsOnTargets="CommonPackagingProperties" >
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Package Product Tests"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)"
             >
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
-        </BuildStep>
-        
-
-        <!-- Clear test directory. -->
-        <RemoveDir Directories="$(ExpertTestsDirectory)" Condition="Exists('$(ExpertTestsDirectory)')"/>
-        <MakeDir Directories="$(ExpertTestsDirectory)" Condition="!Exists('$(ExpertTestsDirectory)')" />
+		</BuildStep>
 
 
-        <!--Copy test binaries to folder for execution.-->
-        <Exec ContinueOnError="false"
+		<!-- Clear test directory. -->
+		<RemoveDir Directories="$(ExpertTestsDirectory)" Condition="Exists('$(ExpertTestsDirectory)')"/>
+		<MakeDir Directories="$(ExpertTestsDirectory)" Condition="!Exists('$(ExpertTestsDirectory)')" />
+
+
+		<!--Copy test binaries to folder for execution.-->
+		<Exec ContinueOnError="false"
               IgnoreExitCode="false"
               Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
               WorkingDirectory="$(BuildScriptsDirectory)" />
 
-        <!--Copy to drop location for reference-->
-        <MakeDir Directories="$(DropExpertTestsDirectory)" Condition="!Exists('$(DropExpertTestsDirectory)')" />
+		<!--Copy to drop location for reference-->
+		<!-- Andy - we are hitting 260 char limit so commenting this out to test a build.-->
+		<!--<MakeDir Directories="$(DropExpertTestsDirectory)" Condition="!Exists('$(DropExpertTestsDirectory)')" />
         <Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" Copy-Item -Path $(ExpertTestsDirectory)\* -Destination $(DropExpertTestsDirectory) -Recurse' />
+              Command='"Powershell" Copy-Item -Path $(ExpertTestsDirectory)\* -Destination $(DropExpertTestsDirectory) -Recurse' />-->
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
-    <!--
+	</Target>
+	<!--
     ==========================================================================================
         Remove the deployed Product
     ==========================================================================================
   -->
 
-    <Target Name="RemoveProduct" >
+	<Target Name="RemoveProduct" >
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Remove the deployed Product"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)"
             >
 
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
 
-        </BuildStep>
+		</BuildStep>
 
-        <!--Run from build serever as has a dependancy on .NET framework-->
-        <Exec
+		<!--Run from build serever as has a dependancy on .NET framework-->
+		<Exec
             ContinueOnError="false"
             IgnoreExitCode="false"
             Command='"Powershell" "$(BuildScriptsDirectory)\DeploymentRemove.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath) $(RemoteTestMachineName)' />
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
+	</Target>
 
-  <!--
+	<!--
     ==========================================================================================
         Run remote deployment from remote machine
     ==========================================================================================
   -->
 
-  <Target Name="RemoveProductRemote" >
+	<Target Name="RemoveProductRemote" >
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Remove the deployed Product"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)"
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  Message="Remove the deployed Product"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildURI)"
             >
 
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"
+			<Output
+			  TaskParameter="id"
+			  PropertyName="BuildStepId"
                 />
 
-    </BuildStep>
+		</BuildStep>
 
-    <Exec
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RemoteDeploymentRemove.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
+		<Exec
+		  ContinueOnError="false"
+		  IgnoreExitCode="false"
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RemoteDeploymentRemove.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildUri)"
+		  Id="$(BuildStepId)"
+		  Status="Succeeded" />
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-  </Target>
-  
-    <!--
+	</Target>
+
+	<!--
     
     ==========================================================================================
         Restore Database
     ==========================================================================================
   -->
 
-    <Target Name="RestoreDB"
+	<Target Name="RestoreDB"
             Condition="('$(IsDesktopBuild)' != 'true') and ('$(RestoreDatabase)' == 'true')">
 
-      <BuildStep
-        Condition="('$(IsDesktopBuild)'!='true')"
-        Message="Restoring Database"
-        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-        BuildUri="$(BuildURI)"
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  Message="Restoring Database"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildURI)"
             >
 
-        <Output
-          TaskParameter="id"
-          PropertyName="BuildStepId"
+			<Output
+			  TaskParameter="id"
+			  PropertyName="BuildStepId"
                 />
 
-      </BuildStep>
+		</BuildStep>
 
-      <!--Run from build server as has a dependancy on .NET framework-->
-      <Exec
-        ContinueOnError="false"
-        IgnoreExitCode="false"
-        Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDB.ps1" $(EnvironmentManifestPath) $(dbBackupFile) $(directory)' />
+		<!--Run from build server as has a dependancy on .NET framework-->
+		<Exec
+		  ContinueOnError="false"
+		  IgnoreExitCode="false"
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDB.ps1" $(EnvironmentManifestPath) $(dbBackupFile) $(directory)' />
 
-      <BuildStep
-        Condition="('$(IsDesktopBuild)'!='true')"
-        TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-        BuildUri="$(BuildUri)"
-        Id="$(BuildStepId)"
-        Status="Succeeded" />
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildUri)"
+		  Id="$(BuildStepId)"
+		  Status="Succeeded" />
 
-      <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
+	</Target>
 
-  <!--  
+	<!--  
     
     ==========================================================================================
         Deploy the database project.
@@ -374,208 +412,215 @@
     ==========================================================================================
   -->
 
-    <Target Name="DeployDatabaseProject"
+	<Target Name="DeployDatabaseProject"
             Condition="('$(IsDesktopBuild)' != 'true') and ('$(DeployDbProject)' == 'true')" >
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)' != 'true')"
             Message="Deploying database project"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)"
             >
 
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
 
-        </BuildStep>
+		</BuildStep>
 
-        <Exec
+		<!--    Need to make this a PS script that runs this command remotely on test machine as that
+                is where the db schema file is.
+                -->
+		<Exec
             ContinueOnError="false"
             IgnoreExitCode="false"
             Command='"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Deploy\vsdbcmd.exe" /a:deploy /dd /cs:"Integrated Security=SSPI;Initial Catalog=$(DbProjectTargetDatabase);Data Source=$(DbProjectTargetServer)" /model:$(LocalExpertBinariesDirectory)\Expert.dbschema /dsp:sql /p:TargetDatabase="$(DbProjectTargetDatabase)" /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false' />
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
+	</Target>
 
-    <!--  
+	<!--  
     
     ==========================================================================================
         Deploy the Product
     ==========================================================================================
   -->
 
-    <Target Name="DeployProduct" >
+	<Target Name="DeployProduct" >
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Deploying Product"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)"
             >
 
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
 
-        </BuildStep>
+		</BuildStep>
 
-        <!--Run from build serever as has a dependancy on .NET framework-->
-        <Exec
+		<!--Run from build serever as has a dependancy on .NET framework-->
+		<Exec
             ContinueOnError="false"
             IgnoreExitCode="false"
             Command='"Powershell" "$(BuildScriptsDirectory)\DeploymentDeploy.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath)' />
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
+	</Target>
 
-  <!--
+	<!--
     ==========================================================================================
         Run deployment from remote machine
     ==========================================================================================
   -->
 
-  <Target Name="DeployProductRemote">
+	<Target Name="DeployProductRemote">
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Deploying Product"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)"
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  Message="Deploying Product"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildURI)"
             >
 
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"
+			<Output
+			  TaskParameter="id"
+			  PropertyName="BuildStepId"
                 />
 
-    </BuildStep>
+		</BuildStep>
 
-    <Exec
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RemoteDeploymentDeploy.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath) $(LocalExpertBinariesDirectory) $(RemoteExpertBinariesDirectory)' />
+		<Exec
+		  ContinueOnError="false"
+		  IgnoreExitCode="false"
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RemoteDeploymentDeploy.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath) $(LocalExpertBinariesDirectory) $(RemoteExpertBinariesDirectory) $(UseBuildAllOutput) $(DropSp_CmsCheckIndex) $(DeployDbProject) $(DeployExpert)' />
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildUri)"
+		  Id="$(BuildStepId)"
+		  Status="Succeeded" />
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-  </Target>
+	</Target>
 
-  <!--
+	<!--
     ==========================================================================================
-        Wait For Service for Tests
+        Wait & Check that Services have started
     ==========================================================================================
   -->
 
-    <Target Name="WaitForServiceStartUp">
+	<Target Name="WaitForServiceStartUp">
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Testing services have started"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)"
             >
 
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
-        </BuildStep>
+		</BuildStep>
 
-        <Exec
+		<Exec
             ContinueOnError="false"
             IgnoreExitCode="false"
-            Command='"Powershell" "$(BuildScriptsDirectory)\PingDeploymentEngine.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath)' />
+            Command='"Powershell" "$(BuildScriptsDirectory)\PingDeploymentEngine.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
+	</Target>
 
-    <!--
+	<!--
     ==========================================================================================
         Intergration Tests
     ==========================================================================================
   -->
 
-    <Target Name="IntegrationTests"
+	<Target Name="IntegrationTests"
             DependsOnTargets="CommonPackagingProperties"
             Condition="('$(RunTests)'=='true')" >
-        
-        <PropertyGroup>
-            <IntergrationAssemblies>@(AderantTestAssembliesInclude->'%(TestContainerPrefix)%(Filename)',' ')</IntergrationAssemblies>
-            <PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
-            <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
-            <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
-            <PublishSwitch>/publish:$(TeamFoundationServerUrl)</PublishSwitch>
-            <TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
-            <TestSettingsSwitch>/testsettings:$(TestSettingsFile)</TestSettingsSwitch>
-            <ResultsFileSwitch>/resultsfile:$(ExpertProductDropDirectory)\IntegrationTestResults.trx</ResultsFileSwitch>
-            
-        <!--VS2010 paths as we are using 2008 TFS-->
-            <VS2010TestHostDirectory>'$(VS100COMNTOOLS)..\IDE\'</VS2010TestHostDirectory>
-            <PathToVS2010MSTest>$(VS100COMNTOOLS)..\IDE\MSTest.exe</PathToVS2010MSTest>
-            <AderantBinLinkDirectory>'$(VS100COMNTOOLS)..\IDE\AderantBin\'</AderantBinLinkDirectory>
-        </PropertyGroup>
 
-        <BuildStep
+		<PropertyGroup>
+			<IntergrationAssemblies>@(AderantTestAssembliesInclude->'%(TestContainerPrefix)%(Filename)',' ')</IntergrationAssemblies>
+			<PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
+			<ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
+			<PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
+			<PublishSwitch>/publish:$(TeamFoundationServerUrl)</PublishSwitch>
+			<TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
+			<TestSettingsSwitch>/testsettings:$(TestSettingsFile)</TestSettingsSwitch>
+			<ResultsFileSwitch>/resultsfile:$(ExpertProductDropDirectory)\IntegrationTestResults.trx</ResultsFileSwitch>
+
+			<!--VS2010 paths as we are using 2008 TFS-->
+			<VS2010TestHostDirectory>%VS100COMNTOOLS%..\IDE\</VS2010TestHostDirectory>
+			<PathToVS2010MSTest>%VS100COMNTOOLS%..\IDE\mstest.exe</PathToVS2010MSTest>
+			<AderantBinLinkDirectory>%VS100COMNTOOLS%..\IDE\AderantBin\</AderantBinLinkDirectory>
+		</PropertyGroup>
+
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             Message="Running Integration Tests"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildURI)"
             >
-            <Output
+			<Output
                 TaskParameter="id"
                 PropertyName="BuildStepId"
                 />
-        </BuildStep>
+		</BuildStep>
 
-        <!-- Run the integration tests using MSTest controller. -->
-        <Exec Condition="('$(IsDesktopBuild)'!='true')"
+		<Message
+			Text="Target IntegrationTests: ExpertTestDirectory = $(ExpertTestsDirectory)"
+            />
+
+		<!-- Run the integration tests using MSTest controller. -->
+		<Exec Condition="('$(IsDesktopBuild)'!='true')"
               ContinueOnError="false"
               IgnoreExitCode="false"
               Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch)'
               WorkingDirectory='$(ExpertTestsDirectory)'
-              />        
+              />
 
-        <BuildStep
+		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-    </Target>
+	</Target>
 </Project>
