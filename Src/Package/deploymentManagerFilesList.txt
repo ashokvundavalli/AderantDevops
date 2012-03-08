@@ -55,6 +55,7 @@ Aderant.PresentationFramework.Images.dll
 Aderant.PresentationFramework.Resources.dll
 Aderant.PresentationFramework.Windows.dll
 Aderant.Query.dll
+Aderant.Query.Services.dll
 Aderant.Workflow.dll
 Antlr3.Runtime.dll
 Castle.Core.dll
@@ -96,6 +97,7 @@ Microsoft.VisualStudio.Settings.dll
 Microsoft.VisualStudio.Settings.xml
 Microsoft.VisualStudio.TextTemplating.10.0.dll
 Microsoft.VisualStudio.TextTemplating.Interfaces.10.0.dll
+EntityFramework.dll
 nhibernate-configuration.xsd
 nhibernate-mapping.xsd
 NHibernate.ByteCode.Castle.dll

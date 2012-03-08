@@ -127,6 +127,8 @@
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Packages"
 						AssemblyVersion="1.8.0.0"/>
+		<Module Name="Web.Workflow"
+						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Workflow.FileOpening"
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Workflow.EmployeeIntake"
@@ -150,6 +152,7 @@
 		<Module Name="Thirdparty.Mindscape"  />
 		<Module Name="Thirdparty.Microsoft"  />
 		<Module Name="Thirdparty.Microsoft.Build"/>
+		<Module Name="ThirdParty.Microsoft.EntityFramework"/>
 		<Module Name="Thirdparty.Microsoft.ExpressionBlendSdk"/>
 		<Module Name="Thirdparty.Microsoft.Linq.Dynamic"/>
 		<Module Name="Thirdparty.Microsoft.Practices" />
@@ -177,6 +180,8 @@
 		<Module Name="Thirdparty.Keyoti.RapidSpell" />
 		<Module Name="Thirdparty.PDF" />
 		<Module Name="Thirdparty.SQLCE" />
+		<Module Name="Thirdparty.Ninject" />
+		<Module Name="Thirdparty.MVC" />
 		
         <!-- FWBS and FOApi are needed by MatterCenterIntegration.  Uncomment if MatterCenterIntegration is ever enabled.
             <Module Name="ThirdParty.FWBS" />

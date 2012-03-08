@@ -517,7 +517,14 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <MSBuild
       Projects="$(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"
       Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
-      Targets="Build"  />
+      Targets="Build"
+      Condition="('$(PackageWeb)'!='true')"/>
+      
+     <MSBuild
+       Projects="$(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"
+       Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true"
+       Targets="Build"
+       Condition="('$(PackageWeb)'=='true')"/>
 
     <Message Text="BuildUsingMSBuild4 Finished"/>
 
@@ -947,7 +954,11 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     ==========================================================================================
   -->
 
-  <Target Name="CopyToDrop"
+    <ItemGroup>
+        <WebPackageFiles Include="$(SolutionDirectoryPath)\Src\**\bin\_PublishedWebsites\**\*.*" />
+    </ItemGroup>
+
+    <Target Name="CopyToDrop"
           Condition="('$(IsDesktopBuild)'!='true')" >
 
     <BuildStep
@@ -975,7 +986,14 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
 
-    <!--At the moment we check for successful builtds in the build logs where there are 0 Error(s). The BuildAll only has one build log
+
+        <Message Text="WebPackageFiles: @(WebPackageFiles)" />
+        <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)\Src\**\bin\_PublishedWebsites\**\*.*" />
+        <Copy SourceFiles="@(WebPackageFiles)"
+            DestinationFolder="$(DropLocation)\$(FileVersion)\bin\Module"
+            Condition="('$(PackageWeb)'=='true')"/>
+
+        <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
         so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
     -->
     <WriteLinesToFile
