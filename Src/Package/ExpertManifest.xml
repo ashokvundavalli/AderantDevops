@@ -23,9 +23,9 @@
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.ExpertTime"
 						AssemblyVersion="1.8.0.0"  />
-    	<Module Name="Applications.FoundTimeOutlookAddIn"
+    <Module Name="Applications.FoundTimeOutlookAddIn"
 						AssemblyVersion="1.8.0.0"  />
-        <Module Name="Applications.FoundTimeOutlookAddIn64"
+    <Module Name="Applications.FoundTimeOutlookAddIn64"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Build.T4Task"
 						AssemblyVersion="1.8.0.0"  />    
@@ -43,7 +43,7 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Presentation"
 						AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Presentation.Firm"
+    <Module Name="Libraries.Presentation.Firm"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Packaging"
 						AssemblyVersion="1.8.0.0" />
@@ -51,7 +51,7 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Deployment"
 						AssemblyVersion="1.8.0.0" />
-        <Module Name="SmartForms.ExpertTime"
+    <Module Name="SmartForms.ExpertTime"
                         AssemblyVersion="1.8.0.0" />        
 		<Module Name="Libraries.Integration"
 						AssemblyVersion="1.8.0.0" />
@@ -85,8 +85,8 @@
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Time"
 						AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Time.Connectors"
-                        AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Time.Connectors"
+            AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Applications.EmployeeIntake"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Services.Applications.FirmControl"
@@ -176,14 +176,15 @@
 		<Module Name="Thirdparty.LLBLGen" />
 		<Module Name="Thirdparty.Microsoft.WcfRest" />
 		<Module Name="Thirdparty.LocalSecurityAuthority" />
-        <Module Name="Thirdparty.NTFSStreams" />
+    <Module Name="Thirdparty.NTFSStreams" />
 		<Module Name="Thirdparty.Keyoti.RapidSpell" />
 		<Module Name="Thirdparty.PDF" />
 		<Module Name="Thirdparty.SQLCE" />
 		<Module Name="Thirdparty.Ninject" />
-		<Module Name="Thirdparty.MVC" />
-		
-        <!-- FWBS and FOApi are needed by MatterCenterIntegration.  Uncomment if MatterCenterIntegration is ever enabled.
+    <Module Name="Thirdparty.MVC" />
+    <Module Name="Thirdparty.SignalR" />
+
+    <!-- FWBS and FOApi are needed by MatterCenterIntegration.  Uncomment if MatterCenterIntegration is ever enabled.
             <Module Name="ThirdParty.FWBS" />
             <Module Name="ThirdParty.FOApi" />
         -->  
