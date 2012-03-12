@@ -18,7 +18,7 @@ Function TryKillProcess([string] $processName, [string] $computerName){
 
 Function Get-SourceDirectory($environmentManifestPath){    
 	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
-	$sourcePath = $environmentManifest.environment.deploymentBinariesPath    
+	$sourcePath = $environmentManifest.environment.deploymentBinariesPath  
 	return $sourcePath
 }
 
@@ -52,6 +52,28 @@ Function CopyBinariesToRemoteMachine($localBinaries, $remoteBinaries) {
 	Copy-Item -Path "$localBinaries\*" -Destination "$remoteBinaries" -Recurse -Force
 }
 
+Function Execute-SQL($environmentManifestPath, $SQLscript){
+	#This function executes a given SQL to a specified environment's Database
+	#Parameter definitions:
+	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
+	$SQLServer = "{0}\{1}" -f $environmentManifest.environment.expertDatabaseServer.serverName, $environmentManifest.environment.expertDatabaseServer.serverInstance
+	$SQLDBName = $environmentManifest.environment.expertDatabaseServer.databaseConnection.databaseName
+	$SQLDBUid = "cmsdbo"
+	$SQLDBPwd = "cmsdbo"
+	$Sql = $SQLscript
+	$ConnectionString = "Server={0};Database={1};Integrated Security=false;UID={2};PWD={3}" -f $SQLServer,$SQLDBName,$SQLDBUid,$SQLDBPwd
+	
+	#Define new connection & SQL command objects:
+	$SqlConnection = New-Object System.Data.SqlClient.SqlConnection ($ConnectionString)
+	$SqlCmd = New-Object System.Data.SqlClient.SqlCommand($Sql, $SqlConnection)
+	
+	#Open connection, execute SQL then close connection:
+	$SqlConnection.Open()
+	$SqlCmd.ExecuteNonQuery()
+	$SqlConnection.Close()
+}
+
+Export-ModuleMember -Function Execute-SQL
 Export-ModuleMember -Function CopyBinariesToRemoteMachine
 Export-ModuleMember -Function Get-RemoteSession
 Export-ModuleMember -Function Get-SourceDirectory

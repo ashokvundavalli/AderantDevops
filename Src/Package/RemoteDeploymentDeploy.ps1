@@ -44,12 +44,7 @@ process{
     if ($DropSp_CmsCheckIndex -and $DropSp_CmsCheckIndex.ToUpper() -eq 'TRUE') {
         Write-Host "Dropping [dbo].[SP_CMSCHECKINDEX] so deploy database works."
         $dropSP_CMSCHECKINDEX = "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_CMSCHECKINDEX]') AND type in (N'P', N'PC')) DROP PROCEDURE [dbo].[SP_CMSCHECKINDEX]"
-        $sqlSnapin = Get-PSSnapin | where {$_.Name -eq "SqlServerCmdletSnapin100"}
-    	if($sqlSnapin -eq $null)
-    	{
-    		 Add-PSSnapin SqlServerCmdletSnapin100
-    	}
-        Invoke-Sqlcmd -ServerInstance $dbProjectTargetServer -Database $dbProjectTargetDatabaseName -Username cmsdbo -Password cmsdbo -Query $dropSP_CMSCHECKINDEX
+		Execute-SQL $environmentManifestPath,$dropSP_CMSCHECKINDEX
     }
     
     #Run deploy database command on remote machine.
@@ -79,8 +74,9 @@ process{
             } `
             -ArgumentList $sourcePath, $environmentManifestPath
     }
-
-    Write-Host "Exiting remote PS session."    
-    Remove-PSSession -Session $session
-    
+	Write-Host "Last Exit Code for Deployment Engine - Deploy: " + $LASTEXITCODE
+	Write-Host "Last Exit Code for Deployment Engine - Deploy: " + $LASTEXITCODE
+	Write-Host "Last Exit Code for Deployment Engine - Deploy: " + $LASTEXITCODE
+	Write-Host "Last Exit Code for Deployment Engine - Deploy: " + $LASTEXITCODE
+	
 }
