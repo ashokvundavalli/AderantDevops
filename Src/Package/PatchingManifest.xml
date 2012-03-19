@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Settings>
     <!-- Controls the name of the package -->
-    <PatchName>GENU 2170</PatchName>
+    <PatchName>GENU 2194</PatchName>
     
     <!-- Controls how the change set list should be discovered. Only the first node with a value will be used. -->
     <!-- If set the change set list will be taken from this Team Query -->
-    <TeamQuery></TeamQuery>
+    <TeamQuery>GGSP1HF03 GENU2194</TeamQuery>
     
     <!-- If set the change set list will be taken between these two VersionSpec -->
-    <StartVersionSpec>C193442</StartVersionSpec>
-    <EndVersionSpec>C193442</EndVersionSpec>
+    <!--<StartVersionSpec>C193442</StartVersionSpec>
+    <EndVersionSpec>C193442</EndVersionSpec>-->
     
     <!-- Example -->
     <!-- 
