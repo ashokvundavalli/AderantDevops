@@ -23,7 +23,7 @@ process{
     $binariesPresentOnRemote = Invoke-Command $session -ScriptBlock { param($innerSourcePath) test-path "$innerSourcePath\DeploymentEngine.exe"} -ArgumentList $sourcePath
     if ($binariesPresentOnRemote ) {
         Write-Host "Invoking DeploymentEngine to STOP on [$remoteMachineName]."
-    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe stop "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+    	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath\"; .\DeploymentEngine.exe stop   "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
 
         Write-Host "Waiting for services to stop on [$remoteMachineName]."
     	Start-Sleep -s 120

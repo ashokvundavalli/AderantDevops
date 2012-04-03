@@ -53,6 +53,53 @@
     TaskName="NDependTask"
         />
 
+  <!-- The Zip Custom Source inline task -->
+    <UsingTask
+      TaskName="SourceTransformationTask"
+      TaskFactory="CodeTaskFactory"
+      AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+      <ParameterGroup >
+        <SourcePath ParameterType="System.String" Required="true"/>
+        <TransformsDefinitionFile ParameterType="System.String" Required="true"/>
+      </ParameterGroup>
+      <Task>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Xml"/>
+        <Reference Include="System.Xml.Linq"/>
+        <Using Namespace="System"/>
+        <Using Namespace="System.IO"/>
+        <Using Namespace="System.Linq"/>
+        <Using Namespace="System.Xml.Linq"/>
+        <Using Namespace="System.Text.RegularExpressions"/>
+        <Code><![CDATA[
+Log.LogMessage(string.Format("Starting transformation of source at {0} using {1}", SourcePath, TransformsDefinitionFile));
+
+// Get the list of transformations
+if(!File.Exists(TransformsDefinitionFile)){
+  Log.LogError(string.Format("The transformations file {0} does not exist", TransformsDefinitionFile));
+}
+
+XDocument transformsDoc = XDocument.Load(TransformsDefinitionFile);
+var replacements = from replacementDefinition in transformsDoc.Root.Descendants("Replacement")
+                   from file in Directory.GetFiles(SourcePath, replacementDefinition.Attribute("FileFilter").Value, SearchOption.AllDirectories)
+                   select new {
+                    FilePath = file,
+                    Regex = new Regex(replacementDefinition.Attribute("Pattern").Value),
+                    ReplaceWith = replacementDefinition.Attribute("ReplaceWith").Value
+                   };
+
+Log.LogMessage(string.Format("Starting {0} replacement tasks", replacements.Count()));
+
+foreach(var replacement in replacements){
+  string fileContent = File.ReadAllText(replacement.FilePath);
+  fileContent = replacement.Regex.Replace(fileContent, replacement.ReplaceWith);
+  File.WriteAllText(replacement.FilePath, fileContent);
+}
+
+
+]]></Code>
+      </Task>
+    </UsingTask>
   <!-- 
     ==========================================================================================
         Build Configurations
@@ -553,8 +600,11 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization</ZipFileDirectory>
-      <CustomBuildFilesDirectory>$(SolutionDirectoryPath)BuildScripts</CustomBuildFilesDirectory>
       <ZipFile>$(ZipFileDirectory)\$(ModuleName).Custom.zip</ZipFile>
+      <TempSolutionDirectory>$(SolutionDirectoryPath)\TempTransform</TempSolutionDirectory>
+      <TempModuleSourceDirectory>$(SolutionDirectoryPath)\TempTransform\src</TempModuleSourceDirectory>
+      <TempModuleBuildDirectory>$(SolutionDirectoryPath)\TempTransform\build</TempModuleBuildDirectory>
+      <CustomBuildFilesDirectory>$(SolutionDirectoryPath)\TempTransform\BuildScripts</CustomBuildFilesDirectory>
     </PropertyGroup>
 
     <Delete
@@ -562,9 +612,29 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Condition="Exists('$(ZipFile)')"
             />
 
+    <RemoveDir
+      Condition="Exists('$(TempSolutionDirectory)')"
+      Directories="$(TempSolutionDirectory)"/>
+
+    <ItemGroup>
+      <SourceFilesToCopyForTransform Include="$(SolutionDirectoryPath)\**\*.*"/>
+    </ItemGroup>
+
+
+    <!-- Make a copy of the source files for the custom solution transformation and zip -->
+    <MakeDir
+      Directories="$(TempSolutionDirectory)"/>
+
+
+    <Copy
+      SourceFiles="@(SourceFilesToCopyForTransform)"
+      DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempSolutionDirectory)\%(RecursiveDir)%(Filename)%(Extension)')"
+        />
+
+
 
     <!-- Read solution file so we can get the project source-->
-    <ReadLinesFromFile File="$(SolutionDirectoryPath)\$(ModuleName).Custom.sln">
+    <ReadLinesFromFile File="$(TempSolutionDirectory)\$(ModuleName).Custom.sln">
       <Output TaskParameter="Lines"
               ItemName="LinesFromSlnFile"/>
     </ReadLinesFromFile>
@@ -611,10 +681,16 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <!-- Create property that lists the project folders as an MSBuild include string-->
     <PropertyGroup>
-      <ProjectFoldersIncludeString>$(ModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(ModuleSourceDirectory)\')\**\*.*;</ProjectFoldersIncludeString>
+      <ProjectFoldersIncludeString>$(TempModuleSourceDirectory)\@(CustomProjects,'\**\*.*;$(TempModuleSourceDirectory)\')\**\*.*;</ProjectFoldersIncludeString>
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
+    <!-- Update the source with the specified transformations file -->
+    <SourceTransformationTask
+      Condition="($(CustomSolutionTransformsFile) != '')"
+      SourcePath="$(TempSolutionDirectory)"
+      TransformsDefinitionFile="$(SolutionDirectoryPath)\Build\$(CustomSolutionTransformsFile)"
+      />
 
     <!--Create CommonBuild Dir-->
 
@@ -636,7 +712,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
       <ZipSourceFiles
         Include="
-                      $(SolutionDirectoryPath)\**\*.Custom.sln;
+                      $(TempSolutionDirectory)\**\*.Custom.sln;
   					          "/>
 
       <ZipSourceFiles
@@ -644,27 +720,27 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   					          $(ProjectFoldersIncludeString)
   					          "
         Exclude="
-                      $(ModuleSourceDirectory)\**\*.sln;
-                      $(ModuleSourceDirectory)\**\*.vssscc;
-                      $(ModuleSourceDirectory)\**\*.vspscc;
-                      $(ModuleSourceDirectory)\**\*.sln.cache;
-                      $(ModuleSourceDirectory)\**\*.vsmdi;
-                      $(ModuleSourceDirectory)\**\*.testrunconfig;
-                      $(ModuleSourceDirectory)\**\*.suo;
-                      $(ModuleSourceDirectory)\**\*.sln.Debug.vsprops;
-                      $(ModuleSourceDirectory)\**\bin\**;
-                      $(ModuleSourceDirectory)\**\obj\**;
-                      $(ModuleSourceDirectory)\**\UnitTest*\**;
-                      $(ModuleSourceDirectory)\**\IntegrationTest*\**;
-  			          $(ModuleSourceDirectory)\**\TestResults\**;
-                      $(ModuleSourceDirectory)\**\Release.txt;
-                      $(ModuleSourceDirectory)\**\Debug.txt;
-                      $(ModuleSourceDirectory)\**\_Resharper*\**;
-                      $(ModuleSourceDirectory)\**\*resharper.user;
+                      $(TempModuleSourceDirectory)\**\*.sln;
+                      $(TempModuleSourceDirectory)\**\*.vssscc;
+                      $(TempModuleSourceDirectory)\**\*.vspscc;
+                      $(TempModuleSourceDirectory)\**\*.sln.cache;
+                      $(TempModuleSourceDirectory)\**\*.vsmdi;
+                      $(TempModuleSourceDirectory)\**\*.testrunconfig;
+                      $(TempModuleSourceDirectory)\**\*.suo;
+                      $(TempModuleSourceDirectory)\**\*.sln.Debug.vsprops;
+                      $(TempModuleSourceDirectory)\**\bin\**;
+                      $(TempModuleSourceDirectory)\**\obj\**;
+                      $(TempModuleSourceDirectory)\**\UnitTest*\**;
+                      $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
+  			              $(TempModuleSourceDirectory)\**\TestResults\**;
+                      $(TempModuleSourceDirectory)\**\Release.txt;
+                      $(TempModuleSourceDirectory)\**\Debug.txt;
+                      $(TempModuleSourceDirectory)\**\_Resharper*\**;
+                      $(TempModuleSourceDirectory)\**\*resharper.user;
   				    "/>
       <ZipSourceFiles
         Include="
-  					          $(ModuleBuildDirectory)\*.*;
+  					          $(TempModuleBuildDirectory)\*.*;
   					          "
               />
       <ZipSourceFiles
@@ -683,8 +759,11 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipSourceFiles)"
       ZipFileName="$(ZipFile)"
-      WorkingDirectory="$(SolutionDirectoryPath)"
+      WorkingDirectory="$(TempSolutionDirectory)"
             />
+
+    <RemoveDir
+      Directories="$(TempSolutionDirectory)"/>
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"

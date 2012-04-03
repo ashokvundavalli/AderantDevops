@@ -52,7 +52,7 @@
 		<Module Name="Libraries.Deployment"
 						AssemblyVersion="1.8.0.0" />
     <Module Name="SmartForms.ExpertTime"
-                        AssemblyVersion="1.8.0.0" />        
+            AssemblyVersion="1.8.0.0" />        
 		<Module Name="Libraries.Integration"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Customization"
@@ -152,6 +152,7 @@
 		<Module Name="Thirdparty.Mindscape"  />
 		<Module Name="Thirdparty.Microsoft"  />
 		<Module Name="Thirdparty.Microsoft.Build"/>
+		<Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller"/>
 		<Module Name="ThirdParty.Microsoft.EntityFramework"/>
 		<Module Name="Thirdparty.Microsoft.ExpressionBlendSdk"/>
 		<Module Name="Thirdparty.Microsoft.Linq.Dynamic"/>
@@ -183,6 +184,9 @@
 		<Module Name="Thirdparty.Ninject" />
     <Module Name="Thirdparty.MVC" />
     <Module Name="Thirdparty.SignalR" />
+	  <Module Name="Thirdparty.Reactive" />
+	  <Module Name="Thirdparty.WiX" />
+
 
     <!-- FWBS and FOApi are needed by MatterCenterIntegration.  Uncomment if MatterCenterIntegration is ever enabled.
             <Module Name="ThirdParty.FWBS" />

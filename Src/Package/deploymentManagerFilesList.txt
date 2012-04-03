@@ -85,6 +85,7 @@ log4net.xml
 mage.exe
 metadatamanager.exe
 metadatamanager.exe.config
+Microsoft.Deployment.WindowsInstaller.dll
 Microsoft.VisualStudio.Data.dll
 Microsoft.VisualStudio.Data.xml
 Microsoft.VisualStudio.Modeling.Sdk.10.0.dll
