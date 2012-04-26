@@ -55,8 +55,6 @@
             AssemblyVersion="1.8.0.0" />        
 		<Module Name="Libraries.Integration"
 						AssemblyVersion="1.8.0.0" />
-		<Module Name="Libraries.Customization"
-						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.SoftwareFactory"
 						AssemblyVersion="1.8.0.0" />
 		<Module Name="Libraries.Query"
