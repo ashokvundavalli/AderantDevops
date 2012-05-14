@@ -17,18 +17,18 @@ Function TryKillProcess([string] $processName, [string] $computerName){
 }
 
 Function Get-SourceDirectory($environmentManifestPath){    
-	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
+	[xml]$environmentManifest = Get-Content $environmentManifestPath      
 	$sourcePath = $environmentManifest.environment.deploymentBinariesPath  
 	return $sourcePath
 }
 
 Function Get-DbProjectTargetDatabaseServer($environmentManifestPath){    
-	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
+	[xml]$environmentManifest = Get-Content $environmentManifestPath      
     return $environmentManifest.environment.expertDatabaseServer.serverName + "\" + $environmentManifest.environment.expertDatabaseServer.serverInstance
 }
 
 Function Get-DbProjectTargetDatabaseName($environmentManifestPath){    
-	[xml]$environmentManifest =  Get-Content $environmentManifestPath
+	[xml]$environmentManifest = Get-Content $environmentManifestPath
     return $environmentManifest.environment.expertDatabaseServer.databaseConnection.databaseName
 }
 
@@ -55,7 +55,7 @@ Function CopyBinariesToRemoteMachine($localBinaries, $remoteBinaries) {
 Function Execute-SQL($environmentManifestPath, $SQLscript){
 	#This function executes a given SQL to a specified environment's Database
 	#Parameter definitions:
-	[xml]$environmentManifest =  Get-Content $environmentManifestPath      
+	[xml]$environmentManifest = Get-Content $environmentManifestPath      
 	$SQLServer = "{0}\{1}" -f $environmentManifest.environment.expertDatabaseServer.serverName, $environmentManifest.environment.expertDatabaseServer.serverInstance
 	$SQLDBName = $environmentManifest.environment.expertDatabaseServer.databaseConnection.databaseName
 	$SQLDBUid = "cmsdbo"
