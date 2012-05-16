@@ -47,7 +47,23 @@
 		<Error Condition="('$(IsDesktopBuild)'=='true')"/>
 	</Target>
 
+	
+	<!--
+    ==========================================================================================
+        Mark build step as failed
+    ==========================================================================================
+  -->
 
+	<Target Name="MarkStepAsFailed">
+		<BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Failed"
+            />
+		<Error Condition="('$(IsDesktopBuild)'=='true')"/>
+	</Target>
 
 
 	<!--
@@ -435,7 +451,7 @@
 		<Exec
             ContinueOnError="false"
             IgnoreExitCode="false"
-            Command='"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Deploy\vsdbcmd.exe" /a:deploy /dd /cs:"Integrated Security=SSPI;Initial Catalog=$(DbProjectTargetDatabase);Data Source=$(DbProjectTargetServer)" /model:$(LocalExpertBinariesDirectory)\Expert.dbschema /dsp:sql /p:TargetDatabase="$(DbProjectTargetDatabase)" /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false' />
+            Command='"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Deploy\vsdbcmd.exe" /a:deploy /dd /cs:"Integrated Security=SSPI;Initial Catalog=$(DbProjectTargetDatabase);Data Source=$(DbProjectTargetServer)" /ManifestFile:$(DbProjectSchemaFilePath) /dsp:sql /p:TargetDatabase="$(DbProjectTargetDatabase)" /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false' />
 
 		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
@@ -582,6 +598,7 @@
 			<TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
 			<TestSettingsSwitch>/testsettings:$(TestSettingsFile)</TestSettingsSwitch>
 			<ResultsFileSwitch>/resultsfile:$(ExpertProductDropDirectory)\IntegrationTestResults.trx</ResultsFileSwitch>
+			<DetailSwitch>/detail:projectname</DetailSwitch>
 
 			<!--VS2010 paths as we are using 2008 TFS-->
 			<VS2010TestHostDirectory>%VS100COMNTOOLS%..\IDE\</VS2010TestHostDirectory>
@@ -609,10 +626,10 @@
 		<Exec Condition="('$(IsDesktopBuild)'!='true')"
               ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch)'
+              Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch) $(DetailSwitch)'
               WorkingDirectory='$(ExpertTestsDirectory)'
               />
-
+		
 		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
             TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
@@ -620,7 +637,45 @@
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkStepAsFailed;ConvertTestResults" />
 
 	</Target>
+
+	<!--
+    ==========================================================================================
+        Convert Intergration Test Result to HTML
+    ==========================================================================================
+  -->		
+	<Target Name="ConvertTestResults"
+            Condition="('$(RunTests)'=='true')" >
+		
+		<BuildStep
+			Condition="('$(IsDesktopBuild)'!='true')"
+			Message="Converting Integration Tests Results to HTML"
+			TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+			BuildUri="$(BuildURI)"
+            >
+			<Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+		</BuildStep>
+		
+		<CreateItem Include="$(DropLocation)\$(BuildNumber)\*.trx">
+			<Output TaskParameter="Include" ItemName="trxfiles"/>
+		</CreateItem>
+		
+		<RidoTasks.trx2html FileName="%(trxfiles.Identity)" />
+
+		<BuildStep
+			Condition="('$(IsDesktopBuild)'!='true')"
+			TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+			BuildUri="$(BuildUri)"
+			Id="$(BuildStepId)"
+			Status="Succeeded" />
+
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		
+	</Target>
+	
 </Project>
