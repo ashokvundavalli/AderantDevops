@@ -79,7 +79,8 @@
         Automated Testing Targets
     ==========================================================================================
   -->
-
+  <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\RidoTasks.dll" />
+	
   <Target Name="AutomatedTestingTargets">
     <CallTarget Targets="PackageProductTests" />
     <CallTarget Targets="IntegrationTests" />
