@@ -1,15 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Settings>
+    <ServerUri>http://tfs.ap.aderant.com:8080/tfs/aderant</ServerUri>
+    <TeamProject>ExpertSuite</TeamProject>
+    
     <!-- Controls the name of the package -->
-    <PatchName>GENU 2194</PatchName>
+    <PatchName>Patch 2214</PatchName>
     
     <!-- Controls how the change set list should be discovered. Only the first node with a value will be used. -->
     <!-- If set the change set list will be taken from this Team Query -->
-    <TeamQuery>GGSP1HF03 GENU2194</TeamQuery>
+    <TeamQuery>Expert 8.0.0.1 Patch 2214</TeamQuery>
     
     <!-- If set the change set list will be taken between these two VersionSpec -->
-    <!--<StartVersionSpec>C193442</StartVersionSpec>
-    <EndVersionSpec>C193442</EndVersionSpec>-->
+    <StartVersionSpec></StartVersionSpec>
+    <EndVersionSpec></EndVersionSpec>  
     
     <!-- Example -->
     <!-- 
