@@ -5,7 +5,7 @@
 /p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\LoveBird
 /p:EnvironmentManifestPath=\\na.aderant.com\ExpertSuite\ExpertTestAssets\LoveBirdIntegrationTest.environment.xml
 /p:ExpertDatabaseConnectionStringForSystemMap="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"
-/p:BuildFlavor=Release
+/p:BuildFlavor=Debug
 /p:RunTests=false
 /P:ExpertAssistantAssemblyVersion=1.8.0.0
 /P:TimerAssemblyVersion=1.8.0.0

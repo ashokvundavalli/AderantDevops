@@ -8,4 +8,4 @@
 /p:VersionMinor=8
 /p:VersionBuild=0
 /p:VersionRevision=0
-/p:BuildFlavor=Release
+/p:BuildFlavor=Debug
