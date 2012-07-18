@@ -175,7 +175,8 @@
 		<Module Name="Thirdparty.LocalSecurityAuthority" />
     <Module Name="Thirdparty.NTFSStreams" />
 		<Module Name="Thirdparty.Keyoti.RapidSpell" />
-		<Module Name="Thirdparty.PDF" />
+    <Module Name="Thirdparty.Keyoti.RapidSpell.v3" />
+    <Module Name="Thirdparty.PDF" />
 		<Module Name="Thirdparty.SQLCE" />
 		<Module Name="Thirdparty.Ninject" />
     <Module Name="Thirdparty.MVC" />
