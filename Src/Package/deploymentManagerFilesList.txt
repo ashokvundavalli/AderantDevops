@@ -133,3 +133,6 @@ IronPython\V2.6\Microsoft.Scripting.Debugging.dll
 IronPython\V2.6\Microsoft.Scripting.dll
 SystemMapBuilder.exe
 SystemMapBuilder.exe.config
+System.Reactive.dll
+System.Reactive.Providers.dll
+System.Reactive.Windows.Threading.dll
