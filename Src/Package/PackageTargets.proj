@@ -21,7 +21,7 @@
 
 	<PropertyGroup>
 		<BuildScriptsDirectory>$(SolutionRoot)</BuildScriptsDirectory>
-		<CommonBuildScriptsDirectory>$(SolutionRoot)\Build</CommonBuildScriptsDirectory>
+		<CommonBuildScriptsDirectory>$(SolutionRoot)</CommonBuildScriptsDirectory>
 	</PropertyGroup>
 
 	<!--
