@@ -35,7 +35,7 @@
 /P:TimerAssemblyVersion=1.8.0.0
 
 # Microsoft Build Configuration
-/p:BuildFlavor=Debug
+/p:BuildFlavor=Release
 
 # Unused - remove.
 /p:ExpertProductDirectory=\\na.aderant.com\expertsuite\Dev\LoveBird\Product\Expert

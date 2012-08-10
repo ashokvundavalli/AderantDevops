@@ -76,8 +76,6 @@ Factory.bin
 ICSharpCode.SharpZipLib.dll
 Iesi.Collections.dll
 Iesi.Collections.xml
-IronMath.dll
-IronPython.dll
 Keyoti.RapidSpellMDict.dll
 Keyoti4.RapidSpell.WPF.dll
 log4net.dll
