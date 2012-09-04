@@ -20,8 +20,7 @@
 	</ProjectExtensions>
 
 	<PropertyGroup>
-		<BuildScriptsDirectory>$(SolutionRoot)</BuildScriptsDirectory>
-		<CommonBuildScriptsDirectory>$(SolutionRoot)</CommonBuildScriptsDirectory>
+        <BuildScriptsDirectory>$(SolutionRoot)</BuildScriptsDirectory>
 	</PropertyGroup>
 
 	<!--
@@ -133,15 +132,17 @@
 		<!--Merge and generate factory.bin-->
 		<Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(BuildScriptsDirectory)'
               WorkingDirectory="$(BuildScriptsDirectory)" />
 
 		<!-- Zip up and place in root of drop folder-->
 		<ItemGroup>
 			<ZipFiles Include="$(LocalExpertBinariesDirectory)\**\*.*" />
 		</ItemGroup>
-		<Zip Files="@(ZipFiles)"
-             ZipFileName="$(ExpertProductDropDirectory)\ExpertBinaries.zip"/>
+		<Zip 
+            Files="@(ZipFiles)"
+            ZipFileName="$(ExpertProductDropDirectory)\ExpertBinaries.zip"
+            WorkingDirectory="$(LocalExpertBinariesDirectory)"/>
 
 		<BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
@@ -177,7 +178,7 @@
 		<!--Merge and generate factory.bin-->
 		<Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductZip.ps1" -remoteMachineName $(RemoteTestMachineName) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesPathOnRemote) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductZip.ps1" -remoteMachineName $(RemoteTestMachineName) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesPathOnRemote) -buildLibrariesPath $(BuildScriptsDirectory)'
               WorkingDirectory="$(BuildScriptsDirectory)" />
 
 
@@ -281,7 +282,7 @@
 		<!--Copy test binaries to folder for execution.-->
 		<Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(CommonBuildScriptsDirectory)'
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(BuildScriptsDirectory)'
               WorkingDirectory="$(BuildScriptsDirectory)" />
 
 		<!--Copy to drop location for reference-->

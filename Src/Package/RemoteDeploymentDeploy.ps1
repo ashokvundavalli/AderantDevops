@@ -54,7 +54,7 @@ process{
             -ScriptBlock { 
                 param($dbProjectTargetServer, $dbProjectTargetDatabase, $sourcePath)
                 $vsdbcmd = ".\vsdbcmd.exe"
-                $params = "/a:deploy /cs:`"Integrated Security=SSPI;Initial Catalog=$dbProjectTargetDatabase;Data Source=$dbProjectTargetServer`" /ManifestFile:$sourcePath\Expert.deploymanifest /dsp:sql /p:TargetDatabase=$dbProjectTargetDatabase /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false"
+                $params = "/a:deploy /cs:`"Integrated Security=SSPI;Initial Catalog=$dbProjectTargetDatabase;Data Source=$dbProjectTargetServer`" /ManifestFile:C:\Expertsource\Expertsource\Expert.deploymanifest /dsp:sql /p:TargetDatabase=$dbProjectTargetDatabase /p:BlockIncrementalDeploymentIfDataLoss=False /p:DeployDatabaseProperties=False /p:AlwaysCreateNewDatabase=false"
                 Write-host "Command: $vsdbcmd $params"
                 pushd "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Deploy\"
                 cmd /C "$vsdbcmd $params"
