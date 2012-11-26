@@ -15,7 +15,9 @@
 						AssemblyVersion="1.8.0.0"/>
 		<Module Name="Applications.Administration"
 						AssemblyVersion="1.8.0.0"  />
-		<Module Name="Applications.Customization"
+    <Module Name="Applications.CCLogViewer"
+            AssemblyVersion="1.8.0.0"  />
+    <Module Name="Applications.Customization"
 						AssemblyVersion="1.8.0.0"  />
 		<Module Name="Applications.Deployment"
 						AssemblyVersion="1.8.0.0"  />
