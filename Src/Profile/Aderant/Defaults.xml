@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DefaultPath>
     <!--Change to your relavent branch-->
-    <dropRootUNCPath Value="\\na.aderant.com\expertsuite\Dev\Validation" />
-    <devBranchFolder Value="C:\ExpertSuite\Dev\Validation" />
+    <dropRootUNCPath Value="\\na.aderant.com\expertsuite\dev\ExpressionsPhase2" />
+    <devBranchFolder Value="C:\tfs\ExpertSuite\dev\ExpressionsPhase2" />
     <!--Add your database details for the automatic creation of the systemmap for customisation-->
     <!--<systemMapConnectionString Value="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"/>-->
 
