@@ -25,9 +25,33 @@ process{
         Write-Host "Invoking DeploymentEngine to STOP on [$remoteMachineName]."
     	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath\"; .\DeploymentEngine.exe stop   "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
 
-        Write-Host "Waiting for services to stop on [$remoteMachineName]."
-    	Start-Sleep -s 120
+		Write-Host "Invoking to remove Share permissions from the ExpertShare folder on [$remoteMachineName]."
+		Invoke-Command $session -ScriptBlock { 
+			$share = GET-WMIOBJECT Win32_Share -Filter "Name='ExpertShare'"
+			Write-Verbose "Attempt to remove specified share"
+			$Return = $share.Delete()
+			if ($Return.ReturnValue -ne 0) {
+			Write-Host "Unable to remove specified share due of the error: $(Get-ReturnCode $Return)."
+			}
+			else {
+				Write-Verbose "Removed Share permissions on ExpertShare folder."
+			}
+		}
+		
+		Start-Sleep -s 10
+		
+		Write-Host "Invoking to create Share permissions for the ExpertShare folder on [$remoteMachineName]."
+		Invoke-Command $session -ScriptBlock { 
+			param($remoteMachineName) 					 
+			$share = GET-WMIOBJECT Win32_Share -Filter "Name='ExpertShare'"
+			Write-Verbose "Attempt to create specified share"
+			net share "ExpertShare=C:\ExpertShare" "/GRANT:Everyone,FULL"
+		} -ArgumentList $remoteMachineName
+		
+		Start-Sleep -s 10
 
+        #Write-Host "Waiting for services to stop on [$remoteMachineName]."
+    	#Start-Sleep -s 30
         # Need to get server info from environment so we kill processes on the right machine.
         #TryKillProcess "Expert.Workflow.Service" $remoteMachineName
         #TryKillProcess "ExpertMatterPlanning" $remoteMachineName

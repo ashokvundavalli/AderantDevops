@@ -21,7 +21,7 @@ process{
     
 	#Wait for services to start
 	Write-Host "Waiting for services to start on [$remoteMachineName]."
-	Start-Sleep -Seconds 120
+	Start-Sleep -Seconds 20
 	
 	#Start to ping serivces on target machine
     Write-Host "Invoking DeploymentEngine to PING Services on [$remoteMachineName]."
@@ -29,16 +29,10 @@ process{
 		param($innerSourcePath, $innerManifestPath) 
 		cd "$innerSourcePath"; .\DeploymentEngine.exe ping "$innerManifestPath" 
 		Write-Host "Last Exit Code for Deployment Engine - Ping: $LASTEXITCODE"
-		Write-Host "Last Exit Code for Deployment Engine - Ping: $LASTEXITCODE"
-		Write-Host "Last Exit Code for Deployment Engine - Ping: $LASTEXITCODE"
-		Write-Host "Last Exit Code for Deployment Engine - Ping: $LASTEXITCODE"
 		#Check PS exit code, if something went wrong, restart the services
 		if ($LASTEXITCODE -ne 0) {
 			Write-Host "Services did not start, attempting to re-start services. Invoking DeploymentEngine to RESTART Services on [$remoteMachineName]."		
 			cd "$innerSourcePath"; .\DeploymentEngine.exe restart "$innerManifestPath" 
-			Write-Host "Last Exit Code for Deployment Engine - Restart: $LASTEXITCODE"
-			Write-Host "Last Exit Code for Deployment Engine - Restart: $LASTEXITCODE"
-			Write-Host "Last Exit Code for Deployment Engine - Restart: $LASTEXITCODE"
 			Write-Host "Last Exit Code for Deployment Engine - Restart: $LASTEXITCODE"
 			if ($LASTEXITCODE -ne 0) { Write-Host "There was a problem starting the services, please check the environment. Exit Code: $LASTEXITCODE" }
 			}
