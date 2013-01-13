@@ -1,0 +1,16 @@
+#
+# This file lists all the files that are copied to the LicenseGenerator folder to support running LicenseGenerator.exe and PackagePackager.exe
+#
+Aderant.Framework.Communication.Client.dll
+Aderant.Framework.Communication.Server.dll
+Aderant.Framework.Configuration.dll
+Aderant.Framework.Configuration.Service.dll
+Aderant.Framework.dll
+Aderant.Framework.Identity.dll
+Aderant.Framework.Packaging.Client.dll
+Aderant.Framework.Packaging.dll
+Aderant.Framework.Packaging.Dtos.dll
+Aderant.Framework.Packaging.Process.dll
+Aderant.Framework.Persistence.dll
+Aderant.Framework.Presentation.dll
+ICSharpCode.SharpZiplib.dll

@@ -26,6 +26,7 @@ Aderant.Framework.Packaging.Service.dll
 Aderant.Framework.PackagingPlugins.dll
 Aderant.Framework.Persistence.dll
 Aderant.Framework.Presentation.dll
+Aderant.Framework.Reporting.dll
 Aderant.Framework.Security.dll
 Aderant.Framework.Security.ImportExport.dll
 Aderant.Framework.ServiceLibrary.dll
