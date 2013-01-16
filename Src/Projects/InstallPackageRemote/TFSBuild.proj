@@ -24,7 +24,7 @@
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
 
     <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
-    <Import Project="\\na.aderant.com\expertsuite\dev\OnTheGoV2\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
+    <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
   <!--
     ==========================================================================================
         Begin
@@ -81,13 +81,46 @@
   -->
 
   <Target Name="AutomatedTestingTargets">
-    <CallTarget Targets="RemoveProductRemote" />
-    <CallTarget Targets="RestoreDB" />  
-    <CallTarget Targets="PackageProduct" Condition="('$(UseBuildAllOutput)'!='true')" />
-    <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
-    <CallTarget Targets="DeployProductRemote" />
-    <CallTarget Targets="WaitForServiceStartUp" />
-  </Target>  
+    <CallTarget Targets="ImportPackageRemote" />
+  </Target>
 
+
+    <!--
+    ==========================================================================================
+        Run deployment from remote machine
+    ==========================================================================================
+  -->
+
+    <Target Name="ImportPackageRemote">
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            Message="Importing Package"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildURI)"
+            >
+
+            <Output
+                TaskParameter="id"
+                PropertyName="BuildStepId"
+                />
+
+        </BuildStep>
+
+        <Exec
+            ContinueOnError="false"
+            IgnoreExitCode="false"
+            Command='"Powershell" "$(BuildScriptsDirectory)\RemoteImportPackage.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath) $(PackagePath)' />
+
+        <BuildStep
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
+
+        <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+    </Target>
 
 </Project>

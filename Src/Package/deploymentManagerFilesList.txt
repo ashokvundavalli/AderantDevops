@@ -109,6 +109,9 @@ NHibernate.Linq.xml
 NHibernate.xml
 NVelocity.dll
 NVelocity.license.txt
+PackageManagerConsole.exe
+PackageManagerConsole.exe.config
+PackageManagerConsole.exe.log4net.xml
 role.xsd
 Trinet.Core.IO.Ntfs.dll
 Wintellect.Threading.dll

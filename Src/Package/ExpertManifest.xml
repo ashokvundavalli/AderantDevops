@@ -125,6 +125,12 @@
                         AssemblyVersion="1.8.0.0"/>
         <Module Name="Packages"
                         AssemblyVersion="1.8.0.0"/>
+        <Module Name="Web.Foundation"
+                        AssemblyVersion="1.8.0.0"/>
+        <Module Name="Web.Presentation"
+                      AssemblyVersion="1.8.0.0"/>
+        <Module Name="Web.Time"
+                      AssemblyVersion="1.8.0.0"/>
         <Module Name="Web.Workflow"
                         AssemblyVersion="1.8.0.0"/>
         <Module Name="Workflow.FileOpening"

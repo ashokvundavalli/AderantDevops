@@ -1,0 +1,17 @@
+# This is a response file for MSBuild
+# Add custom MSBuild command line options in this file
+
+##########################################
+# DeployProduct and RemoveProduct targets
+##########################################
+# Environment used by RemoveProduct and DeployProduct targets when running deployment engine.
+/p:EnvironmentManifestPath=\\vmexpdevb307\ExpertSource\environment.xml
+
+# Specify the remote test machine.  Binaries will be copied to this macine, and deployment runs on this machine too.
+/p:RemoteTestMachineName=vmexpdevb307.ap.aderant.com
+
+##########################################
+# DeployProduct and RemoveProduct targets
+##########################################
+# 
+/p:PackagePath=\\vmexpdevb307\ExpertPackages\FileOpening.zip
