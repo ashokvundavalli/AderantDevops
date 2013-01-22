@@ -27,6 +27,10 @@
                         AssemblyVersion="1.8.0.0"  />
         <Module Name="Applications.FoundTimeOutlookAddIn"
                         AssemblyVersion="1.8.0.0"  />
+        <Module Name="Applications.WipReview"
+                        AssemblyVersion="1.8.0.0"  />
+        <Module Name="Applications.TeamManager"
+                      AssemblyVersion="1.8.0.0"  />
         <Module Name="Build.T4Task"
                         AssemblyVersion="1.8.0.0"  />    
         <Module Name="Libraries.Entities.Disbursement"
@@ -142,7 +146,9 @@
         <Module Name="Workflow.PaperlessPrebill"
                         AssemblyVersion="1.8.0.0"/>    
         <Module Name="Workflow.MatterPlanning"
-                        AssemblyVersion="1.8.0.0"/>    
+                        AssemblyVersion="1.8.0.0"/>
+        <Module Name="Workflow.TeamManager"
+                      AssemblyVersion="1.8.0.0"/>
         <Module Name="Expert.Help"/>
         <Module Name="Marketing.Help"/>
         <Module Name="Thirdparty.ICSharpCode"  />
