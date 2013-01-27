@@ -113,6 +113,7 @@ PackageManagerConsole.exe
 PackageManagerConsole.exe.config
 PackageManagerConsole.exe.log4net.xml
 role.xsd
+ToolsBase.dll
 Trinet.Core.IO.Ntfs.dll
 Wintellect.Threading.dll
 WPFToolkit.dll

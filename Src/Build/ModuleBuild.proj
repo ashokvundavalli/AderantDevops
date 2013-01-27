@@ -732,7 +732,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
                       $(TempModuleSourceDirectory)\**\obj\**;
                       $(TempModuleSourceDirectory)\**\UnitTest*\**;
                       $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
-  			              $(TempModuleSourceDirectory)\**\TestResults\**;
+  			          $(TempModuleSourceDirectory)\**\TestResults\**;
                       $(TempModuleSourceDirectory)\**\Release.txt;
                       $(TempModuleSourceDirectory)\**\Debug.txt;
                       $(TempModuleSourceDirectory)\**\_Resharper*\**;
