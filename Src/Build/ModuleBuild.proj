@@ -447,9 +447,14 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <Message Text="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"/>
     <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
 
-    <MSBuild Condition="('$(IsDesktopBuild)'=='true')"
+    <MSBuild Condition="('$(IsDesktopBuild)'=='true') And ('$(PackageWeb)'!='true')"
              Projects="$(SolutionFileName)"
              Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
+             Targets="Build"  />
+
+    <MSBuild Condition="('$(IsDesktopBuild)'=='true') And ('$(PackageWeb)'=='true')"
+             Projects="$(SolutionFileName)"
+             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true"
              Targets="Build"  />
 
     <Exec Condition="('$(IsDesktopBuild)'!='true')"
@@ -732,7 +737,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
                       $(TempModuleSourceDirectory)\**\obj\**;
                       $(TempModuleSourceDirectory)\**\UnitTest*\**;
                       $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
-  			          $(TempModuleSourceDirectory)\**\TestResults\**;
+  			              $(TempModuleSourceDirectory)\**\TestResults\**;
                       $(TempModuleSourceDirectory)\**\Release.txt;
                       $(TempModuleSourceDirectory)\**\Debug.txt;
                       $(TempModuleSourceDirectory)\**\_Resharper*\**;

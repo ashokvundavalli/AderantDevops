@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert"
 				 ExpertVersion="8">
 	<Modules>
@@ -195,8 +195,10 @@
 		<Module Name="Thirdparty.PDF" />
 		<Module Name="Thirdparty.SQLCE" />
 		<Module Name="Thirdparty.Ninject" />
+    <Module Name="Thirdparty.Newtonsoft.Json" />
 		<Module Name="Thirdparty.MVC" />
 		<Module Name="Thirdparty.SignalR" />
+    <Module Name="Thirdparty.SignalR.Client" />
 		<Module Name="Thirdparty.Reactive" />
 		<Module Name="Thirdparty.WiX" />
         <Module Name="Thirdparty.Microsoft.UrlRewrite" />
@@ -204,4 +206,3 @@
 		<Module Name="ThirdParty.FOApi" />
 	</Modules>
 </ProductManifest>
-
