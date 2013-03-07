@@ -153,8 +153,10 @@
 		<Module Name="Workflow.TeamManager"
 				AssemblyVersion="1.8.0.0" />        
 		<Module Name="Expert.Help" />
-		<Module Name="Marketing.Help" />
-		<Module Name="Thirdparty.ICSharpCode" />
+        <Module Name="Marketing.Help" />
+        <Module Name="Internal.Licensing" />
+        <Module Name="Services.Registration" />
+        <Module Name="Thirdparty.ICSharpCode" />
 		<Module Name="Thirdparty.Infragistics" />
 		<Module Name="Thirdparty.DevComponents" />
 		<Module Name="Thirdparty.ExtremeML" />
