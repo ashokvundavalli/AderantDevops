@@ -152,10 +152,12 @@
 				AssemblyVersion="1.8.0.0" />
 		<Module Name="Workflow.TeamManager"
 				AssemblyVersion="1.8.0.0" />        
+        <Module Name="Internal.Licensing"
+				AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Registration"
+				AssemblyVersion="1.8.0.0" />
 		<Module Name="Expert.Help" />
         <Module Name="Marketing.Help" />
-        <Module Name="Internal.Licensing" />
-        <Module Name="Services.Registration" />
         <Module Name="Thirdparty.ICSharpCode" />
 		<Module Name="Thirdparty.Infragistics" />
 		<Module Name="Thirdparty.DevComponents" />
