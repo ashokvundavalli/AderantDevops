@@ -2,8 +2,6 @@
 <ProductManifest Name="Expert"
 				 ExpertVersion="8">
 	<Modules>
-		<Module Name="Database"
-				AssemblyVersion="1.8.0.0" />
 		<Module Name="Installs.Marketing"
 				AssemblyVersion="1.8.0.0" />
 		<Module Name="Applications.Marketing"
