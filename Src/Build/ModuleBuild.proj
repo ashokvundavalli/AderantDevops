@@ -630,15 +630,11 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <MakeDir
       Directories="$(TempSolutionDirectory)"/>
 
-
     <Copy
       SourceFiles="@(SourceFilesToCopyForTransform)"
-      DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempSolutionDirectory)\%(RecursiveDir)%(Filename)%(Extension)')"
-        />
+      DestinationFiles="@(SourceFilesToCopyForTransform->'$([System.IO.Path]::GetFullPath('$(TempSolutionDirectory)\%(RecursiveDir)%(Filename)%(Extension)'))')" />
 
-
-
-    <!-- Read solution file so we can get the project source-->
+      <!-- Read solution file so we can get the project source-->
     <ReadLinesFromFile File="$(TempSolutionDirectory)\$(ModuleName).Custom.sln">
       <Output TaskParameter="Lines"
               ItemName="LinesFromSlnFile"/>

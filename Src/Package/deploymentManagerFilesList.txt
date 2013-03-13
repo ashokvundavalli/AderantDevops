@@ -72,7 +72,10 @@ bindings.config
 DeploymentService.exe
 DeploymentService.exe.config
 DevComponents.WpfRibbon.dll
+EntityFramework.dll
 environment.xsd
+EnvironmentCloner.exe
+EnvironmentCloner.exe.config
 Factory.bin
 ICSharpCode.SharpZipLib.dll
 Iesi.Collections.dll
@@ -97,7 +100,6 @@ Microsoft.VisualStudio.Settings.dll
 Microsoft.VisualStudio.Settings.xml
 Microsoft.VisualStudio.TextTemplating.10.0.dll
 Microsoft.VisualStudio.TextTemplating.Interfaces.10.0.dll
-EntityFramework.dll
 nhibernate-configuration.xsd
 nhibernate-mapping.xsd
 NHibernate.ByteCode.Castle.dll
@@ -112,7 +114,14 @@ NVelocity.license.txt
 PackageManagerConsole.exe
 PackageManagerConsole.exe.config
 PackageManagerConsole.exe.log4net.xml
+RefreshDBFromEnvironment.exe
+RefreshDBFromEnvironment.exe.config
 role.xsd
+SystemMapBuilder.exe
+SystemMapBuilder.exe.config
+System.Reactive.dll
+System.Reactive.Providers.dll
+System.Reactive.Windows.Threading.dll
 ToolsBase.dll
 Trinet.Core.IO.Ntfs.dll
 Wintellect.Threading.dll
@@ -121,7 +130,6 @@ Xceed.Wpf.Controls.v4.1.dll
 Xceed.Wpf.DataGrid.v4.1.dll
 en-US\Aderant.Framework.Configuration.Presentation.resources.dll
 en-US\Aderant.Framework.Identity.Presentation.resources.dll
-en-US\Aderant.Framework.Presentation.resources.dll
 en-US\Aderant.Framework.Security.Presentation.resources.dll
 en-US\SecurityManager.resources.dll
 IronPython\V2.6\ipy.exe
@@ -134,8 +142,10 @@ IronPython\V2.6\IronPython.XML
 IronPython\V2.6\Microsoft.Dynamic.dll
 IronPython\V2.6\Microsoft.Scripting.Debugging.dll
 IronPython\V2.6\Microsoft.Scripting.dll
-SystemMapBuilder.exe
-SystemMapBuilder.exe.config
-System.Reactive.dll
-System.Reactive.Providers.dll
-System.Reactive.Windows.Threading.dll
+SQLScripts\Expert\DeleteMessageRouterRegistrations.sql
+SQLScripts\Expert\DeleteWorkflowInstanceData.sql
+SQLScripts\Expert\ResetServiceBroker.sql
+SQLScripts\Expert\SetDatabaseToTrustworthy.sql
+SQLScripts\Expert\SyncExpertUsersWithDatabaseUsers.sql
+SQLScripts\Workflow\DeleteRunningWorkflowInstanceData.sql
+

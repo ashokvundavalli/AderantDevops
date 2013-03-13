@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert"
 				 ExpertVersion="8">
 	<Modules>
@@ -139,7 +139,7 @@
 		<Module Name="Web.Time"
 				AssemblyVersion="1.8.0.0" />
 		<Module Name="Web.Workflow"
-				AssemblyVersion="1.8.0.0" />
+			  	AssemblyVersion="1.8.0.0"/>
 		<Module Name="Workflow.FileOpening"
 				AssemblyVersion="1.8.0.0" />
 		<Module Name="Workflow.EmployeeIntake"
