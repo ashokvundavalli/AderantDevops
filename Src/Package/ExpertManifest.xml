@@ -174,7 +174,8 @@
 		<Module Name="Thirdparty.Microsoft.Practices" />
 		<Module Name="Thirdparty.Microsoft.VisualStudio" />
 		<Module Name="Thirdparty.Microsoft.Net4" />
-		<Module Name="Thirdparty.Microsoft.NTRights" />
+    <Module Name="Thirdparty.Microsoft.OData" />
+    <Module Name="Thirdparty.Microsoft.NTRights" />
 		<Module Name="Thirdparty.Microsoft.WindowsServerAppFabric" />
 		<Module Name="Thirdparty.MSExchange" />
 		<Module Name="Thirdparty.NHibernate" />
