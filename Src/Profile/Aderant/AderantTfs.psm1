@@ -311,9 +311,7 @@ function Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $
     Write-Host "Merge Completed!!!"
 }
 
-Add-BranchExpansionParameter -CommandName "Merge-Branch" -ParameterName "sourceBranch"
-Add-BranchExpansionParameter -CommandName "Merge-Branch" -ParameterName "targetBranch"
-
 Set-Alias merge Merge-Branch
 Export-ModuleMember -function Merge-Branch
 Export-Alias merge
+
