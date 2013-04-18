@@ -372,10 +372,6 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     ==========================================================================================
   -->
 
-  <PropertyGroup>
-    <TfCommand>$(TeamBuildRefPath)\..\tf.exe</TfCommand>
-  </PropertyGroup>
-
   <Target Name="UpdateModuleFileVersion"
           Condition="('$(IsDesktopBuild)'!='true')">
 
