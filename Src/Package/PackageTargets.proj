@@ -25,7 +25,7 @@
 
 	<!--
     ==========================================================================================
-        Build Status
+        Build Status - Set both Build and Step status to FAIL
     ==========================================================================================
   -->
 
@@ -49,7 +49,7 @@
 	
 	<!--
     ==========================================================================================
-        Mark build step as failed
+        Build Status - Only set Step status to FAIL
     ==========================================================================================
   -->
 
@@ -638,7 +638,7 @@
             Id="$(BuildStepId)"
             Status="Succeeded" />
 
-		<OnError ExecuteTargets="MarkStepAsFailed;ConvertTestResults" />
+		<OnError ExecuteTargets="MarkStepAsFailed" />
 
 	</Target>
 
@@ -675,8 +675,131 @@
 			Id="$(BuildStepId)"
 			Status="Succeeded" />
 
-		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+		<OnError ExecuteTargets="MarkStepAsFailed" />
 		
 	</Target>
+
+	<!--
+    
+    ==========================================================================================
+        Create Database Snapshot
+    ==========================================================================================
+  -->
+
+	<Target Name="CreateDBSnapshot"
+            Condition="('$(IsDesktopBuild)' != 'true') and ('$(RestoreSnapshot)' == 'true')">
+
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  Message="Creating Database Snapshot"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildURI)"
+            >
+
+			<Output
+			  TaskParameter="id"
+			  PropertyName="BuildStepId"
+                />
+
+		</BuildStep>
+
+		<!--Run from build server as has a dependancy on .NET framework-->
+		<Exec
+		  ContinueOnError="false"
+		  IgnoreExitCode="false"
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "CREATE"' />
+
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildUri)"
+		  Id="$(BuildStepId)"
+		  Status="Succeeded" />
+
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+	</Target>
+
+	<!--
+    
+    ==========================================================================================
+        Restore from Database Snapshot
+    ==========================================================================================
+  -->
+
+	<Target Name="RestoreDBSnapshot"
+            Condition="('$(IsDesktopBuild)' != 'true') and ('$(RestoreSnapshot)' == 'true')">
+
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  Message="Restoring Database"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildURI)"
+            >
+
+			<Output
+			  TaskParameter="id"
+			  PropertyName="BuildStepId"
+                />
+
+		</BuildStep>
+
+		<!--Run from build server as has a dependancy on .NET framework-->
+		<Exec
+		  ContinueOnError="false"
+		  IgnoreExitCode="false"
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "RESTORE"' />
+
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildUri)"
+		  Id="$(BuildStepId)"
+		  Status="Succeeded" />
+
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+	</Target>
+
+	<!--
+    
+    ==========================================================================================
+        Run UPD
+    ==========================================================================================
+  -->	
+	
+	<Target Name="RunUPD"
+            Condition="('$(IsDesktopBuild)' != 'true') and ('$(RunUPD)' == 'true')">
+
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  Message="Running UPD"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildURI)"
+            >
+
+			<Output
+			  TaskParameter="id"
+			  PropertyName="BuildStepId"
+                />
+ 
+		</BuildStep>
+
+		<!--Run from build server as has a dependancy on .NET framework-->
+		<Exec
+		  ContinueOnError="false"
+		  IgnoreExitCode="false"
+		  Command='"Powershell" "$(DBGenDirectory)\DBGEN.EXE HIDE=1 AUTOSTART=1 AUTOCLOSE=1 EXPERTMODE=1 target=$(UPDTarget) login=cmsdbo password=cmsdbo update.1=$(UPDPath)"' />
+
+		<BuildStep
+		  Condition="('$(IsDesktopBuild)'!='true')"
+		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+		  BuildUri="$(BuildUri)"
+		  Id="$(BuildStepId)"
+		  Status="Succeeded" />
+
+		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+	</Target>	
 	
 </Project>

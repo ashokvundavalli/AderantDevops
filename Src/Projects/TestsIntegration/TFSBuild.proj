@@ -45,7 +45,10 @@
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>     
+    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>
+	  
+	<!-- Define targets to run from PackageTargets-->  
+	<IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>  
   </PropertyGroup>
 
   <!-- 
@@ -82,8 +85,7 @@
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\RidoTasks.dll" />
 	
   <Target Name="AutomatedTestingTargets">
-    <CallTarget Targets="PackageProductTests" />
-    <CallTarget Targets="IntegrationTests" />
+    <CallTarget Targets="$(IntegrationTestSteps)" RunEachTargetSeparately="true" />
   </Target>  
 
 </Project>
