@@ -128,6 +128,8 @@
         AssemblyVersion="1.8.0.0" />
     <Module Name="SDK.Workflow"
         AssemblyVersion="1.8.0.0" />
+    <Module Name="SDK.Database" 
+        AssemblyVersion="1.8.0.0" />
     <Module Name="Packages"
         AssemblyVersion="1.8.0.0" />
     <Module Name="Web.Foundation"
@@ -207,5 +209,9 @@
     <Module Name="Thirdparty.Microsoft.UrlRewrite" />
     <Module Name="ThirdParty.FWBS" />
     <Module Name="ThirdParty.FOApi" />
+    <Module Name="Database" />
+    <Module Name="ThirdParty.AutoMapper.2" />
+    <Module Name="ThirdParty.Irony" />
+    <Module Name="ThirdParty.DBGEN" />
   </Modules>
 </ProductManifest>
