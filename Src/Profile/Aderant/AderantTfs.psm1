@@ -312,6 +312,5 @@ function Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $
 }
 
 Set-Alias merge Merge-Branch
-Export-ModuleMember -function Merge-Branch
-Export-Alias merge
+Export-ModuleMember -function Merge-Branch -alias merge
 
