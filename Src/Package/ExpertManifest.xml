@@ -213,5 +213,17 @@
     <Module Name="ThirdParty.AutoMapper.2" />
     <Module Name="ThirdParty.Irony" />
     <Module Name="ThirdParty.DBGEN" />
+
+    <Module Name="Thirdparty.DotLess"/>
+    <Module Name="Thirdparty.WatiN" />
+    <Module Name="Thirdparty.Bootstrap" />
+    <Module Name="Thirdparty.Add2Home" />
+    <Module Name="Thirdparty.AsyncJs" />
+    <Module Name="Thirdparty.JQuery" />
+    <Module Name="Thirdparty.JQueryUI" />
+    <Module Name="Thirdparty.Knockout" />
+    <Module Name="Thirdparty.Modernizr" />
+    <Module Name="Thirdparty.SpinJs" />
+    <Module Name="Thirdparty.Underscore" />
   </Modules>
 </ProductManifest>
