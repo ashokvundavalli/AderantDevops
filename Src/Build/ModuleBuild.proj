@@ -296,7 +296,7 @@ foreach(var replacement in replacements){
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)LoadDependancies.ps1" -modulesRootPath $(SolutionDirectoryPath) -dropPath $(BaseDropDirectory) -buildScriptsDirectory $(BuildScriptsDirectory)'>
+          Command='"Powershell" "$(BuildScriptsDirectory)LoadDependancies.ps1" -modulesRootPath $(SolutionDirectoryPath) -moduleName $(ModuleName) -dropPath $(BaseDropDirectory) -buildScriptsDirectory $(BuildScriptsDirectory)'>
     </Exec>
 
     <BuildStep
