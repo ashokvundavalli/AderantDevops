@@ -110,8 +110,6 @@
         AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Foundation"
         AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Identity"
-        AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Integration"
         AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Metadata"
@@ -122,15 +120,13 @@
         AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Security"
         AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Lookup"
-        AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Query"
         AssemblyVersion="1.8.0.0" />
     <Module Name="SDK"
         AssemblyVersion="1.8.0.0" />
     <Module Name="SDK.Workflow"
-        AssemblyVersion="1.8.0.0" />  
-    <Module Name="SDK.Database" 
+        AssemblyVersion="1.8.0.0" />
+    <Module Name="SDK.Database"
         AssemblyVersion="1.8.0.0" />
     <Module Name="Packages"
         AssemblyVersion="1.8.0.0" />
@@ -153,7 +149,7 @@
     <Module Name="Workflow.MatterPlanning"
         AssemblyVersion="1.8.0.0" />
     <Module Name="Workflow.TeamManager"
-      AssemblyVersion="1.8.0.0" />        
+      AssemblyVersion="1.8.0.0" />
     <Module Name="Internal.Licensing"
         AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Registration"
@@ -209,11 +205,10 @@
     <Module Name="Thirdparty.WiX" />
     <Module Name="Thirdparty.Microsoft.UrlRewrite" />
     <Module Name="ThirdParty.FWBS" />
-    <Module Name="ThirdParty.FOApi" />    
+    <Module Name="ThirdParty.FOApi" />
     <Module Name="ThirdParty.AutoMapper.2" />
     <Module Name="ThirdParty.Irony" />
     <Module Name="ThirdParty.DBGEN" />
-
     <Module Name="Thirdparty.DotLess"/>
     <Module Name="Thirdparty.WatiN" />
     <Module Name="Thirdparty.Bootstrap" />
@@ -225,5 +220,12 @@
     <Module Name="Thirdparty.Modernizr" />
     <Module Name="Thirdparty.SpinJs" />
     <Module Name="Thirdparty.Underscore" />
+    <Module Name="Thirdparty.RhinoMocks" />
+    <Module Name="Thirdparty.Moq" />
+    <Module Name="Thirdparty.NMock.2" />
+    <Module Name="Thirdparty.SpecFlow" />
+    <Module Name="Thirdparty.ZipLibrary" />
+    <Module Name="Thirdparty.HtmlAgilityPack" />
+    <Module Name="ThirdParty.SquishIt" />
   </Modules>
 </ProductManifest>
