@@ -54,8 +54,8 @@ Aderant.BusinessEntity.dll
 Aderant.BusinessEntity.Library.dll
 Aderant.BusinessEntity.Model.dll
 Aderant.Common.dll
-Aderant.Employee.Library.dl
-Aderant.Employee.Model.dlll
+Aderant.Employee.Library.dll
+Aderant.Employee.Model.dll
 Aderant.Firm.Library.dll
 Aderant.Firm.Model.dll
 Aderant.FirmControl.dll
