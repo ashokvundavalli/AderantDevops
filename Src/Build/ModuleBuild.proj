@@ -1006,14 +1006,14 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
     <Exec Condition="('$(BuildAll)'=='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion)' />
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
 
     <Exec Condition="('$(BuildAll)'!='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
+          Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
 
-    <BuildStep
+      <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
