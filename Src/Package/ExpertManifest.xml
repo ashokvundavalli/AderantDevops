@@ -180,7 +180,11 @@
     <Module Name="Thirdparty.NHibernate" />
     <Module Name="Thirdparty.NVelocity" />
     <Module Name="Thirdparty.log4net" />
+    
+    <!-- These are fundamentally incompatible with each other as they share the same file name -->
     <Module Name="Thirdparty.NMock" />
+    <Module Name="Thirdparty.NMock.2" />    
+
     <Module Name="Thirdparty.OpenXML" />
     <Module Name="Thirdparty.Wintellect" />
     <Module Name="Thirdparty.Xenocode" />
@@ -220,8 +224,7 @@
     <Module Name="Thirdparty.SpinJs" />
     <Module Name="Thirdparty.Underscore" />
     <Module Name="Thirdparty.RhinoMocks" />
-    <Module Name="Thirdparty.Moq" />
-    <Module Name="Thirdparty.NMock.2" />
+    <Module Name="Thirdparty.Moq" />    
     <Module Name="Thirdparty.SpecFlow" />
     <Module Name="Thirdparty.ZipLibrary" />
     <Module Name="Thirdparty.HtmlAgilityPack" />
