@@ -35,9 +35,14 @@ begin {
     }
 }
 
-process {
-    $path = GetSourceDirectory $environmentManifestPath
-    [System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($path, "Aderant.Framework.dll")) | Out-Null
+process {    
+    $fw = [System.IO.Path]::Combine($expertSourceDirectory, "Aderant.Framework.dll")
+    
+    if (-not (Test-Path $fw)) {
+        throw [string]"Aderant.Framework.dll not found at path: $fw"
+    }
+    
+    [System.Reflection.Assembly]::LoadFrom($fw) | Out-Null
     
     $encryption = New-Object Aderant.Framework.Encryption		
     $password = GetPassword $environmentManifestPath
@@ -52,7 +57,7 @@ process {
     Write-Debug "Using connection $server.$database ($login [$password])"
     
     Write-Host "Loading database module"	
-    $module = [System.IO.Path]::Combine($path, "Aderant.Database.Build.dll")
+    $module = [System.IO.Path]::Combine($expertSourceDirectory, "Aderant.Database.Build.dll")
     
     if (Test-Path $module) {
         Import-Module $module
@@ -62,9 +67,9 @@ process {
         if (Test-Path $upd) {            
             Update-ExpertDatabase -Server "$server" -Database "$database" -Login "$login" -Password "$password" -DeploymentToolPath "$expertSourceDirectory" -DeploymentManifestPath "$upd" -interactive:$interactive
         } else {
-            Write-Error "No EXPERT_1.UPD exists at path: $upd"
+            throw [string]"No EXPERT_1.UPD exists at path: $upd"
         }
     } else {
-        Write-Error "Module assembly was not found at path: $path"
+        throw [string]"Module assembly was not found at path: $path"
     }
 }
