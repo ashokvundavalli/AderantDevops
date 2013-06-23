@@ -114,8 +114,6 @@
         AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Metadata"
         AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Monitoring"
-        AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Notes"
         AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Security"
