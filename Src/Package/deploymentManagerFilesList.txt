@@ -156,6 +156,7 @@ ipy.exe
 Microsoft.Dynamic.dll
 Microsoft.Scripting.dll
 Microsoft.Scripting.Metadata.dll
+Microsoft.Data.Services.Client.dll
 SQLScripts\Expert\DeleteMessageRouterRegistrations.sql
 SQLScripts\Expert\DeleteWorkflowInstanceData.sql
 SQLScripts\Expert\ResetServiceBroker.sql
