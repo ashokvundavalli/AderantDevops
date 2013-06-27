@@ -80,6 +80,7 @@
         <Module Name="Thirdparty.DevComponents" />
         <Module Name="Thirdparty.DotLess"/>
         <Module Name="Thirdparty.ExtremeML" />
+        <Module Name="Thirdparty.FiddlerCore" />
         <Module Name="ThirdParty.FOApi" />
         <Module Name="ThirdParty.FWBS" />
         <Module Name="Thirdparty.HtmlAgilityPack" />
