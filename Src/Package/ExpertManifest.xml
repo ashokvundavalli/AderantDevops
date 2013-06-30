@@ -5,7 +5,7 @@
         <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
-        <!-- <Module Name="Application.Expenses" AssemblyVersion="1.8.0.0" /> -->
+        <Module Name="Application.Expenses" AssemblyVersion="1.8.0.0" /> -->
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" />
@@ -23,7 +23,7 @@
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
-        <!-- <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" /> -->
+        <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" />
@@ -54,7 +54,7 @@
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
-        <!-- <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" /> -->
+        <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.FirmControl" AssemblyVersion="1.8.0.0" />
@@ -144,13 +144,13 @@
         <Module Name="Thirdparty.Xceed.4" />
         <Module Name="Thirdparty.Xenocode" />
         <Module Name="Thirdparty.ZipLibrary" />
-        <!-- <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" /> -->
+        <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.EmployeeIntake" AssemblyVersion="1.8.0.0" />
-        <!-- <Module Name="Workflow.Expenses" AssemblyVersion="1.8.0.0" /> -->
+        <Module Name="Workflow.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.FileOpening" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.MatterPlanning" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.PaperlessPrebill" AssemblyVersion="1.8.0.0" />
