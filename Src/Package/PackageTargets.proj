@@ -764,42 +764,49 @@
 	<!--
     
     ==========================================================================================
-        Run UPD
+        Apply UPD
     ==========================================================================================
-  -->	
-	
-	<Target Name="RunUPD"
+  -->
+
+  <Target Name="ApplyUPD"
             Condition="('$(IsDesktopBuild)' != 'true') and ('$(RunUPD)' == 'true')">
 
-		<BuildStep
+    <BuildStep
 		  Condition="('$(IsDesktopBuild)'!='true')"
 		  Message="Running UPD"
 		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
 		  BuildUri="$(BuildURI)"
             >
 
-			<Output
+      <Output
 			  TaskParameter="id"
 			  PropertyName="BuildStepId"
                 />
- 
-		</BuildStep>
 
-		<!--Run from build server as has a dependancy on .NET framework-->
-		<Exec
+    </BuildStep>
+
+    <Exec
+     ContinueOnError="false"
+     IgnoreExitCode="false"
+     Command='"Powershell" "$(BuildScriptsDirectory)\AllowDotNet40Assemblies.ps1"' />
+    
+    
+    <!--Run from build server as has a dependancy on .NET framework-->
+    <Exec
 		  ContinueOnError="false"
 		  IgnoreExitCode="false"
-		  Command='"Powershell" "$(DBGenDirectory)\DBGEN.EXE HIDE=1 AUTOSTART=1 AUTOCLOSE=1 EXPERTMODE=1 target=$(UPDTarget) login=cmsdbo password=cmsdbo update.1=$(UPDPath)"' />
+		  Command='"Powershell" "$(BuildScriptsDirectory)\DeployDatabase.ps1" $(EnvironmentManifestPath) $(RemoteExpertSourceDirectory)' />
 
-		<BuildStep
+    
+    <BuildStep
 		  Condition="('$(IsDesktopBuild)'!='true')"
 		  TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
 		  BuildUri="$(BuildUri)"
 		  Id="$(BuildStepId)"
 		  Status="Succeeded" />
 
-		<OnError ExecuteTargets="MarkBuildStepAsFailed" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
-	</Target>	
-	
+  </Target>
+
 </Project>

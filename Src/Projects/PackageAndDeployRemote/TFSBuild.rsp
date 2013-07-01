@@ -6,7 +6,7 @@
 ###################################
 # Product manifest that is used when running GetProduct.ps1 and GetProductTests.ps1.
 # This does not change unless the mapping in the build definition is changed.
-/p:ProductManifestPath=..\src\ExpertManifest.xml
+/p:ProductManifestPath=..\Sources\ExpertManifest.xml
 
 # Each branch will have its own drop root.
 /p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
@@ -25,6 +25,9 @@
 # Set to true to deploy Expert, optional and defaults to true.
 /p:DeployExpert=true
 
+# Set to true to apply UPD to Expert database, optional and defaults to true.
+/p:RunUPD=true
+
 # Set this to true to drop SP_CMSCHECKINDEX so that deploy database works.
 /p:DropSp_CmsCheckIndex=false
 
@@ -37,6 +40,7 @@
 # Used by remoteDeploymentDeploy.ps1 to copy files to test machine.  When running get-product the binaries 
 # are copied to this location, so you need to setup this share on your test machine.  If UseBuildAllOutput=true this is ignored.
 /p:RemoteExpertBinariesDirectory=\\vmaklexpmain\ExpertBinaries
+/p:RemoteExpertSourceDirectory=\\vmaklexpmain\ExpertSource\ExpertSource
 
 # Local path of binaries folder on the remote machine, used by scripts executed on remote machine.
 #  If DeployDbProject=true this is ignored.

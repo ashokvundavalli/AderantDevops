@@ -85,6 +85,7 @@
     <CallTarget Targets="RestoreDB" />  
     <CallTarget Targets="PackageProduct" Condition="('$(UseBuildAllOutput)'!='true')" />
     <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
+    <CallTarget Targets="ApplyUPD" />
     <CallTarget Targets="DeployProductRemote" />
     <CallTarget Targets="WaitForServiceStartUp" />
   </Target>  
