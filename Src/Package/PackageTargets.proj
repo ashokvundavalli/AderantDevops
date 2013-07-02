@@ -620,7 +620,7 @@
 		</BuildStep>
 
 		<Message
-			Text="Target IntegrationTests: ExpertTestDirectory = $(ExpertTestsDirectory)"
+			Text="Target IntegrationTests: ExpertTestDirectory = $(ExpertTestsDirectory)\ExpertSource"
             />
 
 		<!-- Run the integration tests using MSTest controller. -->
@@ -628,7 +628,7 @@
               ContinueOnError="false"
               IgnoreExitCode="false"
               Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch) $(DetailSwitch)'
-              WorkingDirectory='$(ExpertTestsDirectory)'
+              WorkingDirectory='$(ExpertTestsDirectory)\ExpertSource'
               />
 		
 		<BuildStep
