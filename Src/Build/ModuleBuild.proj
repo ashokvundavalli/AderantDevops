@@ -625,9 +625,10 @@ foreach(var replacement in replacements){
           <SourceFilesToCopyForTransform
               Include="$(SolutionDirectoryPath)\**\*.*"
               Exclude="$(SolutionDirectoryPath)\**\obj\**;                       
-                       $(SolutionDirectoryPath)\**\_Resharper*\**;       
+                       $(SolutionDirectoryPath)\**\_Resharper*\**;                       
                        $(SolutionDirectoryPath)\Bin\**\**;
                        $(SolutionDirectoryPath)\Test\**\**;
+                       $(SolutionDirectoryPath)\TestResults\*\**;
                        $(SolutionDirectoryPath)\Dependencies\**\**;
                        $(SolutionDirectoryPath)\**\*.vssscc;
                        $(SolutionDirectoryPath)\**\*.vspscc;" />
