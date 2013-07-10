@@ -44,7 +44,6 @@
       <rmTransformTemplatesWorkerDependsOn>
       rmBeforeTransformTemplates;
       rmT4AssemblyReferencePaths;
-      rmT4RKeyTemplateIncludes;
       rmT4DslDirectiveProcessors;
       </rmTransformTemplatesWorkerDependsOn>
   </PropertyGroup>       
@@ -71,26 +70,20 @@
       Condition="('@(rmT4TextTemplates)'=='')"
       Text="Missing required item group 'rmT4TextTemplates'"
             />    
-    <Message
-      Condition="('$(IsDesktopBuild)'=='true')"
-      Importance="$(MessageImportance)"
-      Text="rmT4TransformTemplates"
-            />
+
+    <Message Text="rmT4DslDirectiveProcessors" />
+    <Message Text="Processor --> %(Identity) @(rmT4DslDirectiveProcessors)" />
+
     <Message
       Text="
-rmT4DslDirectiveProcessors&#xA;$(rmT4DslDirectiveProcessors)&#xA;
 rmT4AssemblyReferencePaths&#xA;$(rmT4AssemblyReferencePaths)&#xA;
 rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
 "/>
     <ItemGroup>
-      <rmT4TransformItems
-        Include="
-                    @(rmT4TextTemplates);
-                    ">
-        <KnownDslDirectiveProcessors>$(rmT4DslDirectiveProcessors);</KnownDslDirectiveProcessors>
-        <AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);</AssemblyReferencePaths>
-        <TemplateIncludeRegistryKeys>$(rmT4RKeyTemplateIncludes);</TemplateIncludeRegistryKeys>
-        <TemplateIncludeFolders>$(rmT4TemplateIncludeFolders);</TemplateIncludeFolders>
+      <rmT4TransformItems Include="@(rmT4TextTemplates);">
+      <KnownDslDirectiveProcessors>$(rmT4DslDirectiveProcessors);</KnownDslDirectiveProcessors>
+      <AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);</AssemblyReferencePaths>
+      <TemplateIncludeFolders>$(rmT4TemplateIncludeFolders);</TemplateIncludeFolders>
       </rmT4TransformItems>
     </ItemGroup>
 
@@ -140,53 +133,31 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     rmT4AssemblyReferencePaths
     *************************************************************************************************************
     -->
-  <Target
-    Name="rmT4AssemblyReferencePaths"
-        >
-    <!-- Path to reference dlls required by DSLs -->
-    <PropertyGroup>
+  <Target Name="rmT4AssemblyReferencePaths">
+      <!-- Path to reference dlls required by DSLs -->
+      <PropertyGroup>
+          <VSSDKPath Condition="'$(VSSDK110Install)' != ''">$(VSSDK110Install)\VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
+      </PropertyGroup>
 
-      <!--  The registry entry HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\10.0_Config\TextTemplating\DirectiveProcessors\DslDirectiveProcessor 
-            specifies the location of Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.10.0.dll.  This user specific entry is only created when you log
-            in and start Visual Studio.  So we have included this dll in the Thirdparty.Microsoft.VisualStudio module and include it as a dependency.
-      -->
-      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies;$(rmT4AssemblyReferencePaths)</rmT4AssemblyReferencePaths>
+    <PropertyGroup>
+      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies;$(rmT4AssemblyReferencePaths);$(VSSDKPath)</rmT4AssemblyReferencePaths>
     </PropertyGroup>
     <ItemGroup>
       <rmT4AssemblyReferencePaths
-        Include="
-                    $(rmT4AssemblyReferencePaths);
-                    "/>
+        Include="$(rmT4AssemblyReferencePaths);" />
     </ItemGroup>
     <PropertyGroup>
       <rmT4AssemblyReferencePaths>@(rmT4AssemblyReferencePaths, '%3B')</rmT4AssemblyReferencePaths>
     </PropertyGroup>
   </Target>
 
-
-  <!--
-    *************************************************************************************************************
-    rmT4RKeyTemplateIncludes
-    *************************************************************************************************************
-    -->
-  <Target
-    Name="rmT4RKeyTemplateIncludes"
-        >
-    <PropertyGroup>
-      <!--  We no longer use the registry to locate include folders.  These have been added to the Thirdparty.Microsoft.VisualStudio
-            module which is included as a dependency for Libraries.SoftwareFactory.-->
-      <rmT4RKeyTemplateIncludes></rmT4RKeyTemplateIncludes>
-    </PropertyGroup>
-  </Target>
   
   <!--
     *************************************************************************************************************
     rmT4DslDirectiveProcessors
     *************************************************************************************************************
     -->
-  <Target
-    Name="rmT4DslDirectiveProcessors"
-        >
+  <Target Name="rmT4DslDirectiveProcessors">
     <PropertyGroup>
       <rmSoftwareFactoryCommonDll>$(SolutionDirectoryPath)\Dependencies\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
     </PropertyGroup>
@@ -202,7 +173,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </PropertyGroup>
     <PropertyGroup>
       <DslClass>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</DslClass>
-      <DslAssembly>Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</DslAssembly>
+      <DslAssembly>Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.11.0, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</DslAssembly>
       <!-- Aderant Domain Model -->
       <DomainModelDslClass>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</DomainModelDslClass>
       <DomainModelDslAssembly>Aderant.Framework.SoftwareFactory.Domain, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</DomainModelDslAssembly>

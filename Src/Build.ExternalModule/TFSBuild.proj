@@ -1,12 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="CopyToDrop"
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="3.5">
+         ToolsVersion="4.0">
     <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
-    <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
 
     <PropertyGroup>
-        <PathToModulesToCopy Condition="('$(IsDesktopBuild)'!='true')">$(SolutionRoot)</PathToModulesToCopy>
+        <PathToModulesToCopy Condition="('$(IsDesktopBuild)'!='true')">$(SolutionRoot)</PathToModulesToCopy>        
     </PropertyGroup>
 
     <Target Name="AfterCompile">
@@ -15,35 +14,53 @@
 
     <!--
     ==========================================================================================
-        Copy content of solution directory to the dop
+        Copy content of solution directory to the drop
     ==========================================================================================
   -->
-    <Target Name="CopyToDrop"
-            Condition="('$(IsDesktopBuild)'!='true')" >
+    
+    <Target Name="CopyToDrop" Condition="('$(IsDesktopBuild)'!='true')">
 
         <BuildStep
           Condition="('$(IsDesktopBuild)'!='true')"
           Message="Copy modules to $(DropLocation)"
           TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-          BuildUri="$(BuildURI)"
-            >
+          BuildUri="$(BuildURI)">
             <Output
               TaskParameter="id"
-              PropertyName="BuildStepId"
-                />
+              PropertyName="BuildStepId"/>
         </BuildStep>
 
-        <Exec ContinueOnError="false"
-              IgnoreExitCode="false"
-              Command='"Powershell" Copy-Item -Path $(PathToModulesToCopy)\* -Destination $(DropLocation) -Recurse -Force'/>
+        <ItemGroup>
+            <Folders Include="$([System.IO.Directory]::GetDirectories(&quot;$(PathToModulesToCopy)&quot;))" />
+        </ItemGroup>
+        
+        <PropertyGroup>
+            <CopySwitches>/NJS /NJH /NDL /MT /R:3 /W:5 /MIR</CopySwitches>
+        </PropertyGroup>
+
+        <Message Text="Going to copy:" />
+        <Message Text="%(Folders.Filename)%(Extension)" />
+
+        <!-- Robocopy returns a 1 when successful unlike all other command line tools -->
+
+        <!-- Do primary copy case (ThirdParty) -->
+        <Exec Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
+              ContinueOnError="false"
+              IgnoreExitCode="true"
+              Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD src" />
+
+        <!-- Do Build.Infrastructure copy case (don't exlude src directory) -->
+        <Exec Condition="'%(Folders.Filename)%(Extension)' == 'Build.Infrastructure'"
+              ContinueOnError="false"
+              IgnoreExitCode="true"
+              Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches)" />
 
         <BuildStep
-          Condition="('$(IsDesktopBuild)'!='true')"
-          TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-          BuildUri="$(BuildUri)"
-          Id="$(BuildStepId)"
-          Status="Succeeded" />
-
+            Condition="('$(IsDesktopBuild)'!='true')"
+            TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+            BuildUri="$(BuildUri)"
+            Id="$(BuildStepId)"
+            Status="Succeeded" />
         <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
     </Target>
@@ -59,14 +76,12 @@
           TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
           BuildUri="$(BuildUri)"
           Id="$(BuildStepId)"
-          Status="Failed"
-            />
+          Status="Failed" />
         <SetBuildProperties
           Condition="('$(IsDesktopBuild)'!='true')"
           TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
           BuildUri="$(BuildUri)"
-          CompilationStatus="Failed"
-            />
+          CompilationStatus="Failed" />
         <Error Condition="('$(IsDesktopBuild)'=='true')"/>
     </Target>
 

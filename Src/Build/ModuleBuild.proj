@@ -21,7 +21,7 @@
   </ProjectExtensions>
 
   <PropertyGroup>
-    <RunTest>true</RunTest>
+    <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
@@ -34,6 +34,13 @@
     <!--Desktop build for a module-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionDirectoryPath)..\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
+
+    <BuildScriptsDirectory>$([System.IO.Path]::GetFullPath('$(BuildScriptsDirectory)'))</BuildScriptsDirectory>
+    <SolutionDirectoryPath>$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
+
+    <!-- Detect VS 2010 or 2012 -->
+    <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != ''">$(VS110COMNTOOLS)</VsCommonTools>
 
     <!-- This is required as the T4 and compile is done via BuildUsingMSBuild4.ps1, so it runs as a desktopbuild -->
     <SolutionDirectoryPath Condition="('$(SolutionDirectoryPathForMSBuild4)'!='')">$(SolutionDirectoryPathForMSBuild4)</SolutionDirectoryPath>
@@ -165,7 +172,7 @@ foreach(var replacement in replacements){
     <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="PublishModule" />
-    <CallTarget Targets ="Testing" />
+    <CallTarget Targets="Testing" />
     <CallTarget Targets="PostBuild" Condition="('$(PostBuild)'=='true')" />
     <CallTarget Targets="CopyToDrop" />
   </Target>
@@ -178,6 +185,7 @@ foreach(var replacement in replacements){
     <Message Text="Drop Location = $(DropLocation) " />
     <Message Text="Create MSI? = $(CreateMSI) " />
     <Message Text="BuildType MSI? = $(BuildFlavor) " />
+    <Message Text="Visual Studio Tools Path: $(VsCommonTools)" />
   </Target>
 
   <!--
@@ -348,22 +356,17 @@ foreach(var replacement in replacements){
       </rmT4TextTemplates>
     </ItemGroup>
 
-    <Message Text="IsDesktopBuild = $(IsDesktopBuild)"/>
-    <Message Text="SolutionDirectoryPathForMSBuild4 = $(SolutionDirectoryPathForMSBuild4)"/>
-    <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
-    <Message Text="ModuleSourceDirectory = $(ModuleSourceDirectory)"/>
-    <Message Text="ModuleTestDirectory = $(ModuleTestDirectory)"/>
-    <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0 = $(AderantBuildClientTasksV100Lib-1_0_0_0)"/>
-    <Message Text="rmT4AssemblyReferencePaths = $(rmT4AssemblyReferencePaths)"/>
-    <Message Text="rmT4TextTemplates = @(rmT4TextTemplates)"/>
-    <Message
-      Text="
-DSLDirectiveLoadMethod&#xA;$(DSLDirectiveLoadMethod)&#xA;
-AderantBuildClientTasksV100Lib-1_0_0_0&#xA;$(AderantBuildClientTasksV100Lib-1_0_0_0)&#xA;
-rmT4AssemblyReferencePaths&#xA;$(rmT4AssemblyReferencePaths)&#xA;
-rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
-            "/>
+    <Message Text="IsDesktopBuild: $(IsDesktopBuild)"/>
+    <Message Text="SolutionDirectoryPathForMSBuild4: $(SolutionDirectoryPathForMSBuild4)"/>
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)"/>
+    <Message Text="ModuleSourceDirectory: $(ModuleSourceDirectory)"/>
+    <Message Text="ModuleTestDirectory: $(ModuleTestDirectory)"/>
 
+    <Message Text="" />
+    <Message Text="DSLDirectiveLoadMethod: $(DSLDirectiveLoadMethod)" />
+    <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)"/>
+    <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)"/>
+    <Message Text="rmT4TextTemplates: $(rmT4TextTemplates)"/>
   </Target>
 
   <!--
@@ -477,7 +480,7 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
   -->
 
   <PropertyGroup>
-    <PathToDevEnv10>$(VS100COMNTOOLS)..\IDE</PathToDevEnv10>
+    <PathToDevEnv>$(VsCommonTools)..\IDE</PathToDevEnv>
     <MSILog>$(BinModuleDirectory)MCIBuild.log</MSILog>
   </PropertyGroup>
 
@@ -487,17 +490,18 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
 
     <Message Text="Solution to create MSI for [$(SolutionFileName)]"/>
     <Message Text="MSI BuildType [$(BuildFlavor)]"/>
-    <Message Text="Devenv path [$(PathToDevEnv10)]"/>
+    <Message Text="Devenv path [$(PathToDevEnv)]"/>
     <Message Text="MSI Log [$(MSILog)]"/>
 
-    <!--Iritating issue here were as part of the msi creation there are error produced but the MSI is succesfully created.
+    <!--
+        Irritating issue here were as part of the msi creation there are error produced but the MSI is successfully created.
         Because of this error's and exit code are being ignored.
     -->
 
     <Exec
       ContinueOnError="true"
       IgnoreExitCode="true"
-      WorkingDirectory="$(PathToDevEnv10)"
+      WorkingDirectory="$(PathToDevEnv)"
       Command='devenv.com &quot;$(SolutionFileName)&quot; /build &quot;$(BuildFlavor)&quot; /out &quot;$(MSILog)&quot;'>
     </Exec>
 
@@ -617,9 +621,17 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       Condition="Exists('$(TempSolutionDirectory)')"
       Directories="$(TempSolutionDirectory)"/>
 
-    <ItemGroup>
-      <SourceFilesToCopyForTransform Include="$(SolutionDirectoryPath)\**\*.*"/>
-    </ItemGroup>
+      <ItemGroup>
+          <SourceFilesToCopyForTransform
+              Include="$(SolutionDirectoryPath)\**\*.*"
+              Exclude="$(SolutionDirectoryPath)\**\obj\**;                       
+                       $(SolutionDirectoryPath)\**\_Resharper*\**;       
+                       $(SolutionDirectoryPath)\Bin\**\**;
+                       $(SolutionDirectoryPath)\Test\**\**;
+                       $(SolutionDirectoryPath)\Dependencies\**\**;
+                       $(SolutionDirectoryPath)\**\*.vssscc;
+                       $(SolutionDirectoryPath)\**\*.vspscc;" />
+        </ItemGroup>
 
 
     <!-- Make a copy of the source files for the custom solution transformation and zip -->
@@ -812,19 +824,18 @@ rmT4TextTemplates&#xA;$(rmT4TextTemplates)&#xA;
       <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
       <PublishSwitch>/publish:$(TeamFoundationServerUrl)</PublishSwitch>
       <TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
-      <PathToMSTest10>$(VS100COMNTOOLS)..\IDE\MSTest.exe</PathToMSTest10>
+      <PathToMSTest>$(VsCommonTools)..\IDE\MSTest.exe</PathToMSTest>    
     </PropertyGroup>
-
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' == 'true')"
-          Command='"$(PathToMSTest10)" %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx ' />
+          Command='"$(PathToMSTest)" %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx ' />
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' != 'true')"
-          Command='"$(PathToMSTest10)" $(UnitTestAssemblies) $(ResultsFileSwitch) ' />
+          Command='"$(PathToMSTest)" $(UnitTestAssemblies) $(ResultsFileSwitch) ' />
 
 
     <BuildStep
