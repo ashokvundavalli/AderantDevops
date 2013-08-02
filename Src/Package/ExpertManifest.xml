@@ -5,7 +5,7 @@
         <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" /> -->
+        <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" />
@@ -79,6 +79,7 @@
         <Module Name="Thirdparty.DevComponents" />
         <Module Name="Thirdparty.DotLess"/>
         <Module Name="Thirdparty.ExtremeML" />
+        <Module Name="ThirdParty.FiddlerCore" />
         <Module Name="ThirdParty.FOApi" />
         <Module Name="ThirdParty.FWBS" />
         <Module Name="Thirdparty.HtmlAgilityPack" />
