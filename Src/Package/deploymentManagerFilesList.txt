@@ -93,6 +93,7 @@ environment.xsd
 EnvironmentCloner.exe
 EnvironmentCloner.exe.config
 Factory.bin
+FiddlerCore.dll
 ICSharpCode.SharpZipLib.dll
 Iesi.Collections.dll
 Iesi.Collections.xml
