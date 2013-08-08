@@ -21,6 +21,7 @@
         <Module Name="Expert.Help" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
+        <Module Name="Internal.Validation" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" />
@@ -44,7 +45,7 @@
         <Module Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Presentation.Firm" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Roles" AssemblyVersion="1.8.0.0"/>
+        <Module Name="Libraries.Roles" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
@@ -52,6 +53,7 @@
         <Module Name="Marketing.Help" />
         <Module Name="Packages" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
+        <Module Name="SDK.API" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
@@ -71,13 +73,13 @@
         <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
-        <Module Name="Thirdparty.Add2Home" />
-        <Module Name="Thirdparty.AsyncJs" />
+        <Module Name="ThirdParty.Add2Home" />
+        <Module Name="ThirdParty.AsyncJs" />
         <Module Name="ThirdParty.AutoMapper.2" />
-        <Module Name="Thirdparty.Bootstrap" />
+        <Module Name="ThirdParty.Bootstrap" />
         <Module Name="ThirdParty.DBGEN" />
         <Module Name="Thirdparty.DevComponents" />
-        <Module Name="Thirdparty.DotLess"/>
+        <Module Name="ThirdParty.DotLess" />
         <Module Name="Thirdparty.ExtremeML" />
         <Module Name="ThirdParty.FiddlerCore" />
         <Module Name="ThirdParty.FOApi" />
@@ -104,7 +106,7 @@
         <Module Name="Thirdparty.Microsoft.Linq.Dynamic" />
         <Module Name="Thirdparty.Microsoft.Net4" />
         <Module Name="Thirdparty.Microsoft.NTRights" />
-        <Module Name="Thirdparty.Microsoft.OData" />
+        <Module Name="ThirdParty.Microsoft.OData" />
         <Module Name="Thirdparty.Microsoft.Office11.Interop" />
         <Module Name="Thirdparty.Microsoft.Office12.Interop" />
         <Module Name="Thirdparty.Microsoft.Practices" />
@@ -113,7 +115,7 @@
         <Module Name="Thirdparty.Microsoft.WcfRest" />
         <Module Name="Thirdparty.Microsoft.WindowsServerAppFabric" />
         <Module Name="Thirdparty.Mindscape" />
-        <Module Name="Thirdparty.Modernizr" />
+        <Module Name="ThirdParty.Modernizr" />
         <Module Name="Thirdparty.Moq" />
         <Module Name="Thirdparty.MSExchange" />
         <Module Name="Thirdparty.MVC" />

@@ -72,9 +72,12 @@ Aderant.PresentationFramework.Images.dll
 Aderant.PresentationFramework.Resources.dll
 Aderant.PresentationFramework.Windows.dll
 Aderant.Query.dll
+Aderant.Query.Modeling.dll
 Aderant.Query.Services.dll
 Aderant.Workflow.dll
 Antlr3.Runtime.dll
+candle.exe
+candle.exe.config
 Castle.Core.dll
 Castle.Core.xml
 Castle.DynamicProxy.license.txt
@@ -85,6 +88,7 @@ CustomizationBuilder.exe.config
 CustomizationBuilder.exe.log4net.xml
 cmsmsgen.msg
 bindings.config
+darice.cub
 DeploymentService.exe
 DeploymentService.exe.config
 DevComponents.WpfRibbon.dll
@@ -94,11 +98,15 @@ EnvironmentCloner.exe
 EnvironmentCloner.exe.config
 Factory.bin
 FiddlerCore.dll
+heat.exe
+heat.exe.config
 ICSharpCode.SharpZipLib.dll
 Iesi.Collections.dll
 Iesi.Collections.xml
 Keyoti.RapidSpellMDict.dll
 Keyoti4.RapidSpell.WPF.dll
+light.exe
+light.exe.config
 log4net.dll
 log4net.xml
 mage.exe
@@ -114,6 +122,7 @@ NHibernate.license.txt
 NHibernate.Linq.dll
 NHibernate.Linq.xml
 NHibernate.xml
+ModelMetadataExport.exe
 NVelocity.dll
 NVelocity.license.txt
 PackageManagerConsole.exe
@@ -129,7 +138,11 @@ System.Reactive.Providers.dll
 System.Reactive.Windows.Threading.dll
 ToolsBase.dll
 Trinet.Core.IO.Ntfs.dll
+wconsole.dll
 Wintellect.Threading.dll
+winterop.dll
+wix.dll
+WixUtilExtension.dll
 WPFToolkit.dll
 Xceed.Wpf.Controls.v4.1.dll
 Xceed.Wpf.DataGrid.v4.1.dll
@@ -137,6 +150,9 @@ en-US\Aderant.Framework.Configuration.Presentation.resources.dll
 en-US\Aderant.Framework.Identity.Presentation.resources.dll
 en-US\Aderant.Framework.Security.Presentation.resources.dll
 en-US\SecurityManager.resources.dll
+InstallerManifests\ExpertTimeAgentManifest.xml
+InstallerManifests\ExpertTimeManifest.xml
+InstallerManifests\ProductTemplate.xml
 IronPython.dll
 IronPython.Modules.dll
 Iron.Python.License.txt
