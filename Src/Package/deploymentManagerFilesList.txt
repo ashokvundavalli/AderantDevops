@@ -113,6 +113,7 @@ mage.exe
 metadatamanager.exe
 metadatamanager.exe.config
 Microsoft.Deployment.WindowsInstaller.dll
+Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.11.0.dll
 nhibernate-configuration.xsd
 nhibernate-mapping.xsd
 NHibernate.ByteCode.Castle.dll
