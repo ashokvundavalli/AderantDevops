@@ -1021,11 +1021,6 @@ foreach(var replacement in replacements){
                 />
     </BuildStep>
 
-    <!-- Gather any files created as part of a Web project build. These are typically zip files -->
-    <ItemGroup>
-        <WebPackageFiles Include="$(SolutionDirectoryPath)Src\**\bin\_PublishedWebsites\**\*.*" />
-    </ItemGroup>
-
     <!--We have differing ways of determining the drop location depending on the type of build. 
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
 
@@ -1039,11 +1034,20 @@ foreach(var replacement in replacements){
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
 
+    <!-- Gather any files created as part of a Web project build. These are typically zip files -->
+    <ItemGroup>
+        <WebPackageFiles Include="$(SolutionDirectoryPath)Src\**\bin\_PublishedWebsites\**\*.*" />
+    </ItemGroup>
     <Message Text="WebPackageFiles: @(WebPackageFiles)" />
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)\Src\**\bin\_PublishedWebsites\**\*.*" />
-    <Copy SourceFiles="@(WebPackageFiles)"
-          DestinationFolder="$(DropLocation)\$(FileVersion)\bin\Module"
-          Condition="('$(PackageWeb)'=='true')"/>
+
+    <Copy Condition="('$(PackageWeb)'=='true' And '$(BuildAll)'=='true')"
+          SourceFiles="@(WebPackageFiles)"
+          DestinationFolder="$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\$(FileVersion)\Bin\Module" />
+
+    <Copy Condition="('$(PackageWeb)'=='true' And '$(BuildAll)'!='true')"
+          SourceFiles="@(WebPackageFiles)"
+          DestinationFolder="$(DropLocation)\$(FileVersion)\Bin\Module" />
 
         <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
         so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
