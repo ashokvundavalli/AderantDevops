@@ -270,7 +270,7 @@ foreach(var replacement in replacements){
 
     <ItemGroup>
         <!-- Must trim trailing slash as GetDirectories does not return results with trailing slashes -->
-        <Folders Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'"
+        <Folders Condition="Exists('$(SolutionDirectoryPath)Bin\') And ('$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false')"
                  Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)Bin\', '*', System.IO.SearchOption.AllDirectories))"
                  Exclude="$(BinTestDirectory.TrimEnd('\'));$(BinModuleDirectory.TrimEnd('\'))" />
     </ItemGroup>
