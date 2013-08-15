@@ -280,6 +280,8 @@ foreach(var replacement in replacements){
     <Delete Files="@(Files)" />
     <RemoveDir Directories="@(Folders)" />
 
+    <MakeDir Directories="$(BinModuleDirectory)" />
+
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
@@ -1004,11 +1006,6 @@ foreach(var replacement in replacements){
         Copy Build to Drop Location 
     ==========================================================================================
   -->
-
-    <ItemGroup>
-        <WebPackageFiles Include="$(SolutionDirectoryPath)\Src\**\bin\_PublishedWebsites\**\*.*" />
-    </ItemGroup>
-
     <Target Name="CopyToDrop"
           Condition="('$(IsDesktopBuild)'!='true')" >
 
@@ -1024,6 +1021,11 @@ foreach(var replacement in replacements){
                 />
     </BuildStep>
 
+    <!-- Gather any files created as part of a Web project build. These are typically zip files -->
+    <ItemGroup>
+        <WebPackageFiles Include="$(SolutionDirectoryPath)Src\**\bin\_PublishedWebsites\**\*.*" />
+    </ItemGroup>
+
     <!--We have differing ways of determining the drop location depending on the type of build. 
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
 
@@ -1037,12 +1039,11 @@ foreach(var replacement in replacements){
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
 
-
-        <Message Text="WebPackageFiles: @(WebPackageFiles)" />
-        <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)\Src\**\bin\_PublishedWebsites\**\*.*" />
-        <Copy SourceFiles="@(WebPackageFiles)"
-            DestinationFolder="$(DropLocation)\$(FileVersion)\bin\Module"
-            Condition="('$(PackageWeb)'=='true')"/>
+    <Message Text="WebPackageFiles: @(WebPackageFiles)" />
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)\Src\**\bin\_PublishedWebsites\**\*.*" />
+    <Copy SourceFiles="@(WebPackageFiles)"
+          DestinationFolder="$(DropLocation)\$(FileVersion)\bin\Module"
+          Condition="('$(PackageWeb)'=='true')"/>
 
         <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
         so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
@@ -1070,7 +1071,7 @@ foreach(var replacement in replacements){
   -->
   <PropertyGroup>
     <NDependPath>c:\Program Files (x86)\NDepend</NDependPath>
-    <NDpendOutputDir>$(SolutionDirectoryPath)\bin\NDependOut</NDpendOutputDir>
+    <NDependOutputDir>$(SolutionDirectoryPath)\bin\NDependOut</NDependOutputDir>
     <NDependWarn>0</NDependWarn>
   </PropertyGroup>
 
@@ -1099,8 +1100,7 @@ foreach(var replacement in replacements){
     <NDependTask
       NDependConsoleExePath="$(NDependPath)"
       ProjectFilePath="$(BuildScriptsDirectory)NDependFramework.xml"
-      OutDir="$(NDpendOutputDir)"
-            />
+      OutDir="$(NDependOutputDir)" />
 
     <!-- Scan the NDepend Report Files to see if a braking change has been identified -->
 
