@@ -23,13 +23,11 @@
     
   <UsingTask
         AssemblyFile="$(AderantBuildClientTasksV100Lib-1_0_0_0)"
-        TaskName="ADERANT.Build.Client.Tasks.v100.EnvironmentVariable"
-        />
+        TaskName="ADERANT.Build.Client.Tasks.v100.EnvironmentVariable" />
     
   <UsingTask
         AssemblyFile="$(AderantBuildClientTasksV100Lib-1_0_0_0)"
-        TaskName="ADERANT.Build.Client.Tasks.v100.Transform"
-        />
+        TaskName="ADERANT.Build.Client.Tasks.v100.Transform" />
   
   <!-- 
     *************************************************************************************************************
@@ -47,29 +45,21 @@
       rmT4DslDirectiveProcessors;
       </rmTransformTemplatesWorkerDependsOn>
   </PropertyGroup>       
-  <Target
-    Name="rmTransformTemplates"
-    DependsOnTargets="$(rmTransformTemplatesDependsOn)"
-        >
+
+  <Target Name="rmTransformTemplates" DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 
     <CallTarget Targets="rmTransformTemplatesWorker"/>
   </Target>
-  <Target
-    Name="rmTransformTemplatesWorker"
-    Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')"
-    DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)"
-        >
+
+  <Target Name="rmTransformTemplatesWorker" Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
     <Error
       Condition="('$(rmT4AssemblyReferencePaths)'=='')"
-      Text="Missing required property 'rmT4AssemblyReferencePaths'"
-            />
+      Text="Missing required property 'rmT4AssemblyReferencePaths'" />
     <Error
       Condition="('@(rmT4DslDirectiveProcessors)'=='')"
-      Text="Missing required item group 'rmT4DslDirectiveProcessors'"
-            />
+      Text="Missing required item group 'rmT4DslDirectiveProcessors'" />
     <Error
       Condition="('@(rmT4TextTemplates)'=='')"
-      Text="Missing required item group 'rmT4TextTemplates'"
-            />    
+      Text="Missing required item group 'rmT4TextTemplates'" />    
 
     <Message Text="rmT4DslDirectiveProcessors" />
     <Message Text="Processor --> %(Identity) @(rmT4DslDirectiveProcessors)" />
@@ -88,45 +78,41 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     </ItemGroup>
 
     <!--
-            The TextTransform uses the location of TMP environment variable to output temporary
-            files in the code generation.  We will redirect this to reduce the clutter.  Now that 
-            we redirect to our folder, we clean up before Transform.
-        -->
+        The TextTransform uses the location of TMP environment variable to output temporary files in the code generation.  
+        We will redirect this to reduce the clutter. Now that we redirect to our folder, we clean up before Transform.
+    -->
     <PropertyGroup>
-      <TempABT Condition="('$(TempABT)'=='')">$(OutDir)\_ABT</TempABT>
+      <TempABT Condition="('$(TempABT)'=='')">$(SolutionDirectoryPath)\_ABT</TempABT>
       <TMP_SAVE>$(TMP)</TMP_SAVE>
       <TMP>$(TempABT)\T4</TMP>
     </PropertyGroup>
+
     <RemoveDir
       Directories="$(TMP)"
       Condition="Exists('$(TMP)')"
-      ContinueOnError="true"
-            />
+      ContinueOnError="true" />
+
     <MakeDir
       Directories="$(TMP)"
-      ContinueOnError="true"
-            />
+      ContinueOnError="true" />
+
     <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
-      Action="Set"
-      Variable="TMP"
-      Value="$(TMP)"
-      Target="Process"
-            />
+        Action="Set"
+        Variable="TMP"
+        Value="$(TMP)"
+        Target="Process" />
+
     <!-- Do the Transform  -->
-    <ADERANT.Build.Client.Tasks.v100.Transform
-      Templates="@(rmT4TransformItems)"
-            />
+    <ADERANT.Build.Client.Tasks.v100.Transform Templates="@(rmT4TransformItems)" />
+    
     <!-- Restore TMP -->
     <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
-      Action="Set"
-      Variable="TMP"
-      Value="$(TMP_SAVE)"
-      Target="Process"
-            />
+        Action="Set"
+        Variable="TMP"
+        Value="$(TMP_SAVE)"
+        Target="Process" />
 
   </Target>
-
-
 
   <!--
     *************************************************************************************************************
@@ -134,10 +120,10 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     *************************************************************************************************************
     -->
   <Target Name="rmT4AssemblyReferencePaths">
-      <!-- Path to reference dlls required by DSLs -->
-      <PropertyGroup>
-          <VSSDKPath Condition="'$(VSSDK110Install)' != ''">$(VSSDK110Install)\VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
-      </PropertyGroup>
+    <!-- Path to reference dlls required by DSLs -->
+    <PropertyGroup>
+      <VSSDKPath Condition="'$(VSSDK110Install)' != ''">$(VSSDK110Install)\VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
+    </PropertyGroup>
 
     <PropertyGroup>
       <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies;$(rmT4AssemblyReferencePaths);$(VSSDKPath)</rmT4AssemblyReferencePaths>

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="3.5">
+  ToolsVersion="4.0">
 
   <!-- 
     =========================================================================================================
@@ -41,9 +41,7 @@
     <!-- Detect VS 2010 or 2012 -->
     <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
     <VsCommonTools Condition="'$(VS110COMNTOOLS)' != ''">$(VS110COMNTOOLS)</VsCommonTools>
-
-    <!-- This is required as the T4 and compile is done via BuildUsingMSBuild4.ps1, so it runs as a desktopbuild -->
-    <SolutionDirectoryPath Condition="('$(SolutionDirectoryPathForMSBuild4)'!='')">$(SolutionDirectoryPathForMSBuild4)</SolutionDirectoryPath>
+    
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
@@ -251,24 +249,36 @@ foreach(var replacement in replacements){
         Clean
     ==========================================================================================
   -->
-  <ItemGroup>
-    <ModuleBinFiles Include="$(SolutionDirectoryPath)\Bin\**\*.*"/>
-  </ItemGroup>
-
   <Target Name="CleanBin" >
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Clean Module Bin"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)"
-            >
+      BuildUri="$(BuildURI)">
       <Output
         TaskParameter="id"
-        PropertyName="BuildStepId"
-                />
+        PropertyName="BuildStepId" />
     </BuildStep>
+    
+    <ItemGroup>
+      <Files Include="$(SolutionDirectoryPath)Bin\**\*.trx" />
+      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'" 
+             Include="$(SolutionDirectoryPath)Bin\**\*" />
+      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'" 
+             Include="$(SolutionDirectoryPath)src\**\obj\**\*" />
+    </ItemGroup>
 
-    <Delete Files="@(ModuleBinFiles)"/>
+    <ItemGroup>
+        <!-- Must trim trailing slash as GetDirectories does not return results with trailing slashes -->
+        <Folders Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'"
+                 Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)Bin\', '*', System.IO.SearchOption.AllDirectories))"
+                 Exclude="$(BinTestDirectory.TrimEnd('\'));$(BinModuleDirectory.TrimEnd('\'))" />
+    </ItemGroup>
+
+    <Message Text="Cleaning module bin: $(CleanBin)" />
+
+    <Delete Files="@(Files)" />
+    <RemoveDir Directories="@(Folders)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -278,7 +288,6 @@ foreach(var replacement in replacements){
       Status="Succeeded" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
   </Target>
 
 
@@ -418,11 +427,11 @@ foreach(var replacement in replacements){
 
   <!--
     ==========================================================================================================================
-        Compile - rmTransformTemplates is only run here for a desktop build, on the server is is handled by BuildUsingMSBuild4 
+        Compile - rmTransformTemplates 
     ==========================================================================================================================
   -->
   <PropertyGroup>
-    <BuildDependsOn Condition="('$(IsDesktopBuild)'=='true')">
+    <BuildDependsOn>
       rmTransformTemplates;
     </BuildDependsOn>
     <SolutionFileName Condition="('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)$(ModuleName).Custom.sln</SolutionFileName>
@@ -446,21 +455,15 @@ foreach(var replacement in replacements){
     <Message Text="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"/>
     <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
 
-    <MSBuild Condition="('$(IsDesktopBuild)'=='true') And ('$(PackageWeb)'!='true')"
+    <MSBuild Condition="'$(PackageWeb)'!='true'"
              Projects="$(SolutionFileName)"
              Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
              Targets="Build"  />
 
-    <MSBuild Condition="('$(IsDesktopBuild)'=='true') And ('$(PackageWeb)'=='true')"
+    <MSBuild Condition="'$(PackageWeb)'=='true'"
              Projects="$(SolutionFileName)"
              Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true"
              Targets="Build"  />
-
-    <Exec Condition="('$(IsDesktopBuild)'!='true')"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)BuildUsingMSBuild4.ps1" -moduleToBuildPath $(SolutionDirectoryPath) -buildInfrastructurePath $(BuildScriptsDirectory)'>
-    </Exec>
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -551,39 +554,6 @@ foreach(var replacement in replacements){
 
   <!--
     ==========================================================================================
-        BuildUsingMSBuild4 
-    ==========================================================================================
-  -->
-  <Target Name="BuildUsingMSBuild4"
-          DependsOnTargets="rmTransformTemplates" >
-
-    <Message Text="
-      BuildUsingMSBuild4 Starting.
-      This is a temporary solution to the problem that we are using a VS2008 build agent
-      on the build servers .  A server build calls BuildUsingMSBuild4.ps1 (see above)
-      which uses the MSBuild4 engine to run this target.
-      "/>
-
-    <Message Text="Solution File = $(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"/>
-
-    <MSBuild
-      Projects="$(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"
-      Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
-      Targets="Build"
-      Condition="('$(PackageWeb)'!='true')"/>
-      
-     <MSBuild
-       Projects="$(SolutionDirectoryPathForMSBuild4)\$(ModuleName).sln"
-       Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true"
-       Targets="Build"
-       Condition="('$(PackageWeb)'=='true')"/>
-
-    <Message Text="BuildUsingMSBuild4 Finished"/>
-
-  </Target>
-
-  <!--
-    ==========================================================================================
         Zip Source 
     ==========================================================================================
   -->
@@ -614,8 +584,7 @@ foreach(var replacement in replacements){
 
     <Delete
       Files="$(ZipFile)"
-      Condition="Exists('$(ZipFile)')"
-            />
+      Condition="Exists('$(ZipFile)')" />
 
     <RemoveDir
       Condition="Exists('$(TempSolutionDirectory)')"
@@ -623,17 +592,17 @@ foreach(var replacement in replacements){
 
       <ItemGroup>
           <SourceFilesToCopyForTransform
-              Include="$(SolutionDirectoryPath)\**\*.*"
-              Exclude="$(SolutionDirectoryPath)\**\obj\**;                       
-                       $(SolutionDirectoryPath)\**\_Resharper*\**;                       
-                       $(SolutionDirectoryPath)\Bin\**\**;
-                       $(SolutionDirectoryPath)\Test\**\**;
-                       $(SolutionDirectoryPath)\TestResults\*\**;
-                       $(SolutionDirectoryPath)\Dependencies\**\**;
-                       $(SolutionDirectoryPath)\**\*.vssscc;
-                       $(SolutionDirectoryPath)\**\*.vspscc;" />
+              Include="$(SolutionDirectoryPath)**\*"
+              Exclude="$(SolutionDirectoryPath)**\obj\**;                   
+                       $(SolutionDirectoryPath)**\_Resharper*\**;                       
+                       $(SolutionDirectoryPath)*ABT\**;                       
+                       $(SolutionDirectoryPath)Bin\**\**;
+                       $(SolutionDirectoryPath)Test\**\**;
+                       $(SolutionDirectoryPath)TestResults\*\**;
+                       $(SolutionDirectoryPath)Dependencies\**\**;
+                       $(SolutionDirectoryPath)**\*.vssscc;
+                       $(SolutionDirectoryPath)**\*.vspscc;" />
         </ItemGroup>
-
 
     <!-- Make a copy of the source files for the custom solution transformation and zip -->
     <MakeDir
@@ -723,12 +692,12 @@ foreach(var replacement in replacements){
       <ZipSourceFiles
         Include="
                       $(TempSolutionDirectory)\**\*.Custom.sln;
-  					          "/>
+                              "/>
 
       <ZipSourceFiles
         Include="
-  					          $(ProjectFoldersIncludeString)
-  					          "
+                              $(ProjectFoldersIncludeString)
+                              "
         Exclude="
                       $(TempModuleSourceDirectory)\**\*.sln;
                       $(TempModuleSourceDirectory)\**\*.vssscc;
@@ -742,21 +711,21 @@ foreach(var replacement in replacements){
                       $(TempModuleSourceDirectory)\**\obj\**;
                       $(TempModuleSourceDirectory)\**\UnitTest*\**;
                       $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
-  			              $(TempModuleSourceDirectory)\**\TestResults\**;
+                          $(TempModuleSourceDirectory)\**\TestResults\**;
                       $(TempModuleSourceDirectory)\**\Release.txt;
                       $(TempModuleSourceDirectory)\**\Debug.txt;
                       $(TempModuleSourceDirectory)\**\_Resharper*\**;
                       $(TempModuleSourceDirectory)\**\*resharper.user;
-  				    "/>
+                    "/>
       <ZipSourceFiles
         Include="
-  					          $(TempModuleBuildDirectory)\*.*;
-  					          "
+                              $(TempModuleBuildDirectory)\*.*;
+                              "
               />
       <ZipSourceFiles
         Include="
-  					          $(CustomBuildFilesDirectory)\*.*;
-  					          "
+                              $(CustomBuildFilesDirectory)\*.*;
+                              "
         Exclude="
                     $(CustomBuildFilesDirectory)\**\*.pfx;
                     "
@@ -789,12 +758,9 @@ foreach(var replacement in replacements){
         Unit Test 
     ==========================================================================================
   -->
-
-
   <Target Name="RunUnitTests"
           DependsOnTargets="Build"
-          Condition="('$(RunTest)'!='false')"
-  >
+          Condition="('$(RunTest)'!='false')">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -820,23 +786,26 @@ foreach(var replacement in replacements){
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</UnitTestAssemblies>
       <ResultsFileSwitch>/resultsfile:$(BinTestDirectory)\UnitTestResults.trx</ResultsFileSwitch>
-      <PublishBuildSwitch>/publishbuild:$(FileVersion)</PublishBuildSwitch>
-      <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
-      <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
-      <PublishSwitch>/publish:$(TeamFoundationServerUrl)</PublishSwitch>
-      <TeamProjectSwitch>/teamproject:$(TeamProject)</TeamProjectSwitch>
-      <PathToMSTest>$(VsCommonTools)..\IDE\MSTest.exe</PathToMSTest>    
+
+      <!-- Test Result Publishing -->
+      <PublishBuildSwitch>/publishbuild:"$(BuildUri)"</PublishBuildSwitch>
+      <ConfigurationSwitch>/flavor:"%(ConfigurationToBuild.FlavorToBuild)"</ConfigurationSwitch> <!-- e.g Debug -->
+      <PlatformSwitch>/platform:"%(ConfigurationToBuild.PlatformToBuild)"</PlatformSwitch> <!-- e.g Any CPU -->
+      <PublishSwitch>/publish:"$(TeamFoundationServerUrl)"</PublishSwitch>
+      <TeamProjectSwitch>/teamproject:"$(TeamProject)"</TeamProjectSwitch>
+      <PublishCommand Condition="'$(IsDesktopBuild)' != 'true'">$(PublishSwitch) $(PublishBuildSwitch) $(PlatformSwitch) $(ConfigurationSwitch) $(TeamProjectSwitch)</PublishCommand>
+      <PathToMSTest>$(VsCommonTools)..\IDE\MSTest.exe</PathToMSTest>
     </PropertyGroup>
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' == 'true')"
-          Command='"$(PathToMSTest)" %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx ' />
+          Command='"$(PathToMSTest)" /nologo /usestderr %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx' />
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' != 'true')"
-          Command='"$(PathToMSTest)" $(UnitTestAssemblies) $(ResultsFileSwitch) ' />
+          Command='"$(PathToMSTest)" /nologo /usestderr $(UnitTestAssemblies) $(ResultsFileSwitch)' />
 
 
     <BuildStep
@@ -876,15 +845,9 @@ foreach(var replacement in replacements){
              Text="Create package to publish" />
     <Message Text="## Publish as version $(FileVersion)" />
 
-    <MSBuild Condition="('$(IsDesktopBuild)'=='true')"
-             Projects="$(SolutionFileName)"
+    <MSBuild Projects="$(SolutionFileName)"
              Properties="ApplicationVersion=$(FileVersion)"
              Targets="Publish"  />
-
-    <Exec Condition="('$(IsDesktopBuild)'!='true')"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)PublishClickOnceProjectUsingMSBuild4.ps1" -pathForModuleToPublish $(SolutionFileName) -applicationVersion $(FileVersion)'/>
 
     <Message Condition="('$(IsDesktopBuild)'=='true')"
              Text="Zip package" />
@@ -947,7 +910,7 @@ foreach(var replacement in replacements){
     <ItemGroup>
       <ZipSourceFiles
         Include="
-  			$(SolutionDirectoryPath)\**;
+            $(SolutionDirectoryPath)\**;
         "
         Exclude="
         $(BinTestDirectory)\**;
