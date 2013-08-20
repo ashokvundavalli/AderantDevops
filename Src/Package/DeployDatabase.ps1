@@ -36,6 +36,7 @@ begin {
 }
 
 process {    
+	$ErrorActionPreference='Stop'
     $fw = [System.IO.Path]::Combine($expertSourceDirectory, "Aderant.Framework.dll")
     
     if (-not (Test-Path $fw)) {
