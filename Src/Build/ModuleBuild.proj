@@ -462,9 +462,10 @@ foreach(var replacement in replacements){
              Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
              Targets="Build"  />
 
+    <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files -->
     <MSBuild Condition="'$(PackageWeb)'=='true'"
              Projects="$(SolutionFileName)"
-             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true"
+             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true;EnableExcludeFilesByExtension=false"
              Targets="Build"  />
 
     <BuildStep
