@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="8">
     <Modules>
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
@@ -18,6 +19,7 @@
         <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
         <Module Name="Database" AssemblyVersion="1.8.0.0" />
+        <Module Name="Documentation" AssemblyVersion="1.8.0.0" />
         <Module Name="Expert.Help" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
@@ -34,6 +36,7 @@
         <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.QueryModels" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" />
@@ -46,12 +49,14 @@
         <Module Name="Libraries.Presentation.Firm" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Roles" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Rules" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Marketing.Help" />
         <Module Name="Packages" AssemblyVersion="1.8.0.0" />
+        <Module Name="Performance.ExpertSuite" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.API" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
@@ -66,17 +71,26 @@
         <Module Name="Services.Applications.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Identity" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Lookup" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Notes" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Query" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Rules" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
+        <Module Name="Tests.Assets" AssemblyVersion="1.8.0.0" />
+        <Module Name="Tests.Customization" AssemblyVersion="1.8.0.0" />
+        <Module Name="Tests.Load" AssemblyVersion="1.8.0.0" />
         <Module Name="ThirdParty.Add2Home" />
         <Module Name="ThirdParty.AsyncJs" />
+        <Module Name="ThirdParty.AutoMapper" />
         <Module Name="ThirdParty.AutoMapper.2" />
+        <Module Name="ThirdParty.AvalonDock.2.0" />
         <Module Name="ThirdParty.Bootstrap" />
+        <Module Name="Thirdparty.Build" />
         <Module Name="ThirdParty.DBGEN" />
         <Module Name="Thirdparty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
@@ -87,10 +101,13 @@
         <Module Name="Thirdparty.HtmlAgilityPack" />
         <Module Name="Thirdparty.ICSharpCode" />
         <Module Name="Thirdparty.Infragistics" />
+        <Module Name="Thirdparty.IronPython.1.1" />
+        <Module Name="Thirdparty.IronPython.2.6" />
         <Module Name="Thirdparty.IronPython.2.7" />
         <Module Name="ThirdParty.Irony" />
         <Module Name="Thirdparty.JQuery" />
         <Module Name="Thirdparty.JQueryUI" />
+        <Module Name="Thirdparty.Keyoti.RapidSpell" />
         <Module Name="Thirdparty.Keyoti.RapidSpell.v3" />
         <Module Name="Thirdparty.Knockout" />
         <Module Name="Thirdparty.LLBLGen" />
@@ -122,15 +139,13 @@
         <Module Name="Thirdparty.Newtonsoft.Json" />
         <Module Name="Thirdparty.NHibernate" />
         <Module Name="Thirdparty.Ninject" />
-
-        <!-- These are fundamentally incompatible with each other as they share the same file name -->
         <Module Name="Thirdparty.NMock" />
         <Module Name="Thirdparty.NMock.2" />
-
         <Module Name="Thirdparty.NTFSStreams" />
         <Module Name="Thirdparty.NVelocity" />
         <Module Name="Thirdparty.OpenXML" />
         <Module Name="Thirdparty.PDF" />
+        <Module Name="Thirdparty.PsUnit" />
         <Module Name="Thirdparty.Reactive" />
         <Module Name="Thirdparty.RhinoMocks" />
         <Module Name="Thirdparty.SignalR" />
@@ -144,6 +159,8 @@
         <Module Name="Thirdparty.WatiN" />
         <Module Name="Thirdparty.Wintellect" />
         <Module Name="Thirdparty.WiX" />
+        <Module Name="Thirdparty.Xceed" />
+        <Module Name="Thirdparty.Xceed.3" />
         <Module Name="Thirdparty.Xceed.4" />
         <Module Name="Thirdparty.Xenocode" />
         <Module Name="Thirdparty.ZipLibrary" />

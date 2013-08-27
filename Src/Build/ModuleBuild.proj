@@ -250,6 +250,17 @@ foreach(var replacement in replacements){
     ==========================================================================================
   -->
   <Target Name="CleanBin" >
+    <PropertyGroup>
+        <!-- Default to clean on the server -->
+        <CleanBin Condition="'$(CleanBin)' == '' And '$(IsDesktopBuild)' == 'false'">true</CleanBin>
+
+        <!-- Default to no clean on the desktop -->
+        <CleanBin Condition="'$(CleanBin)' == '' And '$(IsDesktopBuild)' == 'true'">false</CleanBin>
+
+        <!-- Always clean if we are building a template module -->
+        <CleanBin Condition="'$(IsTemplateModule)' == 'true'">true</CleanBin>
+    </PropertyGroup>
+
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Clean Module Bin"
@@ -261,24 +272,36 @@ foreach(var replacement in replacements){
     </BuildStep>
     
     <ItemGroup>
+      <!-- Always delete trx files -->
       <Files Include="$(SolutionDirectoryPath)Bin\**\*.trx" />
-      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'" 
+      <!-- Always delete the contents of TestResults -->
+      <Files Include="$(SolutionDirectoryPath)TestResults\**\*" />
+      <!-- Always delete the contents of the Bin\Test\<name> directories  -->
+      <Files Include="$(BinTestDirectory)$(UserName)*\**" />
+
+      <Files Condition="'$(CleanBin)'" 
              Include="$(SolutionDirectoryPath)Bin\**\*" />
-      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'" 
+      <Files Condition="'$(CleanBin)'" 
              Include="$(SolutionDirectoryPath)src\**\obj\**\*" />
     </ItemGroup>
 
     <ItemGroup>
         <!-- Must trim trailing slash as GetDirectories does not return results with trailing slashes -->
-        <Folders Condition="Exists('$(SolutionDirectoryPath)Bin\') And ('$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false')"
+        <Folders Condition="Exists('$(SolutionDirectoryPath)Bin\') And '$(CleanBin)'"
                  Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)Bin\', '*', System.IO.SearchOption.AllDirectories))"
                  Exclude="$(BinTestDirectory.TrimEnd('\'));$(BinModuleDirectory.TrimEnd('\'))" />
+        <!-- Always delete TestResults -->
+        <Folders Condition="Exists('$(SolutionDirectoryPath)')"
+                 Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)', 'TestResults', System.IO.SearchOption.AllDirectories))" />
+        <!-- Always delete Bin\Test\<name> directories -->
+        <Folders Condition="Exists('$(BinTestDirectory)')"
+                 Include="$([System.IO.Directory]::GetDirectories('$(BinTestDirectory)', '$(UserName)*', System.IO.SearchOption.AllDirectories))" />
     </ItemGroup>
 
     <Message Text="Cleaning module bin: $(CleanBin)" />
 
-    <Delete Files="@(Files)" />
-    <RemoveDir Directories="@(Folders)" />
+    <Delete Files="@(Files)" ContinueOnError="true" />
+    <RemoveDir Directories="@(Folders)" ContinueOnError="true" />
 
     <MakeDir Directories="$(BinModuleDirectory)" />
 
@@ -337,10 +360,7 @@ foreach(var replacement in replacements){
   <Target Name="rmBeforeTransformTemplates" >
 
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>
-        $(OutDir);
-        $(SolutionDirectoryPath)\Dependencies;
-      </rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies;</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
     <ItemGroup>
@@ -368,7 +388,6 @@ foreach(var replacement in replacements){
     </ItemGroup>
 
     <Message Text="IsDesktopBuild: $(IsDesktopBuild)"/>
-    <Message Text="SolutionDirectoryPathForMSBuild4: $(SolutionDirectoryPathForMSBuild4)"/>
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)"/>
     <Message Text="ModuleSourceDirectory: $(ModuleSourceDirectory)"/>
     <Message Text="ModuleTestDirectory: $(ModuleTestDirectory)"/>
@@ -714,7 +733,7 @@ foreach(var replacement in replacements){
                       $(TempModuleSourceDirectory)\**\obj\**;
                       $(TempModuleSourceDirectory)\**\UnitTest*\**;
                       $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
-                          $(TempModuleSourceDirectory)\**\TestResults\**;
+                      $(TempModuleSourceDirectory)\**\TestResults\**;
                       $(TempModuleSourceDirectory)\**\Release.txt;
                       $(TempModuleSourceDirectory)\**\Debug.txt;
                       $(TempModuleSourceDirectory)\**\_Resharper*\**;
