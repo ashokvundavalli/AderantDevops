@@ -19,7 +19,6 @@
         <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
         <Module Name="Database" AssemblyVersion="1.8.0.0" />
-        <Module Name="Documentation" AssemblyVersion="1.8.0.0" />
         <Module Name="Expert.Help" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
@@ -81,14 +80,10 @@
         <Module Name="Services.Rules" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
-        <Module Name="Tests.Assets" AssemblyVersion="1.8.0.0" />
-        <Module Name="Tests.Customization" AssemblyVersion="1.8.0.0" />
-        <Module Name="Tests.Load" AssemblyVersion="1.8.0.0" />
         <Module Name="ThirdParty.Add2Home" />
         <Module Name="ThirdParty.AsyncJs" />
         <Module Name="ThirdParty.AutoMapper" />
         <Module Name="ThirdParty.AutoMapper.2" />
-        <Module Name="ThirdParty.AvalonDock.2.0" />
         <Module Name="ThirdParty.Bootstrap" />
         <Module Name="Thirdparty.Build" />
         <Module Name="ThirdParty.DBGEN" />
