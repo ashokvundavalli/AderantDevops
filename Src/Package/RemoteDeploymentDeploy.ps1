@@ -28,7 +28,8 @@ begin{
 }
 
 process{
-	$ErrorActionPreference = "Stop"
+	# There is an issue with Environment Validator that throws an error which will stop the deployment.
+	# $ErrorActionPreference = "Stop"
 	$session = Get-RemoteSession $remoteMachineName
 	$sourcePath = Get-SourceDirectory $environmentManifestPath
 
