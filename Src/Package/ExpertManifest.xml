@@ -8,7 +8,6 @@
         <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" />
