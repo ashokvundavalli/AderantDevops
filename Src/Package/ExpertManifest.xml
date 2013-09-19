@@ -71,7 +71,7 @@
         <Module Name="Services.Applications.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Customization" AssemblyVersion="1.8.0.0" />
+	      <Module Name="Services.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Lookup" AssemblyVersion="1.8.0.0" />
