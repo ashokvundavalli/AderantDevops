@@ -2,7 +2,7 @@
 <Project
     DefaultTargets="DesktopBuild"
     xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-    ToolsVersion="4.0">
+    ToolsVersion="3.5">
 
   <!-- 
     =========================================================================================================
@@ -45,7 +45,10 @@
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>     
+    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>
+	  
+	<!-- Define targets to run from PackageTargets-->  
+	<IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>  
   </PropertyGroup>
 
   <!-- 
@@ -70,23 +73,19 @@
   </Target>
 
   <Target Name="AfterCompile">
-    <CallTarget Targets="ProductPackage" />
+    <CallTarget Targets="AutomatedTestingTargets" />
   </Target>
 
 
   <!--
     ==========================================================================================
-        Packaging Tasks
+        Automated Testing Targets
     ==========================================================================================
   -->
-
-  <Target Name="ProductPackage">
-    <CallTarget Targets="PackageProduct" />
-    <!--<CallTarget Targets="GenerateClickonce" />-->
-    <CallTarget Targets="RemoveProduct" />
-    <CallTarget Targets="DeployProduct" />
-    <CallTarget Targets="WaitForServiceStartUp" />
+  <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\RidoTasks.dll" />
+	
+  <Target Name="AutomatedTestingTargets">
+    <CallTarget Targets="$(IntegrationTestSteps)" RunEachTargetSeparately="true" />
   </Target>  
-
 
 </Project>

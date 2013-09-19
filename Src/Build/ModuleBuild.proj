@@ -474,7 +474,8 @@ foreach(var replacement in replacements){
     </BuildStep>
 
     <Message Text="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"/>
-    <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
+    <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)" />
+    <Message Text="ModuleName = $(ModuleName)" />
 
     <MSBuild Condition="'$(PackageWeb)'!='true'"
              Projects="$(SolutionFileName)"

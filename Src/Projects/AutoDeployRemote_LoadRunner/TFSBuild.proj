@@ -2,7 +2,7 @@
 <Project
     DefaultTargets="DesktopBuild"
     xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-    ToolsVersion="4.0">
+    ToolsVersion="3.5">
 
   <!-- 
     =========================================================================================================
@@ -22,10 +22,9 @@
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
-    
-  <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->  
-  <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
 
+    <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
+    <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
   <!--
     ==========================================================================================
         Begin
@@ -46,7 +45,7 @@
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-    <FrameworkHomeEnvVariable>MyFrameworkHome</FrameworkHomeEnvVariable>     
+    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>     
   </PropertyGroup>
 
   <!-- 
@@ -71,17 +70,24 @@
   </Target>
 
   <Target Name="AfterCompile">
-    <CallTarget Targets="ProductPackage" />
+    <CallTarget Targets="AutomatedTestingTargets" />
   </Target>
 
 
   <!--
     ==========================================================================================
-        Tasks
+        Automated Testing Targets
     ==========================================================================================
   -->
 
-  <Target Name="ProductPackage">
-    <CallTarget Targets="PackageProduct" />
+  <Target Name="AutomatedTestingTargets">
+    <CallTarget Targets="RemoveProductRemote" />
+    <CallTarget Targets="RestoreDB" />
+    <CallTarget Targets="PackageProduct" Condition="('$(UseBuildAllOutput)'!='true')" />
+    <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
+    <CallTarget Targets="DeployProductRemote" />
+    <CallTarget Targets="WaitForServiceStartUp" />
   </Target>  
+
+
 </Project>
