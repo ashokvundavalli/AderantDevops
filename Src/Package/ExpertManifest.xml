@@ -3,6 +3,7 @@
     <Modules>        
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
@@ -30,6 +31,7 @@
         <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Disbursement" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Employee" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Firm" AssemblyVersion="1.8.0.0" />
@@ -62,6 +64,7 @@
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Applications.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.FirmControl" AssemblyVersion="1.8.0.0" />
@@ -81,11 +84,13 @@
         <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Rules" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
+        <Module Name="SmartForms.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="ThirdParty.Add2Home" />
         <Module Name="ThirdParty.AsyncJs" />        
         <Module Name="ThirdParty.AutoMapper.2"  />
         <Module Name="ThirdParty.Bootstrap" />
+        <Module Name="ThirdParty.BsnGoldParser" />
         <Module Name="Thirdparty.Build" />
         <Module Name="ThirdParty.DBGEN"  />
         <Module Name="Thirdparty.DevComponents"  />
@@ -113,6 +118,7 @@
         <Module Name="Thirdparty.Microsoft"  />
         <Module Name="Thirdparty.Microsoft.Build"  />
         <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller"  />
+        <Module Name="ThirdParty.Microsoft.DocumentFormat" />
         <Module Name="ThirdParty.Microsoft.EntityFramework"  />
         <Module Name="Thirdparty.Microsoft.ExpressionBlendSdk"  />
         <Module Name="Thirdparty.Microsoft.Linq.Dynamic"  />
