@@ -396,7 +396,7 @@ foreach(var replacement in replacements){
     <Message Text="DSLDirectiveLoadMethod: $(DSLDirectiveLoadMethod)" />
     <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)"/>
     <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)"/>
-    <Message Text="rmT4TextTemplates: $(rmT4TextTemplates)"/>
+    <Message Text="rmT4TextTemplates: @(rmT4TextTemplates)"/>
   </Target>
 
   <!--
