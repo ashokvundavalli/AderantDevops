@@ -118,6 +118,7 @@
         <Module Name="ThirdParty.Marketing.Interop" />
         <Module Name="Thirdparty.Microsoft" />
         <Module Name="Thirdparty.Microsoft.Build" />
+        <Module Name="Thirdparty.Microsoft.Data" />
         <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
         <Module Name="ThirdParty.Microsoft.DocumentFormat" />
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
