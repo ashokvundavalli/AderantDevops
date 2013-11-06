@@ -23,8 +23,8 @@
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
 
-    <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
-    <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
+  <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
+  <Import Project="\\na.aderant.com\expertsuite\dev\expenses\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
   <!--
     ==========================================================================================
         Begin
@@ -46,9 +46,9 @@
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
     <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>
-	  
-	<!-- Define targets to run from PackageTargets-->  
-	<IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>  
+
+    <!-- Define targets to run from PackageTargets-->
+    <IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>
   </PropertyGroup>
 
   <!-- 
@@ -83,9 +83,9 @@
     ==========================================================================================
   -->
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\RidoTasks.dll" />
-	
+
   <Target Name="AutomatedTestingTargets">
     <CallTarget Targets="$(IntegrationTestSteps)" RunEachTargetSeparately="true" />
-  </Target>  
+  </Target>
 
 </Project>

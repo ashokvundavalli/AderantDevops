@@ -1010,8 +1010,18 @@ foreach(var replacement in replacements){
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
+    
+    <PropertyGroup>
+        <FailedMessage>Build FAILED via BuildAll.</FailedMessage>
+        <FailedMessage Condition="'$(BuildAllDropPath)' != ''">$(FailedMessage) See: $(BuildAllDropPath)\BuildLog.txt</FailedMessage>
+    </PropertyGroup>
 
-      <BuildStep
+    <WriteLinesToFile
+      Condition ="('$(BuildAll)'=='true')"
+      File="$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\$(FileVersion)\BuildLog.txt"
+      Lines="$(FailedMessage)" />
+
+    <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
