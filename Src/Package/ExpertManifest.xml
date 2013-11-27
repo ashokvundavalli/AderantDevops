@@ -39,7 +39,6 @@
     <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" />
-    <Module Name="Libraries.Entities.QueryModels" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" />
     <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" />
