@@ -6,7 +6,7 @@
 /p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Dev\Automation
 /p:EnvironmentManifestPath=\\na.aderant.com\expertsuite\Dev\Automation\Tests.Assets\Automation.CustomizationTest.environment.xml
 /p:ExpertDatabaseConnectionStringForSystemMap="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"
-/p:BuildFlavor=Debug
+/p:BuildFlavor=Release
 /p:RunTests=false
 /P:ExpertAssistantAssemblyVersion=1.8.0.0
 /P:TimerAssemblyVersion=1.8.0.0

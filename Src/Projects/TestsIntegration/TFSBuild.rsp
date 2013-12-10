@@ -20,7 +20,7 @@
 /p:TestSettingsFile=\\na.aderant.com\ExpertSuite\Main\Tests.Assets\Main.Remote.Integration.testsettings
 
 # Environment used by Creating and Restoring database targets.
-/p:EnvironmentManifestPath=\\VMEXPDEVB307\ExpertSource\environment.xml
+/p:EnvironmentManifestPath=\\VMAKLExpMain.ap.aderant.com\ExpertSource\environment.xml
 
 # Path where the database files are stored on the database server.
 /p:directory=D:\MSSQL10

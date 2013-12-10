@@ -39,7 +39,7 @@
 
 
 # Microsoft Build Configuration
-/p:BuildFlavor=Debug
+/p:BuildFlavor=Release
 
 
 #Unused - need to find source before removing.
