@@ -87,7 +87,7 @@
     <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
     <CallTarget Targets="ApplyUPD" />
     <CallTarget Targets="DeployProductRemote" />
-    <CallTarget Targets="WaitForServiceStartUp" />
+    <!--<CallTarget Targets="WaitForServiceStartUp" />-->
   </Target>  
 
 

@@ -798,10 +798,9 @@ foreach(var replacement in replacements){
     </BuildStep>
 
     <CreateItem
-      Include="$(BinTestDirectory)\%2aUnitTest%2a.dll"
+      Include="$(BinTestDirectory)\UnitTest%2a.dll"
       Exclude="$(BinTestDirectory)\%2aHelpers%2a.dll"
-      AdditionalMetadata="TestContainerPrefix=/testcontainer:"
-          >
+      AdditionalMetadata="TestContainerPrefix=/testcontainer:">
       <Output TaskParameter="Include"
               ItemName="TestAssemblies" />
     </CreateItem>
