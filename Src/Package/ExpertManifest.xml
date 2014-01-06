@@ -91,7 +91,6 @@
         <Module Name="Thirdparty.AvalonDock.2.0" />
         <Module Name="ThirdParty.Bootstrap"  />
         <Module Name="ThirdParty.BsnGoldParser"  />
-        <Module Name="Thirdparty.Build"  />
         <Module Name="ThirdParty.DBGEN"  />
         <Module Name="Thirdparty.DevComponents"  />
         <Module Name="ThirdParty.DotLess"  />
