@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\Sources\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\dev\expenses
 
 
 ##########################
@@ -17,7 +17,7 @@
 ##########################
 # This is passed to MsTest.exe as the test settings switch.
 # The test settings allow you to specify test controllers, data collection settings and other goodness.
-/p:TestSettingsFile=\\na.aderant.com\ExpertSuite\Main\Tests.Assets\Main.Remote.Integration.testsettings
+/p:TestSettingsFile=\\na.aderant.com\ExpertSuite\Dev\Expenses\Tests.Assets\Dev.Expenses.testsettings
 
 # Environment used by Creating and Restoring database targets.
 /p:EnvironmentManifestPath=\\VMAKLExpMain.ap.aderant.com\ExpertSource\environment.xml
@@ -26,9 +26,8 @@
 /p:directory=D:\MSSQL10
 
 # List of test assemblies to include in the test run.  Space delimited list of test dlls, each one prefixed with "/testcontainer".
-/p:"AderantTestAssembliesInclude=/testcontainer:IntegrationTest.Marketing.Library.dll /testcontainer:IntegrationTest.Wizards.dll /testcontainer:IntegrationTest.PrebillEditor.dll /testcontainer:IntegrationTest.Framework.Customization.dll /testcontainer:IntegrationTest.Aderant.Framework.Deployment.dll /testcontainer:IntegrationTest.Bill.Library.dll /testcontainer:IntegrationTest.BusinessEntity.Library.dll /testcontainer:IntegrationTest.Client.Library.dll /testcontainer:IntegrationTest.Disbursement.Library.dll /testcontainer:IntegrationTest.Employee.Library.dll /testcontainer:IntegrationTest.Firm.Library.dll /testcontainer:IntegrationTest.GeneralLedger.Library.dll /testcontainer:IntegrationTest.Matter.Library.dll /testcontainer:IntegrationTest.Rates.Library.dll /testcontainer:IntegrationTest.Framework.Configuration.dll /testcontainer:IntegrationTest.Framework.Persistence.dll /testcontainer:IntegrationTest.Framework.Security.dll /testcontainer:IntegrationTest.Framework.Packaging.Service.dll /testcontainer:IntegrationTest.Billing.Library.dll /testcontainer:IntegrationTest.PresentationFramework.Windows.dll /testcontainer:IntegrationTest.Tasks.dll /testcontainer:IntegrationTest.Workflow.dll /testcontainer:IntegrationTest.FileOpening.Conflicts.Service.Proxy.dll /testcontainer:IntegrationTest.FileOpening.dll /testcontainer:IntegrationTest.MatterPlanning.dll /testcontainer:IntegrationTest.Prebill.dll /testcontainer:IntegrationTest.Rates.dll /testcontainer:IntegrationTest.Metadata.Service.dll /testcontainer:IntegrationTest.Query.dll /testcontainer:IntegrationTest.Query.Services.dll /testcontainer:IntegrationTest.Helpers.dll /testcontainer:IntegrationTest.DeploymentService.dll /testcontainer:IntegrationTest.TaskBasedBilling.dll /testcontainer:IntegrationTest.EmployeeIntake.dll /testcontainer:IntegrationTest.FirmControl.dll /testcontainer:IntegrationTest.FoundTime.Connectors.dll /testcontainer:IntegrationTest.AccountsPayable.dll /testcontainer:IntegrationTest.Security.dll /testcontainer:IntegrationTests.Messaging.BusinessEvents.dll /testcontainer:IntegrationTest.Framework.Reporting.dll /testcontainer:IntegrationTest.DesignStudio.dll /testcontainer:IntegrationTest.CustomizationBuilder.dll"
-# Unused tests
-# /testcontainer:IntegrationTest.Time.Library.dll /testcontainer:IntegrationTest.TimeService.dll /testcontainer:IntegrationTest.Time.dll 
+# /testcontainer:IntegrationTest.Firm.Library.dll
+/p:"AderantTestAssembliesInclude=/testcontainer:IntegrationTest.AccountsPayable.dll"
 
 # Used as condition for IntegrationTests target.
 /p:RunTests=true
