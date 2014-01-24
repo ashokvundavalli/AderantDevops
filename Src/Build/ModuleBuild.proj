@@ -117,19 +117,21 @@ foreach(var replacement in replacements){
       <Using Namespace="System.IO"/>
       <Code Type="Fragment" Language="cs">
         <![CDATA[
-foreach (var assembly in Assemblies) {
-    if (assembly.ItemSpec.EndsWith(".dll") || assembly.ItemSpec.EndsWith(".exe")) {
-        var asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(assembly.ItemSpec);
+if (Assemblies != null) {
+    foreach (var assembly in Assemblies) {
+        if (assembly.ItemSpec.EndsWith(".dll") || assembly.ItemSpec.EndsWith(".exe")) {
+            var asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(assembly.ItemSpec);
     
-        System.Reflection.PortableExecutableKinds peKind;
-        System.Reflection.ImageFileMachine imageFileMachine;
-        asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
+            System.Reflection.PortableExecutableKinds peKind;
+            System.Reflection.ImageFileMachine imageFileMachine;
+            asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
     
-        if (peKind.HasFlag(System.Reflection.PortableExecutableKinds.Required32Bit)) {            
-            assembly.SetMetadata("Platform", "Required32Bit");
-            MustRun32Bit = true;
-        } else {
-            assembly.SetMetadata("Platform", "ILOnly");
+            if (peKind.HasFlag(System.Reflection.PortableExecutableKinds.Required32Bit)) {            
+                assembly.SetMetadata("Platform", "Required32Bit");
+                MustRun32Bit = true;
+            } else {
+                assembly.SetMetadata("Platform", "ILOnly");
+            }
         }
     }
 }
