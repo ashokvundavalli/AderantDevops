@@ -839,9 +839,12 @@ if (Assemblies != null) {
     <Message  Condition="$(MustRun32Bit)" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
     <PropertyGroup>
+      <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
+      <PublishName Condition="'$(BuildAll)' == 'true'">$(OriginalBuildNumber)</PublishName>
+      
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
       <ResultsFileSwitch Condition="'$(IsDesktopBuild)' == 'true'">/Logger:trx</ResultsFileSwitch>
-      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true'">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(BuildNumber);TeamProject=ExpertSuite;Platform="%(ConfigurationToBuild.PlatformToBuild)";Flavor="%(ConfigurationToBuild.FlavorToBuild)"</ResultsFileSwitch>
+      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true'">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=ExpertSuite;Platform="%(ConfigurationToBuild.PlatformToBuild)";Flavor="%(ConfigurationToBuild.FlavorToBuild)"</ResultsFileSwitch>
       <PlatformSwitch Condition="'$(MustRun32Bit)' != 'true'">/Platform:x64</PlatformSwitch>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
       <PathToTestTool>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe</PathToTestTool>
