@@ -118,8 +118,8 @@ foreach(var replacement in replacements){
       <Code Type="Fragment" Language="cs">
         <![CDATA[
 if (Assemblies != null) {
-    foreach (var assembly in Assemblies) {
-        if (assembly.ItemSpec.EndsWith(".dll") || assembly.ItemSpec.EndsWith(".exe")) {
+    foreach (var assembly in Assemblies) {        
+        if ((assembly.ItemSpec.EndsWith(".dll") || assembly.ItemSpec.EndsWith(".exe")) && System.IO.File.Exists(assembly.ItemSpec)) {
             var asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(assembly.ItemSpec);
     
             System.Reflection.PortableExecutableKinds peKind;
