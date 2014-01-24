@@ -1,0 +1,27 @@
+using System;
+using System.Linq;
+using System.Management.Automation;
+
+namespace DependencyAnalyzer {
+    [Cmdlet("Get", "ExpertModule")]
+    public class GetExpertModule : PSCmdlet {
+
+        [Parameter(Mandatory = true,  Position = 0)]
+        public string ModuleName { get; set; }
+
+        [Parameter(Mandatory = false, Position = 1)]
+        public string BranchPath { get; set; }
+
+        protected override void ProcessRecord() {
+            string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
+
+            DependencyBuilder builder = new DependencyBuilder(branchPath);
+            ExpertModule module = builder.GetAllModules().Where(x => x.Name.ToUpperInvariant() == ModuleName.ToUpperInvariant()).
+                    FirstOrDefault();
+            if (module == null) {
+                throw new PSArgumentOutOfRangeException("ModuleName");
+            }
+            WriteObject(module);
+        }
+    }
+}

@@ -5,10 +5,9 @@
 
   <!-- 
     =========================================================================================================
-        Team Build Script - Modularisation Prototype.
-        Another Change.
+        Team Build Script - Modularisation Prototype.        
         
-        Maintained by Global DBA And Release Management.  DBARM monitors and approves all modifications.  
+        Maintained by Global DBA And Release Management. 
         Guidelines:
             * All Imports, Calls to external commands/tasks/tools/utilities must be approved by DBARM  
             * Retain structure and formatting for easier merge between Team Build project scripts 
@@ -250,17 +249,6 @@ foreach(var replacement in replacements){
     ==========================================================================================
   -->
   <Target Name="CleanBin" >
-    <PropertyGroup>
-        <!-- Default to clean on the server -->
-        <CleanBin Condition="'$(CleanBin)' == '' And '$(IsDesktopBuild)' == 'false'">true</CleanBin>
-
-        <!-- Default to no clean on the desktop -->
-        <CleanBin Condition="'$(CleanBin)' == '' And '$(IsDesktopBuild)' == 'true'">false</CleanBin>
-
-        <!-- Always clean if we are building a template module -->
-        <CleanBin Condition="'$(IsTemplateModule)' == 'true'">true</CleanBin>
-    </PropertyGroup>
-
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Clean Module Bin"
@@ -271,37 +259,27 @@ foreach(var replacement in replacements){
         PropertyName="BuildStepId" />
     </BuildStep>
     
+    <RemoveDir Directories="$(ModuleBuildDirectory)\TestResults" />
+    
     <ItemGroup>
-      <!-- Always delete trx files -->
       <Files Include="$(SolutionDirectoryPath)Bin\**\*.trx" />
-      <!-- Always delete the contents of TestResults -->
-      <Files Include="$(SolutionDirectoryPath)TestResults\**\*" />
-      <!-- Always delete the contents of the Bin\Test\<name> directories  -->
-      <Files Include="$(BinTestDirectory)$(UserName)*\**" />
-
-      <Files Condition="'$(CleanBin)'" 
+      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'" 
              Include="$(SolutionDirectoryPath)Bin\**\*" />
-      <Files Condition="'$(CleanBin)'" 
+      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'" 
              Include="$(SolutionDirectoryPath)src\**\obj\**\*" />
     </ItemGroup>
 
     <ItemGroup>
         <!-- Must trim trailing slash as GetDirectories does not return results with trailing slashes -->
-        <Folders Condition="Exists('$(SolutionDirectoryPath)Bin\') And '$(CleanBin)'"
+        <Folders Condition="Exists('$(SolutionDirectoryPath)Bin\') And ('$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false')"
                  Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)Bin\', '*', System.IO.SearchOption.AllDirectories))"
                  Exclude="$(BinTestDirectory.TrimEnd('\'));$(BinModuleDirectory.TrimEnd('\'))" />
-        <!-- Always delete TestResults -->
-        <Folders Condition="Exists('$(SolutionDirectoryPath)')"
-                 Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)', 'TestResults', System.IO.SearchOption.AllDirectories))" />
-        <!-- Always delete Bin\Test\<name> directories -->
-        <Folders Condition="Exists('$(BinTestDirectory)')"
-                 Include="$([System.IO.Directory]::GetDirectories('$(BinTestDirectory)', '$(UserName)*', System.IO.SearchOption.AllDirectories))" />
     </ItemGroup>
 
     <Message Text="Cleaning module bin: $(CleanBin)" />
 
-    <Delete Files="@(Files)" ContinueOnError="true" />
-    <RemoveDir Directories="@(Folders)" ContinueOnError="true" />
+    <Delete Files="@(Files)" />
+    <RemoveDir Directories="@(Folders)" />
 
     <MakeDir Directories="$(BinModuleDirectory)" />
 
@@ -360,7 +338,10 @@ foreach(var replacement in replacements){
   <Target Name="rmBeforeTransformTemplates" >
 
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies;</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>
+        $(OutDir);
+        $(SolutionDirectoryPath)\Dependencies;
+      </rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
     <ItemGroup>
@@ -388,6 +369,7 @@ foreach(var replacement in replacements){
     </ItemGroup>
 
     <Message Text="IsDesktopBuild: $(IsDesktopBuild)"/>
+    <Message Text="SolutionDirectoryPathForMSBuild4: $(SolutionDirectoryPathForMSBuild4)"/>
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)"/>
     <Message Text="ModuleSourceDirectory: $(ModuleSourceDirectory)"/>
     <Message Text="ModuleTestDirectory: $(ModuleTestDirectory)"/>
@@ -458,34 +440,40 @@ foreach(var replacement in replacements){
     <SolutionFileName Condition="('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)$(ModuleName).Custom.sln</SolutionFileName>
     <SolutionFileName Condition="('$(IsCustomBuild)'!='true')">$(SolutionDirectoryPath)$(ModuleName).sln</SolutionFileName>
   </PropertyGroup>
+
   <Target Name="Build"
-          DependsOnTargets="$(BuildDependsOn)">
+         DependsOnTargets="$(BuildDependsOn)">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Building Module $(ModuleName)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)"
-            >
+      BuildUri="$(BuildURI)">
       <Output
         TaskParameter="id"
-        PropertyName="BuildStepId"
-                />
+        PropertyName="BuildStepId"/>
     </BuildStep>
 
     <Message Text="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"/>
-    <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)" />
-    <Message Text="ModuleName = $(ModuleName)" />
-
+    <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
+    
+    <PropertyGroup>
+      <CodeAnalysisTarget>$(MSBuildThisFileDirectory)\Aderant.CodeAnalysis.targets</CodeAnalysisTarget>
+      
+      <!-- Push these down to the build process so code analysis can use them -->
+      <TeamBuildProperties>TeamBuildRefPath=$(TeamBuildRefPath);TeamFoundationServerUrl=$(TeamFoundationServerUrl);BuildURI=$(BuildURI);IsDesktopBuild=$(IsDesktopBuild)</TeamBuildProperties>
+    </PropertyGroup>
+    
     <MSBuild Condition="'$(PackageWeb)'!='true'"
              Projects="$(SolutionFileName)"
-             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"
-             Targets="Build"  />
-
-    <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files -->
+             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);CodeAnalysisTargets=$(CodeAnalysisTarget);$(TeamBuildProperties)"
+             Targets="Build" >
+    </MSBuild>
+    
+     <!--EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files--> 
     <MSBuild Condition="'$(PackageWeb)'=='true'"
              Projects="$(SolutionFileName)"
-             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true;EnableExcludeFilesByExtension=false"
+             Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);DeployOnBuild=true;EnableExcludeFilesByExtension=false;CodeAnalysisTargets=$(CodeAnalysisTarget);$(TeamBuildProperties)"
              Targets="Build"  />
 
     <BuildStep
@@ -497,7 +485,6 @@ foreach(var replacement in replacements){
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
-
 
   <!--
     ==========================================================================================================================
@@ -734,7 +721,7 @@ foreach(var replacement in replacements){
                       $(TempModuleSourceDirectory)\**\obj\**;
                       $(TempModuleSourceDirectory)\**\UnitTest*\**;
                       $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
-                      $(TempModuleSourceDirectory)\**\TestResults\**;
+                          $(TempModuleSourceDirectory)\**\TestResults\**;
                       $(TempModuleSourceDirectory)\**\Release.txt;
                       $(TempModuleSourceDirectory)\**\Debug.txt;
                       $(TempModuleSourceDirectory)\**\_Resharper*\**;
@@ -798,37 +785,31 @@ foreach(var replacement in replacements){
     </BuildStep>
 
     <CreateItem
-      Include="$(BinTestDirectory)\UnitTest%2a.dll"
-      Exclude="$(BinTestDirectory)\%2aHelpers%2a.dll"
-      AdditionalMetadata="TestContainerPrefix=/testcontainer:">
+      Include="$(BinTestDirectory)\%2aUnitTest%2a.dll"
+      Exclude="$(BinTestDirectory)\%2aHelpers%2a.dll">
       <Output TaskParameter="Include"
               ItemName="TestAssemblies" />
     </CreateItem>
 
     <PropertyGroup>
-      <UnitTestAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</UnitTestAssemblies>
-      <ResultsFileSwitch>/resultsfile:$(BinTestDirectory)\UnitTestResults.trx</ResultsFileSwitch>
-
-      <!-- Test Result Publishing -->
-      <PublishBuildSwitch>/publishbuild:"$(BuildUri)"</PublishBuildSwitch>
-      <ConfigurationSwitch>/flavor:"%(ConfigurationToBuild.FlavorToBuild)"</ConfigurationSwitch> <!-- e.g Debug -->
-      <PlatformSwitch>/platform:"%(ConfigurationToBuild.PlatformToBuild)"</PlatformSwitch> <!-- e.g Any CPU -->
-      <PublishSwitch>/publish:"$(TeamFoundationServerUrl)"</PublishSwitch>
-      <TeamProjectSwitch>/teamproject:"$(TeamProject)"</TeamProjectSwitch>
-      <PublishCommand Condition="'$(IsDesktopBuild)' != 'true'">$(PublishSwitch) $(PublishBuildSwitch) $(PlatformSwitch) $(ConfigurationSwitch) $(TeamProjectSwitch)</PublishCommand>
-      <PathToMSTest>$(VsCommonTools)..\IDE\MSTest.exe</PathToMSTest>
+      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
+      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' == 'true'">/Logger:trx</ResultsFileSwitch>
+      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true'">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(BuildNumber);TeamProject=ExpertSuite;Platform="%(ConfigurationToBuild.PlatformToBuild)";Flavor="%(ConfigurationToBuild.FlavorToBuild)"</ResultsFileSwitch>
+      <PlatformSwitch>/Platform:x64</PlatformSwitch>
+      <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <PathToTestTool>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe</PathToTestTool>
     </PropertyGroup>
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' == 'true')"
-          Command='"$(PathToMSTest)" /nologo /usestderr %(TestAssemblies.TestContainerPrefix)%(TestAssemblies.FullPath) /resultsfile:$(BinTestDirectory)\UnitTestResults_%(TestAssemblies.Filename).trx' />
-
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Condition="('$(UnitTestAssemblies)' != '' And '$(RunTestAssembliesSeperately)' != 'true')"
-          Command='"$(PathToMSTest)" /nologo /usestderr $(UnitTestAssemblies) $(ResultsFileSwitch)' />
-
+          Condition="'$(UnitTestAssemblies)' != ''"
+          Command='"$(PathToTestTool)" $(UnitTestAssemblies) $(ResultsFileSwitch) $(PlatformSwitch) $(IsolationSwitch)' />
+    
+    <ItemGroup>
+      <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)\**\*.trx" />
+    </ItemGroup>
+    
+    <Copy Condition="'$(IsDesktopBuild)' == 'true'" SourceFiles="@(TestResults)" DestinationFiles="$(BinTestDirectory)\UnitTestResults.trx" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -1009,18 +990,8 @@ foreach(var replacement in replacements){
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
-    
-    <PropertyGroup>
-        <FailedMessage>Build FAILED via BuildAll.</FailedMessage>
-        <FailedMessage Condition="'$(BuildAllDropPath)' != ''">$(FailedMessage) See: $(BuildAllDropPath)\BuildLog.txt</FailedMessage>
-    </PropertyGroup>
 
-    <WriteLinesToFile
-      Condition ="('$(BuildAll)'=='true')"
-      File="$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\$(FileVersion)\BuildLog.txt"
-      Lines="$(FailedMessage)" />
-
-    <BuildStep
+      <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"

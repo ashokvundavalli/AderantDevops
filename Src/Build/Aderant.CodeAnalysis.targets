@@ -1,0 +1,135 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="Microsoft.TeamFoundation.Build.Tasks.BuildStep"
+             AssemblyFile="$(TeamBuildRefPath)\Microsoft.TeamFoundation.Build.ProcessComponents.dll" />
+
+  <PropertyGroup>
+    <MicrosoftCodeAnalysisTargets Condition="'$(MicrosoftCodeAnalysisTargets)'==''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\CodeAnalysis\Microsoft.CodeAnalysis.targets</MicrosoftCodeAnalysisTargets>
+  </PropertyGroup>
+
+  <Import Project="$(MicrosoftCodeAnalysisTargets)" Condition="Exists('$(MicrosoftCodeAnalysisTargets)')"/>
+    
+  <PropertyGroup>
+    <!-- This option does exactly what we want but appears to never actually used by FxCop. We will set it in case one day it starts working -->
+    <CodeAnalysisIgnoreMissingIndirectReferences>true</CodeAnalysisIgnoreMissingIndirectReferences>
+    
+    <!-- Pass the actual path of FxCop to our shim so we can call the real exe -->
+    <CodeAnalysisAdditionalOptions>CodeAnalysisOriginalPath=$(CodeAnalysisPath)</CodeAnalysisAdditionalOptions>
+    
+    <!-- Override the tool path to point to our FxCop shim -->
+    <CodeAnalysisPath>$(MSBuildThisFileDirectory)..\Build.Tools\</CodeAnalysisPath>
+    
+    <CodeAnalysisOutputToConsole>true</CodeAnalysisOutputToConsole>
+    <CodeAnalysisSummary>true</CodeAnalysisSummary>
+  </PropertyGroup>
+  
+  <!-- 
+    Override the Microsoft target.
+    We do this so we can get console logging to work by setting StandardErrorImportance and StandardOutputImportance
+  -->
+  <Target
+      Name="RunCodeAnalysis"
+      Condition="'$(RunCodeAnalysisOnThisProject)'=='true'"
+      Inputs="$(RunCodeAnalysisInputs)"
+      Outputs="$(CodeAnalysisLogFile);$(CodeAnalysisSucceededFile)"
+      DependsOnTargets="$(RunCodeAnalysisDependsOn)">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Run Code Analysis ($(CodeAnalysisInputAssembly))"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+        <Output
+          TaskParameter="id"
+          PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <!-- Build CodeAnalysisReferencePath inside of the RunCodeAnalysis target to ensure that ReferencePath -->
+    <!-- has already been populated by the ResolveReferences target prior to using it. -->
+    <ItemGroup>
+      <CodeAnalysisReferencePath Include="@(ReferencePath)" />
+      <CodeAnalysisReferencePath Condition="'$(Language)'=='VB' and '$(VBRuntimePath)'!=''" Include="$(VBRuntimePath)" />
+    </ItemGroup>
+
+    <!-- Add AdditionalUsingDirectories as reference assembly paths for C++ projects -->
+    <ItemGroup>
+      <CodeAnalysisDependentAssemblyPaths Condition="'$(Language)'=='C++'" Include="%(ClCompile.AdditionalUsingDirectories)" />
+    </ItemGroup>
+ 
+    <!-- If it is winmd file than we want to analyze winmdobj instead of winmd file -->
+    <PropertyGroup>
+      <CodeAnalysisInputAssembly Condition="'$(OutputType)'=='winmdobj'">@(IntermediateAssembly)</CodeAnalysisInputAssembly>
+      <CodeAnalysisInputAssembly Condition="'$(OutputType)'=='winmdobj' and '$(Language)'=='VB'">$(IntermediateOutputPath)\TempCA\$(TargetName)$(TargetExt)</CodeAnalysisInputAssembly>
+    </PropertyGroup>
+    
+    <!-- VBCompiler issue: fix the name of PDB file for winmdobj assembly -->
+    <Copy Condition="'$(OutputType)'=='winmdobj' and '$(Language)'=='VB'"
+        DestinationFiles="$(IntermediateOutputPath)\TempCA\$(TargetName).pdb"  
+        SourceFiles="$(PdbFile)" 
+        OverwriteReadOnlyFiles="True" />
+        
+    <Copy Condition="'$(OutputType)'=='winmdobj' and '$(Language)'=='VB'"
+        DestinationFolder="$(IntermediateOutputPath)\TempCA\"  
+        SourceFiles="@(IntermediateAssembly)" 
+        OverwriteReadOnlyFiles="True" />
+        
+    <CodeAnalysis Condition="'$(RunCodeAnalysisOnThisProject)'=='true'"	
+        AdditionalOptions="$(CodeAnalysisAdditionalOptions)"
+        AlternativeToolName="$(CodeAnalysisAlternativeToolName)"
+        AnalysisTimeout="$(CodeAnalysisTimeout)"
+        ApplyLogFileXsl="$(CodeAnalysisApplyLogFileXsl)"
+        Assemblies="$(CodeAnalysisInputAssembly)"
+        ConsoleXsl="$(CodeAnalysisConsoleXsl)"
+        Culture="$(CodeAnalysisCulture)"
+        DependentAssemblyPaths="@(CodeAnalysisDependentAssemblyPaths)"
+        Dictionaries="@(CodeAnalysisDictionary)"
+        DisableReferenceSwitchGeneration="$(CodeAnalysisDisableReferenceSwitchGeneration)"
+        FailOnMissingRules="$(CodeAnalysisFailOnMissingRules)"
+        FilesWritten="$(CodeAnalysisLogFile);$(CodeAnalysisSucceededFile)"
+        ForceOutput="$(CodeAnalysisForceOutput)"
+        GenerateSuccessFile="$(CodeAnalysisGenerateSuccessFile)"
+        IgnoreBuildTaskWarnings="$(CodeAnalysisIgnoreBuildTaskWarnings)"
+        IgnoreGeneratedCode="$(CodeAnalysisIgnoreGeneratedCode)"
+        IgnoreInvalidTargets="$(CodeAnalysisIgnoreInvalidTargets)"
+        IgnoreMissingIndirectReferences="$(CodeAnalysisIgnoreMissingIndirectReferences)"
+        Imports="@(CodeAnalysisImport)"
+        LogFile="$(CodeAnalysisLogFile)"
+        LogFileXsl="$(CodeAnalysisLogFileXsl)"
+        MSBuildProjectDirectory="$(MSBuildProjectDirectory)"
+        OutputToConsole="$(CodeAnalysisOutputToConsole)"
+        OverrideRuleVisibilities="$(CodeAnalysisOverrideRuleVisibilities)"
+        NeverReportRuleErrors="$(CodeAnalysisNeverReportRuleErrors)"
+        PlatformPath="$(CodeAnalysisPlatformPath)"
+        Project="$(CodeAnalysisProject)"
+        Quiet="$(CodeAnalysisQuiet)"
+        References="@(CodeAnalysisReferencePath)"
+        RuleAssemblies="$(CodeAnalysisRuleAssemblies)"
+        RuleDirectories="$(CodeAnalysisRuleDirectories)"
+        Rules="$(CodeAnalysisRules)"
+        RuleSet="$(CodeAnalysisRuleSet)"
+        RuleSetDirectories="$(CodeAnalysisRuleSetDirectories)"
+        SaveMessagesToReport="$(CodeAnalysisSaveMessagesToReport)"
+        SearchGlobalAssemblyCache="$(CodeAnalysisSearchGlobalAssemblyCache)"
+        SuccessFile="$(CodeAnalysisSucceededFile)"
+        Summary="$(CodeAnalysisSummary)"
+        TargetFrameworkVersion="$(TargetFrameworkVersion)"
+        TLogFile="$(CodeAnalysisTLogFile)"
+        ToolPath="$(CodeAnalysisPath)"
+        TreatWarningsAsErrors="$(CodeAnalysisTreatWarningsAsErrors)"
+        UpdateProject="$(CodeAnalysisUpdateProject)"
+        Verbose="$(CodeAnalysisVerbose)"
+        
+        StandardErrorImportance="Normal"
+        StandardOutputImportance="Normal">
+      <Output TaskParameter="FilesWritten" ItemName="FileWrites"/>
+    </CodeAnalysis>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+  </Target>
+</Project>

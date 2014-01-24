@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="AfterCompile"
+         ToolsVersion="4.0">
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
+
+  <PropertyGroup>
+    <TeamFoundationTargetImported>true</TeamFoundationTargetImported>
+    <DropLocation Condition="'$(DropLocation)' == ''">C:\MyDrop\</DropLocation>
+    <SolutionRoot Condition="'$(IsDesktopBuild)' == 'true'">$(MSBuildThisFileDirectory)\..\</SolutionRoot>
+    
+    <!-- Detect VS 2010 or 2012 -->
+    <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != ''">$(VS110COMNTOOLS)</VsCommonTools>
+	  <tf>&quot;$(VsCommonTools)\..\IDE\tf.exe&quot;</tf>
+  </PropertyGroup>
+
+  <Target Name="AfterCompile">
+    <Message Text="SolutionRoot: $(SolutionRoot)" />
+
+    <ItemGroup>
+      <Assemblies Include="$(SolutionRoot)\src\Profile\Aderant\*.dll" />
+      <Assemblies Include="$(SolutionRoot)\src\Build.Tools\*.dll" />
+      <Assemblies Include="$(SolutionRoot)\src\Build.Tools\*.exe" />
+    </ItemGroup>    
+
+    <Exec Command="$(tf) checkout %(Assemblies.FullPath)" />    
+
+    <MSBuild Projects="$(SolutionRoot)\Build.Infrastructure.sln"
+             Properties="Configuration=Debug;Platform=Any CPU">
+      <Output ItemName="ProjectOutputs" TaskParameter="TargetOutputs"/>
+    </MSBuild>
+
+    <PropertyGroup>
+      <ExcludeFiles>*.vssscc *.suo *.pdb *.vshost* *.cache</ExcludeFiles>
+      <ExcludeProjects>DependencyAnalyzer FxCopCmd GetWebProjectDependencies Aderant.Framework.Build WebDependencyCsprojSynchronize</ExcludeProjects>
+      <ExcludeDirectories>$(ExcludeProjects) Test obj TestResults</ExcludeDirectories>      
+    </PropertyGroup>
+
+    <!-- Robocopy returns a 1 when successful unlike all other command line tools -->
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="true"
+          Command="robocopy $(SolutionRoot) $(DropLocation)\Build.Infrastructure\ $(CopySwitches) /NJS /NJH /NDL /MT /R:3 /W:5 /MIR /XD /NP $(ExcludeDirectories) /XF $(ExcludeFiles)" />
+
+    <PropertyGroup>
+      <AssemblyList>@(Assemblies, ' ')</AssemblyList>
+    </PropertyGroup>
+    <Exec Command='echo checkin /comment:"Build System Update ***NO_CI***" /override:"Build System Update" $(AssemblyList)' />
+
+  </Target>
+
+</Project>

@@ -2,24 +2,24 @@
 <Project DefaultTargets="CopyToDrop"
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="4.0">
-    <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
+  
+    <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(TeamFoundationTargetImported)' != 'true' "/>
 
     <PropertyGroup>
-        <PathToModulesToCopy Condition="('$(IsDesktopBuild)'!='true')">$(SolutionRoot)</PathToModulesToCopy>        
+      <PathToModulesToCopy>$(SolutionRoot)</PathToModulesToCopy>
     </PropertyGroup>
 
     <Target Name="AfterCompile">
-        <CallTarget Targets="CopyToDrop" />
+      <CallTarget Targets="CopyToDrop" />
     </Target>
 
     <!--
     ==========================================================================================
         Copy content of solution directory to the drop
     ==========================================================================================
-  -->
+    -->
     
     <Target Name="CopyToDrop" Condition="('$(IsDesktopBuild)'!='true')">
-
         <BuildStep
           Condition="('$(IsDesktopBuild)'!='true')"
           Message="Copy modules to $(DropLocation)"
@@ -31,13 +31,16 @@
         </BuildStep>
 
         <ItemGroup>
-            <Folders Include="$([System.IO.Directory]::GetDirectories(&quot;$(PathToModulesToCopy)&quot;))" />
+            <Folders Include="$([System.IO.Directory]::GetDirectories(&quot;$(PathToModulesToCopy)&quot;))" Condition="'$(PathToModulesToCopy)' != ''" />
         </ItemGroup>
         
         <PropertyGroup>
             <CopySwitches>/NJS /NJH /NDL /MT /R:3 /W:5 /MIR</CopySwitches>
         </PropertyGroup>
-
+    
+        <Error Condition="'@(Folders)' == ''" Text="No source folders specified to copy from" />
+        <Error Condition="'$(DropLocation)' == ''" Text="No path specified for DropLocation" />
+    
         <Message Text="Going to copy:" />
         <Message Text="%(Folders.Filename)%(Extension)" />
 
@@ -53,7 +56,7 @@
         <Exec Condition="'%(Folders.Filename)%(Extension)' == 'Build.Infrastructure'"
               ContinueOnError="false"
               IgnoreExitCode="true"
-              Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches)" />
+              Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD Test"  />
 
         <BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"

@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<helpItems xmlns="http://msh"
+           schema="maml"
+           xmlns:maml="http://schemas.microsoft.com/maml/2004/10"
+           xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10"
+           xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+
+    <command:command >
+        
+        <command:details>
+            <command:name>Get-DependenciesFrom</command:name>
+            <maml:description>
+                <maml:para>Gets dependencies from your current branch folder on your hard drive.</maml:para>
+            </maml:description>
+            <maml:copyright>
+                <maml:para></maml:para>
+            </maml:copyright>
+            <command:verb>Get</command:verb>
+            <command:noun>DependenciesFrom</command:noun>
+            <dev:version>0.1</dev:version>
+        </command:details>
+
+        <maml:description>
+            <maml:para>The Get-DependenciesFrom cmdlet lets you get dependencies from your local hard drive.  This is useful when you are making changes to multiple dependant modules.  
+                
+For example if you make changes in Libraries.Presentation and you want to consume them in Applications.MatterPlanning, you can use this command to get the Library.Presentation dependencies that you jave just built. 
+            </maml:para>
+        </maml:description>
+        
+        <command:syntax>
+            <command:syntaxItem>
+                <maml:name>Get-DependenciesFrom</maml:name>
+
+                <command:parameter required="false"
+                                   position="0">
+                    <maml:name>ProviderModules</maml:name>
+                    <maml:description>
+                        <maml:para>Sets the module name or names which are the dependency providers.</maml:para>
+                    </maml:description>
+                    <command:parameterValue>string[]</command:parameterValue>
+                </command:parameter>
+
+                <command:parameter required="false"
+                                   position="1">
+                    <maml:name>ConsumerModules</maml:name>
+                    <maml:description>
+                        <maml:para>Sets the module names or names which are consuming the dependencies.</maml:para>
+                    </maml:description>
+                    <command:parameterValue>string[]</command:parameterValue>
+                </command:parameter>
+
+                <command:parameter required="false"
+                                   position="2">
+                    <maml:name>PendingChanges</maml:name>
+                    <maml:description>
+                        <maml:para>Flags that the dependency source or sources should be determined by your current pending changes.</maml:para>
+                    </maml:description>
+                    <command:parameterValue>SwitchParameter</command:parameterValue>
+                </command:parameter>
+
+                <command:parameter required="false"
+                                   position="3">
+                    <maml:name>AdditionalDestination</maml:name>
+                    <maml:description>
+                        <maml:para>Provide a list of paths that all items will be copied to as well.</maml:para>
+                    </maml:description>
+                    <command:parameterValue>string[]</command:parameterValue>
+                </command:parameter>
+
+            </command:syntaxItem>
+        </command:syntax>
+
+        <command:parameters>
+            <command:parameter required="false"
+                               position="0">
+                <maml:name>ProviderModules</maml:name>
+                <maml:description>
+                    <maml:para>Sets the module name or names which are the dependency providers.</maml:para>
+                </maml:description>
+                <command:parameterValue>string[]</command:parameterValue>
+            </command:parameter>
+
+            <command:parameter required="false"
+                               position="1">
+                <maml:name>ConsumerModules</maml:name>
+                <maml:description>
+                    <maml:para>Sets the module names or names which are consuming the dependencies.</maml:para>
+                </maml:description>
+                <command:parameterValue>string[]</command:parameterValue>
+            </command:parameter>
+
+            <command:parameter required="false"
+                               position="2">
+                <maml:name>PendingChanges</maml:name>
+                <maml:description>
+                    <maml:para>Flags that the dependency source or sources should be determined by your current pending changes.</maml:para>
+                </maml:description>
+                <command:parameterValue>SwitchParameter</command:parameterValue>
+            </command:parameter>
+
+            <command:parameter required="false"
+                               position="3">
+                <maml:name>AdditionalDestination</maml:name>
+                <maml:description>
+                    <maml:para>Provide a list of paths that all items will be copied to as well.</maml:para>
+                </maml:description>
+                <command:parameterValue>string[]</command:parameterValue>
+            </command:parameter>
+        </command:parameters>
+
+    </command:command>
+
+
+</helpItems>
