@@ -835,13 +835,11 @@ if (Assemblies != null) {
       <Output PropertyName="MustRun32Bit" TaskParameter="MustRun32Bit" />
     </GetAssemblyPlatform>
 
-    <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" />
-    <Message  Condition="$(MustRun32Bit)" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
-
     <PropertyGroup>
+      <UseMsTest>false</UseMsTest>
+      <UseMsTest Condition="'$(ModuleName.StartsWith(`Web`))' == 'true'">true</UseMsTest>
       <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
       <PublishName Condition="'$(BuildAll)' == 'true'">$(OriginalBuildNumber)</PublishName>
-      
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
       <ResultsFileSwitch Condition="'$(IsDesktopBuild)' == 'true'">/Logger:trx</ResultsFileSwitch>
       <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true'">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=ExpertSuite;Platform="%(ConfigurationToBuild.PlatformToBuild)";Flavor="%(ConfigurationToBuild.FlavorToBuild)"</ResultsFileSwitch>
@@ -850,10 +848,26 @@ if (Assemblies != null) {
       <PathToTestTool>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe</PathToTestTool>
     </PropertyGroup>
 
+    <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" />
+    <Message Condition="'$(MustRun32Bit)' And !'$(UseMsTest)'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
+
+    <!--Run With VSTest -->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Condition="'$(UnitTestAssemblies)' != ''"
+          Condition="'$(UnitTestAssemblies)' != '' And !'$(UseMsTest)'"
           Command='"$(PathToTestTool)" $(UnitTestAssemblies) $(ResultsFileSwitch) $(PlatformSwitch) $(IsolationSwitch)' />
+
+    <!-- Now prepare for MSTest run (legacy) -->
+    <PropertyGroup>
+      <PathToMsTest>$(VsCommonTools)..\IDE\MSTest.exe</PathToMsTest>
+      <MsTestResultsFileSwitch>/resultsfile:"$(BinTestDirectory)\UnitTestResults.trx"</MsTestResultsFileSwitch>
+      <UnitTestAssemblies>@(TestAssemblies->'/testcontainer:%(FullPath)',' ')</UnitTestAssemblies>
+    </PropertyGroup>
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Condition="'$(UnitTestAssemblies)' != '' And '$(UseMsTest)'"
+          Command='"$(PathToMsTest)" /nologo /usestderr $(UnitTestAssemblies) $(MsTestResultsFileSwitch)' />
 
     <ItemGroup>
       <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)\**\*.trx" />
