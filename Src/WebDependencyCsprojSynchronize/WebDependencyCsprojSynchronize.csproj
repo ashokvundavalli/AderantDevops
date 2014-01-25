@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WebDependencyCsprojSynchronize</RootNamespace>
     <AssemblyName>WebDependencyCsprojSynchronize</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -58,6 +58,7 @@
     <ProjectReference Include="..\Aderant.Framework.Build\Aderant.Framework.Build.csproj">
       <Project>{98baf6fd-8527-4e9c-90e3-c37eb62969c3}</Project>
       <Name>Aderant.Framework.Build</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

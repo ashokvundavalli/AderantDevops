@@ -109,6 +109,7 @@
     <ProjectReference Include="..\Aderant.Framework.Build\Aderant.Framework.Build.csproj">
       <Project>{98BAF6FD-8527-4E9C-90E3-C37EB62969C3}</Project>
       <Name>Aderant.Framework.Build</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

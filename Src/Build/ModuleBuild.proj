@@ -47,6 +47,7 @@
     <ModuleSourceDirectory>$(SolutionDirectoryPath)\src</ModuleSourceDirectory>
     <ModuleTestDirectory> $(SolutionDirectoryPath)\test</ModuleTestDirectory>
     <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>
+    <BuildToolsDirectory>$(MSBuildThisFileDirectory)..\Build.Tools</BuildToolsDirectory>
   </PropertyGroup>
 
   <Import Project="RM.TransformTemplates.Targets"/>
@@ -107,39 +108,11 @@ foreach(var replacement in replacements){
     </Task>
   </UsingTask>
 
-  <!--Gets the platform of an assembly (eg x86, x64 or AnyCPU) -->
-  <UsingTask TaskName="GetAssemblyPlatform" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
-    <ParameterGroup>
-      <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-      <MustRun32Bit ParameterType="System.Boolean" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Using Namespace="System.IO"/>
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-if (Assemblies != null) {
-    foreach (var assembly in Assemblies) {        
-        if ((assembly.ItemSpec.EndsWith(".dll") || assembly.ItemSpec.EndsWith(".exe")) && System.IO.File.Exists(assembly.ItemSpec)) {
-            var asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(assembly.ItemSpec);
-    
-            System.Reflection.PortableExecutableKinds peKind;
-            System.Reflection.ImageFileMachine imageFileMachine;
-            asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
-    
-            if (peKind.HasFlag(System.Reflection.PortableExecutableKinds.Required32Bit)) {            
-                assembly.SetMetadata("Platform", "Required32Bit");
-                MustRun32Bit = true;
-            } else {
-                assembly.SetMetadata("Platform", "ILOnly");
-            }
-        }
-    }
-}
-]]>
-      </Code>
-    </Task>
+  <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
+  <UsingTask TaskName="GetAssemblyPlatform"
+             AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll" >
   </UsingTask>
-
+  
   <!-- 
     ==========================================================================================
         Build Configurations
