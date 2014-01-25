@@ -112,6 +112,10 @@ foreach(var replacement in replacements){
   <UsingTask TaskName="GetAssemblyPlatform"
              AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll" >
   </UsingTask>
+
+  <UsingTask TaskName="AddPlatformConfiguration"
+           AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll" >
+  </UsingTask>
   
   <!-- 
     ==========================================================================================
@@ -192,6 +196,11 @@ foreach(var replacement in replacements){
     <Message Text="Create MSI? = $(CreateMSI) " />
     <Message Text="BuildType MSI? = $(BuildFlavor) " />
     <Message Text="Visual Studio Tools Path: $(VsCommonTools)" />
+
+    <!--<AddPlatformConfiguration
+      TeamFoundationServer="http://tfs:8080/tfs/ADERANT"
+      BuildUri="vstfs:///Build/Build/113440"
+      Configuration="Release" />-->
   </Target>
 
   <!--
@@ -343,14 +352,12 @@ foreach(var replacement in replacements){
     ==========================================================================================
     T4 Template Transformation
     ========================================================================================== 
-    -->
+  -->
   <Target Name="rmBeforeTransformTemplates" >
 
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>
-        $(OutDir);
-        $(SolutionDirectoryPath)\Dependencies;
-      </rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
     <ItemGroup>
@@ -796,6 +803,13 @@ foreach(var replacement in replacements){
                 />
     </BuildStep>
 
+    <!-- Add the correct platform to TFS -->
+    <AddPlatformConfiguration
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServer="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)"
+      Configuration="%(ConfigurationToBuild.FlavorToBuild)" />
+
     <CreateItem
       Include="$(BinTestDirectory)\%2aUnitTest%2a.dll"
       Exclude="$(BinTestDirectory)\%2aHelpers%2a.dll">
@@ -811,14 +825,23 @@ foreach(var replacement in replacements){
     <PropertyGroup>
       <UseMsTest>false</UseMsTest>
       <UseMsTest Condition="'$(ModuleName.StartsWith(`Web`))' == 'true'">true</UseMsTest>
+
+      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
+      
+      <!-- VSTest Setup -->
+      <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
+      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
+      <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
+      <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <PlatformSwitch Condition="'$(MustRun32Bit)' != 'true'">/Platform:x64</PlatformSwitch>
+      
+      <!-- Test Result Publishing -->
       <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
       <PublishName Condition="'$(BuildAll)' == 'true'">$(OriginalBuildNumber)</PublishName>
-      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
-      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' == 'true'">/Logger:trx</ResultsFileSwitch>
-      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true'">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=ExpertSuite;Platform="%(ConfigurationToBuild.PlatformToBuild)";Flavor="%(ConfigurationToBuild.FlavorToBuild)"</ResultsFileSwitch>
-      <PlatformSwitch Condition="'$(MustRun32Bit)' != 'true'">/Platform:x64</PlatformSwitch>
-      <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <PathToTestTool>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe</PathToTestTool>
+      <ResultsFileSwitch>/Logger:trx</ResultsFileSwitch>
+
+      <!-- Test result publishing requires Visual Studio Update 1 or higher -->
+      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=ExpertSuite;Platform="%(ConfigurationToBuild.PlatformToBuild)";Flavor="%(ConfigurationToBuild.FlavorToBuild)"</ResultsFileSwitch>
     </PropertyGroup>
 
     <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" />
@@ -844,9 +867,10 @@ foreach(var replacement in replacements){
 
     <ItemGroup>
       <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)\**\*.trx" />
+      <TestResults Condition="'$(BuildDirectory)' != '' And Exists('$(BuildDirectory)\BuildType')" Include="$(BuildDirectory)\BuildType\**\*.trx" />
     </ItemGroup>
 
-    <Copy Condition="'$(IsDesktopBuild)' == 'true'" SourceFiles="@(TestResults)" DestinationFiles="$(BinTestDirectory)\UnitTestResults.trx" />
+    <Copy Condition="@(TestResults) != ''" SourceFiles="@(TestResults)" DestinationFiles="$(BinTestDirectory)\UnitTestResults.trx" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"

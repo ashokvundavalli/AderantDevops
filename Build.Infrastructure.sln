@@ -23,7 +23,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Profile", "Profile", "{D6EF
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
 	ProjectSection(SolutionItems) = preProject
+		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
+		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Build.Tasks", "Src\Build.Tasks\Build.Tasks.csproj", "{66E50D39-8E73-4D16-944B-43F18C308FE0}"

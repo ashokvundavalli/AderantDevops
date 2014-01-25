@@ -97,6 +97,10 @@ namespace DependencyAnalyzer {
             string currentDrop = sessionState.PSVariable.GetValue("BranchServerDirectory", string.Empty).ToString();
             string currentBranch = PathHelper.GetBranch(currentDrop);
 
+            if (currentDrop.IndexOf(currentBranch, StringComparison.InvariantCultureIgnoreCase) > 0) {
+                return currentDrop;
+            }
+
             return Path.Combine(currentDrop.Replace(currentBranch, string.Empty), targetBranch);
         }
     }

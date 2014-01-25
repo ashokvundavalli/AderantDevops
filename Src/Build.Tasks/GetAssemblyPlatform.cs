@@ -24,10 +24,10 @@ namespace Build.Tasks {
 
                         var peKind = (System.Reflection.PortableExecutableKinds)inspectionDomain.GetData("PortableExecutableKinds");
                         if (peKind.HasFlag(System.Reflection.PortableExecutableKinds.Required32Bit)) {
-                            item.SetMetadata("Platform", "Required32Bit");
+                            item.SetMetadata("Configuration", "Required32Bit");
                             MustRun32Bit = true;
                         } else {
-                            item.SetMetadata("Platform", "ILOnly");
+                            item.SetMetadata("Configuration", "ILOnly");
                         }
 
                     }

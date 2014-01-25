@@ -20,6 +20,7 @@ Updates the ExpertManifest to get the branched module from this branch
 Checking back in to TFS must be done manually.")]
     [Cmdlet("Branch", "Module")]
     public class BranchModule : PSCmdlet {
+       
         [Parameter(Position = 0, HelpMessage = "The name of the module to branch")]
         public string ModuleName {
             get;
@@ -87,7 +88,7 @@ Checking back in to TFS must be done manually.")]
 
             GetBuildInfrastructure(wss, PathHelper.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), "Build.Infrastructure"));
 
-            UpdatePathToModuleBuildProject(wss, serverPathToModule, ParameterHelper.GetDropPath(TargetBranch, SessionState));
+            BuildInfrastructureHelper.UpdatePathToModuleBuildProject(wss, serverPathToModule, ParameterHelper.GetDropPath(TargetBranch, SessionState));
 
             GetBuildFilesForAllModules(wss);
 
@@ -181,50 +182,6 @@ Checking back in to TFS must be done manually.")]
             string moduleDirectory = wss.TryGetLocalItemForServerItem(PathHelper.GetServerPathToModuleDirectory(TargetBranch));
             ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), new WorkspaceModuleProvider(moduleDirectory));
             updater.Update(SourceBranch);
-        }
-
-        private void UpdatePathToModuleBuildProject(Workspace wss, string serverPathToModule, string targetBranchDropLocation) {
-            Host.UI.WriteLine();
-            Host.UI.WriteLine();
-            Host.UI.WriteLine("Updating path to TFSBuild.proj");
-
-            string localPath = wss.TryGetLocalItemForServerItem(serverPathToModule + "/Build/TFSBuild.proj");
-
-            if (File.Exists(localPath)) {
-                wss.PendEdit(localPath);
-
-                string contents = File.ReadAllText(localPath);
-
-                XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-                var project = XDocument.Parse(contents, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
-
-                var element = project.Descendants(ns + "Import").FirstOrDefault(elm => {
-                    XAttribute attribute = elm.Attribute("Project");
-                    if (attribute != null) {
-                        var value = attribute.Value;
-                        return value.StartsWith(@"\\") && value.EndsWith(PathHelper.PathToModuleBuild);
-                    }
-                    return false;
-                });
-
-                if (element != null) {
-                    string path = string.Format(@"{0}\{1}", targetBranchDropLocation, PathHelper.PathToModuleBuild);
-                    Host.UI.WriteLine("Updating path: " + path);
-
-                    element.Attribute("Project").Value = path;
-
-                    XmlWriterSettings settings = new XmlWriterSettings();
-                    settings.Encoding = Encoding.UTF8;
-                    settings.ConformanceLevel = ConformanceLevel.Document;
-                    settings.IndentChars = "  ";
-                    settings.Indent = true;
-                    settings.NewLineOnAttributes = true;
-
-                    using (XmlWriter writer = XmlWriter.Create(localPath, settings)) {
-                        project.Save(writer);
-                    }
-                }
-            }
         }
 
         private void UpdateBuildAll(Workspace wss) {
