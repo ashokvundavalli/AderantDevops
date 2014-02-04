@@ -37,6 +37,7 @@
         Unknown,
         Database,
         InternalTool,
-        Web
+        Web,
+        Installs
     }
 }

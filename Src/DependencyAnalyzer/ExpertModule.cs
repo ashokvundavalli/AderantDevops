@@ -48,7 +48,7 @@ namespace DependencyAnalyzer {
         /// <value>The type of the module.</value>
         public ModuleType ModuleType {
             get {
-                return GetModuleType();
+                return GetModuleType(Name);
             }
         }
 
@@ -63,35 +63,39 @@ namespace DependencyAnalyzer {
             return string.Equals(Name, other.Name, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        protected virtual ModuleType GetModuleType() {
-            if (Name.StartsWith("LIBRARIES", StringComparison.OrdinalIgnoreCase)) {
+        //make static method
+        public static ModuleType GetModuleType(string name) {
+            if (name.StartsWith("LIBRARIES", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Library;
             }
-            if (Name.StartsWith("SERVICES", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("SERVICES", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Service;
             }
-            if (Name.StartsWith("APPLICATIONS", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("APPLICATIONS", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Application;
             }
-            if (Name.StartsWith("WORKFLOW", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("WORKFLOW", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Sample;
             }
-            if (Name.StartsWith("SDK", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("SDK", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.SDK;
             }
-            if (Name.StartsWith("THIRDPARTY", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("THIRDPARTY", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.ThirdParty;
             }
-            if (Name.StartsWith("BUILD", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("BUILD", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Build;
             }
-            if (Name.StartsWith("INTERNAL", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("INTERNAL", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.InternalTool;
             }
-            if (Name.StartsWith("WEB", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("WEB", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Web;
             }
-            if (Name.Equals("DATABASE", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("INSTALLS", StringComparison.OrdinalIgnoreCase)) {
+                return ModuleType.Installs;
+            }
+            if (name.Equals("DATABASE", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Database;
             }
 

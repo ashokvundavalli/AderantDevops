@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Management.Automation;
 
@@ -26,34 +27,41 @@ namespace DependencyAnalyzer {
 
             DependencyBuilder builder = new DependencyBuilder(branchPath);
 
-            Module =
-                builder.GetAllModules().Where(
-                    x => x.Name.Equals(ModuleName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+            Module = builder.GetAllModules().FirstOrDefault(x => x.Name.Equals(ModuleName, StringComparison.OrdinalIgnoreCase));
 
-            if(Module == null) {
+            if (Module == null) {
                 throw new ArgumentException(string.Format("Could not find Module '{0}'", ModuleName));
             }
 
             IEnumerable<ModuleDependency> allDependencies = builder.GetModuleDependencies();
 
-            ExpertModule[] downstreamModules = GetDependentModules(Module, allDependencies, 0).ToArray();
+            HashSet<ExpertModule> modules = new HashSet<ExpertModule>();
+            GetDependentModules(allDependencies, new Collection<ExpertModule> { Module }, modules);
 
-            WriteObject(downstreamModules, true);
+            WriteObject(modules, true);
         }
 
-        protected virtual IEnumerable<ExpertModule> GetDependentModules(ExpertModule targetModule, IEnumerable<ModuleDependency> allDependencies, int depth) {
-            IEnumerable<ExpertModule> firstLevelDependencies = from dependency in allDependencies
-                                                               where dependency.Provider.Equals(targetModule)
-                                                               select dependency.Consumer;
-            if(depth > 20) {
-                return firstLevelDependencies.Distinct();
+        private IEnumerable<ExpertModule> GetDirectDependencies(IEnumerable<ModuleDependency> allDependencies, ExpertModule module) {
+            return from dependency in allDependencies
+                   where dependency.Provider.Equals(module)
+                   where !dependency.Consumer.Equals(module)
+                   select dependency.Consumer;
+        }
+
+        private void GetDependentModules(IEnumerable<ModuleDependency> allDependencies, IEnumerable<ExpertModule> directDependencies, HashSet<ExpertModule> modules) {
+            foreach (ExpertModule dependency in directDependencies) {
+                var nextDependencies = GetDirectDependencies(allDependencies, dependency);
+
+                foreach (ExpertModule module in nextDependencies) {
+                    modules.Add(module);
+                }
+
+                if (!nextDependencies.Any()) {
+                    continue;
+                }
+
+                GetDependentModules(allDependencies, nextDependencies, modules);
             }
-            return firstLevelDependencies.Concat(
-                from dependency in firstLevelDependencies
-                from deepDependency in GetDependentModules(dependency, allDependencies, depth + 1)
-                select deepDependency
-                ).Distinct();
-            
         }
     }
 }

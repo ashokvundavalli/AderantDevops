@@ -78,6 +78,10 @@ namespace DependencyAnalyzer {
                     foreach (XElement dependencyElement in references) {
                         string referencedModule = dependencyElement.Attribute("Name").Value.ToUpperInvariant();
 
+                        if (ExpertModule.GetModuleType(referencedModule) == ModuleType.ThirdParty) {
+                            continue;
+                        }
+
                         XElement productManifestEntry = moduleElements.FirstOrDefault(n => n.Attribute("Name").Value.Equals(referencedModule, StringComparison.OrdinalIgnoreCase));
 
                         ExpertModule m;
@@ -106,7 +110,7 @@ namespace DependencyAnalyzer {
                                                                   Provider = m
                                                               });
 
-            return dependencies.Union(nodes.OrderBy(x => x.Consumer.Name));
+            return dependencies.Union(nodes.OrderBy(x => x.Consumer.Name)).ToList();
         }
 
 
@@ -143,7 +147,7 @@ namespace DependencyAnalyzer {
 
             return document;
         }
-        
+
         public XDocument BuildDgmlDocument(bool includeBuilds, bool restrictToModulesInBranch) {
             List<ExpertModule> allModules = new List<ExpertModule>(GetAllModules());
             List<ModuleDependency> allDependencies = new List<ModuleDependency>(GetModuleDependencies());
@@ -276,7 +280,7 @@ namespace DependencyAnalyzer {
                 // so is therefore is allowed to be included in the dependency tree.
                 // If doesn't exist then it must be an external module, so it just gets given to us during the build process and we don't need an edge for 
                 // the module
-                
+
                 if (moduleProvider.IsAvailable(module.Provider.Name)) {
                     if (module.Provider.ModuleType != ModuleType.ThirdParty && !module.Provider.Equals(module.Consumer)) {
                         sort.Edge(module.Consumer, module.Provider);
@@ -331,7 +335,8 @@ namespace DependencyAnalyzer {
             }
 
             return levels.Select(level => new Build {
-                Modules = level.Value, Order = level.Key
+                Modules = level.Value,
+                Order = level.Key
             });
         }
     }
