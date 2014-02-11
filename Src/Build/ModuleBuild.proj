@@ -16,13 +16,17 @@
     -->
 
   <ProjectExtensions>
-    <ProjectFileVersion>2</ProjectFileVersion>
+    <ProjectFileVersion>3</ProjectFileVersion>
   </ProjectExtensions>
 
   <PropertyGroup>
     <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
-    <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
+    <RunTest Condition="'$(IsCustomBuild)' == 'true'">false</RunTest>
+    
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
+    <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
+
+    <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
     <!--Server Build for all modules-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true')">$(SolutionRoot)\..\</SolutionDirectoryPath>
@@ -110,13 +114,13 @@ foreach(var replacement in replacements){
 
   <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
   <UsingTask TaskName="GetAssemblyPlatform"
-             AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll" >
-  </UsingTask>
+             AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="AddPlatformConfiguration"
-           AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll" >
-  </UsingTask>
-  
+             AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
   <!-- 
     ==========================================================================================
         Build Configurations
@@ -269,7 +273,7 @@ foreach(var replacement in replacements){
   <Target Name="CleanBin" >
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Clean Module Bin"
+      Message="$(ModuleName) - Clean Module Bin"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -474,7 +478,7 @@ foreach(var replacement in replacements){
     <Message Text="SolutionDirectoryPath = $(SolutionDirectoryPath)"/>
 
     <PropertyGroup>
-      <CodeAnalysisTarget>$(MSBuildThisFileDirectory)\Aderant.CodeAnalysis.targets</CodeAnalysisTarget>
+      <CodeAnalysisTarget Condition="'$(IsCustomBuild)' != 'true'">$(MSBuildThisFileDirectory)\Aderant.CodeAnalysis.targets</CodeAnalysisTarget>
 
       <!-- Push these down to the build process so code analysis can use them -->
       <TeamBuildProperties>TeamBuildRefPath=$(TeamBuildRefPath);TeamFoundationServerUrl=$(TeamFoundationServerUrl);BuildURI=$(BuildURI);IsDesktopBuild=$(IsDesktopBuild)</TeamBuildProperties>
@@ -827,14 +831,14 @@ foreach(var replacement in replacements){
       <UseMsTest Condition="'$(ModuleName.StartsWith(`Web`))' == 'true'">true</UseMsTest>
 
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
-      
+
       <!-- VSTest Setup -->
       <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
       <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
       <PlatformSwitch Condition="'$(MustRun32Bit)' != 'true'">/Platform:x64</PlatformSwitch>
-      
+
       <!-- Test Result Publishing -->
       <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
       <PublishName Condition="'$(BuildAll)' == 'true'">$(OriginalBuildNumber)</PublishName>
@@ -864,13 +868,8 @@ foreach(var replacement in replacements){
           IgnoreExitCode="false"
           Condition="'$(UnitTestAssemblies)' != '' And '$(UseMsTest)'"
           Command='"$(PathToMsTest)" /nologo /usestderr $(UnitTestAssemblies) $(MsTestResultsFileSwitch)' />
-
-    <ItemGroup>
-      <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)\**\*.trx" />
-      <TestResults Condition="'$(BuildDirectory)' != '' And Exists('$(BuildDirectory)\BuildType')" Include="$(BuildDirectory)\BuildType\**\*.trx" />
-    </ItemGroup>
-
-    <Copy Condition="@(TestResults) != ''" SourceFiles="@(TestResults)" DestinationFiles="$(BinTestDirectory)\UnitTestResults.trx" />
+    
+    <CallTarget Targets="CopyTrxFile" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -879,8 +878,16 @@ foreach(var replacement in replacements){
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    <OnError ExecuteTargets="CopyToDropOnTestFailure;MarkBuildStepAsFailed" />
+    <OnError ExecuteTargets="CopyTrxFile;CopyToDropOnTestFailure;MarkBuildStepAsFailed" />
+  </Target>
 
+  <Target Name="CopyTrxFile">
+    <ItemGroup>
+      <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)\**\*.trx" />
+      <TestResults Condition="'$(BuildDirectory)' != '' And Exists('$(BuildDirectory)\BuildType')" Include="$(BuildDirectory)\BuildType\**\*.trx" />
+    </ItemGroup>
+
+    <Copy Condition="@(TestResults) != ''" SourceFiles="@(TestResults)" DestinationFiles="$(BinTestDirectory)\UnitTestResults.trx" />
   </Target>
 
   <!--
