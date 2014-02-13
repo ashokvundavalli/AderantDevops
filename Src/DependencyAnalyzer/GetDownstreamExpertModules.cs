@@ -33,7 +33,7 @@ namespace DependencyAnalyzer {
                 throw new ArgumentException(string.Format("Could not find Module '{0}'", ModuleName));
             }
 
-            IEnumerable<ModuleDependency> allDependencies = builder.GetModuleDependencies();
+            var allDependencies = new List<ModuleDependency>(builder.GetModuleDependencies());
 
             HashSet<ExpertModule> modules = new HashSet<ExpertModule>();
             GetDependentModules(allDependencies, new Collection<ExpertModule> { Module }, modules);
@@ -42,13 +42,13 @@ namespace DependencyAnalyzer {
         }
 
         private IEnumerable<ExpertModule> GetDirectDependencies(IEnumerable<ModuleDependency> allDependencies, ExpertModule module) {
-            return from dependency in allDependencies
-                   where dependency.Provider.Equals(module)
-                   where !dependency.Consumer.Equals(module)
-                   select dependency.Consumer;
+            return (from dependency in allDependencies
+                    where dependency.Provider.Equals(module)
+                    where !dependency.Consumer.Equals(module)
+                    select dependency.Consumer);
         }
 
-        private void GetDependentModules(IEnumerable<ModuleDependency> allDependencies, IEnumerable<ExpertModule> directDependencies, HashSet<ExpertModule> modules) {
+        private void GetDependentModules(List<ModuleDependency> allDependencies, IEnumerable<ExpertModule> directDependencies, HashSet<ExpertModule> modules) {
             foreach (ExpertModule dependency in directDependencies) {
                 var nextDependencies = GetDirectDependencies(allDependencies, dependency);
 

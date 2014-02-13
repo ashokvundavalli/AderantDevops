@@ -113,8 +113,6 @@ namespace DependencyAnalyzer {
             return dependencies.Union(nodes.OrderBy(x => x.Consumer.Name)).ToList();
         }
 
-
-
         /// <summary>
         /// Builds the graph document for the dependency tree.
         /// </summary>

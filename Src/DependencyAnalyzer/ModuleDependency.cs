@@ -90,9 +90,9 @@ namespace DependencyAnalyzer {
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(ModuleDependency other) {
-            return string.Equals(this.Branch, other.Branch, StringComparison.InvariantCultureIgnoreCase) &&
-                string.Equals(this.AssemblyVersion, other.AssemblyVersion, StringComparison.InvariantCultureIgnoreCase) &&
-                string.Equals(this.FileVersion, other.FileVersion, StringComparison.InvariantCultureIgnoreCase) &&
+            return string.Equals(this.Branch, other.Branch, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(this.AssemblyVersion, other.AssemblyVersion, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(this.FileVersion, other.FileVersion, StringComparison.OrdinalIgnoreCase) &&
                 this.Consumer.Equals(other.Consumer) &&
                 this.Provider.Equals(other.Provider);
         }

@@ -10,12 +10,12 @@ namespace DependencyAnalyzer {
     [DebuggerDisplay("{Name}")]
     public class ExpertModule : IEquatable<ExpertModule> {
         private string name;
+        private string id;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
         /// </summary>
         public ExpertModule() {
-
         }
 
         /// <summary>
@@ -29,6 +29,10 @@ namespace DependencyAnalyzer {
             Branch = moduleElement.Attribute("Path") == null ? null : moduleElement.Attribute("Path").Value;
         }
 
+        public string Id {
+            get { return id; }
+        }
+
         /// <summary>
         /// Gets or sets the name of the module.
         /// </summary>
@@ -38,7 +42,10 @@ namespace DependencyAnalyzer {
                 return name;
             }
             set {
-                name = Path.GetFileName(value);
+                id = name = Path.GetFileName(value);
+                if (id != null) {
+                    id = id.ToUpperInvariant();
+                }
             }
         }
 
@@ -60,7 +67,7 @@ namespace DependencyAnalyzer {
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(ExpertModule other) {
-            return string.Equals(Name, other.Name, StringComparison.InvariantCultureIgnoreCase);
+            return String.Equals(id, other.id, StringComparison.Ordinal);
         }
 
         //make static method
@@ -94,6 +101,9 @@ namespace DependencyAnalyzer {
             }
             if (name.StartsWith("INSTALLS", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Installs;
+            }
+            if (name.StartsWith("TESTS", StringComparison.OrdinalIgnoreCase)) {
+                return ModuleType.Test;
             }
             if (name.Equals("DATABASE", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Database;
@@ -156,7 +166,7 @@ namespace DependencyAnalyzer {
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
         /// </returns>
         public override int GetHashCode() {
-            return Name.ToUpperInvariant().GetHashCode();
+            return id.GetHashCode();
         }
 
         /// <summary>

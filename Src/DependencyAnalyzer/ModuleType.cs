@@ -38,6 +38,10 @@
         Database,
         InternalTool,
         Web,
-        Installs
+        Installs,
+        /// <summary>
+        /// The tests module type
+        /// </summary>
+        Test
     }
 }
