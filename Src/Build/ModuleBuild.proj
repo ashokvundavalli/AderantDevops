@@ -48,10 +48,10 @@
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
-    <ModuleSourceDirectory>$(SolutionDirectoryPath)\src</ModuleSourceDirectory>
-    <ModuleTestDirectory> $(SolutionDirectoryPath)\test</ModuleTestDirectory>
-    <ModuleBuildDirectory> $(SolutionDirectoryPath)\build</ModuleBuildDirectory>
-    <BuildToolsDirectory>$(MSBuildThisFileDirectory)..\Build.Tools</BuildToolsDirectory>
+    <ModuleSourceDirectory>$(SolutionDirectoryPath)src\</ModuleSourceDirectory>
+    <ModuleTestDirectory> $(SolutionDirectoryPath)test\</ModuleTestDirectory>
+    <ModuleBuildDirectory> $(SolutionDirectoryPath)build\</ModuleBuildDirectory>
+    <BuildToolsDirectory>$(MSBuildThisFileDirectory)..\Build.Tools\</BuildToolsDirectory>
   </PropertyGroup>
 
   <Import Project="RM.TransformTemplates.Targets"/>
@@ -973,7 +973,7 @@ foreach(var replacement in replacements){
     </BuildStep>
 
     <PropertyGroup>
-      <ZipFileDirectory>$(BinModuleDirectory)\Workflow\Templates</ZipFileDirectory>
+      <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
       <ZipFile>$(ZipFileDirectory)\$(ModuleName).Template.zip</ZipFile>
     </PropertyGroup>
 
@@ -981,41 +981,43 @@ foreach(var replacement in replacements){
     <ItemGroup>
       <ZipSourceFiles
         Include="
-            $(SolutionDirectoryPath)\**;
+        $(SolutionDirectoryPath)**;
         "
         Exclude="
-        $(BinTestDirectory)\**;
-        $(BinModuleDirectory)\**;                
-        $(ModuleBuildDirectory)\**;
-        $(ModuleSourceDirectory)\**\*.csproj.user;        
-        $(ModuleSourceDirectory)\**\obj\**;
-        $(ModuleSourceDirectory)\**\bin\**;
-        $(SolutionDirectoryPath)\$(ModuleName).sln;
-        $(SolutionDirectoryPath)\CommonBuild\**;
-        $(SolutionDirectoryPath)\Dependencies\**;
-        $(SolutionDirectoryPath)\**\*.vssscc;
-        $(SolutionDirectoryPath)\**\*.vspscc;        
-        $(SolutionDirectoryPath)\**\*.sln.cache;
-        $(SolutionDirectoryPath)\**\*.vsmdi;        
-        $(SolutionDirectoryPath)\**\*.testrunconfig;
-        $(SolutionDirectoryPath)\**\*.suo;
-        $(SolutionDirectoryPath)\**\*.sln.Debug.vsprops;
-        $(SolutionDirectoryPath)\**\TestResults\**;
-        $(SolutionDirectoryPath)\**\Release.txt;
-        $(SolutionDirectoryPath)\**\Debug.txt;
-        $(SolutionDirectoryPath)\**\_Resharper*\**;
-        $(SolutionDirectoryPath)\**\*resharper.user;
+        $(BinTestDirectory)**\**;        
+        $(BinModuleDirectory)**\**;                
+        $(ModuleBuildDirectory)**;
+        $(ModuleSourceDirectory)**\*.csproj.user;        
+        $(ModuleSourceDirectory)**\obj\**;
+        $(ModuleSourceDirectory)**\bin\**;      
+        $(SolutionDirectoryPath)$(ModuleName).sln;
+        $(SolutionDirectoryPath)CommonBuild\**;
+        $(SolutionDirectoryPath)Dependencies\**;
+        $(SolutionDirectoryPath)**\*.vssscc;
+        $(SolutionDirectoryPath)**\*.vspscc;        
+        $(SolutionDirectoryPath)**\*.sln.cache;
+        $(SolutionDirectoryPath)**\*.vsmdi;        
+        $(SolutionDirectoryPath)**\*.testrunconfig;
+        $(SolutionDirectoryPath)**\*.suo;
+        $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
+        $(SolutionDirectoryPath)**\TestResults\**;
+        $(SolutionDirectoryPath)**\Release.txt;
+        $(SolutionDirectoryPath)**\Debug.txt;
+        $(SolutionDirectoryPath)**\_Resharper*\**;
+        $(SolutionDirectoryPath)**\*resharper.user;
         "/>
     </ItemGroup>
 
     <MakeDir
       Directories="$(ZipFileDirectory)"/>
+    
+    <Delete 
+      Files="$(ZipFile)" ContinueOnError="true" />
 
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipSourceFiles)"
       ZipFileName="$(ZipFile)"
-      WorkingDirectory="$(SolutionDirectoryPath)"
-            />
+      WorkingDirectory="$(SolutionDirectoryPath)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
