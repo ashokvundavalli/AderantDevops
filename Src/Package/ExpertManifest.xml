@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
-    <Modules>        
+    <Modules>
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Collections" AssemblyVersion="1.8.0.0" />
@@ -10,7 +10,7 @@
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />        
         <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" />
         <Module Name="Applications.MatterCenterIntegration" AssemblyVersion="7.7.0.0" />
@@ -27,7 +27,7 @@
         <Module Name="Internal.Validation" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />        
         <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
@@ -58,8 +58,8 @@
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Marketing.Help" />
-        <Module Name="Packages" AssemblyVersion="1.8.0.0" />
-        <Module Name="SDK" AssemblyVersion="1.8.0.0" />
+        <Module Name="Packages" AssemblyVersion="1.8.0.0" />        
+        <Module Name="SDK" AssemblyVersion="1.8.0.0" />        
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
@@ -73,17 +73,17 @@
         <Module Name="Services.Applications.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" />
-	      <Module Name="Services.Customization" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Customization" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" />        
+        <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" />        
+        <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" />        
         <Module Name="Services.Notes" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Query" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" />        
         <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.Collections" AssemblyVersion="1.8.0.0" />
-        <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
+        <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />        
         <Module Name="ThirdParty.Add2Home"  />
         <Module Name="ThirdParty.AsyncJs"  />
         <Module Name="ThirdParty.AutoMapper" />
@@ -109,7 +109,6 @@
         <Module Name="ThirdParty.Irony"  />
         <Module Name="Thirdparty.JQuery"  />
         <Module Name="Thirdparty.JQueryUI"  />
-        <Module Name="Thirdparty.Keyoti.RapidSpell"  />
         <Module Name="Thirdparty.Keyoti.RapidSpell.v3"  />
         <Module Name="Thirdparty.Knockout"  />
         <Module Name="Thirdparty.LLBLGen"  />

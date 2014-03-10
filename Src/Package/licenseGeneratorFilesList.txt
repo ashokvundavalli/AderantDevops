@@ -13,4 +13,6 @@ Aderant.Framework.Packaging.Dtos.dll
 Aderant.Framework.Packaging.Process.dll
 Aderant.Framework.Persistence.dll
 Aderant.Framework.Presentation.dll
+Aderant.Query.dll
+Aderant.PresentationFramework.Windows.dll
 ICSharpCode.SharpZiplib.dll

@@ -627,7 +627,7 @@
 		<Exec Condition="('$(IsDesktopBuild)'!='true')"
               ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch) $(DetailSwitch)'
+              Command='"$(PathToVS2010MSTest)" $(AderantTestAssembliesInclude) $(TestSettingsSwitch) $(ResultsFileSwitch) $(DetailSwitch) $(PublishSwitch) $(PublishBuildSwitch) "$(ConfigurationSwitch)" "$(PlatformSwitch)" $(TeamProjectSwitch)'
               WorkingDirectory='$(ExpertTestsDirectory)\ExpertSource'
               />
 		
