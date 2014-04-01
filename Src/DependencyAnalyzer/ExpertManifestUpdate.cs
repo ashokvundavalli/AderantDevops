@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Management.Automation;
 using DependencyAnalyzer.Logging;
 using DependencyAnalyzer.Providers;
@@ -23,12 +24,16 @@ namespace DependencyAnalyzer {
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
-            if (string.IsNullOrEmpty(SourceBranch)) {
-                SourceBranch = "Main";
-            }
-
             if (string.IsNullOrEmpty(TargetBranch)) {
                 TargetBranch = ParameterHelper.GetBranchName(SessionState);
+            }
+
+            if (string.IsNullOrEmpty(SourceBranch) && TargetBranch.StartsWith("Releases", StringComparison.OrdinalIgnoreCase)) {
+                SourceBranch = TargetBranch;
+            }
+
+            if (string.IsNullOrEmpty(SourceBranch)) {
+                SourceBranch = "Main";
             }
 
             Host.UI.WriteLine();
@@ -39,7 +44,7 @@ namespace DependencyAnalyzer {
             string modulesDirectory = ParameterHelper.GetBranchModulesDirectory(TargetBranch, SessionState);
 
             ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), new WorkspaceModuleProvider(modulesDirectory));
-            updater.Update(SourceBranch);
+            updater.Update(SourceBranch, TargetBranch);
         }
     }
 }

@@ -33,7 +33,8 @@ namespace DependencyAnalyzer {
         /// Performs the update operation against the product manifest.
         /// </summary>
         /// <param name="sourceBranch">The source branch to source modules from.</param>
-        public void Update(string sourceBranch) {
+        /// <param name="targetBranch"></param>
+        public void Update(string sourceBranch, string targetBranch) {
             IEnumerable<ExpertModule> modules = provider.GetAll();
 
             sourceBranch = sourceBranch.Replace('/', Path.DirectorySeparatorChar);
@@ -48,13 +49,19 @@ namespace DependencyAnalyzer {
                     continue;
                 }
 
+                if (ExpertModule.IsNonProductModule(module.ModuleType)) {
+                    continue;
+                }
+
                 XElement element = AddOrUpdateExpertManifestEntry(provider.ProductManifest, module.Name);
                 if (!provider.IsAvailable(module.Name)) {
-                    string sourceBranchModule = sourceBranchModules.Contains(module.Name) ? sourceBranch : "Main";
+                    string sourceBranchModule = sourceBranchModules.Contains(module.Name) ? sourceBranch : targetBranch;
 
-                    // Module is not on disk or in the branch - use the sourceBranch if it exists there
-                    AddOrUpdateAttribute(element, "GetAction", "branch");
-                    AddOrUpdateAttribute(element, "Path", sourceBranchModule);
+                    if (!sourceBranch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase)) {
+                        // Module is not on disk or in the branch - use the sourceBranch if it exists there
+                        AddOrUpdateAttribute(element, "GetAction", "branch");
+                        AddOrUpdateAttribute(element, "Path", sourceBranchModule);
+                    }
                 } else {
                     XAttribute action = element.Attribute("GetAction");
                     if (action != null) {
@@ -175,6 +182,10 @@ namespace DependencyAnalyzer {
                 return node;
             }
 
+            if (ExpertModule.IsNonProductModule(ExpertModule.GetModuleType(moduleName))) {
+                return null;
+            }
+
             logger.Log("The Expert Manifest did not contain an entry for the module $moduleName. Adding...");
 
             XElement moduleElement = new XElement("Module");
@@ -191,7 +202,7 @@ namespace DependencyAnalyzer {
 
         private static bool IsThirdParty(XElement element) {
             XAttribute xAttribute = element.Attribute("Name");
-            return xAttribute != null && xAttribute.Value.StartsWith("ThirdParty", StringComparison.OrdinalIgnoreCase);
+            return xAttribute != null && ExpertModule.GetModuleType(xAttribute.Value) == ModuleType.ThirdParty;
         }
 
         private static void SortManifestNodesByName(XElement productOrDependencyManifest) {

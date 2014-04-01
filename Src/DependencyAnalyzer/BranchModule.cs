@@ -181,7 +181,7 @@ Checking back in to TFS must be done manually.")]
 
             string moduleDirectory = wss.TryGetLocalItemForServerItem(PathHelper.GetServerPathToModuleDirectory(TargetBranch));
             ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), new WorkspaceModuleProvider(moduleDirectory));
-            updater.Update(SourceBranch);
+            updater.Update(SourceBranch, TargetBranch);
         }
 
         private void UpdateBuildAll(Workspace wss) {

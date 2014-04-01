@@ -1,10 +1,10 @@
 $currentDirectory = pwd
 $psHomeDirectory = Join-Path $Env:UserProfile "Documents\WindowsPowerShell\"
-$aderantModuleDirectory = Join-Path $psHomeDirectory "Modules\Aderant"
+$moduleDirectory = Join-Path $psHomeDirectory "Modules"
 
-$moduleExists = Test-Path $aderantModuleDirectory
+if (-not (Test-Path "$moduleDirectory\Aderant")) {	
+    New-Item -ItemType Directory -Path $moduleDirectory -Force -ErrorAction SilentlyContinue
 
-if (-not $moduleExists) {	
     # Find ExpertSuite MAIN and create the appropriate symlink
     [Reflection.Assembly]::Load("Microsoft.TeamFoundation, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a") | Out-Null
     [Reflection.Assembly]::Load("Microsoft.TeamFoundation.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a") | Out-Null
@@ -17,12 +17,17 @@ if (-not $moduleExists) {
 
     foreach ($info in [Microsoft.TeamFoundation.VersionControl.Client.Workstation]::Current.GetAllLocalWorkspaceInfo()) {
         $workspace = $info.GetWorkspace($server)
-        $folder = $workspace.TryGetWorkingFolderForServerItem("$/ExpertSuite/dev/BuildMods/Modules/Build.Infrastructure");
+        $folder = $workspace.TryGetWorkingFolderForServerItem("$/ExpertSuite/Main/Modules/Build.Infrastructure");
 
         if ($folder -ne $null) {
-            $cmd = "cmd /c mklink " + $aderantModuleDirectory + " " + $folder.LocalItem + "\Src\Profile\Aderant /D"            
+            $cmd = "cmd /c mklink " + "$moduleDirectory\Aderant" + " " + $folder.LocalItem + "\Src\Profile\Aderant /D"            
             Invoke-Expression $cmd
-            break
+            
+            # Copy and setup _profile script
+            $script = Join-Path $folder.LocalItem -ChildPath "\Src\Profile\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+            Copy-Item $script $psHomeDirectory
         }
     }
+
+
 }

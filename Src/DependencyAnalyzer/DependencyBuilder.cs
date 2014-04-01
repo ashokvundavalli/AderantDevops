@@ -59,6 +59,10 @@ namespace DependencyAnalyzer {
                     continue;
                 }
 
+                if (ExpertModule.IsNonProductModule(ExpertModule.GetModuleType(module))) {
+                    continue;
+                }
+
                 IEnumerable<XElement> references = manifest.Descendants("ReferencedModule").ToList();
 
                 if (!references.Any()) {
@@ -82,20 +86,25 @@ namespace DependencyAnalyzer {
                             continue;
                         }
 
-                        XElement productManifestEntry = moduleElements.FirstOrDefault(n => n.Attribute("Name").Value.Equals(referencedModule, StringComparison.OrdinalIgnoreCase));
-
-                        ExpertModule m;
-                        if (!providers.TryGetValue(referencedModule, out m)) {
-                            m = new ExpertModule(productManifestEntry);
-                            providers.Add(referencedModule, m);
-                        }
-
                         dependencies.Add(new ModuleDependency() {
                             Consumer = new ExpertModule {
                                 Name = module
                             },
-                            Provider = m,
+                            Provider = CreateExpertModule(moduleElements, referencedModule, providers),
                         });
+                    }
+                }
+
+                // If we have nothing that depends on us, we need to create a dependency entry for ourselves
+                // This covers cases like Internal.Validation on which nothing depends.
+                ExpertModule expertModule = CreateExpertModule(moduleElements, module, providers);
+                if (expertModule != null && !ExpertModule.IsNonProductModule(expertModule.ModuleType)) {
+                    var dependency = new ModuleDependency() {
+                        Provider = expertModule,Consumer = expertModule
+                    };
+
+                    if (!dependencies.Contains(dependency)) {
+                        dependencies.Add(dependency);
                     }
                 }
             }
@@ -111,6 +120,26 @@ namespace DependencyAnalyzer {
                                                               });
 
             return dependencies.Union(nodes.OrderBy(x => x.Consumer.Name)).ToList();
+        }
+
+        private static ExpertModule CreateExpertModule(IEnumerable<XElement> moduleElements, string moduleName, IDictionary<string, ExpertModule> providers) {
+            XElement productManifestEntry = moduleElements.FirstOrDefault(n => n.Attribute("Name").Value.Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+
+            ExpertModule module;
+            if (!providers.TryGetValue(moduleName, out module) && productManifestEntry != null) {
+                module = new ExpertModule(productManifestEntry);
+                providers.Add(moduleName, module);
+            }
+
+            if (module == null && ExpertModule.IsNonProductModule(ExpertModule.GetModuleType(moduleName))) {
+                return null;
+            }
+
+            if (module == null) {
+                throw new InvalidOperationException("Could not find Expert Manifest entry for: " + moduleName);
+            }
+
+            return module;
         }
 
         /// <summary>

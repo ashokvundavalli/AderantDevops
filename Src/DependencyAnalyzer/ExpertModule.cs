@@ -69,8 +69,7 @@ namespace DependencyAnalyzer {
         public bool Equals(ExpertModule other) {
             return String.Equals(id, other.id, StringComparison.Ordinal);
         }
-
-        //make static method
+        
         public static ModuleType GetModuleType(string name) {
             if (name.StartsWith("LIBRARIES", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Library;
@@ -87,9 +86,16 @@ namespace DependencyAnalyzer {
             if (name.StartsWith("SDK", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.SDK;
             }
+
             if (name.StartsWith("THIRDPARTY", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.ThirdParty;
             }
+
+            // Help builds to /bin just like a third party module
+            if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
+                return ModuleType.ThirdParty;
+            }
+
             if (name.StartsWith("BUILD", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Build;
             }
@@ -105,11 +111,18 @@ namespace DependencyAnalyzer {
             if (name.StartsWith("TESTS", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Test;
             }
+            if (name.StartsWith("PERFORMANCE", StringComparison.OrdinalIgnoreCase)) {
+                return ModuleType.Performance;
+            }
             if (name.Equals("DATABASE", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Database;
             }
 
             return ModuleType.Unknown;
+        }
+
+        public static bool IsNonProductModule(ModuleType type) {
+            return (type == ModuleType.Build || type == ModuleType.Performance || type == ModuleType.Test);
         }
 
         /// <summary>

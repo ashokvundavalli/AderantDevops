@@ -42,6 +42,7 @@
         /// <summary>
         /// The tests module type
         /// </summary>
-        Test
+        Test,
+        Performance
     }
 }
