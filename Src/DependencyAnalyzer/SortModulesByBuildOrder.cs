@@ -29,6 +29,11 @@ namespace DependencyAnalyzer {
                            select module).ToArray();
             }
 
+            if (ModuleNames.Length == 1) {
+                WriteObject(Modules.FirstOrDefault(m => m.Name.Equals(ModuleNames[0], StringComparison.OrdinalIgnoreCase)), true);
+                return;
+            }
+
             var modules = (from build in builder.GetTree(true)
                            from module in build.Modules
                            where Modules.Contains(module)
