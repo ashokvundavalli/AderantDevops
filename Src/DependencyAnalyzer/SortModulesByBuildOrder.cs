@@ -29,7 +29,7 @@ namespace DependencyAnalyzer {
                            select module).ToArray();
             }
 
-            if (ModuleNames.Length == 1) {
+            if (ModuleNames != null && ModuleNames.Length == 1) {
                 WriteObject(Modules.FirstOrDefault(m => m.Name.Equals(ModuleNames[0], StringComparison.OrdinalIgnoreCase)), true);
                 return;
             }
