@@ -48,7 +48,7 @@
       If we have VisualStudioVersion specified then we won't overwrite the tools version even if a newer version is available 
       This is used by CRM builds which need to build MSIs under the Visual Studio 2010 as the project type they use is not supported under 2012+.
     -->
-    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != '' And '$(VisualStudioVersion)' != '10.0'">$(VS110COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != '' And ('$(VisualStudioVersion)' != '10.0' Or '$(IsDesktopBuild)' == 'True')">$(VS110COMNTOOLS)</VsCommonTools>
 
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
