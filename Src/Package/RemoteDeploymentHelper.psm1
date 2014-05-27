@@ -48,7 +48,7 @@ Function Get-RemoteSession($remoteMachineName) {
 
 Function CopyBinariesToRemoteMachine($localBinaries, $remoteBinaries) {
     Write-Host "Copying Binaries [$localBinaries\*] to remote machine [$remoteBinaries]."
-	Remove-Item -Recurse $remoteBinaries\*
+	Remove-Item -Recurse -Exclude environment.xml $remoteBinaries\*
 	Copy-Item -Path "$localBinaries\*" -Destination "$remoteBinaries" -Recurse -Force
 }
 

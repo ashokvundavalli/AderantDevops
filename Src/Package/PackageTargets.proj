@@ -132,7 +132,7 @@
 		<!--Merge and generate factory.bin-->
 		<Exec ContinueOnError="false"
               IgnoreExitCode="false"
-              Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(BuildScriptsDirectory)'
+              Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesDirectory) -buildLibrariesPath $(BuildScriptsDirectory) -systemMapConnectionString $(ExpertDatabaseConnectionStringForSystemMap)'
               WorkingDirectory="$(BuildScriptsDirectory)" />
 
 		<!-- Zip up and place in root of drop folder-->
@@ -707,7 +707,7 @@
 		<Exec
 		  ContinueOnError="false"
 		  IgnoreExitCode="false"
-		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "CREATE"' />
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "CREATE" $(BuildNumber)' />
 
 		<BuildStep
 		  Condition="('$(IsDesktopBuild)'!='true')"
@@ -748,7 +748,7 @@
 		<Exec
 		  ContinueOnError="false"
 		  IgnoreExitCode="false"
-		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "RESTORE"' />
+		  Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "RESTORE" $(BuildNumber)' />
 
 		<BuildStep
 		  Condition="('$(IsDesktopBuild)'!='true')"

@@ -91,12 +91,13 @@ namespace Aderant.Framework.Build {
 				string fileName = file.Substring(file.LastIndexOfAny(new[] { '\\', '/' }) + 1);
 				string path = file.Substring(index, file.Length - index - fileName.Length);
 
-				if (file.EndsWith(".tt")) { // .tt file, we need to add the project stuff that connects the files so they are "joined" in solution explorer
-					SetProjectFileDependencyAttributes(file, fileName, path, node, ns);
-					continue;
-				}
+                if (file.EndsWith(".tt")) { // .tt file, we need to add the project stuff that connects the files so they are "joined" in solution explorer
+                    SetProjectFileDependencyAttributes(file, fileName, path, node, ns);
+                    continue;
 
-				if (file.EndsWith(".ts")) {
+                }
+
+                if (file.EndsWith(".ts")) {
 					UpdateTsFileReferences(file, node, ns, index);
 					continue;
 				}

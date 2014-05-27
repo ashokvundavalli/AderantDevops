@@ -50,13 +50,13 @@ process{
 		
 		Start-Sleep -s 10
 
-        #Write-Host "Waiting for services to stop on [$remoteMachineName]."
-    	#Start-Sleep -s 30
-        # Need to get server info from environment so we kill processes on the right machine.
-        #TryKillProcess "Expert.Workflow.Service" $remoteMachineName
-        #TryKillProcess "ExpertMatterPlanning" $remoteMachineName
-        #TryKillProcess "ConfigurationManager" $remoteMachineName
-        #Start-Sleep -s 30
+        Write-Host "Waiting for services to stop on [$remoteMachineName]."
+    	Start-Sleep -s 30
+        #Need to get server info from environment so we kill processes on the right machine.
+        TryKillProcess "Expert.Messaging.Service" $remoteMachineName
+        TryKillProcess "Expert.Core.Services" $remoteMachineName
+        TryKillProcess "Expert.Workflow.Service" $remoteMachineName
+        Start-Sleep -s 30
 
         Write-Host "Invoking DeploymentEngine to REMOVE on [$remoteMachineName]."
     	Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe remove "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath

@@ -34,7 +34,8 @@ process{
 	$sourcePath = Get-SourceDirectory $environmentManifestPath
 
     # Only copy binaries if we are NOT using build all output.
-	if (-not $useBuildAllOutput.ToUpper() -eq 'TRUE') {
+	if ($useBuildAllOutput.ToUpper() -ne 'TRUE') {
+        Write-Host "Calling CopyBinariesToRemoteMachine $localBinariesOnBuildMachine $remoteBinaries"
         CopyBinariesToRemoteMachine $localBinariesOnBuildMachine $remoteBinaries
     }
     
