@@ -5,7 +5,7 @@
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
-  <!--Server build for all moduled-->
+  <!--Server build for all modules-->
   <Import Condition="('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
           Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
   <!--Server build for a module-->

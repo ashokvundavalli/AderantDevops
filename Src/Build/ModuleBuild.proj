@@ -37,6 +37,9 @@
     <!--Desktop build for a module-->
     <SolutionDirectoryPath Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionRoot)\$(ModuleName)\</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true')">$(SolutionDirectoryPath)..\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
+    <!--Custom build for a module-->
+    <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(MSBuildProjectDirectory)\..\</SolutionDirectoryPath>
+    <BuildScriptsDirectory Condition="('$(IsCustomBuild)' == 'true')">$(SolutionDirectoryPath)BuildScripts\</BuildScriptsDirectory>
 
     <BuildScriptsDirectory>$([System.IO.Path]::GetFullPath('$(BuildScriptsDirectory)'))</BuildScriptsDirectory>
     <SolutionDirectoryPath>$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
@@ -57,15 +60,15 @@
     <ModuleTestDirectory>$(SolutionDirectoryPath)test\</ModuleTestDirectory>
     <ModuleBuildDirectory>$(SolutionDirectoryPath)build\</ModuleBuildDirectory>
     <BuildToolsDirectory>$(MSBuildThisFileDirectory)..\Build.Tools\</BuildToolsDirectory>
+    <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
   </PropertyGroup>
 
-  <Import Project="RM.TransformTemplates.Targets"/>
-
-  <!--Copied from Aderant.Build.targets-->
+  <Import Project="RM.TransformTemplates.Targets" />
+  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
+  
   <UsingTask
     AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
-    TaskName="NDependTask"
-        />
+    TaskName="NDependTask" />
 
   <!-- The Zip Custom Source inline task -->
   <UsingTask
@@ -193,6 +196,7 @@ foreach(var replacement in replacements){
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="Testing" />
     <CallTarget Targets="PostBuild" Condition="('$(PostBuild)'=='true')" />
+    <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="CopyToDrop" />
   </Target>
 
@@ -205,11 +209,6 @@ foreach(var replacement in replacements){
     <Message Text="Create MSI? = $(CreateMSI) " />
     <Message Text="BuildType MSI? = $(BuildFlavor) " />
     <Message Text="Visual Studio Tools Path: $(VsCommonTools)" />
-
-    <!--<AddPlatformConfiguration
-      TeamFoundationServer="http://tfs:8080/tfs/ADERANT"
-      BuildUri="vstfs:///Build/Build/113440"
-      Configuration="Release" />-->
   </Target>
 
   <!--
@@ -277,7 +276,7 @@ foreach(var replacement in replacements){
   -->
   <Target Name="CleanBin" >
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="$(ModuleName) - Clean Module Bin"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
@@ -311,7 +310,7 @@ foreach(var replacement in replacements){
     <MakeDir Directories="$(BinModuleDirectory)" />
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -330,7 +329,7 @@ foreach(var replacement in replacements){
   <Target Name ="GetModuleDependencies"
           Condition="('$(DropLocation)'!='')">
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Getting Module Dependencies"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -347,7 +346,7 @@ foreach(var replacement in replacements){
     </Exec>
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -416,7 +415,7 @@ foreach(var replacement in replacements){
           Condition="('$(IsDesktopBuild)'!='true')">
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Updating file version in CommonAssemblyInfo.cs"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -443,7 +442,7 @@ foreach(var replacement in replacements){
                 ReplacementText="${section1}$(FileVersion)${section2}"/>
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -470,7 +469,7 @@ foreach(var replacement in replacements){
          DependsOnTargets="$(BuildDependsOn)">
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Building Module $(ModuleName)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
@@ -505,7 +504,7 @@ foreach(var replacement in replacements){
     </MSBuild>
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -562,7 +561,7 @@ foreach(var replacement in replacements){
   <Target Name="BuildHelpFiles"
           Condition="('$(BuildHelpFiles)'== 'true')">
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Building help file %(HelpProjectFiles.Identity)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
@@ -580,7 +579,7 @@ foreach(var replacement in replacements){
       Targets="Build"/>
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -600,7 +599,7 @@ foreach(var replacement in replacements){
           Condition="(Exists('$(SolutionDirectoryPath)\$(ModuleName).Custom.sln') and '$(IsCustomBuild)'!='true')"
           >
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Zipping Source for $(ModuleName)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -639,7 +638,8 @@ foreach(var replacement in replacements){
                        $(SolutionDirectoryPath)TestResults\*\**;
                        $(SolutionDirectoryPath)Dependencies\**\**;
                        $(SolutionDirectoryPath)**\*.vssscc;
-                       $(SolutionDirectoryPath)**\*.vspscc;" />
+                       $(SolutionDirectoryPath)**\*.vspscc;
+                       $(SolutionDirectoryPath)**\*.DotSettings;" />
     </ItemGroup>
 
     <!-- Make a copy of the source files for the custom solution transformation and zip -->
@@ -728,46 +728,33 @@ foreach(var replacement in replacements){
     <ItemGroup>
 
       <ZipSourceFiles
-        Include="
-                      $(TempSolutionDirectory)\**\*.Custom.sln;
-                              "/>
+        Include="$(TempSolutionDirectory)\**\*.Custom.sln;"/>
 
       <ZipSourceFiles
-        Include="
-                              $(ProjectFoldersIncludeString)
-                              "
-        Exclude="
-                      $(TempModuleSourceDirectory)\**\*.sln;
-                      $(TempModuleSourceDirectory)\**\*.vssscc;
-                      $(TempModuleSourceDirectory)\**\*.vspscc;
-                      $(TempModuleSourceDirectory)\**\*.sln.cache;
-                      $(TempModuleSourceDirectory)\**\*.vsmdi;
-                      $(TempModuleSourceDirectory)\**\*.testrunconfig;
-                      $(TempModuleSourceDirectory)\**\*.suo;
-                      $(TempModuleSourceDirectory)\**\*.sln.Debug.vsprops;
-                      $(TempModuleSourceDirectory)\**\bin\**;
-                      $(TempModuleSourceDirectory)\**\obj\**;
-                      $(TempModuleSourceDirectory)\**\UnitTest*\**;
-                      $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
-                          $(TempModuleSourceDirectory)\**\TestResults\**;
-                      $(TempModuleSourceDirectory)\**\Release.txt;
-                      $(TempModuleSourceDirectory)\**\Debug.txt;
-                      $(TempModuleSourceDirectory)\**\_Resharper*\**;
-                      $(TempModuleSourceDirectory)\**\*resharper.user;
-                    "/>
+        Include="$(ProjectFoldersIncludeString)"
+        Exclude="$(TempModuleSourceDirectory)\**\*.sln;
+                 $(TempModuleSourceDirectory)\**\*.vssscc;
+                 $(TempModuleSourceDirectory)\**\*.vspscc;
+                 $(TempModuleSourceDirectory)\**\*.sln.cache;
+                 $(TempModuleSourceDirectory)\**\*.vsmdi;
+                 $(TempModuleSourceDirectory)\**\*.testrunconfig;
+                 $(TempModuleSourceDirectory)\**\*.suo;
+                 $(TempModuleSourceDirectory)\**\*.sln.Debug.vsprops;
+                 $(TempModuleSourceDirectory)\**\bin\**;
+                 $(TempModuleSourceDirectory)\**\obj\**;
+                 $(TempModuleSourceDirectory)\**\UnitTest*\**;
+                 $(TempModuleSourceDirectory)\**\IntegrationTest*\**;
+                 $(TempModuleSourceDirectory)\**\TestResults\**;
+                 $(TempModuleSourceDirectory)\**\Release.txt;
+                 $(TempModuleSourceDirectory)\**\Debug.txt;
+                 $(TempModuleSourceDirectory)\**\_Resharper*\**;
+                 $(TempModuleSourceDirectory)\**\*resharper.user;
+                 $(TempModuleSourceDirectory)**\*.DotSettings;" />
       <ZipSourceFiles
-        Include="
-                              $(TempModuleBuildDirectory)\*.*;
-                              "
-              />
+        Include="$(TempModuleBuildDirectory)\*.*;" />
       <ZipSourceFiles
-        Include="
-                              $(CustomBuildFilesDirectory)\*.*;
-                              "
-        Exclude="
-                    $(CustomBuildFilesDirectory)\**\*.pfx;
-                    "
-         />
+        Include="$(CustomBuildFilesDirectory)\*.*;"
+        Exclude="$(CustomBuildFilesDirectory)\**\*.pfx; $(CustomBuildFilesDirectory)\**\Aderant.CodeSigning*; "/>
     </ItemGroup>
 
     <MakeDir
@@ -783,7 +770,7 @@ foreach(var replacement in replacements){
       Directories="$(TempSolutionDirectory)"/>
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -801,7 +788,7 @@ foreach(var replacement in replacements){
           Condition="('$(RunTest)'!='false')">
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Running Unit Tests"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -814,7 +801,7 @@ foreach(var replacement in replacements){
 
     <!-- Add the correct platform to TFS -->
     <AddPlatformConfiguration
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServer="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
       Configuration="%(ConfigurationToBuild.FlavorToBuild)" />
@@ -834,7 +821,6 @@ foreach(var replacement in replacements){
     <PropertyGroup>
       <UseMsTest>false</UseMsTest>
       <UseMsTest Condition="'$(ModuleName.StartsWith(`Web`))' == 'true'">true</UseMsTest>
-
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
 
       <!-- VSTest Setup -->
@@ -877,7 +863,7 @@ foreach(var replacement in replacements){
     <CallTarget Targets="CopyTrxFile" />
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -906,7 +892,7 @@ foreach(var replacement in replacements){
           Condition="('$(PublishModule)' == 'true')">
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Create Package to publish"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -966,7 +952,7 @@ foreach(var replacement in replacements){
           Condition="('$(IsTemplateModule)'=='true')"
           >
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Zipping Source for $(ModuleName)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -985,32 +971,29 @@ foreach(var replacement in replacements){
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <ZipSourceFiles
-        Include="
-        $(SolutionDirectoryPath)**;
-        "
-        Exclude="
-        $(BinTestDirectory)**\**;        
-        $(BinModuleDirectory)**\**;                
-        $(ModuleBuildDirectory)**;
-        $(ModuleSourceDirectory)**\*.csproj.user;        
-        $(ModuleSourceDirectory)**\obj\**;
-        $(ModuleSourceDirectory)**\bin\**;      
-        $(SolutionDirectoryPath)$(ModuleName).sln;
-        $(SolutionDirectoryPath)CommonBuild\**;
-        $(SolutionDirectoryPath)Dependencies\**;
-        $(SolutionDirectoryPath)**\*.vssscc;
-        $(SolutionDirectoryPath)**\*.vspscc;        
-        $(SolutionDirectoryPath)**\*.sln.cache;
-        $(SolutionDirectoryPath)**\*.vsmdi;        
-        $(SolutionDirectoryPath)**\*.testrunconfig;
-        $(SolutionDirectoryPath)**\*.suo;
-        $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
-        $(SolutionDirectoryPath)**\TestResults\**;
-        $(SolutionDirectoryPath)**\Release.txt;
-        $(SolutionDirectoryPath)**\Debug.txt;
-        $(SolutionDirectoryPath)**\_Resharper*\**;
-        $(SolutionDirectoryPath)**\*resharper.user;
-        "/>
+        Include="$(SolutionDirectoryPath)**;"
+        Exclude="$(BinTestDirectory)**\**;        
+                 $(BinModuleDirectory)**\**;                
+                 $(ModuleBuildDirectory)**;
+                 $(ModuleSourceDirectory)**\*.csproj.user;        
+                 $(ModuleSourceDirectory)**\obj\**;
+                 $(ModuleSourceDirectory)**\bin\**;      
+                 $(SolutionDirectoryPath)$(ModuleName).sln;
+                 $(SolutionDirectoryPath)CommonBuild\**;
+                 $(SolutionDirectoryPath)Dependencies\**;
+                 $(SolutionDirectoryPath)**\*.vssscc;
+                 $(SolutionDirectoryPath)**\*.vspscc;        
+                 $(SolutionDirectoryPath)**\*.sln.cache;
+                 $(SolutionDirectoryPath)**\*.vsmdi;        
+                 $(SolutionDirectoryPath)**\*.testrunconfig;
+                 $(SolutionDirectoryPath)**\*.suo;
+                 $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
+                 $(SolutionDirectoryPath)**\TestResults\**;
+                 $(SolutionDirectoryPath)**\Release.txt;
+                 $(SolutionDirectoryPath)**\Debug.txt;
+                 $(SolutionDirectoryPath)**\_Resharper*\**;
+                 $(SolutionDirectoryPath)**\*resharper.user;
+                 $(SolutionDirectoryPath)**\*.DotSettings; "/>
     </ItemGroup>
 
     <MakeDir
@@ -1025,7 +1008,7 @@ foreach(var replacement in replacements){
       WorkingDirectory="$(SolutionDirectoryPath)" />
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -1042,7 +1025,7 @@ foreach(var replacement in replacements){
           Condition="('$(IsDesktopBuild)'!='true')" >
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Copy Output to $(DropLocation)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -1067,7 +1050,7 @@ foreach(var replacement in replacements){
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
 
     <BuildStep
-    Condition="('$(IsDesktopBuild)'!='true')"
+    Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
     TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
     BuildUri="$(BuildUri)"
     Id="$(BuildStepId)"
@@ -1086,7 +1069,7 @@ foreach(var replacement in replacements){
         Condition="('$(IsDesktopBuild)'!='true')" >
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="Copy Output to $(DropLocation)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -1100,12 +1083,12 @@ foreach(var replacement in replacements){
     <!--We have differing ways of determining the drop location depending on the type of build. 
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
 
-    <Exec Condition="('$(BuildAll)'=='true')"
+    <Exec Condition="('$(BuildAll)'=='true') And ('$(IsCustomBuild)'!='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation)\$(ModuleName)\$(AssemblyVersion) -assemblyFileVersion $(FileVersion)' />
 
-    <Exec Condition="('$(BuildAll)'!='true')"
+    <Exec Condition="('$(BuildAll)'!='true') And ('$(IsCustomBuild)'!='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion)' />
@@ -1134,7 +1117,7 @@ foreach(var replacement in replacements){
       Lines="Build succeeded via BuildAll - 0 Error(s)"/>
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -1159,7 +1142,7 @@ foreach(var replacement in replacements){
           Condition="('$(IsDesktopBuild)'!='true')" >
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="NDepend"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)"
@@ -1178,6 +1161,7 @@ foreach(var replacement in replacements){
     <RemoveDir Directories="$(SolutionDirectoryPath)\NDependOut" />
 
     <NDependTask
+      Condition="('$(IsCustomBuild)'!='true')"
       NDependConsoleExePath="$(NDependPath)"
       ProjectFilePath="$(BuildScriptsDirectory)NDependFramework.xml"
       OutDir="$(NDependOutputDir)" />
@@ -1198,6 +1182,7 @@ foreach(var replacement in replacements){
            Condition="$(NDependWarn) &gt; 0"/>
 
     <BuildStep
+      Condition="('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -1214,14 +1199,14 @@ foreach(var replacement in replacements){
 
   <Target Name="MarkBuildStepAsFailed">
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Failed"
             />
     <SetBuildProperties
-      Condition="('$(IsDesktopBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       CompilationStatus="Failed"

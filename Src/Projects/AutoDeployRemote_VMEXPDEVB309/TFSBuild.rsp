@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\Sources\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\dev\IntegrationTests
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\releases\802x
 
 # Set this to 'true' to get the lates build all output, otherwise it just runs Get-Product to get the latest of each module.
 /p:UseBuildAllOutput=true

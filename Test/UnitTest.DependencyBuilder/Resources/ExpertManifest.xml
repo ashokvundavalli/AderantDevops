@@ -121,7 +121,6 @@
         <Module Name="Thirdparty.NHibernate" GetAction="branch" Path="Main" />
         <Module Name="Thirdparty.Ninject" GetAction="branch" Path="Main" />
         <Module Name="Thirdparty.NMock" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.NMock.2" GetAction="branch" Path="Main" />
         <Module Name="Thirdparty.NTFSStreams" GetAction="branch" Path="Main" />
         <Module Name="Thirdparty.NVelocity" GetAction="branch" Path="Main" />
         <Module Name="Thirdparty.OpenXML" GetAction="branch" Path="Main" />

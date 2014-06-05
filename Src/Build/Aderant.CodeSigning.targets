@@ -1,0 +1,76 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+         ToolsVersion="4.0"
+         DefaultTargets="SignApplications">
+
+  <PropertyGroup>
+    <SignToolPath Condition="'$(SignToolPath)' == ''">C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe</SignToolPath>
+    <SignToolPath Condition="Exists('$(WindowsSdkDir)bin\x86\signtool.exe') and '$(PROCESSOR_ARCHITECTURE)'=='x86' ">$(WindowsSdkDir)bin\x86\signtool.exe</SignToolPath>
+    <SignToolPath Condition="Exists('$(WindowsSdkDir)bin\x64\signtool.exe') and '$(PROCESSOR_ARCHITECTURE)'=='AMD64' ">$(WindowsSdkDir)bin\x64\signtool.exe</SignToolPath>
+  </PropertyGroup>
+
+  <UsingTask TaskName="GetAssemblyIdentity" AssemblyName="Microsoft.Build.Tasks.v4.0" />
+  
+  <UsingTask
+    TaskName="GetAssembliesToSign"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>      
+      <Using Namespace="System.Reflection" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Diagnostics" />
+      <Code Type="Fragment" Language="cs">
+        ArrayList arrayList = new ArrayList();
+
+        foreach (var file in Files) {
+          FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(file.ItemSpec);
+
+          bool isAderantAssembly = false;;
+          if (versionInfo.CompanyName != null) {
+            isAderantAssembly = versionInfo.CompanyName.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0;
+          }
+
+          if (isAderantAssembly) {
+            try {
+              var assemblyName = AssemblyName.GetAssemblyName(file.ItemSpec);
+              arrayList.Add(file);
+            } catch (BadImageFormatException) {
+            }
+          }
+        }
+        this.Assemblies = (ITaskItem[])arrayList.ToArray(typeof(ITaskItem));
+      </Code>
+    </Task>
+  </UsingTask>
+  
+  <Target Name="SignApplications">
+    <Message Text="Signing applications in $(BinModuleDirectory)" />
+    
+    <ItemGroup>
+      <Applications Include="$(BinModuleDirectory)**\*.exe;"                                   
+                    Exclude="$(BinModuleDirectory)**\*CO.exe;
+                             $(BinModuleDirectory)**\Aderant.Development*.exe;
+                             $(BinModuleDirectory)**\Aderant.MatterCenterIntegration*;
+                             $(BinModuleDirectory)**\ExpertService*;
+                             $(BinModuleDirectory)**\*Update*; 
+                             $(BinModuleDirectory)**\*Performance*" />
+    </ItemGroup>
+    
+    <GetAssembliesToSign Files="@(Applications)">
+      <Output TaskParameter="Assemblies" 
+              ItemName="Assemblies" />
+    </GetAssembliesToSign>    
+
+    <Message Text = "Signing application: %(Assemblies.Identity)" />    
+
+    <Exec
+      Condition="@(Assemblies) != '' And '$(SignToolPath)' != ''"
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"$(SignToolPath)" sign /f $(BuildScriptsDirectory)aderant.pfx /p "rugby ball" %(Assemblies.Identity)' />
+  </Target>
+
+</Project>

@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<instanceData>
-  <instance name="1.8.0.0">
-    <repository name="GG_75SP2_QA_FW" server="SVSQL302\FileOpening" userid="tt" password="cWcSufiSx69pH0iUtgKKbA==" />
-    <configuration uri="net.tcp://VMAKLGGGAHF01.ap.aderant.com:18180/ConfigurationService" identity="ExpertConfigurationSvc/VMAKLGGGAHF01.ap.aderant.com:18180" />
-  </instance>
-</instanceData>
