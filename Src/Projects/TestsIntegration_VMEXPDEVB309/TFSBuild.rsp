@@ -9,7 +9,7 @@
 /p:ProductManifestPath=..\Sources\ExpertManifest.xml
 
 # Each branch will have its own drop root.
-/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\releases\802x
+/p:ExpertModulesDirectory=\\na.aderant.com\expertsuite\Main
 
 
 ##########################
@@ -17,7 +17,7 @@
 ##########################
 # This is passed to MsTest.exe as the test settings switch.
 # The test settings allow you to specify test controllers, data collection settings and other goodness.
-/p:TestSettingsFile=\\na.aderant.com\expertsuite\releases\802x\Tests.Assets\Releases.802x.testsettings
+/p:TestSettingsFile=\\na.aderant.com\expertsuite\Main\Tests.Assets\Main.Integration.testsettings
 
 # Environment used by Creating and Restoring database targets.
 /p:EnvironmentManifestPath=\\VMEXPDEVB309.ap.aderant.com\ExpertSource\environment.xml
