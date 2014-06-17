@@ -64,13 +64,13 @@
               ItemName="Assemblies" />
     </GetAssembliesToSign>    
 
-    <Message Text = "Signing application: %(Assemblies.Identity)" />    
+    <Message Text = "Signing application: %(Assemblies.Filename)%(Assemblies.Extension)" />
 
     <Exec
       Condition="@(Assemblies) != '' And '$(SignToolPath)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"$(SignToolPath)" sign /f $(BuildScriptsDirectory)aderant.pfx /p "rugby ball" %(Assemblies.Identity)' />
+      Command='"$(SignToolPath)" sign /f $(BuildScriptsDirectory)aderant.pfx /p "rugby ball" %(Assemblies.FullPath)' />
   </Target>
 
 </Project>
