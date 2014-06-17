@@ -70,7 +70,7 @@
       Condition="@(Assemblies) != '' And '$(SignToolPath)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"$(SignToolPath)" sign /f $(BuildScriptsDirectory)aderant.pfx /p "rugby ball" %(Assemblies.FullPath)' />
+      Command='"$(SignToolPath)" sign /f "$(BuildScriptsDirectory)aderant.pfx" /p "rugby ball" "%(Assemblies.FullPath)"' />
   </Target>
 
 </Project>
