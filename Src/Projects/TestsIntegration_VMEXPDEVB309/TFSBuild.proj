@@ -17,14 +17,15 @@
     -->
 
   <ProjectExtensions>
-    <ProjectFileVersion>2</ProjectFileVersion>
+    <ProjectFileVersion>4</ProjectFileVersion>
   </ProjectExtensions>
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
 
-    <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
-    <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
+  <!-- Targets file has to be on the drop, as MSBuild pares this file before getting the workspace.-->
+  <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
+  
   <!--
     ==========================================================================================
         Begin
@@ -45,10 +46,9 @@
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>
-	  
-	<!-- Define targets to run from PackageTargets-->  
-	<IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>  
+    
+    <!-- Define targets to run from PackageTargets -->  
+    <IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>
   </PropertyGroup>
 
   <!-- 
@@ -59,7 +59,7 @@
   <ItemGroup>
     <ConfigurationToBuild
         Condition="'$(BuildFlavor)'=='Release'"
-		    Include="Release|Any CPU">
+        Include="Release|Any CPU">
       <FlavorToBuild>Release</FlavorToBuild>
       <PlatformToBuild>Any CPU</PlatformToBuild>
     </ConfigurationToBuild>
@@ -82,8 +82,7 @@
         Automated Testing Targets
     ==========================================================================================
   -->
-  <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\RidoTasks.dll" />
-	
+  
   <Target Name="AutomatedTestingTargets">
     <CallTarget Targets="$(IntegrationTestSteps)" RunEachTargetSeparately="true" />
   </Target>  

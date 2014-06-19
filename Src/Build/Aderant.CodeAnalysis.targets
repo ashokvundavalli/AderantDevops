@@ -40,7 +40,7 @@
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Run Code Analysis on %(Assemblies.Filename)%(Assemblies.Extension)"
+      Message="Running Code Analysis on %(Assemblies.Filename)%(Assemblies.Extension)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
         <Output
