@@ -5,26 +5,23 @@
     ToolsVersion="4.0">
 
   <!-- 
-    =========================================================================================================
-        Team Build Script - Workflow Prototype                                                 
-        
-        Maintained by Global DBA And Release Management.  DBARM monitors and approves all modifications.  
-        Guidelines:
-            * All Imports, Calls to external commands/tasks/$(BuildNumber)/utilities must be approved by DBARM  
+    ========================================================================================================
+        Guidelines:            
             * Retain structure and formatting for easier merge between Team Build project scripts 
             * Tabs converted to 4 spaces for easier reading outside of VS.
     =========================================================================================================
     -->
 
   <ProjectExtensions>
-    <ProjectFileVersion>2</ProjectFileVersion>
+    <ProjectFileVersion>3</ProjectFileVersion>
   </ProjectExtensions>
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
 
-    <!-- Targets file has to be on the drop, as MSBuild pares this file bofore getting the workspace.-->
-    <Import Project="\\na.aderant.com\expertsuite\Main\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
+  <!-- Targets file has to be on the drop, as MSBuild pares this file before getting the workspace.-->
+  <Import Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Package\PackageTargets.proj" />
+
   <!--
     ==========================================================================================
         Begin
@@ -45,50 +42,45 @@
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-    <FrameworkHomeEnvVariable>FrameworkHome</FrameworkHomeEnvVariable>     
   </PropertyGroup>
 
   <!-- 
     ==========================================================================================
         Build Configurations
     ==========================================================================================
-    -->
+  -->
   <ItemGroup>
     <ConfigurationToBuild
-        Condition="'$(BuildFlavor)'=='Release'"
-		    Include="Release|Any CPU">
+        Condition="'$(BuildFlavor)' == '' Or '$(BuildFlavor)' == 'Release'"
+        Include="Release|Any CPU">
       <FlavorToBuild>Release</FlavorToBuild>
       <PlatformToBuild>Any CPU</PlatformToBuild>
     </ConfigurationToBuild>
   </ItemGroup>
 
   <Target
-      Name="OnBuildBreak"
-      Condition="('$(IsDesktopBuild)'!='true')"
-      DependsOnTargets="$(OnBuildBreakDependsOn)"
-        >
+    Name="OnBuildBreak"
+    Condition="('$(IsDesktopBuild)'!='true')"
+    DependsOnTargets="$(OnBuildBreakDependsOn)">
   </Target>
 
   <Target Name="AfterCompile">
     <CallTarget Targets="AutomatedTestingTargets" />
   </Target>
 
-
   <!--
     ==========================================================================================
         Automated Testing Targets
     ==========================================================================================
   -->
-
   <Target Name="AutomatedTestingTargets">
     <CallTarget Targets="RemoveProductRemote" />
     <CallTarget Targets="RestoreDB" />
-    <CallTarget Targets="PackageProduct" Condition="('$(UseBuildAllOutput)'!='true')" />
-    <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)'=='true')"/>
+    <CallTarget Targets="GetProduct" Condition="('$(UseBuildAllOutput)' != 'true')" />
+    <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)' == 'true')"/>
     <CallTarget Targets="ApplyUPD" />
     <CallTarget Targets="DeployProductRemote" />
     <CallTarget Targets="WaitForServiceStartUp" />
-  </Target>  
-
+  </Target>
 
 </Project>

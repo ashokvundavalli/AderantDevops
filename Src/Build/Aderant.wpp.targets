@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  ToolsVersion="4.0">
+
+  <PropertyGroup>
+    <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
+    <EnableExcludeFilesByExtension>false</EnableExcludeFilesByExtension>
+    <FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
+    <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
+    <DeployOnBuild>true</DeployOnBuild>
+  </PropertyGroup>
+
+  <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
+    <!-- Exclude all references and copy local assemblies from packaging -->
+    <ItemGroup>
+      <FilesForPackagingFromProject Remove="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- This target replaces the full path to source that MSDeploy typically uses -->
+  <PropertyGroup>
+    <PackagePath Condition=" '$(PackagePath)'=='' ">PackageTmp</PackagePath>
+    <EnableAddReplaceToUpdatePackagePath Condition=" '$(EnableAddReplaceToUpdatePackagePath)'=='' ">true</EnableAddReplaceToUpdatePackagePath>
+
+    <PackageDependsOn>
+      $(PackageDependsOn);
+      AddReplaceRuleForAppPath;
+    </PackageDependsOn>
+  </PropertyGroup>
+
+  <Target Name="AddReplaceRuleForAppPath" Condition=" '$(EnableAddReplaceToUpdatePackagePath)'=='true' ">
+    <PropertyGroup>
+      <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
+    </PropertyGroup>
+
+    <!-- escape the text into a regex -->
+    <EscapeTextForRegularExpressions Text="$(_PkgPathFull)">
+      <Output TaskParameter="Result" PropertyName="_PkgPathRegex" />
+    </EscapeTextForRegularExpressions>
+
+    <!-- add the replace rule to update the path -->
+    <ItemGroup>
+      <MsDeployReplaceRules Include="replaceFullPath">
+        <Match>$(_PkgPathRegex)</Match>
+        <Replace>$(PackagePath)</Replace>
+      </MsDeployReplaceRules>
+    </ItemGroup>
+  </Target>
+
+</Project>

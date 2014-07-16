@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Management.Automation.Host;
 using System.Text;
@@ -45,9 +46,18 @@ namespace DependencyAnalyzer {
                 });
 
                 if (element != null) {
-                    string path = string.Format(@"{0}\{1}", branchDropLocation, PathHelper.PathToModuleBuild);
+                    // \\na.aderant.com\expertsuite\releases\802x\Build.Infrastructure\Src\Build\ModuleBuild.proj
+                    var projectElement = element.Attribute("Project");
 
-                    element.Attribute("Project").Value = path;
+                    string branch = PathHelper.GetBranch(branchDropLocation);
+                    int pos = branchDropLocation.IndexOf(branch, StringComparison.OrdinalIgnoreCase);
+                    string dropLocationRoot = branchDropLocation.Substring(0, pos);
+
+                    if (projectElement != null) {
+                        if (projectElement.Value.IndexOf("$(BranchName)", StringComparison.OrdinalIgnoreCase) < 0) {
+                            projectElement.Value = Path.Combine(Path.Combine(dropLocationRoot, "$(BranchName)"), PathHelper.PathToModuleBuild);
+                        }
+                    }
 
                     XmlWriterSettings settings = new XmlWriterSettings();
                     settings.Encoding = Encoding.UTF8;

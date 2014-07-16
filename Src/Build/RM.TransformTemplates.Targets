@@ -46,11 +46,25 @@
       </rmTransformTemplatesWorkerDependsOn>
   </PropertyGroup>       
 
-  <Target Name="rmTransformTemplates" DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 
+  <Target Name="rmTransformTemplates" 
+          DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 
     <CallTarget Targets="rmTransformTemplatesWorker"/>
   </Target>
 
-  <Target Name="rmTransformTemplatesWorker" Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
+  <Target Name="rmTransformTemplatesWorker" 
+          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" 
+          DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="Transforming Text Templates"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+    
     <Error
       Condition="('$(rmT4AssemblyReferencePaths)'=='')"
       Text="Missing required property 'rmT4AssemblyReferencePaths'" />
@@ -103,7 +117,8 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         Target="Process" />
 
     <!-- Do the Transform  -->
-    <ADERANT.Build.Client.Tasks.v100.Transform Templates="@(rmT4TransformItems)" />
+    <ADERANT.Build.Client.Tasks.v100.Transform 
+      Templates="@(rmT4TransformItems)" />
     
     <!-- Restore TMP -->
     <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
@@ -112,26 +127,32 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         Value="$(TMP_SAVE)"
         Target="Process" />
 
+    <BuildStep
+      Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
   </Target>
 
   <!--
     *************************************************************************************************************
     rmT4AssemblyReferencePaths
     *************************************************************************************************************
-    -->
+  -->
   <Target Name="rmT4AssemblyReferencePaths">
     <!-- Path to reference dlls required by DSLs -->
     <PropertyGroup>
       <VSSDKPath Condition="'$(VSSDK110Install)' != ''">$(VSSDK110Install)\VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);$(SolutionDirectoryPath)\Dependencies;</rmT4AssemblyReferencePaths>
     </PropertyGroup>
-
-    <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies;$(rmT4AssemblyReferencePaths);$(VSSDKPath)</rmT4AssemblyReferencePaths>
-    </PropertyGroup>
+    
     <ItemGroup>
       <rmT4AssemblyReferencePaths
         Include="$(rmT4AssemblyReferencePaths);" />
     </ItemGroup>
+    
     <PropertyGroup>
       <rmT4AssemblyReferencePaths>@(rmT4AssemblyReferencePaths, '%3B')</rmT4AssemblyReferencePaths>
     </PropertyGroup>
@@ -142,7 +163,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     *************************************************************************************************************
     rmT4DslDirectiveProcessors
     *************************************************************************************************************
-    -->
+  -->
   <Target Name="rmT4DslDirectiveProcessors">
     <PropertyGroup>
       <rmSoftwareFactoryCommonDll>$(SolutionDirectoryPath)\Dependencies\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
@@ -173,18 +194,14 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     <ItemGroup>
       <!-- Only include Aderant Processors if common dll exists in dependencies.-->
       <rmT4DslDirectiveProcessors
-        Condition="'$(rmSoftwareFactoryVersion)'==''"
-        Include="
-                    $(DslClass), $(DslAssembly);
-                    "/>
+        Condition="'$(rmSoftwareFactoryVersion)' == ''"
+        Include="$(DslClass), $(DslAssembly);" />
       <rmT4DslDirectiveProcessors
-        Condition="'$(rmSoftwareFactoryVersion)'!=''"
-        Include="
-                    $(DslClass), $(DslAssembly);
-                    $(DomainModelDslClass), $(DomainModelDslAssembly);
-                    $(ViewModelDslClass), $(ViewModelDslAssembly);
-                    $(ServiceDslClass), $(ServiceDslAssembly);
-                    "/>
+        Condition="'$(rmSoftwareFactoryVersion)' != ''"
+        Include="$(DslClass), $(DslAssembly);
+                 $(DomainModelDslClass), $(DomainModelDslAssembly);
+                 $(ViewModelDslClass), $(ViewModelDslAssembly);
+                 $(ServiceDslClass), $(ServiceDslAssembly);" />
     </ItemGroup>
     <!-- T4 items need to be escaped ';' with '%3B' and converted to a property -->
     <PropertyGroup>
