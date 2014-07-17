@@ -12,10 +12,10 @@
   </PropertyGroup>
 
   <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
-    <!-- Exclude all references and copy local assemblies from packaging -->
-    <ItemGroup>
+    <!-- Exclude all references and copy local assemblies from packaging. Disabled until single bin folder work is complete -->
+    <!--<ItemGroup>
       <FilesForPackagingFromProject Remove="@(ReferenceCopyLocalPaths)" />
-    </ItemGroup>
+    </ItemGroup>-->
   </Target>
 
   <!-- This target replaces the full path to source that MSDeploy typically uses -->
