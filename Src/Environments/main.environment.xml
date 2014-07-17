@@ -32,7 +32,6 @@
         <role type="ExpertTime" />
         <role type="fileopening" />
         <role type="FirmControl" />
-        <role type="MatterCenterIntegration" />
         <role type="messaging" />
         <role type="notes" />
         <role type="queryservice" />
