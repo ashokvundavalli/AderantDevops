@@ -17,7 +17,7 @@
   </workflowDatabaseServer>
   <expertSystem exePath="\\VMAKLEXPMAIN\ApplicationServer\Bin\AppShell.exe" connection="VMAKLEXPMAIN" />
   <servers>
-    <server name="VMAKLEXPMAIN" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+    <server name="VMAKLEXPMAIN" expertPath="C:\AderantExpert\IntegrationTest_Main" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="CheckRequest" />
         <role type="commonapplications" />
