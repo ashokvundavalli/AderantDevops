@@ -1,15 +1,16 @@
 param ( [string] $environmentManifestPath, 
-		[string] $dbBackupFile, 
-        [string] $directory,
+		[string] $databaseBackupLocation, 
 		[string] $dbowner='cmsdbo')
         
        
 begin {
+	$databaseBackupPath=Split-Path -parent $databaseBackupLocation
+	$dbBackupFile=Split-Path -leaf $databaseBackupLocation
 
     write "RestoreDB.ps1 params:"
     write "environmentManifestPath = $environmentManifestPath"
-    write "dbBackupFile = $dbBackupFile"
-    write "directory = $directory"
+    write "databaseBackupFile = $dbBackupFile"
+    write "databaseBackupPath = $databaseBackupPath"
     write "dbowner = $dbowner"
 
     $script:ErrorActionPreference = 'Stop'
@@ -40,24 +41,16 @@ process {
         write $error
     }
 
-	$restoreCmd = "`nRESTORE FILELISTONLY FROM DISK = N'$dbBackupFile'"
+	$restoreCmd = "`nRESTORE FILELISTONLY FROM DISK = N'$databaseBackupLocation'"
     write "Running command: $restoreCmd"
 	$fileList = Invoke-SqlCmd -ServerInstance $dbServerInstance -Query $restoreCmd -ErrorAction Stop
 
-	$restoreCmd = "`nRESTORE DATABASE [$dbName] FROM DISK = N'$dbBackupFile'" 
+	$restoreCmd = "`nRESTORE DATABASE [$dbName] FROM DISK = N'$databaseBackupLocation'" 
     $restoreCmd += "`nWITH REPLACE"
     foreach ($file in $fileList) {
-        $restoreCmd += ",`n`tMOVE '$($file.LogicalName)' TO '$directory\$($dbName)_$($file.LogicalName)'"
+        $restoreCmd += ",`n`tMOVE '$($file.LogicalName)' TO '$databaseBackupPath\$($dbName)_$($file.LogicalName)'"
     }
 	$restoreCmd += ";"
-
-#	$restoreCmd = "`nRESTORE DATABASE [$dbName] FROM DISK = N'$dbBackupFile'" 
-#    $restoreCmd += "`nWITH REPLACE,"
-#    $restoreCmd += "`n`tMOVE 'data01' TO '$directory\$dbName"+"_data01.mdf',"
-#    $restoreCmd += "`n`tMOVE 'log01' TO '$directory\$dbName"+"_log01.ldf',"
-#    $restoreCmd += "`n`tMOVE 'sysft_CMSFTICatalog' TO '$directory\$dbName"+"_sysft_CMSFTICatalog',"
-#    $restoreCmd += "`n`tMOVE 'sysft_ExpertTimeFTICatalog' TO '$directory\$dbName"+"_sysft_ExpertTimeFTICatalog'"
-#	$restoreCmd += ";"
 
     write "Running command: $restoreCmd"
 	Invoke-SqlCmd -ServerInstance $dbServerInstance -Query $restoreCmd -ErrorAction Stop

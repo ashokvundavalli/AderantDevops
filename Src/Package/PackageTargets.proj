@@ -286,12 +286,14 @@
         TaskParameter="id"
         PropertyName="BuildStepId" />
     </BuildStep>
-
-    <!-- Run from build server as has a dependency on .NET framework-->
+    
+    <PropertyGroup>
+      <DatabaseBackupLocation>\\$(MachineName)\$(BuildDirectory.Replace(':','$'))\Database.bak</DatabaseBackupLocation>
+    </PropertyGroup>
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDB.ps1" $(EnvironmentManifestPath) $(dbBackupFile) $(directory)' />
+      Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDB.ps1" $(EnvironmentManifestPath) $(DatabaseBackupLocation)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -580,76 +582,7 @@
     
   </Target>
 
-  <!--    
-    ==========================================================================================
-        Create Database Snapshot
-    ==========================================================================================
-  -->
-  <Target Name="CreateDBSnapshot"
-            Condition="('$(IsDesktopBuild)' != 'true') and ('$(RestoreSnapshot)' == 'true')">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Creating Database Snapshot"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
-    
-    <Exec
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "CREATE" $(BuildNumber)' />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
-  </Target>
-
-  <!--    
-    ==========================================================================================
-        Restore from Database Snapshot
-    ==========================================================================================
-  -->
-  <Target Name="RestoreDBSnapshot"
-            Condition="('$(IsDesktopBuild)' != 'true') and ('$(RestoreSnapshot)' == 'true')">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Restoring Database"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-    
-    <Exec
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDBSnapshot.ps1" $(EnvironmentManifestPath) $(directory) "RESTORE" $(BuildNumber)' />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
-  </Target>
-
-  <!--    
+  <!--  
     ==========================================================================================
         Apply UPD
     ==========================================================================================

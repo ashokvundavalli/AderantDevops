@@ -40,13 +40,13 @@
 
   <PropertyGroup>
     <!-- Controls the execution of the integration test step in PackageTargets -->
-    <RunTests>true</RunTests>
+    <RunTests Condition="'$(RunTests)' == ''">true</RunTests>
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
 
     <!-- Define targets to run from PackageTargets -->
-    <IntegrationTestSteps>CreateDBSnapshot;PackageProductTests;IntegrationTests;ConvertTestResults;RestoreDBSnapshot</IntegrationTestSteps>
+    <IntegrationTestSteps>PackageProductTests;IntegrationTests;ConvertTestResults;</IntegrationTestSteps>
   </PropertyGroup>
 
   <!-- 
@@ -68,7 +68,7 @@
     Condition="('$(IsDesktopBuild)'!='true')"
     DependsOnTargets="$(OnBuildBreakDependsOn)">
 
-    <CallTarget Targets="RemoveProductRemote" 
+    <CallTarget Targets="RemoveProductRemote"
                 Condition="'$(DeployExpert)' != 'false'" />
   </Target>
 
@@ -78,16 +78,16 @@
     ==========================================================================================
   -->
   <Target Name="AutomatedTesting">
-    <CallTarget Targets="$(IntegrationTestSteps)" 
+    <CallTarget Targets="$(IntegrationTestSteps)"
                 RunEachTargetSeparately="true" />
-    
-    <CallTarget Targets="RemoveProductRemote" 
+
+    <CallTarget Targets="RemoveProductRemote"
                 Condition="'$(DeployExpert)' != 'false'" />
   </Target>
 
   <Target Name="RunDeployProduct" Condition="'$(DeployExpert)' != 'false'">
     <Message Text="Starting product deployment..." />
-    
+
     <!-- Deploy the product -->
     <CallTarget Targets="RemoveProductRemote" />
     <CallTarget Targets="RestoreDB" />
