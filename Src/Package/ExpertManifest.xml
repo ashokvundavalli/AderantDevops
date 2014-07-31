@@ -63,7 +63,6 @@
     <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.CheckRequest" AssemblyVersion="1.8.0.0" />
-    <Module Name="Services.Applications.Case" AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.Collections" AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" />
     <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />
@@ -84,15 +83,15 @@
     <Module Name="SmartForms.CheckRequest" AssemblyVersion="1.8.0.0" />
     <Module Name="SmartForms.Collections" AssemblyVersion="1.8.0.0" />
     <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
-    <Module Name="Thirdparty.Add2Home" />
-    <Module Name="Thirdparty.AsyncJs" />
+    <Module Name="ThirdParty.Add2Home" />
+    <Module Name="ThirdParty.AsyncJs" />
     <Module Name="ThirdParty.AutoMapper.2" />
     <Module Name="Thirdparty.AvalonDock.2.0" />
-    <Module Name="ThirdParty.Bootstrap"  />
+    <Module Name="ThirdParty.Bootstrap" />
     <Module Name="ThirdParty.BsnGoldParser" />
     <Module Name="ThirdParty.DBGEN" />
     <Module Name="Thirdparty.DevComponents" />
-    <Module Name="ThirdParty.DotLess"  />
+    <Module Name="ThirdParty.DotLess" />
     <Module Name="Thirdparty.ExpertImageApi" />
     <Module Name="Thirdparty.ExtremeML" />
     <Module Name="ThirdParty.FiddlerCore" />
@@ -106,12 +105,10 @@
     <Module Name="ThirdParty.InterAction" ExcludeFromPackaging="true" />
     <Module Name="Thirdparty.IronPython.2.7" />
     <Module Name="ThirdParty.Irony" />
-    <Module Name="Thirdparty.JQuery"/>
+    <Module Name="Thirdparty.JQuery" />
     <Module Name="Thirdparty.JQueryUI" />
-    <Module Name="ThirdParty.KendoUI" />
     <Module Name="Thirdparty.Keyoti.RapidSpell.v3" />
     <Module Name="Thirdparty.Knockout" />
-    <Module Name="Thirdparty.LinqKit" />
     <Module Name="Thirdparty.LLBLGen" />
     <Module Name="Thirdparty.LocalSecurityAuthority" />
     <Module Name="Thirdparty.Log2Console" />
@@ -142,8 +139,6 @@
     <Module Name="Thirdparty.Moq" ExcludeFromPackaging="true" />
     <Module Name="Thirdparty.MSExchange" />
     <Module Name="Thirdparty.MVC" />
-    <Module Name="ThirdParty.Mvc4" />
-    <Module Name="ThirdParty.Mvc5" />
     <Module Name="Thirdparty.Newtonsoft.Json" />
     <Module Name="Thirdparty.NHibernate" />
     <Module Name="Thirdparty.Ninject" />
@@ -154,10 +149,8 @@
     <Module Name="Thirdparty.PDF" />
     <Module Name="Thirdparty.PsUnit" ExcludeFromPackaging="true" />
     <Module Name="Thirdparty.Reactive" />
-    <Module Name="Thirdparty.Selenium" />
     <Module Name="Thirdparty.RhinoMocks" ExcludeFromPackaging="true" />
     <Module Name="Thirdparty.SignalR" />
-    <Module Name="Thirdparty.SignalR2" />
     <Module Name="Thirdparty.SignalR.Client" />
     <Module Name="Thirdparty.SpecFlow" />
     <Module Name="ThirdParty.SpinJs" />
@@ -173,14 +166,10 @@
     <Module Name="Thirdparty.Xceed.4" />
     <Module Name="Thirdparty.Xenocode" />
     <Module Name="Thirdparty.ZipLibrary" />
-    <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
-    <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />
     <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
-    <Module Name="Web.Financials" AssemblyVersion="1.8.0.0" />
     <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
     <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
     <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
-    <Module Name="Web.Test" AssemblyVersion="1.8.0.0" />
     <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
     <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
     <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />
