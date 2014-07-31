@@ -12,7 +12,7 @@ namespace Aderant.Framework.Build {
     public class WebPackageExtract {
         private const string FolderNameToExtract = "PackageTmp";
 
-        public void ExtractWebPackage(string sourceFolder, string destinationDependencyFolder) {
+        public void ExtractWebPackage(string sourceFolder, string destinationDependencyFolder, Boolean copyDlls) {
             if (!Directory.Exists(sourceFolder)) {
                 throw new DirectoryNotFoundException(sourceFolder);
             }
@@ -43,36 +43,47 @@ namespace Aderant.Framework.Build {
             string folderToDeploy = matchingFolders[0].FullName;
             string[] dependencies = new string[0];
 
-            DeployWebDependenciesToProject(destinationDependencyFolder, folderToDeploy, moduleName, dependencies);
+            DeployWebDependenciesToProject(destinationDependencyFolder, folderToDeploy, moduleName, dependencies, copyDlls);
             DeleteFolder(new DirectoryInfo(temporaryFolderWithZip)); // clean out zip folder
         }
 
         // Public method so it can be used by GetDependenciesFrom, when user has been doing local builds.
-        public void DeployWebDependenciesToProject(string destinationDependencyFolder, string folderToDeploy, string moduleName, string[] dependencies) {
+        public void DeployWebDependenciesToProject(string destinationDependencyFolder, string folderToDeploy, string moduleName, string[] dependencies, Boolean copyDlls) {
             // copy entire zip into dependencies folder
             string localDependencyFolderName = Path.Combine(destinationDependencyFolder, moduleName);
-            CopyDirectoryContentsRecursively(folderToDeploy, localDependencyFolderName, dependencies);
 
-            // move dll files to dependency folder, not this sub folder
-            var dlls = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web*.dll");
-            foreach (string dll in dlls) {
-                string destinationDllName = Path.Combine(destinationDependencyFolder, Path.GetFileName(dll) ?? "");
-                if (File.Exists(destinationDllName)) {
-                    File.Delete(destinationDllName);
+            if (copyDlls) {
+                CopyDirectoryContentsRecursively(folderToDeploy, localDependencyFolderName, dependencies);
+
+                // move dll files to dependency folder, not this sub folder
+                var dlls = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.dll");
+                foreach (string dll in dlls) {
+                    string destinationDllName = Path.Combine(destinationDependencyFolder, Path.GetFileName(dll) ?? "");
+                    if (File.Exists(destinationDllName)) {
+                        File.Delete(destinationDllName);
+                    }
+                    File.Move(dll, destinationDllName);
                 }
-                File.Move(dll, destinationDllName);
-            }
 
+                // move pdb files to dependency folder, not this sub folder
+                var pdbs = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.pdb");
+                foreach (string pdb in pdbs) {
+                    string destinationPdbName = Path.Combine(destinationDependencyFolder, Path.GetFileName(pdb) ?? "");
+                    if (File.Exists(destinationPdbName)) {
+                        File.Delete(destinationPdbName);
+                    }
+                    File.Move(pdb, destinationPdbName);
+                }
+            }
             // these are the folders that get copied to src, rather than just to dependencies. 
             // things like images, scripts, and css that physically need to be in the source folder.
-            string[] folderNamesToCopyToSrc = new[] { "Scripts", "Views", "Content", "ViewModels", "Views", "Authentication", "ManualLogon" };
-            string[] folderNamesToCopyToTest = new[] { "TestAssets" };
+            string[] folderNamesToCopyToSrc = { "Scripts", "Views", "Content", "ViewModels", "Views", "Authentication", "ManualLogon" };
+            string[] folderNamesToCopyToTest = { "TestAssets" };
 
             // copy selected folders into src (Images, Scripts, CSS etc)
             DirectoryInfo srcInfo = new DirectoryInfo(Path.Combine(destinationDependencyFolder, "..\\src"));
             DirectoryInfo[] srcProjectFolders = srcInfo.GetDirectories("*.*", SearchOption.TopDirectoryOnly);
             foreach (var srcProjectFolder in srcProjectFolders.Where(s => s.Name.StartsWith("Web"))) {
-
                 foreach (var srcFolderName in folderNamesToCopyToSrc) {
                     string destinationFolderName = Path.Combine(srcProjectFolder.FullName, srcFolderName);
                     if (srcFolderName != "ManualLogon") {
@@ -122,8 +133,19 @@ namespace Aderant.Framework.Build {
             string currentFolderName = destinationFolder.Split('\\').Last();
             FileInfo[] files = root.GetFiles("*.*");
             foreach (FileInfo fi in files) {
+                if (fi.Extension.ToLowerInvariant() == ".map" || fi.Name.EndsWith(".ts", StringComparison.OrdinalIgnoreCase)) {
+                    if (fi.Name.EndsWith("Kendo.d.ts", StringComparison.OrdinalIgnoreCase)
+                        || !fi.Name.EndsWith(".d.ts", StringComparison.OrdinalIgnoreCase)) {
+                        continue;
+                    }
+                    // Ignore all .js.map and .ts files
+                }
+                if (fi.Extension.ToLowerInvariant() == ".bak") {
+                    continue;
+                    // Ignore all .bak files
+                }
                 string destinationFileName = Path.Combine(destinationFolder, fi.Name);
-                if (fi.Extension.ToLowerInvariant() == ".tt" && fi.Name != "Aderant.Deployment.tt"){
+                if (fi.Extension.ToLowerInvariant() == ".tt" && fi.Name != "Aderant.Deployment.tt") {
                     continue;
                     // Ignore all .tt files except for the deployment info one that sets the build date and time
                 }
@@ -131,8 +153,8 @@ namespace Aderant.Framework.Build {
                     // and ignore anything that this zip has that was in it's own dependencies folder
                     && !dependencies.Any(
                         d => String.Compare(d, fi.Name, StringComparison.OrdinalIgnoreCase) == 0
-                            || (d.Contains(currentFolderName) && d.EndsWith(fi.Name)
-                                )
+                             || (d.Contains(currentFolderName) && d.EndsWith(fi.Name)
+                                 )
                         )) {
                     // do not copy file in dependency txt file.
                     if (!folderExists && !Directory.Exists(destinationFolder)) {

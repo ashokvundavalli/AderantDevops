@@ -4,7 +4,7 @@ using Aderant.Framework.Build;
 namespace GetWebProjectDependencies {
     class Program {
         static void Main(string[] args) {
-            string sourceFolder = @"\\na.aderant.com\expertsuite\dev\casev1\Web.Presentation\1.8.0.0\1.8.5177.30378\Bin\Module";
+            string sourceFolder = @"\\na.aderant.com\expertsuite\dev\casev1\Web.Presentation\1.8.0.0\1.8.5297.29669\Bin\Module";
 			string destinationFolder = @"C:\TFS\ExpertSuite\dev\CaseV1\Modules\Web.Case\Dependencies";
             if (args.Length >= 2) {
                 sourceFolder = args[0];
@@ -14,7 +14,7 @@ namespace GetWebProjectDependencies {
             }
 
 			var wpe = new WebPackageExtract();
-            wpe.ExtractWebPackage(sourceFolder, destinationFolder);
+            wpe.ExtractWebPackage(sourceFolder, destinationFolder, true);
         }
     }
 }

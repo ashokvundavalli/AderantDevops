@@ -1,154 +1,155 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
-    <Modules>
-        <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.MatterCenterIntegration" AssemblyVersion="7.7.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.MatterPlanning" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.PrebillEditor" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Applications.TeamManager" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
-        <Module Name="Database" AssemblyVersion="1.8.0.0" />
-        <Module Name="Expert.Help" GetAction="branch" Path="Main" />
-        <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Disbursement" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Employee" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Firm" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Integration" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Models" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Prebill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Presentation.Firm" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Roles" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Rules" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
-        <Module Name="Marketing.Help" GetAction="branch" Path="Main" />
-        <Module Name="Packages" AssemblyVersion="1.8.0.0" />
-        <Module Name="SDK" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.FirmControl" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.MatterPlanning" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.Prebill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Applications.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Identity" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Lookup" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Monitoring" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Notes" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Query" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Services.Rules" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Security" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.AutoMapper" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.AutoMapper.2" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.AvalonDock.2.0" />
-        <Module Name="ThirdParty.DBGEN" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.DevComponents" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.ExtremeML" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.FiddlerCore" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.FOApi" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.FWBS" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.HtmlAgilityPack" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.ICSharpCode" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Infragistics" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.IronPython.2.7" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.Irony" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Keyoti.RapidSpell.v3" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.LLBLGen" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.LocalSecurityAuthority" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.log4net" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.MadCap" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.Marketing.Interop" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.Build" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.Microsoft.EntityFramework" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.ExpressionBlendSdk" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.Linq.Dynamic" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.Net4" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.NTRights" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.OData" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.Office11.Interop" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.Office12.Interop" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.Practices" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.UrlRewrite" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.VisualStudio" />
-        <Module Name="Thirdparty.Microsoft.WcfRest" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Microsoft.WindowsServerAppFabric" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Mindscape" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Moq" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.MSExchange" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.MVC" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Newtonsoft.Json" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.NHibernate" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Ninject" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.NMock" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.NTFSStreams" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.NVelocity" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.OpenXML" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.PDF" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Reactive" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.RhinoMocks" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.SignalR" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.SignalR.Client" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.SQLCE" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.TimerCompatibility.1.0" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Wintellect" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.WiX" GetAction="branch" Path="Main" />
-        <Module Name="ThirdParty.Xceed" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Xceed.4" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.Xenocode" GetAction="branch" Path="Main" />
-        <Module Name="Thirdparty.ZipLibrary" GetAction="branch" Path="Main" />
-        <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Web.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.EmployeeIntake" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.Expenses" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.FileOpening" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.MatterPlanning" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.PaperlessPrebill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.Samples" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-        <Module Name="Workflow.TeamManager" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
-    </Modules>
+  <Modules>
+    <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.FoundTimeOutlookAddIn" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.MatterCenterIntegration" AssemblyVersion="7.7.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.MatterPlanning" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.PrebillEditor" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Applications.TeamManager" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
+    <Module Name="Database" AssemblyVersion="1.8.0.0" />
+    <Module Name="Expert.Help" GetAction="branch" Path="Main" />
+    <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Disbursement" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Employee" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Firm" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Integration" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Models" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Prebill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Presentation.Firm" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Query" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Roles" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Rules" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
+    <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
+    <Module Name="Marketing.Help" GetAction="branch" Path="Main" />
+    <Module Name="Packages" AssemblyVersion="1.8.0.0" />
+    <Module Name="SDK" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.FirmControl" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.MatterPlanning" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.Prebill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.Rates" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Applications.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Identity" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Lookup" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Monitoring" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Notes" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Query" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Services.Rules" AssemblyVersion="1.8.0.0" />
+    <Module Name="Services.Security" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.AutoMapper" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.AutoMapper.2" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.AvalonDock.2.0" />
+    <Module Name="ThirdParty.DBGEN" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.DevComponents" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.ExtremeML" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.FiddlerCore" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.FOApi" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.FWBS" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.HtmlAgilityPack" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.ICSharpCode" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Infragistics" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.IronPython.2.7" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.Irony" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Keyoti.RapidSpell.v3" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.LLBLGen" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.LocalSecurityAuthority" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.log4net" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.MadCap" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.Marketing.Interop" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.Build" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.Microsoft.EntityFramework" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.ExpressionBlendSdk" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.Linq.Dynamic" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.Net4" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.NTRights" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.OData" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.Office11.Interop" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.Office12.Interop" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.Practices" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.UrlRewrite" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.VisualStudio" />
+    <Module Name="Thirdparty.Microsoft.WcfRest" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Microsoft.WindowsServerAppFabric" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Mindscape" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Moq" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.MSExchange" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.MVC" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Newtonsoft.Json" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.NHibernate" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Ninject" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.NMock" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.NMock.2" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.NTFSStreams" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.NVelocity" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.OpenXML" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.PDF" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Reactive" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.RhinoMocks" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.SignalR" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.SignalR.Client" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.SQLCE" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.TimerCompatibility.1.0" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Wintellect" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.WiX" GetAction="branch" Path="Main" />
+    <Module Name="ThirdParty.Xceed" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Xceed.4" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.Xenocode" GetAction="branch" Path="Main" />
+    <Module Name="Thirdparty.ZipLibrary" GetAction="branch" Path="Main" />
+    <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Web.Time" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.EmployeeIntake" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.Expenses" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.FileOpening" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.MatterPlanning" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.PaperlessPrebill" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.Samples" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+    <Module Name="Workflow.TeamManager" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+  </Modules>
 </ProductManifest>
 <!--<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
