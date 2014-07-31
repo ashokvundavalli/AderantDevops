@@ -37,7 +37,7 @@ process {
         
     }
     catch [System.Exception]{
-        write "Excpetion thrown while attempting to det $dbName to single user."
+        write "Excpetion thrown while attempting to set $dbName to single user."
         write $error
     }
 
@@ -53,7 +53,7 @@ process {
 	$restoreCmd += ";"
 
     write "Running command: $restoreCmd"
-	Invoke-SqlCmd -ServerInstance $dbServerInstance -Query $restoreCmd -ErrorAction Stop
+	Invoke-SqlCmd -ServerInstance $dbServerInstance -Query $restoreCmd -ErrorAction Stop -QueryTimeout 1000
     write "Restored database $dbName"
     
 	[string] $setSimpleRecovery =   "ALTER DATABASE $dbName SET RECOVERY SIMPLE"
