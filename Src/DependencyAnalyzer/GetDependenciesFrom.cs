@@ -62,7 +62,7 @@ namespace DependencyAnalyzer {
             if (ConsumerModules == null || ConsumerModules.Length == 0) {
                 ConsumerModules = new[] { ParameterHelper.GetCurrentModulePath(null, SessionState) };
             }
-            if (ProviderModules == null || ProviderModules.Length == 0) {
+            if (!PendingChanges && (ProviderModules == null || ProviderModules.Length == 0)) {
                 // ConsumerModule contains full path of the module, therefore we cannot do .StartWith comparisons
                 if (ConsumerModules[0].ToUpperInvariant().Contains("WEB")) {
                     ProviderModules = ConsumerModules[0].ToUpperInvariant().Contains("WEB.PRESENTATION")
@@ -99,7 +99,7 @@ namespace DependencyAnalyzer {
                             o => builds.Where(b => b.Modules.Contains(o.Provider)).Select(b => b.Order).FirstOrDefault())) {
                     // Check the dependency branch is this current branch.
                     if (dependency.Branch == null || branchPath.ToUpperInvariant().Contains(dependency.Branch.ToUpperInvariant())) {
-                        if (!dependency.Provider.Name.Equals(dependency.Consumer.Name, StringComparison.OrdinalIgnoreCase)) {
+                        if (!PendingChanges && (!dependency.Provider.Name.Equals(dependency.Consumer.Name, StringComparison.OrdinalIgnoreCase))) {
                             if (dependency.Provider.ModuleType != ModuleType.ThirdParty &&
                                 dependency.Provider.ModuleType != ModuleType.Build &&
                                 dependency.Provider.ModuleType != ModuleType.Database) {
