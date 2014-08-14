@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Management.Automation;
 using DependencyAnalyzer.Providers;
@@ -38,6 +39,15 @@ namespace DependencyAnalyzer {
             return modulePath;
         }
 
+
+        public static string GetCurrentModuleName(string defaultValue, SessionState sessionState) {
+            string moduleName = sessionState.PSVariable.GetValue("CurrentModuleName", defaultValue).ToString();
+            if (string.IsNullOrEmpty(moduleName)) {
+                throw new ArgumentException("There must be a variable $CurrentModuleName in the current host session.");
+            }
+            return moduleName;
+        }
+
         /// <summary>
         /// Gets the value of the $BranchLocalDirectory variable
         /// </summary>
@@ -45,7 +55,7 @@ namespace DependencyAnalyzer {
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">There must be a variable $BranchLocalDirectory in the current host session.</exception>
         public static string GetBranchLocalDirectory(SessionState state) {
-            var branchLocalDirectory = state.PSVariable.GetValue("BranchLocalDirectory", string.Empty).ToString();
+            string branchLocalDirectory = state.PSVariable.GetValue("BranchLocalDirectory", string.Empty).ToString();
 
             if (string.IsNullOrEmpty(branchLocalDirectory)) {
                 throw new ArgumentException("There must be a variable $BranchLocalDirectory in the current host session.");
@@ -54,6 +64,22 @@ namespace DependencyAnalyzer {
             return branchLocalDirectory;
         }
 
+        public static string GetBranchBinariesDirectory(SessionState state) {
+            string branchBinariesDirectory = state.PSVariable.GetValue("BranchBinariesDirectory", string.Empty).ToString();
+            if (string.IsNullOrEmpty(branchBinariesDirectory)) {
+                throw new ArgumentException("There must be a variable $BranchBinariesDirectory in the current host session.");
+            }
+            return branchBinariesDirectory;
+        }
+
+        public static string BranchExpertSourceDirectory(SessionState state) {
+            string branchExpertSourceDirectory = state.PSVariable.GetValue("BranchExpertSourceDirectory", string.Empty).ToString();
+            if (string.IsNullOrEmpty(branchExpertSourceDirectory)) {
+                throw new ArgumentException("There must be a variable $BranchExpertSourceDirectory in the current host session.");
+            }
+            return branchExpertSourceDirectory;
+        }
+        
         /// <summary>
         /// Gets the value of the $BranchName variable
         /// </summary>
@@ -67,7 +93,11 @@ namespace DependencyAnalyzer {
                 throw new ArgumentException("There must be a variable $BranchName in the current host session.");
             }
 
-            return branchName;
+            string[] parts = branchName.Split('\\');
+            string location = parts[0];
+            string upper = char.ToUpper(location[0]).ToString(CultureInfo.InvariantCulture);
+
+            return string.Concat(upper + location.Substring(1, location.Length - 1), @"\", parts[1]);
         }
 
         /// <summary>

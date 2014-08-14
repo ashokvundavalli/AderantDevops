@@ -14,5 +14,15 @@ namespace DependencyAnalyzer {
 
             return null;
         }
+
+        public static Collection<PSObject> InvokeCommand(PSCmdlet cmd, string function, params object[] args) {
+            CommandInfo command = cmd.InvokeCommand.GetCommand(function, CommandTypes.Function);
+
+            if (command != null) {
+                return cmd.InvokeCommand.InvokeScript(command.Name, args);
+            }
+
+            return null;
+        }
     }
 }

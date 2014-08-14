@@ -28,6 +28,4 @@ if (-not (Test-Path "$moduleDirectory\Aderant")) {
             Copy-Item $script $psHomeDirectory
         }
     }
-
-
 }

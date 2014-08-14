@@ -8,9 +8,10 @@ using DependencyAnalyzer.Process;
 using Project = DependencyAnalyzer.MSBuild.Project;
 
 namespace DependencyAnalyzer {
+
     [Cmdlet(VerbsCommon.New, "ParallelBuildProject")]
-    public class NewParallelBuildProjectCommand : PSCmdlet {
-        [Parameter(Mandatory = false, Position = 1)]
+    public class NewParallelBuildProject : PSCmdlet {
+     
         public string BranchModulePath {
             get;
             set;

@@ -5,14 +5,26 @@ namespace DependencyAnalyzer {
     internal static class TeamFoundation {
 
         /// <summary>
-        /// Gets the Expert Suite team project.
+        /// Gets the team project name.
+        /// </summary>
+        /// <value>
+        /// The team project.
+        /// </value>
+        public static string TeamProject {
+            get {
+                return "ExpertSuite";   
+            }
+        }
+
+        /// <summary>
+        /// Gets the ExpertSuite team project server.
         /// </summary>
         /// <returns></returns>
-        public static TfsTeamProjectCollection GetTeamProject() {
-            var collection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("http://tfs:8080/tfs/ADERANT"));
-            collection.EnsureAuthenticated();
+        public static TfsTeamProjectCollection GetTeamProjectServer() {
+            var server = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("http://tfs:8080/tfs/ADERANT"));
+            server.EnsureAuthenticated();
 
-            return collection;
+            return server;
         }
     }
 }

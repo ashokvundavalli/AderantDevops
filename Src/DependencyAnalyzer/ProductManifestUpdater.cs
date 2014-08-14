@@ -33,14 +33,14 @@ namespace DependencyAnalyzer {
         /// Performs the update operation against the product manifest.
         /// </summary>
         /// <param name="sourceBranch">The source branch to source modules from.</param>
-        /// <param name="targetBranch"></param>
+        /// <param name="targetBranch">The branch which should be updated with the new ExpertManifest.</param>
         public void Update(string sourceBranch, string targetBranch) {
             IEnumerable<ExpertModule> modules = provider.GetAll();
 
             sourceBranch = sourceBranch.Replace('/', Path.DirectorySeparatorChar);
 
-            TfsTeamProjectCollection collection = TeamFoundation.GetTeamProject();
-            WorkspaceInfo[] workspaceInfo = EditProductManifest(collection);
+            TfsTeamProjectCollection collection = TeamFoundation.GetTeamProjectServer();
+            Workspace workspaceInfo = EditProductManifest(collection);
 
             IEnumerable<string> sourceBranchModules = GetSourceBranchModules(collection, sourceBranch);
 
@@ -55,7 +55,7 @@ namespace DependencyAnalyzer {
 
                 XElement element = AddOrUpdateExpertManifestEntry(provider.ProductManifest, module.Name);
                 if (!provider.IsAvailable(module.Name)) {
-                    string sourceBranchModule = sourceBranchModules.Contains(module.Name) ? sourceBranch : targetBranch;
+                    string sourceBranchModule = sourceBranchModules.Contains(module.Name, StringComparer.OrdinalIgnoreCase) ? sourceBranch : targetBranch;
 
                     if (!sourceBranch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase)) {
                         // Module is not on disk or in the branch - use the sourceBranch if it exists there
@@ -96,10 +96,7 @@ namespace DependencyAnalyzer {
 
                     string dependencyManifestPath;
                     if (provider.TryGetDependencyManifestPath(module.Name, out dependencyManifestPath)) {
-                        foreach (WorkspaceInfo info in workspaceInfo) {
-                            Workspace workspace = info.GetWorkspace(collection);
-                            workspace.PendEdit(dependencyManifestPath);
-                        }
+                        workspaceInfo.PendEdit(dependencyManifestPath);
 
                         // Add any dependencies of the module to the Expert Manifest
                         AddMissingModulesToExpertManifest(manifest, provider.ProductManifest);
@@ -111,13 +108,18 @@ namespace DependencyAnalyzer {
             SaveDocument(provider.ProductManifest, provider.ProductManifestPath);
         }
 
-        private WorkspaceInfo[] EditProductManifest(TfsTeamProjectCollection collection) {
+        private Workspace EditProductManifest(TfsTeamProjectCollection collection) {
             var workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
             foreach (WorkspaceInfo info in workspaceInfo) {
                 Workspace workspace = info.GetWorkspace(collection);
-                workspace.PendEdit(provider.ProductManifestPath);
+                string path = workspace.TryGetServerItemForLocalItem(provider.ProductManifestPath);
+                if (path != null) {
+                    workspace.PendEdit(provider.ProductManifestPath);
+                    return workspace;
+                }
+                
             }
-            return workspaceInfo;
+            return null;
         }
 
         private void AddOrUpdateAttribute(XElement element, string attributeName, string attributeValue) {

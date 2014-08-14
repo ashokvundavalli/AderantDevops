@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Host;
-using System.Text;
-using System.Xml;
-using System.Xml.Linq;
 using DependencyAnalyzer.Logging;
 using DependencyAnalyzer.Providers;
+using Lapointe.PowerShell.MamlGenerator.Attributes;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace DependencyAnalyzer {
-    [Description(@"Branches the TFS source from TFS into the relevant path in the target branch location.
+    [CmdletDescription(@"Branches the TFS source from TFS into the relevant path in the target branch location.
 Updates the ExpertManifest to get the branched module from this branch
 Checking back in to TFS must be done manually.")]
     [Cmdlet("Branch", "Module")]
@@ -81,12 +76,12 @@ Checking back in to TFS must be done manually.")]
         }
 
         private void ExecuteBranchModule() {
-            TfsTeamProjectCollection collection = TeamFoundation.GetTeamProject();
+            TfsTeamProjectCollection collection = TeamFoundation.GetTeamProjectServer();
 
             string serverPathToModule;
             Workspace wss = Branch(collection, out serverPathToModule);
 
-            GetBuildInfrastructure(wss, PathHelper.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), "Build.Infrastructure"));
+            GetBuildInfrastructure(wss, Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), "Build.Infrastructure"));
 
             BuildInfrastructureHelper.UpdatePathToModuleBuildProject(wss, serverPathToModule, ParameterHelper.GetDropPath(TargetBranch, SessionState));
 
@@ -108,8 +103,8 @@ Checking back in to TFS must be done manually.")]
         }
 
         private Workspace Branch(TfsTeamProjectCollection collection, out string fullTargetServerPath) {
-            string fullSourceServerPath = PathHelper.Combine(PathHelper.GetServerPathToModuleDirectory(SourceBranch), ModuleName);
-            fullTargetServerPath = PathHelper.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), ModuleName);
+            string fullSourceServerPath = Path.Combine(PathHelper.GetServerPathToModuleDirectory(SourceBranch), ModuleName);
+            fullTargetServerPath = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), ModuleName);
 
             Workspace workspace = null;
 
@@ -135,7 +130,7 @@ Checking back in to TFS must be done manually.")]
 
         private void GetBuildFilesForAllModules(Workspace wss) {
             // Get and checkout ExpertManifest
-            string serverPathToManifest = PathHelper.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToProductManifest);
+            string serverPathToManifest = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToProductManifest);
 
             Host.UI.WriteLine("Getting latest: " + serverPathToManifest);
             wss.Get(new string[] {serverPathToManifest}, VersionSpec.Latest, RecursionType.None, GetOptions.None);
@@ -185,7 +180,7 @@ Checking back in to TFS must be done manually.")]
         }
 
         private void UpdateBuildAll(Workspace wss) {
-            string serverPathToBuildProject = PathHelper.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToBuildOrderProject);
+            string serverPathToBuildProject = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToBuildOrderProject);
 
             wss.Get(new string[] {serverPathToBuildProject}, VersionSpec.Latest, RecursionType.None, GetOptions.None);
 

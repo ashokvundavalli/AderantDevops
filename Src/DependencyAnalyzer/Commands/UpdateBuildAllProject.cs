@@ -50,7 +50,7 @@ namespace DependencyAnalyzer {
         }
 
         private void SequenceBuilds(WorkspaceModuleProvider provider, string moduleProject) {
-            TfsTeamProjectCollection teamProject = TeamFoundation.GetTeamProject();
+            TfsTeamProjectCollection teamProject = TeamFoundation.GetTeamProjectServer();
 
             WorkspaceInfo[] workspaces = Workstation.Current.GetAllLocalWorkspaceInfo();
             foreach (WorkspaceInfo workspaceInfo in workspaces) {

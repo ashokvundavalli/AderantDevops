@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DependencyAnalyzer</RootNamespace>
     <AssemblyName>DependencyAnalyzer</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -29,19 +29,25 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <DocumentationFile>
     </DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>..\Profile\Aderant\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities" />
     <Reference Include="Microsoft.TeamFoundation, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.TeamFoundation.Build.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.TeamFoundation.Build.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.TeamFoundation.Build.Workflow, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\Microsoft.TeamFoundation.Build.Workflow\v4.0_10.0.0.0__b03f5f7f11d50a3a\Microsoft.TeamFoundation.Build.Workflow.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.TeamFoundation.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.TeamFoundation.VersionControl.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.TeamFoundation.VersionControl.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -57,13 +63,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoCompletionParser.cs" />
-    <Compile Include="BranchModule.cs" />
+    <Compile Include="Commands\ModuleHelpInitializerCommand.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletDescriptionAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletGroupAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\ExampleAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\RelatedCmdletsAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\CmdletHelpGenerator.cs" />
+    <Compile Include="Commands\BranchModule.cs" />
     <Compile Include="BuildProjectSequencer.cs" />
-    <Compile Include="ModuleBuildPathUpdateCmd.cs" />
+    <Compile Include="Commands\CopyBinToEnvironment.cs" />
+    <Compile Include="Commands\SetModuleBuildPath.cs" />
+    <Compile Include="Commands\NewExpertBuildDefinition.cs" />
     <Compile Include="ProductManifestUpdater.cs" />
-    <Compile Include="ExpertManifestUpdate.cs" />
-    <Compile Include="GetSymbolicLinkTarget.cs" />
-    <Compile Include="NewParallelBuildProjectCommand.cs" />
+    <Compile Include="Commands\ExpertManifestUpdate.cs" />
+    <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
+    <Compile Include="Commands\NewParallelBuildProject.cs" />
     <Compile Include="Process\DynamicProject.cs" />
     <Compile Include="MSBuild\BuildElementVisitor.cs" />
     <Compile Include="MSBuild\BuildStep.cs" />
@@ -79,30 +93,30 @@
     <Compile Include="Logging\PowerShellLogger.cs" />
     <Compile Include="Providers\PathProvider.cs" />
     <Compile Include="Providers\WorkspaceModuleProvider.cs" />
-    <Compile Include="GetDependenciesFrom.cs" />
+    <Compile Include="Commands\GetDependenciesFrom.cs" />
     <Compile Include="ShellInvocationHelper.cs" />
     <Compile Include="TeamFoundation.cs" />
-    <Compile Include="UpdateBuildAllProject.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="CircularDependencyException.cs" />
-    <Compile Include="Get-ExpertBranches.cs" />
+    <Compile Include="Commands\Get-ExpertBranches.cs" />
     <Compile Include="TopologicalSort.cs" />
     <Compile Include="DependencyBuilder.cs" />
     <Compile Include="ExpertModule.cs" />
-    <Compile Include="GetDependencies.cs" />
-    <Compile Include="GetDependencyGraph.cs" />
-    <Compile Include="GetDependencyTree.cs" />
-    <Compile Include="GetDependsOn.cs" />
-    <Compile Include="GetDownstreamExpertModules.cs" />
-    <Compile Include="GetExpertModule.cs" />
-    <Compile Include="GetExpertModules.cs" />
+    <Compile Include="Commands\GetDependencies.cs" />
+    <Compile Include="Commands\GetDependencyGraph.cs" />
+    <Compile Include="Commands\GetDependencyTree.cs" />
+    <Compile Include="Commands\GetDependsOn.cs" />
+    <Compile Include="Commands\GetDownstreamExpertModules.cs" />
+    <Compile Include="Commands\GetExpertModule.cs" />
+    <Compile Include="Commands\GetExpertModules.cs" />
     <Compile Include="ModuleDependency.cs" />
     <Compile Include="ModuleType.cs" />
     <Compile Include="NamingExtensions.cs" />
     <Compile Include="ParameterHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SortModulesByBuildOrder.cs" />
+    <Compile Include="Commands\SortModulesByBuildOrder.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
+    <Compile Include="Commands\UpdateBuildAllProject.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ExpertBuilds.cd" />
@@ -114,15 +128,10 @@
       <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="DependencyAnalyzer.dll-Help.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>"$(DevEnvDir)tf.exe" checkout $(TargetPath)
-"$(DevEnvDir)tf.exe" checkout $(TargetPath)-Help.xml</PreBuildEvent>
+</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>

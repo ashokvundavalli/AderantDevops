@@ -65,10 +65,9 @@ namespace DependencyAnalyzer.Providers {
         /// <returns>The two part branch name</returns>
         /// <exception cref="System.InvalidOperationException">Thrown when name detection fails</exception>
         public static string GetBranch(string path) {
-            var parts = path.Split(new char[] {Path.DirectorySeparatorChar}, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = path.Split(new char[] {Path.DirectorySeparatorChar}, StringSplitOptions.RemoveEmptyEntries);
 
-            for (int i = 0; i < parts.Count(); i++) {
-                
+            for (int i = 0; i < parts.Length; i++) {
                 if (parts[i].Equals("dev", StringComparison.OrdinalIgnoreCase)) {
                     return Path.Combine(parts[i], parts[i + 1]);
                 }
@@ -127,17 +126,7 @@ namespace DependencyAnalyzer.Providers {
         public static string GetServerPathToModuleDirectory(string branch) {
             string root = VersionControlPath.PrependRootIfNeeded("ExpertSuite");
 
-            return Combine(root, branch, "Modules");
-        }
-
-        /// <summary>
-        /// Combines the specified paths as required for Team Foundation
-        /// </summary>
-        /// <param name="path1">The path1.</param>
-        /// <param name="paths">The paths.</param>
-        /// <returns></returns>
-        internal static string Combine(string path1, params string[] paths) {
-            return paths.Aggregate(path1, VersionControlPath.Combine);
+            return Path.Combine(root, branch, "Modules");
         }
 
         /// <summary>

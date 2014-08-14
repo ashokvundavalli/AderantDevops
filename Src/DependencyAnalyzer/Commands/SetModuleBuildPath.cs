@@ -5,7 +5,7 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace DependencyAnalyzer {
     [Cmdlet(VerbsCommon.Set, "ModuleBuildPath")]
-    public class ModuleBuildPathUpdateCmd : PSCmdlet {
+    public class SetModuleBuildPath : PSCmdlet {
         [Parameter(HelpMessage = "The module name to update")]
         public string Module { get; set; }
 
@@ -42,7 +42,7 @@ namespace DependencyAnalyzer {
         private void UpdatePath(string modulePath) {
             var workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
             foreach (WorkspaceInfo info in workspaceInfo) {
-                Workspace workspace = info.GetWorkspace(TeamFoundation.GetTeamProject());
+                Workspace workspace = info.GetWorkspace(TeamFoundation.GetTeamProjectServer());
 
                 string serverPathToModule = workspace.TryGetServerItemForLocalItem(modulePath);
                 if (!string.IsNullOrEmpty(serverPathToModule)) {

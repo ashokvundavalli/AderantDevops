@@ -64,8 +64,8 @@ namespace DependencyAnalyzer {
             }
             if (!PendingChanges && (ProviderModules == null || ProviderModules.Length == 0)) {
                 // ConsumerModule contains full path of the module, therefore we cannot do .StartWith comparisons
-                if (ConsumerModules[0].ToUpperInvariant().Contains("WEB")) {
-                    ProviderModules = ConsumerModules[0].ToUpperInvariant().Contains("WEB.PRESENTATION")
+                if (ConsumerModules[0].IndexOf("Web.", StringComparison.OrdinalIgnoreCase) != -1) {
+                    ProviderModules = ConsumerModules[0].IndexOf("Web.Presentation", StringComparison.OrdinalIgnoreCase) != -1
                         ? new[] { "Web.Foundation" }
                         : new[] { "Web.Foundation", "Web.Presentation" };
                 } else {
@@ -85,12 +85,7 @@ namespace DependencyAnalyzer {
             IEnumerable<Build> builds = builder.GetTree(true);
 
             foreach (string consumerModule in ConsumerModules) {
-                string moduleName =
-                    consumerModule.ToUpper()
-                                .Replace(branchPath.ToUpper(), string.Empty)
-                                .Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries)
-                                .LastOrDefault();
-
+                string moduleName = GetModuleNameFromLocalPath(consumerModule, branchPath);
                 IEnumerable<ModuleDependency> moduleDependencies = FilterDependencies(builder, moduleName);
 
                 foreach (
@@ -99,58 +94,60 @@ namespace DependencyAnalyzer {
                             o => builds.Where(b => b.Modules.Contains(o.Provider)).Select(b => b.Order).FirstOrDefault())) {
                     // Check the dependency branch is this current branch.
                     if (dependency.Branch == null || branchPath.ToUpperInvariant().Contains(dependency.Branch.ToUpperInvariant())) {
-                        if (!PendingChanges && (!dependency.Provider.Name.Equals(dependency.Consumer.Name, StringComparison.OrdinalIgnoreCase))) {
-                            if (dependency.Provider.ModuleType != ModuleType.ThirdParty &&
+
+                        if (dependency.Provider.Name.Equals(dependency.Consumer.Name, StringComparison.OrdinalIgnoreCase)) {
+                            // if the dependency module is this current module.
+                            WriteDebug(string.Format("Cannot get {0}, this command cannot get dependency from the same module.", dependency.Provider.Name));
+                            continue;
+                        }
+
+                        if (dependency.Provider.ModuleType != ModuleType.ThirdParty &&
                                 dependency.Provider.ModuleType != ModuleType.Build &&
                                 dependency.Provider.ModuleType != ModuleType.Database) {
-                                WriteCopyInfo(dependency);
-                                // Get our two and from directories
-                                string sourcePath = PathHelper.GetModuleOutputDirectory(branchPath, dependency.Provider);
-                                string targetPath = PathHelper.GetModuleDependenciesDirectory(branchPath, dependency.Consumer);
-                                if (!Directory.Exists(targetPath)) {
-                                    Directory.CreateDirectory(targetPath);
-                                }
-                                if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
-                                    // The source is a web module, these are packaged using webdeploy and need to be uzipped and copied in a specific way.
-                                    CallWebPackageExtract(targetPath, branchPath, dependency);
-                                } else {
-                                    // Get a list of unique content, we don't want to dump all the stuff from bin into dependencies as we may drag out dated stuff along
-                                    List<FileInfo> content = ResolveUniqueBinContent(
-                                        sourcePath,
-                                        PathHelper.GetModuleDependenciesDirectory(
-                                            branchPath,
-                                            dependency
-                                                .Provider));
+                            WriteCopyInfo(dependency);
+                            // Get our to and from directories
+                            string sourcePath = PathHelper.GetModuleOutputDirectory(branchPath, dependency.Provider);
+                            string targetPath = PathHelper.GetModuleDependenciesDirectory(branchPath, dependency.Consumer);
+                            if (!Directory.Exists(targetPath)) {
+                                Directory.CreateDirectory(targetPath);
+                            }
+                            if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
+                                // The source is a web module, these are packaged using webdeploy and need to be uzipped and copied in a specific way.
+                                CallWebPackageExtract(targetPath, branchPath, dependency);
+                            } else {
+                                // Get a list of unique content, we don't want to dump all the stuff from bin into dependencies as we may drag out dated stuff along
+                                List<FileInfo> content = ResolveUniqueBinContent(
+                                    sourcePath,
+                                    PathHelper.GetModuleDependenciesDirectory(
+                                        branchPath,
+                                        dependency
+                                            .Provider));
 
-                                    foreach (FileInfo file in content) {
-                                        var substringFromIndex = file.FullName.IndexOf("Bin\\Module", StringComparison.OrdinalIgnoreCase) +
-                                                                 "Bin\\Module".Length;
+                                foreach (FileInfo file in content) {
+                                    var substringFromIndex = file.FullName.IndexOf("Bin\\Module", StringComparison.OrdinalIgnoreCase) +
+                                                             "Bin\\Module".Length;
 
-                                        string relativeFromBinPath = file.FullName.Substring(substringFromIndex).TrimStart(Path.DirectorySeparatorChar);
-                                        string destination = Path.Combine(targetPath, relativeFromBinPath);
-                                        CopyFile(destination, file);
-                                        if (AdditionalDestination != null) {
-                                            foreach (string additionalDestination in AdditionalDestination) {
-                                                CopyFile(Path.Combine(additionalDestination, relativeFromBinPath), file);
-                                            }
+                                    string relativeFromBinPath = file.FullName.Substring(substringFromIndex).TrimStart(Path.DirectorySeparatorChar);
+                                    string destination = Path.Combine(targetPath, relativeFromBinPath);
+                                    CopyFile(destination, file);
+                                    if (AdditionalDestination != null) {
+                                        foreach (string additionalDestination in AdditionalDestination) {
+                                            CopyFile(Path.Combine(additionalDestination, relativeFromBinPath), file);
                                         }
                                     }
-                                    if (dependency.Provider.Name.StartsWith("ThirdParty.", StringComparison.OrdinalIgnoreCase) &&
-                                        dependency.Consumer.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
-                                        // If we are getting a third party module and we are a Web module, then our dependencies need to go into additional directories
-                                        // Not supported at the moment.  If you want third party modules you need to check them in and get in the usual way.
-                                        // See line 176 of LoadDependencies.ps1 for this section of code.
-                                        WriteWarning("This command cannot get third party modules for web projects.");
-                                    }
                                 }
-                            } else {
-                                WriteWarning(string.Format("Cannot get {0}, this command cannot get third party, build or database modules.", dependency.Provider.Name));
+                                if (dependency.Provider.Name.StartsWith("ThirdParty.", StringComparison.OrdinalIgnoreCase) &&
+                                    dependency.Consumer.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
+                                    // If we are getting a third party module and we are a Web module, then our dependencies need to go into additional directories
+                                    // Not supported at the moment.  If you want third party modules you need to check them in and get in the usual way.
+                                    // See line 176 of LoadDependencies.ps1 for this section of code.
+                                    WriteWarning("This command cannot get third party modules for web projects.");
+                                }
                             }
                         } else {
-                            // if the dependency module is this current module.
-                            WriteWarning(string.Format("Cannot get {0}, this command cannot get dependency from the same module.", dependency.Provider.Name));
-                            return;
+                            WriteWarning(string.Format("Cannot get {0}, this command cannot get third party, build or database modules.", dependency.Provider.Name));
                         }
+
                     } // if the dependency branch is this current branch.
                 }  // foreach dependency
 
@@ -175,6 +172,10 @@ namespace DependencyAnalyzer {
                 processRecordStopwatch.ElapsedMilliseconds,
                 ExpressMode ? "in Express Mode, project files have not been modified." : "")
                 );
+        }
+
+        private static string GetModuleNameFromLocalPath(string consumerModulePath, string branchPath) {
+            return consumerModulePath.Substring(branchPath.Length).Split(Path.DirectorySeparatorChar).Last();
         }
 
         private void CallWebPackageExtract(string targetPath, string branchPath, ModuleDependency dependency) {
