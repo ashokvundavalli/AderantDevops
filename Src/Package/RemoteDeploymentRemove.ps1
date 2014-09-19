@@ -65,3 +65,9 @@ process{
         Write-Host "Could not find $sourcePath\DeploymentEngine.exe so not performing remove."
     }
 }
+
+end{
+    $doneMessage = "Remote Remove action completed"
+    write $doneMessage
+	Remove-PSSession -Session $session
+}
