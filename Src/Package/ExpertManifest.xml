@@ -26,9 +26,9 @@
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Validation" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.CheckRequest" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.DesignStudio" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.DesignStudio" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
@@ -98,6 +98,7 @@
         <Module Name="ThirdParty.DotLess" />
         <Module Name="Thirdparty.ExpertImageApi" />
         <Module Name="Thirdparty.ExtremeML" />
+        <Module Name="Thirdparty.FastClick" />
         <Module Name="ThirdParty.FiddlerCore" />
         <Module Name="ThirdParty.FOApi" />
         <Module Name="ThirdParty.FWBS" />
@@ -170,6 +171,7 @@
         <Module Name="Thirdparty.Xceed.4" />
         <Module Name="Thirdparty.Xenocode" />
         <Module Name="Thirdparty.ZipLibrary" />
+        <Module Name="UIAutomation.Framework" AssemblyVersion="5.3.1.0" GetAction="specificdroplocation" Path="\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation" ExcludeFromPackaging="true" />
         <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
