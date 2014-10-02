@@ -27,8 +27,8 @@ namespace Aderant.Build.Process {
             BuildSettings settings = new BuildSettings();
             parameters["BuildSettings"] = settings;
 
-            settings.PlatformConfigurations.Add(new PlatformConfiguration("AnyCPU", "Debug"));
-            settings.PlatformConfigurations.Add(new PlatformConfiguration("AnyCPU", "Release"));
+            settings.PlatformConfigurations.Add(new PlatformConfiguration("Any CPU", "Debug"));
+            settings.PlatformConfigurations.Add(new PlatformConfiguration("Any CPU", "Release"));
         }
     }
 }
