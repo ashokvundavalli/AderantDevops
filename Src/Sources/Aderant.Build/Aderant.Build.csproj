@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{66E50D39-8E73-4D16-944B-43F18C308FE0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Aderant.Build</RootNamespace>
+    <AssemblyName>Aderant.Build</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\Build.Tools\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Build.Tools\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Build.Tools\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Engine">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Framework">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.v4.0">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.v4.0">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.Build.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.Build.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.Build.Workflow, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.VersionControl.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.TeamFoundation.VersionControl.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PresentationCore">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Configuration">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Core">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\v1.0\System.Management.Automation.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xaml">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="WindowsBase">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AddSourceAndSymbolSettings.cs" />
+    <Compile Include="AutoCompletionParser.cs" />
+    <Compile Include="Build.cs" />
+    <Compile Include="BuildInfrastructureHelper.cs" />
+    <Compile Include="BuildProcess\DynamicProject.cs" />
+    <Compile Include="BuildProcess\ParallelBuildVisitor.cs" />
+    <Compile Include="Commands\BranchModule.cs" />
+    <Compile Include="Commands\CopyBinToEnvironment.cs" />
+    <Compile Include="Commands\ExpertManifestUpdate.cs" />
+    <Compile Include="Commands\Get-ExpertBranches.cs" />
+    <Compile Include="Commands\GetDependencies.cs" />
+    <Compile Include="Commands\GetDependenciesFrom.cs" />
+    <Compile Include="Commands\GetDependencyGraph.cs" />
+    <Compile Include="Commands\GetDependencyTree.cs" />
+    <Compile Include="Commands\GetDependsOn.cs" />
+    <Compile Include="Commands\GetDownstreamExpertModules.cs" />
+    <Compile Include="Commands\GetExpertModule.cs" />
+    <Compile Include="Commands\GetExpertModules.cs" />
+    <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
+    <Compile Include="Commands\ModuleHelpInitializerCommand.cs" />
+    <Compile Include="Commands\NewExpertBuildDefinition.cs" />
+    <Compile Include="Commands\NewParallelBuildProject.cs" />
+    <Compile Include="Commands\SetModuleBuildPath.cs" />
+    <Compile Include="Commands\SortModulesByBuildOrder.cs" />
+    <Compile Include="Commands\UpdateBuildAllProject.cs" />
+    <Compile Include="DependencyAnalyzer\BuildProjectSequencer.cs" />
+    <Compile Include="DependencyAnalyzer\CircularDependencyException.cs" />
+    <Compile Include="DependencyAnalyzer\DependencyBuilder.cs" />
+    <Compile Include="DependencyAnalyzer\ExpertModule.cs" />
+    <Compile Include="DependencyAnalyzer\ModuleDependency.cs" />
+    <Compile Include="DependencyAnalyzer\ModuleType.cs" />
+    <Compile Include="DependencyAnalyzer\NamingExtensions.cs" />
+    <Compile Include="DependencyAnalyzer\ParameterHelper.cs" />
+    <Compile Include="DependencyAnalyzer\ProductManifestUpdater.cs" />
+    <Compile Include="DependencyAnalyzer\ShellInvocationHelper.cs" />
+    <Compile Include="DependencyAnalyzer\TopologicalSort.cs" />
+    <Compile Include="FontInstaller.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\PowerShellLogger.cs" />
+    <Compile Include="MSBuild\BuildElementVisitor.cs" />
+    <Compile Include="MSBuild\BuildStep.cs" />
+    <Compile Include="MSBuild\Element.cs" />
+    <Compile Include="MSBuild\ItemGroup.cs" />
+    <Compile Include="MSBuild\Message.cs" />
+    <Compile Include="MSBuild\MSBuildTask.cs" />
+    <Compile Include="MSBuild\Project.cs" />
+    <Compile Include="MSBuild\PropertyGroup.cs" />
+    <Compile Include="MSBuild\Target.cs" />
+    <Compile Include="Providers\IModuleProvider.cs" />
+    <Compile Include="Providers\PathProvider.cs" />
+    <Compile Include="Providers\WorkspaceModuleProvider.cs" />
+    <Compile Include="SplashScreenText.cs" />
+    <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
+    <Compile Include="Tasks\ProductInfo.cs" />
+    <Compile Include="GetAssemblyPlatform.cs" />
+    <Compile Include="Commands\ProjectFileFolderSync.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Commands\WebPackageExtract.cs" />
+    <Compile Include="TeamFoundationHelper.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletDescriptionAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletGroupAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\ExampleAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\Attributes\RelatedCmdletsAttribute.cs" />
+    <Compile Include="ThirdParty\Lapointe\CmdletHelpGenerator.cs" />
+    <Compile Include="WorkflowIntegrationTask.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
+    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
+    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

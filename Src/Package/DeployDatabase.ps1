@@ -61,7 +61,7 @@ process {
     $module = [System.IO.Path]::Combine($expertSourceDirectory, "Aderant.Database.Build.dll")
     
     if (Test-Path $module) {
-        Import-Module $module
+        Import-Module $module -DisableNameChecking 
         
         $upd = "$expertSourceDirectory\Database\EXPERT_1.UPD"
         

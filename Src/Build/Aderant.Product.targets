@@ -1,0 +1,29 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="ProductInfo"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <UsingTask TaskName="UpdateSplashScreenImage"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+  
+  <Target Name="UpdateSplashScreen" 
+          Condition="'$(IsCustomBuild)' != 'true'"
+          BeforeTargets="Build">
+    
+    <Message Text="Looking for a product under: $(ModuleSourceDirectory)" />
+    
+    <ProductInfo
+      SourcePath="$(ModuleSourceDirectory)">
+      <Output TaskParameter="Info" 
+              ItemName="ProductInfo" />
+    </ProductInfo>
+
+    <UpdateSplashScreenImage 
+      ProductInfo="@(ProductInfo)"
+      Version="Version 8"
+      SplashScreenStyle="$(SplashScreenStyle)" />
+  </Target>
+  
+</Project>

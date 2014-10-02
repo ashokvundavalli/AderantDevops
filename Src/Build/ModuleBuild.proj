@@ -5,11 +5,9 @@
 
   <!-- 
     =========================================================================================================
-        Team Build Script - Modularisation Prototype.        
+        Team Build Script        
         
-        Maintained by Global DBA And Release Management. 
-        Guidelines:
-            * All Imports, Calls to external commands/tasks/tools/utilities must be approved by DBARM  
+        Guidelines:            
             * Retain structure and formatting for easier merge between Team Build project scripts 
             * Tabs converted to 4 spaces for easier reading outside of VS.
     =========================================================================================================
@@ -67,6 +65,7 @@
 
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
+  <Import Project="Aderant.Product.targets" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask
     AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
@@ -124,13 +123,8 @@ foreach(var replacement in replacements){
 
   <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
   <UsingTask TaskName="GetAssemblyPlatform"
-             AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="AddPlatformConfiguration"
-             AssemblyFile="$(BuildToolsDirectory)\Build.Tasks.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
   <!-- 
     ==========================================================================================
         Build Configurations
@@ -161,6 +155,7 @@ foreach(var replacement in replacements){
     <OnBuildBreakDependsOn>
       BeforeOnBuildBreak;
       GetChangeSetsOnBuildBreak;
+      BeforeDropBuild;
       DropBuild;
       AfterOnBuildBreak;
     </OnBuildBreakDependsOn>
@@ -182,6 +177,7 @@ foreach(var replacement in replacements){
     ==========================================================================================
   -->
   <Target Name="ModuleBuild">
+    <CallTarget Targets="PrepareBuildTools" />
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="GetModuleDependencies" />
     <CallTarget Targets="ZipCustomSource" />
@@ -190,7 +186,6 @@ foreach(var replacement in replacements){
     <CallTarget Targets="Build" />
     <CallTarget Targets="CreateMSI" />
     <CallTarget Targets="ZipTemplateModule" />
-    <CallTarget Targets="BuildHelpFiles" />
     <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="PublishModule" />
@@ -267,12 +262,13 @@ foreach(var replacement in replacements){
     </CreateProperty>
   </Target>
 
-  <Target Name="BeforeDropBuild" 
-          Condition="'$(BuildAll)' != 'true'">
-    
-    <RemoveDir Directories="$(DropLocation)\$(BuildNumber)" 
+  <Target Name="BeforeDropBuild"
+          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" BeforeTargets="DropBuild">
+
+    <RemoveDir Condition="'$(DropLocation)' != ''"
+               Directories="$(DropLocation)\$(BuildNumber)"
                ContinueOnError="true" />
-    
+
     <!-- Set the drop location back to the FileVersion so the log file goes to the right place -->
     <UpdateBuildNumberDropLocation
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
@@ -281,12 +277,32 @@ foreach(var replacement in replacements){
       DropLocation="$(DropLocation)\$(FileVersion)" />
   </Target>
 
+
+  <!--
+    ==========================================================================================
+        PrepareBuildTools
+        Builds the Build.Infrastructure assemblies and tools required by the build process
+    ==========================================================================================
+  -->
+  <Target Name="PrepareBuildTools" Condition="'$(IsDesktopBuild)' == 'true' and '$(IsCustomBuild)' != 'true'">
+    <ItemGroup>
+      <Projects Include="$(BuildScriptsDirectory)..\Sources\FxCopCmd\FxCopCmd.csproj"></Projects>
+      <Projects Include="$(BuildScriptsDirectory)..\Sources\Aderant.Build\Aderant.Build.csproj"></Projects>
+    </ItemGroup>
+
+    <MSBuild
+      Projects="@(Projects)"
+      BuildInParallel="true"
+      UnloadProjectsOnCompletion="true" />
+  </Target>
+  
+
   <!--
     ==========================================================================================
         Clean
     ==========================================================================================
   -->
-  <Target Name="CleanBin" >
+  <Target Name="CleanBin">
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       Message="$(ModuleName) - Clean Module Bin"
@@ -337,7 +353,6 @@ foreach(var replacement in replacements){
         Get Module Dependencies
     ==========================================================================================
   -->
-
   <Target Name ="GetModuleDependencies"
           Condition="('$(DropLocation)'!='')">
     <BuildStep
@@ -372,7 +387,6 @@ foreach(var replacement in replacements){
     ========================================================================================== 
   -->
   <Target Name="rmBeforeTransformTemplates">
-
     <PropertyGroup>
       <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies</rmT4AssemblyReferencePaths>
       <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
@@ -380,7 +394,8 @@ foreach(var replacement in replacements){
 
     <ItemGroup>
       <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
-                         Include="$(ModuleSourceDirectory)\**\*.tt;$(ModuleTestDirectory)\**\*.tt;">
+                         Include="$(ModuleSourceDirectory)\**\*.tt;$(ModuleTestDirectory)\**\*.tt;"
+                         Exclude="$(ModuleSourceDirectory)\**\__*.tt">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
     </ItemGroup>
@@ -558,47 +573,6 @@ foreach(var replacement in replacements){
 
 
   <!--
-   ==========================================================================================
-        Building helpfiles
-    ==========================================================================================
-  -->
-  <ItemGroup>
-    <HelpProjectFiles
-      Include="$(SolutionDirectoryPath)\Src\*.shfbproj;"/>
-  </ItemGroup>
-
-  <Target Name="BuildHelpFiles"
-          Condition="('$(BuildHelpFiles)'== 'true')">
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Building help file %(HelpProjectFiles.Identity)"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"
-                />
-    </BuildStep>
-
-    <Message Text = "Building HelpProjectFile: %(HelpProjectFiles.Identity)"/>
-
-    <MSBuild
-      Projects="%(HelpProjectFiles.Identity)"
-      Properties="Platform=%(ConfigurationToBuild.PlatformToBuild)"
-      Targets="Build"/>
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
-  </Target>
-
-  <!--
     ==========================================================================================
         Zip Source 
     ==========================================================================================
@@ -642,7 +616,9 @@ foreach(var replacement in replacements){
                        $(SolutionDirectoryPath)*ABT\**;                       
                        $(SolutionDirectoryPath)Bin\**\**;
                        $(SolutionDirectoryPath)Test\**\**;
-                       $(SolutionDirectoryPath)TestResults\*\**;
+                       $(SolutionDirectoryPath)IntegrationTest*\**;
+                       $(SolutionDirectoryPath)UnitTest*\**;
+                       $(SolutionDirectoryPath)TestResults\**\**;
                        $(SolutionDirectoryPath)Dependencies\**\**;
                        $(SolutionDirectoryPath)**\*.vssscc;
                        $(SolutionDirectoryPath)**\*.vspscc;
@@ -792,7 +768,7 @@ foreach(var replacement in replacements){
   -->
   <Target Name="RunUnitTests"
           DependsOnTargets="Build"
-          Condition="('$(RunTest)'!='false')">
+          Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
@@ -805,13 +781,6 @@ foreach(var replacement in replacements){
         PropertyName="BuildStepId"
                 />
     </BuildStep>
-
-    <!-- Add the correct platform to TFS -->
-    <AddPlatformConfiguration
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServer="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)"
-      Configuration="%(ConfigurationToBuild.FlavorToBuild)" />
 
     <CreateItem
       Include="$(BinTestDirectory)\%2aUnitTest%2a.dll"
@@ -1203,22 +1172,23 @@ foreach(var replacement in replacements){
         MarkBuildStepAsFailed
     ==========================================================================================
   -->
+  <Target Name="MarkBuildStepAsFailed"
+          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
+          DependsOnTargets="BeforeDropBuild">
 
-  <Target Name="MarkBuildStepAsFailed">
+    <Message Text="Marking build as failed" />
+
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
-      Status="Failed"
-            />
+      Status="Failed" />
+
     <SetBuildProperties
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
-      CompilationStatus="Failed"
-            />
-    <Error Condition="('$(IsDesktopBuild)'=='true')"/>
+      CompilationStatus="Failed" />
+
   </Target>
 
 </Project>

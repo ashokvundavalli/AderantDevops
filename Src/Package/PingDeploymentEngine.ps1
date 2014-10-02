@@ -11,7 +11,7 @@ param ([string]$remoteMachineName, [string]$environmentManifestPath)
 
 begin{
 	$modulePath = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) RemoteDeploymentHelper.psm1
-    Import-Module $modulePath
+    Import-Module $modulePath -DisableNameChecking 
 }
 
 process{

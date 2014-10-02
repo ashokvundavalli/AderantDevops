@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Comment CommentText="Sends a ExpertModule to the PS pipeline.">
+    <Position X="0.75" Y="6" Height="0.75" Width="1.7" />
+  </Comment>
+  <Comment CommentText="Sends list of ExpertModules to the PS pipeline.">
+    <Position X="2.792" Y="6.01" Height="0.75" Width="1.7" />
+  </Comment>
+  <Comment CommentText="Sends a list of strings that are the branch folders on your disk.">
+    <Position X="4.771" Y="6.01" Height="0.698" Width="1.679" />
+  </Comment>
+  <Comment CommentText="Get-ExpertModuleDependencies sends of ExpertModules to the PS pipeline">
+    <Position X="6.771" Y="5.968" Height="0.75" Width="2.106" />
+  </Comment>
+  <Comment CommentText="Get-DependenciesFrom &#xD;&#xA;Copies depencies from specified source and target.">
+    <Position X="9.198" Y="5.947" Height="0.75" Width="2.054" />
+  </Comment>
+  <Class Name="Aderant.Build.Build">
+    <Position X="2.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Build.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Aderant.Build.Commands.GetExpertModule">
+    <Position X="0.75" Y="7" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAAAAAAAAAAAAAAAAACAAAIAAAAAAA=</HashCode>
+      <FileName>Commands\GetExpertModule.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Aderant.Build.Commands.GetExpertModules">
+    <Position X="2.75" Y="7" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAIBAAAAAA=</HashCode>
+      <FileName>Commands\GetExpertModules.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Aderant.Build.Commands.GetExpertBranches">
+    <Position X="4.75" Y="7" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>CAgAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAIAAAAAAA=</HashCode>
+      <FileName>Commands\Get-ExpertBranches.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Aderant.Build.Commands.GetDependencies">
+    <Position X="6.75" Y="7" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AEAEAAAAAABIAAAAAAAAAAAAAAAAAAAAAgAIAAAAAAA=</HashCode>
+      <FileName>Commands\GetDependencies.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Aderant.Build.DependencyAnalyzer.ModuleDependency">
+    <Position X="4.5" Y="1" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>EAAAAAAAAAAEAAAAgAAAAAAAAAAAAIgAAAACQAAAAAA=</HashCode>
+      <FileName>DependencyAnalyzer\ModuleDependency.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Aderant.Build.DependencyAnalyzer.ExpertModule">
+    <Position X="6.75" Y="1" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>EAACAAAAAAAAAAAEgAACAAQACAIEAIgAAAAAQAAAAgA=</HashCode>
+      <FileName>DependencyAnalyzer\ExpertModule.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Aderant.Build.Commands.GetDependenciesFrom">
+    <Position X="9.25" Y="7" Width="2" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AIAAIAAIAACAAIgIAAAAAAEIEAAAAAQAQAAMICAAABA=</HashCode>
+      <FileName>Commands\GetDependenciesFrom.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="Aderant.Build.DependencyAnalyzer.ModuleType">
+    <Position X="9.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAFAgQAAACAAAAARAAAAAwBIAAACACAAAABA=</HashCode>
+      <FileName>DependencyAnalyzer\ModuleType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
