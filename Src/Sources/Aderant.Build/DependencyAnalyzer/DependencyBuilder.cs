@@ -45,6 +45,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public IEnumerable<ModuleDependency> GetModuleDependencies() {
+            return GetModuleDependencies(false);
+        }
+
+        public IEnumerable<ModuleDependency> GetModuleDependencies(bool includeThirdParty) {
             var modules = moduleProvider.GetAll().Select(m => m.Name);
 
             IEnumerable<XElement> moduleElements = moduleProvider.ProductManifest.Root.Descendants("Modules").Descendants().ToList();
@@ -83,7 +87,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (XElement dependencyElement in references) {
                         string referencedModule = dependencyElement.Attribute("Name").Value.ToUpperInvariant();
 
-                        if (ExpertModule.GetModuleType(referencedModule) == ModuleType.ThirdParty) {
+                        if (!includeThirdParty && ExpertModule.GetModuleType(referencedModule) == ModuleType.ThirdParty) {
                             continue;
                         }
 

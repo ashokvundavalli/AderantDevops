@@ -4,9 +4,9 @@ using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Process;
 using Lapointe.PowerShell.MamlGenerator.Attributes;
 using Microsoft.TeamFoundation.Build.Client;
-using Microsoft.TeamFoundation.Build.Workflow;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
@@ -82,7 +82,11 @@ namespace Aderant.Build.Commands {
             IBuildDefinition existingDefinition;
             Host.UI.WriteLine("Checking for existing build for " + ModuleName);
             if (CheckForExistingBuild(buildConfiguration, buildServer, out existingDefinition)) {
-                WriteObject("A build definition for the given module already exists.");
+                WriteObject("A build definition for the given module already exists. Updating...");
+
+                // Add build settings etc
+                DefinitionParametersConfigurator.ConfigureDefinitionParameters(existingDefinition, null);
+                existingDefinition.Save();
                 return;
             }
 
@@ -104,6 +108,11 @@ namespace Aderant.Build.Commands {
             // Trigger type
             buildDefinition.ContinuousIntegrationType = ContinuousIntegrationType.Individual;
 
+            SetDefinitionProperties(configuration, buildServer, buildDefinition);
+            buildDefinition.Save();
+        }
+
+        private static void SetDefinitionProperties(ExpertBuildConfiguration configuration, IBuildServer buildServer, IBuildDefinition buildDefinition) {
             // Workspace 
             buildDefinition.Workspace.AddMapping(configuration.ServerPathToModule, "$(SourceDir)", WorkspaceMappingType.Map);
             buildDefinition.Workspace.AddMapping(configuration.BuildInfrastructurePath, @"$(SourceDir)\Build\Build.Infrastructure", WorkspaceMappingType.Map);
@@ -113,16 +122,11 @@ namespace Aderant.Build.Commands {
             buildDefinition.BuildController = controller;
             buildDefinition.DefaultDropLocation = configuration.DropLocation;
 
-            IProcessTemplate upgradeTemplate = buildServer.QueryProcessTemplates(buildDefinition.TeamProject).First(p => p.TemplateType == ProcessTemplateType.Upgrade);            
+            IProcessTemplate upgradeTemplate = buildServer.QueryProcessTemplates(buildDefinition.TeamProject).First(p => p.TemplateType == ProcessTemplateType.Upgrade);
             buildDefinition.Process = upgradeTemplate;
 
-            // Set process parameters
-            var parameters = WorkflowHelpers.DeserializeProcessParameters(buildDefinition.ProcessParameters);
-            parameters.Add("ConfigurationFolderPath", configuration.ServerPathToModule + "/Build");
-            parameters.Add("ToolsVersion", "12.0");
-
-            buildDefinition.ProcessParameters = WorkflowHelpers.SerializeProcessParameters(parameters);
-            buildDefinition.Save();
+            // Add build settings etc
+            DefinitionParametersConfigurator.ConfigureDefinitionParameters(buildDefinition, configuration);
         }
 
         private static IBuildController SetController(ExpertBuildConfiguration configuration, IBuildServer buildServer) {

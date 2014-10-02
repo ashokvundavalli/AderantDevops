@@ -133,10 +133,11 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
-    <Compile Include="BuildProcess\DynamicProject.cs" />
-    <Compile Include="BuildProcess\ParallelBuildVisitor.cs" />
+    <Compile Include="Process\DynamicProject.cs" />
+    <Compile Include="Process\ParallelBuildVisitor.cs" />
     <Compile Include="Commands\BranchModule.cs" />
     <Compile Include="Commands\CopyBinToEnvironment.cs" />
+    <Compile Include="Process\DefinitionParametersConfigurator.cs" />
     <Compile Include="Commands\ExpertManifestUpdate.cs" />
     <Compile Include="Commands\Get-ExpertBranches.cs" />
     <Compile Include="Commands\GetDependencies.cs" />

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
-using DependencyAnalyzer;
 
 namespace Aderant.Build.Commands {
     [Cmdlet("Get", "ExpertModuleDependencies")]
@@ -21,29 +20,34 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 3)]
         public string BranchPath { get; set; }
 
+        [Parameter(Mandatory = false, Position = 4)]
+        public SwitchParameter IncludeThirdParty { get; set; }
+
         protected override void ProcessRecord() {
             string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
 
             DependencyBuilder builder  = new DependencyBuilder(branchPath);
 
-            if(SourceModuleName == null && SourceModule == null) {
+            if (SourceModuleName == null && SourceModule == null) {
                 throw new ArgumentException("You must supply a SourceModule or SourceModuleName");
             }
 
-            if(SourceModule == null) {
-                SourceModule = builder.GetAllModules().Where(
-                    x => x.Name.Equals(SourceModuleName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            if (SourceModule == null) {
+                SourceModule = builder.GetAllModules().FirstOrDefault(x => x.Name.Equals(SourceModuleName, StringComparison.InvariantCultureIgnoreCase));
             }
 
-            if(SourceModule == null) {
+            if (SourceModule == null) {
                 throw new ArgumentException("SourceModuleName", string.Format("Could not find Module '{0}'", SourceModuleName));
             }
 
-            if(!Recurse) {
-                WriteObject((
-                    from dependency in builder.GetModuleDependencies()
-                    where dependency.Consumer.Equals(SourceModule)
-                    select dependency.Provider).Distinct().ToArray(), true);
+            if (!Recurse) {
+                var moduleDependencies = (from dependency in builder.GetModuleDependencies(IncludeThirdParty)
+                                   where dependency.Consumer.Equals(SourceModule)
+                                   select dependency.Provider)
+                                   .Distinct()
+                                   .ToArray();
+
+                WriteObject(moduleDependencies, true);
             }
             else {
                 WriteObject(
