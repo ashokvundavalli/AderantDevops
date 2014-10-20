@@ -82,7 +82,7 @@ namespace Aderant.Build.Commands {
             IBuildDefinition existingDefinition;
             Host.UI.WriteLine("Checking for existing build for " + ModuleName);
             if (CheckForExistingBuild(buildConfiguration, buildServer, out existingDefinition)) {
-                WriteObject("A build definition for the given module already exists. Updating...");
+                Host.UI.WriteLine(string.Format("A build definition with the name [{0}] for the given module {1} already exists. Updating...", existingDefinition.Name, ModuleName));
 
                 // Add build settings etc
                 DefinitionParametersConfigurator.ConfigureDefinitionParameters(existingDefinition, null);
