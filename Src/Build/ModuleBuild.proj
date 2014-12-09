@@ -51,7 +51,7 @@
       If we have VisualStudioVersion specified then we won't overwrite the tools version even if a newer version is available 
       This is used by CRM builds which need to build MSIs under the Visual Studio 2010 as the project type they use is not supported under 2012+.
     -->
-    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != '' And ('$(VisualStudioVersion)' != '10.0' Or '$(IsDesktopBuild)' == 'True')">$(VS110COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != '' And ('$(VisualStudioVersion)' != '10.0' Or '$(IsDesktopBuild)' == 'True')">$(VS120COMNTOOLS)</VsCommonTools>
 
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
@@ -489,6 +489,8 @@ foreach(var replacement in replacements){
       <!-- Isolate projects with COM references to prevent them from including COM typelibs in the MSBuild process -->
       <IsolatedProjects Include="Applications.Marketing" />
       <IsolatedProjects Include="Installs.Marketing" />
+      <IsolatedProjects Include="Libraries.Time" />
+      <IsolatedProjects Include="Applications.Collection" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -497,13 +499,14 @@ foreach(var replacement in replacements){
 
       <!-- Determine if we can build in process -->
       <RunInNewProcess Condition="'$(RunInNewProcess)' == '' And '%(IsolatedProjects.Identity)' == '$(ModuleName)'">true</RunInNewProcess>
+      <!--<PathToMsBuild Condition="'$(MSBuildBinPath)' == ''"></PathToMsBuild>-->
     </PropertyGroup>
 
     <!-- Start a new MSBuild process to build modules which use COM dependencies TFS #103474 -->
     <Message Text="Starting new MSBuild process for build" Condition="'$(RunInNewProcess)' == 'true'" />
     <Exec Condition="'$(RunInNewProcess)' == 'true' And '$(IsolatedBuild)' != 'true'"
           ConsoleToMSBuild="true"
-          Command='$(MSBuildBinPath)\MSBuild.exe "$(SolutionFileName)" "/p:Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"' />
+          Command='"$(MSBuildToolsPath)\MSBuild.exe" "$(SolutionFileName)" "/p:Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild)"' />
 
     <!-- For web projects we want to copy in a special target file that controls the packaging steps -->
     <ItemGroup>
@@ -512,6 +515,11 @@ foreach(var replacement in replacements){
 
     <PropertyGroup>
       <_ContainsWebProject Condition="$([System.String]::new('%(Projects.Filename)').Contains('Web.'))">true</_ContainsWebProject>
+
+      <ProjectToolsVersion>4.0</ProjectToolsVersion>
+      <ProjectToolsVersion Condition="'$(PackageWeb)' == 'true'">12.0</ProjectToolsVersion>
+
+      <BuildProperties  Condition="'$(PackageWeb)' != 'true'">$(BuildProperties);VisualStudioVersion=11.0</BuildProperties>
     </PropertyGroup>
 
     <Copy Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true' Or '$(_ContainsWebProject)' == 'true'"
@@ -523,7 +531,8 @@ foreach(var replacement in replacements){
     <MSBuild Condition="'$(RunInNewProcess)' != 'true'"
              Projects="$(SolutionFileName)"
              Properties="$(BuildProperties)"
-             Targets="Build">
+             Targets="Build"
+             ToolsVersion="$(ProjectToolsVersion)">
       <Output ItemName="BuildOutput" TaskParameter="TargetOutputs" />
     </MSBuild>
 
