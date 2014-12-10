@@ -491,6 +491,7 @@ foreach(var replacement in replacements){
       <IsolatedProjects Include="Installs.Marketing" />
       <IsolatedProjects Include="Libraries.Time" />
       <IsolatedProjects Include="Applications.Collection" />
+      <IsolatedProjects Include="Applications.PrebillEditor" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -498,8 +499,7 @@ foreach(var replacement in replacements){
       <BuildProperties>Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);CodeAnalysisTargets=$(CodeAnalysisTarget);$(TeamBuildProperties)</BuildProperties>
 
       <!-- Determine if we can build in process -->
-      <RunInNewProcess Condition="'$(RunInNewProcess)' == '' And '%(IsolatedProjects.Identity)' == '$(ModuleName)'">true</RunInNewProcess>
-      <!--<PathToMsBuild Condition="'$(MSBuildBinPath)' == ''"></PathToMsBuild>-->
+      <RunInNewProcess Condition="'$(RunInNewProcess)' == '' And '%(IsolatedProjects.Identity)' == '$(ModuleName)' And '$(IsDesktopBuild)' == 'false'">true</RunInNewProcess>
     </PropertyGroup>
 
     <!-- Start a new MSBuild process to build modules which use COM dependencies TFS #103474 -->
@@ -533,8 +533,15 @@ foreach(var replacement in replacements){
              Properties="$(BuildProperties)"
              Targets="Build"
              ToolsVersion="$(ProjectToolsVersion)">
-      <Output ItemName="BuildOutput" TaskParameter="TargetOutputs" />
+      <Output ItemName="BuildOutput" 
+              TaskParameter="TargetOutputs" />
     </MSBuild>
+
+    <ItemGroup>
+      <!-- If an isolated build we need to populate the BuildOutput item group with the bin folder contents -->
+      <BuildOutput Condition="'$(RunInNewProcess)' == 'true'"
+                   Include="$(BinModuleDirectory)**\*.dll;$(BinModuleDirectory)**\*.exe" />
+    </ItemGroup>
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"

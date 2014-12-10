@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build {
-
     public class GetAssemblyPlatform : Microsoft.Build.Utilities.Task {
         public virtual bool Success { get; set; }
 
@@ -17,19 +17,19 @@ namespace Aderant.Build {
                 var inspectionDomain = System.AppDomain.CreateDomain("InspectionDomain", null, Path.GetDirectoryName(this.GetType().Assembly.Location), null, false);
 
                 foreach (var item in Assemblies) {
-                    if ((item.ItemSpec.EndsWith(".dll") || item.ItemSpec.EndsWith(".exe")) && System.IO.File.Exists(item.ItemSpec)) {
+                    if ((item.ItemSpec.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || item.ItemSpec.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) && File.Exists(item.ItemSpec)) {
                         inspectionDomain.SetData("Assembly", item.ItemSpec);
 
                         inspectionDomain.DoCallBack(new System.CrossAppDomainDelegate(Inspect));
 
-                        var peKind = (System.Reflection.PortableExecutableKinds)inspectionDomain.GetData("PortableExecutableKinds");
+                        var peKind = (System.Reflection.PortableExecutableKinds) inspectionDomain.GetData("PortableExecutableKinds");
                         if (peKind.HasFlag(System.Reflection.PortableExecutableKinds.Required32Bit)) {
-                            item.SetMetadata("Configuration", "Required32Bit");
+                            item.SetMetadata("Platform", "Required32Bit");
                             MustRun32Bit = true;
-                        } else {
-                            item.SetMetadata("Configuration", "ILOnly");
                         }
-
+                        else {
+                            item.SetMetadata("Platform", "ILOnly");
+                        }
                     }
                 }
 
