@@ -490,7 +490,7 @@ foreach(var replacement in replacements){
       <IsolatedProjects Include="Applications.Marketing" />
       <IsolatedProjects Include="Installs.Marketing" />
       <IsolatedProjects Include="Libraries.Time" />
-      <IsolatedProjects Include="Applications.Collection" />
+      <IsolatedProjects Include="Applications.Collections" />
       <IsolatedProjects Include="Applications.PrebillEditor" />
     </ItemGroup>
 
