@@ -32,8 +32,9 @@
 
   <!-- Horrible hack to get T4 working under TFS 2013 -->
   <UsingTask
-    AssemblyName="Microsoft.Build.Tasks.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-    TaskName="GetAssemblyIdentity" />
+      Condition="'$(VS120COMNTOOLS)' != ''"
+      AssemblyName="Microsoft.Build.Tasks.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+      TaskName="GetAssemblyIdentity" />
 
   <!-- 
     *************************************************************************************************************
