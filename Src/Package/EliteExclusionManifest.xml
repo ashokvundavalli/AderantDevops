@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExclusionManifest name="Elite">
+	<Module name="Libraries.Roles" action="Include">
+		<!-- All role files excluded from Aderant Expert are automatically included in Elite Integration. -->
+		<OnlyInElite>
+			<File path="eliteintegration.role.xml" />
+			<File path="matterplanningelite.role.xml" />
+		</OnlyInElite>
+		<!-- All role files are excluded from Elite Integration by default unless excluded from Aderant Expert (above) or specified to be included in both (below) -->
+		<InBoth>
+			<File path="commonapplications.role.xml" />
+			<File path="configuration.role.xml" />
+			<File path="customworkflows.role.xml" />
+			<File path="firmcontrol.role.xml" />
+			<File path="messaging.role.xml" />
+			<File path="notes.role.xml" />
+			<File path="queryservice.role.xml" />
+			<File path="security.role.xml" />
+			<File path="workflow.role.xml" />
+			<File path="workflowauthoring.role.xml" />
+		</InBoth>
+	</Module>
+</ExclusionManifest>
