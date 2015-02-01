@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
     <Modules>
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
@@ -99,7 +99,7 @@
         <Module Name="ThirdParty.DotLess" />
         <Module Name="Thirdparty.ExpertImageApi" />
         <Module Name="Thirdparty.ExtremeML" />
-        <Module Name="Thirdparty.FastClick" GetAction="branch" Path="Main"  />
+        <Module Name="Thirdparty.FastClick" />
         <Module Name="ThirdParty.FiddlerCore" />
         <Module Name="ThirdParty.FOApi" />
         <Module Name="ThirdParty.FWBS" />
@@ -142,7 +142,7 @@
         <Module Name="Thirdparty.Mindscape" />
         <Module Name="ThirdParty.Modernizr" />
         <Module Name="Thirdparty.Moq" ExcludeFromPackaging="true" />
-        <Module Name="Thirdparty.MSExchange" />        
+        <Module Name="Thirdparty.MSExchange" />
         <Module Name="Thirdparty.Newtonsoft.Json" />
         <Module Name="Thirdparty.NHibernate" />
         <Module Name="Thirdparty.Ninject" />
@@ -150,7 +150,9 @@
         <Module Name="Thirdparty.NTFSStreams" />
         <Module Name="Thirdparty.OpenXML" />
         <Module Name="Thirdparty.PDF" />
+        <Module Name="Thirdparty.Quartz" />
         <Module Name="Thirdparty.Reactive" />
+        <Module Name="Thirdparty.ReportViewer" />
         <Module Name="Thirdparty.RhinoMocks" ExcludeFromPackaging="true" />
         <Module Name="Thirdparty.SignalR" />
         <Module Name="Thirdparty.SignalR.Client" />
@@ -165,8 +167,6 @@
         <Module Name="Thirdparty.WiX" />
         <Module Name="Thirdparty.Xceed.4" />
         <Module Name="Thirdparty.Xenocode" />
-        <Module Name="Thirdparty.Quartz" />
-        <Module Name="Thirdparty.ReportViewer" />
         <Module Name="UIAutomation.Framework" AssemblyVersion="5.3.1.0" GetAction="specificdroplocation" Path="\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation" ExcludeFromPackaging="true" />
         <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
