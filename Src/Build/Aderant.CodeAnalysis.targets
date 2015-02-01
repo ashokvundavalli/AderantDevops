@@ -11,7 +11,7 @@
   <Import Project="$(MicrosoftCodeAnalysisTargets)" Condition="Exists('$(MicrosoftCodeAnalysisTargets)')"/>
 
   <PropertyGroup>
-    <!-- This option does exactly what we want but appears to never actually used by FxCop. We will set it in case one day it starts working -->
+    <!-- This option does exactly what we want but appears to never actually be used by FxCop. We will set it in case one day it starts working -->
     <CodeAnalysisIgnoreMissingIndirectReferences>true</CodeAnalysisIgnoreMissingIndirectReferences>
 
     <!-- Pass the actual path of FxCop to our shim so we can call the real exe -->
@@ -27,6 +27,7 @@
   <Target Name="BeforeRunCodeAnalysis"
           BeforeTargets="RunCodeAnalysis"
           Condition="'$(IsDesktopBuild)' == 'false' And '$(RunCodeAnalysisOnThisProject)' == 'true'">
+
 
     <ItemGroup>
       <_Assemblies Include="$(CodeAnalysisInputAssembly)" />

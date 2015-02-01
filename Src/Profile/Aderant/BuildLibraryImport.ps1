@@ -35,7 +35,11 @@ private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
 }
 
 function BuildProject([string]$actualPath, [bool]$rebuild) {
-    $frameworkPath = $([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())
+	$frameworkPath = "C:\Program Files (x86)\MSBuild\12.0\Bin"
+	if (-not (Test-Path $frameworkPath)) {			
+		$frameworkPath = $([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())
+	}
+
     $buildTool = [System.IO.Path]::Combine($frameworkPath, "MSBuild.exe")
 
     $projectPath = [System.IO.Path]::Combine($actualPath, "..\..\..\Build.Infrastructure.sln")
@@ -55,7 +59,7 @@ function BuildProject([string]$actualPath, [bool]$rebuild) {
         $rebuildSwitch = "/target:Rebuild"
     }
 
-    $command = "cmd /c $buildTool /nr:false $loggerSwitch /nologo /m $projectPath /verbosity:m " + $rebuildSwitch
+    $command = "cmd /c `"$buildTool`" /nr:false $loggerSwitch /nologo /m `"$projectPath`" /verbosity:m " + $rebuildSwitch
 
     Invoke-Expression $command
 }

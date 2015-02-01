@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project
     xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-    ToolsVersion="4.0">
+    ToolsVersion="12.0">
 
   <!-- This is a custom version which resolves an ArgumentOutOfRangeException -->
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
@@ -26,6 +26,7 @@
       <!-- Detect Visual Studio Versions -->
       <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
       <VsCommonTools Condition="'$(VS110COMNTOOLS)' != ''">$(VS110COMNTOOLS)</VsCommonTools>
+      <VsCommonTools Condition="'$(VS120COMNTOOLS)' != ''">$(VS120COMNTOOLS)</VsCommonTools>
   </PropertyGroup>
   
   <!--

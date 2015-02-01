@@ -1,5 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
-         ToolsVersion="4.0"
+         ToolsVersion="12.0"
          DefaultTargets="SignApplications">
 
   <PropertyGroup>
@@ -8,12 +8,12 @@
     <SignToolPath Condition="Exists('$(WindowsSdkDir)bin\x64\signtool.exe') and '$(PROCESSOR_ARCHITECTURE)'=='AMD64' ">$(WindowsSdkDir)bin\x64\signtool.exe</SignToolPath>
   </PropertyGroup>
 
-  <UsingTask TaskName="GetAssemblyIdentity" AssemblyName="Microsoft.Build.Tasks.v4.0" />
+  <UsingTask TaskName="GetAssemblyIdentity" AssemblyName="Microsoft.Build.Tasks.v12.0" />
   
   <UsingTask
     TaskName="GetAssembliesToSign"
     TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
     <ParameterGroup>
       <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />

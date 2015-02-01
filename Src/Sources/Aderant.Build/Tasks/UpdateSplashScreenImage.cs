@@ -38,7 +38,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private void UpdateSplashScreen(string splashScreenPath, string productName, string splashScreenStyle) {
+        internal void UpdateSplashScreen(string splashScreenPath, string productName, string splashScreenStyle) {
             SplashScreenText[] parts = CreateSplashScreenText(productName);
 
             if (string.IsNullOrEmpty(splashScreenStyle)) {
@@ -62,7 +62,9 @@ namespace Aderant.Build.Tasks {
                 drawingContext.DrawImage(originalImageSource,
                                          new Rect(0, 0, originalImageSource.PixelWidth, originalImageSource.PixelHeight));
                 foreach (SplashScreenText text in parts) {
-                    drawingContext.DrawText(text.FormattedText, text.TopRight);
+                    if (text.Text != null) {
+                        drawingContext.DrawText(text.FormattedText, text.TopRight);
+                    }
                 }
             }
 

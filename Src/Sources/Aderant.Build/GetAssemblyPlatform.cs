@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build {
@@ -14,40 +15,39 @@ namespace Aderant.Build {
 
         public override bool Execute() {
             if (Assemblies != null) {
-                var inspectionDomain = System.AppDomain.CreateDomain("InspectionDomain", null, Path.GetDirectoryName(this.GetType().Assembly.Location), null, false);
+                var inspectionDomain = AppDomain.CreateDomain("InspectionDomain", null, Path.GetDirectoryName(this.GetType().Assembly.Location), null, false);
 
                 foreach (var item in Assemblies) {
                     if ((item.ItemSpec.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || item.ItemSpec.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) && File.Exists(item.ItemSpec)) {
                         inspectionDomain.SetData("Assembly", item.ItemSpec);
 
-                        inspectionDomain.DoCallBack(new System.CrossAppDomainDelegate(Inspect));
+                        inspectionDomain.DoCallBack(Inspect);
 
-                        var peKind = (System.Reflection.PortableExecutableKinds) inspectionDomain.GetData("PortableExecutableKinds");
-                        if (peKind.HasFlag(System.Reflection.PortableExecutableKinds.Required32Bit)) {
-                            item.SetMetadata("Platform", "Required32Bit");
+                        var peKind = (PortableExecutableKinds) inspectionDomain.GetData("PortableExecutableKinds");
+                        if (peKind.HasFlag(PortableExecutableKinds.Required32Bit)) {
                             MustRun32Bit = true;
                         }
-                        else {
-                            item.SetMetadata("Platform", "ILOnly");
-                        }
+                        item.SetMetadata("Platform", peKind.ToString());
+                        
                     }
                 }
 
-                System.AppDomain.Unload(inspectionDomain);
+                AppDomain.Unload(inspectionDomain);
             }
 
             return true;
         }
 
         private static void Inspect() {
-            string assembly = System.AppDomain.CurrentDomain.GetData("Assembly") as string;
+            string assembly = AppDomain.CurrentDomain.GetData("Assembly") as string;
 
-            var asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(assembly);
+            var asm = Assembly.ReflectionOnlyLoadFrom(assembly);
 
-            System.Reflection.PortableExecutableKinds peKind;
-            System.Reflection.ImageFileMachine imageFileMachine;
+            PortableExecutableKinds peKind;
+            ImageFileMachine imageFileMachine;
             asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
-            System.AppDomain.CurrentDomain.SetData("PortableExecutableKinds", peKind);
+            
+            AppDomain.CurrentDomain.SetData("PortableExecutableKinds", peKind);
         }
     }
 }

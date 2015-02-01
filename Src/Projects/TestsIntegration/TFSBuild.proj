@@ -2,13 +2,13 @@
 <Project
     DefaultTargets="AutomatedTesting"
     xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-    ToolsVersion="4.0">
+    ToolsVersion="12.0">
 
   <!-- 
     =========================================================================================================
-        Team Build Script - Workflow Prototype
+        Team Build Script - Workflow Prototype                                                 
         
-        Guidelines:            
+        Guidelines:
             * Retain structure and formatting for easier merge between Team Build project scripts 
             * Tabs converted to 4 spaces for easier reading outside of VS.
     =========================================================================================================
@@ -53,19 +53,19 @@
     ==========================================================================================
         Build Configurations
     ==========================================================================================
-  -->
+    -->
   <ItemGroup>
     <ConfigurationToBuild
         Condition="'$(BuildFlavor)' == '' Or '$(BuildFlavor)' == 'Release'"
-        Include="Release|Any CPU">
+		    Include="Release|Any CPU">
       <FlavorToBuild>Release</FlavorToBuild>
       <PlatformToBuild>Any CPU</PlatformToBuild>
     </ConfigurationToBuild>
   </ItemGroup>
 
   <Target
-    Name="OnBuildBreak"
-    Condition="('$(IsDesktopBuild)'!='true')"
+      Name="OnBuildBreak"
+      Condition="('$(IsDesktopBuild)'!='true')"
     DependsOnTargets="$(OnBuildBreakDependsOn)">
 
     <CallTarget Targets="RemoveProductRemote"

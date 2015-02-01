@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="4.0">
+  ToolsVersion="12.0">
 
   <!-- 
     =========================================================================================================
@@ -12,10 +12,6 @@
             * Tabs converted to 4 spaces for easier reading outside of VS.
     =========================================================================================================
     -->
-
-  <ProjectExtensions>
-    <ProjectFileVersion>3</ProjectFileVersion>
-  </ProjectExtensions>
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(TeamBuildVersion)' == ''" />
 
@@ -77,7 +73,7 @@
   <UsingTask
     TaskName="SourceTransformationTask"
     TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(VisualStudioVersion).dll" >
     <ParameterGroup >
       <SourcePath ParameterType="System.String" Required="true"/>
       <TransformsDefinitionFile ParameterType="System.String" Required="true"/>
@@ -287,15 +283,21 @@ foreach(var replacement in replacements){
     ==========================================================================================
   -->
   <Target Name="PrepareBuildTools" Condition="'$(IsDesktopBuild)' == 'true' and '$(IsCustomBuild)' != 'true'">
-    <ItemGroup>
+  <ItemGroup>
       <Projects Include="$(BuildScriptsDirectory)..\Sources\FxCopCmd\FxCopCmd.csproj"></Projects>
       <Projects Include="$(BuildScriptsDirectory)..\Sources\Aderant.Build\Aderant.Build.csproj"></Projects>
-    </ItemGroup>
+  </ItemGroup>
+
+
+
+  
 
     <MSBuild
       Projects="@(Projects)"
       BuildInParallel="true"
       UnloadProjectsOnCompletion="true" />
+    
+        
   </Target>
   
 
@@ -315,28 +317,61 @@ foreach(var replacement in replacements){
         PropertyName="BuildStepId" />
     </BuildStep>
 
-    <RemoveDir Directories="$(ModuleBuildDirectory)\TestResults" />
+    <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
+    <Delete Files="$(SolutionDirectoryPath)TestResults\**\*"
+            ContinueOnError="true" />
+    <Delete Files="$(ModuleBuildDirectory)TestResults\**\*"
+            ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)TestResults"
+               ContinueOnError="true" />
+    <RemoveDir Directories="$(ModuleBuildDirectory)TestResults"
+               ContinueOnError="true" />
+
+    <PropertyGroup>
+      <!-- Transform this variable into a boolean -->
+      <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <Folders Include="$(SolutionDirectoryPath)Bin\" />
+      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
+      <Folders Include="$(SolutionDirectoryPath)Src\" />
+      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
+      <Folders Include="$(SolutionDirectoryPath)CommonBuild\" />
+      <Folders Include="$(SolutionDirectoryPath)TestResults\" />
+    </ItemGroup>
+    
+    <Error Condition="!HasTrailingSlash('%(Folders.FullPath)')" 
+           Text="All paths in the Folders item group must end with a trailing slash" />
 
     <ItemGroup>
-      <Files Include="$(SolutionDirectoryPath)Bin\**\*.trx" />
-      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'"
-             Include="$(SolutionDirectoryPath)Bin\**\*" />
-      <Files Condition="'$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false'"
-             Include="$(SolutionDirectoryPath)src\**\obj\**\*" />
+      <!-- (?i) means case insensitive -->
+      <Files Include="%(Folders.RootDir)%(Folders.Directory)\**\obj\**" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Folders.FullPath)', `(?i)Src`))" />
+      <Files Include="%(Folders.RootDir)%(Folders.Directory)\**\**" Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('%(Folders.FullPath)', `(?i)Src`))" />
     </ItemGroup>
 
     <ItemGroup>
-      <!-- Must trim trailing slash as GetDirectories does not return results with trailing slashes -->
-      <Folders Condition="Exists('$(SolutionDirectoryPath)Bin\') And ('$(CleanBin)' != '' Or '$(IsDesktopBuild)' == 'false')"
-               Include="$([System.IO.Directory]::GetDirectories('$(SolutionDirectoryPath)Bin\', '*', System.IO.SearchOption.AllDirectories))"
-               Exclude="$(BinTestDirectory.TrimEnd('\'));$(BinModuleDirectory.TrimEnd('\'))" />
+      <FilesToDelete Condition="$(CleanBin)" Include="@(Files)" />
+      <FilesToDelete Condition="$(CleanBin)" Include="$(AssemblyInfoFileUpdated)" />
+      <FoldersToDelete Condition="$(CleanBin)" Include="%(Files.RelativeDir)" />
     </ItemGroup>
 
-    <Message Text="Cleaning module bin: $(CleanBin)" />
+    <Message Condition="$(CleanBin) And @(FilesToDelete) != ''" Text="Files to clean: %(FilesToDelete.FullPath)" />
+    <Message Condition="$(CleanBin) And @(FoldersToDelete) != ''" Text="Folders to clean: %(FoldersToDelete.FullPath)" />
 
-    <Delete Files="@(Files)" />
-    <RemoveDir Directories="@(Folders)" />
+    <MSBuild.Community.Tasks.Attrib
+     Condition="$(CleanBin)"
+     ReadOnly="false"
+     Files="@(FilesToDelete)" />
 
+    <Delete Condition="$(CleanBin)"
+            Files="@(FilesToDelete)"
+            ContinueOnError="true" />
+    
+    <RemoveDir Condition="$(CleanBin)"
+               Directories="@(FoldersToDelete)" 
+               ContinueOnError="true" />
+    
     <MakeDir Directories="$(BinModuleDirectory)" />
 
     <BuildStep
@@ -394,13 +429,21 @@ foreach(var replacement in replacements){
       <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
-    <ItemGroup>
-      <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
-                         Include="$(ModuleSourceDirectory)\**\*.tt;$(ModuleTestDirectory)\**\*.tt;"
-                         Exclude="$(ModuleSourceDirectory)\**\__*.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-      </rmT4TextTemplates>
-    </ItemGroup>
+      <ItemGroup>
+          <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
+                             Include="$(ModuleSourceDirectory)**\*.tt;$(ModuleTestDirectory)**\*.tt;"
+                             Exclude="$(ModuleSourceDirectory)**\__*.tt">
+              <Generator>TextTemplatingFileGenerator</Generator>
+          </rmT4TextTemplates>
+      </ItemGroup>
+
+      <ItemGroup>
+          <TemplateExclude Include="$(ModuleSourceDirectory)**\Aderant.Framework.SmartForm.Dsl\**\*.tt" />
+      </ItemGroup>
+
+      <ItemGroup>
+          <rmT4TextTemplates Remove="@(TemplateExclude)" />
+      </ItemGroup>
 
     <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
@@ -419,8 +462,14 @@ foreach(var replacement in replacements){
         Versioning 
     ==========================================================================================
   -->
+  <PropertyGroup>
+    <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
+    <AssemblyInfoFileUpdated>$(AssemblyInfoFile).updated</AssemblyInfoFileUpdated>
+  </PropertyGroup>
+
   <Target Name="UpdateModuleFileVersion"
-          Condition="('$(IsDesktopBuild)'!='true')">
+          Inputs="$(AssemblyInfoFile)"
+          Outputs="$(AssemblyInfoFileUpdated)">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
@@ -432,30 +481,39 @@ foreach(var replacement in replacements){
         PropertyName="BuildStepId" />
     </BuildStep>
 
-    <CreateItem Include="$(ModuleBuildDirectory)\CommonAssemblyInfo.cs;">
-      <Output TaskParameter="Include"
-              ItemName="AssemblyInfoFile" />
-    </CreateItem>
-
-    <Attrib Files="@(AssemblyInfoFile)"
+    <Attrib Files="$(AssemblyInfoFile)"
             ReadOnly="false" />
 
-    <FileUpdate Files="@(AssemblyInfoFile)"
+    <FileUpdate Condition="'$(IsDesktopBuild)' != 'true'"
+                Files="$(AssemblyInfoFile)"
                 IgnoreCase="true"
                 Multiline="true"
                 Singleline="false"
                 Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
-                ReplacementText="${section1}$(FileVersion)${section2}"/>
+                ReplacementText="${section1}$(FileVersion)${section2}" />
+
+    <!-- Update copyright, $1, $2 and $4 are capture groups -->
+    <FileUpdate Files="$(AssemblyInfoFile)"
+                IgnoreCase="true"
+                Multiline="true"
+                Singleline="false"
+                Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
+                ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4" />
+
+    <Touch Files="$(AssemblyInfoFileUpdated)"
+           AlwaysCreate="true" />
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
   </Target>
+  
 
   <!--
     ==========================================================================================================================
@@ -517,11 +575,6 @@ foreach(var replacement in replacements){
 
     <PropertyGroup>
       <_ContainsWebProject Condition="$([System.String]::new('%(Projects.Filename)').Contains('Web.'))">true</_ContainsWebProject>
-
-      <ProjectToolsVersion>4.0</ProjectToolsVersion>
-      <ProjectToolsVersion Condition="'$(PackageWeb)' == 'true'">12.0</ProjectToolsVersion>
-
-      <BuildProperties  Condition="'$(PackageWeb)' != 'true'">$(BuildProperties);VisualStudioVersion=11.0</BuildProperties>
     </PropertyGroup>
 
     <Copy Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true' Or '$(_ContainsWebProject)' == 'true'"
@@ -784,6 +837,7 @@ foreach(var replacement in replacements){
         Unit Test 
     ==========================================================================================
   -->
+  
   <Target Name="RunUnitTests"
           DependsOnTargets="Build"
           Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
@@ -799,7 +853,6 @@ foreach(var replacement in replacements){
         PropertyName="BuildStepId"
                 />
     </BuildStep>
-
     <CreateItem
       Include="$(BinTestDirectory)\%2aUnitTest%2a.dll"
       Exclude="$(BinTestDirectory)\%2aHelpers%2a.dll">
@@ -813,8 +866,6 @@ foreach(var replacement in replacements){
     </GetAssemblyPlatform>
 
     <PropertyGroup>
-      <UseMsTest>false</UseMsTest>
-      <UseMsTest Condition="'$(ModuleName.StartsWith(`Web`))' == 'true'">true</UseMsTest>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
 
       <!-- VSTest Setup -->
@@ -834,25 +885,13 @@ foreach(var replacement in replacements){
     </PropertyGroup>
 
     <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" />
-    <Message Condition="'$(MustRun32Bit)' And !'$(UseMsTest)'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
+    <Message Condition="'$(MustRun32Bit)'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
     <!--Run With VSTest -->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Condition="'$(UnitTestAssemblies)' != '' And !'$(UseMsTest)'"
+          Condition="'$(UnitTestAssemblies)' != ''"
           Command='"$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />
-
-    <!-- Now prepare for MSTest run (legacy) -->
-    <PropertyGroup>
-      <PathToMsTest>$(VsCommonTools)..\IDE\MSTest.exe</PathToMsTest>
-      <MsTestResultsFileSwitch>/resultsfile:"$(BinTestDirectory)\UnitTestResults.trx"</MsTestResultsFileSwitch>
-      <UnitTestAssemblies>@(TestAssemblies->'/testcontainer:%(FullPath)',' ')</UnitTestAssemblies>
-    </PropertyGroup>
-
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Condition="'$(UnitTestAssemblies)' != '' And '$(UseMsTest)'"
-          Command='"$(PathToMsTest)" /nologo /usestderr $(UnitTestAssemblies) $(MsTestResultsFileSwitch)' />
 
     <CallTarget Targets="CopyTrxFile" />
 

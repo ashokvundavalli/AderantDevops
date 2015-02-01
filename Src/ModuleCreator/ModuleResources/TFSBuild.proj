@@ -1,20 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="ModuleBuild"
-         xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="4.0">
+<Project
+  DefaultTargets="ModuleBuild" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  ToolsVersion="12.0">
 
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
-  <!--Server build for all modules-->
-  <Import Condition="('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-          Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
-  <!--Server build for a module-->
-  <Import Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-          Project="\\na.aderant.com\expertsuite\main\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
-  <!--Desktop build for a module-->
-  <Import Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'!='true')"
-          Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj"/>
-  <!--Custom build for a module-->
-  <Import Condition="('$(IsCustomBuild)'=='true') "
-          Project="..\BuildScripts\ModuleBuild.proj"/>
+    <Import
+      Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
+    <Import
+      Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+    <!--Server build for all modules-->
+    <Import
+      Condition="('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
+    <!--Server build for a module-->
+    <Import
+      Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
+    <!--Desktop build for a module-->
+    <Import
+      Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'=='true') And ('$(IsCustomBuild)'!='true')"
+      Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
+    <!--Custom build for a module-->
+    <Import
+      Condition="('$(IsCustomBuild)'=='true') "
+      Project="..\BuildScripts\ModuleBuild.proj" />
 </Project>

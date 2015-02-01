@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
-         ToolsVersion="4.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+
+  <UsingTask
+    TaskName="LoadTextTemplatingTask"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+    <ParameterGroup >
+      <TextTemplatingPath ParameterType="System.String" Required="true"/>
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core"/>
+      <Reference Include="System.Xml"/>
+      <Reference Include="System.Xml.Linq"/>
+      <Using Namespace="System"/>
+      <Using Namespace="System.IO"/>
+      <Using Namespace="System.Linq"/>
+      <Using Namespace="System.Xml.Linq"/>
+      <Code>
+        <![CDATA[
+  string file = Path.Combine(TextTemplatingPath, "Microsoft.TextTemplating.Build.Tasks.dll");
+  if (File.Exists(file)) {
+      System.Reflection.Assembly.LoadFrom(file);
+  }
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
 
   <!-- 
     ***********************************************************************
@@ -8,7 +34,18 @@
     ***  Please retain formatting, one attribute per line, and split    ***
     ***  delimited values over several lines.                           ***                                  
     ***********************************************************************
-    -->  
+    -->
+
+  <PropertyGroup>
+    <!--Indicates whether only out of date templates should be transformed, or whether all templates should be transformed.-->
+    <TransformOutOfDateOnly Condition=" '$(TransformOutOfDateOnly)' =='' ">true</TransformOutOfDateOnly>
+
+    <!--Directory into which .tlog files will be written.-->
+    <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(SolutionDirectoryPath)\BuildTemp\T4</TrackerLogDirectory>
+
+    <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">true</TrackFileAccess>
+  </PropertyGroup>
+
   <Target Name="rmBeforeTransformTemplates">
     <!--  Example:
         <CreateProperty Value="$(AderantDependencies)\ExpertFramework;
@@ -18,48 +55,37 @@
         <CreateItem Include="$(SolutionRoot)\TimeEntryService\**\*.tt"
                     AdditionalMetadata="Generator=TextTemplatingFileGenerator">
             <Output TaskParameter="Include" ItemName="rmT4TextTemplates" />
-        </CreateItem>    
-    -->
+        </CreateItem>
+        -->
   </Target>
-    
-  <UsingTask
-        AssemblyFile="$(AderantBuildClientTasksV100Lib-1_0_0_0)"
-        TaskName="ADERANT.Build.Client.Tasks.v100.EnvironmentVariable" />
-    
+
   <UsingTask
         AssemblyFile="$(AderantBuildClientTasksV100Lib-1_0_0_0)"
         TaskName="ADERANT.Build.Client.Tasks.v100.Transform" />
 
-  <!-- Horrible hack to get T4 working under TFS 2013 -->
-  <UsingTask
-      Condition="'$(VS120COMNTOOLS)' != ''"
-      AssemblyName="Microsoft.Build.Tasks.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-      TaskName="GetAssemblyIdentity" />
-
   <!-- 
     *************************************************************************************************************
-      This target is called to transform all templates in the solution
-      Also used in DesktopBuild
+      This target is called to transform all templates in the solution      
     *************************************************************************************************************
     -->
   <PropertyGroup>
-      <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)\Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
-      <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)\Dependencies</rmT4TemplateIncludeFolders>
-    
-      <rmTransformTemplatesWorkerDependsOn>
+    <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)\Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
+    <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)\Dependencies</rmT4TemplateIncludeFolders>
+
+    <rmTransformTemplatesWorkerDependsOn>
       rmBeforeTransformTemplates;
       rmT4AssemblyReferencePaths;
       rmT4DslDirectiveProcessors;
-      </rmTransformTemplatesWorkerDependsOn>
-  </PropertyGroup>       
+    </rmTransformTemplatesWorkerDependsOn>
+  </PropertyGroup>
 
-  <Target Name="rmTransformTemplates" 
-          DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 
+  <Target Name="rmTransformTemplates"
+          DependsOnTargets="$(rmTransformTemplatesDependsOn)">
     <CallTarget Targets="rmTransformTemplatesWorker"/>
   </Target>
 
-  <Target Name="rmTransformTemplatesWorker" 
-          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" 
+  <Target Name="rmTransformTemplatesWorker"
+          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')"
           DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
 
     <BuildStep
@@ -71,7 +97,7 @@
         TaskParameter="id"
         PropertyName="BuildStepId" />
     </BuildStep>
-    
+
     <Error
       Condition="('$(rmT4AssemblyReferencePaths)'=='')"
       Text="Missing required property 'rmT4AssemblyReferencePaths'" />
@@ -80,7 +106,7 @@
       Text="Missing required item group 'rmT4DslDirectiveProcessors'" />
     <Error
       Condition="('@(rmT4TextTemplates)'=='')"
-      Text="Missing required item group 'rmT4TextTemplates'" />    
+      Text="Missing required item group 'rmT4TextTemplates'" />
 
     <Message Text="rmT4DslDirectiveProcessors" />
     <Message Text="Processor --> %(Identity) @(rmT4DslDirectiveProcessors)" />
@@ -90,49 +116,31 @@
 rmT4AssemblyReferencePaths&#xA;$(rmT4AssemblyReferencePaths)&#xA;
 rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
 "/>
+
     <ItemGroup>
-      <rmT4TransformItems Include="@(rmT4TextTemplates);">
-      <KnownDslDirectiveProcessors>$(rmT4DslDirectiveProcessors);</KnownDslDirectiveProcessors>
-      <AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);</AssemblyReferencePaths>
-      <TemplateIncludeFolders>$(rmT4TemplateIncludeFolders);</TemplateIncludeFolders>
-      </rmT4TransformItems>
+      <rmT4TransformItems Include="@(rmT4TextTemplates);" />
+      <AssemblyReferencePaths Include="$(rmT4AssemblyReferencePaths)" />
+      <TemplateIncludeFolders Include="$(rmT4TemplateIncludeFolders)" />
     </ItemGroup>
 
-    <!--
-        The TextTransform uses the location of TMP environment variable to output temporary files in the code generation.  
-        We will redirect this to reduce the clutter. Now that we redirect to our folder, we clean up before Transform.
-    -->
-    <PropertyGroup>
-      <TempABT Condition="('$(TempABT)'=='')">$(SolutionDirectoryPath)\_ABT</TempABT>
-      <TMP_SAVE>$(TMP)</TMP_SAVE>
-      <TMP>$(TempABT)\T4</TMP>
-    </PropertyGroup>
-
-    <RemoveDir
-      Directories="$(TMP)"
-      Condition="Exists('$(TMP)')"
-      ContinueOnError="true" />
-
-    <MakeDir
-      Directories="$(TMP)"
-      ContinueOnError="true" />
-
-    <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
-        Action="Set"
-        Variable="TMP"
-        Value="$(TMP)"
-        Target="Process" />
+    <LoadTextTemplatingTask
+      TextTemplatingPath="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v12.0\TextTemplating\" />
 
     <!-- Do the Transform  -->
-    <ADERANT.Build.Client.Tasks.v100.Transform 
-      Templates="@(rmT4TransformItems)" />
-    
-    <!-- Restore TMP -->
-    <ADERANT.Build.Client.Tasks.v100.EnvironmentVariable
-        Action="Set"
-        Variable="TMP"
-        Value="$(TMP_SAVE)"
-        Target="Process" />
+    <ADERANT.Build.Client.Tasks.v100.Transform
+      TemplatesToProcess="@(rmT4TransformItems)"
+      ReferencePaths="@(AssemblyReferencePaths)"
+      IncludeFolders="@(TemplateIncludeFolders)"
+      DirectiveProcessors="@(rmT4DslDirectiveProcessors)"
+      TrackerLogDirectory="$(TrackerLogDirectory)"
+      TrackFileAccess="$(TrackFileAccess)"
+      MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
+      OverwriteReadOnlyOutputFiles="true">
+      <Output ItemName="GeneratedFiles"
+              TaskParameter="GeneratedFiles"/>
+      <Output ItemName="NonGeneratedFiles"
+              TaskParameter="NonGeneratedFiles"/>
+    </ADERANT.Build.Client.Tasks.v100.Transform>
 
     <BuildStep
       Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
@@ -151,21 +159,11 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   <Target Name="rmT4AssemblyReferencePaths">
     <!-- Path to reference dlls required by DSLs -->
     <PropertyGroup>
-      <VSSDKPath Condition="'$(VSSDK110Install)' != ''">$(VSSDK110Install)\VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);$(SolutionDirectoryPath)\Dependencies;</rmT4AssemblyReferencePaths>
-    </PropertyGroup>
-    
-    <ItemGroup>
-      <rmT4AssemblyReferencePaths
-        Include="$(rmT4AssemblyReferencePaths);" />
-    </ItemGroup>
-    
-    <PropertyGroup>
-      <rmT4AssemblyReferencePaths>@(rmT4AssemblyReferencePaths, '%3B')</rmT4AssemblyReferencePaths>
+      <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);$(SolutionDirectoryPath)Dependencies;$(VS120COMNTOOLS)..\IDE\PublicAssemblies</rmT4AssemblyReferencePaths>
     </PropertyGroup>
   </Target>
 
-  
   <!--
     *************************************************************************************************************
     rmT4DslDirectiveProcessors
@@ -173,8 +171,9 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   -->
   <Target Name="rmT4DslDirectiveProcessors">
     <PropertyGroup>
-      <rmSoftwareFactoryCommonDll>$(SolutionDirectoryPath)\Dependencies\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
+      <rmSoftwareFactoryCommonDll>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
     </PropertyGroup>
+
     <GetAssemblyIdentity
       Condition="Exists('$(rmSoftwareFactoryCommonDll)')"
       AssemblyFiles="$(rmSoftwareFactoryCommonDll)">
@@ -182,39 +181,38 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         TaskParameter="Assemblies"
         ItemName="rmSoftwareFactoryCommonDllIdentity"/>
     </GetAssemblyIdentity>
+
     <PropertyGroup Condition="'@(rmSoftwareFactoryCommonDllIdentity)'!=''">
       <rmSoftwareFactoryVersion>%(rmSoftwareFactoryCommonDllIdentity.Version)</rmSoftwareFactoryVersion>
     </PropertyGroup>
-    <PropertyGroup>
-      <DslClass>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</DslClass>
-      <DslAssembly>Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.11.0, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</DslAssembly>
-      <!-- Aderant Domain Model -->
-      <DomainModelDslClass>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</DomainModelDslClass>
-      <DomainModelDslAssembly>Aderant.Framework.SoftwareFactory.Domain, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</DomainModelDslAssembly>
-      <!-- Aderant View Model -->
-      <ViewModelDslClass>Aderant.Framework.SoftwareFactory.ViewModel.ViewModelDslDirectiveProcessor</ViewModelDslClass>
-      <ViewModelDslAssembly>Aderant.Framework.SoftwareFactory.ViewModel, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</ViewModelDslAssembly>
-      <!--Aderant Service Model-->
-      <ServiceDslClass>Aderant.Framework.SoftwareFactory.Service.ServiceDslDirectiveProcessor</ServiceDslClass>
-      <ServiceDslAssembly>Aderant.Framework.SoftwareFactory.Service, Version=$(rmSoftwareFactoryVersion), Culture=neutral, PublicKeyToken=e9a38109c1519e4d</ServiceDslAssembly>
-    </PropertyGroup>
+
     <ItemGroup>
       <!-- Only include Aderant Processors if common dll exists in dependencies.-->
-      <rmT4DslDirectiveProcessors
-        Condition="'$(rmSoftwareFactoryVersion)' == ''"
-        Include="$(DslClass), $(DslAssembly);" />
-      <rmT4DslDirectiveProcessors
-        Condition="'$(rmSoftwareFactoryVersion)' != ''"
-        Include="$(DslClass), $(DslAssembly);
-                 $(DomainModelDslClass), $(DomainModelDslAssembly);
-                 $(ViewModelDslClass), $(ViewModelDslAssembly);
-                 $(ServiceDslClass), $(ServiceDslAssembly);" />
-    </ItemGroup>
-    <!-- T4 items need to be escaped ';' with '%3B' and converted to a property -->
-    <PropertyGroup>
-      <rmT4DslDirectiveProcessors>@(rmT4DslDirectiveProcessors, '%3B')</rmT4DslDirectiveProcessors>
-    </PropertyGroup>
-  </Target>
+      <rmT4DslDirectiveProcessors Include="DslDirectiveProcessor">
+        <Class>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</Class>
+        <CodeBase>$(Registry:HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\12.0_Config@InstallDir)Extensions\Microsoft\DSL SDK\DSL Designer\12.0\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.12.0.dll</CodeBase>
+      </rmT4DslDirectiveProcessors>
 
+
+      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
+                                  Include="DomainModelDslDirectiveProcessor">
+        <Class>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</Class>
+        <CodeBase>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.Domain.dll</CodeBase>
+      </rmT4DslDirectiveProcessors>
+
+      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
+                                  Include="ViewModelDslDirectiveProcessor">
+        <Class>Aderant.Framework.SoftwareFactory.ViewModel.ViewModelDslDirectiveProcessor</Class>
+        <CodeBase>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.ViewModel.dll</CodeBase>
+      </rmT4DslDirectiveProcessors>
+        
+      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
+                                  Include="ServiceDslDirectiveProcessor">
+        <Class>Aderant.Framework.SoftwareFactory.Service.ServiceDslDirectiveProcessor</Class>
+        <CodeBase>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.Service.dll</CodeBase>
+      </rmT4DslDirectiveProcessors>
+    </ItemGroup>
+
+  </Target>
 
 </Project>

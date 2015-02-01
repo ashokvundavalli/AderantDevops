@@ -45,7 +45,7 @@
 /P:TimerAssemblyVersion=1.8.0.0
 
 # Microsoft Build Configuration
-/p:BuildFlavor=Release
+/p:BuildFlavor=Debug
 
 #Unused - need to find source before removing.
 /p:ExpertDatabaseConnectionStringForSystemMap="/pdbs:localhost /pdbd:expert /pdbid:cmsdbo /pdbpw:cmsdbo"
