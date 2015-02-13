@@ -173,6 +173,7 @@
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />

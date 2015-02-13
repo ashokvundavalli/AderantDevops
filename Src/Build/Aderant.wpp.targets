@@ -51,6 +51,7 @@ Result = uniqueFiles.ToArray();
         <PublishParametersFile>false</PublishParametersFile>
         <PackageParametersFile>false</PackageParametersFile>
         <DeployOnBuild Condition="'$(IsDesktopBuild)' == ''">true</DeployOnBuild>
+        <DesktopBuildPackageLocation Condition="'$(DesktopBuildPackageLocation)' == ''">..\..\Bin\Module\$(ModuleName).zip</DesktopBuildPackageLocation>
     </PropertyGroup>
 
     <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
