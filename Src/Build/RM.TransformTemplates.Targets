@@ -34,7 +34,7 @@
     ***  Please retain formatting, one attribute per line, and split    ***
     ***  delimited values over several lines.                           ***                                  
     ***********************************************************************
-    -->
+    -->  
 
   <PropertyGroup>
     <!--Indicates whether only out of date templates should be transformed, or whether all templates should be transformed.-->
@@ -55,37 +55,37 @@
         <CreateItem Include="$(SolutionRoot)\TimeEntryService\**\*.tt"
                     AdditionalMetadata="Generator=TextTemplatingFileGenerator">
             <Output TaskParameter="Include" ItemName="rmT4TextTemplates" />
-        </CreateItem>
-        -->
+        </CreateItem>    
+    -->
   </Target>
-
+    
   <UsingTask
         AssemblyFile="$(AderantBuildClientTasksV100Lib-1_0_0_0)"
         TaskName="ADERANT.Build.Client.Tasks.v100.Transform" />
 
   <!-- 
     *************************************************************************************************************
-      This target is called to transform all templates in the solution      
+      This target is called to transform all templates in the solution
     *************************************************************************************************************
     -->
   <PropertyGroup>
-    <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)\Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
-    <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)\Dependencies</rmT4TemplateIncludeFolders>
-
-    <rmTransformTemplatesWorkerDependsOn>
+      <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)\Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
+      <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)\Dependencies</rmT4TemplateIncludeFolders>
+    
+      <rmTransformTemplatesWorkerDependsOn>
       rmBeforeTransformTemplates;
       rmT4AssemblyReferencePaths;
       rmT4DslDirectiveProcessors;
-    </rmTransformTemplatesWorkerDependsOn>
-  </PropertyGroup>
+      </rmTransformTemplatesWorkerDependsOn>
+  </PropertyGroup>       
 
-  <Target Name="rmTransformTemplates"
-          DependsOnTargets="$(rmTransformTemplatesDependsOn)">
+  <Target Name="rmTransformTemplates" 
+          DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 
     <CallTarget Targets="rmTransformTemplatesWorker"/>
   </Target>
 
-  <Target Name="rmTransformTemplatesWorker"
-          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')"
+  <Target Name="rmTransformTemplatesWorker" 
+          Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" 
           DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
 
     <BuildStep
@@ -97,7 +97,7 @@
         TaskParameter="id"
         PropertyName="BuildStepId" />
     </BuildStep>
-
+    
     <Error
       Condition="('$(rmT4AssemblyReferencePaths)'=='')"
       Text="Missing required property 'rmT4AssemblyReferencePaths'" />
@@ -106,7 +106,7 @@
       Text="Missing required item group 'rmT4DslDirectiveProcessors'" />
     <Error
       Condition="('@(rmT4TextTemplates)'=='')"
-      Text="Missing required item group 'rmT4TextTemplates'" />
+      Text="Missing required item group 'rmT4TextTemplates'" />    
 
     <Message Text="rmT4DslDirectiveProcessors" />
     <Message Text="Processor --> %(Identity) @(rmT4DslDirectiveProcessors)" />
@@ -127,7 +127,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       TextTemplatingPath="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v12.0\TextTemplating\" />
 
     <!-- Do the Transform  -->
-    <ADERANT.Build.Client.Tasks.v100.Transform
+    <ADERANT.Build.Client.Tasks.v100.Transform 
       TemplatesToProcess="@(rmT4TransformItems)"
       ReferencePaths="@(AssemblyReferencePaths)"
       IncludeFolders="@(TemplateIncludeFolders)"
