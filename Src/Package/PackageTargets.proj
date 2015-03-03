@@ -180,7 +180,7 @@
     <!--Copy test binaries to folder for execution.-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(BuildScriptsDirectory)'
+          Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -buildSourcesDirectory $(SolutionRoot) -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(BuildScriptsDirectory)'
           WorkingDirectory="$(BuildScriptsDirectory)" />
 
     <!--Copy to drop location for reference-->
@@ -196,6 +196,41 @@
             BuildUri="$(BuildUri)"
             Id="$(BuildStepId)"
             Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+  
+  <!--
+    ==========================================================================================
+        Move all ordered tests to the test directory
+    ==========================================================================================
+  -->
+  <Target Name="ParseOrderedTests" >
+
+    <BuildStep
+          Condition="('$(IsDesktopBuild)'!='true')"
+          Message="Parse all Ordered Test Files"
+          TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+          BuildUri="$(BuildURI)">
+      <Output TaskParameter="id"
+              PropertyName="BuildStepId" />
+    </BuildStep>
+    
+    <PropertyGroup>
+      <TestAssemblyDirectory>$([System.IO.Path]::GetFullPath('$(ExpertTestsDirectory)\ExpertSource'))</TestAssemblyDirectory>
+    </PropertyGroup>
+    <Exec
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"Powershell" "$(BuildScriptsDirectory)\ParseOrderedTests.ps1" $(TestAssemblyDirectory)' />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
@@ -232,7 +267,7 @@
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
-
+  
   <!--
     ==========================================================================================
         Run remote deployment from remote machine
@@ -475,39 +510,61 @@
       <IsolationSwitch></IsolationSwitch>
       <!-- Test result publishing requires Visual Studio Update 1 or higher -->
       <LoggerSwitch>/logger:Multicast;loggers=trx,TfsPublisher;TfsPublisher.Collection=$(TeamFoundationServerUrl);TfsPublisher.BuildName=$(BuildNumber);TfsPublisher.TeamProject=$(TeamProject);TfsPublisher.Platform="%(ConfigurationToBuild.PlatformToBuild)";TfsPublisher.Flavor="%(ConfigurationToBuild.FlavorToBuild)"</LoggerSwitch>
+      <TestSettingsSwitch>/Settings:$(TestSettingsFile)</TestSettingsSwitch>
+      <TestFilterSwitch>$(TestCaseFilterSwitch)</TestFilterSwitch>
     </PropertyGroup>
 
     <Message Text="Test Assembly Directory: $(TestAssemblyDirectory)" />
     <Message Text="Excluding test assemblies: $(ExcludeIntegrationAssemblies)" />
-    
+   
     <!--Expand the scalar property from the command line into an item group -->
     <ItemGroup>
       <ExcludedIntegrationAssemblies Include="$(ExcludeIntegrationAssemblies)" />
     </ItemGroup>
     
     <Message Text="Exclude List: @(ExcludedIntegrationAssemblies)" />
-
+    
     <PropertyGroup>
         <TestAssemblyIncludePattern Condition="'$(TestAssemblyIncludePattern)' == ''">IntegrationTest*.dll</TestAssemblyIncludePattern>
     </PropertyGroup>
 
     <ItemGroup>
-      <!-- Gather all inputs and apply the assembly filter -->
+      <PatternGroup Include="$(TestAssemblyIncludePattern.Split(';'))"  />
+    </ItemGroup>
+
+    <!--
+    <ItemGroup>
       <IntegrationAssemblies Include="$(TestAssemblyDirectory)\$(TestAssemblyIncludePattern)"
                              Exclude="@(ExcludedIntegrationAssemblies->'$(TestAssemblyDirectory)\%(Filename)%(Extension)')" />
     </ItemGroup>
+    -->
+    
+    <!--Changed the integration assembly construction to CreatItem as this resolves wildcards as strings.  This lets us pass in multiple wildcard expressions-->
+    <CreateItem Include="$(TestAssemblyDirectory)\%(PatternGroup.Identity)" 
+                Exclude="@(ExcludedIntegrationAssemblies-> '$(TestAssemblyDirectory)\%(Filename)%(Extension)')" >
+      <Output TaskParameter="Include" ItemName="IntegrationAssemblies" />
+    </CreateItem>
 
     <PropertyGroup>
       <!-- Create a space delimited string -->
-      <TestAssemblies>@(IntegrationAssemblies->'%(FullPath)',' ')</TestAssemblies>
+      <TestAssemblies>@(IntegrationAssemblies->'&quot;%(FullPath)&quot;',' ')</TestAssemblies>
     </PropertyGroup>
 
     <Message Text="Test Assemblies: $(TestAssemblies)" />
+
+    <!-- Group of integration assemblies, excludes automation test assemblies-->
+    <ItemGroup>
+      <IntegrationTestToChange Include="$(TestAssemblyDirectory)\IntegrationTest*.dll"
+                               Exclude="@(ExcludedIntegrationAssemblies->'$(TestAssemblyDirectory)\%(Filename)%(Extension)')"  />
+    </ItemGroup>
+
+    <Message Text="Integration Assemblies: $(IntegrationTestToChange)" />
     <Message Text="Replacing test configuration files with template from: $(BuildDirectory)" />
 
-    <!-- Foreach test assembly, replace the checked in .config with our template -->
+    <!-- Foreach integration test assembly, replace the checked in .config with our template
+         Excludes automation assemblies -->
     <Copy SourceFiles="$(BuildDirectory)\IntegrationTest.config" 
-          DestinationFiles="%(IntegrationAssemblies.FullPath).config"
+          DestinationFiles="%(IntegrationTestToChange.FullPath).config"
           OverwriteReadOnlyFiles="true" />
     
     <!-- 
@@ -523,7 +580,7 @@
           Condition="!Exists('$(TeamCityLogger)')" />
 
     <!-- Run the integration tests -->
-    <Exec Command='"$(PathToTestTool)" $(TestAssemblies) $(LoggerSwitch) $(IsolationSwitch)'
+    <Exec Command='"$(PathToTestTool)" $(TestAssemblies) $(TestSettingsSwitch) $(TestFilterSwitch) $(LoggerSwitch) $(IsolationSwitch)'
           ContinueOnError="false"
           IgnoreExitCode="false" 
           WorkingDirectory="$(TestAssemblyDirectory)" />

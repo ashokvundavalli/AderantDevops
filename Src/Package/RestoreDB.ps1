@@ -12,12 +12,12 @@ begin {
     write "databaseBackupFile = $dbBackupFile"
     write "databaseBackupPath = $databaseBackupPath"
     write "dbowner = $dbowner"
-
+	
     $script:ErrorActionPreference = 'Stop'
 	$sqlSnapin = Get-PSSnapin | where {$_.Name -eq "SqlServerCmdletSnapin100"}
 	if($sqlSnapin -eq $null)
 	{
-		 Add-PSSnapin SqlServerCmdletSnapin100
+        Add-PSSnapin SqlServerCmdletSnapin100
 	}
 }
 
@@ -28,6 +28,38 @@ process {
     $ServerInstance = $environmentManifest.environment.expertDatabaseServer.serverInstance
     $dbName = $environmentManifest.environment.expertDatabaseServer.databaseConnection.databaseName
     $dbServerInstance = "$ServerName\" + "$ServerInstance"
+
+
+    ##set up a location on the sql server to store the db files
+    ##this cannot be on the build server as clean up jobs will wipe these files and corrupt the db
+    if ([String]::IsNullOrEmpty($ServerInstance)){
+        $sqlServerFilePath = "\\"+"$ServerName\"+"AutoDeploymentDataFiles"
+    } else {
+        $sqlServerFilePath = "\\"+"$ServerName\"+"$ServerInstance\"+"AutoDeploymentDataFiles"
+    }
+
+    if (Test-Path $sqlServerFilePath){
+        write "$sqlServerFilePath exists"
+
+        if (Test-Path "$sqlServerFilePath\$dbName"){
+            $sqlServerFilePath = "$sqlServerFilePath\$dbName"
+        } else {
+            try{
+                New-Item "$sqlServerFilePath\$dbName" -ItemType directory -force
+            } catch {
+                write "Unable to create $sqlServerFilePath\$dbName, will use $sqlServerFilePath as the location for the DB files"
+            }
+        }
+    } else {
+        try{
+            New-Item $sqlServerFilePath -ItemType directory -force
+        } catch{
+            throw "$sqlServerFilePath doesn't exist on the sql server, or the tfs build account doesn't have access to view this directory"
+        }
+    }
+
+
+
 	
 	try {
 	    $singleUserCmd = "`nIF DB_ID('$dbName') > 0 `n`tALTER DATABASE $dbName SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" 
@@ -48,7 +80,7 @@ process {
 	$restoreCmd = "`nRESTORE DATABASE [$dbName] FROM DISK = N'$databaseBackupLocation'" 
     $restoreCmd += "`nWITH REPLACE"
     foreach ($file in $fileList) {
-        $restoreCmd += ",`n`tMOVE '$($file.LogicalName)' TO '$databaseBackupPath\$($dbName)_$($file.LogicalName)'"
+        $restoreCmd += ",`n`tMOVE '$($file.LogicalName)' TO '$sqlServerFilePath\$($dbName)_$($file.LogicalName)'"
     }
 	$restoreCmd += ";"
 

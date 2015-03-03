@@ -46,7 +46,7 @@
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
 
     <!-- Define targets to run from PackageTargets -->
-    <IntegrationTestSteps>PackageProductTests;IntegrationTests;ConvertTestResults;</IntegrationTestSteps>
+    <IntegrationTestSteps>PackageProductTests;ParseOrderedTests;IntegrationTests;ConvertTestResults;</IntegrationTestSteps>
   </PropertyGroup>
 
   <!-- 
@@ -82,7 +82,7 @@
                 RunEachTargetSeparately="true" />
 
     <CallTarget Targets="RemoveProductRemote"
-                Condition="'$(DeployExpert)' != 'false'" />
+                Condition="'$(DeployExpert)' != 'false' And '$(RemoveDeploymentAfterTests)' != 'false'" />
   </Target>
 
   <Target Name="RunDeployProduct" Condition="'$(DeployExpert)' != 'false'">
