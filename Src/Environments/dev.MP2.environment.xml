@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest" networkSharePath="\\vmexpdevb307\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" enableServiceCallCompression="false">
+<environment name="IntegrationTest" networkSharePath="\\vmexpdevb307\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" enableServiceCallCompression="false" reportServer="http://svsql304/ReportServer" reportServerUser="cmsdbo" reportServerPassword="eozBzG3osa/FNS5EzgQb3Q==">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
