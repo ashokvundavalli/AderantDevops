@@ -244,9 +244,6 @@ namespace Aderant.Build.Commands {
             } else if (MaxThreadCount < 0) {
                 MaxThreadCount = 1;
             }
-            if (MaxThreadCount > 1) {
-                WriteWarning(string.Format("MaxThreadCount is {0}; which is greater than 1. Sometimes powershell has an issue with spawning multiple threads. If powershell crashes with no explanation, please try -MaxThreadCount  1", MaxThreadCount));
-            }
             return true;
         }
 
@@ -562,14 +559,42 @@ namespace Aderant.Build.Commands {
             }
         }
 
+        private readonly Dictionary<string, bool> reparseCache = new Dictionary<string, bool>(); 
+
+        private bool IsReparsePoint(string path) {
+            //If it doesn't exist then it can't be a reparse point.
+            if (string.IsNullOrWhiteSpace(path)) {
+                return false;
+            }
+            if (reparseCache.ContainsKey(path)) {
+                return reparseCache[path];
+            }
+            bool isReparsePoint = false;
+            DirectoryInfo directoryInfo = new DirectoryInfo(path);
+            if (directoryInfo.Exists) {
+                isReparsePoint = directoryInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+            } else {
+                FileInfo fileInfo = new FileInfo(path);
+                if (fileInfo.Exists) {
+                    isReparsePoint = fileInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+                }
+            }
+            reparseCache[path] = isReparsePoint;
+            return isReparsePoint; 
+        }
+
         internal void RemoveLinksToSharedBin(IDictionary<string, ICollection<FileToCopy>> ourFilesToCopy) {
             foreach (var list in ourFilesToCopy) {
-                foreach (var item in list.Value.ToList()) {
-                    if (item.DestinationFilePath.Contains("SharedBin") && !item.DestinationFilePath.Contains("AderantExpert\\Local\\SharedBin")) {
-                        list.Value.Remove(item); //if we are in a SharedBin but not in THEE SharedBin folder, then it is probably a symlink.
+                foreach (FileToCopy item in list.Value.ToList()) {
+                    string[] splitDirectories = item.DestinationFilePath.Split('\\');
+                    for (int i = splitDirectories.Length; i > 1; i--) {
+                        if (IsReparsePoint(string.Join("\\", splitDirectories, 0, i))) {
+                            list.Value.Remove(item);
+                        }
                     }
+                    //If we update one of these binaries then we cannot re-hydrate the workflow. Re-import the workflow to get updated binaries.
                     if (item.DestinationFilePath.Contains("AderantExpert\\Local\\Services\\Workflows")) {
-                        list.Value.Remove(item); //If we update one of these binaries then we cannot re-hydrate the workflow. Re-import the workflow to get updated binaries.
+                        list.Value.Remove(item); 
                         AddToWorkflowBinaries(WorkflowName(item.DestinationFilePath), item);
                     }
                 }
