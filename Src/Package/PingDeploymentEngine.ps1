@@ -11,16 +11,17 @@ param ([string]$remoteMachineName, [string]$environmentManifestPath)
 
 begin{
 	$modulePath = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) RemoteDeploymentHelper.psm1
-    Import-Module $modulePath -DisableNameChecking 
+    Import-Module $modulePath
 }
 
 process{
+	$ErrorActionPreference = "Stop"
 	$session = Get-RemoteSession $remoteMachineName
 	$sourcePath = Get-SourceDirectory $environmentManifestPath
     
 	#Wait for services to start
 	Write-Host "Waiting for services to start on [$remoteMachineName]."
-	Start-Sleep -Seconds 30
+	Start-Sleep -Seconds 20
 	
 	#Start to ping serivces on target machine
     Write-Host "Invoking DeploymentEngine to PING Services on [$remoteMachineName]."

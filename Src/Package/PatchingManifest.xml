@@ -4,11 +4,11 @@
     <TeamProject>ExpertSuite</TeamProject>
     
     <!-- Controls the name of the package -->
-    <PatchName>Patch 2371</PatchName>
+    <PatchName>Patch 2293</PatchName>
     
     <!-- Controls how the change set list should be discovered. Only the first node with a value will be used. -->
     <!-- If set the change set list will be taken from this Team Query -->
-    <TeamQuery>Expert 8.0SP2 Patch 2371</TeamQuery>
+    <TeamQuery>Expert 8.0SP1 Patch 2293</TeamQuery>
     
     <!-- If set the change set list will be taken between these two VersionSpec -->
     <StartVersionSpec></StartVersionSpec>
