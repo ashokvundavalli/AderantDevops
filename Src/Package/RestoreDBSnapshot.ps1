@@ -1,6 +1,7 @@
 param ( [string] $environmentManifestPath, 
 		[string] $directory, 
-        [string] $action)
+		[string] $action,
+		[string] $buildNumber = $null)
         
 begin {
 
@@ -21,7 +22,7 @@ process {
 	[xml]$environmentManifest =  (Get-Content $environmentManifestPath)      
     $Database = $environmentManifest.environment.expertDatabaseServer.databaseConnection.databaseName
     $dbServerInstance = "{0}\{1}" -f $environmentManifest.environment.expertDatabaseServer.serverName, $environmentManifest.environment.expertDatabaseServer.serverInstance
-	$Snapshot = "ExpertSS_$Database"
+	$Snapshot = "ExpertSS_$Database_$buildNumber"
 	$Folder = $directory
 #	$Action = "RESTORE"
 #	$dbServerInstance = "svsql303\mssql10"
