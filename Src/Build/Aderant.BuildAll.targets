@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  ToolsVersion="12.0">
+  
+  <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
+  
+  <Target Name="GetAllModuleDependencies"
+          DependsOnTargets="PrepareBuildEnvironment"
+          Condition="'$(UseSharedDependencyDirectory)' == 'true'" 
+          Returns="@(TargetReturns)">
+    
+    <Message Text="Using build scripts: $(BuildScriptsDirectory)" />
+
+
+    <!-- Cull the module list if we are resuming the build from a certain point -->
+    <Message Text="Resuming build from module $(BuildFrom)" Condition="'$(BuildFrom)' != ''" />
+    <FilterModules
+      Condition="'$(BuildFrom)' != ''"
+      ModulesInBuild="@(ModulesInBuild)"
+      BuildFrom="$(BuildFrom)">
+      <Output TaskParameter="ModulesInBuild" ItemName="FilteredModuleList" />
+    </FilterModules>
+
+    <!-- Refresh the module list with the filtered list if needed -->
+    <ItemGroup>
+      <ModulesInBuild Remove="@(ModulesInBuild)" Condition="'$(BuildFrom)' != ''" />
+      <ModulesInBuild Include="@(FilteredModuleList)" Condition="'$(BuildFrom)' != ''" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <SharedDependencyDirectory>$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
+      <SharedTestRunDirectory>$(SolutionRoot)TestRun\</SharedTestRunDirectory>
+    </PropertyGroup>
+
+    <Message Text="Getting dependencies for build." />
+    <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
+    <GetDependencies
+      ProductManifest="$(ProductManifestPath)"
+      ModulesRootPath="$(SolutionRoot)"
+      DropPath="$(DropLocation)"
+      BuildAll="true"
+      ModulesInBuild="@(ModulesInBuild)" />
+
+    <!-- Replicate the dependencies to our shared test run location -->
+    <ItemGroup>
+      <Dependencies Include="$(SharedDependencyDirectory)**\*"  Condition="'$(UseSharedTestRunDirectory)' == 'true'" />
+    </ItemGroup>
+    
+    <RemoveDir Directories="$(SharedTestRunDirectory)" Condition="Exists('$(SharedTestRunDirectory)')" />
+    
+    <Copy Condition="'$(UseSharedTestRunDirectory)' == 'true' And '%(Dependencies.Extension)' != '.pdb'"
+          SourceFiles="@(Dependencies)"
+          OverwriteReadOnlyFiles="true"
+          DestinationFiles="$(SharedTestRunDirectory)%(Dependencies.RecursiveDir)%(Dependencies.Filename)%(Dependencies.Extension)" />
+
+    <ItemGroup>
+      <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
+                         Exclude="$(SolutionRoot)Dependencies;
+                                  $(SolutionRoot)ThirdParty;
+                                  $(SolutionRoot)Build.Infrastructure;
+                                  $(SolutionRoot)TestRun" />
+    </ItemGroup>
+
+    <MakeSymlink
+      Link="%(ModuleDirectories.FullPath)\Dependencies"
+      Target="$(SharedDependencyDirectory)"
+      Type="D" />
+
+    <!-- 
+      This project is called in a different scope from the build all entry point TFSBuild.proj so we need to explicity 
+      build up our properties to return to our invoker via the Returns attribute
+    -->
+    <ItemGroup>
+      <TargetReturns Include="SharedDependencyDirectory=$(SharedDependencyDirectory)">
+        <Type>Property</Type>
+      </TargetReturns>
+
+      <TargetReturns Include="SharedTestRunDirectory=$(SharedTestRunDirectory)">
+        <Type>Property</Type>
+      </TargetReturns>
+
+      <TargetReturns Include="@(ModulesInBuild)">
+        <Type>Module</Type>
+      </TargetReturns>
+    </ItemGroup>
+    
+  </Target>
+
+
+  <!-- Tranforms inputs to this target file into item groups -->
+  <Target Name="GetAllModuleDependenciesSetup" 
+          BeforeTargets="GetAllModuleDependencies">
+
+    <ItemGroup>
+      <ModulesInBuild Include="$(ModulesToBuild)" />
+    </ItemGroup>
+
+    <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
+    <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" />
+    <RemoveDir Directories="$(SharedDependencyDirectory)" />
+    
+  </Target>
+
+  
+  <Target Name="ValidateBranchConfiguration" BeforeTargets="GetAllModuleDependencies">
+
+    <ItemGroup>
+      <ThirdPartyFiles Include="$(SolutionRoot)ThirdParty\**\bin\*.dll" />
+    </ItemGroup>
+
+    <!-- 
+      Validates that we have no duplicated third party assemblies
+      The build and packaging system does not support multiple versions of the same assembly with the same file name.
+    -->
+    <Message Text="Validating dependencies for build." />
+    <DependencyChecker
+      Files="@(ThirdPartyFiles)" />
+
+    <ItemGroup>
+      <BuildProjects Include="$(SolutionRoot)**\Build\TFSBuild.proj"
+                     Exclude="$(SolutionRoot)Build.Infrastructure\**;
+                              $(SolutionRoot)Performance.*\**;
+                              $(SolutionRoot)Tests.*\**;">
+        
+      </BuildProjects>
+    </ItemGroup>
+
+    <!--
+      Validates that we have no misconfigured build configurations in this branch
+    -->
+    <Message Text="Validating build project files." />
+    <BuildConfigurationCheck
+      ProjectFiles="@(BuildProjects)" />
+    
+  </Target>
+  
+
+  <Target Name="CreateParallelBuildProject" 
+          DependsOnTargets="GetAllModuleDependencies" 
+          AfterTargets="GetAllModuleDependencies">
+    
+    <Message Text="Creating parallel build project... "/>
+    <ParallelBuildProject
+      ModulesDirectory="$(SolutionRoot)"
+      ProductManifest="$(ProductManifestPath)"
+      ModulesInBuild="@(ModulesInBuild)" />
+    
+    <Error Condition="!Exists('$(SolutionRoot)BranchBuild.proj')" />
+    
+  </Target>
+  
+</Project>
+ 

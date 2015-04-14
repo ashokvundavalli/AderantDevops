@@ -15,7 +15,7 @@ namespace Aderant.Build {
 
         public override bool Execute() {
             if (Assemblies != null) {
-                var inspectionDomain = AppDomain.CreateDomain("InspectionDomain", null, Path.GetDirectoryName(this.GetType().Assembly.Location), null, false);
+                var inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(this.GetType().Assembly.Location), null, false);
 
                 foreach (var item in Assemblies) {
                     if ((item.ItemSpec.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || item.ItemSpec.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) && File.Exists(item.ItemSpec)) {
@@ -33,6 +33,7 @@ namespace Aderant.Build {
                 }
 
                 AppDomain.Unload(inspectionDomain);
+                GC.Collect();
             }
 
             return true;

@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
-    
     internal class DependencyBuilder {
         private const string mgraphRootNamespace = "http://graphml.graphdrawing.org/xmlns";
         private const string dgmlRootNamespace = "http://schemas.microsoft.com/vs/2009/dgml";
@@ -19,7 +18,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="provider">The provider.</param>
         public DependencyBuilder(IModuleProvider provider) {
-            this.moduleProvider = provider;
+            moduleProvider = provider;
         }
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentException("modulePath must be a rooted path", "branchRootOrModulePath");
             }
 
-            this.moduleProvider = new WorkspaceModuleProvider(branchRootOrModulePath);
+            moduleProvider = ExpertManifest.Load(branchRootOrModulePath);
         }
 
         /// <summary>
@@ -49,102 +48,72 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public IEnumerable<ModuleDependency> GetModuleDependencies(bool includeThirdParty) {
-            var modules = moduleProvider.GetAll().Select(m => m.Name);
+            var allModules = moduleProvider.GetAll().ToList();
 
-            IEnumerable<XElement> moduleElements = moduleProvider.ProductManifest.Root.Descendants("Modules").Descendants().ToList();
+            HashSet<ModuleDependency> dependencies = new HashSet<ModuleDependency>();
 
-            Debug.Assert(moduleElements.Count() > 1);
-
-            IDictionary<string, ExpertModule> providers = new Dictionary<string, ExpertModule>();
-            IList<ModuleDependency> dependencies = new List<ModuleDependency>();
-
-            foreach (string module in modules) {
-                XDocument manifest;
-                if (!moduleProvider.TryGetDependencyManifest(module, out manifest)) {
+            foreach (var module in allModules) {
+                DependencyManifest manifest;
+                if (!moduleProvider.TryGetDependencyManifest(module.Name, out manifest)) {
                     continue;
                 }
 
-                if (ExpertModule.IsNonProductModule(ExpertModule.GetModuleType(module))) {
+                if (ExpertModule.IsNonProductModule(module.ModuleType)) {
                     continue;
                 }
 
-                IEnumerable<XElement> references = manifest.Descendants("ReferencedModule").ToList();
-
-                if (!references.Any()) {
-                    XElement productManifestEntry = moduleElements.FirstOrDefault(n => n.Attribute("Name").Value.Equals(module, StringComparison.OrdinalIgnoreCase));
-                    providers[module.ToUpperInvariant()] = new ExpertModule(productManifestEntry);
-
-                    var dependency = new ModuleDependency() {
+                if (!manifest.ReferencedModules.Any()) {
+                    var dependency = new ModuleDependency {
                         Consumer = new ExpertModule {
-                            Name = module
+                            Name = module.Name
                         }
                     };
-
                     dependency.Provider = dependency.Consumer;
-
                     dependencies.Add(dependency);
                 } else {
-                    foreach (XElement dependencyElement in references) {
-                        string referencedModule = dependencyElement.Attribute("Name").Value.ToUpperInvariant();
+                    var consumer = new ExpertModule {Name = manifest.ModuleName};
 
-                        if (!includeThirdParty && ExpertModule.GetModuleType(referencedModule) == ModuleType.ThirdParty) {
+                    foreach (var expertModule in manifest.ReferencedModules) {
+                        if (!includeThirdParty && expertModule.ModuleType == ModuleType.ThirdParty) {
                             continue;
                         }
 
-                        dependencies.Add(new ModuleDependency() {
-                            Consumer = new ExpertModule {
-                                Name = module
-                            },
-                            Provider = CreateExpertModule(moduleElements, referencedModule, providers),
+                        dependencies.Add(new ModuleDependency {
+                            Consumer = consumer,
+                            Provider = expertModule,
                         });
                     }
                 }
 
                 // If we have nothing that depends on us, we need to create a dependency entry for ourselves
                 // This covers cases like Internal.Validation on which nothing depends.
-                ExpertModule expertModule = CreateExpertModule(moduleElements, module, providers);
-                if (expertModule != null && !ExpertModule.IsNonProductModule(expertModule.ModuleType)) {
-                    var dependency = new ModuleDependency() {
-                        Provider = expertModule,Consumer = expertModule
-                    };
-
-                    if (!dependencies.Contains(dependency)) {
-                        dependencies.Add(dependency);
-                    }
+                if (!ExpertModule.IsNonProductModule(module.ModuleType)) {
+                    AddSelfPointer(dependencies, module);
                 }
             }
 
             // Now we need to add a dependency for each module that points to itself. 
             // If we have the case where all of a given module's dependencies are external to the branch, 
             // the restriction filter will exclude not only the external dependencies but also the module itself
-            IEnumerable<ModuleDependency> nodes = dependencies.Select(m => m.Consumer)
-                                                              .Distinct()
-                                                              .Select(m => new ModuleDependency {
-                                                                  Consumer = m,
-                                                                  Provider = m
-                                                              });
+            var consumers = dependencies.Select(m => m.Consumer);
+            foreach (var module in consumers) {
+                AddSelfPointer(dependencies, module);
+            }
 
-            return dependencies.Union(nodes.OrderBy(x => x.Consumer.Name)).ToList();
+            return dependencies.OrderBy(x => x.Consumer.Name).ToList();
         }
 
-        private static ExpertModule CreateExpertModule(IEnumerable<XElement> moduleElements, string moduleName, IDictionary<string, ExpertModule> providers) {
-            XElement productManifestEntry = moduleElements.FirstOrDefault(n => n.Attribute("Name").Value.Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+        private static void AddSelfPointer(HashSet<ModuleDependency> dependencies, ExpertModule module) {
+            // Test if we already added this module to the set
+            bool add = dependencies.All(moduleDependency => !string.Equals(moduleDependency.Consumer.Name, module.Name, StringComparison.OrdinalIgnoreCase) || !string.Equals(moduleDependency.Provider.Name, module.Name, StringComparison.OrdinalIgnoreCase));
 
-            ExpertModule module;
-            if (!providers.TryGetValue(moduleName, out module) && productManifestEntry != null) {
-                module = new ExpertModule(productManifestEntry);
-                providers.Add(moduleName, module);
+            if (add) {
+                var dependency = new ModuleDependency {
+                    Provider = module,
+                    Consumer = module
+                };
+                dependencies.Add(dependency);
             }
-
-            if (module == null && ExpertModule.IsNonProductModule(ExpertModule.GetModuleType(moduleName))) {
-                return null;
-            }
-
-            if (module == null) {
-                throw new InvalidOperationException("Could not find Expert Manifest entry for: " + moduleName);
-            }
-
-            return module;
         }
 
         /// <summary>
@@ -159,20 +128,20 @@ namespace Aderant.Build.DependencyAnalyzer {
             XDocument document = new XDocument(
                 new object[] {
                     new XElement(XName.Get("graphml", mgraphRootNamespace),
-                                 new XElement(XName.Get("graph", mgraphRootNamespace),
-                                              new object[] {
-                                                  new XAttribute(XName.Get("id"), "G"),
-                                                  new XAttribute(XName.Get("edgedefault"), "directed"),
-                                                  new XAttribute(XName.Get("parse.nodes"), "8"),
-                                                  new XAttribute(XName.Get("parse.edges"), "7"),
-                                                  new XAttribute(XName.Get("parse.order"), "nodesfirst"),
-                                                  new XAttribute(XName.Get("parse.nodeids"), "free"),
-                                                  new XAttribute(XName.Get("parse.edgeids"), "free"),
-                                                  allModules.Select(module => new XElement(XName.Get("node", mgraphRootNamespace), new object[] {new XAttribute(XName.Get("id"), module.Name), new XAttribute(XName.Get("desc"), allModules.IndexOf(module))})),
-                                                  allDependencies.Select(dependency => new XElement(XName.Get("edge", mgraphRootNamespace), new object[] {new XAttribute(XName.Get("id"), allDependencies.IndexOf(dependency)), new XAttribute(XName.Get("source"), allModules.IndexOf(dependency.Consumer)), new XAttribute(XName.Get("target"), allModules.IndexOf(dependency.Provider))}))
-                                              }
-                                     )
-                    )
+                        new XElement(XName.Get("graph", mgraphRootNamespace),
+                            new object[] {
+                                new XAttribute(XName.Get("id"), "G"),
+                                new XAttribute(XName.Get("edgedefault"), "directed"),
+                                new XAttribute(XName.Get("parse.nodes"), "8"),
+                                new XAttribute(XName.Get("parse.edges"), "7"),
+                                new XAttribute(XName.Get("parse.order"), "nodesfirst"),
+                                new XAttribute(XName.Get("parse.nodeids"), "free"),
+                                new XAttribute(XName.Get("parse.edgeids"), "free"),
+                                allModules.Select(module => new XElement(XName.Get("node", mgraphRootNamespace), new object[] {new XAttribute(XName.Get("id"), module.Name), new XAttribute(XName.Get("desc"), allModules.IndexOf(module))})),
+                                allDependencies.Select(dependency => new XElement(XName.Get("edge", mgraphRootNamespace), new object[] {new XAttribute(XName.Get("id"), allDependencies.IndexOf(dependency)), new XAttribute(XName.Get("source"), allModules.IndexOf(dependency.Consumer)), new XAttribute(XName.Get("target"), allModules.IndexOf(dependency.Provider))}))
+                            }
+                            )
+                        )
                 }
                 );
 
@@ -188,100 +157,100 @@ namespace Aderant.Build.DependencyAnalyzer {
             XDocument document = new XDocument(
                 new object[] {
                     new XElement(XName.Get("DirectedGraph", dgmlRootNamespace),
-                                 new XElement(XName.Get("Nodes", dgmlRootNamespace),
-                                              new object[] {
-                                                  allModules.Select(module => new XElement(XName.Get("Node", dgmlRootNamespace),
-                                                                                           new object[] {
-                                                                                               new XAttribute(XName.Get("Id"), allModules.IndexOf(module)),
-                                                                                               new XAttribute(XName.Get("Label"), module.Name)
-                                                                                           })),
-                                                  ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((item, index) =>
-                                                                                                                              new XElement(XName.Get("Node", dgmlRootNamespace),
-                                                                                                                                           new object[] {
-                                                                                                                                               new XAttribute(XName.Get("Id"), string.Format("Build{0}", index)),
-                                                                                                                                               new XAttribute(XName.Get("Group"), "Expanded"),
-                                                                                                                                               new XAttribute(XName.Get("Label"), string.Format("Build Level {0}", index))
-                                                                                                                                           })))
-                                              }
-                                     ),
-                                 new XElement(XName.Get("Links", dgmlRootNamespace),
-                                              new object[] {
-                                                  allDependencies.Select(dependency => new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
-                                                      new XAttribute(XName.Get("Consumer"), allModules.IndexOf(dependency.Consumer)),
-                                                      new XAttribute(XName.Get("Provider"), allModules.IndexOf(dependency.Provider))
-                                                  })),
-                                                  ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((build, levelIndex) => build.Modules.Select(item =>
-                                                                                                                                                                          new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
-                                                                                                                                                                              new XAttribute(XName.Get("Source"), string.Format("Build{0}", levelIndex)),
-                                                                                                                                                                              new XAttribute(XName.Get("Target"), allModules.IndexOf(item)),
-                                                                                                                                                                              new XAttribute(XName.Get("Category"), "Contains")
-                                                                                                                                                                          }))
-                                                  ))
-                                              }
-                                     ),
-                                 new XElement(XName.Get("Categories", dgmlRootNamespace),
-                                              new object[] {
-                                                  new XElement(XName.Get("Category", dgmlRootNamespace), new object[] {
-                                                      new XAttribute(XName.Get("Id"), "Contains"),
-                                                      new XAttribute(XName.Get("Label"), "Contans"),
-                                                      new XAttribute(XName.Get("CanBeDataDriven"), "False"),
-                                                      new XAttribute(XName.Get("CanLinkedNodesBeDataDriven"), "True"),
-                                                      new XAttribute(XName.Get("IncomingActionLabel"), "Contained By"),
-                                                      new XAttribute(XName.Get("IsContainment"), "True"),
-                                                      new XAttribute(XName.Get("OutgoingActionLabel"), "Contains"),
-                                                  })
-                                              }),
-                                 new XElement(XName.Get("Properties", dgmlRootNamespace), new object[] {
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "Label"),
-                                                  new XAttribute("Label", "Label"),
-                                                  new XAttribute("Description", "Displayable label of an Annotatable object"),
-                                                  new XAttribute("DataType", "System.String")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "CanBeDataDriven"),
-                                                  new XAttribute("Label", "CanBeDataDriven"),
-                                                  new XAttribute("Description", "CanBeDataDriven"),
-                                                  new XAttribute("DataType", "System.Boolean")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "CanLinkedNodesBeDataDriven"),
-                                                  new XAttribute("Label", "CanLinkedNodesBeDataDriven"),
-                                                  new XAttribute("Description", "CanLinkedNodesBeDataDriven"),
-                                                  new XAttribute("DataType", "System.Boolean")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "GraphDirection"),
-                                                  new XAttribute("DataType", "Microsoft.VisualStudio.Progression.Layout.GraphDirection")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "Group"),
-                                                  new XAttribute("Label", "Group"),
-                                                  new XAttribute("Description", "Group"),
-                                                  new XAttribute("DataType", "Microsoft.VisualStudio.Progression.GraphModel.GroupStyle")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "IncomingActionLabel"),
-                                                  new XAttribute("Label", "IncomingActionLabel"),
-                                                  new XAttribute("Description", "IncomingActionLabel"),
-                                                  new XAttribute("DataType", "System.String")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "IsContainment"),
-                                                  new XAttribute("DataType", "System.Boolean")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "Layout"),
-                                                  new XAttribute("DataType", "System.String")
-                                                                                                   ),
-                                     new XElement("Property", dgmlRootNamespace,
-                                                  new XAttribute("Id", "OutgoingActionLabel"),
-                                                  new XAttribute("Label", "OutgoingActionLabel"),
-                                                  new XAttribute("Description", "OutgoingActionLabel"),
-                                                  new XAttribute("DataType", "System.String")
-                                                                                                   )
-                                 })
-                    )
+                        new XElement(XName.Get("Nodes", dgmlRootNamespace),
+                            new object[] {
+                                allModules.Select(module => new XElement(XName.Get("Node", dgmlRootNamespace),
+                                    new object[] {
+                                        new XAttribute(XName.Get("Id"), allModules.IndexOf(module)),
+                                        new XAttribute(XName.Get("Label"), module.Name)
+                                    })),
+                                ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((item, index) =>
+                                    new XElement(XName.Get("Node", dgmlRootNamespace),
+                                        new object[] {
+                                            new XAttribute(XName.Get("Id"), string.Format("Build{0}", index)),
+                                            new XAttribute(XName.Get("Group"), "Expanded"),
+                                            new XAttribute(XName.Get("Label"), string.Format("Build Level {0}", index))
+                                        })))
+                            }
+                            ),
+                        new XElement(XName.Get("Links", dgmlRootNamespace),
+                            new object[] {
+                                allDependencies.Select(dependency => new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
+                                    new XAttribute(XName.Get("Consumer"), allModules.IndexOf(dependency.Consumer)),
+                                    new XAttribute(XName.Get("Provider"), allModules.IndexOf(dependency.Provider))
+                                })),
+                                ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((build, levelIndex) => build.Modules.Select(item =>
+                                    new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
+                                        new XAttribute(XName.Get("Source"), string.Format("Build{0}", levelIndex)),
+                                        new XAttribute(XName.Get("Target"), allModules.IndexOf(item)),
+                                        new XAttribute(XName.Get("Category"), "Contains")
+                                    }))
+                                    ))
+                            }
+                            ),
+                        new XElement(XName.Get("Categories", dgmlRootNamespace),
+                            new object[] {
+                                new XElement(XName.Get("Category", dgmlRootNamespace), new object[] {
+                                    new XAttribute(XName.Get("Id"), "Contains"),
+                                    new XAttribute(XName.Get("Label"), "Contans"),
+                                    new XAttribute(XName.Get("CanBeDataDriven"), "False"),
+                                    new XAttribute(XName.Get("CanLinkedNodesBeDataDriven"), "True"),
+                                    new XAttribute(XName.Get("IncomingActionLabel"), "Contained By"),
+                                    new XAttribute(XName.Get("IsContainment"), "True"),
+                                    new XAttribute(XName.Get("OutgoingActionLabel"), "Contains"),
+                                })
+                            }),
+                        new XElement(XName.Get("Properties", dgmlRootNamespace), new object[] {
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "Label"),
+                                new XAttribute("Label", "Label"),
+                                new XAttribute("Description", "Displayable label of an Annotatable object"),
+                                new XAttribute("DataType", "System.String")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "CanBeDataDriven"),
+                                new XAttribute("Label", "CanBeDataDriven"),
+                                new XAttribute("Description", "CanBeDataDriven"),
+                                new XAttribute("DataType", "System.Boolean")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "CanLinkedNodesBeDataDriven"),
+                                new XAttribute("Label", "CanLinkedNodesBeDataDriven"),
+                                new XAttribute("Description", "CanLinkedNodesBeDataDriven"),
+                                new XAttribute("DataType", "System.Boolean")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "GraphDirection"),
+                                new XAttribute("DataType", "Microsoft.VisualStudio.Progression.Layout.GraphDirection")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "Group"),
+                                new XAttribute("Label", "Group"),
+                                new XAttribute("Description", "Group"),
+                                new XAttribute("DataType", "Microsoft.VisualStudio.Progression.GraphModel.GroupStyle")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "IncomingActionLabel"),
+                                new XAttribute("Label", "IncomingActionLabel"),
+                                new XAttribute("Description", "IncomingActionLabel"),
+                                new XAttribute("DataType", "System.String")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "IsContainment"),
+                                new XAttribute("DataType", "System.Boolean")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "Layout"),
+                                new XAttribute("DataType", "System.String")
+                                ),
+                            new XElement("Property", dgmlRootNamespace,
+                                new XAttribute("Id", "OutgoingActionLabel"),
+                                new XAttribute("Label", "OutgoingActionLabel"),
+                                new XAttribute("Description", "OutgoingActionLabel"),
+                                new XAttribute("DataType", "System.String")
+                                )
+                        })
+                        )
                 }
                 );
 

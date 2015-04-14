@@ -13,7 +13,7 @@
   <UsingTask
     TaskName="GetAssembliesToSign"
     TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll">
     <ParameterGroup>
       <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
@@ -64,10 +64,10 @@
               ItemName="Assemblies" />
     </GetAssembliesToSign>    
 
-    <Message Text = "Signing application: %(Assemblies.Filename)%(Assemblies.Extension)" />
+    <Message Text = "Signing application: %(Assemblies.Filename)%(Assemblies.Extension)" Condition="'@(Assemblies)' != ''" />
 
     <Exec
-      Condition="@(Assemblies) != '' And '$(SignToolPath)' != ''"
+      Condition="'@(Assemblies)' != '' And '$(SignToolPath)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
       Command='"$(SignToolPath)" sign /f "$(BuildScriptsDirectory)aderant.pfx" /p "rugby ball" "%(Assemblies.FullPath)"' />

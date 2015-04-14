@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Globalization;
 using System.Linq;
 using System.Management.Automation.Host;
-using System.Text;
+using DependencyAnalyzer.Logging;
 
-namespace DependencyAnalyzer.Logging {
+namespace Aderant.Build.Logging {
     /// <summary>
     /// A PowerShell implementation of the <see cref="ILogger"/> interface. 
     /// Allows internal components to write to a PowerShell host.
@@ -26,7 +25,7 @@ namespace DependencyAnalyzer.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
         public void Debug(string message, params string[] args) {
-            host.UI.WriteDebugLine(string.Format(message, args));
+            host.UI.WriteDebugLine(FormatMessage(message, args));
         }
 
         /// <summary>
@@ -35,7 +34,7 @@ namespace DependencyAnalyzer.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
         public void Log(string message, params string[] args) {
-            host.UI.WriteLine(string.Format(message, args));
+            host.UI.WriteLine(FormatMessage(message, args));
         }
 
         /// <summary>
@@ -44,16 +43,23 @@ namespace DependencyAnalyzer.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
         public void Warning(string message, params string[] args) {
-            host.UI.WriteWarningLine(string.Format(message, args));
+            host.UI.WriteWarningLine(FormatMessage(message, args));
         }
-        
+
         /// <summary>
         /// Writes an error message.
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
         public void Error(string message, params string[] args) {
-            host.UI.WriteErrorLine(string.Format(message, args));
+            host.UI.WriteErrorLine(FormatMessage(message, args));
+        }
+
+        private static string FormatMessage(string message, string[] args) {
+            if (args != null) {
+                message = string.Format(CultureInfo.CurrentCulture, message, args);
+            }
+            return message;
         }
     }
 }

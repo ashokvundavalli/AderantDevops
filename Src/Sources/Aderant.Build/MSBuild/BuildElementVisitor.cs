@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.MSBuild {
 
@@ -25,9 +26,10 @@ namespace Aderant.Build.MSBuild {
 
         private XElement CreateRoot(Project project) {
             return new XElement(Xmlns + "Project",
-                                new XAttribute("ToolsVersion", "4.0"),
+                                new XAttribute("ToolsVersion", ToolLocationHelper.CurrentToolsVersion),
                                 new XAttribute("DefaultTargets", project != null && project.DefaultTarget != null ? project.DefaultTarget.Name : string.Empty),
-                                new XElement(Xmlns + "Import", new XAttribute("Project", @"$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets")));
+                                new XElement(Xmlns + "Import", new XAttribute("Project", @"$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets")),
+                                new XComment("Properties is a special element understood by the MS Build task and will associate the unique properties to each project"));
         }
 
         public void Visit(Project project) {

@@ -10,6 +10,9 @@ namespace Aderant.Build {
 
     internal static class BuildInfrastructureHelper {
 
+        internal static string PathToBuildScriptsFromModules = Path.Combine("Build.Infrastructure", "Src", "Build");
+
+
         /// <summary>
         /// Updates the path to module build project within a TFSBuild.proj
         /// </summary>
@@ -30,7 +33,7 @@ namespace Aderant.Build {
                 XAttribute toolsVersion = project.Root.Attribute("ToolsVersion");
                 if (toolsVersion != null) {
                     if (toolsVersion.Value == "3.5") {
-                        toolsVersion.SetValue("4.0");
+                        toolsVersion.SetValue("12.0");
                     }
                 }
 

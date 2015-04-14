@@ -1,11 +1,11 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Microsoft.TeamFoundation.VersionControl.Common;
 
 namespace Aderant.Build.Providers {
-
     internal static class PathHelper {
         /// <summary>
         /// Combines an arbitrary number of paths.
@@ -39,7 +39,7 @@ namespace Aderant.Build.Providers {
                 branchPath = Path.Combine(branchPath, "Modules");
             }
 
-            return Aggregate(branchPath, expertModule.Name, "Dependencies");
+            return Path.Combine(branchPath, expertModule.Name, "Dependencies");
         }
 
         /// <summary>
@@ -54,9 +54,9 @@ namespace Aderant.Build.Providers {
             }
 
             if (expertModule.ModuleType == ModuleType.ThirdParty) {
-                return Aggregate(branchPath, expertModule.Name, "Bin");
+                return Path.Combine(branchPath, expertModule.Name, "Bin");
             }
-            return Aggregate(branchPath, expertModule.Name, "Bin", "Module");
+            return Path.Combine(branchPath, expertModule.Name, "Bin", "Module");
         }
 
         /// <summary>
@@ -66,21 +66,40 @@ namespace Aderant.Build.Providers {
         /// <returns>The two part branch name</returns>
         /// <exception cref="System.InvalidOperationException">Thrown when name detection fails</exception>
         public static string GetBranch(string path) {
-            string[] parts = path.Split(new char[] {Path.DirectorySeparatorChar}, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = path.Split(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+
+            string part1 = null;
+            string part2 = null;
 
             for (int i = 0; i < parts.Length; i++) {
-                if (parts[i].Equals("dev", StringComparison.OrdinalIgnoreCase)) {
-                    return Path.Combine(parts[i], parts[i + 1]);
+                if (parts[i].Equals("dev", StringComparison.OrdinalIgnoreCase) || parts[i].Equals("releases", StringComparison.OrdinalIgnoreCase) || parts[i].Equals("automation", StringComparison.OrdinalIgnoreCase)) {
+                    part1 = parts[i];
+                    part2 = parts[i + 1];
+
+                    break;
                 }
-                if (parts[i].Equals("releases", StringComparison.OrdinalIgnoreCase)) {
-                    return Path.Combine(parts[i], parts[i + 1]);
-                }
+
                 if (parts[i].Equals("main", StringComparison.OrdinalIgnoreCase)) {
-                    return parts[i];
+                    part1 = parts[i];
+
+                    break;
                 }
             }
 
-            throw new InvalidOperationException("Unknown branch: " + path);
+            if (part1 == null) {
+                if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TF_BUILD"))) {
+                    throw new InvalidOperationException("Unknown branch: " + path);
+                }
+                return path;
+            }
+
+            part1 = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(part1);
+
+            if (part2 != null) {
+                part2 = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(part2);
+            }
+
+            return Path.Combine(part1, part2 ?? string.Empty);
         }
 
         /// <summary>
@@ -90,9 +109,7 @@ namespace Aderant.Build.Providers {
         /// The path to module build.
         /// </value>
         public static string PathToModuleBuild {
-            get {
-                return @"Build.Infrastructure\Src\Build\ModuleBuild.proj";
-            }
+            get { return @"Build.Infrastructure\Src\Build\ModuleBuild.proj"; }
         }
 
         /// <summary>
@@ -102,9 +119,7 @@ namespace Aderant.Build.Providers {
         /// The path to module build.
         /// </value>
         public static string PathToBuildOrderProject {
-            get {
-                return @"Modules.proj";
-            }
+            get { return @"Modules.proj"; }
         }
 
         /// <summary>
@@ -114,9 +129,7 @@ namespace Aderant.Build.Providers {
         /// The path to product manifest.
         /// </value>
         public static string PathToProductManifest {
-            get {
-                return @"Build.Infrastructure\Src\Package\ExpertManifest.xml";
-            }
+            get { return @"Build.Infrastructure\Src\Package\ExpertManifest.xml"; }
         }
 
         /// <summary>
@@ -146,7 +159,21 @@ namespace Aderant.Build.Providers {
                 return null;
             }
             throw new ArgumentOutOfRangeException("serverItem", "Must start with $");
+        }
 
+        public static string ChangeBranch(string dropLocationDirectory, string otherBranch) {
+            string branch = GetBranch(dropLocationDirectory);
+
+            int index = dropLocationDirectory.IndexOf(branch, StringComparison.OrdinalIgnoreCase);
+            string substring = dropLocationDirectory.Substring(0, index);
+
+            dropLocationDirectory = Path.Combine(substring, otherBranch);
+
+            if (!Directory.Exists(dropLocationDirectory)) {
+                throw new DirectoryNotFoundException("The path " + dropLocationDirectory + " does not exist");
+            }
+
+            return dropLocationDirectory;
         }
     }
 }

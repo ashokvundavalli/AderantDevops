@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  ToolsVersion="12.0">
+
+  <!--
+    ==========================================================================================
+      Prepare Build Environment
+      Builds the Build.Infrastructure assemblies and tools required by the build process
+    ==========================================================================================
+  -->
+  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' == 'true'">
+    <!-- This is just a stub -->
+  </Target>
+  
+  
+  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
+    
+    <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
+
+    <PropertyGroup>
+      <!-- Inject per CSharp project overrides. This target is imported once for each CSharp project and allows us access to project level variables -->
+      <CustomAfterMicrosoftCSharpTargets>$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
+      <CustomAfterMicrosoftCommonTargets>$(BuildScriptsDirectory)Aderant.CustomAfterMicrosoftCommon.targets</CustomAfterMicrosoftCommonTargets>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Projects Include="$(BuildScriptsDirectory)..\Sources\FxCopCmd\FxCopCmd.csproj"></Projects>
+      <Projects Include="$(BuildScriptsDirectory)..\Sources\Aderant.Build\Aderant.Build.csproj"></Projects>
+    </ItemGroup>
+
+    <MSBuild
+      Projects="@(Projects)"
+      BuildInParallel="true"
+      UnloadProjectsOnCompletion="true" />
+  
+  </Target>
+  
+</Project>

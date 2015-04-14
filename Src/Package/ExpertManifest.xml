@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
     <Modules>
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
@@ -21,7 +21,7 @@
         <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
         <Module Name="Database" AssemblyVersion="1.8.0.0" />
-        <Module Name="Expert.Help" />
+        <Module Name="Expert.Help" GetAction="branch" Path="Main" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Validation" AssemblyVersion="1.8.0.0" />
@@ -58,7 +58,7 @@
         <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
-        <Module Name="Marketing.Help" />
+        <Module Name="Marketing.Help" GetAction="branch" Path="Main" />
         <Module Name="Packages" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
@@ -94,7 +94,7 @@
         <Module Name="Thirdparty.AvalonDock.2.0" />
         <Module Name="ThirdParty.Bootstrap" />
         <Module Name="ThirdParty.BsnGoldParser" />
-		    <Module Name="Thirdparty.CryptoJS" />
+        <Module Name="ThirdParty.CryptoJS" />
         <Module Name="ThirdParty.DBGEN" />
         <Module Name="Thirdparty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
@@ -127,15 +127,13 @@
         <Module Name="Thirdparty.Microsoft.Build" />
         <Module Name="Thirdparty.Microsoft.Data" />
         <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
-        <Module Name="ThirdParty.Microsoft.DocumentFormat" />
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
         <Module Name="Thirdparty.Microsoft.ExpressionBlendSdk" />
         <Module Name="Thirdparty.Microsoft.Linq.Dynamic" />
         <Module Name="Thirdparty.Microsoft.Net4" />
         <Module Name="Thirdparty.Microsoft.NTRights" />
         <Module Name="ThirdParty.Microsoft.OData" />
-        <Module Name="Thirdparty.Microsoft.Office11.Interop" />
-        <Module Name="Thirdparty.Microsoft.Office12.Interop" />
+        <Module Name="Thirdparty.Microsoft.Office.Interop" />
         <Module Name="ThirdParty.Microsoft.OpenXmlPowerTools" />
         <Module Name="Thirdparty.Microsoft.Practices" />
         <Module Name="Thirdparty.Microsoft.UrlRewrite" />
@@ -162,7 +160,7 @@
         <Module Name="Thirdparty.SQLCE" />
         <Module Name="ThirdParty.SquishIt" />
         <Module Name="ThirdParty.TimerCompatibility.1.0" />
-		    <Module Name="Thirdparty.Toastr" />
+        <Module Name="ThirdParty.Toastr" />
         <Module Name="ThirdParty.Underscore" />
         <Module Name="ThirdParty.WatiN" />
         <Module Name="Thirdparty.Wintellect" />
@@ -174,8 +172,8 @@
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
-        <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />

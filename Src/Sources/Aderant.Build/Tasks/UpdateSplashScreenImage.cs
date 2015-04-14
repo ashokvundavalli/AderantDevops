@@ -1,5 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Resources;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -8,32 +11,34 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public sealed class UpdateSplashScreenImage : Task {
-        [Required]
-        public ITaskItem[] ProductInfo { get; set; }
 
+    public sealed class UpdateSplashScreenImage : TrackedSourcesBuildTask {
+
+        protected override string WriteTLogFilename {
+            get { return "UpdateSplashScreenImage.write.TLog"; }
+        }
+
+        protected override string[] ReadTLogFilenames {
+            get {
+                return new[] {
+                    "UpdateSplashScreenImage.read.TLog"
+                };
+            }
+        }
+
+        [Required]
+        public string Text { get; set; }
+
+        [Required]
         public string Version { get; set; }
 
-        public string SplashScreenStyle { get; set; }
-
-        public override bool Execute() {
-            foreach (ITaskItem taskItem in ProductInfo) {
-                string splashScreenPath = taskItem.ItemSpec;
-
-                string productName = taskItem.GetMetadata("ProductName");
-                if (string.IsNullOrEmpty(productName)) {
-                    throw new ArgumentNullException("No product name was found for splash screen " +
-                                                    splashScreenPath);
-                }
-
-                string style = taskItem.GetMetadata("SplashScreenStyle");
-                if (!string.IsNullOrEmpty(style)) {
-                    SplashScreenStyle = style;
-                }
-
-                UpdateSplashScreen(splashScreenPath, productName, SplashScreenStyle);
-            }
-
+        public string Style { get; set; }
+        
+        protected override bool ExecuteInternal() {
+            var splashScreen = Sources[0];
+            string splashScreenPath = splashScreen.GetMetadata("FullPath");
+            
+            UpdateSplashScreen(splashScreenPath, Text, Style);
 
             return !Log.HasLoggedErrors;
         }
@@ -49,13 +54,20 @@ namespace Aderant.Build.Tasks {
             }
 
             var file = new FileInfo(splashScreenPath);
+            FileInfo copy = null;
             if (file.Exists) {
-                file.IsReadOnly = false;
-                file.Refresh();
+                if (OutputFile != null) {
+                    Directory.CreateDirectory(Path.GetDirectoryName(OutputFile));
+
+                    copy = file.CopyTo(OutputFile, true);
+                    copy.IsReadOnly = false;
+                    copy.Refresh();
+                }
+            } else {
+                throw new FileNotFoundException("Could not find the file", file.FullName);
             }
 
-            BitmapFrame originalImageSource = BitmapFrame.Create(new Uri(splashScreenPath), BitmapCreateOptions.None,
-                                                                 BitmapCacheOption.OnLoad);
+            BitmapFrame originalImageSource = BitmapFrame.Create(new Uri(file.FullName), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
             var visual = new DrawingVisual();
 
             using (DrawingContext drawingContext = visual.RenderOpen()) {
@@ -80,9 +92,10 @@ namespace Aderant.Build.Tasks {
 
             encoder.Frames.Add(bitmapFrame);
 
-            using (FileStream stream = file.OpenWrite()) {
-                encoder.Save(stream);
-            }
+            if (copy != null)
+                using (FileStream stream = copy.OpenWrite()) {
+                    encoder.Save(stream);
+                }
         }
 
         private SplashScreenText[] CreateSplashScreenText(string productName) {

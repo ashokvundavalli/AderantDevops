@@ -4,8 +4,8 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Host;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Aderant.Build.Providers;
-using DependencyAnalyzer.Logging;
 using Lapointe.PowerShell.MamlGenerator.Attributes;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
@@ -82,7 +82,7 @@ Checking back in to TFS must be done manually.")]
             string serverPathToModule;
             Workspace wss = Branch(collection, out serverPathToModule);
 
-            GetBuildInfrastructure(wss, Path.Combine(Providers.PathHelper.GetServerPathToModuleDirectory(TargetBranch), "Build.Infrastructure"));
+            GetBuildInfrastructure(wss, Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), "Build.Infrastructure"));
 
             BuildInfrastructureHelper.UpdatePathToModuleBuildProject(wss, serverPathToModule, ParameterHelper.GetDropPath(TargetBranch, SessionState));
 
@@ -104,8 +104,8 @@ Checking back in to TFS must be done manually.")]
         }
 
         private Workspace Branch(TfsTeamProjectCollection collection, out string fullTargetServerPath) {
-            string fullSourceServerPath = Path.Combine(Providers.PathHelper.GetServerPathToModuleDirectory(SourceBranch), ModuleName);
-            fullTargetServerPath = Path.Combine(Providers.PathHelper.GetServerPathToModuleDirectory(TargetBranch), ModuleName);
+            string fullSourceServerPath = Path.Combine(PathHelper.GetServerPathToModuleDirectory(SourceBranch), ModuleName);
+            fullTargetServerPath = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), ModuleName);
 
             Workspace workspace = null;
 
@@ -131,7 +131,7 @@ Checking back in to TFS must be done manually.")]
 
         private void GetBuildFilesForAllModules(Workspace wss) {
             // Get and checkout ExpertManifest
-            string serverPathToManifest = Path.Combine(Providers.PathHelper.GetServerPathToModuleDirectory(TargetBranch), Providers.PathHelper.PathToProductManifest);
+            string serverPathToManifest = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToProductManifest);
 
             Host.UI.WriteLine("Getting latest: " + serverPathToManifest);
             wss.Get(new string[] {serverPathToManifest}, VersionSpec.Latest, RecursionType.None, GetOptions.None);
@@ -176,7 +176,7 @@ Checking back in to TFS must be done manually.")]
             Host.UI.WriteLine("Updating product manifest");
 
             string moduleDirectory = wss.TryGetLocalItemForServerItem(PathHelper.GetServerPathToModuleDirectory(TargetBranch));
-            ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), new WorkspaceModuleProvider(moduleDirectory));
+            ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), ExpertManifest.Load(moduleDirectory));
             updater.Update(SourceBranch, TargetBranch);
         }
 
@@ -197,7 +197,7 @@ Checking back in to TFS must be done manually.")]
 
                     string localPath = wss.TryGetLocalItemForServerItem(PathHelper.GetServerPathToModuleDirectory(TargetBranch));
 
-                    string sequence = BuildProjectSequencer.CreateOrUpdateBuildSequence(wss, localProject, new WorkspaceModuleProvider(localPath));
+                    string sequence = BuildProjectSequencer.CreateOrUpdateBuildSequence(wss, localProject, ExpertManifest.Load(localPath));
                     File.WriteAllText(localProject, sequence);
                 }
             }

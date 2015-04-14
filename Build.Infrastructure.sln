@@ -1,17 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2770-4455-94CF-489136D6405A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Profile", "Profile", "{D6EF2A47-2169-41BB-82BE-538DFB8D7CC1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
 	ProjectSection(SolutionItems) = preProject
+		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
+		Src\Build\Aderant.Build.Infrastructure.targets = Src\Build\Aderant.Build.Infrastructure.targets
+		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
 		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
 		Src\Build\Aderant.CodeSigning.targets = Src\Build\Aderant.CodeSigning.targets
-		Src\Build\Aderant.Product.targets = Src\Build\Aderant.Product.targets
+		Src\Build\Aderant.CSharp.targets = Src\Build\Aderant.CSharp.targets
+		Src\Build\Aderant.CustomAfterMicrosoftCommon.targets = Src\Build\Aderant.CustomAfterMicrosoftCommon.targets
+		Src\Build\Aderant.wpp.content.proj = Src\Build\Aderant.wpp.content.proj
 		Src\Build\Aderant.wpp.targets = Src\Build\Aderant.wpp.targets
 		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
+		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
@@ -37,11 +45,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build", "Src\Source
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Build", "Test\UnitTest.Build\UnitTest.Build.csproj", "{DC82E590-6F89-42E2-9A22-54375D01A492}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD66D46-70EB-4965-8C51-09738F486E31}"
+	ProjectSection(SolutionItems) = preProject
+		Src\Package\GetProduct.ps1 = Src\Package\GetProduct.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 4
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs:8080/tfs/aderant
+		SccTeamFoundationServer = http://svtfs303:8080/tfs/aderant
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = Src\\Sources\\FxCopCmd\\FxCopCmd.csproj
 		SccProjectName1 = Src/Sources/FxCopCmd
@@ -76,8 +89,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{DC82E590-6F89-42E2-9A22-54375D01A492} = {31A06791-2770-4455-94CF-489136D6405A}
 		{B4B175EF-44C3-4EE4-BCAE-3B796D6A986D} = {D6EF2A47-2169-41BB-82BE-538DFB8D7CC1}
 		{3FD46DC7-F04A-4136-B0B9-EAE5722C22F0} = {D6EF2A47-2169-41BB-82BE-538DFB8D7CC1}
+		{DC82E590-6F89-42E2-9A22-54375D01A492} = {31A06791-2770-4455-94CF-489136D6405A}
 	EndGlobalSection
 EndGlobal

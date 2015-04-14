@@ -1,0 +1,193 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  ToolsVersion="12.0">
+  
+  <PropertyGroup>
+    <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildThisFileDirectory)</DependenciesDirectory>
+    <DependenciesDirectory Condition="!HasTrailingSlash('$(DependenciesDirectory)')">$(DependenciesDirectory)\</DependenciesDirectory>
+  </PropertyGroup>
+
+  <!-- 
+    We need to share JavaScript, CSS or images files amongst several web applications.
+    
+    This target takes care of including the shared content from the dependency directory into the project and importantly maintaining 
+    the F5 experience by virtue of the CopyLinkedContentFiles target  
+  -->
+
+  <!-- 
+    DependencyContent item group defines the unprocessed content provided by dependency modules
+    
+    There is a small annoyance with the packaging structure which we need to transform before including 
+    the content in the csproj
+    
+    When the web zip is extracted the output looks like this
+    
+    <module dir>\Web.Expenses\Dependencies\Web.Foundation\Scripts
+    
+    We want to reverse the Web.Foundation\Scripts so it becomes Scripts\Web.Foundation but the RecursiveDir metadata
+    item will give us the former name. To get around this, we will include all content in a pending item group and add the
+    actual include path we want as a metadata item and use this over RecursiveDir. 
+    The end result is when the content is finally included in the project the module that provides the dependency (Web.Foundation etc) 
+    is the container of the content in the project tree.
+    
+    The item group excludes are some here make sure we don't include the recursive heirachy 
+    eg -> Dependencies\Web.Presentation\Content\Web.Foundation
+  -->
+
+  <!--
+    If there was a better way to do this with batching (a loop) ... I would but wildcards don't get expanded
+    when you use the MS Build item selector (@->) so we stuck with a hardcoded list of folders to process.
+    Ideally this syntax would work @(ListOfFolders->'$(DependenciesDirectory)Web.*\%(Identity\*.js') ... but it doesn't
+  -->
+
+  <!-- Scripts -->
+  <ItemGroup>
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\Scripts\*.js">
+      <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('Scripts\', ''))</RelativePath>
+    </ExternalContent>
+    
+    <ExternalContent Include="$(DependenciesDirectory)ThirdParty.*\*.js">
+      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
+    </ExternalContent>
+  </ItemGroup>
+
+  <!-- TypeScript -->
+  <ItemGroup>
+    <ExternalTypeScript Include="$(DependenciesDirectory)ThirdParty.*\*.d.ts">
+      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
+    </ExternalTypeScript>
+  </ItemGroup>
+
+  <!-- Content -->
+  <ItemGroup>
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\Content\**\*" 
+                     Exclude="$(DependenciesDirectory)Web.*\Content\**\*.js;
+                              $(DependenciesDirectory)Web.*\Content\**\*.d.ts;
+                              $(DependenciesDirectory)Web.*\Content\Web.*\**">
+      <RelativePath>Content\$([System.String]::Copy('%(RecursiveDir)').Replace('Content\', ''))</RelativePath>
+    </ExternalContent>
+    
+    <ExternalContent Include="$(DependenciesDirectory)ThirdParty.*\**\*" 
+                     Exclude="$(DependenciesDirectory)ThirdParty.*\**\.js;
+                              $(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
+      <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
+    </ExternalContent>
+  </ItemGroup>
+
+  <!--ViewModels--> 
+  <ItemGroup>
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\ViewModels\**\*.js" 
+                     Exclude="$(DependenciesDirectory)Web.*\ViewModels\Web.*\**">
+      <RelativePath>ViewModels\$([System.String]::Copy('%(RecursiveDir)').Replace('ViewModels\', ''))</RelativePath>
+    </ExternalContent>
+  </ItemGroup>
+
+  <!--Authentication--> 
+  <ItemGroup>
+    <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\**\*.aspx"
+                 Exclude="$(DependenciesDirectory)Web.*\Authentication\Web.*\**">
+      <RelativePath>Authentication\$([System.String]::Copy('%(RecursiveDir)').Replace('Authentication\', ''))</RelativePath>
+    </AspxContent>
+  </ItemGroup>
+
+  <!--ManualLogOn--> 
+  <ItemGroup>
+    <AspxContent Include="$(DependenciesDirectory)Web.*\ManualLogOn\*.aspx"
+                 Exclude="$(DependenciesDirectory)Web.*\ManualLogOn\Web.*\**">
+      <RelativePath>ManualLogOn\$([System.String]::Copy('%(RecursiveDir)').Replace('%(RecursiveDir)', ''))</RelativePath>
+    </AspxContent>
+  </ItemGroup>
+
+  <!--Helpers--> 
+  <ItemGroup>
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\Helpers\*.js"
+                     Exclude="$(DependenciesDirectory)Web.*\Helpers\Web.*\**">
+      <RelativePath>Helpers\$([System.String]::Copy('%(RecursiveDir)').Replace('Helpers\', ''))</RelativePath>
+    </ExternalContent>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\Views\**\Shared\**\*.cshtml"
+                     Exclude="$(DependenciesDirectory)Web.*\Views\**\Shared\**\Web.*\**">
+       <!--Views are different - Web.Presentation\Views\Shared => Web.Time\Views\Shared\Web.Presentation-->     
+      <RelativePath>Views\Shared\$([System.String]::Copy('%(RecursiveDir)').Replace('Views\Shared\', ''))</RelativePath>
+    </ExternalContent>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="@(ExternalContent)">
+      <Link>%(RelativePath)\%(Filename)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
+
+    <TypeScriptCompile Include="@(ExternalTypeScript)">
+      <Link>%(RelativePath)\%(Filename)%(Extension)</Link>
+      <Visible>true</Visible>
+    </TypeScriptCompile>
+  </ItemGroup>
+
+
+  <Choose>
+    <When Condition=" '$(AssemblyName)' == 'Web.Foundation' ">
+      <!-- We don't need to include Logon.aspx inside Web.Foundation as it provides this file -->
+      <ItemGroup />
+    </When>
+    <When Condition=" '$(AssemblyName)' != 'Web.Foundation' ">
+      <ItemGroup>
+        <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
+        <Content Include="Authentication\Web.Foundation\LogOn.aspx;ManualLogOn\default.aspx" >
+          <Visible>true</Visible>
+        </Content>
+
+        <Content Include="Authentication\**\*" Exclude="Authentication\**\LogOn.aspx">
+          <Visible>true</Visible>
+        </Content>
+
+        <Content Include="ManualLogOn\**\*" Exclude="ManualLogOn\**\default.aspx">
+          <Visible>true</Visible>
+        </Content>
+      </ItemGroup>
+    </When>
+  </Choose>
+
+
+  <!-- Maintains the F5 experience -->
+  <Target Name="CopyLinkedContentFiles" BeforeTargets="Build;CopyAllFilesToSingleFolderForMsdeploy">
+
+    <!-- Only copy files with the Link attribute set -->
+    <Copy SourceFiles="%(Content.Identity)"
+          DestinationFiles="%(Content.Link)"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"
+          Condition="'%(Content.Link)' != '' And '$(BuildingInsideVisualStudio)' == 'true'" />
+    
+   <!--
+       Aspx content hangs Visual studio if you attempt to add a breakpoint to the file and the file is actually a link (very annoying). 
+       So we need to copy the file instead 
+    -->
+   <Copy SourceFiles="%(AspxContent.Identity)"
+         DestinationFiles="%(AspxContent.RelativePath)\%(Filename)%(Extension)"
+         SkipUnchangedFiles="true"
+         OverwriteReadOnlyFiles="true" />
+    
+  </Target>
+
+  <!-- 
+    Debugging   
+    msbuild Web.Foundation.csproj /target:_ItemGroupDebug
+  -->
+  <Target Name="_ItemGroupDebug">
+    <Message Text="=======RelativePath======="/>
+    <Message Text="$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))" />
+    
+    <Message Text="ExternalContent: %(ExternalContent.RelativePath)%(Filename)%(Extension)" />
+
+    <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
+  
+    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />
+
+    <Message Text="AssemblyName: $(AssemblyName)" />
+  </Target>
+ 
+</Project>

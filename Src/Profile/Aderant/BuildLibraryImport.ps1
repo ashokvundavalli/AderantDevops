@@ -1,4 +1,6 @@
-﻿function GetSymbolicLinkTarget($path) {
+﻿$DebugPreference = 'Continue'
+
+function GetSymbolicLinkTarget($path) {
     Add-Type -MemberDefinition @"
 private const int CREATION_DISPOSITION_OPEN_EXISTING = 3;
 private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
@@ -35,10 +37,10 @@ private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
 }
 
 function BuildProject([string]$actualPath, [bool]$rebuild) {
-	$frameworkPath = "C:\Program Files (x86)\MSBuild\12.0\Bin"
-	if (-not (Test-Path $frameworkPath)) {			
-		$frameworkPath = $([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())
-	}
+    $frameworkPath = "C:\Program Files (x86)\MSBuild\12.0\Bin"
+    if (-not (Test-Path $frameworkPath)) {			
+        $frameworkPath = $([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())
+    }
 
     $buildTool = [System.IO.Path]::Combine($frameworkPath, "MSBuild.exe")
 
@@ -78,17 +80,19 @@ function LoadAssembly([string]$targetAssembly) {
 function UpdateOrBuildAssembly([string]$actualPath) {	
     $targetAssembly = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools\Aderant.Build.dll"))
 
-    if (-not [System.IO.File]::Exists($targetAssembly)) {
-        Write-Host "No Aderant.Build.dll found at $targetAssembly. Creating..."
-        BuildProject $actualPath $false
-    }
+  #  if ([System.Diagnostics.Debugger]::IsAttached -eq $false) {
+        if (-not [System.IO.File]::Exists($targetAssembly)) {
+            Write-Host "No Aderant.Build.dll found at $targetAssembly. Creating..."
+            BuildProject $actualPath $false
+        }
 
-    # Test if the file is older than a day
-    $fileInfo = Get-ChildItem $targetAssembly
-    if ($fileInfo.LastWriteTimeUtc.Date -le [System.DateTime]::UtcNow.AddDays(-1)) {
-        Write-Host "Aderant.Build.dll is out of date. Updating..."
-        BuildProject $actualPath $true
-    }	
+        # Test if the file is older than a day
+        $fileInfo = Get-ChildItem $targetAssembly
+        if ($fileInfo.LastWriteTimeUtc.Date -le [System.DateTime]::UtcNow.AddDays(-1)) {
+            Write-Host "Aderant.Build.dll is out of date. Updating..."
+            BuildProject $actualPath $true
+        }	
+  #  }
 
     # Now actually load the assembly
     LoadAssembly $targetAssembly

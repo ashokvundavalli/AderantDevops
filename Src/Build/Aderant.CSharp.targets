@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="12.0">
+
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == ''" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
+
+  <UsingTask TaskName="UpdateSplashScreenImage"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <UsingTask TaskName="FileUpdate2"
+           AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+           Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <PropertyGroup>
+    <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
+  </PropertyGroup>
+
+  <UsingTask TaskName="GetProductName" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll">
+    <ParameterGroup>
+      <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
+      <ProductName Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            var fullPath = AssemblyInfo.GetMetadata("FullPath");
+            string text = System.IO.File.ReadAllText(fullPath);
+
+            var assemblyTitleExpression = new Regex(@"(AssemblyTitle|AssemblyProduct)\((.*?)\)"); 
+            GroupCollection match = assemblyTitleExpression.Match(text).Groups;
+            string value = match[match.Count - 1].Value;
+
+            if (!string.IsNullOrEmpty(value)) {
+                // Product names for the splash screen don't have Expert in the name, unless you want to run Expert ExpertTime :)
+                ProductName = value.Replace("\"", string.Empty);
+                return true;              
+            }          
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <!--
+    Defining custom targets to execute before individual project compilation starts.
+  -->
+  <PropertyGroup>
+    <CompileDependsOn>
+      CommonBuildUpdateAssemblyInfo;
+      $(CompileDependsOn);
+    </CompileDependsOn>
+  </PropertyGroup>
+
+  <!--
+      Creates modified version of CommonAssemblyInfo.cs without touching the original file
+  -->
+  <Target Name="CommonBuildUpdateAssemblyInfo">
+    <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
+    <ItemGroup>
+      <OriginalAssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
+      <!-- Now remove the original element -->
+      <Compile Remove="@(OriginalAssemblyInfo)" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <OutputCommonAssemblyInfo>@(OriginalAssemblyInfo->'$(IntermediateOutputPath)%(Filename)%(Extension)')</OutputCommonAssemblyInfo>
+    </PropertyGroup>
+
+    <!-- Update copyright, $1, $2 and $4 are capture groups -->
+    <FileUpdate2 Condition="@(OriginalAssemblyInfo) != ''"
+                      
+                 TrackerLogDirectory="$(IntermediateOutputPath)"
+                 Sources="@(OriginalAssemblyInfo)"
+                 OutputFile="$(OutputCommonAssemblyInfo)"
+                 TrackFileAccess="true"
+                 MinimalRebuildFromTracking="true"
+                 
+                 IgnoreCase="true"
+                 Multiline="true"
+                 Singleline="false"
+                 Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
+                 ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4">
+    </FileUpdate2>
+
+    <!-- Include the modified CommonAssemblyInfo.cs file in "Compile" items (instead of the original). -->
+    <ItemGroup>
+      <Compile Include="$(OutputCommonAssemblyInfo)" Condition="@(OriginalAssemblyInfo) != ''" />
+    </ItemGroup>
+
+  </Target>
+
+  <!--
+    Updates the product splash screen without touching the original file
+  -->
+  <Target Name="CommonBuildUpdateSplashscreen"
+          Condition="'$(OutputType)' == 'WinExe' Or '$(OutputType)' == 'winexe'"
+          BeforeTargets="BeforeResolveReferences;CoreBuild">
+    <!--
+      This needs to run before BeforeResolveReferences target otherwise changes Resources item group 
+      is not reflected through out the in memory projecct
+    -->
+
+    <Error Text="Cannot find path to build tools" Condition="'$(BuildToolsDirectory)' == ''" />
+
+    <!-- Find Expert_SplashScreen_ in the "Resource" Items. Remove it from "Resource" Items because we will use a modified version instead. -->
+    <ItemGroup>
+      <OriginalSplashScreen Include="@(Resource)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen_', RegexOptions.IgnoreCase)) And %(Extension) == '.png'">
+        <IsResource>true</IsResource>
+      </OriginalSplashScreen>
+
+      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And $([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen_', RegexOptions.IgnoreCase)) And %(Extension) == '.png'" >
+        <IsSplashScreen>true</IsSplashScreen>
+      </OriginalSplashScreen>
+      
+      <AssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
+
+      <!-- Remove the original splash screen resource node -->
+      <Resource Remove="@(OriginalSplashScreen)" />
+      <SplashScreen Remove="@(OriginalSplashScreen)" />
+    </ItemGroup>
+
+    <GetProductName AssemblyInfo="@(AssemblyInfo)">
+      <Output PropertyName="ExpertProductName" 
+              TaskParameter="ProductName" />
+    </GetProductName>
+
+    <PropertyGroup>
+      <OutputSplashScreen>@(OriginalSplashScreen->'$(IntermediateOutputPath)%(RelativeDir)%(Filename)%(Extension)')</OutputSplashScreen>
+    </PropertyGroup>
+
+    <!-- 
+      This task can return a previously generated file to keep incremental builds working.      
+    -->
+    <PropertyGroup>
+      <SplashScreenText Condition="'$(BuildFlavor)' == 'Debug'">$(ExpertProductName) (DEBUG)</SplashScreenText>
+      <SplashScreenText Condition="'$(BuildFlavor)' != 'Debug'">$(ExpertProductName)</SplashScreenText>
+      <SplashScreenVersion>Version 8</SplashScreenVersion>
+    </PropertyGroup>
+    
+    <UpdateSplashScreenImage
+     Condition="'@(OriginalSplashScreen)' != '' And '$(ExpertProductName)' != ''"
+     
+     TrackerLogDirectory="$(IntermediateOutputPath)"
+     Sources="@(OriginalSplashScreen)"
+     OutputFile="$(OutputSplashScreen)"
+     TrackFileAccess="true"
+     MinimalRebuildFromTracking="true"
+     
+     Text="$(SplashScreenText)"
+     Version="$(SplashScreenVersion)"
+     Style="$(SplashScreenStyle)">
+    </UpdateSplashScreenImage>
+
+    <Message Text="Product Name: $(ExpertProductName)" Condition="' $(ExpertProductName)' != ''" />
+    <Message Text="Splash screen style: $(SplashScreenStyle)" Condition="' $(SplashScreenStyle)' != ''" />
+    <Message Text="Path to splash screen: $(OutputSplashScreen)" Condition="' $(OutputSplashScreen)' != ''" />
+
+    <!-- Add the returned modified node from the update task into the in memory project -->
+    <ItemGroup>
+      <Resource Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsResource)' == 'true'" />
+      <SplashScreen Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsSplashScreen)' == 'true'" />
+    </ItemGroup>
+  </Target>
+
+  
+  <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
+
+    <!--
+      This changes the search path of the ResolveReferences task to look in the dependencies folder. The normal probe sequence is
+      
+        (1) Files from current project - indicated by {CandidateAssemblyFiles}
+        (2) $(ReferencePath) - the reference path property, which comes from the .USER file.
+        (3) The hintpath from the referenced item itself, indicated by {HintPathFromItem}.
+        (4) The directory of MSBuild's "target" runtime from GetFrameworkPath.
+            The "target" runtime folder is the folder of the runtime that MSBuild is a part of.
+        (5) Registered assembly folders, indicated by {Registry:*,*,*}
+        (6) Legacy registered assembly folders, indicated by {AssemblyFolders}
+        (7) Resolve to the GAC.
+        (8) Treat the reference's Include as if it were a real file name.
+        (9) Look in the application's output folder (like bin\debug)
+            
+    -->
+    <PropertyGroup>
+      <AssemblySearchPaths>
+        ..\..\Dependencies\;
+        $(AssemblySearchPaths);
+      </AssemblySearchPaths>
+    </PropertyGroup>
+    
+  </Target>
+
+
+  <!-- Disable copy local for all projects which build to Bin\Module excluding Office integration projects (addins).
+       VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
+       mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
+  <Target Name="CommonBuildDisableCopyLocal"
+          BeforeTargets="BeforeResolveReferences"
+          AfterTargets="SetupAssemblySearchPaths"
+          Condition="'$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == ''">
+
+    <ItemGroup>
+      <Whitelist Include="UnitTest.Database.Build" />
+      <Whitelist Include="UnitTest.Database.Package" />
+    </ItemGroup>
+    
+    <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
+    <PropertyGroup>
+      <DisableCopyLocal Condition="'$(UseSharedTestRunDirectory)' == 'true'">true</DisableCopyLocal>
+      
+      <DisableCopyLocal Condition="$(OutputPath.ToLower().Contains('bin\module')) == 'true'">true</DisableCopyLocal>
+
+      <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
+
+      <!-- This changes the copy local behaviour for _CopyFilesMarkedCopyLocal -->
+      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>
+    </PropertyGroup>
+    
+    <Message Text="Copy local disabled: $(DisableCopyLocal)" />
+
+    <ItemGroup>
+      <ReferenceNew Include="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'">
+        <Private>False</Private>
+        <CopyLocal>False</CopyLocal>
+      </ReferenceNew>
+      
+      <Reference Remove="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'" />
+
+      <!-- Replace the Reference item group with the modified version -->
+      <Reference Include="@(ReferenceNew)" Condition="'$(DisableCopyLocal)' == 'true'" />
+    </ItemGroup>
+  </Target>
+  
+ 
+  <!-- 
+    This target only runs after the publishing step of a VSTO addin project
+    It is used to clean up the reference items that are moved into the bin folder during the build. 
+    We cannot suppress the copy local items as they could be dependencies needed for the FindRibbons task to run successfully. 
+    In summary for VSTO projects we will copy local the dependencies, run the VSTO pipeline and then clean up the bin folder afterwards. 
+  -->
+  <Target Name="AfterVstoPublish" 
+          AfterTargets="AfterPublish" 
+          Condition="'$(VSTO_ProjectType)' != ''">
+
+    <ItemGroup>
+      <Dependencies Include="..\..\Dependencies\*.dll" />
+    </ItemGroup>
+
+    <!--FileWritesShareable comes from the Microsoft CopyLocal target -->
+    <GetCopyLocalItemsToRemove
+       SourceFiles="@(FileWritesShareable)"
+       Dependencies="@(Dependencies)">
+      <Output TaskParameter="CopyLocalFiles" ItemName="CopyLocalFilesToRemove" />
+    </GetCopyLocalItemsToRemove>
+    
+    <Delete Files="@(CopyLocalFilesToRemove)" />
+
+    <!-- Remove empty directories -->
+    <ItemGroup>
+      <Directories Include="$([System.IO.Directory]::GetDirectories($(OutDir), '*', System.IO.SearchOption.AllDirectories))" />
+      <Directories>
+        <Files>$([System.IO.Directory]::GetFiles("%(Directories.Identity)", "*", System.IO.SearchOption.AllDirectories).get_Length())</Files>
+      </Directories>
+    </ItemGroup>
+    
+    <RemoveDir Directories="@(Directories)" Condition="'%(Files)' == '0'" />
+   
+  </Target>
+  
+</Project>

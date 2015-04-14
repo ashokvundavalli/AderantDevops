@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  ToolsVersion="12.0">
+
+  <PropertyGroup>
+    <MicrosoftCodeAnalysisTargets Condition="'$(CodeAnalysisTargets)' !=''">$(CodeAnalysisTargets)</MicrosoftCodeAnalysisTargets>
+    <AderantCodeAnalysisTargets Condition="'$(IsCustomBuild)' != 'true'">$(MSBuildThisFileDirectory)Aderant.CodeAnalysis.targets</AderantCodeAnalysisTargets>
+  </PropertyGroup>
+
+  <!-- Import the Aderant Code Analysis targets. This will add in our desired Code Analysis behaviour  -->
+  <Import Project="$(AderantCodeAnalysisTargets)" Condition="Exists('$(AderantCodeAnalysisTargets)')" />
+
+</Project>

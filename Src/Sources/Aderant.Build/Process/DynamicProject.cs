@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.MSBuild;
 
-namespace Aderant.Build.BuildProcess {
+namespace Aderant.Build.Process {
 
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of Expert modules in dependency order and in parallel
@@ -37,7 +38,7 @@ namespace Aderant.Build.BuildProcess {
                     continue;
                 }
 
-                ItemGroup itemGroup = new ItemGroup("Build" + i, modulesInGroup.Select(m => Path.Combine(modulesDirectory, m, "Build", "TFSBuild.proj")));
+                ItemGroup itemGroup = new ItemGroup("Build" + i.ToString(CultureInfo.InvariantCulture), modulesInGroup.Select(m => Path.Combine(modulesDirectory, m, "Build", "TFSBuild.proj")));
                 project.Add(itemGroup);
 
                 // e.g. <Target Name="Build2">

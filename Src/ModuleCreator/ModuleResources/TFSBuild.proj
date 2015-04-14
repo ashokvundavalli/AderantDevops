@@ -22,5 +22,5 @@
     <!--Custom build for a module-->
     <Import
       Condition="('$(IsCustomBuild)'=='true') "
-      Project="..\BuildScripts\ModuleBuild.proj" />
+      Project="..\..\BuildScripts\ModuleBuild.proj" />
 </Project>

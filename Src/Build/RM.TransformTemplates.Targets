@@ -4,7 +4,7 @@
   <UsingTask
     TaskName="LoadTextTemplatingTask"
     TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll" >
     <ParameterGroup >
       <TextTemplatingPath ParameterType="System.String" Required="true"/>
     </ParameterGroup>
@@ -69,8 +69,8 @@
     *************************************************************************************************************
     -->
   <PropertyGroup>
-      <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)\Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
-      <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)\Dependencies</rmT4TemplateIncludeFolders>
+      <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
+      <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)Dependencies</rmT4TemplateIncludeFolders>
     
       <rmTransformTemplatesWorkerDependsOn>
       rmBeforeTransformTemplates;
@@ -135,7 +135,8 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       TrackerLogDirectory="$(TrackerLogDirectory)"
       TrackFileAccess="$(TrackFileAccess)"
       MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
-      OverwriteReadOnlyOutputFiles="true">
+      OverwriteReadOnlyOutputFiles="true"
+      TempDirectoryOverride="$(ModuleBuildDirectory)..\BuildTemp">
       <Output ItemName="GeneratedFiles"
               TaskParameter="GeneratedFiles"/>
       <Output ItemName="NonGeneratedFiles"
@@ -159,8 +160,8 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
   <Target Name="rmT4AssemblyReferencePaths">
     <!-- Path to reference dlls required by DSLs -->
     <PropertyGroup>
-      <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);$(SolutionDirectoryPath)Dependencies;$(VS120COMNTOOLS)..\IDE\PublicAssemblies</rmT4AssemblyReferencePaths>
+      <VSSDKPath Condition="'$(VSSDKPath)' == '' And '$(VSSDK120Install)' != ''">$(VSSDK120Install)VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);$(VS120COMNTOOLS)..\IDE\PublicAssemblies</rmT4AssemblyReferencePaths>
     </PropertyGroup>
   </Target>
 

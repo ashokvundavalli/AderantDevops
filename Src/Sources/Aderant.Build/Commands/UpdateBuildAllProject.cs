@@ -20,10 +20,7 @@ namespace Aderant.Build.Commands {
         /// The module project.
         /// </value>
         [Parameter(Mandatory = false, Position = 0, HelpMessage = "Specifies the path to a MS Build project containing a single item group which specifies the branch build configuration.")]
-        public string ModuleProject {
-            get;
-            set;
-        }
+        public string ModuleProject { get; set; }
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
@@ -38,10 +35,15 @@ namespace Aderant.Build.Commands {
                 Collection<ChoiceDescription> descriptions = new Collection<ChoiceDescription>(
                     new[] {new ChoiceDescription("Y"), new ChoiceDescription("N")});
 
-                int choice = Host.UI.PromptForChoice("Update file?", string.Format("Do you want to update: {0} with the new module build order?", ModuleProject), descriptions, 0);
+                int choice = 0;
+                if (!System.Diagnostics.Debugger.IsAttached) {
+                    choice = Host.UI.PromptForChoice("Update file?", string.Format("Do you want to update: {0} with the new module build order?", ModuleProject), descriptions, 0);
+                }
 
                 if (choice == 0) {
-                    WorkspaceModuleProvider provider = new WorkspaceModuleProvider(ParameterHelper.GetBranchModulesDirectory(null, SessionState));
+                    string moduleDirectory = ParameterHelper.GetBranchModulesDirectory(null, SessionState);
+                    IModuleProvider provider = ExpertManifest.Load(moduleDirectory);
+
                     SequenceBuilds(provider, ModuleProject);
                 } else {
                     Host.UI.WriteWarningLine("Creating/updating of project file canceled");
@@ -49,7 +51,7 @@ namespace Aderant.Build.Commands {
             }
         }
 
-        private void SequenceBuilds(WorkspaceModuleProvider provider, string moduleProject) {
+        private void SequenceBuilds(IModuleProvider provider, string moduleProject) {
             TfsTeamProjectCollection teamProject = TeamFoundationHelper.GetTeamProjectServer();
 
             WorkspaceInfo[] workspaces = Workstation.Current.GetAllLocalWorkspaceInfo();

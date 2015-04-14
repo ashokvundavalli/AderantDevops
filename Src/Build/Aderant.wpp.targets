@@ -1,25 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="4.0">
+  ToolsVersion="12.0">
 
-    <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
-  
-    <UsingTask
-      TaskName="ResolveUniqueDependencies"
-      TaskFactory="CodeTaskFactory"
-      AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
-        <ParameterGroup >
-            <FilesToProcess ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-            <DependencyDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-            <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-        </ParameterGroup>
-        <Task>
-            <Reference Include="System.Core"/>
-            <Using Namespace="System"/>
-            <Using Namespace="System.IO"/>
-            <Code>
-                <![CDATA[
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == ''" />
+
+  <UsingTask
+    TaskName="ResolveUniqueDependencies"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll" >
+    <ParameterGroup >
+      <FilesToProcess ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <DependencyDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core"/>
+      <Using Namespace="System"/>
+      <Using Namespace="System.IO"/>
+      <Code>
+        <![CDATA[
 var dependencies = new List<string>(FilesToProcess.Length);
 
 foreach (ITaskItem directory in DependencyDirectories) {
@@ -38,127 +38,140 @@ foreach (ITaskItem taskItem in FilesToProcess) {
 
 Result = uniqueFiles.ToArray();
 ]]>
-            </Code>
-        </Task>
-    </UsingTask>
+      </Code>
+    </Task>
+  </UsingTask>
 
-    <PropertyGroup>
-        <DeployOnBuild>true</DeployOnBuild>
-        <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
-        <EnableExcludeFilesByExtension>false</EnableExcludeFilesByExtension>
-        <FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
-        <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
-        <PublishParametersFile>false</PublishParametersFile>
-        <PackageParametersFile>false</PackageParametersFile>
-        <DeployOnBuild Condition="'$(IsDesktopBuild)' == ''">true</DeployOnBuild>
-        <DesktopBuildPackageLocation Condition="'$(DesktopBuildPackageLocation)' == ''">..\..\Bin\Module\$(ModuleName).zip</DesktopBuildPackageLocation>
-    </PropertyGroup>
+  <PropertyGroup>
+    <!-- EnableExcludeFilesByExtension prevents Microsoft.Web.Publishing.targets from excluding .tt files-->
+    <EnableExcludeFilesByExtension>false</EnableExcludeFilesByExtension>
+    <FilesToIncludeForPublish>OnlyFilesToRunTheApp</FilesToIncludeForPublish>
+    <GenerateSampleDeployScript>false</GenerateSampleDeployScript>
+    <PublishParametersFile>false</PublishParametersFile>
+    <PackageParametersFile>false</PackageParametersFile>
+    <DeployOnBuild>true</DeployOnBuild>
 
-    <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
-        <!-- Take a copy of the dependencies -->
-        <ItemGroup>
-            <Dependencies Include="@(ReferenceCopyLocalPaths)" 
-                          Condition="%(ReferenceCopyLocalPaths.Extension) == '.dll' And $([System.String]::new('%(ReferenceCopyLocalPaths.Filename)').StartsWith('Aderant')) != 'true' " />
-        </ItemGroup>
-
-        <!-- Exclude all references and copy local assemblies from packaging -->
-        <ItemGroup>
-            <FilesForPackagingFromProject Remove="@(ReferenceCopyLocalPaths)" />
-        </ItemGroup>
-
-        <PropertyGroup>
-            <DependenciesZipLocation>$([System.IO.Path]::GetDirectoryName($(DesktopBuildPackageLocation)))</DependenciesZipLocation>
-            <DependenciesDirectory>$([System.IO.Path]::GetFullPath($(DependenciesZipLocation)..\..\..\Dependencies))</DependenciesDirectory>
-            <DependenciesPackagingDir>$(PackageTempRootDir)\DependenciesPackageTmp</DependenciesPackagingDir>
-        </PropertyGroup>
-
-        <Error Condition="!Exists($(DependenciesDirectory))"
-               Text="Could not determine dependency directory" />
-
-        <!-- Flatten the references we don't want folders within our zip file -->
-        <Copy SourceFiles="@(Dependencies)"
-              DestinationFolder="$(DependenciesPackagingDir)\%(RecursiveDir)" />
-
-        <ItemGroup>
-            <DependenciesForPackaging Include="$(DependenciesPackagingDir)\**\*.dll" />
-        </ItemGroup>
-
-        <!-- 
-            From the references and dependencies of the web project find any assembly that is not in the Dependency directory. These could be dependencies from
-            NuGet which aren't part of the standard dependency system and so we need to bundle these along side the zip.
-        -->
-        <ResolveUniqueDependencies
-            FilesToProcess="@(DependenciesForPackaging)"
-            DependencyDirectories="$(DependenciesDirectory)">
-            <Output TaskParameter="Result" 
-                    ItemName="ResolvedDependenciesForPackaging" />
-        </ResolveUniqueDependencies>
-
-        <!-- Add all web dependencies into a separate zip -->
-        <MSBuild.Community.Tasks.Zip
-          Files="@(ResolvedDependenciesForPackaging)"
-          ZipFileName="$(DependenciesZipLocation)\$(WebPublishPipelineProjectName).dependencies.zip"
-          WorkingDirectory="$(DependenciesPackagingDir)" />
-
-        <RemoveDir Directories="$(DependenciesPackagingDir)" />
-    </Target>
-
-    <Target Name="CollectFilesFromContentOverride" AfterTargets="CollectFilesFromContent">
-        <!-- Exclude all environment specific files from packaging -->
-        <ItemGroup>
-            <FilesForPackagingFromProject Remove="instance.config" />
-            <FilesForPackagingFromProject Remove="bindings.config" />
-            <FilesForPackagingFromProject Remove="clients.config" />
-            <FilesForPackagingFromProject Remove="extensions.config" />
-            <FilesForPackagingFromProject Remove="packages.config" />
-            <FilesForPackagingFromProject Remove="BuildInfo.config" />
-        </ItemGroup>
-    </Target>
-
-    <!-- This target replaces the full path to source that MSDeploy typically uses -->
-    <PropertyGroup>
-        <PackagePath Condition=" '$(PackagePath)'=='' ">PackageTmp</PackagePath>
-        <EnableAddReplaceToUpdatePackagePath Condition=" '$(EnableAddReplaceToUpdatePackagePath)'=='' ">true</EnableAddReplaceToUpdatePackagePath>
-
-        <PackageDependsOn>
-            $(PackageDependsOn);
-            AddReplaceRuleForAppPath;
-        </PackageDependsOn>
-    </PropertyGroup>
-
-    <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
-        <PropertyGroup>
-            <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
-        </PropertyGroup>
-
-        <!-- escape the text into a regex -->
-        <EscapeTextForRegularExpressions Text="$(_PkgPathFull)">
-            <Output TaskParameter="Result" PropertyName="_PkgPathRegex" />
-        </EscapeTextForRegularExpressions>
-
-        <!-- add the replace rule to update the path -->
-        <ItemGroup>
-            <MsDeployReplaceRules Include="replaceFullPath">
-                <Match>$(_PkgPathRegex)</Match>
-                <Replace>$(PackagePath)</Replace>
-            </MsDeployReplaceRules>
-        </ItemGroup>
-    </Target>
-
-    <Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
-        <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
-        <Delete Files="$(PackageSourceManifest)"
-                Condition="'$(PackageSourceManifest)' != ''"
-                ContinueOnError="true" />
-    </Target>
-
-    <Target Name="CopyZipToOutput" AfterTargets="PipelineDeployPhase">
-        
-        <Copy Condition="'$(BinModuleDirectory)' != ''"
-              SourceFiles="$(PackageFileName)"
-              SkipUnchangedFiles="true"
-              DestinationFolder="$(BinModuleDirectory)" />
-        
-    </Target>
+    <DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
+    <!--<WebProjectOutputDir>$(BinModuleDirectory)</WebProjectOutputDir>-->
+    <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
+    <!--<PackageLocation>$(BinModuleDirectory)</PackageLocation>-->
     
+  </PropertyGroup>
+
+  <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
+    <!-- Take a copy of the dependencies -->
+    <ItemGroup>
+      <Dependencies Include="@(ReferenceCopyLocalPaths)"
+                    Condition="'%(ReferenceCopyLocalPaths.Extension)' == '.dll' And $([System.String]::new('%(ReferenceCopyLocalPaths.Filename)').StartsWith('Aderant')) != 'true' " />
+    </ItemGroup>
+
+    <!-- Exclude all references and copy local assemblies from packaging -->
+    <ItemGroup>
+      <FilesForPackagingFromProject Remove="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <DependenciesZipLocation>$([System.IO.Path]::GetDirectoryName($(DesktopBuildPackageLocation)))</DependenciesZipLocation>
+      <DependenciesDirectory>$([System.IO.Path]::GetFullPath($(DependenciesZipLocation)..\..\..\Dependencies))</DependenciesDirectory>
+      <DependenciesPackagingDir>$(PackageTempRootDir)\DependenciesPackageTmp</DependenciesPackagingDir>
+    </PropertyGroup>
+
+    <Error Condition="!Exists($(DependenciesDirectory))"
+           Text="Could not determine dependency directory" />
+
+    <!-- Flatten the references we don't want folders within our zip file -->
+    <Copy SourceFiles="@(Dependencies)"
+          DestinationFolder="$(DependenciesPackagingDir)\%(RecursiveDir)" />
+
+    <ItemGroup>
+      <DependenciesForPackaging Include="$(DependenciesPackagingDir)\**\*.dll" />
+    </ItemGroup>
+
+    <!-- 
+      From the references and dependencies of the web project find any assembly that is not in the Dependency directory. These could be dependencies from
+      NuGet which aren't part of the standard dependency system and so we need to bundle these along side the zip.
+    -->
+    <ResolveUniqueDependencies
+        FilesToProcess="@(DependenciesForPackaging)"
+        DependencyDirectories="$(DependenciesDirectory)">
+        <Output TaskParameter="Result"
+                ItemName="ResolvedDependenciesForPackaging" />
+    </ResolveUniqueDependencies>
+
+    <!-- Add all web dependencies into a separate zip -->
+    <MSBuild.Community.Tasks.Zip
+      Condition="'@(ResolvedDependenciesForPackaging)' != ''"
+      Files="@(ResolvedDependenciesForPackaging)"
+      ZipFileName="$(DependenciesZipLocation)\$(WebPublishPipelineProjectName).dependencies.zip"
+      WorkingDirectory="$(DependenciesPackagingDir)" />
+
+    <RemoveDir Directories="$(DependenciesPackagingDir)" />
+  </Target>
+
+  <Target Name="CollectFilesFromContentOverride" AfterTargets="CollectFilesFromContent">
+    <!-- Exclude all environment specific files from packaging -->
+    <ItemGroup>
+      <FilesForPackagingFromProject Remove="instance.config" />
+      <FilesForPackagingFromProject Remove="bindings.config" />
+      <FilesForPackagingFromProject Remove="clients.config" />
+      <FilesForPackagingFromProject Remove="extensions.config" />
+      <FilesForPackagingFromProject Remove="packages.config" />
+      <FilesForPackagingFromProject Remove="BuildInfo.config" />
+      <FilesForPackagingFromProject Remove="FrameworkKey.snk" />
+    </ItemGroup>
+  </Target>
+
+  <!-- This target replaces the full path to source that MSDeploy typically uses -->
+  <PropertyGroup>
+    <PackagePath Condition=" '$(PackagePath)'=='' ">PackageTmp</PackagePath>
+    <EnableAddReplaceToUpdatePackagePath Condition=" '$(EnableAddReplaceToUpdatePackagePath)'=='' ">true</EnableAddReplaceToUpdatePackagePath>
+
+    <PackageDependsOn>
+      $(PackageDependsOn);
+      AddReplaceRuleForAppPath;
+    </PackageDependsOn>
+  </PropertyGroup>
+
+  <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
+    <PropertyGroup>
+      <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
+    </PropertyGroup>
+
+    <!-- escape the text into a regex -->
+    <EscapeTextForRegularExpressions Text="$(_PkgPathFull)">
+      <Output TaskParameter="Result" PropertyName="_PkgPathRegex" />
+    </EscapeTextForRegularExpressions>
+
+    <!-- add the replace rule to update the path -->
+    <ItemGroup>
+      <MsDeployReplaceRules Include="replaceFullPath">
+        <Match>$(_PkgPathRegex)</Match>
+        <Replace>$(PackagePath)</Replace>
+      </MsDeployReplaceRules>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="DeleteManifest" AfterTargets="PackageUsingManifest">
+    <!-- Remove Web.xyz.SourceManifest.xml from the output directory as we don't need it -->
+    <Delete Files="$(PackageSourceManifest)"
+            Condition="'$(PackageSourceManifest)' != ''"
+            ContinueOnError="true" />
+  </Target>
+
+  
+  <Target Name="ReplicateWebModuleAssemblies" 
+          AfterTargets="CopyFilesToOutputDirectory">
+    
+    <Message Text="Replicating web assemblies to shared directories" />
+    
+    <Copy Condition="'$(SharedDependencyDirectory)' != ''"
+          SourceFiles="@(IntermediateAssembly)"
+          DestinationFolder="$(SharedDependencyDirectory)" />
+
+    <Copy Condition="'$(SharedTestRunDirectory)' != ''"
+          SourceFiles="@(IntermediateAssembly)"
+          DestinationFolder="$(SharedTestRunDirectory)" />
+    
+  </Target>
+
 </Project>

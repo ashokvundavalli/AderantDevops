@@ -45,7 +45,6 @@
     <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Build.Tools\ICSharpCode.SharpZipLib.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Build">
       <HintPath>..\..\..\..\..\..\..\..\..\Program Files (x86)\MSBuild\12.0\Bin\Microsoft.Build.dll</HintPath>
@@ -76,6 +75,8 @@
     <Reference Include="System.Core">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\v1.0\System.Management.Automation.dll</HintPath>
@@ -99,6 +100,24 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
+    <Compile Include="BranchInfo.cs" />
+    <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
+    <Compile Include="BuildNotFoundException.cs" />
+    <Compile Include="Tasks\ParallelBuildProject.cs" />
+    <Compile Include="Process\ParallelBuildProjectController.cs" />
+    <Compile Include="DependencyAnalyzer\ReverseLineReader.cs" />
+    <Compile Include="DependencyResolvedEventArgs.cs" />
+    <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
+    <Compile Include="DependencyAnalyzer\SourceControlModuleInspector.cs" />
+    <Compile Include="DependencyFetchMode.cs" />
+    <Compile Include="Providers\SourceControl.cs" />
+    <Compile Include="ModuleDependencyResolver.cs" />
+    <Compile Include="DependencyAnalyzer\WebModule.cs" />
+    <Compile Include="FileSystem.cs" />
+    <Compile Include="DependencyAnalyzer\ExpertManifest.cs" />
+    <Compile Include="DependencyAnalyzer\DependencyManifest.cs" />
+    <Compile Include="DuplicateModuleInManifestException.cs" />
+    <Compile Include="DependencyAnalyzer\ThirdPartyModule.cs" />
     <Compile Include="Process\DynamicProject.cs" />
     <Compile Include="Process\ParallelBuildVisitor.cs" />
     <Compile Include="Commands\BranchModule.cs" />
@@ -148,8 +167,17 @@
     <Compile Include="Providers\PathProvider.cs" />
     <Compile Include="Providers\WorkspaceModuleProvider.cs" />
     <Compile Include="SplashScreenText.cs" />
+    <Compile Include="Tasks\AsyncExec.cs" />
+    <Compile Include="Tasks\BuildConfigurationCheck.cs" />
+    <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
+    <Compile Include="Tasks\DependencyChecker.cs" />
+    <Compile Include="Tasks\ExtractWebModule.cs" />
+    <Compile Include="Tasks\FileUpdate2.cs" />
+    <Compile Include="Tasks\FilterModules.cs" />
+    <Compile Include="Tasks\GetDependencies.cs" />
+    <Compile Include="Tasks\MakeSymlink.cs" />
+    <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
-    <Compile Include="Tasks\ProductInfo.cs" />
     <Compile Include="GetAssemblyPlatform.cs" />
     <Compile Include="Commands\ProjectFileFolderSync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

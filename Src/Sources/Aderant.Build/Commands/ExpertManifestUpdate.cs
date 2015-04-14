@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Aderant.Build.Providers;
 using DependencyAnalyzer.Logging;
 
@@ -44,7 +45,7 @@ namespace Aderant.Build.Commands {
             
             string modulesDirectory = ParameterHelper.GetBranchModulesDirectory(TargetBranch, SessionState);
 
-            ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), new WorkspaceModuleProvider(modulesDirectory));
+            ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), ExpertManifest.Load(modulesDirectory));
             updater.Update(SourceBranch, TargetBranch);
         }
     }

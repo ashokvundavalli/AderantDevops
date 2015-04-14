@@ -7,7 +7,7 @@ using Aderant.Build.MSBuild;
 using Microsoft.Build.Evaluation;
 using Project = Microsoft.Build.Evaluation.Project;
 
-namespace Aderant.Build.BuildProcess {
+namespace Aderant.Build.Process {
 
     internal sealed class ParallelBuildVisitor : BuildElementVisitor {
 
@@ -36,9 +36,9 @@ namespace Aderant.Build.BuildProcess {
 
 
         private Project AddBuildProperties(XElement projectDocument) {
-            var project = new Microsoft.Build.Evaluation.Project(projectDocument.CreateReader());
+            var project = new Project(projectDocument.CreateReader());
 
-            IEnumerable<string> types = project.ItemTypes.Where(type => type.StartsWith("Build"));
+            IEnumerable<string> types = project.ItemTypes.Where(type => type.StartsWith("Build", StringComparison.OrdinalIgnoreCase));
             foreach (string type in types) {
                 ICollection<ProjectItem> items = project.GetItems(type);
 
@@ -46,14 +46,18 @@ namespace Aderant.Build.BuildProcess {
                 foreach (ProjectItem projectItem in items) {
                     string value = projectItem.EvaluatedInclude;
 
-                    if (value.EndsWith("TFSBuild.proj")) {
+                    if (value.EndsWith("TFSBuild.proj", StringComparison.OrdinalIgnoreCase)) {
                         DirectoryInfo buildDirectory = Directory.GetParent(value);
                         string responseFile = Path.Combine(buildDirectory.FullName, "TFSBuild.rsp");
 
                         if (File.Exists(responseFile)) {
                             string[] properties = File.ReadAllLines(responseFile);
                             string singlePropertyLine = CreateSinglePropertyLine(properties);
-                            //projectItem.SetMetadata("Properties", singlePropertyLine);
+
+                            if (buildDirectory.Parent != null) {
+                                singlePropertyLine += (";SolutionDirectoryPath=" + buildDirectory.Parent.FullName + @"\");
+                            }
+
                             projectItem.SetMetadataValue("Properties", singlePropertyLine);
                         }
                     }

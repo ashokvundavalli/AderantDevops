@@ -1,20 +1,9 @@
 using System.Collections.Generic;
-using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
-
 
 namespace Aderant.Build.Providers {
     
     internal interface IModuleProvider {
-        /// <summary>
-        /// Gets the product manifest.
-        /// </summary>
-        /// <value>
-        /// The product manifest.
-        /// </value>
-        XDocument ProductManifest {
-            get;
-        }
 
         /// <summary>
         /// Gets the product manifest path.
@@ -48,7 +37,7 @@ namespace Aderant.Build.Providers {
         /// <param name="moduleName">The module name.</param>
         /// <param name="manifest">The manifest.</param>
         /// <returns></returns>
-        bool TryGetDependencyManifest(string moduleName, out XDocument manifest);
+        bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest);
 
         /// <summary>
         /// Tries to the get the path to the dependency manifest for a given module. 
@@ -66,5 +55,29 @@ namespace Aderant.Build.Providers {
         ///   <c>true</c> if the specified module name is available; otherwise, <c>false</c>.
         /// </returns>
         bool IsAvailable(string moduleName);
+
+        /// <summary>
+        /// Gets the module with the specified name.
+        /// </summary>
+        /// <param name="moduleName">Name of the module.</param>
+        /// <returns></returns>
+        ExpertModule GetModule(string moduleName);
+
+        /// <summary>
+        /// Adds the specified module to the provider.
+        /// </summary>
+        /// <param name="module">The new module.</param>
+        void Add(ExpertModule module);
+
+        /// <summary>
+        /// Removes the specified items.
+        /// </summary>
+        /// <param name="items">The items.</param>
+        void Remove(IEnumerable<ExpertModule> items);
+
+        /// <summary>
+        /// Saves this instance.
+        /// </summary>
+        string Save();
     }
 }

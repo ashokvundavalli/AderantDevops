@@ -1,7 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Xaml.Permissions;
 using System.Xml.Linq;
+using Aderant.Build.Providers;
+using MiscUtil.IO;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
@@ -9,8 +16,10 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     [DebuggerDisplay("{Name}")]
     public class ExpertModule : IEquatable<ExpertModule> {
+        internal FileSystem FileSystem { get; private set; }
+
         private string name;
-        private string id;
+        private List<XAttribute> customAttributes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
@@ -19,18 +28,58 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
+        /// Creates a Expert Module from the specified element.
         /// </summary>
-        /// <param name="moduleElement">The product manifest module element.</param>
-        public ExpertModule(XElement moduleElement) {
-            Name = moduleElement.Attribute("Name") == null ? null : moduleElement.Attribute("Name").Value;
-            AssemblyVersion = moduleElement.Attribute("AssemblyVersion") == null ? null : moduleElement.Attribute("AssemblyVersion").Value;
-            FileVersion = moduleElement.Attribute("FileVersion") == null ? null : moduleElement.Attribute("FileVersion").Value;
-            Branch = moduleElement.Attribute("Path") == null ? null : moduleElement.Attribute("Path").Value;
+        /// <param name="element">The element.</param>
+        public static ExpertModule Create(XElement element) {
+            var name = element.Attribute("Name");
+
+            if (name == null || string.IsNullOrEmpty(name.Value)) {
+                throw new ArgumentNullException("element", "No name element specified");
+            }
+
+            if (GetModuleType(name.Value) == ModuleType.ThirdParty) {
+                return new ThirdPartyModule(element);
+            }
+
+            if (GetModuleType(name.Value) == ModuleType.Web) {
+                return new WebModule(element);
+            }
+            return new ExpertModule(element);
         }
 
-        public string Id {
-            get { return id; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
+        /// </summary>
+        /// <param name="element">The product manifest module element.</param>
+        public ExpertModule(XElement element) : this(FileSystem.Default) {
+            customAttributes = element.Attributes().ToList();
+
+            SetPropertyValue(value => name = value, element, "Name");
+            SetPropertyValue(value => AssemblyVersion = value, element, "AssemblyVersion");
+            SetPropertyValue(value => FileVersion = value, element, "FileVersion");
+            SetPropertyValue(value => Branch = value, element, "Path");
+            SetPropertyValue(SetGetAction, element, "GetAction");
+        }
+
+        private void SetPropertyValue(Action<string> setAction, XElement element, string attributeName) {
+            XAttribute attribute = element.Attribute(attributeName);
+            if (attribute != null) {
+                setAction(attribute.Value);
+
+                // Remove this attribute from the collection as it isn't custom
+                customAttributes.Remove(attribute);
+            }
+        }
+
+        private void SetGetAction(string value) {
+            if (!string.IsNullOrEmpty(value)) {
+                GetAction = (GetAction) Enum.Parse(typeof (GetAction), value.Replace("_", "-"), true);
+            }
+        }
+
+        private ExpertModule(FileSystem fileSystem) {
+            this.FileSystem = fileSystem;
         }
 
         /// <summary>
@@ -38,15 +87,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <value>The name.</value>
         public string Name {
-            get {
-                return name;
-            }
-            set {
-                id = name = Path.GetFileName(value);
-                if (id != null) {
-                    id = id.ToUpperInvariant();
-                }
-            }
+            get { return name; }
+            set { name = Path.GetFileName(value); }
         }
 
         /// <summary>
@@ -54,9 +96,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <value>The type of the module.</value>
         public ModuleType ModuleType {
-            get {
-                return GetModuleType(Name);
-            }
+            get { return GetModuleType(Name); }
         }
 
         /// <summary>
@@ -67,9 +107,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(ExpertModule other) {
-            return String.Equals(id, other.id, StringComparison.Ordinal);
+            return String.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
         }
-        
+
         public static ModuleType GetModuleType(string name) {
             if (name.StartsWith("LIBRARIES", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Library;
@@ -131,10 +171,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>
         /// The assembly version.
         /// </value>
-        public string AssemblyVersion {
-            get;
-            set;
-        }
+        public string AssemblyVersion { get; set; }
 
         /// <summary>
         /// Gets or sets the assembly version of this module
@@ -142,10 +179,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>
         /// The assembly version.
         /// </value>
-        public string FileVersion {
-            get;
-            set;
-        }
+        public string FileVersion { get; set; }
 
         /// <summary>
         /// Gets or sets the branch for which this module originates.
@@ -153,9 +187,23 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>
         /// The branch.
         /// </value>
-        public string Branch {
-            get;
-            set;
+        public string Branch { get; internal set; }
+
+        public GetAction GetAction { get; set; }
+
+        /// <summary>
+        /// Gets the custom attributes associated with this instance.
+        /// </summary>
+        /// <value>
+        /// The custom attributes.
+        /// </value>
+        public ICollection<XAttribute> CustomAttributes {
+            get {
+                if (customAttributes == null) {
+                    return (ICollection<XAttribute>) Enumerable.Empty<XAttribute>();
+                }
+                return new ReadOnlyCollection<XAttribute>(customAttributes);
+            }
         }
 
         /// <summary>
@@ -169,7 +217,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (!(obj is ExpertModule)) {
                 return false;
             }
-            return Equals((ExpertModule)obj);
+            return Equals((ExpertModule) obj);
         }
 
         /// <summary>
@@ -179,7 +227,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
         /// </returns>
         public override int GetHashCode() {
-            return id.GetHashCode();
+            if (name != null) {
+                return name.ToUpperInvariant().GetHashCode();
+            }
+            return string.Empty.GetHashCode();
         }
 
         /// <summary>
@@ -191,5 +242,91 @@ namespace Aderant.Build.DependencyAnalyzer {
         public override string ToString() {
             return Name;
         }
+
+        public string GetPathToBinaries(string dropLocationDirectory) {
+            if (!string.IsNullOrEmpty(Branch)) {
+                if (dropLocationDirectory.StartsWith("\\")) {
+                    dropLocationDirectory = AdjustDropPathToBranch(dropLocationDirectory, this);
+                }
+            }
+
+            return GetBinariesPath(dropLocationDirectory);
+        }
+
+        protected static string AdjustDropPathToBranch(string dropLocationDirectory, ExpertModule module) {
+            return PathHelper.ChangeBranch(dropLocationDirectory, module.Branch);
+        }
+
+        protected virtual string GetBinariesPath(string dropLocation) {
+            dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
+
+            DirectoryOperations directoryOperations = FileSystem.Directory;
+
+            string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
+
+            var orderedBuilds = entries.OrderByDescending(d => d);
+            foreach (string build in orderedBuilds) {
+                string[] files = directoryOperations.GetFileSystemEntries(build);
+
+                foreach (string file in files) {
+                    if (file.EndsWith("BuildLog.txt", StringComparison.OrdinalIgnoreCase)) {
+                        if (CheckLog(file)) {
+
+                            string binaries = Path.Combine(build, "Bin", "Module");
+
+                            if (directoryOperations.Exists(binaries)) {
+                                return binaries;
+                            }
+                        }
+                    }
+                }
+            }
+
+            throw new BuildNotFoundException("No latest build found for " + Name);
+        }
+
+        internal static bool CheckLog(string logfile) {
+            ReverseLineReader lineReader = new ReverseLineReader(logfile);
+
+            int i = 0;
+            foreach (string s in lineReader) {
+                if (i > 10) {
+                    break;
+                }
+
+                if (s.IndexOf("0 Error(s)", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    return true;
+                }
+
+                i++;
+            }
+
+            return false;
+        }
+
+        public virtual void Deploy(string moduleDependenciesDirectory) {
+        }
+    }
+
+
+    /// <summary>
+    /// Controls the behaviour of the get action
+    /// </summary>
+    public enum GetAction {
+        None,
+
+        Branch,
+
+        local,
+        local_external_module,
+        current_branch_external_module,
+        other_branch_external_module,
+        other_branch,
+        current_branch,
+        specific_path,
+        specific_path_external_module,
+
+        SpecificDropLocation
     }
 }
+

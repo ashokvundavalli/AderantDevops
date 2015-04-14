@@ -9,6 +9,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTest.Build {
     [TestClass]
     public class DependencyBuilderTests {
+        private const string BranchPath = @"c:\tfs\ExpertSuite\Dev\Framework";
+
         #region Test Context
 
         private TestContext testContextInstance;
@@ -18,19 +20,15 @@ namespace UnitTest.Build {
         ///information about and functionality for the current test run.
         ///</summary>
         public TestContext TestContext {
-            get {
-                return testContextInstance;
-            }
-            set {
-                testContextInstance = value;
-            }
+            get { return testContextInstance; }
+            set { testContextInstance = value; }
         }
 
         #endregion
 
         [TestMethod]
         public void GetModulesReturnsDistinctModules() {
-            DependencyBuilder builder = new DependencyBuilder(@"c:\tfs\ExpertSuite\Dev\Rules");
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ExpertModule> modules = builder.GetAllModules();
             Assert.IsNotNull(modules);
             Assert.AreNotEqual(0, modules.Count());
@@ -40,7 +38,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void GetModuleDependenciesReturnsCorrectDependencies() {
-            DependencyBuilder builder = new DependencyBuilder(@"c:\tfs\ExpertSuite\Dev\Rules");
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ModuleDependency> modulesDependencies = builder.GetModuleDependencies();
             Assert.IsNotNull(modulesDependencies);
             Assert.AreNotEqual(0, modulesDependencies.Count());
@@ -53,7 +51,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void BuildMGraphDocumentReturnsCorrectDocument() {
-            DependencyBuilder builder = new DependencyBuilder(@"c:\tfs\ExpertSuite\Dev\Rules");
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             XDocument doc = builder.BuildMGraphDocument();
             Assert.IsNotNull(doc);
             TestContext.WriteLine(doc.ToString(SaveOptions.None));
@@ -61,7 +59,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void BuildDGMLDocumentReturnsCorrectDocument() {
-            DependencyBuilder builder = new DependencyBuilder(@"c:\tfs\ExpertSuite\Dev\Rules");
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             XDocument doc = builder.BuildDgmlDocument(true, false);
             Assert.IsNotNull(doc);
             TestContext.WriteLine(doc.ToString(SaveOptions.None));
@@ -69,7 +67,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void BuildDependencyTree() {
-            DependencyBuilder builder = new DependencyBuilder(@"c:\tfs\ExpertSuite\Dev\Rules");
+            DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<Aderant.Build.Build> tree = builder.GetTree(false);
 
 
@@ -77,12 +75,12 @@ namespace UnitTest.Build {
 
             TestContext.WriteLine(string.Format("Count in All Modules: {0}", builder.GetAllModules().Count()));
             TestContext.WriteLine(string.Format("Count in Tree: {0}", (from level in tree
-                                                                       from item in level.Modules
-                                                                       select item).Count()));
+                from item in level.Modules
+                select item).Count()));
 
             var itemsNotInTree = builder.GetAllModules().Except(from level in tree
-                                                                from item in level.Modules
-                                                                select item);
+                from item in level.Modules
+                select item);
 
             TestContext.WriteLine("");
             TestContext.WriteLine("Items not in tree:");
@@ -117,7 +115,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CircularDependencyException))]
+        [ExpectedException(typeof (CircularDependencyException))]
         public void WhenDependencyChainIsCircularAnExceptionIsThrown() {
             var provider = new CircularReferenceProvider();
 
@@ -126,32 +124,23 @@ namespace UnitTest.Build {
         }
     }
 
-    internal class FakeProvider : IModuleProvider {
+    internal class FakeProvider : TestModuleProviderBase {
         public XDocument ProductManifest {
-            get {
-                return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <ProductManifest Name='Expert' ExpertVersion='802'>
     <Modules>
         <Module Name='A' AssemblyVersion='1.8.0.0' />
         <Module Name='B' AssemblyVersion='1.8.0.0' />
         <Module Name='C' AssemblyVersion='1.8.0.0' />
     </Modules>
-</ProductManifest>");
-            }
+</ProductManifest>"); }
         }
 
-        public string ProductManifestPath {
-            get;
-            private set;
+        public override string Branch {
+            get { return @"Dev\Foo"; }
         }
 
-        public string Branch {
-            get {
-                return @"Dev\Foo";
-            }
-        }
-
-        public IEnumerable<ExpertModule> GetAll() {
+        public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
                 new ExpertModule() {
                     Name = "A",
@@ -168,9 +157,9 @@ namespace UnitTest.Build {
             };
         }
 
-        public bool TryGetDependencyManifest(string moduleName, out XDocument manifest) {
+        public override bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (moduleName == "A") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>        
     </ReferencedModules>
@@ -179,7 +168,7 @@ namespace UnitTest.Build {
             }
 
             if (moduleName == "B") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("B", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
         <ReferencedModule Name='A' />
@@ -189,7 +178,7 @@ namespace UnitTest.Build {
             }
 
             if (moduleName == "C") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("C", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
         <ReferencedModule Name='A' />
@@ -203,19 +192,14 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-            throw new NotImplementedException();
-        }
-
-        public bool IsAvailable(string moduleName) {
+        public override bool IsAvailable(string moduleName) {
             return true;
         }
     }
 
-    internal class ParallelFakeProvider : IModuleProvider {
+    internal class ParallelFakeProvider : TestModuleProviderBase {
         public XDocument ProductManifest {
-            get {
-                return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <ProductManifest Name='Expert' ExpertVersion='802'>
     <Modules>
         <Module Name='A' AssemblyVersion='1.8.0.0' />
@@ -223,19 +207,11 @@ namespace UnitTest.Build {
         <Module Name='C' AssemblyVersion='1.8.0.0' />
         <Module Name='D' AssemblyVersion='1.8.0.0' />
     </Modules>
-</ProductManifest>");
-            }
-        }
-
-        public string ProductManifestPath {
-            get;
-            private set;
+</ProductManifest>"); }
         }
 
         public string Branch {
-            get {
-                return @"Dev\Foo";
-            }
+            get { return @"Dev\Foo"; }
         }
 
         public IEnumerable<ExpertModule> GetAll() {
@@ -259,9 +235,9 @@ namespace UnitTest.Build {
             };
         }
 
-        public bool TryGetDependencyManifest(string moduleName, out XDocument manifest) {
+        public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (moduleName == "A") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>        
     </ReferencedModules>
@@ -270,7 +246,7 @@ namespace UnitTest.Build {
             }
 
             if (moduleName == "B") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("B", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
         <ReferencedModule Name='A' />
@@ -280,7 +256,7 @@ namespace UnitTest.Build {
             }
 
             if (moduleName == "C") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("C", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
         <ReferencedModule Name='A' />
@@ -291,7 +267,7 @@ namespace UnitTest.Build {
             }
 
             if (moduleName == "D") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("D", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
         <ReferencedModule Name='A' />
@@ -305,37 +281,21 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-            throw new NotImplementedException();
-        }
-
-        public bool IsAvailable(string moduleName) {
+        public override bool IsAvailable(string moduleName) {
             return true;
         }
+
     }
 
-    internal class CircularReferenceProvider : IModuleProvider {
+    internal class CircularReferenceProvider : TestModuleProviderBase {
         public XDocument ProductManifest {
-            get {
-                return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+            get { return XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <ProductManifest Name='Expert' ExpertVersion='802'>
     <Modules>
         <Module Name='A' AssemblyVersion='1.8.0.0' />
         <Module Name='B' AssemblyVersion='1.8.0.0' />
     </Modules>
-</ProductManifest>");
-            }
-        }
-
-        public string ProductManifestPath {
-            get;
-            private set;
-        }
-
-        public string Branch {
-            get {
-                return @"Dev\Foo";
-            }
+</ProductManifest>"); }
         }
 
         public IEnumerable<ExpertModule> GetAll() {
@@ -351,9 +311,9 @@ namespace UnitTest.Build {
             };
         }
 
-        public bool TryGetDependencyManifest(string moduleName, out XDocument manifest) {
+        public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (moduleName == "A") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>        
        <ReferencedModule Name='B' />
@@ -363,7 +323,7 @@ namespace UnitTest.Build {
             }
 
             if (moduleName == "B") {
-                manifest = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                manifest = DependencyManifest.Parse("B", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
         <ReferencedModule Name='A' />
@@ -376,11 +336,7 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-            throw new NotImplementedException();
-        }
-
-        public bool IsAvailable(string moduleName) {
+        public override bool IsAvailable(string moduleName) {
             return true;
         }
     }

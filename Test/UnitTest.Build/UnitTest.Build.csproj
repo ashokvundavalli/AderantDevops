@@ -62,6 +62,16 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncExecTests.cs" />
+    <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="ModuleDependencyResolverTests.cs" />
+    <Compile Include="PathHelperTest.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="TestModuleProviderBase.cs" />
     <Compile Include="UpdateSplashScreenImageTests.cs" />
     <Compile Include="MSBuild\BuildElementVisitorTests.cs" />
     <Compile Include="AutoCompletionParserTests.cs" />
@@ -75,10 +85,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\BadBuildLog.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\ExpertManifest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\Expert_SplashScreen_Domain Customization Wizard.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\GoodBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -88,6 +104,12 @@
       <Name>Aderant.Build</Name>
       <Private>True</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

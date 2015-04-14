@@ -116,10 +116,10 @@ namespace Aderant.Build {
 
         private static void ReceiveStandardErrorOrOutputData(DataReceivedEventArgs e, bool isError) {
             if (e.Data != null) {
+                Console.WriteLine(e.Data);
+
                 if (isError) {
                     Console.Error.WriteLine(e.Data);
-                } else {
-                    Console.WriteLine(e.Data);
                 }
             }
         }

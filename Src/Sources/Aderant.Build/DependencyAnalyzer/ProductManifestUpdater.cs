@@ -1,26 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Xml;
-using System.Xml.Linq;
-using Aderant.Build.Providers;
+﻿using Aderant.Build.Providers;
 using DependencyAnalyzer.Logging;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.TeamFoundation.VersionControl.Common;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Aderant.Build.DependencyAnalyzer {
-    /// <summary>
-    /// Updates a Product Manifest (ExpertManifest.xml) against all modules on disk and referenced in Dependency Manifests
-    /// </summary>
     internal class ProductManifestUpdater {
         private readonly ILogger logger;
         private readonly IModuleProvider provider;
+        
 
         /// <summary>
-        /// Prevents a default instance of the <see cref="ProductManifestUpdater"/> class from being created.
+        /// Initializes a new instance of the <see cref="ProductManifestUpdater"/> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
         /// <param name="provider">The provider.</param>
@@ -29,156 +24,206 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.provider = provider;
         }
 
-        /// <summary>
-        /// Performs the update operation against the product manifest.
-        /// </summary>
-        /// <param name="sourceBranch">The source branch to source modules from.</param>
-        /// <param name="targetBranch">The branch which should be updated with the new ExpertManifest.</param>
         public void Update(string sourceBranch, string targetBranch) {
+            sourceBranch = PathHelper.GetBranch(sourceBranch);
+            targetBranch = PathHelper.GetBranch(targetBranch);
+
             IEnumerable<ExpertModule> modules = provider.GetAll();
 
             sourceBranch = sourceBranch.Replace('/', Path.DirectorySeparatorChar);
 
             TfsTeamProjectCollection collection = TeamFoundationHelper.GetTeamProjectServer();
+            VersionControlServer service = collection.GetService<VersionControlServer>();
             Workspace workspaceInfo = EditProductManifest(collection);
 
-            IEnumerable<string> sourceBranchModules = GetSourceBranchModules(collection, sourceBranch);
+            var validator = new SourceControlModuleInspector(logger, service);
+
+            // The list of module names from the remote branch (eg Main)
+            ICollection<string> sourceBranchModules = GetModulesFromSourceControl(service, sourceBranch);
+
+            modules = AddModulesFromSourceControl(modules, targetBranch, service);
+            
+            IList<ExpertModule> removeList = new List<ExpertModule>();
+
+            foreach (var module in modules) {
+                SynchronizeProductManifestWithModules(module, workspaceInfo);
+            }
+
+            // Refresh the local collection as we may have updated it.
+            modules = provider.GetAll();
 
             foreach (ExpertModule module in modules) {
-                if (module.Name.Equals("Build.Infrastructure", StringComparison.OrdinalIgnoreCase)) {
+                if (string.Equals(module.Name, "Build.Infrastructure", StringComparison.OrdinalIgnoreCase)) {
+                    removeList.Add(module);
                     continue;
                 }
 
                 if (ExpertModule.IsNonProductModule(module.ModuleType)) {
+                    // We don't want to remove these modules from the manifest as they were probably added 
+                    // for a reason so we don't add them to the removeList here.
                     continue;
                 }
 
-                XElement element = AddOrUpdateExpertManifestEntry(provider.ProductManifest, module.Name);
-                if (!provider.IsAvailable(module.Name)) {
-                    string sourceBranchModule = sourceBranchModules.Contains(module.Name, StringComparer.OrdinalIgnoreCase) ? sourceBranch : targetBranch;
+                ExpertModule updatedModule = AddOrUpdateExpertManifestEntry(provider, module.Name);
 
-                    if (!sourceBranch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase)) {
-                        // Module is not on disk or in the branch - use the sourceBranch if it exists there
-                        AddOrUpdateAttribute(element, "GetAction", "branch");
-                        AddOrUpdateAttribute(element, "Path", sourceBranchModule);
-                    }
-                } else {
-                    XAttribute action = element.Attribute("GetAction");
-                    if (action != null) {
-                        action.Remove();
-                    }
+                if (updatedModule != null) {
+                    if (!provider.IsAvailable(module.Name)) {
+                        // The module is not available in the current branch we need to check if it is available in the other branch
+                        string sourceBranchModule = sourceBranchModules.Contains(module.Name, StringComparer.OrdinalIgnoreCase) ? sourceBranch : targetBranch;
 
-                    XAttribute path = element.Attribute("Path");
-                    if (path != null) {
-                        path.Remove();
-                    }
-                }
+                        if (updatedModule.GetAction != GetAction.SpecificDropLocation && !validator.IsValidModule(module.Name, sourceBranch)) {
+                            removeList.Add(module);
+                            continue;
+                        }
 
-                if (module.ModuleType == ModuleType.ThirdParty) {
-                    //Next item, as third party modules don't have dependency manifests
-                    continue;
-                }
-
-                XDocument manifest;
-                if (provider.TryGetDependencyManifest(module.Name, out manifest)) {
-                    // since this module exists in our branch (the Test-Path test passed), remove any invalid attributes       
-                    XAttribute action = element.Attribute("GetAction");
-                    if (action != null) {
-                        action.Remove();
-                    }
-
-                    XAttribute path = element.Attribute("Path");
-                    if (path != null) {
-                        path.Remove();
-                    }
-
-                    logger.Log("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
-
-                    string dependencyManifestPath;
-                    if (provider.TryGetDependencyManifestPath(module.Name, out dependencyManifestPath)) {
-                        workspaceInfo.PendEdit(dependencyManifestPath);
-
-                        // Add any dependencies of the module to the Expert Manifest
-                        AddMissingModulesToExpertManifest(manifest, provider.ProductManifest);
-                        SaveDocument(manifest, dependencyManifestPath);
+                        if (updatedModule.GetAction != GetAction.SpecificDropLocation && !sourceBranch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase)) {
+                            if (!string.Equals(updatedModule.Branch, sourceBranchModule)) {
+                                updatedModule.GetAction = GetAction.Branch;
+                                updatedModule.Branch = sourceBranchModule;
+                            }
+                        }
+                    } else {
+                        updatedModule.GetAction = GetAction.None;
+                        updatedModule.Branch = null;
                     }
                 }
             }
 
-            SaveDocument(provider.ProductManifest, provider.ProductManifestPath);
+            provider.Remove(removeList);
+
+            string expertManifestDocument = provider.Save();
+            workspaceInfo.PendEdit(provider.ProductManifestPath);
+            File.WriteAllText(provider.ProductManifestPath, expertManifestDocument);
+        }
+
+        private void SynchronizeProductManifestWithModules(ExpertModule module, Workspace workspaceInfo) {
+            DependencyManifest manifest;
+            if (provider.TryGetDependencyManifest(module.Name, out manifest)) {
+                logger.Log("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
+
+                string dependencyManifestPath;
+                if (provider.TryGetDependencyManifestPath(module.Name, out dependencyManifestPath)) {
+                    DependencyManifest dependencyManifest;
+
+                    if (provider.TryGetDependencyManifest(module.Name, out dependencyManifest)) {
+                        string instanceBeforeSave = File.ReadAllText(dependencyManifestPath);
+
+                        AddMissingModulesToManifest(manifest.ReferencedModules, provider);
+
+                        string modifiedManifestDocument = dependencyManifest.Save();
+
+                        if (!string.Equals(instanceBeforeSave, modifiedManifestDocument)) {
+                            workspaceInfo.PendEdit(dependencyManifestPath);
+                            File.WriteAllText(dependencyManifestPath, modifiedManifestDocument);
+                        }
+                    }
+                }
+            }
+        }
+
+        private List<ExpertModule> AddModulesFromSourceControl(IEnumerable<ExpertModule> modules, string targetBranch, VersionControlServer vcs) {
+            List<string> modulesMissingFromManifest = GetModulesMissingFromManifest(vcs, modules, targetBranch);
+            List<ExpertModule> expertModules = new List<ExpertModule>(modules);
+
+            string thirdPartyName = ModuleType.ThirdParty.ToString();
+
+            if (modulesMissingFromManifest.Count > 0) {
+                foreach (string name in modulesMissingFromManifest) {
+                    if (!string.Equals(name, thirdPartyName, StringComparison.OrdinalIgnoreCase)) {
+                        ExpertModule newModule = new ExpertModule {
+                            Name = name
+                        };
+                        if (!ExpertModule.IsNonProductModule(newModule.ModuleType)) {
+                            logger.Log("Adding module {0} found in source control to Expert Manifest: ", new string[] {
+                                name
+                            });
+                            expertModules.Add(newModule);
+                        }
+                    }
+                }
+            }
+            return expertModules;
+        }
+
+        private List<string> GetModulesMissingFromManifest(VersionControlServer vcs, IEnumerable<ExpertModule> modules, string branch) {
+            List<string> moduleNames = GetModulesFromSourceControl(vcs, branch).ToList<string>();
+            int count = moduleNames.RemoveAll((string m) => IsManifest(m, modules));
+
+            return moduleNames;
+        }
+
+        private bool IsManifest(string name, IEnumerable<ExpertModule> moduleNames) {
+            foreach (ExpertModule module in moduleNames) {
+                if (string.Equals(name, module.Name, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private Workspace EditProductManifest(TfsTeamProjectCollection collection) {
-            var workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
-            foreach (WorkspaceInfo info in workspaceInfo) {
+            WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
+            WorkspaceInfo[] array = workspaceInfo;
+
+            for (int i = 0; i < array.Length; i++) {
+                WorkspaceInfo info = array[i];
                 Workspace workspace = info.GetWorkspace(collection);
                 string path = workspace.TryGetServerItemForLocalItem(provider.ProductManifestPath);
                 if (path != null) {
                     workspace.PendEdit(provider.ProductManifestPath);
                     return workspace;
                 }
-                
             }
-            return null;
+
+            throw new InvalidOperationException("Could not determine current TFS workspace");
         }
 
-        private void AddOrUpdateAttribute(XElement element, string attributeName, string attributeValue) {
-            XAttribute attribute = element.Attribute(attributeName);
-            if (attribute != null) {
-                attribute.SetValue(attributeValue);
-            } else {
-                element.Add(new XAttribute(attributeName, attributeValue));
+        private ICollection<string> GetModulesFromSourceControl(VersionControlServer vcs, string branch) {
+            logger.Log("Getting module names from source branch: {0}", branch);
+
+            List<string> items = new List<string>();
+
+            string[] paths = {
+                "Modules",
+                "Modules/ThirdParty"
+            };
+
+            string[] array = paths;
+
+            for (int i = 0; i < array.Length; i++) {
+                string path = array[i];
+                string sccPath = VersionControlPath.Combine("$/ExpertSuite", branch + "/" + path);
+
+                ItemSet itemSet = vcs.GetItems(sccPath, VersionSpec.Latest, RecursionType.OneLevel, DeletedState.NonDeleted, ItemType.Folder, false);
+
+                items.AddRange(itemSet.Items.Select(item => PathHelper.GetModuleName(item.ServerItem)).Where(m => m != null));
             }
+            return items.Distinct().ToList();
         }
 
-        private IEnumerable<string> GetSourceBranchModules(TfsTeamProjectCollection collection, string sourceBranch) {
-            VersionControlServer service = collection.GetService<VersionControlServer>();
-            string combine = VersionControlPath.Combine("$/ExpertSuite", sourceBranch + "/Modules");
-
-            logger.Log(string.Empty);
-            logger.Log("Getting module names from source branch: {0}", sourceBranch);
-            logger.Log(string.Empty);
-
-            ItemSet itemSet = service.GetItems(combine, VersionSpec.Latest, RecursionType.OneLevel, DeletedState.NonDeleted, ItemType.Folder, false);
-
-            return itemSet.Items.Select(item => PathHelper.GetModuleName(item.ServerItem)).Where(m => m != null).ToList();
-        }
-
-        private void AddMissingModulesToExpertManifest(XDocument moduleManifest, XDocument productManifest) {
-            IEnumerable<XElement> elements = moduleManifest.Descendants("ReferencedModule");
-
-            foreach (XElement element in elements) {
-                XAttribute action = element.Attribute("GetAction");
-                if (action != null) {
-                    action.Remove();
-                }
-
-                XAttribute path = element.Attribute("Path");
-                if (path != null) {
-                    path.Remove();
-                }
-
-                XAttribute nameAttribute = element.Attribute("Name");
-                if (nameAttribute != null) {
-                    AddOrUpdateExpertManifestEntry(productManifest, nameAttribute.Value);
+        private void AddMissingModulesToManifest(IList<ExpertModule> referencedModules, IModuleProvider productManifest) {
+            foreach (ExpertModule referencedModule in referencedModules) {
+                ExpertModule matchingModule = productManifest.GetModule(referencedModule.Name);
+                if (matchingModule == null) {
+                    productManifest.Add(referencedModule);
                 }
             }
         }
 
-        private XElement AddOrUpdateExpertManifestEntry(XDocument manifest, string moduleName) {
+        private ExpertModule AddOrUpdateExpertManifestEntry(IModuleProvider manifest, string moduleName) {
             if (string.IsNullOrEmpty(moduleName)) {
                 throw new ArgumentNullException("ModuleName cannot be null or empty for creating a new Expert Manifest entry");
             }
 
-            var node = manifest.Root.Descendants("Module").FirstOrDefault(elm => elm.Attribute("Name").Value.Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+            ExpertModule node = manifest.GetModule(moduleName);
+            ExpertModule result;
 
             if (node != null) {
                 logger.Log("Found module {0} in Expert Manifest", moduleName);
 
-                var attr = node.Attribute("AssemblyVersion");
-                if (attr == null && !IsThirdParty(node)) {
-                    logger.Warning("Non-third party module has no assembly version. Adding default");
-                    node.Add(new XAttribute("AssemblyVersion", "1.8.0.0"));
+                if (node.ModuleType != ModuleType.ThirdParty && string.IsNullOrEmpty(node.AssemblyVersion)) {
+                    logger.Warning("Non-third party module has no assembly version. Adding default", null);
+                    node.AssemblyVersion = "1.8.0.0";
                 }
 
                 return node;
@@ -188,65 +233,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return null;
             }
 
-            logger.Log("The Expert Manifest did not contain an entry for the module $moduleName. Adding...");
+            logger.Log("The Expert Manifest did not contain an entry for the module {0}. Adding...", moduleName);
 
-            XElement moduleElement = new XElement("Module");
-            moduleElement.Add(new XAttribute("Name", moduleName));
-
-            if (!IsThirdParty(moduleElement)) {
-                moduleElement.Add(new XAttribute("AssemblyVersion", "1.8.0.0"));
-            }
-
-            manifest.Root.Element("Modules").Add(moduleElement);
-
-            return moduleElement;
-        }
-
-        private static bool IsThirdParty(XElement element) {
-            XAttribute xAttribute = element.Attribute("Name");
-            return xAttribute != null && ExpertModule.GetModuleType(xAttribute.Value) == ModuleType.ThirdParty;
-        }
-
-        private static void SortManifestNodesByName(XElement productOrDependencyManifest) {
-            XElement modules = productOrDependencyManifest.Element("Modules") ?? productOrDependencyManifest.Element("ReferencedModules");
-
-            if (modules != null) {
-                List<XElement> orderedEnumerable = modules.Descendants().OrderBy(o => o.Attribute("Name").Value).ToList();
-
-                modules.RemoveAll();
-
-                foreach (XElement element in orderedEnumerable) {
-                    var attributes = element
-                        .Attributes()
-                        .OrderByDescending(a => a.Value.Equals("AssemblyVersion"))
-                        .ThenByDescending(a => a.Value.Equals("GetAction"))
-                        .ThenByDescending(a => a.Value.Equals("Path"))
-                        .ToList();
-
-                    element.RemoveAttributes();
-                    foreach (XAttribute attribute in attributes) {
-                        element.Add(attribute);
-                    }
-
-                    modules.Add(element);
-                }
-            }
-        }
-
-        private void SaveDocument(XDocument document, string path) {
-            logger.Log("Saving manifest: {0}", path);
-
-            SortManifestNodesByName(document.Root);
-
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.IndentChars = "    ";
-            settings.NewLineOnAttributes = false;
-            settings.Encoding = Encoding.UTF8;
-
-            using (XmlWriter writer = XmlWriter.Create(path, settings)) {
-                document.Save(writer);
-            }
+            ExpertModule newModule = new ExpertModule {
+                Name = moduleName,
+                AssemblyVersion = "1.8.0.0"
+            };
+            manifest.Add(newModule);
+            result = newModule;
+            return result;
         }
     }
 }

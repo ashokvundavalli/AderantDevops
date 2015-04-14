@@ -9,6 +9,16 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Provides helper methods for retrieving variables from the host PowerShell session
     /// </summary>
     public static class ParameterHelper {
+
+      
+
+        /// <summary>
+        /// Gets the value of $BranchLocalDirectory from the local session.
+        /// </summary>
+        /// <param name="branchPathParameter">The branch path parameter.</param>
+        /// <param name="sessionState">State of the session.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">BranchPath must be specified or there must be a variable $branchPath</exception>
         public static string GetBranchPath(string branchPathParameter, SessionState sessionState) {
             string branchPath = branchPathParameter ??
                                 sessionState.PSVariable.GetValue("BranchLocalDirectory", string.Empty).ToString();
@@ -31,8 +41,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">BranchPath must be specified or there must be a variable $CurrentModulePath</exception>
         public static string GetCurrentModulePath(string currentModule, SessionState sessionState) {
-            string modulePath = currentModule ??
-                                sessionState.PSVariable.GetValue("CurrentModulePath", string.Empty).ToString();
+            if (!string.IsNullOrEmpty(currentModule) && Directory.Exists(currentModule)) {
+                return currentModule;
+            }
+
+            string modulePath = sessionState.PSVariable.GetValue("CurrentModulePath", string.Empty).ToString();
 
             if (string.IsNullOrEmpty(modulePath)) {
                 throw new ArgumentException(
@@ -130,6 +143,23 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return localDirectory;
+        }
+
+        /// <summary>
+        /// Attempts to get the branch modules directory.
+        /// </summary>
+        /// <param name="branchModulePath">The branch module path.</param>
+        /// <param name="sessionState">State of the session.</param>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        public static bool TryGetBranchModulesDirectory(string branchModulePath, SessionState sessionState, out string path) {
+            try {
+                path = GetBranchModulesDirectory(branchModulePath, sessionState);
+                return true;
+            } catch {
+                path = null;
+                return false;
+            }
         }
 
         /// <summary>

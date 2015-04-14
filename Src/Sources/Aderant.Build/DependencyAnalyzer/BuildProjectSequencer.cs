@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     internal sealed class BuildProjectSequencer {
         private XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+        private static string directorySeparatorChar = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Sequences the builds within the given branch.
@@ -74,7 +76,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 foreach (Build build in grouping) {
                     foreach (ExpertModule module in build.Modules) {
-                        XElement entry = new XElement(ns + "Modules", new XAttribute("Include", "$(SolutionRoot)/" + module.Name));
+                        XElement entry = new XElement(ns + "Modules", new XAttribute("Include", "$(SolutionRoot)" + directorySeparatorChar + module.Name));
                         group.Add(entry);
                     }
                 }
