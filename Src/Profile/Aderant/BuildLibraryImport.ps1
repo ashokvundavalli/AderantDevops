@@ -1,6 +1,4 @@
-﻿$DebugPreference = 'Continue'
-
-function GetSymbolicLinkTarget($path) {
+﻿function GetSymbolicLinkTarget($path) {
     Add-Type -MemberDefinition @"
 private const int CREATION_DISPOSITION_OPEN_EXISTING = 3;
 private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
