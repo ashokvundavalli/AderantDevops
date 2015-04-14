@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using System.Xaml.Permissions;
 using System.Xml.Linq;
 using Aderant.Build.Providers;
@@ -286,7 +287,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal static bool CheckLog(string logfile) {
-            ReverseLineReader lineReader = new ReverseLineReader(logfile);
+            //ReverseLineReader lineReader = new ReverseLineReader(logfile);
+
+            // temp fix until I have this working with UCS-2 Little Endian files
+            IEnumerable<string> lineReader = File.ReadAllLines(logfile).Reverse().Take(10);
 
             int i = 0;
             foreach (string s in lineReader) {
