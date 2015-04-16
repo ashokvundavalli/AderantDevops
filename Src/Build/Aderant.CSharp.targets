@@ -208,7 +208,12 @@
     <ItemGroup>
       <Whitelist Include="UnitTest.Database.Build" />
       <Whitelist Include="UnitTest.Database.Package" />
-      <Whitelist Include="UIAutomation.Framework" />
+      <Whitelist Include="UIAutomation.Framework.Core" />
+      <Whitelist Include="UIAutomation.Framework.CoreWeb" />
+      <Whitelist Include="UIAutomation.Framework.Crm" />
+      <Whitelist Include="UIAutomation.Framework.Expert" />
+      <Whitelist Include="UIAutomation.Framework.ExpertOnTheGo" />
+      <Whitelist Include="UIAutomation.Framework.ExpertWeb" />
     </ItemGroup>
     
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
