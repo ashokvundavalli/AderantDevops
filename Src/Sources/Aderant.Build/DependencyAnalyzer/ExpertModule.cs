@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -262,10 +264,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
 
             DirectoryOperations directoryOperations = FileSystem.Directory;
-
             string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
+            string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
-            var orderedBuilds = entries.OrderByDescending(d => d);
             foreach (string build in orderedBuilds) {
                 string[] files = directoryOperations.GetFileSystemEntries(build);
 
@@ -284,6 +285,24 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             throw new BuildNotFoundException("No latest build found for " + Name);
+        }
+
+        internal static string[] OrderBuildsByBuildNumber(string[] entries) {
+            // Converts the dotted version into an int64 to get the highest build number
+            // This differs from the PowerShell implementation that padded each part of the version string and used an alphanumeric sort
+
+            List<KeyValuePair<long, string>> numbers = new List<KeyValuePair<long, string>>(entries.Count());
+            foreach (var entry in entries) {
+                string directoryName = Path.GetFileName(entry);
+                string version = directoryName.Replace(".", string.Empty);
+
+                long result;
+                if (long.TryParse(version, NumberStyles.Any, CultureInfo.InvariantCulture, out result)) {
+                    numbers.Add(new KeyValuePair<long, string>(result, entry));
+                }
+            }
+
+            return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
         }
 
         internal static bool CheckLog(string logfile) {

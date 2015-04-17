@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Aderant.Build.Providers;
 using Task = System.Threading.Tasks.Task;
 
@@ -81,6 +82,8 @@ namespace Aderant.Build.Commands {
                             Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, " from the branch ");
                             Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.Branch);
                             Host.UI.WriteLine(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
+
+                            Host.UI.WriteDebugLine("Resolved path:" + args.FullPath);
                         });
 
                         await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, DependencyFetchMode.Default);
