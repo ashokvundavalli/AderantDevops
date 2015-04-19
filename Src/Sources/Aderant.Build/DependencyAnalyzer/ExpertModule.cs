@@ -6,12 +6,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Xaml.Permissions;
 using System.Xml.Linq;
 using Aderant.Build.Providers;
-using MiscUtil.IO;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
@@ -291,14 +287,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Converts the dotted version into an int64 to get the highest build number
             // This differs from the PowerShell implementation that padded each part of the version string and used an alphanumeric sort
 
-            List<KeyValuePair<long, string>> numbers = new List<KeyValuePair<long, string>>(entries.Count());
+            List<KeyValuePair<Version, string>> numbers = new List<KeyValuePair<Version, string>>(entries.Count());
             foreach (var entry in entries) {
                 string directoryName = Path.GetFileName(entry);
-                string version = directoryName.Replace(".", string.Empty);
-
-                long result;
-                if (long.TryParse(version, NumberStyles.Any, CultureInfo.InvariantCulture, out result)) {
-                    numbers.Add(new KeyValuePair<long, string>(result, entry));
+                Version version;
+                if (Version.TryParse(directoryName, out version)) {
+                    numbers.Add(new KeyValuePair<Version, string>(version, entry));
                 }
             }
 
