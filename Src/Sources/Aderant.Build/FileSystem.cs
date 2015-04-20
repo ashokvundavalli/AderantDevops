@@ -87,6 +87,8 @@ namespace Aderant.Build {
                 }
 
                 if (useHardLinks) {
+                    //Need to delete any existing file first otherwise the create hard link won't bother doing anything.
+                    NativeMethods.DeleteFile(destinationFile);
                     NativeMethods.CreateHardLink(destinationFile, file.FullName, IntPtr.Zero);
                 } else {
                     using (FileStream sourceStream = file.Open(FileMode.Open, FileAccess.Read, FileShare.Read)) {
@@ -142,5 +144,7 @@ namespace Aderant.Build {
     internal static class NativeMethods {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool CreateHardLink(string newFileName, string exitingFileName, IntPtr securityAttributes);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        internal static extern bool DeleteFile(string fileName);
     }
 }
