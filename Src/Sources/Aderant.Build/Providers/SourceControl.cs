@@ -29,7 +29,14 @@ namespace Aderant.Build.Providers {
         public static SourceControl CreateFromBranchRoot(string path) {
             var workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
             foreach (WorkspaceInfo info in workspaceInfo) {
-                Workspace workspace = info.GetWorkspace(TeamFoundationHelper.GetTeamProjectServer());
+
+                // If the "tfs/ADERANT" collection is not found inside of the current WorkspaceInfo object, then move to the next
+                Workspace workspace;
+                try {
+                    workspace = info.GetWorkspace(TeamFoundationHelper.GetTeamProjectServer());
+                } catch (System.InvalidOperationException ex) {
+                    continue;
+                }
 
                 string serverPathToModule = workspace.TryGetServerItemForLocalItem(path);
 
