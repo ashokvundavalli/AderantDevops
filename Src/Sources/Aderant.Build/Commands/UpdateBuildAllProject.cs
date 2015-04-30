@@ -56,7 +56,15 @@ namespace Aderant.Build.Commands {
 
             WorkspaceInfo[] workspaces = Workstation.Current.GetAllLocalWorkspaceInfo();
             foreach (WorkspaceInfo workspaceInfo in workspaces) {
-                Workspace workspace = workspaceInfo.GetWorkspace(teamProject);
+
+                
+                // If the "tfs/ADERANT" collection is not found inside of the current WorkspaceInfo object, then move to the next
+                Workspace workspace;
+                try {
+                    workspace = workspaceInfo.GetWorkspace(teamProject);
+                } catch (System.InvalidOperationException ex) {
+                    continue;
+                }
 
                 string serverItem = workspace.TryGetServerItemForLocalItem(moduleProject);
                 if (!string.IsNullOrEmpty(serverItem)) {
