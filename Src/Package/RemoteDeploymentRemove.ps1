@@ -50,7 +50,7 @@ process{
         
         Start-Sleep -s 10
 
-        Write-Host "Waiting for services to stop on [$remoteMachineName]."
+        Write-Host "Waiting 60 seconds for services to stop on [$remoteMachineName]."
         Start-Sleep -s 30
         #Need to get server info from environment so we kill processes on the right machine.
         TryKillProcess "Expert.Messaging.Service" $remoteMachineName
@@ -59,7 +59,26 @@ process{
         Start-Sleep -s 30
 
         Write-Host "Invoking DeploymentEngine to REMOVE on [$remoteMachineName]."
-        Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath) cd "$innerSourcePath"; .\DeploymentEngine.exe remove "$innerManifestPath" } -ArgumentList $sourcePath, $environmentManifestPath
+        Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath)             
+            function Contains($List, $value) {
+                foreach($process in $running) {
+                    if ($process.name.ToLower() -eq $item.BaseName.ToLower()) {
+                        return $true; 
+                    }
+                } 
+                return $false
+            }
+            cd "$innerSourcePath"; 
+            $running = Get-Process
+            foreach ($item in Get-Item -Filter *.exe -Path C:\ExpertShare\*) {
+                if (Contains($running, $item)) {
+                    $name = $item.BaseName
+                    Write-Host "Attempting to kill $name as it still appears to be running."
+                    Stop-Process -Name $item.BaseName -Force
+                }
+            }
+            .\DeploymentEngine.exe remove "$innerManifestPath" 
+        } -ArgumentList $sourcePath, $environmentManifestPath
 
     } else {
         Write-Host "Could not find $sourcePath\DeploymentEngine.exe so not performing remove."

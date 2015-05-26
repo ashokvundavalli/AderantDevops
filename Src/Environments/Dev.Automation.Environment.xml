@@ -1,23 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest" networkSharePath="\\vmexpdevb309\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" enableServiceCallCompression="false">
+<environment name="IntegrationTest" networkSharePath="\\VMEXPDEVB309\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" enableServiceCallCompression="false">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
   <expertDatabaseServer serverName="svsql303" serverInstance="mssql10">
-    <databaseConnection databaseName="vmexpdevb309" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseConnection databaseName="VMEXPDEVB309" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
     <databaseSecurity administrators="" readers="" writers="" />
   </expertDatabaseServer>
   <monitoringDatabaseServer serverName="svsql303" serverInstance="mssql10">
-    <databaseConnection databaseName="vmexpdevb309_Monitoring" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseConnection databaseName="VMEXPDEVB309_Monitoring" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
     <databaseSecurity administrators="ADERANT_AP\SG_AP_AS_Admins" readers="ADERANT_AP\SG_AP_AS_Observers" writers="ADERANT_AP\SG_AP_AS_Admins" />
   </monitoringDatabaseServer>
   <workflowDatabaseServer serverName="svsql303" serverInstance="mssql10">
-    <databaseConnection databaseName="vmexpdevb309" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseConnection databaseName="VMEXPDEVB309" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
     <databaseSecurity administrators="ADERANT_AP\SG_AP_AS_Admins" readers="ADERANT_AP\SG_AP_AS_Observers" writers="ADERANT_AP\SG_AP_AS_Admins" />
   </workflowDatabaseServer>
-  <expertSystem exePath="C:\CMS.Net\ApplicationServer\Bin\AppShell.exe" connection="vmexpdevb309" />
+  <expertSystem exePath="C:\CMS.Net\ApplicationServer\Bin\AppShell.exe" connection="VMEXPDEVB309" />
   <servers>
-    <server name="vmexpdevb309" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+    <server name="VMEXPDEVB309" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="CheckRequest" />
         <role type="commonapplications" />

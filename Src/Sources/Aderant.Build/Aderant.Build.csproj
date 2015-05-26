@@ -75,6 +75,7 @@
     <Reference Include="System.Core">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -176,6 +177,7 @@
     <Compile Include="Tasks\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />
+    <Compile Include="Tasks\SqlFileExecution.cs" />
     <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
     <Compile Include="GetAssemblyPlatform.cs" />

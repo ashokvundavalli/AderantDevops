@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
 		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
+		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
 		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
@@ -54,7 +55,7 @@ Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 4
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://svtfs303:8080/tfs/aderant
+		SccTeamFoundationServer = http://tfs.ap.aderant.com:8080/tfs/aderant
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = Src\\Sources\\FxCopCmd\\FxCopCmd.csproj
 		SccProjectName1 = Src/Sources/FxCopCmd
@@ -63,7 +64,7 @@ Global
 		SccProjectName2 = Src/Sources/Aderant.Build
 		SccLocalPath2 = Src\\Sources\\Aderant.Build
 		SccProjectUniqueName3 = Test\\UnitTest.Build\\UnitTest.Build.csproj
-		SccProjectTopLevelParentUniqueName3 = Build.Infrastructure.sln
+		SccProjectTopLevelParentUniqueName3 = Build.infrastructure.sln
 		SccProjectName3 = Test/UnitTest.Build
 		SccLocalPath3 = Test\\UnitTest.Build
 	EndGlobalSection

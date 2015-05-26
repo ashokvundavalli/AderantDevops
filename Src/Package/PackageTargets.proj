@@ -4,7 +4,8 @@
     ToolsVersion="12.0">
 
   <!-- This is a custom version which resolves an ArgumentOutOfRangeException -->
-  <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(BuildScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
+  <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(PackageScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
+  <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\na.aderant.com\ExpertSuite\Dev\Automation\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
 
   <!-- 
     =========================================================================================================
@@ -21,8 +22,11 @@
   </ProjectExtensions>
 
   <PropertyGroup>
-      <BuildScriptsDirectory>$(SolutionRoot)</BuildScriptsDirectory>
-    
+      <PackageScriptsDirectory Condition="'$(PackageScriptsDirectory)' == ''">$(SolutionRoot)</PackageScriptsDirectory>
+      <!-- The build server copies packages into *\src but the buildscripts into *\src\Build so we need to accomodate the build server and a local build. -->
+      <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == '' and $(SolutionRoot.ToLower().EndsWith('src'))">$(SolutionRoot)\Build</BuildScriptsDirectory>
+      <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == ''">$(SolutionRoot)\..\Build</BuildScriptsDirectory>
+      <BuildDirectory Condition="'$(BuildDirectory)' == ''">$(SolutionRoot)\..\Projects\TestsIntegration</BuildDirectory>
       <!-- Detect Visual Studio Versions -->
       <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
       <VsCommonTools Condition="'$(VS110COMNTOOLS)' != ''">$(VS110COMNTOOLS)</VsCommonTools>
@@ -107,8 +111,8 @@
     
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(RemoteExpertSourceDirectory) -getDebugFiles $false -buildLibrariesPath $(BuildScriptsDirectory) -systemMapConnectionString {"$(ExpertDatabaseConnectionStringForSystemMap)"}'
-          WorkingDirectory="$(BuildScriptsDirectory)" />
+          Command='"Powershell" "$(PackageScriptsDirectory)\GetProduct.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(RemoteExpertSourceDirectory) -getDebugFiles $false -buildLibrariesPath $(PackageScriptsDirectory) -systemMapConnectionString {"$(ExpertDatabaseConnectionStringForSystemMap)"}'
+          WorkingDirectory="$(PackageScriptsDirectory)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -141,8 +145,8 @@
     <!--Merge and generate factory.bin-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)\GetProductZip.ps1" -remoteMachineName $(RemoteTestMachineName) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesPathOnRemote) -buildLibrariesPath $(BuildScriptsDirectory)'
-          WorkingDirectory="$(BuildScriptsDirectory)" />
+          Command='"Powershell" "$(PackageScriptsDirectory)\GetProductZip.ps1" -remoteMachineName $(RemoteTestMachineName) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(LocalExpertBinariesPathOnRemote) -buildLibrariesPath $(PackageScriptsDirectory)'
+          WorkingDirectory="$(PackageScriptsDirectory)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -180,8 +184,8 @@
     <!--Copy test binaries to folder for execution.-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)\GetProductTests.ps1" -buildSourcesDirectory $(SolutionRoot) -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(BuildScriptsDirectory)'
-          WorkingDirectory="$(BuildScriptsDirectory)" />
+          Command='"Powershell" "$(PackageScriptsDirectory)\GetProductTests.ps1" -buildSourcesDirectory $(SolutionRoot) -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(PackageScriptsDirectory)'
+          WorkingDirectory="$(PackageScriptsDirectory)" />
 
     <!--Copy to drop location for reference-->
     <!-- Andy - we are hitting 260 char limit so commenting this out to test a build.-->
@@ -223,7 +227,7 @@
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\ParseOrderedTests.ps1" $(TestAssemblyDirectory)' />
+      Command='"Powershell" "$(PackageScriptsDirectory)\ParseOrderedTests.ps1" $(TestAssemblyDirectory)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -255,7 +259,7 @@
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\DeploymentRemove.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath) $(RemoteTestMachineName)' />
+      Command='"Powershell" "$(PackageScriptsDirectory)\DeploymentRemove.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath) $(RemoteTestMachineName)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -290,7 +294,7 @@
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RemoteDeploymentRemove.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
+      Command='"Powershell" "$(PackageScriptsDirectory)\RemoteDeploymentRemove.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -329,7 +333,7 @@
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RestoreDB.ps1" $(EnvironmentManifestPath) $(DatabaseBackupLocation)' />
+      Command='"Powershell" "$(PackageScriptsDirectory)\RestoreDB.ps1" $(EnvironmentManifestPath) $(DatabaseBackupLocation)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -404,7 +408,7 @@
     <Exec
             ContinueOnError="false"
             IgnoreExitCode="false"
-            Command='"Powershell" "$(BuildScriptsDirectory)\DeploymentDeploy.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath)' />
+            Command='"Powershell" "$(PackageScriptsDirectory)\DeploymentDeploy.ps1" $(LocalExpertBinariesDirectory) $(EnvironmentManifestPath)' />
 
     <BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
@@ -438,7 +442,7 @@
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\RemoteDeploymentDeploy.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath) $$(DeployExpert)' />
+      Command='"Powershell" "$(PackageScriptsDirectory)\RemoteDeploymentDeploy.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath) $$(DeployExpert)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -469,7 +473,7 @@
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(BuildScriptsDirectory)\PingDeploymentEngine.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
+          Command='"Powershell" "$(PackageScriptsDirectory)\PingDeploymentEngine.ps1" $(RemoteTestMachineName) $(EnvironmentManifestPath)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -480,6 +484,40 @@
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Get UI Test Automation Framework dependencies.
+    ==========================================================================================
+  -->
+  <Target Name="ReplicateUITestDependencies">
+      <Message Text="SolutionRoot: $(SolutionRoot); BuildScriptsDirectory: $(BuildScriptsDirectory)" />
+      <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\Load-UITestDependencies.ps1" "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0" $(TestAssemblyDirectory) $(BuildScriptsDirectory)' />
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Inject data into database for UI tests.
+    ==========================================================================================
+  -->
+  <Target Name="ProvisionDatabaseForUiTests">
+    <!-- There is currently a bug in PackageManagerConsole.exe. When that is resolved we can use this script again. 
+    <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\ImportPackagesForAutomation.ps1" $(EnvironmentManifestPath) "\\vmexpdevb309\AutomatedTesting\DatabaseProvisioning" -licenses -workflows' /> -->
+    <SqlFileExecution
+      EnvironmentPath='$(EnvironmentManifestPath)'
+      SqlFile='\\vmexpdevb309\AutomatedTesting\DatabaseProvisioning\ProvisionDB.sql' />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Integration Tests
+    ==========================================================================================
+  -->
+  <Target Name="IntegrationTests"
+          DependsOnTargets="ReplicateUITestDependencies;ProvisionDatabaseForUiTests;IntegrationTests"
+          Condition="('$(RunTests)'=='true')" >
   </Target>
 
   <!--
@@ -575,7 +613,7 @@
       <TeamCityLogger Condition="'$(TeamCityLogger)'==''">$(VsTestDirectory)\Extensions\VSTest.TeamCityLogger.dll</TeamCityLogger>
     </PropertyGroup>
     
-    <Copy SourceFiles="$(BuildScriptsDirectory)\Build\Tasks\VSTest.TeamCityLogger.dll" 
+    <Copy SourceFiles="$(PackageScriptsDirectory)\Build\Tasks\VSTest.TeamCityLogger.dll" 
           DestinationFiles="$(TeamCityLogger)"
           Condition="!Exists('$(TeamCityLogger)')" />
 
@@ -592,14 +630,14 @@
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    <OnError ExecuteTargets="MarkStepAsFailed; ConvertTestResults" />
+    <OnError ExecuteTargets="MarkStepAsFailed" />
   </Target>
 
   <!--
     ==========================================================================================
         Convert Integration Test Result to HTML
     ==========================================================================================
-  -->		
+  -->   
   <Target Name="ConvertTestResults"
           Condition="('$(RunTests)'=='true')" >
     
@@ -661,12 +699,12 @@
     <Exec
      ContinueOnError="false"
      IgnoreExitCode="false"
-     Command='"Powershell" "$(BuildScriptsDirectory)\AllowDotNet40Assemblies.ps1"' />
+     Command='"Powershell" "$(PackageScriptsDirectory)\AllowDotNet40Assemblies.ps1"' />
     
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" "$(BuildScriptsDirectory)\DeployDatabase.ps1" $(EnvironmentManifestPath) $(RemoteExpertSourceDirectory)\ExpertSource' />
+      Command='"Powershell" "$(PackageScriptsDirectory)\DeployDatabase.ps1" $(EnvironmentManifestPath) $(RemoteExpertSourceDirectory)\ExpertSource' />
 
     
     <BuildStep
