@@ -512,10 +512,10 @@
 
   <!--
     ==========================================================================================
-        Integration Tests
+        UI Automation Tests
     ==========================================================================================
   -->
-  <Target Name="IntegrationTests"
+  <Target Name="AutomationTests"
           DependsOnTargets="ReplicateUITestDependencies;ProvisionDatabaseForUiTests;IntegrationTests"
           Condition="('$(RunTests)'=='true')" >
   </Target>
