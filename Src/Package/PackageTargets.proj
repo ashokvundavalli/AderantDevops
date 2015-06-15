@@ -564,6 +564,7 @@
     
     <PropertyGroup>
         <TestAssemblyIncludePattern Condition="'$(TestAssemblyIncludePattern)' == ''">IntegrationTest*.dll</TestAssemblyIncludePattern>
+		<TestSettingsSwitch Condition="'$(TestSettingsFile)' == ''"></TestSettingsSwitch>
     </PropertyGroup>
 
     <ItemGroup>
