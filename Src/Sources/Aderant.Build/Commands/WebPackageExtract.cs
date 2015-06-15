@@ -48,7 +48,7 @@ namespace Aderant.Build.Commands {
 
             Host.UI.WriteDebugLine(string.Format("Getting Web Dependencies from {0} to {1}", sourceFolder, destinationDependencyFolder));
 
-            string zipFileName = sourceFolder.Split('\\').First(p => p.StartsWith("Web.")) + ".zip"; // e.g. web.workflow.zip
+            string zipFileName = sourceFolder.Split('\\').First(p => (p.StartsWith("Web.")||p.StartsWith("Mobile."))) + ".zip"; // e.g. web.workflow.zip
             string moduleName = zipFileName.Split('\\').Last().Replace(".zip", ""); // e.g. web.workflow
             FastZip fz = new FastZip();
 
@@ -82,7 +82,7 @@ namespace Aderant.Build.Commands {
                 CopyDirectoryContentsRecursively(folderToDeploy, localDependencyFolderName, dependencies);
 
                 // move dll files to dependency folder, not this sub folder
-                var dlls = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.dll");
+                var dlls = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.dll").Union(Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "mobile.*.dll"));
                 foreach (string dll in dlls) {
                     string destinationDllName = Path.Combine(destinationDependencyFolder, Path.GetFileName(dll) ?? "");
                     if (File.Exists(destinationDllName)) {
@@ -92,7 +92,7 @@ namespace Aderant.Build.Commands {
                 }
 
                 // move pdb files to dependency folder, not this sub folder
-                var pdbs = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.pdb");
+                var pdbs = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.pdb").Union(Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "mobile.*.pdb")); ;
                 foreach (string pdb in pdbs) {
                     string destinationPdbName = Path.Combine(destinationDependencyFolder, Path.GetFileName(pdb) ?? "");
                     if (File.Exists(destinationPdbName)) {
@@ -109,7 +109,7 @@ namespace Aderant.Build.Commands {
             // copy selected folders into src (Images, Scripts, CSS etc)
             DirectoryInfo srcInfo = new DirectoryInfo(Path.Combine(destinationDependencyFolder, "..\\src"));
             DirectoryInfo[] srcProjectFolders = srcInfo.GetDirectories("*.*", SearchOption.TopDirectoryOnly);
-            foreach (var srcProjectFolder in srcProjectFolders.Where(s => s.Name.StartsWith("Web"))) {
+            foreach (var srcProjectFolder in srcProjectFolders.Where(s => s.Name.StartsWith("Web") || s.Name.StartsWith("Mobile"))) {
                 foreach (var srcFolderName in folderNamesToCopyToSrc) {
                     string destinationFolderName = Path.Combine(srcProjectFolder.FullName, srcFolderName);
                     if (srcFolderName != "ManualLogon") {
@@ -118,7 +118,7 @@ namespace Aderant.Build.Commands {
 
                     var info = new DirectoryInfo(Path.Combine(folderToDeploy, srcFolderName));
 
-                    dependencies = info.Exists ? info.GetDirectories("ThirdParty*").Union(info.GetDirectories("Web.*")).Select(i => i.Name).ToArray() : new string[0];
+                    dependencies = info.Exists ? info.GetDirectories("ThirdParty*").Union(info.GetDirectories("Web.*")).Union(info.GetDirectories("Mobile.*")).Select(i => i.Name).ToArray() : new string[0];
 
                     if (srcFolderName == "Views") {
                         // Views are different - Web.Presentation\Views\Shared => Web.Time\Views\Shared\Web.Presentation\

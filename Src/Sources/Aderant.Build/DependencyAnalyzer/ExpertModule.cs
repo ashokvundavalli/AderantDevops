@@ -141,7 +141,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (name.StartsWith("INTERNAL", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.InternalTool;
             }
-            if (name.StartsWith("WEB", StringComparison.OrdinalIgnoreCase)) {
+            if (name.StartsWith("WEB", StringComparison.OrdinalIgnoreCase) || name.StartsWith("MOBILE", StringComparison.OrdinalIgnoreCase))
+            {
                 return ModuleType.Web;
             }
             if (name.StartsWith("INSTALLS", StringComparison.OrdinalIgnoreCase)) {

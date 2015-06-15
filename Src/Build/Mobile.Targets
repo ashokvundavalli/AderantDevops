@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="MobileBuild">
+    <Message Text="Starting custom build for: $(ModuleName)"/>
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
+    <!--<CallTarget Targets="CleanBuildLocation"/>-->
+    <CallTarget Targets="CopyModule"/>
+    <CallTarget Targets="SSHCall"/>
+    <CallTarget Targets="CheckSuccess"/>
+    <CallTarget Targets="MobileBuildCleanUp"/>
+    <!--<CallTarget Targets="Testing"/>-->
+  </Target>
+  
+  <Target Name="MobileBuildCleanUp">
+    <CallTarget Targets="CopyToModuleBin"/>
+    <CallTarget Targets="CleanServer"/>
+  </Target>
+
+    <PropertyGroup>
+    <SSHClient>$(BuildToolsDirectory)plink.exe</SSHClient>
+    <User>service.tfsbuild.ap</User>
+    <Password>Ad3rant0</Password>
+  </PropertyGroup>
+  
+  <Target Name="CleanServer">
+    <PropertyGroup>
+      <SSHRemoveServerBin>sudo su - $(USERNAME) -c 'rm -r /$(BuildLocationWSF)'</SSHRemoveServerBin>
+      <SSHCommand>$(SSHClient) -t -pw $(Password) $(User)@$(BuildServer) "$(SSHRemoveServerBin)"</SSHCommand>
+    </PropertyGroup>
+
+    <Exec Command='$(SSHCommand)'></Exec>
+    <Error Condition="'$(AndroidSuccess)' != 'True' Or '$(IosSuccess)' != 'True'" />
+  </Target>
+
+  <Target Name="CopyModule">
+    <PropertyGroup>
+      <NewGuid>$([System.Guid]::NewGuid())</NewGuid>
+      <BuildDirectory Condition="('$(IsDesktopBuild)'=='true')">$(USERNAME)\$(NewGuid)</BuildDirectory>
+      <BuildDirectory Condition="('$(IsDesktopBuild)'!='true')">$(AssemblyVersion)\$(FileVersion)</BuildDirectory>
+      <AppBuildLocation>AppBuild</AppBuildLocation>
+      <BuildServer>WSAKL001122OSX</BuildServer>
+      <BuildLocation>$(AppBuildLocation)\$(ModuleName)\$(BuildDirectory)</BuildLocation>
+      <CopyLocation Condition="'$(CopyLocation)' == ''">\\$(BuildServer)\$(BuildLocation)\$(ModuleName)</CopyLocation>
+      <BuildLocationWSF>$(BuildLocation.Replace('\', '/'))</BuildLocationWSF>
+    </PropertyGroup>
+    <!--<ItemGroup>
+      <Files Include="$(SolutionDirectoryPath)\src\$(ModuleName)\**\*" Exclude="$(SolutionDirectoryPath)\src\$(ModuleName)\**\obj\**;$(SolutionDirectoryPath)\src\$(ModuleName)\**\bin\**"/>
+    </ItemGroup>
+    <Zip Files="@(Files)"
+          WorkingDirectory="$(SolutionDirectoryPath)\src\$(ModuleName)"
+          ZipFileName="$(SolutionDirectoryPath)src\$(ModuleName).zip"
+          ZipLevel="9" />
+          -->
+    <Exec Command='"Powershell" -noprofile new-item  $(CopyLocation) -itemtype directory; Copy-Item -Recurse -Force $(SolutionDirectoryPath)Bin\Module\$(ModuleName).zip $(CopyLocation)'></Exec>
+    <!--<Exec Command='"Powershell" -noprofile Copy-Item -Recurse -Force $(SolutionDirectoryPath)src\* $(CopyLocation)'></Exec>-->
+    <!--<Delete Files="$(SolutionDirectoryPath)src\$(ModuleName).zip" />-->
+    
+
+  </Target>
+
+  <Target Name="SSHCall">
+  
+    <PropertyGroup>
+      <SSHClient>$(BuildToolsDirectory)plink.exe</SSHClient>
+      <User>service.tfsbuild.ap</User>
+      <Password>Ad3rant0</Password>
+      <Keychain>iOSCustomBuild.keychain</Keychain>
+      <CurrentDate>$([System.DateTime]::Now.ToString(yyyyMMdd-HHmm))</CurrentDate>
+      <AppBuildVersion Condition="('$(IsDesktopBuild)'=='true')">localbuild.$(USERNAME).$(CurrentDate)</AppBuildVersion>
+      <AppBuildVersion Condition="('$(IsDesktopBuild)'!='true')">$(FileVersion)</AppBuildVersion>
+      <SSHChangeDirectory>cd /$(BuildLocationWSF)/$(ModuleName); </SSHChangeDirectory>
+      <SSHUnzip>unzip $(ModuleName) 2>%261 > /dev/null; </SSHUnzip>
+      <!--rank custom keychain above who ever called build and unlock it-->
+      <SSHUnlockKeychain>security list-keychains -s /Users/$(User)/Library/Keychains/$(Keychain) /Users/$(USERNAME)/Library/Keychains/login.keychain; security -v unlock-keychain -p '$(Password)' '/Users/$(User)/Library/Keychains/$(Keychain)' ;</SSHUnlockKeychain>
+      <SSHMakeScriptExe>ls; cd Content/PackageTmp; ls; chmod 766 BuildScripts/*.sh;</SSHMakeScriptExe>
+      <SSHCallBuildScript>./BuildScripts/build-app.sh $(AppBuildVersion);</SSHCallBuildScript>
+      <!--the command that is run on the remote machine-->
+      <SSHSubCommand> $(SSHChangeDirectory) $(SSHUnzip) $(SSHUnlockKeychain) $(SSHMakeScriptExe) $(SSHCallBuildScript)</SSHSubCommand>
+      <!--Changes to current user and build module-->
+      <SSHChangeUser>sudo su - $(USERNAME) -c '$(SSHSubCommand)'</SSHChangeUser>
+      <SSHCommand>$(SSHClient) -batch -t -pw $(Password) $(User)@$(BuildServer) "$(SSHChangeUser)"</SSHCommand>
+
+      <!--The build server doesn't automatically trust the mac build server, so we add the fingerprint to the  registry keys-->
+      <SSHRegLocation>HKEY_CURRENT_USER\SoftWare\SimonTatham\PuTTY\SshHostKeys</SSHRegLocation>
+      <SSHRegValue>rsa2@22:wsakl001122osx</SSHRegValue>
+      <SSHFingerprint>0x10001,0xc2ac9014e2def23ae95d4ceca137c8fe781d20b91e347b392c7680b68fd327dbee27c7cde16c87a4a00bc017436602234473f8c9ea9966cd8ceaafe4ab7502dd44d0dd13b6e5adfabd1ad6cfd696995fa4e7ee632ec75d4492f4585b5fc624045c6d381dc3d2b817754eaef6dedc9d5df7bdffb234d69e54a2b5372f694a9d9523e02d3451b581d11187f05d6a8f2bc46b1e72679f72d201afb95eb3d12b70a4d2e77cdc9630fe448f3114457bd8fcb5d19e97be11d62e2196b88400623c9115b83a7fcc121fc7710d718e9b271ca1f5c40f94d8f698304edbd08a69d0331ac60737b3d9eb2e59590f51aad73fc91aa38a0c8b251b7517d30754d1f2a58b5fdf</SSHFingerprint>
+      <SSHRegEditCommand>reg add "$(SSHRegLocation)" /f /v "$(SSHRegValue)" /t REG_SZ /d "$(SSHFingerprint)"</SSHRegEditCommand>
+    </PropertyGroup>
+
+    <Exec Command='$(SSHRegEditCommand)'></Exec>
+    <Exec Command='$(SSHCommand)'></Exec>
+    <OnError ExecuteTargets="MobileBuildCleanUp" />
+  </Target>
+
+  <Target Name="CheckSuccess">
+    <PropertyGroup>
+      <BinLocation>\\$(BuildServer)\$(BuildLocation)\$(ModuleName)\Content\bin</BinLocation>
+      <AndroidLog>$(BinLocation)\android-build.log</AndroidLog>
+      <IosLog>$(BinLocation)\ios-build.log</IosLog>
+      <BlackberryLog>$(BinLocation)\blackberry10-build.log</BlackberryLog>
+    </PropertyGroup>
+    <Message Text='Starting Success Check, Bin location: $(BinLocation)' />
+    <Message Text="iOS logs DOESNT exists" Condition="!Exists($(IosLog))"/>
+    <ReadLinesFromFile File="$(IosLog)" Condition="Exists($(IosLog))">
+      <Output TaskParameter="Lines" ItemName="IosBuildLog"/>
+    </ReadLinesFromFile>
+    <Message Text="Android Log DOESNT exists" Condition="!Exists($(AndroidLog))"/>
+    <ReadLinesFromFile File="$(AndroidLog)" Condition="Exists($(AndroidLog))">
+      <Output TaskParameter="Lines" ItemName="AndroidBuildLog"/>
+    </ReadLinesFromFile>
+    <Message Text="Blackberr Log DOESNT exists" Condition="!Exists($(BlackberryLog))"/>
+    <ReadLinesFromFile File="$(BlackberryLog)" Condition="Exists($(BlackberryLog))">
+      <Output TaskParameter="Lines" ItemName="BlackberryBuildLog"/>
+    </ReadLinesFromFile>
+
+    <PropertyGroup>
+      <IosFileContent>@(IosBuildLog)</IosFileContent>
+      <AndroidFileContent>@(AndroidBuildLog)</AndroidFileContent>
+      <BlackberryFileContent>@(BlackberryBuildLog)</BlackberryFileContent>
+      
+      <IosSuccess>$(IosFileContent.Contains("BUILD SUCCEEDED"))</IosSuccess>
+      <AndroidSuccess>$(AndroidFileContent.Contains("BUILD SUCCESSFUL"))</AndroidSuccess>
+      <BlackberrySuccess>$(BlackberryFileContent.Contains("BAR packaging complete"))</BlackberrySuccess>
+    </PropertyGroup>
+    <Message Condition="'$(AndroidSuccess)' != 'True'" Text='The Android Build Failed' />
+    <Message Condition="'$(IosSuccess)' != 'True'" Text='The iOS Build Failed' />
+    <Message Condition="'$(BlackberrySuccess)' != 'True'" Text='The Blackberry Build Failed' />
+    <Message Text='Finished Success Check, iOS successful: $(IosSuccess), Android successful: $(AndroidSuccess), Blackberry successful: $(BlackberrySuccess)' />
+  </Target>
+
+  <Target Name="CopyToModuleBin">
+    <PropertyGroup>
+      <DesktopDropLocation>$(SolutionDirectoryPath)Bin\Module</DesktopDropLocation>
+    </PropertyGroup>
+    <Message Text="Starting Copy" />
+    <Message Text="Copy Output to $(DesktopDropLocation)" />
+    <Exec ContinueOnError="ErrorAndContinue" Command='"Powershell" -noprofile Copy-Item -Recurse -Force \\$(BuildServer)\$(BuildLocation)\$(ModuleName)\Content\bin\* $(DesktopDropLocation)'></Exec>
+    
+  </Target>
+  
+
+</Project>

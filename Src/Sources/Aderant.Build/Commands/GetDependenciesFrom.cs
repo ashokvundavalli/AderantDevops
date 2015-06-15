@@ -112,10 +112,7 @@ namespace Aderant.Build.Commands {
                             if (!Directory.Exists(targetPath)) {
                                 Directory.CreateDirectory(targetPath);
                             }
-                            if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
-                                // The source is a web module, these are packaged using webdeploy and need to be uzipped and copied in a specific way.
-                                CallWebPackageExtract(targetPath, branchPath, dependency);
-                            } else {
+
                                 // Get a list of unique content, we don't want to dump all the stuff from bin into dependencies as we may drag out dated stuff along
                                 List<FileInfo> content = ResolveUniqueBinContent(
                                     sourcePath,
@@ -137,6 +134,12 @@ namespace Aderant.Build.Commands {
                                         }
                                     }
                                 }
+                                if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    // The source is a web module, these are packaged using webdeploy and need to be uzipped and copied in a specific way.
+                                    dependency.Provider.Deploy(targetPath);
+                                    //  CallWebPackageExtract(targetPath, branchPath, dependency);
+                                }
                                 if (dependency.Provider.Name.StartsWith("ThirdParty.", StringComparison.OrdinalIgnoreCase) &&
                                     dependency.Consumer.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
                                     // If we are getting a third party module and we are a Web module, then our dependencies need to go into additional directories
@@ -144,28 +147,13 @@ namespace Aderant.Build.Commands {
                                     // See line 176 of LoadDependencies.ps1 for this section of code.
                                     WriteWarning("This command cannot get third party modules for web projects.");
                                 }
-                            }
+                            
                         } else {
                             WriteWarning(string.Format("Cannot get {0}, this command cannot get third party, build or database modules.", dependency.Provider.Name));
                         }
 
                     } // if the dependency branch is this current branch.
                 }  // foreach dependency
-
-                if (!ExpressMode) {
-                    // Call WebDependencyCsprojSynchronize.exe to synch up folder and VS project.
-                    Host.UI.WriteLine(string.Format("Synchronizing web projects in {0}.", moduleName));
-                    Host.UI.WriteLine(string.Format("If you wish not to do this, use -ExpressMode to stop synchronising project file."));
-                    var csProjSynchStopwatch = Stopwatch.StartNew();
-                    var projectFileFolderSync = new ProjectFileFolderSync();
-                    string dependenciesFolderPath = Path.Combine(consumerModule, "Dependencies");
-                    WriteDebug("About to call projectFileFolderSync.Synchronize using the following params...");
-                    WriteDebug(string.Format("   dependenciesFolderPath = {0}", dependenciesFolderPath));
-                    projectFileFolderSync.Synchronize(dependenciesFolderPath);
-                    csProjSynchStopwatch.Stop();
-                    WriteDebug(string.Format("   Returned from projectFileFolderSync.Synchronize (took {0}ms)", csProjSynchStopwatch.ElapsedMilliseconds));
-                }
-
             } // for each target module
 
             processRecordStopwatch.Stop();
@@ -177,40 +165,6 @@ namespace Aderant.Build.Commands {
 
         private static string GetModuleNameFromLocalPath(string consumerModulePath, string branchPath) {
             return consumerModulePath.Substring(branchPath.Length).Split(Path.DirectorySeparatorChar).Last();
-        }
-
-        private void CallWebPackageExtract(string targetPath, string branchPath, ModuleDependency dependency) {
-            // The source is a web module, these are packaged using webdeploy and need to be uzipped and copied in a specific way.
-            Host.UI.WriteLine(string.Format("  Inserting {0} web assets into the {1} projects.", dependency.Provider.Name, dependency.Consumer.Name));
-            var stopwatch = Stopwatch.StartNew();
-            string destinationDependencyFolder = targetPath;
-            string providerWebProjectRoot = PathHelper.Aggregate(branchPath,
-                                                                         "Modules", dependency.Provider.Name,
-                                                                         "Src", dependency.Provider.Name);
-            string[] dependencies = Directory.GetFiles(
-                PathHelper.Aggregate(branchPath, "Modules", dependency.Provider.Name, "Dependencies"),
-                "*.*",
-                SearchOption.AllDirectories
-                ).OrderBy(s => s)
-                                             .Select(
-                                                 file =>
-                                                 file.Substring(
-                                                     file.IndexOf("Dependencies",
-                                                                  StringComparison.InvariantCultureIgnoreCase) + 13))
-                                             .ToArray();
-            stopwatch.Stop();
-            WriteDebug(string.Format("CallWebPackageExtract - calculated dependencies list in {0}ms", stopwatch.ElapsedMilliseconds));
-            stopwatch = Stopwatch.StartNew();
-            WriteDebug("About to call DeployWebDependenciesToProject using the following params...");
-            WriteDebug(string.Format("   destinationDependencyFolder = {0}", destinationDependencyFolder));
-            WriteDebug(string.Format("   folderToDeploy = {0}", providerWebProjectRoot));
-            WriteDebug(string.Format("   moduleName = {0}", dependency.Provider.Name));
-            WriteDebug(string.Format("   dependencies.Length = {0}", dependencies.Length));
-            var webPackageExtract = new WebPackageExtract();
-            webPackageExtract.DeployWebDependenciesToProject(destinationDependencyFolder, providerWebProjectRoot,
-                                                             dependency.Provider.Name, dependencies, CopyWebDlls);
-            stopwatch.Stop();
-            WriteDebug(string.Format("   Returned from DeployWebDependenciesToProject (took {0}ms)", stopwatch.ElapsedMilliseconds));
         }
 
         private void CopyFile(string destination, FileInfo file) {

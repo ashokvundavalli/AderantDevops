@@ -46,6 +46,9 @@
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Scripts\*.js">
       <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('Scripts\', ''))</RelativePath>
     </ExternalContent>
+    <ExternalContent Include="$(DependenciesDirectory)Mobile.*\Scripts\*.js">
+      <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('Scripts\', ''))</RelativePath>
+    </ExternalContent>
     
     <ExternalContent Include="$(DependenciesDirectory)ThirdParty.*\*.js">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
@@ -67,6 +70,13 @@
                               $(DependenciesDirectory)Web.*\Content\Web.*\**">
       <RelativePath>Content\$([System.String]::Copy('%(RecursiveDir)').Replace('Content\', ''))</RelativePath>
     </ExternalContent>
+    <ExternalContent Include="$(DependenciesDirectory)Mobile.*\Content\**\*"
+                    Exclude="$(DependenciesDirectory)Mobile.*\Content\**\*.js;
+                              $(DependenciesDirectory)Mobile.*\Content\**\*.d.ts;
+                              $(DependenciesDirectory)Mobile.*\Content\Web.*\**;
+                              $(DependenciesDirectory)Mobile.*\Content\Mobile.*\**">
+      <RelativePath>Content\$([System.String]::Copy('%(RecursiveDir)').Replace('Content\', ''))</RelativePath>
+    </ExternalContent>
     
     <ExternalContent Include="$(DependenciesDirectory)ThirdParty.*\**\*" 
                      Exclude="$(DependenciesDirectory)ThirdParty.*\**\.js;
@@ -81,12 +91,21 @@
                      Exclude="$(DependenciesDirectory)Web.*\ViewModels\Web.*\**">
       <RelativePath>ViewModels\$([System.String]::Copy('%(RecursiveDir)').Replace('ViewModels\', ''))</RelativePath>
     </ExternalContent>
+    <ExternalContent Include="$(DependenciesDirectory)Mobile.*\ViewModels\**\*.js"
+                 Exclude="$(DependenciesDirectory)Mobile.*\ViewModels\Web.*\**;
+                         $(DependenciesDirectory)Mobile.*\ViewModels\Mobile.*\**">
+      <RelativePath>ViewModels\$([System.String]::Copy('%(RecursiveDir)').Replace('ViewModels\', ''))</RelativePath>
+    </ExternalContent>
   </ItemGroup>
 
   <!--Authentication--> 
   <ItemGroup>
     <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\**\*.aspx"
                  Exclude="$(DependenciesDirectory)Web.*\Authentication\Web.*\**">
+      <RelativePath>Authentication\$([System.String]::Copy('%(RecursiveDir)').Replace('Authentication\', ''))</RelativePath>
+    </AspxContent>
+    <AspxContent Include="$(DependenciesDirectory)Mobile.*\Authentication\**\*.aspx"
+             Exclude="$(DependenciesDirectory)Mobile.*\Authentication\Web.*\**">
       <RelativePath>Authentication\$([System.String]::Copy('%(RecursiveDir)').Replace('Authentication\', ''))</RelativePath>
     </AspxContent>
   </ItemGroup>
@@ -97,12 +116,20 @@
                  Exclude="$(DependenciesDirectory)Web.*\ManualLogOn\Web.*\**">
       <RelativePath>ManualLogOn\$([System.String]::Copy('%(RecursiveDir)').Replace('%(RecursiveDir)', ''))</RelativePath>
     </AspxContent>
+    <AspxContent Include="$(DependenciesDirectory)Mobile.*\ManualLogOn\*.aspx"
+             Exclude="$(DependenciesDirectory)Mobile.*\ManualLogOn\Web.*\**">
+      <RelativePath>ManualLogOn\$([System.String]::Copy('%(RecursiveDir)').Replace('%(RecursiveDir)', ''))</RelativePath>
+    </AspxContent>
   </ItemGroup>
 
   <!--Helpers--> 
   <ItemGroup>
-    <ExternalContent Include="$(DependenciesDirectory)Web.*\Helpers\*.js"
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\Helpers\*.js;$(DependenciesDirectory)Web.*\Helpers\*.xml"
                      Exclude="$(DependenciesDirectory)Web.*\Helpers\Web.*\**">
+      <RelativePath>Helpers\$([System.String]::Copy('%(RecursiveDir)').Replace('Helpers\', ''))</RelativePath>
+    </ExternalContent>
+    <ExternalContent Include="$(DependenciesDirectory)Mobile.*\Helpers\*.js;$(DependenciesDirectory)Mobile.*\Helpers\*.xml"
+                     Exclude="$(DependenciesDirectory)Mobile.*\Helpers\Web.*\**">
       <RelativePath>Helpers\$([System.String]::Copy('%(RecursiveDir)').Replace('Helpers\', ''))</RelativePath>
     </ExternalContent>
   </ItemGroup>
@@ -111,6 +138,11 @@
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Views\**\Shared\**\*.cshtml"
                      Exclude="$(DependenciesDirectory)Web.*\Views\**\Shared\**\Web.*\**">
        <!--Views are different - Web.Presentation\Views\Shared => Web.Time\Views\Shared\Web.Presentation-->     
+      <RelativePath>Views\Shared\$([System.String]::Copy('%(RecursiveDir)').Replace('Views\Shared\', ''))</RelativePath>
+    </ExternalContent>
+    <ExternalContent Include="$(DependenciesDirectory)Mobile.*\Views\**\Shared\**\*.cshtml"
+                    Exclude="$(DependenciesDirectory)Mobile.*\Views\**\Shared\**\Web.*\**">
+      <!--Views are different - Web.Presentation\Views\Shared => Web.Time\Views\Shared\Web.Presentation-->
       <RelativePath>Views\Shared\$([System.String]::Copy('%(RecursiveDir)').Replace('Views\Shared\', ''))</RelativePath>
     </ExternalContent>
   </ItemGroup>
@@ -136,11 +168,11 @@
     <When Condition=" '$(AssemblyName)' != 'Web.Foundation' ">
       <ItemGroup>
         <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
-        <Content Include="Authentication\Web.Foundation\LogOn.aspx;ManualLogOn\default.aspx" >
+        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx" >
           <Visible>true</Visible>
         </Content>
 
-        <Content Include="Authentication\**\*" Exclude="Authentication\**\LogOn.aspx">
+        <Content Include="Authentication\**\*" Exclude="Authentication\**\LogOn.aspx; Authentication\**\LogOff.aspx">
           <Visible>true</Visible>
         </Content>
 

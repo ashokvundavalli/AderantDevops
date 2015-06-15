@@ -185,7 +185,7 @@ namespace Aderant.Build {
             
             Task task;
 
-            if (referencedModule.ModuleType == ModuleType.ThirdParty && (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty)) {
+            if (referencedModule.ModuleType == ModuleType.ThirdParty && (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase)  || mode == DependencyFetchMode.ThirdParty)){
                 // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                 // used depending on the content type.
 

@@ -7,7 +7,7 @@
     =========================================================================================================
         Team Build Script        
         
-        Guidelines:            
+        Guidelines:
             * Retain structure and formatting for easier merge between Team Build project scripts 
             * Tabs converted to 4 spaces for easier reading outside of VS.
     =========================================================================================================
@@ -197,6 +197,7 @@ foreach(var replacement in replacements){
     <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
     <CallTarget Targets="RunUnitTests" />
     <CallTarget Targets="PublishModule" />
+    <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
     <CallTarget Targets="Testing" />
     <CallTarget Targets="PostBuild" Condition="('$(PostBuild)'=='true')" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
@@ -271,13 +272,13 @@ foreach(var replacement in replacements){
     </CreateProperty>
   </Target>
 
-  <Target Name="BeforeDropBuild"
+  <Target Name="BeforeDropBuild" 
           Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" BeforeTargets="DropBuild">
-
+    
     <RemoveDir Condition="'$(DropLocation)' != ''"
                Directories="$(DropLocation)\$(BuildNumber)"
                ContinueOnError="true" />
-
+    
     <!-- Set the drop location back to the FileVersion so the log file goes to the right place -->
     <UpdateBuildNumberDropLocation
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
@@ -511,6 +512,7 @@ foreach(var replacement in replacements){
   <PropertyGroup>
     <BuildDependsOn>
       rmTransformTemplates;
+      $(BuildDependsOn)
     </BuildDependsOn>
 
     <SolutionFileName Condition="('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)$(ModuleName).Custom.sln</SolutionFileName>
@@ -542,10 +544,10 @@ foreach(var replacement in replacements){
     </ItemGroup>
 
     <PropertyGroup>
-      <_ContainsWebProject Condition="$([System.String]::new('%(Projects.Filename)').Contains('Web.'))">true</_ContainsWebProject>
+      <_ContainsWebProject Condition="$([System.String]::new('%(Projects.Filename)').Contains('Web.')) or $([System.String]::new('%(Projects.Filename)').Contains('Mobile.'))">true</_ContainsWebProject>
     </PropertyGroup>
 
-    <Copy Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true' Or '$(_ContainsWebProject)' == 'true'"
+    <Copy Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true' Or '$(_ContainsWebProject)' == 'true' Or $(ModuleName.Contains('Mobile.'))"
           SourceFiles="$(MSBuildThisFileDirectory)\Aderant.wpp.targets"
           DestinationFiles="%(Projects.RelativeDir)\Aderant.wpp.targets"
           UseHardlinksIfPossible="true"
@@ -1284,7 +1286,7 @@ foreach(var replacement in replacements){
           OverwriteReadOnlyFiles="true"
           UseHardlinksIfPossible="true" />
 
-    <ExtractWebModule Condition="$(ModuleName.StartsWith('Web'))"
+    <ExtractWebModule Condition="$(ModuleName.StartsWith('Web')) Or $(ModuleName.StartsWith('Mobile'))"
                       ModuleName="$(ModuleName)"
                       DependenciesDirectory="$(SharedDependencyDirectory)" />
 
@@ -1468,4 +1470,6 @@ foreach(var replacement in replacements){
             ContinueOnError="true" />-->
   </Target>
 
+  <!-- Import this last to override the standard Build and CopyToDrop targets -->
+  <Import Project="Mobile.targets" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
 </Project>
