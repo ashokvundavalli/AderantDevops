@@ -8,6 +8,7 @@
     <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
+    <Module Name="Applications.DocuDraftAddIn" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
     <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
@@ -104,6 +105,7 @@
     <Module Name="ThirdParty.FiddlerCore" />
     <Module Name="ThirdParty.FOApi" />
     <Module Name="ThirdParty.FWBS" />
+    <Module Name="ThirdParty.GalaSoft" />        
     <Module Name="ThirdParty.GongSolutions" />
   	<Module Name="ThirdParty.HammerJS" />
     <Module Name="Thirdparty.HtmlAgilityPack" />
