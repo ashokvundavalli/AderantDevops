@@ -34,7 +34,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             TfsTeamProjectCollection collection = TeamFoundationHelper.GetTeamProjectServer();
             VersionControlServer service = collection.GetService<VersionControlServer>();
-            Workspace workspaceInfo = EditProductManifest(collection);
+            Workspace workspaceInfo = EditProductManifest();
 
             var validator = new SourceControlModuleInspector(logger, service);
 
@@ -146,8 +146,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private List<string> GetModulesMissingFromManifest(VersionControlServer vcs, IEnumerable<ExpertModule> modules, string branch) {
-            List<string> moduleNames = GetModulesFromSourceControl(vcs, branch).ToList<string>();
-            int count = moduleNames.RemoveAll((string m) => IsManifest(m, modules));
+            List<string> moduleNames = GetModulesFromSourceControl(vcs, branch).ToList();
+            moduleNames.RemoveAll(m => IsManifest(m, modules));
 
             return moduleNames;
         }
@@ -161,20 +161,15 @@ namespace Aderant.Build.DependencyAnalyzer {
             return false;
         }
 
-        private Workspace EditProductManifest(TfsTeamProjectCollection collection) {
-            WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
-
-            for (int i = 0; i < workspaceInfo.Length; i++) {
-                WorkspaceInfo info = workspaceInfo[i];
-                Workspace workspace = info.GetWorkspace(collection);
-
-                string path = workspace.TryGetServerItemForLocalItem(provider.ProductManifestPath);
-                if (path != null) {
-                    workspace.PendEdit(provider.ProductManifestPath);
-                    return workspace;
-                }
+        private Workspace EditProductManifest() {
+            Workspace workspace = TeamFoundationHelper.GetWorkspaceForItem(provider.ProductManifestPath);
+            
+            string path = workspace.TryGetServerItemForLocalItem(provider.ProductManifestPath);
+            if (path != null) {
+                workspace.PendEdit(provider.ProductManifestPath);
+                return workspace;
             }
-
+            
             throw new InvalidOperationException("Could not determine current TFS workspace");
         }
 
