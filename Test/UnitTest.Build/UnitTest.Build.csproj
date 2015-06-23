@@ -56,7 +56,7 @@
     <Reference Include="Microsoft.TeamFoundation.Client, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="MSBuild.Community.Tasks">
-      <HintPath>..\..\Src\Build\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
+      <HintPath>..\..\Src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
