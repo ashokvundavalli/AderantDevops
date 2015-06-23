@@ -15,13 +15,22 @@ namespace Aderant.Build.Commands {
     [CmdletDescription("Creates a new build definition in TFS for the current module.")]
     public sealed class NewExpertBuildDefinition : PSCmdlet {
 
-        static NewExpertBuildDefinition() {
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
-                //C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\IDE\PrivateAssemblies
-                string commonTools = Environment.GetEnvironmentVariable("VS110COMNTOOLS");
+        private static string[] visualStudioVersions = new string[] {
+            "VS120COMNTOOLS",
+            "VS110COMNTOOLS" //C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\IDE\PrivateAssemblies
+        };
 
-                if (commonTools != null) {
+        static NewExpertBuildDefinition() {
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+        }
+
+        private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args) {
+            foreach (var visualStudioVersion in visualStudioVersions) {
+                string commonTools = Environment.GetEnvironmentVariable(visualStudioVersion);
+
+                if (!string.IsNullOrEmpty(commonTools)) {
                     string privateAssemblies = Path.GetFullPath(Path.Combine(commonTools, @"..\IDE\PrivateAssemblies"));
+                    
                     if (Directory.Exists(privateAssemblies)) {
                         string assemblyFileName = args.Name.Split(',')[0];
                         assemblyFileName = assemblyFileName + ".dll";
@@ -33,7 +42,8 @@ namespace Aderant.Build.Commands {
                     }
                 }
                 return null;
-            };
+            }
+            return null;
         }
 
         [Parameter(HelpMessage = "The module name to create a build definition for.")]
@@ -68,8 +78,8 @@ namespace Aderant.Build.Commands {
             TfsTeamProjectCollection project = TeamFoundationHelper.GetTeamProjectServer();
             var buildServer = project.GetService<IBuildServer>();
 
-            string serverPathToModule = GetServerPathForModule(modulePath, project);
-            var buildInfrastructurePath = GetServerPathForModule(Path.Combine(Path.Combine(branchPath, "Modules"), "Build.Infrastructure"), project);
+            string serverPathToModule = GetServerPathForModule(modulePath);
+            var buildInfrastructurePath = GetServerPathForModule(Path.Combine(Path.Combine(branchPath, "Modules"), "Build.Infrastructure"));
 
             var buildConfiguration = new ExpertBuildConfiguration(branchName) {
                 ModuleName = ModuleName,
@@ -91,6 +101,8 @@ namespace Aderant.Build.Commands {
             }
 
             CreateBuildDefinition(buildConfiguration, buildServer);
+
+            AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;
         }
 
         private void CreateBuildDefinition(ExpertBuildConfiguration configuration, IBuildServer buildServer) {
@@ -153,18 +165,15 @@ namespace Aderant.Build.Commands {
             return false;
         }
 
-        private string GetServerPathForModule(string path, TfsTeamProjectCollection project) {
-            var workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
-            foreach (WorkspaceInfo info in workspaceInfo) {
-                Workspace workspace = info.GetWorkspace(project);
+        private string GetServerPathForModule(string path) {
+            var workspace = TeamFoundationHelper.GetWorkspaceForItem(path);
 
-                string serverPath = workspace.TryGetServerItemForLocalItem(path);
-                if (!string.IsNullOrEmpty(serverPath)) {
-                    return serverPath;
-                }
+            string serverPath = workspace.TryGetServerItemForLocalItem(path);
+            if (!string.IsNullOrEmpty(serverPath)) {
+                return serverPath;
             }
 
-            throw new PSInvalidOperationException("Unable to get server path for loca path: " + path);
+            throw new PSInvalidOperationException("Unable to get server path for local path: " + path);
         }
     }
 

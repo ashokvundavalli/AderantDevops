@@ -76,5 +76,26 @@ namespace UnitTest.Build {
                 return ResourceManager.GetString("ProjectFileText1", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SRCSRV: ini ------------------------------------------------
+        ///VERSION=3
+        ///INDEXVERSION=2
+        ///VERCTRL=Team Foundation Server
+        ///DATETIME=Wed Apr 22 01:16:10 2015
+        ///INDEXER=MSCT
+        ///SRCSRV: variables ------------------------------------------
+        ///TFS_EXTRACT_CMD=tf.exe view /version:%var4% /noprompt &quot;$%var3%&quot; /server:%fnvar%(%var2%) /console &gt;%srcsrvtrg%
+        ///TFS_EXTRACT_TARGET=C:\Temp\%var2%%fnbksl%(%var3%)\%var4%\%fnfile%(%var5%)
+        ///SRCSRVVERCTRL=tfs
+        ///SRCSRVERRDESC=access
+        ///SRCSRVERRVAR=var2
+        ///VSTFSSERVER=http://tfs:8080/tfs/ad [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SrcSrvStream1 {
+            get {
+                return ResourceManager.GetString("SrcSrvStream1", resourceCulture);
+            }
+        }
     }
 }

@@ -1,22 +1,31 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{9A29B994-DF10-4C6E-82EA-B45F79915A3D}"
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{CreateGuid}"
 	ProjectSection(SolutionItems) = preProject
 		Doc\readme.txt = Doc\readme.txt
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{C1CE4CE6-EB6E-4F74-8CF1-3D361BC1C46E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{CreateGuid}"
 	ProjectSection(SolutionItems) = preProject
 		Build\CommonAssemblyInfo.cs = Build\CommonAssemblyInfo.cs
 		Build\CustomDictionary.xml = Build\CustomDictionary.xml
 		Build\DependencyManifest.xml = Build\DependencyManifest.xml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{928B1B82-70F7-4CA0-A864-4C2981FB4BA5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{CreateGuid}"
 EndProject
 Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 1        
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://svtfs303:8080/tfs/aderant
+		SccLocalPath0 = .
+        SccProjectName0 = NewModule
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+
 EndGlobal

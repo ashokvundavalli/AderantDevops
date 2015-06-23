@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.MSBuild;
 using Microsoft.Build.Evaluation;
@@ -28,43 +29,44 @@ namespace Aderant.Build.Process {
 
             var project = AddBuildProperties(projectDocument);
 
-            StringWriter writer = new StringWriter();
-            project.Save(writer);
-
-            return XElement.Parse(writer.GetStringBuilder().ToString());
+            using (StringWriter writer = new StringWriter()) {
+                project.Save(writer);
+                return XElement.Parse(writer.GetStringBuilder().ToString());
+            }
         }
 
-
         private Project AddBuildProperties(XElement projectDocument) {
-            var project = new Project(projectDocument.CreateReader());
 
-            IEnumerable<string> types = project.ItemTypes.Where(type => type.StartsWith("Build", StringComparison.OrdinalIgnoreCase));
-            foreach (string type in types) {
-                ICollection<ProjectItem> items = project.GetItems(type);
+            using (XmlReader reader = projectDocument.CreateReader()) {
+                Project project = new Project(reader);
 
-                // ProjectItem in this case represents a path to a TFSBuild.proj
-                foreach (ProjectItem projectItem in items) {
-                    string value = projectItem.EvaluatedInclude;
+                IEnumerable<string> types = project.ItemTypes.Where(type => type.StartsWith("Build", StringComparison.OrdinalIgnoreCase));
+                foreach (string type in types) {
+                    ICollection<ProjectItem> items = project.GetItems(type);
 
-                    if (value.EndsWith("TFSBuild.proj", StringComparison.OrdinalIgnoreCase)) {
-                        DirectoryInfo buildDirectory = Directory.GetParent(value);
-                        string responseFile = Path.Combine(buildDirectory.FullName, "TFSBuild.rsp");
+                    // ProjectItem in this case represents a path to a TFSBuild.proj
+                    foreach (ProjectItem projectItem in items) {
+                        string value = projectItem.EvaluatedInclude;
 
-                        if (File.Exists(responseFile)) {
-                            string[] properties = File.ReadAllLines(responseFile);
-                            string singlePropertyLine = CreateSinglePropertyLine(properties);
+                        if (value.EndsWith("TFSBuild.proj", StringComparison.OrdinalIgnoreCase)) {
+                            DirectoryInfo buildDirectory = Directory.GetParent(value);
+                            string responseFile = Path.Combine(buildDirectory.FullName, "TFSBuild.rsp");
 
-                            if (buildDirectory.Parent != null) {
-                                singlePropertyLine += (";SolutionDirectoryPath=" + buildDirectory.Parent.FullName + @"\");
+                            if (File.Exists(responseFile)) {
+                                string[] properties = File.ReadAllLines(responseFile);
+                                string singlePropertyLine = CreateSinglePropertyLine(properties);
+
+                                if (buildDirectory.Parent != null) {
+                                    singlePropertyLine += (";SolutionDirectoryPath=" + buildDirectory.Parent.FullName + @"\");
+                                }
+
+                                projectItem.SetMetadataValue("Properties", singlePropertyLine);
                             }
-
-                            projectItem.SetMetadataValue("Properties", singlePropertyLine);
                         }
                     }
                 }
+                return project;
             }
-
-            return project;
         }
 
         private string CreateSinglePropertyLine(string[] properties) {
@@ -75,7 +77,7 @@ namespace Aderant.Build.Process {
                     string line =
                         property.Substring(property.IndexOf("/p:", StringComparison.Ordinal) + 3)
                                 .Replace("\"", "")
-                                .Trim();
+                                .Trim(null);
 
                     if (!line.StartsWith("BuildInParallel")) {
                         lines.Add(line);

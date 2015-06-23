@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
-using ICSharpCode.SharpZipLib.Zip;
 
 namespace Aderant.Build.Commands {
 
@@ -50,7 +49,6 @@ namespace Aderant.Build.Commands {
 
             string zipFileName = sourceFolder.Split('\\').First(p => (p.StartsWith("Web.")||p.StartsWith("Mobile."))) + ".zip"; // e.g. web.workflow.zip
             string moduleName = zipFileName.Split('\\').Last().Replace(".zip", ""); // e.g. web.workflow
-            FastZip fz = new FastZip();
 
             // extract zip to a temporary folder (temporaryFolderWithZip).  32 digits no special chars , 00000000000000000000000000000000
             const string tempFolderPath = @"C:\temp"; // not using Path.GetTempPath as that is too long a path and I can't extract it (>260 chars)
@@ -59,7 +57,8 @@ namespace Aderant.Build.Commands {
             }
             string temporaryFolderWithZip = Path.Combine(tempFolderPath, Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(temporaryFolderWithZip);
-            fz.ExtractZip(Path.Combine(sourceFolder, zipFileName), temporaryFolderWithZip, FastZip.Overwrite.Always, null, String.Empty, String.Empty, false);
+
+            System.IO.Compression.ZipFile.ExtractToDirectory(Path.Combine(sourceFolder, zipFileName), temporaryFolderWithZip);
 
             DirectoryInfo directoryInfo = new DirectoryInfo(temporaryFolderWithZip);
             var matchingFolders = directoryInfo.GetDirectories(FolderNameToExtract, SearchOption.AllDirectories);

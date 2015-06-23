@@ -90,7 +90,7 @@
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Transforming Text Templates"
+      Message="$(BuildStepModuleName) Transforming text templates"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -123,6 +123,11 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <TemplateIncludeFolders Include="$(rmT4TemplateIncludeFolders)" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <TempDirectoryOverride Condition="'$(IsDesktopBuild)' == 'true' Or '$(BuildAll)' == 'true'">$(ModuleBuildDirectory)..\..\_BuildTemp</TempDirectoryOverride>
+      <TempDirectoryOverride Condition="'$(IsDesktopBuild)' != 'true' And '$(BuildAll)' != 'true'">$(ModuleBuildDirectory)..\BuildTemp</TempDirectoryOverride>
+    </PropertyGroup>
+
     <LoadTextTemplatingTask
       TextTemplatingPath="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v12.0\TextTemplating\" />
 
@@ -136,7 +141,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       TrackFileAccess="$(TrackFileAccess)"
       MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
       OverwriteReadOnlyOutputFiles="true"
-      TempDirectoryOverride="$(ModuleBuildDirectory)..\BuildTemp">
+      TempDirectoryOverride="$(TempDirectoryOverride)">
       <Output ItemName="GeneratedFiles"
               TaskParameter="GeneratedFiles"/>
       <Output ItemName="NonGeneratedFiles"

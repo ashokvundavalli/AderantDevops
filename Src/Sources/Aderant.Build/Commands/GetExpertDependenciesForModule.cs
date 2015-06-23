@@ -69,7 +69,7 @@ namespace Aderant.Build.Commands {
                         var resolver = new ModuleDependencyResolver(expertManifest, DropPath);
 
                         if (!UseThirdPartyFromDrop) {
-                            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(branchRoot);
+                            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(null, branchRoot);
                         }
 
                         resolver.ModuleName = ModuleName;

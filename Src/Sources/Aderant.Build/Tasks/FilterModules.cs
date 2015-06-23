@@ -22,9 +22,16 @@ namespace Aderant.Build.Tasks {
                 BuildFrom = BuildFrom.Trim(null);
                 for (i = 0; i < ModulesInBuild.Length; i++) {
                     ITaskItem item = ModulesInBuild[i];
-                    if (item.ItemSpec.IndexOf(BuildFrom, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        Log.LogMessage("Found module {0} to build from", item.ItemSpec);
-                        break;
+
+                    // Convert $(SolutionRoot)\Modules\Libraries.Models into Libraries.Models
+                    string name = System.IO.Path.GetFileName(item.ItemSpec);
+                    if (name != null) {
+                        name = name.Trim(null);
+
+                        if (string.Equals(name, BuildFrom, StringComparison.OrdinalIgnoreCase)) {
+                            Log.LogMessage("Found module {0} to build from", item.ItemSpec);
+                            break;
+                        }
                     }
                 }
 

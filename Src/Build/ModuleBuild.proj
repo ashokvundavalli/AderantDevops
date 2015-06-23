@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project
-  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="12.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="12.0"
+         TreatAsLocalProperty="FileVersion;AssemblyVersion">
 
   <!-- 
     =========================================================================================================
@@ -27,6 +27,7 @@
     <StopOnFirstFailure>true</StopOnFirstFailure>
 
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
+    <BuildStepModuleName>$(ModuleName):</BuildStepModuleName>
 
     <!--Server Build for all modules-->
     <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == '' And ('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true')">$(SolutionRoot)\..\</SolutionDirectoryPath>
@@ -91,20 +92,20 @@
     TaskFactory="CodeTaskFactory"
     AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll" >
     <ParameterGroup >
-      <SourcePath ParameterType="System.String" Required="true"/>
-      <TransformsDefinitionFile ParameterType="System.String" Required="true"/>
+      <SourcePath ParameterType="System.String" Required="true" />
+      <TransformsDefinitionFile ParameterType="System.String" Required="true" />
     </ParameterGroup>
     <Task>
-      <Reference Include="System.Core"/>
-      <Reference Include="System.Xml"/>
-      <Reference Include="System.Xml.Linq"/>
-      <Using Namespace="System"/>
-      <Using Namespace="System.IO"/>
-      <Using Namespace="System.Linq"/>
-      <Using Namespace="System.Xml.Linq"/>
-      <Using Namespace="System.Text.RegularExpressions"/>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO "/>
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
       <Code>
-        <![CDATA[
+<![CDATA[
 Log.LogMessage(string.Format("Starting transformation of source at {0} using {1}", SourcePath, TransformsDefinitionFile));
 
 // Get the list of transformations
@@ -128,6 +129,57 @@ foreach(var replacement in replacements){
   fileContent = replacement.Regex.Replace(fileContent, replacement.ReplaceWith);
   File.WriteAllText(replacement.FilePath, fileContent);
 }
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <!-- The Zip Custom Source inline task -->
+  <UsingTask
+    TaskName="XDocumentPoke"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll" >
+    <ParameterGroup >
+      <File ParameterType="System.String" Required="true" />
+      <Query ParameterType="System.String" Required="true" />
+      <Value ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+<![CDATA[
+var doc = XDocument.Load(File);
+
+var root = doc.Root;
+
+var parts = Query.Split('/');
+
+// Skip(1) is a bit of a hack - assumes the XPath includes the root element
+foreach (string element in parts.Skip(1)) {
+    var descendant = root.Descendants(element).FirstOrDefault();
+    if (descendant == null) {
+        descendant = new XElement(element);
+        root.Add(descendant);
+    }
+    root = descendant;
+}
+
+var contentToAdd = XElement.Parse(Value);
+
+if (!root.Descendants(contentToAdd.Name).Any()) {
+  root.Add(contentToAdd);
+}
+
+
+
+doc.Save(File);
 ]]>
       </Code>
     </Task>
@@ -208,44 +260,14 @@ foreach(var replacement in replacements){
   <Target Name="Testing">
     <Message Text="Solution Root = $(SolutionRoot)" />
     <Message Text="Solution Directory = $(SolutionDirectoryPath)" />
-    <Message Text="Build Scripts Directory = $(BuildScriptsDirectory) " />
-    <Message Text="Module Name = $(ModuleName) " />
+    <Message Text="Build Scripts Directory = $(BuildScriptsDirectory)" />
+    <Message Text="Module Name = $(ModuleName)" />
     <Message Text="Drop Location = $(DropLocation) " />
-    <Message Text="Create MSI? = $(CreateMSI) " />
-    <Message Text="BuildType MSI? = $(BuildFlavor) " />
+    <Message Text="Create MSI? = $(CreateMSI)" />
+    <Message Text="BuildType MSI? = $(BuildFlavor)" />
     <Message Text="Visual Studio Tools Path: $(VsCommonTools)" />
   </Target>
 
-  <!--
-    ==========================================================================================
-        Version Numbers
-    ==========================================================================================
-  -->
-
-  <Target Name="SetBuildNumbers"
-          Condition="'$(IsDesktopBuild)' != 'true'">
-    <Version BuildType="Automatic"
-             RevisionType="Automatic"
-             Major="$(VersionMajor)"
-             Minor="$(VersionMinor)" >
-      <Output TaskParameter="Major"
-              PropertyName="Major" />
-      <Output TaskParameter="Minor"
-              PropertyName="Minor" />
-      <Output TaskParameter="Build"
-              PropertyName="Build" />
-      <Output TaskParameter="Revision"
-              PropertyName="Revision" />
-    </Version>
-
-    <PropertyGroup>
-      <FileVersion>$(Major).$(Minor).$(Build).$(Revision)</FileVersion>
-      <AssemblyVersion>$(VersionMajor).$(VersionMinor).$(VersionBuild).$(VersionRevision)</AssemblyVersion>
-    </PropertyGroup>
-
-    <Message Text="AssemblyVersion = $(AssemblyVersion)" />
-    <Message Text="FileVersion = $(FileVersion)" />
-  </Target>
 
   <!--
   ==========================================================================================
@@ -256,8 +278,8 @@ foreach(var replacement in replacements){
           DependsOnTargets="SetBuildNumbers">
     <PropertyGroup>
       <!-- 
-           For a module build, append the name of the module.
-           If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
+        For a module build, append the name of the module.
+        If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
       -->
       <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
       <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
@@ -295,7 +317,7 @@ foreach(var replacement in replacements){
   <Target Name="CleanBin">
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(ModuleName) - Clean Module Bin"
+      Message="$(BuildStepModuleName) Clean"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -387,8 +409,8 @@ foreach(var replacement in replacements){
           Condition="('$(DropLocation)'!='')">
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Getting Module Dependencies"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
+      Message="$(BuildStepModuleName) Getting module dependencies"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -405,13 +427,14 @@ foreach(var replacement in replacements){
 
     <GetDependencies
       Condition="'$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"
       ModuleName="$(ModuleName)"
       DropPath="$(BaseDropDirectory)" />
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
@@ -433,9 +456,14 @@ foreach(var replacement in replacements){
     </PropertyGroup>
 
     <ItemGroup>
+      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process 
+           crafted by the developer -->
       <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
-                         Include="$(ModuleSourceDirectory)**\*.tt;$(ModuleTestDirectory)**\*.tt;"
-                         Exclude="$(ModuleSourceDirectory)**\__*.tt">
+                         Include="$(ModuleSourceDirectory)**\*.tt;
+                                  $(ModuleTestDirectory)**\*.tt;"
+                         Exclude="$(ModuleSourceDirectory)**\__*.tt;
+                                  $(ModuleSourceDirectory)**\obj\**\*.tt;
+                                  $(ModuleTestDirectory)**\obj\**\*.tt">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
     </ItemGroup>
@@ -474,7 +502,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Updating file version in CommonAssemblyInfo.cs"
+      Message="$(BuildStepModuleName) Updating file version in CommonAssemblyInfo.cs"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -527,7 +555,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Building Module $(ModuleName)"
+      Message="$(BuildStepModuleName) Building module"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -537,6 +565,8 @@ foreach(var replacement in replacements){
 
     <Message Text="Starting build for: $(ModuleName)"/>
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
+    <Message Text="File Version: $(FileVersion)" />
+    <Message Text="Assembly Version: $(AssemblyVersion)" />
 
     <!-- For web projects we want to copy in a special target file that controls the packaging steps -->
     <ItemGroup>
@@ -556,22 +586,28 @@ foreach(var replacement in replacements){
 
     <MSBuild Projects="$(SolutionFileName)"
              Properties="$(BuildProperties)"
-             BuildInParallel="false"
-             Targets="Build">
-
+             RemoveProperties="AssemblyVersion">
+      
       <!--The compiled assemblies from projects-->
-      <Output ItemName="BuildOutput"
+      <Output ItemName="CompiledAssemblies"
               TaskParameter="TargetOutputs" />
     </MSBuild>
+    
+    <Message Text="Compiled assemblies: %(CompiledAssemblies.FullPath)" />
 
     <ItemGroup>
       <!-- The compiled assemblies from projects under Module\Src -->
-      <ModuleBuildOutput Include="@(BuildOutput)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch(%(BuildOutput.MSBuildSourceProjectFile), `(?i)$(ModuleName)\\Src`))' == 'true'">
+      <ModuleBuildOutput Include="@(CompiledAssemblies)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch( %(CompiledAssemblies.FullPath), `(?i)(Bin\\Module)`))' == 'true'">
+        <OutputType>Module</OutputType>
+      </ModuleBuildOutput>
+
+      <!-- Match "Web.Foundation\Src\Web.Foundation\bin\Web.Foundation.dll" but not "e:\B\88\3862\src\Libraries.Foundation\Bin\Test\UnitTest.Framework.Security.pdb" -->
+      <ModuleBuildOutput Include="@(CompiledAssemblies)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch( %(CompiledAssemblies.FullPath), `(?i)(?!.*Test\\).*(?=\\Src\\)(.*)(?=\\bin\\)`' == 'true'">
         <OutputType>Module</OutputType>
       </ModuleBuildOutput>
 
       <!-- The compiled assemblies from projects under Module\Test -->
-      <ModuleBuildOutput Include="@(BuildOutput)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch(%(BuildOutput.MSBuildSourceProjectFile), `(?i)$(ModuleName)\\Test`))' == 'true'">
+      <ModuleBuildOutput Include="@(CompiledAssemblies)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch( %(CompiledAssemblies.FullPath), `(?i)(Bin\\Test)`))' == 'true'">
         <OutputType>Test</OutputType>
       </ModuleBuildOutput>
     </ItemGroup>
@@ -601,6 +637,11 @@ foreach(var replacement in replacements){
     </PropertyGroup>
 
     <PropertyGroup>
+      <IsWebModule>false</IsWebModule>
+      <IsWebModule Condition="$(ModuleName.Contains('Web.'))">true</IsWebModule>
+    </PropertyGroup>
+
+    <PropertyGroup>
       <BuildProperties>
         Configuration=%(ConfigurationToBuild.FlavorToBuild);
         Platform=%(ConfigurationToBuild.PlatformToBuild);
@@ -611,6 +652,7 @@ foreach(var replacement in replacements){
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         BuildAll=$(BuildAll);
         UseSharedTestRunDirectory=$(UseSharedTestRunDirectory);
+        IsWebModule=$(IsWebModule);
         $(TeamBuildProperties);
       </BuildProperties>
 
@@ -707,7 +749,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Zipping Source for $(ModuleName)"
+      Message="$(BuildStepModuleName) Zipping source"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -895,13 +937,80 @@ foreach(var replacement in replacements){
     </RunUnitTestsDependsOn>
   </PropertyGroup>
 
+  <Target Name="BeforeRunUnitTests" 
+          DependsOnTargets="Build">
+    
+    <ItemGroup>
+      <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;"
+                      Exclude="$(BinTestDirectory)*Helpers*.dll;
+                               $(BinTestDirectory)Microsoft.*" />
+    </ItemGroup>
+
+    <!-- Determine if we can run the tests using the 64-bit test runner -->
+    <GetAssemblyPlatform
+        Condition="'$(Use32BitTestRunner)' == '' And '@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Module'"
+        Assemblies="@(ModuleBuildOutput)">
+      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
+      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
+    </GetAssemblyPlatform>
+
+    <GetAssemblyPlatform
+        Condition="'$(Use32BitTestRunner)' == '' And '@(ModuleBuildOutput)' == '' And '@(BuildOutput)' != ''"
+        Assemblies="@(CompiledAssemblies)">
+      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
+      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
+    </GetAssemblyPlatform>
+
+    <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
+
+    <PropertyGroup>
+      <UnitTestAppConfigText>$([System.IO.File]::ReadAllText('$(BuildScriptsDirectory)UnitTestAppConfig.txt'))</UnitTestAppConfigText>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <TestAssemblyConfigFiles Include="@(TestAssemblies->'$(BinTestDirectory)%(RecursiveDir)%(Filename)%(Extension).config')" />
+    </ItemGroup>
+
+    <Touch Condition="!Exists(%(TestAssemblyConfigFiles.FullPath))"
+           Files="%(TestAssemblyConfigFiles.FullPath)"
+           AlwaysCreate="true">
+      <Output TaskParameter="TouchedFiles" ItemName="TouchedFiles" />
+    </Touch>
+
+    <ItemGroup>
+      <XmlLinesToWrite Include="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;" />
+      <XmlLinesToWrite Include="&lt;configuration /&gt;" />
+    </ItemGroup>
+
+    <WriteLinesToFile Condition="'@(TouchedFiles)' != ''"
+                      File="%(TouchedFiles.FullPath)"
+                      Lines="@(XmlLinesToWrite)"
+                      Encoding="UTF-8" />
+    
+    <Error Condition="'$(UnitTestAppConfigText)' == ''" Text="No unit tets app.config text" />
+
+    <XDocumentPoke Condition="Exists(%(TestAssemblyConfigFiles.FullPath))"
+                   File="%(TestAssemblyConfigFiles.FullPath)"
+                   Query="configuration/runtime"
+                   Value="$(UnitTestAppConfigText)" />
+    
+    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+                 Link="$(BinTestDirectory)Dependencies" 
+                 Target="$(SolutionDirectoryPath)Dependencies" />
+
+    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+                 Link="$(BinTestDirectory)ModuleBin"
+                 Target="$(BinModuleDirectory)" />
+  </Target>
+  
+
   <Target Name="RunUnitTests"
           DependsOnTargets="$(RunUnitTestsDependsOn)"
           Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Running Unit Tests"
+      Message="$(BuildStepModuleName) Running unit tests"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -910,10 +1019,8 @@ foreach(var replacement in replacements){
     </BuildStep>
 
     <PropertyGroup>
-      <UnitTestAssemblies Condition="'$(UseSharedTestRunDirectory)' != 'true'">@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
-      <UnitTestAssemblies Condition="'$(UseSharedTestRunDirectory)' == 'true'">@(TestAssemblies->'$(SharedTestRunDirectory)%(Filename)%(Extension)',' ')</UnitTestAssemblies>
-
-      <VsTestWorkingDirectorty Condition="'$(UseSharedTestRunDirectory)' == 'true'">$(SharedTestRunDirectory)</VsTestWorkingDirectorty>
+      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
+      <VsTestWorkingDirectory>$(BinTestDirectory)</VsTestWorkingDirectory>
 
       <!-- VSTest Setup -->
       <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
@@ -933,24 +1040,22 @@ foreach(var replacement in replacements){
 
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
-    <!--<Error Text="zzz $(UnitTestAssemblies)" />-->
-
     <!--Run With VSTest-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="'$(UnitTestAssemblies)' != ''"
-          WorkingDirectory="$(VsTestWorkingDirectorty)"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
           Command='"$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
     <SetBuildProperties
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       TestStatus="Succeeded" />
@@ -959,118 +1064,14 @@ foreach(var replacement in replacements){
   </Target>
 
 
-  <Target Name="BeforeRunUnitTests" DependsOnTargets="Build">
-    <ItemGroup>
-      <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;"
-                      Exclude="$(BinTestDirectory)*Helpers*.dll;
-                               $(BinTestDirectory)Microsoft.*" />
-    </ItemGroup>
-
-    <!-- Determine if we can run the tests using the 64-bit test runner -->
-    <GetAssemblyPlatform
-        Condition="'$(Use32BitTestRunner)' == '' And '@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Module'"
-        Assemblies="@(ModuleBuildOutput)">
-      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
-      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-    </GetAssemblyPlatform>
-
-    <GetAssemblyPlatform
-        Condition="'$(Use32BitTestRunner)' == '' And '@(ModuleBuildOutput)' == '' And '@(BuildOutput)' != ''"
-        Assemblies="@(BuildOutput)">
-      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
-      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-    </GetAssemblyPlatform>
-
-    <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
-
-    <ItemGroup>
-      <TestDirectoryContentBeforeTests Include="$(BinTestDirectory)**\*" />
-      <BinDirectoryContentBeforeTests Include="$(BinModuleDirectory)**\*" />
-    </ItemGroup>
-
-    <!-- Symlink dependencies into Bin\Test so the VSTest assembly resolver can pick them up -->
-    <ItemGroup>
-      <_TestDependencies Include="$(SolutionDirectoryPath)Dependencies\*.dll"
-                         Exclude="$(SolutionDirectoryPath)Dependencies\Aderant.Build*.dll;
-                                  $(SolutionDirectoryPath)Dependencies\*SoftwareFactory*">
-        <UseHardlink>true</UseHardlink>
-      </_TestDependencies>
-
-      <_TestDependencies Include="$(BinModuleDirectory)*.dll">
-        <UseHardlink>true</UseHardlink>
-      </_TestDependencies>
-
-      <_TestDependencies Include="$(BinModuleDirectory)*.exe">
-        <UseHardlink>true</UseHardlink>
-      </_TestDependencies>
-
-      <!-- 
-        If we are using hardlinks we won't be able to delete the hardlink to SoftwareFactory from the test directory as it will be locked by our process (MSBuild.exe)
-        so we will copy it instead 
-      -->
-      <_TestDependencies Include="$(SolutionDirectoryPath)Dependencies\*SoftwareFactory*.dll">
-        <UseHardlink>false</UseHardlink>
-      </_TestDependencies>
-    </ItemGroup>
-
-    <PropertyGroup>
-      <!-- Disable shared test directory for web projects -->
-      <UseSharedTestRunDirectory Condition="'$(UseSharedTestRunDirectory)' == 'true' And $(ModuleName.StartsWith('Web'))">false</UseSharedTestRunDirectory>
-    </PropertyGroup>
-
-    <!-- Symlink assemblies in the dependencies folder to Bin\Test but only if it doesn't already exist in Bin\Test -->
-    <Copy Condition="!Exists('$(BinTestDirectory)%(_TestDependencies.Filename)%(_TestDependencies.Extension)') And '@(TestAssemblies)' != '' And '$(UseSharedTestRunDirectory)' != 'true'"
-          SourceFiles="@(_TestDependencies)"
-          DestinationFiles="$(BinTestDirectory)%(_TestDependencies.RecursiveDir)%(_TestDependencies.Filename)%(_TestDependencies.Extension)"
-          SkipUnchangedFiles="true"
-          OverwriteReadOnlyFiles="true"
-          UseHardlinksIfPossible="%(_TestDependencies.UseHardlink)">
-      <Output TaskParameter="CopiedFiles" ItemName="_LinkedFilesForTesting" />
-    </Copy>
-
-    <Error Condition="'$(UseSharedTestRunDirectory)' == 'true' And '$(SharedTestRunDirectory)' == ''" Text="SharedTestRunDirectory is undefined" />
-
-    <ItemGroup>
-      <SharedTestContentToReplicate Include="@(TestDirectoryContentBeforeTests)" />
-      <SharedTestContentToReplicate Include="@(BinDirectoryContentBeforeTests)" />
-    </ItemGroup>
-
-    <Copy Condition="'$(UseSharedTestRunDirectory)' == 'true' And '%(Extension)' != '.pdb'"
-          SourceFiles="@(SharedTestContentToReplicate)"
-          DestinationFiles="@(SharedTestContentToReplicate->'$(SharedTestRunDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
-          OverwriteReadOnlyFiles="true"
-          UseHardlinksIfPossible="true" />
-
-  </Target>
-
-
   <Target Name="AfterRunUnitTests"
-          AfterTargets="RunUnitTests"
-          Condition="'$(UseSharedTestRunDirectory)' != 'true'">
-
-    <ItemGroup>
-      <TestDirectoryContentAfterTests Include="$(BinTestDirectory)**\*"
-                                      Exclude="@(TestDirectoryContentBeforeTests)" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <!-- Clean up any symlinked files -->
-      <TestDirectoryContentAfterTests Include="@(_LinkedFilesForTesting)">
-        <Type>LinkedFile</Type>
-      </TestDirectoryContentAfterTests>
-
-      <!--Clean up any files marked as CopyLocal in the proect file(s)-->
-      <TestDirectoryContentAfterTests Include="$(BinTestDirectory)%(_TestDependencies.Filename)%(_TestDependencies.Extension)">
-        <Type>CopyLocal</Type>
-      </TestDirectoryContentAfterTests>
-
-      <TestDirectoryContentAfterTests Include="$(BinTestDirectory)%(_TestDependencies.Filename).pdb">
-        <Type>CopyLocal</Type>
-      </TestDirectoryContentAfterTests>
-    </ItemGroup>
-
-    <Delete Files="@(TestDirectoryContentAfterTests)"
-            ContinueOnError="true"
+          AfterTargets="RunUnitTests">
+    
+    <RemoveDir Directories="$(BinTestDirectory)Dependencies"  />
+    <RemoveDir Directories="$(BinTestDirectory)ModuleBin" />
+    
+    <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
+            Files="@(TestAssemblyConfigFiles)" 
             TreatErrorsAsWarnings="true" />
   </Target>
 
@@ -1091,14 +1092,13 @@ foreach(var replacement in replacements){
         Create the modules package to be Published
     ==========================================================================================
   -->
-
   <Target Name="PublishModule"
           DependsOnTargets="RunUnitTests"
           Condition="('$(PublishModule)' == 'true')">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Create Package to publish"
+      Message="$(BuildStepModuleName) Create package to publish"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -1160,7 +1160,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Zipping Source for $(ModuleName)"
+      Message="$(BuildStepModuleName) Zipping source"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -1231,7 +1231,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Copy Output to $(DropLocation)"
+      Message="$(BuildStepModuleName) Copy output to $(DropLocation)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -1250,7 +1250,7 @@ foreach(var replacement in replacements){
     <Exec Condition="('$(BuildAll)'!='true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1"  -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
+          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(DropLocation) -assemblyFileVersion $(FileVersion) -copyTestDirectory' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
@@ -1261,6 +1261,20 @@ foreach(var replacement in replacements){
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
+
+  <!--
+    ==========================================================================================
+        Index Sources and Publish Symbols        
+    ==========================================================================================
+  -->
+  <Target Name="IndexSourcesAndPublishSymbols"
+          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
+          DependsOnTargets="Build;RunUnitTests"
+          AfterTargets="AfterRunUnitTests">
+
+    <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
+  </Target>
+
 
   <!--
     ==========================================================================================
@@ -1275,7 +1289,8 @@ foreach(var replacement in replacements){
 
     <!-- Symlink the output of into Bin\Module into the common dependencies directory so the next build can pick them up -->
     <ItemGroup>
-      <FilesToReplicate Include="$(BinModuleDirectory)**\*" />
+      <FilesToReplicate Include="$(BinModuleDirectory)**\*" 
+                        Exclude="$(BinModuleDirectory)CodeAnalysis\**;$(BinModuleDirectory)*.pdb" />
     </ItemGroup>
 
     <Message Text="Replicating module output to shared dependencies directory: $(SharedDependencyDirectory)" />
@@ -1309,7 +1324,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="Copy Output to $(ModuleDropLocation)$(FileVersion)"
+      Message="$(BuildStepModuleName) Copy output to $(ModuleDropLocation)$(FileVersion)"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output
@@ -1382,7 +1397,7 @@ foreach(var replacement in replacements){
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="NDepend"
+      Message="$(BuildStepModuleName) NDepend"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildURI)">
       <Output

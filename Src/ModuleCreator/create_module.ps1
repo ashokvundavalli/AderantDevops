@@ -18,11 +18,16 @@ New-Item $DestinationFolder\$SrcDir -type directory
 New-Item $DestinationFolder\$TestDir -type directory
 New-Item $DestinationFolder\$BuildDir -type directory
 
+#Root items
+Copy-Item $ResourcesDir\TemplateSolution.vssscc -Destination $DestinationFolder\$ModuleDir\$ModuleName.vssscc
+
 #Build Items
 Copy-Item $ResourcesDir\DependencyManifest.xml -Destination $DestinationFolder\$BuildDir\DependencyManifest.xml
 Copy-Item $ResourcesDir\CommonAssemblyInfo.cs -Destination  $DestinationFolder\$BuildDir\CommonAssemblyInfo.cs
 Copy-Item $ResourcesDir\CustomDictionary.xml -Destination  $DestinationFolder\$BuildDir\CustomDictionary.xml
+Copy-Item $ResourcesDir\FrameworkKey.snk -Destination  $DestinationFolder\$BuildDir\FrameworkKey.snk
 Copy-Item $ResourcesDir\TFSBuild.proj -Destination  $DestinationFolder\$BuildDir\TFSBuild.proj 
+
 (Get-Content $ResourcesDir\TFSBuild.rsp) | Foreach-Object {$_ -replace "GivenModuleName", $ModuleName} | Set-Content $DestinationFolder\$BuildDir\TFSBuild.rsp
 #Solution Template
 (Get-Content $ResourcesDir\TemplateSolution.sln) | Foreach-Object {$_ -replace "CreateGuid", [Guid]::NewGuid()} | Set-Content $DestinationFolder\$ModuleDir\$ModuleName.sln
@@ -30,3 +35,12 @@ Copy-Item $ResourcesDir\TFSBuild.proj -Destination  $DestinationFolder\$BuildDir
 (Get-Content $DestinationFolder\$ModuleDir\$ModuleName.sln) | Foreach-Object {$_ -replace "CreateTestProjectGuid", $TestProjectGuid} | Set-Content $DestinationFolder\$ModuleDir\$ModuleName.sln
 #Doc readme
 (Get-Content $ResourcesDir\docReadme.txt) | Set-Content $DestinationFolder\$DocDir\Readme.txt
+
+$allFiles = Get-ChildItem $DestinationFolder\$ModuleDir -Recurse | ?{ -not $_.PSIsContainer }
+
+foreach ($file in $allFiles) {  
+    Write-Host "Clearing read only: $file"
+
+    $file.IsReadOnly = $false
+    $file.Refresh()
+}

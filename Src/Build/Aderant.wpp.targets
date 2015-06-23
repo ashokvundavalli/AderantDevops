@@ -52,10 +52,7 @@ Result = uniqueFiles.ToArray();
     <DeployOnBuild>true</DeployOnBuild>
 
     <DefaultPackageOutputDir>$(BinModuleDirectory)</DefaultPackageOutputDir>
-    <!--<WebProjectOutputDir>$(BinModuleDirectory)</WebProjectOutputDir>-->
     <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
-    <!--<PackageLocation>$(BinModuleDirectory)</PackageLocation>-->
-    
   </PropertyGroup>
 
   <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">

@@ -359,12 +359,14 @@ namespace Aderant.Build {
         /// </value>
         public string DropLocation { get; private set; }
 
-        internal static string GetLocalPathToThirdPartyBinaries(string branchRoot) {
+        internal static string GetLocalPathToThirdPartyBinaries(string tfsServerUri, string branchRoot) {
             if (!string.IsNullOrEmpty(branchRoot)) {
-                SourceControl sourceControl = SourceControl.CreateFromBranchRoot(branchRoot);
+                SourceControl sourceControl = SourceControl.CreateFromBranchRoot(tfsServerUri, branchRoot);
                 return sourceControl.BranchInfo.ThirdPartyFolder;
             }
             return null;
         }
+
+
     }
 }

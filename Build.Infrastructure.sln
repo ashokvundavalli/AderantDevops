@@ -10,7 +10,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
 	ProjectSection(SolutionItems) = preProject
 		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
-		Src\Build\Aderant.Build.Infrastructure.targets = Src\Build\Aderant.Build.Infrastructure.targets
 		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
 		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
 		Src\Build\Aderant.CodeSigning.targets = Src\Build\Aderant.CodeSigning.targets
@@ -52,9 +51,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD6
 		Src\Package\GetProduct.ps1 = Src\Package\GetProduct.ps1
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules (from branch root)", "Modules (from branch root)", "{38DD1E10-E957-4313-98E6-10D034705484}"
+	ProjectSection(SolutionItems) = preProject
+		..\Modules.proj = ..\Modules.proj
+		..\TFSBuild.proj = ..\TFSBuild.proj
+		..\TFSBuild.rsp = ..\TFSBuild.rsp
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
+		SccNumberOfProjects = 5
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = http://tfs.ap.aderant.com:8080/tfs/aderant
 		SccLocalPath0 = .
@@ -68,6 +76,9 @@ Global
 		SccProjectTopLevelParentUniqueName3 = Build.infrastructure.sln
 		SccProjectName3 = Test/UnitTest.Build
 		SccLocalPath3 = Test\\UnitTest.Build
+		SccProjectUniqueName4 = Src\\Sources\\Aderant.Build.Tasks\\Aderant.Build.Tasks.csproj
+		SccProjectName4 = Src/Sources/Aderant.Build.Tasks
+		SccLocalPath4 = Src\\Sources\\Aderant.Build.Tasks
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +97,10 @@ Global
 		{DC82E590-6F89-42E2-9A22-54375D01A492}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC82E590-6F89-42E2-9A22-54375D01A492}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC82E590-6F89-42E2-9A22-54375D01A492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

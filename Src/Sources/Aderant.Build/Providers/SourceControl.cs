@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Providers {
@@ -27,14 +29,20 @@ namespace Aderant.Build.Providers {
         public BranchInfo BranchInfo { get; private set; }
 
         public static SourceControl CreateFromBranchRoot(string path) {
+            return CreateFromBranchRoot(null, path);
+        }
+
+        public static SourceControl CreateFromBranchRoot(string teamProjectServerUri, string path) {
+            var teamProjectServer = string.IsNullOrEmpty(teamProjectServerUri) ? TeamFoundationHelper.GetTeamProjectServer() : new TfsTeamProjectCollection(new Uri(teamProjectServerUri));
+
             var workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
             foreach (WorkspaceInfo info in workspaceInfo) {
 
                 // If the "tfs/ADERANT" collection is not found inside of the current WorkspaceInfo object, then move to the next
                 Workspace workspace;
                 try {
-                    workspace = info.GetWorkspace(TeamFoundationHelper.GetTeamProjectServer());
-                } catch (System.InvalidOperationException ex) {
+                    workspace = info.GetWorkspace(teamProjectServer);
+                } catch (System.InvalidOperationException) {
                     continue;
                 }
 

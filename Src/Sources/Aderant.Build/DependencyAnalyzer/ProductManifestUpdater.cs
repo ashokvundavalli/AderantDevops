@@ -163,11 +163,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private Workspace EditProductManifest(TfsTeamProjectCollection collection) {
             WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
-            WorkspaceInfo[] array = workspaceInfo;
 
-            for (int i = 0; i < array.Length; i++) {
-                WorkspaceInfo info = array[i];
+            for (int i = 0; i < workspaceInfo.Length; i++) {
+                WorkspaceInfo info = workspaceInfo[i];
                 Workspace workspace = info.GetWorkspace(collection);
+
                 string path = workspace.TryGetServerItemForLocalItem(provider.ProductManifestPath);
                 if (path != null) {
                     workspace.PendEdit(provider.ProductManifestPath);

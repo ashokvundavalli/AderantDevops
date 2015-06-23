@@ -2,16 +2,20 @@
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
   ToolsVersion="12.0">
-  
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(TeamBuildVersion)' == ''" />
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
+
+  <ItemGroup>
+    <ModulesInBuild Include="$(ModulesToBuild)" />
+  </ItemGroup>
   
   <Target Name="GetAllModuleDependencies"
-          DependsOnTargets="PrepareBuildEnvironment"
+          DependsOnTargets="PrepareBuildEnvironment;SetBuildNumbers"
           Condition="'$(UseSharedDependencyDirectory)' == 'true'" 
           Returns="@(TargetReturns)">
     
     <Message Text="Using build scripts: $(BuildScriptsDirectory)" />
-
 
     <!-- Cull the module list if we are resuming the build from a certain point -->
     <Message Text="Resuming build from module $(BuildFrom)" Condition="'$(BuildFrom)' != ''" />
@@ -31,28 +35,22 @@
     <PropertyGroup>
       <SharedDependencyDirectory>$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
       <SharedTestRunDirectory>$(SolutionRoot)TestRun\</SharedTestRunDirectory>
+
+      <!-- Default to the production TFS server -->
+      <TeamFoundationServerUrl Condition="'$(TeamFoundationServerUrl)' == ''">http://tfs:8080/tfs/aderant</TeamFoundationServerUrl>
     </PropertyGroup>
 
     <Message Text="Getting dependencies for build." />
     <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
+    
     <GetDependencies
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       DropPath="$(DropLocation)"
       BuildAll="true"
       ModulesInBuild="@(ModulesInBuild)" />
 
-    <!-- Replicate the dependencies to our shared test run location -->
-    <ItemGroup>
-      <Dependencies Include="$(SharedDependencyDirectory)**\*"  Condition="'$(UseSharedTestRunDirectory)' == 'true'" />
-    </ItemGroup>
-    
-    <RemoveDir Directories="$(SharedTestRunDirectory)" Condition="Exists('$(SharedTestRunDirectory)')" />
-    
-    <Copy Condition="'$(UseSharedTestRunDirectory)' == 'true' And '%(Dependencies.Extension)' != '.pdb'"
-          SourceFiles="@(Dependencies)"
-          OverwriteReadOnlyFiles="true"
-          DestinationFiles="$(SharedTestRunDirectory)%(Dependencies.RecursiveDir)%(Dependencies.Filename)%(Dependencies.Extension)" />
 
     <ItemGroup>
       <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
@@ -80,6 +78,14 @@
         <Type>Property</Type>
       </TargetReturns>
 
+      <TargetReturns Include="FileVersion=$(FileVersion)">
+        <Type>Property</Type>
+      </TargetReturns>
+
+      <TargetReturns Include="AssemblyVersion=$(AssemblyVersion)">
+        <Type>Property</Type>
+      </TargetReturns>
+
       <TargetReturns Include="@(ModulesInBuild)">
         <Type>Module</Type>
       </TargetReturns>
@@ -91,10 +97,6 @@
   <!-- Tranforms inputs to this target file into item groups -->
   <Target Name="GetAllModuleDependenciesSetup" 
           BeforeTargets="GetAllModuleDependencies">
-
-    <ItemGroup>
-      <ModulesInBuild Include="$(ModulesToBuild)" />
-    </ItemGroup>
 
     <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
     <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" />
@@ -117,21 +119,12 @@
     <DependencyChecker
       Files="@(ThirdPartyFiles)" />
 
-    <ItemGroup>
-      <BuildProjects Include="$(SolutionRoot)**\Build\TFSBuild.proj"
-                     Exclude="$(SolutionRoot)Build.Infrastructure\**;
-                              $(SolutionRoot)Performance.*\**;
-                              $(SolutionRoot)Tests.*\**;">
-        
-      </BuildProjects>
-    </ItemGroup>
-
     <!--
       Validates that we have no misconfigured build configurations in this branch
     -->
     <Message Text="Validating build project files." />
     <BuildConfigurationCheck
-      ProjectFiles="@(BuildProjects)" />
+      ProjectFiles="@(ModulesInBuild->'%(FullPath)\Build\TFSBuild.proj')" />
     
   </Target>
   
@@ -141,7 +134,7 @@
           AfterTargets="GetAllModuleDependencies">
     
     <Message Text="Creating parallel build project... "/>
-    <ParallelBuildProject
+    <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
       ProductManifest="$(ProductManifestPath)"
       ModulesInBuild="@(ModulesInBuild)" />

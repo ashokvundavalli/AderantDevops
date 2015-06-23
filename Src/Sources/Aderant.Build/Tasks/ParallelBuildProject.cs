@@ -10,7 +10,7 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
 
-    public sealed class ParallelBuildProject : Task {
+    public sealed class ParallelBuildProjectFactory : Task {
 
         [Required]
         public ITaskItem[] ModulesInBuild { get; set; }

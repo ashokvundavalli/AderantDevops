@@ -6,7 +6,8 @@ using System.Windows.Controls;
 using Task = System.Threading.Tasks.Task;
 
 namespace Aderant.Build {
-    internal class FileSystem {
+
+    public class FileSystem {
         /// <summary>
         /// Calculates the destination directory for a file
         /// </summary>
@@ -28,9 +29,9 @@ namespace Aderant.Build {
         /// <value>
         /// The directory.
         /// </value>
-        public DirectoryOperations Directory {
+        public virtual DirectoryOperations Directory {
             get { return directory; }
-            internal set { directory = value; }
+            protected internal set { directory = value; }
         }
 
         /// <summary>
@@ -39,9 +40,9 @@ namespace Aderant.Build {
         /// <value>
         /// The file.
         /// </value>
-        public FileOperations File {
+        public virtual FileOperations File {
             get { return file; }
-            internal set { file = value; }
+            protected internal set { file = value; }
         }
 
         internal static async Task DirectoryCopyAsync(string source, string destination, bool recursive, bool useHardLinks) {
@@ -120,20 +121,24 @@ namespace Aderant.Build {
         }
     }
 
-    internal class FileOperations {
+    public class FileOperations {
 
         public virtual bool Exists(string file) {
             return File.Exists(file);
         }
     }
 
-    internal class DirectoryOperations {
+    public class DirectoryOperations {
         public virtual string[] GetDirectories(string path) {
             return System.IO.Directory.GetDirectories(path);
         }
 
         public virtual string[] GetFileSystemEntries(string path) {
             return System.IO.Directory.GetFileSystemEntries(path);
+        }
+
+        public virtual string[] GetFileSystemEntries(string path, string searchPattern) {
+            return System.IO.Directory.GetFileSystemEntries(path, searchPattern);
         }
 
         public virtual bool Exists(string path) {
@@ -143,7 +148,7 @@ namespace Aderant.Build {
 
     internal static class NativeMethods {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        internal static extern bool CreateHardLink(string newFileName, string exitingFileName, IntPtr securityAttributes);
+        internal static extern bool CreateHardLink(string newFileName, string existingFileName, IntPtr securityAttributes);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool DeleteFile(string fileName);
     }

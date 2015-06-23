@@ -62,7 +62,7 @@ namespace Aderant.Build.Commands {
                 Workspace workspace;
                 try {
                     workspace = workspaceInfo.GetWorkspace(teamProject);
-                } catch (System.InvalidOperationException ex) {
+                } catch (System.InvalidOperationException) {
                     continue;
                 }
 

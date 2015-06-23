@@ -139,7 +139,7 @@ Checking back in to TFS must be done manually.")]
             Host.UI.WriteLine("Checking out: " + serverPathToManifest);
             wss.PendEdit(serverPathToManifest);
 
-            string root = Providers.PathHelper.GetServerPathToModuleDirectory(TargetBranch) + @"/*";
+            string root = PathHelper.GetServerPathToModuleDirectory(TargetBranch) + @"/*";
 
             Host.UI.WriteLine("Getting build system files for each module in branch: " + TargetBranch);
 

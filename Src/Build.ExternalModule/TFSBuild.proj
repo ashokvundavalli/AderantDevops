@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="CopyToDrop"
+<Project DefaultTargets="AfterCompile"
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="12.0">
 
@@ -16,16 +16,15 @@
 
   <Target Name="CompileBuildInfrastructure">
     <!-- Optionally compile Build.Infrastructure -->
-    <PropertyGroup>
-      <BuildInfrastructureSolution>$(SolutionRoot)\Build.Infrastructure\Build.Infrastructure.sln</BuildInfrastructureSolution>
-    </PropertyGroup>
+      <ItemGroup>
+        <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\FxCopCmd\FxCopCmd.csproj" />
+        <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\Aderant.Build\Aderant.Build.csproj" />
+        <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
+                  Condition="'$(IsDesktopBuild)' != 'true'" />
+      </ItemGroup>
 
-    <MSBuild Condition="Exists($(BuildInfrastructureSolution))"
-                 Projects="$(BuildInfrastructureSolution)"
-                 Targets="Build">
-      <Output ItemName="BuildOutput" TaskParameter="TargetOutputs" />
-    </MSBuild>
-
+    <MSBuild Condition="Exists('$(SolutionRoot)\Build.Infrastructure')"
+             Projects="@(Projects)" />
   </Target>
 
   <!--
@@ -68,9 +67,9 @@
 
     <!-- Do Build.Infrastructure copy case (don't exclude src directory) -->
     <Exec Condition="'%(Folders.Filename)%(Extension)' == 'Build.Infrastructure'"
-              ContinueOnError="false"
-              IgnoreExitCode="true"
-              Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD Test"  />
+          ContinueOnError="false"
+          IgnoreExitCode="true"
+          Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD Test"  />
 
     <BuildStep
         Condition="('$(IsDesktopBuild)'!='true')"

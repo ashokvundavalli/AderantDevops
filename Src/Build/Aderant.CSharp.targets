@@ -218,9 +218,8 @@
     
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
     <PropertyGroup>
-      <DisableCopyLocal Condition="'$(UseSharedTestRunDirectory)' == 'true'">true</DisableCopyLocal>
-      
       <DisableCopyLocal Condition="$(OutputPath.ToLower().Contains('bin\module')) == 'true'">true</DisableCopyLocal>
+      <DisableCopyLocal Condition="'$(UseSharedTestRunDirectory)' != 'false' And '$(IsWebModule)' != 'true' And $(OutputPath.ToLower().Contains('bin\test')) == 'true'">true</DisableCopyLocal>
 
       <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
 

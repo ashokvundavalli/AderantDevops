@@ -1,4 +1,6 @@
-﻿function GetSymbolicLinkTarget($path) {
+﻿#$DebugPreference = 'Continue'
+
+function GetSymbolicLinkTarget($path) {
     Add-Type -MemberDefinition @"
 private const int CREATION_DISPOSITION_OPEN_EXISTING = 3;
 private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
@@ -35,33 +37,21 @@ private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
 }
 
 function BuildProject([string]$actualPath, [bool]$rebuild) {
-    $frameworkPath = "C:\Program Files (x86)\MSBuild\12.0\Bin"
-    if (-not (Test-Path $frameworkPath)) {			
-        $frameworkPath = $([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory())
+    # Load the build libraries as this has our shared compile function. This function is shared by the desktop and server bootstrap of Build.Infrastructure
+    $buildScripts = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build"));
+
+    if (-not (Test-Path $buildScripts)) {
+        throw "Cannot find directory: $buildScripts"
+        return
     }
 
-    $buildTool = [System.IO.Path]::Combine($frameworkPath, "MSBuild.exe")
+    Write-Debug "Build scripts: $buildScripts"
 
-    $projectPath = [System.IO.Path]::Combine($actualPath, "..\..\..\Build.Infrastructure.sln")
-    $projectPath = [System.IO.Path]::GetFullPath($projectPath)
+    pushd $buildScripts
+    Invoke-Expression ". .\Build-Libraries.ps1"
+    popd	       
 
-    if (-not [System.IO.File]::Exists($projectPath)) {
-        throw "Cannot compile Aderant.Build assembly as the project file does not exist at path $projectPath"
-    }
-        
-    $loggerSwitch = "/noconsolelogger"
-    if ($DebugPreference -eq "Continue") {
-        $loggerSwitch = ""
-    }
-
-    $rebuildSwitch = ""
-    if ($rebuild) {
-        $rebuildSwitch = "/target:Rebuild"
-    }
-
-    $command = "cmd /c `"$buildTool`" /nr:false $loggerSwitch /nologo /m `"$projectPath`" /verbosity:m " + $rebuildSwitch
-
-    Invoke-Expression $command
+    CompileBuildLibraryAssembly $buildScripts $rebuild
 }
 
 function LoadAssembly([string]$targetAssembly) {
@@ -76,21 +66,23 @@ function LoadAssembly([string]$targetAssembly) {
 }
 
 function UpdateOrBuildAssembly([string]$actualPath) {	
+    Write-Debug "Profile home: $actualPath"
     $targetAssembly = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools\Aderant.Build.dll"))
 
-  #  if ([System.Diagnostics.Debugger]::IsAttached -eq $false) {
-        if (-not [System.IO.File]::Exists($targetAssembly)) {
-            Write-Host "No Aderant.Build.dll found at $targetAssembly. Creating..."
-            BuildProject $actualPath $false
-        }
+    if (-not [System.IO.File]::Exists($targetAssembly)) {
+        Write-Host "No Aderant.Build.dll found at $targetAssembly. Creating..."
+        BuildProject $actualPath $false
+    }
 
-        # Test if the file is older than a day
-        $fileInfo = Get-ChildItem $targetAssembly
-        if ($fileInfo.LastWriteTimeUtc.Date -le [System.DateTime]::UtcNow.AddDays(-1)) {
-            Write-Host "Aderant.Build.dll is out of date. Updating..."
-            BuildProject $actualPath $true
-        }	
-  #  }
+    # Test if the file is older than a day
+    $fileInfo = Get-ChildItem $targetAssembly
+    if ($fileInfo.LastWriteTimeUtc.Date -le [System.DateTime]::UtcNow.AddDays(-1)) {
+        Write-Host "Aderant.Build.dll is out of date. Updating..."
+        BuildProject $actualPath $true
+    } else {
+        $dt = $fileInfo.LastWriteTime.ToString("d", [System.Globalization.CultureInfo]::CurrentCulture)
+        Write-Host "Aderant.Build.dll is not out of date. $dt is less than 1 day old"
+    }
 
     # Now actually load the assembly
     LoadAssembly $targetAssembly

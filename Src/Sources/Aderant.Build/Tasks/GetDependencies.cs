@@ -44,6 +44,15 @@ namespace Aderant.Build.Tasks {
         /// The modules in build.
         /// </value>
         public ITaskItem[] ModulesInBuild { get; set; }
+
+        /// <summary>
+        /// Gets or sets the TFS server.
+        /// </summary>
+        /// <value>
+        /// The TFS server.
+        /// </value>
+        [Required]
+        public string TeamFoundationServerUrl { get; set; }
         
         public override bool Execute() {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
@@ -125,7 +134,9 @@ namespace Aderant.Build.Tasks {
 
         private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
             var resolver = new ModuleDependencyResolver(expertManifest, DropPath);
-            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(ModulesRootPath);
+
+            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(TeamFoundationServerUrl, ModulesRootPath);
+
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
                 Log.LogMessage(MessageImportance.Normal, "Fetch modules for: " + resolver.ModuleName, null);

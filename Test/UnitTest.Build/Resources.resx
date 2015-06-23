@@ -139,4 +139,39 @@
           Project="..\..\BuildScripts\ModuleBuild.proj"/&gt;
 &lt;/Project&gt;</value>
   </data>
+  <data name="SrcSrvStream1" xml:space="preserve">
+    <value>SRCSRV: ini ------------------------------------------------
+VERSION=3
+INDEXVERSION=2
+VERCTRL=Team Foundation Server
+DATETIME=Wed Apr 22 01:16:10 2015
+INDEXER=MSCT
+SRCSRV: variables ------------------------------------------
+TFS_EXTRACT_CMD=tf.exe view /version:%var4% /noprompt "$%var3%" /server:%fnvar%(%var2%) /console &gt;%srcsrvtrg%
+TFS_EXTRACT_TARGET=C:\Temp\%var2%%fnbksl%(%var3%)\%var4%\%fnfile%(%var5%)
+SRCSRVVERCTRL=tfs
+SRCSRVERRDESC=access
+SRCSRVERRVAR=var2
+VSTFSSERVER=http://tfs:8080/tfs/aderant
+SRCSRVTRG=%TFS_extract_target%
+SRCSRVCMD=%TFS_extract_cmd%
+SRCSRV: source files ---------------------------------------
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\Converters\CurrencyToDecimalConverter.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/Converters/CurrencyToDecimalConverter.cs*252821*CurrencyToDecimalConverter.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\CheckRequestViewModelExtension.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/CheckRequestViewModelExtension.cs*252821*CheckRequestViewModelExtension.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\Converters\BankToDecimalConverter.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/Converters/BankToDecimalConverter.cs*252821*BankToDecimalConverter.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\DataProviders\ExpertImageDocumentDataProvider.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/DataProviders/ExpertImageDocumentDataProvider.cs*252821*ExpertImageDocumentDataProvider.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\DataProviders\InvoiceWithNewOptionDataProvider.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/DataProviders/InvoiceWithNewOptionDataProvider.cs*252821*InvoiceWithNewOptionDataProvider.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\DataProviders\VendorWithNewOptionDataProvider.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/DataProviders/VendorWithNewOptionDataProvider.cs*252821*VendorWithNewOptionDataProvider.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\Enums\CheckRequestEnums.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/Enums/CheckRequestEnums.cs*252821*CheckRequestEnums.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\Helpers\ExpertImageHelper.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/Helpers/ExpertImageHelper.cs*252821*ExpertImageHelper.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\CheckRequestViewModelBase.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/CheckRequestViewModelBase.cs*252821*CheckRequestViewModelBase.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\CreditRepaymentCheckRequest.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/CreditRepaymentCheckRequest.cs*252821*CreditRepaymentCheckRequest.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\InvoicePaymentCheckRequest.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/InvoicePaymentCheckRequest.cs*252821*InvoicePaymentCheckRequest.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\InvoicePayment.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/InvoicePayment.cs*252821*InvoicePayment.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\MiscPaymentCheckRequest.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/MiscPaymentCheckRequest.cs*252821*MiscPaymentCheckRequest.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\CheckRequestParameters.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/CheckRequestParameters.cs*252821*CheckRequestParameters.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\TrustRepaymentCheckRequest.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/TrustRepaymentCheckRequest.cs*252821*TrustRepaymentCheckRequest.cs
+c:\tfs\ExpertSuite\Dev\Framework\Modules\Libraries.CheckRequest\Src\Aderant.CheckRequest.Presentation\ViewModels\NewVendor.cs*VSTFSSERVER*/ExpertSuite/Dev/Framework/Modules/Libraries.CheckRequest/Src/Aderant.CheckRequest.Presentation/ViewModels/NewVendor.cs*252821*NewVendor.cs
+SRCSRV: end ------------------------------------------------</value>
+  </data>
 </root>

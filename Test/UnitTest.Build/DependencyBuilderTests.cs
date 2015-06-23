@@ -210,11 +210,11 @@ namespace UnitTest.Build {
 </ProductManifest>"); }
         }
 
-        public string Branch {
+        public override string Branch {
             get { return @"Dev\Foo"; }
         }
 
-        public IEnumerable<ExpertModule> GetAll() {
+        public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
                 new ExpertModule() {
                     Name = "A",
@@ -235,7 +235,7 @@ namespace UnitTest.Build {
             };
         }
 
-        public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
+        public override bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
@@ -298,7 +298,7 @@ namespace UnitTest.Build {
 </ProductManifest>"); }
         }
 
-        public IEnumerable<ExpertModule> GetAll() {
+        public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
                 new ExpertModule() {
                     Name = "A",
@@ -311,7 +311,7 @@ namespace UnitTest.Build {
             };
         }
 
-        public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
+        public override bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
