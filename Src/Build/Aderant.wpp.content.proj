@@ -43,21 +43,26 @@
 
   <!-- Scripts -->
   <ItemGroup>
-    <ExternalContent Include="$(DependenciesDirectory)Web.*\Scripts\*.js">
+    <ExternalContent Include="$(DependenciesDirectory)Web.*\Scripts\**\*.js"
+                     Exclude="$(DependenciesDirectory)Web.*\Scripts\ThirdParty.*\**\*.*;
+                              $(DependenciesDirectory)Web.*\Scripts\Web.*\**\*.*">
       <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('Scripts\', ''))</RelativePath>
     </ExternalContent>
     <ExternalContent Include="$(DependenciesDirectory)Mobile.*\Scripts\*.js">
       <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('Scripts\', ''))</RelativePath>
     </ExternalContent>
+    <!-- TypeScript -->
+    <ExternalTypeScript Include="$(DependenciesDirectory)Web.*\Scripts\**\*.d.ts"
+                        Exclude="$(DependenciesDirectory)Web.*\Scripts\ThirdParty.*\**\*.*;
+                                 $(DependenciesDirectory)Web.*\Scripts\Web.*\**\*.*">
+      <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('Scripts\', ''))</RelativePath>
+    </ExternalTypeScript>
     
-    <ExternalContent Include="$(DependenciesDirectory)ThirdParty.*\*.js">
+    <ExternalContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
     </ExternalContent>
-  </ItemGroup>
-
   <!-- TypeScript -->
-  <ItemGroup>
-    <ExternalTypeScript Include="$(DependenciesDirectory)ThirdParty.*\*.d.ts">
+    <ExternalTypeScript Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
     </ExternalTypeScript>
   </ItemGroup>
@@ -96,6 +101,11 @@
                          $(DependenciesDirectory)Mobile.*\ViewModels\Mobile.*\**">
       <RelativePath>ViewModels\$([System.String]::Copy('%(RecursiveDir)').Replace('ViewModels\', ''))</RelativePath>
     </ExternalContent>
+    <!-- TypeScript -->
+    <ExternalTypeScript Include="$(DependenciesDirectory)Web.*\ViewModels\**\*.d.ts"
+                        Exclude="$(DependenciesDirectory)Web.*\ViewModels\Web.*\**">
+      <RelativePath>ViewModels\$([System.String]::Copy('%(RecursiveDir)').Replace('ViewModels\', ''))</RelativePath>
+    </ExternalTypeScript>
   </ItemGroup>
 
   <!--Authentication--> 
@@ -176,7 +186,8 @@
           <Visible>true</Visible>
         </Content>
 
-        <Content Include="ManualLogOn\**\*" Exclude="ManualLogOn\**\default.aspx">
+        <Content Include="ManualLogOn\**\*"
+                 Exclude="ManualLogOn\**\default.aspx">
           <Visible>true</Visible>
         </Content>
       </ItemGroup>
@@ -185,7 +196,8 @@
 
 
   <!-- Maintains the F5 experience -->
-  <Target Name="CopyLinkedContentFiles" BeforeTargets="Build;CopyAllFilesToSingleFolderForMsdeploy">
+  <Target Name="CopyLinkedContentFiles"
+          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy">
 
     <!-- Only copy files with the Link attribute set -->
     <Copy SourceFiles="%(Content.Identity)"

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest" networkSharePath="\\vmexpdevb307\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" enableServiceCallCompression="false" reportServer="http://svsql304/ReportServer" reportServerUser="cmsdbo" reportServerPassword="eozBzG3osa/FNS5EzgQb3Q==">
+<environment name="IntegrationTest" networkSharePath="\\vmexpdevb307\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" enableServiceCallCompression="false">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
@@ -19,27 +19,28 @@
   <servers>
     <server name="vmexpdevb307" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
-        <role type="CheckRequest" />
-        <role type="commonapplications" />
-        <role type="employeeIntake" />
         <role type="Budgeting" />
+        <role type="CheckRequest" />
         <role type="Collections" />
+        <role type="commonapplications" />
         <role type="configuration" />
+        <role type="customworkflows" />
+        <role type="employeeIntake" />
         <role type="Expenses" />
         <role type="ExpensesOnTheGo" />
-        <role type="Marketing" />
-        <role type="MatterPlanning" />
-        <role type="prebill" />
-        <role type="Rates" />
         <role type="ExpertTime" />
-        <role type="ExpertTimeConnectorScheduler" />
+        <role type="ExpertTimeCommon" />
         <role type="ExpertTimeConnectors" />
+        <role type="ExpertTimeConnectorScheduler" />
         <role type="ExpertTimeOnTheGo" />
         <role type="fileopening" />
         <role type="FirmControl" />
-        <role type="messaging" />
+        <role type="Marketing" />
+        <role type="MatterPlanning" />
         <role type="notes" />
+        <role type="prebill" />
         <role type="queryservice" />
+        <role type="Rates" />
         <role type="security" />
         <role type="WipReview" />
         <role type="workflow">
@@ -49,7 +50,6 @@
           </roleParameters>
         </role>
         <role type="WorkflowOnTheGo" />
-        <role type="customworkflows" />
       </roles>
     </server>
   </servers>
