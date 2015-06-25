@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest_Main" networkSharePath="\\VMAKLEXPMAIN\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" reportServer="http://svsql304/ReportServer" reportServerUser="cmsdbo" reportServerPassword="eozBzG3osa/FNS5EzgQb3Q==" generateFullMsi="false" enableServiceCallCompression="false">
+<environment name="IntegrationTest_Main" networkSharePath="\\VMAKLEXPMAIN\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" reportServer="http://svsql304/ReportServer" reportServerUser="cmsdbo" reportServerPassword="eozBzG3osa/FNS5EzgQb3Q==" smtpHost="smtp.dev.ap.aderant.com" smtpPort="25" fromEmailAddress="VMAKLEXPMAIN.WFADMIN@Aderant.com" enableServiceCallCompression="false">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
@@ -20,21 +20,22 @@
     <server name="VMAKLEXPMAIN" expertPath="C:\AderantExpert\IntegrationTest_Main" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="CheckRequest" />
-        <role type="commonapplications" />
-        <role type="employeeIntake" />
         <role type="Collections" />
+        <role type="commonapplications" />
         <role type="configuration" />
+        <role type="customworkflows" />
+        <role type="employeeIntake" />
         <role type="Expenses" />
-        <role type="Marketing" />
-        <role type="MatterPlanning" />
-        <role type="prebill" />
-        <role type="Rates" />
         <role type="ExpertTime" />
+        <role type="ExpertTimeCommon" />
         <role type="fileopening" />
         <role type="FirmControl" />
-        <role type="messaging" />
+        <role type="Marketing" />
+        <role type="MatterPlanning" />
         <role type="notes" />
+        <role type="prebill" />
         <role type="queryservice" />
+        <role type="Rates" />
         <role type="security" />
         <role type="WipReview" />
         <role type="workflow">
@@ -44,7 +45,6 @@
             <roleParameter name="defaultFromEmailAddress" value="VMAKLEXPMAIN.WFADMIN@Aderant.com" />
           </roleParameters>
         </role>
-        <role type="customworkflows" />
       </roles>
     </server>
   </servers>
