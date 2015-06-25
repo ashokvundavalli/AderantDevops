@@ -19,6 +19,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private string name;
         private List<XAttribute> customAttributes;
+        private ModuleType type;
+        private bool hasModuleType = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
@@ -95,7 +97,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <value>The type of the module.</value>
         public ModuleType ModuleType {
-            get { return GetModuleType(Name); }
+            get {
+                if (!hasModuleType) {
+                    type = GetModuleType(Name);
+                    hasModuleType = true;
+                }
+                return type;
+            }
         }
 
         /// <summary>
@@ -106,7 +114,17 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(ExpertModule other) {
-            return String.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+            if (ModuleType != other.ModuleType) {
+                return false;
+            }
+
+            if (Char.IsUpper(Name[0]) && char.IsUpper(other.name[0])) {
+                if (Name[0] != other.name[0]) {
+                    return false;
+                }
+            }
+
+            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
 
         public static ModuleType GetModuleType(string name) {
@@ -228,8 +246,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         public override int GetHashCode() {
             if (name != null) {
-                return name.ToUpperInvariant().GetHashCode();
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(name);
             }
+         
             return string.Empty.GetHashCode();
         }
 

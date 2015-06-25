@@ -37,27 +37,38 @@ namespace Aderant.Build.Commands {
             var allDependencies = new List<ModuleDependency>(builder.GetModuleDependencies());
 
             HashSet<ExpertModule> modules = new HashSet<ExpertModule>();
-            GetDependentModules(allDependencies, new Collection<ExpertModule> { Module }, modules);
+            GetDependentModules(allDependencies, new List<ExpertModule> { Module }, modules);
 
             WriteObject(modules, true);
         }
 
-        private IEnumerable<ExpertModule> GetDirectDependencies(IEnumerable<ModuleDependency> allDependencies, ExpertModule module) {
-            return (from dependency in allDependencies
-                    where dependency.Provider.Equals(module)
-                    where !dependency.Consumer.Equals(module)
-                    select dependency.Consumer);
+        private List<ExpertModule> GetDirectDependencies(List<ModuleDependency> allDependencies, ExpertModule module) {
+            var modules = new List<ExpertModule>();
+
+            for (int i = 0; i < allDependencies.Count; i++) {
+                var dependency = allDependencies[i];
+                
+                if (dependency.Provider.Equals(module)) {
+                    if (!dependency.Consumer.Equals(module))
+                        //yield return dependency.Consumer;
+                        modules.Add(dependency.Consumer);
+                }
+            }
+
+            return modules;
         }
 
-        private void GetDependentModules(List<ModuleDependency> allDependencies, IEnumerable<ExpertModule> directDependencies, HashSet<ExpertModule> modules) {
-            foreach (ExpertModule dependency in directDependencies) {
-                var nextDependencies = GetDirectDependencies(allDependencies, dependency);
+        private void GetDependentModules(List<ModuleDependency> allDependencies, List<ExpertModule> directDependencies, HashSet<ExpertModule> modules) {
+            for (int i = 0; i < directDependencies.Count; i++) {
+                ExpertModule dependency = directDependencies[i];
+                
+                List<ExpertModule> nextDependencies = GetDirectDependencies(allDependencies, dependency);
 
                 foreach (ExpertModule module in nextDependencies) {
                     modules.Add(module);
                 }
 
-                if (!nextDependencies.Any()) {
+                if (nextDependencies.Count == 0) {
                     continue;
                 }
 
