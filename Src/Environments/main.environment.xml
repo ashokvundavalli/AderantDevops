@@ -19,6 +19,7 @@
   <servers>
     <server name="VMAKLEXPMAIN" expertPath="C:\AderantExpert\IntegrationTest_Main" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
+        <role type="Budgeting" />
         <role type="CheckRequest" />
         <role type="Collections" />
         <role type="commonapplications" />
@@ -26,8 +27,12 @@
         <role type="customworkflows" />
         <role type="employeeIntake" />
         <role type="Expenses" />
+        <role type="ExpensesOnTheGo" />
         <role type="ExpertTime" />
         <role type="ExpertTimeCommon" />
+        <role type="ExpertTimeConnectors" />
+        <role type="ExpertTimeConnectorScheduler" />
+        <role type="ExpertTimeOnTheGo" />
         <role type="fileopening" />
         <role type="FirmControl" />
         <role type="Marketing" />
@@ -45,6 +50,7 @@
             <roleParameter name="defaultFromEmailAddress" value="VMAKLEXPMAIN.WFADMIN@Aderant.com" />
           </roleParameters>
         </role>
+        <role type="WorkflowOnTheGo" />
       </roles>
     </server>
   </servers>
