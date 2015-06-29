@@ -5,7 +5,8 @@
 
   <!-- This is a custom version which resolves an ArgumentOutOfRangeException -->
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(PackageScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
-  <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\na.aderant.com\ExpertSuite\Dev\Automation\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
+  <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
+  <UsingTask TaskName="ConsolePackageImporter" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
 
   <!-- 
     =========================================================================================================
@@ -493,30 +494,45 @@
   -->
   <Target Name="ReplicateUITestDependencies">
       <Message Text="SolutionRoot: $(SolutionRoot); BuildScriptsDirectory: $(BuildScriptsDirectory)" />
-      <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\Load-UITestDependencies.ps1" "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0" $(TestAssemblyDirectory) $(BuildScriptsDirectory)' />
+
+      <PropertyGroup>
+        <TestAssemblyDirectory>$([System.IO.Path]::GetFullPath('$(ExpertTestsDirectory)\ExpertSource'))</TestAssemblyDirectory>
+      </PropertyGroup>
+    
+      <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\Load-UITestDependencies.ps1" -UiFrameworkDirectory "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0" -TargetDirectory $(TestAssemblyDirectory) -BuildScriptsDirectory $(BuildScriptsDirectory)' />
   </Target>
 
 
   <!--
     ==========================================================================================
-        Inject data into database for UI tests.
+        Inject data into database and import packages for UI tests.
     ==========================================================================================
   -->
   <Target Name="ProvisionDatabaseForUiTests">
+    <Message Text="Running SQl Injection script for Automation Tests" />
+    <Message Text="Environment Manifest Path: $(EnvironmentManifestPath)" />
+    
     <!-- There is currently a bug in PackageManagerConsole.exe. When that is resolved we can use this script again. 
     <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\ImportPackagesForAutomation.ps1" $(EnvironmentManifestPath) "\\vmexpdevb309\AutomatedTesting\DatabaseProvisioning" -licenses -workflows' /> -->
     <SqlFileExecution
-      EnvironmentPath='$(EnvironmentManifestPath)'
+      EnvironmentManifestPath='$(EnvironmentManifestPath)'
       SqlFile='\\vmexpdevb309\AutomatedTesting\DatabaseProvisioning\ProvisionDB.sql' />
   </Target>
 
+  <Target Name="PackageImportForUiTests">
+    <Message Text="Importing Packages for Automation Tests" />
+    <Message Text="configuration file path: $(TestAssemblyDirectory)\Resources\Configuration.xml" />
+    <ConsolePackageImporter
+      EnvironmentManifestPath='$(EnvironmentManifestPath)'
+      ConfigurationPath='$(TestAssemblyDirectory)\Resources\Configuration.xml' />
+  </Target>
   <!--
     ==========================================================================================
         UI Automation Tests
     ==========================================================================================
   -->
   <Target Name="AutomationTests"
-          DependsOnTargets="ReplicateUITestDependencies;ProvisionDatabaseForUiTests;IntegrationTests"
+          DependsOnTargets="ReplicateUITestDependencies;ProvisionDatabaseForUiTests;PackageImportForUiTests;IntegrationTests"
           Condition="('$(RunTests)'=='true')" >
   </Target>
 
@@ -548,7 +564,7 @@
       <IsolationSwitch></IsolationSwitch>
       <!-- Test result publishing requires Visual Studio Update 1 or higher -->
       <LoggerSwitch>/logger:Multicast;loggers=trx,TfsPublisher;TfsPublisher.Collection=$(TeamFoundationServerUrl);TfsPublisher.BuildName=$(BuildNumber);TfsPublisher.TeamProject=$(TeamProject);TfsPublisher.Platform="%(ConfigurationToBuild.PlatformToBuild)";TfsPublisher.Flavor="%(ConfigurationToBuild.FlavorToBuild)"</LoggerSwitch>
-      <TestSettingsSwitch>/Settings:$(TestSettingsFile)</TestSettingsSwitch>
+      <TestSettingsSwitch Condition="'$(TestSettingsFile)' != ''">/Settings:$(TestSettingsFile)</TestSettingsSwitch>
       <TestFilterSwitch>$(TestCaseFilterSwitch)</TestFilterSwitch>
     </PropertyGroup>
 
@@ -564,7 +580,6 @@
     
     <PropertyGroup>
         <TestAssemblyIncludePattern Condition="'$(TestAssemblyIncludePattern)' == ''">IntegrationTest*.dll</TestAssemblyIncludePattern>
-		<TestSettingsSwitch Condition="'$(TestSettingsFile)' == ''"></TestSettingsSwitch>
     </PropertyGroup>
 
     <ItemGroup>

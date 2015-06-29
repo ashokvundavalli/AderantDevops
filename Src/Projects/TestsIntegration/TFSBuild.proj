@@ -44,9 +44,6 @@
     <RunCodeAnalysis>Never</RunCodeAnalysis>
     <SolutionDirectoryPath>$(SolutionRoot)</SolutionDirectoryPath>
     <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-
-    <!-- Define targets to run from PackageTargets -->
-    <IntegrationTestSteps>PackageProductTests;ParseOrderedTests;IntegrationTests;ConvertTestResults;</IntegrationTestSteps>
   </PropertyGroup>
 
   <!-- 
@@ -57,7 +54,7 @@
   <ItemGroup>
     <ConfigurationToBuild
         Condition="'$(BuildFlavor)' == '' Or '$(BuildFlavor)' == 'Release'"
-		    Include="Release|Any CPU">
+            Include="Release|Any CPU">
       <FlavorToBuild>Release</FlavorToBuild>
       <PlatformToBuild>Any CPU</PlatformToBuild>
     </ConfigurationToBuild>
@@ -77,14 +74,6 @@
         Automated Testing
     ==========================================================================================
   -->
-  <Target Name="AutomatedTesting">
-    <CallTarget Targets="$(IntegrationTestSteps)"
-                RunEachTargetSeparately="true" />
-
-    <CallTarget Targets="RemoveProductRemote"
-                Condition="'$(DeployExpert)' != 'false' And '$(RemoveDeploymentAfterTests)' != 'false'" />
-  </Target>
-
   <Target Name="RunDeployProduct" Condition="'$(DeployExpert)' != 'false'">
     <Message Text="Starting product deployment..." />
 
@@ -96,6 +85,14 @@
     <CallTarget Targets="ApplyUPD" />
     <CallTarget Targets="DeployProductRemote" />
     <CallTarget Targets="WaitForServiceStartUp" />
+  </Target>
+  <!-- Run the tests -->
+  <Target Name="AutomatedTesting" Condition="'$(RunTests)'=='true'">
+    <CallTarget Targets="PackageProductTests" />
+    <CallTarget Targets="IntegrationTests" Condition="'$(TestRunType)' == 'Integration'"/>
+    <CallTarget Targets="AutomationTests" Condition="'$(TestRunType)' == 'Automation'"/>
+    <CallTarget Targets="ConvertTestResults" />
+    <CallTarget Targets="RemoveProductRemote" Condition="'$(DeployExpert)' != 'false' And '$(RemoveDeploymentAfterTests)' != 'false'" />
   </Target>
 
 </Project>

@@ -14,7 +14,7 @@ using Microsoft.TeamFoundation.Server;
 namespace Aderant.Build.Tasks {
     public class SqlFileExecution : Microsoft.Build.Utilities.Task {
         [Required]
-        public string EnvironmentPath { get; set; }
+        public string EnvironmentManifestPath { get; set; }
         [Required]
         public string SqlFile { get; set; }
         private string Database { get; set; }
@@ -42,7 +42,7 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool Execute() {
-            GetValuesFromEnvironment(EnvironmentPath);
+            GetValuesFromEnvironment(EnvironmentManifestPath);
             string connectionString = ConnectionString(Server, Database);
             using (SqlConnection conn = new SqlConnection(connectionString)) {
                 if (conn.State != ConnectionState.Open) {
