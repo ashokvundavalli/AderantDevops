@@ -1,12 +1,9 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpFormat/TYPE_DECLARATION_BRACES/@EntryValue">END_OF_LINE</s:String>
-	<s:Boolean x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=5BD020CA46F53446B9F157D388DD1EC9/@KeyIndexDefined">True</s:Boolean>
-	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=5BD020CA46F53446B9F157D388DD1EC9/RelativePath/@EntryValue">..\Build.Infrastructure\Src\Build\resharper.DotSettings</s:String>
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=B28C26B69CE2E14EAD52E933B9D299FF/@KeyIndexDefined">True</s:Boolean>
 	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=B28C26B69CE2E14EAD52E933B9D299FF/AbsolutePath/@EntryValue">[PATH]\Modules\Build.Infrastructure\Src\Profile\resharper.DotSettings</s:String>
-	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File5BD020CA46F53446B9F157D388DD1EC9/@KeyIndexDefined">True</s:Boolean>
-	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File5BD020CA46F53446B9F157D388DD1EC9/RelativePriority/@EntryValue">2</s:Double>
+    <s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=B28C26B69CE2E14EAD52E933B9D299FF/RelativePath/@EntryValue">..\..\Build.Infrastructure\Src\Profile\resharper.DotSettings</s:String>
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileB28C26B69CE2E14EAD52E933B9D299FF/@KeyIndexDefined">True</s:Boolean>
-	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileB28C26B69CE2E14EAD52E933B9D299FF/RelativePriority/@EntryValue">3</s:Double>
+	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileB28C26B69CE2E14EAD52E933B9D299FF/RelativePriority/@EntryValue">2</s:Double>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ESettingsUpgrade_002EMigrateBlankLinesAroundFieldToBlankLinesAroundProperty/@EntryIndexedValue">True</s:Boolean>
 </wpf:ResourceDictionary>
