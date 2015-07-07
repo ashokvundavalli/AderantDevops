@@ -168,10 +168,10 @@ namespace Aderant.Build.Commands {
         private string GetServerPathForModule(string path) {
             var workspace = TeamFoundationHelper.GetWorkspaceForItem(path);
 
-            string serverPath = workspace.TryGetServerItemForLocalItem(path);
-            if (!string.IsNullOrEmpty(serverPath)) {
-                return serverPath;
-            }
+                string serverPath = workspace.TryGetServerItemForLocalItem(path);
+                if (!string.IsNullOrEmpty(serverPath)) {
+                    return serverPath;
+                }
 
             throw new PSInvalidOperationException("Unable to get server path for local path: " + path);
         }

@@ -153,7 +153,12 @@ namespace Aderant.Build {
             var modulesInBuild = new HashSet<string>(moduleNamesInBuild, StringComparer.OrdinalIgnoreCase);
 
             foreach (var name in modulesInBuild) {
-                ExpertModule module = modules.Single(expertModule => string.Equals(expertModule.Name, name, StringComparison.OrdinalIgnoreCase));
+                ExpertModule module = null;
+                try {
+                    module = modules.Single(expertModule => string.Equals(expertModule.Name, name, StringComparison.OrdinalIgnoreCase));
+                } catch (InvalidOperationException) {
+                    throw new InvalidOperationException("Module: " + name + " does not exist in the Expert Manifest.");
+                }
 
                 IEnumerable<ExpertModule> dependenciesRequiredForModule = moduleDependencyGraph
                     .Where(dependency => dependency.Consumer.Equals(module)) // Find the module in the dependency graph
