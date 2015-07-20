@@ -399,7 +399,7 @@
 
   <!--
     ==========================================================================================
-        Intergration Tests
+        Integration Tests
     ==========================================================================================
   -->  
   
@@ -410,7 +410,7 @@
     </CreateItem>
 
     <PropertyGroup>
-      <IntergrationAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</IntergrationAssemblies>      
+      <IntegrationAssemblies>@(TestAssemblies->'%(TestContainerPrefix)%(FullPath)',' ')</IntegrationAssemblies>      
       <PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
       <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
       <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
@@ -439,10 +439,10 @@
           IgnoreExitCode="false"
           Command='"Powershell" "$(BuildScriptsDirectory)\SetupIntegrationEnvironment.ps1" "$(AderantBinLinkDirectory)" $(LocalExpertTestsDirectory) "$(VS2010TestHostDirectory)"' />
       
-    <Exec Condition="(('$(IsDesktopBuild)'!='true') and ('$(IntergrationAssemblies)' != ''))"
+    <Exec Condition="(('$(IsDesktopBuild)'!='true') and ('$(IntegrationAssemblies)' != ''))"
         ContinueOnError="false"
         IgnoreExitCode="false"
-        Command='"$(PathToVS2010MSTest)" $(IntergrationAssemblies) /resultsfile:$(DropExpertTestsDirectory)\IntegrationTestResults.trx' />    
+        Command='"$(PathToVS2010MSTest)" $(IntegrationAssemblies) /resultsfile:$(DropExpertTestsDirectory)\IntegrationTestResults.trx' />    
 
     <!--Remove FrameworkHome -->
     <Exec Condition="('$(IsDesktopBuild)'!='true')"

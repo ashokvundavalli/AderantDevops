@@ -75,8 +75,7 @@ namespace Aderant.Build.Commands {
                 throw new DirectoryNotFoundException("Could not find module directory: " + modulePath);
             }
 
-            string environmentManifestPath = ParameterHelper.GetBranchBinariesDirectory(this.SessionState) + @"\environment.xml";
-            XDocument environment = XDocument.Load(environmentManifestPath);
+            XDocument environment = GetEnvironmentManifest();
 
             IntegrationTestContext testContext = new IntegrationTestContext(environment) {
                 ModuleUnderTest = ModuleName,
@@ -140,8 +139,23 @@ namespace Aderant.Build.Commands {
             }
         }
 
+        private XDocument GetEnvironmentManifest() {
+            string environmentManifestPath = ParameterHelper.GetBranchBinariesDirectory(this.SessionState) + @"\environment.xml";
+
+            if (!File.Exists(environmentManifestPath)) {
+                throw new FileNotFoundException("Could not find the environment file for the current branch", environmentManifestPath);
+            }
+
+            XDocument environment = XDocument.Load(environmentManifestPath);
+            return environment;
+        }
+
         private void EditSolutionAppConfig(string modulePath, XDocument appConfig) {
             var fileSystemEntries = Directory.GetFileSystemEntries(Path.Combine(modulePath, "Test", "Config"), "app.config", SearchOption.TopDirectoryOnly);
+
+            if (fileSystemEntries.Length == 0) {
+                throw new FileNotFoundException("No app.config found under Test\\Config. An template app.config must exist in the solution.", "app.config");
+            }
 
             if (fileSystemEntries.Length == 1) {
                 string appConfigFile = fileSystemEntries[0];
@@ -169,7 +183,7 @@ namespace Aderant.Build.Commands {
         private void ConfigureTestAssemblyAppConfigs(IntegrationTestContext context, XDocument appConfig) {
             string testPath = Path.Combine(context.ModulePath, "Bin", "Test");
 
-            string[] testAssemblies = Directory.GetFileSystemEntries(testPath, "IntegrationTest.*.dll", SearchOption.TopDirectoryOnly);
+            string[] testAssemblies = Directory.GetFileSystemEntries(testPath, "IntegrationTest*.dll", SearchOption.TopDirectoryOnly);
             foreach (string testAssembly in testAssemblies) {
                 string configPath = testAssembly + ".config";
 
@@ -239,10 +253,9 @@ namespace Aderant.Build.Commands {
 
         private void PrepareTestEnvironment(IntegrationTestContext context) {
             var directories = new List<KeyValuePair<string, string>>();
-            {
-                directories.Add(new KeyValuePair<string, string>(Path.Combine(context.TestAssemblyDirectory, "NetworkShare"), context.NetworkShare));
-                directories.Add(new KeyValuePair<string, string>(Path.Combine(context.TestAssemblyDirectory, "Bin"), Path.Combine(context.ModulePath, "Bin", "Module")));
-            };
+            directories.Add(new KeyValuePair<string, string>(Path.Combine(context.TestAssemblyDirectory, "Dependencies"), Path.Combine(context.ModulePath, "Dependencies")));
+            directories.Add(new KeyValuePair<string, string>(Path.Combine(context.TestAssemblyDirectory, "Bin"), Path.Combine(context.ModulePath, "Bin", "Module")));
+            directories.Add(new KeyValuePair<string, string>(Path.Combine(context.TestAssemblyDirectory, "NetworkShare"), context.NetworkShare));
 
             foreach (var link in directories) {
                 if (!Directory.Exists(link.Value)) {

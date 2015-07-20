@@ -135,7 +135,7 @@
         Condition="('$(RunTests)'=='true')" >
 
     <PropertyGroup>
-      <IntergrationAssemblies>@(AderantTestAssembliesInclude->'%(TestContainerPrefix)%(Filename)',' ')</IntergrationAssemblies>
+      <IntegrationAssemblies>@(AderantTestAssembliesInclude->'%(TestContainerPrefix)%(Filename)',' ')</IntegrationAssemblies>
       <PublishBuildSwitch>/publishbuild:$(BuildNumber)</PublishBuildSwitch>
       <ConfigurationSwitch>/flavor:%(ConfigurationToBuild.FlavorToBuild)</ConfigurationSwitch>
       <PlatformSwitch>/platform:%(ConfigurationToBuild.PlatformToBuild)</PlatformSwitch>
