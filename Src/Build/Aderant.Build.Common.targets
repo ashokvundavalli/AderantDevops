@@ -170,6 +170,11 @@
 
     <OverwriteSymbolTextFile Condition="'$(BuildAll)' != 'true'">true</OverwriteSymbolTextFile>
     <OverwriteSymbolTextFile Condition="'$(BuildAll)' == 'true'">false</OverwriteSymbolTextFile>
+
+    <TeamProject Condition="'$(TeamProject)' == ''">ExpertSuite</TeamProject>
+    <TeamFoundationServerUrl Condition="'$(TeamFoundationServerUrl)' == ''">http://tfs:8080/tfs/aderant</TeamFoundationServerUrl>
+
+    <SymbolPublishFile Condition="'$(SymbolPublishFile)' == ''">$(SolutionDirectoryPath)SymbolsToPublish.txt</SymbolPublishFile>
   </PropertyGroup>
 
   <Target Name="IndexSourcesAndPublishSymbolsCore">
@@ -198,13 +203,6 @@
     <ItemGroup>
       <SymbolFiles Include="@(AllSymbolFiles->Distinct())" />
     </ItemGroup>
-
-    <PropertyGroup>
-      <TeamProject Condition="'$(TeamProject)' == ''">ExpertSuite</TeamProject>
-      <TeamFoundationServerUrl Condition="'$(TeamFoundationServerUrl)' == ''">http://tfs:8080/tfs/aderant</TeamFoundationServerUrl>
-
-      <SymbolPublishFile Condition="'$(SymbolPublishFile)' == ''">$(SolutionDirectoryPath)SymbolsToPublish.txt</SymbolPublishFile>
-    </PropertyGroup>
 
     <SourceIndex
       SymbolFiles="@(SymbolFiles)"
