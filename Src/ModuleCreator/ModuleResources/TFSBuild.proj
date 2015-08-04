@@ -3,23 +3,23 @@
   DefaultTargets="ModuleBuild" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
   ToolsVersion="12.0">
 
-  <Import
-  Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
-  <Import
-    Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+    <Import
+      Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
+    <Import
+      Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
 
-  <Import
+    <Import
    Condition="Exists('..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj')"
-   Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
+      Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
 
-  <!--Server build for a module-->
-  <Import
-    Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-    Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
+    <!--Server build for a module-->
+    <Import
+      Condition="('$(BuildAll)'!='true') And ('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
 
-  <!--Custom build for a module-->
-  <Import
-    Condition="('$(IsCustomBuild)'=='true') "
-    Project="..\..\BuildScripts\ModuleBuild.proj" />
+    <!--Custom build for a module-->
+    <Import
+      Condition="('$(IsCustomBuild)'=='true') "
+      Project="..\..\BuildScripts\ModuleBuild.proj" />
   
 </Project>

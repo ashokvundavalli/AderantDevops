@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B1
 	ProjectSection(SolutionItems) = preProject
 		Src\Profile\Aderant\Aderant.psd1 = Src\Profile\Aderant\Aderant.psd1
 		Src\Profile\Aderant\Aderant.psm1 = Src\Profile\Aderant\Aderant.psm1
+		Src\Profile\Aderant\AderantWeb.psm1 = Src\Profile\Aderant\AderantWeb.psm1
 		Src\Profile\Aderant\BuildLibraryImport.ps1 = Src\Profile\Aderant\BuildLibraryImport.ps1
 		Src\Profile\Aderant\Setup.ps1 = Src\Profile\Aderant\Setup.ps1
 	EndProjectSection

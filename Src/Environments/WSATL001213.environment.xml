@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<environment name="local" networkSharePath="\\WSATL001213\ExpertShare" sourcePath="C:\tfs\expertsuite\dev\casev1\Binaries\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="false" failOnSDKDependencyFailure="false" enableServiceCallCompression="false">
+  <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
+    <proxyBypassExpressions />
+  </httpProxySettings>
+  <expertDatabaseServer serverName="wsatl001213" serverInstance="">
+    <databaseConnection databaseName="CaseV1" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseSecurity administrators="" readers="" writers="" />
+  </expertDatabaseServer>
+  <monitoringDatabaseServer serverName="wsatl001213" serverInstance="">
+    <databaseConnection databaseName="ExpertMonitoring" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseSecurity administrators="wsatl001213\AS_Administrators" readers="wsatl001213\AS_Administrators" writers="wsatl001213\AS_Administrators" />
+  </monitoringDatabaseServer>
+  <workflowDatabaseServer serverName="wsatl001213" serverInstance="">
+    <databaseConnection databaseName="ExpertWorkflow" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseSecurity administrators="wsatl001213\AS_Administrators" readers="wsatl001213\AS_Administrators" writers="wsatl001213\AS_Administrators" />
+  </workflowDatabaseServer>
+  <expertSystem exePath="" connection="" />
+  <servers>
+    <server name="WSATL001213.na.aderant.com" expertPath="c:\AderantExpert\Local" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+      <roles>
+        <role type="AccountsPayable" />
+        <role type="Case" />
+        <role type="commonapplications" />
+        <role type="workflowauthoring" />
+        <role type="employeeIntake" />
+        <role type="configuration" />
+        <role type="Expenses" />
+        <role type="MatterPlanning" />
+        <role type="prebill" />
+        <role type="ExpertTime" />
+        <role type="ExpertTimeOnTheGo" />
+        <role type="fileopening" />
+        <role type="FirmControl" />
+        <role type="messaging" />
+        <role type="notes" />
+        <role type="queryservice" />
+        <role type="security" />
+        <role type="workflow" />
+        <role type="WorkflowOnTheGo" />
+        <role type="customworkflows" />
+      </roles>
+    </server>
+  </servers>
+</environment>

@@ -634,7 +634,7 @@
           Condition="!Exists('$(TeamCityLogger)')" />
 
     <!-- Run the integration tests -->
-    <Exec Command='"$(PathToTestTool)" $(TestAssemblies) $(TestSettingsSwitch) $(TestFilterSwitch) $(LoggerSwitch) $(IsolationSwitch)'
+    <Exec Command='"$(PathToTestTool)" $(TestAssemblies) $(TestFilterSwitch) $(LoggerSwitch) $(IsolationSwitch)'
           ContinueOnError="false"
           IgnoreExitCode="false" 
           WorkingDirectory="$(TestAssemblyDirectory)" />
@@ -712,11 +712,7 @@
         PropertyName="BuildStepId" />
     </BuildStep>
 
-    <Exec
-     ContinueOnError="false"
-     IgnoreExitCode="false"
-     Command='"Powershell" "$(PackageScriptsDirectory)\AllowDotNet40Assemblies.ps1"' />
-    
+   
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"

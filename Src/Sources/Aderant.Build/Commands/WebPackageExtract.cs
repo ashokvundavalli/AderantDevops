@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Reflection;
+using System.Threading;
 
 namespace Aderant.Build.Commands {
-
     /// <summary>
     /// Used to deploy web assets into the project folders.
     /// </summary>
     [Cmdlet(VerbsData.Update, "WebProjectAssets")]
     public class WebPackageExtract : PSCmdlet {
-        
         private const string FolderNameToExtract = "PackageTmp";
 
         /// <summary>
@@ -33,11 +30,15 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = true, Position = 1, HelpMessage = "Specifies the dependencies directory to use for extraction")]
         public string ModuleDependenciesDirectory { get; set; }
 
+        public SwitchParameter CopyWebDlls { get; set; }
+
+
         protected override void ProcessRecord() {
-            ExtractWebPackage(ModuleBinariesPath, ModuleDependenciesDirectory, true);
+            CopyWebDlls = true;
+            ExtractWebPackage(ModuleBinariesPath, ModuleDependenciesDirectory);
         }
 
-        public void ExtractWebPackage(string sourceFolder, string destinationDependencyFolder, Boolean copyDlls) {
+        public void ExtractWebPackage(string sourceFolder, string destinationDependencyFolder) {
             if (!Directory.Exists(sourceFolder)) {
                 throw new DirectoryNotFoundException(sourceFolder);
             }
@@ -47,7 +48,7 @@ namespace Aderant.Build.Commands {
 
             Host.UI.WriteDebugLine(string.Format("Getting Web Dependencies from {0} to {1}", sourceFolder, destinationDependencyFolder));
 
-            string zipFileName = sourceFolder.Split('\\').First(p => (p.StartsWith("Web.")||p.StartsWith("Mobile."))) + ".zip"; // e.g. web.workflow.zip
+            string zipFileName = sourceFolder.Split('\\').First(p => (p.StartsWith("Web.") || p.StartsWith("Mobile."))) + ".zip"; // e.g. web.workflow.zip
             string moduleName = zipFileName.Split('\\').Last().Replace(".zip", ""); // e.g. web.workflow
 
             // extract zip to a temporary folder (temporaryFolderWithZip).  32 digits no special chars , 00000000000000000000000000000000
@@ -68,17 +69,17 @@ namespace Aderant.Build.Commands {
             string folderToDeploy = matchingFolders[0].FullName;
             string[] dependencies = new string[0];
 
-            DeployWebDependenciesToProject(destinationDependencyFolder, folderToDeploy, moduleName, dependencies, copyDlls);
+            DeployWebDependenciesToProject(destinationDependencyFolder, folderToDeploy, moduleName, dependencies);
             DeleteFolder(new DirectoryInfo(temporaryFolderWithZip)); // clean out zip folder
         }
 
         // Public method so it can be used by GetDependenciesFrom, when user has been doing local builds.
-        public void DeployWebDependenciesToProject(string destinationDependencyFolder, string folderToDeploy, string moduleName, string[] dependencies, Boolean copyDlls) {
-            // copy entire zip into dependencies folder
-            string localDependencyFolderName = Path.Combine(destinationDependencyFolder, moduleName);
+        public void DeployWebDependenciesToProject(string destinationDependencyFolder, string folderToDeploy, string moduleName, string[] dependencies) {
+            if (CopyWebDlls) {
+                // copy entire zip into dependencies folder
+                string localDependencyFolderName = Path.Combine(destinationDependencyFolder, moduleName);
 
-            if (copyDlls) {
-                CopyDirectoryContentsRecursively(folderToDeploy, localDependencyFolderName, dependencies);
+                CopyDirectoryContentsRecursively(folderToDeploy, localDependencyFolderName, dependencies, moduleName);
 
                 // move dll files to dependency folder, not this sub folder
                 var dlls = Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "web.*.dll").Union(Directory.GetFiles(Path.Combine(localDependencyFolderName, "bin"), "mobile.*.dll"));
@@ -100,10 +101,10 @@ namespace Aderant.Build.Commands {
                     File.Move(pdb, destinationPdbName);
                 }
             }
-            // these are the folders that get copied to src, rather than just to dependencies. 
-            // things like images, scripts, and css that physically need to be in the source folder.
-            string[] folderNamesToCopyToSrc = { "Scripts", "Views", "Content", "ViewModels", "Views", "Authentication", "ManualLogon","Helpers" };
-            string[] folderNamesToCopyToTest = { "TestAssets" };
+
+            // If the parameter expressModeOptions passed in is not null, take the options and only run selected folders; 
+            // Otherwise do the migration for all web folders.
+            string[] folderNamesToCopyToSrc = { "Scripts", "Content", "ViewModels", "Views", "Authentication", "ManualLogon", "Helpers", "Tests" };
 
             // copy selected folders into src (Images, Scripts, CSS etc)
             DirectoryInfo srcInfo = new DirectoryInfo(Path.Combine(destinationDependencyFolder, "..\\src"));
@@ -125,26 +126,16 @@ namespace Aderant.Build.Commands {
                         CopyDirectoryContentsRecursively(
                             Path.Combine(folderToDeploy, srcFolderName + "\\Shared"),
                             destinationFolderName,
-                            dependencies);
+                            dependencies,
+                            moduleName);
                     } else {
-                        CopyDirectoryContentsRecursively(Path.Combine(folderToDeploy, srcFolderName), destinationFolderName, dependencies);
+                        CopyDirectoryContentsRecursively(Path.Combine(folderToDeploy, srcFolderName), destinationFolderName, dependencies, moduleName);
                     }
-                }
-            }
-
-            // copy selected folders into test (Images, Scripts, CSS etc)
-            DirectoryInfo testInfo = new DirectoryInfo(Path.Combine(destinationDependencyFolder, "..\\Test"));
-            DirectoryInfo[] testProjectFolders = testInfo.GetDirectories("*.*", SearchOption.TopDirectoryOnly);
-            foreach (var testProjectFolder in testProjectFolders) {
-                foreach (var testFolderName in folderNamesToCopyToTest) {
-                    string destinationFolderName = Path.Combine(testProjectFolder.FullName, "Scripts");
-                    destinationFolderName = Path.Combine(destinationFolderName, testFolderName);
-                    CopyDirectoryContentsRecursively(Path.Combine(folderToDeploy, testFolderName), destinationFolderName, dependencies);
                 }
             }
         }
 
-        private void CopyDirectoryContentsRecursively(string sourceDirectory, string destinationFolder, string[] dependencies) {
+        private void CopyDirectoryContentsRecursively(string sourceDirectory, string destinationFolder, string[] dependencies, string moduleName) {
             bool folderExists = false;
             if (!Directory.Exists(sourceDirectory) || dependencies.Any(sourceDirectory.EndsWith)) {
                 return;
@@ -158,7 +149,8 @@ namespace Aderant.Build.Commands {
             string currentFolderName = destinationFolder.Split('\\').Last();
             FileInfo[] files = root.GetFiles("*.*");
             foreach (FileInfo fi in files) {
-                if (fi.Extension.ToLowerInvariant() == ".map" || fi.Name.EndsWith(".ts", StringComparison.OrdinalIgnoreCase)) {
+                if ((fi.Extension.ToLowerInvariant() == ".map" && !fi.Name.EndsWith("SMB.Time.css.map", StringComparison.OrdinalIgnoreCase))
+                    || fi.Name.EndsWith(".ts", StringComparison.OrdinalIgnoreCase)) {
                     if (fi.Name.EndsWith("Kendo.d.ts", StringComparison.OrdinalIgnoreCase)
                         || !fi.Name.EndsWith(".d.ts", StringComparison.OrdinalIgnoreCase)) {
                         continue;
@@ -183,17 +175,57 @@ namespace Aderant.Build.Commands {
                         )) {
                     // do not copy file in dependency txt file.
                     if (!folderExists && !Directory.Exists(destinationFolder)) {
-                        Directory.CreateDirectory(destinationFolder); // lazy create so as not to make empty folders
+                        try {
+                            Directory.CreateDirectory(destinationFolder); // lazy create so as not to make empty folders
+                        } catch (IOException) {
+                            Thread.Sleep(20);
+                            if (Directory.Exists(destinationFolder)) {
+                                DeleteFolder(new DirectoryInfo(destinationFolder));
+                                Directory.CreateDirectory(destinationFolder); // lazy create so as not to make empty folders
+                            }
+                        }
                     }
 
                     folderExists = true;
                     try {
-                        File.Copy(fi.FullName, destinationFileName, true);
+                        string extension = fi.Extension.ToLowerInvariant();
+                        if (extension == ".js" || extension == ".ts") {
+                            // look in js file for requires. if the require in Web.Presentation was 
+                            //    ../../../Scripts/Foo
+                            //  then it needs to become 
+                            // ../../../Scripts/Web.Presentation/Foo 
+                            // view model will do a similar change from 
+                            // ../../../Web.Presentation/Foo
+                            // will add an extra level to account for the 
+                            // extra level added as the module name
+                            // ../../../../Web.Presentation/Foo
+                            // in the consuming module
+                            moduleName = moduleName.Replace("/", "");
+                            string[] fileContents = File.ReadAllLines(fi.FullName);
+                            int i = 0;
+                            foreach (var line in fileContents) {
+                                int requireIndexJS = line.IndexOf("require\"", StringComparison.Ordinal);
+                                int requireIndexDTS = line.IndexOf("require(", StringComparison.Ordinal);
+                                if (requireIndexJS >= 0 || requireIndexDTS >= 0) {
+                                    var requireString = line.Replace("../Scripts", "../../Scripts/" + moduleName + "/").Replace("//", "/");
+                                    requireString = requireString.Replace("../ViewModels/", "../../ViewModels/" + moduleName + "/").Replace("//", "/");
+                                    requireString = requireString.Replace("../Web", "../../Web").Replace("//", "/");
+                                    if (requireString != line) {
+                                        fileContents[i] = requireString;
+                                    }
+                                }
+                                i++;
+                            }
+                            File.WriteAllLines(destinationFileName, fileContents);
+                        } else {
+                            File.Copy(fi.FullName, destinationFileName, true);
+                        }
                     } catch (Exception) {
                         FileAttributes attributes = File.GetAttributes(destinationFileName);
                         if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly) {
                             File.SetAttributes(destinationFileName, attributes ^ FileAttributes.ReadOnly);
                         }
+                        Thread.Sleep(20);
                         File.Copy(fi.FullName, destinationFileName, true);
                     }
                 }
@@ -201,7 +233,7 @@ namespace Aderant.Build.Commands {
 
             // Now recursively call for all the sub-directories under this directory.
             foreach (DirectoryInfo dirInfo in root.GetDirectories()) {
-                CopyDirectoryContentsRecursively(dirInfo.FullName, Path.Combine(destinationFolder, dirInfo.Name), dependencies);
+                CopyDirectoryContentsRecursively(dirInfo.FullName, Path.Combine(destinationFolder, dirInfo.Name), dependencies, moduleName);
             }
         }
 
@@ -219,7 +251,17 @@ namespace Aderant.Build.Commands {
                 }
             }
 
-            fileSystemInfo.Delete();
+            // This delete method was failing often and the retrys fix this problem.
+            try {
+                fileSystemInfo.Delete();
+            } catch (IOException) {
+                try {
+                    fileSystemInfo.Delete();
+                } catch (IOException) {
+                    Thread.Sleep(20);
+                    fileSystemInfo.Delete();
+                }
+            }
         }
     }
 }

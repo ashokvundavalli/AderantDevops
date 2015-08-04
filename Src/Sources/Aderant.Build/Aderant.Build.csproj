@@ -107,16 +107,11 @@
     <Compile Include="Build.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BranchInfo.cs" />
+    <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="BuildNotFoundException.cs" />
-    <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="IntegrationTestConfigBuilder.cs" />
     <Compile Include="ManifestPathProcessor.cs" />
-    <Compile Include="Resources.Designer.cs" />
-    <Compile Include="SQLBackupDatabase.cs" />
-    <Compile Include="SQLDataFileEntry.cs" />
-    <Compile Include="SQLDropDatabase.cs" />
-    <Compile Include="SQLRestoreDatabase.cs" />
     <Compile Include="NativeUtilities.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Process\ParallelBuildProjectController.cs" />
@@ -181,7 +176,16 @@
     <Compile Include="Providers\IModuleProvider.cs" />
     <Compile Include="Providers\PathProvider.cs" />
     <Compile Include="Providers\WorkspaceModuleProvider.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="SplashScreenText.cs" />
+    <Compile Include="SQLDataFileEntry.cs" />
+    <Compile Include="SQLDropDatabase.cs" />
+    <Compile Include="SQLRestoreDatabase.cs" />
+    <Compile Include="SQLBackupDatabase.cs" />
     <Compile Include="Tasks\AsyncExec.cs" />
     <Compile Include="Tasks\BuildConfigurationCheck.cs" />
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
@@ -210,7 +214,11 @@
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
-    <EmbeddedResource Include="Resources.resx" />
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="DependencyAnalyzer\ExpertBuilds.cd" />

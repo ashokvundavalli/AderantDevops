@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<environment name="PKG_DB" networkSharePath="\\vm2k8374\ExpertShare" sourcePath="C:\Aderant\ExpertBinaries\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="CMSDBO" expertServiceUser="aderant_na\service.expert" expertServicePassword="jKn9wsZ5GuOaAxP72PMAAg==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="false" failOnSDKDependencyFailure="false" reportServer="http://svsql218/reportserver" reportServerUser="aderant_na\service.expert" reportServerPassword="jKn9wsZ5GuOaAxP72PMAAg==" enableServiceCallCompression="false">
+  <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
+    <proxyBypassExpressions />
+  </httpProxySettings>
+  <expertDatabaseServer serverName="svsql218" serverInstance="">
+    <databaseConnection databaseName="DB18_ST_80SP2_MBON_pkg" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseSecurity administrators="" readers="" writers="" />
+  </expertDatabaseServer>
+  <monitoringDatabaseServer serverName="svsql218" serverInstance="">
+    <databaseConnection databaseName="ExpertMonitoring" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseSecurity administrators="aderant_na\sg_na_as_admins" readers="aderant_na\sg_na_as_observers" writers="aderant_na\sg_na_as_admins" />
+  </monitoringDatabaseServer>
+  <workflowDatabaseServer serverName="svsql218" serverInstance="">
+    <databaseConnection databaseName="DB18_ST_80SP2_MBON_pkg_workflow" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseSecurity administrators="aderant_na\sg_na_as_admins" readers="aderant_na\sg_na_as_observers" writers="aderant_na\sg_na_as_admins" />
+  </workflowDatabaseServer>
+  <expertSystem exePath="C:\Program Files (x86)\ADERANT\Expert Application Server\Bin\AppShell.exe" connection="DB18_ST_80SP2_MBON_pkg" />
+  <servers>
+    <server name="vm2k8374" expertPath="C:\AderantExpert\PKG_DB" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+      <roles>
+        <role type="CheckRequest" />
+        <role type="commonapplications" />
+        <role type="employeeIntake" />
+        <role type="Collections" />
+        <role type="configuration" />
+        <role type="Expenses" />
+        <role type="ExpensesOnTheGo" />
+        <role type="Marketing" />
+        <role type="MatterPlanning" />
+        <role type="prebill" />
+        <role type="Rates" />
+        <role type="ExpertTime" />
+        <role type="ExpertTimeConnectorScheduler" />
+        <role type="ExpertTimeConnectors" />
+        <role type="ExpertTimeOnTheGo" />
+        <role type="fileopening" />
+        <role type="FirmControl" />
+        <role type="messaging" />
+        <role type="notes" />
+        <role type="queryservice" />
+        <role type="security" />
+        <role type="WipReview" />
+        <role type="workflow">
+          <roleParameters>
+            <roleParameter name="defaultSmtpHost" value="na.smtp.aderant.com" />
+          </roleParameters>
+        </role>
+        <role type="WorkflowOnTheGo" />
+        <role type="customworkflows" />
+      </roles>
+    </server>
+  </servers>
+</environment>

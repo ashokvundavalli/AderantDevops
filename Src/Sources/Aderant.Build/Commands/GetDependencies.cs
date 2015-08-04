@@ -7,7 +7,6 @@ using Aderant.Build.DependencyAnalyzer;
 namespace Aderant.Build.Commands {
     [Cmdlet("Get", "ExpertModuleDependencies")]
     public class GetDependencies : PSCmdlet {
-        
         [Parameter(Mandatory = false, Position = 0)]
         public string SourceModuleName { get; set; }
 
@@ -24,9 +23,9 @@ namespace Aderant.Build.Commands {
         public SwitchParameter IncludeThirdParty { get; set; }
 
         protected override void ProcessRecord() {
-            string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
+            string branchPath = ParameterHelper.GetBranchPath(BranchPath, SessionState);
 
-            DependencyBuilder builder  = new DependencyBuilder(branchPath);
+            DependencyBuilder builder = new DependencyBuilder(branchPath);
 
             if (SourceModuleName == null && SourceModule == null) {
                 throw new ArgumentException("You must supply a SourceModule or SourceModuleName");
@@ -42,14 +41,13 @@ namespace Aderant.Build.Commands {
 
             if (!Recurse) {
                 var moduleDependencies = (from dependency in builder.GetModuleDependencies(IncludeThirdParty)
-                                   where dependency.Consumer.Equals(SourceModule)
-                                   select dependency.Provider)
+                                          where dependency.Consumer.Equals(SourceModule)
+                                          select dependency.Provider)
                                    .Distinct()
                                    .ToArray();
 
                 WriteObject(moduleDependencies, true);
-            }
-            else {
+            } else {
                 WriteObject(
                     GetModuleDependenciesRecursive(SourceModule, builder.GetModuleDependencies(), 0).Distinct().ToArray(), true);
             }
@@ -67,7 +65,6 @@ namespace Aderant.Build.Commands {
                 from deepDependency in GetModuleDependenciesRecursive(dependency, allDependencies, depth + 1)
                 select deepDependency
                 ).Distinct();
-
         }
     }
 }

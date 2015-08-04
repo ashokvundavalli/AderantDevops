@@ -3,11 +3,11 @@
   <ReferencedModules>
       <ReferencedModule Name="Libraries.Sample" AssemblyVersion="1.8.0.0" />
       <ReferencedModule Name="Libraries.Local" AssemblyVersion="1.8.0.0" GetAction="Local" />
-      <ReferencedModule Name="Thirdparty.Test" GetAction="Local"/>
+      <ReferencedModule Name="ThirdParty.Test" GetAction="Local"/>
       
       <ReferencedModule Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" GetAction=""/>      
       <ReferencedModule Name="Libraries.Presentation" AssemblyVersion="1.8.0.0" />      
-      <ReferencedModule Name="Thirdparty.DevComponents"/>
+      <ReferencedModule Name="ThirdParty.DevComponents"/>
   </ReferencedModules>
 </DependencyManifest>
 

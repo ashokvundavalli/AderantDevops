@@ -7,7 +7,7 @@
     =========================================================================================================
         Team Build Script        
         
-        Guidelines:
+        Guidelines:            
             * Retain structure and formatting for easier merge between Team Build project scripts 
             * Tabs converted to 4 spaces for easier reading outside of VS.
     =========================================================================================================
@@ -105,7 +105,7 @@
       <Using Namespace="System.Xml.Linq" />
       <Using Namespace="System.Text.RegularExpressions" />
       <Code>
-<![CDATA[
+        <![CDATA[
 Log.LogMessage(string.Format("Starting transformation of source at {0} using {1}", SourcePath, TransformsDefinitionFile));
 
 // Get the list of transformations
@@ -278,8 +278,8 @@ doc.Save(File);
           DependsOnTargets="SetBuildNumbers">
     <PropertyGroup>
       <!-- 
-        For a module build, append the name of the module.
-        If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
+           For a module build, append the name of the module.
+           If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
       -->
       <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
       <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
@@ -294,13 +294,13 @@ doc.Save(File);
     </CreateProperty>
   </Target>
 
-  <Target Name="BeforeDropBuild" 
+  <Target Name="BeforeDropBuild"
           Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" BeforeTargets="DropBuild">
-    
+
     <RemoveDir Condition="'$(DropLocation)' != ''"
                Directories="$(DropLocation)\$(BuildNumber)"
                ContinueOnError="true" />
-    
+
     <!-- Set the drop location back to the FileVersion so the log file goes to the right place -->
     <UpdateBuildNumberDropLocation
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
@@ -336,6 +336,8 @@ doc.Save(File);
                ContinueOnError="true" />
     <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Module"
                ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
+           ContinueOnError="true" />
 
     <PropertyGroup>
       <!-- Transform this variable into a boolean -->
@@ -463,7 +465,8 @@ doc.Save(File);
                                   $(ModuleTestDirectory)**\*.tt;"
                          Exclude="$(ModuleSourceDirectory)**\__*.tt;
                                   $(ModuleSourceDirectory)**\obj\**\*.tt;
-                                  $(ModuleTestDirectory)**\obj\**\*.tt">
+                                  $(ModuleTestDirectory)**\obj\**\*.tt;
+								  $(ModuleSourceDirectory)**\PackageTmp\**\*.tt">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
     </ItemGroup>
@@ -587,12 +590,12 @@ doc.Save(File);
     <MSBuild Projects="$(SolutionFileName)"
              Properties="$(BuildProperties)"
              RemoveProperties="AssemblyVersion">
-      
+
       <!--The compiled assemblies from projects-->
       <Output ItemName="CompiledAssemblies"
               TaskParameter="TargetOutputs" />
     </MSBuild>
-    
+
     <Message Text="Compiled assemblies: %(CompiledAssemblies.FullPath)" />
 
     <ItemGroup>
@@ -1066,10 +1069,10 @@ doc.Save(File);
 
   <Target Name="AfterRunUnitTests"
           AfterTargets="RunUnitTests">
-    
+
     <RemoveDir Directories="$(BinTestDirectory)Dependencies"  />
     <RemoveDir Directories="$(BinTestDirectory)ModuleBin" />
-    
+
     <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
             Files="@(TestAssemblyConfigFiles)" 
             TreatErrorsAsWarnings="true" />

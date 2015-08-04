@@ -58,15 +58,18 @@ namespace Aderant.Build.Commands {
         private void SynchronizeProject(string projectFilePath, string projectFileFolder) {
             string[] folders = { "Content", "Content\\Includes", "Scripts", "Views\\Shared", "ViewModels", "Authentication", "ManualLogon" };
             XDocument projectFileDoc = XDocument.Load(projectFilePath);
+            XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+
             foreach (string folder in folders.OrderBy((s => s))) {
                 string folderPath = Path.Combine(projectFileFolder, folder);
                 if (!Directory.Exists(folderPath)) {
                     continue;
                 }
 
-                XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-                // delete third party and web folders embedded in a folder
-                List<string> dependencyFolders = Directory.GetDirectories(folderPath, "ThirdParty.*").Concat(Directory.GetDirectories(folderPath, "Web.*")).OrderBy(s => s).ToList();
+                List<string> dependencyFolders = Directory
+                    .GetDirectories(folderPath, "ThirdParty.*")
+                    .Concat(Directory.GetDirectories(folderPath, "Web.*"))
+                    .OrderBy(s => s).ToList();
                 foreach (var dependencyFolder in dependencyFolders) {
                     var tp = dependencyFolder.Split('\\').Last();
                     string folder1 = folder;
@@ -83,6 +86,11 @@ namespace Aderant.Build.Commands {
 
                 }
             }
+
+            //if (Directory.Exists(Path.Combine(projectFileFolder, "ManualLogon"))) {
+            //    AddFilesToProject(projectFileDoc, ns, Path.Combine(projectFileFolder, "ManualLogon"), projectFileFolder);
+            //}
+
             FileInfo fileInfo = new FileInfo(projectFilePath) { IsReadOnly = false };
             fileInfo.Refresh();
             projectFileDoc.Save(projectFilePath);
