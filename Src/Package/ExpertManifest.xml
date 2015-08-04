@@ -193,7 +193,6 @@
         <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
-        <Module Name="Web.Financials" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.MatterWorks" AssemblyVersion="1.8.0.0" />
