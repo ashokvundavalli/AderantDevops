@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Management.Automation;
+using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -9,8 +10,6 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Provides helper methods for retrieving variables from the host PowerShell session
     /// </summary>
     public static class ParameterHelper {
-
-      
 
         /// <summary>
         /// Gets the value of $BranchLocalDirectory from the local session.
@@ -177,6 +176,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return Path.Combine(currentDrop.Replace(currentBranch, string.Empty), targetBranch);
+        }
+
+        public static XDocument GetEnvironmentManifest(string branchBinariesPath) {
+            string environmentManifestPath = Path.Combine(branchBinariesPath, "environment.xml");
+            if (!File.Exists(environmentManifestPath)) {
+                throw new FileNotFoundException("Could not find the environment file for the current branch", environmentManifestPath);
+            }
+
+            XDocument environment = XDocument.Load(environmentManifestPath);
+            return environment;
         }
     }
 }

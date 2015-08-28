@@ -7,6 +7,8 @@
 
   <PropertyGroup>
     <PathToModulesToCopy>$(SolutionRoot)</PathToModulesToCopy>
+	<PathToModulesToCopy Condition="'$(IsDesktopBuild)'=='true'">$(SolutionRoot)\ThirdParty</PathToModulesToCopy>
+    <BuildScriptsDirectory>$(SolutionRoot)\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
   </PropertyGroup>
 
   <Target Name="AfterCompile">
@@ -22,7 +24,7 @@
         <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
                   Condition="'$(IsDesktopBuild)' != 'true'" />
       </ItemGroup>
-
+	  
     <MSBuild Condition="Exists('$(SolutionRoot)\Build.Infrastructure')"
              Projects="@(Projects)" />
   </Target>
@@ -32,7 +34,7 @@
         Copy content of solution directory to the drop
     ==========================================================================================
   -->
-  <Target Name="CopyToDrop" Condition="('$(IsDesktopBuild)'!='true')">
+  <Target Name="CopyToDrop">
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Copy modules to $(DropLocation)"
@@ -42,7 +44,7 @@
         TaskParameter="id"
         PropertyName="BuildStepId"/>
     </BuildStep>
-
+	
     <ItemGroup>
       <Folders Include="$([System.IO.Directory]::GetDirectories(&quot;$(PathToModulesToCopy)&quot;))" Condition="'$(PathToModulesToCopy)' != ''" />
     </ItemGroup>
@@ -59,18 +61,28 @@
 
     <!-- Robocopy returns a 1 when successful unlike all other command line tools -->
 
-    <!-- Do primary copy case (ThirdParty) -->
-    <Exec Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
-          ContinueOnError="false"
-          IgnoreExitCode="true"
-          Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD src" />
-
     <!-- Do Build.Infrastructure copy case (don't exclude src directory) -->
     <Exec Condition="'%(Folders.Filename)%(Extension)' == 'Build.Infrastructure'"
           ContinueOnError="false"
           IgnoreExitCode="true"
           Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD Test"  />
-
+		
+	<!-- Write BuildNumber to disk for use of gd -->
+	<WriteLinesToFile Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
+					  File="$(DropLocation)\ThirdPartyBuild.txt"
+					  Lines="$(BuildNumber)"
+					  Overwrite="true"/>
+	<!--<Exec ContinueOnError="false"
+          Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
+          IgnoreExitCode="false"
+          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)Generate-SummaryFile.ps1" -folder "$(PathToModulesToCopy)\%(Folders.Filename)%(Extension) "' />-->
+		  
+	<!-- Do primary copy case (ThirdParty) -->
+    <Exec Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
+          ContinueOnError="false"
+          IgnoreExitCode="true"
+          Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD src" />
+		  
     <BuildStep
         Condition="('$(IsDesktopBuild)'!='true')"
         TeamFoundationServerUrl="$(TeamFoundationServerUrl)"

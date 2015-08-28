@@ -9,7 +9,7 @@
       Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
 
     <Import
-   Condition="Exists('..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj')"
+      Condition="Exists('..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj')"
       Project="..\..\Build.Infrastructure\Src\Build\ModuleBuild.proj" />
 
     <!--Server build for a module-->

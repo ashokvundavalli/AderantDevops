@@ -9,35 +9,15 @@ using Aderant.Build.Commands;
 namespace Aderant.Build {
 
     internal sealed class IntegrationTestConfigBuilder {
-        private XDocument environmentManifest;
+        private readonly FileSystem fileSystem;
+        private readonly XDocument environment;
         private string server, db;
         private bool isTest;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IntegrationTestConfigBuilder" /> class.
-        /// </summary>
-        /// <param name="environmentManifest">The environment manifest.</param>
-        /// <param name="isTest">if set to <c>true</c> [is test].</param>
-        public IntegrationTestConfigBuilder(string environmentManifest, bool isTest = false) {
-            this.environmentManifest = GetDocument(environmentManifest);
+        public IntegrationTestConfigBuilder(FileSystem fileSystem, XDocument environment, bool isTest = false) {
+            this.fileSystem = fileSystem;
+            this.environment = environment;
             this.isTest = isTest;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IntegrationTestConfigBuilder"/> class.
-        /// </summary>
-        /// <param name="environment">The environment.</param>
-        public IntegrationTestConfigBuilder(XDocument environment) {
-            this.environmentManifest = environment;
-            isTest = true;
-        }
-
-        private XDocument GetDocument(string manifest) {
-            if (File.Exists(manifest)) {
-                return ReadXmlFile(manifest);
-            }
-
-            return XDocument.Parse(manifest);
         }
 
         public string GetServer() {
@@ -60,18 +40,16 @@ namespace Aderant.Build {
         /// Builds the integration test configuration file.
         /// </summary>
         /// <param name="testContext">The test context.</param>
-        /// <param name="integrationTestConfigTemplate">The integration test configuration template.</param>
+        /// <param name="existingAppConfigDocument"></param>
         /// <returns></returns>
-        /// <exception cref="System.IO.FileNotFoundException">Could not find instance.config under path:  + localExpertPath</exception>
-        public XDocument BuildAppConfig(IntegrationTestContext testContext, string integrationTestConfigTemplate) {
-            XDocument template = GetDocument(integrationTestConfigTemplate);
-
-            XAttribute attribute = environmentManifest.Element("environment").Attribute("networkSharePath");
+        /// <exception cref="System.IO.FileNotFoundException">Could not find instance.config</exception>
+        public XDocument ConfigureAppConfig(IntegrationTestContext testContext, XDocument existingAppConfigDocument) {
+            XAttribute attribute = environment.Element("environment").Attribute("networkSharePath");
             string networkSharePath = attribute.Value;
-            string localExpertPath = environmentManifest.Root.Descendants("server").First().Attribute("expertPath").Value;
+            string localExpertPath = environment.Root.Descendants("server").First().Attribute("expertPath").Value;
 
-            var serverInstanceConfiguration = Directory.GetFileSystemEntries(localExpertPath, "instance.config", SearchOption.AllDirectories).FirstOrDefault();
-            if (string.IsNullOrEmpty(serverInstanceConfiguration)) {
+            var entries = fileSystem.Directory.GetFileSystemEntries(localExpertPath, "instance.config", SearchOption.AllDirectories);
+            if (entries.Length == 0) {
                 throw new FileNotFoundException("Could not find instance.config under path: " + localExpertPath);
             }
 
@@ -79,28 +57,43 @@ namespace Aderant.Build {
             
             if (isTest) {
                 appendTest = "Test";
-                XDocument backup = XDocument.Load(serverInstanceConfiguration);
+                XDocument backup = XDocument.Load(entries[0]);
 
-                string instanceConfigBackup = serverInstanceConfiguration + ".bak";
-                backup.Save(instanceConfigBackup);
+                string instanceConfigBackup = entries + ".bak";
+                WriteXmlFile(instanceConfigBackup, backup.ToString());
                 testContext.AddTemporaryItem(instanceConfigBackup);
 
                 this.BackupInstanceFile = instanceConfigBackup;
-                this.InstanceFile = serverInstanceConfiguration;
+                this.InstanceFile = entries[0];
             }
 
-            var instanceConfiguration = SetRepository(networkSharePath, appendTest, serverInstanceConfiguration);
-
+            XDocument instanceConfiguration = ChangeDatabaseName(networkSharePath, appendTest, entries[0]);
+            
             XDocument clientsConfiguration = ReadXmlFile(Path.Combine(networkSharePath, "clients.config"));
 
             string hostName = GetEnvironmentHostName(instanceConfiguration);
 
-            ReplaceInstanceSection(template, instanceConfiguration);
-            ReplaceClientSection(template, clientsConfiguration, hostName);
+            ReplaceInstanceSection(existingAppConfigDocument, instanceConfiguration);
+            ReplaceClientSection(existingAppConfigDocument, clientsConfiguration, hostName);
 
-            AddConnectionString(template, instanceConfiguration);
+            if (testContext.AppConfigTemplate != null) {
+                UpdateBehaviours(existingAppConfigDocument, testContext.AppConfigTemplate);
+            }
 
-            return template;
+            AddConnectionString(existingAppConfigDocument, instanceConfiguration);
+
+            if (testContext.ShouldConfigureAssemblyBinding) {
+                AddAssemblyBindingElement(existingAppConfigDocument);
+            }
+
+            return existingAppConfigDocument;
+        }
+
+        private void UpdateBehaviours(XDocument document, XDocument template) {
+            var targetBehaviorsNode = document.Root.GetOrAddElement("system.serviceModel/behaviors/endpointBehaviors");
+            var sourceBehaviorsNode = template.Root.GetOrAddElement("system.serviceModel/behaviors/endpointBehaviors");
+
+            targetBehaviorsNode.ReplaceWith(sourceBehaviorsNode);
         }
 
         /// <summary>
@@ -119,7 +112,17 @@ namespace Aderant.Build {
         /// </value>
         public string InstanceFile { get; private set; }
 
-        private XDocument SetRepository(string networkSharePath, string appendTest, string serverInstanceConfiguration) {
+        private void AddAssemblyBindingElement(XDocument document) {
+            XElement runtime = document.Element("configuration").GetOrAddElement("runtime");
+
+            XNamespace ns = "urn:schemas-microsoft-com:asm.v1";
+            XElement assemblyBinding = new XElement(ns + "assemblyBinding");
+            assemblyBinding.Add(new XElement(ns + "probing", new XAttribute("privatePath", "Dependencies;Bin;NetworkShare")));
+
+            runtime.Add(assemblyBinding);
+        }
+
+        private XDocument ChangeDatabaseName(string networkSharePath, string appendTest, string serverInstanceConfiguration) {
             XDocument instanceConfiguration = ReadXmlFile(Path.Combine(networkSharePath, "instance.config"));
 
             XElement repository = instanceConfiguration.Root.Descendants("repository").FirstOrDefault();
@@ -130,7 +133,7 @@ namespace Aderant.Build {
 
                 repositoryName.Value = repositoryName.Value + appendTest;
 
-                instanceConfiguration.Save(serverInstanceConfiguration);
+                WriteXmlFile(serverInstanceConfiguration, instanceConfiguration.ToString());
             }
 
             return instanceConfiguration;
@@ -148,18 +151,40 @@ namespace Aderant.Build {
             throw new InvalidOperationException("Could not get environment host name from instance.config for the integration test run.");
         }
 
-        private void AddConnectionString(XDocument template, XDocument instanceConfiguration) {
+        private void AddConnectionString(XDocument document, XDocument instanceConfiguration) {
             string connectionString = CreateConnectionString(instanceConfiguration);
 
-            XElement configuration = template.Element("configuration");
+            XElement configuration = document.Element("configuration");
             if (configuration != null) {
                 XElement connectionStrings = configuration.Element("connectionStrings");
+
                 if (connectionStrings != null) {
-                    connectionStrings.Add(new XElement("add",
-                        new XAttribute("name", "test"),
-                        new XAttribute("connectionString", connectionString)));
+                    bool added = false;
+
+                    foreach (var add in connectionStrings.Descendants("add")) {
+                        XAttribute attribute = add.Attribute("name");
+
+                        if (attribute != null) {
+                            if (string.Equals(attribute.Value, "test", StringComparison.OrdinalIgnoreCase)) {
+                                add.ReplaceWith(CreateConnectionStringElement(connectionString));
+
+                                added = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!added) {
+                        connectionStrings.Add(CreateConnectionStringElement(connectionString));
+                    }
                 }
             }
+        }
+
+        private static XElement CreateConnectionStringElement(string connectionString) {
+            return new XElement("add",
+                new XAttribute("name", "test"),
+                new XAttribute("connectionString", connectionString));
         }
 
         private string CreateConnectionString(XDocument instanceConfiguration) {
@@ -180,26 +205,19 @@ namespace Aderant.Build {
             throw new InvalidOperationException("Could not construct a connection string for the integration test run.");
         }
 
-        private void ReplaceClientSection(XDocument template, XDocument clientsConfiguration, string hostName) {
-            XElement configuration = template.Element("configuration");
-            if (configuration != null) {
-                XElement serviceModel = configuration.Element("system.serviceModel");
-                if (serviceModel != null) {
-                    XElement metadataSection = serviceModel.Element("client");
+        private void ReplaceClientSection(XDocument document, XDocument clientsConfiguration, string hostName) {
+            XElement clientSection = document.Element("configuration").GetOrAddElement("system.serviceModel/client");
 
-                    if (metadataSection != null) {
-                        SetServicePrincipalName(metadataSection, "ReportingService", hostName, "HOST");
+            if (clientSection != null) {
+                //SetServicePrincipalName(clientSection, "ReportingService", hostName, "HOST");
+                //clientsConfiguration.Root.Add(clientSection.Descendants("endpoint"));
 
-                        clientsConfiguration.Root.Add(metadataSection.Descendants("endpoint"));
-
-                        metadataSection.ReplaceWith(clientsConfiguration.Root);
-                    }
-                }
+                clientSection.ReplaceWith(clientsConfiguration.Root);
             }
         }
 
-        private void SetServicePrincipalName(XElement metadataSection, string endPointName, string host, string type) {
-            IEnumerable<XElement> elements = metadataSection.Elements("endpoint");
+        private void SetServicePrincipalName(XElement document, string endPointName, string host, string type) {
+            IEnumerable<XElement> elements = document.Elements("endpoint");
             foreach (XElement element in elements) {
                 if (element.Attribute("name").Value == endPointName) {
                     XElement identity = element.Element("identity");
@@ -214,8 +232,8 @@ namespace Aderant.Build {
             }
         }
 
-        private void ReplaceInstanceSection(XDocument template, XDocument instanceConfiguration) {
-            XElement configuration = template.Element("configuration");
+        private void ReplaceInstanceSection(XDocument document, XDocument instanceConfiguration) {
+            XElement configuration = document.Element("configuration");
             if (configuration != null) {
                 XElement aderantSection = configuration.Element("aderant");
                 if (aderantSection != null) {
@@ -228,15 +246,19 @@ namespace Aderant.Build {
             }
         }
 
-        private static XDocument ReadXmlFile(string path) {
+        private XDocument ReadXmlFile(string path) {
             if (!string.IsNullOrEmpty(path)) {
-                if (File.Exists(path)) {
-                    string configFileContents = File.ReadAllText(path);
+                if (fileSystem.File.Exists(path)) {
+                    string configFileContents = fileSystem.File.ReadAllText(path);
 
                     return XDocument.Parse(configFileContents);
                 }
             }
             throw new FileNotFoundException("The path " + path + " does not resolve to a file.");
+        }
+
+        private void WriteXmlFile(string path, string contents) {
+            fileSystem.File.WriteAllText(path, contents);
         }
     }
 }

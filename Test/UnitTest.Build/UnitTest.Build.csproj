@@ -55,6 +55,9 @@
     <Reference Include="Microsoft.TeamFoundation.Build.Workflow, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.TeamFoundation.Client, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Moq">
+      <HintPath>..\Dependencies\Moq.dll</HintPath>
+    </Reference>
     <Reference Include="MSBuild.Community.Tasks">
       <HintPath>..\..\Src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
     </Reference>
@@ -73,6 +76,7 @@
   <ItemGroup>
     <Compile Include="AsyncExecTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="IntegrationTestBuilderTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="Resources.Designer.cs">
@@ -92,6 +96,10 @@
     <Compile Include="DependencyBuilderTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\App.config" />
+    <None Include="Resources\bindings.config" />
+    <None Include="Resources\clients.config" />
+    <None Include="Resources\instance.config" />
     <None Include="test.dgml">
       <SubType>Designer</SubType>
     </None>
@@ -100,6 +108,7 @@
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\environment.xml" />
     <Content Include="Resources\ExpertManifest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

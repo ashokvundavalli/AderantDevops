@@ -71,15 +71,15 @@ namespace Aderant.Build.Tasks {
                     sqlCommand.ExecuteNonQuery();
                 }
             }
-
         }
         private static string ConnectionString(string server, string database) {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-            builder.DataSource = server;
-            builder.InitialCatalog = database;
-            builder.ConnectTimeout = 3600;
-            builder.UserID = "cmsdbo";
-            builder.Password = "cmsdbo";
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder {
+                DataSource = server,
+                InitialCatalog = database,
+                ConnectTimeout = 3600,
+                UserID = "cmsdbo",
+                Password = "cmsdbo"
+            };
             return builder.ToString();
         }
 

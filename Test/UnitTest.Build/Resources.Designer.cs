@@ -62,6 +62,82 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;!--
+        ///This is the integration tests app config file that has the config burnt in for integration tests to run.  This file
+        ///must contain settings that match the integration test environment.  The integration environment file location is listed
+        ///in the rsp at ../Modules/Build.Infrastructure/Src/Projects/PackageAndDeployRemote/TFSBuild.rsp.
+        ///
+        ///To run the integration tests locally you need to edit the following attributes
+        /// - aderant/instanceMetadataConfigurationSection@e [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string AppConfig {
+            get {
+                return ResourceManager.GetString("AppConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+        ///&lt;bindings&gt;
+        ///    &lt;customBinding&gt;
+        ///        &lt;binding name=&quot;expertCustomHttpBinding&quot;
+        ///                 sendTimeout=&quot;00:10:00&quot;&gt;
+        ///            &lt;gzipMessageEncoding innerMessageEncoding=&quot;textMessageEncoding&quot;/&gt;
+        ///            &lt;httpTransport authenticationScheme=&quot;Negotiate&quot;
+        ///                           maxReceivedMessageSize=&quot;2147483647&quot;
+        ///                           proxyAuthenticationScheme=&quot;Negotiate&quot;&gt;
+        ///                &lt;extendedProtectionPolicy policyEnforcement=&quot;Never&quot; /&gt;
+        ///     [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string bindings {
+            get {
+                return ResourceManager.GetString("bindings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;client&gt;
+        ///  &lt;endpoint name=&quot;Budgeting&quot; address=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/ApplicationServices/Budgeting/BudgetingService.svc/Basic&quot; binding=&quot;basicHttpBinding&quot; behaviorConfiguration=&quot;LargeQuotaBehavior&quot; bindingConfiguration=&quot;expertBasicHttpBinding&quot; contract=&quot;Aderant.Budgeting.Interfaces.Service.IBudgetingContractAsync&quot;&gt;
+        ///    &lt;identity&gt;
+        ///      &lt;servicePrincipalName value=&quot;HTTP/WSAKL001092.ap.aderant.com&quot; /&gt;
+        ///    &lt;/identity&gt;
+        ///  &lt;/endpoint&gt;
+        ///  &lt;endpoi [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string clients {
+            get {
+                return ResourceManager.GetString("clients", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;environment name=&quot;Local&quot; networkSharePath=&quot;C:\ExpertShare&quot; sourcePath=&quot;C:\tfs\expertsuite\releases\803x\Binaries\ExpertSource&quot; networkDeploymentType=&quot;NetworkCustom&quot; createClickOnceDeployments=&quot;true&quot; owner=&quot;cmsdbo&quot; expertServiceUser=&quot;ADERANT_AP\service.expert.ap&quot; expertServicePassword=&quot;bBh4t9wdtZN+hR2LMh6wVw==&quot; networkLoadBalancer=&quot;&quot; removeOnError=&quot;true&quot; skipPackageImport=&quot;false&quot; isDevEnvironment=&quot;true&quot; failOnSDKDependencyFailure=&quot;false&quot; reportServerUser=&quot;cmsdbo&quot; repo [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string environment {
+            get {
+                return ResourceManager.GetString("environment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;instanceMetadataConfigurationSection environment=&quot;Local&quot;&gt;
+        ///  &lt;repository name=&quot;_803x&quot; server=&quot;WSAKL001092&quot; userid=&quot;cmsdbo&quot; password=&quot;eozBzG3osa/FNS5EzgQb3Q==&quot; /&gt;
+        ///  &lt;expertShare uri=&quot;C:\ExpertShare&quot; /&gt;
+        ///  &lt;queryService uri=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/FrameworkServices/Query/QueryService.svc&quot; /&gt;
+        ///  &lt;notificationService uri=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/FrameworkServices/Notification/Notifications&quot; /&gt;
+        ///&lt;/instanceMetadataConfigurati [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string instance {
+            get {
+                return ResourceManager.GetString("instance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project DefaultTargets=&quot;ModuleBuild&quot;
         ///         xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;
         ///         ToolsVersion=&quot;12.0&quot;&gt;

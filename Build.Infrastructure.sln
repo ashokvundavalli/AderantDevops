@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2770-4455-94CF-489136D6405A}"
 EndProject
@@ -50,6 +50,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD66D46-70EB-4965-8C51-09738F486E31}"
 	ProjectSection(SolutionItems) = preProject
 		Src\Package\GetProduct.ps1 = Src\Package\GetProduct.ps1
+		Src\Package\GetProductTests.ps1 = Src\Package\GetProductTests.ps1
+		Src\Package\GetProductZip.ps1 = Src\Package\GetProductZip.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
@@ -61,9 +63,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules (from branch root)"
 		..\TFSBuild.rsp = ..\TFSBuild.rsp
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UITester", "Src\Sources\UITester\UITester.csproj", "{03B07177-354D-4D30-8F71-A21CA1314F3C}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 5
+		SccNumberOfProjects = 6
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = http://tfs.ap.aderant.com:8080/tfs/aderant
 		SccLocalPath0 = .
@@ -74,12 +78,15 @@ Global
 		SccProjectName2 = Src/Sources/Aderant.Build
 		SccLocalPath2 = Src\\Sources\\Aderant.Build
 		SccProjectUniqueName3 = Test\\UnitTest.Build\\UnitTest.Build.csproj
-		SccProjectTopLevelParentUniqueName3 = Build.infrastructure.sln
+		SccProjectTopLevelParentUniqueName3 = Build.Infrastructure.sln
 		SccProjectName3 = Test/UnitTest.Build
 		SccLocalPath3 = Test\\UnitTest.Build
 		SccProjectUniqueName4 = Src\\Sources\\Aderant.Build.Tasks\\Aderant.Build.Tasks.csproj
 		SccProjectName4 = Src/Sources/Aderant.Build.Tasks
 		SccLocalPath4 = Src\\Sources\\Aderant.Build.Tasks
+		SccProjectUniqueName5 = Src\\UITester\\UITester.csproj
+		SccProjectName5 = Src/UITester
+		SccLocalPath5 = Src\\UITester
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +109,10 @@ Global
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03B07177-354D-4D30-8F71-A21CA1314F3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03B07177-354D-4D30-8F71-A21CA1314F3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03B07177-354D-4D30-8F71-A21CA1314F3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03B07177-354D-4D30-8F71-A21CA1314F3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

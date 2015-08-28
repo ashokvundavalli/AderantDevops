@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using DependencyAnalyzer.Logging;
+using Aderant.Build.Logging;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.TeamFoundation.VersionControl.Common;
 

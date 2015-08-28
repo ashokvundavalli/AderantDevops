@@ -10,7 +10,7 @@
 
   <!-- 
     =========================================================================================================
-        Team Build Script - Workflow Prototype                                                         
+        Team Build Script                                            
         
         Guidelines:            
             * Retain structure and formatting for easier merge between Team Build project scripts 
@@ -185,15 +185,8 @@
     <!--Copy test binaries to folder for execution.-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" "$(PackageScriptsDirectory)\GetProductTests.ps1" -buildSourcesDirectory $(SolutionRoot) -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(PackageScriptsDirectory)'
+          Command='"Powershell" "$(PackageScriptsDirectory)\GetProductTests.ps1" -productManifestPath $(ProductManifestPath) -dropRoot $(ExpertModulesDirectory) -binariesDirectory $(ExpertTestsDirectory) -buildLibrariesPath $(PackageScriptsDirectory)\Build'
           WorkingDirectory="$(PackageScriptsDirectory)" />
-
-    <!--Copy to drop location for reference-->
-    <!-- Andy - we are hitting 260 char limit so commenting this out to test a build.-->
-    <!--<MakeDir Directories="$(DropExpertTestsDirectory)" Condition="!Exists('$(DropExpertTestsDirectory)')" />
-        <Exec ContinueOnError="false"
-              IgnoreExitCode="false"
-              Command='"Powershell" Copy-Item -Path $(ExpertTestsDirectory)\* -Destination $(DropExpertTestsDirectory) -Recurse' />-->
 
     <BuildStep
             Condition="('$(IsDesktopBuild)'!='true')"
@@ -516,10 +509,13 @@
     <Exec Command='"Powershell" "-NoProfile" "$(BuildScriptsDirectory)\ImportPackagesForAutomation.ps1" $(EnvironmentManifestPath) "\\vmexpdevb309\AutomatedTesting\DatabaseProvisioning" -licenses -workflows' /> -->
     <SqlFileExecution
       EnvironmentManifestPath='$(EnvironmentManifestPath)'
-      SqlFile='\\vmexpdevb309\AutomatedTesting\DatabaseProvisioning\ProvisionDB.sql' />
+      SqlFile='\\vmexpdevb309\automatedtesting\DatabaseProvisioning\ProvisionDB.sql' />
   </Target>
 
   <Target Name="PackageImportForUiTests">
+    <PropertyGroup>
+      <TestAssemblyDirectory>$([System.IO.Path]::GetFullPath('$(ExpertTestsDirectory)\ExpertSource'))</TestAssemblyDirectory>
+    </PropertyGroup>
     <Message Text="Importing Packages for Automation Tests" />
     <Message Text="configuration file path: $(TestAssemblyDirectory)\Resources\Configuration.xml" />
     <ConsolePackageImporter
@@ -562,7 +558,6 @@
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
       <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
       <IsolationSwitch></IsolationSwitch>
-      <!-- Test result publishing requires Visual Studio Update 1 or higher -->
       <LoggerSwitch>/logger:Multicast;loggers=trx,TfsPublisher;TfsPublisher.Collection=$(TeamFoundationServerUrl);TfsPublisher.BuildName=$(BuildNumber);TfsPublisher.TeamProject=$(TeamProject);TfsPublisher.Platform="%(ConfigurationToBuild.PlatformToBuild)";TfsPublisher.Flavor="%(ConfigurationToBuild.FlavorToBuild)"</LoggerSwitch>
       <TestSettingsSwitch Condition="'$(TestSettingsFile)' != ''">/Settings:$(TestSettingsFile)</TestSettingsSwitch>
       <TestFilterSwitch>$(TestCaseFilterSwitch)</TestFilterSwitch>
@@ -585,15 +580,9 @@
     <ItemGroup>
       <PatternGroup Include="$(TestAssemblyIncludePattern.Split(';'))"  />
     </ItemGroup>
-
-    <!--
-    <ItemGroup>
-      <IntegrationAssemblies Include="$(TestAssemblyDirectory)\$(TestAssemblyIncludePattern)"
-                             Exclude="@(ExcludedIntegrationAssemblies->'$(TestAssemblyDirectory)\%(Filename)%(Extension)')" />
-    </ItemGroup>
-    -->
     
-    <!--Changed the integration assembly construction to CreatItem as this resolves wildcards as strings.  This lets us pass in multiple wildcard expressions-->
+    <!-- Changed the integration assembly construction to CreateItem as this resolves wildcards as strings.  
+         This lets us pass in multiple wildcard expressions -->
     <CreateItem Include="$(TestAssemblyDirectory)\%(PatternGroup.Identity)" 
                 Exclude="@(ExcludedIntegrationAssemblies-> '$(TestAssemblyDirectory)\%(Filename)%(Extension)')" >
       <Output TaskParameter="Include" ItemName="IntegrationAssemblies" />
@@ -634,9 +623,12 @@
           Condition="!Exists('$(TeamCityLogger)')" />
 
     <!-- Run the integration tests -->
-    <Exec Command='"$(PathToTestTool)" $(TestAssemblies) $(TestFilterSwitch) $(LoggerSwitch) $(IsolationSwitch)'
+    <!-- 9000000 = 2.5 hours -->
+    <Exec Command='"$(PathToTestTool)" $(TestAssemblies) $(TestSettingsSwitch) $(TestFilterSwitch) $(LoggerSwitch) $(IsolationSwitch)'
           ContinueOnError="false"
           IgnoreExitCode="false" 
+          Timeout="9000000"
+          IgnoreStandardErrorWarningFormat="true"
           WorkingDirectory="$(TestAssemblyDirectory)" />
     
     <BuildStep
@@ -646,7 +638,7 @@
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    <OnError ExecuteTargets="MarkStepAsFailed" />
+    <OnError ExecuteTargets="ConvertTestResults; MarkStepAsFailed" />
   </Target>
 
   <!--
@@ -655,7 +647,7 @@
     ==========================================================================================
   -->   
   <Target Name="ConvertTestResults"
-          Condition="('$(RunTests)'=='true')" >
+          Condition="('$(RunTests)'=='true')" DependsOnTargets="IntegrationTests" >
     
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -712,12 +704,12 @@
         PropertyName="BuildStepId" />
     </BuildStep>
 
-   
+    <!-- 1800000 = 30 minutes -->
     <Exec
       ContinueOnError="false"
       IgnoreExitCode="false"
+      Timeout="1800000"
       Command='"Powershell" "$(PackageScriptsDirectory)\DeployDatabase.ps1" $(EnvironmentManifestPath) $(RemoteExpertSourceDirectory)\ExpertSource' />
-
     
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"

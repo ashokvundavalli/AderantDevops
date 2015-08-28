@@ -58,6 +58,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                     continue;
                 }
 
+                if (!manifest.IsEnabled) {
+                    continue;
+                }
+
                 if (ExpertModule.IsNonProductModule(module.ModuleType)) {
                     continue;
                 }

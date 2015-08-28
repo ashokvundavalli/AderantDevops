@@ -71,16 +71,20 @@ namespace Aderant.Build.Providers {
             string part1 = null;
             string part2 = null;
 
-            for (int i = 0; i < parts.Length; i++) {
-                if (parts[i].Equals("dev", StringComparison.OrdinalIgnoreCase) || parts[i].Equals("releases", StringComparison.OrdinalIgnoreCase) || parts[i].Equals("automation", StringComparison.OrdinalIgnoreCase)) {
+            for (int i = parts.Length - 1; i >= 0; i--) {
+                if (parts[i].Equals("main", StringComparison.OrdinalIgnoreCase)) {
                     part1 = parts[i];
-                    part2 = parts[i + 1];
 
                     break;
                 }
 
-                if (parts[i].Equals("main", StringComparison.OrdinalIgnoreCase)) {
+                if (i == parts.Length - 1) {
+                    continue;
+                }
+
+                if (parts[i].Equals("dev", StringComparison.OrdinalIgnoreCase) || parts[i].Equals("releases", StringComparison.OrdinalIgnoreCase) || parts[i].Equals("automation", StringComparison.OrdinalIgnoreCase)) {
                     part1 = parts[i];
+                    part2 = parts[i + 1];
 
                     break;
                 }

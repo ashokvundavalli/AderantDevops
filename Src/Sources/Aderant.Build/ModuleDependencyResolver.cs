@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Security.Policy;
 using System.Threading;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
-using ModuleType = Aderant.Build.DependencyAnalyzer.ModuleType;
 
 namespace Aderant.Build {
     internal sealed class ModuleDependencyResolver {
@@ -187,10 +184,10 @@ namespace Aderant.Build {
             }
 
             string moduleName = ModuleName ?? string.Empty;
-            
+
             Task task;
 
-            if (referencedModule.ModuleType == ModuleType.ThirdParty && (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase)  || mode == DependencyFetchMode.ThirdParty)){
+            if (referencedModule.ModuleType == ModuleType.ThirdParty && (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty)) {
                 // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                 // used depending on the content type.
 
@@ -210,7 +207,7 @@ namespace Aderant.Build {
         }
 
         private class WebContentDestinationRule {
-            private static readonly char[] directorySeparatorCharArray = new[] {Path.DirectorySeparatorChar};
+            private static readonly char[] directorySeparatorCharArray = new[] { Path.DirectorySeparatorChar };
             private readonly ExpertModule module;
             private readonly string moduleDependenciesDirectory;
 
@@ -260,7 +257,7 @@ namespace Aderant.Build {
         }
 
         private static class GetDependencyCopyHelper {
-            private static string[] portableExecutableExtensions = {".dll", ".exe"};
+            private static string[] portableExecutableExtensions = { ".dll", ".exe" };
 
             private static string[] extensions = {
                 // Exclude documentation files

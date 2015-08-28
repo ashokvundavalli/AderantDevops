@@ -2,7 +2,6 @@ using System.IO;
 using System.Management.Automation;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
-using DependencyAnalyzer;
 
 namespace Aderant.Build.Commands {
     [Cmdlet("Get", "ExpertModuleDependencyGraph")]

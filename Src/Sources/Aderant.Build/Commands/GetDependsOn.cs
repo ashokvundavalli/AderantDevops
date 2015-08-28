@@ -26,8 +26,7 @@ namespace Aderant.Build.Commands {
             }
 
             if (TargetModule == null) {
-                TargetModule = builder.GetAllModules().Where(
-                    x => x.Name.Equals(TargetModuleName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+                TargetModule = builder.GetAllModules().FirstOrDefault(x => x.Name.Equals(TargetModuleName, StringComparison.OrdinalIgnoreCase));
             }
 
             if (TargetModule == null) {

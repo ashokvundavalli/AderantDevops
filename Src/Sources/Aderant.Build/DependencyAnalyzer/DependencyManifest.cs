@@ -15,7 +15,22 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal DependencyManifest(string moduleName, XDocument manifest) {
             this.ModuleName = moduleName;
             this.manifest = manifest;
+
+            if (manifest.Root != null) {
+                XAttribute attribute = manifest.Root.Attribute("IsEnabled");
+                if (attribute != null) {
+                    bool value;
+                    if (bool.TryParse(attribute.Value, out value)) {
+                        IsEnabled = value;
+                        return;
+                    }
+                }
+            }
+
+            this.IsEnabled = true;
         }
+
+        public bool IsEnabled { get; private set; }
 
         /// <summary>
         /// The dependency manifest file file.

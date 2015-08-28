@@ -20,16 +20,18 @@ namespace UnitTest.Build {
         [DeploymentItem(@"Resources\Expert_SplashScreen_Domain Customization Wizard.png")]
         public void Test_splash_screen_generation() {
             UpdateSplashScreenImage updater = new UpdateSplashScreenImage();
+            updater.OutputFile = Path.Combine(TestContext.DeploymentDirectory, "Updated.png");
 
             string image = Path.Combine(TestContext.DeploymentDirectory,
                 "Expert_SplashScreen_Domain Customization Wizard.png");
 
+            updater.Version = "Version 8 (Development)";
             updater.UpdateSplashScreen(
                 image, 
                 "My Awesome Product", 
                 "Admin");
 
-            Process.Start(image);
+            Process.Start(updater.OutputFile);
             Thread.Sleep(500);
         }
     }

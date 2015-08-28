@@ -1,5 +1,4 @@
 ﻿using Aderant.Build.Providers;
-using DependencyAnalyzer.Logging;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.TeamFoundation.VersionControl.Common;
@@ -7,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Logging;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class ProductManifestUpdater {
@@ -48,9 +48,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             foreach (var module in modules) {
                 SynchronizeProductManifestWithModules(module, workspaceInfo);
             }
-
-            // Refresh the local collection as we may have updated it.
-            modules = provider.GetAll();
 
             foreach (ExpertModule module in modules) {
                 if (string.Equals(module.Name, "Build.Infrastructure", StringComparison.OrdinalIgnoreCase)) {

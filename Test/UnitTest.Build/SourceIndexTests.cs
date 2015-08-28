@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ namespace UnitTest.Build {
         // The test implementation for GetFileSystemEntries.
         public Func<string, string, string[]> GetDirectoryContentsDelegate { get; set; }
 
-        public override string[] GetFileSystemEntries(string path, string searchPattern) {
+        public override string[] GetFileSystemEntries(string path, string searchPattern, SearchOption allDirectories) {
             if (GetDirectoryContentsDelegate != null) {
                 return GetDirectoryContentsDelegate(path, searchPattern);
             }

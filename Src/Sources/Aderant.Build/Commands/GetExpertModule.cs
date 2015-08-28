@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
@@ -16,11 +17,12 @@ namespace Aderant.Build.Commands {
             string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
 
             DependencyBuilder builder = new DependencyBuilder(branchPath);
-            ExpertModule module = builder.GetAllModules().Where(x => x.Name.ToUpperInvariant() == ModuleName.ToUpperInvariant()).
-                    FirstOrDefault();
+            ExpertModule module = builder.GetAllModules().FirstOrDefault(x => string.Equals(x.Name, ModuleName, StringComparison.OrdinalIgnoreCase));
+            
             if (module == null) {
                 throw new PSArgumentOutOfRangeException("ModuleName");
             }
+
             WriteObject(module);
         }
     }

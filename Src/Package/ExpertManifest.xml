@@ -8,10 +8,9 @@
         <Module Name="Applications.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Deployment" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.DesignStudio" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.DocuDraftAddIn" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.DocuDraftAddIn" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.ExpertOfficeAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" />
@@ -26,16 +25,13 @@
         <Module Name="Expert.Help" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
-        <Module Name="Internal.Validation" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.DesignStudio" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.DocumentManagement" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Entities.CashManagement" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Disbursement" AssemblyVersion="1.8.0.0" />
@@ -44,13 +40,11 @@
         <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Entities.Parameters" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Entities.Trust" AssemblyVersion="1.8.0.0" />
-        <Module Name="Libraries.Exchange" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Installation" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Libraries.Integration" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Models" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
@@ -72,10 +66,8 @@
         <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.Budgeting" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Applications.Case" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.Collections" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Applications.Disbursement" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.EliteIntegration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />
@@ -97,109 +89,96 @@
         <Module Name="SmartForms.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
+        <Module Name="Tests.UIAutomation" AssemblyVersion="1.8.0.0" />
         <Module Name="ThirdParty.Add2Home" />
-        <Module Name="ThirdParty.AddinExpress" />
         <Module Name="ThirdParty.AsyncJs" />
         <Module Name="ThirdParty.AutoMapper" />
-        <Module Name="ThirdParty.AvalonDock.2.0" />
+        <Module Name="Thirdparty.AvalonDock.2.0" />
         <Module Name="ThirdParty.Bootstrap" />
         <Module Name="ThirdParty.BsnGoldParser" />
         <Module Name="ThirdParty.CryptoJS" />
         <Module Name="ThirdParty.DBGEN" />
-        <Module Name="ThirdParty.DevComponents" />
+        <Module Name="Thirdparty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
-        <Module Name="ThirdParty.ExpertImageApi" />
-        <Module Name="ThirdParty.ExtremeML" />
-        <Module Name="ThirdParty.FastClick" />
-        <Module Name="ThirdParty.FiddlerCore" />
+        <Module Name="Thirdparty.ExpertImageApi" />
+        <Module Name="Thirdparty.FastClick" />
         <Module Name="ThirdParty.FOApi" />
         <Module Name="ThirdParty.FWBS" />
-        <Module Name="ThirdParty.GalaSoft" />
         <Module Name="ThirdParty.GongSolutions" />
         <Module Name="ThirdParty.HammerJS" />
-        <Module Name="ThirdParty.HtmlAgilityPack" />
-        <Module Name="ThirdParty.ICSharpCode" />
+        <Module Name="Thirdparty.HtmlAgilityPack" />
+        <Module Name="Thirdparty.ICSharpCode" />
         <Module Name="ThirdParty.iManage" />
-        <Module Name="ThirdParty.Infragistics" />
+        <Module Name="Thirdparty.Infragistics" />
         <Module Name="ThirdParty.InterAction" ExcludeFromPackaging="true" />
-        <Module Name="ThirdParty.IronPython.2.7" />
+        <Module Name="Thirdparty.IronPython.2.7" />
         <Module Name="ThirdParty.Irony" />
-        <Module Name="ThirdParty.JQuery" />
-        <Module Name="ThirdParty.JQueryUI" />
-        <Module Name="ThirdParty.JsDiff" />
-        <Module Name="ThirdParty.KendoUI" />
-        <Module Name="ThirdParty.Keyoti.RapidSpell.v3" />
-        <Module Name="ThirdParty.Knockout" />
-        <Module Name="ThirdParty.LinqKit" />
-        <Module Name="ThirdParty.LLBLGen" />
-        <Module Name="ThirdParty.LocalSecurityAuthority" />
-        <Module Name="ThirdParty.Log2Console" />
-        <Module Name="ThirdParty.log4net" />
-        <Module Name="ThirdParty.MadCap" />
+        <Module Name="Thirdparty.JQuery" />
+        <Module Name="Thirdparty.JQueryUI" />
+        <Module Name="Thirdparty.KendoUI" />
+        <Module Name="Thirdparty.Keyoti.RapidSpell.v3" />
+        <Module Name="Thirdparty.Knockout" />
+        <Module Name="Thirdparty.LLBLGen" />
+        <Module Name="Thirdparty.LocalSecurityAuthority" />
+        <Module Name="Thirdparty.Log2Console" />
+        <Module Name="Thirdparty.log4net" />
+        <Module Name="Thirdparty.MadCap" />
         <Module Name="ThirdParty.Marketing.Interop" />
-        <Module Name="ThirdParty.Microsoft" />
-        <Module Name="ThirdParty.Microsoft.AspNet" />
-        <Module Name="ThirdParty.Microsoft.Build" />
-        <Module Name="ThirdParty.Microsoft.Data" />
+        <Module Name="Thirdparty.Microsoft" />
+        <Module Name="Thirdparty.Microsoft.AspNet" />
+        <Module Name="Thirdparty.Microsoft.Build" />
+        <Module Name="Thirdparty.Microsoft.Data" />
         <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
-        <Module Name="ThirdParty.Microsoft.ExpressionBlendSdk" />
-        <Module Name="ThirdParty.Microsoft.Linq.Dynamic" />
-        <Module Name="ThirdParty.Microsoft.Net4" />
-        <Module Name="ThirdParty.Microsoft.NTRights" />
+        <Module Name="Thirdparty.Microsoft.ExpressionBlendSdk" />
+        <Module Name="Thirdparty.Microsoft.Linq.Dynamic" />
+        <Module Name="Thirdparty.Microsoft.Net4" />
+        <Module Name="Thirdparty.Microsoft.NTRights" />
         <Module Name="ThirdParty.Microsoft.OData" />
         <Module Name="Thirdparty.Microsoft.Office.Interop" />
         <Module Name="ThirdParty.Microsoft.OpenXmlPowerTools" />
-        <Module Name="ThirdParty.Microsoft.Practices" />
-        <Module Name="ThirdParty.Microsoft.UrlRewrite" />
-        <Module Name="ThirdParty.Microsoft.WindowsServerAppFabric" />
-        <Module Name="ThirdParty.Mindscape" />
+        <Module Name="Thirdparty.Microsoft.Practices" />
+        <Module Name="Thirdparty.Microsoft.UrlRewrite" />
+        <Module Name="Thirdparty.Microsoft.WindowsServerAppFabric" />
+        <Module Name="Thirdparty.Mindscape" />
         <Module Name="ThirdParty.Modernizr" />
-        <Module Name="ThirdParty.MomentJS" />
-        <Module Name="ThirdParty.Moq" ExcludeFromPackaging="true" />
-        <Module Name="ThirdParty.MSExchange" />
-        <Module Name="ThirdParty.Newtonsoft.Json" />
-        <Module Name="ThirdParty.NHibernate" />
-        <Module Name="ThirdParty.Ninject" />
-        <Module Name="ThirdParty.NMock" ExcludeFromPackaging="true" />
-        <Module Name="ThirdParty.NTFSStreams" />
-        <Module Name="ThirdParty.OpenText" />
-        <Module Name="ThirdParty.OpenXML" />
-        <Module Name="ThirdParty.PDF" />
-        <Module Name="ThirdParty.Quartz" />
-        <Module Name="ThirdParty.QUnit" />
-        <Module Name="ThirdParty.Reactive" />
-        <Module Name="ThirdParty.ReportViewer" />
-        <Module Name="ThirdParty.RequireJS" />
-        <Module Name="ThirdParty.RhinoMocks" ExcludeFromPackaging="true" />
-        <Module Name="ThirdParty.Selenium" />
-        <Module Name="ThirdParty.SignalR" />
-        <Module Name="ThirdParty.SignalR.Client" />
-        <Module Name="ThirdParty.SpecFlow" />
+        <Module Name="Thirdparty.Moq" ExcludeFromPackaging="true" />
+        <Module Name="Thirdparty.MSExchange" />
+        <Module Name="Thirdparty.Newtonsoft.Json" />
+        <Module Name="Thirdparty.NHibernate" />
+        <Module Name="Thirdparty.Ninject" />
+        <Module Name="Thirdparty.NMock" ExcludeFromPackaging="true" />
+        <Module Name="Thirdparty.NTFSStreams" />
+        <Module Name="Thirdparty.OfficeXmlTools" />
+        <Module Name="Thirdparty.OwlCarousel" />
+        <Module Name="Thirdparty.PDF" />
+        <Module Name="Thirdparty.Quartz" />
+        <Module Name="Thirdparty.QUnit" ExcludeFromPackaging="true" />
+        <Module Name="Thirdparty.Reactive" />
+        <Module Name="Thirdparty.ReportViewer" />
+        <Module Name="Thirdparty.RhinoMocks" ExcludeFromPackaging="true" />
+        <Module Name="Thirdparty.SignalR" />
+        <Module Name="Thirdparty.SignalR.Client" />
+        <Module Name="Thirdparty.SpecFlow" />
         <Module Name="ThirdParty.SpinJs" />
-        <Module Name="ThirdParty.SQLCE" />
+        <Module Name="Thirdparty.SQLCE" />
         <Module Name="ThirdParty.SquishIt" />
         <Module Name="ThirdParty.TimerCompatibility.1.0" />
         <Module Name="ThirdParty.Toastr" />
         <Module Name="ThirdParty.Underscore" />
         <Module Name="ThirdParty.WatiN" />
-        <Module Name="ThirdParty.WebDateRangePicker" />
-        <Module Name="ThirdParty.WebGrease" />
-        <Module Name="ThirdParty.Wintellect" />
-        <Module Name="ThirdParty.WiX" />
-        <Module Name="ThirdParty.Xceed.4" />
-        <Module Name="ThirdParty.Xenocode" />
+        <Module Name="Thirdparty.WebGrease" />
+        <Module Name="Thirdparty.Wintellect" />
+        <Module Name="Thirdparty.WiX" />
+        <Module Name="Thirdparty.Xceed.4" />
+        <Module Name="Thirdparty.Xenocode" />
         <Module Name="UIAutomation.Framework" AssemblyVersion="5.3.1.0" GetAction="specificdroplocation" Path="\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation" ExcludeFromPackaging="true" />
-        <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
-        <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.MatterWorks" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
-        <Module Name="Web.SMB" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
-        <Module Name="Web.Test" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />

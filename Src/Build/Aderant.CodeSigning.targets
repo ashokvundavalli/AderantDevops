@@ -46,7 +46,7 @@
     </Task>
   </UsingTask>
   
-  <Target Name="SignApplications">
+  <Target Name="SignApplications" Condition="'$(IsDesktopBuild)' != 'true'">
     <Message Text="Signing applications in $(BinModuleDirectory)" />
     
     <ItemGroup>
@@ -70,7 +70,7 @@
       Condition="'@(Assemblies)' != '' And '$(SignToolPath)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"$(SignToolPath)" sign /f "$(BuildScriptsDirectory)aderant.pfx" /p "rugby ball" "%(Assemblies.FullPath)"' />
+      Command='"$(SignToolPath)" sign /t http://timestamp.digicert.com /f "$(BuildScriptsDirectory)aderant.pfx" /p "rugby ball" "%(Assemblies.FullPath)"' />
   </Target>
 
 </Project>

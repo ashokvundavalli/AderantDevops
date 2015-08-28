@@ -29,6 +29,9 @@
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
     <BuildStepModuleName>$(ModuleName):</BuildStepModuleName>
 
+    <!-- Team Build options -->
+    <UpdateAssociatedWorkItems>false</UpdateAssociatedWorkItems> <!-- We need a custom task for this as this will associate all work items to a build even if the build doesn't relate to the work item -->
+
     <!--Server Build for all modules-->
     <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == '' And ('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true')">$(SolutionRoot)\..\</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == '' And ('$(BuildAll)'=='true') And ('$(IsDesktopBuild)'!='true')">$(SolutionDirectoryPath)..\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
@@ -278,8 +281,8 @@ doc.Save(File);
           DependsOnTargets="SetBuildNumbers">
     <PropertyGroup>
       <!-- 
-           For a module build, append the name of the module.
-           If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
+          For a module build, append the name of the module.
+          If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
       -->
       <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
       <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
@@ -338,6 +341,12 @@ doc.Save(File);
                ContinueOnError="true" />
     <RemoveDir Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
            ContinueOnError="true" />
+
+    <!-- These can be symlinks so delete them directly -->
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\Dependencies"
+               ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\ModuleBin"
+               ContinueOnError="true" />
 
     <PropertyGroup>
       <!-- Transform this variable into a boolean -->
@@ -466,7 +475,7 @@ doc.Save(File);
                          Exclude="$(ModuleSourceDirectory)**\__*.tt;
                                   $(ModuleSourceDirectory)**\obj\**\*.tt;
                                   $(ModuleTestDirectory)**\obj\**\*.tt;
-								  $(ModuleSourceDirectory)**\PackageTmp\**\*.tt">
+                                  $(ModuleSourceDirectory)**\PackageTmp\**\*.tt">
         <Generator>TextTemplatingFileGenerator</Generator>
       </rmT4TextTemplates>
     </ItemGroup>
@@ -590,13 +599,12 @@ doc.Save(File);
     <MSBuild Projects="$(SolutionFileName)"
              Properties="$(BuildProperties)"
              RemoveProperties="AssemblyVersion">
-
       <!--The compiled assemblies from projects-->
       <Output ItemName="CompiledAssemblies"
               TaskParameter="TargetOutputs" />
     </MSBuild>
-
-    <Message Text="Compiled assemblies: %(CompiledAssemblies.FullPath)" />
+    
+    <Message Text="Compiled assemblies: %(CompiledAssemblies.FullPath)" Importance="Low" />
 
     <ItemGroup>
       <!-- The compiled assemblies from projects under Module\Src -->
@@ -614,10 +622,7 @@ doc.Save(File);
         <OutputType>Test</OutputType>
       </ModuleBuildOutput>
     </ItemGroup>
-
-    <Message Text="Module: %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" Importance="High" />
-    <Message Text="Test:   %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Test'" Importance="High" />
-
+    
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
@@ -626,6 +631,41 @@ doc.Save(File);
       Status="Succeeded" />
 
     <OnError ExecuteTargets="SetBuildBreakProperties;MarkBuildStepAsFailed" />
+  </Target>
+
+  <Target Name="GetOutputAssemblyFromProject" 
+          AfterTargets="Build" 
+          Condition="'$(IsCustomBuild)' != 'true'">
+    <!-- This target fixes a problem with TargetOutputs missing assemblies project in the solution file appears in a a post section. A most irritating MS Build bug. See TFS 121911-->
+    <ItemGroup>
+      <ModuleProjects Include="$(ModuleSourceDirectory)**\**\*.csproj" />
+    </ItemGroup>
+    
+    <!-- 
+      Get assembly name from the project file       
+    -->
+    <XmlPeek Condition="'@(ModuleProjects)' != ''"
+             XmlInputPath="%(ModuleProjects.FullPath)" 
+             Query="//p:Project/p:PropertyGroup/p:AssemblyName[.][contains(translate(//p:Project/p:PropertyGroup/p:OutputType, 'LIBRARY', 'library'), 'library')]/text()"
+             Namespaces="&lt;Namespace Prefix='p' Uri='http://schemas.microsoft.com/developer/msbuild/2003'/&gt;">
+      <Output ItemName="AssemblyName" TaskParameter="Result" />
+    </XmlPeek>
+
+    <ItemGroup>
+      <DllOutputs Condition="'@(ModuleProjects)' != ''"
+                  Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ModuleBuildOutput Condition="'@(ModuleProjects)' != ''"
+                         Include="@(DllOutputs)">
+        <OutputType>Module</OutputType>
+      </ModuleBuildOutput>
+    </ItemGroup>
+
+    <Message Text="Module: %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" Importance="High" />
+    <Message Text="Test:   %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Test'" Importance="High" />
+    
   </Target>
 
   <!--
@@ -748,7 +788,7 @@ doc.Save(File);
   -->
 
   <Target Name="ZipCustomSource"
-          Condition="(Exists('$(SolutionDirectoryPath)$(ModuleName).Custom.sln') and '$(IsCustomBuild)' != 'true')">
+          Condition="'$(ZipSource)' != 'false' And (Exists('$(SolutionDirectoryPath)$(ModuleName).Custom.sln') and '$(IsCustomBuild)' != 'true')">
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
@@ -944,7 +984,8 @@ doc.Save(File);
           DependsOnTargets="Build">
     
     <ItemGroup>
-      <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;"
+      <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
+                               $(BinTestDirectory)*.Tests.ps1;"
                       Exclude="$(BinTestDirectory)*Helpers*.dll;
                                $(BinTestDirectory)Microsoft.*" />
     </ItemGroup>
@@ -1020,10 +1061,10 @@ doc.Save(File);
         TaskParameter="id"
         PropertyName="BuildStepId"/>
     </BuildStep>
-
+  
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
-      <VsTestWorkingDirectory>$(BinTestDirectory)</VsTestWorkingDirectory>
+      <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
 
       <!-- VSTest Setup -->
       <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
@@ -1031,6 +1072,7 @@ doc.Save(File);
       <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
 
       <!-- Test Result Publishing -->
       <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
@@ -1040,15 +1082,17 @@ doc.Save(File);
       <!-- Test result publishing requires Visual Studio Update 1 or higher -->
       <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>
     </PropertyGroup>
-
+  
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
-
+    
+    <MakeDir Directories="$(VsTestWorkingDirectory)" />
+    
     <!--Run With VSTest-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="'$(UnitTestAssemblies)' != ''"
           WorkingDirectory="$(VsTestWorkingDirectory)"
-          Command='"$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />
+          Command='"$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
@@ -1069,10 +1113,12 @@ doc.Save(File);
 
   <Target Name="AfterRunUnitTests"
           AfterTargets="RunUnitTests">
-
+    
     <RemoveDir Directories="$(BinTestDirectory)Dependencies"  />
     <RemoveDir Directories="$(BinTestDirectory)ModuleBin" />
-
+    <RemoveDir Directories="$(BinTestDirectory)TestResults\packages" 
+               ContinueOnError="true" />
+    
     <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
             Files="@(TestAssemblyConfigFiles)" 
             TreatErrorsAsWarnings="true" />
@@ -1089,6 +1135,43 @@ doc.Save(File);
           SourceFiles="@(TestResults)"
           DestinationFiles="$(BinTestDirectory)UnitTestResults.trx" />
   </Target>
+
+  
+  <Target Name="InstallPester" 
+          Condition="'$(PSTests)' == 'true'" 
+          AfterTargets="BeforeRunUnitTests"
+          BeforeTargets="RunUnitTests">
+    
+    <Message Condition="'$(PSTests)' == 'true'" Text="Copying Pester files to test run directory." />
+
+    <ItemGroup>
+      <PesterFiles 
+        Include="$(BuildScriptsDirectory)..\Profile\Pester\Pester.psd1;
+                 $(BuildScriptsDirectory)..\Profile\Pester\Pester.psm1;"/>
+      <PesterFunctionsFiles 
+        Include="$(BuildScriptsDirectory)..\Profile\Pester\Functions\*.*;"/>
+      <PesterFunctionsAssertionsFiles 
+        Include="$(BuildScriptsDirectory)..\Profile\Pester\Functions\Assertions\*.*"/>
+    </ItemGroup>
+
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults" />
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions"/>
+
+    <Copy SourceFiles="@(PesterFiles)"
+          DestinationFiles="@(PesterFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="@(PesterFunctionsFiles)"
+          DestinationFiles="@(PesterFunctionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="@(PesterFunctionsAssertionsFiles)"
+          DestinationFiles="@(PesterFunctionsAssertionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions\%(Filename)%(Extension)')" />
+    
+  </Target>
+  
 
   <!--
     ==========================================================================================
@@ -1470,11 +1553,11 @@ doc.Save(File);
       CompilationStatus="Failed" />
 
     <SetBuildProperties
-     Condition="'$(TestBreak)' == 'true'"
-     TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-     BuildUri="$(BuildUri)"
-     TestStatus="Failed"
-     CompilationStatus="Failed" />
+      Condition="'$(TestBreak)' == 'true'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      TestStatus="Failed"
+      CompilationStatus="Failed" />
   </Target>
 
   <!--

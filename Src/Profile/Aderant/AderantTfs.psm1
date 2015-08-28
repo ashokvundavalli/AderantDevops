@@ -74,6 +74,29 @@ function GetListOfTfsChildFolders([string] $parentTfsPath){
     return $childItems;
 }
 
+<#
+.Synopsis
+    Migrate TFS shelveset from one ExpertSuite branch to another.
+.Description
+    This is a shortcut for tftp unshelve /migrate
+    It wraps your branch names with "$/ExpertSuite/" and "/modules".
+    The branch parameters also feature auto-complete.
+    You need to quote the shelveset name if it has spaces in it.
+.PARAMETER name
+    The shelveset name. Please quote it if the name has spaces in it.
+.PARAMETER SourceBranch
+    The source branch name eg. dev\product
+.PARAMETER TargetBranch
+    The target branch name eg. dev\anotherProduct
+#>
+function Move-Shelveset($Name, $SourceBranch, $TargetBranch) {
+    $sourceBranch = $sourceBranch -replace "\\", "/"
+    $targetBranch = $targetBranch -replace "\\", "/"
+    $sourceLoc = "$/ExpertSuite/" + $sourceBranch + "/modules"
+    $targetLoc = "$/ExpertSuite/" + $targetBranch + "/modules"
+    tfpt unshelve $Name /migrate /source:$sourceLoc /target:$targetLoc
+}
+
 <# 
 .Synopsis 
     Merges an Expert source branch to a target branch
@@ -313,4 +336,4 @@ function Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $
 
 Set-Alias merge Merge-Branch
 Export-ModuleMember -function Merge-Branch -alias merge
-
+Export-ModuleMember -function Move-Shelveset

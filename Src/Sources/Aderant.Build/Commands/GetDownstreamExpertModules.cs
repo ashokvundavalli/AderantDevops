@@ -28,7 +28,7 @@ namespace Aderant.Build.Commands {
 
             DependencyBuilder builder = new DependencyBuilder(branchPath);
 
-            Module = builder.GetAllModules().FirstOrDefault(x => x.Name.Equals(ModuleName, StringComparison.OrdinalIgnoreCase));
+            Module = builder.GetAllModules().FirstOrDefault(x => string.Equals(x.Name, ModuleName, StringComparison.OrdinalIgnoreCase));
 
             if (Module == null) {
                 throw new ArgumentException(string.Format("Could not find Module '{0}'", ModuleName));

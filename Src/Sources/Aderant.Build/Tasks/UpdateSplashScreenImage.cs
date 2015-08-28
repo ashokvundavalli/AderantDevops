@@ -92,10 +92,11 @@ namespace Aderant.Build.Tasks {
 
             encoder.Frames.Add(bitmapFrame);
 
-            if (copy != null)
+            if (copy != null) {
                 using (FileStream stream = copy.OpenWrite()) {
                     encoder.Save(stream);
                 }
+            }
         }
 
         private SplashScreenText[] CreateSplashScreenText(string productName) {

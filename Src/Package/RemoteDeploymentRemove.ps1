@@ -29,13 +29,14 @@ process{
         Invoke-Command $session -ScriptBlock { 
             $share = GET-WMIOBJECT Win32_Share -Filter "Name='ExpertShare'"
             Write-Verbose "Attempt to remove specified share"
-            $Return = $share.Delete()
-            if ($Return.ReturnValue -ne 0) {
-            Write-Host "Unable to remove specified share due of the error: $(Get-ReturnCode $Return)."
-            }
-            else {
-                Write-Verbose "Removed Share permissions on ExpertShare folder."
-            }
+			if ($share -ne $null) {
+				$Return = $share.Delete()
+				if ($Return.ReturnValue -ne 0) {
+					Write-Host "Unable to remove specified share due of the error: $(Get-ReturnCode $Return)."
+				} else {
+                    Write-Verbose "Removed Share permissions on ExpertShare folder."
+                }
+    		}
         }
         
         Start-Sleep -s 10
@@ -60,21 +61,15 @@ process{
 
         Write-Host "Invoking DeploymentEngine to REMOVE on [$remoteMachineName]."
         Invoke-Command $session -ScriptBlock { param($innerSourcePath, $innerManifestPath)             
-            function Contains($List, $value) {
-                foreach($process in $running) {
-                    if ($process.name.ToLower() -eq $item.BaseName.ToLower()) {
-                        return $true; 
-                    }
-                } 
-                return $false
-            }
             cd "$innerSourcePath"; 
             $running = Get-Process
             foreach ($item in Get-Item -Filter *.exe -Path C:\ExpertShare\*) {
-                if (Contains($running, $item)) {
-                    $name = $item.BaseName
-                    Write-Host "Attempting to kill $name as it still appears to be running."
-                    Stop-Process -Name $item.BaseName -Force
+                foreach($process in $running) {
+                    if ($process.name -ieq $item.BaseName) {
+                        $name = $item.BaseName
+                        Write-Host "Attempting to kill $name as it still appears to be running."
+                        Stop-Process -Name $item.BaseName -Force
+                    }
                 }
             }
             .\DeploymentEngine.exe remove "$innerManifestPath" 

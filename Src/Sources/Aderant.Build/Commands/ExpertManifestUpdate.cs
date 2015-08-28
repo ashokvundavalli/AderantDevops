@@ -4,7 +4,6 @@ using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
-using DependencyAnalyzer.Logging;
 
 namespace Aderant.Build.Commands {
     [Cmdlet("New", "ExpertManifestForBranch")]

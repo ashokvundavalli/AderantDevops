@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
-using DependencyAnalyzer;
 
 namespace Aderant.Build.Commands {
     [Cmdlet("Get", "ExpertModules")]

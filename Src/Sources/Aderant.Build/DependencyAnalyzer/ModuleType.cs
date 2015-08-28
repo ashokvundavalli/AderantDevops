@@ -38,6 +38,9 @@
         Unknown,
         Database,
         InternalTool,
+        /// <summary>
+        /// The web module type (MVC website)
+        /// </summary>
         Web,
         Installs,
         /// <summary>

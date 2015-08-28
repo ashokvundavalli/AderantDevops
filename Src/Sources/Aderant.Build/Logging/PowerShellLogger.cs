@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using System.Linq;
 using System.Management.Automation.Host;
-using DependencyAnalyzer.Logging;
 
 namespace Aderant.Build.Logging {
     /// <summary>

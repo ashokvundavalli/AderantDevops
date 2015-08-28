@@ -96,7 +96,7 @@ namespace Aderant.Build.Commands {
                     // Check the dependency branch is this current branch.
                     if (dependency.Branch == null || branchPath.ToUpperInvariant().Contains(dependency.Branch.ToUpperInvariant())) {
 
-                        if (dependency.Provider.Name.Equals(dependency.Consumer.Name, StringComparison.OrdinalIgnoreCase)) {
+                        if (string.Equals(dependency.Provider.Name, dependency.Consumer.Name, StringComparison.OrdinalIgnoreCase)) {
                             // if the dependency module is this current module.
                             WriteDebug(string.Format("Cannot get {0}, this command cannot get dependency from the same module.", dependency.Provider.Name));
                             continue;
@@ -173,13 +173,23 @@ namespace Aderant.Build.Commands {
                 newFile.Directory.Create();
             }
 
+            if (newFile.IsReadOnly) {
+                WriteWarning("Destination " + destination + " file is read only - skipped");
+                return;
+            }
+
             if (file.Exists) {
                 file.IsReadOnly = false;
                 file.Refresh();
             }
 
             WriteDebug(string.Format("Copying {0} ==> {1}", file.FullName, newFile.FullName));
-            file.CopyTo(newFile.FullName, true);
+
+            try {
+                file.CopyTo(newFile.FullName, true);
+            } catch (Exception ex) {
+                WriteWarning("Copy failed. " + ex.Message);
+            }
         }
 
         private IEnumerable<ModuleDependency> FilterDependencies(DependencyBuilder builder, string moduleName) {
@@ -201,7 +211,7 @@ namespace Aderant.Build.Commands {
         private void FilterDependenciesBySourceModules(List<ModuleDependency> moduleDependencies, IEnumerable<ModuleDependency> dependencies) {
             foreach (string module in ProviderModules) {
                 string name = module;
-                moduleDependencies.AddRange(dependencies.Where(d => d.Provider.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
+                moduleDependencies.AddRange(dependencies.Where(d => string.Equals(d.Provider.Name, name, StringComparison.OrdinalIgnoreCase)));
             }
         }
 

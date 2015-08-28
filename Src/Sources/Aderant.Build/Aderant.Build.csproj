@@ -107,12 +107,20 @@
     <Compile Include="Build.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BranchInfo.cs" />
-    <Compile Include="Commands\StartIntegrationTests.cs" />
+    <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="BuildNotFoundException.cs" />
+    <Compile Include="Commands\StartIntegrationTests.cs" />
+    <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
+    <Compile Include="IntegrationTestContext.cs" />
+    <Compile Include="IntegrationTestAssemblyConfig.cs" />
+    <Compile Include="Commands\XElementExtensions.cs" />
     <Compile Include="IntegrationTestConfigBuilder.cs" />
+    <Compile Include="Logging\BuildTaskLogger.cs" />
     <Compile Include="ManifestPathProcessor.cs" />
     <Compile Include="NativeUtilities.cs" />
+    <Compile Include="ConsolePackageImporterExecutor.cs" />
+    <Compile Include="Tasks\ConsolePackageImporter.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Process\ParallelBuildProjectController.cs" />
     <Compile Include="DependencyAnalyzer\ReverseLineReader.cs" />
@@ -195,6 +203,7 @@
     <Compile Include="Tasks\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />
+    <Compile Include="Tasks\RewriteTestConfigs.cs" />
     <Compile Include="Tasks\SqlFileExecution.cs" />
     <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
@@ -222,7 +231,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
-    <None Include="Resources\IntegrationTest.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -1,4 +1,4 @@
-namespace DependencyAnalyzer.Logging {
+namespace Aderant.Build.Logging {
     /// <summary>
     /// Represts a common logging interface for MSBuild, PowerShell and another tools involved in the build toolkit.
     /// </summary>
