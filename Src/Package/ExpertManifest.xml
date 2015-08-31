@@ -11,6 +11,7 @@
         <Module Name="Applications.DocuDraftAddIn" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.ExpertOfficeAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" />
@@ -29,9 +30,11 @@
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Deployment" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.DesignStudio" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.DocumentManagement" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Bill" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.BusinessEntity" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.CashManagement" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Client" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Collections" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Disbursement" AssemblyVersion="1.8.0.0" />
@@ -40,9 +43,12 @@
         <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.Parameters" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.Trust" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Exchange" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Installation" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Libraries.Integration" AssemblyVersion="1.8.0.0" />
@@ -66,8 +72,10 @@
         <Module Name="SDK.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.AccountsPayable" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.Budgeting" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Applications.Case" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.Collections" AssemblyVersion="1.8.0.0" />
+        <Module Name="Services.Applications.Disbursement" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.EliteIntegration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.EmployeeIntake" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Applications.FileOpening" AssemblyVersion="1.8.0.0" />
