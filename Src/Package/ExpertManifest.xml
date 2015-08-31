@@ -99,6 +99,7 @@
         <Module Name="SmartForms.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Tests.UIAutomation" AssemblyVersion="1.8.0.0" />
         <Module Name="ThirdParty.Add2Home" />
+        <Module Name="ThirdParty.AddinExpress" />
         <Module Name="ThirdParty.AsyncJs" />
         <Module Name="ThirdParty.AutoMapper" />
         <Module Name="Thirdparty.AvalonDock.2.0" />
@@ -123,9 +124,11 @@
         <Module Name="ThirdParty.Irony" />
         <Module Name="Thirdparty.JQuery" />
         <Module Name="Thirdparty.JQueryUI" />
+        <Module Name="ThirdParty.JsDiff" />
         <Module Name="Thirdparty.KendoUI" />
         <Module Name="Thirdparty.Keyoti.RapidSpell.v3" />
         <Module Name="Thirdparty.Knockout" />
+        <Module Name="ThirdParty.LinqKit" />
         <Module Name="Thirdparty.LLBLGen" />
         <Module Name="Thirdparty.LocalSecurityAuthority" />
         <Module Name="Thirdparty.Log2Console" />
@@ -150,6 +153,7 @@
         <Module Name="Thirdparty.Microsoft.WindowsServerAppFabric" />
         <Module Name="Thirdparty.Mindscape" />
         <Module Name="ThirdParty.Modernizr" />
+        <Module Name="ThirdParty.MomentJs" />
         <Module Name="Thirdparty.Moq" ExcludeFromPackaging="true" />
         <Module Name="Thirdparty.MSExchange" />
         <Module Name="Thirdparty.Newtonsoft.Json" />
@@ -164,6 +168,7 @@
         <Module Name="Thirdparty.QUnit" ExcludeFromPackaging="true" />
         <Module Name="Thirdparty.Reactive" />
         <Module Name="Thirdparty.ReportViewer" />
+        <Module Name="ThirdParty.RequireJS" />
         <Module Name="Thirdparty.RhinoMocks" ExcludeFromPackaging="true" />
         <Module Name="Thirdparty.SignalR" />
         <Module Name="Thirdparty.SignalR.Client" />
@@ -175,18 +180,24 @@
         <Module Name="ThirdParty.Toastr" />
         <Module Name="ThirdParty.Underscore" />
         <Module Name="ThirdParty.WatiN" />
+        <Module Name="ThirdParty.WebDateRangePicker" />
         <Module Name="Thirdparty.WebGrease" />
         <Module Name="Thirdparty.Wintellect" />
         <Module Name="Thirdparty.WiX" />
         <Module Name="Thirdparty.Xceed.4" />
         <Module Name="Thirdparty.Xenocode" />
         <Module Name="UIAutomation.Framework" AssemblyVersion="5.3.1.0" GetAction="specificdroplocation" Path="\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation" ExcludeFromPackaging="true" />
+        <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.Financials" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.MatterWorks" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.SMB" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.Test" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
