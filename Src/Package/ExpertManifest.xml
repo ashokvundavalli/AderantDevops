@@ -113,6 +113,7 @@
         <Module Name="Thirdparty.FastClick" />
         <Module Name="ThirdParty.FOApi" />
         <Module Name="ThirdParty.FWBS" />
+        <Module Name="ThirdParty.GalaSoft" />
         <Module Name="ThirdParty.GongSolutions" />
         <Module Name="ThirdParty.HammerJS" />
         <Module Name="Thirdparty.HtmlAgilityPack" />
