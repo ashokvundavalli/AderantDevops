@@ -118,7 +118,7 @@ namespace Aderant.Build {
 
                     OnModuleDependencyResolved(new DependencyResolvedEventArgs {
                         DependencyProvider = referencedModule.Name,
-                        Branch = PathHelper.GetBranch(latestBuild),
+                        Branch = PathHelper.GetBranch(latestBuild, false),
                         ResolvedUsingHardlink = useHardLinks,
                         FullPath = latestBuild,
                     });

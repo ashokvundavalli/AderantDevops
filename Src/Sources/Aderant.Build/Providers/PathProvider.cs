@@ -59,6 +59,10 @@ namespace Aderant.Build.Providers {
             return Path.Combine(branchPath, expertModule.Name, "Bin", "Module");
         }
 
+        public static string GetBranch(string path, bool throwOnNotFound) {
+            return GetBranchInternal(path, false);
+        }
+
         /// <summary>
         /// Gets two part branch name from a path.
         /// </summary>
@@ -66,6 +70,10 @@ namespace Aderant.Build.Providers {
         /// <returns>The two part branch name</returns>
         /// <exception cref="System.InvalidOperationException">Thrown when name detection fails</exception>
         public static string GetBranch(string path) {
+            return GetBranchInternal(path, true);
+        }
+
+        private static string GetBranchInternal(string path, bool throwOnNotFound) {
             string[] parts = path.Split(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
 
             string part1 = null;
@@ -92,7 +100,9 @@ namespace Aderant.Build.Providers {
 
             if (part1 == null) {
                 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TF_BUILD"))) {
-                    throw new InvalidOperationException("Unknown branch: " + path);
+                    if (throwOnNotFound) {
+                        throw new InvalidOperationException("Unknown branch: " + path);
+                    }
                 }
                 return path;
             }
@@ -179,5 +189,7 @@ namespace Aderant.Build.Providers {
 
             return dropLocationDirectory;
         }
+
+
     }
 }

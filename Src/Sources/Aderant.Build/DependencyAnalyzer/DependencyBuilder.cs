@@ -180,8 +180,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                         new XElement(XName.Get("Links", dgmlRootNamespace),
                             new object[] {
                                 allDependencies.Select(dependency => new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
-                                    new XAttribute(XName.Get("Consumer"), allModules.IndexOf(dependency.Consumer)),
-                                    new XAttribute(XName.Get("Provider"), allModules.IndexOf(dependency.Provider))
+                                    new XAttribute(XName.Get("Source"), allModules.IndexOf(dependency.Consumer)),
+                                    new XAttribute(XName.Get("Target"), allModules.IndexOf(dependency.Provider))
                                 })),
                                 ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((build, levelIndex) => build.Modules.Select(item =>
                                     new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
