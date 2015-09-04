@@ -163,6 +163,7 @@
         <Module Name="Thirdparty.NMock" ExcludeFromPackaging="true" />
         <Module Name="Thirdparty.NTFSStreams" />
         <Module Name="Thirdparty.OfficeXmlTools" />
+        <Module Name="ThirdParty.OpenText" />
         <Module Name="Thirdparty.OwlCarousel" />
         <Module Name="Thirdparty.PDF" />
         <Module Name="Thirdparty.Quartz" />
@@ -171,6 +172,7 @@
         <Module Name="Thirdparty.ReportViewer" />
         <Module Name="ThirdParty.RequireJS" />
         <Module Name="Thirdparty.RhinoMocks" ExcludeFromPackaging="true" />
+        <Module Name="ThirdParty.Selenium" />
         <Module Name="Thirdparty.SignalR" />
         <Module Name="Thirdparty.SignalR.Client" />
         <Module Name="Thirdparty.SpecFlow" />
