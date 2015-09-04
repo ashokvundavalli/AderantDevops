@@ -242,7 +242,7 @@ doc.Save(File);
   <Target Name="ModuleBuild">
     <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
     <CallTarget Targets="CleanBin" />  
-    <CallTarget Targets="CheckForWrongReferences" />
+    <!--<CallTarget Targets="CheckForWrongReferences" />-->
     <CallTarget Targets="GetModuleDependencies" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
