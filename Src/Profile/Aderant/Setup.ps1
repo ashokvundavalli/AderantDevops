@@ -2,6 +2,11 @@ $currentDirectory = pwd
 $psHomeDirectory = Join-Path $Env:UserProfile "Documents\WindowsPowerShell\"
 $moduleDirectory = Join-Path $psHomeDirectory "Modules"
 
+if (Test-Path "$moduleDirectory\Aderant") {
+    $cmd = "cmd /c rmdir " + $moduleDirectory + "\Aderant /q /s"
+    Invoke-Expression $cmd
+}
+
 if (-not (Test-Path "$moduleDirectory\Aderant")) {	
     New-Item -ItemType Directory -Path $moduleDirectory -Force -ErrorAction SilentlyContinue
 

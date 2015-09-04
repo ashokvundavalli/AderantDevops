@@ -243,8 +243,9 @@
     </BuildStep>
 
     <PropertyGroup>
-      <ProductName Condition="'$(ProductName)' == '' And '$(BuildAll)' != 'true'">$(ModuleName)</ProductName>
-      <ProductName Condition="'$(ProductName)' == '' And '$(BuildAll)' == 'true'">$(BranchName) (Build All)</ProductName>
+      <ProductName Condition="'$(ProductName)' == '' And '$(BuildAll)' != 'true'">[$(BranchName)][$(ModuleName)]</ProductName>
+      <ProductName Condition="'$(ProductName)' == '' And '$(BuildAll)' == 'true'">[$(BranchName)][Build All]</ProductName>
+      <ProductName>$(ProductName)[$(BuildUri)]</ProductName>
     </PropertyGroup>
     
     <!-- @ before the variable as we want @Symbols.txt so it is treated as a response file -->

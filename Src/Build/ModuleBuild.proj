@@ -241,7 +241,8 @@ doc.Save(File);
   -->
   <Target Name="ModuleBuild">
     <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
-    <CallTarget Targets="CleanBin" />
+    <CallTarget Targets="CleanBin" />  
+    <CallTarget Targets="CheckForWrongReferences" />
     <CallTarget Targets="GetModuleDependencies" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
@@ -411,6 +412,20 @@ doc.Save(File);
   </Target>
 
 
+  <!--
+    ==========================================================================================
+        Check For Wrong References
+    ==========================================================================================
+  -->
+  <Target Name="CheckForWrongReferences" Condition="'$(IsCustomBuild)' != 'true'">
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
+
+  </Target>
+
+  
   <!--
     ==========================================================================================
         Get Module Dependencies
