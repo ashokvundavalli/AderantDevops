@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
@@ -49,7 +49,8 @@ namespace Aderant.Build.Commands {
                 WriteObject(moduleDependencies, true);
             } else {
                 WriteObject(
-                    GetModuleDependenciesRecursive(SourceModule, builder.GetModuleDependencies(), 0).Distinct().ToArray(), true);
+                    GetModuleDependenciesRecursive(SourceModule, builder.GetModuleDependencies(), 0).Distinct().ToArray(),
+                    true);
             }
         }
 

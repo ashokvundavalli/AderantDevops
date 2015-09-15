@@ -83,7 +83,6 @@
     <Module Name="ThirdParty.DBGEN" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.DevComponents" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.ExtremeML" GetAction="branch" Path="Main" />
-    <Module Name="Thirdparty.FiddlerCore" GetAction="branch" Path="Main" />
     <Module Name="ThirdParty.FOApi" GetAction="branch" Path="Main" />
     <Module Name="ThirdParty.FWBS" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.HtmlAgilityPack" GetAction="branch" Path="Main" />
