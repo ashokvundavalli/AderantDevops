@@ -68,7 +68,7 @@ var copyModule = (function (gulp) {
 
         // copy to dependency root folder
         gulp.src(paths.scripts, { base: getPath(moduleName, folderName) })
-			.pipe(changed(paths.dependencyRootFolder, { hasChanged: changed.compareLastModifiedTime })) // compareSha1Digest
+			.pipe(changed(paths.dependencyRootFolder, { hasChanged: changed.compareSha1Digest })) // compareLastModifiedTime
 			.pipe(chmod({ owner: { read: true, write: true } }))
 			.pipe(gulp.dest(paths.dependencyRootFolder))
             .pipe(gulpPrint({ format: function (filepath) { return "-> " + filepath; }, colors: false }));

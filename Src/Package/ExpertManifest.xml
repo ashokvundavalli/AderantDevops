@@ -87,7 +87,6 @@
         <Module Name="Services.Communication" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Customization" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Deployment" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.ExchangeSynchronization" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Integration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" />

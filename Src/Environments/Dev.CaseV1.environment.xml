@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest" networkSharePath="\\WSAKL000691\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" smtpPort="25" enableServiceCallCompression="false">
+<environment name="IntegrationTest" networkSharePath="\\WSAKL000691\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" smtpHost="smtp.dev.ap.aderant.com" smtpPort="25" fromEmailAddress="workflow@aderant.com" operationsEmailAddress="mark.henderson@aderant.com" enableServiceCallCompression="false">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
@@ -39,7 +39,6 @@
         <role type="notes" />
         <role type="queryservice" />
         <role type="security" />
-        <role type="SMFinancials" />
         <role type="workflow" />
         <role type="WorkflowOnTheGo" />
       </roles>
