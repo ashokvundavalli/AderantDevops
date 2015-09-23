@@ -109,6 +109,7 @@
         <Module Name="ThirdParty.DBGEN" />
         <Module Name="ThirdParty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
+        <Module Name="Thirdparty.ExifJS" />
         <Module Name="ThirdParty.ExpertImageApi" />
         <Module Name="ThirdParty.FastClick" />
         <Module Name="ThirdParty.FOApi" />
@@ -149,7 +150,6 @@
         <Module Name="ThirdParty.Microsoft.OData" />
         <Module Name="Thirdparty.Microsoft.Office.Interop" />
         <Module Name="ThirdParty.Microsoft.OpenXmlPowerTools" />
-        <Module Name="ThirdParty.Microsoft.Practices" />
         <Module Name="ThirdParty.Microsoft.UrlRewrite" />
         <Module Name="ThirdParty.Microsoft.WindowsServerAppFabric" />
         <Module Name="ThirdParty.Mindscape" />
@@ -188,7 +188,6 @@
         <Module Name="ThirdParty.Wintellect" />
         <Module Name="ThirdParty.WiX" />
         <Module Name="ThirdParty.Xceed.4" />
-        <Module Name="ThirdParty.Xenocode" />
         <Module Name="UIAutomation.Framework" AssemblyVersion="5.3.1.0" GetAction="specificdroplocation" Path="\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation" ExcludeFromPackaging="true" />
         <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />

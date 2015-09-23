@@ -76,7 +76,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <returns></returns>
         public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (dependencyManifests != null) {
-                manifest = dependencyManifests.FirstOrDefault(m => string.Equals(m.ModuleName, moduleName));
+                manifest = dependencyManifests.FirstOrDefault(m => string.Equals(m.ModuleName, moduleName, StringComparison.OrdinalIgnoreCase));
 
                 if (manifest != null) {
                     return true;

@@ -164,10 +164,6 @@ Result = uniqueFiles.ToArray();
     <Copy Condition="'$(SharedDependencyDirectory)' != ''"
           SourceFiles="@(IntermediateAssembly)"
           DestinationFolder="$(SharedDependencyDirectory)" />
-
-    <Copy Condition="'$(SharedTestRunDirectory)' != ''"
-          SourceFiles="@(IntermediateAssembly)"
-          DestinationFolder="$(SharedTestRunDirectory)" />
     
   </Target>
 

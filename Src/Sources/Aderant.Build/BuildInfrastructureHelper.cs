@@ -7,10 +7,9 @@ using System.Xml.Linq;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build {
-
     internal static class BuildInfrastructureHelper {
 
-        internal static string PathToBuildScriptsFromModules = Path.Combine("Build.Infrastructure", "Src", "Build");
+        internal static string PathToBuildScriptsFromModules = Path.Combine(BuildConstants.BuildInfrastructureDirectory, "Src", "Build");
 
 
         /// <summary>
@@ -55,8 +54,8 @@ namespace Aderant.Build {
                     string dropLocationRoot = branchDropLocation.Substring(0, pos);
 
                     if (projectElement != null) {
-                        if (projectElement.Value.IndexOf("$(BranchName)", StringComparison.OrdinalIgnoreCase) < 0) {
-                            projectElement.Value = Path.Combine(Path.Combine(dropLocationRoot, "$(BranchName)"), Providers.PathHelper.PathToModuleBuild);
+                        if (projectElement.Value.IndexOf(BuildConstants.BranchNameVariable, StringComparison.OrdinalIgnoreCase) < 0) {
+                            projectElement.Value = Path.Combine(Path.Combine(dropLocationRoot, BuildConstants.BranchNameVariable), Providers.PathHelper.PathToModuleBuild);
                         }
                     }
 

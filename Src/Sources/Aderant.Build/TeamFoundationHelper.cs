@@ -3,9 +3,7 @@ using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build {
-
     internal static class TeamFoundationHelper {
-
         /// <summary>
         /// Gets the team project name.
         /// </summary>
@@ -13,9 +11,17 @@ namespace Aderant.Build {
         /// The team project.
         /// </value>
         public static string TeamProject {
-            get {
-                return "ExpertSuite";   
-            }
+            get { return "ExpertSuite"; }
+        }
+
+        /// <summary>
+        /// Gets the Team Foundation Server URI.
+        /// </summary>
+        /// <value>
+        /// The team foundation server URI.
+        /// </value>
+        public static string TeamFoundationServerUri {
+            get { return "http://tfs:8080/tfs/ADERANT"; }
         }
 
         /// <summary>
@@ -23,7 +29,7 @@ namespace Aderant.Build {
         /// </summary>
         /// <returns></returns>
         public static TfsTeamProjectCollection GetTeamProjectServer() {
-            var server = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("http://tfs:8080/tfs/ADERANT"));
+            var server = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TeamFoundationServerUri));
             server.EnsureAuthenticated();
 
             return server;
@@ -48,7 +54,6 @@ namespace Aderant.Build {
                     workspace = info.GetWorkspace(server);
                 } catch (InvalidOperationException) {
                     continue;
-                    
                 }
 
                 string path = workspace.TryGetServerItemForLocalItem(localItem);

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="12.0"
-         TreatAsLocalProperty="FileVersion;AssemblyVersion">
+         TreatAsLocalProperty="FileVersion;AssemblyVersion;BuildFlavor">
 
   <!-- 
     =========================================================================================================
@@ -247,21 +247,22 @@ doc.Save(File);
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
+    <CallTarget Targets="PublishBuild" Condition="'$(BuildAll)' == 'true'" />
     <CallTarget Targets="Build" />
     <CallTarget Targets="CreateMSI" />
     <CallTarget Targets="ZipTemplateModule" />
-    <CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />
-    <CallTarget Targets="RunUnitTests" />
+    <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
+    <CallTarget Targets="RunTest" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-    <CallTarget Targets="Testing" />
     <CallTarget Targets="PostBuild" Condition="('$(PostBuild)'=='true')" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />
+    <CallTarget Targets="FinalizeBuild" />
   </Target>
 
-  <Target Name="Testing">
+  <Target Name="LogBuildVariables" BeforeTargets="Build" DependsOnTargets="InitializeBuildParameters">
     <Message Text="Solution Root = $(SolutionRoot)" />
     <Message Text="Solution Directory = $(SolutionDirectoryPath)" />
     <Message Text="Build Scripts Directory = $(BuildScriptsDirectory)" />
@@ -270,6 +271,7 @@ doc.Save(File);
     <Message Text="Create MSI? = $(CreateMSI)" />
     <Message Text="BuildType MSI? = $(BuildFlavor)" />
     <Message Text="Visual Studio Tools Path: $(VsCommonTools)" />
+    <Message Text="Is Web Module: $(IsWebModule)" />
   </Target>
 
 
@@ -521,7 +523,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="UpdateModuleFileVersion"
-          Condition="'$(IsDesktopBuild)' != 'true'">
+          Condition="'$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true'">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
@@ -604,16 +606,25 @@ doc.Save(File);
       <_ContainsWebProject Condition="$([System.String]::new('%(Projects.Filename)').Contains('Web.')) or $([System.String]::new('%(Projects.Filename)').Contains('Mobile.'))">true</_ContainsWebProject>
     </PropertyGroup>
 
-    <Copy Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true' Or '$(_ContainsWebProject)' == 'true' Or $(ModuleName.Contains('Mobile.'))"
+    <Copy Condition="'$(IsWebModule)' == 'true' Or '$(_ContainsWebProject)' == 'true' Or $(ModuleName.Contains('Mobile.'))"
           SourceFiles="$(MSBuildThisFileDirectory)\Aderant.wpp.targets"
           DestinationFiles="%(Projects.RelativeDir)\Aderant.wpp.targets"
           UseHardlinksIfPossible="true"
           SkipUnchangedFiles="true"
           ContinueOnError="true" />
+    
+    <!--<AddBuildProjectNode Condition="'$(IsDesktopBuild)' != 'true'"
+                         TeamFoundationServerUri="$(TeamFoundationServerUrl)"
+                         BuildUri="$(BuildURI)"
+                         TeamProject="$(TeamProject)"
+                         Flavor="%(ConfigurationToBuild.FlavorToBuild)"
+                         Platform="%(ConfigurationToBuild.PlatformToBuild)"
+                         ProjectFile="$(SolutionFileName)" />-->
 
     <MSBuild Projects="$(SolutionFileName)"
              Properties="$(BuildProperties)"
              RemoveProperties="AssemblyVersion">
+      
       <!--The compiled assemblies from projects-->
       <Output ItemName="CompiledAssemblies"
               TaskParameter="TargetOutputs" />
@@ -648,7 +659,7 @@ doc.Save(File);
     <OnError ExecuteTargets="SetBuildBreakProperties;MarkBuildStepAsFailed" />
   </Target>
 
-  <Target Name="GetOutputAssemblyFromProject" 
+  <Target Name="GetOutputAssembliesFromProjects" 
           AfterTargets="Build" 
           Condition="'$(IsCustomBuild)' != 'true'">
     <!-- This target fixes a problem with TargetOutputs missing assemblies project in the solution file appears in a a post section. A most irritating MS Build bug. See TFS 121911-->
@@ -667,12 +678,22 @@ doc.Save(File);
     </XmlPeek>
 
     <ItemGroup>
-      <DllOutputs Condition="'@(ModuleProjects)' != ''"
+      <DllOutputs Condition="'@(ModuleProjects)' != '' And Exists(%(FullPath))"
                   Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
     </ItemGroup>
 
+    <!-- 
+      Fricking web projects output to [Module]\Src\[Project]\bin 
+      Since we can't do wild cards inside a item function -> we need to fall back to CreateItem here to scan all project bin dirs
+      for out output DLL
+    -->
+    <CreateItem Include="@(DllOutputs);@(AssemblyName->'$(ModuleSourceDirectory)**\%(Identity).dll')"
+                Exclude="$(ModuleSourceDirectory)**\obj\**">
+      <Output ItemName="DllOutputs" TaskParameter="Include" />
+    </CreateItem>
+
     <ItemGroup>
-      <ModuleBuildOutput Condition="'@(ModuleProjects)' != ''"
+      <ModuleBuildOutput Condition="'@(ModuleProjects)' != '' And Exists(%(DllOutputs.FullPath))"
                          Include="@(DllOutputs)">
         <OutputType>Module</OutputType>
       </ModuleBuildOutput>
@@ -696,7 +717,8 @@ doc.Save(File);
 
     <PropertyGroup>
       <IsWebModule>false</IsWebModule>
-      <IsWebModule Condition="$(ModuleName.Contains('Web.'))">true</IsWebModule>
+      <IsWebModule Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true'">true</IsWebModule>
+      <ExternalConstants Condition="'$(IsCustomBuild)' == 'true'">IS_CUSTOM_BUILD</ExternalConstants>	
     </PropertyGroup>
 
     <PropertyGroup>
@@ -709,9 +731,9 @@ doc.Save(File);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         BuildAll=$(BuildAll);
-        UseSharedTestRunDirectory=$(UseSharedTestRunDirectory);
         IsWebModule=$(IsWebModule);
         $(TeamBuildProperties);
+        ExternalConstants=$(ExternalConstants);
       </BuildProperties>
 
       <!-- Determine if we can build in process -->
@@ -988,15 +1010,13 @@ doc.Save(File);
     ==========================================================================================
   -->
   <PropertyGroup>
-    <RunUnitTestsDependsOn>
-      $(RunUnitTestsDependsOn);
-      Build;
-      BeforeRunUnitTests;
-    </RunUnitTestsDependsOn>
+    <RunTestDependsOn>
+      $(RunTestDependsOn);
+      BeforeRunTest;
+    </RunTestDependsOn>
   </PropertyGroup>
 
-  <Target Name="BeforeRunUnitTests" 
-          DependsOnTargets="Build">
+  <Target Name="BeforeRunTest">
     
     <ItemGroup>
       <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
@@ -1005,23 +1025,26 @@ doc.Save(File);
                                $(BinTestDirectory)Microsoft.*" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AssembliesToAnalyze Include="@(ModuleBuildOutput)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
+      <AssembliesToAnalyze Include="@(BuildOutput)" />
+    </ItemGroup>
+
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
-        Condition="'$(Use32BitTestRunner)' == '' And '@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Module'"
-        Assemblies="@(ModuleBuildOutput)">
-      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
-      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-    </GetAssemblyPlatform>
-
-    <GetAssemblyPlatform
-        Condition="'$(Use32BitTestRunner)' == '' And '@(ModuleBuildOutput)' == '' And '@(BuildOutput)' != ''"
-        Assemblies="@(CompiledAssemblies)">
+        Condition="'$(Use32BitTestRunner)' == ''"
+        Assemblies="@(AssembliesToAnalyze)">
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
     </GetAssemblyPlatform>
 
     <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
 
+    <!-- 
+      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override 
+      which includes two additional folders "ModuleBin" and "Dependencies". This is so unit tests can find dependencies
+      without relying on copy local having deployed assemblies to the test directory.
+    -->
     <PropertyGroup>
       <UnitTestAppConfigText>$([System.IO.File]::ReadAllText('$(BuildScriptsDirectory)UnitTestAppConfig.txt'))</UnitTestAppConfigText>
     </PropertyGroup>
@@ -1046,7 +1069,7 @@ doc.Save(File);
                       Lines="@(XmlLinesToWrite)"
                       Encoding="UTF-8" />
     
-    <Error Condition="'$(UnitTestAppConfigText)' == ''" Text="No unit tets app.config text" />
+    <Error Condition="'$(UnitTestAppConfigText)' == ''" Text="No unit test app.config text defined!" />
 
     <XDocumentPoke Condition="Exists(%(TestAssemblyConfigFiles.FullPath))"
                    File="%(TestAssemblyConfigFiles.FullPath)"
@@ -1056,15 +1079,15 @@ doc.Save(File);
     <MakeSymlink Condition="'@(TestAssemblies)' != ''"
                  Link="$(BinTestDirectory)Dependencies" 
                  Target="$(SolutionDirectoryPath)Dependencies" />
-
-    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+    
+    <MakeSymlink Condition="'@(TestAssemblies)' != '' And '$(IsWebModule)' != 'true'"
                  Link="$(BinTestDirectory)ModuleBin"
                  Target="$(BinModuleDirectory)" />
   </Target>
   
 
-  <Target Name="RunUnitTests"
-          DependsOnTargets="$(RunUnitTestsDependsOn)"
+  <Target Name="RunTest"
+          DependsOnTargets="$(RunTestDependsOn)"
           Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
 
     <BuildStep
@@ -1078,6 +1101,8 @@ doc.Save(File);
     </BuildStep>
   
     <PropertyGroup>
+      <!-- On the build server this target will get called twice because of EndToEndInteration. To stop this we set the RunTest flag to false. -->
+      <RunTest>false</RunTest>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
       <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
 
@@ -1126,11 +1151,13 @@ doc.Save(File);
   </Target>
 
 
-  <Target Name="AfterRunUnitTests"
-          AfterTargets="RunUnitTests">
+  <Target Name="AfterRunTest"
+          AfterTargets="RunTest">
     
-    <RemoveDir Directories="$(BinTestDirectory)Dependencies"  />
-    <RemoveDir Directories="$(BinTestDirectory)ModuleBin" />
+    <RemoveDir Directories="$(BinTestDirectory)Dependencies" 
+               ContinueOnError="true"  />
+    <RemoveDir Directories="$(BinTestDirectory)ModuleBin" 
+               ContinueOnError="true" />
     <RemoveDir Directories="$(BinTestDirectory)TestResults\packages" 
                ContinueOnError="true" />
     
@@ -1140,7 +1167,7 @@ doc.Save(File);
   </Target>
 
 
-  <Target Name="CopyTrxFile" AfterTargets="RunUnitTests">
+  <Target Name="CopyTrxFile" AfterTargets="RunTest">
     <ItemGroup>
       <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)**\*.trx" />
       <TestResults Condition="'$(BuildDirectory)' != '' And Exists('$(BuildDirectory)BuildType')" Include="$(BuildDirectory)BuildType\**\*.trx" />
@@ -1154,8 +1181,8 @@ doc.Save(File);
   
   <Target Name="InstallPester" 
           Condition="'$(PSTests)' == 'true'" 
-          AfterTargets="BeforeRunUnitTests"
-          BeforeTargets="RunUnitTests">
+          AfterTargets="BeforeRunTest"
+          BeforeTargets="RunTest">
     
     <Message Condition="'$(PSTests)' == 'true'" Text="Copying Pester files to test run directory." />
 
@@ -1194,7 +1221,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="PublishModule"
-          DependsOnTargets="RunUnitTests"
+          DependsOnTargets="RunTest"
           Condition="('$(PublishModule)' == 'true')">
 
     <BuildStep
@@ -1319,6 +1346,7 @@ doc.Save(File);
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Succeeded" />
+    
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
@@ -1342,6 +1370,12 @@ doc.Save(File);
 
     <!--We have differing ways of determining the drop location depending on the type of build. 
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
+    
+    <!-- Remove the symlinked folders if they exist (we don't want to copy all of this to the drop!) -->
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\Dependencies"
+               ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\ModuleBin"
+               ContinueOnError="true" />
 
     <Exec Condition="('$(BuildAll)'=='true')"
           ContinueOnError="false"
@@ -1370,8 +1404,8 @@ doc.Save(File);
   -->
   <Target Name="IndexSourcesAndPublishSymbols"
           Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
-          DependsOnTargets="Build;RunUnitTests"
-          AfterTargets="AfterRunUnitTests">
+          DependsOnTargets="Build;RunTest"
+          AfterTargets="AfterRunTest">
 
     <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
   </Target>
@@ -1388,10 +1422,26 @@ doc.Save(File);
     <Error Condition="'$(SharedDependencyDirectory)' == ''" Text="The shared dependency directory is not defined" />
     <Error Condition="!Exists('$(SharedDependencyDirectory)')" Text="The common dependency directory $(SharedDependencyDirectory) does not exist." />
 
+    <ItemGroup>
+      <!-- XML documentation files provide no benefit for the build process so we don't replicate them -->
+      <XmlDocumentationFileList Include="@(CompiledAssemblies -> '%(RootDir)%(Directory)%(Filename).xml')" />
+    </ItemGroup>
+    
     <!-- Symlink the output of into Bin\Module into the common dependencies directory so the next build can pick them up -->
     <ItemGroup>
+      <!-- 
+          TFS: 122744
+          We exclude the cmsmsg files here. I don't think this is "correct" as it makes the build system
+          aware of what it's building but there is a frustrating interplay through the use of statics and singletons through
+          out the Expert code base that constantly cause quirky issues. By excluding the msg file from dependency replication           
+          it prevents TextTranslator loading a message file while unit tests are running and then having those tests fail.
+      -->
       <FilesToReplicate Include="$(BinModuleDirectory)**\*" 
-                        Exclude="$(BinModuleDirectory)CodeAnalysis\**;$(BinModuleDirectory)*.pdb" />
+                        Exclude="$(BinModuleDirectory)CodeAnalysis\**;
+                                 $(BinModuleDirectory)**\*.pdb;
+                                 $(BinModuleDirectory)**\*cmsmsg*.msg;
+                                 $(BinModuleDirectory)**\*exe.config;
+                                 @(XmlDocumentationFileList)" />
     </ItemGroup>
 
     <Message Text="Replicating module output to shared dependencies directory: $(SharedDependencyDirectory)" />
@@ -1444,18 +1494,18 @@ doc.Save(File);
       Lines="@(ModuleBuildOutput)"
       Overwrite="true"
       File="$(ModuleBuildTempDirectory)ModuleTestOutput.txt" />
-
+    
     <!-- 
       Copy to the drop can be asynchronous if the build is using a shared dependency directory as the replication of dependencies will occur using hardlinks
       in this case.
     -->
-    <AsyncExec Condition="('$(BuildAll)' == 'true' And '$(UseSharedDependencyDirectory)' == 'true' And '$(IsCustomBuild)'!='true')"
+    <AsyncExec Condition="('$(BuildAll)' == 'true' And '$(UseSharedDependencyDirectory)' == 'true' And '$(IsCustomBuild)' != 'true')"
                ContinueOnError="false"
                LogFile="$(ModuleDropLocation)$(FileVersion)\CopyToDrop.txt"
                Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(ModuleDropLocation) -assemblyFileVersion $(FileVersion) $(SuppressUniqueCheck)'  />
 
     <!--Otherwise copy to the drop synchronously -->
-    <Exec Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true' And '$(IsCustomBuild)'!='true')"
+    <Exec Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true' And '$(IsCustomBuild)' != 'true')"
           ContinueOnError="false"
           IgnoreExitCode="false"
           Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) -dropRootUNCPath $(ModuleDropLocation) -assemblyFileVersion $(FileVersion) $(SuppressUniqueCheck)'  />
@@ -1481,6 +1531,52 @@ doc.Save(File);
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
+
+
+  <!--
+    ==========================================================================================
+        Publishes build details into TFS.
+        This is done in a build all so we can have visibility of modules built during a build all
+        and have TFS manage the drop via retention policies for us.
+    ==========================================================================================
+  -->
+  <Target Name="PublishBuild" Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+
+    <Message Text="Publishing build for: $(ModuleName) [$(FileVersion)]" />
+    <Message Text="BaseDropDirectory: $(BaseDropDirectory) [$(DropLocation)]" />
+
+    <PublishBuild
+      CurrentBuildUri="$(BuildUri)"
+      DropLocation="$(BaseDropDirectory)"
+      ModuleName="$(ModuleName)"
+      BranchName="$(BranchName)"
+      FileVersion="$(FileVersion)"
+      AssemblyVersion="$(AssemblyVersion)"
+      TeamFoundationServerUri="$(TeamFoundationServerUrl)"
+      TeamProject="$(TeamProject)">
+      
+      <Output 
+        TaskParameter="PublishedBuildUri" 
+        PropertyName="PublishedBuildUri" />
+      
+    </PublishBuild>
+      
+    </Target>
+  
+  
+  <Target Name="FinalizeBuild" Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    
+    <Error Condition="'$(PublishedBuildUri)' == ''" Text="Undefined property: PublishedBuildUri" />
+    
+    <FinalizeBuild
+      CurrentBuildUri="$(BuildUri)"
+      BuildToFinalizeUri="$(PublishedBuildUri)"
+      ModuleName="$(ModuleName)"
+      TeamFoundationServerUri="$(TeamFoundationServerUrl)"
+      TeamProject="$(TeamProject)" />
+  
+  </Target>
+  
 
   <!--
     ==========================================================================================
@@ -1573,6 +1669,9 @@ doc.Save(File);
       BuildUri="$(BuildUri)"
       TestStatus="Failed"
       CompilationStatus="Failed" />
+    
+    <CallTarget Targets="FinalizeBuild" />
+
   </Target>
 
   <!--

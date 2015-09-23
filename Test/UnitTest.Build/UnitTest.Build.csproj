@@ -74,7 +74,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncExecTests.cs" />
+    <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="IntegrationTestBuilderTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="PathHelperTest.cs" />

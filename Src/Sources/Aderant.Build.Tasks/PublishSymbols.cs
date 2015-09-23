@@ -74,7 +74,7 @@ namespace Aderant.Build.Tasks {
 
                     return !Log.HasLoggedErrors;
                 } else {
-                    Log.LogMessage("Unable to acquire lock {1} - retrying", fileLock.LockName);
+                    Log.LogMessage("Unable to acquire lock {0} - retrying", fileLock.LockName);
                     Thread.Sleep(TimeSpan.FromSeconds(1));
                 }
             }

@@ -59,6 +59,21 @@
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
+  <!-- Creates "fakes" builds in TFS -->
+  <UsingTask TaskName="PublishBuild"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <!-- Closes and finalizes a build -->
+  <UsingTask TaskName="FinalizeBuild"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <!-- Adds solution build details into TFS so the build can track warnings etc -->
+  <UsingTask TaskName="AddBuildProjectNode"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
   <PropertyGroup>
     <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == ''">$(MSBuildThisFileDirectory)\</BuildScriptsDirectory>
     
@@ -121,7 +136,7 @@
     ==========================================================================================
   -->
   <Target Name="SetBuildNumbers"
-          Condition="'$(IsDesktopBuild)' != 'true' And (('$(FileVersion)' == '' And '$(AssemblyVersion)' == '') Or '$(ForceVersion)' == 'true')">
+          Condition="('$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true') And (('$(FileVersion)' == '' And '$(AssemblyVersion)' == '') Or '$(ForceVersion)' == 'true')">
 
     <PropertyGroup>
       <VersionMajor Condition="'$(VersionMajor)' == ''">1</VersionMajor>

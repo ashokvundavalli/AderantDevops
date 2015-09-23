@@ -19,11 +19,11 @@ begin {
 
 process {
 	$source = PathToLatestSuccessfulBuild $UiFrameworkDirectory
-	Write-Host "Copying $source to $TargetDirectory"
-	robocopy.exe /NJS /NJH /NS /NC /NFL /NDL /S /R:2 /W:5  $source $TargetDirectory
+	Write-Host "Copying Test Dependencies from [$source] to [$TargetDirectory]"
+	robocopy.exe /NJS /NJH /NS /NC /NFL /NDL /S /R:5 /W:2  $source $TargetDirectory
 }
 
 end {
-    write "Copied Test Dependencies from $source to $TargetDirectory"
+    write "Copy of Test Dependencies completed."
 }
 

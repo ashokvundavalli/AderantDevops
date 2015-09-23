@@ -34,7 +34,6 @@
 
     <PropertyGroup>
       <SharedDependencyDirectory>$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
-      <SharedTestRunDirectory>$(SolutionRoot)TestRun\</SharedTestRunDirectory>
 
       <!-- Default to the production TFS server -->
       <TeamFoundationServerUrl Condition="'$(TeamFoundationServerUrl)' == ''">http://tfs:8080/tfs/aderant</TeamFoundationServerUrl>
@@ -51,7 +50,6 @@
       BuildAll="true"
       ModulesInBuild="@(ModulesInBuild)" />
 
-
     <ItemGroup>
       <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
                          Exclude="$(SolutionRoot)Dependencies;
@@ -66,15 +64,25 @@
       Type="D" />
 
     <!-- 
+        TFS: 122744
+        We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
+        aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the module
+        the produces the message file(s) then the build can fail as on some application module builds. By delete the msg file from 
+        dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
+        as the test are generally written to assume no message file is available and so don't expect to find translated strings.
+      -->
+    <ItemGroup>
+      <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
+    </ItemGroup>
+    
+    <Delete Files="@(MessageFiles)" />
+
+    <!-- 
       This project is called in a different scope from the build all entry point TFSBuild.proj so we need to explicity 
       build up our properties to return to our invoker via the Returns attribute
     -->
     <ItemGroup>
       <TargetReturns Include="SharedDependencyDirectory=$(SharedDependencyDirectory)">
-        <Type>Property</Type>
-      </TargetReturns>
-
-      <TargetReturns Include="SharedTestRunDirectory=$(SharedTestRunDirectory)">
         <Type>Property</Type>
       </TargetReturns>
 

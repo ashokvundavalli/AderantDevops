@@ -1,17 +1,54 @@
-//using System;
-//using System.Collections.Generic;
-//using System.IO;
-//using System.Linq;
-//using System.Xml.Linq;
-//using Aderant.Build.Commands;
-//using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer;
 
+namespace Aderant.Build.Providers {
+    /// <summary>
+    /// Represents an ExpertSuite developement environment . 
+    /// 
+    /// The ideal is to make this class the single entry point for all services required for working with Expert Suite.
+    /// This class should manage the various manifest files and provide a set of dependency analysis services.
+    /// 
+    /// The class also talks to Team Foundation. 
+    /// </summary>
+    internal class ModuleWorkspace {
+        //private string teamProject;
+        //private string teamFoundationServerUri;
+        //private IServiceProvider teamFoundationFactory;
 
-//namespace Aderant.Build.Providers {
-//    /// <summary>
-//    /// A <see cref="IModuleProvider"/> which returns branch information from the current Team Foundation workspace.
-//    /// </summary>
-//    internal class WorkspaceModuleProvider : IModuleProvider {
+        ///// <summary>
+        ///// Initializes a new instance of the <see cref="BuildDetailPublisher"/> class.
+        ///// </summary>
+        ///// <param name="teamFoundationServerUri">The team foundation server URI.</param>
+        ///// <param name="teamProject">The team project.</param>
+        //public WorkspaceModuleProvider(string teamFoundationServerUri, string teamProject) {
+        //    this.teamProject = teamProject;
+        //    this.teamFoundationServerUri = teamFoundationServerUri;
+        //}
+
+        public ModuleWorkspace(string expertManifestPath) {
+            IModuleProvider manifest = ExpertManifest.Load(expertManifestPath);
+
+            DependencyAnalyzer = new DependencyBuilder(manifest);
+        }
+
+        ///// <summary>
+        ///// Gets or sets the team foundation server factory.
+        ///// </summary>
+        ///// <value>
+        ///// The team foundation factory.
+        ///// </value>
+        //public IServiceProvider TeamFoundationServiceFactory {
+
+        //    get {
+        //        if (teamFoundationFactory == null) {
+        //            teamFoundationFactory = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(teamFoundationServerUri));
+        //        }
+        //        return teamFoundationFactory;
+        //    }
+        //    set { teamFoundationFactory = value; }
+        //}
+
+        public DependencyBuilder DependencyAnalyzer { get; private set; }
+
 //        private readonly ExpertManifest expertManifest;
 //        private readonly string moduleDirectory;
 
@@ -124,4 +161,12 @@
 //            return File.Exists(Path.Combine(moduleDirectory, moduleName, "Build", "TFSBuild.proj"));
 //        }
 //    }
-//}
+        public void GetModulesInPendingChanges(string branchModulesDirectory) {
+
+            //  var info = Workstation.Current.GetAllLocalWorkspaceInfo();
+
+            // info[0].GetWorkspace((TfsTeamProjectCollection)teamFoundationFactory).GetPendingChanges()
+
+        }
+    }
+}

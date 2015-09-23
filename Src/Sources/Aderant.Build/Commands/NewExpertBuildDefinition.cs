@@ -4,11 +4,8 @@ using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.Process;
 using Lapointe.PowerShell.MamlGenerator.Attributes;
 using Microsoft.TeamFoundation.Build.Client;
-using Microsoft.TeamFoundation.Client;
-using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.New, "ExpertBuildDefinition")]
@@ -75,87 +72,47 @@ namespace Aderant.Build.Commands {
                 throw new PSInvalidOperationException(string.Format("Current branch path {0} does not contain the current module path {1}", branchPath, modulePath));
             }
 
-            TfsTeamProjectCollection project = TeamFoundationHelper.GetTeamProjectServer();
-            var buildServer = project.GetService<IBuildServer>();
-
             string serverPathToModule = GetServerPathForModule(modulePath);
-            var buildInfrastructurePath = GetServerPathForModule(Path.Combine(Path.Combine(branchPath, "Modules"), "Build.Infrastructure"));
+            string buildInfrastructurePath = GetServerPathForModule(Path.Combine(Path.Combine(branchPath, "Modules"), "Build.Infrastructure"));
 
             var buildConfiguration = new ExpertBuildConfiguration(branchName) {
                 ModuleName = ModuleName,
                 TeamProject = TeamFoundationHelper.TeamProject,
-                ServerPathToModule = serverPathToModule,
+                SourceControlPathToModule = serverPathToModule,
                 BuildInfrastructurePath = buildInfrastructurePath,
                 DropLocation = ParameterHelper.GetDropPath(null, SessionState)
             };
 
             IBuildDefinition existingDefinition;
-            Host.UI.WriteLine("Checking for existing build for " + ModuleName);
+
+            Host.UI.WriteLine("ModuleName: " + buildConfiguration.ModuleName);
+            Host.UI.WriteLine("TeamProject: " + buildConfiguration.TeamProject);
+            Host.UI.WriteLine("ServerPathToModule: " + buildConfiguration.SourceControlPathToModule);
+            Host.UI.WriteLine("BuildInfrastructurePath: " + buildConfiguration.BuildInfrastructurePath);
+            Host.UI.WriteLine("DropLocation: " + buildConfiguration.DropLocation);
+
+            var buildPublisher = new BuildDetailPublisher(TeamFoundationHelper.TeamFoundationServerUri, TeamFoundationHelper.TeamProject);
+            IBuildServer buildServer = (IBuildServer)buildPublisher.TeamFoundationServiceFactory.GetService(typeof(IBuildServer));
+
             if (CheckForExistingBuild(buildConfiguration, buildServer, out existingDefinition)) {
-                Host.UI.WriteLine(string.Format("A build definition with the name [{0}] for the given module {1} already exists. Updating...", existingDefinition.Name, ModuleName));
-
-                // Add build settings etc
-                DefinitionParametersConfigurator.ConfigureDefinitionParameters(existingDefinition, null);
-                existingDefinition.Save();
-                return;
+                IBuildDefinition definition = buildPublisher.CreateBuildDefinition(buildConfiguration);
+                Host.UI.WriteLine(string.Format("Updated build definition with the name [{0}] for the given module {1}.", definition.Name, ModuleName));
+            } else {
+                IBuildDefinition definition = buildPublisher.CreateBuildDefinition(buildConfiguration);
+                Host.UI.WriteLine(string.Format("Creating new build definition with the name [{0}] for the given module {1}.", definition.Name, ModuleName));
             }
-
-            CreateBuildDefinition(buildConfiguration, buildServer);
 
             AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;
         }
 
-        private void CreateBuildDefinition(ExpertBuildConfiguration configuration, IBuildServer buildServer) {
-            Host.UI.WriteLine("Creating new build for " + ModuleName);
-
-            Host.UI.WriteLine("ModuleName: " + configuration.ModuleName);
-            Host.UI.WriteLine("TeamProject: " + configuration.TeamProject);
-            Host.UI.WriteLine("ServerPathToModule: " + configuration.ServerPathToModule);
-            Host.UI.WriteLine("BuildInfrastructurePath: " + configuration.BuildInfrastructurePath);
-            Host.UI.WriteLine("DropLocation: " + configuration.DropLocation);
-
-            IBuildDefinition buildDefinition = buildServer.CreateBuildDefinition(TeamFoundationHelper.TeamProject);
-            buildDefinition.Name = configuration.BuildName;
-
-            // Trigger type
-            buildDefinition.ContinuousIntegrationType = ContinuousIntegrationType.Individual;
-
-            SetDefinitionProperties(configuration, buildServer, buildDefinition);
-            buildDefinition.Save();
-        }
-
-        private static void SetDefinitionProperties(ExpertBuildConfiguration configuration, IBuildServer buildServer, IBuildDefinition buildDefinition) {
-            // Workspace 
-            buildDefinition.Workspace.AddMapping(configuration.ServerPathToModule, "$(SourceDir)", WorkspaceMappingType.Map);
-            buildDefinition.Workspace.AddMapping(configuration.BuildInfrastructurePath, @"$(SourceDir)\Build\Build.Infrastructure", WorkspaceMappingType.Map);
-
-            var controller = SetController(configuration, buildServer);
-
-            buildDefinition.BuildController = controller;
-            buildDefinition.DefaultDropLocation = configuration.DropLocation;
-
-            IProcessTemplate upgradeTemplate = buildServer.QueryProcessTemplates(buildDefinition.TeamProject).First(p => p.TemplateType == ProcessTemplateType.Upgrade);
-            buildDefinition.Process = upgradeTemplate;
-
-            // Add build settings etc
-            DefinitionParametersConfigurator.ConfigureDefinitionParameters(buildDefinition, configuration);
-        }
-
-        private static IBuildController SetController(ExpertBuildConfiguration configuration, IBuildServer buildServer) {
-            // Build Defaults
-            IBuildController[] controllers = buildServer.QueryBuildControllers();
-            controllers = controllers.Where(c => c.Agents.Count > 1).ToArray();
-            Random random = new Random(configuration.GetHashCode());
-            IBuildController controller = controllers[random.Next(controllers.Length)];
-            return controller;
-        }
-
         private bool CheckForExistingBuild(ExpertBuildConfiguration buildConfiguration, IBuildServer buildServer, out IBuildDefinition existingDefinition) {
+            Host.UI.WriteLine("Checking for existing build for " + buildConfiguration.ModuleName);
+
             IBuildDefinitionSpec spec = buildServer.CreateBuildDefinitionSpec(buildConfiguration.TeamProject);
             IBuildDefinitionQueryResult result = buildServer.QueryBuildDefinitions(spec);
 
             foreach (IBuildDefinition buildDefinition in result.Definitions) {
-                if (buildDefinition.Workspace.Mappings.Any(m => m.ServerItem.Equals(buildConfiguration.ServerPathToModule, StringComparison.OrdinalIgnoreCase))) {
+                if (buildDefinition.Workspace.Mappings.Any(m => m.ServerItem.Equals(buildConfiguration.SourceControlPathToModule, StringComparison.OrdinalIgnoreCase))) {
                     existingDefinition = buildDefinition;
                     return true;
                 }
@@ -174,43 +131,6 @@ namespace Aderant.Build.Commands {
                 }
 
             throw new PSInvalidOperationException("Unable to get server path for local path: " + path);
-        }
-    }
-
-    internal sealed class ExpertBuildConfiguration {
-        private readonly string branchName;
-
-        public ExpertBuildConfiguration(string branchName) {
-            this.branchName = branchName.Replace("\\", ".");
-        }
-
-        public string TeamProject {
-            get;
-            set;
-        }
-
-        public string ModuleName {
-            get;
-            set;
-        }
-
-        public string ServerPathToModule {
-            get;
-            set;
-        }
-
-        public string BuildInfrastructurePath {
-            get;
-            set;
-        }
-
-        public string BuildName {
-            get { return string.Concat(branchName, ".", ModuleName); }
-        }
-
-        public string DropLocation {
-            get;
-            set;
         }
     }
 }

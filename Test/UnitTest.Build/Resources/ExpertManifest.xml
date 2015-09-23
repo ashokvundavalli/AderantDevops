@@ -107,7 +107,6 @@
     <Module Name="Thirdparty.Microsoft.OData" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.Microsoft.Office11.Interop" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.Microsoft.Office12.Interop" GetAction="branch" Path="Main" />
-    <Module Name="Thirdparty.Microsoft.Practices" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.Microsoft.UrlRewrite" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.Microsoft.VisualStudio" />
     <Module Name="Thirdparty.Microsoft.WcfRest" GetAction="branch" Path="Main" />
@@ -135,7 +134,6 @@
     <Module Name="Thirdparty.WiX" GetAction="branch" Path="Main" />
     <Module Name="ThirdParty.Xceed" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.Xceed.4" GetAction="branch" Path="Main" />
-    <Module Name="Thirdparty.Xenocode" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.ZipLibrary" GetAction="branch" Path="Main" />
     <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
     <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />

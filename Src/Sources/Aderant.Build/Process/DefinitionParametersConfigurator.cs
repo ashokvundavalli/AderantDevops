@@ -13,7 +13,7 @@ namespace Aderant.Build.Process {
             var parameters = WorkflowHelpers.DeserializeProcessParameters(buildDefinition.ProcessParameters);
 
             if (configuration != null) {
-                parameters["ConfigurationFolderPath"] = configuration.ServerPathToModule + "/Build";
+                parameters["ConfigurationFolderPath"] = configuration.SourceControlPathToModule + "/Build";
             }
 
             FixupPre2013Parameter(parameters);

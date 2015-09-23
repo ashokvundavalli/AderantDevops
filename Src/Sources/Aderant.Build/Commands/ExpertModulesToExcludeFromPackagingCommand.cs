@@ -5,23 +5,30 @@ using System.Management.Automation;
 using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Providers;
 using ModuleType = Aderant.Build.DependencyAnalyzer.ModuleType;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "ExpertModulesToExcludeFromPackaging")]
     public sealed class ExpertModulesToExcludeFromPackagingCommand : PSCmdlet {
-        [Parameter(Mandatory = false, Position = 0)]
-        public string BranchPath { get; set; }
-
-        [Parameter(Position = 1)]
+        
+        [Parameter(Position = 0)]
         public object Manifest { get; set; }
+
+        [Parameter(Mandatory = true, Position = 1)]
+        public string ExpertManifestPath { get; set; }
+
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
-            string branchPath = ParameterHelper.GetBranchPath(BranchPath, SessionState);
+            if (string.IsNullOrEmpty(ExpertManifestPath)) {
+                throw new InvalidOperationException("Unable to filter modules as no path ExpertManifest.xml was provided");
+            }
 
-            DependencyBuilder builder = new DependencyBuilder(branchPath);
+            ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath);
+            DependencyBuilder builder = provider.DependencyAnalyzer;
+
             List<ExpertModule> modules = builder.GetAllModules().ToList();
             List<ModuleDependency> allDependencies = builder.GetModuleDependencies(true).ToList();
 
@@ -39,8 +46,8 @@ namespace Aderant.Build.Commands {
                     }
 
                     ExpertModule[] dependencies = (from dependency in allDependencies
-                        where dependency.Consumer.Equals(module)
-                        select dependency.Provider).Distinct().ToArray();
+                                                   where dependency.Consumer.Equals(module)
+                                                   select dependency.Provider).Distinct().ToArray();
 
                     if (module.ModuleType == ModuleType.Web) {
                         foreach (ExpertModule dependency in dependencies) {

@@ -54,6 +54,10 @@ namespace Aderant.Build.Process {
 
                             if (File.Exists(responseFile)) {
                                 string[] properties = File.ReadAllLines(responseFile);
+
+                                // We want to be able to specify the flavor globally in a build all so remove it from the property set
+                                properties = RemoveFlavor(properties);
+
                                 string singlePropertyLine = CreateSinglePropertyLine(properties);
 
                                 if (buildDirectory.Parent != null) {
@@ -67,6 +71,12 @@ namespace Aderant.Build.Process {
                 }
                 return project;
             }
+        }
+
+        private string[] RemoveFlavor(string[] properties) {
+            IEnumerable<string> newProperties = properties.Where(p => p.IndexOf("BuildFlavor", StringComparison.InvariantCultureIgnoreCase) == -1);
+
+            return newProperties.ToArray();
         }
 
         private string CreateSinglePropertyLine(string[] properties) {
