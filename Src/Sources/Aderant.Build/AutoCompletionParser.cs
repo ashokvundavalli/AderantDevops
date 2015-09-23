@@ -12,12 +12,12 @@ namespace Aderant.Build {
         private readonly string lastWord;
 
         public AutoCompletionParser(string line, string lastWord, object[] aliases) {
-            Debug.WriteLine(string.Format("Aderant:Auto-Complete Line: {0}, lastWord: {1}", (line ?? string.Empty).Replace(" ", "<space>"), (lastWord ?? string.Empty).Replace(" ", "<space>")));
+            Debug.WriteLine("Aderant:Auto-Complete Line: {0}, lastWord: {1}", (line ?? string.Empty).Replace(" ", "<space>"), (lastWord ?? string.Empty).Replace(" ", "<space>"));
 
-            Debug.WriteLine(string.Format("Aderant:Auto-Complete, Alias Count: {0}", aliases.Length));
+            Debug.WriteLine("Aderant:Auto-Complete, Alias Count: {0}", aliases.Length);
             if(aliases.Length > 0) {
                 aliases.OfType<PSObject>().ToList().ForEach(alias => {
-                    Debug.WriteLine(string.Format("Aderant:Auto-Complete, Alias Name: {0}, Value {1}", alias.Properties["Name"].Value, alias.Properties["Definition"].Value));
+                    Debug.WriteLine("Aderant:Auto-Complete, Alias Name: {0}, Value {1}", alias.Properties["Name"].Value, alias.Properties["Definition"].Value);
                 });
             }
             

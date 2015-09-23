@@ -94,7 +94,7 @@ namespace UnitTest.Build {
             DependencyBuilder builder = new DependencyBuilder(provider);
             var builds = builder.GetTree(true).ToList();
 
-            Assert.AreEqual(3, builds.Count());
+            Assert.AreEqual(3, builds.Count);
             CollectionAssert.AllItemsAreUnique(builds);
         }
 
@@ -105,7 +105,7 @@ namespace UnitTest.Build {
             DependencyBuilder builder = new DependencyBuilder(provider);
             var builds = builder.GetTree(true).ToList();
 
-            Assert.AreEqual(3, builds.Count());
+            Assert.AreEqual(3, builds.Count);
             CollectionAssert.AllItemsAreUnique(builds);
 
             Aderant.Build.Build build = builds.Last();

@@ -136,7 +136,7 @@ namespace Aderant.Build.Commands {
                                 }
                                 if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    // The source is a web module, these are packaged using webdeploy and need to be uzipped and copied in a specific way.
+                                    // The source is a web module, these are packaged using webdeploy and need to be unzipped and copied in a specific way.
                                     dependency.Provider.Deploy(targetPath);
                                     //  CallWebPackageExtract(targetPath, branchPath, dependency);
                                 }

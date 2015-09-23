@@ -1,4 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Controls;
 using Aderant.Build.DependencyAnalyzer;
+using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Providers {
     /// <summary>
@@ -9,164 +18,217 @@ namespace Aderant.Build.Providers {
     /// 
     /// The class also talks to Team Foundation. 
     /// </summary>
-    internal class ModuleWorkspace {
-        //private string teamProject;
-        //private string teamFoundationServerUri;
-        //private IServiceProvider teamFoundationFactory;
+    public class ModuleWorkspace {
+        private readonly string branchPath;
+        private string teamProject;
+        private string teamFoundationServerUri;
+        private IServiceProvider teamFoundationFactory;
 
-        ///// <summary>
-        ///// Initializes a new instance of the <see cref="BuildDetailPublisher"/> class.
-        ///// </summary>
-        ///// <param name="teamFoundationServerUri">The team foundation server URI.</param>
-        ///// <param name="teamProject">The team project.</param>
-        //public WorkspaceModuleProvider(string teamFoundationServerUri, string teamProject) {
-        //    this.teamProject = teamProject;
-        //    this.teamFoundationServerUri = teamFoundationServerUri;
-        //}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ModuleWorkspace"/> class.
+        /// </summary>
+        /// <param name="branchPath">The server branch path.</param>
+        /// <param name="teamFoundationServerUri">The team foundation server URI.</param>
+        /// <param name="teamProject">The team project.</param>
+        public ModuleWorkspace(string branchPath, string teamFoundationServerUri, string teamProject) {
+            this.branchPath = branchPath;
+            this.teamProject = teamProject;
+            this.teamFoundationServerUri = teamFoundationServerUri;
 
+            Task.Run(() => {
+                WorkspaceWrapper workspace = GetWorkspaceForItem(branchPath);
+
+                // We may have been passed a local path C:\Foo rather than $/Path/ so convert it if needed.
+                branchPath = workspace.GetServerPath(branchPath);
+
+                WorkspaceItem item = workspace.Find(CombineServerPaths(branchPath, "*ExpertManifest.xml"), "Src");
+
+                Initialize(item.LocalItem);
+            });
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ModuleWorkspace"/> class.
+        /// </summary>
+        /// <param name="expertManifestPath">The expert manifest path.</param>
         public ModuleWorkspace(string expertManifestPath) {
-            IModuleProvider manifest = ExpertManifest.Load(expertManifestPath);
+            Initialize(expertManifestPath);
+        }
 
+        private void Initialize(string expertManifestPath) {
+            IModuleProvider manifest = ExpertManifest.Load(expertManifestPath);
             DependencyAnalyzer = new DependencyBuilder(manifest);
         }
 
-        ///// <summary>
-        ///// Gets or sets the team foundation server factory.
-        ///// </summary>
-        ///// <value>
-        ///// The team foundation factory.
-        ///// </value>
-        //public IServiceProvider TeamFoundationServiceFactory {
+        private string CombineServerPaths(params string[] paths) {
+            return string.Join(Path.AltDirectorySeparatorChar.ToString(CultureInfo.InvariantCulture), paths);
+        }
 
-        //    get {
-        //        if (teamFoundationFactory == null) {
-        //            teamFoundationFactory = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(teamFoundationServerUri));
-        //        }
-        //        return teamFoundationFactory;
-        //    }
-        //    set { teamFoundationFactory = value; }
-        //}
+        /// <summary>
+        /// Gets or sets the team foundation server factory.
+        /// </summary>
+        /// <value>
+        /// The team foundation factory.
+        /// </value>
+        public IServiceProvider TeamFoundationServiceFactory {
+            get {
+                if (teamFoundationFactory == null) {
+                    teamFoundationFactory = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(teamFoundationServerUri));
+                }
+                return teamFoundationFactory;
+            }
+            set { teamFoundationFactory = value; }
+        }
 
         public DependencyBuilder DependencyAnalyzer { get; private set; }
 
-//        private readonly ExpertManifest expertManifest;
-//        private readonly string moduleDirectory;
+        /// <summary>
+        /// Gets the modules for the given names.
+        /// </summary>
+        /// <param name="moduleNames">The module names.</param>
+        public ICollection<ExpertModule> GetModules(string[] moduleNames) {
+            IEnumerable<ExpertModule> modules = DependencyAnalyzer.GetAllModules();
 
-//        /// <summary>
-//        /// Initializes a new instance of the <see cref="WorkspaceModuleProvider" /> class.
-//        /// </summary>
-//        /// <param name="moduleDirectory"></param>
-//        /// <param name="expertManifest">The expert manifest.</param>
-//        /// <exception cref="System.IO.DirectoryNotFoundException"></exception>
-//        public WorkspaceModuleProvider(string moduleDirectory, ExpertManifest expertManifest) {
-//            if (moduleDirectory.IndexOf("Modules", StringComparison.OrdinalIgnoreCase) == -1) {
-//                moduleDirectory = Path.Combine(moduleDirectory, "Modules");
-//            }
+            return modules.Where(m => moduleNames.Contains(m.Name, StringComparer.OrdinalIgnoreCase)).ToArray();
+        }
 
-//            this.moduleDirectory = moduleDirectory;
-//            this.expertManifest = expertManifest;
+        /// <summary>
+        /// Gets the modules with pending changes.
+        /// </summary>
+        /// <param name="branchPath">The branch path to restrict changes to.</param>
+        public ICollection<ExpertModule> GetModulesWithPendingChanges(string branchPath) {
+            string[] names = GetModuleNamesWithPendingChanges(branchPath);
 
-//            Branch = expertManifest.Branch;
-//        }
+            IEnumerable<ExpertModule> modules = DependencyAnalyzer.GetAllModules();
 
-//        /// <summary>
-//        /// Gets the product manifest path.
-//        /// </summary>
-//        /// <value>
-//        /// The product manifest path.
-//        /// </value>
-//        public string ProductManifestPath { get; private set; }
+            List<ExpertModule> modulesWithChanges = new List<ExpertModule>(names.Length);
 
-//        /// <summary>
-//        /// Gets the two part branch name
-//        /// </summary>
-//        /// <value>
-//        /// The branch.
-//        /// </value>
-//        public string Branch { get; private set; }
+            foreach (string name in names) {
+                foreach (ExpertModule module in modules) {
+                    if (string.Equals(module.Name, name, StringComparison.OrdinalIgnoreCase)) {
+                        modulesWithChanges.Add(module);
+                        break;
+                    }
+                }
+            }
 
-//        /// <summary>
-//        /// Gets the distinct complete list of available modules and those referenced in Dependency Manifests.
-//        /// </summary>
-//        /// <returns></returns>
-//        public IEnumerable<ExpertModule> GetAll() {
-//            HashSet<ExpertModule> branchModules = new HashSet<ExpertModule>();
+            return modulesWithChanges;
+        }
 
-//            IEnumerable<ExpertModule> modules = expertManifest.GetAll();
+        private string[] GetModuleNamesWithPendingChanges(string branchPath) {
+            WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
 
-//            foreach (string directory in Directory.GetDirectories(moduleDirectory)) {
-//                DependencyManifest manifest;
-//                if (!TryGetDependencyManifest(directory, out manifest)) {
-//                    continue;
-//                }
+            HashSet<string> moduleNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-//                branchModules.Add(new ExpertModule {
-//                    Name = directory
-//                });
+            for (int i = 0; i < workspaceInfo.Length; i++) {
+                WorkspaceInfo info = workspaceInfo[i];
 
-//                foreach (ExpertModule module in manifest.ReferencedModules) {
-//                    branchModules.Add(module);
-//                }
-//            }
+                Workspace workspace;
+                try {
+                    workspace = info.GetWorkspace((TfsTeamProjectCollection) TeamFoundationServiceFactory);
+                } catch (InvalidOperationException) {
+                    continue;
+                }
 
-//            return modules.Union(branchModules);
-//        }
+                char[] splitCharArray = new char[] {Path.DirectorySeparatorChar};
 
-//        /// <summary>
-//        /// Tries to get the Dependency Manifest document from the given module.  
-//        /// </summary>
-//        /// <param name="moduleName">Name of the module.</param>
-//        /// <param name="manifest">The manifest.</param>
-//        /// <returns></returns>
-//        public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
-//            string modulePath = Path.Combine(moduleDirectory, moduleName);
+                if (workspace != null) {
+                    PendingChange[] pendingChanges = workspace.GetPendingChanges();
 
-//            if (Directory.Exists(modulePath)) {
-//                if (File.Exists(Path.Combine(modulePath, DependencyManifest.PathToDependencyManifestFile))) {
-//                    manifest = DependencyManifest.LoadFromModule(modulePath);
-//                    return true;
-//                }
-//            }
+                    foreach (PendingChange change in pendingChanges) {
+                        if (change.ItemType == ItemType.File) {
+                            if (change.LocalItem.IndexOf(branchPath, StringComparison.OrdinalIgnoreCase) >= 0) {
+                                string localItem = change.LocalItem;
 
-//            manifest = null;
-//            return false;
-//        }
+                                string folder = localItem.Substring(localItem.IndexOf(branchPath, StringComparison.OrdinalIgnoreCase) + branchPath.Length);
 
-//        /// <summary>
-//        /// Tries to the get the path to the dependency manifest for a given module.
-//        /// </summary>
-//        /// <param name="moduleName">Name of the module.</param>
-//        /// <param name="manifestPath">The manifest path.</param>
-//        /// <returns></returns>
-//        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-//            string dependencyManifest = Path.Combine(moduleDirectory, moduleName, DependencyManifest.PathToDependencyManifestFile);
+                                folder = folder.Trim(splitCharArray);
+                                string moduleName = folder.Split(splitCharArray, StringSplitOptions.RemoveEmptyEntries)[0];
 
-//            if (File.Exists(dependencyManifest)) {
-//                manifestPath = dependencyManifest;
-//                return true;
-//            }
+                                moduleNames.Add(moduleName);
+                            }
+                        }
+                    }
+                }
+            }
 
-//            manifestPath = null;
-//            return false;
-//        }
+            return moduleNames.ToArray();
+        }
 
-//        /// <summary>
-//        /// Determines whether the specified module is available to the current branch.
-//        /// </summary>
-//        /// <param name="moduleName">Name of the module.</param>
-//        /// <returns>
-//        ///   <c>true</c> if the specified module name is available; otherwise, <c>false</c>.
-//        /// </returns>
-//        public bool IsAvailable(string moduleName) {
-//            return File.Exists(Path.Combine(moduleDirectory, moduleName, "Build", "TFSBuild.proj"));
-//        }
-//    }
-        public void GetModulesInPendingChanges(string branchModulesDirectory) {
+        /// <summary>
+        /// Gets the workspace for the given TFS item.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Could not determine current TFS workspace</exception>
+        public WorkspaceWrapper GetWorkspaceForItem(string path) {
+            TfsTeamProjectCollection server = (TfsTeamProjectCollection) TeamFoundationServiceFactory;
 
-            //  var info = Workstation.Current.GetAllLocalWorkspaceInfo();
+            WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
 
-            // info[0].GetWorkspace((TfsTeamProjectCollection)teamFoundationFactory).GetPendingChanges()
+            for (int i = 0; i < workspaceInfo.Length; i++) {
+                WorkspaceInfo info = workspaceInfo[i];
 
+                Workspace workspace;
+                try {
+                    workspace = info.GetWorkspace(server);
+                } catch (InvalidOperationException) {
+                    continue;
+                }
+
+                if (path.StartsWith("$")) {
+                    string serverPath = workspace.TryGetLocalItemForServerItem(path);
+                    if (serverPath != null) {
+                        return new WorkspaceWrapper(workspace);
+                    }
+                } else {
+                    string serverPath = workspace.TryGetServerItemForLocalItem(path);
+                    if (serverPath != null) {
+                        return new WorkspaceWrapper(workspace);
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("Could not determine current TFS workspace");
+        }
+    }
+
+    public class WorkspaceWrapper {
+        private readonly Workspace workspace;
+
+        public WorkspaceWrapper(Workspace workspace) {
+            this.workspace = workspace;
+        }
+
+        /// <summary>
+        /// TFS queries do not support mulitple wildcards. Specifiy a file filter and an optional path filter if multiple matches are found.
+        /// </summary>
+        /// <param name="query">The query.</param>
+        /// <param name="pathFilter">The filter.</param>
+        public WorkspaceItem Find(string query, string pathFilter) {
+            WorkspaceItemSet[] items = workspace.GetItems(new[] {new ItemSpec(query, RecursionType.Full)}, DeletedState.NonDeleted, ItemType.File, false, GetItemsOptions.LocalOnly);
+
+            if (items != null) {
+                foreach (WorkspaceItemSet set in items) {
+                    if (set.Items.Length == 1) {
+                        return set.Items[0];
+                    }
+
+                    if (pathFilter != null) {
+                        foreach (WorkspaceItem item in set.Items) {
+                            if (item.LocalItem.IndexOf(pathFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
+                                return item;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public string GetServerPath(string branchPath) {
+            return workspace.TryGetServerItemForLocalItem(branchPath);
         }
     }
 }

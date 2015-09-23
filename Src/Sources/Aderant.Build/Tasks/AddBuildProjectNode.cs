@@ -45,6 +45,13 @@ namespace Aderant.Build.Tasks {
 
                         node.Save();
                         parentProject.Save();
+                    } else {
+                        Log.LogMessage("Adding project node(s) for project: " + ProjectFile);
+
+                        IBuildProjectNode node = buildDetails.Information.AddBuildProjectNode(Flavor, ProjectFile, Platform, projectServerPath, DateTime.Now, "default");
+
+                        node.Save();
+                        parentProject.Save();
                     }
                   
                     buildDetails.Information.Save();

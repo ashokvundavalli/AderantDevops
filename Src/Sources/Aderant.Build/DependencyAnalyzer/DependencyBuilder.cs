@@ -6,7 +6,7 @@ using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
-    internal class DependencyBuilder {
+    public class DependencyBuilder {
         private const string mgraphRootNamespace = "http://graphml.graphdrawing.org/xmlns";
         private const string dgmlRootNamespace = "http://schemas.microsoft.com/vs/2009/dgml";
 
@@ -178,10 +178,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                             ),
                         new XElement(XName.Get("Links", dgmlRootNamespace),
                             new object[] {
-                                allDependencies.Select(dependency => new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
-                                    new XAttribute(XName.Get("Source"), allModules.IndexOf(dependency.Consumer)),
-                                    new XAttribute(XName.Get("Target"), allModules.IndexOf(dependency.Provider))
-                                })),
+                                CreateLinks(allDependencies, allModules),
                                 ((includeBuilds ? GetTree(restrictToModulesInBranch) : new Build[0]).Select((build, levelIndex) => build.Modules.Select(item =>
                                     new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
                                         new XAttribute(XName.Get("Source"), string.Format("Build{0}", levelIndex)),
@@ -259,6 +256,18 @@ namespace Aderant.Build.DependencyAnalyzer {
 
 
             return document;
+        }
+
+        private static IEnumerable<XElement> CreateLinks(List<ModuleDependency> allDependencies, List<ExpertModule> allModules) {
+            foreach (var dependency in allDependencies) {
+                if (dependency.Consumer.Equals(dependency.Provider)) {
+                    continue;
+                }
+
+                yield return new XElement(XName.Get("Link", dgmlRootNamespace), new object[] {
+                        new XAttribute(XName.Get("Source"), allModules.IndexOf(dependency.Consumer)), new XAttribute(XName.Get("Target"), allModules.IndexOf(dependency.Provider))
+                });
+            }
         }
 
         /// <summary>
@@ -342,6 +351,57 @@ namespace Aderant.Build.DependencyAnalyzer {
                 Modules = level.Value,
                 Order = level.Key
             });
+        }
+
+        public ICollection<ExpertModule> GetDownstreamModules(ICollection<ExpertModule> modules) {
+            List<ModuleDependency> moduleDependencies = new List<ModuleDependency>(GetModuleDependencies());
+
+            HashSet<ExpertModule> collector = new HashSet<ExpertModule>();
+
+            List<ExpertModule> input = modules.ToList();
+
+            GetDependents(input, moduleDependencies, collector);
+
+            // All going well this should equal zero! If it doesn't we have vertices with no edges.
+            // var inputSet = new HashSet<ExpertModule>(modules);
+            // inputSet.ExceptWith(collector);
+
+            return collector;
+        }
+
+        private void GetDependents(List<ExpertModule> input, List<ModuleDependency> moduleDependencies, HashSet<ExpertModule> collector) {
+            for (int i = input.Count - 1; i >= 0; i--) {
+                ExpertModule module = input[i];
+
+                // Add the module itself - this ensures we capture modules which are vertices 
+                collector.Add(module);
+
+                List<ExpertModule> dependents = GetDependents(module, moduleDependencies).ToList();
+
+                foreach (ExpertModule dependent in dependents) {
+                    // If the dependent is in our input list we can remove it as we will include it in the exhaustive loop
+                    // Otherwise we will double process the module which is inefficient
+                    input.RemoveAll(p => string.Equals(p.Name, dependent.Name, StringComparison.OrdinalIgnoreCase));
+
+                    collector.Add(dependent);
+
+                    // Now get the children of the children (if any)
+                    GetDependents(new List<ExpertModule> {dependent}, moduleDependencies, collector);
+                }
+            }
+        }
+
+        private IEnumerable<ExpertModule> GetDependents(ExpertModule module, List<ModuleDependency> moduleDependencies) {
+            for (int i = moduleDependencies.Count - 1; i >= 0; i--) {
+                ModuleDependency dependency = moduleDependencies[i];
+
+                if (dependency.Provider.Equals(module)) {
+                    if (!dependency.Consumer.Equals(module)) {
+                        moduleDependencies.RemoveAt(i);
+                        yield return dependency.Consumer;
+                    }
+                }
+            }
         }
     }
 }

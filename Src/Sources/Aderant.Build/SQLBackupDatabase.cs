@@ -72,7 +72,7 @@ namespace Aderant.Build {
                     while (reader.Read()) {
                         var fileEntry = new SQLDataFileEntry();
                         string physicalName = reader["physical_name"] as string;
-                        int pos = physicalName.LastIndexOf("\\") + 1;
+                        int pos = physicalName.LastIndexOf("\\", StringComparison.Ordinal) + 1;
                         physicalName = physicalName.Substring(pos, physicalName.Length - pos);
                         fileEntry.Name = reader["name"].ToString();
                         fileEntry.PhysicalName = physicalName;

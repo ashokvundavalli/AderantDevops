@@ -179,7 +179,7 @@ namespace Aderant.Build.Commands {
             node.Add(new XElement(ns + "TypeScriptCompile", new XAttribute("Include", file.Substring(rootPathIndex))));
             bool changedFile = false;
             string[] tsFile = File.ReadAllLines(file);
-            for (int i = 0; i < tsFile.Count(); i++) {
+            for (int i = 0; i < tsFile.Length; i++) {
                 string referenceLine = tsFile[i];
                 if (!referenceLine.Contains("/// <reference path")) {
                     // e.g. /// <reference path="..\Scripts\Thirdparty.Knockout\knockout.d.ts" />

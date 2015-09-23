@@ -7,8 +7,7 @@ using System.Xml;
 using System.Xml.Linq;
 
 namespace Aderant.Build.DependencyAnalyzer {
-
-    internal class DependencyManifest {
+    public class DependencyManifest {
         private readonly XDocument manifest;
         private List<ExpertModule> referencedModules;
 

@@ -306,7 +306,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Converts the dotted version into an int64 to get the highest build number
             // This differs from the PowerShell implementation that padded each part of the version string and used an alphanumeric sort
 
-            List<KeyValuePair<Version, string>> numbers = new List<KeyValuePair<Version, string>>(entries.Count());
+            List<KeyValuePair<Version, string>> numbers = new List<KeyValuePair<Version, string>>(entries.Length);
             foreach (var entry in entries) {
                 string directoryName = Path.GetFileName(entry);
                 Version version;

@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
 using Microsoft.Win32.SafeHandles;
 using Task = System.Threading.Tasks.Task;
 
@@ -208,7 +205,7 @@ namespace Aderant.Build {
             public uint FileIndexLow;
         }
 
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
         static extern SafeFileHandle CreateFile(
             string lpFileName,
             [MarshalAs(UnmanagedType.U4)] FileAccess dwDesiredAccess,
@@ -241,10 +238,10 @@ namespace Aderant.Build {
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool FindClose(IntPtr fFindHandle);
 
-        [DllImport("kernel32.dll")]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
         static extern bool GetVolumePathName(string lpszFileName, [Out] StringBuilder lpszVolumePathName, uint cchBufferLength);
 
-        [DllImport("shlwapi.dll", CharSet = CharSet.Auto)]
+        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
         static extern bool PathAppend([In, Out] StringBuilder pszPath, string pszMore);
 
         public static int GetFileLinkCount(string filepath) {

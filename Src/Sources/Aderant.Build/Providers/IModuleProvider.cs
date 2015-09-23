@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Providers {
-    
-    internal interface IModuleProvider {
+    public interface IModuleProvider {
 
         /// <summary>
         /// Gets the product manifest path.
