@@ -6,7 +6,7 @@ using Aderant.Build.Logging;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.Commands {
-    [Cmdlet("New", "ExpertManifestForBranch")]
+    [Cmdlet(VerbsCommon.New, "ExpertManifestForBranch")]
     [Description("Walks all modules in the current branch and adds the module reference information from the DependencyManifest to the ExpertManifest")]
     public class ExpertManifestUpdate : PSCmdlet {
 

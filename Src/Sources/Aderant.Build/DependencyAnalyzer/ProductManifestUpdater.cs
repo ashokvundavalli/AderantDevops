@@ -45,7 +45,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             
             IList<ExpertModule> removeList = new List<ExpertModule>();
 
-            foreach (var module in modules) {
+            foreach (ExpertModule module in modules) {
                 SynchronizeProductManifestWithModules(module, workspaceInfo);
             }
 
