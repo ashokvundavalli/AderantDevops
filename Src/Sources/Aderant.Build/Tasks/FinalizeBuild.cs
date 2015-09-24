@@ -49,12 +49,36 @@ namespace Aderant.Build.Tasks {
             IBuildDetail currentBuild = controller.GetBuildDetails(CurrentBuildUri);
             IBuildDetail buildToFinalize = controller.GetBuildDetails(BuildToFinalizeUri);
 
-            Log.LogMessage("Finalizing build: {0} (Current status: {1})", BuildToFinalizeUri, currentBuild.Status);
+            Log.LogMessage("Finalizing build: {0}. Status: {1} CompilationStatus: {2} TestStatus: {3}.", BuildToFinalizeUri, currentBuild.Status, currentBuild.CompilationStatus, currentBuild.TestStatus);
 
-            // If the current build is still running then we assume that the build should be marked as Completed.
-            controller.FinalizeBuild(buildToFinalize, currentBuild.Status == BuildStatus.InProgress);
+            bool isSuccessful = IsSuccessful(currentBuild);
+
+            controller.FinalizeBuild(buildToFinalize, isSuccessful);
 
             return !Log.HasLoggedErrors;
+        }
+
+        private bool IsSuccessful(IBuildDetail currentBuild) {
+            if (currentBuild.Status == BuildStatus.InProgress) {
+                if (currentBuild.CompilationStatus == BuildPhaseStatus.Failed) {
+                    return false;
+                } 
+
+                if (currentBuild.TestStatus == BuildPhaseStatus.Failed) {
+                    return false;
+                }
+            }
+
+            if (currentBuild.Status == BuildStatus.Failed) {
+                return false;
+            }
+
+            if (currentBuild.Status == BuildStatus.InProgress) {
+                return true;
+            }
+
+            // Assume all is green?
+            return true;
         }
     }
 }
