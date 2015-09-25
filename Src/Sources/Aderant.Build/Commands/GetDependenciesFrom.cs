@@ -173,7 +173,7 @@ namespace Aderant.Build.Commands {
                 newFile.Directory.Create();
             }
 
-            if (newFile.IsReadOnly) {
+            if (newFile.Exists && newFile.IsReadOnly) {
                 WriteWarning("Destination " + destination + " file is read only - skipped");
                 return;
             }

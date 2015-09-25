@@ -201,6 +201,7 @@
         <Module Name="Web.SMB" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Test" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
