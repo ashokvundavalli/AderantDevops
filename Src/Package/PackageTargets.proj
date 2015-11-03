@@ -7,7 +7,7 @@
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(PackageScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
   <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
   <UsingTask TaskName="ConsolePackageImporter" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
-
+  <Import Project="$(SolutionRoot)\Build\Aderant.Build.Common.targets" />
   <!-- 
     =========================================================================================================
         Team Build Script                                            
@@ -92,7 +92,24 @@
     </PropertyGroup>
   </Target>
 
+  
   <!--
+    ==========================================================================================
+        Get Build.Tools
+    ==========================================================================================
+  -->
+  <Target Name="GetBuildTools">
+    <ItemGroup>
+      <BuildToolsItems Include="$(ExpertModulesDiretory)\Build.Infrastructure\Src\Build.Tools\**\*.*" />
+    </ItemGroup>
+    
+    <Copy SourceFiles="@(BuildToolsItems)"
+          DestinationFolder="$(SolutionRoot)\Build.Tools"
+          OverwriteReadOnlyFiles="true" />
+  </Target>
+          
+  
+ <!--
     ==========================================================================================
         GetProduct to Target Machine
     ==========================================================================================
@@ -176,7 +193,8 @@
         TaskParameter="id"
         PropertyName="BuildStepId" />
     </BuildStep>
-
+    
+    <CallTarget Targets ="PrepareBuildEnvironment"></CallTarget>
 
     <!-- Clear test directory. -->
     <RemoveDir Directories="$(ExpertTestsDirectory)" Condition="Exists('$(ExpertTestsDirectory)')"/>
@@ -573,10 +591,11 @@
     
     <Message Text="Exclude List: @(ExcludedIntegrationAssemblies)" />
     
+    <!--
     <PropertyGroup>
         <TestAssemblyIncludePattern Condition="'$(TestAssemblyIncludePattern)' == ''">IntegrationTest*.dll</TestAssemblyIncludePattern>
     </PropertyGroup>
-
+    -->
     <ItemGroup>
       <PatternGroup Include="$(TestAssemblyIncludePattern.Split(';'))"  />
     </ItemGroup>
@@ -647,7 +666,7 @@
     ==========================================================================================
   -->   
   <Target Name="ConvertTestResults"
-          Condition="('$(RunTests)'=='true')" DependsOnTargets="IntegrationTests" >
+          Condition="('$(RunTests)'=='true')">
     
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"

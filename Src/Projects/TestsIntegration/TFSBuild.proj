@@ -23,7 +23,7 @@
 
   <!-- Targets file has to be on the drop, as MSBuild pares this file before getting the workspace.-->
   <Import Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Package\PackageTargets.proj"/>
-
+  
   <!--
     ==========================================================================================
         Begin
@@ -79,10 +79,10 @@
 
     <!-- Deploy the product -->
     <CallTarget Targets="RemoveProductRemote" />
-    <CallTarget Targets="RestoreDB" />
+    <CallTarget Targets="RestoreDB" Condition="('$(RestoreDatabase)' == 'true')" />
     <CallTarget Targets="GetProduct" Condition="('$(UseBuildAllOutput)' != 'true')" />
     <CallTarget Targets="GetProductZip" Condition="('$(UseBuildAllOutput)' == 'true')"/>
-    <CallTarget Targets="ApplyUPD" />
+    <CallTarget Targets="ApplyUPD" Condition="('$(RunUPD)' == 'true')" />
     <CallTarget Targets="DeployProductRemote" />
     <CallTarget Targets="WaitForServiceStartUp" />
   </Target>

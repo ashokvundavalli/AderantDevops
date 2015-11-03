@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest" networkSharePath="\\vmexpdevb311\ExpertShare" sourcePath="C:\TFS\ExpertSuite\Dev\BillingBase\Binaries\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="CMSDBO" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="false" failOnSDKDependencyFailure="false" smtpHost="smtp.dev.ap.aderant.com" smtpPort="25" fromEmailAddress="notarealemailaddress@aderant.com" operationsEmailAddress="notarealemailaddress@aderant.com" reportServer="http://svsql304/ReportServer" reportServerUser="cmsdbo" reportServerPassword="eozBzG3osa/FNS5EzgQb3Q==" enableServiceCallCompression="false">
+<environment name="IntegrationTest" networkSharePath="\\vmexpdevb311\ExpertShare" sourcePath="C:\TFS\ExpertSuite\Dev\BillingBase\Binaries\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="CMSDBO" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="false" failOnSDKDependencyFailure="false" reportServer="http://svsql304/ReportServer" reportServerUser="cmsdbo" reportServerPassword="eozBzG3osa/FNS5EzgQb3Q==" smtpHost="smtp.dev.ap.aderant.com" smtpPort="25" fromEmailAddress="notarealemailaddress@aderant.com" operationsEmailAddress="pareena.saengphaijit@aderant.com" enableServiceCallCompression="false">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
@@ -17,13 +17,12 @@
   </workflowDatabaseServer>
   <expertSystem exePath="C:\CMS.NET\Bin\AppShell.exe" connection="VMEXPDEVB311" />
   <servers>
-    <server name="vmexpdevb311" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+    <server name="VMEXPDEVB311.ap.aderant.com" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="AccountsPayable" />
-	<role type="billing" />
+        <role type="billing" />
         <role type="billingcommon" />
         <role type="Budgeting" />
-	<role type="Case" />
         <role type="CheckRequest" />
         <role type="Collections" />
         <role type="commonapplications" />
@@ -48,8 +47,7 @@
         <role type="security" />
         <role type="WipReview" />
         <role type="workflow" />
-        <role type="workflowauthoring" />
-	<role type="WorkflowOnTheGo" />
+        <role type="WorkflowOnTheGo" />
       </roles>
     </server>
   </servers>

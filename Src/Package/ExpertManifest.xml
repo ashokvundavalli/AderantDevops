@@ -11,6 +11,7 @@
         <Module Name="Applications.DocuDraftAddIn" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.ExpertEntityManager" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertOfficeAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
@@ -100,6 +101,7 @@
         <Module Name="Tests.UIAutomation" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.Add2Home" />
         <Module Name="ThirdParty.AddinExpress" />
+        <Module Name="ThirdParty.Aspose" />
         <Module Name="ThirdParty.AsyncJs" />
         <Module Name="ThirdParty.AutoMapper" />
         <Module Name="ThirdParty.AvalonDock.2.0" />
@@ -109,7 +111,7 @@
         <Module Name="ThirdParty.DBGEN" />
         <Module Name="ThirdParty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
-        <Module Name="Thirdparty.ExifJS" />
+         <Module Name="Thirdparty.ExifJS" />
         <Module Name="ThirdParty.ExpertImageApi" />
         <Module Name="ThirdParty.FastClick" />
         <Module Name="ThirdParty.FOApi" />
@@ -201,6 +203,7 @@
         <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Test" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />
