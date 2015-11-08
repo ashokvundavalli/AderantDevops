@@ -75,14 +75,14 @@ var copyModule = (function (gulp) {
 
         // copy to dependency folder
         gulp.src(paths.scripts, { base: getPath(moduleName, folderName) })
-			.pipe(changed(paths.dependencyFolder, { hasChanged: changed.compareLastModifiedTime }))
+			.pipe(changed(paths.dependencyFolder, { hasChanged: changed.compareSha1Digest }))
 			.pipe(chmod({ owner: { read: true, write: true } }))
 			.pipe(gulp.dest(paths.dependencyFolder))
             .pipe(gulpPrint({ format: function (filepath) { return "-> " + filepath; }, colors: false }));
 
         // copy to module folder
         gulp.src(paths.scripts, { base: getPath(moduleName, folderName) })
-			.pipe(changed(paths.moduleFolder, { hasChanged: changed.compareLastModifiedTime }))
+			.pipe(changed(paths.moduleFolder, { hasChanged: changed.compareSha1Digest }))
 			.pipe(chmod({ owner: { read: true, write: true } }))
             .pipe(gulp.dest(paths.moduleFolder))
             .pipe(gulpPrint({ format: function (filepath) { return "-> " + filepath; }, colors: false }));

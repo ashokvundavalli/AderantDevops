@@ -1,30 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<environment name="IntegrationTest" networkSharePath="\\WSAKL000691\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="cmsdbo" expertServiceUser="ADERANT_AP\service.expert.ap" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="" removeOnError="true" skipPackageImport="false" isDevEnvironment="true" failOnSDKDependencyFailure="false" smtpHost="smtp.dev.ap.aderant.com" smtpPort="25" fromEmailAddress="workflow@aderant.com" operationsEmailAddress="mark.henderson@aderant.com" enableServiceCallCompression="false">
+<environment name="IntegrationTest" networkSharePath="\\WSAKL000691\ExpertShare" sourcePath="C:\ExpertSource\ExpertSource" networkDeploymentType="NetworkCustom" createClickOnceDeployments="true" owner="" expertServiceUser="ADERANT_AP\Service.Expert.AP" expertServicePassword="bBh4t9wdtZN+hR2LMh6wVw==" networkLoadBalancer="VMCASE301.ap.aderant.com" removeOnError="true" skipPackageImport="false" isDevEnvironment="false" failOnSDKDependencyFailure="false" smtpHost="smtp.dev.ap.aderant.com" smtpPort="25" fromEmailAddress="workflow@aderant.com" operationsEmailAddress="workflow@aderant.com" enableServiceCallCompression="false">
   <httpProxySettings useDefaultProxySettings="false" useDefaultCredentials="false">
     <proxyBypassExpressions />
   </httpProxySettings>
   <expertDatabaseServer serverName="svsql304" serverInstance="">
-    <databaseConnection databaseName="wsakl000691" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseConnection databaseName="WSAKL000691" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
     <databaseSecurity administrators="" readers="" writers="" />
   </expertDatabaseServer>
   <monitoringDatabaseServer serverName="svsql304" serverInstance="">
-    <databaseConnection databaseName="wsakl000691_Monitoring" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseConnection databaseName="WSAKL000691_Monitoring" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
     <databaseSecurity administrators="ADERANT_AP\SG_AP_AS_Admins" readers="ADERANT_AP\SG_AP_AS_Observers" writers="ADERANT_AP\SG_AP_AS_Admins" />
   </monitoringDatabaseServer>
   <workflowDatabaseServer serverName="svsql304" serverInstance="">
-    <databaseConnection databaseName="wsakl000691" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
+    <databaseConnection databaseName="WSAKL000691" username="cmsdbo" password="eozBzG3osa/FNS5EzgQb3Q==" />
     <databaseSecurity administrators="ADERANT_AP\SG_AP_AS_Admins" readers="ADERANT_AP\SG_AP_AS_Observers" writers="ADERANT_AP\SG_AP_AS_Admins" />
   </workflowDatabaseServer>
-  <expertSystem exePath="C:\CMS.Net\8011\AppShell.exe" connection="wsakl000691" />
+  <expertSystem exePath="" connection="" />
   <servers>
-    <server name="WSAKL000691" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+    <server name="VMCASE301.ap.aderant.com" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="AccountsPayable" />
-        <role type="Case">
-          <roleParameters>
-            <roleParameter name="FilestreamDataContainerPath" value="D:\SQLDATAContainer_wsakl000691" />
-          </roleParameters>
-        </role>
+        <role type="Budgeting" />
+        <role type="Case" />
+        <role type="CheckRequest" />
+        <role type="Collections" />
         <role type="commonapplications" />
         <role type="configuration" />
         <role type="customworkflows" />
@@ -33,12 +32,49 @@
         <role type="ExpensesOnTheGo" />
         <role type="ExpertTime" />
         <role type="ExpertTimeCommon" />
+        <role type="ExpertTimeConnectors" />
+        <role type="ExpertTimeConnectorScheduler" />
         <role type="ExpertTimeOnTheGo" />
         <role type="fileopening" />
         <role type="FirmControl" />
+        <role type="Marketing" />
+        <role type="MatterPlanning" />
         <role type="notes" />
+        <role type="prebill" />
         <role type="queryservice" />
+        <role type="Rates" />
         <role type="security" />
+        <role type="WipReview" />
+        <role type="workflow" />
+        <role type="WorkflowOnTheGo" />
+      </roles>
+    </server>
+    <server name="VMCASE302.ap.aderant.com" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
+      <roles>
+        <role type="AccountsPayable" />
+        <role type="Budgeting" />
+        <role type="Case" />
+        <role type="CheckRequest" />
+        <role type="Collections" />
+        <role type="commonapplications" />
+        <role type="configuration" />
+        <role type="customworkflows" />
+        <role type="employeeIntake" />
+        <role type="Expenses" />
+        <role type="ExpensesOnTheGo" />
+        <role type="ExpertTime" />
+        <role type="ExpertTimeCommon" />
+        <role type="ExpertTimeConnectors" />
+        <role type="ExpertTimeOnTheGo" />
+        <role type="fileopening" />
+        <role type="FirmControl" />
+        <role type="MatterPlanning" />
+        <role type="notes" />
+        <role type="prebill" />
+        <role type="queryservice" />
+        <role type="Rates" />
+        <role type="security" />
+        <role type="WipReview" />
         <role type="workflow" />
         <role type="WorkflowOnTheGo" />
       </roles>

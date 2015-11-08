@@ -12,16 +12,17 @@ currentModule = "";
 gulp.task('setModule', function (moduleName) {
     dependentModules = [];
     switch (moduleName.toLowerCase()) {
-		case "web.case": 
+        case "web.case":
 		case "web.test": 
-		case "web.admin": 
+		case "web.administration": 
 			dependentModules.push("Web.Foundation", "Web.Presentation", "Web.SMB");
 			break;
-			
-		case "web.smb": 
+        case "web.time":
+        case "web.workflow":
+        case "web.expenses":
+        case "web.smb":
 			dependentModules.push("Web.Foundation", "Web.Presentation");
 			break;
-			
         case "web.presentation":
             dependentModules.push("Web.Foundation");
             break;
