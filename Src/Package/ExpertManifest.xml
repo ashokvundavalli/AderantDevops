@@ -111,7 +111,7 @@
         <Module Name="ThirdParty.DBGEN" />
         <Module Name="ThirdParty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
-         <Module Name="Thirdparty.ExifJS" />
+        <Module Name="Thirdparty.ExifJS" />
         <Module Name="ThirdParty.ExpertImageApi" />
         <Module Name="ThirdParty.FastClick" />
         <Module Name="ThirdParty.FOApi" />
@@ -143,6 +143,7 @@
         <Module Name="ThirdParty.Microsoft.AspNet" />
         <Module Name="ThirdParty.Microsoft.Build" />
         <Module Name="ThirdParty.Microsoft.Data" />
+        <!--Module Name="Thirdparty.Microsoft.DSL" /-->
         <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
         <Module Name="ThirdParty.Microsoft.ExpressionBlendSdk" />

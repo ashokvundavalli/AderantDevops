@@ -13,7 +13,9 @@
     =========================================================================================================
     -->
 
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(TeamBuildVersion)' == ''" />
+  <Import
+      Condition="('$(TeamBuildVersion)' == '') and ('$(IsCustomBuild)'!='true')"
+      Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" />
 
   <PropertyGroup>
     <NewLine>%0A</NewLine>
