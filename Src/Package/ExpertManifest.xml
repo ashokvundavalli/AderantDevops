@@ -112,6 +112,7 @@
         <Module Name="ThirdParty.DevComponents" />
         <Module Name="ThirdParty.DotLess" />
         <Module Name="Thirdparty.ExifJS" />
+        <Module Name="Thirdparty.ExifLibrary" />
         <Module Name="ThirdParty.ExpertImageApi" />
         <Module Name="ThirdParty.FastClick" />
         <Module Name="ThirdParty.FOApi" />
