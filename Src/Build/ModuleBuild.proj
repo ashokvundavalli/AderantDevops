@@ -1306,18 +1306,31 @@ doc.Save(File);
       <ZipFile>$(ZipFileDirectory)\$(ModuleName).Template.zip</ZipFile>
     </PropertyGroup>
 
+    <Copy SourceFiles="$(SolutionDirectoryPath)$(ModuleName).Template.sln" 
+          DestinationFiles="$(SolutionDirectoryPath)BuildTemp\$(ModuleName).Template.sln"
+          ContinueOnError="true"/>
+
+    <FileUpdate Files="$(SolutionDirectoryPath)BuildTemp\$(ModuleName).Template.sln"
+      Regex="GlobalSection\(TeamFoundationVersionControl\)(.|\n)*?EndGlobalSection"
+      ReplacementText=" " 
+      ContinueOnError="true"/>
+
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <ZipSourceFiles
         Include="$(SolutionDirectoryPath)**;"
-        Exclude="$(BinTestDirectory)**\**;        
+        Exclude="$(BinTestDirectory)**\**;
+                 $(SolutionDirectoryPath)BuildTemp\**;
                  $(BinModuleDirectory)**\**;                
                  $(ModuleBuildDirectory)**;
                  $(ModuleSourceDirectory)**\*.csproj.user;        
                  $(ModuleSourceDirectory)**\obj\**;
                  $(ModuleSourceDirectory)**\bin\**;      
                  $(SolutionDirectoryPath)$(ModuleName).sln;
+                 $(SolutionDirectoryPath)$(ModuleName).Template.sln;
                  $(SolutionDirectoryPath)CommonBuild\**;
+                 $(SolutionDirectoryPath)ThirdPartyBuild.txt;
+                 $(ModuleSourceDirectory)**\SharedBin\**;
                  $(SolutionDirectoryPath)Dependencies\**;
                  $(SolutionDirectoryPath)**\*.vssscc;
                  $(SolutionDirectoryPath)**\*.vspscc;        
@@ -1333,6 +1346,17 @@ doc.Save(File);
                  $(SolutionDirectoryPath)**\*resharper.user;
                  $(SolutionDirectoryPath)**\*.DotSettings; "/>
     </ItemGroup>
+    
+    <Copy
+       SourceFiles="@(ZipSourceFiles)"
+       DestinationFiles="@(ZipSourceFiles->'$(SolutionDirectoryPath)BuildTemp\%(RecursiveDir)%(Filename)%(Extension)')"
+       SkipUnchangedFiles="true">
+    </Copy>
+    
+    <ItemGroup>
+      <FilesToZip
+        Include="$(SolutionDirectoryPath)BuildTemp\**;"/>
+    </ItemGroup>
 
     <MakeDir
       Directories="$(ZipFileDirectory)"/>
@@ -1341,16 +1365,23 @@ doc.Save(File);
       Files="$(ZipFile)" ContinueOnError="true" />
 
     <MSBuild.Community.Tasks.Zip
-      Files="@(ZipSourceFiles)"
+      Files="@(FilesToZip)"
       ZipFileName="$(ZipFile)"
-      WorkingDirectory="$(SolutionDirectoryPath)" />
-
+      WorkingDirectory="$(SolutionDirectoryPath)BuildTemp\" />
+    
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Succeeded" />
+    
+    <Delete
+      Files="@(FilesToZip)" ContinueOnError="true" />
+    
+    <RemoveDir 
+      Directories="$(SolutionDirectoryPath)BuildTemp\Src;
+                   $(SolutionDirectoryPath)BuildTemp\Doc"/>
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
