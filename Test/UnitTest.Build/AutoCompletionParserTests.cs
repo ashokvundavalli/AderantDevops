@@ -1,5 +1,9 @@
-﻿using Aderant.Build;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Aderant.Build;
+using Aderant.Build.DependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace UnitTest.Build {
 
@@ -65,5 +69,82 @@ namespace UnitTest.Build {
             AutoCompletionParser parser = new AutoCompletionParser("My-FirstCommand;My-Command -MyArg ", "", new object[0]);
             Assert.IsTrue(parser.IsAutoCompletionForParameter("My-Command", "MyArg", false));
         }
+
+        #region module name completion tests
+        [TestMethod]
+        public void AutoCompletesSearchStringSeparatedByCase() {
+            Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
+
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
+
+            List<ExpertModule> moduleList = new List<ExpertModule>();
+            moduleList.Add(module1);
+            moduleList.Add(module2);
+            analyzerMock.Setup(a => a.GetAllModules()).Returns(moduleList);
+
+            AutoCompletionParser parser = new AutoCompletionParser("cm MTW", "MTW", new object[0]);
+            string[] matches = parser.GetModuleMatches(analyzerMock.Object);
+            Assert.IsTrue(matches.Count() == 1);
+            Assert.IsTrue(matches.First() == "Module.TwoWords");
+        }
+
+        [TestMethod]
+        public void AutoCompletesSearchStringSeparatedByPeriods() {
+            Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
+
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
+
+            List<ExpertModule> moduleList = new List<ExpertModule>();
+            moduleList.Add(module1);
+            moduleList.Add(module2);
+            analyzerMock.Setup(a => a.GetAllModules()).Returns(moduleList);
+
+            AutoCompletionParser parser = new AutoCompletionParser("cm m.t.w", "m.t.w", new object[0]);
+            string[] matches = parser.GetModuleMatches(analyzerMock.Object);
+            Assert.IsTrue(matches.Count() == 1);
+            Assert.IsTrue(matches.First() == "Module.TwoWords");
+        }
+
+        [TestMethod]
+        public void AggressivelySeparatesLowerCaseWhenNoMatchFound() {
+            Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
+
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
+
+            List<ExpertModule> moduleList = new List<ExpertModule>();
+            moduleList.Add(module1);
+            moduleList.Add(module2);
+            analyzerMock.Setup(a => a.GetAllModules()).Returns(moduleList);
+
+            AutoCompletionParser parser = new AutoCompletionParser("cm mtw", "mtw", new object[0]);
+            string[] matches = parser.GetModuleMatches(analyzerMock.Object);
+            Assert.IsTrue(matches.Count() == 1);
+            Assert.IsTrue(matches.First() == "Module.TwoWords");
+        }
+
+        [TestMethod]
+        public void AggressivelySeparates_AFTER_TryingToMatchBeginningOfString_WhenSearchStringIsAllLowerCase() {
+            Mock<IDependencyBuilder> analyzerMock = new Mock<IDependencyBuilder>();
+
+            ExpertModule module1 = new ExpertModule() { Name = "Module.TwoWords" };
+            ExpertModule module3 = new ExpertModule() { Name = "mtw" };
+            ExpertModule module2 = new ExpertModule() { Name = "Module.ShouldntMatch" };
+
+            List<ExpertModule> moduleList = new List<ExpertModule>();
+            moduleList.Add(module1);
+            moduleList.Add(module2);
+            moduleList.Add(module3);
+            analyzerMock.Setup(a => a.GetAllModules()).Returns(moduleList);
+
+            AutoCompletionParser parser = new AutoCompletionParser("cm mtw", "mtw", new object[0]);
+            string[] matches = parser.GetModuleMatches(analyzerMock.Object);
+            Assert.IsTrue(matches.Count() == 1);
+            Assert.IsTrue(matches.First() == "mtw");
+        }
+
+        #endregion
     }
 }

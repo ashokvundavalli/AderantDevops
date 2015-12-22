@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
     <Modules>
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
@@ -24,7 +24,7 @@
         <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
         <Module Name="Database" AssemblyVersion="1.8.0.0" />
-        <Module Name="Expert.Help" GetAction="branch" Path="Main" />
+        <Module Name="Expert.Help" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.CheckRequest" AssemblyVersion="1.8.0.0" />
@@ -66,7 +66,7 @@
         <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
-        <Module Name="Marketing.Help" GetAction="branch" Path="Main" />
+        <Module Name="Marketing.Help" />
         <Module Name="Packages" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />

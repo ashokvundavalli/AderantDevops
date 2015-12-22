@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Management.Automation;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyAnalyzer;
 
@@ -82,17 +84,79 @@ namespace Aderant.Build {
             return false;
         }
 
-        public string[] GetModuleMatches(string modulePath) {
-            DependencyBuilder analyzer = new DependencyBuilder(modulePath);
+        internal string[] GetModuleMatches(IDependencyBuilder analyzer) {
+            List<string> searchStringSplitByCase = SplitModuleNameByCase(lastWord);
+            List<string> matches = new List<string>();
+            Debug.WriteLine(string.Format("Module name split by case = {0}", searchStringSplitByCase.StringConcat(" ")));
 
-            return analyzer
+            //if the search string is split into more than one "word" then we want to also split the module names
+            //otherwise we match the string to the whole word.
+            if (searchStringSplitByCase.Count > 1) {
+                foreach (ExpertModule m in analyzer.GetAllModules()) {
+                    if (CompareModuleNameToSearchString(m.Name, searchStringSplitByCase)) {
+                        matches.Add(m.Name);
+                    }
+                }
+            } else {
+                matches = analyzer
                 .GetAllModules()
                 .Where(m => string.IsNullOrEmpty(lastWord) || m.Name.StartsWith(lastWord, StringComparison.OrdinalIgnoreCase)
                             ||
                             new string(m.Name.Split('.').Select(s => s.First()).ToArray()).StartsWith(lastWord,
                                                                                                       StringComparison.
                                                                                                           OrdinalIgnoreCase))
-                .Select(m => m.Name).ToArray();
+                .Select(m => m.Name).ToList();
+            }
+            //if we still have no matches we match again, but assume that the input consists of only the first letters of a series of words
+            if (!matches.Any()) {
+                List<string> searchStringSplitByAll = SplitModuleNameByCase(lastWord.ToUpper());
+                foreach (ExpertModule m in analyzer.GetAllModules()) {
+                    if (CompareModuleNameToSearchString(m.Name, searchStringSplitByAll)) {
+                        matches.Add(m.Name);
+                    }
+                }
+            }
+
+            return matches.ToArray();
+        }
+
+        public string[] GetModuleMatches(string modulePath) {
+            return GetModuleMatches(new DependencyBuilder(modulePath));
+        }
+
+        private static bool CompareModuleNameToSearchString(string moduleName, List<string> searchStringSplitByCase) {
+            List<string> moduleNameSplitByCase = SplitModuleNameByCase(moduleName);
+            if (moduleNameSplitByCase.Count < searchStringSplitByCase.Count) {
+                return false; }
+            //truncate the full module name so that we only match the number of parts in the search string
+            List<string> moduleNameSplitByCaseTruncated = SplitModuleNameByCase(moduleName).GetRange(0, searchStringSplitByCase.Count);
+            
+            int i = 0;
+            foreach(string searchString in searchStringSplitByCase) {
+                string modulePart = moduleNameSplitByCaseTruncated[i];
+                if (!modulePart.ToLower().StartsWith(searchString.ToLower())) {
+                    return false;
+                }
+                i++;
+            }
+            return true;
+        }
+
+        private static List<string> SplitModuleNameByCase(string moduleName) {
+            //first split by period separator
+            string[] parts = moduleName.Split('.');
+            List<string> words = new List<string>();
+            foreach (var part in parts) {
+                //now split by assuming that an upper case letter denotes the beginning of a new word
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (char c in part) {
+                    if (Char.IsUpper(c) && stringBuilder.Length > 0)
+                        stringBuilder.Append('.');
+                    stringBuilder.Append(c);
+                }
+                words.AddRange(stringBuilder.ToString().Split('.'));
+            }
+            return words;
         }
     }
 }

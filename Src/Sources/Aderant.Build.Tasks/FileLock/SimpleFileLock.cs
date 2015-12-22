@@ -8,10 +8,8 @@ using System;
 
 namespace Aderant.Build.Tasks.FileLock {
 
-    public class SimpleFileLock
-    {
-        protected SimpleFileLock(string lockName, TimeSpan lockTimeout)
-        {
+    public class SimpleFileLock {
+        protected SimpleFileLock(string lockName, TimeSpan lockTimeout) {
             LockName = lockName;
             LockTimeout = lockTimeout;
         }
@@ -22,21 +20,17 @@ namespace Aderant.Build.Tasks.FileLock {
 
         private string LockFilePath { get; set; }
 
-        public bool TryAcquireLock()
-        {
-            if (LockIO.LockExists(LockFilePath))
-            {
+        public bool TryAcquireLock() {
+            if (LockIO.LockExists(LockFilePath)) {
                 var lockContent = LockIO.ReadLock(LockFilePath);
 
                 //Someone else owns the lock
-                if (lockContent.GetType() == typeof(OtherProcessOwnsFileLockContent))
-                {
+                if (lockContent.GetType() == typeof(OtherProcessOwnsFileLockContent)) {
                     return false;
                 }
 
                 //the file no longer exists
-                if (lockContent.GetType() == typeof(MissingFileLockContent))
-                {
+                if (lockContent.GetType() == typeof(MissingFileLockContent)) {
                     return AcquireLock();
                 }
 
@@ -44,8 +38,7 @@ namespace Aderant.Build.Tasks.FileLock {
                 var lockWriteTime = new DateTime(lockContent.Timestamp);
 
                 //This lock belongs to this process - we can reacquire the lock
-                if (lockContent.PID == System.Diagnostics.Process.GetCurrentProcess().Id)
-                {
+                if (lockContent.PID == System.Diagnostics.Process.GetCurrentProcess().Id) {
                     return AcquireLock();
                 }
 
@@ -54,14 +47,23 @@ namespace Aderant.Build.Tasks.FileLock {
             }
 
             //Acquire the lock
-            
-            return AcquireLock();
+
+            var aquiredLock = AcquireLock();
+
+            if (aquiredLock) {
+                var lockContent = LockIO.ReadLock(LockFilePath);
+
+                //This lock does NOT belong to this process - there obviously was a race condition and we have to dismiss the lock
+                if (lockContent.GetType() == typeof(OtherProcessOwnsFileLockContent) || lockContent.PID != System.Diagnostics.Process.GetCurrentProcess().Id) {
+                    return false;
+                }
+            }
+            return aquiredLock;
         }
 
 
 
-        public bool ReleaseLock()
-        {
+        public bool ReleaseLock() {
             //Need to own the lock in order to release it (and we can reacquire the lock inside the current process)
             if (LockIO.LockExists(LockFilePath) && TryAcquireLock())
                 LockIO.DeleteLock(LockFilePath);
@@ -70,19 +72,16 @@ namespace Aderant.Build.Tasks.FileLock {
 
         #region Internal methods
 
-        protected FileLockContent CreateLockContent()
-        {
+        protected FileLockContent CreateLockContent() {
             var process = System.Diagnostics.Process.GetCurrentProcess();
-            return new FileLockContent()
-            {
+            return new FileLockContent() {
                 PID = process.Id,
                 Timestamp = DateTime.Now.Ticks,
                 ProcessName = process.ProcessName
             };
         }
 
-        private bool AcquireLock()
-        {
+        private bool AcquireLock() {
             return LockIO.WriteLock(LockFilePath, CreateLockContent());
         }
 
@@ -90,8 +89,7 @@ namespace Aderant.Build.Tasks.FileLock {
 
         #region Create methods
 
-        public static SimpleFileLock Create(string lockName, TimeSpan lockTimeout)
-        {
+        public static SimpleFileLock Create(string lockName, TimeSpan lockTimeout) {
             if (string.IsNullOrEmpty(lockName))
                 throw new ArgumentNullException("lockName", "lockName cannot be null or empty.");
 

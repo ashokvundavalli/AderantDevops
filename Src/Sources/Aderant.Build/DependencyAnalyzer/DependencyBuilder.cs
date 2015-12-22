@@ -6,7 +6,37 @@ using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
-    public class DependencyBuilder {
+    public interface IDependencyBuilder {
+        /// <summary>
+        /// Gets the distinct list of modules in the module folder or referenced in Dependency Manifests.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<ExpertModule> GetAllModules();
+
+        IEnumerable<ModuleDependency> GetModuleDependencies();
+
+        IEnumerable<ModuleDependency> GetModuleDependencies(bool includeThirdParty);
+
+        /// <summary>
+        /// Builds the graph document for the dependency tree.
+        /// </summary>
+        /// <returns></returns>
+        XDocument BuildMGraphDocument();
+
+        XDocument BuildDgmlDocument(bool includeBuilds, bool restrictToModulesInBranch);
+
+        /// <summary>
+        /// Gets the dependency tree.
+        /// </summary>
+        /// <param name="restrictToModulesInBranch">if set to <c>true</c> restricts the analysis to modules in the current branch.</param>
+        /// <returns></returns>
+        /// <exception cref="CircularDependencyException">Whe a a circular dependency between following modules is detected</exception>
+        IEnumerable<Build> GetTree(bool restrictToModulesInBranch);
+
+        ICollection<ExpertModule> GetDownstreamModules(ICollection<ExpertModule> modules);
+    }
+
+    public class DependencyBuilder : IDependencyBuilder {
         private const string mgraphRootNamespace = "http://graphml.graphdrawing.org/xmlns";
         private const string dgmlRootNamespace = "http://schemas.microsoft.com/vs/2009/dgml";
 
