@@ -99,6 +99,75 @@ function Move-Shelveset($Name, $SourceBranch, $TargetBranch) {
 
 <# 
 .Synopsis 
+    Merge of a single changeset from a source branch to a target branch. This will perform a baseless merge.
+.Description   
+    Performs a baseless merge of a single changeset from a source branch to a target branch.
+    
+    The user must manually check in the branched changes
+.PARAMETER sourceBranch
+    The name of the source branch e.g. Main
+.PARAMETER targetBranch
+    The name of the target branch e.g. Dev\OnTheGo
+.PARAMETER changeSet
+    The changeset number to merge. e.g.: 273255
+.EXAMPLE
+        Merge-Baseless -sourceBranch Dev\Validation -targetBranch Dev\BillingBase -changeSet 273255
+    
+#>
+function Merge-Baseless([string] $sourceBranch, [string] $targetBranch, [int] $changeSet) {
+    # Validate branch names and paths
+
+    if (!($sourceBranch)) {
+        write "No source branch specified."
+        return
+    }
+
+    if (!($targetBranch)) {
+        write "No target branch specified."
+        return
+    }
+
+    if (!($changeSet)) {
+    
+        $changeSet = Read-Host "Enter the changeset number"
+
+        if (!($changeSet)) {
+            Write-Host ""
+            Write-Error "No changeset specified"
+            return
+        }
+        
+    }
+    
+    # calculate paths and output to the user
+
+    $sourceTfsPath = "`$/ExpertSuite/" + $sourceBranch.Replace("\", "/").Trim('/') + "/Modules/" + $moduleName
+    $targetTfsPath = "`$/ExpertSuite/" + $targetBranch.Replace("\", "/").Trim('/') + "/Modules/" + $moduleName
+    $rootPath = $global:BranchLocalDirectory.ToLower().Replace($global:BranchName.ToLower(), "")
+    if($global:BranchName.Trim("/").ToUpper() -eq "MAIN"){
+        $rootPath = $global:BranchLocalDirectory.Trim("/").Substring(0, $global:BranchLocalDirectory.Length - 4)
+    }
+
+    Write-Host "TFS Local Root:           $rootPath"
+    Write-Host "Source TFS:               $sourceTfsPath"
+    Write-Host "Target TFS:               $targetTfsPath"
+    Write-Host "ChangeSet:                $changeSet"
+    Write-Host "Baseless:                 Yes"
+        
+
+    Write-Host "Performing baseless merge..."
+
+    $resultOfBranch = Invoke-Expression "tf merge /baseless $sourceTfsPath $targetTfsPath /version:C$changeSet~C$changeSet /recursive"
+
+    if($LASTEXITCODE -ne 0){
+        Write-Host ""
+        Write-Error "An error occurred branching $moduleToBranch"
+    }
+
+}
+
+<# 
+.Synopsis 
     Merges an Expert source branch to a target branch
 .Description   
     Merges any changes from a source branch to a target branch by first checking for existing changes,
@@ -335,5 +404,7 @@ function Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $
 }
 
 Set-Alias merge Merge-Branch
+Set-Alias bmerge Merge-Baseless
 Export-ModuleMember -function Merge-Branch -alias merge
+Export-ModuleMember -function Merge-Baseless -alias bmerge
 Export-ModuleMember -function Move-Shelveset
