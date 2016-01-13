@@ -20,6 +20,8 @@
     <server name="VMCASE301.ap.aderant.com" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="AccountsPayable" />
+        <role type="billing" />
+        <role type="billingcommon" />
         <role type="Budgeting" />
         <role type="Case" />
         <role type="CheckRequest" />
@@ -28,6 +30,8 @@
         <role type="configuration" />
         <role type="customworkflows" />
         <role type="employeeIntake" />
+        <role type="entitymanager" />
+        <role type="entitymanagercommon" />
         <role type="Expenses" />
         <role type="ExpensesOnTheGo" />
         <role type="ExpertTime" />
@@ -44,6 +48,7 @@
         <role type="queryservice" />
         <role type="Rates" />
         <role type="security" />
+		<role type="WebWipReview" />
         <role type="WipReview" />
         <role type="workflow" />
         <role type="WorkflowOnTheGo" />
@@ -52,6 +57,8 @@
     <server name="VMCASE302.ap.aderant.com" expertPath="C:\AderantExpert\IntegrationTest" skipPrerequisitesCheck="false" servicesWebsite="Default Web Site">
       <roles>
         <role type="AccountsPayable" />
+        <role type="billing" />
+        <role type="billingcommon" />
         <role type="Budgeting" />
         <role type="Case" />
         <role type="CheckRequest" />
@@ -60,6 +67,8 @@
         <role type="configuration" />
         <role type="customworkflows" />
         <role type="employeeIntake" />
+        <role type="entitymanager" />
+        <role type="entitymanagercommon" />
         <role type="Expenses" />
         <role type="ExpensesOnTheGo" />
         <role type="ExpertTime" />
@@ -74,6 +83,7 @@
         <role type="queryservice" />
         <role type="Rates" />
         <role type="security" />
+		<role type="WebWipReview" />
         <role type="WipReview" />
         <role type="workflow" />
         <role type="WorkflowOnTheGo" />
