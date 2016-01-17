@@ -59,7 +59,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Creates or gets the approperiate build definition for the provided configuration.
+        /// Creates or gets the appropriate build definition for the provided configuration.
         /// </summary>
         /// <param name="configuration">The configuration.</param>
         /// <returns></returns>
@@ -242,7 +242,7 @@ namespace Aderant.Build {
         private IBuildController GetBuildController(IBuildServer buildServer, ExpertBuildConfiguration configuration) {
             // Build Defaults
             IBuildController[] controllers = buildServer.QueryBuildControllers();
-            controllers = controllers.Where(c => c.Agents.Count > 1).ToArray();
+            controllers = controllers.Where(c => c.Agents.Count > 1 && !c.Name.Contains("TLH")).ToArray();
 
             if (controllers.Length == 0) {
                 throw new InvalidOperationException("There are no controllers with more than 1 agent or no controllers are available");
