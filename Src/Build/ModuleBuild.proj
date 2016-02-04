@@ -484,7 +484,7 @@ doc.Save(File);
   -->
   <Target Name="rmBeforeTransformTemplates">
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)\Dependencies\</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)Dependencies\</rmT4AssemblyReferencePaths>
       <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 

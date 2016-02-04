@@ -12,24 +12,24 @@ currentModule = "";
 gulp.task('setModule', function (moduleName) {
     dependentModules = [];
     switch (moduleName.toLowerCase()) {
-        case "web.case":
-        case "web.test":
+		case "web.case": 
+		case "web.test": 
         case "web.administration":
-            dependentModules.push("Web.Foundation", "Web.Presentation", "Web.SMB");
-            break;
+			dependentModules.push("Web.Foundation", "Web.Presentation", "Web.SMB");
+			break;
         case "web.time":
         case "web.workflow":
         case "web.expenses":
         case "web.matterworks":
-        case "web.smb":
-            dependentModules.push("Web.Foundation", "Web.Presentation");
-            break;
+		case "web.smb": 
+			dependentModules.push("Web.Foundation", "Web.Presentation");
+			break;
         case "web.presentation":
             dependentModules.push("Web.Foundation");
             break;
 
         default:
-    }
+	}
     copyModule.setCurrentModule(moduleName);
     currentModule = moduleName;
 });
@@ -81,9 +81,9 @@ gulp.task('WatchAll', ['setModule', 'All'], function () {
 
 gulp.task('All', ['setModule'], function (watch) {
     for (var i = 0; i < dependentModules.length; i++) {
-        console.log("Copying dependencies from " + dependentModules[i] + " -> " + currentModule);
-        copyModule.copy(dependentModules[i]);
-    }
+	    console.log("Copying dependencies from " + dependentModules[i] + " -> " + currentModule);
+	    copyModule.copy(dependentModules[i]);
+	}
     //if (watch) {
     //    for (var i = 0; i < dependentModules.length; i++) {
     //        copyModule.watchAndCopyChanges(dependentModules[i]);

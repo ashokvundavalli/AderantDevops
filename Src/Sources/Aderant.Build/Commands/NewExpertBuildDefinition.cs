@@ -13,6 +13,7 @@ namespace Aderant.Build.Commands {
     public sealed class NewExpertBuildDefinition : PSCmdlet {
 
         private static string[] visualStudioVersions = new string[] {
+            //"VS140COMNTOOLS",
             "VS120COMNTOOLS",
             "VS110COMNTOOLS" //C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\IDE\PrivateAssemblies
         };

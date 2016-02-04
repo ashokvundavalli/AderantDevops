@@ -264,8 +264,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return dropLocationDirectory;
                 }
             }
-
-            throw new BuildNotFoundException("No path to binaries found for " + expertModule.Name);
+            string dependentModules = "";
+            foreach (var module in DependencyManifests.Where(a => a.ReferencedModules.Contains(expertModule))) {
+                dependentModules += " " + module.ModuleName;
+            }
+            throw new BuildNotFoundException("No path to binaries found for " + expertModule.Name + ". Modules with dependencies:" + dependentModules);
         }
     }
 }
