@@ -12,8 +12,8 @@
         <Module Name="Applications.Expenses" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertAssistant" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertEntityManager" AssemblyVersion="1.8.0.0" />
-        <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main"/>
-        <Module Name="Applications.ExpertOfficeAddIn" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main"/>
+        <Module Name="Applications.ExpertOfficeAddIn" AssemblyVersion="1.8.0.0" />
+        <Module Name="Applications.ExpertOutlookAddIn" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.ExpertTime" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.HelpAdministration" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Marketing" AssemblyVersion="8.0.0.0" />
@@ -23,9 +23,9 @@
         <Module Name="Applications.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.TeamManager" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.WipReview" AssemblyVersion="1.8.0.0" />
-        <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
+        <Module Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
         <Module Name="Database" AssemblyVersion="1.8.0.0" />
-        <Module Name="Expert.Help" />
+        <Module Name="Expert.Help" GetAction="branch" Path="Main" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.CheckRequest" AssemblyVersion="1.8.0.0" />
@@ -67,7 +67,7 @@
         <Module Name="Libraries.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
-        <Module Name="Marketing.Help" />
+        <Module Name="Marketing.Help" GetAction="branch" Path="Main" />
         <Module Name="Packages" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
@@ -146,8 +146,8 @@
         <Module Name="ThirdParty.Microsoft.AspNet" />
         <Module Name="ThirdParty.Microsoft.Build" />
         <Module Name="ThirdParty.Microsoft.Data" />
-        <Module Name="Thirdparty.Microsoft.DSL" />
         <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
+        <Module Name="Thirdparty.Microsoft.DSL" />
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
         <Module Name="ThirdParty.Microsoft.ExpressionBlendSdk" />
         <Module Name="ThirdParty.Microsoft.Linq.Dynamic" />
@@ -169,12 +169,14 @@
         <Module Name="ThirdParty.NMock" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.NTFSStreams" />
         <Module Name="ThirdParty.OfficeXmlTools" />
+        <Module Name="ThirdParty.OpenSans" />
         <Module Name="ThirdParty.OpenText" />
         <Module Name="ThirdParty.OwlCarousel" />
         <Module Name="ThirdParty.PDF" />
         <Module Name="ThirdParty.Quartz" />
         <Module Name="ThirdParty.QUnit" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.Reactive" />
+        <Module Name="ThirdParty.ReactJS" />
         <Module Name="ThirdParty.ReportViewer" />
         <Module Name="ThirdParty.RequireJS" />
         <Module Name="ThirdParty.RhinoMocks" ExcludeFromPackaging="true" />
@@ -209,6 +211,7 @@
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
+        <Module Name="Workflow.Billing" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Collections" AssemblyVersion="1.8.0.0" />

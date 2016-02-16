@@ -205,12 +205,6 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         <Class>Aderant.Framework.SoftwareFactory.Domain.DomainModelDslDirectiveProcessor</Class>
         <CodeBase>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.Domain.dll</CodeBase>
       </rmT4DslDirectiveProcessors>
-
-      <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
-                                  Include="ViewModelDslDirectiveProcessor">
-        <Class>Aderant.Framework.SoftwareFactory.ViewModel.ViewModelDslDirectiveProcessor</Class>
-        <CodeBase>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.ViewModel.dll</CodeBase>
-      </rmT4DslDirectiveProcessors>
         
       <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
                                   Include="ServiceDslDirectiveProcessor">

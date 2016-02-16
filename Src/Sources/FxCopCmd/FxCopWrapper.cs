@@ -14,6 +14,8 @@ namespace Aderant.Build {
         private bool eventsDisposed;
         private int exitCode;
         private ManualResetEvent toolExited;
+        private bool toolFailed;
+        private int toolRunCount;
 
         public FxCopWrapper(string commandLine) {
             this.commandLine = commandLine;
@@ -35,9 +37,18 @@ namespace Aderant.Build {
                 if (!string.IsNullOrEmpty(capture) && Directory.Exists(capture)) {
                     string pathToTool = Path.Combine(capture, ToolName);
 
-                    return ExecuteTool(pathToTool, null, CleanResponseFileText(commandLine, match));
+                    var result = ExecuteTool(pathToTool, null, CleanResponseFileText(commandLine, match));
+
+                    // Retry the tool if it failed with CA0001
+                    if (toolFailed && toolRunCount == 0) {
+                        toolRunCount++;
+                        result = ExecuteTool(pathToTool, null, CleanResponseFileText(commandLine, match));
+                    }
+
+                    return result;
                 }
             }
+
             return -1;
         }
 
@@ -114,8 +125,24 @@ namespace Aderant.Build {
             return processStartInfo;
         }
 
-        private static void ReceiveStandardErrorOrOutputData(DataReceivedEventArgs e, bool isError) {
+        private void ReceiveStandardErrorOrOutputData(DataReceivedEventArgs e, bool isError) {
             if (e.Data != null) {
+
+                if (!toolFailed) {
+                    // FxCop is quite unstable. Sometimes it fails with CA0001 which means internal error.
+                    // We can retry on these errors.
+                    if (e.Data.IndexOf("CA0001", StringComparison.Ordinal) >= 0) {
+
+                        string message = "FxCop bug detected. Retrying...";
+                        string dashes = new string('-', message.Length);
+                        Console.WriteLine(dashes);
+                        Console.WriteLine(message);
+                        Console.WriteLine(dashes);
+
+                        toolFailed = true;
+                    }
+                }
+
                 Console.WriteLine(e.Data);
 
                 if (isError) {

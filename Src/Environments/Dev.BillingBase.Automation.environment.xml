@@ -29,6 +29,8 @@
         <role type="configuration" />
         <role type="customworkflows" />
         <role type="employeeIntake" />
+        <role type="entitymanager" />
+        <role type="entitymanagercommon" />
         <role type="Expenses" />
         <role type="ExpensesOnTheGo" />
         <role type="ExpertTime" />
@@ -36,6 +38,7 @@
         <role type="ExpertTimeConnectors" />
         <role type="ExpertTimeConnectorScheduler" />
         <role type="ExpertTimeOnTheGo" />
+        <role type="expertwipaware" />
         <role type="fileopening" />
         <role type="FirmControl" />
         <role type="Marketing" />

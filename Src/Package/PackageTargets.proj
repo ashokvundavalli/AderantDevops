@@ -7,7 +7,7 @@
   <UsingTask TaskName="RidoTasks.trx2html" AssemblyFile="$(PackageScriptsDirectory)\Build\Tasks\RidoTasks.dll" />
   <UsingTask TaskName="SqlFileExecution" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
   <UsingTask TaskName="ConsolePackageImporter" AssemblyFile="\\na.aderant.com\ExpertSuite\$(BranchName)\Build.Infrastructure\Src\Build.Tools\Aderant.Build.dll" />
-  <Import Project="$(SolutionRoot)\Build\Aderant.Build.Common.targets" />
+  <Import Project="\\na.aderant.com\expertsuite\$(BranchName)\Build.Infrastructure\Src\Build\Aderant.Build.Common.targets" /> <!-- The build process has not yet copied these files to disk so using network share. -->
   <!-- 
     =========================================================================================================
         Team Build Script                                            
