@@ -195,7 +195,7 @@
         <Module Name="ThirdParty.WebGrease" />
         <Module Name="ThirdParty.Wintellect" />
         <Module Name="ThirdParty.WiX" />
-        <Module Name="ThirdParty.Xceed.4" />
+        <Module Name="Thirdparty.Xceed" />
         <Module Name="UIAutomation.Framework" AssemblyVersion="5.3.1.0" GetAction="specificdroplocation" Path="\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation" ExcludeFromPackaging="true" />
         <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />

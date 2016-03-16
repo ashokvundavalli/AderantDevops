@@ -133,7 +133,6 @@
     <Module Name="Thirdparty.Wintellect" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.WiX" GetAction="branch" Path="Main" />
     <Module Name="ThirdParty.Xceed" GetAction="branch" Path="Main" />
-    <Module Name="Thirdparty.Xceed.4" GetAction="branch" Path="Main" />
     <Module Name="Thirdparty.ZipLibrary" GetAction="branch" Path="Main" />
     <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />
     <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" GetAction="branch" Path="Main" />

@@ -64,7 +64,7 @@
     <Node Id="63" Bounds="1562.50813080876,55.9599999999999,110.85,25.96" ErrorMessage="Unreferenced node detected:Thirdparty.PsUnit (63)" IsUnreferenced="True" Label="Thirdparty.PsUnit" />
     <Node Id="64" Bounds="3274.16876666667,167.88,142.13,25.96" Label="Thirdparty.RhinoMocks" />
     <Node Id="65" Bounds="659.907066666667,167.88,129.98,25.96" Label="Thirdparty.Wintellect" />
-    <Node Id="66" Bounds="819.887166666667,167.88,118.34,25.96" Label="Thirdparty.Xceed.3" />
+    <Node Id="66" Bounds="819.887166666667,167.88,118.34,25.96" Label="Thirdparty.Xceed" />
     <Node Id="67" Bounds="1722.40906060877,111.92,129.703333333333,25.96" Label="Thirdparty.ZipLibrary" />
     <Node Id="68" Bounds="1703.35823080876,55.9599999999999,157.496666666667,25.96" ErrorMessage="Unreferenced node detected:Workflow.EmployeeIntake (68)" IsUnreferenced="True" Label="Workflow.EmployeeIntake" />
     <Node Id="69" Bounds="2259.60137848254,223.84,137.223333333333,25.96" ErrorMessage="Unreferenced node detected:Workflow.FileOpening (69)" IsUnreferenced="True" Label="Workflow.FileOpening" />

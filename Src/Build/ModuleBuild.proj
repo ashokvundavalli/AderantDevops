@@ -21,6 +21,8 @@
     <NewLine>%0A</NewLine>
     <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
     <RunTest Condition="'$(IsCustomBuild)' == 'true'">false</RunTest>
+      
+    <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
 
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
@@ -345,21 +347,19 @@ doc.Save(File);
                ContinueOnError="true" />
     <RemoveDir Directories="$(ModuleBuildDirectory)TestResults"
                ContinueOnError="true" />
-    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Module"
+    
+    <RemoveDir Condition="'$(CleanBin)' == 'true'"
+               Directories="$(SolutionDirectoryPath)Bin\Module"
                ContinueOnError="true" />
-    <RemoveDir Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
-           ContinueOnError="true" />
+    <RemoveDir Condition="'$(CleanBin)' == 'true'"
+               Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
+               ContinueOnError="true" />
 
     <!-- These can be symlinks so delete them directly -->
     <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\Dependencies"
                ContinueOnError="true" />
     <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\ModuleBin"
                ContinueOnError="true" />
-
-    <PropertyGroup>
-      <!-- Transform this variable into a boolean -->
-      <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
-    </PropertyGroup>
 
     <ItemGroup>
       <Folders Include="$(SolutionDirectoryPath)Bin\" />
@@ -1137,7 +1137,7 @@ doc.Save(File);
           IgnoreExitCode="false"
           Condition="'$(UnitTestAssemblies)' != ''"
           WorkingDirectory="$(VsTestWorkingDirectory)"
-          Command='"$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
@@ -1281,7 +1281,6 @@ doc.Save(File);
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
-
 
   <!--
     ==========================================================================================
