@@ -734,6 +734,7 @@ doc.Save(File);
         BuildToolsDirectory=$(BuildToolsDirectory);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
         BinModuleDirectory=$(BinModuleDirectory);
+        SolutionDirectoryPath=$(SolutionDirectoryPath);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         BuildAll=$(BuildAll);

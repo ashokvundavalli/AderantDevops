@@ -127,6 +127,7 @@
         <Module Name="ThirdParty.iManage" />
         <Module Name="ThirdParty.Infragistics" />
         <Module Name="ThirdParty.InterAction" ExcludeFromPackaging="true" />
+        <Module Name="ThirdParty.IScroll" />
         <Module Name="ThirdParty.IronPython.2.7" />
         <Module Name="ThirdParty.Irony" />
         <Module Name="ThirdParty.JQuery" />
