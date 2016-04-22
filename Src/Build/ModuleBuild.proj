@@ -213,7 +213,7 @@ doc.Save(File);
     
     <PropertyGroup>
       <FailedBuildFile Condition="'$(BuildAll)' == 'true'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</FailedBuildFile>
-      <FailedBuildFile Condition="'$(BuildAll)' != 'true'">$(DropLocation)\</FailedBuildFile>
+      <FailedBuildFile Condition="'$(BuildAll)' != 'true'">$(DropLocation)\$(FileVersion)</FailedBuildFile>
       <FailedBuildFile>$(FailedBuildFile)\build.failed</FailedBuildFile>
     </PropertyGroup>
     
