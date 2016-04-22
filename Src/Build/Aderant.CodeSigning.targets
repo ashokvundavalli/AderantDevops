@@ -3,7 +3,7 @@
          DefaultTargets="SignApplications">
 
   <PropertyGroup>
-    <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == '' And '$(IsDesktopBuild)' == 'false'">true</CodeSigningEnabled>
+    <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == '' And '$(IsDesktopBuild)' != 'true'">true</CodeSigningEnabled>
     <CertificateHash>9AB8870EE441103F76009BE6141265D0D9B6197C</CertificateHash>
     <TimestampUrl>&quot;http://timestamp.digicert.com&quot;</TimestampUrl>
     
@@ -52,6 +52,11 @@
       </PropertyGroup>
     </When>
   </Choose>
+
+  <PropertyGroup>
+    <SignToolPath>$(WindowsKitRoot)bin\x64\signtool.exe</SignToolPath>
+    <MageToolPath>$(WindowsSdkDir)bin\$(FxToolsDir)\mage.exe</MageToolPath>
+  </PropertyGroup>
   
   <UsingTask
     TaskName="GetAssembliesToSign"
@@ -95,11 +100,6 @@
     <Error Condition="'$(WindowsSdkDir)' == ''" Text="WindowsSdkDir is undefined" />
     <Error Condition="'$(FxToolsDir)' == ''" Text="FxToolsDir is undefined" />
 
-    <PropertyGroup>
-      <SignToolPath>$(WindowsKitRoot)bin\x64\signtool.exe</SignToolPath>
-      <MageToolPath>$(WindowsSdkDir)bin\$(FxToolsDir)\mage.exe</MageToolPath>
-    </PropertyGroup>
-
     <Error Condition="!Exists($(SignToolPath))" Text="SignTool.exe not found at path $(SignToolPath)" />
     <Error Condition="!Exists($(MageToolPath))" Text="mage.exe not found at path $(MageToolPath)" />
   </Target>
@@ -140,7 +140,7 @@
   </Target>
   
 
-  <Target Name="SignClickOnceFiles" AfterTargets="SignApplications">
+  <Target Name="SignClickOnceFiles" AfterTargets="SignApplications" Condition="'$(CodeSigningEnabled)' == 'true'">
     <PropertyGroup>
       <MinVersion Condition="'$(MinVersion)' == ''">8.0.2.0</MinVersion>
     </PropertyGroup>
