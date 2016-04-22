@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml;
-using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
 using ModuleType = Aderant.Build.DependencyAnalyzer.ModuleType;
@@ -26,7 +25,7 @@ namespace Aderant.Build.Commands {
                 throw new InvalidOperationException("Unable to filter modules as no path ExpertManifest.xml was provided");
             }
 
-            ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath);
+            ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath, null);
             DependencyBuilder builder = provider.DependencyAnalyzer;
 
             List<ExpertModule> modules = builder.GetAllModules().ToList();

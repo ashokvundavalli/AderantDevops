@@ -3,13 +3,13 @@
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
   ToolsVersion="12.0">
 
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == ''" />
+  <Import Project="$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
 
   <UsingTask
     TaskName="ResolveUniqueDependencies"
     TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll" >
-    <ParameterGroup >
+    AssemblyFile="$(CodeTaskFactoryAssembly)">
+    <ParameterGroup>
       <FilesToProcess ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <DependencyDirectories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
@@ -31,6 +31,13 @@ var uniqueFiles = new List<ITaskItem>();
 foreach (ITaskItem taskItem in FilesToProcess) {
     ITaskItem item1 = taskItem;
     if (!dependencies.Any(item => String.Equals(Path.GetFileName(item), Path.GetFileName(item1.ItemSpec), StringComparison.OrdinalIgnoreCase))) {
+        
+        var fileName = taskItem.GetMetadata("FileName");
+        if (fileName.IndexOf("VisualStudio") >= 0)
+          continue;
+        if (fileName.IndexOf("UnitTest") >= 0)
+          continue;        
+    
         Log.LogMessage("File {0} is a unique dependency", taskItem.ItemSpec);
         uniqueFiles.Add(taskItem);
     }
@@ -98,6 +105,7 @@ Result = uniqueFiles.ToArray();
     <!-- Add all web dependencies into a separate zip -->
     <MSBuild.Community.Tasks.Zip
       Condition="'@(ResolvedDependenciesForPackaging)' != ''"
+      ParallelCompression="false"
       Files="@(ResolvedDependenciesForPackaging)"
       ZipFileName="$(DependenciesZipLocation)\$(WebPublishPipelineProjectName).dependencies.zip"
       WorkingDirectory="$(DependenciesPackagingDir)" />
@@ -131,7 +139,7 @@ Result = uniqueFiles.ToArray();
 
   <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
     <PropertyGroup>
-      <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
+      <_PkgPathFull Condition="'$(WPPAllFilesInSingleFolder)' != ''">$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder))</_PkgPathFull>
     </PropertyGroup>
 
     <!-- escape the text into a regex -->

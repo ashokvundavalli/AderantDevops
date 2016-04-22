@@ -41,7 +41,7 @@ namespace Aderant.Build.Commands {
             Host.UI.WriteLine();
             Host.UI.WriteLine("Source Branch: " + SourceBranch);
             Host.UI.WriteLine("Target Branch: " + TargetBranch);
-            
+
             string modulesDirectory = ParameterHelper.GetBranchModulesDirectory(TargetBranch, SessionState);
 
             ProductManifestUpdater updater = new ProductManifestUpdater(new PowerShellLogger(Host), ExpertManifest.Load(modulesDirectory));

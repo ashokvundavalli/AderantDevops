@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="12.0">
+  ToolsVersion="14.0">
 
   <PropertyGroup>
     <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildThisFileDirectory)</DependenciesDirectory>
@@ -380,8 +380,8 @@
     </ItemGroup>
 
     <!-- Only copy files with the Link attribute set -->
-    <Copy SourceFiles="%(ContentToCopy.Identity)"
-          DestinationFiles="$(ProjectDir)%(ContentToCopy.Link)"
+    <Copy SourceFiles="@(ContentToCopy)"
+          DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true"
           Condition="'%(ContentToCopy.Link)' != ''"  />
@@ -390,9 +390,8 @@
        Aspx content hangs Visual studio if you attempt to add a breakpoint to an ASPX file and the file is actually a link (very annoying). 
        So we need to copy the file instead 
     -->
-    <Message Text="Copying linked ASPX content @(AspxContent)" />
-    <Copy SourceFiles="%(AspxContent.Identity)"
-          DestinationFiles="%(AspxContent.RelativePath)\%(Filename)%(Extension)"
+    <Copy SourceFiles="@(AspxContent)"
+          DestinationFiles="@(AspxContent->'%(RelativePath)\%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true" />
 

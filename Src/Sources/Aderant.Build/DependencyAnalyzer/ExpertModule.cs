@@ -286,20 +286,43 @@ namespace Aderant.Build.DependencyAnalyzer {
                 string[] files = directoryOperations.GetFileSystemEntries(build);
 
                 foreach (string file in files) {
-                    if (file.EndsWith("BuildLog.txt", StringComparison.OrdinalIgnoreCase)) {
-                        if (CheckLog(file)) {
+                    if (file.IndexOf("build.failed", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        break;
+                    }
 
-                            string binaries = Path.Combine(build, "Bin", "Module");
+                    if (file.IndexOf("build.succeeded", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        string binariesPath;
+                        if (HasBinariesFolder(build, directoryOperations, out binariesPath)) {
+                            return binariesPath;
+                        }
+                    }
+                }
 
-                            if (directoryOperations.Exists(binaries)) {
-                                return binaries;
-                            }
+                string buildLog = files.FirstOrDefault(f => f.EndsWith("BuildLog.txt", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(buildLog)) {
+                    if (CheckLog(buildLog)) {
+                        string binariesPath;
+                        if (HasBinariesFolder(build, directoryOperations, out binariesPath)) {
+                            return binariesPath;
                         }
                     }
                 }
             }
 
             throw new BuildNotFoundException("No latest build found for " + Name);
+        }
+
+        private static bool HasBinariesFolder(string build, DirectoryOperations directoryOperations, out string binariesFolder) {
+            string binaries = Path.Combine(build, "Bin", "Module");
+
+            if (directoryOperations.Exists(binaries)) {
+                {
+                    binariesFolder = binaries;
+                    return true;
+                }
+            }
+            binariesFolder = null;
+            return false;
         }
 
         internal static string[] OrderBuildsByBuildNumber(string[] entries) {

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2770-4455-94CF-489136D6405A}"
 EndProject
@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Aderant.wpp.targets = Src\Build\Aderant.wpp.targets
 		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
 		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
+		Src\Build\CleanSymlinks.ps1 = Src\Build\CleanSymlinks.ps1
 		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
 		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
@@ -32,6 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B1
 	ProjectSection(SolutionItems) = preProject
 		Src\Profile\Aderant\Aderant.psd1 = Src\Profile\Aderant\Aderant.psd1
 		Src\Profile\Aderant\Aderant.psm1 = Src\Profile\Aderant\Aderant.psm1
+		Src\Profile\Aderant\AderantTfs.psm1 = Src\Profile\Aderant\AderantTfs.psm1
 		Src\Profile\Aderant\AderantWeb.psm1 = Src\Profile\Aderant\AderantWeb.psm1
 		Src\Profile\Aderant\BuildLibraryImport.ps1 = Src\Profile\Aderant\BuildLibraryImport.ps1
 		Src\Profile\Aderant\Setup.ps1 = Src\Profile\Aderant\Setup.ps1
@@ -98,7 +100,7 @@ Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 5
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs.ap.aderant.com:8080/tfs/aderant
+		SccTeamFoundationServer = http://svtfs303:8080/tfs/aderant
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = Src\\Sources\\FxCopCmd\\FxCopCmd.csproj
 		SccProjectName1 = Src/Sources/FxCopCmd

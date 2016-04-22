@@ -6,7 +6,6 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.Providers;
-using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
@@ -39,7 +38,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (existingProject != null) {
                 project = XDocument.Load(existingProject);
             } else {
-                project = new XDocument(new XElement(ns + "Project", new XAttribute("ToolsVersion", 4.0)));
+                project = new XDocument(new XElement(ns + "Project", new XAttribute("ToolsVersion", 14.0)));
             }
 
             project.Declaration = new XDeclaration("1.0", "utf-8", "yes");;
@@ -87,23 +86,23 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Sequences the builds provided by the specified <see cref="IModuleProvider" /> instance and checks out the project file for edits.
         /// </summary>
-        /// <param name="wss">The WSS.</param>
+        /// <param name="workspace">The source control provider.</param>
         /// <param name="project">The project.</param>
         /// <param name="provider">The provider.</param>
         /// <returns>
         /// The updated project text.
         /// </returns>
-        internal static string CreateOrUpdateBuildSequence(Workspace wss, string project, IModuleProvider provider) {
+        internal static string CreateOrUpdateBuildSequence(ITeamFoundationWorkspace workspace, string project, IModuleProvider provider) {
             var sequencer = new BuildProjectSequencer();
             IEnumerable<Build> builds = sequencer.SequenceBuilds(provider);
 
             if (!File.Exists(project)) {
-                wss.PendAdd(project);
+                workspace.PendAdd(project);
 
                 return sequencer.CreateBuildDocument(null, builds);
             }
 
-            wss.PendEdit(project);
+            workspace.PendEdit(project);
 
             using (StreamReader reader = new StreamReader(project)) {
                 return sequencer.CreateBuildDocument(reader, builds);

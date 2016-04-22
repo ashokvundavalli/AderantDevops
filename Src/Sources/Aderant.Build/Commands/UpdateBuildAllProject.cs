@@ -4,8 +4,6 @@ using System.Management.Automation;
 using System.Management.Automation.Host;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
-using Microsoft.TeamFoundation.Client;
-using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Commands {
     /// <summary>
@@ -52,33 +50,16 @@ namespace Aderant.Build.Commands {
         }
 
         private void SequenceBuilds(IModuleProvider provider, string moduleProject) {
-            TfsTeamProjectCollection teamProject = TeamFoundationHelper.GetTeamProjectServer();
+            ITeamFoundationWorkspace workspace = ServiceLocator.GetInstance<ITeamFoundationWorkspace>();
 
-            WorkspaceInfo[] workspaces = Workstation.Current.GetAllLocalWorkspaceInfo();
-            foreach (WorkspaceInfo workspaceInfo in workspaces) {
+            Host.UI.WriteLine("Sequencing builds...");
 
-                
-                // If the "tfs/ADERANT" collection is not found inside of the current WorkspaceInfo object, then move to the next
-                Workspace workspace;
-                try {
-                    workspace = workspaceInfo.GetWorkspace(teamProject);
-                } catch (System.InvalidOperationException) {
-                    continue;
-                }
+            string sequence = BuildProjectSequencer.CreateOrUpdateBuildSequence(workspace, moduleProject, provider);
 
-                string serverItem = workspace.TryGetServerItemForLocalItem(moduleProject);
-                if (!string.IsNullOrEmpty(serverItem)) {
-                    Host.UI.WriteLine("Sequencing builds...");
+            Host.UI.WriteLine();
+            Host.UI.WriteLine("Writing updated project file: " + moduleProject);
 
-                    string sequence = BuildProjectSequencer.CreateOrUpdateBuildSequence(workspace, moduleProject, provider);
-
-                    Host.UI.WriteLine();
-                    Host.UI.WriteLine("Writing updated project file: " + moduleProject);
-
-                    File.WriteAllText(moduleProject, sequence);
-                    return;
-                }
-            }
+            File.WriteAllText(moduleProject, sequence);
         }
     }
 }

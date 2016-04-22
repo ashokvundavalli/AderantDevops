@@ -1,5 +1,4 @@
 ﻿using Aderant.Build.Providers;
-using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.TeamFoundation.VersionControl.Common;
 using System;
@@ -12,7 +11,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class ProductManifestUpdater {
         private readonly ILogger logger;
         private readonly IModuleProvider provider;
-        
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProductManifestUpdater"/> class.
@@ -25,28 +24,29 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public void Update(string sourceBranch, string targetBranch) {
+            var sourceControl = ServiceLocator.GetInstance<ITeamFoundationWorkspace>();
+            var versionControl = ServiceLocator.GetInstance<VersionControlServer>();
+
             sourceBranch = PathHelper.GetBranch(sourceBranch);
             targetBranch = PathHelper.GetBranch(targetBranch);
 
             IEnumerable<ExpertModule> modules = provider.GetAll();
 
             sourceBranch = sourceBranch.Replace('/', Path.DirectorySeparatorChar);
+            
+            EditProductManifest(sourceControl);
 
-            TfsTeamProjectCollection collection = TeamFoundationHelper.GetTeamProjectServer();
-            VersionControlServer service = collection.GetService<VersionControlServer>();
-            Workspace workspaceInfo = EditProductManifest();
-
-            var validator = new SourceControlModuleInspector(logger, service);
+            var validator = new SourceControlModuleInspector(logger, versionControl);
 
             // The list of module names from the remote branch (eg Main)
-            ICollection<string> sourceBranchModules = GetModulesFromSourceControl(service, sourceBranch);
+            ICollection<string> sourceBranchModules = GetModulesFromSourceControl(versionControl, sourceBranch);
 
-            modules = AddModulesFromSourceControl(modules, targetBranch, service);
-            
+            modules = AddModulesFromSourceControl(modules, targetBranch, versionControl);
+
             IList<ExpertModule> removeList = new List<ExpertModule>();
 
             foreach (ExpertModule module in modules) {
-                SynchronizeProductManifestWithModules(module, workspaceInfo);
+                SynchronizeProductManifestWithModules(module, sourceControl);
             }
 
             foreach (ExpertModule module in modules) {
@@ -89,11 +89,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             provider.Remove(removeList);
 
             string expertManifestDocument = provider.Save();
-            workspaceInfo.PendEdit(provider.ProductManifestPath);
+
+            sourceControl.PendEdit(provider.ProductManifestPath);
+
             File.WriteAllText(provider.ProductManifestPath, expertManifestDocument);
         }
 
-        private void SynchronizeProductManifestWithModules(ExpertModule module, Workspace workspaceInfo) {
+        private void SynchronizeProductManifestWithModules(ExpertModule module, ITeamFoundationWorkspace workspace) {
             DependencyManifest manifest;
             if (provider.TryGetDependencyManifest(module.Name, out manifest)) {
                 logger.Log("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
@@ -110,7 +112,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         string modifiedManifestDocument = dependencyManifest.Save();
 
                         if (!string.Equals(instanceBeforeSave, modifiedManifestDocument)) {
-                            workspaceInfo.PendEdit(dependencyManifestPath);
+                            workspace.PendEdit(dependencyManifestPath);
                             File.WriteAllText(dependencyManifestPath, modifiedManifestDocument);
                         }
                     }
@@ -158,16 +160,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             return false;
         }
 
-        private Workspace EditProductManifest() {
-            Workspace workspace = TeamFoundationHelper.GetWorkspaceForItem(provider.ProductManifestPath);
-            
-            string path = workspace.TryGetServerItemForLocalItem(provider.ProductManifestPath);
-            if (path != null) {
-                workspace.PendEdit(provider.ProductManifestPath);
-                return workspace;
-            }
-            
-            throw new InvalidOperationException("Could not determine current TFS workspace");
+        private void EditProductManifest(ITeamFoundationWorkspace workspace) {
+            workspace.PendEdit(provider.ProductManifestPath);
         }
 
         private ICollection<string> GetModulesFromSourceControl(VersionControlServer vcs, string branch) {

@@ -30,7 +30,7 @@ namespace Aderant.Build.Tasks {
 
                     try {
                         check.CheckForInvalidBranch(projectFileText, BranchName);
-                    } catch (InvalidOperationException ex) {
+                    } catch (Exception ex) {
                         Log.LogError("File {0} is invalid. {1}", item.ItemSpec, ex.Message);
                         break;
                     }

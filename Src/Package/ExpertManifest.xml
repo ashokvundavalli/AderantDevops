@@ -147,8 +147,7 @@
         <Module Name="ThirdParty.Microsoft.AspNet" />
         <Module Name="ThirdParty.Microsoft.Build" />
         <Module Name="ThirdParty.Microsoft.Data" />
-        <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
-        <Module Name="Thirdparty.Microsoft.DSL" />
+        <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />        
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
         <Module Name="ThirdParty.Microsoft.ExpressionBlendSdk" />
         <Module Name="ThirdParty.Microsoft.Linq.Dynamic" />
@@ -159,6 +158,7 @@
         <Module Name="ThirdParty.Microsoft.OpenXmlPowerTools" />
         <Module Name="ThirdParty.Microsoft.UrlRewrite" />
         <Module Name="ThirdParty.Microsoft.WindowsServerAppFabric" />
+        <Module Name="ThirdParty.Microsoft.TeamFoundation" />
         <Module Name="ThirdParty.Mindscape" />
         <Module Name="ThirdParty.Modernizr" />
         <Module Name="ThirdParty.MomentJs" />
@@ -201,7 +201,6 @@
         <Module Name="Web.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Case" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Expenses" AssemblyVersion="1.8.0.0" />
-        <Module Name="Web.Financials" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.MatterWorks" AssemblyVersion="1.8.0.0" />

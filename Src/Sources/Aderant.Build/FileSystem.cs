@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
 using Task = System.Threading.Tasks.Task;
 
 namespace Aderant.Build {
-
     public class FileSystem {
         /// <summary>
         /// Calculates the destination directory for a file
@@ -71,7 +72,7 @@ namespace Aderant.Build {
 
             // Get the files in the directory and copy them to the new location.
             FileInfo[] files = dir.GetFiles();
-            foreach (FileInfo file in files) {
+            Parallel.ForEach(files, (file, loopState) => {
                 var destinationFile = Path.Combine(destination, file.Name);
 
                 // Ask the override hook if we should copy this file and where it should go
@@ -80,7 +81,7 @@ namespace Aderant.Build {
                 }
 
                 if (destinationFile == null) {
-                    continue;
+                    return;
                 }
 
                 // The user could have given us a new path so ensure the directory exists
@@ -94,16 +95,9 @@ namespace Aderant.Build {
                 if (useHardLinks) {
                     NativeMethods.CreateHardLink(destinationFile, file.FullName, IntPtr.Zero);
                 } else {
-                    using (FileStream sourceStream = file.Open(FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                        using (FileStream destinationStream = System.IO.File.Create(destinationFile)) {
-                            using (destinationStream) {
-                                await sourceStream.CopyToAsync(destinationStream);
-                                ClearReadOnly(destinationFile);
-                            }
-                        }
-                    }
+                    FileCopy.CopyFileWriteThrough(file.FullName, destinationFile);
                 }
-            }
+            });
 
             // If copying subdirectories, copy them and their contents to new location. 
             if (recursive) {
@@ -122,13 +116,13 @@ namespace Aderant.Build {
                     // sometimes throws a "Handle is not valid" error - don't know why (need to investigate)
                     //var fileLinkCount = NativeMethods.GetFileLinkCount(destinationFile);
                     //if (fileLinkCount > 1) {
-                        var fileLinks = NativeMethods.GetFileSiblingHardLinks(destinationFile);
-                        var randomOtherLink = fileLinks.FirstOrDefault(f => f.ToLowerInvariant() != destinationFile.ToLowerInvariant());
-                        if (randomOtherLink != null) {
-                            ClearReadOnly(destinationFile);
-                            success = NativeMethods.DeleteFile(destinationFile);
-                            SetReadOnly(randomOtherLink);
-                        }
+                    var fileLinks = NativeMethods.GetFileSiblingHardLinks(destinationFile);
+                    var randomOtherLink = fileLinks.FirstOrDefault(f => f.ToLowerInvariant() != destinationFile.ToLowerInvariant());
+                    if (randomOtherLink != null) {
+                        ClearReadOnly(destinationFile);
+                        success = NativeMethods.DeleteFile(destinationFile);
+                        SetReadOnly(randomOtherLink);
+                    }
                     //}
                 }
                 if (!success) {
@@ -148,8 +142,24 @@ namespace Aderant.Build {
         }
     }
 
-    public class FileOperations {
+    internal class FileCopy {
+        const FileOptions FileFlagNoBuffering = (FileOptions)0x20000000;
+        public static int CopyFileWriteThrough(string inputfile, string outputfile) {
+            int bufferSize = 4096;
 
+            using (var infile = new FileStream(inputfile, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileFlagNoBuffering | FileOptions.SequentialScan)) {
+                
+                using (var outfile = new FileStream(outputfile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize, FileOptions.WriteThrough)) {
+                    infile.CopyTo(outfile);
+                }
+            }
+
+            return 1;
+        }
+    }
+
+
+    public class FileOperations {
         public virtual bool Exists(string file) {
             return File.Exists(file);
         }
@@ -188,6 +198,7 @@ namespace Aderant.Build {
     internal static class NativeMethods {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool CreateHardLink(string newFileName, string existingFileName, IntPtr securityAttributes);
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool DeleteFile(string fileName);
 
@@ -249,7 +260,7 @@ namespace Aderant.Build {
             SafeFileHandle handle = CreateFile(filepath, FileAccess.Read, FileShare.Read, IntPtr.Zero, FileMode.Open, FileAttributes.Archive, IntPtr.Zero);
             BY_HANDLE_FILE_INFORMATION fileInfo = new BY_HANDLE_FILE_INFORMATION();
             if (GetFileInformationByHandle(handle, out fileInfo))
-                result = (int)fileInfo.NumberOfLinks;
+                result = (int) fileInfo.NumberOfLinks;
             CloseHandle(handle);
             return result;
         }
@@ -260,14 +271,16 @@ namespace Aderant.Build {
             StringBuilder sb = new StringBuilder(256);
             GetVolumePathName(filepath, sb, stringLength);
             string volume = sb.ToString();
-            sb.Length = 0; stringLength = 256;
+            sb.Length = 0;
+            stringLength = 256;
             IntPtr findHandle = FindFirstFileNameW(filepath, 0, ref stringLength, sb);
             if (findHandle.ToInt64() != -1) {
                 do {
                     StringBuilder pathSb = new StringBuilder(volume, 256);
                     PathAppend(pathSb, sb.ToString());
                     result.Add(pathSb.ToString());
-                    sb.Length = 0; stringLength = 256;
+                    sb.Length = 0;
+                    stringLength = 256;
                 } while (FindNextFileNameW(findHandle, ref stringLength, sb));
                 FindClose(findHandle);
                 return result.ToArray();

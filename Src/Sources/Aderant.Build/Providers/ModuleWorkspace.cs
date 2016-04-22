@@ -1,86 +1,110 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 using Aderant.Build.DependencyAnalyzer;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Providers {
     /// <summary>
-    /// Represents an ExpertSuite developement environment . 
+    /// Represents an ExpertSuite developement environment. 
     /// 
     /// The ideal is to make this class the single entry point for all services required for working with Expert Suite.
     /// This class should manage the various manifest files and provide a set of dependency analysis services.
     /// 
     /// The class also talks to Team Foundation. 
     /// </summary>
-    public class ModuleWorkspace {
-        private readonly string branchPath;
-        private string teamProject;
-        private string teamFoundationServerUri;
-        private IServiceProvider teamFoundationFactory;
+    [Export(typeof(IWorkspace))]
+    [PartCreationPolicy(CreationPolicy.Shared)]
+    public class ModuleWorkspace : ISourceControlProvider, IWorkspace {
+        private static ITeamFoundationWorkspace tfsWorkspace;
+        private static VersionControlServer versionControlServer;
+        private DependencyBuilder dependencyAnalyzer;
+        private Task workspaceTask;
+        private bool workspaceTaskCompleted;
+
+        [ContextualExport(typeof(ITeamFoundationWorkspace), ExportMode.Desktop)]
+        ITeamFoundationWorkspace ISourceControlProvider.Workspace {
+            get {
+                WaitForWorkspace();
+                return tfsWorkspace;
+            }
+        }
+      
+        [ContextualExport(typeof(VersionControlServer), ExportMode.Desktop)]
+        public VersionControlServer VersionControlServer {
+            get {
+                WaitForWorkspace();
+
+                if (tfsWorkspace == null) {
+                    throw new InvalidOperationException("No workspace available.");
+                }
+                return versionControlServer;
+            }
+        }
+
+        [Export(typeof(VersionControlServer))]
+        public DependencyBuilder DependencyAnalyzer {
+            get {
+                WaitForWorkspace();
+
+                return dependencyAnalyzer;
+            }
+        }
+
+        private void WaitForWorkspace() {
+            if (workspaceTaskCompleted) {
+                return;
+            }
+
+            if (workspaceTask != null && !workspaceTask.IsCompleted) {
+                workspaceTask.Wait();
+            }
+        }
+
+
+        static ModuleWorkspace() {
+            VisualStudioEnvironmentContext.SetupContext();
+        }
+
+        public ModuleWorkspace() {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ModuleWorkspace"/> class.
         /// </summary>
-        /// <param name="branchPath">The server branch path.</param>
-        /// <param name="teamFoundationServerUri">The team foundation server URI.</param>
-        /// <param name="teamProject">The team project.</param>
-        public ModuleWorkspace(string branchPath, string teamFoundationServerUri, string teamProject) {
-            this.branchPath = branchPath;
-            this.teamProject = teamProject;
-            this.teamFoundationServerUri = teamFoundationServerUri;
+        /// <param name="path">The expert manifest path.</param>
+        /// /// <param name="teamProject">The TFS team project.</param>
+        public ModuleWorkspace(string path, string teamProject) {
+            GetWorkspaceForPath(path, teamProject);
+        }
 
-            Task.Run(() => {
-                WorkspaceWrapper workspace = GetWorkspaceForItem(branchPath);
+        private void GetWorkspaceForPath(string path, string teamProject) {
+            workspaceTask = Task.Run(() => {
+                WorkspaceInfo workspaceInfo = Workstation.Current.GetLocalWorkspaceInfo(path);
 
-                // We may have been passed a local path C:\Foo rather than $/Path/ so convert it if needed.
-                branchPath = workspace.GetServerPath(branchPath);
+                Workspace workspace = workspaceInfo.GetWorkspace(new TfsTeamProjectCollection(workspaceInfo.ServerUri));
+                versionControlServer = workspace.VersionControlServer;
+                tfsWorkspace = new TeamFoundationWorkspace(teamProject, workspace, path);
 
-                WorkspaceItem item = workspace.Find(CombineServerPaths(branchPath, "*ExpertManifest.xml"), "Src");
+                string manifestPath;
+                if (path.EndsWith(".xml")) {
+                    manifestPath = path;
+                } else {
+                    manifestPath = Path.Combine(path, PathHelper.PathToProductManifest);
+                }
 
-                Initialize(item.LocalItem);
+                IModuleProvider manifest = ExpertManifest.Load(manifestPath);
+                dependencyAnalyzer = new DependencyBuilder(manifest);
+            }).ContinueWith(delegate {
+                workspaceTask = null;
+                workspaceTaskCompleted = true;
             });
         }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ModuleWorkspace"/> class.
-        /// </summary>
-        /// <param name="expertManifestPath">The expert manifest path.</param>
-        public ModuleWorkspace(string expertManifestPath) {
-            Initialize(expertManifestPath);
-        }
-
-        private void Initialize(string expertManifestPath) {
-            IModuleProvider manifest = ExpertManifest.Load(expertManifestPath);
-            DependencyAnalyzer = new DependencyBuilder(manifest);
-        }
-
-        private string CombineServerPaths(params string[] paths) {
-            return string.Join(Path.AltDirectorySeparatorChar.ToString(CultureInfo.InvariantCulture), paths);
-        }
-
-        /// <summary>
-        /// Gets or sets the team foundation server factory.
-        /// </summary>
-        /// <value>
-        /// The team foundation factory.
-        /// </value>
-        public IServiceProvider TeamFoundationServiceFactory {
-            get {
-                if (teamFoundationFactory == null) {
-                    teamFoundationFactory = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(teamFoundationServerUri));
-                }
-                return teamFoundationFactory;
-            }
-            set { teamFoundationFactory = value; }
-        }
-
-        public DependencyBuilder DependencyAnalyzer { get; private set; }
 
         /// <summary>
         /// Gets the modules for the given names.
@@ -116,38 +140,23 @@ namespace Aderant.Build.Providers {
         }
 
         private string[] GetModuleNamesWithPendingChanges(string branchPath) {
-            WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
-
             HashSet<string> moduleNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            for (int i = 0; i < workspaceInfo.Length; i++) {
-                WorkspaceInfo info = workspaceInfo[i];
+            char[] splitCharArray = new char[] {Path.DirectorySeparatorChar};
 
-                Workspace workspace;
-                try {
-                    workspace = info.GetWorkspace((TfsTeamProjectCollection) TeamFoundationServiceFactory);
-                } catch (InvalidOperationException) {
-                    continue;
-                }
+            PendingChange[] pendingChanges = ((ISourceControlProvider) this).Workspace.GetPendingChanges();
 
-                char[] splitCharArray = new char[] {Path.DirectorySeparatorChar};
+            foreach (PendingChange change in pendingChanges) {
+                if (change.ItemType == ItemType.File) {
+                    if (change.LocalItem.IndexOf(branchPath, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        string localItem = change.LocalItem;
 
-                if (workspace != null) {
-                    PendingChange[] pendingChanges = workspace.GetPendingChanges();
+                        string folder = localItem.Substring(localItem.IndexOf(branchPath, StringComparison.OrdinalIgnoreCase) + branchPath.Length);
 
-                    foreach (PendingChange change in pendingChanges) {
-                        if (change.ItemType == ItemType.File) {
-                            if (change.LocalItem.IndexOf(branchPath, StringComparison.OrdinalIgnoreCase) >= 0) {
-                                string localItem = change.LocalItem;
+                        folder = folder.Trim(splitCharArray);
+                        string moduleName = folder.Split(splitCharArray, StringSplitOptions.RemoveEmptyEntries)[0];
 
-                                string folder = localItem.Substring(localItem.IndexOf(branchPath, StringComparison.OrdinalIgnoreCase) + branchPath.Length);
-
-                                folder = folder.Trim(splitCharArray);
-                                string moduleName = folder.Split(splitCharArray, StringSplitOptions.RemoveEmptyEntries)[0];
-
-                                moduleNames.Add(moduleName);
-                            }
-                        }
+                        moduleNames.Add(moduleName);
                     }
                 }
             }
@@ -155,80 +164,16 @@ namespace Aderant.Build.Providers {
             return moduleNames.ToArray();
         }
 
-        /// <summary>
-        /// Gets the workspace for the given TFS item.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        /// <exception cref="System.InvalidOperationException">Could not determine current TFS workspace</exception>
-        public WorkspaceWrapper GetWorkspaceForItem(string path) {
-            TfsTeamProjectCollection server = (TfsTeamProjectCollection) TeamFoundationServiceFactory;
-
-            WorkspaceInfo[] workspaceInfo = Workstation.Current.GetAllLocalWorkspaceInfo();
-
-            for (int i = 0; i < workspaceInfo.Length; i++) {
-                WorkspaceInfo info = workspaceInfo[i];
-
-                Workspace workspace;
-                try {
-                    workspace = info.GetWorkspace(server);
-                } catch (InvalidOperationException) {
-                    continue;
-                }
-
-                if (path.StartsWith("$")) {
-                    string serverPath = workspace.TryGetLocalItemForServerItem(path);
-                    if (serverPath != null) {
-                        return new WorkspaceWrapper(workspace);
-                    }
-                } else {
-                    string serverPath = workspace.TryGetServerItemForLocalItem(path);
-                    if (serverPath != null) {
-                        return new WorkspaceWrapper(workspace);
-                    }
-                }
-            }
-
-            throw new InvalidOperationException("Could not determine current TFS workspace");
+        public string GetThirdPartyFolder() {
+            return null;
         }
     }
 
-    public class WorkspaceWrapper {
-        private readonly Workspace workspace;
+    public interface IWorkspace {
+        string GetThirdPartyFolder();
+    }
 
-        public WorkspaceWrapper(Workspace workspace) {
-            this.workspace = workspace;
-        }
-
-        /// <summary>
-        /// TFS queries do not support mulitple wildcards. Specifiy a file filter and an optional path filter if multiple matches are found.
-        /// </summary>
-        /// <param name="query">The query.</param>
-        /// <param name="pathFilter">The filter.</param>
-        public WorkspaceItem Find(string query, string pathFilter) {
-            WorkspaceItemSet[] items = workspace.GetItems(new[] {new ItemSpec(query, RecursionType.Full)}, DeletedState.NonDeleted, ItemType.File, false, GetItemsOptions.LocalOnly);
-
-            if (items != null) {
-                foreach (WorkspaceItemSet set in items) {
-                    if (set.Items.Length == 1) {
-                        return set.Items[0];
-                    }
-
-                    if (pathFilter != null) {
-                        foreach (WorkspaceItem item in set.Items) {
-                            if (item.LocalItem.IndexOf(pathFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
-                                return item;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public string GetServerPath(string branchPath) {
-            return workspace.TryGetServerItemForLocalItem(branchPath);
-        }
+    internal interface ISourceControlProvider {
+        ITeamFoundationWorkspace Workspace { get; }
     }
 }

@@ -28,15 +28,12 @@ namespace Aderant.Build {
         /// <summary>
         /// Gets or sets the modules in build.
         /// </summary>
-        /// <value>
-        /// The modules in build.
-        /// </value>
-        public IEnumerable<string> ModulesInBuild {
-            get { return modulesInBuild; }
-            set {
-                if (value != null) {
-                    modulesInBuild = value.ToList();
-                }
+        /// <param name="value">
+        ///     The modules in build.
+        /// </param>
+        public void SetModulesInBuild(IEnumerable<string> value) {
+            if (value != null) {
+                modulesInBuild = value.ToList();
             }
         }
 
@@ -99,7 +96,7 @@ namespace Aderant.Build {
                 // Optimization. If we have a local ThirdParty dependency source attempt to use it.
                 if (!string.IsNullOrEmpty(DependencySources.LocalThirdPartyDirectory)) {
                     if (referencedModule.ModuleType == ModuleType.ThirdParty && string.IsNullOrEmpty(referencedModule.Branch)) {
-                        // The third party module can come straight out of the TFS workspace - we don't need to copy it from the drop
+                        // The third party module can come straight out of the TFS TeamFoundationWorkspace - we don't need to copy it from the drop
                         try {
                             latestBuild = expertManifest.GetPathToBinaries(referencedModule, DependencySources.LocalThirdPartyDirectory);
                             useHardLinks = true;
@@ -334,41 +331,5 @@ namespace Aderant.Build {
                 return false;
             }
         }
-    }
-
-    internal class DependencySources {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DependencySources"/> class.
-        /// </summary>
-        /// <param name="dropPath">The drop path.</param>
-        public DependencySources(string dropPath) {
-            DropLocation = dropPath;
-        }
-
-        /// <summary>
-        /// Gets or sets the third party module location.
-        /// </summary>
-        /// <value>
-        /// The third party.
-        /// </value>
-        public string LocalThirdPartyDirectory { get; set; }
-
-        /// <summary>
-        /// Gets or sets the drop location.
-        /// </summary>
-        /// <value>
-        /// The drop location.
-        /// </value>
-        public string DropLocation { get; private set; }
-
-        internal static string GetLocalPathToThirdPartyBinaries(string tfsServerUri, string branchRoot) {
-            if (!string.IsNullOrEmpty(branchRoot)) {
-                SourceControl sourceControl = SourceControl.CreateFromBranchRoot(tfsServerUri, branchRoot);
-                return sourceControl.BranchInfo.ThirdPartyFolder;
-            }
-            return null;
-        }
-
-
     }
 }

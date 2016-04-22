@@ -1,52 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="12.0"
+  ToolsVersion="14.0"
   DefaultTargets="PrepareBuildEnvironment"
-  TreatAsLocalProperty="BuildScriptsDirectory">
+  TreatAsLocalProperty="BuildScriptsDirectory;BuildNumber">
 
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == ''"/>
+  <PropertyGroup Label="TeamBuild">
+    <SkipWorkItemCreation>true</SkipWorkItemCreation>
+    <!-- We need a custom task for this as this will associate all work items to a build even if the build doesn't relate to the work item -->
+    <UpdateAssociatedWorkItems>false</UpdateAssociatedWorkItems>
+    <StopOnFirstFailure>true</StopOnFirstFailure>
+    <StopOnTestFailure>true</StopOnTestFailure>
+    <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsDesktopBuild Condition="'$(IsDesktopBuild)' == ''">true</IsDesktopBuild>
+    
+    <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == ''">$(MSBuildThisFileDirectory)\</BuildScriptsDirectory>
+    <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != ''">$([System.IO.Path]::GetFullPath('$(BuildScriptsDirectory)'))</BuildScriptsDirectory>
+    
+    <!-- Inject per CSharp project overrides. This target is imported once for each CSharp project and allows us access to project level variables -->
+    <CustomAfterMicrosoftCSharpTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
+    <CustomAfterMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomAfterMicrosoftCommon.targets</CustomAfterMicrosoftCommonTargets>
+    
+    <BuildScriptsDirectory Condition="!HasTrailingSlash('$(BuildScriptsDirectory)')">$(BuildScriptsDirectory)\</BuildScriptsDirectory>
+    <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
+    <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
+
+    <ProductManifestPath Condition="'$(ProductManifestPath)' == ''">$(BuildScriptsDirectory)..\Package\ExpertManifest.xml</ProductManifestPath>
+
+    <BuildAssembly>$(BuildToolsDirectory)\Aderant.Build.dll</BuildAssembly>
+    <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
+    <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
+  </PropertyGroup>
 
   <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
   <UsingTask TaskName="GetAssemblyPlatform"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Gets the dependencies for a given module -->
   <UsingTask TaskName="GetDependencies"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="MakeSymlink"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="DependencyChecker"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="BuildConfigurationCheck"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="FilterModules"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="AsyncExec"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="ExtractWebModule"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="GetCopyLocalItemsToRemove"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="ParallelBuildProjectFactory"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds SCC information into the pdb files for the symbol server -->
@@ -61,31 +89,37 @@
 
   <!-- Creates "fakes" builds in TFS -->
   <UsingTask TaskName="PublishBuild"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Closes and finalizes a build -->
   <UsingTask TaskName="FinalizeBuild"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds solution build details into TFS so the build can track warnings etc -->
   <UsingTask TaskName="AddBuildProjectNode"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             AssemblyFile="$(BuildAssembly)"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <UsingTask TaskName="CheckCertificate"
+             AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <PropertyGroup>
-    <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == ''">$(MSBuildThisFileDirectory)\</BuildScriptsDirectory>
-    
-    <!-- Inject per CSharp project overrides. This target is imported once for each CSharp project and allows us access to project level variables -->
-    <CustomAfterMicrosoftCSharpTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
-    <CustomAfterMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomAfterMicrosoftCommon.targets</CustomAfterMicrosoftCommonTargets>
+    <!-- Visual Studio Environment-->
+    <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS110COMNTOOLS)' != ''">$(VS110COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS120COMNTOOLS)' != ''">$(VS120COMNTOOLS)</VsCommonTools>
+    <VsCommonTools Condition="'$(VS140COMNTOOLS)' != ''">$(VS140COMNTOOLS)</VsCommonTools>
 
-    <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != '' And !HasTrailingSlash('$(BuildScriptsDirectory)')">$(BuildScriptsDirectory)\</BuildScriptsDirectory>
-    <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
-    <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
-    <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
+    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '12.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</CodeTaskFactoryAssembly>
+    <CodeTaskFactoryAssembly Condition="'$(VisualStudioVersion)' == '14.0'">$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll</CodeTaskFactoryAssembly>
+
+    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
   </PropertyGroup>
+
+  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" />
 
   <!--
     ==========================================================================================
@@ -98,7 +132,6 @@
   </Target>
 
   <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
-
     <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
 
     <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
@@ -115,18 +148,9 @@
       BuildInParallel="true"
       UnloadProjectsOnCompletion="true" />
 
-    <ItemGroup>
-      <CommunityTasksContent Include="$(BuildScriptsDirectory)Tasks\MSBuild.Community.Tasks\**\*" />
-    </ItemGroup>
-
-    <Message Text="Deploying MS Build Community Tasks" Condition="'$(IsDesktopBuild)' == 'false'" />
-    <Copy Condition="'$(IsDesktopBuild)' == 'false'"
-          SourceFiles="@(CommunityTasksContent)"
-          DestinationFiles="@(CommunityTasksContent->'$(BuildToolsDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
-          OverwriteReadOnlyFiles="true"
-          SkipUnchangedFiles="true"
-          Retries="10"
-          ContinueOnError="true" />
+    <!-- Setup environment for JavaScript tests -->
+    <Exec Command="reg import $(BuildScriptsDirectory)Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg" 
+          YieldDuringToolExecution="true" />
 
   </Target>
 
@@ -175,7 +199,7 @@
   -->
   <PropertyGroup>
     <SymbolStore Condition="'$(SymbolStore)' == '' And '$(IsDesktopBuild)' == 'true'">C:\Temp\SymbolStore</SymbolStore>
-    <SymbolStore Condition="'$(SymbolStore)' == '' And '$(IsDesktopBuild)' != 'true'">\\na.aderant.com\ExpertSuite\Symbols\</SymbolStore>
+    <SymbolStore Condition="'$(SymbolStore)' == '' And '$(IsDesktopBuild)' != 'true'">\\SVFP312\ExpertSuite\Symbols\</SymbolStore>
 
     <SymbolStoreLock Condition="'$(SymbolStoreLock)' == ''">$(SymbolStore)symstore.lock</SymbolStoreLock>
 
@@ -183,10 +207,9 @@
     <SymStorePath Condition="'$(WindowsSDK80Path)' != '' And Exists('$(WindowsSDK80Path)')">$(WindowsSDK80Path)</SymStorePath>
     <SymStorePath Condition="'$(SymStorePath)' != ''">$(SymStorePath)Debuggers\x64\</SymStorePath>
 
-    <OverwriteSymbolTextFile Condition="'$(BuildAll)' != 'true'">true</OverwriteSymbolTextFile>
-    <OverwriteSymbolTextFile Condition="'$(BuildAll)' == 'true'">false</OverwriteSymbolTextFile>
-
     <TeamProject Condition="'$(TeamProject)' == ''">ExpertSuite</TeamProject>
+
+    <!-- Default to the production TFS server -->
     <TeamFoundationServerUrl Condition="'$(TeamFoundationServerUrl)' == ''">http://tfs:8080/tfs/aderant</TeamFoundationServerUrl>
 
     <SymbolPublishFile Condition="'$(SymbolPublishFile)' == ''">$(SolutionDirectoryPath)SymbolsToPublish.txt</SymbolPublishFile>
@@ -224,18 +247,19 @@
       TeamProjectRootDirectory="-"
       TeamProjectName="$(TeamProject)"
       TeamProjectCollectionUri="$(TeamFoundationServerUrl)"
+      WorkspaceName="$(WorkspaceName)"
+      WorkspaceOwner="$(WorkspaceOwner)"
       FailOnNoSourceInformationFound="false"
       KeepTempFileForDebugging="false" />
 
     <Message Text="Using SymStore: $(SymStorePath)" />
     <Error Condition="!Exists('$(SymStorePath)')" Text="Cannot find SymStore.exe at $(SymStorePath)" />
-
-    <!-- Append to the file symbol file during a build all - otherwise create new -->
+    
     <WriteLinesToFile File="$(SymbolPublishFile)"
                       Lines="@(SymbolFiles)"
-                      Overwrite="$(OverwriteSymbolTextFile)" />
+                      Overwrite="true" />
 
-    <CallTarget Targets="PublishSymbols" Condition="'$(BuildAll)' != 'true'" />
+    <CallTarget Targets="PublishSymbols" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
@@ -258,23 +282,28 @@
     </BuildStep>
 
     <PropertyGroup>
-      <ProductName Condition="'$(ProductName)' == '' And '$(BuildAll)' != 'true'">[$(BranchName)][$(ModuleName)]</ProductName>
-      <ProductName Condition="'$(ProductName)' == '' And '$(BuildAll)' == 'true'">[$(BranchName)][Build All]</ProductName>
-      <ProductName>$(ProductName)[$(BuildUri)]</ProductName>
+      <ProductName Condition="'$(ProductName)' == ''">$(BranchName)</ProductName>
+      <BuildToAssociateWith Condition="'$(BuildAll)' != 'true'">$(BuildUri)</BuildToAssociateWith>
+      <BuildToAssociateWith Condition="'$(BuildAll)' == 'true'">$(PublishedBuildUri)</BuildToAssociateWith>
+      <ProductName>$(ProductName)[$(BuildToAssociateWith)]</ProductName>
     </PropertyGroup>
+    
+    <Error Condition="'$(BuildToAssociateWith)' == ''" Text="The build system is unsure what build to associate the symbols with" />
     
     <!-- @ before the variable as we want @Symbols.txt so it is treated as a response file -->
     <PublishSymbols
       Condition="Exists('$(SymbolPublishFile)')"
       TeamProjectCollectionUri="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
+      BuildUri="$(BuildToAssociateWith)"
       Product="$(ProductName)"
       Version="$(FileVersion)"
       LockFile="$(SymbolStoreLock)"
       WindowsSdkPath="$(SymStorePath)"
       Command="add"
       Files="@$(SymbolPublishFile)"
-      Store="$(SymbolStore)" />
+      Store="$(SymbolStore)" 
+      LogStandardErrorAsError="false"
+      YieldDuringToolExecution="true" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"

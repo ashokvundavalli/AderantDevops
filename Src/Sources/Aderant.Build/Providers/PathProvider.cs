@@ -8,27 +8,6 @@ using Microsoft.TeamFoundation.VersionControl.Common;
 namespace Aderant.Build.Providers {
     internal static class PathHelper {
         /// <summary>
-        /// Combines an arbitrary number of paths.
-        /// </summary>
-        /// <param name="path1">The path1.</param>
-        /// <param name="paths">The paths.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// path1
-        /// or
-        /// paths
-        /// </exception>
-        public static string Aggregate(string path1, params string[] paths) {
-            if (path1 == null) {
-                throw new ArgumentNullException("path1");
-            }
-            if (paths == null) {
-                throw new ArgumentNullException("paths");
-            }
-            return paths.Aggregate(path1, Path.Combine);
-        }
-
-        /// <summary>
         /// Gets the module dependencies directory.
         /// </summary>
         /// <param name="branchPath">The branch path.</param>
@@ -114,16 +93,6 @@ namespace Aderant.Build.Providers {
             }
 
             return Path.Combine(part1, part2 ?? string.Empty);
-        }
-
-        /// <summary>
-        /// Gets the path to the module build project file from the module root.
-        /// </summary>
-        /// <value>
-        /// The path to module build.
-        /// </value>
-        public static string PathToModuleBuild {
-            get { return @"Build.Infrastructure\Src\Build\ModuleBuild.proj"; }
         }
 
         /// <summary>

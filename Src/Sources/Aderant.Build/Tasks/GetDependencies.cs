@@ -53,6 +53,14 @@ namespace Aderant.Build.Tasks {
         /// </value>
         [Required]
         public string TeamFoundationServerUrl { get; set; }
+
+        public string WorkspaceName { get; set; }
+
+        public string WorkspaceOwner { get; set; }
+
+        static GetDependencies() {
+            VisualStudioEnvironmentContext.SetupContext();
+        }
         
         public override bool Execute() {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
@@ -135,7 +143,7 @@ namespace Aderant.Build.Tasks {
         private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
             var resolver = new ModuleDependencyResolver(expertManifest, DropPath);
 
-            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(TeamFoundationServerUrl, ModulesRootPath);
+            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(TeamFoundationServerUrl, ModulesRootPath, WorkspaceName, WorkspaceOwner);
 
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
@@ -143,14 +151,14 @@ namespace Aderant.Build.Tasks {
             }
 
             if (ModulesInBuild != null) {
-                resolver.ModulesInBuild = ModulesInBuild.Select(m => Path.GetFileName(Path.GetFullPath(m.ItemSpec)));
+                resolver.SetModulesInBuild(ModulesInBuild.Select(m => Path.GetFileName(Path.GetFullPath(m.ItemSpec))));
             }
 
             if (!string.IsNullOrEmpty(resolver.DependencySources.LocalThirdPartyDirectory)) {
                 Log.LogMessage(MessageImportance.Normal, "Using ThirdParty path: " + resolver.DependencySources.LocalThirdPartyDirectory, null);
             }
 
-            resolver.ModuleDependencyResolved += ((sender, args) => Log.LogMessage(MessageImportance.Normal, "Getting binaries for {0} from the branch {1} {2}", args.DependencyProvider, args.Branch, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty)));
+            resolver.ModuleDependencyResolved += (sender, args) => Log.LogMessage(MessageImportance.Normal, "Getting binaries for {0} from the branch {1} {2}", args.DependencyProvider, args.Branch, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
             return resolver;
         }
 

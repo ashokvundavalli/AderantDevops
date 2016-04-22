@@ -61,7 +61,7 @@ namespace Aderant.Build.Process {
                                 string singlePropertyLine = CreateSinglePropertyLine(properties);
 
                                 if (buildDirectory.Parent != null) {
-                                    singlePropertyLine += (";SolutionDirectoryPath=" + buildDirectory.Parent.FullName + @"\");
+                                    singlePropertyLine += ";SolutionDirectoryPath=" + buildDirectory.Parent.FullName + @"\";
                                 }
 
                                 projectItem.SetMetadataValue("Properties", singlePropertyLine);

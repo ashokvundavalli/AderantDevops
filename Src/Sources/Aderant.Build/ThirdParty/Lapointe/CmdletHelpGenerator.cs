@@ -20,7 +20,6 @@ namespace Lapointe.PowerShell.MamlGenerator
          */
         public static void GenerateHelp(string outputPath, bool oneFile)
         {
-            //System.Diagnostics.Debugger.Launch();
             GenerateHelp(Assembly.GetExecutingAssembly(), outputPath, oneFile);
         }
 

@@ -1,24 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="12.0">
+  ToolsVersion="14.0" 
+  TreatAsLocalProperty="BuildNumber">
 
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(TeamBuildVersion)' == ''" />
+  <PropertyGroup>
+    <BuildInParallel Condition="'$(BuildInParallel)' == '' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
+
+    <!-- Local for factory generation -->
+    <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
+    <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath( '$(LocalExpertBinariesDirectory)' ))</LocalExpertBinariesDirectory>
+
+    <PackageScriptsDirectory>$(SolutionRoot)Build.Infrastructure\Src\Package\</PackageScriptsDirectory>
+    <BuildScriptsDirectory>$(SolutionRoot)Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
+    <BuildToolsDirectory>$(SolutionRoot)Build.Infrastructure\Src\Build.Tools\</BuildToolsDirectory>
+    <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
+    <ProductManifestPath>$(PackageScriptsDirectory)ExpertManifest.xml</ProductManifestPath>
+
+    <!-- Enables the use of a shared dependency directory to speed up the build -->
+    <UseSharedDependencyDirectory>true</UseSharedDependencyDirectory>
+
+    <SharedDependencyDirectory>$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
+
+    <BuildAllDropPath>$(DropLocation)</BuildAllDropPath>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(IsDesktopBuild)' == 'false' And '$(TeamBuildRefPath)' != ''" />
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
+  <!-- Contains the branch build configuration -->
+  <Import Project="$(ModuleList)" />
 
   <ItemGroup>
-    <ModulesInBuild Include="$(ModulesToBuild)" />
+    <ModulesInBuild Include="@(Modules)" />
   </ItemGroup>
   
   <Target Name="GetAllModuleDependencies"
           DependsOnTargets="PrepareBuildEnvironment;SetBuildNumbers"
-          Condition="'$(UseSharedDependencyDirectory)' == 'true'" 
-          Returns="@(TargetReturns)">
+          BeforeTargets="BuildAndPackage"
+          Condition="'$(UseSharedDependencyDirectory)' == 'true'">
     
     <Message Text="Using build scripts: $(BuildScriptsDirectory)" />
 
     <!-- Cull the module list if we are resuming the build from a certain point -->
     <Message Text="Resuming build from module $(BuildFrom)" Condition="'$(BuildFrom)' != ''" />
+    
     <FilterModules
       Condition="'$(BuildFrom)' != ''"
       ModulesInBuild="@(ModulesInBuild)"
@@ -31,19 +56,14 @@
       <ModulesInBuild Remove="@(ModulesInBuild)" Condition="'$(BuildFrom)' != ''" />
       <ModulesInBuild Include="@(FilteredModuleList)" Condition="'$(BuildFrom)' != ''" />
     </ItemGroup>
-
-    <PropertyGroup>
-      <SharedDependencyDirectory>$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
-
-      <!-- Default to the production TFS server -->
-      <TeamFoundationServerUrl Condition="'$(TeamFoundationServerUrl)' == ''">http://tfs:8080/tfs/aderant</TeamFoundationServerUrl>
-    </PropertyGroup>
-
-    <Message Text="Getting dependencies for build." />
+    
     <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
+    <Message Text="Getting dependencies for build." />
     
     <GetDependencies
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      WorkspaceOwner="$(WorkspaceOwner)"
+      WorkspaceName="$(WorkspaceName)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       DropPath="$(DropLocation)"
@@ -66,8 +86,8 @@
     <!-- 
         TFS: 122744
         We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
-        aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the module
-        the produces the message file(s) then the build can fail as on some application module builds. By delete the msg file from 
+        aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the
+        producution of the message file(s) then the build can fail on some application module builds. By delete the msg file from 
         dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
         as the test are generally written to assume no message file is available and so don't expect to find translated strings.
       -->
@@ -76,35 +96,16 @@
     </ItemGroup>
     
     <Delete Files="@(MessageFiles)" />
-
-    <!-- 
-      This project is called in a different scope from the build all entry point TFSBuild.proj so we need to explicity 
-      build up our properties to return to our invoker via the Returns attribute
-    -->
-    <ItemGroup>
-      <TargetReturns Include="SharedDependencyDirectory=$(SharedDependencyDirectory)">
-        <Type>Property</Type>
-      </TargetReturns>
-
-      <TargetReturns Include="FileVersion=$(FileVersion)">
-        <Type>Property</Type>
-      </TargetReturns>
-
-      <TargetReturns Include="AssemblyVersion=$(AssemblyVersion)">
-        <Type>Property</Type>
-      </TargetReturns>
-
-      <TargetReturns Include="@(ModulesInBuild)">
-        <Type>Module</Type>
-      </TargetReturns>
-    </ItemGroup>
-    
   </Target>
 
 
   <!-- Tranforms inputs to this target file into item groups -->
   <Target Name="GetAllModuleDependenciesSetup" 
           BeforeTargets="GetAllModuleDependencies">
+
+    <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
+
+    <Exec Command="PowerShell.exe -NoProfile -File &quot;CleanSymlinks.ps1&quot; $(SolutionRoot)" />
 
     <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
     <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" />
@@ -124,6 +125,7 @@
       The build and packaging system does not support multiple versions of the same assembly with the same file name.
     -->
     <Message Text="Validating dependencies for build." />
+    
     <DependencyChecker
       Files="@(ThirdPartyFiles)" />
 
@@ -142,6 +144,7 @@
           AfterTargets="GetAllModuleDependencies">
     
     <Message Text="Creating parallel build project... "/>
+    
     <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
       ProductManifest="$(ProductManifestPath)"
@@ -150,6 +153,397 @@
     <Error Condition="!Exists('$(SolutionRoot)BranchBuild.proj')" />
     
   </Target>
+
+  <Target Name="Version" AfterTargets="GetAllModuleDependencies">
+    <CallTarget Targets="SetBuildNumbers" />
+  </Target>
+
+  <!-- Override the the Team Build hook -->
+  <Target Name="AfterDropBuild">
+    <Message Text="After drop build" />
+  </Target>
+
+
+  <Target Name="BuildAndPackage">
+    <!-- 
+      To invoke this target on the desktop 
+      msbuild TFSBuild.proj @TFSBuild.rsp /p:DropLocation=\\na.aderant.com\expertsuite\dev\Framework /nr:false /p:RunTest=False
+    -->
+
+    <Message Text="==========================================" Importance="High" />
+    <Message Text="Build queue..."                             Importance="High" />
+    <Message Text="%(ModulesInBuild.FullPath)"                 Importance="High" />
+    <Message Text="==========================================" Importance="High" />
+
+    <CallTarget Targets="BuildModules" />
+    <CallTarget Targets="BuildModulesParallel" />
+
+    <SetBuildProperties
+      Condition="'$(IsDesktopBuild)' == 'false'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      CompilationStatus="Succeeded"
+      TestStatus="Succeeded" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+    The Target that iterates through all the listed modules and kicks off a build for them
+    ==========================================================================================
+  -->
+  <Target Name="BuildModules"
+          Condition="'$(BuildInParallel)' != 'true'"
+          Inputs="@(Modules)"
+          Outputs="@(Modules->%(FullPath))">
+    
+    <Message Text="Building modules..." Importance="High" />
+
+    <!--This section is all in aid of retrieving and splitting the parameters that need to be passed
+        to the modules build from its associated rsp file.-->
+    <ReadLinesFromFile File="%(Modules.FullPath)\Build\TFSBuild.rsp">
+      <Output TaskParameter="Lines"
+              ItemName="RspParamaters"/>
+    </ReadLinesFromFile>
+
+    <RegexMatch Input="@(RspParamaters)"
+                Expression="/p:[&quot;&quot;]?(?&lt;parameter&gt;[\w=\.]*)+?">
+      <Output ItemName="RemoveParameterPrefix"
+              TaskParameter="Output"/>
+    </RegexMatch>
+
+    <RegexReplace Input="@(RemoveParameterPrefix)"
+                  Expression="/p:"
+                  Replacement=""
+                  Count="-1">
+      <Output ItemName="RemoveQuotes"
+              TaskParameter="Output" />
+    </RegexReplace>
+
+    <RegexReplace Input="@(RemoveQuotes)"
+                  Expression="&quot;"
+                  Replacement=""
+                  Count="-1">
+      <Output ItemName="Parameters"
+              TaskParameter="Output" />
+    </RegexReplace>
+
+    <!-- Build All configuration overrides the module level so we need to remove any invalid configurations before building  -->
+    <ItemGroup>
+      <Parameters Condition="$(BuildFlavor) == 'Release'" Remove="BuildFlavor=Debug" />
+      <Parameters Condition="$(BuildFlavor) == 'Debug'" Remove="BuildFlavor=Release" />
+    </ItemGroup>
+
+    <!--- Copy the global properties down to the individual build -->
+    <MergeParameters
+      Source="@(PropertiesForBuild)"
+      Target="@(Parameters)">
+      <Output ItemName="MergedParameters"
+              TaskParameter="MergeResult" />
+    </MergeParameters>
+
+    <Message Text="Parameters" />
+    <Message Text="%09@(MergedParameters->'%(Identity)', '%0D%0A%09')" />
+
+    <!--Call to the modules specific build-->
+    <MSBuild Projects="%(Modules.FullPath)\Build\TFSBuild.proj"
+             Properties="@(MergedParameters);SolutionDirectoryPath=%(Modules.FullPath)\" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+    This target will build the modules in the branch in parallel where possible.
+    For parallel builds to work reliably it is important that project references are used so MS Build can calculate the
+    build order of projects within the module correctly.
+    ==========================================================================================
+  -->
+  <Target Name="BuildModulesParallel" Condition="'$(BuildInParallel)' == 'true'">
+    <Message Text="Building modules in parallel..." Importance="High" />
+
+    <PropertyGroup>
+      <CommonBuildProperties>
+        BuildAll=true;
+        BuildNumber=$(BuildNumber);
+        TfsBuildNumber=$(BuildNumber);
+        BuildScriptsDirectory=$(BuildScriptsDirectory);
+        ProductManifestPath=$(ProductManifestPath);
+        BuildToolsDirectory=$(BuildToolsDirectory);
+        UseSharedDependencyDirectory=$(UseSharedDependencyDirectory);
+        SharedDependencyDirectory=$(SharedDependencyDirectory);
+        FileVersion=$(FileVersion);
+        AssemblyVersion=$(AssemblyVersion);
+        BuildFlavor=$(BuildFlavor)
+      </CommonBuildProperties>
+    </PropertyGroup>
+    
+    <Message Text="$(CommonBuildProperties)" />
+    
+    <Error Condition="!Exists('$(SolutionRoot)BranchBuild.proj')" Text="Did not find BranchBuild.proj "/>
+
+    <MSBuild Projects="$(SolutionRoot)BranchBuild.proj"
+             Properties="$(CommonBuildProperties)"
+             BuildInParallel="true" />
+
+  </Target>
+
+
+  <Target Name="Package" AfterTargets="BuildAndPackage">
+    <!-- 
+      To test via desktop
+      msbuild TFSBuild.proj @TFSBuild.rsp /target:ZipProduct /p:LocalExpertBinariesDirectory=C:\Binaries\ /p:ZipFileDirectory=C:\Output\
+    -->
+
+    <OnError ExecuteTargets="SetBuildBreakProperties;OnBuildBreak" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+    Zip output
+    ==========================================================================================
+  -->
+  <Target Name="ZipProduct" BeforeTargets="Package">
+
+    <PropertyGroup>
+      <ZipFileDirectory Condition="'$(ZipFileDirectory)' == ''">$(BuildAllDropPath)\$(BuildNumber)</ZipFileDirectory>
+      <ZipFile>$(ZipFileDirectory)\ExpertBinaries.zip</ZipFile>
+      <EliteEnterpriseZipFile>$(ZipFileDirectory)\ExpertEEIntegrationBinaries.zip</EliteEnterpriseZipFile>
+      <LicenseZipFile>$(ZipFileDirectory)\LicenseGenerator.zip</LicenseZipFile>
+      <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
+      <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>
+    </PropertyGroup>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Zipping build output"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <Message Text="Zipping product files"/>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <SharedExclusions
+        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\**\*.*;
+                 $(LocalExpertBinariesDirectory)\**\_PublishedWebsites\**\*;
+                 $(LocalExpertBinariesDirectory)\**\LexisNexis*.*;
+                 $(LocalExpertBinariesDirectory)\**\iManage*.*;
+                 $(LocalExpertBinariesDirectory)\**\System.dll*;
+                 $(LocalExpertBinariesDirectory)\**\System.Data.dll;
+                 $(LocalExpertBinariesDirectory)\**\System.Drawing*.dll;
+                 $(LocalExpertBinariesDirectory)\**\System.Windows.Forms*.dll;
+                 $(LocalExpertBinariesDirectory)\**\System.Xml*dll*;   
+                 $(LocalExpertBinariesDirectory)\**\Microsoft.TeamFoundation.*dll*;
+                 $(LocalExpertBinariesDirectory)\**\*UnitTest*;
+                 $(LocalExpertBinariesDirectory)\**\TestLicenseRegistration*;
+                 $(LocalExpertBinariesDirectory)\**\*CodeAnalysis*;
+                 $(LocalExpertBinariesDirectory)\**\*.deploy.cmd;   
+                 $(LocalExpertBinariesDirectory)\**\*.deploy-readme.txt;
+                 $(LocalExpertBinariesDirectory)\**\*.SetParameters.*;
+                 $(LocalExpertBinariesDirectory)\**\*.BuildInfo.config;
+                 $(LocalExpertBinariesDirectory)\**\DropFolderBuildNumbers.txt;" />
+
+      <!-- Group of the roles shared between expert and elite -->
+      <SharedRoles
+        Include="$(LocalExpertBinariesDirectory)\**\commonapplications.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\configuration.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\customworkflows.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\firmcontrol.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\messaging.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\notes.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\queryservice.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\security.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\workflow.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\workflowauthoring.role.xml" />
+
+      <!-- Group of the roles that should be elite only -->
+      <EliteRoles
+        Include="$(LocalExpertBinariesDirectory)\**\eliteintegration.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\matterplanningelite.role.xml" />
+
+      <!-- Create a group of roles to exclude from elite (all roles minus the elite roles and shared roles) -->
+      <EliteRoleExclusions
+        Include="$(LocalExpertBinariesDirectory)\**\*.role.xml"
+        Exclude="@(SharedRoles);@(EliteRoles)"/>
+
+      <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
+
+      <ZipSourceFiles
+        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Exclude="@(SharedExclusions);@(EliteRoles);$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
+      <ZipLicenseGeneratorFiles
+        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator\*.*" />
+      <ZipRegistrationServiceFiles
+        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService\*.*" />
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <!-- Create ZIP for ExpertSource -->
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)"
+      ParallelCompression="false" />
+
+    <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. -->
+    <Copy
+      SourceFiles="@(EliteOverrideFiles)"
+      DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <!-- This item group must go after the copy so that any moved files are included -->
+    <ItemGroup>
+      <ZipEliteEnterpriseSourceFiles
+        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Exclude="@(SharedExclusions);@(EliteRoleExclusions)" />
+    </ItemGroup>
+
+    <!-- Create ZIP for Elite Enterprise ExpertSource -->
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipEliteEnterpriseSourceFiles)"
+      ZipFileName="$(EliteEnterpriseZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)"
+      ParallelCompression="false" />
+
+    <!-- Create ZIP for LicenseGenerator -->
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipLicenseGeneratorFiles)"
+      ZipFileName="$(LicenseZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator"
+      ParallelCompression="false" />
+
+    <!-- Create ZIP for RegistrationService -->
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipRegistrationServiceFiles)"
+      ZipFileName="$(RegistrationZipFile)"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService"
+      ParallelCompression="false" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  
+  <!--
+  ==========================================================================================
+  Package the built modules and place in this builds output folder on the drop.
+  ==========================================================================================
+  -->
+  <Target Name="GetProduct" BeforeTargets="ZipProduct">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Package Product"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <MakeDir Directories="$(LocalExpertBinariesDirectory)"
+             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true"
+          WorkingDirectory="$(PackageScriptsDirectory)" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  
+  <!--
+    ==========================================================================================
+    Concatenates all files matching license attribution pattern (attribution.txt) 
+    into a common file for distribition and dumps it in the binaries directory.
+    ==========================================================================================
+  -->
+  <Target Name="CreateLicenseAttributionFile" AfterTargets="ZipProduct">
+
+    <PropertyGroup>
+      <!-- Candidate for the most ugly file name ever? -->
+      <OutputAttributionFileName>ThirdPartyOSSRightsAndRestrictions.txt</OutputAttributionFileName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <InFiles Include="$(SolutionRoot)\ThirdParty\**\attribution.txt"/>
+    </ItemGroup>
+
+    <Exec Command="echo y| echo All or some of the following third party open source software may be used in some of the components > $(LocalExpertBinariesDirectory)\$(OutputAttributionFileName)" />
+    <Exec Command="echo y| type %(InFiles.Identity) >> $(LocalExpertBinariesDirectory)\ExpertSource\$(OutputAttributionFileName)"/>
+
+  </Target>
+
+  <UsingTask
+    TaskName="MergeParameters"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)">
+    <ParameterGroup>
+      <Source ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <Target ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" Output="true" />
+      <MergeResult ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq "/>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+        <![CDATA[
+  List<ITaskItem> items = new List<ITaskItem>(Target);
+  
+  foreach (var sourceItem in Source) {
+      var sourceKey = sourceItem.ItemSpec.Split('=')[0];
+    
+      bool add = true;
+    
+      foreach (var item in Target) {
+          var itemKey = item.ItemSpec.Split('=')[0];
+      
+          if (itemKey == sourceKey) {
+            Log.LogMessage("ItemGroup already contains key: " + itemKey, null);
+            add = false;
+            break;
+          }
+      }
+    
+      if (add) {
+          items.Add(sourceItem);
+      }    
+  } 
+  
+  MergeResult = items.ToArray(); 
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
   
 </Project>
  

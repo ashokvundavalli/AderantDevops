@@ -5,6 +5,7 @@ using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
+using Microsoft.TeamFoundation.VersionControl.Client;
 using Task = System.Threading.Tasks.Task;
 
 namespace Aderant.Build.Commands {
@@ -69,14 +70,14 @@ namespace Aderant.Build.Commands {
                         var resolver = new ModuleDependencyResolver(expertManifest, DropPath);
 
                         if (!UseThirdPartyFromDrop) {
-                            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(null, branchRoot);
+                            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(null, branchRoot, null, null);
                         }
 
                         resolver.ModuleName = ModuleName;
 
                         Host.UI.WriteDebugLine("Using local thirdparty path: " + resolver.DependencySources.LocalThirdPartyDirectory);
 
-                        resolver.ModuleDependencyResolved += ((sender, args) => {
+                        resolver.ModuleDependencyResolved += (sender, args) => {
                             Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, "Getting binaries for ");
                             Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.DependencyProvider);
                             Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, " from the branch ");
@@ -84,7 +85,7 @@ namespace Aderant.Build.Commands {
                             Host.UI.WriteLine(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
 
                             Host.UI.WriteDebugLine("Resolved path:" + args.FullPath);
-                        });
+                        };
 
                         await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, DependencyFetchMode.Default);
                     }).Wait(); // Wait is used here as to not change the signature of the ProcessRecord method

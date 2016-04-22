@@ -98,7 +98,7 @@ namespace UnitTest.Build {
 
 
             var resolver = new ModuleDependencyResolver(expertManifest, "");
-            resolver.ModulesInBuild = new[] {"Module1"};
+            resolver.SetModulesInBuild(new[] {"Module1"});
 
             await resolver.CopyDependenciesFromDrop(string.Empty, DependencyFetchMode.Default);
 

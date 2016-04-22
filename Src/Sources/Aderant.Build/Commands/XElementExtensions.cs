@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -25,29 +24,5 @@ internal static class XElementExtensions {
         }
 
         return root;
-    }
-
-    public static XElement GetOrAddElement(this XElement element, XName name) {
-        var section = element.Descendants(name).SingleOrDefault();
-        if (section == null) {
-            section = new XElement(name);
-            element.Add(section);
-        }
-        return section;
-    }
-
-    internal static T GetAttributeValue<T>(XElement element, string attributeName) where T : class {
-        T result;
-        try {
-            var attribute = element.Attribute(attributeName);
-            if (attribute != null) {
-                result = (T)((object)attribute.Value);
-            } else {
-                result = default(T);
-            }
-        } catch (Exception ex) {
-            throw new InvalidOperationException("Unable to get or set attribute: " + attributeName, ex);
-        }
-        return result;
     }
 }

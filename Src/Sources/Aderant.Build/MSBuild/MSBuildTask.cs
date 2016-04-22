@@ -42,6 +42,8 @@ namespace Aderant.Build.MSBuild {
             set;
         }
 
+        public string Targets { get; set; }
+
         public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }

@@ -16,18 +16,51 @@ namespace Aderant.Build.Tasks {
 
         internal SourceIndex(FileSystem fileSystem) {
             this.fileSystem = fileSystem;
+
+            VisualStudioEnvironmentContext.SetupContext();
         }
 
+        public string WorkspaceName { get; set; }
+
+        public string WorkspaceOwner { get; set; }
+
         public override bool Execute() {
-            var buildEngineWrapper = new WrappedBuildEngine(BuildEngine);
+            try {
+                ExecuteInternal();
+
+                return base.Execute();
+            } finally {
+                VisualStudioEnvironmentContext.Shutdown();
+            }
+        }
+
+        private void ExecuteInternal() {
+            WrappedBuildEngine buildEngineWrapper = new WrappedBuildEngine(BuildEngine);
             buildEngineWrapper.SuppressSrcToolExitCode = true;
-            
-            this.BuildEngine = buildEngineWrapper;
-            
-            return base.Execute();
+
+            BuildEngine = buildEngineWrapper;
+
+            if (!string.IsNullOrEmpty(TeamProjectCollectionUri)) {
+                TfsTeamProjectCollection teamProjectServer = new TfsTeamProjectCollection(new Uri(TeamProjectCollectionUri));
+                teamProjectServer.EnsureAuthenticated();
+
+                VersionControlServer vcs = teamProjectServer.GetService<VersionControlServer>();
+
+                if (!string.IsNullOrEmpty(WorkspaceName) && !string.IsNullOrEmpty(WorkspaceOwner)) {
+                    workspace = vcs.GetWorkspace(WorkspaceName, WorkspaceOwner);
+                }
+
+                if (!string.IsNullOrEmpty(WorkspaceName) && string.IsNullOrEmpty(WorkspaceOwner)) {
+                    workspace = vcs.GetWorkspace(WorkspaceName, teamProjectServer.AuthorizedIdentity.UniqueName);
+                }
+            }
         }
 
         protected override bool AddSourceProperties(SymbolFile symbolFile) {
+            if (symbolFile.SourceFiles == null) {
+                throw new InvalidOperationException("There are no source files for symbol file: " + symbolFile.File.FullName);
+            }
+
             for (int i = symbolFile.SourceFiles.Count - 1; i >= 0; i--) {
                 SourceFile sourceFile = symbolFile.SourceFiles[i];
 
@@ -53,6 +86,11 @@ namespace Aderant.Build.Tasks {
 
             if (workspace == null) {
                 WorkspaceInfo workspaceInfo = Workstation.Current.GetLocalWorkspaceInfo(symbolFile.SourceFiles[0].File.FullName);
+
+                if (workspaceInfo == null) {
+                    throw new InvalidOperationException("Could not determine workspace from file: " + symbolFile.SourceFiles[0].File.FullName);
+                }
+
                 workspace = workspaceInfo.GetWorkspace(new TfsTeamProjectCollection(new Uri(TeamProjectCollectionUri)));
             }
 

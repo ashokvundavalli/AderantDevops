@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="12.0">
+         ToolsVersion="14.0">
 
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == ''" />
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
 
   <UsingTask TaskName="UpdateSplashScreenImage"
@@ -17,7 +16,9 @@
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
   </PropertyGroup>
 
-  <UsingTask TaskName="GetProductName" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll">
+  <UsingTask TaskName="GetProductName" 
+             TaskFactory="CodeTaskFactory" 
+             AssemblyFile="$(CodeTaskFactoryAssembly)">
     <ParameterGroup>
       <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
       <ProductName Output="true"/>

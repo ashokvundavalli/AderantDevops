@@ -28,7 +28,6 @@ namespace Aderant.Build.MSBuild {
             return new XElement(Xmlns + "Project",
                                 new XAttribute("ToolsVersion", ToolLocationHelper.CurrentToolsVersion),
                                 new XAttribute("DefaultTargets", project != null && project.DefaultTarget != null ? project.DefaultTarget.Name : string.Empty),
-                                new XElement(Xmlns + "Import", new XAttribute("Project", @"$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets")),
                                 new XComment("Properties is a special element understood by the MS Build task and will associate the unique properties to each project"));
         }
 
@@ -70,6 +69,10 @@ namespace Aderant.Build.MSBuild {
             XElement element = new XElement(Xmlns + "MSBuild",
                                             new XAttribute("Projects", msBuildTask.Projects),
                                             new XAttribute("BuildInParallel", msBuildTask.BuildInParallel));
+
+            if (!string.IsNullOrEmpty(msBuildTask.Targets)) {
+                element.Add(new XAttribute("Targets", msBuildTask.Targets));
+            }
 
             if (!string.IsNullOrEmpty(msBuildTask.Properties)) {
                 element.Add(new XAttribute(new XAttribute("Properties", msBuildTask.Properties)));

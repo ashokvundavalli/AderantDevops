@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Microsoft.TeamFoundation.Build.Client;
@@ -9,6 +10,10 @@ namespace Aderant.Build.Tasks {
     /// This primary reason for this is so we can have the TFS retention policies manage the builds.
     /// </summary>
     public sealed class PublishBuild : Task {
+        static PublishBuild() {
+            VisualStudioEnvironmentContext.SetupContext();    
+        }
+
         [Required]
         public string CurrentBuildUri { get; set; }
 
@@ -37,27 +42,31 @@ namespace Aderant.Build.Tasks {
         public TaskItem PublishedBuildUri { get; set; }
 
         public override bool Execute() {
-            BuildDetailPublisher controller = new BuildDetailPublisher(TeamFoundationServerUri, TeamProject);
-            IBuildDetail detail = controller.GetBuildDetails(CurrentBuildUri);
+            try {
+                BuildDetailPublisher controller = new BuildDetailPublisher(TeamFoundationServerUri, TeamProject);
+                IBuildDetail detail = controller.GetBuildDetails(CurrentBuildUri);
 
-            ExpertBuildConfiguration configuration = new ExpertBuildConfiguration(BranchName) {
-                ModuleName = ModuleName,
-                DropLocation = DropLocation,
-            };
-            
-            ExpertBuildDetail newBuildDetail = new ExpertBuildDetail(AssemblyVersion, FileVersion, configuration);
-            newBuildDetail.BuildSummary = new BuildSummary();
-            newBuildDetail.BuildSummary.Message = string.Format("Build created by Build All ({0})", detail.BuildNumber);
+                ExpertBuildConfiguration configuration = new ExpertBuildConfiguration(BranchName) {
+                    ModuleName = ModuleName,
+                    DropLocation = DropLocation,
+                };
 
-            IBuildDefinition definition = controller.CreateBuildDefinition(configuration);
-            IBuildDetail newBuild = controller.CreateNewBuild(definition, newBuildDetail, detail.SourceGetVersion);
+                ExpertBuildDetail newBuildDetail = new ExpertBuildDetail(AssemblyVersion, FileVersion, configuration);
+                newBuildDetail.BuildSummary = new BuildSummary();
+                newBuildDetail.BuildSummary.Message = string.Format(CultureInfo.InvariantCulture, "Build created by Build All ({0})", detail.BuildNumber);
 
-            AssociateBuild(detail, ModuleName, newBuild.Uri);
+                IBuildDefinition definition = controller.CreateBuildDefinition(configuration);
+                IBuildDetail newBuild = controller.CreateNewBuild(definition, newBuildDetail, detail.SourceGetVersion);
 
-            // Return the published build Uri to the build workflow
-            PublishedBuildUri = new TaskItem(newBuild.Uri.ToString());
+                AssociateBuild(detail, ModuleName, newBuild.Uri);
 
-            return !Log.HasLoggedErrors;
+                // Return the published build Uri to the build workflow
+                PublishedBuildUri = new TaskItem(newBuild.Uri.ToString());
+
+                return !Log.HasLoggedErrors;
+            } finally {
+                VisualStudioEnvironmentContext.Shutdown();
+            }
         }
 
         private void AssociateBuild(IBuildDetail currentBuild, string moduleName, Uri uri) {

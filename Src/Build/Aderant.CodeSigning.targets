@@ -1,19 +1,62 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
-         ToolsVersion="12.0"
+         ToolsVersion="14.0"
          DefaultTargets="SignApplications">
 
   <PropertyGroup>
-    <SignToolPath Condition="'$(SignToolPath)' == ''">C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe</SignToolPath>
-    <SignToolPath Condition="Exists('$(WindowsSdkDir)bin\x86\signtool.exe') and '$(PROCESSOR_ARCHITECTURE)'=='x86' ">$(WindowsSdkDir)bin\x86\signtool.exe</SignToolPath>
-    <SignToolPath Condition="Exists('$(WindowsSdkDir)bin\x64\signtool.exe') and '$(PROCESSOR_ARCHITECTURE)'=='AMD64' ">$(WindowsSdkDir)bin\x64\signtool.exe</SignToolPath>
+    <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == '' And '$(IsDesktopBuild)' == 'false'">true</CodeSigningEnabled>
+    <CertificateHash>9AB8870EE441103F76009BE6141265D0D9B6197C</CertificateHash>
+    <TimestampUrl>&quot;http://timestamp.digicert.com&quot;</TimestampUrl>
+    
+    <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
+    <!-- Nothing like consistency eh? -->
+    <!-- Sign Tool -->
+    <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
+    <WindowsKits_81 Condition="'$(WindowsKits_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots@KitsRoot81)</WindowsKits_81>
+
+    <!-- Mage -->
+    <WindowsSdkDir_71A Condition="'$(WindowsSdkDir_71A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A@InstallationFolder)</WindowsSdkDir_71A>
+    <WindowsSdkDir_71A Condition="'$(WindowsSdkDir_71A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v7.1A@InstallationFolder)</WindowsSdkDir_71A>
+
+    <WindowsSdkDir_81 Condition="'$(WindowsSdkDir_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.1@InstallationFolder)</WindowsSdkDir_81>
+    <WindowsSdkDir_81 Condition="'$(WindowsSdkDir_81)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v8.1@InstallationFolder)</WindowsSdkDir_81>
+
+    <WindowsSdkDir_81A Condition="'$(WindowsSdkDir_81A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.1A@InstallationFolder)</WindowsSdkDir_81A>
+    <WindowsSdkDir_81A Condition="'$(WindowsSdkDir_81A)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v8.1A@InstallationFolder)</WindowsSdkDir_81A>
   </PropertyGroup>
 
-  <UsingTask TaskName="GetAssemblyIdentity" AssemblyName="Microsoft.Build.Tasks.v12.0" />
+  <Choose>
+    <When Condition="'$(WindowsKits_81)' != ''">
+      <PropertyGroup>
+        <WindowsKitRoot>$(WindowsKits_81)</WindowsKitRoot>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <Choose>
+    <When Condition="'$(WindowsSdkDir_81A)' != ''">
+      <PropertyGroup>
+        <WindowsSdkDir>$(WindowsSdkDir_81A)</WindowsSdkDir>
+        <FxToolsDir>NETFX 4.5.1 Tools</FxToolsDir>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(WindowsSdkDir_81)' != ''">
+      <PropertyGroup>
+        <WindowsSdkDir>$(WindowsSdkDir_81)</WindowsSdkDir>
+        <FxToolsDir></FxToolsDir>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(WindowsSdkDir_71A)' != ''">
+      <PropertyGroup>
+        <WindowsSdkDir>$(WindowsSdkDir_71A)</WindowsSdkDir>
+        <FxToolsDir></FxToolsDir>
+      </PropertyGroup>
+    </When>
+  </Choose>
   
   <UsingTask
     TaskName="GetAssembliesToSign"
     TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll">
+    AssemblyFile="$(CodeTaskFactoryAssembly)">
     <ParameterGroup>
       <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
@@ -46,7 +89,28 @@
     </Task>
   </UsingTask>
   
-  <Target Name="SignApplications" Condition="'$(IsDesktopBuild)' != 'true'">
+
+  <Target Name="ValidateSigningEnvironment">
+    <Error Condition="'$(WindowsKitRoot)' == ''" Text="WindowsKitRoot is undefined" />
+    <Error Condition="'$(WindowsSdkDir)' == ''" Text="WindowsSdkDir is undefined" />
+    <Error Condition="'$(FxToolsDir)' == ''" Text="FxToolsDir is undefined" />
+
+    <PropertyGroup>
+      <SignToolPath>$(WindowsKitRoot)bin\x64\signtool.exe</SignToolPath>
+      <MageToolPath>$(WindowsSdkDir)bin\$(FxToolsDir)\mage.exe</MageToolPath>
+    </PropertyGroup>
+
+    <Error Condition="!Exists($(SignToolPath))" Text="SignTool.exe not found at path $(SignToolPath)" />
+    <Error Condition="!Exists($(MageToolPath))" Text="mage.exe not found at path $(MageToolPath)" />
+  </Target>
+  
+
+  <Target Name="CheckCodeSigningCertitifcate" AfterTargets="PrepareBuildEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
+    <CheckCertificate ThumbPrint="$(CertificateHash)" />
+  </Target>
+  
+  
+  <Target Name="SignApplications" DependsOnTargets="ValidateSigningEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
     <Message Text="Signing applications in $(BinModuleDirectory)" />
     
     <ItemGroup>
@@ -64,13 +128,50 @@
               ItemName="Assemblies" />
     </GetAssembliesToSign>    
 
-    <Message Text = "Signing application: %(Assemblies.Filename)%(Assemblies.Extension)" Condition="'@(Assemblies)' != ''" />
+    <Message Text="Signing application: %(Assemblies.Filename)%(Assemblies.Extension)" Condition="'@(Assemblies)' != ''" />
 
     <Exec
       Condition="'@(Assemblies)' != '' And '$(SignToolPath)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"$(SignToolPath)" sign /t http://timestamp.digicert.com /f "$(BuildScriptsDirectory)aderant.pfx" /p "rugby ball" "%(Assemblies.FullPath)"' />
+      Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd SHA256 /sha1 $(CertificateHash) /s "My" "%(Assemblies.FullPath)"'
+      YieldDuringToolExecution="true" />
+
+  </Target>
+  
+
+  <Target Name="SignClickOnceFiles" AfterTargets="SignApplications">
+    <PropertyGroup>
+      <MinVersion Condition="'$(MinVersion)' == ''">8.0.2.0</MinVersion>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <!-- Grab all CO content -->
+      <ClickOnceSignFiles Include="$(BinModuleDirectory)**\*CO*exe" Exclude="$(BinModuleDirectory)**\app.publish\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ClickOnceSignFiles Include="@(ClickOnceSignFiles)">
+        <!-- Include the manifest and application files by convention -->
+        <Manifest>$(BinModuleDirectory)%(RecursiveDir)%(FileName)%(Extension).manifest</Manifest>
+        <Application>$(BinModuleDirectory)%(RecursiveDir)%(FileName).application</Application>
+      </ClickOnceSignFiles>
+    </ItemGroup>
+    
+    <Exec Condition="Exists(%(ClickOnceSignFiles.Manifest))"
+          ContinueOnError="false" 
+          IgnoreExitCode="false"
+          Command="&quot;$(MageToolPath)&quot; -sign %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash)" 
+          YieldDuringToolExecution="true" />
+
+    <Exec Condition="Exists(%(ClickOnceSignFiles.Manifest)) And Exists(%(ClickOnceSignFiles.Application))"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="&quot;$(MageToolPath)&quot; -update %(ClickOnceSignFiles.Application) -UseManifestForTrust true -IncludeProviderURL false -AppManifest %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash) -MinVersion &quot;$(MinVersion)&quot;" 
+          YieldDuringToolExecution="true" />
+
   </Target>
 
 </Project>
+
+

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Aderant.Build.Providers;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Commands {
@@ -57,7 +58,7 @@ namespace Aderant.Build.Commands {
             }
 
             IEnumerable<IntegrationTestAssemblyConfig> assemblyConfigs = IntegrationTestAssemblyConfig.Create(testContext.TestAssemblyDirectory);
-            
+
             if (testContext.UpdateSolutionAppConfig) {
                 EditModuleSolutionAppConfig(testContext);
             }
@@ -139,7 +140,7 @@ namespace Aderant.Build.Commands {
 
             XDocument environmentManifest = ParameterHelper.GetEnvironmentManifest(Path.Combine(branchPath, "Binaries"));
             IntegrationTestContext context = new IntegrationTestContext(environmentManifest);
-            
+
             if (!string.IsNullOrEmpty(TestAssemblyPath)) {
                 context.TestAssemblyDirectory = TestAssemblyPath;
 
@@ -193,7 +194,7 @@ namespace Aderant.Build.Commands {
             if (fileSystemEntries.Length == 1) {
                 string appConfigFile = fileSystemEntries[0];
 
-                Workspace workspace = TeamFoundationHelper.GetWorkspaceForItem(fileSystemEntries[0]);
+                var workspace = ServiceLocator.GetInstance<ITeamFoundationWorkspace>();
                 workspace.PendEdit(appConfigFile);
 
                 IntegrationTestAssemblyConfig config = new IntegrationTestAssemblyConfig(appConfigFile, FileSystem.Default);
@@ -232,7 +233,7 @@ namespace Aderant.Build.Commands {
                 info.UseShellExecute = false;
                 info.CreateNoWindow = true;
 
-                var testProcess = new System.Diagnostics.Process {StartInfo = info};
+                var testProcess = new System.Diagnostics.Process { StartInfo = info };
                 testProcess.EnableRaisingEvents = true;
 
                 testProcess.OutputDataReceived += (sender, args) => {
@@ -272,7 +273,7 @@ namespace Aderant.Build.Commands {
                         throw new DirectoryNotFoundException(string.Format("Directory {0} does not exist", link.Value));
                     }
 
-                    NativeUtilities.CreateSymbolicLink(link.Key, link.Value, (uint) NativeUtilities.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY);
+                    NativeUtilities.CreateSymbolicLink(link.Key, link.Value, (uint)NativeUtilities.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY);
 
                     context.AddTemporaryItem(link.Key);
                 }

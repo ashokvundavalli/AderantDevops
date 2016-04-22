@@ -7,7 +7,7 @@
 
   <PropertyGroup>
     <PathToModulesToCopy>$(SolutionRoot)</PathToModulesToCopy>
-	<PathToModulesToCopy Condition="'$(IsDesktopBuild)'=='true'">$(SolutionRoot)\ThirdParty</PathToModulesToCopy>
+	  <PathToModulesToCopy Condition="'$(IsDesktopBuild)'=='true'">$(SolutionRoot)\ThirdParty</PathToModulesToCopy>
     <BuildScriptsDirectory>$(SolutionRoot)\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
   </PropertyGroup>
 

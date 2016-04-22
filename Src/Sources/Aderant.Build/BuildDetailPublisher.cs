@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 
@@ -139,7 +138,7 @@ namespace Aderant.Build {
 
             if (result.Definitions.Length == 1) {
                 // Found the unique match
-                ConfigureAndSave(buildServer, configuration, null, result.Definitions[0]);
+                ConfigureAndSave(buildServer, configuration, null, result.Definitions[0], false);
                 return result.Definitions[0];
             }
 
@@ -159,17 +158,20 @@ namespace Aderant.Build {
             IBuildController controller = GetBuildController(buildServer, configuration);
 
             IBuildDefinition buildDefinition = buildServer.CreateBuildDefinition(teamProject);
-
-            ConfigureAndSave(buildServer, configuration, controller, buildDefinition);
+            
+            ConfigureAndSave(buildServer, configuration, controller, buildDefinition, true);
 
             return buildDefinition;
         }
 
-        private void ConfigureAndSave(IBuildServer buildServer, ExpertBuildConfiguration configuration, IBuildController controller, IBuildDefinition buildDefinition) {
+        private void ConfigureAndSave(IBuildServer buildServer, ExpertBuildConfiguration configuration, IBuildController controller, IBuildDefinition buildDefinition, bool updateTemplate) {
             ConfigureCoreProperties(configuration, controller, buildDefinition);
             ConfigureRetentionPolicy(buildDefinition);
             ConfigureWorkspaceMapping(configuration, buildDefinition);
-            ConfigureBuildProcess(configuration, buildServer, buildDefinition);
+
+            if (updateTemplate) {
+                ConfigureBuildProcess(configuration, buildServer, buildDefinition);
+            }
 
             buildDefinition.Save();
         }
@@ -230,7 +232,7 @@ namespace Aderant.Build {
                 buildDefinition.Workspace.RemoveMapping(mapping);
             }
 
-            // Workspace 
+            // TeamFoundationWorkspace 
             buildDefinition.Workspace.AddMapping(configuration.SourceControlPathToModule, "$(SourceDir)", WorkspaceMappingType.Map);
             buildDefinition.Workspace.AddMapping(configuration.BuildInfrastructurePath, @"$(SourceDir)\Build\" + BuildConstants.BuildInfrastructureDirectory, WorkspaceMappingType.Map);
         }

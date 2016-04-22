@@ -1,32 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
-
-  <UsingTask
-    TaskName="LoadTextTemplatingTask"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll" >
-    <ParameterGroup >
-      <TextTemplatingPath ParameterType="System.String" Required="true"/>
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core"/>
-      <Reference Include="System.Xml"/>
-      <Reference Include="System.Xml.Linq"/>
-      <Using Namespace="System"/>
-      <Using Namespace="System.IO"/>
-      <Using Namespace="System.Linq"/>
-      <Using Namespace="System.Xml.Linq"/>
-      <Code>
-        <![CDATA[
-  string file = Path.Combine(TextTemplatingPath, "Microsoft.TextTemplating.Build.Tasks.dll");
-  if (File.Exists(file)) {
-      System.Reflection.Assembly.LoadFrom(file);
-  }
-]]>
-      </Code>
-    </Task>
-  </UsingTask>
-
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <!-- 
     ***********************************************************************
@@ -34,7 +7,12 @@
     ***  Please retain formatting, one attribute per line, and split    ***
     ***  delimited values over several lines.                           ***                                  
     ***********************************************************************
-    -->  
+  -->
+
+  <PropertyGroup>
+    <VSSDKPath Condition="'$(VSSDK120Install)' != ''">$(VSSDK120Install)</VSSDKPath>
+    <VSSDKPath Condition="'$(VSSDK140Install)' != ''">$(VSSDK140Install)</VSSDKPath>
+  </PropertyGroup>
 
   <PropertyGroup>
     <!--Indicates whether only out of date templates should be transformed, or whether all templates should be transformed.-->
@@ -45,6 +23,32 @@
 
     <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">true</TrackFileAccess>
   </PropertyGroup>
+
+  <UsingTask
+    TaskName="LoadTextTemplatingTask"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)" >
+      <ParameterGroup >
+        <Directory ParameterType="System.String" Required="true"/>
+      </ParameterGroup>
+      <Task>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Xml"/>
+        <Reference Include="System.Xml.Linq"/>
+        <Using Namespace="System"/>
+        <Using Namespace="System.IO"/>
+        <Using Namespace="System.Linq"/>
+        <Using Namespace="System.Xml.Linq"/>
+        <Code>
+<![CDATA[    
+    string file = System.IO.Directory.GetFileSystemEntries(Directory, "Microsoft.TextTemplating.Build.Tasks.dll", System.IO.SearchOption.AllDirectories).FirstOrDefault();
+    if (file != null) {
+        System.Reflection.Assembly.LoadFrom(file);
+    }
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
 
   <Target Name="rmBeforeTransformTemplates">
     <!--  Example:
@@ -60,8 +64,8 @@
   </Target>
     
   <UsingTask
-        AssemblyFile="$(AderantBuildClientTasksV100Lib-1_0_0_0)"
-        TaskName="ADERANT.Build.Client.Tasks.v100.Transform" />
+    AssemblyFile="$(TransformTask)"
+    TaskName="Aderant.TextTransform.Tasks.Transform" />
 
   <!-- 
     *************************************************************************************************************
@@ -69,14 +73,17 @@
     *************************************************************************************************************
     -->
   <PropertyGroup>
-      <AderantBuildClientTasksV100Lib-1_0_0_0>$(SolutionDirectoryPath)Dependencies\ADERANT.Build.Client.Tasks.dll</AderantBuildClientTasksV100Lib-1_0_0_0>
-      <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)Dependencies</rmT4TemplateIncludeFolders>
+    <TransformTask Condition="'$(VisualStudioVersion)' == '12.0'">Aderant.TextTransform.v12.0.dll</TransformTask>
+    <TransformTask Condition="'$(VisualStudioVersion)' == '14.0'">Aderant.TextTransform.v14.0.dll</TransformTask>
+
+    <TransformTask>$(SolutionDirectoryPath)Dependencies\$(TransformTask)</TransformTask>
+    <rmT4TemplateIncludeFolders Condition="('$(rmT4TemplateIncludeFolders)'=='')">$(SolutionDirectoryPath)Dependencies</rmT4TemplateIncludeFolders>
     
-      <rmTransformTemplatesWorkerDependsOn>
+    <rmTransformTemplatesWorkerDependsOn>
       rmBeforeTransformTemplates;
       rmT4AssemblyReferencePaths;
       rmT4DslDirectiveProcessors;
-      </rmTransformTemplatesWorkerDependsOn>
+    </rmTransformTemplatesWorkerDependsOn>
   </PropertyGroup>       
 
   <Target Name="rmTransformTemplates" 
@@ -128,11 +135,10 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <TempDirectoryOverride Condition="'$(IsDesktopBuild)' != 'true' And '$(BuildAll)' != 'true'">$(ModuleBuildDirectory)..\BuildTemp</TempDirectoryOverride>
     </PropertyGroup>
 
-    <LoadTextTemplatingTask
-      TextTemplatingPath="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v12.0\TextTemplating\" />
+    <LoadTextTemplatingTask Directory="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\TextTemplating" />
 
     <!-- Do the Transform  -->
-    <ADERANT.Build.Client.Tasks.v100.Transform 
+    <Aderant.TextTransform.Tasks.Transform
       TemplatesToProcess="@(rmT4TransformItems)"
       ReferencePaths="@(AssemblyReferencePaths)"
       IncludeFolders="@(TemplateIncludeFolders)"
@@ -146,7 +152,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
               TaskParameter="GeneratedFiles"/>
       <Output ItemName="NonGeneratedFiles"
               TaskParameter="NonGeneratedFiles"/>
-    </ADERANT.Build.Client.Tasks.v100.Transform>
+    </Aderant.TextTransform.Tasks.Transform>
 
     <BuildStep
       Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
@@ -163,10 +169,13 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     *************************************************************************************************************
   -->
   <Target Name="rmT4AssemblyReferencePaths">
+    
+    <Error Condition="'$(VSSDKPath)' == ''" Text="Visual Studio SDK path not found" />
+    
     <!-- Path to reference dlls required by DSLs -->
     <PropertyGroup>
-      <VSSDKPath Condition="'$(VSSDKPath)' == '' And '$(VSSDK120Install)' != ''">$(VSSDK120Install)VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
-      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);$(VS120COMNTOOLS)..\IDE\PublicAssemblies</rmT4AssemblyReferencePaths>
+      <VSSDKPath>$(VSSDKPath)VisualStudioIntegration\Common\Assemblies\v4.0\</VSSDKPath>
+      <rmT4AssemblyReferencePaths>$(rmT4AssemblyReferencePaths);$(VSSDKPath);</rmT4AssemblyReferencePaths>
     </PropertyGroup>
   </Target>
 
@@ -180,13 +189,13 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <rmSoftwareFactoryCommonDll>$(SolutionDirectoryPath)Dependencies\Aderant.Framework.SoftwareFactory.Common.dll</rmSoftwareFactoryCommonDll>
     </PropertyGroup>
 
-    <GetAssemblyIdentity
+    <Microsoft.Build.Tasks.GetAssemblyIdentity
       Condition="Exists('$(rmSoftwareFactoryCommonDll)')"
       AssemblyFiles="$(rmSoftwareFactoryCommonDll)">
       <Output
         TaskParameter="Assemblies"
         ItemName="rmSoftwareFactoryCommonDllIdentity"/>
-    </GetAssemblyIdentity>
+    </Microsoft.Build.Tasks.GetAssemblyIdentity>
 
     <PropertyGroup Condition="'@(rmSoftwareFactoryCommonDllIdentity)'!=''">
       <rmSoftwareFactoryVersion>%(rmSoftwareFactoryCommonDllIdentity.Version)</rmSoftwareFactoryVersion>
@@ -196,9 +205,8 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <!-- Only include Aderant Processors if common dll exists in dependencies.-->
       <rmT4DslDirectiveProcessors Include="DslDirectiveProcessor">
         <Class>Microsoft.VisualStudio.Modeling.DslDefinition.DslDirectiveProcessor</Class>
-        <CodeBase>$(Registry:HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\12.0_Config@InstallDir)Extensions\Microsoft\DSL SDK\DSL Designer\12.0\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.12.0.dll</CodeBase>
+        <CodeBase>$(VSSDKPath)\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.$(MSBuildToolsVersion).dll</CodeBase>
       </rmT4DslDirectiveProcessors>
-
 
       <rmT4DslDirectiveProcessors Condition="'$(rmSoftwareFactoryVersion)' != ''"
                                   Include="DomainModelDslDirectiveProcessor">

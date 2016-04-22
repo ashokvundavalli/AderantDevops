@@ -25,8 +25,8 @@ namespace UnitTest.Build {
             var detail = service.GetBuild(new Uri("vstfs:///Build/Build/171115"));
 
             var buildWarnings = InformationNodeConverters.GetBuildWarnings(detail);
-            //   var workspace = new ModuleWorkspace("$/ExpertSuite/Releases/803x/", TeamFoundationHelper.TeamFoundationServerUri, TeamFoundationHelper.TeamProject);
-            //  workspace.GetModulesWithPendingChanges(@"C:\tfs\ExpertSuite\Releases\803x\Modules");
+            //   var TeamFoundationWorkspace = new ModuleWorkspace("$/ExpertSuite/Releases/803x/", TeamFoundationHelper.TeamFoundationServerUri, TeamFoundationHelper.TeamProject);
+            //  TeamFoundationWorkspace.GetModulesWithPendingChanges(@"C:\tfs\ExpertSuite\Releases\803x\Modules");
         }
     }
 }
