@@ -139,7 +139,7 @@ Result = uniqueFiles.ToArray();
 
   <Target Name="AddReplaceRuleForAppPath" Condition="'$(EnableAddReplaceToUpdatePackagePath)'=='true'">
     <PropertyGroup>
-      <_PkgPathFull Condition="'$(WPPAllFilesInSingleFolder)' != ''">$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder))</_PkgPathFull>
+      <_PkgPathFull>$([System.IO.Path]::GetFullPath($(WPPAllFilesInSingleFolder)))</_PkgPathFull>
     </PropertyGroup>
 
     <!-- escape the text into a regex -->
