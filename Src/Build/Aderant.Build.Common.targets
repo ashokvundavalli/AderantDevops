@@ -270,7 +270,7 @@
   </Target>
 
   
-  <Target Name="PublishSymbols">
+  <Target Name="PublishSymbols" Condition="false">
     <BuildStep
        Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
        Message="$(BuildStepModuleName) Publish symbols"
