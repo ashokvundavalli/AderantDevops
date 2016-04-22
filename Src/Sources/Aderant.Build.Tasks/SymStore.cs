@@ -190,6 +190,10 @@ namespace Aderant.Build.Tasks {
 
             return builder.ToString();
         }
+        protected override void LogEventsFromTextOutput(string singleLine, MessageImportance messageImportance) {
+            // Overridden as the standard implementation logs text with the word "error" as error which we don't want.
+            Log.LogMessage(messageImportance, singleLine, null);
+        }
 
         /// <summary>
         /// Returns the fully qualified path to the executable file.
