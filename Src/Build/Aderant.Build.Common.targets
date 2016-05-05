@@ -61,10 +61,6 @@
              AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
-  <UsingTask TaskName="AsyncExec"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
   <UsingTask TaskName="ExtractWebModule"
              AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
