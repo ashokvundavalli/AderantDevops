@@ -52,6 +52,7 @@
         <Module Name="Libraries.Entities.Trust" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Exchange" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Foundation" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Installation" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Libraries.Integration" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Models" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
@@ -211,6 +212,7 @@
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
+        <Module Name="Workflow.Billing" AssemblyVersion="1.8.0.0" />      
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Collections" AssemblyVersion="1.8.0.0" />
