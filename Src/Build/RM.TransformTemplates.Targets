@@ -139,6 +139,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
 
     <!-- Do the Transform  -->
     <Aderant.TextTransform.Tasks.Transform
+      SolutionDirectory="$(SolutionDirectoryPath)"
       TemplatesToProcess="@(rmT4TransformItems)"
       ReferencePaths="@(AssemblyReferencePaths)"
       IncludeFolders="@(TemplateIncludeFolders)"

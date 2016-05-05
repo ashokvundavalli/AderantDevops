@@ -1356,7 +1356,7 @@ doc.Save(File);
                                  @(XmlDocumentationFileList)" />
     </ItemGroup>
 
-    <Message Text="Replicating module output to shared dependencies directory: $(SharedDependencyDirectory)" />
+    <Message Text="Replicating module output to shared dependencies directory: $(SharedDependencyDirectory)" Importance="High "/>
 
     <Copy Condition="!Exists('$(SharedDependencyDirectory)%(FilesToReplicate.RecursiveDir)%(FilesToReplicate.Filename)%(FilesToReplicate.Extension)')"
           SourceFiles="@(FilesToReplicate)"
