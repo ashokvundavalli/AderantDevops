@@ -35,7 +35,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B1
 		Src\Profile\Aderant\Aderant.psm1 = Src\Profile\Aderant\Aderant.psm1
 		Src\Profile\Aderant\AderantTfs.psm1 = Src\Profile\Aderant\AderantTfs.psm1
 		Src\Profile\Aderant\AderantWeb.psm1 = Src\Profile\Aderant\AderantWeb.psm1
-		Src\Profile\Aderant\BuildLibraryImport.ps1 = Src\Profile\Aderant\BuildLibraryImport.ps1
+		Src\Profile\Aderant\Bootstrap.ps1 = Src\Profile\Aderant\Bootstrap.ps1
 		Src\Profile\Aderant\Setup.ps1 = Src\Profile\Aderant\Setup.ps1
 	EndProjectSection
 EndProject
@@ -58,13 +58,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD6
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules (from branch root)", "Modules (from branch root)", "{38DD1E10-E957-4313-98E6-10D034705484}"
-	ProjectSection(SolutionItems) = preProject
-		..\Modules.proj = ..\Modules.proj
-		..\TFSBuild.proj = ..\TFSBuild.proj
-		..\TFSBuild.rsp = ..\TFSBuild.rsp
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.PowerShell", "Src\Sources\Aderant.Build.PowerShell\Aderant.Build.PowerShell.csproj", "{D251902D-9537-440A-91B2-DF47D99030F3}"
 EndProject
