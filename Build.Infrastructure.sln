@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B175EF-44C3-4EE4-BCAE-3B796D6A986D}"
 	ProjectSection(SolutionItems) = preProject
+		Src\Profile\Aderant\aderant.git.psm1 = Src\Profile\Aderant\aderant.git.psm1
 		Src\Profile\Aderant\Aderant.psd1 = Src\Profile\Aderant\Aderant.psd1
 		Src\Profile\Aderant\Aderant.psm1 = Src\Profile\Aderant\Aderant.psm1
 		Src\Profile\Aderant\AderantTfs.psm1 = Src\Profile\Aderant\AderantTfs.psm1

@@ -16,5 +16,6 @@
     CompileAndLoad $buildScripts
 }
 
+$p = $MyInvocation.MyCommand.Definition
 $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Load $currentPath     
