@@ -3,12 +3,23 @@ using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.Logging;
-using Aderant.Build.Providers;
-using Microsoft.TeamFoundation.VersionControl.Client;
 using Task = System.Threading.Tasks.Task;
 
 namespace Aderant.Build.Commands {
+
+    [Cmdlet(VerbsCommon.Get, "DependenciesForRepository")]
+    public class GetDependenciesForRepository : GetExpertDependenciesForModule {
+
+        [Parameter(Mandatory = false, Position = 0)]
+        public string RepositoryDirectory { get; set; }
+
+        protected override void ProcessRecord() {
+            ModuleName = RepositoryDirectory;
+
+            base.ProcessRecord();
+        }
+    }
+
     [Cmdlet(VerbsCommon.Get, "ExpertDependenciesForModule")]
     public class GetExpertDependenciesForModule : PSCmdlet {
 
@@ -28,6 +39,8 @@ namespace Aderant.Build.Commands {
         public SwitchParameter UseThirdPartyFromDrop { get; set; }
 
         protected override void ProcessRecord() {
+            System.Diagnostics.Debugger.Launch();
+
             base.ProcessRecord();
 
             if (string.IsNullOrEmpty(ModuleName)) {
