@@ -1,4 +1,6 @@
-﻿function Load([string]$currentPath) {
+﻿$DebugPreference = "Continue"
+
+function Load([string]$currentPath) {
     # Load the build libraries as this has our shared compile function. This function is shared by the desktop and server bootstrap of Build.Infrastructure
     $buildScripts = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($currentPath, "..\..\Build"));
 
