@@ -278,11 +278,7 @@ doc.Save(File);
                         BuildUri="$(BuildUri)"
                         Condition=" '$(IsDesktopBuild)' != 'true' ">
       <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
-    </GetBuildProperties>
-
-    <RemoveDir Condition="'$(DropLocation)' != ''"
-               Directories="$(DropLocation)\$(BuildNumber)"
-               ContinueOnError="true" />
+    </GetBuildProperties>    
 
     <PropertyGroup>
       <!-- 
