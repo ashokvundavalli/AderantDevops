@@ -39,8 +39,6 @@ namespace Aderant.Build.Commands {
         public SwitchParameter UseThirdPartyFromDrop { get; set; }
 
         protected override void ProcessRecord() {
-            System.Diagnostics.Debugger.Launch();
-
             base.ProcessRecord();
 
             if (string.IsNullOrEmpty(ModuleName)) {
