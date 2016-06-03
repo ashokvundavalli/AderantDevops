@@ -1,4 +1,4 @@
-﻿function install
+﻿function install()
 {
     try {
         $cwd = (Split-Path -Parent $MyInvocation.MyCommand.Path)
@@ -25,4 +25,4 @@
     write "Build bootstrap complete"
 }
 
-install @args
+install
