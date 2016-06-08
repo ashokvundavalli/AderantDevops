@@ -243,6 +243,3 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-*.dll
-*.exe
-/Src/Build.Tools/FxCopCmd.exe.config
