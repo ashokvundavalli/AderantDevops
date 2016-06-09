@@ -1,3 +1,8 @@
+param(
+	[ValidateSet('build','update')]
+	[string]$action
+)
+
 function DownloadScript() 
 {
     $response = wget "http://tfs:8080/tfs/aderant/expertsuite/_apis/git/repositories/build.infrastructure/items?api-version=1.0&scopePath=build.ps1" -UseDefaultCredentials
@@ -5,7 +10,8 @@ function DownloadScript()
     return $response.RawContentStream
 }
 
-function Update() {
+function Update() 
+{
     Write-Host "Updating build system"	
     
     $stream = DownloadScript
@@ -26,21 +32,25 @@ function Update() {
     }
 }
 
-function Build()
-{
-    $buildUtilDirectory = $Env:EXPERT_BUILD_UTIL_DIRECTORY
-    $updateRequested = $args.Length -eq 1 -and $args[0] -eq "update"
+function Build([string]$action)
+{    
+    $updateRequested = $action -eq "update"
 
-    if ($PSCommandPath -and (-not $buildUtilDirectory -or $updateRequested)) {
+    if ($PSCommandPath -and (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $updateRequested)) {
         Update
+		
+		if (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY) {
+			$Env:EXPERT_BUILD_UTIL_DIRECTORY = [System.IO.Path]::Combine($PSCommandPath, ".buildutils")
+		}
         
         if (-not $updateRequested) {
-            & $PSCommandPath $PSScriptRoot
+            & $PSCommandPath -action build
         }
     } else {
 	    #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
-        Write-Host "Doing the build"
+        Write-Host "Doing the build: $PSScriptRoot"
     }	
 }
 
-Build $args
+Build $action
+
