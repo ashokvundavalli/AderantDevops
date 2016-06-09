@@ -28,12 +28,17 @@ function Update() {
 
 function Build()
 {
-    if ($PSCommandPath -and (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $args[0] -eq "update")) {
-        Update
+    $buildUtilDirectory = $Env:EXPERT_BUILD_UTIL_DIRECTORY
+    $updateRequested = $args[0] -eq "update"
 
-        $newScriptBlock = Get-Content $PSCommandPath -Raw
-        Invoke-Expression -Command "$newScriptBlock $args"
-        return
+    if (-not $buildUtilDirectory -or $updateRequested) {
+        Update
+        
+        if (-not $updateRequested) {
+            $args.Remove("update")
+             
+            & $PSCommandPath $args
+        }
     } else {
 	    #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
         Write-Host "Doing the build"
