@@ -1,28 +1,24 @@
-﻿function install()
+function DownloadScript() 
 {
-    try {
-        $cwd = (Split-Path -Parent $MyInvocation.MyCommand.Path)
-
-        $BUILDUTIL_TAG = "master"
-
-        $id = [Guid]::NewGuid().ToString()
-        $buildutil = [System.IO.Path]::Combine($cwd, "build.infrastructure." + $id)
-
-        gci -Path $cwd -Filter "build.infrastructure.*" | Remove-Item -Force -Recursee
-
-        # PowerShell will raise NativeCommandError if git writes to stdout or stderr
-        # therefore 2> is added and the output is eaten	
-        & "git" clone http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure $buildutil 2> git_error.log        
-  
-        cd $buildutil
-
-        & "git" fetch -a -v 2> git_error.log
-        & "git" fetch --tags 2> git_error.log
-        & "git" reset --hard $BUILDUTIL_TAG 2> git_error.log
-    } finally {
-        cd $cwd    
-    }
-    write "Build bootstrap complete"
+    $response = wget "http://tfs:8080/tfs/aderant/expertsuite/_apis/git/repositories/build.infrastructure/items?api-version=1.0&scopePath=build.ps1" -UseDefaultCredentials
+    return $response
 }
 
-install
+function Build()
+{
+    if (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $args.Contains("update")) {
+	    Write-Host "Updating build system"	
+    
+	    $response = DownloadScript
+    
+        $newHash = Get-FileHash -InputStream $result.RawContentStream -Algorithm SHA256
+	    $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
+
+        if ($thisFileHash -ne $newHash) {
+            $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
+            $script = $sr.ReadToEnd() | Out-File "foo.txt"
+	    }
+    } else {
+	    & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
+    }
+}
