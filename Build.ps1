@@ -29,7 +29,7 @@ function Update() {
 function Build()
 {
     $buildUtilDirectory = $Env:EXPERT_BUILD_UTIL_DIRECTORY
-    $updateRequested = $args[0] -eq "update"
+    $updateRequested = $args.Length -eq 1 -and $args[0] -eq "update"
 
     if ($PSCommandPath -and (-not $buildUtilDirectory -or $updateRequested)) {
         Update
