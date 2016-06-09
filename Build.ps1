@@ -1,21 +1,22 @@
 function DownloadScript() 
 {
     $response = wget "http://tfs:8080/tfs/aderant/expertsuite/_apis/git/repositories/build.infrastructure/items?api-version=1.0&scopePath=build.ps1" -UseDefaultCredentials
-    return $response
+
+    return $response.RawContentStream
 }
 
 function Update() {
     Write-Host "Updating build system"	
     
-    $response = DownloadScript
+    $stream = DownloadScript
     
-    $newHash = Get-FileHash -InputStream $response.RawContentStream -Algorithm SHA256
+    $newHash = Get-FileHash -InputStream $stream -Algorithm SHA256
     $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
 
     if ($thisFileHash.Hash -ne $newHash.Hash) {
-        $response.RawContentStream.Position = 0
+        $stream.Position = 0
 
-        $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
+        $sr = new-object System.IO.StreamReader ($stream)    
         $script = $sr.ReadToEnd()
 
         if ($script) {
@@ -31,7 +32,7 @@ function Build()
         Update
 
         $newScriptBlock = Get-Content $PSCommandPath -Raw
-        Invoke-Expression -Command $newScriptBlock $args
+        Invoke-Expression -Command "$newScriptBlock $args"
         return
     } else {
 	    #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
