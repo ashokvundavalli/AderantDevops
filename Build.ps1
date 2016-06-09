@@ -28,7 +28,7 @@ function Update() {
 
 function Build()
 {
-    if (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $args[0] -eq "update") {
+    if ($PSCommandPath -and (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $args[0] -eq "update")) {
         Update
 
         $newScriptBlock = Get-Content $PSCommandPath -Raw
