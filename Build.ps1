@@ -21,6 +21,7 @@ function Build()
             $script = $sr.ReadToEnd()
 
             if ($script) {
+                Write-Host "Updating $PSCommandPath"
                 $script | Out-File $PSCommandPath
             }
 	    }
