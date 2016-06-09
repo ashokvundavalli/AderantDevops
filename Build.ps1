@@ -11,7 +11,7 @@ function Build()
     
 	    $response = DownloadScript
     
-        $newHash = Get-FileHash -InputStream $result.RawContentStream -Algorithm SHA256
+        $newHash = Get-FileHash -InputStream $response.RawContentStream -Algorithm SHA256
 	    $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
 
         if ($thisFileHash.Hash -ne $newHash.Hash) {
