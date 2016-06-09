@@ -22,3 +22,5 @@ function Build()
 	    & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
     }
 }
+
+Build $args
