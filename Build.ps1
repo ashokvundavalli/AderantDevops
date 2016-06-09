@@ -16,7 +16,11 @@ function Build()
 
         if ($thisFileHash.Hash -ne $newHash.Hash) {
             $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
-            $script = $sr.ReadToEnd() | Out-File $PSCommandPath
+            $script = $sr.ReadToEnd()
+
+            if ($script) {
+                $script | Out-File $PSCommandPath
+            }
 	    }
     } else {
 	    & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
