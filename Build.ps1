@@ -4,29 +4,38 @@ function DownloadScript()
     return $response
 }
 
+function Update() {
+    Write-Host "Updating build system"	
+    
+    $response = DownloadScript
+    
+    $newHash = Get-FileHash -InputStream $response.RawContentStream -Algorithm SHA256
+    $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
+
+    if ($thisFileHash.Hash -ne $newHash.Hash) {
+        $response.RawContentStream.Position = 0
+
+        $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
+        $script = $sr.ReadToEnd()
+
+        if ($script) {
+            Write-Host "Updating $PSCommandPath"
+            $script | Out-File $PSCommandPath
+        }
+    }
+}
+
 function Build()
 {
-    if (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $args.Contains("update")) {
-	    Write-Host "Updating build system"	
-    
-	    $response = DownloadScript
-    
-        $newHash = Get-FileHash -InputStream $response.RawContentStream -Algorithm SHA256
-	    $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
+    if (-not $Env:EXPERT_BUILD_UTIL_DIRECTORY -or $args[0] -eq "update") {
+        Update
 
-        if ($thisFileHash.Hash -ne $newHash.Hash) {
-            $response.RawContentStream.Position = 0
-
-            $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
-            $script = $sr.ReadToEnd()
-
-            if ($script) {
-                Write-Host "Updating $PSCommandPath"
-                $script | Out-File $PSCommandPath
-            }
-	    }
+        $newScriptBlock = Get-Content $PSCommandPath -Raw
+        Invoke-Expression -Command $newScriptBlock $args
+        return
     } else {
-	    & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
+	    #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
+        Write-Host "Doing the build"
     }	
 }
 
