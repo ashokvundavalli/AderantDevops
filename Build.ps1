@@ -31,13 +31,11 @@ function Build()
     $buildUtilDirectory = $Env:EXPERT_BUILD_UTIL_DIRECTORY
     $updateRequested = $args[0] -eq "update"
 
-    if (-not $buildUtilDirectory -or $updateRequested) {
+    if ($PSCommandPath -and (-not $buildUtilDirectory -or $updateRequested)) {
         Update
         
         if (-not $updateRequested) {
-            $args.Remove("update")
-             
-            & $PSCommandPath $args
+            & $PSCommandPath $PSScriptRoot
         }
     } else {
 	    #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
