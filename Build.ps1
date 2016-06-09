@@ -15,6 +15,8 @@ function Build()
 	    $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
 
         if ($thisFileHash.Hash -ne $newHash.Hash) {
+            $response.RawContentStream.Position = 0
+
             $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
             $script = $sr.ReadToEnd()
 
@@ -24,7 +26,7 @@ function Build()
 	    }
     } else {
 	    & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
-    }
+    }	
 }
 
 Build $args
