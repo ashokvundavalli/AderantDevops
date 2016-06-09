@@ -14,9 +14,9 @@ function Build()
         $newHash = Get-FileHash -InputStream $result.RawContentStream -Algorithm SHA256
 	    $thisFileHash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
 
-        if ($thisFileHash -ne $newHash) {
+        if ($thisFileHash.Hash -ne $newHash.Hash) {
             $sr = new-object System.IO.StreamReader ($response.RawContentStream)    
-            $script = $sr.ReadToEnd() | Out-File "foo.txt"
+            $script = $sr.ReadToEnd() | Out-File $PSCommandPath
 	    }
     } else {
 	    & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
