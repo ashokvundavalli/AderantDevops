@@ -78,7 +78,21 @@ process {
         [string]$newVersion = [scriptblock]::Create($script).Invoke($true)        
 
         if ($thisVersion -ne $newVersion) {
-            Write-Host ("Updating $PSCommandPath [Current Version: {0} New Version: {1}]" -f $thisVersion, $newVersion)
+
+            if ([System.Environment]::UserInteractive) {
+                $title = "Update?"
+                $message = "Do want to update this script?"
+                $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
+                $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
+                $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+                $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+                if ($result -ne 0) {
+                    return
+                }              
+            }
+
+            Write-Host ("Updating $PSCommandPath [Existing: {0} New: {1}]" -f $thisVersion, $newVersion)
             $script | Out-File $PSCommandPath -Encoding UTF8            
         } else {
             Write-Host "No update required."
@@ -100,11 +114,9 @@ process {
             
             if (-not $updateRequested) {
                 & $PSCommandPath -action build
-                return
             }
         } else {
-            #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
-            Write-Host "Doing the build: $PSScriptRoot"
+            & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 -moduleToBuildPath $PSScriptRoot -getDependencies $true -dropRoot "\\na.aderant.com\ExpertSuite\Main"
         }    
     }
     
