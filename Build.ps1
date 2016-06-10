@@ -3,7 +3,6 @@ param(
     [string]$action = "build",    
     [string]$updateSource = "http://tfs:8080/tfs/aderant/expertsuite/_apis/git/repositories/build.infrastructure/items?scopePath=build.ps1"    
 )
-
    
 process {
 
@@ -103,7 +102,7 @@ process {
                 return
             }
         } else {
-            #& $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
+            & $Env:EXPERT_BUILD_UTIL_DIRECTORY\Build\BuildModule.ps1 $args
             Write-Host "Doing the build: $PSScriptRoot"
         }    
     }

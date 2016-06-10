@@ -38,9 +38,10 @@ function ExtractZip($zipPath, $destinationPath) {
         }
     }
 
+    Write-Host "Extracted build system to $destinationPath" 
     $archive.Dispose()
     Remove-Item $zip -Force
 }
 
 $zip = DownloadBuildSystem
-ExtractZip $zip "$repositoryDirectory\.Build"
+ExtractZip $zip "$repositoryDirectory\.build"
