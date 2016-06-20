@@ -244,3 +244,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /Src/Build.Tools/*
+!/Src/Build.Tools/Paket.exe
+!/Src/Build.Tools/plink.exe
