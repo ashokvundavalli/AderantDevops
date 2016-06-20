@@ -38,38 +38,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualStudio.CoreUtility, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Editor, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Language.Intellisense, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="Microsoft.VisualStudio.Shell.12.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>../../../../../../../Program%20Files%20(x86)/Microsoft%20Visual%20Studio%2014.0/VSSDK/VisualStudioIntegration/Common/Assemblies/v4.0/Microsoft.VisualStudio.Shell.12.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.11.0, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Shell.Immutable.12.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.11.0, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-      <HintPath>..\..\..\..\..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\VSSDK\VisualStudioIntegration\Common\Assemblies\v4.0\Microsoft.VisualStudio.Shell.Interop.12.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.14.1.DesignTime, Version=14.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.8.0, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="Microsoft.VisualStudio.Shell.Interop.9.0, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.Text.Data, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>../../../../../../../Program%20Files%20(x86)/Microsoft%20Visual%20Studio%2014.0/VSSDK/VisualStudioIntegration/Common/Assemblies/v4.0/Microsoft.VisualStudio.Text.Data.dll</HintPath>
     </Reference>
@@ -82,22 +51,15 @@
     <Reference Include="Microsoft.VisualStudio.Text.UI.Wpf, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>../../../../../../../Program%20Files%20(x86)/Microsoft%20Visual%20Studio%2014.0/VSSDK/VisualStudioIntegration/Common/Assemblies/v4.0/Microsoft.VisualStudio.Text.UI.Wpf.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.TextManager.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Windows.dll</HintPath>
     </Reference>
     <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>

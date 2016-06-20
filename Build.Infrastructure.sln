@@ -81,6 +81,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.Vsix
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.XamlAdorner", "Src\Sources\Aderant.DeveloperTools.XamlAdorner\Aderant.DeveloperTools.XamlAdorner.csproj", "{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Paket", ".Paket", "{C449953C-7736-401E-80D0-71220437E833}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -132,40 +137,5 @@ Global
 		{3FD46DC7-F04A-4136-B0B9-EAE5722C22F0} = {D6EF2A47-2169-41BB-82BE-538DFB8D7CC1}
 		{DC82E590-6F89-42E2-9A22-54375D01A492} = {31A06791-2770-4455-94CF-489136D6405A}
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7} = {31A06791-2770-4455-94CF-489136D6405A}
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 10
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs.ap.aderant.com:8080/tfs/aderant
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Src\\Sources\\FxCopCmd\\FxCopCmd.csproj
-		SccProjectName1 = Src/Sources/FxCopCmd
-		SccLocalPath1 = Src\\Sources\\FxCopCmd
-		SccProjectUniqueName2 = Src\\Sources\\Aderant.Build\\Aderant.Build.csproj
-		SccProjectName2 = Src/Sources/Aderant.Build
-		SccLocalPath2 = Src\\Sources\\Aderant.Build
-		SccProjectUniqueName3 = Test\\UnitTest.Build\\UnitTest.Build.csproj
-		SccProjectTopLevelParentUniqueName3 = Build.Infrastructure.sln
-		SccProjectName3 = Test/UnitTest.Build
-		SccLocalPath3 = Test\\UnitTest.Build
-		SccProjectUniqueName4 = Src\\Sources\\Aderant.Build.Tasks\\Aderant.Build.Tasks.csproj
-		SccProjectName4 = Src/Sources/Aderant.Build.Tasks
-		SccLocalPath4 = Src\\Sources\\Aderant.Build.Tasks
-		SccProjectUniqueName5 = Src\\Sources\\Aderant.Build.Analyzer.Vsix\\Aderant.Build.Analyzer.Vsix.csproj
-		SccProjectName5 = Src/Sources/Aderant.Build.Analyzer.Vsix
-		SccLocalPath5 = Src\\Sources\\Aderant.Build.Analyzer.Vsix
-		SccProjectUniqueName6 = Src\\Sources\\Aderant.Build.Analyzer\\Aderant.Build.Analyzer.csproj
-		SccProjectName6 = Src/Sources/Aderant.Build.Analyzer
-		SccLocalPath6 = Src\\Sources\\Aderant.Build.Analyzer
-		SccProjectUniqueName7 = Test\\UnitTest.Aderant.Build.Analyzer\\UnitTest.Aderant.Build.Analyzer.csproj
-		SccProjectTopLevelParentUniqueName7 = Build.Infrastructure.sln
-		SccProjectName7 = Test/UnitTest.Aderant.Build.Analyzer
-		SccLocalPath7 = Test\\UnitTest.Aderant.Build.Analyzer
-		SccProjectUniqueName8 = Src\\Sources\\Aderant.DeveloperTools.XamlAdorner\\Aderant.DeveloperTools.XamlAdorner.csproj
-		SccProjectName8 = Src/Sources/Aderant.DeveloperTools.XamlAdorner
-		SccLocalPath8 = Src\\Sources\\Aderant.DeveloperTools.XamlAdorner
-		SccProjectUniqueName9 = Src\\Sources\\Aderant.DeveloperTools\\Aderant.DeveloperTools.Vsix.csproj
-		SccProjectName9 = Src/Sources/Aderant.DeveloperTools
-		SccLocalPath9 = Src\\Sources\\Aderant.DeveloperTools
 	EndGlobalSection
 EndGlobal
