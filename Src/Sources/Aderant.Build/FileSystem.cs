@@ -171,6 +171,10 @@ namespace Aderant.Build {
         public virtual void WriteAllText(string path, string contents) {
             File.WriteAllText(path, contents, Encoding.UTF8);
         }
+
+        public void Delete(string path) {
+            File.Delete(path);
+        }
     }
 
     public class DirectoryOperations {

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -14,7 +15,7 @@ namespace UnitTest.Build {
     public class ModuleDependencyResolverTests {
         [TestMethod]
         public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
-            var resolver = new ModuleDependencyResolver(null, "");
+            var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
 
             List<ExpertModule> modules = new List<ExpertModule>();
             modules.Add(new ExpertModule {Name = "Foo"});
@@ -43,7 +44,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void GetDependenciesRequiredForBuild() {
-            var resolver = new ModuleDependencyResolver(null, "");
+            var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
 
             List<ExpertModule> modules = new List<ExpertModule>();
             modules.Add(new ExpertModule {Name = "Foo"});
@@ -97,10 +98,10 @@ namespace UnitTest.Build {
 </ProductManifest>", new[] {dependencyManifest1, dependencyManifest2});
 
 
-            var resolver = new ModuleDependencyResolver(expertManifest, "");
+            var resolver = new ModuleDependencyResolver(expertManifest, "", new FakeLogger());
             resolver.SetModulesInBuild(new[] {"Module1"});
 
-            await resolver.CopyDependenciesFromDrop(string.Empty, DependencyFetchMode.Default);
+            await resolver.CopyDependenciesFromDrop(string.Empty, DependencyFetchMode.Default, string.Empty);
 
             Assert.AreEqual(1, expertManifest.modulesFetched.Count);
             Assert.AreEqual("Module0", expertManifest.modulesFetched[0].Name);

@@ -98,7 +98,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void SynchronizeProductManifestWithModules(ExpertModule module, ITeamFoundationWorkspace workspace) {
             DependencyManifest manifest;
             if (provider.TryGetDependencyManifest(module.Name, out manifest)) {
-                logger.Log("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
+                logger.Info("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
 
                 string dependencyManifestPath;
                 if (provider.TryGetDependencyManifestPath(module.Name, out dependencyManifestPath)) {
@@ -133,7 +133,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                             Name = name
                         };
                         if (!ExpertModule.IsNonProductModule(newModule.ModuleType)) {
-                            logger.Log("Adding module {0} found in source control to Expert Manifest: ", new string[] {
+                            logger.Info("Adding module {0} found in source control to Expert Manifest: ", new string[] {
                                 name
                             });
                             expertModules.Add(newModule);
@@ -165,7 +165,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private ICollection<string> GetModulesFromSourceControl(VersionControlServer vcs, string branch) {
-            logger.Log("Getting module names from source branch: {0}", branch);
+            logger.Info("Getting module names from source branch: {0}", branch);
 
             List<string> items = new List<string>();
 
@@ -205,7 +205,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             ExpertModule result;
 
             if (node != null) {
-                logger.Log("Found module {0} in Expert Manifest", moduleName);
+                logger.Info("Found module {0} in Expert Manifest", moduleName);
 
                 if (node.ModuleType != ModuleType.ThirdParty && string.IsNullOrEmpty(node.AssemblyVersion)) {
                     logger.Warning("Non-third party module has no assembly version. Adding default", null);
@@ -219,7 +219,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return null;
             }
 
-            logger.Log("The Expert Manifest did not contain an entry for the module {0}. Adding...", moduleName);
+            logger.Info("The Expert Manifest did not contain an entry for the module {0}. Adding...", moduleName);
 
             ExpertModule newModule = new ExpertModule {
                 Name = moduleName,

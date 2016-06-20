@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+    <Metadata>
+        <Identity Id="b36002e4-cf03-4ed9-9f5c-bf15991e15e4" Version="1.73" Language="en-US" Publisher="Aderant" />
+        <DisplayName>Aderant Developer Tools</DisplayName>
+        <Description xml:space="preserve">Changes the task bar preview thumbnail of an ExpertSuite solution to clearly show the module name and the branch where it was opened from. Puts the branch name into the window title and the Solution Explorer caption. Draws an Adorner for x:Static usage (ExpertResources, ExpertBrushes, ExpertImages), e.g. colors, brushes, images, fonts, sizes etc.</Description>
+        <Icon>Resources\ExpertIcon.ico</Icon>
+    </Metadata>
+    <Installation InstalledByMsi="false">
+        <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[12.0,15.0)" />
+        <InstallationTarget Version="[12.0,15.0)" Id="Microsoft.VisualStudio.Enterprise" />
+        <InstallationTarget Version="[14.0,15.0)" Id="Microsoft.VisualStudio.Community" />
+    </Installation>
+    <Dependencies>
+        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+        <Dependency Id="Microsoft.VisualStudio.MPF.12.0" DisplayName="Visual Studio MPF 12.0" d:Source="Installed" Version="[12.0]" />
+    </Dependencies>
+    <Assets>
+        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+        <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" Path="|Aderant.DeveloperTools.XamlAdorner|" d:ProjectName="%CurrentProject%.XamlAdorner" />
+    </Assets>
+</PackageManifest>

@@ -44,7 +44,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private bool FileExistsInSourceControl(string sccPath, ItemType type) {
-            logger.Log("Checking source control: {0}", sccPath);
+            logger.Info("Checking source control: {0}", sccPath);
 
             ItemSet itemSet = service.GetItems(sccPath, VersionSpec.Latest, RecursionType.OneLevel, DeletedState.NonDeleted, type, false);
 

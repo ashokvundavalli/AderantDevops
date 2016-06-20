@@ -278,7 +278,7 @@ doc.Save(File);
                         BuildUri="$(BuildUri)"
                         Condition=" '$(IsDesktopBuild)' != 'true' ">
       <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
-    </GetBuildProperties>    
+    </GetBuildProperties>
 
     <PropertyGroup>
       <!-- 
@@ -413,7 +413,7 @@ doc.Save(File);
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
+          Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
 
   </Target>
 
@@ -446,7 +446,8 @@ doc.Save(File);
       ModuleName="$(ModuleName)"
       DropPath="$(BaseDropDirectory)"
       WorkspaceName="$(WorkspaceName)"
-      WorkspaceOwner="$(WorkspaceOwner)" />
+      WorkspaceOwner="$(WorkspaceOwner)"
+      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"

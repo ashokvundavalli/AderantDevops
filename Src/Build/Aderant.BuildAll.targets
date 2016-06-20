@@ -68,7 +68,8 @@
       ModulesRootPath="$(SolutionRoot)"
       DropPath="$(DropLocation)"
       BuildAll="true"
-      ModulesInBuild="@(ModulesInBuild)" />
+      ModulesInBuild="@(ModulesInBuild)"
+      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
 
     <ItemGroup>
       <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"

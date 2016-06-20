@@ -11,7 +11,7 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Providers {
     /// <summary>
-    /// Represents an ExpertSuite development environment. 
+    /// Represents an ExpertSuite developement environment. 
     /// 
     /// The ideal is to make this class the single entry point for all services required for working with Expert Suite.
     /// This class should manage the various manifest files and provide a set of dependency analysis services.

@@ -73,7 +73,7 @@ namespace Aderant.Build.Commands {
                     continue;
                 }
 
-                logger.Log("Configured " + config.AppConfigFile);
+                logger.Info("Configured " + config.AppConfigFile);
 
                 config.SaveAppConfig();
             }

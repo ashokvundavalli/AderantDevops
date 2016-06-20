@@ -138,7 +138,7 @@ namespace Aderant.Build {
 
         private void LogMessage(string message, params string[] args) {
             if (HasLogger) {
-                Logger.Log(message, args);
+                Logger.Info(message, args);
             }
         }
 

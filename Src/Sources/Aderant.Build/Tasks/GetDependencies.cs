@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -44,6 +45,15 @@ namespace Aderant.Build.Tasks {
         /// The modules in build.
         /// </value>
         public ITaskItem[] ModulesInBuild { get; set; }
+
+        /// <summary>
+        /// Gets or sets the build scripts directory.
+        /// </summary>
+        /// <value>
+        /// The build scripts directory.
+        /// </value>
+        [Required]
+        public string BuildScriptsDirectory { get; set; }
 
         /// <summary>
         /// Gets or sets the TFS server.
@@ -94,7 +104,7 @@ namespace Aderant.Build.Tasks {
                 System.Threading.Tasks.Task.Run(async () => {
                     // Create a cancellation token so we can abort the async task
                     cancellationToken = new CancellationTokenSource();
-                    await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, BuildAll ? DependencyFetchMode.ThirdParty : DependencyFetchMode.Default, cancellationToken);
+                    await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, BuildAll ? DependencyFetchMode.ThirdParty : DependencyFetchMode.Default, BuildScriptsDirectory, cancellationToken);
                 }).Wait(); // Wait is used here as to not change the signature of the Execute method
             } catch (Exception ex) {
                 Log.LogError("Failed to get all module dependencies.", null);
@@ -141,7 +151,9 @@ namespace Aderant.Build.Tasks {
         }
 
         private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
-            var resolver = new ModuleDependencyResolver(expertManifest, DropPath);
+            var resolver = new ModuleDependencyResolver(expertManifest, DropPath, new BuildTaskLogger(this));
+
+            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(TeamFoundationServerUrl, ModulesRootPath, WorkspaceName, WorkspaceOwner);
 
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
@@ -150,6 +162,10 @@ namespace Aderant.Build.Tasks {
 
             if (ModulesInBuild != null) {
                 resolver.SetModulesInBuild(ModulesInBuild.Select(m => Path.GetFileName(Path.GetFullPath(m.ItemSpec))));
+            }
+
+            if (!string.IsNullOrEmpty(resolver.DependencySources.LocalThirdPartyDirectory)) {
+                Log.LogMessage(MessageImportance.Normal, "Using ThirdParty path: " + resolver.DependencySources.LocalThirdPartyDirectory, null);
             }
 
             resolver.ModuleDependencyResolved += (sender, args) => Log.LogMessage(MessageImportance.Normal, "Getting binaries for {0} from the branch {1} {2}", args.DependencyProvider, args.Branch, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
