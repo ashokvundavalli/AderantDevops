@@ -64,13 +64,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD6
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules (from branch root)", "Modules (from branch root)", "{38DD1E10-E957-4313-98E6-10D034705484}"
-	ProjectSection(SolutionItems) = preProject
-		..\Modules.proj = ..\Modules.proj
-		..\TFSBuild.proj = ..\TFSBuild.proj
-		..\TFSBuild.rsp = ..\TFSBuild.rsp
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer.Vsix", "Src\Sources\Aderant.Build.Analyzer.Vsix\Aderant.Build.Analyzer.Vsix.csproj", "{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer", "Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj", "{32045E58-C419-46F1-9429-9F4D99B165FE}"
