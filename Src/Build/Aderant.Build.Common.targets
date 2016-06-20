@@ -135,9 +135,6 @@
     <ItemGroup>
       <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj"></Projects>
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj"></Projects>
-      <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj"></Projects>
-      <Projects Include="$(BuildSourcesDirectory)Aderant.DeveloperTools\Aderant.DeveloperTools.Vsix.csproj"></Projects>
-      <Projects Include="$(BuildSourcesDirectory)Aderant.DeveloperTools.XamlAdorner\Aderant.DeveloperTools.XamlAdorner.csproj"></Projects>
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
                 Condition="'$(IsDesktopBuild)' == 'false' And '$(TestRunType)' == ''" />
     </ItemGroup>

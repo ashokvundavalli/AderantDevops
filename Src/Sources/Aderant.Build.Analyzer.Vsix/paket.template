@@ -5,4 +5,4 @@ Authors Aderant
 Description ""
 
 files
-    ..\..\Build.Tools\Aderant.DeveloperTools.vsix ==> lib
+    bin\Aderant.Build.Analyzer.vsix ==> lib
