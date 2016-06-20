@@ -1,11 +1,11 @@
 $global:DeveloperShell = New-Object PSObject -Property @{
     # The directory which contains all of the repositories
-    ExpertRepositoryPath                          = $Env:ExpertRepositoryPath
+    ExpertRepositoryPath                          = $Env:EXPERT_REPOSITORY_PATH
 
     # The current repository. This is where all commands execute relative to
     CurrentRepositoryPath                         = ""
 
-    BuildSystem                                   = Resolve-Path ((Split-Path -Parent $MyInvocation.MyCommand.Path) + "..\..\..\")
+    BuildSystem                                   = $Env:EXPERT_BUILD_ROOT
 
     DropLocation                                  = "\\na.aderant.com\ExpertSuite\Main\"
 }
@@ -38,12 +38,20 @@ function WriteRepositoryInfo {
     Write-Host "]" 
 }
 
+function SetBuildSystemPathFromCurrentFile() {
+    $path = [System.IO.Path]::GetFullPath((Get-Module Aderant).Path + "..\..\..\..\")
+    
+    $s.BuildSystem = $path
+    
+    [Environment]::SetEnvironmentVariable("EXPERT_BUILD_ROOT", $path, "User")
+}
+
 function Enable-GitPrompt {
 
     function global:prompt {
         $realLASTEXITCODE = $LASTEXITCODE
 
-        Write-Host($pwd.ProviderPath) -nonewline
+        Write-Host($pwd.ProviderPath) -NoNewline
 
         Write-VcsStatus
 
@@ -56,6 +64,7 @@ function Enable-GitPrompt {
         Write-Host ("PS " + $(Get-Location) + ">") -NoNewline 
         return " "
     }
+    
 }
 
 function global:Set-Repository([string]$repositoryPath) {   
@@ -88,20 +97,35 @@ function global:Get-Dependencies() {
 function InitializeEnvironment() {
     # Export functions and variables we want external to this script
     $functionsToExport = @( 
-        @{ function="Get-Dependencies";						alias="gd"}
-        @{ function="Set-Repository";						alias=""}
+        @{ function="Get-Dependencies";                     alias="gd"}
+        @{ function="Set-Repository";                       alias=""}
     )
     
-    foreach ($toExport in $functionsToExport) {			
+    foreach ($toExport in $functionsToExport) {
         Write-Debug "Exporting $($toExport.function)"
 
         Export-ModuleMember -function $toExport.function
         if ($toExport.alias) {
             Set-Alias $toExport.alias $toExport.function -Scope Global
             Export-ModuleMember -alias $toExport.alias
-        }	    
+        }
+    }
+    
+    if (-not ($s.BuildSystem)) {
+        SetBuildSystemPathFromCurrentFile
     }
 }
+
+function InstallPoshGit() {
+    # We need Windows 10 or WMF 5 for Install-Module
+    if ($host.Version.Major -ge 5) {
+    
+        if (-not (Get-InstalledModule posh-git)) {
+            Install-Module posh-git
+        }
+    }
+}
+
 
 function global:Enable-GitIntegration() {
     if (-not $s.ExpertRepositoryPath)  {
@@ -116,15 +140,19 @@ function global:Enable-GitIntegration() {
             Write-Host "For example C:\Source\"
         }
 
-        $path = GetPathFromUser $promptAction         
+        $path = GetPathFromUser $promptAction
                 
-        [Environment]::SetEnvironmentVariable("ExpertRepositoryPath", $path, "User")
+        [Environment]::SetEnvironmentVariable("EXPERT_REPOSITORY_PATH", $path, "User")
         
         $s.ExpertRepositoryPath = $path
     }
 
-    Import-Module posh-git -Global
-    Enable-GitPrompt
+    InstallPoshGit    
+    
+    if (Get-InstalledModule posh-git) {
+        Import-Module posh-git -Global    
+        Enable-GitPrompt
+    }
 
     Set-Location $s.ExpertRepositoryPath
 
