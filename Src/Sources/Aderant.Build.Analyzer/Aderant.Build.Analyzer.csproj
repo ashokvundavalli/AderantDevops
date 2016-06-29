@@ -35,10 +35,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
-  </PropertyGroup>
-  <UsingTask TaskName="CopyRuntimeDependencies" AssemblyFile="..\..\..\.paket\paket.exe" />
   <ItemGroup>
     <Compile Include="AnalyzerCategory.cs" />
     <Compile Include="ClassExtensions.cs" />
@@ -64,12 +60,6 @@
     <None Include="paket.template" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.6\Microsoft.Portable.CSharp.targets" />
-  <Target Name="AfterBuild">
-    <GetAssemblyIdentity AssemblyFiles="$(OutDir)\$(AssemblyName).dll">
-      <Output TaskParameter="Assemblies" ItemName="AnalyzerAssemblyInfo" />
-    </GetAssemblyIdentity>
-    <CopyRuntimeDependencies OutputPath="$(OutputPath)" ProjectsWithRuntimeLibs="System.AppContext;System.Diagnostics.FileVersionInfo;System.Diagnostics.StackTrace;System.Dynamic.Runtime;System.Linq.Expressions;System.Reflection.TypeExtensions;System.Security.Cryptography.Algorithms;System.Security.Cryptography.Cng;System.Security.Cryptography.Csp;System.Security.Cryptography.Encoding;System.Security.Cryptography.OpenSsl;System.Security.Cryptography.X509Certificates;System.Text.Encoding.CodePages;System.Threading" />
-  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -93,6 +83,11 @@
     <Analyzer Include="..\..\..\packages\Microsoft.CodeAnalysis.Analyzers\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll">
       <Paket>True</Paket>
     </Analyzer>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\..\packages\System.Collections.Immutable\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And ($(TargetFrameworkVersion) == 'v1.3' Or $(TargetFrameworkVersion) == 'v1.4' Or $(TargetFrameworkVersion) == 'v1.5')">

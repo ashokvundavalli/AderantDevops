@@ -101,7 +101,7 @@ namespace UnitTest.Build {
             var resolver = new ModuleDependencyResolver(expertManifest, "", new FakeLogger());
             resolver.SetModulesInBuild(new[] {"Module1"});
 
-            await resolver.CopyDependenciesFromDrop(string.Empty, DependencyFetchMode.Default, string.Empty);
+            await resolver.Resolve(string.Empty, DependencyFetchMode.Default, string.Empty);
 
             Assert.AreEqual(1, expertManifest.modulesFetched.Count);
             Assert.AreEqual("Module0", expertManifest.modulesFetched[0].Name);

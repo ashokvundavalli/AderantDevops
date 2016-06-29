@@ -246,3 +246,6 @@ ModelManifest.xml
 /Src/Build.Tools/*
 !/Src/Build.Tools/Paket.exe
 !/Src/Build.Tools/plink.exe
+/Test/Dependencies
+
+*.bak
