@@ -2,16 +2,14 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
+using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
-using Aderant.Build.Providers;
-using Microsoft.TeamFoundation.VersionControl.Client;
 using Task = System.Threading.Tasks.Task;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "ExpertDependenciesForModule")]
     public class GetExpertDependenciesForModule : PSCmdlet {
-
         [Parameter(Mandatory = false, Position = 0)]
         public string ModuleName { get; set; }
 
@@ -24,8 +22,14 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = true, Position = 3)]
         public string BuildScriptsDirectory { get; set; }
 
-        [Parameter(Mandatory = false, Position = 3)]
-        public SwitchParameter UseThirdPartyFromDrop { get; set; }
+        [Parameter(Mandatory = false, Position = 4)]
+        public SwitchParameter Update { get; set; }
+
+        [Parameter(Mandatory = false, Position = 5)]
+        public SwitchParameter ShowOutdated { get; set; }
+
+        [Parameter(Mandatory = false, Position = 6)]
+        public SwitchParameter Force { get; set; }
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
@@ -60,7 +64,7 @@ namespace Aderant.Build.Commands {
                     return;
                 }
 
-                ExpertManifest expertManifest = ExpertManifest.Load(manifest, new[] { dependencyManifest });
+                ExpertManifest expertManifest = ExpertManifest.Load(manifest, new[] {dependencyManifest});
 
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
@@ -69,13 +73,10 @@ namespace Aderant.Build.Commands {
                     Task.Run(async () => {
                         var resolver = new ModuleDependencyResolver(expertManifest, DropPath, new PowerShellLogger(Host));
 
-                        if (!UseThirdPartyFromDrop) {
-                            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(null, branchRoot, null, null);
-                        }
-
                         resolver.ModuleName = ModuleName;
-
-                        //Host.UI.WriteDebugLine("Using local thirdparty path: " + resolver.DependencySources.LocalThirdPartyDirectory);
+                        resolver.Update = Update.ToBool();
+                        resolver.Outdated = ShowOutdated.ToBool();
+                        resolver.Force = Force.ToBool();
 
                         resolver.ModuleDependencyResolved += (sender, args) => {
                             Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, "Getting binaries for ");
@@ -84,10 +85,10 @@ namespace Aderant.Build.Commands {
                             Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.Branch);
                             Host.UI.WriteLine(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
 
-                            Host.UI.WriteDebugLine("Resolved path:" + args.FullPath);
+                            Host.UI.WriteLine("Resolved path:" + args.FullPath);
                         };
 
-                        await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, DependencyFetchMode.Default, BuildScriptsDirectory);
+                        await resolver.Resolve(moduleDependenciesDirectory, DependencyFetchMode.Default, BuildScriptsDirectory, CancellationToken.None);
                     }).Wait(); // Wait is used here as to not change the signature of the ProcessRecord method
                 } catch (Exception ex) {
                     Host.UI.WriteErrorLine("Failed to get all module dependencies.");

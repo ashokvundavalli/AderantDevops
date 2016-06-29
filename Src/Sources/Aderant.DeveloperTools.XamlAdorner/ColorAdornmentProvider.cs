@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.Composition;
+using Aderant.DeveloperTools.Shared;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 
@@ -24,6 +25,9 @@ namespace Aderant.DeveloperTools.XamlAdorner {
         public AdornmentLayerDefinition editorAdornmentLayer = null;
 
         public void TextViewCreated(IWpfTextView textView) {
+            if (!Options.EnableExtension || !Options.EnableXamlAdorner) {
+                return;
+            }
             new ColorAdornment(textView);
         }
     }

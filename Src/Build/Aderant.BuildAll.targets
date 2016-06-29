@@ -473,29 +473,7 @@
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
-
-  
-  <!--
-    ==========================================================================================
-    Concatenates all files matching license attribution pattern (attribution.txt) 
-    into a common file for distribition and dumps it in the binaries directory.
-    ==========================================================================================
-  -->
-  <Target Name="CreateLicenseAttributionFile" AfterTargets="ZipProduct">
-
-    <PropertyGroup>
-      <!-- Candidate for the most ugly file name ever? -->
-      <OutputAttributionFileName>ThirdPartyOSSRightsAndRestrictions.txt</OutputAttributionFileName>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <InFiles Include="$(SolutionRoot)\ThirdParty\**\attribution.txt"/>
-    </ItemGroup>
-
-    <Exec Command="echo y| echo All or some of the following third party open source software may be used in some of the components > $(LocalExpertBinariesDirectory)\$(OutputAttributionFileName)" />
-    <Exec Command="echo y| type %(InFiles.Identity) >> $(LocalExpertBinariesDirectory)\ExpertSource\$(OutputAttributionFileName)"/>
-
-  </Target>
+ 
 
   <UsingTask
     TaskName="MergeParameters"

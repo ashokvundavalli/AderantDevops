@@ -141,9 +141,16 @@
 
     <MSBuild
       Projects="@(Projects)"
-      Targets="Rebuild"
       BuildInParallel="true"
-      UnloadProjectsOnCompletion="true" />
+      UnloadProjectsOnCompletion="true"
+      Condition="'$(Rebuild)' != 'true'"/>
+
+    <MSBuild
+      Projects="@(Projects)"
+      BuildInParallel="true"
+      UnloadProjectsOnCompletion="true"
+      Targets="Rebuild"
+      Condition="'$(Rebuild)' == 'true'"/>
 
     <!-- Setup environment for JavaScript tests -->
     <Exec Command="reg import $(BuildScriptsDirectory)Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg" 

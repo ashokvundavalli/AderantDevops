@@ -53,6 +53,9 @@
   <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
   <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
   <ItemGroup>
+    <Reference Include="paket">
+      <HintPath>..\..\Build\paket.exe</HintPath>
+    </Reference>
     <Reference Include="PresentationCore">
       <Private>False</Private>
     </Reference>
@@ -102,6 +105,7 @@
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
+    <Compile Include="DependencyRetriever.cs" />
     <Compile Include="DependencySources.cs" />
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
@@ -131,7 +135,6 @@
     <Compile Include="Commands\XElementExtensions.cs" />
     <Compile Include="IntegrationTestConfigBuilder.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
-    <Compile Include="ManifestPathProcessor.cs" />
     <Compile Include="NativeUtilities.cs" />
     <Compile Include="ConsolePackageImporterExecutor.cs" />
     <Compile Include="Tasks\PublishBuild.cs" />
@@ -244,11 +247,6 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>IF "$(ConfigurationName)" == "Debug" (
-    IF EXIST "$(SolutionDir)Aderant.Build.lsb" (
-        del "$(SolutionDir)Aderant.Build.lsb"
-    )
-)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

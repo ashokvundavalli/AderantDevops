@@ -12,7 +12,7 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Tasks {
     public class CheckCertificate : Microsoft.Build.Utilities.Task {
         public override bool Execute() {
-            X509Store userStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            X509Store userStore = GetUserStore();
 
             try {
                 userStore.Open(OpenFlags.ReadWrite);
@@ -20,8 +20,17 @@ namespace Aderant.Build.Tasks {
                 X509Certificate2Collection collection = userStore.Certificates.Find(X509FindType.FindByThumbprint, ThumbPrint, true);
 
                 if (collection.Count == 0) {
-                    throw new InvalidOperationException(
-                        "Cannot locate code signing certificate in the user store. The certificate was expected to be deployed by Active Directory.\r\nPlease contact SCM and IT Helpdesk.");
+                    if (!CopyCertificateFromMachineStore(userStore)) {
+                        throw new InvalidOperationException(
+                            "Cannot locate code signing certificate in the user store. The certificate was expected to be deployed by Active Directory.\r\nPlease contact SCM and the IT help desk.");
+                    }
+
+                    userStore.Close();
+
+                    userStore = GetUserStore();
+
+                    // Refresh the store as it should be installed now.
+                    collection = userStore.Certificates.Find(X509FindType.FindByThumbprint, ThumbPrint, true);
                 }
 
                 Log.LogMessage("Code signing certificate installed.");
@@ -32,7 +41,7 @@ namespace Aderant.Build.Tasks {
                 var name = currentCertificate.Subject;
 
                 if (expirationDate < DateTime.Now) {
-                    throw new IdentityValidationException("Code signing certificate expired. Contact IT Helpdesk immediately.");
+                    throw new IdentityValidationException("Code signing certificate expired. Contact the IT help desk immediately.");
                 }
 
                 if ((expirationDate - DateTime.Now).TotalDays <= 30) {
@@ -53,6 +62,31 @@ namespace Aderant.Build.Tasks {
             }
 
             return !Log.HasLoggedErrors;
+        }
+
+        private X509Store GetUserStore() {
+            X509Store userStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            userStore.Open(OpenFlags.ReadWrite);
+
+            return userStore;
+        }
+
+        private bool CopyCertificateFromMachineStore(X509Store userStore) {
+            X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+          
+            store.Open(OpenFlags.ReadOnly);
+
+            var certificates = store.Certificates.Find(X509FindType.FindByThumbprint, ThumbPrint, true);
+            if (certificates.Count > 0) {
+                userStore.Add(certificates[0]);
+                userStore.Close();
+
+                return true;
+            }
+
+            store.Close();
+
+            return false;
         }
 
         private void LogCertificateStatusMessage(string message, bool error) {

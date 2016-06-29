@@ -104,7 +104,7 @@ namespace Aderant.Build.Tasks {
                 System.Threading.Tasks.Task.Run(async () => {
                     // Create a cancellation token so we can abort the async task
                     cancellationToken = new CancellationTokenSource();
-                    await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, BuildAll ? DependencyFetchMode.ThirdParty : DependencyFetchMode.Default, BuildScriptsDirectory, cancellationToken);
+                    await resolver.Resolve(moduleDependenciesDirectory, DependencyFetchMode.Default, BuildScriptsDirectory, cancellationToken.Token);
                 }).Wait(); // Wait is used here as to not change the signature of the Execute method
             } catch (Exception ex) {
                 Log.LogError("Failed to get all module dependencies.", null);

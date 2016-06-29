@@ -223,6 +223,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        internal RepositoryType RepositoryType { get; set; }
+
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
         /// </summary>
@@ -279,7 +281,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
 
             DirectoryOperations directoryOperations = FileSystem.Directory;
-            string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
+
+            if (!directoryOperations.Exists(dropLocation)) {
+                throw new BuildNotFoundException("No drop location for " + Name);
+            }
+
+           string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
             string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
             foreach (string build in orderedBuilds) {
@@ -342,9 +349,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal static bool CheckLog(string logfile) {
-            //ReverseLineReader lineReader = new ReverseLineReader(logfile);
-
-            // temp fix until I have this working with UCS-2 Little Endian files
+            // UCS-2 Little Endian files sometimes get created which makes it difficult
+            // to produce an efficient solution for reading a text file backwards
             IEnumerable<string> lineReader = File.ReadAllLines(logfile).Reverse().Take(10);
 
             int i = 0;

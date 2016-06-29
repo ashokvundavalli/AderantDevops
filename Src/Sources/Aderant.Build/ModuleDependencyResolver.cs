@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
-using Aderant.Build.Providers;
 
 namespace Aderant.Build {
     internal sealed class ModuleDependencyResolver {
@@ -49,6 +46,10 @@ namespace Aderant.Build {
         /// </value>
         public string ModuleName { get; set; }
 
+        public bool Update { get; set; }
+        public bool Force { get; set; }
+        public bool Outdated { get; set; }
+
         private void OnModuleDependencyResolved(DependencyResolvedEventArgs e) {
             EventHandler<DependencyResolvedEventArgs> handler = ModuleDependencyResolved;
             if (handler != null) {
@@ -81,7 +82,12 @@ namespace Aderant.Build {
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
-        public async Task CopyDependenciesFromDrop(string dependenciesDirectory, DependencyFetchMode mode, string buildScriptsDirectory, CancellationTokenSource cancellationToken = null) {
+        public async Task Resolve(string dependenciesDirectory, DependencyFetchMode mode, string buildScriptsDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
+
+            if (!Directory.Exists(dependenciesDirectory)) {
+                Directory.CreateDirectory(dependenciesDirectory);
+            }
+
             IEnumerable<ExpertModule> referencedModules = expertManifest.DependencyManifests
                 .SelectMany(s => s.ReferencedModules)
                 .Distinct();
@@ -92,103 +98,115 @@ namespace Aderant.Build {
                 referencedModules = GetReferencedModulesForBuild(mode, referencedModules);
             }
 
-            // create on-the-fly paket.dependencies file
-            var hasThirdPartyModules = referencedModules.Any(m => m.Name.StartsWith("THIRDPARTY", StringComparison.OrdinalIgnoreCase));
-            var dependenciesContentBuilder = new StringBuilder(@"source http://packages.ap.aderant.com/packages/nuget
+            referencedModules = PostProcess(referencedModules);
 
-");
+            string moduleDirectory = Path.GetFullPath(Path.Combine(dependenciesDirectory, @"..\"));
 
-            foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
-                // Check if we have been issued CTRL + C from the command line, if so abort.
-                if (cancellationToken != null && cancellationToken.IsCancellationRequested) {
+            var fileSystem = new PhysicalFileSystem(moduleDirectory);
+
+            await PackageRestore(mode, fileSystem, referencedModules);
+
+            if (Outdated) {
+                // Return early if we are showing outdated packages as we don't want to "gd" over the dependencies
+                return;
+            }
+
+            await LegacyGetDependencies(dependenciesDirectory, mode, cancellationToken, referencedModules.Where(m => m.RepositoryType == RepositoryType.Folder));
+        }
+
+        private async Task PackageRestore(DependencyFetchMode mode, PhysicalFileSystem fileSystem2, IEnumerable<ExpertModule> referencedModules) {
+            using (var retriever = new DependencyRetriever(fileSystem2, logger)) {
+                retriever.Add(referencedModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
+
+                if (Outdated) {
+                    await retriever.ShowOutdated();
                     return;
                 }
 
+                if (Update) {
+                    logger.Info("Updating packages.");
+                    await retriever.Update(Force);
+                }
+
+                logger.Info("Restoring packages.");
+                await retriever.Restore();
+            }
+
+            logger.Info("Performing legacy restore.");
+            await RestorePackages(fileSystem2, mode, referencedModules);
+        }
+
+        private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> referencedModules) {
+            var packagedModules = new string[] { "Aderant.Build.Analyzer" }; // TODO: Enable this as we switch modules over
+
+            foreach (var module in referencedModules) {
+                if (module.ModuleType == ModuleType.ThirdParty) {
+                    module.RepositoryType = RepositoryType.NuGet;
+                    continue;
+                }
+
+                foreach (var name in packagedModules) {
+                    if (string.Equals(module.Name, name, StringComparison.OrdinalIgnoreCase)) {
+                        module.RepositoryType = RepositoryType.NuGet;
+                    }
+                }
+            }
+
+            return referencedModules;
+        }
+
+        private async Task LegacyGetDependencies(string dependenciesDirectory, DependencyFetchMode mode, CancellationToken cancellationToken, IEnumerable<ExpertModule> referencedModules) {
+            foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
+                // Check if we have been issued CTRL + C from the command line, if so abort.
+                if (cancellationToken != null) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
                 string latestBuild = null;
-                bool useHardLinks = false;
-
-                latestBuild = expertManifest.GetPathToBinaries(referencedModule, DependencySources.DropLocation);
-
+                try {
+                    latestBuild = expertManifest.GetPathToBinaries(referencedModule, DependencySources.DropLocation);
+                } catch (BuildNotFoundException) {
+                    string localModuleDirectory = Path.Combine(dependenciesDirectory, @"..\..\" + referencedModule, "bin", "module");
+                    localModuleDirectory = Path.GetFullPath(localModuleDirectory);
+                    latestBuild = localModuleDirectory;
+                }
                 if (Directory.Exists(latestBuild)) {
-
-                    // add third party modules to the temporary paket.dependencies file
-                    if (referencedModule.Name.StartsWith("THIRDPARTY", StringComparison.OrdinalIgnoreCase)) {
-                        dependenciesContentBuilder.AppendLine(string.Concat("nuget ", referencedModule.Name.Replace("Thirdparty", "ThirdParty")));
-                    }
-                    else {
-                        await CopyContentsAsync(dependenciesDirectory, referencedModule, latestBuild, useHardLinks, mode);
-
-                        OnModuleDependencyResolved(new DependencyResolvedEventArgs {
-                            DependencyProvider = referencedModule.Name,
-                            Branch = PathHelper.GetBranch(latestBuild, false),
-                            ResolvedUsingHardlink = useHardLinks,
-                            FullPath = latestBuild,
-                        });
-                    }
+                    await CopyContentsAsync(dependenciesDirectory, referencedModule, latestBuild, false, mode);
                 }
-            }
 
-            // handle third party dependencies
-            if (hasThirdPartyModules) {
-                logger.Info("Retrieving third party modules from nuget server");
-
-                var paketDependenciesFile = Path.Combine(dependenciesDirectory, "paket.dependencies");
-                FileSystem.Default.File.WriteAllText(paketDependenciesFile, dependenciesContentBuilder.ToString());
-
-                // get nuget packages from the server
-                var arguments = @"install";
-                var processStartInfo = new ProcessStartInfo(Path.Combine(buildScriptsDirectory, "paket.exe"), arguments) {
-                    UseShellExecute = false,
-                    WorkingDirectory = dependenciesDirectory,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
-                var process = new System.Diagnostics.Process {
-                    StartInfo = processStartInfo,
-                    EnableRaisingEvents = true
-                };
-                process.OutputDataReceived += Process_OutputDataReceived;
-                process.ErrorDataReceived += Process_ErrorDataReceived;
-                process.Start();
-
-                process.BeginErrorReadLine();
-                process.BeginOutputReadLine();
-
-                process.WaitForExit();
-
-                string moduleName = ModuleName ?? string.Empty;
-
-                // copy third party binaries from packages to Dependencies for now
-                foreach (var thirdPartyModuleFolder in Directory.EnumerateDirectories(Path.Combine(dependenciesDirectory, "packages"))) {
-
-                    var referencedModuleName = thirdPartyModuleFolder.Split('\\').Last();
-                    var referencedModule = referencedModules.Single(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
-
-                    if (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty) {
-                        // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
-                        // used depending on the content type.
-
-                        var selector = new WebContentDestinationRule(referencedModule, dependenciesDirectory);
-                        await FileSystem.DirectoryCopyAsync(Path.Combine(thirdPartyModuleFolder, "bin"), dependenciesDirectory, selector.GetDestinationForFile, recursive: true, useHardLinks: false);
-                    } else {
-                        await FileSystem.DirectoryCopyAsync(Path.Combine(thirdPartyModuleFolder, "bin"), dependenciesDirectory, GetDependencyCopyHelper.DestinationSelector, recursive: true, useHardLinks: false);
-                    }
-
-                    referencedModule.Deploy(dependenciesDirectory);
-                }
+                OnModuleDependencyResolved(new DependencyResolvedEventArgs {
+                    DependencyProvider = referencedModule.Name,
+                    Branch = Aderant.Build.Providers.PathHelper.GetBranch(latestBuild, false),
+                    ResolvedUsingHardlink = false,
+                    FullPath = latestBuild,
+                });
             }
         }
 
-        private void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e) {
-            if (e.Data != null) {
-                logger.Error(e.Data);
-            }
-        }
+        private async Task RestorePackages(IFileSystem2 fileSystem, DependencyFetchMode mode, IEnumerable<ExpertModule> referencedModules) {
+            string moduleName = ModuleName ?? string.Empty;
 
-        private void Process_OutputDataReceived(object sender, DataReceivedEventArgs e) {
-            if (e.Data != null) {
-                logger.Info(e.Data);
+            string dependenciesDirectory = Path.Combine(fileSystem.Root, "Dependencies");
+            string packagesDirectory = Path.Combine(fileSystem.Root, "packages");
+
+            foreach (var package in Directory.EnumerateDirectories(packagesDirectory)) {
+                logger.Info("Performing legacy restore on " + package);
+
+                string binariesDirectory = Path.Combine(package, "lib");
+                var referencedModuleName = package.Split('\\').Last();
+                var referencedModule = referencedModules.Single(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
+
+                if (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty) {
+                    // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
+                    // used depending on the content type.
+
+                    var selector = new WebContentDestinationRule(referencedModule, dependenciesDirectory);
+                    await FileSystem.DirectoryCopyAsync(binariesDirectory, dependenciesDirectory, selector.GetDestinationForFile, recursive: true, useHardLinks: false);
+                } else {
+                    await FileSystem.DirectoryCopyAsync(binariesDirectory, dependenciesDirectory, GetDependencyCopyHelper.DestinationSelector, recursive: true, useHardLinks: false);
+                }
+
+                referencedModule.Deploy(dependenciesDirectory);
             }
         }
 
@@ -273,7 +291,7 @@ namespace Aderant.Build {
         }
 
         private class WebContentDestinationRule {
-            private static readonly char[] directorySeparatorCharArray = new[] { Path.DirectorySeparatorChar };
+            private static readonly char[] directorySeparatorCharArray = new[] {Path.DirectorySeparatorChar};
             private readonly ExpertModule module;
             private readonly string moduleDependenciesDirectory;
 
@@ -323,11 +341,11 @@ namespace Aderant.Build {
         }
 
         private static class GetDependencyCopyHelper {
-            private static string[] portableExecutableExtensions = { ".dll", ".exe" };
+            private static string[] portableExecutableExtensions = {".dll", ".exe"};
 
             private static string[] extensions = {
                 // Exclude documentation files
-                ".chm", 
+                ".chm",
 
                 // Exclude license attribution text files
                 "license.txt",
@@ -400,5 +418,10 @@ namespace Aderant.Build {
                 return false;
             }
         }
+    }
+
+    internal enum RepositoryType {
+        Folder,
+        NuGet
     }
 }

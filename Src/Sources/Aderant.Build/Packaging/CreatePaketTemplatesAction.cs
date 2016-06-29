@@ -101,10 +101,23 @@ authors Aderant
 description
     {2}
 files
-    bin ==> bin", moduleName, semVer, string.Concat(moduleName, " package")));
+", moduleName, semVer, string.Concat(moduleName, " package")));
+
+                    var attributionFile = Path.Combine(moduleFolder, "attribution.txt");
+                    var licenseFile = Path.Combine(moduleFolder, "license.txt");
+                    if (File.Exists(attributionFile)) {
+                        if (File.Exists(licenseFile)) {
+                            File.SetAttributes(licenseFile, FileAttributes.Normal);
+                            File.Delete("license.txt");
+                        }
+                        File.Copy(attributionFile, licenseFile, true);
+                        templateContentBuilder.AppendLine("    license.txt ==> .");
+                    }
+
+                    templateContentBuilder.AppendLine("    bin ==> lib");
+
                     File.WriteAllText(paketTemplateFile, templateContentBuilder.ToString());
-
-
+                    
                     // create nuspec file
                     var arguments = string.Format(@"pack output {0} templatefile {1} version {2}", moduleFolder, paketTemplateFile, semVer);
                     var processFilePath = Path.Combine(buildScriptsDirectory, "paket.exe");

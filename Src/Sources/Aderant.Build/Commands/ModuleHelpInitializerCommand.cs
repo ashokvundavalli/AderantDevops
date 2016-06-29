@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Management.Automation;
 using System.Reflection;
@@ -7,6 +8,7 @@ using Lapointe.PowerShell.MamlGenerator;
 namespace Aderant.Build.Commands {
 
     [Cmdlet(VerbsData.Initialize, "AderantModuleHelp")]
+    [Browsable(false)]
     public sealed class ModuleHelpInitializerCommand : PSCmdlet {
 
         [Parameter(HelpMessage = "Forces help generation to run.")]
@@ -30,8 +32,7 @@ namespace Aderant.Build.Commands {
             if (targetFile.Exists) {
                 if (targetFile.LastWriteTimeUtc.Date <= DateTime.UtcNow.AddDays(-1)) {
                     GenerateHelp(psHome, targetFile);
-                }
-                else {
+                } else {
                     WriteDebug("Help is less than a day old. Not regenerating");
                     return;
                 }

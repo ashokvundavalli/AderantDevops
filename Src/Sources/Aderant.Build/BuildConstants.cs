@@ -13,10 +13,9 @@ namespace Aderant.Build {
         public static string BranchNameVariable = "$(BranchName)";
 
         public static string NugetServerApiKey = "abc";
+        
+        public static string NugetServerUrl = "http://packages.ap.aderant.com/packages/nuget";
 
-        //public static string NugetServerUrl = "http://localhost:32789";
-        public static string NugetServerUrl = "http://packages.ap.aderant.com/packages";
-
-        public static string NugetServerClearCacheUrl = NugetServerUrl + "/nuget/ClearCache()";
+        public static string NugetServerClearCacheUrl = NugetServerUrl + "/ClearCache()";
     }
 }

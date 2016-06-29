@@ -70,13 +70,6 @@
     </GetAssemblyIdentity>
     <CopyRuntimeDependencies OutputPath="$(OutputPath)" ProjectsWithRuntimeLibs="System.AppContext;System.Diagnostics.FileVersionInfo;System.Diagnostics.StackTrace;System.Dynamic.Runtime;System.Linq.Expressions;System.Reflection.TypeExtensions;System.Security.Cryptography.Algorithms;System.Security.Cryptography.Cng;System.Security.Cryptography.Csp;System.Security.Cryptography.Encoding;System.Security.Cryptography.OpenSsl;System.Security.Cryptography.X509Certificates;System.Text.Encoding.CodePages;System.Threading" />
   </Target>
-  <PropertyGroup>
-    <PostBuildEvent>IF "$(ConfigurationName)" == "Debug" (
-    IF EXIST "$(SolutionDir)Aderant.Build.Analyzer.lsb" (
-        del "$(SolutionDir)Aderant.Build.Analyzer.lsb"
-    )
-)</PostBuildEvent>
-  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

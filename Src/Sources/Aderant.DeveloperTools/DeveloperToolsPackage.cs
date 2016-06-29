@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Aderant.DeveloperTools.Shared;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
@@ -39,6 +40,8 @@ namespace Aderant.DeveloperTools {
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     [Guid(GuidList.guidVSPackage2PkgString)]
     [ProvideAutoLoad(UIContextGuids.NoSolution)]
+    [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideOptionPage(typeof(OptionPageGrid), "Aderant Developer Tools", "Options", 0, 0, true)]
     public sealed class DeveloperToolsPackage : Package {
 
 
@@ -47,7 +50,8 @@ namespace Aderant.DeveloperTools {
 
         private DTE2 dtePropertyValue;
 
-        public DTE2 DTE {
+        public DTE2 DTE
+        {
             get { return dtePropertyValue ?? (dtePropertyValue = GetGlobalService(typeof(SDTE)) as DTE2); }
         }
 
@@ -79,6 +83,20 @@ namespace Aderant.DeveloperTools {
         /// </summary>
         protected override void Initialize() {
 
+            OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+            Options.EnableExtension = page.EnableExtension;
+
+            Options.EnableSolutionBadges = page.EnableSolutionBadges;
+            Options.ChangeWindowTitles = page.ChangeWindowTitles;
+            Options.ChangeSolutionExplorerTitles = page.ChangeSolutionExplorerTitles;
+
+            Options.EnableXamlAdorner = page.EnableXamlAdorner;
+            Options.EnableImagePreview = page.EnableImagePreview;
+
+            if (!Options.EnableExtension || (!Options.EnableSolutionBadges && !Options.ChangeWindowTitles && !Options.ChangeWindowTitles)) {
+                return;
+            }
+
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
@@ -92,15 +110,23 @@ namespace Aderant.DeveloperTools {
 
             // listen to any solution that gets opened
             solutionEvents.Opened += SolutionEvents_Opened;
-
-            timer.Elapsed += TimerOnElapsed;
-        }
-
-        private void TimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs) {
-            SetMainWindowTitle();
         }
 
         private void SolutionEvents_Opened() {
+
+            // detach from solution events
+            debuggerEvents.OnEnterBreakMode -= OnIdeEvent;
+            debuggerEvents.OnEnterRunMode -= OnIdeEvent;
+            debuggerEvents.OnEnterDesignMode -= OnIdeEvent;
+            debuggerEvents.OnContextChanged -= OnIdeEvent;
+            solutionEvents.AfterClosing -= OnIdeEvent;
+            solutionEvents.Opened -= OnIdeEvent;
+            solutionEvents.Renamed -= OnIdeEvent;
+            windowEvents.WindowCreated -= OnIdeEvent;
+            windowEvents.WindowClosing -= OnIdeEvent;
+            windowEvents.WindowActivated -= OnIdeEvent;
+            documentEvents.DocumentOpened -= OnIdeEvent;
+            documentEvents.DocumentClosing -= OnIdeEvent;
 
             currentCaptionSuffix = string.Empty;
 
@@ -110,29 +136,15 @@ namespace Aderant.DeveloperTools {
                 if (customThumbnail != null) {
                     customThumbnail.TabbedThumbnailActivated -= CustomThumbnailOnTabbedThumbnailActivated;
                     customThumbnail.Dispose();
-                    timer.Stop();
-
-                    debuggerEvents.OnEnterBreakMode -= OnIdeEvent;
-                    debuggerEvents.OnEnterRunMode -= OnIdeEvent;
-                    debuggerEvents.OnEnterDesignMode -= OnIdeEvent;
-                    debuggerEvents.OnContextChanged -= OnIdeEvent;
-                    solutionEvents.AfterClosing -= OnIdeEvent;
-                    solutionEvents.Opened -= OnIdeEvent;
-                    solutionEvents.Renamed -= OnIdeEvent;
-                    windowEvents.WindowCreated -= OnIdeEvent;
-                    windowEvents.WindowClosing -= OnIdeEvent;
-                    windowEvents.WindowActivated -= OnIdeEvent;
-                    documentEvents.DocumentOpened -= OnIdeEvent;
-                    documentEvents.DocumentClosing -= OnIdeEvent;
                 }
             }
+
 
             // if this seems to be an ExpertSuite solution, change the preview thumbnail
             var fileName = DTE.Solution.FileName;
             var folders = fileName.Split('\\').ToList();
             if (folders.IndexOf("Modules") >= 0) {
                 ChangePreviewThumbnail(fileName);
-
             } else {
                 customThumbnail = null;
                 SetMainWindowTitle(cleanOnly: true);
@@ -166,10 +178,12 @@ namespace Aderant.DeveloperTools {
 
                 // generate custom image for preview thumbnail
                 Bitmap bitmap = GenerateBitmap(fileName);
-                customThumbnail.SetImage(bitmap);
+                if (bitmap != null) {
+                    customThumbnail.SetImage(bitmap);
 
-                // show Expert icon in header next to title
-                customThumbnail.SetWindowIcon(Resources.ExpertIcon);
+                    // show Expert icon in header next to title
+                    customThumbnail.SetWindowIcon(Resources.ExpertIcon);
+                }
             } catch (Exception ex) {
                 MessageBox.Show(ex.ToString());
             }
@@ -199,127 +213,149 @@ namespace Aderant.DeveloperTools {
 
         private Bitmap GenerateBitmap(string fileName) {
 
-            // outer Grid with StackPanel
-            var mainGrid = new Grid {
-                Width = 195,
-                Height = 105,
-                Background = Brushes.White
-            };
-            var stackPanel = new StackPanel() {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                Margin = new Thickness(5, 0, 5, 0)
-            };
-            mainGrid.Children.Add(stackPanel);
-
-            // split up solution name and display every part in StackPanel
-            var solutionName = Path.GetFileNameWithoutExtension(fileName);
-            foreach (var solutionNamePart in solutionName.Split('.')) {
-                var textBlock = new TextBlock() {
-                    Text = solutionNamePart,
-                    FontSize = 20,
-                    FontWeight = FontWeights.SemiBold,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 0, 0, -5)
-                };
-                // shrink text to fit
-                var viewBox = new Viewbox {
-                    StretchDirection = StretchDirection.DownOnly,
-                    Stretch = Stretch.Uniform
-                };
-                viewBox.Child = textBlock;
-                stackPanel.Children.Add(viewBox);
-            }
-
-            // display branch information
+            // calculate branch and branch area
+            string branch = string.Empty;
+            string branchArea = string.Empty;
             var folders = fileName.Split('\\').ToList();
             var modulesIndex = folders.IndexOf("Modules");
             if (modulesIndex > 1) {
-                var innergrid = new Grid {
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    Margin = new Thickness(5, 2, 5, 2)
-                };
-
-                // branch name
-                var branchTextBlock = new TextBlock() {
-                    Text = folders[modulesIndex - 1],
-                    FontSize = 20,
-                    FontWeight = FontWeights.SemiBold,
-                    TextWrapping = TextWrapping.Wrap,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    VerticalAlignment = VerticalAlignment.Bottom,
-                    Foreground = Brushes.DodgerBlue,
-                };
-                if (branchTextBlock.Text.StartsWith("Framework")) {
-                    branchTextBlock.Foreground = Brushes.ForestGreen;
-                } 
-                else if (branchTextBlock.Text.StartsWith("Time")) {
-                    branchTextBlock.Foreground = Brushes.DarkOrchid;
-                } 
-                else if (branchTextBlock.Text.StartsWith("Case")) {
-                    branchTextBlock.Foreground = Brushes.DarkRed;
-                } 
-                else if (branchTextBlock.Text.StartsWith("Billing")) {
-                    branchTextBlock.Foreground = Brushes.Goldenrod;
-                }
-                else if (branchTextBlock.Text == "Main") {
-                    branchTextBlock.Foreground = Brushes.OrangeRed;
-                    branchTextBlock.Text = "MAIN";
-                    branchTextBlock.FontSize = 24;
-                }
-
-                // parent folder of branch
-                var branchAreaTextBlock = new TextBlock() {
-                    Text = folders[modulesIndex - 2],
-                    FontSize = 22,
-                    FontWeight = FontWeights.SemiBold,
-                    TextWrapping = TextWrapping.Wrap,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Bottom,
-                    Foreground = Brushes.DarkGray,
-                };
-
-                string branchDisplayName = string.Concat(branchAreaTextBlock.Text.ToUpperInvariant(), " · ", branchTextBlock.Text.ToUpperInvariant());
-
-                // Main branch has no parent folder
-                if (branchAreaTextBlock.Text.Equals("ExpertSuite", StringComparison.InvariantCultureIgnoreCase)) {
-                    branchAreaTextBlock.Text = string.Empty;
-                    branchTextBlock.HorizontalAlignment = HorizontalAlignment.Center;
-                    branchDisplayName = branchTextBlock.Text.ToUpperInvariant();
-                }
-
-                currentCaptionSuffix = string.Concat(dot, branchDisplayName);
-                SetMainWindowTitle();
-                DTE.ToolWindows.SolutionExplorer.Parent.Caption = string.Concat("Solution Explorer", dot, branchDisplayName);
-                //timer.Start();
-
-                debuggerEvents.OnEnterBreakMode += OnIdeEvent;
-                debuggerEvents.OnEnterRunMode += OnIdeEvent;
-                debuggerEvents.OnEnterDesignMode += OnIdeEvent;
-                debuggerEvents.OnContextChanged += OnIdeEvent;
-                solutionEvents.AfterClosing += OnIdeEvent;
-                solutionEvents.Opened += OnIdeEvent;
-                solutionEvents.Renamed += OnIdeEvent;
-                windowEvents.WindowCreated += OnIdeEvent;
-                windowEvents.WindowClosing += OnIdeEvent;
-                windowEvents.WindowActivated += OnIdeEvent;
-                documentEvents.DocumentOpened += OnIdeEvent;
-                documentEvents.DocumentClosing += OnIdeEvent;
-
-                innergrid.Children.Add(branchTextBlock);
-                innergrid.Children.Add(branchAreaTextBlock);
-                mainGrid.Children.Add(innergrid);
+                branch = folders[modulesIndex - 1];
+                branchArea = folders[modulesIndex - 2];
             }
 
-            // measure and arrange before converting into image
-            mainGrid.Measure(new System.Windows.Size(195, 105));
-            mainGrid.Arrange(new Rect(new System.Windows.Size(195, 105)));
-            mainGrid.UpdateLayout();
+            if (branch == "Main") {
+                branch = "MAIN";
+            }
 
-            // convert visual into bitmap
-            RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap(195, 105, 96, 96, PixelFormats.Default);
-            renderTargetBitmap.Render(mainGrid);
-            BitmapSource bitmapSource = renderTargetBitmap;
-            Bitmap bitmap = ConvertToBitmap(bitmapSource);
+            string branchDisplayName = string.Concat(branchArea.ToUpperInvariant(), " · ", branch.ToUpperInvariant());
+
+            if (branchArea.Equals("ExpertSuite", StringComparison.InvariantCultureIgnoreCase)) {
+                branchArea = string.Empty;
+                branchDisplayName = branch.ToUpperInvariant();
+            }
+
+            currentCaptionSuffix = string.Concat(dot, branchDisplayName);
+
+
+            OnIdeEvent();
+
+
+            Bitmap bitmap = null;
+            if (Options.EnableSolutionBadges) {
+
+                // outer Grid with StackPanel
+                var mainGrid = new Grid {
+                    Width = 195,
+                    Height = 105,
+                    Background = Brushes.White
+                };
+                var stackPanel = new StackPanel() {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Margin = new Thickness(5, 0, 5, 0)
+                };
+                mainGrid.Children.Add(stackPanel);
+
+                // split up solution name and display every part in StackPanel
+                var solutionName = Path.GetFileNameWithoutExtension(fileName);
+                foreach (var solutionNamePart in solutionName.Split('.')) {
+                    var textBlock = new TextBlock() {
+                        Text = solutionNamePart,
+                        FontSize = 20,
+                        FontWeight = FontWeights.SemiBold,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Margin = new Thickness(0, 0, 0, -5)
+                    };
+                    // shrink text to fit
+                    var viewBox = new Viewbox {
+                        StretchDirection = StretchDirection.DownOnly,
+                        Stretch = Stretch.Uniform
+                    };
+                    viewBox.Child = textBlock;
+                    stackPanel.Children.Add(viewBox);
+                }
+
+                // display branch information
+                if (modulesIndex > 1) {
+                    var innergrid = new Grid {
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        Margin = new Thickness(5, 2, 5, 2)
+                    };
+
+                    // branch name
+                    var branchTextBlock = new TextBlock() {
+                        Text = branch,
+                        FontSize = 20,
+                        FontWeight = FontWeights.SemiBold,
+                        TextWrapping = TextWrapping.Wrap,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        VerticalAlignment = VerticalAlignment.Bottom,
+                        Foreground = Brushes.DodgerBlue,
+                    };
+                    if (branch.StartsWith("Framework")) {
+                        branchTextBlock.Foreground = Brushes.ForestGreen;
+                    }
+                    else if (branch.StartsWith("Time")) {
+                        branchTextBlock.Foreground = Brushes.DarkOrchid;
+                    }
+                    else if (branch.StartsWith("Case")) {
+                        branchTextBlock.Foreground = Brushes.DarkRed;
+                    }
+                    else if (branch.StartsWith("Billing")) {
+                        branchTextBlock.Foreground = Brushes.Goldenrod;
+                    }
+                    else if (branch == "MAIN") {
+                        branchTextBlock.Foreground = Brushes.OrangeRed;
+                        branchTextBlock.FontSize = 24;
+                    }
+
+                    // parent folder of branch
+                    var branchAreaTextBlock = new TextBlock() {
+                        Text = branchArea,
+                        FontSize = 22,
+                        FontWeight = FontWeights.SemiBold,
+                        TextWrapping = TextWrapping.Wrap,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Bottom,
+                        Foreground = Brushes.DarkGray,
+                    };
+
+                    // Main branch has no parent folder
+                    if (branchArea == string.Empty) {
+                        branchTextBlock.HorizontalAlignment = HorizontalAlignment.Center;
+                    }
+
+                    innergrid.Children.Add(branchTextBlock);
+                    innergrid.Children.Add(branchAreaTextBlock);
+                    mainGrid.Children.Add(innergrid);
+                }
+
+                // measure and arrange before converting into image
+                mainGrid.Measure(new System.Windows.Size(195, 105));
+                mainGrid.Arrange(new Rect(new System.Windows.Size(195, 105)));
+                mainGrid.UpdateLayout();
+
+                // convert visual into bitmap
+                RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap(195, 105, 96, 96, PixelFormats.Default);
+                renderTargetBitmap.Render(mainGrid);
+                BitmapSource bitmapSource = renderTargetBitmap;
+                bitmap = ConvertToBitmap(bitmapSource);
+
+            }
+
+            // attach to solution events
+            debuggerEvents.OnEnterBreakMode += OnIdeEvent;
+            debuggerEvents.OnEnterRunMode += OnIdeEvent;
+            debuggerEvents.OnEnterDesignMode += OnIdeEvent;
+            debuggerEvents.OnContextChanged += OnIdeEvent;
+            solutionEvents.AfterClosing += OnIdeEvent;
+            solutionEvents.Opened += OnIdeEvent;
+            solutionEvents.Renamed += OnIdeEvent;
+            windowEvents.WindowCreated += OnIdeEvent;
+            windowEvents.WindowClosing += OnIdeEvent;
+            windowEvents.WindowActivated += OnIdeEvent;
+            documentEvents.DocumentOpened += OnIdeEvent;
+            documentEvents.DocumentClosing += OnIdeEvent;
+
 
             return bitmap;
         }
@@ -353,14 +389,18 @@ namespace Aderant.DeveloperTools {
         }
 
         private void OnIdeEvent() {
-            SetMainWindowTitle();
+            SetMainWindowTitle(!Options.ChangeWindowTitles);
+            if (Options.ChangeSolutionExplorerTitles) {
+                DTE.ToolWindows.SolutionExplorer.Parent.Caption = string.Concat("Solution Explorer", currentCaptionSuffix);
+            }
         }
 
         private const string dash = " - ";
         private const string dot = " ● ";
 
-        private void SetMainWindowTitle(bool cleanOnly = false){
-            try { 
+        private void SetMainWindowTitle(bool cleanOnly = false) {
+
+            try {
                 var cleanedCurrentCaption = CleanCaption();
 
                 if (cleanOnly) {
@@ -373,7 +413,7 @@ namespace Aderant.DeveloperTools {
                         Application.Current.MainWindow.Title = string.Concat(cleanedCurrentCaption, currentCaptionSuffix);
                     }
                 }
-            } catch { 
+            } catch {
                 //ignore errors in title changing - we don't want to break anybody!
             }
         }
@@ -393,7 +433,7 @@ namespace Aderant.DeveloperTools {
             firstDashIndex = currentCaption.IndexOf(dash);
             firstDotIndex = currentCaption.IndexOf(dot);
             var firstDashOrDotIndex = firstDashIndex;
-            if (firstDotIndex>= 0) {
+            if (firstDotIndex >= 0) {
                 firstDashOrDotIndex = Math.Min(firstDashIndex, firstDotIndex);
             }
             if (firstDashOrDotIndex >= 0 && !string.IsNullOrEmpty(DTE.Solution.FileName)) {
@@ -401,14 +441,6 @@ namespace Aderant.DeveloperTools {
                 cleanedCurrentCaption = string.Concat(solutionName, cleanedCurrentCaption.Substring(firstDashOrDotIndex));
             }
             return cleanedCurrentCaption;
-        }
-
-        public string ReplaceFirst(string text, string search, string replace) {
-            int pos = text.IndexOf(search);
-            if (pos < 0) {
-                return text;
-            }
-            return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
         }
 
         private Bitmap ConvertToBitmap(BitmapSource bitmapSource) {
