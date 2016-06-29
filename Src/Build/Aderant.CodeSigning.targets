@@ -3,7 +3,7 @@
          DefaultTargets="SignApplications">
 
   <PropertyGroup>
-    <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == '' And '$(IsDesktopBuild)' != 'true'">true</CodeSigningEnabled>
+    <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
     <CertificateHash>9AB8870EE441103F76009BE6141265D0D9B6197C</CertificateHash>
     <TimestampUrl>&quot;http://timestamp.digicert.com&quot;</TimestampUrl>
     

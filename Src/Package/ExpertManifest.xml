@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ProductManifest Name="Expert" ExpertVersion="802">
     <Modules>
+        <Module Name="Administration.HubSetup" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.CCLogViewer" AssemblyVersion="1.8.0.0" />
@@ -43,11 +44,13 @@
         <Module Name="Libraries.Entities.Employee" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Firm" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.Guideline" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Marketing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Matter" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Parameters" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Rates" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.TaskBasedBilling" AssemblyVersion="1.8.0.0" />
+        <Module Name="Libraries.Entities.Tax" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Entities.Trust" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Exchange" AssemblyVersion="1.8.0.0" />
@@ -68,6 +71,8 @@
         <Module Name="Libraries.Time.Connectors" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
         <Module Name="Marketing.Help" GetAction="branch" Path="Main" />
+        <Module Name="Mobile.Foundation" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
+        <Module Name="Mobile.Time" AssemblyVersion="1.8.0.0" ExcludeFromPackaging="true" />
         <Module Name="Packages" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK" AssemblyVersion="1.8.0.0" />
         <Module Name="SDK.Database" AssemblyVersion="1.8.0.0" />
@@ -127,9 +132,9 @@
         <Module Name="ThirdParty.iManage" />
         <Module Name="ThirdParty.Infragistics" />
         <Module Name="ThirdParty.InterAction" ExcludeFromPackaging="true" />
-        <Module Name="ThirdParty.IScroll" />
         <Module Name="ThirdParty.IronPython.2.7" />
         <Module Name="ThirdParty.Irony" />
+        <Module Name="ThirdParty.IScroll" />
         <Module Name="ThirdParty.JQuery" />
         <Module Name="ThirdParty.JQueryUI" />
         <Module Name="ThirdParty.JsDiff" />
@@ -147,7 +152,7 @@
         <Module Name="ThirdParty.Microsoft.AspNet" />
         <Module Name="ThirdParty.Microsoft.Build" />
         <Module Name="ThirdParty.Microsoft.Data" />
-        <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />        
+        <Module Name="ThirdParty.Microsoft.Deployment.WindowsInstaller" />
         <Module Name="ThirdParty.Microsoft.EntityFramework" />
         <Module Name="ThirdParty.Microsoft.ExpressionBlendSdk" />
         <Module Name="ThirdParty.Microsoft.Linq.Dynamic" />
@@ -156,9 +161,9 @@
         <Module Name="ThirdParty.Microsoft.OData" />
         <Module Name="Thirdparty.Microsoft.Office.Interop" />
         <Module Name="ThirdParty.Microsoft.OpenXmlPowerTools" />
+        <Module Name="ThirdParty.Microsoft.TeamFoundation" />
         <Module Name="ThirdParty.Microsoft.UrlRewrite" />
         <Module Name="ThirdParty.Microsoft.WindowsServerAppFabric" />
-        <Module Name="ThirdParty.Microsoft.TeamFoundation" />
         <Module Name="ThirdParty.Mindscape" />
         <Module Name="ThirdParty.Modernizr" />
         <Module Name="ThirdParty.MomentJs" />
@@ -178,9 +183,9 @@
         <Module Name="ThirdParty.QUnit" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.Reactive" />
         <Module Name="ThirdParty.ReactJS" />
+        <Module Name="ThirdParty.ReactJS" />
         <Module Name="ThirdParty.ReportViewer" />
         <Module Name="ThirdParty.RequireJS" />
-        <Module Name="ThirdParty.ReactJS" />
         <Module Name="ThirdParty.RhinoMocks" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.Selenium" />
         <Module Name="ThirdParty.SignalR" />
@@ -205,6 +210,8 @@
         <Module Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.HtmlEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.MatterWorks" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.OTG" AssemblyVersion="1.8.0.0" />
+        <Module Name="Web.PrebillEditor" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Presentation" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.SMB" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.SystemInformation" AssemblyVersion="1.8.0.0" />
@@ -212,7 +219,7 @@
         <Module Name="Web.Time" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.WipReview" AssemblyVersion="1.8.0.0" />
         <Module Name="Web.Workflow" AssemblyVersion="1.8.0.0" />
-        <Module Name="Workflow.Billing" AssemblyVersion="1.8.0.0" />      
+        <Module Name="Workflow.Billing" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Budgeting" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Workflow.Collections" AssemblyVersion="1.8.0.0" />

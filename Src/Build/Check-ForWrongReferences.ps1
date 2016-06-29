@@ -77,6 +77,7 @@ begin{
 								-and -not ($hintPath.StartsWith("<HintPath>..\..\Src\Build.Tools\", "CurrentCultureIgnoreCase")) `
 								-and -not ($hintPath.StartsWith("<HintPath>..\..\Build.Tools\", "CurrentCultureIgnoreCase")) `
 								-and -not ($hintPath.StartsWith("<HintPath>..\..\packages\", "CurrentCultureIgnoreCase")) `
+								-and -not ($hintPath.StartsWith("<HintPath>..\..\..\Web.", "CurrentCultureIgnoreCase")) `
                                 -and -not ($hintPath.StartsWith("<HintPath>..\..\..\..\ThirdParty\Thirdparty.Microsoft\bin", "CurrentCultureIgnoreCase") -and $module.Name -eq "Build.Infrastructure")) {
                                 if (-not ($ignoreEmptyHintPaths -and $hintPath -eq "<HintPath>")) {
                                     if (-not $areProjectReferencesSuspicious) {
