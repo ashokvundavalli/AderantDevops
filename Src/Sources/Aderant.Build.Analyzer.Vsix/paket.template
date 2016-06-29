@@ -1,8 +1,0 @@
-id Aderant.Build.Analyzer.Vsix
-type project
-Version 1.0.0
-Authors Aderant
-Description ""
-
-files
-    bin\Aderant.Build.Analyzer.vsix ==> lib
