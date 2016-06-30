@@ -85,6 +85,7 @@
     <Compile Include="DependencyBuilderTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="paket.references" />
     <None Include="Resources\App.config" />
     <None Include="Resources\bindings.config" />
     <None Include="Resources\clients.config" />

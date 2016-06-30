@@ -1,7 +1,9 @@
 source https://www.nuget.org/api/v2
 
-nuget Microsoft.CodeAnalysis.CSharp
-nuget Microsoft.CodeAnalysis.CSharp.Workspaces
+nuget Microsoft.CodeAnalysis.CSharp 1.2.2
+nuget Microsoft.CodeAnalysis.CSharp.Workspaces 1.2.2
 nuget WindowsAPICodePack-Core
 nuget Microsoft.WindowsAPICodePack-Shell
+nuget Microsoft.Composition 1.0.27
 nuget Moq
+nuget ILRepack
