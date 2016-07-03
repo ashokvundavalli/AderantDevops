@@ -40,7 +40,7 @@ namespace Aderant.Build.Analyzer {
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics {
             get {
                 var supportedDiagnostics = rules.Select(d => d.Descriptor);
-                return ImmutableArray.CreateRange(supportedDiagnostics); ;
+                return ImmutableArray.CreateRange(supportedDiagnostics);
             }
         }
 

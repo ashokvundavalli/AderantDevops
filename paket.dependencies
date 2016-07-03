@@ -1,9 +1,14 @@
 source https://www.nuget.org/api/v2
 
-nuget Microsoft.CodeAnalysis.CSharp 1.2.2
-nuget Microsoft.CodeAnalysis.CSharp.Workspaces 1.2.2
+# For compatibility with VS 2015 Update 2 and 3 we need
+# Microsoft.CodeAnalysis.CSharp 1.2.0.0
+# System.Collections.Immutable 1.1.37.0 (or less)
+# as there are binding redirects in devenv.exe.config which redirect to these versions.
+
+nuget Microsoft.CodeAnalysis.CSharp
+nuget Microsoft.CodeAnalysis.CSharp.Workspaces
 nuget WindowsAPICodePack-Core
 nuget Microsoft.WindowsAPICodePack-Shell
-nuget Microsoft.Composition 1.0.27
+nuget Microsoft.Composition
+nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
-nuget ILRepack
