@@ -60,6 +60,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        public bool HasDependencyManifests {
+            get { return dependencyManifests != null; }
+        }
+
         /// <summary>
         /// Gets the distinct complete list of available modules and those referenced in Dependency Manifests.
         /// </summary>
@@ -123,7 +127,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         public bool IsAvailable(string moduleName) {
             ModuleType moduleType = ExpertModule.GetModuleType(moduleName);
 
-            if (moduleType == ModuleType.ThirdParty) {
+            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
                 return fileSystem.Directory.Exists(Path.Combine(moduleDirectory, "ThirdParty", moduleName, "bin"));
             }
 

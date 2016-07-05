@@ -39,11 +39,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentNullException("element", "No name element specified");
             }
 
-            if (GetModuleType(name.Value) == ModuleType.ThirdParty) {
+            var moduleType = GetModuleType(name.Value);
+            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
                 return new ThirdPartyModule(element);
             }
 
-            if (GetModuleType(name.Value) == ModuleType.Web) {
+            if (moduleType == ModuleType.Web) {
                 return new WebModule(element);
             }
             return new ExpertModule(element);
@@ -150,7 +151,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Help builds to /bin just like a third party module
             if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.ThirdParty;
+                return ModuleType.Help;
             }
 
             if (name.StartsWith("BUILD", StringComparison.OrdinalIgnoreCase)) {

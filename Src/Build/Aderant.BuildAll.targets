@@ -56,33 +56,6 @@
       <ModulesInBuild Remove="@(ModulesInBuild)" Condition="'$(BuildFrom)' != ''" />
       <ModulesInBuild Include="@(FilteredModuleList)" Condition="'$(BuildFrom)' != ''" />
     </ItemGroup>
-    
-    <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
-    <Message Text="Getting dependencies for build." />
-    
-    <GetDependencies
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      WorkspaceOwner="$(WorkspaceOwner)"
-      WorkspaceName="$(WorkspaceName)"
-      ProductManifest="$(ProductManifestPath)"
-      ModulesRootPath="$(SolutionRoot)"
-      DropPath="$(DropLocation)"
-      BuildAll="true"
-      ModulesInBuild="@(ModulesInBuild)"
-      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
-
-    <ItemGroup>
-      <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
-                         Exclude="$(SolutionRoot)Dependencies;
-                                  $(SolutionRoot)ThirdParty;
-                                  $(SolutionRoot)Build.Infrastructure;
-                                  $(SolutionRoot)TestRun" />
-    </ItemGroup>
-
-    <MakeSymlink
-      Link="%(ModuleDirectories.FullPath)\Dependencies"
-      Target="$(SharedDependencyDirectory)"
-      Type="D" />
 
     <!-- 
         TFS: 122744
@@ -97,21 +70,6 @@
     </ItemGroup>
     
     <Delete Files="@(MessageFiles)" />
-  </Target>
-
-
-  <!-- Tranforms inputs to this target file into item groups -->
-  <Target Name="GetAllModuleDependenciesSetup" 
-          BeforeTargets="GetAllModuleDependencies">
-
-    <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
-
-    <Exec Command="PowerShell.exe -NoProfile -File &quot;CleanSymlinks.ps1&quot; $(SolutionRoot)" />
-
-    <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
-    <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" />
-    <RemoveDir Directories="$(SharedDependencyDirectory)" />
-    
   </Target>
 
   

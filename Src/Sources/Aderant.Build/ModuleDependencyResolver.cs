@@ -88,9 +88,14 @@ namespace Aderant.Build {
                 Directory.CreateDirectory(dependenciesDirectory);
             }
 
-            IEnumerable<ExpertModule> referencedModules = expertManifest.DependencyManifests
-                .SelectMany(s => s.ReferencedModules)
-                .Distinct();
+            IEnumerable<ExpertModule> referencedModules;
+            if (expertManifest.HasDependencyManifests) {
+                referencedModules = expertManifest.DependencyManifests
+                    .SelectMany(s => s.ReferencedModules)
+                    .Distinct();
+            } else {
+                referencedModules = Enumerable.Empty<ExpertModule>();
+            }
 
             // Remove the modules from the dependency tree that we are currently building. This is done as the dependencies don't need to
             // come from the drop but instead they will be produced by this build
@@ -117,6 +122,8 @@ namespace Aderant.Build {
         private async Task PackageRestore(DependencyFetchMode mode, PhysicalFileSystem fileSystem2, IEnumerable<ExpertModule> referencedModules) {
             using (var retriever = new DependencyRetriever(fileSystem2, logger)) {
                 retriever.Add(referencedModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
+
+                retriever.Hack();
 
                 if (Outdated) {
                     await retriever.ShowOutdated();
@@ -190,11 +197,16 @@ namespace Aderant.Build {
             string packagesDirectory = Path.Combine(fileSystem.Root, "packages");
 
             foreach (var package in Directory.EnumerateDirectories(packagesDirectory)) {
-                logger.Info("Performing legacy restore on " + package);
-
                 string binariesDirectory = Path.Combine(package, "lib");
                 var referencedModuleName = package.Split('\\').Last();
-                var referencedModule = referencedModules.Single(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
+                var referencedModule = referencedModules.FirstOrDefault(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
+
+                if (referencedModule == null) {
+                    logger.Warning("No package for: " + referencedModuleName);
+                    continue;
+                }
+
+                logger.Info("Performing legacy restore on " + package);
 
                 if (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty) {
                     // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is

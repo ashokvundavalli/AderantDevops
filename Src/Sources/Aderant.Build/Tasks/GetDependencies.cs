@@ -89,9 +89,6 @@ namespace Aderant.Build.Tasks {
             }
 
             var dependencyManifests = GetDependencyManifests();
-            if (dependencyManifests == null) {
-                return true;
-            }
 
             ExpertManifest expertManifest = ExpertManifest.Load(manifest, dependencyManifests);
 

@@ -32,7 +32,7 @@ namespace Aderant.Build.Providers {
                 branchPath = Path.Combine(branchPath, "Modules");
             }
 
-            if (expertModule.ModuleType == ModuleType.ThirdParty) {
+            if (expertModule.ModuleType == ModuleType.ThirdParty || expertModule.ModuleType == ModuleType.Help) {
                 return Path.Combine(branchPath, expertModule.Name, "Bin");
             }
             return Path.Combine(branchPath, expertModule.Name, "Bin", "Module");

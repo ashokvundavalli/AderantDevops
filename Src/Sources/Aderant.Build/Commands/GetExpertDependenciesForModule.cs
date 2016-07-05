@@ -58,12 +58,7 @@ namespace Aderant.Build.Commands {
             string manifest = Path.GetFullPath(Path.Combine(BuildScriptsDirectory, @"..\Package\ExpertManifest.xml"));
             if (File.Exists(manifest)) {
                 DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);
-
-                if (dependencyManifest.ReferencedModules.Count == 0) {
-                    WriteDebug("There are no referenced modules");
-                    return;
-                }
-
+                
                 ExpertManifest expertManifest = ExpertManifest.Load(manifest, new[] {dependencyManifest});
 
                 Stopwatch sw = new Stopwatch();

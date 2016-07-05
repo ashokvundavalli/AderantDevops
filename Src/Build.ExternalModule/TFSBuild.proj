@@ -43,7 +43,7 @@
         TaskParameter="id"
         PropertyName="BuildStepId"/>
     </BuildStep>
-	
+
     <ItemGroup>
       <Folders Include="$([System.IO.Directory]::GetDirectories(&quot;$(PathToModulesToCopy)&quot;))" Condition="'$(PathToModulesToCopy)' != ''" />
     </ItemGroup>
@@ -66,12 +66,18 @@
           IgnoreExitCode="true"
           Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD Test"  />
 		
+	<!-- Write BuildNumber to disk for use of gd -->
+	<WriteLinesToFile Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
+					  File="$(DropLocation)\ThirdPartyBuild.txt"
+					  Lines="$(BuildNumber)"
+					  Overwrite="true"/>
+		  
 	<!-- Do primary copy case (Help) -->
     <Exec Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
           ContinueOnError="false"
           IgnoreExitCode="true"
           Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD src" />
-		  
+
     <BuildStep
         Condition="('$(IsDesktopBuild)'!='true')"
         TeamFoundationServerUrl="$(TeamFoundationServerUrl)"

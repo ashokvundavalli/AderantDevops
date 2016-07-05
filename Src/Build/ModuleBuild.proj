@@ -280,6 +280,10 @@ doc.Save(File);
       <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
     </GetBuildProperties>
 
+    <RemoveDir Condition="'$(DropLocation)' != '' And  '$(IsDesktopBuild)' != 'true'"
+               Directories="$(DropLocation)\$(BuildNumber)"
+               ContinueOnError="true" />
+
     <PropertyGroup>
       <!-- 
           For a module build, append the name of the module.
@@ -439,7 +443,6 @@ doc.Save(File);
     <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
 
     <GetDependencies
-      Condition="'$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true'"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"

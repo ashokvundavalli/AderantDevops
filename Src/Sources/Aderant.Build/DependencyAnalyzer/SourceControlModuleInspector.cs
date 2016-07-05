@@ -35,7 +35,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return FileExistsInSourceControl(sccPath, ItemType.File);
             }
 
-            if (type == ModuleType.ThirdParty) {
+            if (type == ModuleType.ThirdParty || type == ModuleType.Help) {
                 sccPath = VersionControlPath.Combine("$/ExpertSuite", sourceBranch + "/Modules/ThirdParty/" + moduleName + "/bin");
                 return FileExistsInSourceControl(sccPath, ItemType.Folder);
             } 

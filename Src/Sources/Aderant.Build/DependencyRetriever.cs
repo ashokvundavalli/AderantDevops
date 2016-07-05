@@ -11,6 +11,8 @@ using Paket;
 
 namespace Aderant.Build {
     public class DependencyRetriever : IDisposable {
+        static string group = Constants.MainDependencyGroup.ToString();
+
         private readonly IFileSystem2 fileSystem;
         private IDisposable traceEventsSubscription;
         private Dependencies dependencies;
@@ -35,10 +37,6 @@ namespace Aderant.Build {
         public void Add(IEnumerable<ExpertModule> referencedModules) {
             var file = dependencies.GetDependenciesFile();
 
-            if (HasLockFile()) {
-                return;
-            }
-
             string[] lines = file.Lines;
             for (int i = 0; i < lines.Length; i++) {
                 string line = lines[i];
@@ -47,9 +45,10 @@ namespace Aderant.Build {
                     break;
                 }
 
-                if (line.IndexOf("source https://www.nuget.org/api/v2", StringComparison.OrdinalIgnoreCase) >= 0) {
+                if (line.IndexOf("source " + Constants.DefaultNuGetStream, StringComparison.OrdinalIgnoreCase) >= 0) {
                     lines[i] = "source " + BuildConstants.NugetServerUrl;
 
+                    fileSystem.MakeFileWritable(file.FileName);
                     file.Save();
                     break;
                 }
@@ -57,9 +56,9 @@ namespace Aderant.Build {
 
             foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
                 if (referencedModule.ModuleType == ModuleType.ThirdParty) {
-                    dependencies.Add(new FSharpOption<string>("Main"), referencedModule.Name, "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+                    dependencies.Add(new FSharpOption<string>(group), referencedModule.Name, "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
                 } else {
-                    dependencies.Add(new FSharpOption<string>("Main"), referencedModule.Name, ">= 8.1 Main", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+                    dependencies.Add(new FSharpOption<string>(group), referencedModule.Name, ">= 8.1 " + group, true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
                 }
             }
         }
@@ -71,7 +70,7 @@ namespace Aderant.Build {
         public async Task Restore() {
             await Task.Run(() => {
                 if (!HasLockFile()) {
-                    return;
+                    dependencies.Update(false);
                 }
 
                 dependencies.Restore();
@@ -108,12 +107,24 @@ namespace Aderant.Build {
                     logger.Info(trace.Text);
                 }
 
+                if (trace.Level == TraceLevel.Warning) {
+                    logger.Warning(trace.Text);
+                }
+
                 if (trace.Level == TraceLevel.Error) {
                     logger.Error(trace.Text);
                 }
 
                 return null;
             }
+        }
+
+        public void Hack() {
+            dependencies.Add(new FSharpOption<string>(group), "Aderant.Build.Analyzer", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+            DependenciesFile file = dependencies.GetDependenciesFile();
+
+            fileSystem.MakeFileWritable(file.FileName);
+            file.Save();
         }
     }
 }

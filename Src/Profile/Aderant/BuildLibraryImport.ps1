@@ -1,4 +1,4 @@
-﻿$DebugPreference = 'SilentlyContinue'
+﻿$DebugPreference = 'Continue'
 
 function GetSymbolicLinkTarget($path) {
 Add-Type -MemberDefinition @"
@@ -90,8 +90,7 @@ function UpdateOrBuildAssembly($properties) {
     $aderantBuildAssembly = [System.IO.Path]::Combine($properties.BuildToolsDirectory, "Aderant.Build.dll")	
 
 	$needToBuild = $false
-	$needToInstallVsix = $false
-
+	
     if (-not [System.IO.File]::Exists($aderantBuildAssembly)) {
         Write-Host "No Aderant.Build.dll found at $aderantBuildAssembly. Creating..."
 		$needToBuild = $true
@@ -103,8 +102,7 @@ function UpdateOrBuildAssembly($properties) {
 	}
 
     # Test if one of the files is older than a day
-    $aderantBuildFileInfo = Get-ChildItem $aderantBuildAssembly
-	
+    $aderantBuildFileInfo = Get-ChildItem $aderantBuildAssembly	
 
 	$outdatedAderantBuildFile = $false	
 	
@@ -127,11 +125,17 @@ function UpdateOrBuildAssembly($properties) {
 # We can't use $PSScriptRoot here until we move to Git and get rid of symlinks
 $actualPath = GetSymbolicLinkTarget (Split-Path -Parent $MyInvocation.MyCommand.Definition)   
 
-$shellProperties = New-Object -TypeName PSObject
-$shellProperties | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build")) }
-$shellProperties | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools")) }
-$shellProperties | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value { [System.IO.Path]::Combine($This.BuildScriptsDirectory, "paket.exe") }
+$ShellContext = New-Object -TypeName PSObject
+$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { 
+    [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build")) 
+}
+$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { 
+    [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools")) 
+}
+$ShellContext | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value { 
+    [System.IO.Path]::Combine($This.BuildScriptsDirectory, "paket.exe") 
+}
 
-Write-Debug $shellProperties
+Write-Debug $ShellContext
 
-UpdateOrBuildAssembly $shellProperties
+UpdateOrBuildAssembly $ShellContext
