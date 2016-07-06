@@ -13,8 +13,8 @@ function Write-Info {
     Write-Host "## $Message ##" -ForegroundColor Magenta
 }
 
-task Package Init, Clean, GetDependencies, Build, Test, {
-
+task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
+    
 }
 
 task GetDependencies {    
@@ -33,6 +33,10 @@ task Clean {
 }
 
 task Test {
+}
+
+task CopyToDrop {
+    "##vso[artifact.associate type=filepath;artifactname=drop]\\WSAKL001092\C$\MyDropLocation"
 }
 
 task Init {
