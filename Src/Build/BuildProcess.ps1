@@ -4,6 +4,9 @@ param(
     $Repository
 )
 
+$MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
+use -Path $MSBuildLocation -Name MSBuild
+
 function Write-Info {
     param ([string] $Message)
 
@@ -33,11 +36,7 @@ task Test {
 }
 
 task Init {
-    Write-Info 'Establishing build properties'
-
-    $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
-
-    use -Path $MSBuildLocation -Name MSBuild
+    Write-Info 'Establishing build properties'    
 
     . $Env:EXPERT_BUILD_FOLDER\Build\Build-Libraries.ps1
     CompileBuildLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\
