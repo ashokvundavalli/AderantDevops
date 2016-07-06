@@ -14,7 +14,7 @@ task Package Init, Clean, GetDependencies, Build, Test, {
 
 }
 
-task GetDependencies {
+task GetDependencies {    
     . $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath "\\na.aderant.com\ExpertSuite\Main"
 }
 
@@ -37,7 +37,10 @@ task Init {
 
     $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 
-    use -Path $MSBuildLocation -Name MSBuild    
+    use -Path $MSBuildLocation -Name MSBuild
+
+    . $Env:EXPERT_BUILD_FOLDER\Build\Build-Libraries.ps1
+    CompileBuildLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\
 }
 
 task Default Package
