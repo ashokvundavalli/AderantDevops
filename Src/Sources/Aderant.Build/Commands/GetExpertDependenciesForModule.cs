@@ -46,14 +46,14 @@ namespace Aderant.Build.Commands {
                 DropPath = ParameterHelper.GetDropPath(null, SessionState);
             }
 
+            string moduleDirectory = ModulesRootPath;
             // e.g Modules\Web.Expenses
-            string moduleDirectory = ParameterHelper.GetCurrentModulePath(ModuleName, SessionState);
+            if (string.IsNullOrEmpty(ModulesRootPath)) {
+                moduleDirectory = ParameterHelper.GetCurrentModulePath(ModuleName, SessionState);
+            }  
 
             // e.g Modules\Web.Expenses\Dependencies
             string moduleDependenciesDirectory = Path.Combine(moduleDirectory, "Dependencies");
-
-            string branchRoot;
-            ParameterHelper.TryGetBranchModulesDirectory(null, SessionState, out branchRoot);
 
             string manifest = Path.GetFullPath(Path.Combine(BuildScriptsDirectory, @"..\Package\ExpertManifest.xml"));
             if (File.Exists(manifest)) {
