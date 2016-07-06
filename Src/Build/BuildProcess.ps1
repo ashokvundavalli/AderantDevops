@@ -35,7 +35,7 @@ task Test {
 task Init {
     Write-Info 'Establishing build properties'
 
-    $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\$Env:VisualStudioVersion\Bin\"
+    $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 
     use -Path $MSBuildLocation -Name MSBuild    
 }
