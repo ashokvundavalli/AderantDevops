@@ -1,0 +1,1608 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="ModuleBuild"
+         ToolsVersion="14.0"
+         TreatAsLocalProperty="BuildRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
+
+  <!-- 
+    =========================================================================================================
+        Team Build Script        
+        
+        Guidelines:            
+            * Retain structure and formatting for easier merge between Team Build project scripts             
+    =========================================================================================================
+  -->
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets"
+          Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets')" />
+
+  <PropertyGroup>
+    <NewLine>%0A</NewLine>
+    <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
+    <RunTest Condition="'$(IsCustomBuild)' == 'true'">false</RunTest>
+
+    <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
+
+    <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
+    <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
+
+    <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
+    <StopOnFirstFailure>true</StopOnFirstFailure>
+
+    <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
+    <BuildStepModuleName>$(ModuleName):</BuildStepModuleName>
+
+    <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(BuildRoot)</SolutionDirectoryPath>
+    <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' != ''">$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
+    <SolutionDirectoryPath Condition="!HasTrailingSlash('$(SolutionDirectoryPath)')">$(SolutionDirectoryPath)\</SolutionDirectoryPath>
+
+    <!--Custom build for a module-->
+    <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(BuildRoot)</SolutionDirectoryPath>
+    <BuildScriptsDirectory Condition="('$(IsCustomBuild)' == 'true')">$(SolutionDirectoryPath)BuildScripts\</BuildScriptsDirectory>
+
+    <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
+    <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
+    <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
+    <ModuleSourceDirectory>$(SolutionDirectoryPath)Src\</ModuleSourceDirectory>
+    <ModuleTestDirectory>$(SolutionDirectoryPath)Test\</ModuleTestDirectory>
+    <ModuleBuildDirectory>$(SolutionDirectoryPath)Build\</ModuleBuildDirectory>
+    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
+
+    <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
+
+    <!--This looks weird but it stops the TeamBuild from calling PostBuild - we want to control when it runs-->
+    <SkipPostBuild>true</SkipPostBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Holds a list of files created during the build so they can be cleaned on failure -->
+    <_TemporaryBuildFiles Include="@(_TemporaryBuildFiles)" />
+  </ItemGroup>
+
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
+  <Import Project="RM.TransformTemplates.Targets" />
+  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
+
+  <!-- Stub for customizers to override -->
+  <Target Name="AfterBuild" />
+
+  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
+  <Import Project="$(BuildRoot)\Build\TFSBuild.proj" Condition="Exists('$(BuildRoot)\Build\TFSBuild.proj')" />
+
+  <UsingTask
+    AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
+    TaskName="NDependTask" />
+
+  <!-- The Zip Custom Source inline task -->
+  <UsingTask
+    TaskName="SourceTransformationTask"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)">
+    <ParameterGroup>
+      <SourcePath ParameterType="System.String" Required="true" />
+      <TransformsDefinitionFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO "/>
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+        <![CDATA[
+Log.LogMessage(string.Format("Starting transformation of source at {0} using {1}", SourcePath, TransformsDefinitionFile));
+
+// Get the list of transformations
+if(!File.Exists(TransformsDefinitionFile)){
+  Log.LogError(string.Format("The transformations file {0} does not exist", TransformsDefinitionFile));
+}
+
+XDocument transformsDoc = XDocument.Load(TransformsDefinitionFile);
+var replacements = from replacementDefinition in transformsDoc.Root.Descendants("Replacement")
+                   from file in Directory.GetFiles(SourcePath, replacementDefinition.Attribute("FileFilter").Value, SearchOption.AllDirectories)
+                   select new {
+                    FilePath = file,
+                    Regex = new Regex(replacementDefinition.Attribute("Pattern").Value),
+                    ReplaceWith = replacementDefinition.Attribute("ReplaceWith").Value
+                   };
+
+Log.LogMessage(string.Format("Starting {0} replacement tasks", replacements.Count()));
+
+foreach(var replacement in replacements){
+  string fileContent = File.ReadAllText(replacement.FilePath);
+  fileContent = replacement.Regex.Replace(fileContent, replacement.ReplaceWith);
+  File.WriteAllText(replacement.FilePath, fileContent);
+}
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+
+  <UsingTask
+    TaskName="XDocumentPoke"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)" >
+    <ParameterGroup>
+      <File ParameterType="System.String" Required="true" />
+      <Query ParameterType="System.String" Required="true" />
+      <Value ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+        <![CDATA[
+var doc = XDocument.Load(File);
+
+var root = doc.Root;
+
+var parts = Query.Split('/');
+
+// Skip(1) is a bit of a hack - assumes the XPath includes the root element
+foreach (string element in parts.Skip(1)) {
+    var descendant = root.Descendants(element).FirstOrDefault();
+    if (descendant == null) {
+        descendant = new XElement(element);
+        root.Add(descendant);
+    }
+    root = descendant;
+}
+
+var contentToAdd = XElement.Parse(Value);
+
+if (!root.Descendants(contentToAdd.Name).Any()) {
+  root.Add(contentToAdd);
+}
+
+doc.Save(File);
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <!-- 
+    ==========================================================================================
+        Build Configurations
+    ==========================================================================================
+    -->
+  <ItemGroup>
+    <ConfigurationToBuild
+      Condition="'$(BuildFlavor)'=='Release'"
+      Include="Release|Any CPU">
+      <FlavorToBuild>Release</FlavorToBuild>
+      <PlatformToBuild>Any CPU</PlatformToBuild>
+    </ConfigurationToBuild>
+    <ConfigurationToBuild
+      Condition="'$(BuildFlavor)'=='Debug'"
+      Include="Debug|Any CPU">
+      <FlavorToBuild>Debug</FlavorToBuild>
+      <PlatformToBuild>Any CPU</PlatformToBuild>
+    </ConfigurationToBuild>
+  </ItemGroup>
+
+  <!--
+    ==========================================================================================
+        Team / Desktop Build Sequences - Begin
+    ==========================================================================================
+  -->
+
+  <PropertyGroup>
+    <OnBuildBreakDependsOn>
+      BeforeOnBuildBreak;
+      GetChangeSetsOnBuildBreak;
+      BeforeDropBuild;
+      DropBuild;
+      AfterOnBuildBreak;
+    </OnBuildBreakDependsOn>
+  </PropertyGroup>
+
+  <Target Name="OnBuildBreak"
+          Condition="('$(IsDesktopBuild)'!='true')"
+          DependsOnTargets="$(OnBuildBreakDependsOn)">
+
+    <PropertyGroup>
+      <FailedBuildFile Condition="'$(BuildAll)' == 'true'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</FailedBuildFile>
+      <FailedBuildFile Condition="'$(BuildAll)' != 'true'">$(DropLocation)\$(FileVersion)</FailedBuildFile>
+      <FailedBuildFile>$(FailedBuildFile)\build.failed</FailedBuildFile>
+    </PropertyGroup>
+
+    <Touch Files="$(FailedBuildFile)"
+           ForceTouch="true"
+           AlwaysCreate="true" />
+  </Target>
+
+  <Target Name="AfterCompile">
+    <CallTarget Targets="ModuleBuild" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Build process pipeline
+    ==========================================================================================
+  -->
+  <Target Name="ModuleBuild">
+    <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
+    <CallTarget Targets="CleanBin" />
+    <CallTarget Targets="GetModuleDependencies" />
+    <CallTarget Targets="ZipCustomSource" />
+    <CallTarget Targets="SetBuildNumbers" />
+    <CallTarget Targets="CheckForWrongReferences" />
+    <CallTarget Targets="UpdateModuleFileVersion"/>
+    <CallTarget Targets="Build" />
+    <CallTarget Targets="ZipTemplateModule" />
+    <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
+    <CallTarget Targets="RunTests" />
+    <CallTarget Targets="PublishModule" />
+    <CallTarget Targets="IndexSourcesAndPublishSymbols" />
+    <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
+    <CallTarget Targets="AfterBuild" />
+    <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
+    <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
+    <CallTarget Targets="CopyToDrop" />
+    <CallTarget Targets="FinalizeBuild" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  <Target Name="LogBuildVariables" BeforeTargets="Build" DependsOnTargets="InitializeBuildParameters">
+    <Message Text="Solution Directory = $(SolutionDirectoryPath)" />
+    <Message Text="Build Scripts Directory = $(BuildScriptsDirectory)" />
+    <Message Text="Module Name = $(ModuleName)" />
+    <Message Text="Drop Location = $(DropLocation) " />
+    <Message Text="BuildType MSI? = $(BuildFlavor)" />
+    <Message Text="Visual Studio Tools Path: $(VsCommonTools)" />
+    <Message Text="Is Web Module: $(IsWebModule)" />
+  </Target>
+
+
+  <!--
+  ==========================================================================================
+  Override drop location
+  ==========================================================================================
+  -->
+  <Target Name="BuildNumberOverrideTarget"
+          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
+
+    <GetBuildProperties TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+                        BuildUri="$(BuildUri)"
+                        Condition=" '$(IsDesktopBuild)' != 'true' ">
+      <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
+    </GetBuildProperties>
+
+    <RemoveDir Condition="'$(DropLocation)' != '' And  '$(IsDesktopBuild)' != 'true'"
+               Directories="$(DropLocation)\$(BuildNumber)"
+               ContinueOnError="true" />
+
+    <PropertyGroup>
+      <!-- 
+          For a module build, append the name of the module.
+          If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
+      -->
+      <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
+      <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
+
+      <DropLocation Condition="'$(IsDesktopBuild)' == 'false'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</DropLocation>
+    </PropertyGroup>
+  </Target>
+
+
+  <Target Name="UpdateDropLocation"
+          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" AfterTargets="BuildNumberOverrideTarget">
+
+    <!-- Set the drop location back to the FileVersion so the log file goes to the right place -->
+    <UpdateBuildNumberDropLocation
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      BuildNumber="$(BuildNumber)"
+      DropLocation="$(DropLocation)\$(FileVersion)" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Clean
+    ==========================================================================================
+  -->
+  <Target Name="CleanBin">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Clean"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
+    <Delete Files="$(SolutionDirectoryPath)TestResults\**\*"
+            ContinueOnError="true" />
+    <Delete Files="$(ModuleBuildDirectory)TestResults\**\*"
+            ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)TestResults"
+               ContinueOnError="true" />
+    <RemoveDir Directories="$(ModuleBuildDirectory)TestResults"
+               ContinueOnError="true" />
+
+    <RemoveDir Condition="'$(CleanBin)' == 'true'"
+               Directories="$(SolutionDirectoryPath)Bin\Module"
+               ContinueOnError="true" />
+    <RemoveDir Condition="'$(CleanBin)' == 'true'"
+               Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
+               ContinueOnError="true" />
+
+    <!-- These can be symlinks so delete them directly -->
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\Dependencies"
+               ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Test\ModuleBin"
+               ContinueOnError="true" />
+
+    <ItemGroup>
+      <Folders Include="$(SolutionDirectoryPath)Bin\" />
+      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
+      <Folders Include="$(SolutionDirectoryPath)Src\" />
+      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
+      <Folders Include="$(SolutionDirectoryPath)CommonBuild\" />
+      <Folders Include="$(SolutionDirectoryPath)TestResults\" />
+    </ItemGroup>
+
+    <Error Condition="!HasTrailingSlash('%(Folders.FullPath)')"
+           Text="All paths in the Folders item group must end with a trailing slash" />
+
+    <ItemGroup>
+      <!-- (?i) means case insensitive -->
+      <Files Include="%(Folders.RootDir)%(Folders.Directory)\**\obj\**" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Folders.FullPath)', `(?i)Src`))" />
+      <Files Include="%(Folders.RootDir)%(Folders.Directory)\**\**" Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('%(Folders.FullPath)', `(?i)Src`))" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <FilesToDelete Condition="$(CleanBin)" Include="@(Files)" />
+      <FoldersToDelete Condition="$(CleanBin)" Include="%(Files.RelativeDir)" />
+    </ItemGroup>
+
+    <Message Condition="$(CleanBin) And @(FilesToDelete) != ''" Text="Files to clean: %(FilesToDelete.FullPath)" />
+    <Message Condition="$(CleanBin) And @(FoldersToDelete) != ''" Text="Folders to clean: %(FoldersToDelete.FullPath)" />
+
+    <MSBuild.Community.Tasks.Attrib
+     Condition="$(CleanBin)"
+     ReadOnly="false"
+     Files="@(FilesToDelete)" />
+
+    <Delete Condition="$(CleanBin)"
+            Files="@(FilesToDelete)"
+            ContinueOnError="true" />
+
+    <RemoveDir Condition="$(CleanBin)"
+               Directories="@(FoldersToDelete)"
+               ContinueOnError="true" />
+
+    <MakeDir Directories="$(BinModuleDirectory)" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+
+  <Target Name="CreateBuildDirectories" BeforeTargets="rmBeforeTransformTemplates;Build">
+    <MakeDir Directories="$(ModuleBuildTempDirectory)"
+             Condition="'$(ModuleBuildTempDirectory)' != ''" />
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Check For Wrong References
+    ==========================================================================================
+  -->
+  <Target Name="CheckForWrongReferences" Condition="'$(IsCustomBuild)' != 'true' And '$(BuildAll)' != 'true'">
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Get Module Dependencies
+    ==========================================================================================
+  -->
+  <Target Name="GetModuleDependencies"
+          Condition="('$(DropLocation)'!='')">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
+      Message="$(BuildStepModuleName) Getting module dependencies"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
+
+    <GetDependencies
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      ProductManifest="$(ProductManifestPath)"
+      ModulesRootPath="$(SolutionDirectoryPath)"
+      ModuleName="$(ModuleName)"
+      DropPath="$(BaseDropDirectory)"
+      WorkspaceName="$(WorkspaceName)"
+      WorkspaceOwner="$(WorkspaceOwner)"
+      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+  <!-- 
+    ==========================================================================================
+    T4 Template Transformation
+    ========================================================================================== 
+  -->
+  <Target Name="rmBeforeTransformTemplates">
+    <PropertyGroup>
+      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)Dependencies\</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process 
+           crafted by the developer -->
+      <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
+                         Include="$(ModuleSourceDirectory)**\*.tt;
+                                  $(ModuleTestDirectory)**\*.tt;"
+                         Exclude="$(ModuleSourceDirectory)**\__*.tt;
+                                  $(ModuleSourceDirectory)**\obj\**\*.tt;
+                                  $(ModuleTestDirectory)**\obj\**\*.tt;
+                                  $(ModuleSourceDirectory)**\PackageTmp\**\*.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+      </rmT4TextTemplates>
+    </ItemGroup>
+
+    <ItemGroup>
+      <TemplateExclude Include="$(ModuleSourceDirectory)**\Aderant.Framework.SmartForm.Dsl\**\*.tt" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <rmT4TextTemplates Remove="@(TemplateExclude)" />
+    </ItemGroup>
+
+    <Message Text="IsDesktopBuild: $(IsDesktopBuild)" />
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
+    <Message Text="ModuleSourceDirectory: $(ModuleSourceDirectory)" />
+    <Message Text="ModuleTestDirectory: $(ModuleTestDirectory)" />
+
+    <Message Text="" />
+    <Message Text="DSLDirectiveLoadMethod: $(DSLDirectiveLoadMethod)" />
+    <Message Text="AderantBuildClientTasksV100Lib-1_0_0_0: $(AderantBuildClientTasksV100Lib-1_0_0_0)" />
+    <Message Text="rmT4AssemblyReferencePaths: $(rmT4AssemblyReferencePaths)" />
+    <Message Text="rmT4TextTemplates: @(rmT4TextTemplates)" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Versioning 
+    ==========================================================================================
+  -->
+  <Target Name="UpdateModuleFileVersion"
+          Condition="'$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true'">
+
+    <PropertyGroup>
+      <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
+    </PropertyGroup>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Updating file version in CommonAssemblyInfo.cs"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <Attrib Files="$(AssemblyInfoFile)"
+            ReadOnly="false" />
+
+    <FileUpdate Files="$(AssemblyInfoFile)"
+                IgnoreCase="true"
+                Multiline="true"
+                Singleline="false"
+                Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
+                ReplacementText="${section1}$(FileVersion)${section2}" />
+
+    <BuildStep
+      Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================================================
+        Compile - rmTransformTemplates 
+    ==========================================================================================================================
+  -->
+  <PropertyGroup>
+    <BuildDependsOn>
+      rmTransformTemplates;
+      $(BuildDependsOn)
+    </BuildDependsOn>
+
+    <SolutionFileName Condition="('$(IsCustomBuild)'=='true')">$(SolutionDirectoryPath)$(ModuleName).Custom.sln</SolutionFileName>
+    <SolutionFileName Condition="('$(IsCustomBuild)'!='true')">$(SolutionDirectoryPath)$(ModuleName).sln</SolutionFileName>
+  </PropertyGroup>
+
+  <Target Name="Build"
+          DependsOnTargets="$(BuildDependsOn)">
+
+    <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
+    <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Building module"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"/>
+    </BuildStep>
+
+    <Message Text="Starting build for: $(ModuleName)"/>
+    <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
+    <Message Text="File Version: $(FileVersion)" />
+    <Message Text="Assembly Version: $(AssemblyVersion)" />
+
+    <!-- For web projects we want to copy in a special target file that controls the packaging steps -->
+    <ItemGroup>
+      <Projects Include="$(SolutionDirectoryPath)\Src\**\*.csproj" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_ContainsWebProject Condition="$([System.String]::new('%(Projects.Filename)').Contains('Web.')) or $([System.String]::new('%(Projects.Filename)').Contains('Mobile.'))">true</_ContainsWebProject>
+    </PropertyGroup>
+
+    <MSBuild Projects="$(SolutionFileName)"
+             Properties="$(BuildProperties)"
+             RemoveProperties="AssemblyVersion"
+             UnloadProjectsOnCompletion="true">
+
+      <!--The compiled assemblies from projects-->
+      <Output ItemName="CompiledAssemblies"
+              TaskParameter="TargetOutputs" />
+    </MSBuild>
+
+    <Message Text="Compiled assemblies: %(CompiledAssemblies.FullPath)" Importance="Low" />
+
+    <ItemGroup>
+      <!-- The compiled assemblies from projects under Module\Src -->
+      <ModuleBuildOutput Include="@(CompiledAssemblies)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch( %(CompiledAssemblies.FullPath), `(?i)(Bin\\Module)`))' == 'true'">
+        <OutputType>Module</OutputType>
+      </ModuleBuildOutput>
+
+      <!-- Match "Web.Foundation\Src\Web.Foundation\bin\Web.Foundation.dll" but not "e:\B\88\3862\src\Libraries.Foundation\Bin\Test\UnitTest.Framework.Security.pdb" -->
+      <ModuleBuildOutput Include="@(CompiledAssemblies)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch( %(CompiledAssemblies.FullPath), `(?i)(?!.*Test\\).*(?=\\Src\\)(.*)(?=\\bin\\)`' == 'true'">
+        <OutputType>Module</OutputType>
+      </ModuleBuildOutput>
+
+      <!-- The compiled assemblies from projects under Module\Test -->
+      <ModuleBuildOutput Include="@(CompiledAssemblies)" Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch( %(CompiledAssemblies.FullPath), `(?i)(Bin\\Test)`))' == 'true'">
+        <OutputType>Test</OutputType>
+      </ModuleBuildOutput>
+    </ItemGroup>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="OnBuildBreak" />
+  </Target>
+
+  <Target Name="BeforeOnBuildBreak" Condition="'$(IsDesktopBuild)' == 'false'">
+    <CallTarget Targets="SetBuildBreakProperties;MarkBuildStepAsFailed" />
+  </Target>
+
+  <Target Name="GetOutputAssembliesFromProjects"
+          AfterTargets="Build"
+          Condition="'$(IsCustomBuild)' != 'true'">
+    <!-- This target fixes a problem with TargetOutputs missing assemblies project in the solution file appears in a a post section. A most irritating MS Build bug. See TFS 121911-->
+    <ItemGroup>
+      <ModuleProjects Include="$(ModuleSourceDirectory)**\**\*.csproj" />
+    </ItemGroup>
+
+    <!-- 
+      Get assembly name from the project file       
+    -->
+    <XmlPeek Condition="'@(ModuleProjects)' != ''"
+             XmlInputPath="%(ModuleProjects.FullPath)"
+             Query="//p:Project/p:PropertyGroup/p:AssemblyName[.][contains(translate(//p:Project/p:PropertyGroup/p:OutputType, 'LIBRARY', 'library'), 'library')]/text()"
+             Namespaces="&lt;Namespace Prefix='p' Uri='http://schemas.microsoft.com/developer/msbuild/2003'/&gt;">
+      <Output ItemName="AssemblyName" TaskParameter="Result" />
+    </XmlPeek>
+
+    <ItemGroup>
+      <DllOutputs Condition="'@(ModuleProjects)' != '' And Exists(%(FullPath))"
+                  Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
+    </ItemGroup>
+
+    <!-- 
+      Fricking web projects output to [Module]\Src\[Project]\bin 
+      Since we can't do wild cards inside a item function -> we need to fall back to CreateItem here to scan all project bin dirs
+      for out output DLL
+    -->
+    <CreateItem Include="@(DllOutputs);@(AssemblyName->'$(ModuleSourceDirectory)**\%(Identity).dll')"
+                Exclude="$(ModuleSourceDirectory)**\obj\**">
+      <Output ItemName="DllOutputs" TaskParameter="Include" />
+    </CreateItem>
+
+    <ItemGroup>
+      <ModuleBuildOutput Condition="'@(ModuleProjects)' != '' And Exists(%(DllOutputs.FullPath))"
+                         Include="@(DllOutputs)">
+        <OutputType>Module</OutputType>
+      </ModuleBuildOutput>
+    </ItemGroup>
+
+    <Message Text="Module: %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" Importance="High" />
+    <Message Text="Test:   %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Test'" Importance="High" />
+
+  </Target>
+
+  <!--
+    ==========================================================================================================================
+      Initializes the build parameters needed for a build.
+    ==========================================================================================================================
+  -->
+  <Target Name="InitializeBuildParameters" BeforeTargets="Build">
+
+    <PropertyGroup>
+      <TeamBuildProperties Condition="'$(TeamBuildProperties)' == ''">
+        IsDesktopBuild=$(IsDesktopBuild);
+        BuildStepModuleName=$(BuildStepModuleName)
+      </TeamBuildProperties>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <IsWebModule>false</IsWebModule>
+      <IsWebModule Condition="$(ModuleName.Contains('Web.')) Or '$(PackageWeb)' == 'true'">true</IsWebModule>
+      <ExternalConstants Condition="'$(IsCustomBuild)' == 'true'">IS_CUSTOM_BUILD</ExternalConstants>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <BuildProperties>
+        Configuration=%(ConfigurationToBuild.FlavorToBuild);
+        Platform=%(ConfigurationToBuild.PlatformToBuild);
+        BuildToolsDirectory=$(BuildToolsDirectory);
+        BuildScriptsDirectory=$(BuildScriptsDirectory);
+        BinModuleDirectory=$(BinModuleDirectory);
+        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
+        BuildAll=$(BuildAll);
+        IsWebModule=$(IsWebModule);
+        $(TeamBuildProperties);
+        ExternalConstants=$(ExternalConstants);
+      </BuildProperties>
+
+      <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
+
+      <ResponseFile>$(SolutionDirectoryPath)_$(ModuleName).rsp</ResponseFile>
+    </PropertyGroup>
+
+    <Message Text="Build Properties:$(NewLine)$(BuildProperties)" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Zip Source 
+    ==========================================================================================
+  -->
+
+  <Target Name="ZipCustomSource"
+          Condition="'$(ZipSource)' != 'false' And (Exists('$(SolutionDirectoryPath)$(ModuleName).Custom.sln') and '$(IsCustomBuild)' != 'true')">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Zipping source"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
+      <ZipFile>$(ZipFileDirectory)$(ModuleName).Custom.zip</ZipFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <SourceFilesToCopyForTransform
+          Include="$(SolutionDirectoryPath)Src\**\*"
+          Exclude="$(SolutionDirectoryPath)*ABT\**;
+                   $(SolutionDirectoryPath)Build\TestResults\**\*
+                   $(SolutionDirectoryPath)BuildTemp\**\*;
+                   $(SolutionDirectoryPath)**\obj\**;
+                   $(SolutionDirectoryPath)**\_Resharper*\**; 
+                   $(SolutionDirectoryPath)**\*.g*.cs;
+                   $(SolutionDirectoryPath)**\*.pfx;
+                   $(SolutionDirectoryPath)**\*.vssscc;
+                   $(SolutionDirectoryPath)**\*.vspscc;
+                   $(SolutionDirectoryPath)**\*.DotSettings;">
+        <DestinationSubDirectory>Src\</DestinationSubDirectory>
+      </SourceFilesToCopyForTransform>
+
+      <SourceFilesToCopyForTransform
+          Include="$(SolutionDirectoryPath)Build\**\*"
+          Exclude="$(SolutionDirectoryPath)Build\Build.Infrastructure\**\*">
+        <DestinationSubDirectory>Build\</DestinationSubDirectory>
+      </SourceFilesToCopyForTransform>
+
+      <SourceFilesToCopyForTransform Include="$(SolutionDirectoryPath)*Custom.sln">
+        <DestinationSubDirectory></DestinationSubDirectory>
+      </SourceFilesToCopyForTransform>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <TempSolutionDirectory>$(SolutionDirectoryPath)TempTransform\</TempSolutionDirectory>
+      <TempModuleSourceDirectory>$(SolutionDirectoryPath)TempTransform\Src\</TempModuleSourceDirectory>
+      <TempModuleBuildDirectory>$(SolutionDirectoryPath)TempTransform\Build\</TempModuleBuildDirectory>
+      <CustomBuildFilesDirectory>$(SolutionDirectoryPath)TempTransform\BuildScripts\</CustomBuildFilesDirectory>
+    </PropertyGroup>
+
+    <Delete
+      Files="$(ZipFile)"
+      Condition="Exists('$(ZipFile)')" />
+
+    <RemoveDir
+      Condition="Exists('$(TempSolutionDirectory)')"
+      Directories="$(TempSolutionDirectory)"/>
+
+    <!-- Make a copy of the source files for the custom solution transformation and zip -->
+    <MakeDir
+      Directories="$(TempSolutionDirectory)"/>
+
+    <Copy
+       SourceFiles="@(SourceFilesToCopyForTransform)"
+       DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+       SkipUnchangedFiles="true">
+    </Copy>
+
+    <!-- Read solution file so we can get the project source-->
+    <ReadLinesFromFile File="$(TempSolutionDirectory)$(ModuleName).Custom.sln">
+      <Output TaskParameter="Lines"
+              ItemName="LinesFromSlnFile"/>
+    </ReadLinesFromFile>
+
+
+    <!--  Extract the Project lines from the custom solution file.
+          This will give lines in this format:
+          Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexMatch Input="@(LinesFromSlnFile)"
+                Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
+      <Output ItemName="ProjectLines"
+              TaskParameter="Output"/>
+    </RegexMatch>
+    <Message Text="&#xA;Project lines in custom solution:&#xA;@(ProjectLines, '&#xA;')"/>
+
+
+    <!--  Remove text before custom project name
+          This will leave us with:
+          Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexReplace Input="@(ProjectLines)"
+                  Expression="Project\(&quot;.+&quot;\) = &quot;"
+                  Replacement=""
+                  Count="1">
+      <Output ItemName="SlnProjects"
+              TaskParameter="Output" />
+    </RegexReplace>
+
+
+    <!-- Remove text after custom project name
+          This will leave us with the project name:
+          Aderant.BusinessEntity
+    -->
+    <RegexReplace Input="@(SlnProjects)"
+                  Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
+                  Replacement=""
+                  Count="1">
+      <Output ItemName ="CustomProjects"
+              TaskParameter="Output" />
+    </RegexReplace>
+    <Message Text="&#xA;Projects in custom solution:&#xA;@(CustomProjects, '&#xA;')"/>
+
+
+    <!-- Create property that lists the project folders as an MSBuild include string-->
+    <PropertyGroup>
+      <ProjectFoldersIncludeString>$(TempModuleSourceDirectory)@(CustomProjects,'\**\*;$(TempModuleSourceDirectory)')\**\*;</ProjectFoldersIncludeString>
+    </PropertyGroup>
+    <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
+
+    <!-- Update the source with the specified transformations file -->
+    <SourceTransformationTask
+      Condition="($(CustomSolutionTransformsFile) != '')"
+      SourcePath="$(TempSolutionDirectory)"
+      TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(CustomSolutionTransformsFile)" />
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Include="$(TempSolutionDirectory)**\*.Custom.sln;"/>
+
+      <ZipSourceFiles
+        Include="$(ProjectFoldersIncludeString)"
+        Exclude="$(TempModuleSourceDirectory)**\*.sln;
+                 $(TempModuleSourceDirectory)**\*.vssscc;
+                 $(TempModuleSourceDirectory)**\*.vspscc;
+                 $(TempModuleSourceDirectory)**\*.sln.cache;
+                 $(TempModuleSourceDirectory)**\*.vsmdi;
+                 $(TempModuleSourceDirectory)**\*.testrunconfig;
+                 $(TempModuleSourceDirectory)**\*.suo;
+                 $(TempModuleSourceDirectory)**\*.sln.Debug.vsprops;
+                 $(TempModuleSourceDirectory)**\bin\**;
+                 $(TempModuleSourceDirectory)**\obj\**;
+                 $(TempModuleSourceDirectory)**\UnitTest*\**;
+                 $(TempModuleSourceDirectory)**\IntegrationTest*\**;
+                 $(TempModuleSourceDirectory)**\TestResults\**;
+                 $(TempModuleSourceDirectory)**\Release.txt;
+                 $(TempModuleSourceDirectory)**\Debug.txt;
+                 $(TempModuleSourceDirectory)**\_Resharper*\**;
+                 $(TempModuleSourceDirectory)**\*resharper.user;
+                 $(TempModuleSourceDirectory)**\*.DotSettings;" />
+      <ZipSourceFiles
+        Include="$(TempModuleBuildDirectory)*.*;" />
+      <ZipSourceFiles
+        Include="$(CustomBuildFilesDirectory)*.*;"
+        Exclude="$(CustomBuildFilesDirectory)**\*.pfx; $(CustomBuildFilesDirectory)**\Aderant.CodeSigning*; "/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ZipFile)"
+      WorkingDirectory="$(TempSolutionDirectory)"
+      ParallelCompression="false" />
+
+    <RemoveDir
+      Directories="$(TempSolutionDirectory)"/>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Unit Test 
+    ==========================================================================================
+  -->
+  <PropertyGroup>
+    <RunTestsDependsOn>
+      $(RunTestsDependsOn);
+      BeforeRunTests;
+    </RunTestsDependsOn>
+  </PropertyGroup>
+
+  <Target Name="BeforeRunTests">
+
+    <ItemGroup>
+      <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
+                               $(BinTestDirectory)*.Tests.ps1;"
+                      Exclude="$(BinTestDirectory)*Helpers*.dll;
+                               $(BinTestDirectory)Microsoft.*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AssembliesToAnalyze Include="@(ModuleBuildOutput)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
+      <AssembliesToAnalyze Include="@(BuildOutput)" />
+    </ItemGroup>
+
+    <!-- Determine if we can run the tests using the 64-bit test runner -->
+    <GetAssemblyPlatform
+        Condition="'$(Use32BitTestRunner)' == ''"
+        Assemblies="@(AssembliesToAnalyze)">
+      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
+      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
+    </GetAssemblyPlatform>
+
+    <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
+
+    <!-- 
+      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override 
+      which includes two additional folders "ModuleBin" and "Dependencies". This is so unit tests can find dependencies
+      without relying on copy local having deployed assemblies to the test directory.
+    -->
+    <PropertyGroup>
+      <UnitTestAppConfigText>$([System.IO.File]::ReadAllText('$(BuildScriptsDirectory)UnitTestAppConfig.txt'))</UnitTestAppConfigText>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <TestAssemblyConfigFiles Include="@(TestAssemblies->'$(BinTestDirectory)%(RecursiveDir)%(Filename)%(Extension).config')" />
+    </ItemGroup>
+
+    <Touch Condition="!Exists(%(TestAssemblyConfigFiles.FullPath))"
+           Files="%(TestAssemblyConfigFiles.FullPath)"
+           AlwaysCreate="true">
+      <Output TaskParameter="TouchedFiles" ItemName="TouchedFiles" />
+    </Touch>
+
+    <ItemGroup>
+      <XmlLinesToWrite Include="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;" />
+      <XmlLinesToWrite Include="&lt;configuration /&gt;" />
+    </ItemGroup>
+
+    <WriteLinesToFile Condition="'@(TouchedFiles)' != ''"
+                      File="%(TouchedFiles.FullPath)"
+                      Lines="@(XmlLinesToWrite)"
+                      Encoding="UTF-8" />
+
+    <Error Condition="'$(UnitTestAppConfigText)' == ''" Text="No unit test app.config text defined!" />
+
+    <XDocumentPoke Condition="Exists(%(TestAssemblyConfigFiles.FullPath))"
+                   File="%(TestAssemblyConfigFiles.FullPath)"
+                   Query="configuration/runtime"
+                   Value="$(UnitTestAppConfigText)" />
+
+    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+                 Link="$(BinTestDirectory)Dependencies"
+                 Target="$(SolutionDirectoryPath)Dependencies" />
+
+    <MakeSymlink Condition="'@(TestAssemblies)' != '' And '$(IsWebModule)' != 'true'"
+                 Link="$(BinTestDirectory)ModuleBin"
+                 Target="$(BinModuleDirectory)" />
+  </Target>
+
+
+  <Target Name="RunTest">
+    <!-- Override Team Build target to do nothing -->
+  </Target>
+
+  <Target Name="CoreTest">
+    <!-- Override Team Build target to do nothing -->
+  </Target>
+
+
+  <Target Name="RunTests"
+          DependsOnTargets="$(RunTestsDependsOn)"
+          Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Running unit tests"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"/>
+    </BuildStep>
+
+    <PropertyGroup>
+      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
+      <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
+
+      <!-- VSTest Setup -->
+      <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
+      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
+      <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
+      <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
+
+      <!-- Test Result Publishing -->
+      <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
+      <PublishName Condition="'$(TfsBuildNumber)' != ''">$(TfsBuildNumber)</PublishName>
+      <ResultsFileSwitch>/Logger:trx</ResultsFileSwitch>
+
+      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>
+    </PropertyGroup>
+
+    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
+
+    <MakeDir Directories="$(VsTestWorkingDirectory)" />
+
+    <PropertyGroup>
+      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
+      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
+    </PropertyGroup>
+
+    <!--Run With VSTest-->
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Condition="'$(UnitTestAssemblies)' != ''"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <SetBuildProperties
+      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      TestStatus="Succeeded" />
+
+    <OnError ExecuteTargets="OnTestFailure" />
+  </Target>
+
+
+  <Target Name="AfterRunTests"
+          AfterTargets="RunTests">
+
+    <RemoveDir Directories="$(BinTestDirectory)Dependencies"
+               ContinueOnError="true"  />
+    <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
+               ContinueOnError="true" />
+    <RemoveDir Directories="$(BinTestDirectory)TestResults\packages"
+               ContinueOnError="true" />
+
+    <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
+            Files="@(TestAssemblyConfigFiles)"
+            TreatErrorsAsWarnings="true" />
+  </Target>
+
+
+  <Target Name="CopyTrxFile" AfterTargets="RunTests">
+    <ItemGroup>
+      <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)**\*.trx" />
+      <TestResults Condition="'$(BuildDirectory)' != '' And Exists('$(BuildDirectory)BuildType')" Include="$(BuildDirectory)BuildType\**\*.trx" />
+    </ItemGroup>
+
+    <Copy Condition="@(TestResults) != ''"
+          SourceFiles="@(TestResults)"
+          DestinationFiles="$(BinTestDirectory)UnitTestResults.trx" />
+  </Target>
+
+
+  <Target Name="InstallPester"
+          Condition="'$(PSTests)' == 'true'"
+          AfterTargets="BeforeRunTests"
+          BeforeTargets="RunTests">
+
+    <Message Condition="'$(PSTests)' == 'true'" Text="Copying Pester files to test run directory." />
+
+    <ItemGroup>
+      <PesterFiles
+        Include="$(BuildScriptsDirectory)..\Profile\Pester\Pester.psd1;
+                 $(BuildScriptsDirectory)..\Profile\Pester\Pester.psm1;"/>
+      <PesterFunctionsFiles
+        Include="$(BuildScriptsDirectory)..\Profile\Pester\Functions\*.*;"/>
+      <PesterFunctionsAssertionsFiles
+        Include="$(BuildScriptsDirectory)..\Profile\Pester\Functions\Assertions\*.*"/>
+    </ItemGroup>
+
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults" />
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions"/>
+    <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions"/>
+
+    <Copy SourceFiles="@(PesterFiles)"
+          DestinationFiles="@(PesterFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="@(PesterFunctionsFiles)"
+          DestinationFiles="@(PesterFunctionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="@(PesterFunctionsAssertionsFiles)"
+          DestinationFiles="@(PesterFunctionsAssertionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions\%(Filename)%(Extension)')" />
+
+  </Target>
+
+  <Target Name="OnTestFailure">
+    <CallTarget Targets="SetTestBreakProperties" Condition="'$(IsDesktopBuild)' == 'false'" />
+    <CallTarget Targets="AfterRunTests;CopyTrxFile;CopyToDrop;MarkBuildStepAsFailed"/>
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Create the modules package to be Published
+    ==========================================================================================
+  -->
+  <Target Name="PublishModule"
+          DependsOnTargets="RunTests"
+          Condition="('$(PublishModule)' == 'true')">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Create package to publish"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <Message Condition="('$(IsDesktopBuild)'=='true')"
+             Text="Create package to publish" />
+    <Message Text="## Publish as version $(FileVersion)" />
+
+    <MSBuild Projects="$(SolutionFileName)"
+             Properties="ApplicationVersion=$(FileVersion);$(BuildProperties)"
+             Targets="Publish" />
+
+    <Message Condition="('$(IsDesktopBuild)'=='true')"
+             Text="Zip package" />
+
+    <PropertyGroup>
+      <ClickOnceZipFileDirectory>$(BinModuleDirectory)$(ModuleName).ClickOnce\</ClickOnceZipFileDirectory>
+      <ClickOnceZipFile>$(ClickOnceZipFileDirectory)ClickOnce.zip</ClickOnceZipFile>
+      <PublishDirectory>$(BinModuleDirectory)app.publish\</PublishDirectory>
+    </PropertyGroup>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Include="$(PublishDirectory)**; "/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ClickOnceZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="$(ClickOnceZipFile)"
+      WorkingDirectory="$(PublishDirectory)"
+      ParallelCompression="false" />
+
+    <RemoveDir Directories="$(PublishDirectory)"/>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Zip Sample Module 
+    ==========================================================================================
+  -->
+  <Target Name="ZipTemplateModule"
+          Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')">
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Zipping source"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
+      <ZipFile>$(ZipFileDirectory)\$(ModuleName).Template.zip</ZipFile>
+    </PropertyGroup>
+
+    <Copy SourceFiles="$(SolutionDirectoryPath)$(ModuleName).Template.sln"
+          DestinationFiles="$(SolutionDirectoryPath)BuildTemp\$(ModuleName).Template.sln"
+          ContinueOnError="true"/>
+
+    <FileUpdate Files="$(SolutionDirectoryPath)BuildTemp\$(ModuleName).Template.sln"
+      Regex="GlobalSection\(TeamFoundationVersionControl\)(.|\n)*?EndGlobalSection"
+      ReplacementText=" "
+      ContinueOnError="true"/>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Include="$(SolutionDirectoryPath)**;"
+        Exclude="$(BinTestDirectory)**\**;
+                 $(SolutionDirectoryPath)BuildTemp\**;
+                 $(BinModuleDirectory)**\**;                
+                 $(ModuleBuildDirectory)**;
+                 $(ModuleSourceDirectory)**\*.csproj.user;        
+                 $(ModuleSourceDirectory)**\obj\**;
+                 $(ModuleSourceDirectory)**\bin\**;      
+                 $(SolutionDirectoryPath)$(ModuleName).sln;
+                 $(SolutionDirectoryPath)$(ModuleName).Template.sln;
+                 $(SolutionDirectoryPath)CommonBuild\**;
+                 $(SolutionDirectoryPath)ThirdPartyBuild.txt;
+                 $(ModuleSourceDirectory)**\SharedBin\**;
+                 $(SolutionDirectoryPath)Dependencies\**;
+                 $(SolutionDirectoryPath)**\*.vssscc;
+                 $(SolutionDirectoryPath)**\*.vspscc;        
+                 $(SolutionDirectoryPath)**\*.sln.cache;
+                 $(SolutionDirectoryPath)**\*.vsmdi;        
+                 $(SolutionDirectoryPath)**\*.testrunconfig;
+                 $(SolutionDirectoryPath)**\*.suo;
+                 $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
+                 $(SolutionDirectoryPath)**\TestResults\**;
+                 $(SolutionDirectoryPath)**\Release.txt;
+                 $(SolutionDirectoryPath)**\Debug.txt;
+                 $(SolutionDirectoryPath)**\_Resharper*\**;
+                 $(SolutionDirectoryPath)**\*resharper.user;
+                 $(SolutionDirectoryPath)**\*.DotSettings; "/>
+    </ItemGroup>
+
+    <Copy
+       SourceFiles="@(ZipSourceFiles)"
+       DestinationFiles="@(ZipSourceFiles->'$(SolutionDirectoryPath)BuildTemp\%(RecursiveDir)%(Filename)%(Extension)')"
+       SkipUnchangedFiles="true">
+    </Copy>
+
+    <ItemGroup>
+      <FilesToZip
+        Include="$(SolutionDirectoryPath)BuildTemp\**;"/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <Delete
+      Files="$(ZipFile)" ContinueOnError="true" />
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(FilesToZip)"
+      ZipFileName="$(ZipFile)"
+      WorkingDirectory="$(SolutionDirectoryPath)BuildTemp\"
+      ParallelCompression="false" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <Delete
+      Files="@(FilesToZip)" ContinueOnError="true" />
+
+    <RemoveDir
+      Directories="$(SolutionDirectoryPath)BuildTemp\Src;
+                   $(SolutionDirectoryPath)BuildTemp\Doc"/>
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Index Sources and Publish Symbols        
+    ==========================================================================================
+  -->
+  <Target Name="IndexSourcesAndPublishSymbols"
+          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+
+    <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Copy Build to Drop Location 
+    ==========================================================================================
+  -->
+  <Target Name="ReplicateOutputToSharedDependenciesDirectory" Condition="'$(UseSharedDependencyDirectory)' == 'true'">
+    <!-- This should have a BeforeTargets CopyToDrop but if we use that attribute and error occurs here the build will not stop for unknown reasons -->
+
+    <Error Condition="'$(SharedDependencyDirectory)' == ''" Text="The shared dependency directory is not defined" />
+    <Error Condition="!Exists('$(SharedDependencyDirectory)')" Text="The common dependency directory $(SharedDependencyDirectory) does not exist." />
+
+    <ItemGroup>
+      <!-- XML documentation files provide no benefit for the build process so we don't replicate them -->
+      <XmlDocumentationFileList Include="@(CompiledAssemblies -> '%(RootDir)%(Directory)%(Filename).xml')" />
+    </ItemGroup>
+
+    <!-- Symlink the output of into Bin\Module into the common dependencies directory so the next build can pick them up -->
+    <ItemGroup>
+      <!-- 
+          TFS: 122744
+          We exclude the cmsmsg files here. I don't think this is "correct" as it makes the build system
+          aware of what it's building but there is a frustrating interplay through the use of statics and singletons through
+          out the Expert code base that constantly cause quirky issues. By excluding the msg file from dependency replication           
+          it prevents TextTranslator loading a message file while unit tests are running and then having those tests fail.
+      -->
+      <FilesToReplicate Include="$(BinModuleDirectory)**\*"
+                        Exclude="$(BinModuleDirectory)CodeAnalysis\**;
+                                 $(BinModuleDirectory)**\*.pdb;
+                                 $(BinModuleDirectory)**\*cmsmsg*.msg;
+                                 $(BinModuleDirectory)**\*exe.config;
+                                 @(XmlDocumentationFileList)" />
+    </ItemGroup>
+
+    <Message Text="Replicating module output to shared dependencies directory: $(SharedDependencyDirectory)" Importance="High "/>
+
+    <Copy Condition="!Exists('$(SharedDependencyDirectory)%(FilesToReplicate.RecursiveDir)%(FilesToReplicate.Filename)%(FilesToReplicate.Extension)')"
+          SourceFiles="@(FilesToReplicate)"
+          DestinationFiles="$(SharedDependencyDirectory)%(FilesToReplicate.RecursiveDir)%(FilesToReplicate.Filename)%(FilesToReplicate.Extension)"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"
+          UseHardlinksIfPossible="true" />
+
+    <ExtractWebModule Condition="$(ModuleName.StartsWith('Web')) Or $(ModuleName.StartsWith('Mobile'))"
+                      ModuleName="$(ModuleName)"
+                      DependenciesDirectory="$(SharedDependencyDirectory)" />
+
+  </Target>
+
+  <Target Name="CopyToDrop"
+          Condition="('$(IsDesktopBuild)'!='true' And '$(IsCustomBuild)' != 'true')">
+
+    <!--We have differing ways of determining the drop location depending on the type of build. 
+        The simplest way was to have a condition on whether we are build all modules of a single module.-->
+    <PropertyGroup>
+      <!--<DropLocation>C:\Temp\</DropLocation>
+      <FileVersion>1.8.0.0</FileVersion>-->
+
+      <ModuleDropLocation Condition="'$(BuildAll)' == 'true'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</ModuleDropLocation>
+      <ModuleDropLocation Condition="'$(BuildAll)' != 'true'">$(DropLocation)\</ModuleDropLocation>
+    </PropertyGroup>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) Copy output to $(ModuleDropLocation)$(FileVersion)"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <WriteLinesToFile
+      Condition="'@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Module'"
+      Lines="@(ModuleBuildOutput)"
+      Overwrite="true"
+      File="$(ModuleBuildTempDirectory)ModuleBinOutput.txt" />
+
+    <WriteLinesToFile
+      Condition="'@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Test'"
+      Lines="@(ModuleBuildOutput)"
+      Overwrite="true"
+      File="$(ModuleBuildTempDirectory)ModuleTestOutput.txt" />
+
+    <PropertyGroup>
+      <DropRootUncPathSwitch>-dropRootUNCPath $(ModuleDropLocation)</DropRootUncPathSwitch>
+      <AssemblyFileVersionSwitch>-assemblyFileVersion $(FileVersion)</AssemblyFileVersionSwitch>
+      <SuppressUniqueCheckSwitch Condition="'$(UseSharedDependencyDirectory)' == 'true'">-suppressUniqueCheck</SuppressUniqueCheckSwitch>
+      <TestFailedSwitch Condition="'$(TestBreak)' == 'true'">-testBreak</TestFailedSwitch>
+      <BuildBreakSwitch Condition="'$(BuildBreak)' == 'true'">-buildBreak</BuildBreakSwitch>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <YieldDuringCopy Condition="'$(BuildAll)' != 'true'">false</YieldDuringCopy>
+      <YieldDuringCopy Condition="'$(BuildAll)' == 'true'">true</YieldDuringCopy>
+    </PropertyGroup>
+
+    <Exec
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) $(DropRootUncPathSwitch) $(AssemblyFileVersionSwitch) $(TestFailedSwitch) $(BuildBreakSwitch) $(SuppressUniqueCheckSwitch)'
+          YieldDuringToolExecution="$(YieldDuringCopy)" />
+
+    <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
+        so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
+    -->
+    <MakeDir Directories="$(ModuleDropLocation)$(FileVersion)"
+             Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />
+
+    <WriteLinesToFile
+      Condition="('$(BuildAll)'=='true')"
+      File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt"
+      Lines="Build succeeded via BuildAll - 0 Error(s)"/>
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        Publishes build details into TFS.
+        This is done in a build all so we can have visibility of modules built during a build all
+        and have TFS manage the drop via retention policies for us.
+    ==========================================================================================
+  -->
+  <Target Name="PublishBuild"
+          BeforeTargets="Build;CheckForWrongReferences"
+          Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+
+    <Message Text="Publishing build for: $(ModuleName) [$(FileVersion)]" />
+    <Message Text="BaseDropDirectory: $(BaseDropDirectory) [$(DropLocation)]" />
+
+    <Error Condition="'$(BaseDropDirectory)' == ''" Text="Undefined property: BaseDropDirectory" />
+
+    <PublishBuild
+      CurrentBuildUri="$(BuildUri)"
+      DropLocation="$(BaseDropDirectory)"
+      ModuleName="$(ModuleName)"
+      BranchName="$(BranchName)"
+      FileVersion="$(FileVersion)"
+      AssemblyVersion="$(AssemblyVersion)"
+      TeamFoundationServerUri="$(TeamFoundationServerUrl)"
+      TeamProject="$(TeamProject)">
+
+      <Output
+        TaskParameter="PublishedBuildUri"
+        PropertyName="PublishedBuildUri" />
+
+    </PublishBuild>
+
+  </Target>
+
+
+  <Target Name="FinalizeBuild" Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+
+    <Error Condition="'$(PublishedBuildUri)' == ''" Text="Undefined property: PublishedBuildUri" />
+
+    <FinalizeBuild
+      CurrentBuildUri="$(BuildUri)"
+      BuildToFinalizeUri="$(PublishedBuildUri)"
+      ModuleName="$(ModuleName)"
+      TeamFoundationServerUri="$(TeamFoundationServerUrl)"
+      TeamProject="$(TeamProject)" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        NDepend post build analysis
+    ==========================================================================================
+  -->
+  <PropertyGroup>
+    <NDependPath>c:\Program Files (x86)\NDepend</NDependPath>
+    <NDependOutputDir>$(SolutionDirectoryPath)\bin\NDependOut</NDependOutputDir>
+    <NDependWarn>0</NDependWarn>
+  </PropertyGroup>
+
+  <Target Name="NDepend"
+          Condition="('$(IsDesktopBuild)'!='true')" >
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
+      Message="$(BuildStepModuleName) NDepend"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId" />
+    </BuildStep>
+
+    <Message Text="*** NDepend " />
+    <Message Text="NDependConsoleExePath : $(NDependPath)" />
+    <Message Text="ProjectFilePath       : $(BuildScriptsDirectory)NDependFramework.xml" />
+
+    <!-- Lets first remove the ld NDependOut directory -->
+    <RemoveDir Directories="$(SolutionDirectoryPath)\NDependOut" />
+
+    <NDependTask
+      Condition="('$(IsCustomBuild)'!='true')"
+      NDependConsoleExePath="$(NDependPath)"
+      ProjectFilePath="$(BuildScriptsDirectory)NDependFramework.xml"
+      OutDir="$(NDependOutputDir)" />
+
+    <!-- Scan the NDepend Report Files to see if a braking change has been identified -->
+
+    <XmlRead ContinueOnError="True"
+             XmlFileName="$(SolutionDirectoryPath)\NDependout\CQLResult.xml"
+             XPath="string(count(//Group[@Status='Warn']))">
+      <Output TaskParameter="Value"
+              PropertyName="NDependWarn" />
+    </XmlRead>
+
+
+    <!-- If braking change identified then need to mark build step as Failed -->
+
+    <Error Text="NDepend Breaking Change"
+           Condition="$(NDependWarn) &gt; 0"/>
+
+    <BuildStep
+      Condition="('$(IsCustomBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+  <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+  <Target Name="MarkBuildStepAsFailed"
+          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
+          DependsOnTargets="BeforeDropBuild">
+
+    <Message Text="Marking build as failed" />
+
+    <BuildStep
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Failed" />
+
+    <SetBuildProperties
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      CompilationStatus="Failed" />
+
+    <SetBuildProperties
+      Condition="'$(TestBreak)' == 'true'"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      TestStatus="Failed"
+      CompilationStatus="Failed" />
+
+    <CallTarget Targets="FinalizeBuild" />
+
+  </Target>
+
+  <!--
+    ============================================================
+                        CleanTemporaryFileWrites
+    ============================================================
+  -->
+  <Target Name="CleanTemporaryFileWrites" AfterTargets="Build">
+    <!--<Delete Files="@(_TemporaryBuildFiles)" 
+            Condition="'@(_TemporaryBuildFiles)' != ''"
+            ContinueOnError="true" />-->
+  </Target>
+
+  <!-- Import this last to override the standard Build and CopyToDrop targets -->
+  <Import Project="Mobile.targets" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
+</Project>
