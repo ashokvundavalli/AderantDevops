@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
 		Src\Build\Build.ps1 = Src\Build\Build.ps1
 		Src\Build\BuildModule.ps1 = Src\Build\BuildModule.ps1
-		BuildProcess.ps1 = BuildProcess.ps1
+		Src\Build\BuildProcess.ps1 = Src\Build\BuildProcess.ps1
 		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
 		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
 		Src\Build\Mobile.Targets = Src\Build\Mobile.Targets
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
+		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
 		Src\Build\paket.exe = Src\Build\paket.exe
 		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
 	EndProjectSection

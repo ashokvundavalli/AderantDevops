@@ -7,6 +7,8 @@ param(
 $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 use -Path $MSBuildLocation -Name MSBuild
 
+$dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
+
 function Write-Info {
     param ([string] $Message)
 
@@ -35,8 +37,21 @@ task Clean {
 task Test {
 }
 
-task CopyToDrop {
-    "##vso[artifact.associate type=filepath;artifactname=drop]\\WSAKL001092\C$\MyDropLocation"
+task CopyToDrop {    
+    $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
+
+    $text -match '(?m)(AssemblyFileVersion\(\")(?<version>[0-9]*.[0-9]*.[0-9]*.[0-9]*)' | Out-Null
+    
+    $version = $Matches.version
+
+    $moduleName = [System.IO.Path]::GetFileName($Repository)    
+
+    . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$moduleName\1.8.0.0 -assemblyFileVersion $version
+
+    $fullDropPath = "$dropLocation\$moduleName\1.8.0.0\$version"
+
+    # Associate the drop back to the build
+    Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"
 }
 
 task Init {
