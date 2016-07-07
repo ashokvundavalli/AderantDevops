@@ -39,14 +39,14 @@ task Test {
 
 task CopyToDrop {    
     $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
-
-    $text -match '(?m)(AssemblyFileVersion\(\")(?<version>[0-9]*.[0-9]*.[0-9]*.[0-9]*)' | Out-Null
-    
+    $text -match '(?m)(AssemblyFileVersion\(\")(?<version>[0-9]*.[0-9]*.[0-9]*.[0-9]*)' | Out-Null    
     $version = $Matches.version
 
-    $moduleName = [System.IO.Path]::GetFileName($Repository)    
-
-    . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$moduleName\1.8.0.0 -assemblyFileVersion $version
+    $text = Get-Content $Repository\Build\TFSBuild.rsp -Raw
+    $text -match 'ModuleName=(?<name>[^"]+)' | Out-Null    
+    $name = $Matches.name    
+    
+    . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
 
     $fullDropPath = "$dropLocation\$moduleName\1.8.0.0\$version"
 
