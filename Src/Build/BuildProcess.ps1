@@ -20,7 +20,7 @@ task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
 }
 
 task GetDependencies {    
-    . $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath "\\na.aderant.com\ExpertSuite\Main"
+    & $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath "\\na.aderant.com\ExpertSuite\Main"
 }
 
 task Build {
@@ -51,7 +51,7 @@ task CopyToDrop {
     $text -match 'ModuleName=(?<name>[^"]+)' | Out-Null    
     $name = $Matches.name    
     
-    . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
+    & $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
 
     $fullDropPath = "$dropLocation\$moduleName\1.8.0.0\$version"
 
