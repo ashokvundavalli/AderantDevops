@@ -6,15 +6,11 @@
 
   <!-- 
     =========================================================================================================
-        Team Build Script        
-        
         Guidelines:            
-            * Retain structure and formatting for easier merge between Team Build project scripts             
+            * Retain structure and formatting for easier merge between scripts             
     =========================================================================================================
   -->
 
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets"
-          Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets')" />
 
   <PropertyGroup>
     <NewLine>%0A</NewLine>
@@ -316,16 +312,6 @@ doc.Save(File);
   -->
   <Target Name="CleanBin">
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Clean"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
     <Delete Files="$(SolutionDirectoryPath)TestResults\**\*"
             ContinueOnError="true" />
@@ -390,13 +376,6 @@ doc.Save(File);
 
     <MakeDir Directories="$(BinModuleDirectory)" />
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
@@ -429,16 +408,6 @@ doc.Save(File);
   <Target Name="GetModuleDependencies"
           Condition="('$(DropLocation)'!='')">
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
-      Message="$(BuildStepModuleName) Getting module dependencies"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
 
     <GetDependencies
@@ -450,13 +419,6 @@ doc.Save(File);
       WorkspaceName="$(WorkspaceName)"
       WorkspaceOwner="$(WorkspaceOwner)"
       BuildScriptsDirectory="$(BuildScriptsDirectory)" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
@@ -513,24 +475,11 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="UpdateModuleFileVersion"
-          Condition="'$(IsDesktopBuild)' != 'true' Or '$(IsCustomBuild)' == 'true'">
+          Condition="'$(BUILD_BUILDURI)' != ''">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
     </PropertyGroup>
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Updating file version in CommonAssemblyInfo.cs"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
-    <Attrib Files="$(AssemblyInfoFile)"
-            ReadOnly="false" />
 
     <FileUpdate Files="$(AssemblyInfoFile)"
                 IgnoreCase="true"
@@ -538,16 +487,6 @@ doc.Save(File);
                 Singleline="false"
                 Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
                 ReplacementText="${section1}$(FileVersion)${section2}" />
-
-    <BuildStep
-      Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
   </Target>
 
 
@@ -571,16 +510,6 @@ doc.Save(File);
 
     <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Building module"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"/>
-    </BuildStep>
 
     <Message Text="Starting build for: $(ModuleName)"/>
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
@@ -624,13 +553,6 @@ doc.Save(File);
         <OutputType>Test</OutputType>
       </ModuleBuildOutput>
     </ItemGroup>
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
 
     <OnError ExecuteTargets="OnBuildBreak" />
   </Target>
@@ -735,16 +657,6 @@ doc.Save(File);
 
   <Target Name="ZipCustomSource"
           Condition="'$(ZipSource)' != 'false' And (Exists('$(SolutionDirectoryPath)$(ModuleName).Custom.sln') and '$(IsCustomBuild)' != 'true')">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Zipping source"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
@@ -905,12 +817,6 @@ doc.Save(File);
     <RemoveDir
       Directories="$(TempSolutionDirectory)"/>
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
@@ -1009,16 +915,6 @@ doc.Save(File);
           DependsOnTargets="$(RunTestsDependsOn)"
           Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Running unit tests"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"/>
-    </BuildStep>
-
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
       <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
@@ -1055,19 +951,6 @@ doc.Save(File);
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
           Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <SetBuildProperties
-      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      TestStatus="Succeeded" />
 
     <OnError ExecuteTargets="OnTestFailure" />
   </Target>
@@ -1151,16 +1034,6 @@ doc.Save(File);
           DependsOnTargets="RunTests"
           Condition="('$(PublishModule)' == 'true')">
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Create package to publish"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <Message Condition="('$(IsDesktopBuild)'=='true')"
              Text="Create package to publish" />
     <Message Text="## Publish as version $(FileVersion)" />
@@ -1195,13 +1068,6 @@ doc.Save(File);
 
     <RemoveDir Directories="$(PublishDirectory)"/>
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
@@ -1212,16 +1078,6 @@ doc.Save(File);
   -->
   <Target Name="ZipTemplateModule"
           Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Zipping source"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
@@ -1291,13 +1147,6 @@ doc.Save(File);
       ZipFileName="$(ZipFile)"
       WorkingDirectory="$(SolutionDirectoryPath)BuildTemp\"
       ParallelCompression="false" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
 
     <Delete
       Files="@(FilesToZip)" ContinueOnError="true" />
@@ -1383,16 +1232,6 @@ doc.Save(File);
       <ModuleDropLocation Condition="'$(BuildAll)' != 'true'">$(DropLocation)\</ModuleDropLocation>
     </PropertyGroup>
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Copy output to $(ModuleDropLocation)$(FileVersion)"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <WriteLinesToFile
       Condition="'@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Module'"
       Lines="@(ModuleBuildOutput)"
@@ -1434,13 +1273,6 @@ doc.Save(File);
       Condition="('$(BuildAll)'=='true')"
       File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt"
       Lines="Build succeeded via BuildAll - 0 Error(s)"/>
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
@@ -1510,16 +1342,6 @@ doc.Save(File);
   <Target Name="NDepend"
           Condition="('$(IsDesktopBuild)'!='true')" >
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) NDepend"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <Message Text="*** NDepend " />
     <Message Text="NDependConsoleExePath : $(NDependPath)" />
     <Message Text="ProjectFilePath       : $(BuildScriptsDirectory)NDependFramework.xml" />
@@ -1548,13 +1370,6 @@ doc.Save(File);
     <Error Text="NDepend Breaking Change"
            Condition="$(NDependWarn) &gt; 0"/>
 
-    <BuildStep
-      Condition="('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
   </Target>
@@ -1570,37 +1385,8 @@ doc.Save(File);
 
     <Message Text="Marking build as failed" />
 
-    <BuildStep
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Failed" />
-
-    <SetBuildProperties
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      CompilationStatus="Failed" />
-
-    <SetBuildProperties
-      Condition="'$(TestBreak)' == 'true'"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      TestStatus="Failed"
-      CompilationStatus="Failed" />
-
     <CallTarget Targets="FinalizeBuild" />
 
-  </Target>
-
-  <!--
-    ============================================================
-                        CleanTemporaryFileWrites
-    ============================================================
-  -->
-  <Target Name="CleanTemporaryFileWrites" AfterTargets="Build">
-    <!--<Delete Files="@(_TemporaryBuildFiles)" 
-            Condition="'@(_TemporaryBuildFiles)' != ''"
-            ContinueOnError="true" />-->
   </Target>
 
   <!-- Import this last to override the standard Build and CopyToDrop targets -->
