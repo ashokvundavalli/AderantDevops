@@ -164,7 +164,7 @@
     ==========================================================================================
   -->
   <Target Name="SetBuildNumbers"
-          Condition="('$($(BUILD_BUILDURI))' != '' Or '$(IsCustomBuild)' == 'true') And (('$(FileVersion)' == '' And '$(AssemblyVersion)' == '') Or '$(ForceVersion)' == 'true')">
+          Condition="('$(BUILD_BUILDURI)' != '' Or '$(IsCustomBuild)' == 'true') And (('$(FileVersion)' == '' And '$(AssemblyVersion)' == '') Or '$(ForceVersion)' == 'true')">
 
     <PropertyGroup>
       <VersionMajor Condition="'$(VersionMajor)' == ''">1</VersionMajor>
