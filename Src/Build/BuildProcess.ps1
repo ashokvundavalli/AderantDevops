@@ -27,9 +27,7 @@ function Start-BuildStep {
     param ([string] $message)   
     [string]$g = [Guid]::NewGuid()
 
-    Write-Vso "##vso[task.logdetail id=$g;name=project1;type=build;order=1]$message"
-
-    return $g
+    Write-Vso "##vso[task.logdetail id=$g;name=project1;type=build;order=1]$message"     
 }
 
 function End-BuildStep {
