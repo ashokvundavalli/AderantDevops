@@ -59,6 +59,14 @@ task CopyToDrop {
     Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"
 }
 
+task BeforeCopyToDrop -Before CopyToDrop {
+    Write-Output "##vso[task.logdetail id=$([Guid]::NewGuid);name=project1;type=build;order=1]"
+}
+
+task AfterCopyToDrop -After CopyToDrop {
+    Write-Output "##vso[task.complete result=CopyToDrop succeeded;]DONE"
+}
+
 task Init {
     Write-Info 'Establishing build properties'    
 

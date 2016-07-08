@@ -980,8 +980,6 @@ doc.Save(File);
     <Copy Condition="@(TestResults) != ''"
           SourceFiles="@(TestResults)"
           DestinationFiles="$(BinTestDirectory)TestResults.trx" />
-
-    <Message Text="##vso[artifact.upload containerfolder=testresult;artifactname=uploadedresult;]@(TestResults)" />
   </Target>
 
 
