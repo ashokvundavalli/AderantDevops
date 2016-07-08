@@ -19,7 +19,7 @@ function Write-Vso() {
     param ([string] $message)
     
     #if ($Env:BUILD_URI) {
-        Write-Output $message
+        Write-Host $message
     #}
 }
 
