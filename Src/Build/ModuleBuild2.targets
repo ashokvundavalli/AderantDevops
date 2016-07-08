@@ -974,13 +974,14 @@ doc.Save(File);
 
   <Target Name="CopyTrxFile" AfterTargets="RunTests">
     <ItemGroup>
-      <TestResults Condition="'$(IsDesktopBuild)' == 'true'" Include="$(ModuleBuildDirectory)**\*.trx" />
-      <TestResults Condition="'$(BuildDirectory)' != '' And Exists('$(BuildDirectory)BuildType')" Include="$(BuildDirectory)BuildType\**\*.trx" />
+      <TestResults Include="$(SolutionDirectoryPath)**\*.trx" />
     </ItemGroup>
 
     <Copy Condition="@(TestResults) != ''"
           SourceFiles="@(TestResults)"
-          DestinationFiles="$(BinTestDirectory)UnitTestResults.trx" />
+          DestinationFiles="$(BinTestDirectory)TestResults.trx" />
+
+    <Message Text="##vso[artifact.upload containerfolder=testresult;artifactname=uploadedresult;]@(TestResults)" />
   </Target>
 
 
