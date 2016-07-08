@@ -231,12 +231,13 @@
     <Compile Include="UpgradeTemplateBuildProcess.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
-    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
-    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
+    <None Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
+    <None Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
+    <None Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
+    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
+    <Folder Include="Commands\Assets\OpenTypeStd\" />
   </ItemGroup>
   <!--<ItemGroup>
     <Analyzer Include="$(OutputPath)\Aderant.Build.Analyzer.dll" />
