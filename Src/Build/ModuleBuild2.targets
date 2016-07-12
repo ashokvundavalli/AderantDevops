@@ -973,13 +973,13 @@ doc.Save(File);
 
 
   <Target Name="CopyTrxFile" AfterTargets="RunTests">
-    <ItemGroup>
+    <!--<ItemGroup>
       <TestResults Include="$(SolutionDirectoryPath)**\*.trx" />
     </ItemGroup>
 
     <Copy Condition="@(TestResults) != ''"
           SourceFiles="@(TestResults)"
-          DestinationFiles="$(BinTestDirectory)TestResults.trx" />
+          DestinationFiles="$(BinTestDirectory)TestResults.trx" />-->
   </Target>
 
 

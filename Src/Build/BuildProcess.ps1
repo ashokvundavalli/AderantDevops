@@ -78,7 +78,7 @@ task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
 task GetDependencies {    
     $step = New-Object LogDetail "Get dependencies" 
 
-    #& $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
+    & $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
 
     $step.Finish("Done", [Result]::Succeeded)
 }
@@ -92,7 +92,7 @@ task Build {
             $logger = "/dl:CentralLogger,`"$loggerAssembly`"*ForwardingLogger,`"$loggerAssembly`""
         }        
         
-        #MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger
+        MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger
     }
 
      $step.Finish("Done", [Result]::Succeeded)

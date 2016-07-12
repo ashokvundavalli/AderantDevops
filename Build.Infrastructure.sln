@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
 		Src\Build\Mobile.Targets = Src\Build\Mobile.Targets
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
+		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
 		Src\Build\Package.ps1 = Src\Build\Package.ps1
 		Src\Build\paket.exe = Src\Build\paket.exe
 		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
