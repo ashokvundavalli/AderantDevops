@@ -67,19 +67,18 @@ $IsDesktopBuild = $Env:BUILD_URI -eq $null
 
 $dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
 
-function Write-Info {
-    param ([string] $message)
+task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
+    $step = New-Object LogDetail "Get dependencies" 
 
-    Write-Host "## $message ##" -ForegroundColor Magenta
-}
+    & $Env:EXPERT_BUILD_FOLDER\Build\Package.ps1 -Repository $Repository
 
-task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {        
+    $step.Finish("Done", [Result]::Succeeded)
 }
 
 task GetDependencies {    
     $step = New-Object LogDetail "Get dependencies" 
 
-    & $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath "\\na.aderant.com\ExpertSuite\Main"
+    #& $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
 
     $step.Finish("Done", [Result]::Succeeded)
 }
@@ -93,7 +92,7 @@ task Build {
             $logger = "/dl:CentralLogger,`"$loggerAssembly`"*ForwardingLogger,`"$loggerAssembly`""
         }        
         
-        MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger
+        #MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger
     }
 
      $step.Finish("Done", [Result]::Succeeded)
@@ -105,7 +104,7 @@ task Clean {
 task Test {
 }
 
-task CopyToDrop -If ($IsServerBuild) {
+task CopyToDrop -If (-not $IsDesktopBuild) {
     $step = New-Object LogDetail "CopyToDrop" 
 
     $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
@@ -127,13 +126,14 @@ task CopyToDrop -If ($IsServerBuild) {
 }
 
 task Init {
+    . $Env:EXPERT_BUILD_FOLDER\Build\Build-Libraries.ps1
+    CompileBuildLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\    
+    LoadLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\
+
     Write-Info "Build tree"
     .\Show-BuildTree.ps1 -File $PSCommandPath
 
-    Write-Info "Establishing build properties"
-
-    . $Env:EXPERT_BUILD_FOLDER\Build\Build-Libraries.ps1
-    CompileBuildLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\    
+    Write-Info "Established build environment"
 }
 
 task Default Package
