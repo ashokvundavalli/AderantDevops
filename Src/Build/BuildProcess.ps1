@@ -117,7 +117,7 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
     
     . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
 
-    $fullDropPath = "$dropLocation\$moduleName\1.8.0.0\$version"
+    $fullDropPath = "$dropLocation\$name\1.8.0.0\$version"
 
     # Associate the drop back to the build
     Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"
