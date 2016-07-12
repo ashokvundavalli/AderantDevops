@@ -70,7 +70,7 @@ $dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
 task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
     $step = New-Object LogDetail "Get dependencies" 
 
-    & $Env:EXPERT_BUILD_FOLDER\Build\Package.ps1 -Repository $Repository
+    . $Env:EXPERT_BUILD_FOLDER\Build\Package.ps1 -Repository $Repository
 
     $step.Finish("Done", [Result]::Succeeded)
 }
@@ -78,7 +78,7 @@ task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
 task GetDependencies {    
     $step = New-Object LogDetail "Get dependencies" 
 
-    & $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
+    . $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
 
     $step.Finish("Done", [Result]::Succeeded)
 }
@@ -115,7 +115,7 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
     $text -match 'ModuleName=(?<name>[^"]+)' | Out-Null    
     $name = $Matches.name    
     
-    & $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
+    . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
 
     $fullDropPath = "$dropLocation\$moduleName\1.8.0.0\$version"
 
