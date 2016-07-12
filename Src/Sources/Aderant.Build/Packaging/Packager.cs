@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.FSharp.Core;
 using Paket;
@@ -31,17 +32,32 @@ namespace Aderant.Build.Packaging {
                 OutputPath = Path.Combine(physicalFileSystem.Root, "Bin", "Packages")
             };
 
-            Paket.PackageProcess.Pack<string[]>(physicalFileSystem.Root, DependenciesFile.ReadFromFile(spec.DependenciesFile), spec.OutputPath, FSharpOption<string>.None, FSharpOption<string>.None, FSharpOption<string>.None, new List<Tuple<string, string>>(), FSharpOption<string>.None, FSharpOption<string>.None, null, false, false, false, false, FSharpOption<string>.None);
+            foreach (var file in GetTemplateFiles()) {
+                PackageProcess.Pack(physicalFileSystem.Root, DependenciesFile.ReadFromFile(spec.DependenciesFile), spec.OutputPath, FSharpOption<string>.None, FSharpOption<string>.None, FSharpOption<string>.None, new List<Tuple<string, string>>(), FSharpOption<string>.None, FSharpOption<string>.Some(file), GenerateExcludedTemplates(), false, false, false, false, FSharpOption<string>.None);
+            }
 
             return new PackResult(spec);
+        }
+
+        private FSharpOption<IEnumerable<string>> GenerateExcludedTemplates() {
+            return null;
+        }
+
+        private IEnumerable<string> GetTemplateFiles() {
+            var files = physicalFileSystem.GetFiles(physicalFileSystem.Root, "*paket.template", true);
+            
+            foreach (var file in files) {
+                if (file.IndexOf("_BUILD_", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    continue;
+                }
+                yield return file;
+            }
         }
 
         public static PackResult Package(string repository) {
             var packager = new Packager(new PhysicalFileSystem(repository));
             return packager.Pack();
-
         }
-
     }
 
     public sealed class PackResult {
@@ -54,7 +70,6 @@ namespace Aderant.Build.Packaging {
         public string OutputPath {
             get { return spec.OutputPath; }
         }
-
     }
 
     internal class PackSpecification {
