@@ -63,7 +63,7 @@ class LogDetail {
 $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 use -Path $MSBuildLocation -Name MSBuild
 
-$IsDesktopBuild = $Env:BUILD_URI -eq $null
+$global:IsDesktopBuild = $Env:BUILD_URI -eq $null
 
 $dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
 
