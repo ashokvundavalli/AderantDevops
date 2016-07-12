@@ -63,7 +63,7 @@ class LogDetail {
 $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 use -Path $MSBuildLocation -Name MSBuild
 
-$global:IsDesktopBuild = $Env:BUILD_URI -eq $null
+$global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
 $dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
 
@@ -134,6 +134,9 @@ task Init {
     .\Show-BuildTree.ps1 -File $PSCommandPath
 
     Write-Info "Established build environment"
+
+    Write-Info ("Build URI:".PadRight(20) + $Env:BUILD_URI)
+    Write-Info ("IsDesktopBuild:".PadRight(20) + $IsDesktopBuild)
 }
 
 task Default Package
