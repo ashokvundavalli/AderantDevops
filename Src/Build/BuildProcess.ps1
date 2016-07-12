@@ -120,7 +120,7 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
     $fullDropPath = "$dropLocation\$moduleName\1.8.0.0\$version"
 
     # Associate the drop back to the build
-    Write-Vso "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"
+    Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"
 
     $step.Finish("Done", [Result]::Succeeded)
 }
@@ -136,7 +136,7 @@ task Init {
     Write-Info "Established build environment"
 
     Write-Info ("Build URI:".PadRight(20) + $Env:BUILD_URI)
-    Write-Info ("IsDesktopBuild:".PadRight(20) + $IsDesktopBuild)
+    Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 }
 
 task Default Package
