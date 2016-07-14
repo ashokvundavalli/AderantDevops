@@ -68,7 +68,7 @@ namespace UnitTest.Build {
         ///in the rsp at ../Modules/Build.Infrastructure/Src/Projects/PackageAndDeployRemote/TFSBuild.rsp.
         ///
         ///To run the integration tests locally you need to edit the following attributes
-        /// - aderant/instanceMetadataConfigurationSection@e [rest of string was truncated]&quot;;.
+        /// - aderant/instanceMetadataConfigurationSection@environ [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string AppConfig {
             get {
@@ -118,6 +118,23 @@ namespace UnitTest.Build {
         internal static string environment {
             get {
                 return ResourceManager.GetString("environment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;ProductManifest Name=&quot;Expert&quot; ExpertVersion=&quot;802&quot;&gt;
+        ///  &lt;Modules&gt;
+        ///    &lt;Module Name=&quot;Applications.Administration&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;Module Name=&quot;Applications.CCLogViewer&quot; AssemblyVersion=&quot;1.8.0.0&quot; GetAction=&quot;branch&quot; Path=&quot;Main&quot; /&gt;
+        ///    &lt;Module Name=&quot;Applications.Customization&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;Module Name=&quot;Applications.Deployment&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;Module Name=&quot;Applications.DesignStudio&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ExpertManifest {
+            get {
+                return ResourceManager.GetString("ExpertManifest", resourceCulture);
             }
         }
         

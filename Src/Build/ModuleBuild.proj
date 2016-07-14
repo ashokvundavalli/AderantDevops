@@ -443,6 +443,7 @@ doc.Save(File);
     <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
 
     <GetDependencies
+      Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true') or '$(ForceGetDependencies)' == 'true'"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"
@@ -1234,16 +1235,14 @@ doc.Save(File);
           ContinueOnError="true"/>
 
     <FileUpdate Files="$(SolutionDirectoryPath)BuildTemp\$(ModuleName).Template.sln"
-      Regex="GlobalSection\(TeamFoundationVersionControl\)(.|\n)*?EndGlobalSection"
-      ReplacementText=" "
-      ContinueOnError="true"/>
+                Regex="GlobalSection\(TeamFoundationVersionControl\)(.|\n)*?EndGlobalSection"
+                ReplacementText=" "
+                ContinueOnError="true"/>
 
-    <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <ZipSourceFiles
         Include="$(SolutionDirectoryPath)**;"
-        Exclude="$(BinTestDirectory)**\**;
-                 $(SolutionDirectoryPath)BuildTemp\**;
+        Exclude="$(BinTestDirectory)**\**;                 
                  $(BinModuleDirectory)**\**;                
                  $(ModuleBuildDirectory)**;
                  $(ModuleSourceDirectory)**\*.csproj.user;        
@@ -1251,10 +1250,12 @@ doc.Save(File);
                  $(ModuleSourceDirectory)**\bin\**;      
                  $(SolutionDirectoryPath)$(ModuleName).sln;
                  $(SolutionDirectoryPath)$(ModuleName).Template.sln;
-                 $(SolutionDirectoryPath)CommonBuild\**;
-                 $(SolutionDirectoryPath)ThirdPartyBuild.txt;
+                 $(SolutionDirectoryPath)CommonBuild\**;                 
                  $(ModuleSourceDirectory)**\SharedBin\**;
-                 $(SolutionDirectoryPath)Dependencies\**;
+                 $(SolutionDirectoryPath)ThirdParty.*\**;
+                 $(SolutionDirectoryPath)Dependencies\**\*;
+                 $(SolutionDirectoryPath)Packages\**\*;
+                 $(SolutionDirectoryPath)BuildTemp\**;
                  $(SolutionDirectoryPath)**\*.vssscc;
                  $(SolutionDirectoryPath)**\*.vspscc;        
                  $(SolutionDirectoryPath)**\*.sln.cache;
@@ -1328,11 +1329,10 @@ doc.Save(File);
         Copy Build to Drop Location 
     ==========================================================================================
   -->
-  <Target Name="ReplicateOutputToSharedDependenciesDirectory" Condition="'$(UseSharedDependencyDirectory)' == 'true'">
+  <Target Name="ReplicateOutputToSharedDependenciesDirectory" Condition="'$(UseSharedDependencyDirectory)' == 'true' And Exists('$(SharedDependencyDirectory)')">
     <!-- This should have a BeforeTargets CopyToDrop but if we use that attribute and error occurs here the build will not stop for unknown reasons -->
 
     <Error Condition="'$(SharedDependencyDirectory)' == ''" Text="The shared dependency directory is not defined" />
-    <Error Condition="!Exists('$(SharedDependencyDirectory)')" Text="The common dependency directory $(SharedDependencyDirectory) does not exist." />
 
     <ItemGroup>
       <!-- XML documentation files provide no benefit for the build process so we don't replicate them -->

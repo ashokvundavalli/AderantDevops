@@ -426,22 +426,42 @@
   </Choose>
 
 
-  <!-- Maintains the F5 experience -->
-  <Target Name="CopyLinkedContentFiles"
-          Condition="'$(LinkedBuild)' != 'true' And '$(EnableContentLink)' == 'true'"
-          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy">
+   
+
+  <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
 
     <ItemGroup>
-      <ContentToCopy Include="@(Content);@(TypeScriptCompile)" />
+      <ContentToCopy Include="@(Content->HasMetadata('Link'))">
+        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
+      </ContentToCopy>
+      
+      <ContentToCopy Include="@(TypeScriptCompile->HasMetadata('Link'))">
+        <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
+      </ContentToCopy>
     </ItemGroup>
+    
+  </Target>
+
+
+  <!-- Maintains the
+  F5 experience -->
+  <Target Name="CopyLinkedContentFiles"
+          DependsOnTargets="CollectLinkedContentFiles"
+          Condition="'$(LinkedBuild)' != 'true' And '$(EnableContentLink)' == 'true'"
+          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
+          Inputs="@(ContentToCopy)" 
+          Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
 
     <!-- Only copy files with the Link attribute set -->
-    <Copy SourceFiles="@(ContentToCopy)"
+    <Copy SourceFiles="%(ContentToCopy.OriginalItemSpec)"
           DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
           SkipUnchangedFiles="true"
-          OverwriteReadOnlyFiles="true"
-          Condition="'%(ContentToCopy.Link)' != ''"  />
-
+          OverwriteReadOnlyFiles="true" 
+          UseHardlinksIfPossible="true" />
+    
+  </Target>
+  
+  <Target Name="AfterCopyLinkedContentFiles" AfterTargets="CopyLinkedContentFiles">
     <!--
        Aspx content hangs Visual studio if you attempt to add a breakpoint to an ASPX file and the file is actually a link (very annoying). 
        So we need to copy the file instead 
@@ -458,7 +478,8 @@
     <!-- Build the dll from any linked projects. This project will reference the output assembly of the linked project directly (i.e. we won't use the DLL from 
     the dependencies directory) -->
     <MSBuild Projects="@(LinkTo->'%(RelativePath)\%(Identity).csproj')"
-             Targets="Build"             
+             Condition="'$(IsDesktopBuild)' != 'false'"
+             Targets="Build"
              Properties="Configuration=Debug;Platform=AnyCPU;
                          LinkedBuild=true;
                          PackageAsSingleFile=False;
@@ -466,7 +487,6 @@
                          DeployDefaultTarget=$(EmptyProperty);
                          FilesToIncludeTargetFile=$(EmptyProperty);
                          DeployTarget=$(EmptyProperty)" />
-
   </Target>
 
   <!-- Suppress the TypeScript compile phase if we are building a linked project -->

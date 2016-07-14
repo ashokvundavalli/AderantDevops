@@ -62,6 +62,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             SetPropertyValue(value => FileVersion = value, element, "FileVersion");
             SetPropertyValue(value => Branch = value, element, "Path");
             SetPropertyValue(SetGetAction, element, "GetAction");
+
+            if (ModuleType == ModuleType.ThirdParty) {
+                RepositoryType = RepositoryType.NuGet;
+            }
+
+            if (GetAction == GetAction.NuGet) {
+                RepositoryType = RepositoryType.NuGet;
+            }
         }
 
         private void SetPropertyValue(Action<string> setAction, XElement element, string attributeName) {
@@ -392,7 +400,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         specific_path,
         specific_path_external_module,
 
-        SpecificDropLocation
+        SpecificDropLocation,
+        NuGet
     }
 }
 

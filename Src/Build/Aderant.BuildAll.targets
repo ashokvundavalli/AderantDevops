@@ -56,6 +56,39 @@
       <ModulesInBuild Remove="@(ModulesInBuild)" Condition="'$(BuildFrom)' != ''" />
       <ModulesInBuild Include="@(FilteredModuleList)" Condition="'$(BuildFrom)' != ''" />
     </ItemGroup>
+    
+    <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
+    <Message Text="Getting dependencies for build." />
+    
+    <GetDependencies
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      WorkspaceOwner="$(WorkspaceOwner)"
+      WorkspaceName="$(WorkspaceName)"
+      ProductManifest="$(ProductManifestPath)"
+      ModulesRootPath="$(SolutionRoot)"
+      DropPath="$(DropLocation)"
+      BuildAll="true"
+      ModulesInBuild="@(ModulesInBuild)"
+      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
+
+    <ItemGroup>
+      <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
+                         Exclude="$(SolutionRoot)Build.Infrastructure;
+                                  $(SolutionRoot)packages;
+                                  $(SolutionRoot)Dependencies;
+                                  $(SolutionRoot)ThirdParty;                                  
+                                  $(SolutionRoot)TestRun" />
+    </ItemGroup>
+
+    <MakeSymlink
+      Link="%(ModuleDirectories.FullPath)\Dependencies"
+      Target="$(SharedDependencyDirectory)"
+      Type="D" />
+
+    <MakeSymlink
+      Link="%(ModuleDirectories.FullPath)\packages"
+      Target="$(SolutionRoot)packages"
+      Type="D" />
 
     <!-- 
         TFS: 122744
@@ -70,6 +103,28 @@
     </ItemGroup>
     
     <Delete Files="@(MessageFiles)" />
+  </Target>
+
+
+  <!-- Tranforms inputs to this target file into item groups -->
+  <Target Name="GetAllModuleDependenciesSetup" 
+          BeforeTargets="GetAllModuleDependencies">
+
+    <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
+
+    <Exec Command="PowerShell.exe -NoProfile -File &quot;CleanSymlinks.ps1&quot; $(SolutionRoot)" />
+
+    <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
+    <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" ContinueOnError="true" />
+    <RemoveDir Directories="%(ModulesInBuild.FullPath)\packages" ContinueOnError="true" />
+    <RemoveDir Directories="$(SharedDependencyDirectory)" ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionRoot)\_BuildTemp" ContinueOnError="true" />
+
+    <ItemGroup>
+      <Paket Include="$(SolutionRoot)\paket.*"></Paket>
+    </ItemGroup>
+    <Delete Files="@(Paket)" />
+    
   </Target>
 
   
@@ -134,7 +189,6 @@
     <Message Text="%(ModulesInBuild.FullPath)"                 Importance="High" />
     <Message Text="==========================================" Importance="High" />
 
-    <CallTarget Targets="BuildModules" />
     <CallTarget Targets="BuildModulesParallel" />
 
     <SetBuildProperties
@@ -146,72 +200,6 @@
 
   </Target>
 
-
-  <!--
-    ==========================================================================================
-    The Target that iterates through all the listed modules and kicks off a build for them
-    ==========================================================================================
-  -->
-  <Target Name="BuildModules"
-          Condition="'$(BuildInParallel)' != 'true'"
-          Inputs="@(Modules)"
-          Outputs="@(Modules->%(FullPath))">
-    
-    <Message Text="Building modules..." Importance="High" />
-
-    <!--This section is all in aid of retrieving and splitting the parameters that need to be passed
-        to the modules build from its associated rsp file.-->
-    <ReadLinesFromFile File="%(Modules.FullPath)\Build\TFSBuild.rsp">
-      <Output TaskParameter="Lines"
-              ItemName="RspParamaters"/>
-    </ReadLinesFromFile>
-
-    <RegexMatch Input="@(RspParamaters)"
-                Expression="/p:[&quot;&quot;]?(?&lt;parameter&gt;[\w=\.]*)+?">
-      <Output ItemName="RemoveParameterPrefix"
-              TaskParameter="Output"/>
-    </RegexMatch>
-
-    <RegexReplace Input="@(RemoveParameterPrefix)"
-                  Expression="/p:"
-                  Replacement=""
-                  Count="-1">
-      <Output ItemName="RemoveQuotes"
-              TaskParameter="Output" />
-    </RegexReplace>
-
-    <RegexReplace Input="@(RemoveQuotes)"
-                  Expression="&quot;"
-                  Replacement=""
-                  Count="-1">
-      <Output ItemName="Parameters"
-              TaskParameter="Output" />
-    </RegexReplace>
-
-    <!-- Build All configuration overrides the module level so we need to remove any invalid configurations before building  -->
-    <ItemGroup>
-      <Parameters Condition="$(BuildFlavor) == 'Release'" Remove="BuildFlavor=Debug" />
-      <Parameters Condition="$(BuildFlavor) == 'Debug'" Remove="BuildFlavor=Release" />
-    </ItemGroup>
-
-    <!--- Copy the global properties down to the individual build -->
-    <MergeParameters
-      Source="@(PropertiesForBuild)"
-      Target="@(Parameters)">
-      <Output ItemName="MergedParameters"
-              TaskParameter="MergeResult" />
-    </MergeParameters>
-
-    <Message Text="Parameters" />
-    <Message Text="%09@(MergedParameters->'%(Identity)', '%0D%0A%09')" />
-
-    <!--Call to the modules specific build-->
-    <MSBuild Projects="%(Modules.FullPath)\Build\TFSBuild.proj"
-             Properties="@(MergedParameters);SolutionDirectoryPath=%(Modules.FullPath)\" />
-
-  </Target>
-
-
   <!--
     ==========================================================================================
     This target will build the modules in the branch in parallel where possible.
@@ -219,8 +207,7 @@
     build order of projects within the module correctly.
     ==========================================================================================
   -->
-  <Target Name="BuildModulesParallel" Condition="'$(BuildInParallel)' == 'true'">
-    <Message Text="Building modules in parallel..." Importance="High" />
+  <Target Name="BuildModulesParallel">
 
     <PropertyGroup>
       <CommonBuildProperties>
@@ -237,14 +224,14 @@
         BuildFlavor=$(BuildFlavor)
       </CommonBuildProperties>
     </PropertyGroup>
-    
+
     <Message Text="$(CommonBuildProperties)" />
-    
+
     <Error Condition="!Exists('$(SolutionRoot)BranchBuild.proj')" Text="Did not find BranchBuild.proj "/>
 
     <MSBuild Projects="$(SolutionRoot)BranchBuild.proj"
              Properties="$(CommonBuildProperties)"
-             BuildInParallel="true" />
+             BuildInParallel="$(BuildInParallel)" />
 
   </Target>
 

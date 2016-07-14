@@ -7,7 +7,7 @@ using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
-    internal class ExpertManifest : IModuleProvider {
+    internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
         private readonly FileSystem fileSystem;
         private readonly XDocument manifest;
 
@@ -197,8 +197,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private IEnumerable<ExpertModule> LoadAllModules() {
-            XDocument expertManifest = manifest;
-            IEnumerable<XElement> moduleElements = expertManifest.Root.Element("Modules").Descendants();
+            IEnumerable<XElement> moduleElements = manifest.Root.Element("Modules").Descendants();
 
             return moduleElements.Select(ExpertModule.Create);
         }
@@ -223,6 +222,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (dependencyManifests != null) {
                 expertManifest.dependencyManifests = dependencyManifests;
+
+                foreach (DependencyManifest dependencyManifest in dependencyManifests) {
+                    dependencyManifest.GlobalAttributesProvider = expertManifest;
+                }
             }
 
             return expertManifest;
@@ -273,6 +276,48 @@ namespace Aderant.Build.DependencyAnalyzer {
                 dependentModules += " " + module.ModuleName;
             }
             throw new BuildNotFoundException("No path to binaries found for " + expertModule.Name + ". Modules with dependencies:" + dependentModules);
+        }
+
+        public XElement MergeAttributes(XElement element) {
+            var entry = manifest.Root.Element("Modules")
+                .Descendants()
+                .FirstOrDefault(m => string.Equals(m.Attribute("Name").Value, element.Attribute("Name").Value, StringComparison.OrdinalIgnoreCase));
+
+            if (entry != null) {
+                var mergedAttributes = MergeAttributes(entry.Attributes(), element.Attributes());
+                element.ReplaceAttributes(mergedAttributes);
+            }
+
+            return element;
+        }
+
+        private IEnumerable<XAttribute> MergeAttributes(IEnumerable<XAttribute> productManifestAttributes, IEnumerable<XAttribute> otherAttributes) {
+            List<XAttribute> mergedAttributes = new List<XAttribute>(productManifestAttributes);
+            foreach (var otherAttribute in otherAttributes) {
+
+                bool add = true;
+
+                foreach (var attribute in mergedAttributes) {
+                    if (string.Equals(otherAttribute.Name.LocalName, attribute.Name.LocalName, StringComparison.OrdinalIgnoreCase)) {
+                        add = false;
+
+                        if (!string.Equals(otherAttribute.Value, attribute.Value)) {
+                            attribute.Value = otherAttribute.Value;
+                        }
+                    }
+                }
+
+                if (add) {
+                    mergedAttributes.Add(otherAttribute);
+                }
+            }
+
+
+            if (mergedAttributes.Count(attr => string.Equals(attr.Name.LocalName, "Name")) != 1) {
+                throw new InvalidOperationException("Invalid element merge. Elements must have the same \"Name\" value");
+            }
+
+            return mergedAttributes;
         }
     }
 }

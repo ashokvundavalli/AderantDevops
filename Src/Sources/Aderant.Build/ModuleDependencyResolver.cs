@@ -49,6 +49,7 @@ namespace Aderant.Build {
         public bool Update { get; set; }
         public bool Force { get; set; }
         public bool Outdated { get; set; }
+        internal bool BuildAll { get; set; }
 
         private void OnModuleDependencyResolved(DependencyResolvedEventArgs e) {
             EventHandler<DependencyResolvedEventArgs> handler = ModuleDependencyResolved;
@@ -144,10 +145,10 @@ namespace Aderant.Build {
         }
 
         private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> referencedModules) {
-            var packagedModules = new string[] { "Aderant.Build.Analyzer" }; // TODO: Enable this as we switch modules over
+            var packagedModules = new string[] { "Aderant.Build.Analyzer" };
 
             foreach (var module in referencedModules) {
-                if (module.ModuleType == ModuleType.ThirdParty) {
+                if (module.ModuleType == ModuleType.ThirdParty || module.GetAction == GetAction.NuGet) {
                     module.RepositoryType = RepositoryType.NuGet;
                     continue;
                 }
@@ -196,6 +197,11 @@ namespace Aderant.Build {
             string dependenciesDirectory = Path.Combine(fileSystem.Root, "Dependencies");
             string packagesDirectory = Path.Combine(fileSystem.Root, "packages");
 
+            if (!fileSystem.DirectoryExists(packagesDirectory)) {
+                logger.Warning("Not packages directory at: {0}. This is probably an error as all modules should have dependencies. Continuing. ", packagesDirectory);
+                return;
+            }
+
             foreach (var package in Directory.EnumerateDirectories(packagesDirectory)) {
                 string binariesDirectory = Path.Combine(package, "lib");
                 var referencedModuleName = package.Split('\\').Last();
@@ -208,7 +214,7 @@ namespace Aderant.Build {
 
                 logger.Info("Performing legacy restore on " + package);
 
-                if (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty) {
+                if (BuildAll || (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty)) {
                     // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                     // used depending on the content type.
 

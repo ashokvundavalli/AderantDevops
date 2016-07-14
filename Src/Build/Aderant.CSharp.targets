@@ -228,7 +228,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Analyzer Include="$(PackageDependenciesFileDirectory)\packages\Aderant.Build.Analyzer\analyzers\dotnet\cs\Aderant.Build.Analyzer.dll" />
+      <Analyzer Include="$(PackageDependenciesFileDirectory)\packages\Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
     </ItemGroup>
   </Target>
   

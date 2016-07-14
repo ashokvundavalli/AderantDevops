@@ -112,6 +112,7 @@ namespace Aderant.Build.Tasks {
 
                     ae.Handle(exception => {
                         Log.LogError(exception.Message, null);
+                        Log.LogErrorFromException(exception, true);
                         return true;
                     });
                 }
@@ -149,9 +150,8 @@ namespace Aderant.Build.Tasks {
 
         private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
             var resolver = new ModuleDependencyResolver(expertManifest, DropPath, new BuildTaskLogger(this));
-
-            resolver.DependencySources.LocalThirdPartyDirectory = DependencySources.GetLocalPathToThirdPartyBinaries(TeamFoundationServerUrl, ModulesRootPath, WorkspaceName, WorkspaceOwner);
-
+            resolver.BuildAll = BuildAll;
+            
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
                 Log.LogMessage(MessageImportance.Normal, "Fetch modules for: " + resolver.ModuleName, null);
@@ -159,10 +159,6 @@ namespace Aderant.Build.Tasks {
 
             if (ModulesInBuild != null) {
                 resolver.SetModulesInBuild(ModulesInBuild.Select(m => Path.GetFileName(Path.GetFullPath(m.ItemSpec))));
-            }
-
-            if (!string.IsNullOrEmpty(resolver.DependencySources.LocalThirdPartyDirectory)) {
-                Log.LogMessage(MessageImportance.Normal, "Using ThirdParty path: " + resolver.DependencySources.LocalThirdPartyDirectory, null);
             }
 
             resolver.ModuleDependencyResolved += (sender, args) => Log.LogMessage(MessageImportance.Normal, "Getting binaries for {0} from the branch {1} {2}", args.DependencyProvider, args.Branch, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));

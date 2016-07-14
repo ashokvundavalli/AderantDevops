@@ -54,13 +54,19 @@ namespace Aderant.Build {
                 }
             }
 
+            AddModules(referencedModules, file);
+        }
+
+        private void AddModules(IEnumerable<ExpertModule> referencedModules, DependenciesFile file) {
             foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
-                if (referencedModule.ModuleType == ModuleType.ThirdParty) {
-                    dependencies.Add(new FSharpOption<string>(group), referencedModule.Name, "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
-                } else {
-                    dependencies.Add(new FSharpOption<string>(group), referencedModule.Name, ">= 8.1 " + group, true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+                if (referencedModule.ModuleType == ModuleType.ThirdParty || referencedModule.GetAction == GetAction.NuGet) {
+                    // This is not the correct API. One should use dependencies.Add(...) but this is much faster as it doesn't call the server
+                    // As soon as we have a version constraint for a package this will fail as we are passing "" for the package version..
+                    file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), string.Empty, FSharpOption<Requirements.InstallSettings>.None);
                 }
             }
+            
+            file.Save();
         }
 
         private bool HasLockFile() {
