@@ -68,11 +68,7 @@ $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 $dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
 
 task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
-    $step = New-Object LogDetail "Get dependencies" 
-
     . $Env:EXPERT_BUILD_FOLDER\Build\Package.ps1 -Repository $Repository
-
-    $step.Finish("Done", [Result]::Succeeded)
 }
 
 task GetDependencies {    
@@ -84,8 +80,6 @@ task GetDependencies {
 }
 
 task Build {
-    $step = New-Object LogDetail "Build" 
-
     exec {        
         if ($Env:AGENT_HOMEDIRECTORY) {
             $loggerAssembly = "$Env:AGENT_HOMEDIRECTORY\Agent\Worker\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
@@ -94,8 +88,6 @@ task Build {
         
         MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger
     }
-
-     $step.Finish("Done", [Result]::Succeeded)
 }
 
 task Clean {    
@@ -105,8 +97,6 @@ task Test {
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
-    $step = New-Object LogDetail "CopyToDrop" 
-
     $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
     $text -match '(?m)(AssemblyFileVersion\(\")(?<version>[0-9]*.[0-9]*.[0-9]*.[0-9]*)' | Out-Null    
     $version = $Matches.version
@@ -120,9 +110,7 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
     $fullDropPath = "$dropLocation\$name\1.8.0.0\$version"
 
     # Associate the drop back to the build
-    Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"
-
-    $step.Finish("Done", [Result]::Succeeded)
+    Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"    
 }
 
 task Init {
@@ -138,5 +126,19 @@ task Init {
     Write-Info ("Build URI:".PadRight(20) + $Env:BUILD_URI)
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 }
+
+function Enter-BuildTask {
+    $script:step = New-Object LogDetail $Task.Name    
+}
+
+function Exit-BuildTask {
+    if ($Task.Error) {
+        Write-Host "Task `"$($Task.Name)`" has errored!" -ForegroundColor Red
+        $script:step.Finish("Done", [Result]::Failed)
+    } else {
+        $script:step.Finish("Done", [Result]::Succeeded)
+    }
+}
+
 
 task Default Package
