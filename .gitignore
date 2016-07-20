@@ -17,7 +17,6 @@
 [Rr]eleases/
 [Xx]64/
 [Xx]86/
-[Bb]uild/
 bld/
 [Bb]in/
 [Oo]bj/
@@ -243,6 +242,9 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-*.dll
-*.exe
-/Src/Build.Tools/FxCopCmd.exe.config
+/Src/Build.Tools/*
+!/Src/Build.Tools/Paket.exe
+!/Src/Build.Tools/plink.exe
+/Test/Dependencies
+
+*.bak

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -46,6 +47,15 @@ namespace Aderant.Build.Tasks {
         public ITaskItem[] ModulesInBuild { get; set; }
 
         /// <summary>
+        /// Gets or sets the build scripts directory.
+        /// </summary>
+        /// <value>
+        /// The build scripts directory.
+        /// </value>
+        [Required]
+        public string BuildScriptsDirectory { get; set; }
+
+        /// <summary>
         /// Gets or sets the TFS server.
         /// </summary>
         /// <value>
@@ -79,9 +89,6 @@ namespace Aderant.Build.Tasks {
             }
 
             var dependencyManifests = GetDependencyManifests();
-            if (dependencyManifests == null) {
-                return true;
-            }
 
             ExpertManifest expertManifest = ExpertManifest.Load(manifest, dependencyManifests);
 
@@ -94,7 +101,7 @@ namespace Aderant.Build.Tasks {
                 System.Threading.Tasks.Task.Run(async () => {
                     // Create a cancellation token so we can abort the async task
                     cancellationToken = new CancellationTokenSource();
-                    await resolver.CopyDependenciesFromDrop(moduleDependenciesDirectory, BuildAll ? DependencyFetchMode.ThirdParty : DependencyFetchMode.Default, cancellationToken);
+                    await resolver.Resolve(moduleDependenciesDirectory, DependencyFetchMode.Default, BuildScriptsDirectory, cancellationToken.Token);
                 }).Wait(); // Wait is used here as to not change the signature of the Execute method
             } catch (Exception ex) {
                 Log.LogError("Failed to get all module dependencies.", null);
@@ -105,6 +112,7 @@ namespace Aderant.Build.Tasks {
 
                     ae.Handle(exception => {
                         Log.LogError(exception.Message, null);
+                        Log.LogErrorFromException(exception, true);
                         return true;
                     });
                 }
@@ -141,8 +149,9 @@ namespace Aderant.Build.Tasks {
         }
 
         private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
-            var resolver = new ModuleDependencyResolver(expertManifest, DropPath);
-
+            var resolver = new ModuleDependencyResolver(expertManifest, DropPath, new BuildTaskLogger(this));
+            resolver.BuildAll = BuildAll;
+            
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
                 Log.LogMessage(MessageImportance.Normal, "Fetch modules for: " + resolver.ModuleName, null);

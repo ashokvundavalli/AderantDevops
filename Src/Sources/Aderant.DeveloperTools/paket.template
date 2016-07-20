@@ -1,0 +1,8 @@
+id Aderant.DeveloperTools.Vsix
+type file
+Version 1.75.0
+Authors Aderant
+Description ""
+
+files
+    bin\Aderant.DeveloperTools.vsix ==> lib

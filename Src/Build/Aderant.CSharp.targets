@@ -201,12 +201,37 @@
   <Target Name="CheckHbmFile" BeforeTargets="CoreBuild">
     <ItemGroup>
       <HbmFiles Include="@(Content-> '%(Filename)%(Extension)' )" />
+      <HbmFiles Include="@(Compile-> '%(Filename)%(Extension)' )" />
     </ItemGroup>
     
     <Error Condition="%(HbmFiles.Identity) == 'OrmMappingDefinitions.hbm.xml' Or  %(HbmFiles.Identity) == 'OrmMappingDefinition.hbm.xml'"
            Text="%0a=========%0aHBM ERROR %0a=========%0aYou have an OrmMappingDefinition.hbm.xml which is not set to EmbeddedResource.%0aThis is almost certainly an error.%0aSet the type of the file to Embedded Resource so it can be loaded by NHibernate." 
            File="-->" />
+
+    <Error Condition="%(HbmFiles.Identity) == 'OrmMappingDefinitions.cs' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'"
+       Text="%0a=========%0aHBM ERROR %0a=========%0aYou have an OrmMappingDefinition.cs which is not a valid ORM mapping file. The correct extension is .hbm.xml, also ensure the .cs file is not checked in."
+       File="-->" />
   </Target>
+  
+
+  <Target Name="ApplyCodeAnalzyer" 
+          BeforeTargets="CoreCompile">
+    
+    <PropertyGroup>
+      <PackageDependenciesFileDirectory>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'paket.dependencies'))</PackageDependenciesFileDirectory>
+    </PropertyGroup>
+    
+    <Error Condition="'$(PackageDependenciesFileDirectory)' == ''" Text="No paket.dependencies file found" />
+    
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Analyzer Include="$(PackageDependenciesFileDirectory)\packages\Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
+    </ItemGroup>
+  </Target>
+  
 
   <!-- Disable copy local for all projects which build to Bin\Module excluding Office integration projects (addins).
        VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
@@ -215,20 +240,11 @@
           BeforeTargets="BeforeResolveReferences"
           AfterTargets="SetupAssemblySearchPaths"
           Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
-
-    <ItemGroup>
-      <Whitelist Include="UIAutomation.Framework.Core" />
-      <Whitelist Include="UIAutomation.Framework.CoreWeb" />
-      <Whitelist Include="UIAutomation.Framework.Crm" />
-      <Whitelist Include="UIAutomation.Framework.Expert" />
-      <Whitelist Include="UIAutomation.Framework.ExpertOnTheGo" />
-      <Whitelist Include="UIAutomation.Framework.ExpertWeb" />
-    </ItemGroup>
     
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
     <PropertyGroup>
       <DisableCopyLocal Condition="$(OutputPath.ToLower().Contains('bin\module')) == 'true'">true</DisableCopyLocal>
-      <DisableCopyLocal Condition="'$(IsWebModule)' != 'true' And $(OutputPath.ToLower().Contains('bin\test')) == 'true'">true</DisableCopyLocal>
+      <DisableCopyLocal Condition="'$(IsWebModule)' != 'true' And $(OutputPath.ToLower().Contains('bin\test')) == 'true'">false</DisableCopyLocal>
 
       <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
 

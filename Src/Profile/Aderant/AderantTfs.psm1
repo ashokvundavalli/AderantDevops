@@ -89,7 +89,7 @@ function GetListOfTfsChildFolders([string] $parentTfsPath){
 .PARAMETER TargetBranch
     The target branch name eg. dev\anotherProduct
 #>
-function Move-Shelveset($Name, $SourceBranch, $TargetBranch) {
+function global:Move-Shelveset($Name, $SourceBranch, $TargetBranch) {
     $sourceBranch = $sourceBranch -replace "\\", "/"
     $targetBranch = $targetBranch -replace "\\", "/"
     $sourceLoc = "$/ExpertSuite/" + $sourceBranch + "/modules"
@@ -114,7 +114,7 @@ function Move-Shelveset($Name, $SourceBranch, $TargetBranch) {
         Merge-Baseless -sourceBranch Dev\Validation -targetBranch Dev\BillingBase -changeSet 273255
     
 #>
-function Merge-Baseless([string] $sourceBranch, [string] $targetBranch, [int] $changeSet) {
+function global:Merge-Baseless([string] $sourceBranch, [string] $targetBranch, [int] $changeSet) {
     # Validate branch names and paths
 
     if (!($sourceBranch)) {
@@ -187,10 +187,9 @@ function Merge-Baseless([string] $sourceBranch, [string] $targetBranch, [int] $c
     Will merge changes in the Main branch up to the Validation development branch but will ignore any modules
     that do not exist in the target branch. This is commonly referred to as a reverse integration merge (RI)
 
-    The user must manually check in the branched changes
-    
+    The user must manually check in the branched changes    
 #>
-function Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $reverseIntegration){
+function global:Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $reverseIntegration){
 
     # Command-Definition
     # Merge-Branch -sourceBranch $sourceBranch -targetBranch $targetBranch
@@ -403,8 +402,8 @@ function Merge-Branch([string] $sourceBranch, [string] $targetBranch, [switch] $
     Write-Host "Merge Completed!!!"
 }
 
-Set-Alias merge Merge-Branch
-Set-Alias bmerge Merge-Baseless
+Set-Alias merge Merge-Branch -Scope Global
+Set-Alias bmerge Merge-Baseless -Scope Global
 Export-ModuleMember -function Merge-Branch -alias merge
 Export-ModuleMember -function Merge-Baseless -alias bmerge
 Export-ModuleMember -function Move-Shelveset

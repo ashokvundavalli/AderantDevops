@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2770-4455-94CF-489136D6405A}"
 EndProject
@@ -18,25 +18,30 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Aderant.wpp.content.proj = Src\Build\Aderant.wpp.content.proj
 		Src\Build\Aderant.wpp.targets = Src\Build\Aderant.wpp.targets
 		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
+		Src\Build\Build.ps1 = Src\Build\Build.ps1
+		Src\Build\BuildModule.ps1 = Src\Build\BuildModule.ps1
+		Src\Build\BuildProcess.ps1 = Src\Build\BuildProcess.ps1
 		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
-		Src\Build\CleanSymlinks.ps1 = Src\Build\CleanSymlinks.ps1
 		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
 		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
 		Src\Build\Mobile.Targets = Src\Build\Mobile.Targets
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
+		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
+		Src\Build\Package.ps1 = Src\Build\Package.ps1
+		Src\Build\paket.exe = Src\Build\paket.exe
 		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B175EF-44C3-4EE4-BCAE-3B796D6A986D}"
 	ProjectSection(SolutionItems) = preProject
-		Src\Profile\Aderant\aderant.git.psm1 = Src\Profile\Aderant\aderant.git.psm1
 		Src\Profile\Aderant\Aderant.psd1 = Src\Profile\Aderant\Aderant.psd1
 		Src\Profile\Aderant\Aderant.psm1 = Src\Profile\Aderant\Aderant.psm1
+		Src\Profile\Aderant\AderantGit.psm1 = Src\Profile\Aderant\AderantGit.psm1
 		Src\Profile\Aderant\AderantTfs.psm1 = Src\Profile\Aderant\AderantTfs.psm1
 		Src\Profile\Aderant\AderantWeb.psm1 = Src\Profile\Aderant\AderantWeb.psm1
-		Src\Profile\Aderant\Bootstrap.ps1 = Src\Profile\Aderant\Bootstrap.ps1
+		Src\Profile\Aderant\BuildLibraryImport.ps1 = Src\Profile\Aderant\BuildLibraryImport.ps1
 		Src\Profile\Aderant\Setup.ps1 = Src\Profile\Aderant\Setup.ps1
 	EndProjectSection
 EndProject
@@ -60,7 +65,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD6
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.PowerShell", "Src\Sources\Aderant.Build.PowerShell\Aderant.Build.PowerShell.csproj", "{D251902D-9537-440A-91B2-DF47D99030F3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules (from branch root)", "Modules (from branch root)", "{38DD1E10-E957-4313-98E6-10D034705484}"
+	ProjectSection(SolutionItems) = preProject
+		..\Modules.proj = ..\Modules.proj
+		..\TFSBuild.proj = ..\TFSBuild.proj
+		..\TFSBuild.rsp = ..\TFSBuild.rsp
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,10 +94,6 @@ Global
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D251902D-9537-440A-91B2-DF47D99030F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D251902D-9537-440A-91B2-DF47D99030F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D251902D-9537-440A-91B2-DF47D99030F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D251902D-9537-440A-91B2-DF47D99030F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

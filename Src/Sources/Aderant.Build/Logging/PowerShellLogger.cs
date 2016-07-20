@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Linq;
 using System.Management.Automation.Host;
 
 namespace Aderant.Build.Logging {
@@ -32,7 +31,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
-        public void Log(string message, params string[] args) {
+        public void Info(string message, params string[] args) {
             host.UI.WriteLine(FormatMessage(message, args));
         }
 

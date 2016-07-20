@@ -7,7 +7,6 @@
 
   <PropertyGroup>
     <PathToModulesToCopy>$(SolutionRoot)</PathToModulesToCopy>
-	  <PathToModulesToCopy Condition="'$(IsDesktopBuild)'=='true'">$(SolutionRoot)\ThirdParty</PathToModulesToCopy>
     <BuildScriptsDirectory>$(SolutionRoot)\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
   </PropertyGroup>
 
@@ -44,7 +43,7 @@
         TaskParameter="id"
         PropertyName="BuildStepId"/>
     </BuildStep>
-	
+
     <ItemGroup>
       <Folders Include="$([System.IO.Directory]::GetDirectories(&quot;$(PathToModulesToCopy)&quot;))" Condition="'$(PathToModulesToCopy)' != ''" />
     </ItemGroup>
@@ -72,17 +71,13 @@
 					  File="$(DropLocation)\ThirdPartyBuild.txt"
 					  Lines="$(BuildNumber)"
 					  Overwrite="true"/>
-	<!--<Exec ContinueOnError="false"
-          Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
-          IgnoreExitCode="false"
-          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)Generate-SummaryFile.ps1" -folder "$(PathToModulesToCopy)\%(Folders.Filename)%(Extension) "' />-->
 		  
-	<!-- Do primary copy case (ThirdParty) -->
+	<!-- Do primary copy case (Help) -->
     <Exec Condition="'%(Folders.Filename)%(Extension)' != 'Build.Infrastructure'"
           ContinueOnError="false"
           IgnoreExitCode="true"
           Command="robocopy $(PathToModulesToCopy)\%(Folders.Filename)%(Extension) $(DropLocation)\%(Folders.Filename)%(Extension) $(CopySwitches) /XD src" />
-		  
+
     <BuildStep
         Condition="('$(IsDesktopBuild)'!='true')"
         TeamFoundationServerUrl="$(TeamFoundationServerUrl)"

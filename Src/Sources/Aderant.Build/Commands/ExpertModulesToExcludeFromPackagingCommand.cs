@@ -40,7 +40,7 @@ namespace Aderant.Build.Commands {
                 HashSet<ExpertModule> thirdParty = new HashSet<ExpertModule>();
 
                 foreach (var module in modulesFromManifest) {
-                    if (module.ModuleType == ModuleType.ThirdParty) {
+                    if (module.ModuleType == ModuleType.ThirdParty || module.ModuleType == ModuleType.Help) {
                         continue;
                     }
 

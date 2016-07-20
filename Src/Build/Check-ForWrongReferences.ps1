@@ -17,11 +17,37 @@ begin{
 
         $ignoreEmptyHintPaths = $true #ignore empty hint paths for now
         $areProjectReferencesValid = $true
+		$isAderantBuildAnalyzerPresent = $true
         if (Test-Path $folder) {
             foreach($dir in Get-ChildItem -Path $folder) {
                 foreach ($csprojFile in Get-ChildItem -Path $dir.FullName -Filter "*.csproj") {
+
+					# sometimes the filter does not work properly
+					if (-not $csprojFile.Name.EndsWith(".csproj", "CurrentCultureIgnoreCase")) {
+					   continue
+					}
+					
                     [string] $csprojFileContent = Get-Content $csprojFile.FullName 
                     [string] $csprojFileContentUpperCase = $csprojFileContent.ToUpperInvariant()
+
+					# verify Aderant.Build.Analyzer reference
+					if (-not ($moduleName.StartsWith("Build.", "CurrentCultureIgnoreCase")) `
+						-and -not ($moduleName.StartsWith("Tests.", "CurrentCultureIgnoreCase")) `
+						-and -not ($moduleName.StartsWith("Internal.", "CurrentCultureIgnoreCase")) `
+						-and -not ($moduleName.EndsWith("AddIn", "CurrentCultureIgnoreCase")) `
+						-and -not ($moduleName.Contains("Install")) `
+						-and -not ($moduleName.Contains("Marketing")) `
+						-and -not ($moduleName.Contains("Help")) `
+						-and -not ($moduleName.Contains("SoftwareFactory")) `
+						-and -not ($moduleName.Contains("Exchange")) `
+						) {
+						if (-not $csprojFileContentUpperCase.Contains("ADERANT.BUILD.ANALYZER")) {
+							Write-Host
+							Write-Host "Missing Aderant.Build.Analyzer in $module -> $csprojFile"
+							$isAderantBuildAnalyzerPresent = $false
+						}
+					}
+
                     $searchPattern = "<HintPath>..\..\Bin\".ToUpperInvariant()
                     $startIndex = 0
                     while ($csprojFileContentUpperCase.IndexOf($searchPattern, $startIndex) -ge 0) {
@@ -48,6 +74,10 @@ begin{
                                 -and -not ($hintPath.StartsWith("<HintPath>$", "CurrentCultureIgnoreCase")) `
                                 -and -not ($hintPath.StartsWith("<HintPath>..\..\Src\Build\Tasks", "CurrentCultureIgnoreCase")) `
                                 -and -not ($hintPath.StartsWith("<HintPath>..\..\Build\Tasks", "CurrentCultureIgnoreCase")) `
+								-and -not ($hintPath.StartsWith("<HintPath>..\..\Src\Build.Tools\", "CurrentCultureIgnoreCase")) `
+								-and -not ($hintPath.StartsWith("<HintPath>..\..\Build.Tools\", "CurrentCultureIgnoreCase")) `
+								-and -not ($hintPath.StartsWith("<HintPath>..\..\packages\", "CurrentCultureIgnoreCase")) `
+								-and -not ($hintPath.StartsWith("<HintPath>..\..\..\Web.", "CurrentCultureIgnoreCase")) `
                                 -and -not ($hintPath.StartsWith("<HintPath>..\..\..\..\ThirdParty\Thirdparty.Microsoft\bin", "CurrentCultureIgnoreCase") -and $module.Name -eq "Build.Infrastructure")) {
                                 if (-not ($ignoreEmptyHintPaths -and $hintPath -eq "<HintPath>")) {
                                     if (-not $areProjectReferencesSuspicious) {
@@ -83,6 +113,9 @@ begin{
                     }
                 }
             }
+        }
+		if ($isAderantBuildAnalyzerPresent -eq $false) {
+            return 4
         }
         if ($areProjectReferencesValid -and -not $areProjectReferencesSuspicious) {
             return 0
@@ -121,15 +154,28 @@ process{
         Write-Host "One or more references might not be set up properly - references to projects within the same solution have to be set as project references, all other references should point to the Dependencies folder."
         Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
         Write-Host
+		throw "Invalid project references"
 
-        if ($Env:TF_BUILD -eq $null) {
-            Write-Host "Continuing build in 10 seconds..."
-            Start-Sleep -s 10
-        }
-    }
-    elseif ($srcCheckResult -eq 0 -or $testCheckResult -eq 0) {
+        #if ($Env:TF_BUILD -eq $null) {
+        #    Write-Host "Continuing build in 10 seconds..."
+        #    Start-Sleep -s 10
+        #}
+    } elseif ($srcCheckResult -eq 4 -or $testCheckResult -eq 4) {
+		Write-Host
+        Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        Write-Host "One or more projects don't have the Aderant.Build.Analyzer set as an analyzer reference - add the analyzer reference to Aderant.Build.Analyzer located as follows:"
+		Write-Host '  <ItemGroup Condition="''$(BuildToolsDirectory)'' == ''''">'
+		Write-Host '    <Analyzer Include="..\..\..\Build.Infrastructure\Src\Build.Tools\Aderant.Build.Analyzer.dll" />'
+		Write-Host '  </ItemGroup>'
+		Write-Host '  <ItemGroup Condition="''$(BuildToolsDirectory)'' != ''''">'
+		Write-Host '    <Analyzer Include="$(BuildToolsDirectory)\Aderant.Build.Analyzer.dll" />'
+		Write-Host '  </ItemGroup>"'
+        Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        Write-Host
+		throw "Missing Aderant.Build.Analyzer references"
+	} elseif ($srcCheckResult -eq 0 -or $testCheckResult -eq 0) {
         Write-Host
         Write-Host "All references seem to be set up right."
         Write-Host
-    }	             
+	} 
 }

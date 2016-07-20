@@ -48,7 +48,7 @@ namespace Aderant.Build {
         }
 
         public static T GetInstance<T>() where T : class {
-            var instance = container.GetExportedValue<T>();
+            var instance = container.GetExportedValues<T>().FirstOrDefault(m => m != null);
 
             if (instance == null) {
                 throw new InvalidOperationException("No instance of type:" + typeof(T) + " in container");

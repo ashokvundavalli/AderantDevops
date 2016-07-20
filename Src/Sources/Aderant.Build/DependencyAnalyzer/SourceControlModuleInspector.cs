@@ -35,7 +35,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return FileExistsInSourceControl(sccPath, ItemType.File);
             }
 
-            if (type == ModuleType.ThirdParty) {
+            if (type == ModuleType.ThirdParty || type == ModuleType.Help) {
                 sccPath = VersionControlPath.Combine("$/ExpertSuite", sourceBranch + "/Modules/ThirdParty/" + moduleName + "/bin");
                 return FileExistsInSourceControl(sccPath, ItemType.Folder);
             } 
@@ -44,7 +44,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private bool FileExistsInSourceControl(string sccPath, ItemType type) {
-            logger.Log("Checking source control: {0}", sccPath);
+            logger.Info("Checking source control: {0}", sccPath);
 
             ItemSet itemSet = service.GetItems(sccPath, VersionSpec.Latest, RecursionType.OneLevel, DeletedState.NonDeleted, type, false);
 

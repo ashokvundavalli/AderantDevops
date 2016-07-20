@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -66,10 +67,16 @@ namespace Aderant.Build.DependencyAnalyzer {
                     var elements = manifest.Descendants("ReferencedModule");
 
                     foreach (var element in elements) {
-                        var module = ExpertModule.Create(element);
+                        var mergedElement = element;
+
+                        if (GlobalAttributesProvider != null) {
+                            mergedElement = GlobalAttributesProvider.MergeAttributes(mergedElement);
+                        }
+
+                        var module = ExpertModule.Create(mergedElement);
 
                         if (referencedModules.Contains(module)) {
-                            throw new DuplicateModuleInManifestException(string.Format("The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
+                            throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
                         }
 
                         referencedModules.Add(module);
@@ -78,6 +85,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return referencedModules;
             }
         }
+
+        internal IGlobalAttributesProvider GlobalAttributesProvider { get; set; }
 
         /// <summary>
         /// Loads a dependency manifest from the given module directory.
@@ -142,5 +151,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             ExpertModuleMapper mapper = new ExpertModuleMapper();
             return mapper.Save(this, manifest);
         }
+    }
+
+    internal interface IGlobalAttributesProvider {
+        XElement MergeAttributes(XElement element);
     }
 }

@@ -1,0 +1,9 @@
+id Aderant.Build.Analyzer
+type project
+Version 1.0.1
+Authors Aderant
+Description "Provides code fixes and refactorings for C# projects"
+
+files
+    bin\Aderant.Build.Analyzer.dll ==> analyzers\dotnet\cs
+    bin\Aderant.Build.Analyzer.pdb ==> analyzers\dotnet\cs

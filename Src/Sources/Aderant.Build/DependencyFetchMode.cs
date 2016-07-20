@@ -1,7 +1,7 @@
 namespace Aderant.Build {
 
     /// <summary>
-    /// Specifies the aviable modes for fetching dependencies
+    /// Specifies the available modes for fetching dependencies
     /// </summary>
     internal enum DependencyFetchMode {
         /// <summary>

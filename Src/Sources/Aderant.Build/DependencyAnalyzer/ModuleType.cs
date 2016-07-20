@@ -47,6 +47,7 @@
         /// The tests module type
         /// </summary>
         Test,
-        Performance
+        Performance,
+        Help
     }
 }

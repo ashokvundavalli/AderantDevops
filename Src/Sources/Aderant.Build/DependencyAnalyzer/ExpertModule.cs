@@ -39,11 +39,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentNullException("element", "No name element specified");
             }
 
-            if (GetModuleType(name.Value) == ModuleType.ThirdParty) {
+            var moduleType = GetModuleType(name.Value);
+            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
                 return new ThirdPartyModule(element);
             }
 
-            if (GetModuleType(name.Value) == ModuleType.Web) {
+            if (moduleType == ModuleType.Web) {
                 return new WebModule(element);
             }
             return new ExpertModule(element);
@@ -61,6 +62,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             SetPropertyValue(value => FileVersion = value, element, "FileVersion");
             SetPropertyValue(value => Branch = value, element, "Path");
             SetPropertyValue(SetGetAction, element, "GetAction");
+
+            if (ModuleType == ModuleType.ThirdParty) {
+                RepositoryType = RepositoryType.NuGet;
+            }
+
+            if (GetAction == GetAction.NuGet) {
+                RepositoryType = RepositoryType.NuGet;
+            }
         }
 
         private void SetPropertyValue(Action<string> setAction, XElement element, string attributeName) {
@@ -150,7 +159,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Help builds to /bin just like a third party module
             if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.ThirdParty;
+                return ModuleType.Help;
             }
 
             if (name.StartsWith("BUILD", StringComparison.OrdinalIgnoreCase)) {
@@ -223,6 +232,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        internal RepositoryType RepositoryType { get; set; }
+
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
         /// </summary>
@@ -279,7 +290,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
 
             DirectoryOperations directoryOperations = FileSystem.Directory;
-            string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
+
+            if (!directoryOperations.Exists(dropLocation)) {
+                throw new BuildNotFoundException("No drop location for " + Name);
+            }
+
+           string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
             string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
             foreach (string build in orderedBuilds) {
@@ -342,9 +358,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal static bool CheckLog(string logfile) {
-            //ReverseLineReader lineReader = new ReverseLineReader(logfile);
-
-            // temp fix until I have this working with UCS-2 Little Endian files
+            // UCS-2 Little Endian files sometimes get created which makes it difficult
+            // to produce an efficient solution for reading a text file backwards
             IEnumerable<string> lineReader = File.ReadAllLines(logfile).Reverse().Take(10);
 
             int i = 0;
@@ -385,7 +400,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         specific_path,
         specific_path_external_module,
 
-        SpecificDropLocation
+        SpecificDropLocation,
+        NuGet
     }
 }
 

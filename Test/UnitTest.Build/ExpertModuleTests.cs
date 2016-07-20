@@ -256,5 +256,12 @@ ExcludeFromPackaging='true' />"));
             Assert.AreEqual(@"\\na.aderant.com\expertsuite\Dev\MP2\Libraries.SoftwareFactory\1.8.0.0\1.8.5586.5500", actual, true);
 
         }
+
+        [TestMethod]
+        public void Mapping_of_manifest_entry_with_NuGet_source() {
+            var module = new ExpertModule(XElement.Parse(@"<Module Name='MyModule' AssemblyVersion='5.3.1.0' GetAction='NuGet' />"));
+            
+            Assert.AreEqual(GetAction.NuGet, module.GetAction);
+        }
     }
 }

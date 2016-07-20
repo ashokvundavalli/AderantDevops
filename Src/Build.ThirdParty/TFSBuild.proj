@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="AfterCompile"
+         xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="12.0">
+
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets" Condition="'$(TeamFoundationTargetImported)' != 'true' "/>
+
+  <PropertyGroup>
+    <RootFolder>$(SolutionRoot)</RootFolder>
+    <BuildScriptsDirectory>$(SolutionRoot)\Build.Infrastructure\Src\Build\</BuildScriptsDirectory>
+	<BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
+	<BuildAssembly>$(BuildToolsDirectory)\Aderant.Build.dll</BuildAssembly>
+  </PropertyGroup>
+  
+  <Target Name="AfterCompile">
+    <CallTarget Targets="CompileBuildInfrastructure" />
+	<CallTarget Targets="CreateAndPushPaketTemplates" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        Compile a few bits of Build.Infrastructure
+    ==========================================================================================
+  -->  
+  <Target Name="CompileBuildInfrastructure">
+    <!-- Optionally compile Build.Infrastructure -->
+      <ItemGroup>
+        <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\FxCopCmd\FxCopCmd.csproj" />
+        <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\Aderant.Build\Aderant.Build.csproj" />
+        <Projects Include="$(SolutionRoot)\Build.Infrastructure\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
+                  Condition="'$(IsDesktopBuild)' != 'true'" />
+      </ItemGroup>
+	  
+    <MSBuild Projects="@(Projects)" />
+      
+  </Target>
+
+    
+  <UsingTask TaskName="CreatePaketTemplatesTask"
+             AssemblyFile="$(BuildAssembly)" />
+
+  <UsingTask TaskName="PushPaketTemplatesTask"
+             AssemblyFile="$(BuildAssembly)" />
+
+
+  <!--
+    ==========================================================================================
+        Create paket templates and push them to the internal nuget server
+    ==========================================================================================
+  -->
+  <Target Name="CreateAndPushPaketTemplates">
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Creating paket templates"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"/>
+    </BuildStep>
+	
+	<CreatePaketTemplatesTask RootFolder="$(RootFolder)"
+							  BuildScriptsDirectory="$(BuildScriptsDirectory)"
+							  BuildToolsDirectory="$(BuildToolsDirectory)" />
+
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+
+      <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      Message="Pushing paket templates to nuget server"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildURI)">
+      <Output
+        TaskParameter="id"
+        PropertyName="BuildStepId"/>
+    </BuildStep>
+
+    <PushPaketTemplatesTask RootFolder="$(RootFolder)"
+                            BuildScriptsDirectory="$(BuildScriptsDirectory)" />
+	
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Succeeded" />
+      
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
+
+  <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+  <Target Name="MarkBuildStepAsFailed">
+    <BuildStep
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      Id="$(BuildStepId)"
+      Status="Failed" />
+    <SetBuildProperties
+      Condition="('$(IsDesktopBuild)'!='true')"
+      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+      BuildUri="$(BuildUri)"
+      CompilationStatus="Failed" />
+    <Error Condition="('$(IsDesktopBuild)'=='true')"/>
+  </Target>
+
+</Project>

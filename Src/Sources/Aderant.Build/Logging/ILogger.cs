@@ -15,7 +15,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
-        void Log(string message, params string[] args);
+        void Info(string message, params string[] args);
 
         /// <summary>
         /// Writes a warning message.
