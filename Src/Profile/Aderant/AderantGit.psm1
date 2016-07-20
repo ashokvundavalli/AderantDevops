@@ -12,9 +12,6 @@ function global:prompt {
 
     Write-Host "PS $(location)" -NoNewline
 
-    #TODO: Remove global variables        
-    WriteRepositoryInfo $location        
-
     if ($ShellContext.PoshGitAvailable) {
         Write-VcsStatus
 
@@ -46,17 +43,6 @@ function global:Invoke-Build([switch]$force) {
     }
 
     . $buildFile
-}
-
-function WriteRepositoryInfo([string]$location) {
-    $path = $global:CurrentModulePath.TrimEnd('\')
-
-    # As a reminder, write the repository hint if we are outside of the directory 
-    if (-not $location.Contains($path)) {
-        Write-Host " [" -ForegroundColor Yellow -NoNewline
-        Write-Host $global:CurrentModuleName -ForegroundColor DarkCyan -NoNewline 
-        Write-Host "]" -ForegroundColor Yellow -NoNewline
-    }
 }
 
 function ValidateRepository([string]$path, [bool]$force) {
