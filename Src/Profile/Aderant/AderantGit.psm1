@@ -105,6 +105,10 @@ function InstallPoshGit() {
 function ConfigureGit() {
     & git config --global --add difftool.prompt false
     & git config --global credential.tfs.integrated true
+
+    # set up notepad++ as the default commit editor
+    # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
+
 }
 
 InstallPoshGit
