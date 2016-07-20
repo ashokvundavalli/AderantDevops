@@ -125,7 +125,7 @@ task Init {
 
     Write-Info "Established build environment"
 
-    Write-Info ("Build URI:".PadRight(20) + $Env:BUILD_URI)
+    Write-Info ("Build URI:".PadRight(20) + $Env:BUILD_BUILDURI)
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 }
 
