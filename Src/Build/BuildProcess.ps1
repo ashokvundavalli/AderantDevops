@@ -1,22 +1,21 @@
-#[CmdletBinding()]
 param(
     $Configuration = 'Release',
-    $Repository
+    [string]$Repository
 )
 
 Enum Result {
- Succeeded
- SucceededWithIssues
- Failed
- Cancelled
- Skipped
+    Succeeded
+    SucceededWithIssues
+    Failed
+    Cancelled
+    Skipped
 }
 
 Enum State {
- Unknown
- Initialized
- InProgress
- Completed
+    Unknown
+    Initialized
+    InProgress
+    Completed
 }
 
 class LogDetail {
@@ -67,7 +66,10 @@ $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
 $dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
 
-task Package -Jobs Init, Clean, GetDependencies, Build, Test, CopyToDrop, {
+task EndToEnd -Jobs Init, Clean, GetDependencies, Build, Test, Package, CopyToDrop, {
+}
+
+task Package -Jobs Init,  {
     . $Env:EXPERT_BUILD_FOLDER\Build\Package.ps1 -Repository $Repository
 }
 
@@ -141,4 +143,4 @@ function Exit-BuildTask {
 }
 
 
-task Default Package
+task Default EndToEnd

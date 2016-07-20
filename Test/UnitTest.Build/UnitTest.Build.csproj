@@ -71,6 +71,7 @@
     <Compile Include="IntegrationTestBuilderTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="ModuleWorkspaceTests.cs" />
+    <Compile Include="Packaging\PackagerTests.cs" />
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>

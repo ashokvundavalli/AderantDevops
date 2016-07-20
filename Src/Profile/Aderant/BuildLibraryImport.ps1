@@ -65,9 +65,6 @@ function LoadAssembly($properties, [string]$targetAssembly) {
 
         #Imports the specified modules without locking it on disk
         $assemblyBytes = [System.IO.File]::ReadAllBytes($targetAssembly)
-
-        [System.Reflection.Assembly]$assembly 
-
         $pdb = [System.IO.Path]::ChangeExtension($targetAssembly, "pdb");        
 
         if (Test-Path $pdb) {
@@ -126,15 +123,11 @@ function UpdateOrBuildAssembly($properties) {
 $actualPath = GetSymbolicLinkTarget (Split-Path -Parent $MyInvocation.MyCommand.Definition)   
 
 $ShellContext = New-Object -TypeName PSObject
-$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { 
-    [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build")) 
-}
-$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { 
-    [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools")) 
-}
-$ShellContext | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value { 
-    [System.IO.Path]::Combine($This.BuildScriptsDirectory, "paket.exe") 
-}
+$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build")) }
+$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools")) }
+$ShellContext | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value { [System.IO.Path]::Combine($This.BuildScriptsDirectory, "paket.exe") }
+$ShellContext | Add-Member -MemberType NoteProperty -Name IsGitRepository -Value $false
+$ShellContext | Add-Member -MemberType NoteProperty -Name PoshGitAvailable -Value $false
 
 Write-Debug $ShellContext
 

@@ -53,6 +53,7 @@
   <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
   <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
     </Reference>
@@ -232,10 +233,9 @@
     <Compile Include="UpgradeTemplateBuildProcess.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
-    <None Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
-    <None Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
-    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
+    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
+    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
+    <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Commands\Assets\OpenTypeStd\" />

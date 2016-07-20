@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.FSharp.Core;
+using Newtonsoft.Json;
 using Paket;
 
 namespace Aderant.Build.Packaging {
@@ -16,9 +17,7 @@ namespace Aderant.Build.Packaging {
             this.physicalFileSystem = physicalFileSystem;
         }
 
-        public PackResult Pack() {
-            //System.Diagnostics.Debugger.Launch();
-
+        public PackResult Pack(string version) {
             var files = physicalFileSystem.GetFiles(physicalFileSystem.Root, "paket.dependencies", false);
 
             var dependenciesFile = files.FirstOrDefault();
@@ -33,7 +32,7 @@ namespace Aderant.Build.Packaging {
             };
 
             foreach (var file in GetTemplateFiles()) {
-                PackageProcess.Pack(physicalFileSystem.Root, DependenciesFile.ReadFromFile(spec.DependenciesFile), spec.OutputPath, FSharpOption<string>.None, FSharpOption<string>.None, FSharpOption<string>.None, new List<Tuple<string, string>>(), FSharpOption<string>.None, FSharpOption<string>.Some(file), GenerateExcludedTemplates(), false, false, false, false, FSharpOption<string>.None);
+                PackageProcess.Pack(physicalFileSystem.Root, DependenciesFile.ReadFromFile(spec.DependenciesFile), spec.OutputPath, FSharpOption<string>.None, FSharpOption<string>.None, FSharpOption<string>.Some(version), new List<Tuple<string, string>>(), FSharpOption<string>.None, FSharpOption<string>.Some(file), GenerateExcludedTemplates(), false, false, false, false, FSharpOption<string>.None);
             }
 
             return new PackResult(spec);
@@ -54,9 +53,36 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        public static PackResult Package(string repository) {
+        public static PackResult Package(string repository, string version) {
             var packager = new Packager(new PhysicalFileSystem(repository));
-            return packager.Pack();
+            return packager.Pack(version);
+        }
+
+        public static string CreatePackageVersion(string versionJson) {
+            dynamic o = JsonConvert.DeserializeObject<dynamic>(versionJson);
+
+            string preReleaseLabel = o.PreReleaseLabel;
+            string nugetVersion2 = o.NuGetVersionV2;
+
+           return PackageVersion.CreateVersion(preReleaseLabel, nugetVersion2);
+        }
+    }
+
+    internal class PackageVersion {
+        internal static string CreateVersion(string preReleaseLabel, string nugetVersion2) {
+            if (!string.IsNullOrEmpty(preReleaseLabel)) {
+                var pos = nugetVersion2.IndexOf(preReleaseLabel, StringComparison.Ordinal);
+
+                if (pos >= 0) {
+                    nugetVersion2 = nugetVersion2.Replace(preReleaseLabel, RemoveIllegalCharacters(preReleaseLabel));
+                }
+            }
+
+            return nugetVersion2;
+        }
+
+        private static string RemoveIllegalCharacters(string text) {
+            return text.Replace("-", string.Empty).Replace("_", String.Empty);
         }
     }
 
