@@ -232,7 +232,7 @@ doc.Save(File);
     <CallTarget Targets="GetModuleDependencies" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
-    <CallTarget Targets="CheckForWrongReferences" />
+    <!--<CallTarget Targets="CheckForWrongReferences" />-->
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipTemplateModule" />
