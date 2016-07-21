@@ -99,8 +99,6 @@ task Clean {
 
 task Test {
     if (-not $IsDesktopBuild) {
-        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll")        
-
         . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "**/*.trx" -mergeTestResults $true -publishRunAttachments $true
     }
 }
@@ -140,6 +138,8 @@ task Init {
         $agentDistributedTaskInternalModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll"
         $agentDistributedTaskCommonModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll"
    
+        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll") | Out-Null       
+
         Write-Host "Importing VSTS Module $agentDistributedTaskInternalModulePath"
         Import-Module $agentDistributedTaskInternalModulePath
     
