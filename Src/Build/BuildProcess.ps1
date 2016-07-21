@@ -101,6 +101,8 @@ task Test {
     if (-not $IsDesktopBuild) {
         . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "**/*.trx" -mergeTestResults $true -publishRunAttachments $true
     }
+
+    # http://tfs:8080/tfs/Aderant/ExpertSuite/_apis/test/codeCoverage?buildId=630576&flags=1&api-version=2.0-preview
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
@@ -138,7 +140,8 @@ task Init {
         $agentDistributedTaskInternalModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll"
         $agentDistributedTaskCommonModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll"
    
-        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll") | Out-Null       
+        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll") | Out-Null
+        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.TestManagement.WebApi.dll") | Out-Null
 
         Write-Host "Importing VSTS Module $agentDistributedTaskInternalModulePath"
         Import-Module $agentDistributedTaskInternalModulePath
