@@ -115,6 +115,7 @@
     <Compile Include="IFileSystem.cs" />
     <Compile Include="Packaging\CreatePaketTemplatesAction.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
+    <Compile Include="Packaging\InvalidPrereleaseLabel.cs" />
     <Compile Include="Packaging\Packager.cs" />
     <Compile Include="Packaging\PushPaketTemplatesAction.cs" />
     <Compile Include="Packaging\VersionParser.cs" />

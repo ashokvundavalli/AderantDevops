@@ -24,6 +24,7 @@ class LogDetail {
     [datetime]$finishTime
     [State]$state
     [Result]$result
+    [bool]$isDesktopBuild
 
     LogDetail([string]$message){ 
         $this.start($message)
@@ -35,8 +36,7 @@ class LogDetail {
         $this.Log($message)
     }
 
-    [void] Finish([string]$message, [Result]$result) {   
-                
+    [void] Finish([string]$message, [Result]$result) {                
         $this.finishTime = [DateTime]::UtcNow
         $this.state = [State]::Completed
         $this.result = $result
@@ -45,6 +45,10 @@ class LogDetail {
 
     [void] Log([string]$message) {
         $stateText = $this.state.ToString()
+
+        if ($this.isDesktopBuild) {
+            return
+        }        
 
         if ($this.state -eq [State]::InProgress) {
             Write-Host ("##vso[task.logdetail id=$($this.id);type=build;name=$message;order=1;starttime=$($this.startTime);state=$stateText;]")
@@ -94,6 +98,9 @@ task Clean {
 }
 
 task Test {
+    if (-not $IsDesktopBuild) {
+        . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "**/*.trx" -mergeTestResults $true -publishRunAttachments $true
+    }
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
@@ -127,16 +134,17 @@ task Init {
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 }
 
-function Enter-BuildTask {
-    #$script:step = New-Object LogDetail $Task.Name    
+function Enter-BuildTask {    
+    $script:step = New-Object LogDetail $Task.Name
+    $script:step.isDesktopBuild = $IsDesktopBuild    
 }
 
 function Exit-BuildTask {
     if ($Task.Error) {
         Write-Host "Task `"$($Task.Name)`" has errored!" -ForegroundColor Red
-        #$script:step.Finish("Done", [Result]::Failed)
-    } else {
-        #$script:step.Finish("Done", [Result]::Succeeded)
+        $script:step.Finish("Done", [Result]::Failed)        
+    } else {        
+        $script:step.Finish("Done", [Result]::Succeeded)        
     }
 }
 
