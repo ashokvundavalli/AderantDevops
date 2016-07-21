@@ -72,6 +72,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules (from branch root)"
 		..\TFSBuild.rsp = ..\TFSBuild.rsp
 	EndProjectSection
 EndProject
+Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "Aderant.Build.Agent", "Src\Sources\Aderant.Build.Agent\Aderant.Build.Agent.pssproj", "{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -94,6 +96,10 @@ Global
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

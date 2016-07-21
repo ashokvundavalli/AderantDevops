@@ -1,0 +1,38 @@
+{
+   "id": "415ab5a5-955f-4631-9bdc-a12c2c911f58",
+   "name": "ExpertBuildPipeline",
+   "friendlyName": "Expert Build Pipeline",
+   "description": "Encapsulates the Expert build pipeline",
+   "category": "Build",
+   "author": "Aderant",
+   "version": {
+      "Major": 0,
+      "Minor": 1,
+      "Patch": 0
+   },
+   "minimumAgentVersion": "1.83.0",
+   "inputs": [
+      {
+         "name": "Repository",
+         "type": "string",
+         "label": "Build Infrastructure Repository",
+         "defaultValue": "http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure",
+         "required": true,
+         "helpMarkDown": "Git repository which contains the Build Infrastructure tool chain to use"
+      },
+      {
+         "name": "Version",
+         "type": "string",
+         "label": "Version",
+         "defaultValue": "master",
+         "required": true,
+         "helpMarkDown": "The version of the tool chain you want to use."
+      }
+   ],
+   "instanceNameFormat": "Pipeline script: $(ScriptPath)",
+   "execution": {
+      "PowerShell3": {
+         "target": "Pipeline.ps1"
+      }
+   }
+}
