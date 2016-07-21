@@ -22,11 +22,6 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 4)]
         public SwitchParameter IncludeThirdParty { get; set; }
 
-        // This should be removed when we are fully migrated over. This exists for compatibility with other branches.
-        [Parameter(Mandatory = false, Position = 5)]
-        [Obsolete]
-        public SwitchParameter UseThirdPartyFromDrop { get; set; }
-
         protected override void ProcessRecord() {
             string branchPath = ParameterHelper.GetBranchPath(BranchPath, SessionState);
 
