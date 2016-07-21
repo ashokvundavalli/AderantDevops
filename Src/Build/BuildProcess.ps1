@@ -3,61 +3,61 @@ param(
     [string]$Repository
 )
 
-#Enum Result {
-#    Succeeded
-#    SucceededWithIssues
-#    Failed
-#    Cancelled
-#    Skipped
-#}
+Enum Result {
+    Succeeded
+    SucceededWithIssues
+    Failed
+    Cancelled
+    Skipped
+}
 
-#Enum State {
-#    Unknown
-#    Initialized
-#    InProgress
-#    Completed
-#}
+Enum State {
+    Unknown
+    Initialized
+    InProgress
+    Completed
+}
 
-#class LogDetail {
-#    [Guid]$id = [Guid]::NewGuid()
-#    [datetime]$startTime
-#    [datetime]$finishTime
-#    [State]$state
-#    [Result]$result
+class LogDetail {
+    [Guid]$id = [Guid]::NewGuid()
+    [datetime]$startTime
+    [datetime]$finishTime
+    [State]$state
+    [Result]$result
 
-#    LogDetail([string]$message){ 
-#        $this.start($message)
-#    }
+    LogDetail([string]$message){ 
+        $this.start($message)
+    }
 
-#    [void] Start([string]$message) {
-#        $this.startTime = [DateTime]::UtcNow
-#        $this.state = [State]::InProgress
-#        $this.Log($message)
-#    }
+    [void] Start([string]$message) {
+        $this.startTime = [DateTime]::UtcNow
+        $this.state = [State]::InProgress
+        $this.Log($message)
+    }
 
-#    [void] Finish([string]$message, [Result]$result) {   
+    [void] Finish([string]$message, [Result]$result) {   
                 
-#        $this.finishTime = [DateTime]::UtcNow
-#        $this.state = [State]::Completed
-#        $this.result = $result
-#        $this.Log($message)
-#    }
+        $this.finishTime = [DateTime]::UtcNow
+        $this.state = [State]::Completed
+        $this.result = $result
+        $this.Log($message)
+    }
 
-#    [void] Log([string]$message) {
-#        $stateText = $this.state.ToString()
+    [void] Log([string]$message) {
+        $stateText = $this.state.ToString()
 
-#        if ($this.state -eq [State]::InProgress) {
-#            Write-Host ("##vso[task.logdetail id=$($this.id);type=build;name=$message;order=1;starttime=$($this.startTime);state=$stateText;]")
-#            return
-#        }
+        if ($this.state -eq [State]::InProgress) {
+            Write-Host ("##vso[task.logdetail id=$($this.id);type=build;name=$message;order=1;starttime=$($this.startTime);state=$stateText;]")
+            return
+        }
 
-#        if ($this.state -eq [State]::Completed) {
-#            $resultText = $this.result.ToString()
+        if ($this.state -eq [State]::Completed) {
+            $resultText = $this.result.ToString()
 
-#            Write-Host ("##vso[task.logdetail id=$($this.id);finishtime=$($this.finishTime);result=$resultText;state=$stateText]$message")        
-#        }        
-#    }  
-#}
+            Write-Host ("##vso[task.logdetail id=$($this.id);finishtime=$($this.finishTime);result=$resultText;state=$stateText]$message")        
+        }        
+    }  
+}
 
 $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 use -Path $MSBuildLocation -Name MSBuild
@@ -84,7 +84,9 @@ task Build {
             $logger = "/dl:CentralLogger,`"$loggerAssembly`"*ForwardingLogger,`"$loggerAssembly`""
         }        
         
-        MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger /nologo #/verbosity:quiet
+        # /p:RunWixToolsOutOfProc=true is required due to bug 
+        # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
+        MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger /nologo /p:RunWixToolsOutOfProc=true
     }
 }
 
