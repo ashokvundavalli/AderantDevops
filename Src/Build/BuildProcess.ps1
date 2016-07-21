@@ -99,6 +99,8 @@ task Clean {
 
 task Test {
     if (-not $IsDesktopBuild) {
+        [System.Reflection.Assembly]::LoadFrom($Env:AGENT_HOMEDIRECTORY + "\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll")        
+
         . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "**/*.trx" -mergeTestResults $true -publishRunAttachments $true
     }
 }
