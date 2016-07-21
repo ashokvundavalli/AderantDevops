@@ -98,6 +98,10 @@ task Clean {
 }
 
 task Test {
+    Write-Host $distributedTaskContext
+
+    $global:distributedTaskContext = $distributedTaskContext
+
     if (-not $IsDesktopBuild) {
         . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "$Repository\**\*.trx" -mergeTestResults $true -publishRunAttachments $true
     }
