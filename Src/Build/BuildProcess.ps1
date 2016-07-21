@@ -84,7 +84,7 @@ task GetDependencies {
 task Build {
     exec {        
         if ($Env:AGENT_HOMEDIRECTORY) {
-            $loggerAssembly = "$Env:AGENT_HOMEDIRECTORY\Agent\Worker\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
+            $loggerAssembly = "$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
             $logger = "/dl:CentralLogger,`"$loggerAssembly`"*ForwardingLogger,`"$loggerAssembly`""
         }        
         
@@ -99,7 +99,7 @@ task Clean {
 
 task Test {
     if (-not $IsDesktopBuild) {
-        [System.Reflection.Assembly]::LoadFrom($Env:AGENT_HOMEDIRECTORY + "\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll")        
+        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll")        
 
         . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "**/*.trx" -mergeTestResults $true -publishRunAttachments $true
     }
@@ -134,6 +134,18 @@ task Init {
 
     Write-Info ("Build URI:".PadRight(20) + $Env:BUILD_BUILDURI)
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
+
+    if (-not $IsDesktopBuild) {        
+        $agentWorkerModulesPath = "$($env:AGENT_HOMEDIRECTORY)\agent\worker\Modules"
+        $agentDistributedTaskInternalModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll"
+        $agentDistributedTaskCommonModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll"
+   
+        Write-Host "Importing VSTS Module $agentDistributedTaskInternalModulePath"
+        Import-Module $agentDistributedTaskInternalModulePath
+    
+        Write-Host "Importing VSTS Module $agentDistributedTaskCommonModulePath"
+        Import-Module $agentDistributedTaskCommonModulePath
+    }
 }
 
 function Enter-BuildTask {    
