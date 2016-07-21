@@ -139,9 +139,10 @@ task Init {
         $agentWorkerModulesPath = "$($env:AGENT_HOMEDIRECTORY)\agent\worker\Modules"
         $agentDistributedTaskInternalModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll"
         $agentDistributedTaskCommonModulePath = "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll"
-   
+                  
         [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Interfaces.dll") | Out-Null
         [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.TestManagement.WebApi.dll") | Out-Null
+        [System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.Agent.Common.dll") | Out-Null
 
         Write-Host "Importing VSTS Module $agentDistributedTaskInternalModulePath"
         Import-Module $agentDistributedTaskInternalModulePath
