@@ -1,6 +1,8 @@
 NUGET
   remote: https://www.nuget.org/api/v2
     Castle.Core (3.3.3) - framework: >= net45
+    Microsoft.AspNet.WebApi.Client (5.2.3) - framework: >= net45
+      Newtonsoft.Json (>= 6.0.4) - framework: >= net45, portable-wp80+win+wp81+wpa81
     Microsoft.CodeAnalysis.Analyzers (1.1)
     Microsoft.CodeAnalysis.Common (1.2.2)
       Microsoft.CodeAnalysis.Analyzers (>= 1.1)
@@ -15,13 +17,33 @@ NUGET
       Microsoft.CodeAnalysis.Common (1.2.2)
       Microsoft.Composition (>= 1.0.27)
     Microsoft.Composition (1.0.30)
+    Microsoft.IdentityModel.Clients.ActiveDirectory (3.12) - framework: >= net45
+    Microsoft.IdentityModel.Logging (1.0) - framework: >= net451
+    Microsoft.IdentityModel.Tokens (5.0) - framework: >= net451
+      Microsoft.IdentityModel.Logging (>= 1.0) - framework: >= net451, >= netstandard14
+      Newtonsoft.Json (>= 9.0.1) - framework: >= net451, >= netstandard14
     Microsoft.NETCore.Platforms (1.0.1) - framework: dnxcore50, >= netstandard11
     Microsoft.NETCore.Targets (1.0.1) - framework: dnxcore50, >= netstandard11
+    Microsoft.TeamFoundationServer.Client (14.95.3)
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
+      Microsoft.VisualStudio.Services.Client (14.95.3) - framework: >= net45
+      Newtonsoft.Json (>= 6.0.8) - framework: >= net45
+    Microsoft.VisualStudio.Services.Client (14.95.3) - framework: >= net45
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
+      Newtonsoft.Json (>= 6.0.8) - framework: >= net45
+    Microsoft.VisualStudio.Services.InteractiveClient (14.95.3)
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.16.204221202) - framework: >= net45
+      Microsoft.VisualStudio.Services.Client (14.95.3) - framework: >= net45
+      Newtonsoft.Json (>= 6.0.8) - framework: >= net45
+      System.IdentityModel.Tokens.Jwt (>= 4.0) - framework: >= net45
+      WindowsAzure.ServiceBus (>= 2.5.1) - framework: >= net45
     Microsoft.WindowsAPICodePack-Core (1.1.0.2) - framework: >= net35
     Microsoft.WindowsAPICodePack-Shell (1.1)
       Microsoft.WindowsAPICodePack-Core (>= 1.1) - framework: >= net35
     Moq (4.5.16)
       Castle.Core (>= 3.3.3) - framework: >= net45
+    Newtonsoft.Json (9.0.1) - framework: >= net45
     System.Collections (4.0.11) - framework: dnxcore50, >= netstandard11
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: dnxcore50, netstandard10, >= netstandard13
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, >= netstandard13
@@ -43,6 +65,8 @@ NUGET
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: dnxcore50, netstandard10, >= netstandard13
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, >= netstandard13
       System.Runtime (>= 4.1) - framework: dnxcore50, netstandard10, >= netstandard13
+    System.IdentityModel.Tokens.Jwt (5.0) - framework: >= net45
+      Microsoft.IdentityModel.Tokens (>= 5.0) - framework: >= net451, >= netstandard14
     System.IO (4.1) - framework: dnxcore50, >= netstandard11
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
@@ -127,3 +151,4 @@ NUGET
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, >= netstandard13
       System.Runtime (>= 4.1) - framework: dnxcore50, netstandard10, >= netstandard13
     WindowsAPICodePack-Core (1.1.2)
+    WindowsAzure.ServiceBus (3.3.1) - framework: >= net45

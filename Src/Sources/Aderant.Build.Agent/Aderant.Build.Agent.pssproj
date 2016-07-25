@@ -28,9 +28,45 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="BuildPipeline\" />
+    <Folder Include="BuildPipeline\ps_modules\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\de-de\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\en-US\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\es-es\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\fr-fr\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\it-IT\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\ja-jp\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\ko-KR\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\ru-RU\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\zh-CN\" />
+    <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\zh-TW\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuildPipeline\Pipeline.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\FindFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\InputFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\lib.json" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\LocalizationFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\LoggingCommandFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\LongPathFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\OutFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\ServerOMFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\de-de\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\en-US\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\es-es\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\fr-fr\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\it-IT\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\ja-jp\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\ko-KR\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\ru-RU\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\zh-CN\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\zh-TW\resources.resjson" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\ToolFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\TraceFunctions.ps1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\VstsTaskSdk.psd1" />
+    <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\VstsTaskSdk.psm1" />
     <Compile Include="PublishTask.ps1" />
   </ItemGroup>
   <ItemGroup>

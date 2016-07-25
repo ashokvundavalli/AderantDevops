@@ -1,38 +1,52 @@
 {
-   "id": "415ab5a5-955f-4631-9bdc-a12c2c911f58",
-   "name": "ExpertBuildPipeline",
-   "friendlyName": "Expert Build Pipeline",
-   "description": "Encapsulates the Expert build pipeline",
-   "category": "Build",
-   "author": "Aderant",
-   "version": {
-      "Major": 0,
-      "Minor": 1,
-      "Patch": 0
-   },
-   "minimumAgentVersion": "1.83.0",
-   "inputs": [
-      {
-         "name": "Repository",
-         "type": "string",
-         "label": "Build Infrastructure Repository",
-         "defaultValue": "http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure",
-         "required": true,
-         "helpMarkDown": "Git repository which contains the Build Infrastructure tool chain to use"
-      },
-      {
-         "name": "Version",
-         "type": "string",
-         "label": "Version",
-         "defaultValue": "master",
-         "required": true,
-         "helpMarkDown": "The version of the tool chain you want to use."
+  "id": "415ab5a5-955f-4631-9bdc-a12c2c911f58",
+  "name": "ExpertBuildPipeline",
+  "friendlyName": "Expert Build Pipeline",
+  "description": "Encapsulates the Expert build pipeline",
+  "category": "Build",
+  "author": "Aderant",
+  "version": {
+    "Major": 0,
+    "Minor": 1,
+    "Patch": 1
+  },
+  "minimumAgentVersion": "1.83.0",
+  "inputs": [
+    {
+      "name": "Repository",
+      "type": "pickList",
+      "label": "Build Infrastructure Repository",
+      "defaultValue": "Default",
+      "required": true,
+      "helpMarkDown":
+        "Git repository which contains the Build Infrastructure tool chain to use. You can also specify a custom http git repository or a UNC path.",
+      "options": {
+        "Default": "Default",
+        "CustomRepository": "Custom Repository"
       }
-   ],
-   "instanceNameFormat": "Pipeline script: $(ScriptPath)",
-   "execution": {
-      "PowerShell3": {
-         "target": "Pipeline.ps1"
-      }
-   }
+    },
+    {
+      "name": "Version",
+      "type": "string",
+      "label": "Version",
+      "defaultValue": "master",
+      "required": false,
+      "helpMarkDown": "The version of the tool chain you want to use.",
+      "visibleRule": "Repository = Default"
+    },
+    {
+      "name": "CustomRepository",
+      "type": "string",
+      "label": "Custom Repository",
+      "required": false,
+      "helpMarkDown": "The custom repository address or path to the the tool chain you want to use.",
+      "visibleRule": "Repository != None && Repository != Default"
+    }
+  ],
+  "instanceNameFormat": "Run build pipeline",
+  "execution": {
+    "PowerShell3": {
+      "target": "$(currentDirectory)\\Pipeline.ps1"
+    }
+  }
 }
