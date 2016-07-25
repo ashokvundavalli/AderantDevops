@@ -97,16 +97,21 @@ task Build {
 task Clean {    
 }
 
-task Test {
-    Write-Host $distributedTaskContext
+task Test -Jobs Init, {
+   # http://tfs:8080/tfs/Aderant/ExpertSuite/_apis/test/codeCoverage?buildId=630576&flags=1&api-version=2.0-preview
 
-    $global:distributedTaskContext = $distributedTaskContext
+   $endpoint = Get-VstsEndpoint -Name "SystemVssConnection" -Require
+   $serviceEndpoint = new-object Microsoft.TeamFoundation.DistributedTask.WebApi.ServiceEndpoint
+   $serviceEndpoint.Url = [System.Uri]$endpoint.Url
 
-    if (-not $IsDesktopBuild) {
-        . $Env:AGENT_HOMEDIRECTORY\tasks\PublishTestResults\1.0.22\PublishTestResults.ps1 -testRunner "VSTest" -testResultsFiles "$Repository\**\*.trx" -mergeTestResults $true -publishRunAttachments $true
-    }
+   $vssConnection = [Microsoft.TeamFoundation.DistributedTask.Agent.Common.CredentialsExtensions]::GetVssConnection($serviceEndpoint)
 
-    # http://tfs:8080/tfs/Aderant/ExpertSuite/_apis/test/codeCoverage?buildId=630576&flags=1&api-version=2.0-preview
+   $testResults = gci -Path $Repository -Filter "*.trx" -Recurse
+
+   $buildNumber = (Get-VstsTaskVariable -Name 'Build.BuildNumber' -Require)
+   $buildUri = (Get-VstsTaskVariable -Name 'Build.BuildUri' -Require)
+
+   Invoke-ResultPublisher -BuildNumber $buildNumber -BuildUri  $buildUri -Connection $vssConnection  -ProjectName "Foo" -resultFiles $testResults -ResultType "Trx" #-Configuration -Platform -Owner   
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
@@ -172,6 +177,5 @@ function Exit-BuildTask {
         $script:step.Finish("Done", [Result]::Succeeded)        
     }
 }
-
 
 task Default EndToEnd
