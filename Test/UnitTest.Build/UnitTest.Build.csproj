@@ -71,7 +71,6 @@
   <ItemGroup>
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="IntegrationTestBuilderTests.cs" />

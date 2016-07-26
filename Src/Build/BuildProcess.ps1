@@ -83,7 +83,10 @@ function GetVssConnection() {
    return $vssConnection
 }
 
-task EndToEnd -Jobs Init, Clean, GetDependencies, Build, Test, Quality, Package, CopyToDrop, {
+task EndToEnd -Jobs Init, Clean, GetDependencies, Build, Test, {
+}
+
+task PostBuild -Jobs Init, Quality, Package, CopyToDrop, {   
 }
 
 task Package -Jobs Init,  {
@@ -95,9 +98,7 @@ task GetDependencies {
 }
 
 task Build {
-    exec {        
-     
-        
+    exec { 
         #try {
         #    $detailId = [guid]::NewGuid()
         #    #$detailName = Get-VstsLocString -Key MSB_Build0 -ArgumentList ([System.IO.Path]::GetFileName($ProjectFile))
@@ -148,19 +149,25 @@ task Test -Jobs Init, {
    }
 }
 
-task Quality -Jobs Test, {
+task Quality -If (-not $IsDesktopBuild) {
     $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require)
-    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require)
+    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require) 
     $teamProject = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)
     
     $vssConnection = GetVssConnection
         
     $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
-    $count = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
+    $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
+    $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
 
-    Write-Output "Warning count!"
-    Write-Output $count
+    Write-Output "Last good build warnings: $lastGoodBuild"
+    Write-Output "Current warnings: $currentBuildCount"
+
+    if ($currentBuildCount -gt $lastGoodBuild) {
+        throw "Warning count has increased since the last good build"
+    }
 }
+
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
     $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
@@ -223,7 +230,7 @@ function Exit-BuildTask {
         Write-Host "Task `"$($Task.Name)`" has errored!" -ForegroundColor Red
         $script:step.Finish("Done", [Result]::Failed)        
     } else {        
-        $script:step.Finish("Done", [Result]::Succeeded)        
+        $script:step.Finish("Done", [Result]::Succeeded)
     }
 }
 

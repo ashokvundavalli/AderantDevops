@@ -15,6 +15,11 @@ $taskZip = ("{0}\..\{1}.zip" -f $taskFolder, $taskDefinition.id)
 if (Test-Path $taskZip) { Remove-Item $taskZip }
 
 Add-Type -AssemblyName "System.IO.Compression.FileSystem"
+
+# Clean up before publish
+
+gci -Path $taskFolder -Filter "Thumbs.db" -Hidden -Recurse | Remove-Item -Force
+
 [IO.Compression.ZipFile]::CreateFromDirectory($taskFolder, $taskZip)
 
 # Prepare to upload the task

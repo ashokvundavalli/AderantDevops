@@ -4,31 +4,11 @@ $ErrorActionPreference = 'Stop'
 
 [string]$repository = Get-VstsInput -Name 'Repository'
 [string]$version = Get-VstsInput -Name 'Version'
+[string]$customRepository = Get-VstsInput -Name 'CustomRepository'
 
-function Build {    
-    [cmdletbinding()]
-    param($repository, $version)
-
-    if ([System.IO.Path]::IsPathRooted($repository)) {
-
-    }
-    
-    $buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
-    #cmd /c "git clone $repository --branch custom-task --single-branch $buildFolder 2>&1"  
-    $buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
-    
-    Copy-Item \\wsakl001092\c$\Source\Build.Infrastructure\Src\ $buildFolder\Src -Recurse
-
-    [System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_FOLDER", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)    
-
-    try {        
-        & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -Task $task -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $Env:BUILD_SOURCESDIRECTORY
-    } catch {
-        Write-Error $_
-    } finally {
-        #gci -Path $Env:BUILD_SOURCESDIRECTORY -Filter "_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    }    
-}
+Write-Host "Repository: $repository"
+Write-Host "Version: $version"
+Write-Host "CustomRepository: $customRepository"
 
 Write-Host "SYSTEM_TEAMPROJECT: $ENV:SYSTEM_TEAMPROJECT"
 Write-Host "SYSTEM_TEAMFOUNDATIONSERVERURI: $ENV:SYSTEM_TEAMFOUNDATIONSERVERURI"
@@ -66,4 +46,32 @@ Write-Host "BUILD_STAGINGDIRECTORY: $ENV:BUILD_STAGINGDIRECTORY"
 Write-Host "AGENT_BUILDDIRECTORY: $ENV:AGENT_BUILDDIRECTORY"
 Get-Variable |%{ Write-Host ("Name : {0}, Value: {1}" -f $_.Name,$_.Value ) }
 
-Build $repository $version
+$buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
+
+function Clone($repo, $version) {
+    if (-not $version) {
+        $version = "master"
+    }
+    cmd /c "git clone $repository --branch $version --single-branch $buildFolder 2>&1"  
+}
+
+if ($customRepository) {
+    if ($customRepository.StartsWith("http")) {        
+        Clone $customRepository $version
+    } else {
+        # e.g \\wsakl001092\c$\Source\Build.Infrastructure\Src\
+        Copy-Item $customRepository $buildFolder\Src -Recurse
+    }   
+}
+
+if ($repository -eq "default") {    
+    Clone "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
+}
+
+$buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
+    
+[System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_FOLDER", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)
+
+Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_FOLDER;]$buildInfrastructurePath")
+
+& $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $Env:BUILD_SOURCESDIRECTORY
