@@ -1,0 +1,20 @@
+{
+  "id": "a269700c-c0c7-4a82-a04e-8dbac121b17a",
+  "name": "BuildPipelinePostBuild",
+  "friendlyName": "Expert Post Build Pipeline",
+  "description": "Encapsulates tasks to be performed after the build/compile phase of the build pipeline",
+  "category": "Build",
+  "author": "Aderant",
+  "version": {
+    "Major": 0,
+    "Minor": 1,
+    "Patch": 0
+  },
+  "minimumAgentVersion": "1.83.0", 
+  "instanceNameFormat": "Run post build pipeline",
+  "execution": {
+    "PowerShell3": {
+      "target": "$(currentDirectory)\\PostBuildPipeline.ps1"
+    }
+  }
+}

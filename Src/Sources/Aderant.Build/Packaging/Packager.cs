@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.FSharp.Core;
 using Newtonsoft.Json;
 using Paket;
@@ -27,7 +24,7 @@ namespace Aderant.Build.Packaging {
             }
 
             var spec = new PackSpecification {
-                DependenciesFile = dependenciesFile,
+                DependenciesFile = Path.Combine(physicalFileSystem.Root, dependenciesFile),
                 OutputPath = Path.Combine(physicalFileSystem.Root, "Bin", "Packages")
             };
 

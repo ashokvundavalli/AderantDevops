@@ -248,3 +248,4 @@ ModelManifest.xml
 /Test/Dependencies
 
 *.bak
+/Src/Sources/Aderant.Build.Agent/*.zip
