@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.FSharp.Core;
 using Newtonsoft.Json;
 using Paket;
@@ -27,7 +24,7 @@ namespace Aderant.Build.Packaging {
             }
 
             var spec = new PackSpecification {
-                DependenciesFile = dependenciesFile,
+                DependenciesFile = Path.Combine(physicalFileSystem.Root, dependenciesFile),
                 OutputPath = Path.Combine(physicalFileSystem.Root, "Bin", "Packages")
             };
 
@@ -71,6 +68,12 @@ namespace Aderant.Build.Packaging {
     internal class PackageVersion {
         internal static string CreateVersion(string preReleaseLabel, string nugetVersion2) {
             if (!string.IsNullOrEmpty(preReleaseLabel)) {
+                var i = char.ToLower(preReleaseLabel[0]);
+
+                if (i > 'u') {
+                    throw new InvalidPrereleaseLabel("The package name cannot start with any letter with a lexicographical order greater than 'u' to preserve NuGet prerelease sorting.");
+                }
+
                 var pos = nugetVersion2.IndexOf(preReleaseLabel, StringComparison.Ordinal);
 
                 if (pos >= 0) {

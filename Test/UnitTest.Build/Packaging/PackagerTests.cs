@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Aderant.Build.Packaging;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.Packaging {
     [TestClass]
@@ -37,6 +38,17 @@ namespace UnitTest.Build.Packaging {
             string packageVersion = Aderant.Build.Packaging.Packager.CreatePackageVersion(json);
 
             Assert.AreEqual("3.0.1-gitversionplay0004", packageVersion);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidPrereleaseLabel))]
+        public void Package_starting_with_z_throws_exception() {
+            PackageVersion.CreateVersion("zÆ", "lol");
+        }
+
+        [TestMethod]
+        public void Unstable_label_throws_no_exceptions() {
+            PackageVersion.CreateVersion("unstable", "lol");
         }
     }
 }

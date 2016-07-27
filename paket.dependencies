@@ -12,3 +12,5 @@ nuget Microsoft.WindowsAPICodePack-Shell
 nuget Microsoft.Composition
 nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
+nuget Microsoft.TeamFoundationServer.Client
+nuget Microsoft.VisualStudio.Services.InteractiveClient

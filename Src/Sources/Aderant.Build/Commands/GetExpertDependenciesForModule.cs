@@ -31,6 +31,11 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 6)]
         public SwitchParameter Force { get; set; }
 
+        // This should be removed when we are fully migrated over. This exists for compatibility with other branches.
+        [Parameter(Mandatory = false, Position = 7, DontShow = true)]
+        [Obsolete]
+        public SwitchParameter UseThirdPartyFromDrop { get; set; }
+
         protected override void ProcessRecord() {
             base.ProcessRecord();
 

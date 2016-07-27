@@ -12,9 +12,6 @@ function global:prompt {
 
     Write-Host "PS $(location)" -NoNewline
 
-    #TODO: Remove global variables        
-    WriteRepositoryInfo $location        
-
     if ($ShellContext.PoshGitAvailable) {
         Write-VcsStatus
 
@@ -38,50 +35,12 @@ function global:prompt {
 function global:Invoke-Build([switch]$force) {
     $path = $global:CurrentModulePath
 
-    $buildFile = [System.IO.FileInfo]([System.IO.Path]::Combine($path, "Build.ps1"))
-    if (-not ($buildFile.Exists)) {
-        InitializeRepository $path
-    } else {
-        ValidateRepository $path $force
-    }
-
-    . $buildFile
-}
-
-function WriteRepositoryInfo([string]$location) {
-    $path = $global:CurrentModulePath.TrimEnd('\')
-
-    # As a reminder, write the repository hint if we are outside of the directory 
-    if (-not $location.Contains($path)) {
-        Write-Host " [" -ForegroundColor Yellow -NoNewline
-        Write-Host $global:CurrentModuleName -ForegroundColor DarkCyan -NoNewline 
-        Write-Host "]" -ForegroundColor Yellow -NoNewline
-    }
-}
-
-function ValidateRepository([string]$path, [bool]$force) {
-    $actualHash = Get-FileHash (Join-Path $path -ChildPath Build.ps1)
-    $expectedHash = Get-FileHash (Join-Path $ShellContext.BuildScriptsDirectory -ChildPath Build.ps1)
-
-    if ($actualHash.Hash -ne $expectedHash.Hash) {
-        if (-not $force) {
-            #Write-Host "Build.ps1 is out of date. Specify [force] switch to update it." -ForegroundColor Yellow
-            return
-        }
-
-        Write-Host "Build.ps1 is out of date. Updating it." -ForegroundColor Yellow
-        InitializeRepository $path
-    }
-}
-
-function InitializeRepository([string]$path) {
-    Copy-Item $ShellContext.BuildScriptsDirectory\Build.ps1 -Destination $path\Build.ps1 -Force
+    & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $path
 }
 
 function InstallPoshGit() {
     # We need Windows 10 or WMF 5 for Install-Module
     if ($host.Version.Major -ge 5) {
-
         try {
             # Optimization, Get-InstalledModule is quite slow so just peek directly
             if (Test-Path $Env:ProgramFiles\WindowsPowerShell\Modules\posh-git) {
@@ -103,8 +62,12 @@ function InstallPoshGit() {
 }
 
 function ConfigureGit() {
-    & git config --global --add difftool.prompt false
+    & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
+    & git config --global core.autocrlf false
+
+    # set up notepad++ as the default commit editor
+    # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
 }
 
 InstallPoshGit

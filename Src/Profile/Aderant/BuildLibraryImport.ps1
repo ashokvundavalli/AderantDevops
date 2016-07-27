@@ -129,6 +129,8 @@ $ShellContext | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value
 $ShellContext | Add-Member -MemberType NoteProperty -Name IsGitRepository -Value $false
 $ShellContext | Add-Member -MemberType NoteProperty -Name PoshGitAvailable -Value $false
 
+$Env:EXPERT_BUILD_FOLDER = Resolve-Path ([System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "..\"))
+
 Write-Debug $ShellContext
 
 UpdateOrBuildAssembly $ShellContext
