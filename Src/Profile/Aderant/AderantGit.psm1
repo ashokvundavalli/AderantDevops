@@ -35,30 +35,9 @@ function global:prompt {
 function global:Invoke-Build([switch]$force) {
     $path = $global:CurrentModulePath
 
-    $buildFile = [System.IO.FileInfo]([System.IO.Path]::Combine($path, "Build.ps1"))
-    if (-not ($buildFile.Exists)) {
-        InitializeRepository $path
-    } else {
-        ValidateRepository $path $force
-    }
-
-    . $buildFile
+    & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $path
 }
 
-function ValidateRepository([string]$path, [bool]$force) {
-    $actualHash = Get-FileHash (Join-Path $path -ChildPath Build.ps1)
-    $expectedHash = Get-FileHash (Join-Path $ShellContext.BuildScriptsDirectory -ChildPath Build.ps1)
-
-    if ($actualHash.Hash -ne $expectedHash.Hash) {
-        if (-not $force) {
-            #Write-Host "Build.ps1 is out of date. Specify [force] switch to update it." -ForegroundColor Yellow
-            return
-        }
-
-        Write-Host "Build.ps1 is out of date. Updating it." -ForegroundColor Yellow
-        InitializeRepository $path
-    }
-}
 
 function InitializeRepository([string]$path) {
     Copy-Item $ShellContext.BuildScriptsDirectory\Build.ps1 -Destination $path\Build.ps1 -Force
@@ -89,12 +68,11 @@ function InstallPoshGit() {
 }
 
 function ConfigureGit() {
-    & git config --global --add difftool.prompt false
+    & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
 
     # set up notepad++ as the default commit editor
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
-
 }
 
 InstallPoshGit

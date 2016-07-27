@@ -2,6 +2,7 @@ param(
     [string]$Repository,
     [string]$Configuration = 'Release',    
     [string]$Platform = "AnyCPU",
+    [string]$CommonArgs = "",
     [string]$MSBuildLocation
 )
 

@@ -9,6 +9,10 @@ param(
 $taskDefinition = (Get-Content $taskPath\task.json) -join "`n" | ConvertFrom-Json
 $taskFolder = Get-Item $TaskPath
 
+# Bump the patch version. This is so our changes are automatically deployed to the build agents
+$taskDefinition.version.patch = $taskDefinition.version.patch + 1
+ConvertTo-Json -InputObject $taskDefinition -Depth 100 | Out-File $taskPath\task.json
+
 # Zip the task content
 Write-Output "Zipping task content"
 $taskZip = ("{0}\..\{1}.zip" -f $taskFolder, $taskDefinition.id)
@@ -17,7 +21,6 @@ if (Test-Path $taskZip) { Remove-Item $taskZip }
 Add-Type -AssemblyName "System.IO.Compression.FileSystem"
 
 # Clean up before publish
-
 gci -Path $taskFolder -Filter "Thumbs.db" -Hidden -Recurse | Remove-Item -Force
 
 [IO.Compression.ZipFile]::CreateFromDirectory($taskFolder, $taskZip)
@@ -33,4 +36,8 @@ if ($Overwrite) {
 }
 
 # Actually upload it
-Invoke-RestMethod -Uri $url -Credential $Credential -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem
+try {
+    Invoke-RestMethod -Uri $url -Credential $Credential -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem    
+} catch {
+    $_.Response
+}
