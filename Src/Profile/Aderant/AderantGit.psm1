@@ -38,15 +38,9 @@ function global:Invoke-Build([switch]$force) {
     & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $path
 }
 
-
-function InitializeRepository([string]$path) {
-    Copy-Item $ShellContext.BuildScriptsDirectory\Build.ps1 -Destination $path\Build.ps1 -Force
-}
-
 function InstallPoshGit() {
     # We need Windows 10 or WMF 5 for Install-Module
     if ($host.Version.Major -ge 5) {
-
         try {
             # Optimization, Get-InstalledModule is quite slow so just peek directly
             if (Test-Path $Env:ProgramFiles\WindowsPowerShell\Modules\posh-git) {
@@ -70,6 +64,7 @@ function InstallPoshGit() {
 function ConfigureGit() {
     & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
+    & git config --global core.autocrlf false
 
     # set up notepad++ as the default commit editor
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"

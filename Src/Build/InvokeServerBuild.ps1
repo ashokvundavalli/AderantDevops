@@ -136,22 +136,15 @@ function Format-LoggingCommandData {
 
 # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
 # node has completed build orchestration.
-$arguments = "/nologo /nr:false"
+$arguments = $CommonArgs
 
 $loggerAssembly = "$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
 $arguments = "$arguments /dl:CentralLogger,`"$loggerAssembly`"*ForwardingLogger,`"$loggerAssembly`""
 
-$arguments = "$arguments $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository"
-
-# /p:RunWixToolsOutOfProc=true is required due to bug 
-# https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
-$arguments = "$arguments /p:RunWixToolsOutOfProc=true"
-
 # Start the detail timeline.        
 $detailId = [guid]::NewGuid()
-#$detailName = Get-VstsLocString -Key MSB_Build0 -ArgumentList ([System.IO.Path]::GetFileName($ProjectFile))
 $detailStartTime = [datetime]::UtcNow.ToString('O')
-Write-VstsLogDetail -Id $detailId -Type Process -Name "Foo" -Progress 0 -StartTime $detailStartTime -State Initialized -AsOutput        
+Write-VstsLogDetail -Id $detailId -Type Process -Name "Run MS Build" -Progress 0 -StartTime $detailStartTime -State Initialized -AsOutput        
 
 $detailResult = 'Succeeded'
 try {          

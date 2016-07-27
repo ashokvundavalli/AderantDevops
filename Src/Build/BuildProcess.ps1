@@ -98,37 +98,34 @@ task Package -Jobs Init,  {
 }
 
 task GetDependencies {
-    . $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
+    if (-not $IsDesktopBuild) {
+        . $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
+    }
 }
 
 task Build {
-    exec { 
-        #try {
-        #    $detailId = [guid]::NewGuid()
-        #    #$detailName = Get-VstsLocString -Key MSB_Build0 -ArgumentList ([System.IO.Path]::GetFileName($ProjectFile))
-        #    $detailStartTime = [datetime]::UtcNow.ToString('O')
-        #    Write-VstsLogDetail -Id $detailId -Type Process -Name "Foo" -Progress 0 -StartTime $detailStartTime -State Initialized -AsOutput
+    exec {     
+        $targets = [System.IO.Path]::GetFullPath("$Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets")
 
-        #    # /p:RunWixToolsOutOfProc=true is required due to bug 
-        #    # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
-        #    MSBuild $Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets @$Repository\Build\TFSBuild.rsp /p:BuildRoot=$Repository $logger /nologo /p:RunWixToolsOutOfProc=true
-        #    #Invoke-Tool 
-        #} finally {
-        #    # TODO: Failed handling
-        #    $detailFinishTime = [datetime]::UtcNow.ToString('O')
-        #    Write-VstsLogDetail -Id $detailId -FinishTime $detailFinishTime -Progress 100 -State Completed -Result $detailResult -AsOutput
-        #}
+        $commonArgs = "/nologo /nr:false /m"       
+        $commonArgs = "$commonArgs $targets @$Repository\Build\TFSBuild.rsp"
+        $commonArgs = "$commonArgs /p:BuildRoot=$Repository"
+
         try {
-            $commonArgs = "/p:RunWixToolsOutOfProc=true"
-                        
+            pushd $Repository
+             
             if ($IsDesktopBuild) {
-
+                Start-Process -FilePath $MSBuildLocation\MSBuild.exe -ArgumentList $commonArgs -Wait -NoNewWindow
             } else {
-                . $Env:EXPERT_BUILD_FOLDER\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation
-            }    
-        } finally {
+                # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing 
+                # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
+                $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
 
-        }    
+                . $Env:EXPERT_BUILD_FOLDER\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+            }
+        } finally {
+            popd
+        }
     }
 }
 
