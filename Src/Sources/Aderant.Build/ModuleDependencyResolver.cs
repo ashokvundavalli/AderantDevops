@@ -139,8 +139,7 @@ namespace Aderant.Build {
                 logger.Info("Restoring packages.");
                 await retriever.Restore();
             }
-
-            logger.Info("Performing legacy restore.");
+            
             await RestorePackages(fileSystem2, mode, referencedModules);
         }
 
@@ -192,6 +191,8 @@ namespace Aderant.Build {
         }
 
         private async Task RestorePackages(IFileSystem2 fileSystem, DependencyFetchMode mode, IEnumerable<ExpertModule> referencedModules) {
+            logger.Info("Performing legacy restore.");
+
             string moduleName = ModuleName ?? string.Empty;
 
             string dependenciesDirectory = Path.Combine(fileSystem.Root, "Dependencies");
@@ -207,8 +208,7 @@ namespace Aderant.Build {
                 var referencedModuleName = package.Split('\\').Last();
                 var referencedModule = referencedModules.FirstOrDefault(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
 
-                if (referencedModule == null) {
-                    logger.Warning("No package for: " + referencedModuleName);
+                if (referencedModule?.ModuleType != ModuleType.ThirdParty) {
                     continue;
                 }
 
