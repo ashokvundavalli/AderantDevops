@@ -131,6 +131,8 @@
     <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
 
     <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
+    
+    <Exec Command="$(BuildScriptsDirectory)\paket.exe restore" WorkingDirectory="'$(BuildScriptsDirectory)..\..\" />
 
     <ItemGroup>
       <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj"></Projects>
