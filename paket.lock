@@ -17,7 +17,7 @@ NUGET
       Microsoft.CodeAnalysis.Common (1.2.2)
       Microsoft.Composition (>= 1.0.27)
     Microsoft.Composition (1.0.30)
-    Microsoft.IdentityModel.Clients.ActiveDirectory (3.12) - framework: >= net45
+    Microsoft.IdentityModel.Clients.ActiveDirectory (3.13.1) - framework: >= net45
     Microsoft.IdentityModel.Logging (1.0) - framework: >= net451
     Microsoft.IdentityModel.Tokens (5.0) - framework: >= net451
       Microsoft.IdentityModel.Logging (>= 1.0) - framework: >= net451, >= netstandard14
@@ -151,4 +151,4 @@ NUGET
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, >= netstandard13
       System.Runtime (>= 4.1) - framework: dnxcore50, netstandard10, >= netstandard13
     WindowsAPICodePack-Core (1.1.2)
-    WindowsAzure.ServiceBus (3.3.1) - framework: >= net45
+    WindowsAzure.ServiceBus (3.3.2) - framework: >= net45

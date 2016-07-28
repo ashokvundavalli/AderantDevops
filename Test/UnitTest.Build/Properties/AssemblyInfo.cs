@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("UnitTest.Build")]
 [assembly: AssemblyDescription("Unit Tests for the ExpertSuite build process")]
 [assembly: AssemblyCompany("Aderant")]
-[assembly: AssemblyCopyright("Copyright © Aderant 2010-2015")]
+[assembly: AssemblyCopyright("Copyright © Aderant 2010-2016")]
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM

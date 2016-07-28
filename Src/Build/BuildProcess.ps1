@@ -1,7 +1,8 @@
 param(
     [string]$Repository,
     [string]$Configuration = 'Release',    
-    [string]$Platform = "AnyCPU",
+    [string]$Platform = "AnyCPU",  
+    [bool]$Clean,  
     [bool]$LimitBuildWarnings
 )
 
@@ -111,6 +112,10 @@ task Build {
         $commonArgs = "$commonArgs $targets @$Repository\Build\TFSBuild.rsp"
         $commonArgs = "$commonArgs /p:BuildRoot=$Repository"
 
+        if ($Clean) {
+            $commonArgs = "$commonArgs /p:CleanBin=true"
+        }
+
         try {
             pushd $Repository
              
@@ -126,7 +131,7 @@ task Build {
         } finally {
             popd
         }
-    }
+    }  
 }
 
 task BuildCore (job Build -Safe), {
@@ -173,19 +178,13 @@ task BuildCore (job Build -Safe), {
 # Synopsis: Does what msbuild/VS can't do consistently.  
 # Aggressively and recursively deletes all /obj and /bin folders from the build path as well as the output folder.
 #=================================================================================================
-task Clean {    
+task Clean {
 }
 
 task Test {   
 }
 
-function WarningRatchet() {
-    $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require)
-    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require) 
-    $teamProject = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)
-    
-    $vssConnection = GetVssConnection
-        
+function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
     $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
     $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
     $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
@@ -198,11 +197,24 @@ function WarningRatchet() {
     }
 }
 
+function BuildAssociation($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
+    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $vssConnection    
+    $association.AssociateWorkItemsToBuild($teamProject, $buildId, $buildDefinitionId)
+}
 
 task Quality -If (-not $IsDesktopBuild) {
+    $vssConnection = GetVssConnection
+
+    $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require)
+    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require) 
+    $teamProject = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)   
+
     if ($LimitBuildWarnings) {
-        WarningRatchet
-    }   
+        WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId
+    }
+    
+    BuildAssociation $vssConnection $teamProject $buildId $buildDefinitionId
+       
 }
 
 

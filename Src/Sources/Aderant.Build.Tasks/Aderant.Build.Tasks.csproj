@@ -61,6 +61,9 @@
       <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.Core.WebApi.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Microsoft.TeamFoundation.WorkItemTracking.WebApi">
+      <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.WorkItemTracking.WebApi.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.Services.Client">
       <HintPath>..\..\..\packages\Microsoft.VisualStudio.Services.InteractiveClient\lib\net45\Microsoft.VisualStudio.Services.Client.dll</HintPath>
     </Reference>
@@ -78,6 +81,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildAssociation.cs" />
     <Compile Include="SimpleFileLock.cs" />
     <Compile Include="SourceIndex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

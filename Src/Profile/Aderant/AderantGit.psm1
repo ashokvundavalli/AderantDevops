@@ -32,10 +32,10 @@ function global:prompt {
     return " "
 }
 
-function global:Invoke-Build([switch]$force) {
-    $path = $global:CurrentModulePath
+function global:Invoke-Build([switch]$force, [switch]$clean) {
+    $path = $global:CurrentModulePath    
 
-    & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $path
+    & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $path -Clean:$clean.ToBool()
 }
 
 function InstallPoshGit() {
