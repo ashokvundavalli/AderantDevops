@@ -10,7 +10,7 @@ $tpc = New-Object Microsoft.TeamFoundation.Client.TfsTeamProjectCollection($coll
  
 # Get the build service
 $bs = $tpc.GetService([Microsoft.TeamFoundation.Build.Client.IBuildServer])
-$qbSpec = $bs.CreateBuildDefinitionSpec("ExpertSuite", "*releases.803time.*")
+$qbSpec = $bs.CreateBuildDefinitionSpec("ExpertSuite", "*dev.casev1*")
 $qbResults = $bs.QueryBuildDefinitions($qbSpec)
 
 foreach ($definition in $qbResults.Definitions) {   

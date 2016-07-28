@@ -11,7 +11,7 @@ $tpc.EnsureAuthenticated()
  
 # Get the build service
 $bs = $tpc.GetService([Microsoft.TeamFoundation.Build.Client.IBuildServer])
-$qbSpec = $bs.CreateBuildDetailSpec("ExpertSuite", "*releases.803time.*")
+$qbSpec = $bs.CreateBuildDetailSpec("ExpertSuite", "*casev1*")
 
 $qbSpec.InformationTypes = $null
 
