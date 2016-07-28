@@ -197,9 +197,10 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     }
 }
 
-function BuildAssociation($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
-    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $vssConnection    
-    $association.AssociateWorkItemsToBuild($teamProject, $buildId, $buildDefinitionId)
+function BuildAssociation($vssConnection, $teamProject, $buildId) {
+    $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
+    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection    
+    $association.AssociateWorkItemsToBuild($teamProject, $buildId)
 }
 
 task Quality -If (-not $IsDesktopBuild) {

@@ -6,7 +6,7 @@ namespace Aderant.Build.Logging {
     /// A PowerShell implementation of the <see cref="ILogger"/> interface. 
     /// Allows internal components to write to a PowerShell host.
     /// </summary>
-    internal class PowerShellLogger : ILogger {
+    public class PowerShellLogger : ILogger {
         private PSHost host;
 
         /// <summary>
