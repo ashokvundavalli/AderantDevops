@@ -32,8 +32,8 @@
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
     <BuildStepModuleName>$(ModuleName):</BuildStepModuleName>
 
-    <BuildRoot Condition="'$(BuildRoot)' != '' And ('$(BuildAll)' == 'true' or '$(IsDesktopBuild)' != 'false')">$(BuildRoot)\..\</BuildRoot>
-    <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(BuildRoot)</SolutionDirectoryPath>
+    <!--<BuildRoot Condition="'$(BuildRoot)' != '' And ('$(BuildAll)' == 'true' or '$(IsDesktopBuild)' != 'false')">$(BuildRoot)\..\</BuildRoot>-->
+    <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(SolutionRoot)</SolutionDirectoryPath>
     <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' != ''">$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
     <SolutionDirectoryPath Condition="!HasTrailingSlash('$(SolutionDirectoryPath)')">$(SolutionDirectoryPath)\</SolutionDirectoryPath>
 

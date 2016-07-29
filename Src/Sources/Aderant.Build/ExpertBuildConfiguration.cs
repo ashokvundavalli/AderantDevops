@@ -62,16 +62,6 @@ namespace Aderant.Build {
             set { sourceControlPathToModule = value; }
         }
 
-        public string BuildInfrastructurePath {
-            get {
-                if (string.IsNullOrEmpty(buildInfrastructurePath)) {
-                    BuildSourceControlPaths();
-                }
-                return buildInfrastructurePath;
-            }
-            set { buildInfrastructurePath = value; }
-        }
-
         public string BuildName {
             get { return string.Concat(branchName.Name, ".", ModuleName); }
         }

@@ -1,46 +1,5 @@
 ﻿$DebugPreference = 'Continue'
 
-function GetSymbolicLinkTarget($path) {
-Add-Type -MemberDefinition @"
-private const int CREATION_DISPOSITION_OPEN_EXISTING = 3;
-private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
-
-[DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
-public static extern int GetFinalPathNameByHandle(IntPtr handle, [In, Out] StringBuilder path, int bufLen, int flags);
-
-[DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
-public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess, int dwShareMode,
-IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
-
-public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink)
-{
-    SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
-    if (directoryHandle.IsInvalid) {
-        throw new Win32Exception(Marshal.GetLastWin32Error());
-    }
-
-    StringBuilder path = new StringBuilder(512);
-    int size = GetFinalPathNameByHandle(directoryHandle.DangerousGetHandle(), path, path.Capacity, 0);
-    if (size < 0) {
-        throw new Win32Exception(Marshal.GetLastWin32Error());
-    }
-
-    directoryHandle.Dispose();
-
-    // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\"
-    // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
-    if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-    return path.ToString().Substring(4);
-    else
-    return path.ToString();
-}
-"@ -Name Win32 -NameSpace System -UsingNamespace System.Text,Microsoft.Win32.SafeHandles,System.ComponentModel
-
-    $resolvedPath = [System.Win32]::GetSymbolicLinkTarget($path)
-    Write-Host "Resolved profile path to: $resolvedPath"
-    return $resolvedPath
-}
-
 function BuildProject($properties, [bool]$rebuild) {
     # Load the build libraries as this has our shared compile function. This function is shared by the desktop and server bootstrap of Build.Infrastructure
     $buildScripts = $properties.BuildScriptsDirectory
@@ -119,12 +78,9 @@ function UpdateOrBuildAssembly($properties) {
     LoadAssembly $properties $aderantBuildAssembly
 }
 
-# We can't use $PSScriptRoot here until we move to Git and get rid of symlinks
-$actualPath = GetSymbolicLinkTarget (Split-Path -Parent $MyInvocation.MyCommand.Definition)   
-
 $ShellContext = New-Object -TypeName PSObject
-$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build")) }
-$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($actualPath, "..\..\Build.Tools")) }
+$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build")) }
+$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools")) }
 $ShellContext | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value { [System.IO.Path]::Combine($This.BuildScriptsDirectory, "paket.exe") }
 $ShellContext | Add-Member -MemberType NoteProperty -Name IsGitRepository -Value $false
 $ShellContext | Add-Member -MemberType NoteProperty -Name PoshGitAvailable -Value $false

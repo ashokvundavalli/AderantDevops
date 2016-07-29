@@ -39,13 +39,11 @@ namespace Aderant.Build.Commands {
             var workspace = ServiceLocator.GetInstance<ITeamFoundationWorkspace>();
 
             string serverPathToModule = workspace.TryGetServerItemForLocalItem(modulePath);
-            string buildInfrastructurePath = workspace.TryGetServerItemForLocalItem(Path.Combine(Path.Combine(branchPath, "Modules"), "Build.Infrastructure"));
 
             var buildConfiguration = new ExpertBuildConfiguration(branchName) {
                 ModuleName = ModuleName,
                 TeamProject = workspace.TeamProject,
                 SourceControlPathToModule = serverPathToModule,
-                BuildInfrastructurePath = buildInfrastructurePath,
                 DropLocation = ParameterHelper.GetDropPath(null, SessionState)
             };
 
@@ -54,7 +52,6 @@ namespace Aderant.Build.Commands {
             Host.UI.WriteLine("ModuleName: " + buildConfiguration.ModuleName);
             Host.UI.WriteLine("TeamProject: " + buildConfiguration.TeamProject);
             Host.UI.WriteLine("ServerPathToModule: " + buildConfiguration.SourceControlPathToModule);
-            Host.UI.WriteLine("BuildInfrastructurePath: " + buildConfiguration.BuildInfrastructurePath);
             Host.UI.WriteLine("DropLocation: " + buildConfiguration.DropLocation);
 
             var buildPublisher = new BuildDetailPublisher(workspace.ServerUri, workspace.TeamProject);
