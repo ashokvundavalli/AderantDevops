@@ -1,52 +1,51 @@
-{
-  "id": "415ab5a5-955f-4631-9bdc-a12c2c911f58",
-  "name": "ExpertBuildPipeline",
-  "friendlyName": "Expert Build Pipeline",
-  "description": "Encapsulates the Expert build pipeline",
-  "category": "Build",
-  "author": "Aderant",
-  "version": {
-    "Major": 0,
-    "Minor": 2,
-    "Patch": 0
-  },
-  "minimumAgentVersion": "1.83.0",
-  "inputs": [
-    {
-      "name": "Repository",
-      "type": "pickList",
-      "label": "Build Infrastructure Repository",
-      "defaultValue": "Default",
-      "required": true,
-      "helpMarkDown":
-        "Git repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.",
-      "options": {
-        "Default": "Default",
-        "CustomRepository": "Custom Repository"
-      }
-    },
-    {
-      "name": "Version",
-      "type": "string",
-      "label": "Version",
-      "defaultValue": "master",
-      "required": false,
-      "helpMarkDown": "The version of the tool chain you want to use.",
-      "visibleRule": "Repository != Default"
-    },
-    {
-      "name": "CustomRepository",
-      "type": "string",
-      "label": "Custom Repository",
-      "required": false,
-      "helpMarkDown": "The custom repository address or path to the the tool chain you want to use.",
-      "visibleRule": "Repository != None && Repository != Default"
-    }
-  ],
-  "instanceNameFormat": "Run build pipeline",
-  "execution": {
-    "PowerShell3": {
-      "target": "$(currentDirectory)\\Pipeline.ps1"
-    }
-  }
+﻿{
+    "id":  "415ab5a5-955f-4631-9bdc-a12c2c911f58",
+    "name":  "ExpertBuildPipeline",
+    "friendlyName":  "Expert Build Pipeline",
+    "description":  "Encapsulates the Expert build pipeline",
+    "category":  "Build",
+    "author":  "Aderant",
+    "version":  {
+                    "Major":  0,
+                    "Minor":  2,
+                    "Patch":  6
+                },
+    "minimumAgentVersion":  "1.83.0",
+    "inputs":  [
+                   {
+                       "name":  "Repository",
+                       "type":  "pickList",
+                       "label":  "Build Infrastructure Source",
+                       "defaultValue":  "Default",
+                       "required":  true,
+                       "helpMarkDown":  "Repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.",
+                       "options":  {
+                                       "Default":  "Default",
+                                       "CustomRepository":  "Custom"
+                                   }
+                   },
+                   {
+                       "name":  "Version",
+                       "type":  "string",
+                       "label":  "Version",
+                       "defaultValue":  "master",
+                       "required":  false,
+                       "helpMarkDown":  "The version of the tool chain you want to use.",
+                       "visibleRule":  "Repository != Default"
+                   },
+                   {
+                       "name":  "CustomRepository",
+                       "type":  "string",
+                       "label":  "Repository or Path",
+                       "required":  false,
+                       "helpMarkDown":  "The custom repository address or path to the the tool chain you want to use.",
+                       "visibleRule":  "Repository != None || Repository != Default"
+                   }
+               ],
+    "instanceNameFormat":  "Run build pipeline",
+    "execution":  {
+                      "PowerShell3":  {
+                                          "target":  "$(currentDirectory)\\Pipeline.ps1"
+                                      }
+                  }
 }

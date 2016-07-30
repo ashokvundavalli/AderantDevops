@@ -113,6 +113,7 @@
     <Compile Include="Logging\FakeLogger.cs" />
     <Compile Include="AssemblyVersionInspector.cs" />
     <Compile Include="IFileSystem.cs" />
+    <Compile Include="Logging\ObservableLogReceiver.cs" />
     <Compile Include="Packaging\CreatePaketTemplatesAction.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
     <Compile Include="Packaging\InvalidPrereleaseLabel.cs" />

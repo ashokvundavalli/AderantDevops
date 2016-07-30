@@ -11,7 +11,7 @@ $taskFolder = Get-Item $TaskPath
 
 # Bump the patch version. This is so our changes are automatically deployed to the build agents
 $taskDefinition.version.patch = $taskDefinition.version.patch + 1
-ConvertTo-Json -InputObject $taskDefinition -Depth 100 | Out-File $taskPath\task.json
+ConvertTo-Json -InputObject $taskDefinition -Depth 100 | Out-File $taskPath\task.json -Encoding utf8
 
 # Zip the task content
 Write-Output "Zipping task content"
@@ -36,8 +36,4 @@ if ($Overwrite) {
 }
 
 # Actually upload it
-try {
-    Invoke-RestMethod -Uri $url -Credential $Credential -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem    
-} catch {
-    $_.Response
-}
+Invoke-RestMethod -Uri $url -Credential $Credential -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem

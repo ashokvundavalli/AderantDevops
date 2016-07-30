@@ -29,7 +29,21 @@ namespace Aderant.Build.Packaging {
             };
 
             foreach (var file in GetTemplateFiles()) {
-                PackageProcess.Pack(physicalFileSystem.Root, DependenciesFile.ReadFromFile(spec.DependenciesFile), spec.OutputPath, FSharpOption<string>.None, FSharpOption<string>.None, FSharpOption<string>.Some(version), new List<Tuple<string, string>>(), FSharpOption<string>.None, FSharpOption<string>.Some(file), GenerateExcludedTemplates(), false, false, false, false, FSharpOption<string>.None);
+                PackageProcess.Pack(workingDir: physicalFileSystem.Root, 
+                    dependenciesFile: DependenciesFile.ReadFromFile(spec.DependenciesFile), 
+                    packageOutputPath: spec.OutputPath, 
+                    buildConfig: FSharpOption<string>.Some("Release"), 
+                    buildPlatform: FSharpOption<string>.Some("AnyCPU"), 
+                    version: FSharpOption<string>.Some(version), 
+                    specificVersions: new List<Tuple<string, string>>(), 
+                    releaseNotes: FSharpOption<string>.None, 
+                    templateFile: FSharpOption<string>.Some(Path.Combine(physicalFileSystem.Root, file)), 
+                    excludedTemplates: GenerateExcludedTemplates(), 
+                    lockDependencies: false, 
+                    minimumFromLockFile: false, 
+                    symbols: false, 
+                    includeReferencedProjects: true, 
+                    projectUrl: FSharpOption<string>.None);
             }
 
             return new PackResult(spec);

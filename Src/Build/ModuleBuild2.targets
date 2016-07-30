@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="ModuleBuild"
          ToolsVersion="14.0"
-         TreatAsLocalProperty="BuildRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
+         TreatAsLocalProperty="SolutionRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
 
   <!-- 
     =========================================================================================================
@@ -26,14 +26,13 @@
     <StopOnFirstFailure>true</StopOnFirstFailure>
 
     <BaseDropDirectory>$(DropLocation)</BaseDropDirectory>
-    <BuildStepModuleName>$(ModuleName):</BuildStepModuleName>
 
-    <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(BuildRoot)</SolutionDirectoryPath>
+    <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(SolutionRoot)</SolutionDirectoryPath>
     <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' != ''">$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
     <SolutionDirectoryPath Condition="!HasTrailingSlash('$(SolutionDirectoryPath)')">$(SolutionDirectoryPath)\</SolutionDirectoryPath>
 
     <!--Custom build for a module-->
-    <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(BuildRoot)</SolutionDirectoryPath>
+    <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(SolutionRoot)</SolutionDirectoryPath>
     <BuildScriptsDirectory Condition="('$(IsCustomBuild)' == 'true')">$(SolutionDirectoryPath)BuildScripts\</BuildScriptsDirectory>
 
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
@@ -60,10 +59,10 @@
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
   <!-- Stub for customizers to override -->
-  <Target Name="AfterBuild" />
+  <Target Name="PostBuild" />
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
-  <Import Project="$(BuildRoot)\Build\TFSBuild.proj" Condition="Exists('$(BuildRoot)\Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
   <UsingTask
     AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
@@ -241,7 +240,7 @@ doc.Save(File);
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-    <CallTarget Targets="AfterBuild" />
+    <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />

@@ -2,7 +2,7 @@ param(
     [string]$Repository,
     [string]$Configuration = 'Release',    
     [string]$Platform = "AnyCPU",  
-    [bool]$Clean,  
+    [bool]$Clean,
     [bool]$LimitBuildWarnings
 )
 
@@ -88,10 +88,10 @@ function GetVssConnection() {
 # Applies a common build number, executes unit tests and packages the assemblies as a NuGet 
 # package
 #=================================================================================================
-task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, {
+task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
 }
 
-task PostBuild -Jobs Init, Quality, Package, CopyToDrop, {   
+task PostBuild -Jobs Init, Quality, CopyToDrop, {   
 }
 
 task Package -Jobs Init,  {    
@@ -105,12 +105,13 @@ task GetDependencies {
 }
 
 task Build {
-    exec {     
-        $targets = [System.IO.Path]::GetFullPath("$Env:EXPERT_BUILD_FOLDER\Build\ModuleBuild2.targets")
-
+    exec {
+        # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
+        # node has completed build orchestration.
         $commonArgs = "/nologo /nr:false /m"       
-        $commonArgs = "$commonArgs $targets @$Repository\Build\TFSBuild.rsp"
-        $commonArgs = "$commonArgs /p:BuildRoot=$Repository"
+        $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
+        $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
+        $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
 
         if ($Clean) {
             $commonArgs = "$commonArgs /p:CleanBin=true"
@@ -214,8 +215,7 @@ task Quality -If (-not $IsDesktopBuild) {
         WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId
     }
     
-    BuildAssociation $vssConnection $teamProject $buildId $buildDefinitionId
-       
+    BuildAssociation $vssConnection $teamProject $buildId $buildDefinitionId       
 }
 
 

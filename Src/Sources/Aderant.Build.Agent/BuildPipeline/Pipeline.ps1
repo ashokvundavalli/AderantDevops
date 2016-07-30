@@ -52,19 +52,21 @@ function Clone($repo, $version) {
     if (-not $version) {
         $version = "master"
     }
-    cmd /c "git clone $repository --branch $version --single-branch $buildFolder 2>&1"  
+    Write-Output "About to clone $repo ($version)"
+    cmd /c "git clone $repo --branch $version --single-branch $buildFolder 2>&1"  
 }
 
-if ($customRepository) {
+if ($customRepository -and -not [string]::IsNullOrEmpty($customRepository)) {
     if ($customRepository.StartsWith("http")) {        
         Clone $customRepository $version
     } else {
         # e.g \\wsakl001092\c$\Source\Build.Infrastructure\Src\
+        Write-Output "Copying from path $customRepository"        
         Copy-Item $customRepository $buildFolder\Src -Recurse
     }   
 }
 
-if ($repository -eq "default") {    
+if ($repository -eq "default" -or -not $customRepository) {
     Clone "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
 }
 

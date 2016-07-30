@@ -133,9 +133,6 @@ function Format-LoggingCommandData {
     return $Value
 }
 
-
-# Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
-# node has completed build orchestration.
 $arguments = $CommonArgs
 
 $loggerAssembly = "$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
