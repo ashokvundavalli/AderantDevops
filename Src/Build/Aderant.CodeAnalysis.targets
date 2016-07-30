@@ -1,9 +1,5 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask TaskName="Microsoft.TeamFoundation.Build.Tasks.BuildStep"
-             AssemblyFile="$(TeamBuildRefPath)\Microsoft.TeamFoundation.Build.ProcessComponents.dll"
-             Condition="'$(IsDesktopBuild)' == 'false'" />
-
   <PropertyGroup>
     <!-- This option does exactly what we want but appears to never actually be used by FxCop. We will set it in case one day it starts working -->
     <CodeAnalysisIgnoreMissingIndirectReferences>true</CodeAnalysisIgnoreMissingIndirectReferences>
@@ -46,28 +42,11 @@
   <Target Name="BeforeRunCodeAnalysis"
           BeforeTargets="RunCodeAnalysis"
           Condition="'$(IsDesktopBuild)' == 'false' And '$(RunCodeAnalysisOnThisProject)' == 'true'">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="$(BuildStepModuleName) Running Code Analysis on %(CodeAnalysisAssemblies.Filename)%(CodeAnalysisAssemblies.Extension)"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
   </Target>
 
   <Target Name="AfterRunCodeAnalysis"
           AfterTargets="RunCodeAnalysis"
           Condition="'$(IsDesktopBuild)' == 'false' And '$(RunCodeAnalysisOnThisProject)' == 'true'">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
   </Target>
 
   <!-- 

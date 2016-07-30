@@ -223,16 +223,6 @@
   </PropertyGroup>
 
   <Target Name="IndexSourcesAndPublishSymbolsCore">
-    <BuildStep
-     Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-     Message="$(BuildStepModuleName) Indexing sources and publish symbols"
-     TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-     BuildUri="$(BuildUri)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <Error Condition="'@(CompiledAssemblies)' == ''" Text="There are no outputs from the build" />
 
     <ItemGroup>
@@ -267,27 +257,10 @@
                       Overwrite="true" />
 
     <CallTarget Targets="PublishSymbols" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
   </Target>
 
   
   <Target Name="PublishSymbols" Condition="false">
-    <BuildStep
-       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-       Message="$(BuildStepModuleName) Publish symbols"
-       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-       BuildUri="$(BuildUri)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
     <PropertyGroup>
       <ProductName Condition="'$(ProductName)' == ''">$(BranchName)</ProductName>
       <BuildToAssociateWith Condition="'$(BuildAll)' != 'true'">$(BuildUri)</BuildToAssociateWith>
@@ -311,13 +284,6 @@
       Store="$(SymbolStore)" 
       LogStandardErrorAsError="false"
       YieldDuringToolExecution="true" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
   </Target>
 
 
