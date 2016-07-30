@@ -91,11 +91,7 @@ function GetVssConnection() {
 task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
 }
 
-task PostBuild -Jobs Init, Quality, CopyToDrop, {   
-}
-
-task Package -Jobs Init,  {    
-    . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository    
+task PostBuild -Jobs Init, Package, CopyToDrop, {   
 }
 
 task GetDependencies {
@@ -209,24 +205,25 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
 
 function BuildAssociation($vssConnection, $teamProject, $buildId) {
     $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
-    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection    
+    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
+    
+    Write-Output "Associating work items to build"
     $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
 }
 
 task Quality -If (-not $IsDesktopBuild) {
     $vssConnection = GetVssConnection
 
-    $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require)
-    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require) 
+    $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require -AsInt)
+    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require -AsInt) 
     $teamProject = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)   
 
     if ($LimitBuildWarnings) {
         WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId
     }
     
-    BuildAssociation $vssConnection $teamProject $buildId $buildDefinitionId       
+    BuildAssociation $vssConnection $teamProject $buildId       
 }
-
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
     $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
@@ -245,6 +242,18 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
     Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"    
 }
 
+
+task PackageDesktop {
+
+}
+
+task PackageServer -If (-not $global:IsDesktopBuild) -Jobs Quality, {
+
+}
+
+task Package -Jobs Init, PackageDesktop, PackageServer, {    
+    . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository    
+}
 
 task Init {
     . $Env:EXPERT_BUILD_DIRECTORY\Build\Build-Libraries.ps1
@@ -279,7 +288,6 @@ task Init {
 
     Write-Info "Established build environment"
 }
-
 
 function Enter-BuildTask {    
     $script:step = New-Object LogDetail
