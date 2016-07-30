@@ -110,7 +110,7 @@ task Build {
         # node has completed build orchestration.
         $commonArgs = "/nologo /nr:false /m"       
         $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
-        $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
+        $commonArgs = "$commonArgs /p:SolutionRoot=$Repository\"
         $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
 
         if ($Clean) {
