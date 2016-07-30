@@ -195,7 +195,6 @@ doc.Save(File);
     <OnBuildBreakDependsOn>
       BeforeOnBuildBreak;
       GetChangeSetsOnBuildBreak;
-      BeforeDropBuild;
       DropBuild;
       AfterOnBuildBreak;
     </OnBuildBreakDependsOn>
@@ -228,7 +227,6 @@ doc.Save(File);
   <Target Name="ModuleBuild">
     <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
     <CallTarget Targets="CleanBin" />
-    <CallTarget Targets="GetModuleDependencies" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <!--<CallTarget Targets="CheckForWrongReferences" />-->
@@ -243,7 +241,6 @@ doc.Save(File);
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
-    <CallTarget Targets="CopyToDrop" />
     <CallTarget Targets="FinalizeBuild" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
@@ -398,30 +395,6 @@ doc.Save(File);
 
   </Target>
 
-
-  <!--
-    ==========================================================================================
-        Get Module Dependencies
-    ==========================================================================================
-  -->
-  <Target Name="GetModuleDependencies"
-          Condition="('$(DropLocation)'!='')">
-
-    <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
-
-    <GetDependencies
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      ProductManifest="$(ProductManifestPath)"
-      ModulesRootPath="$(SolutionDirectoryPath)"
-      ModuleName="$(ModuleName)"
-      DropPath="$(BaseDropDirectory)"
-      WorkspaceName="$(WorkspaceName)"
-      WorkspaceOwner="$(WorkspaceOwner)"
-      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-
-  </Target>
 
   <!-- 
     ==========================================================================================
@@ -1378,8 +1351,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="MarkBuildStepAsFailed"
-          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
-          DependsOnTargets="BeforeDropBuild">
+          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Marking build as failed" />
 
