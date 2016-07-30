@@ -102,13 +102,8 @@ function BuildAssociation($vssConnection, $teamProject, $buildId) {
     $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
     $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
     
-    Write-Output "Associating work items to build: $teamProject/$buildId"
-    try {
-    $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
-    } catch {
-    Write-Output "Oh no sad!"
-        Write-Output $_
-    }
+    Write-Output "Associating work items to build: $teamProject/$buildId"   
+    $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)    
 }
 
 #=================================================================================================
