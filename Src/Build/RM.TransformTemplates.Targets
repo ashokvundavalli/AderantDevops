@@ -95,16 +95,6 @@
           Condition="('$(rmBCItemTransformTemplatesEnabled)'=='true')" 
           DependsOnTargets="$(rmTransformTemplatesWorkerDependsOn)">
 
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Transforming text templates"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-    
     <Error
       Condition="('$(rmT4AssemblyReferencePaths)'=='')"
       Text="Missing required property 'rmT4AssemblyReferencePaths'" />
@@ -154,13 +144,6 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <Output ItemName="NonGeneratedFiles"
               TaskParameter="NonGeneratedFiles"/>
     </Aderant.TextTransform.Tasks.Transform>
-
-    <BuildStep
-      Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
 
   </Target>
 

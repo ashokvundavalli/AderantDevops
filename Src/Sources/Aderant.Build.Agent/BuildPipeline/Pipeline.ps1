@@ -71,9 +71,13 @@ if ($repository -eq "default" -or -not $customRepository) {
 }
 
 $buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
+
+if (-not $Env:EXPERT_BUILD_DIRECTORY.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+    $Env:EXPERT_BUILD_DIRECTORY += [System.IO.Path]::DirectorySeparatorChar
+}
     
-[System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_FOLDER", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)
+[System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_DIRECTORY", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)
 
-Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_FOLDER;]$buildInfrastructurePath")
+Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_DIRECTORY;]$buildInfrastructurePath")
 
-& $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $Env:BUILD_SOURCESDIRECTORY
+& $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $Env:BUILD_SOURCESDIRECTORY

@@ -95,12 +95,12 @@ task PostBuild -Jobs Init, Quality, CopyToDrop, {
 }
 
 task Package -Jobs Init,  {    
-    . $Env:EXPERT_BUILD_FOLDER\Build\Package.ps1 -Repository $Repository    
+    . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository    
 }
 
 task GetDependencies {
     if (-not $IsDesktopBuild) {
-        . $Env:EXPERT_BUILD_FOLDER\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
+        . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
     }
 }
 
@@ -110,7 +110,12 @@ task Build {
         # node has completed build orchestration.
         $commonArgs = "/nologo /nr:false /m"       
         $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
-        $commonArgs = "$commonArgs /p:SolutionRoot=$Repository\"
+
+        if (-not $Repository.EndsWith("\")) {
+            $Repository += "\"
+        }
+
+        $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
         $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
 
         if ($Clean) {
@@ -127,7 +132,7 @@ task Build {
                 # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
                 $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
 
-                . $Env:EXPERT_BUILD_FOLDER\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+                . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
             }
         } finally {
             popd
@@ -228,7 +233,7 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
     $text -match 'ModuleName=(?<name>[^"]+)' | Out-Null    
     $name = $Matches.name    
     
-    . $Env:EXPERT_BUILD_FOLDER\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
+    . $Env:EXPERT_BUILD_DIRECTORY\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
 
     $fullDropPath = "$dropLocation\$name\1.8.0.0\$version"
 
@@ -238,9 +243,9 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
 
 
 task Init {
-    . $Env:EXPERT_BUILD_FOLDER\Build\Build-Libraries.ps1
-    CompileBuildLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\    
-    LoadLibraryAssembly $Env:EXPERT_BUILD_FOLDER\Build\
+    . $Env:EXPERT_BUILD_DIRECTORY\Build\Build-Libraries.ps1
+    CompileBuildLibraryAssembly $Env:EXPERT_BUILD_DIRECTORY\Build\    
+    LoadLibraryAssembly $Env:EXPERT_BUILD_DIRECTORY\Build\
 
     Write-Info "Build tree"
     .\Show-BuildTree.ps1 -File $PSCommandPath

@@ -39,7 +39,7 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package) {
         $task = "Package"
     }    
 
-    & $Env:EXPERT_BUILD_FOLDER\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_FOLDER\Build\BuildProcess.ps1 -Repository $path -Clean:$clean.ToBool()
+    & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $path -Clean:$clean.ToBool()
 }
 
 function InstallPoshGit() {
