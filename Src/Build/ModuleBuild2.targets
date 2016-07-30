@@ -268,7 +268,7 @@ doc.Save(File);
   <Target Name="BuildNumberOverrideTarget"
           DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
 
-    <GetBuildProperties TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
+    <!--<GetBuildProperties TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
                         BuildUri="$(BuildUri)"
                         Condition=" '$(IsDesktopBuild)' != 'true' ">
       <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
@@ -276,7 +276,7 @@ doc.Save(File);
 
     <RemoveDir Condition="'$(DropLocation)' != '' And  '$(IsDesktopBuild)' != 'true'"
                Directories="$(DropLocation)\$(BuildNumber)"
-               ContinueOnError="true" />
+               ContinueOnError="true" />-->
 
     <PropertyGroup>
       <!-- 
@@ -294,12 +294,12 @@ doc.Save(File);
   <Target Name="UpdateDropLocation"
           Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" AfterTargets="BuildNumberOverrideTarget">
 
-    <!-- Set the drop location back to the FileVersion so the log file goes to the right place -->
+    <!-- Set the drop location back to the FileVersion so the log file goes to the right place --><!--
     <UpdateBuildNumberDropLocation
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       BuildNumber="$(BuildNumber)"
-      DropLocation="$(DropLocation)\$(FileVersion)" />
+      DropLocation="$(DropLocation)\$(FileVersion)" />-->
 
   </Target>
 
@@ -931,7 +931,7 @@ doc.Save(File);
       <PublishName Condition="'$(TfsBuildNumber)' != ''">$(TfsBuildNumber)</PublishName>
       <ResultsFileSwitch>/Logger:trx</ResultsFileSwitch>
 
-      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>
+      <!--<ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>-->
     </PropertyGroup>
 
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
