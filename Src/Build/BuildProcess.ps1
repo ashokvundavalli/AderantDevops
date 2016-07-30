@@ -115,6 +115,10 @@ task Build {
             $Repository += "\"
         }
 
+        if (-not $Env:EXPERT_BUILD_DIRECTORY.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+            $commonArgs = "$commonArgs /p:EXPERT_BUILD_DIRECTORY=$Env:EXPERT_BUILD_DIRECTORY\"
+        }
+
         $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
         $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
 

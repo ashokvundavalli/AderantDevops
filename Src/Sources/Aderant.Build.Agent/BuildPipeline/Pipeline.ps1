@@ -71,10 +71,6 @@ if ($repository -eq "default" -or -not $customRepository) {
 }
 
 $buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
-
-if (-not $Env:EXPERT_BUILD_DIRECTORY.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
-    $Env:EXPERT_BUILD_DIRECTORY += [System.IO.Path]::DirectorySeparatorChar
-}
     
 [System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_DIRECTORY", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)
 
