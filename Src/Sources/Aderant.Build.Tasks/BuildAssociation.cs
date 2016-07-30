@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Aderant.Build.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -41,7 +42,11 @@ namespace Aderant.Build.Tasks {
         }
 
         public void AssociateWorkItemsToBuild(string teamProject, int buildId) {
-            AssociateWorkItemsToBuildAsync(teamProject, buildId).Wait();
+            try {
+                AssociateWorkItemsToBuildAsync(teamProject, buildId).Wait();
+            } catch (AggregateException ex) {
+                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            }
         }
     }
 }
