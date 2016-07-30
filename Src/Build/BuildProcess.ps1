@@ -93,8 +93,10 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     Write-Output "Last good build warnings: $lastGoodBuild"
     Write-Output "Current warnings: $currentBuildCount"
 
-    if ($currentBuildCount -gt $lastGoodBuild) {
-        throw "Warning count has increased since the last good build"
+    if ($lastGoodBuild -ne -1) {
+        if ($currentBuildCount -gt $lastGoodBuild) {
+            throw "Warning count has increased since the last good build"
+        }
     }
 }
 

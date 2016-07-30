@@ -68,6 +68,10 @@
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
+      <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
+      <Name>Aderant.Build</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

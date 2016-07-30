@@ -9,4 +9,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: InternalsVisibleTo("UnitTest.Build")]
+[assembly: InternalsVisibleTo("IntegrationTest.Build")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Client;
@@ -6,8 +8,9 @@ using Microsoft.VisualStudio.Services.Client;
 namespace Aderant.Build.Tasks {
     public class WarningRatchet {
         private readonly VssConnection connection;
+        const int NoLastGoodBuild = -1;
 
-        const int maximumItemCount = 5000;
+        const int MaximumItemCount = 5000;
 
         public WarningRatchet(VssConnection connection) {
             this.connection = connection;
@@ -26,16 +29,19 @@ namespace Aderant.Build.Tasks {
                 DefinitionType.Build,
                 top: 1,
                 continuationToken: null,
-                maxBuildsPerDefinition: maximumItemCount,
+                maxBuildsPerDefinition: MaximumItemCount,
                 deletedFilter: QueryDeletedOption.ExcludeDeleted,
                 queryOrder: BuildQueryOrder.FinishTimeDescending,
                 branchName: master,
                 userState: null);
 
             Microsoft.TeamFoundation.Build.WebApi.Build build = result.FirstOrDefault();
+            if (build != null) {
+                var timelineRecords = await client.GetBuildTimelineAsync(teamProject, build.Id);
+                return SumWarnings(timelineRecords);
+            }
 
-            var timelineRecords = await client.GetBuildTimelineAsync(teamProject, build.Id);
-            return SumWarnings(timelineRecords);
+            return NoLastGoodBuild;
         }
 
         private static int SumWarnings(Timeline timelineRecords) {
