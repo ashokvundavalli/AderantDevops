@@ -6,6 +6,8 @@ param(
     [bool]$LimitBuildWarnings
 )
 
+$EntryPoint = Get-Variable "BuildTask"
+
 # The VsTsTaskSdk specifies a prefix of Vsts. Thus commands are renamed from what appears in the source under ps_modules.
 # eg Invoke-Tool becomes Invoke-VstsTool
 
@@ -88,7 +90,7 @@ function GetVssConnection() {
 # Applies a common build number, executes unit tests and packages the assemblies as a NuGet 
 # package
 #=================================================================================================
-task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
+task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {    
 }
 
 task PostBuild -Jobs Init, Package, CopyToDrop, {   
@@ -243,15 +245,17 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
 }
 
 
-task PackageDesktop {
+task PackageDesktop -If ($global:IsDesktopBuild) {
+    
+}
+
+task PackageServer -If (-not $global:IsDesktopBuild -and $script:EntryPoint.Value -eq "PostBuild") -Jobs Quality, {
 
 }
 
-task PackageServer -If (-not $global:IsDesktopBuild) -Jobs Quality, {
-
-}
-
-task Package -Jobs Init, PackageDesktop, PackageServer, {    
+task Package -Jobs Init, PackageDesktop, PackageServer, { 
+    Write-Output "Entry point was: $($script:EntryPoint.Value)"
+       
     . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository    
 }
 
@@ -304,6 +308,5 @@ function Exit-BuildTask {
         $script:step.Finish("Done", [Result]::Succeeded)
     }
 }
-
 
 task . EndToEnd
