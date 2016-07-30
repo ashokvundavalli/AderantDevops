@@ -85,6 +85,32 @@ function GetVssConnection() {
    return $vssConnection
 }
 
+function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
+    $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
+    $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
+    $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
+
+    Write-Output "Last good build warnings: $lastGoodBuild"
+    Write-Output "Current warnings: $currentBuildCount"
+
+    if ($currentBuildCount -gt $lastGoodBuild) {
+        throw "Warning count has increased since the last good build"
+    }
+}
+
+function BuildAssociation($vssConnection, $teamProject, $buildId) {
+    $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
+    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
+    
+    Write-Output "Associating work items to build: $teamProject/$buildId"
+    try {
+    $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
+    } catch {
+    Write-Output "Oh no sad!"
+        Write-Output $_
+    }
+}
+
 #=================================================================================================
 # Synopsis: Performs a incremental build of the Visual Studio Solution if possible.
 # Applies a common build number, executes unit tests and packages the assemblies as a NuGet 
@@ -192,27 +218,6 @@ task Clean {
 task Test {   
 }
 
-function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
-    $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
-    $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
-    $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
-
-    Write-Output "Last good build warnings: $lastGoodBuild"
-    Write-Output "Current warnings: $currentBuildCount"
-
-    if ($currentBuildCount -gt $lastGoodBuild) {
-        throw "Warning count has increased since the last good build"
-    }
-}
-
-function BuildAssociation($vssConnection, $teamProject, $buildId) {
-    $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
-    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
-    
-    Write-Output "Associating work items to build"
-    $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
-}
-
 task Quality -If (-not $IsDesktopBuild) {
     $vssConnection = GetVssConnection
 
@@ -246,17 +251,20 @@ task CopyToDrop -If (-not $IsDesktopBuild) {
 
 
 task PackageDesktop -If ($global:IsDesktopBuild) {
-    
+    $script:CreatePackage = $true
 }
 
 task PackageServer -If (-not $global:IsDesktopBuild -and $script:EntryPoint.Value -eq "PostBuild") -Jobs Quality, {
+    $script:CreatePackage = $true
 
 }
 
 task Package -Jobs Init, PackageDesktop, PackageServer, { 
-    Write-Output "Entry point was: $($script:EntryPoint.Value)"
+    if ($script:CreatePackage) {
+        Write-Output "Entry point was: $($script:EntryPoint.Value)"
        
-    . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository    
+        . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository    
+    }
 }
 
 task Init {
