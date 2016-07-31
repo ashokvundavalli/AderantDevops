@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="ModuleBuild"
          ToolsVersion="14.0"
-         TreatAsLocalProperty="BuildRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
+         TreatAsLocalProperty="FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
 
   <!-- 
     =========================================================================================================
@@ -14,7 +14,7 @@
   -->
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets"
-          Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets')" />
+          Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets') And '$(TeamBuildVersion)' == ''" />
 
   <PropertyGroup>
     <NewLine>%0A</NewLine>

@@ -36,6 +36,8 @@ namespace Aderant.Build {
         public void Add(IEnumerable<ExpertModule> referencedModules) {
             var file = dependencies.GetDependenciesFile();
 
+            fileSystem.MakeFileWritable(file.FileName);
+
             string[] lines = file.Lines;
             for (int i = 0; i < lines.Length; i++) {
                 string line = lines[i];
@@ -46,8 +48,6 @@ namespace Aderant.Build {
 
                 if (line.IndexOf("source " + Constants.DefaultNuGetStream, StringComparison.OrdinalIgnoreCase) >= 0) {
                     lines[i] = "source " + BuildConstants.NugetServerUrl;
-
-                    fileSystem.MakeFileWritable(file.FileName);
                     file.Save();
                     break;
                 }
