@@ -8,7 +8,6 @@ using Microsoft.VisualStudio.Services.Client;
 namespace Aderant.Build.Tasks {
     public class WarningRatchet {
         private readonly VssConnection connection;
-        const int NoLastGoodBuild = -1;
 
         const int MaximumItemCount = 5000;
 
@@ -16,17 +15,22 @@ namespace Aderant.Build.Tasks {
             this.connection = connection;
         }
 
-        public async Task<int> GetLastGoodBuildWarningCountAsync(string teamProject, int buildDefinitionId) {
+        public async Task<int?> GetLastGoodBuildWarningCountAsync(string teamProject, int buildDefinitionId) {
             var client = connection.GetClient<BuildHttpClient>();
 
             string master = "refs/heads/master";
 
-            var result = await client.GetBuildsAsync(teamProject, new int[] {buildDefinitionId}, null, null, null, null, null,
-                BuildReason.All,
-                BuildStatus.Completed,
-                BuildResult.Succeeded,
-                null, null,
-                DefinitionType.Build,
+            var result = await client.GetBuildsAsync(teamProject, new int[] {buildDefinitionId}, 
+                queues: null, 
+                buildNumber: null, 
+                minFinishTime: null,
+                maxFinishTime: null, 
+                requestedFor: null,
+                reasonFilter: BuildReason.All,
+                statusFilter: BuildStatus.Completed,
+                resultFilter: BuildResult.Succeeded,
+                tagFilters: null, properties: null,
+                type: DefinitionType.Build,
                 top: 1,
                 continuationToken: null,
                 maxBuildsPerDefinition: MaximumItemCount,
@@ -41,14 +45,14 @@ namespace Aderant.Build.Tasks {
                 return SumWarnings(timelineRecords);
             }
 
-            return NoLastGoodBuild;
+            return null;
         }
 
         private static int SumWarnings(Timeline timelineRecords) {
             return timelineRecords.Records.Sum(s => s.WarningCount).GetValueOrDefault();
         }
 
-        public int GetLastGoodBuildWarningCount(string teamProject, int buildDefinition) {
+        public int? GetLastGoodBuildWarningCount(string teamProject, int buildDefinition) {
             var task = GetLastGoodBuildWarningCountAsync(teamProject, buildDefinition);
             task.Wait();
             return task.Result;

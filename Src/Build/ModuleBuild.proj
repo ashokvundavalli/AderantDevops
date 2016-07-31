@@ -68,7 +68,7 @@
   <Target Name="AfterBuild" />
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
-  <Import Project="$(BuildRoot)\Build\TFSBuild.proj" Condition="Exists('$(BuildRoot)\Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)\Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)\Build\TFSBuild.proj')" />
 
   <UsingTask
     AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
