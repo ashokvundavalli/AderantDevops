@@ -222,7 +222,7 @@
     <SymbolPublishFile Condition="'$(SymbolPublishFile)' == ''">$(SolutionDirectoryPath)SymbolsToPublish.txt</SymbolPublishFile>
   </PropertyGroup>
 
-  <Target Name="IndexSourcesAndPublishSymbolsCore">
+  <Target Name="IndexSourcesAndPublishSymbolsCore" Condition="'$(BUILD_REPOSITORY_PROVIDER)' != 'TfsGit'">
     <Error Condition="'@(CompiledAssemblies)' == ''" Text="There are no outputs from the build" />
 
     <ItemGroup>
