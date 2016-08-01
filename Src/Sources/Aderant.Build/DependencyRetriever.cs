@@ -75,7 +75,7 @@ namespace Aderant.Build {
         public async Task Restore() {
             await Task.Run(() => {
                 if (!HasLockFile()) {
-                    dependencies.Update(false);
+                    dependencies.Update(false, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
                 }
 
                 dependencies.Restore();
