@@ -29,11 +29,11 @@ namespace Aderant.Build {
             // TODO: Bug in Paket Dependencies.Locate - it always prefers to search up
 
             try {
-                //dependencies = Dependencies.Locate(FileSystem.Root);
-                var dependencyFile = FileSystem.GetFiles(FileSystem.Root, DependenciesFile, true).FirstOrDefault();
-                if (dependencyFile != null) {
-                    dependencies = new Dependencies(FileSystem.GetFullPath(dependencyFile));
-                }
+                dependencies = Dependencies.Locate(FileSystem.Root);
+                //var dependencyFile = FileSystem.GetFiles(FileSystem.Root, DependenciesFile, true).FirstOrDefault();
+                //if (dependencyFile != null) {
+                //    dependencies = new Dependencies(FileSystem.GetFullPath(dependencyFile));
+                //}
             } catch (Exception) {
                 
             } finally {
