@@ -9,6 +9,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     public class DependencyManifest {
         private readonly XDocument manifest;
         private List<ExpertModule> referencedModules;
+        private IGlobalAttributesProvider globalAttributesProvider;
 
         internal DependencyManifest(string moduleName, XDocument manifest) {
             this.ModuleName = moduleName;
@@ -72,7 +73,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                             module.VersionRequirement = new DependencyManager(new PhysicalFileSystem(Path.GetDirectoryName(DependencyFile)), null).GetVersionsFor(module.Name);
                         }
                         
-                        
                         if (referencedModules.Contains(module)) {
                             throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
                         }
@@ -84,7 +84,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal IGlobalAttributesProvider GlobalAttributesProvider { get; set; }
+        internal IGlobalAttributesProvider GlobalAttributesProvider {
+            get { return globalAttributesProvider; }
+            set {
+                globalAttributesProvider = value;
+                referencedModules = null;
+            }
+        }
 
         /// <summary>
         /// Loads a dependency manifest from the given module directory.
@@ -103,7 +109,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Recursively loads all dependency manifests.
         /// </summary>
-        /// <param name="fs">The fs.</param>
         /// <param name="modulesRootPath">The modules root path.</param>
         public static IList<DependencyManifest> LoadAll(string modulesRootPath) {
             var fs = new PhysicalFileSystem(modulesRootPath);

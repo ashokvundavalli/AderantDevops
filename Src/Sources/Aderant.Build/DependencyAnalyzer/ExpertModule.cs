@@ -282,6 +282,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         protected virtual string GetBinariesPath(string dropLocation) {
+            if (AssemblyVersion == null) {
+                throw new ArgumentNullException(nameof(AssemblyVersion), "AssemblyVersion != null");
+            }
+
             dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
 
             IFileSystem2 fs = new PhysicalFileSystem(dropLocation);
