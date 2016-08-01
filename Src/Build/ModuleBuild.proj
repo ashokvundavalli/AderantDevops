@@ -87,7 +87,8 @@
     <EndToEndIterationDependsOn Condition="'$(BuildAll)' == 'true'"></EndToEndIterationDependsOn>
   </PropertyGroup>
   
-  <Target Name="EndToEndIteration" DependsOnTargets="$(EndToEndIterationDependsOn)" />
+  <Target Name="EndToEndIteration"
+          DependsOnTargets="$(EndToEndIterationDependsOn)" />
 
   <UsingTask
     AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
