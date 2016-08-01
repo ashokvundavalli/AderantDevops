@@ -58,7 +58,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <exception cref="System.IO.DirectoryNotFoundException"></exception>
         public DependencyBuilder(string branchRootOrModulePath) {
             if (!Path.IsPathRooted(branchRootOrModulePath)) {
-                throw new ArgumentException("modulePath must be a rooted path", "branchRootOrModulePath");
+                throw new ArgumentException("modulePath must be a rooted path", nameof(branchRootOrModulePath));
             }
 
             moduleProvider = ExpertManifest.Load(branchRootOrModulePath);

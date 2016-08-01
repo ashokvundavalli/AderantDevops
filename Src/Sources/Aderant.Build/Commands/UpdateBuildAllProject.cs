@@ -30,22 +30,10 @@ namespace Aderant.Build.Commands {
             }
 
             if (!string.IsNullOrEmpty(ModuleProject)) {
-                Collection<ChoiceDescription> descriptions = new Collection<ChoiceDescription>(
-                    new[] {new ChoiceDescription("Y"), new ChoiceDescription("N")});
+                string moduleDirectory = ParameterHelper.GetBranchModulesDirectory(null, SessionState);
+                IModuleProvider provider = ExpertManifest.Load(moduleDirectory);
 
-                int choice = 0;
-                if (!System.Diagnostics.Debugger.IsAttached) {
-                    choice = Host.UI.PromptForChoice("Update file?", string.Format("Do you want to update: {0} with the new module build order?", ModuleProject), descriptions, 0);
-                }
-
-                if (choice == 0) {
-                    string moduleDirectory = ParameterHelper.GetBranchModulesDirectory(null, SessionState);
-                    IModuleProvider provider = ExpertManifest.Load(moduleDirectory);
-
-                    SequenceBuilds(provider, ModuleProject);
-                } else {
-                    Host.UI.WriteWarningLine("Creating/updating of project file canceled");
-                }
+                SequenceBuilds(provider, ModuleProject);
             }
         }
 

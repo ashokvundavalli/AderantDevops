@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
-
     internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
         const LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace;
 
@@ -30,9 +29,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The product manifest path.
         /// </value>
         public string ProductManifestPath {
-            get {
-                return new Uri(manifest.BaseUri).LocalPath;
-            }
+            get { return new Uri(manifest.BaseUri).LocalPath; }
         }
 
         /// <summary>
@@ -41,10 +38,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>
         /// The branch.
         /// </value>
-        public string Branch {
-            get;
-            private set;
-        }
+        public string Branch { get; private set; }
 
         /// <summary>
         /// Gets the dependency manifests.
@@ -60,9 +54,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 return dependencyManifests;
             }
-            protected set {
-                dependencyManifests = value;
-            }
+            protected set { dependencyManifests = value; }
         }
 
         public bool HasDependencyManifests {
@@ -195,7 +187,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public static ExpertManifest Create(string manifestPath) {
             if (Path.IsPathRooted(manifestPath)) {
-
                 var root = Path.GetDirectoryName(manifestPath);
 
                 PhysicalFileSystem fs = new PhysicalFileSystem(root);
@@ -267,11 +258,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             string path = ResolveLoadFromPath(manifest);
-            //return new ExpertManifest(XDocument.Load(path, loadOptions));
+            var loadResult = LoadInternal(path);
+            loadResult.ModulesDirectory = manifest;
 
-            System.Diagnostics.Debugger.Launch();
-
-            throw new Exception("Bang");
+            return loadResult;
         }
 
         private static string ResolveLoadFromPath(string directory) {
@@ -323,7 +313,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private IEnumerable<XAttribute> MergeAttributes(IEnumerable<XAttribute> productManifestAttributes, IEnumerable<XAttribute> otherAttributes) {
             List<XAttribute> mergedAttributes = new List<XAttribute>(productManifestAttributes);
             foreach (var otherAttribute in otherAttributes) {
-
                 bool add = true;
 
                 foreach (var attribute in mergedAttributes) {

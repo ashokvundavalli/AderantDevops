@@ -16,13 +16,18 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 2)]
         public string BranchPath { get; set; }
 
+        [Parameter(Mandatory = true, Position = 3)]
+        public string ProductManifestPath { get; set; }
+
         protected override void ProcessRecord() {
-            string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
             if (Modules == null && ModuleNames == null) {
                 throw new ArgumentException("Must specify Modules or ModuleNames");
             }
 
-            DependencyBuilder builder = new DependencyBuilder(branchPath);
+            ExpertManifest manifest = ExpertManifest.Create(ProductManifestPath);
+            manifest.ModulesDirectory = BranchPath;
+
+            DependencyBuilder builder = new DependencyBuilder(manifest);
 
             if (Modules == null) {
                 Modules = (from module in builder.GetAllModules()

@@ -290,7 +290,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new BuildNotFoundException("No drop location for " + Name);
             }
 
-            var entries = fs.GetFiles(dropLocation, null, false).ToArray();
+            var entries = fs.GetDirectories(dropLocation).ToArray();
             string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
             foreach (string build in orderedBuilds) {
@@ -303,7 +303,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (file.IndexOf("build.succeeded", StringComparison.OrdinalIgnoreCase) >= 0) {
                         string binariesPath;
-                        if (HasBinariesFolder(build, fs, out binariesPath)) {
+                        if (HasBinariesFolder(fs.GetFullPath(build), fs, out binariesPath)) {
                             return binariesPath;
                         }
                     }
@@ -311,9 +311,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string buildLog = files.FirstOrDefault(f => f.EndsWith("BuildLog.txt", StringComparison.OrdinalIgnoreCase));
                 if (!string.IsNullOrEmpty(buildLog)) {
-                    if (CheckLog(buildLog)) {
+                    if (CheckLog(fs.GetFullPath(buildLog))) {
                         string binariesPath;
-                        if (HasBinariesFolder(build, fs, out binariesPath)) {
+                        if (HasBinariesFolder(fs.GetFullPath(build), fs, out binariesPath)) {
                             return binariesPath;
                         }
                     }
@@ -327,10 +327,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             string binaries = Path.Combine(build, "Bin", "Module");
 
             if (fileSystem.DirectoryExists(binaries)) {
-                {
-                    binariesFolder = binaries;
-                    return true;
-                }
+                binariesFolder = binaries;
+                return true;
             }
             binariesFolder = null;
             return false;
