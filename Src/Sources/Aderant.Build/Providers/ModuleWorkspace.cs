@@ -87,9 +87,11 @@ namespace Aderant.Build.Providers {
             workspaceTask = Task.Run(() => {
                 WorkspaceInfo workspaceInfo = Workstation.Current.GetLocalWorkspaceInfo(path);
 
-                Workspace workspace = workspaceInfo.GetWorkspace(new TfsTeamProjectCollection(workspaceInfo.ServerUri));
-                versionControlServer = workspace.VersionControlServer;
-                tfsWorkspace = new TeamFoundationWorkspace(teamProject, workspace, path);
+                if (workspaceInfo != null) {
+                    Workspace workspace = workspaceInfo.GetWorkspace(new TfsTeamProjectCollection(workspaceInfo.ServerUri));
+                    versionControlServer = workspace.VersionControlServer;
+                    tfsWorkspace = new TeamFoundationWorkspace(teamProject, workspace, path);
+                }
 
                 string manifestPath;
                 if (path.EndsWith(".xml")) {
