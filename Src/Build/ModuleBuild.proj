@@ -78,7 +78,7 @@
     This target is invoked on the build machine by the build agent. It needs to occur after the import of TFSBuild.proj to ensure 
     we don't run EndToEndIteration defined in that file again
   -->
-  <Target Name="EndToEndIteration" />
+  <Target Name="EndToEndIteration" DependsOnTargets="$(EndToEndIterationDependsOn)" />
 
   <UsingTask
     AssemblyFile="$(MSBuildExtensionsPath)\NDepend\NDepend.Build.MSBuild.dll"
