@@ -76,7 +76,7 @@ namespace Aderant.Build {
             
 
             if (line.StartsWith(commandName, StringComparison.InvariantCultureIgnoreCase)
-                && lastParameterName!= null && (parameterName.Equals(lastParameterName.TrimStart('-'), StringComparison.InvariantCultureIgnoreCase))) {
+                && lastParameterName!= null && parameterName.Equals(lastParameterName.TrimStart('-'), StringComparison.InvariantCultureIgnoreCase)) {
                 return true;
             }
 
@@ -120,8 +120,11 @@ namespace Aderant.Build {
             return matches.ToArray();
         }
 
-        public string[] GetModuleMatches(string modulePath) {
-            return GetModuleMatches(new DependencyBuilder(modulePath));
+        public string[] GetModuleMatches(string modulePath, string productManifestPath = null) {
+            ExpertManifest manifest = ExpertManifest.Create(productManifestPath);
+            manifest.ModulesDirectory = modulePath;
+
+            return GetModuleMatches(new DependencyBuilder(manifest));
         }
 
         private static bool CompareModuleNameToSearchString(string moduleName, List<string> searchStringSplitByCase) {

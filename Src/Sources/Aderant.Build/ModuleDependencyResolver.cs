@@ -84,7 +84,6 @@ namespace Aderant.Build {
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
         public async Task Resolve(string dependenciesDirectory, DependencyFetchMode mode, string buildScriptsDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
-
             if (!Directory.Exists(dependenciesDirectory)) {
                 Directory.CreateDirectory(dependenciesDirectory);
             }
@@ -121,7 +120,7 @@ namespace Aderant.Build {
         }
 
         private async Task PackageRestore(DependencyFetchMode mode, PhysicalFileSystem fileSystem2, IEnumerable<ExpertModule> referencedModules) {
-            using (var retriever = new DependencyRetriever(fileSystem2, logger)) {
+            using (var retriever = new DependencyManager(fileSystem2, logger)) {
                 retriever.Add(referencedModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
 
                 retriever.Hack();
@@ -139,12 +138,12 @@ namespace Aderant.Build {
                 logger.Info("Restoring packages.");
                 await retriever.Restore();
             }
-            
+
             await RestorePackages(fileSystem2, mode, referencedModules);
         }
 
         private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> referencedModules) {
-            var packagedModules = new string[] { "Aderant.Build.Analyzer" };
+            var packagedModules = new string[] {"Aderant.Build.Analyzer"};
 
             foreach (var module in referencedModules) {
                 if (module.ModuleType == ModuleType.ThirdParty || module.GetAction == GetAction.NuGet) {

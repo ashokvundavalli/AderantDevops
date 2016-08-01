@@ -178,7 +178,7 @@ namespace Aderant.Build.Tasks {
         private IEnumerable<DependencyManifest> GetDependencyManifests() {
             IList<DependencyManifest> manifests;
             if (BuildAll) {
-                manifests = DependencyManifest.LoadAll(FileSystem.Default, ModulesRootPath);
+                manifests = DependencyManifest.LoadAll(ModulesRootPath);
             } else {
                 DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(ModulesRootPath);
 

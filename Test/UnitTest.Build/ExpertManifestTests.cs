@@ -18,7 +18,7 @@ namespace UnitTest.Build {
 </Modules>
 </ProductManifest>
 ";
-            var manifest = new ExpertManifest(null, XDocument.Parse(manifestText));
+            var manifest = new ExpertManifest(XDocument.Parse(manifestText));
             var element = manifest.MergeAttributes(entry);
 
             Assert.AreEqual(4, element.Attributes().Count());

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -8,8 +9,11 @@ using Aderant.Build.Providers;
 namespace Aderant.Build.DependencyAnalyzer {
 
     internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
-        private readonly FileSystem fileSystem;
+        const LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace;
+
+        private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
+
 
         private List<ExpertModule> modules;
 
@@ -38,7 +42,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The branch.
         /// </value>
         public string Branch {
-            get { return PathHelper.GetBranch(manifest.BaseUri); }
+            get;
+            private set;
         }
 
         /// <summary>
@@ -64,6 +69,17 @@ namespace Aderant.Build.DependencyAnalyzer {
             get { return dependencyManifests != null; }
         }
 
+        public string ModulesDirectory {
+            get { return moduleDirectory; }
+            set {
+                moduleDirectory = value;
+                if (string.IsNullOrEmpty(Branch)) {
+                    Branch = PathHelper.GetBranch(value);
+                }
+            }
+        }
+
+
         /// <summary>
         /// Gets the distinct complete list of available modules and those referenced in Dependency Manifests.
         /// </summary>
@@ -77,7 +93,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="moduleName">Name of the module.</param>
         /// <param name="manifest">The manifest.</param>
-        /// <returns></returns>
         public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
             if (dependencyManifests != null) {
                 manifest = dependencyManifests.FirstOrDefault(m => string.Equals(m.ModuleName, moduleName, StringComparison.OrdinalIgnoreCase));
@@ -87,8 +102,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             } else {
                 string modulePath = Path.Combine(moduleDirectory, moduleName);
-                if (fileSystem.Directory.Exists(modulePath)) {
-                    if (fileSystem.File.Exists(Path.Combine(modulePath, DependencyManifest.PathToDependencyManifestFile))) {
+
+                if (fileSystem.DirectoryExists(modulePath)) {
+                    if (fileSystem.GetFiles(modulePath, DependencyManifest.DependencyManifestFileName, true).FirstOrDefault() != null) {
                         manifest = DependencyManifest.LoadFromModule(modulePath);
                         return true;
                     }
@@ -106,9 +122,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="manifestPath">The manifest path.</param>
         /// <returns></returns>
         public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
-            string dependencyManifest = Path.Combine(moduleDirectory, moduleName, DependencyManifest.PathToDependencyManifestFile);
+            string dependencyManifest = fileSystem.GetFiles(Path.Combine(moduleDirectory, moduleName), DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
 
-            if (fileSystem.File.Exists(dependencyManifest)) {
+            if (dependencyManifest != null) {
                 manifestPath = dependencyManifest;
                 return true;
             }
@@ -128,10 +144,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             ModuleType moduleType = ExpertModule.GetModuleType(moduleName);
 
             if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
-                return fileSystem.Directory.Exists(Path.Combine(moduleDirectory, "ThirdParty", moduleName, "bin"));
+                return fileSystem.DirectoryExists(Path.Combine(moduleDirectory, "ThirdParty", moduleName, "bin"));
             }
 
-            return fileSystem.File.Exists(Path.Combine(moduleDirectory, moduleName, "Build", "TFSBuild.proj"));
+            return fileSystem.FileExists(Path.Combine(moduleDirectory, moduleName, "Build", "TFSBuild.proj"));
         }
 
         /// <summary>
@@ -177,23 +193,37 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        protected ExpertManifest(XDocument manifest) : this(FileSystem.Default, manifest) {
-            
+        public static ExpertManifest Create(string manifestPath) {
+            if (Path.IsPathRooted(manifestPath)) {
+
+                var root = Path.GetDirectoryName(manifestPath);
+
+                PhysicalFileSystem fs = new PhysicalFileSystem(root);
+                return new ExpertManifest(fs, manifestPath);
+            }
+            throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Path {0} is not a rooted path", manifestPath));
         }
 
-        internal ExpertManifest(FileSystem fileSystem, XDocument manifest) {
+        internal ExpertManifest(IFileSystem2 fileSystem, string manifestPath) {
             this.fileSystem = fileSystem;
-            this.manifest = manifest;
-            
-            // Determine the modules directory
-            if (!string.IsNullOrEmpty(manifest.BaseUri)) {
-                // Manifest lives in the package folder: C:\tfs\ExpertSuite\Dev\Framework\Modules\Build.Infrastructure\Src\Package
 
-                string localPath = new Uri(manifest.BaseUri).LocalPath;
-                moduleDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(localPath), @"..\..\..")); // A bit yucky
+            using (Stream stream = fileSystem.OpenFile(manifestPath)) {
+                var document = XDocument.Load(stream, loadOptions);
+                this.manifest = document;
             }
 
+            Initialize();
+        }
+
+        internal ExpertManifest(XDocument manifest) {
+            this.manifest = manifest;
+            Initialize();
+        }
+
+        private void Initialize() {
             this.modules = LoadAllModules().ToList();
+
+            Branch = PathHelper.GetBranch(manifest.BaseUri, false);
         }
 
         private IEnumerable<ExpertModule> LoadAllModules() {
@@ -232,17 +262,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static ExpertManifest LoadInternal(string manifest) {
-            const LoadOptions loadOptions = (LoadOptions.SetBaseUri | LoadOptions.SetLineInfo);
-            try {
-                if (manifest.EndsWith(".xml")) {
-                    return new ExpertManifest(XDocument.Load(manifest, loadOptions));
-                }
-
-                string path = ResolveLoadFromPath(manifest);
-                return new ExpertManifest(XDocument.Load(path, loadOptions));
-            } catch (ArgumentException) {
-                return new ExpertManifest(XDocument.Parse(manifest, loadOptions));
+            if (manifest.EndsWith(".xml")) {
+                return Create(manifest);
             }
+
+            string path = ResolveLoadFromPath(manifest);
+            //return new ExpertManifest(XDocument.Load(path, loadOptions));
+
+            System.Diagnostics.Debugger.Launch();
+
+            throw new Exception("Bang");
         }
 
         private static string ResolveLoadFromPath(string directory) {
@@ -267,7 +296,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (internalModule != null) {
                 string dropLocationDirectory = internalModule.GetPathToBinaries(dropPath);
 
-                if (fileSystem.Directory.Exists(dropLocationDirectory)) {
+                if (fileSystem.DirectoryExists(dropLocationDirectory)) {
                     return dropLocationDirectory;
                 }
             }

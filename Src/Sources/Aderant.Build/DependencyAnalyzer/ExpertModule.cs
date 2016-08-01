@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -15,7 +13,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     [DebuggerDisplay("{Name}")]
     public class ExpertModule : IEquatable<ExpertModule> {
-        internal FileSystem FileSystem { get; private set; }
+        internal IFileSystem2 FileSystem { get; private set; }
 
         private string name;
         private List<XAttribute> customAttributes;
@@ -35,8 +33,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         public static ExpertModule Create(XElement element) {
             var name = element.Attribute("Name");
 
-            if (name == null || string.IsNullOrEmpty(name.Value)) {
-                throw new ArgumentNullException("element", "No name element specified");
+            if (string.IsNullOrEmpty(name?.Value)) {
+                throw new ArgumentNullException(nameof(element), "No name element specified");
             }
 
             var moduleType = GetModuleType(name.Value);
@@ -54,7 +52,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
-        public ExpertModule(XElement element) : this(FileSystem.Default) {
+        internal ExpertModule(XElement element) : this() {
             customAttributes = element.Attributes().ToList();
 
             SetPropertyValue(value => name = value, element, "Name");
@@ -86,10 +84,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (!string.IsNullOrEmpty(value)) {
                 GetAction = (GetAction) Enum.Parse(typeof (GetAction), value.Replace("_", "-"), true);
             }
-        }
-
-        private ExpertModule(FileSystem fileSystem) {
-            this.FileSystem = fileSystem;
         }
 
         /// <summary>
@@ -233,6 +227,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal RepositoryType RepositoryType { get; set; }
+        internal VersionRequirement VersionRequirement { get; set; }
 
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -289,17 +284,17 @@ namespace Aderant.Build.DependencyAnalyzer {
         protected virtual string GetBinariesPath(string dropLocation) {
             dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
 
-            DirectoryOperations directoryOperations = FileSystem.Directory;
+            IFileSystem2 fs = new PhysicalFileSystem(dropLocation);
 
-            if (!directoryOperations.Exists(dropLocation)) {
+            if (!fs.DirectoryExists(dropLocation)) {
                 throw new BuildNotFoundException("No drop location for " + Name);
             }
 
-           string[] entries = directoryOperations.GetFileSystemEntries(dropLocation);
+            var entries = fs.GetFiles(dropLocation, null, false).ToArray();
             string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
             foreach (string build in orderedBuilds) {
-                string[] files = directoryOperations.GetFileSystemEntries(build);
+                var files = fs.GetFiles(build, null, false);
 
                 foreach (string file in files) {
                     if (file.IndexOf("build.failed", StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -308,7 +303,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (file.IndexOf("build.succeeded", StringComparison.OrdinalIgnoreCase) >= 0) {
                         string binariesPath;
-                        if (HasBinariesFolder(build, directoryOperations, out binariesPath)) {
+                        if (HasBinariesFolder(build, fs, out binariesPath)) {
                             return binariesPath;
                         }
                     }
@@ -318,7 +313,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (!string.IsNullOrEmpty(buildLog)) {
                     if (CheckLog(buildLog)) {
                         string binariesPath;
-                        if (HasBinariesFolder(build, directoryOperations, out binariesPath)) {
+                        if (HasBinariesFolder(build, fs, out binariesPath)) {
                             return binariesPath;
                         }
                     }
@@ -328,10 +323,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             throw new BuildNotFoundException("No latest build found for " + Name);
         }
 
-        private static bool HasBinariesFolder(string build, DirectoryOperations directoryOperations, out string binariesFolder) {
+        private static bool HasBinariesFolder(string build, IFileSystem2 fileSystem, out string binariesFolder) {
             string binaries = Path.Combine(build, "Bin", "Module");
 
-            if (directoryOperations.Exists(binaries)) {
+            if (fileSystem.DirectoryExists(binaries)) {
                 {
                     binariesFolder = binaries;
                     return true;
@@ -349,7 +344,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             foreach (var entry in entries) {
                 string directoryName = Path.GetFileName(entry);
                 Version version;
-                if (Version.TryParse(directoryName, out version)) {
+                if (System.Version.TryParse(directoryName, out version)) {
                     numbers.Add(new KeyValuePair<Version, string>(version, entry));
                 }
             }

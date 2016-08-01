@@ -56,13 +56,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                     
                     if (string.IsNullOrEmpty(entry.Name)) {
                         Directory.CreateDirectory(target);
-                        FileSystem.ClearReadOnly(target);
+                        Aderant.Build.FileSystem.ClearReadOnly(target);
                         continue;
                     }
 
                     entry.ExtractToFile(target, true);
 
-                    FileSystem.ClearReadOnly(target);
+                    Aderant.Build.FileSystem.ClearReadOnly(target);
                 }
             }
 

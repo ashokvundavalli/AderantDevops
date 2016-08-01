@@ -90,7 +90,7 @@ namespace Aderant.Build.Providers {
                 if (workspaceInfo != null) {
                     Workspace workspace = workspaceInfo.GetWorkspace(new TfsTeamProjectCollection(workspaceInfo.ServerUri));
                     versionControlServer = workspace.VersionControlServer;
-                    tfsWorkspace = new TeamFoundationWorkspace(teamProject, workspace, path);
+                    tfsWorkspace = new TeamFoundationWorkspace(teamProject, workspace);
                 }
 
                 string manifestPath;
@@ -165,14 +165,9 @@ namespace Aderant.Build.Providers {
 
             return moduleNames.ToArray();
         }
-
-        public string GetThirdPartyFolder() {
-            return null;
-        }
     }
 
     public interface IWorkspace {
-        string GetThirdPartyFolder();
     }
 
     internal interface ISourceControlProvider {

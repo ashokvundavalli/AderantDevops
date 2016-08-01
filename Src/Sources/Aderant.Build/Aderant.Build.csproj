@@ -97,7 +97,6 @@
     <Compile Include="BuildConstants.cs" />
     <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
-    <Compile Include="BranchInfo.cs" />
     <Compile Include="BuildSummary.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
     <Compile Include="Commands\CreatePaketTemplates.cs" />
@@ -106,10 +105,12 @@
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
-    <Compile Include="DependencyRetriever.cs" />
+    <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
+    <Compile Include="DependencyManager.cs" />
     <Compile Include="DependencySources.cs" />
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
+    <Compile Include="IFileSystem2.cs" />
     <Compile Include="Logging\FakeLogger.cs" />
     <Compile Include="AssemblyVersionInspector.cs" />
     <Compile Include="IFileSystem.cs" />
@@ -120,6 +121,8 @@
     <Compile Include="Packaging\Packager.cs" />
     <Compile Include="Packaging\PushPaketTemplatesAction.cs" />
     <Compile Include="Packaging\VersionParser.cs" />
+    <Compile Include="PathUtility.cs" />
+    <Compile Include="PhysicalFileSystem.cs" />
     <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
     <Compile Include="Tasks\CreatePaketTemplatesTask.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />

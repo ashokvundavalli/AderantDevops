@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Microsoft.FSharp.Core;
 
@@ -10,6 +11,10 @@ namespace Aderant.Build.Logging {
         }
 
         public override Unit Invoke(Paket.Logging.Trace trace) {
+            if (logger == null) {
+                return null;
+            }
+
             if (trace.Level == TraceLevel.Verbose) {
                 logger.Debug(trace.Text);
             }

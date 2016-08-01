@@ -9,15 +9,17 @@ using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build {
-    public class DependencyRetriever : IDisposable {
+    internal class DependencyManager : IDisposable {
         static string group = Constants.MainDependencyGroup.ToString();
 
-        private readonly IFileSystem2 fileSystem;
+        public IFileSystem2 FileSystem { get; }
+        public static string DependenciesFile { get; } = "paket.dependencies";
+
         private IDisposable traceEventsSubscription;
         private Dependencies dependencies;
 
-        public DependencyRetriever(IFileSystem2 fileSystem, ILogger logger) {
-            this.fileSystem = fileSystem;
+        public DependencyManager(IFileSystem2 fileSystem, ILogger logger) {
+            this.FileSystem = fileSystem;
             dependencies = Initialize();
 
             traceEventsSubscription = CommonExtensions.SubscribeToObservable(Paket.Logging.@event.Publish, new ObservableLogReceiver(logger));
@@ -25,10 +27,10 @@ namespace Aderant.Build {
 
         private Dependencies Initialize() {
             try {
-                dependencies = Dependencies.Locate(fileSystem.Root);
+                dependencies = Dependencies.Locate(FileSystem.Root);
             } catch (Exception) {
-                Dependencies.Init(fileSystem.Root);
-                dependencies = Dependencies.Locate(fileSystem.Root);
+                Dependencies.Init(FileSystem.Root);
+                dependencies = Dependencies.Locate(FileSystem.Root);
             }
             return dependencies;
         }
@@ -36,7 +38,7 @@ namespace Aderant.Build {
         public void Add(IEnumerable<ExpertModule> referencedModules) {
             var file = dependencies.GetDependenciesFile();
 
-            fileSystem.MakeFileWritable(file.FileName);
+            FileSystem.MakeFileWritable(file.FileName);
 
             string[] lines = file.Lines;
             for (int i = 0; i < lines.Length; i++) {
@@ -60,16 +62,22 @@ namespace Aderant.Build {
             foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
                 if (referencedModule.ModuleType == ModuleType.ThirdParty || referencedModule.GetAction == GetAction.NuGet) {
                     // This is not the correct API. One should use dependencies.Add(...) but this is much faster as it doesn't call the server
-                    // As soon as we have a version constraint for a package this will fail as we are passing "" for the package version..
-                    file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), string.Empty, FSharpOption<Requirements.InstallSettings>.None);
+                    // As soon as we have a version constraint for a package this will fail as we are passing "" for the package version.
+
+                    string version = string.Empty;
+                    if (referencedModule.VersionRequirement != null) {
+                        version = referencedModule.VersionRequirement.ConstraintExpression;
+                    }
+
+                    file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                 }
             }
-            
+
             file.Save();
         }
 
         private bool HasLockFile() {
-            return fileSystem.FileExists(dependencies.GetDependenciesFile().FindLockfile().FullName);
+            return FileSystem.FileExists(dependencies.GetDependenciesFile().FindLockfile().FullName);
         }
 
         public async Task Restore() {
@@ -87,9 +95,7 @@ namespace Aderant.Build {
         }
 
         public async Task ShowOutdated() {
-            await Task.Run(() => {
-                dependencies.ShowOutdated(true, false);
-            });
+            await Task.Run(() => { dependencies.ShowOutdated(true, false); });
         }
 
         public void Dispose() {
@@ -100,8 +106,36 @@ namespace Aderant.Build {
             dependencies.Add(new FSharpOption<string>(group), "Aderant.Build.Analyzer", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
             DependenciesFile file = dependencies.GetDependenciesFile();
 
-            fileSystem.MakeFileWritable(file.FileName);
+            FileSystem.MakeFileWritable(file.FileName);
             file.Save();
         }
+
+        public VersionRequirement GetVersionsFor(string name) {
+            Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
+            var file = dependenciesFile.GetDependenciesFile();
+
+            try {
+                var packageRequirement = file.GetPackage(Constants.MainDependencyGroup, Domain.PackageName(name));
+
+                if (packageRequirement != null) {
+                    string syntax = packageRequirement.VersionRequirement.ToString();
+
+                    if (!string.IsNullOrEmpty(syntax)) {
+                        return new VersionRequirement {
+                            ConstraintExpression = syntax
+                        };
+                    }
+                }
+            } catch (KeyNotFoundException) {
+                // No entry for package
+                return null;
+            }
+
+            return null;
+        }
+    }
+
+    internal class VersionRequirement {
+        public string ConstraintExpression { get; set; }
     }
 }

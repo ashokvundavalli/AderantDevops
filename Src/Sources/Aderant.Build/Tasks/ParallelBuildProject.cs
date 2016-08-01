@@ -22,7 +22,9 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             ParallelBuildProjectController controller = new ParallelBuildProjectController();
 
-            ExpertManifest manifest = new ExpertManifest(FileSystem.Default, XDocument.Load(ProductManifest, LoadOptions.SetBaseUri));
+            ExpertManifest manifest = ExpertManifest.Create(ProductManifest);
+            manifest.ModulesDirectory = ModulesDirectory;
+
             Project project = controller.CreateProject(ModulesDirectory, manifest, ModulesInBuild.Select(m => Path.GetFileName(m.ItemSpec)));
             XElement projectDocument = controller.CreateProjectDocument(project);
 

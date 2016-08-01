@@ -11,8 +11,6 @@ namespace Aderant.Build.Process {
     internal class ParallelBuildProjectController {
 
         public Project CreateProject(string branchDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild) {
-
-
             DependencyBuilder builder = new DependencyBuilder(moduleProvider);
             IEnumerable<Build> builds = builder.GetTree(true);
 

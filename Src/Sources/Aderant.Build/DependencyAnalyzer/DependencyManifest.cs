@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -36,11 +34,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The dependency manifest file file.
         /// </summary>
         internal const string DependencyManifestFileName = "DependencyManifest.xml";
-
-        /// <summary>
-        /// The relative path to the dependency manifest file from the module directory.
-        /// </summary>
-        internal const string PathToDependencyManifestFile = @"Build\" + DependencyManifestFileName;
 
         private const LoadOptions LoadOptions = System.Xml.Linq.LoadOptions.SetBaseUri | System.Xml.Linq.LoadOptions.SetLineInfo;
 
@@ -75,6 +68,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                         var module = ExpertModule.Create(mergedElement);
 
+                        if (!string.IsNullOrEmpty(DependencyFile)) {
+                            module.VersionRequirement = new DependencyManager(new PhysicalFileSystem(Path.GetDirectoryName(DependencyFile)), null).GetVersionsFor(module.Name);
+                        }
+                        
+                        
                         if (referencedModules.Contains(module)) {
                             throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
                         }
@@ -107,24 +105,33 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="fs">The fs.</param>
         /// <param name="modulesRootPath">The modules root path.</param>
-        public static IList<DependencyManifest> LoadAll(FileSystem fs, string modulesRootPath) {
-            string[] directories = fs.Directory.GetDirectories(modulesRootPath);
+        public static IList<DependencyManifest> LoadAll(string modulesRootPath) {
+            var fs = new PhysicalFileSystem(modulesRootPath);
 
-            IList<DependencyManifest> manifests = new List<DependencyManifest>(directories.Length);
+            var directories = fs.GetDirectories(modulesRootPath);
+
+            IList<DependencyManifest> manifests = new List<DependencyManifest>(directories.Count());
 
             foreach (var directory in directories) {
                 DependencyManifest dependencyManifest;
-                if (TryLoadFromModule(directory, out dependencyManifest)) {
+                if (TryLoadFromModule(fs.GetFullPath(directory), out dependencyManifest)) {
                     manifests.Add(dependencyManifest);
+
+                    string dependencyFile = fs.GetFiles(directory, DependencyManager.DependenciesFile, true).FirstOrDefault();
+                    if (dependencyFile != null) {
+                        dependencyManifest.DependencyFile = fs.GetFullPath(dependencyFile);
+                    }
                 }
             }
 
             return manifests;
         }
 
+        public string DependencyFile { get; set; }
+
         private static bool TryLoadFromModule(string modulePath, out DependencyManifest manifest) {
             try {
-                manifest = LoadFromFile(Path.Combine(modulePath, PathToDependencyManifestFile), modulePath);
+                manifest = LoadFromFile(modulePath);
                 return true;
             } catch {
                 manifest = null;
@@ -132,9 +139,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static DependencyManifest LoadFromFile(string path, string modulePath) {
-            var manifest = new DependencyManifest(Path.GetFileName(modulePath), XDocument.Load(path, LoadOptions));
-            return manifest;
+        private static DependencyManifest LoadFromFile(string modulePath) {
+            var fs = new PhysicalFileSystem(modulePath);
+            string dependencyManifest = fs.GetFiles(modulePath, DependencyManifestFileName, true).FirstOrDefault();
+            
+            using (Stream stream = fs.OpenFile(dependencyManifest)) {
+                var document = XDocument.Load(stream, LoadOptions);
+
+                var manifest = new DependencyManifest(Path.GetFileName(modulePath), document);
+                return manifest;
+            }
         }
 
         internal static DependencyManifest Parse(string moduleName, string text) {
@@ -151,9 +165,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             ExpertModuleMapper mapper = new ExpertModuleMapper();
             return mapper.Save(this, manifest);
         }
-    }
-
-    internal interface IGlobalAttributesProvider {
-        XElement MergeAttributes(XElement element);
     }
 }
