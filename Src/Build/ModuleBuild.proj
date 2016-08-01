@@ -274,41 +274,29 @@ doc.Save(File);
   ==========================================================================================
   -->
   <Target Name="BuildNumberOverrideTarget"
-          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
-
-    <GetBuildProperties TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-                        BuildUri="$(BuildUri)"
-                        Condition=" '$(IsDesktopBuild)' != 'true' ">
-      <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
-    </GetBuildProperties>
-
-    <RemoveDir Condition="'$(DropLocation)' != '' And  '$(IsDesktopBuild)' != 'true'"
-               Directories="$(DropLocation)\$(BuildNumber)"
-               ContinueOnError="true" />
+          DependsOnTargets="SetBuildNumbers" 
+          AfterTargets="PrepareBuildEnvironment">
 
     <PropertyGroup>
-      <!-- 
-          For a module build, append the name of the module.
-          If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
-      -->
-      <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
-      <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
-
+      <BuildNumber>$(FileVersion)</BuildNumber>
       <DropLocation Condition="'$(IsDesktopBuild)' == 'false'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</DropLocation>
     </PropertyGroup>
   </Target>
 
 
   <Target Name="UpdateDropLocation"
-          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" AfterTargets="BuildNumberOverrideTarget">
+          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" 
+          AfterTargets="InitializeEndToEndIteration">
 
-    <!-- Set the drop location back to the FileVersion so the log file goes to the right place -->
-    <UpdateBuildNumberDropLocation
+    <PropertyGroup>
+      <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
+    </PropertyGroup>
+
+    <SetBuildProperties
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
-      BuildNumber="$(BuildNumber)"
-      DropLocation="$(DropLocation)\$(FileVersion)" />
-
+      BuildNumber="$(BuildNumber)" />
+    
   </Target>
 
 
