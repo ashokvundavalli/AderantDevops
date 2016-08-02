@@ -102,10 +102,21 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
 
 function BuildAssociation($vssConnection, $teamProject, $buildId) {
     $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
-    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
     
-    Write-Output "Associating work items to build: $teamProject/$buildId"   
-    $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)    
+    try {
+        $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
+    } catch {
+        Write-Output "Failed to construct BuildAssociation"
+        throw
+    }
+
+    try {
+        Write-Output "Associating work items to build: $teamProject/$buildId"   
+        $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)    
+    } catch {
+        Write-Output "Failed to associate work items to build"
+        throw
+    }   
 }
 
 #=================================================================================================
