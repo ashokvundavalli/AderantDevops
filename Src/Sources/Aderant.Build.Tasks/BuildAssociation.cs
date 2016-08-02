@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Aderant.Build.Logging;
@@ -27,7 +28,7 @@ namespace Aderant.Build.Tasks {
             var workItemReferences = await buildHttpClient.GetBuildWorkItemsRefsAsync(teamProject, buildId);
 
             foreach (var result in workItemReferences) {
-                logger.Info("Associating {0} to build {1}" + result.Id, buildDetail.BuildNumber);
+                logger.Info(string.Format(CultureInfo.InvariantCulture, "Associating {0} to build {1}", result.Id, buildDetail.BuildNumber));
 
                 var patch = new JsonPatchDocument {
                     new JsonPatchOperation {
