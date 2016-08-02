@@ -90,8 +90,27 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
     $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
 
+    Write-Output (New-Object string -ArgumentList '*', 80)
+    Write-Output "=== Warning Summary ===" 
     Write-Output "Last good build warnings: $lastGoodBuild"
-    Write-Output "Current warnings: $currentBuildCount"
+    Write-Output "Current build warnings: $currentBuildCount"
+    Write-Output "=== Warning Summary ===" 
+    Write-Output (New-Object string -ArgumentList '*', 80)
+
+    $md = @"
+### Warnings
+||This Build|Last Good Build|
+|:--:|:--:|:--:|
+|**{0}**|{1}|
+[//]: # (End current test results)
+"@ 
+
+    $md = $md -f ($currentBuildCount, $lastGoodBuild)
+
+    $log = "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\warnings.md"
+    Set-Content -Path $log -Value $md -Force -Encoding UTF8
+
+    Write-Host "##vso[Task.UploadSummary]$log"    
 
     if ($lastGoodBuild) {
         if ($currentBuildCount -gt $lastGoodBuild) {
