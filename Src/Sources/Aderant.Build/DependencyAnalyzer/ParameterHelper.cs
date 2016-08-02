@@ -187,5 +187,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             XDocument environment = XDocument.Load(environmentManifestPath);
             return environment;
         }
+
+        public static string GetExpertManifestPath(SessionState sessionState) {
+            var value = sessionState.PSVariable.GetValue("ProductManifestPath").ToString();
+            if (value != null) {
+                return value;
+            }
+
+            throw new ArgumentException("There must be a variable $ProductManifestPath in the current host session.");
+        }
     }
 }
