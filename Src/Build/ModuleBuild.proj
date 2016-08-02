@@ -1464,7 +1464,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="PublishBuild"
-          BeforeTargets="Build;CheckForWrongReferences"
+          BeforeTargets="Build"
           Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Publishing build for: $(ModuleName) [$(FileVersion)]" />
