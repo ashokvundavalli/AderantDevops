@@ -98,11 +98,9 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     Write-Output (New-Object string -ArgumentList '*', 80)
 
     $md = @"
-### Warnings
-||This Build|Last Good Build|
-|:--:|:--:|:--:|
-|**{0}**|{1}|
-[//]: # (End current test results)
+| This Build | Last Good Build |
+|-----------|-----------|
+| {0} | {1} |
 "@ 
 
     $md = $md -f ($currentBuildCount, $lastGoodBuild)
@@ -130,7 +128,10 @@ function BuildAssociation($vssConnection, $teamProject, $buildId) {
     }
 
     try {
-        Write-Output "Associating work items to build: $teamProject/$buildId"   
+        Write-Output "Associating work items to build: $teamProject/$buildId"
+        $teamProject
+        [int]$buildId
+
         $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)    
     } catch {
         Write-Output "Failed to associate work items to build"
