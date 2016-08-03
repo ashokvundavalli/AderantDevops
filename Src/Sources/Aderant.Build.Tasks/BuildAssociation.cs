@@ -29,12 +29,17 @@ namespace Aderant.Build.Tasks {
             logger.Info("Getting details for build: {0}", buildId);
             var buildDetail = await buildHttpClient.GetBuildAsync(buildId);
 
-            logger.Info("Getting build work items");
+            logger.Info("Getting build work items...");
             var workItemReferences = await buildHttpClient.GetBuildWorkItemsRefsAsync(teamProject, buildId);
+
+            if (workItemReferences == null || !workItemReferences.Any()) {
+                logger.Info("There are no work item references associated with this build");
+                return;
+            }
 
             var workItems = await workItemClient.GetWorkItemsAsync(workItemReferences.Select(item => Int32.Parse(item.Id, CultureInfo.InvariantCulture)), null, null, WorkItemExpand.Relations);
 
-            logger.Info("Processing work items");
+            logger.Info("Processing work items...");
             foreach (var workItem in workItems) {
                 object workItemType;
                 if (workItem.Fields.TryGetValue("System.WorkItemType", out workItemType)) {
