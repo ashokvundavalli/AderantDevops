@@ -86,11 +86,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="moduleName">Name of the module.</param>
         /// <param name="manifest">The manifest.</param>
         public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
-            if (moduleDirectory == null) {
-                manifest = null;
-                return false;
-            }
-
             if (dependencyManifests != null) {
                 manifest = dependencyManifests.FirstOrDefault(m => string.Equals(m.ModuleName, moduleName, StringComparison.OrdinalIgnoreCase));
 
@@ -98,6 +93,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return true;
                 }
             } else {
+                if (moduleDirectory == null) {
+                    throw new ArgumentNullException(nameof(moduleDirectory), "Module directory is not specified");
+                }
+
                 string modulePath = Path.Combine(moduleDirectory, moduleName);
 
                 if (fileSystem.DirectoryExists(modulePath)) {
@@ -120,8 +119,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <returns></returns>
         public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
             if (moduleDirectory == null) {
-                manifestPath = null;
-                return false;
+                throw new ArgumentNullException(nameof(moduleDirectory), "Module directory is not specified");
             }
 
             string dependencyManifest = fileSystem.GetFiles(Path.Combine(moduleDirectory, moduleName), DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
