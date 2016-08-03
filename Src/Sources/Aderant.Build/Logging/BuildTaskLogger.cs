@@ -14,7 +14,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
-        public void Debug(string message, params string[] args) {
+        public void Debug(string message, params object[] args) {
             Logger.LogMessage(MessageImportance.Low, message, args);
         }
 
@@ -23,7 +23,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
-        public void Info(string message, params string[] args) {
+        public void Info(string message, params object[] args) {
             Logger.LogMessage(MessageImportance.Normal, message, args);
         }
 
@@ -32,7 +32,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
-        public void Warning(string message, params string[] args) {
+        public void Warning(string message, params object[] args) {
             Logger.LogWarning(message, args);
         }
 
@@ -41,7 +41,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
-        public void Error(string message, params string[] args) {
+        public void Error(string message, params object[] args) {
             Logger.LogError(message, args);
         }
     }

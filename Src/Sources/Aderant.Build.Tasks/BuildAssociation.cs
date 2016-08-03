@@ -26,18 +26,19 @@ namespace Aderant.Build.Tasks {
             var buildHttpClient = connection.GetClient<BuildHttpClient>();
             var workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
 
+            logger.Info("Getting details for build: {0}", buildId);
             var buildDetail = await buildHttpClient.GetBuildAsync(buildId);
 
+            logger.Info("Getting build work items");
             var workItemReferences = await buildHttpClient.GetBuildWorkItemsRefsAsync(teamProject, buildId);
 
-            var workItems = await workItemClient.GetWorkItemsAsync(workItemReferences.Select(item => Int32.Parse(item.Id)), null, null, WorkItemExpand.Relations);
+            var workItems = await workItemClient.GetWorkItemsAsync(workItemReferences.Select(item => Int32.Parse(item.Id, CultureInfo.InvariantCulture)), null, null, WorkItemExpand.Relations);
 
+            logger.Info("Processing work items");
             foreach (var workItem in workItems) {
                 object workItemType;
                 if (workItem.Fields.TryGetValue("System.WorkItemType", out workItemType)) {
                     string type = workItemType as string;
-
-                    logger.Info(string.Format(CultureInfo.InvariantCulture, "Associating {0} to build {1}", workItem.Id, buildDetail.BuildNumber));
 
                     var patch = new JsonPatchDocument();
 
@@ -53,7 +54,10 @@ namespace Aderant.Build.Tasks {
                         AssociateBug(patch, buildDetail);
                     }
 
+                    logger.Info(string.Format(CultureInfo.InvariantCulture, "Associating {0} to build {1}", workItem.Id, buildDetail.BuildNumber));
                     await workItemClient.UpdateWorkItemAsync(patch, workItem.Id.Value);
+                } else {
+                    logger.Info("Work item {0} does not have a System.WorkItemType field so cannot be associated to the build", workItem.Id);
                 }
             }
         }

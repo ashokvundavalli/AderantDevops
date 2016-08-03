@@ -22,7 +22,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
-        public void Debug(string message, params string[] args) {
+        public void Debug(string message, params object[] args) {
             host.UI.WriteDebugLine(FormatMessage(message, args));
         }
 
@@ -31,7 +31,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
-        public void Info(string message, params string[] args) {
+        public void Info(string message, params object[] args) {
             host.UI.WriteLine(FormatMessage(message, args));
         }
 
@@ -40,7 +40,7 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
-        public void Warning(string message, params string[] args) {
+        public void Warning(string message, params object[] args) {
             host.UI.WriteWarningLine(FormatMessage(message, args));
         }
 
@@ -49,11 +49,11 @@ namespace Aderant.Build.Logging {
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
-        public void Error(string message, params string[] args) {
+        public void Error(string message, params object[] args) {
             host.UI.WriteErrorLine(FormatMessage(message, args));
         }
 
-        private static string FormatMessage(string message, string[] args) {
+        private static string FormatMessage(string message, object[] args) {
             if (args != null) {
                 message = string.Format(CultureInfo.CurrentCulture, message, args);
             }
