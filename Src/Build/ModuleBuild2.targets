@@ -898,13 +898,7 @@ doc.Save(File);
       <IsolationSwitch>/InIsolation</IsolationSwitch>
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
-
-      <!-- Test Result Publishing -->
-      <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
-      <PublishName Condition="'$(TfsBuildNumber)' != ''">$(TfsBuildNumber)</PublishName>
       <ResultsFileSwitch>/Logger:trx</ResultsFileSwitch>
-
-      <!--<ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>-->
     </PropertyGroup>
 
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
@@ -922,7 +916,7 @@ doc.Save(File);
           Condition="'$(UnitTestAssemblies)' != ''"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />
 
     <OnError ExecuteTargets="OnTestFailure" />
   </Target>
