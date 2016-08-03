@@ -98,9 +98,10 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     Write-Output (New-Object string -ArgumentList '*', 80)
 
     $md = @"
-| This Build | Last Good Build |
+| Build| Count |
 |-----------|-----------|
-| {0} | {1} |
+| This Build | `{0}` |
+| Last Good | `{1}` |
 "@ 
 
     $md = $md -f ($currentBuildCount, $lastGoodBuild)

@@ -11,23 +11,19 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 
-namespace IntegrationTest.Build {
+namespace Samples {
     [TestClass]
     public class VssApiSample {
         [TestMethod]
-        public void Foo() {
+        public void RelationshipSample() {
             var conn = new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials());
 
             Task.Run(async () => {
                 var client = conn.GetClient<WorkItemTrackingHttpClient>();
 
-                //var task = await client.GetWorkItemAsync(112126);
-                var userstory = await client.GetWorkItemAsync(133912, null, null, WorkItemExpand.Relations);
-                //var bug = await client.GetWorkItemAsync(123065);
+                var userstory = await client.GetWorkItemAsync(133912, null, null, WorkItemExpand.All);
 
-                var patch = new JsonPatchDocument {
-                    
-                };
+                var patch = new JsonPatchDocument();
 
                 patch.Add(new JsonPatchOperation {
                     Path = @"/relations/-",
@@ -35,21 +31,20 @@ namespace IntegrationTest.Build {
                     Value = new WorkItemRelation {
                         Rel = "ArtifactLink",
                         Url = "vstfs:///Build/Build/647011",
-                        Attributes = CreateComment(),
+                        Attributes = CreateAttributes()
                     }
                 });
 
                 await client.UpdateWorkItemAsync(patch, userstory.Id.Value);
-
-                var serializeObject = JsonConvert.SerializeObject(userstory);
-                var patchDoc = JsonConvert.SerializeObject(patch);
-
                 return Task.FromResult(false);
             }, CancellationToken.None).Wait();
         }
 
-        private IDictionary<string, object> CreateComment() {
-            return new Dictionary<string, object> {{"comment", "Integrated in build"}};
+        private IDictionary<string, object> CreateAttributes() {
+            return new Dictionary<string, object> {
+                {"name", "Build"},
+                {"comment", "Integrated in build"}
+            };
         }
     }
 }
