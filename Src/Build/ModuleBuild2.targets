@@ -530,7 +530,7 @@ doc.Save(File);
   </Target>
 
   <Target Name="BeforeOnBuildBreak" Condition="'$(IsDesktopBuild)' == 'false'">
-    <CallTarget Targets="SetBuildBreakProperties;MarkBuildStepAsFailed" />
+    <CallTarget Targets="MarkBuildStepAsFailed" />
   </Target>
 
   <Target Name="GetOutputAssembliesFromProjects"
