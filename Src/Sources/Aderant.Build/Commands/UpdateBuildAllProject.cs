@@ -1,7 +1,5 @@
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Management.Automation;
-using System.Management.Automation.Host;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
 
@@ -20,6 +18,9 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 0, HelpMessage = "Specifies the path to a MS Build project containing a single item group which specifies the branch build configuration.")]
         public string ModuleProject { get; set; }
 
+        [Parameter(Mandatory = false, Position = 1, HelpMessage = "Specifies the path to a MS Build project containing a single item group which specifies the branch build configuration.")]
+        public string ProductManifest { get; set; }
+
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
@@ -29,9 +30,13 @@ namespace Aderant.Build.Commands {
                 ModuleProject = Path.Combine(branchPath, Path.Combine("Modules", "Modules.proj"));
             }
 
+            if (string.IsNullOrEmpty(ProductManifest)) {
+                ProductManifest = ParameterHelper.GetExpertManifestPath(SessionState);
+            }
+
             if (!string.IsNullOrEmpty(ModuleProject)) {
-                string moduleDirectory = ParameterHelper.GetBranchModulesDirectory(null, SessionState);
-                IModuleProvider provider = ExpertManifest.Load(moduleDirectory);
+                var provider = ExpertManifest.Load(ProductManifest);
+                provider.ModulesDirectory = Path.Combine(branchPath, Path.Combine("Modules"));
 
                 SequenceBuilds(provider, ModuleProject);
             }

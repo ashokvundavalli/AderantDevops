@@ -109,8 +109,9 @@
     <None Include="Resources\App.config" />
     <None Include="Resources\bindings.config" />
     <None Include="Resources\clients.config" />
-    <None Include="Resources\test-paket-template" />
+    <None Include="Resources\test-paket-template-without-dependencies" />
     <None Include="Resources\instance.config" />
+    <None Include="Resources\test-paket-template-with-dependencies" />
     <None Include="test.dgml">
       <SubType>Designer</SubType>
     </None>

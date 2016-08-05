@@ -65,7 +65,7 @@ namespace UnitTest.Build.Packaging {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
-                return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template));
+                return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template_with_dependencies));
             });
 
             Assert.AreEqual(23, dependencies.Count);
@@ -75,6 +75,50 @@ namespace UnitTest.Build.Packaging {
                 var text = reader.ReadToEnd();
 
                 Assert.IsFalse(string.IsNullOrWhiteSpace(text));
+            }
+        }
+
+
+        [TestMethod]
+        public void Adding_new_dependencies_to_template() {
+            var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
+            dict.Add(Domain.PackageName("Foo"), Paket.VersionRequirement.AllReleases);
+
+            MemoryStream stream = null;
+
+            var dependencies = new Packager(null).ReplicateDependenciesToTemplate(dict, () => {
+                if (stream != null) {
+                    return stream = new MemoryStream();
+                }
+                return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template_without_dependencies));
+            });
+
+            Assert.AreEqual(1, dependencies.Count);
+
+            string expected = @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files    
+    Bin/Module/*.config ==> lib 
+    Bin/Module/Aderant.* ==> lib 
+    Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
+    Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
+    Bin/Module/Monitoring ==> lib/Monitoring
+    Bin/Module/InstallerManifests ==> lib/InstallerManifests
+    !Bin/Module/*.exe.config
+dependencies
+    Foo ";
+
+
+            using (var reader = new StreamReader(stream)) {
+                stream.Position = 0;
+                var actual = reader.ReadToEnd();
+
+                Assert.IsFalse(string.IsNullOrWhiteSpace(actual));
+
+                Assert.AreEqual(expected, actual);
             }
         }
     }

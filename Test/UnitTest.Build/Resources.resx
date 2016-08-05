@@ -193,7 +193,10 @@ SRCSRV: end ------------------------------------------------</value>
   <data name="ExpertManifest" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\expertmanifest.xml;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="test_paket_template" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>resources\test-paket-template;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="test_paket_template_without_dependencies" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\test-paket-template-without-dependencies;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="test_paket_template_with_dependencies" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\test-paket-template-with-dependencies;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>

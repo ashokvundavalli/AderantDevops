@@ -193,28 +193,43 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to type file
-        ///id Aderant.Deployment.Manager
+        ///id Aderant.Deployment.Core
         ///authors Aderant
         ///description
-        ///    Provides the client deployment tooling.
+        ///    Provides libraries and services for deploying an Expert environment.
         ///files    
-        ///    Bin/Module/Deployment* ==&gt; lib
-        ///    Bin/Module/EnvironmentCloner* ==&gt; lib
-        ///    Bin/Module/RefreshDBFromEnvironment* ==&gt; lib
-        ///    
-        ///dependencies
-        ///    Aderant.Build.Analyzer
-        ///    Thirdparty.DevComponents 
-        ///    Thirdparty.ICSharpCode 
-        ///    Thirdparty.IronPython.2.7 
-        ///    Thirdparty.Keyoti.RapidSpell.v3 
-        ///    ThirdParty.log4net 
-        ///    ThirdParty.Microsoft 
-        ///    ThirdParty.Microsoft. [rest of string was truncated]&quot;;.
+        ///    Bin/Module/*.config ==&gt; lib 
+        ///    Bin/Module/Aderant.* ==&gt; lib 
+        ///    Bin/Module/PrerequisitesPowerShell/* ==&gt; lib/PrerequisitesPowerShell
+        ///    Bin/Module/PrerequisitesPowerShell ==&gt; lib/PrerequisitesPowerShell
+        ///    Bin/Module/Monitoring ==&gt; lib/Monitoring
+        ///    Bin/Module/InstallerManifests ==&gt; lib/InstallerManifests
+        ///    !Bin/Module/*.exe.config.
         /// </summary>
-        internal static string test_paket_template {
+        internal static string test_paket_template_with_dependencies {
             get {
-                return ResourceManager.GetString("test_paket_template", resourceCulture);
+                return ResourceManager.GetString("test_paket_template_with_dependencies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to type file
+        ///id Aderant.Deployment.Core
+        ///authors Aderant
+        ///description
+        ///    Provides libraries and services for deploying an Expert environment.
+        ///files    
+        ///    Bin/Module/*.config ==&gt; lib 
+        ///    Bin/Module/Aderant.* ==&gt; lib 
+        ///    Bin/Module/PrerequisitesPowerShell/* ==&gt; lib/PrerequisitesPowerShell
+        ///    Bin/Module/PrerequisitesPowerShell ==&gt; lib/PrerequisitesPowerShell
+        ///    Bin/Module/Monitoring ==&gt; lib/Monitoring
+        ///    Bin/Module/InstallerManifests ==&gt; lib/InstallerManifests
+        ///    !Bin/Module/*.exe.config.
+        /// </summary>
+        internal static string test_paket_template_without_dependencies {
+            get {
+                return ResourceManager.GetString("test_paket_template_without_dependencies", resourceCulture);
             }
         }
     }

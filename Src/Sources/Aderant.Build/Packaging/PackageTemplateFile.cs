@@ -106,6 +106,7 @@ namespace Aderant.Build.Packaging {
             if (dependencyText.Any()) {
                 lines.InsertRange(dependencyText[0].LineNumber, CreateTextRepresentation(list));
             } else {
+                lines.Add(Environment.NewLine);
                 lines.AddRange(CreateTextRepresentation(list));
             }
 
