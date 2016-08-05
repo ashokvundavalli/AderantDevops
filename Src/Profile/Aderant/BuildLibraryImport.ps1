@@ -45,34 +45,34 @@ function UpdateOrBuildAssembly($properties) {
     Write-Debug "Profile home: $actualPath"
     $aderantBuildAssembly = [System.IO.Path]::Combine($properties.BuildToolsDirectory, "Aderant.Build.dll")	
 
-	$needToBuild = $false
-	
+    $needToBuild = $false
+    
     if (-not [System.IO.File]::Exists($aderantBuildAssembly)) {
         Write-Host "No Aderant.Build.dll found at $aderantBuildAssembly. Creating..."
-		$needToBuild = $true
+        $needToBuild = $true
     }
 
-	if ($needToBuild -eq $true) {
-		Write-Host "Building Build.Infrastructure..."
-		BuildProject $properties $true
-	}
+    if ($needToBuild -eq $true) {
+        Write-Host "Building Build.Infrastructure..."
+        BuildProject $properties $true
+    }
 
     # Test if one of the files is older than a day
     $aderantBuildFileInfo = Get-ChildItem $aderantBuildAssembly	
 
-	$outdatedAderantBuildFile = $false	
-	
-	$dt = $aderantBuildFileInfo.LastWriteTime.ToString("d", [System.Globalization.CultureInfo]::CurrentCulture)
-	if ($aderantBuildFileInfo.LastWriteTime.Date -le [System.DateTime]::Now.AddDays(-1)) {
+    $outdatedAderantBuildFile = $false	
+    
+    $dt = $aderantBuildFileInfo.LastWriteTime.ToString("d", [System.Globalization.CultureInfo]::CurrentCulture)
+    if ($aderantBuildFileInfo.LastWriteTime.Date -le [System.DateTime]::Now.AddDays(-1)) {
         Write-Host ("Aderant.Build.dll is out of date ({0}). Updating..." -f $dt)
-		$outdatedAderantBuildFile = $true
+        $outdatedAderantBuildFile = $true
     } else {
         Write-Host ("Aderant.Build.dll is not out of date. {0} is less than 1 day old" -f $dt)
     }
 
-	if ($outdatedAderantBuildFile) {
-		BuildProject $properties $true
-	}
+    if ($outdatedAderantBuildFile) {
+        BuildProject $properties $true
+    }
 
     # Now actually load Aderant.Build.dll
     LoadAssembly $properties $aderantBuildAssembly
