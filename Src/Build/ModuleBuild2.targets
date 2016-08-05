@@ -985,7 +985,6 @@ doc.Save(File);
   </Target>
 
   <Target Name="OnTestFailure">
-    <CallTarget Targets="SetTestBreakProperties" Condition="'$(IsDesktopBuild)' == 'false'" />
     <CallTarget Targets="AfterRunTests;CopyTrxFile;CopyToDrop;MarkBuildStepAsFailed"/>
   </Target>
 
