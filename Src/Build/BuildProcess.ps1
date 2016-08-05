@@ -90,32 +90,45 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
     $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
 
-    Write-Output (New-Object string -ArgumentList '*', 80)
-    Write-Output "=== Warning Summary ===" 
-    Write-Output "Last good build warnings: $lastGoodBuild"
-    Write-Output "Current build warnings: $currentBuildCount"
-    Write-Output "=== Warning Summary ===" 
-    Write-Output (New-Object string -ArgumentList '*', 80)
-
-    $md = @"
-| Build| Count |
-|-----------|-----------|
-| This Build | `{0}` |
-| Last Good | `{1}` |
-"@ 
-
-    $md = $md -f ($currentBuildCount, $lastGoodBuild)
-
-    $log = "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\warnings.md"
-    Set-Content -Path $log -Value $md -Force -Encoding UTF8
-
-    Write-Host "##vso[Task.UploadSummary]$log"    
-
     if ($lastGoodBuild) {
+        RenderWarningSummary $currentBuildCount $lastGoodBuild
+        
         if ($currentBuildCount -gt $lastGoodBuild) {
+            RenderWarningShields $true $currentBuildCount $lastGoodBuild
             throw "Warning count has increased since the last good build"
         }
+        RenderWarningShields $false $currentBuildCount $lastGoodBuild
     }
+}
+
+function RenderWarningSummary([int]$this, [int]$last) {
+    Write-Host (New-Object string -ArgumentList '*', 80)
+    Write-Host "=== Warning Summary ===" 
+    Write-Host "Last good build warnings: $last"
+    Write-Host "Current build warnings: $this"
+    Write-Host "=== Warning Summary ===" 
+    Write-Host (New-Object string -ArgumentList '*', 80)
+}
+
+function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
+    $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\Warnings.md"
+    
+    $lastGoodShield = Get-Content -Raw -Path $PSScriptRoot\Resources\last-good-build.svg
+    $lastGoodShield = $lastGoodShield -f $last
+
+    if ($inError) {
+        $thisBuildShield = Get-Content -Raw -Path $PSScriptRoot\Resources\this-build-bad.svg
+    } else {
+        $thisBuildShield = Get-Content -Raw -Path $PSScriptRoot\Resources\this-build-good.svg
+    }
+
+    $thisBuildShield = $thisBuildShield -f $this
+    
+    $stream.WriteLine($lastGoodShield)
+    $stream.WriteLine($thisBuildShield)
+    $stream.Close()
+        
+    Write-Host "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\Warnings.md"
 }
 
 function BuildAssociation($vssConnection, $teamProject, $buildId) {
@@ -195,8 +208,8 @@ task BuildCore (job Build -Safe), {
        # we want to see the test results on the TFS dashboard for future analysis
        $vssConnection = GetVssConnection
 
-       # Fucking PowerShell. On a desktop OS the implicit conversion to string[] picks FullName, on the build box it picks Name which
-       # fucks everything up as the data that gets passed to the ResultPublisher doesn't have the directory info attached, so we have to wrangle it ourselves
+       # Fucking PowerShell. On a desktop OS the implicit conversion to string[] picks "FullName", on the build box it picks "Name" which
+       # fucks everything up as the data that gets piped to the ResultPublisher doesn't have the directory info...so we have to explicit
        $testResults = gci -Path "$Repository\TestResults" -Filter "*.trx" -Recurse | Select-Object -ExpandProperty FullName 
 
        if ($testResults) {

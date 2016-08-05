@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Client;
@@ -19,25 +20,29 @@ namespace Samples {
             var conn = new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials());
 
             Task.Run(async () => {
-                var client = conn.GetClient<WorkItemTrackingHttpClient>();
+                var workItemReferences = await conn.GetClient<BuildHttpClient>().GetBuildWorkItemsRefsAsync("ExpertSuite", 648604);
 
-                var userstory = await client.GetWorkItemAsync(133912, null, null, WorkItemExpand.All);
 
-                var patch = new JsonPatchDocument();
+                //    var client = conn.GetClient<WorkItemTrackingHttpClient>();
 
-                patch.Add(new JsonPatchOperation {
-                    Path = @"/relations/-",
-                    Operation = Operation.Add,
-                    Value = new WorkItemRelation {
-                        Rel = "ArtifactLink",
-                        Url = "vstfs:///Build/Build/647011",
-                        Attributes = CreateAttributes()
-                    }
-                });
+                //    var userstory = await client.GetWorkItemAsync(133912, null, null, WorkItemExpand.All);
 
-                await client.UpdateWorkItemAsync(patch, userstory.Id.Value);
-                return Task.FromResult(false);
+                //    var patch = new JsonPatchDocument();
+
+                //    patch.Add(new JsonPatchOperation {
+                //        Path = @"/relations/-",
+                //        Operation = Operation.Add,
+                //        Value = new WorkItemRelation {
+                //            Rel = "ArtifactLink",
+                //            Url = "vstfs:///Build/Build/647011",
+                //            Attributes = CreateAttributes()
+                //        }
+                //    });
+
+                //    await client.UpdateWorkItemAsync(patch, userstory.Id.Value);
+                //    return Task.FromResult(false);
             }, CancellationToken.None).Wait();
+            
         }
 
         private IDictionary<string, object> CreateAttributes() {
