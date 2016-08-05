@@ -8,10 +8,8 @@ Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-
 
 * Start PowerShell or a Command Prompt
 * Clone the repository `http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure C:\Source\Build.Infrastructure`
-
-    Change directory `cd C:\Source\Build.Infrastructure`
-
-    Run `profilesetup.cmd`
+* Change directory `cd C:\Source\Build.Infrastructure`
+* Run `profilesetup.cmd`
 
 This will install and configure the developer tools. 
 The next time you start PowerShell you will be asked a series of questions which will configure the tools for you.
