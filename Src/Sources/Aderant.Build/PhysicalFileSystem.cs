@@ -167,6 +167,11 @@ namespace Aderant.Build {
             return File.OpenRead(path);
         }
 
+        public virtual Stream OpenFileForWrite(string path) {
+            path = GetFullPath(path);
+            return File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+        }
+
         public virtual Stream CreateFile(string path) {
             string fullPath = GetFullPath(path);
 
@@ -214,6 +219,51 @@ namespace Aderant.Build {
                 File.Move(srcFull, destFull);
             } catch (IOException) {
                 File.Delete(srcFull);
+            }
+        }
+
+        public void CopyDirectory(string source, string destination) {
+            if (source == null) {
+                throw new ArgumentNullException(nameof(source));
+            }
+            if (destination == null) {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            string srcFull = GetFullPath(source);
+            string destFull = GetFullPath(destination);
+
+
+            CopyDirectoryInternal(srcFull, destFull, true);
+        }
+
+        private void CopyDirectoryInternal(string source, string destination, bool recursive) {
+            // Get the subdirectories for the specified directory.
+            DirectoryInfo dir = new DirectoryInfo(source);
+
+            if (!dir.Exists) {
+                throw new DirectoryNotFoundException("Source directory does not exist or could not be found: " + source);
+            }
+
+            DirectoryInfo[] dirs = dir.GetDirectories();
+            // If the destination directory doesn't exist, create it.
+            if (!DirectoryExists(destination)) {
+                Directory.CreateDirectory(destination);
+            }
+
+            // Get the files in the directory and copy them to the new location.
+            FileInfo[] files = dir.GetFiles();
+            foreach (FileInfo file in files) {
+                string destinationPath = Path.Combine(destination, file.Name);
+                file.CopyTo(destinationPath, true);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location.
+            if (recursive) {
+                foreach (DirectoryInfo subdir in dirs) {
+                    string temppath = Path.Combine(destination, subdir.Name);
+                    CopyDirectoryInternal(subdir.FullName, temppath, recursive);
+                }
             }
         }
     }

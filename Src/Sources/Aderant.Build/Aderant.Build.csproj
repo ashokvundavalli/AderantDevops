@@ -105,8 +105,9 @@
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
+    <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
-    <Compile Include="DependencyManager.cs" />
+    <Compile Include="PackageManager.cs" />
     <Compile Include="DependencySources.cs" />
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
@@ -118,7 +119,14 @@
     <Compile Include="Packaging\CreatePaketTemplatesAction.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
     <Compile Include="Packaging\InvalidPrereleaseLabel.cs" />
+    <Compile Include="IPackageContext.cs" />
+    <Compile Include="Packaging\PackageProductCommand.cs" />
     <Compile Include="Packaging\Packager.cs" />
+    <Compile Include="Packaging\PackageTemplateFile.cs" />
+    <Compile Include="Packaging\PackageVersion.cs" />
+    <Compile Include="Packaging\PackResult.cs" />
+    <Compile Include="Packaging\PackSpecification.cs" />
+    <Compile Include="Packaging\ProductAssembler.cs" />
     <Compile Include="Packaging\PushPaketTemplatesAction.cs" />
     <Compile Include="Packaging\VersionParser.cs" />
     <Compile Include="PathUtility.cs" />
@@ -151,7 +159,6 @@
     <Compile Include="DependencyResolvedEventArgs.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
     <Compile Include="DependencyAnalyzer\SourceControlModuleInspector.cs" />
-    <Compile Include="DependencyFetchMode.cs" />
     <Compile Include="Providers\TeamFoundationWorkspace.cs" />
     <Compile Include="ModuleDependencyResolver.cs" />
     <Compile Include="DependencyAnalyzer\WebModule.cs" />

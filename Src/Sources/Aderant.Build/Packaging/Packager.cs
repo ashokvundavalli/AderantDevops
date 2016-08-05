@@ -2,45 +2,66 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using Newtonsoft.Json;
 using Paket;
 
 namespace Aderant.Build.Packaging {
     public sealed class Packager {
-        private readonly IFileSystem2 physicalFileSystem;
+        private const string BuildInfrastructureWorkingDirectory = "_BUILD_";
 
-        private Packager(IFileSystem2 physicalFileSystem) {
-            this.physicalFileSystem = physicalFileSystem;
+        private readonly IFileSystem2 fs;
+
+        internal Packager(IFileSystem2 fs) {
+            this.fs = fs;
         }
 
         public PackResult Pack(string version) {
-            var files = physicalFileSystem.GetFiles(physicalFileSystem.Root, "paket.dependencies", false);
+            var files = fs.GetFiles(fs.Root, "paket.dependencies", false);
 
-            var dependenciesFile = files.FirstOrDefault();
+            string dependenciesFilePath = null;
 
-            if (dependenciesFile == null) {
+            foreach (var file in files) {
+                if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
+                    continue;
+                }
+                dependenciesFilePath = file;
+                break;
+
+            }
+
+            if (dependenciesFilePath == null) {
                 return null;
             }
 
             var spec = new PackSpecification {
-                DependenciesFile = Path.Combine(physicalFileSystem.Root, dependenciesFile),
-                OutputPath = Path.Combine(physicalFileSystem.Root, "Bin", "Packages")
+                DependenciesFile = Path.Combine(fs.Root, dependenciesFilePath),
+                OutputPath = Path.Combine(fs.Root, "Bin", "Packages")
             };
 
             foreach (var file in GetTemplateFiles()) {
-                PackageProcess.Pack(workingDir: physicalFileSystem.Root, 
-                    dependenciesFile: DependenciesFile.ReadFromFile(spec.DependenciesFile), 
+                var dependenciesFile = DependenciesFile.ReadFromFile(spec.DependenciesFile);
+
+                FSharpMap<Domain.PackageName, Paket.VersionRequirement> map = dependenciesFile.GetDependenciesInGroup(Paket.Constants.MainDependencyGroup);
+
+            
+                ReplicateDependenciesToTemplate(map.ToDictionary(d => d.Key, d => d.Value), () => fs.OpenFileForWrite(fs.GetFullPath(file)));
+               
+
+                PackageProcess.Pack(workingDir: fs.Root, 
+                    dependenciesFile: dependenciesFile, 
                     packageOutputPath: spec.OutputPath, 
-                    buildConfig: FSharpOption<string>.Some("Release"), 
-                    buildPlatform: FSharpOption<string>.Some("AnyCPU"), 
+                    buildConfig: FSharpOption<string>.Some("Release"),
+                    buildPlatform: FSharpOption<string>.Some("AnyCPU"),
                     version: FSharpOption<string>.Some(version), 
                     specificVersions: new List<Tuple<string, string>>(), 
                     releaseNotes: FSharpOption<string>.None, 
-                    templateFile: FSharpOption<string>.Some(Path.Combine(physicalFileSystem.Root, file)), 
+                    templateFile: FSharpOption<string>.Some(fs.GetFullPath(file)), 
                     excludedTemplates: GenerateExcludedTemplates(), 
-                    lockDependencies: false, 
-                    minimumFromLockFile: false, 
+                    lockDependencies: true, 
+                    minimumFromLockFile: true, 
                     symbols: false, 
                     includeReferencedProjects: true, 
                     projectUrl: FSharpOption<string>.None);
@@ -49,15 +70,32 @@ namespace Aderant.Build.Packaging {
             return new PackResult(spec);
         }
 
+        internal List<string> ReplicateDependenciesToTemplate(Dictionary<Domain.PackageName, Paket.VersionRequirement> dependencyMap, Func<Stream> templateFileStream) {
+            PackageTemplateFile templateFile;
+
+            using (var reader = new StreamReader(templateFileStream())) {
+                templateFile = new PackageTemplateFile(reader.ReadToEnd());
+            }
+
+            foreach (var item in dependencyMap) {
+                templateFile.AddDependency(item.Key, item.Value);
+            }
+
+            templateFile.Save(templateFileStream());
+
+            return templateFile.Dependencies;
+
+        }
+
         private FSharpOption<IEnumerable<string>> GenerateExcludedTemplates() {
             return null;
         }
 
         private IEnumerable<string> GetTemplateFiles() {
-            var files = physicalFileSystem.GetFiles(physicalFileSystem.Root, "*paket.template", true);
+            var files = fs.GetFiles(fs.Root, "*paket.template", true);
             
             foreach (var file in files) {
-                if (file.IndexOf("_BUILD_", StringComparison.OrdinalIgnoreCase) >= 0) {
+                if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
                 }
                 yield return file;
@@ -77,46 +115,5 @@ namespace Aderant.Build.Packaging {
 
            return PackageVersion.CreateVersion(preReleaseLabel, nugetVersion2);
         }
-    }
-
-    internal class PackageVersion {
-        internal static string CreateVersion(string preReleaseLabel, string nugetVersion2) {
-            if (!string.IsNullOrEmpty(preReleaseLabel)) {
-                var i = char.ToLower(preReleaseLabel[0]);
-
-                if (i > 'u') {
-                    throw new InvalidPrereleaseLabel("The package name cannot start with any letter with a lexicographical order greater than 'u' to preserve NuGet prerelease sorting.");
-                }
-
-                var pos = nugetVersion2.IndexOf(preReleaseLabel, StringComparison.Ordinal);
-
-                if (pos >= 0) {
-                    nugetVersion2 = nugetVersion2.Replace(preReleaseLabel, RemoveIllegalCharacters(preReleaseLabel));
-                }
-            }
-
-            return nugetVersion2;
-        }
-
-        private static string RemoveIllegalCharacters(string text) {
-            return text.Replace("-", string.Empty).Replace("_", String.Empty);
-        }
-    }
-
-    public sealed class PackResult {
-        private readonly PackSpecification spec;
-
-        internal PackResult(PackSpecification spec) {
-            this.spec = spec;
-        }
-
-        public string OutputPath {
-            get { return spec.OutputPath; }
-        }
-    }
-
-    internal class PackSpecification {
-        public string DependenciesFile { get; set; }
-        public string OutputPath { get; set; }
     }
 }

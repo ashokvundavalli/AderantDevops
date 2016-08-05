@@ -1,24 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Aderant.Build.Packaging;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build {
-    internal class DependencyManager : IDisposable {
-        static string group = Constants.MainDependencyGroup.ToString();
-
+    internal class PackageManager : IDisposable {
         public IFileSystem2 FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
 
         private IDisposable traceEventsSubscription;
         private Dependencies dependencies;
 
-        public DependencyManager(IFileSystem2 fileSystem, ILogger logger) {
+        public PackageManager(IFileSystem2 fileSystem, ILogger logger) {
             this.FileSystem = fileSystem;
             dependencies = Initialize();
 
@@ -26,18 +27,16 @@ namespace Aderant.Build {
         }
 
         private Dependencies Initialize() {
-            // TODO: Bug in Paket Dependencies.Locate - it always prefers to search up
-
             try {
-                dependencies = Dependencies.Locate(FileSystem.Root);
-                //var dependencyFile = FileSystem.GetFiles(FileSystem.Root, DependenciesFile, true).FirstOrDefault();
-                //if (dependencyFile != null) {
-                //    dependencies = new Dependencies(FileSystem.GetFullPath(dependencyFile));
-                //}
+                var file = FileSystem.GetFiles(FileSystem.Root, DependenciesFile, true).FirstOrDefault();
+                if (file != null) {
+                    dependencies = Dependencies.Locate(FileSystem.Root);
+                }
             } catch (Exception) {
-                
             } finally {
                 if (dependencies == null) {
+                    // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems 
+                    // as it will no doubt locate something it shouldn't use (eg one from another product)
                     Dependencies.Init(FileSystem.Root);
                     dependencies = Dependencies.Locate(FileSystem.Root);
                 }
@@ -45,7 +44,7 @@ namespace Aderant.Build {
             return dependencies;
         }
 
-        public void Add(IEnumerable<ExpertModule> referencedModules) {
+        public void Add(IPackageContext context, IEnumerable<ExpertModule> referencedModules) {
             var file = dependencies.GetDependenciesFile();
 
             FileSystem.MakeFileWritable(file.FileName);
@@ -54,21 +53,25 @@ namespace Aderant.Build {
             for (int i = 0; i < lines.Length; i++) {
                 string line = lines[i];
 
-                if (line.IndexOf("source " + BuildConstants.NugetServerUrl, StringComparison.OrdinalIgnoreCase) >= 0) {
+                if (line.IndexOf("source " + BuildConstants.PackageServerUrl, StringComparison.OrdinalIgnoreCase) >= 0) {
                     break;
                 }
 
-                if (line.IndexOf("source " + Constants.DefaultNuGetStream, StringComparison.OrdinalIgnoreCase) >= 0) {
-                    lines[i] = "source " + BuildConstants.NugetServerUrl;
+                if (line.IndexOf("source " + BuildConstants.DefaultNuGetServer, StringComparison.OrdinalIgnoreCase) >= 0) {
+                    lines[i] = "source " + BuildConstants.PackageServerUrl;
                     file.Save();
                     break;
                 }
             }
 
-            AddModules(referencedModules, file);
+            if (context.AllowExternalPackages) {
+
+            }
+
+            AddModules(context, referencedModules, file);
         }
 
-        private void AddModules(IEnumerable<ExpertModule> referencedModules, DependenciesFile file) {
+        private void AddModules(IPackageContext context, IEnumerable<ExpertModule> referencedModules, DependenciesFile file) {
             foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
                 if (referencedModule.ModuleType == ModuleType.ThirdParty || referencedModule.GetAction == GetAction.NuGet) {
                     // This is not the correct API. One should use dependencies.Add(...) but this is much faster as it doesn't call the server
@@ -84,6 +87,10 @@ namespace Aderant.Build {
             }
 
             file.Save();
+
+            if (context.IncludeDevelopmentDependencies) {
+                dependencies.Add(new FSharpOption<string>("Main"), "Aderant.Build.Analyzer", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+            }
         }
 
         private bool HasLockFile() {
@@ -105,19 +112,14 @@ namespace Aderant.Build {
         }
 
         public async Task ShowOutdated() {
-            await Task.Run(() => { dependencies.ShowOutdated(true, false); });
+            await Task.Run(() => {
+                // TODO: Break UI binding - return a list
+                dependencies.ShowOutdated(true, false);
+            });
         }
 
         public void Dispose() {
             traceEventsSubscription.Dispose();
-        }
-
-        public void Hack() {
-            dependencies.Add(new FSharpOption<string>(group), "Aderant.Build.Analyzer", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
-            DependenciesFile file = dependencies.GetDependenciesFile();
-
-            FileSystem.MakeFileWritable(file.FileName);
-            file.Save();
         }
 
         public VersionRequirement GetVersionsFor(string name) {

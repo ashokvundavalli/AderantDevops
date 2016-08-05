@@ -24,7 +24,7 @@ namespace Aderant.Build.Commands {
                 throw new ArgumentException("Must specify Modules or ModuleNames");
             }
 
-            ExpertManifest manifest = ExpertManifest.Create(ProductManifestPath);
+            ExpertManifest manifest = ExpertManifest.Load(ProductManifestPath);
             manifest.ModulesDirectory = BranchPath;
 
             DependencyBuilder builder = new DependencyBuilder(manifest);

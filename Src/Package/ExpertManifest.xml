@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ProductManifest Name="Expert" ExpertVersion="802">
+<ProductManifest Name="Expert" ExpertVersion="8.1.0">
     <Modules>
         <Module Name="Administration.HubSetup" AssemblyVersion="1.8.0.0" />
         <Module Name="Applications.Administration" AssemblyVersion="1.8.0.0" />
@@ -27,7 +27,6 @@
         <Module Name="Database" AssemblyVersion="1.8.0.0" />
         <Module Name="Expert.Help" GetAction="branch" Path="Main" />
         <Module Name="Installs.Marketing" AssemblyVersion="1.8.0.0" />
-        <Module Name="Internal.Licensing" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="Libraries.Customization" AssemblyVersion="1.8.0.0" />        
         <Module Name="Libraries.DesignStudio" AssemblyVersion="1.8.0.0" />
@@ -99,7 +98,6 @@
         <Module Name="Services.Metadata" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Notes" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Query" AssemblyVersion="1.8.0.0" />
-        <Module Name="Services.Registration" AssemblyVersion="1.8.0.0" />
         <Module Name="Services.Security" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.CheckRequest" AssemblyVersion="1.8.0.0" />
         <Module Name="SmartForms.Collections" AssemblyVersion="1.8.0.0" />
@@ -174,14 +172,12 @@
         <Module Name="ThirdParty.NMock" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.NTFSStreams" />
         <Module Name="ThirdParty.OfficeXmlTools" />
-        <Module Name="ThirdParty.OpenSans" />
         <Module Name="ThirdParty.OpenText" />
         <Module Name="ThirdParty.OwlCarousel" />
         <Module Name="ThirdParty.PDF" />
         <Module Name="ThirdParty.Quartz" />
         <Module Name="ThirdParty.QUnit" ExcludeFromPackaging="true" />
         <Module Name="ThirdParty.Reactive" />
-        <Module Name="ThirdParty.ReactJS" />
         <Module Name="ThirdParty.ReactJS" />
         <Module Name="ThirdParty.ReportViewer" />
         <Module Name="ThirdParty.RequireJS" />

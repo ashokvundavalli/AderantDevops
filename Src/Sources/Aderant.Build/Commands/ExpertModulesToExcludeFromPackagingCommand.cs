@@ -25,7 +25,7 @@ namespace Aderant.Build.Commands {
                 throw new InvalidOperationException("Unable to filter modules as no path ExpertManifest.xml was provided");
             }
 
-            ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath, null);
+            ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath, null, null);
             DependencyBuilder builder = provider.DependencyAnalyzer;
 
             List<ExpertModule> modules = builder.GetAllModules().ToList();

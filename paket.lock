@@ -24,17 +24,17 @@ NUGET
       Newtonsoft.Json (>= 9.0.1) - framework: >= net451, >= netstandard14
     Microsoft.NETCore.Platforms (1.0.1) - framework: dnxcore50, >= netstandard11
     Microsoft.NETCore.Targets (1.0.1) - framework: dnxcore50, >= netstandard11
-    Microsoft.TeamFoundationServer.Client (14.95.3)
+    Microsoft.TeamFoundationServer.Client (14.102)
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
-      Microsoft.VisualStudio.Services.Client (14.95.3) - framework: >= net45
+      Microsoft.VisualStudio.Services.Client (14.102) - framework: >= net45
       Newtonsoft.Json (>= 6.0.8) - framework: >= net45
-    Microsoft.VisualStudio.Services.Client (14.95.3) - framework: >= net45
+    Microsoft.VisualStudio.Services.Client (14.102) - framework: >= net45
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
       Newtonsoft.Json (>= 6.0.8) - framework: >= net45
-    Microsoft.VisualStudio.Services.InteractiveClient (14.95.3)
+    Microsoft.VisualStudio.Services.InteractiveClient (14.102)
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
       Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.16.204221202) - framework: >= net45
-      Microsoft.VisualStudio.Services.Client (14.95.3) - framework: >= net45
+      Microsoft.VisualStudio.Services.Client (14.102) - framework: >= net45
       Newtonsoft.Json (>= 6.0.8) - framework: >= net45
       System.IdentityModel.Tokens.Jwt (>= 4.0) - framework: >= net45
       WindowsAzure.ServiceBus (>= 2.5.1) - framework: >= net45

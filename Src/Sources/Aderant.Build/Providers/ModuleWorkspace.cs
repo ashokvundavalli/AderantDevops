@@ -75,17 +75,14 @@ namespace Aderant.Build.Providers {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ModuleWorkspace"/> class.
+        /// Initializes a new instance of the <see cref="ModuleWorkspace" /> class.
         /// </summary>
-        /// <param name="path">The expert manifest path.</param>
-        /// /// <param name="teamProject">The TFS team project.</param>
-        public ModuleWorkspace(string path, string teamProject) {
-            GetWorkspaceForPath(path, teamProject);
-        }
-
-        private void GetWorkspaceForPath(string path, string teamProject) {
+        /// <param name="productManifestPath">The product manifest path.</param>
+        /// <param name="modulesDirectory">The modules directory.</param>
+        /// <param name="teamProject">The TFS team project.</param>
+        public ModuleWorkspace(string productManifestPath, string modulesDirectory, string teamProject) {
             workspaceTask = Task.Run(() => {
-                WorkspaceInfo workspaceInfo = Workstation.Current.GetLocalWorkspaceInfo(path);
+                WorkspaceInfo workspaceInfo = Workstation.Current.GetLocalWorkspaceInfo(modulesDirectory);
 
                 if (workspaceInfo != null) {
                     Workspace workspace = workspaceInfo.GetWorkspace(new TfsTeamProjectCollection(workspaceInfo.ServerUri));
@@ -93,14 +90,9 @@ namespace Aderant.Build.Providers {
                     tfsWorkspace = new TeamFoundationWorkspace(teamProject, workspace);
                 }
 
-                string manifestPath;
-                if (path.EndsWith(".xml")) {
-                    manifestPath = path;
-                } else {
-                    manifestPath = Path.Combine(path, PathHelper.PathToProductManifest);
-                }
-
-                IModuleProvider manifest = ExpertManifest.Load(manifestPath);
+                ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
+                manifest.ModulesDirectory = modulesDirectory;
+                
                 dependencyAnalyzer = new DependencyBuilder(manifest);
             }).ContinueWith(delegate {
                 workspaceTask = null;

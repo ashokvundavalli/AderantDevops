@@ -19,7 +19,6 @@ namespace Aderant.Build.Commands {
         public string BranchPath { get; set; }
 
         protected override void ProcessRecord() {
-
             string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
 
             if (ModuleName == null && Module == null) {

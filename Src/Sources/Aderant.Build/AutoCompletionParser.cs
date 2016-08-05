@@ -120,8 +120,16 @@ namespace Aderant.Build {
             return matches.ToArray();
         }
 
+
+        /// <summary>
+        /// Provides the core auto complete functionality.
+        /// </summary>
+        /// <param name="modulePath">The module path.</param>
+        /// <param name="productManifestPath">The product manifest path.</param>
+        /// <remarks>Called from the PowerShell host.</remarks>
+
         public string[] GetModuleMatches(string modulePath, string productManifestPath = null) {
-            ExpertManifest manifest = ExpertManifest.Create(productManifestPath);
+            ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
 
             return GetModuleMatches(new DependencyBuilder(manifest));

@@ -2,6 +2,7 @@ using System.IO;
 using System.Management.Automation;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Providers;
 
 namespace Aderant.Build.Commands {
     [Cmdlet("Get", "ExpertModuleDependencyGraph")]
@@ -30,7 +31,7 @@ namespace Aderant.Build.Commands {
                 throw new PSArgumentException(string.Format("The path '{0}' does not exist", Path.GetDirectoryName(OutputPath)));
             }
 
-            DependencyBuilder builder = new DependencyBuilder(branchPath);
+            DependencyBuilder builder = new DependencyBuilder(new DependencyManifestProvider(branchPath));
             builder.BuildDgmlDocument(IncludeBuilds, RestrictToModulesInBranch).Save(OutputPath, SaveOptions.None);
             WriteObject(string.Format("DGML File written to {0}", OutputPath));
         }

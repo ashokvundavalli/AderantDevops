@@ -190,5 +190,32 @@ namespace UnitTest.Build {
                 return ResourceManager.GetString("SrcSrvStream1", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to type file
+        ///id Aderant.Deployment.Manager
+        ///authors Aderant
+        ///description
+        ///    Provides the client deployment tooling.
+        ///files    
+        ///    Bin/Module/Deployment* ==&gt; lib
+        ///    Bin/Module/EnvironmentCloner* ==&gt; lib
+        ///    Bin/Module/RefreshDBFromEnvironment* ==&gt; lib
+        ///    
+        ///dependencies
+        ///    Aderant.Build.Analyzer
+        ///    Thirdparty.DevComponents 
+        ///    Thirdparty.ICSharpCode 
+        ///    Thirdparty.IronPython.2.7 
+        ///    Thirdparty.Keyoti.RapidSpell.v3 
+        ///    ThirdParty.log4net 
+        ///    ThirdParty.Microsoft 
+        ///    ThirdParty.Microsoft. [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string test_paket_template {
+            get {
+                return ResourceManager.GetString("test_paket_template", resourceCulture);
+            }
+        }
     }
 }

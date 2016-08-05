@@ -70,7 +70,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         var module = ExpertModule.Create(mergedElement);
 
                         if (!string.IsNullOrEmpty(DependencyFile)) {
-                            module.VersionRequirement = new DependencyManager(new PhysicalFileSystem(Path.GetDirectoryName(DependencyFile)), null).GetVersionsFor(module.Name);
+                            module.VersionRequirement = new PackageManager(new PhysicalFileSystem(Path.GetDirectoryName(DependencyFile)), null).GetVersionsFor(module.Name);
                         }
                         
                         if (referencedModules.Contains(module)) {
@@ -122,7 +122,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (TryLoadFromModule(fs.GetFullPath(directory), out dependencyManifest)) {
                     manifests.Add(dependencyManifest);
 
-                    string dependencyFile = fs.GetFiles(directory, DependencyManager.DependenciesFile, true).FirstOrDefault();
+                    string dependencyFile = fs.GetFiles(directory, PackageManager.DependenciesFile, true).FirstOrDefault();
                     if (dependencyFile != null) {
                         dependencyManifest.DependencyFile = fs.GetFullPath(dependencyFile);
                     }

@@ -1,10 +1,14 @@
-﻿using Aderant.Build.Packaging;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Paket;
+using VersionRequirement = Aderant.Build.VersionRequirement;
 
 namespace UnitTest.Build.Packaging {
     [TestClass]
     public class PackagerTests {
-
         string json = @"{
   ""Major"":3,
   ""Minor"":0,
@@ -32,7 +36,6 @@ namespace UnitTest.Build.Packaging {
   ""CommitDate"":""2016-07-19""
 }";
 
-
         [TestMethod]
         public void Branch_name_has_dashes_removed() {
             string packageVersion = Aderant.Build.Packaging.Packager.CreatePackageVersion(json);
@@ -49,6 +52,30 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         public void Unstable_label_throws_no_exceptions() {
             PackageVersion.CreateVersion("unstable", "lol");
+        }
+
+        [TestMethod]
+        public void Adding_new_dependencies_to_template_preserves_document_structure() {
+            var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
+            dict.Add(Domain.PackageName("Foo"), Paket.VersionRequirement.AllReleases);
+
+            MemoryStream stream = null;
+
+            var dependencies = new Packager(null).ReplicateDependenciesToTemplate(dict, () => {
+                if (stream != null) {
+                    return stream = new MemoryStream();
+                }
+                return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template));
+            });
+
+            Assert.AreEqual(23, dependencies.Count);
+
+            using (var reader = new StreamReader(stream)) {
+                stream.Position = 0;
+                var text = reader.ReadToEnd();
+
+                Assert.IsFalse(string.IsNullOrWhiteSpace(text));
+            }
         }
     }
 }

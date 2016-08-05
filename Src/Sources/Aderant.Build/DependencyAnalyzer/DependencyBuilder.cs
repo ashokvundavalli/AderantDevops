@@ -61,7 +61,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentException("modulePath must be a rooted path", nameof(branchRootOrModulePath));
             }
 
-            moduleProvider = ExpertManifest.Load(branchRootOrModulePath);
+            if (branchRootOrModulePath.IndexOf(@"\Modules", StringComparison.OrdinalIgnoreCase) == -1) {
+                branchRootOrModulePath = Path.Combine(branchRootOrModulePath, "Modules");
+            }
+
+            moduleProvider = new DependencyManifestProvider(branchRootOrModulePath);
         }
 
         /// <summary>

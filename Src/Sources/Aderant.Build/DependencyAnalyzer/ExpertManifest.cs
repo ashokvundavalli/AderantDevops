@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
+
     internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
         const LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace;
 
@@ -70,6 +71,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
         }
+
+        public IFileSystem2 FileSystem => fileSystem;
 
 
         /// <summary>
@@ -193,17 +196,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public static ExpertManifest Create(string manifestPath) {
-            if (Path.IsPathRooted(manifestPath)) {
-                var root = Path.GetDirectoryName(manifestPath);
-
-                PhysicalFileSystem fs = new PhysicalFileSystem(root);
-                return new ExpertManifest(fs, manifestPath);
-            }
-            throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Path {0} is not a rooted path", manifestPath));
-        }
-
-        internal ExpertManifest(IFileSystem2 fileSystem, string manifestPath) {
+        public ExpertManifest(IFileSystem2 fileSystem, string manifestPath) {
             this.fileSystem = fileSystem;
 
             using (Stream stream = fileSystem.OpenFile(manifestPath)) {
@@ -225,12 +218,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             Branch = PathHelper.GetBranch(manifest.BaseUri, false);
         }
 
-        private IEnumerable<ExpertModule> LoadAllModules() {
-            IEnumerable<XElement> moduleElements = manifest.Root.Element("Modules").Descendants();
-
-            return moduleElements.Select(ExpertModule.Create);
-        }
-
         /// <summary>
         /// Loads the specified manifest.
         /// </summary>
@@ -240,50 +227,32 @@ namespace Aderant.Build.DependencyAnalyzer {
             return Load(manifest, null);
         }
 
+        private IEnumerable<ExpertModule> LoadAllModules() {
+            IEnumerable<XElement> moduleElements = manifest.Root.Element("Modules").Descendants();
+
+            return moduleElements.Select(ExpertModule.Create);
+        }
+
         /// <summary>
         /// Loads the specified manifest and binds to the specified dependency manifest.
         /// </summary>
-        /// <param name="manifest">The manifest.</param>
+        /// <param name="manifestPath">The manifest.</param>
         /// <param name="dependencyManifests">The dependency manifests.</param>
         /// <returns></returns>
-        public static ExpertManifest Load(string manifest, IEnumerable<DependencyManifest> dependencyManifests) {
-            var expertManifest = LoadInternal(manifest);
+        public static ExpertManifest Load(string manifestPath, IEnumerable<DependencyManifest> dependencyManifests) {
+            var root = new FileInfo(manifestPath).DirectoryName;
+            var fs = new PhysicalFileSystem(root);
+            var manifest = new ExpertManifest(fs, manifestPath);
 
             if (dependencyManifests != null) {
-                expertManifest.dependencyManifests = dependencyManifests;
+                manifest.dependencyManifests = dependencyManifests;
 
                 foreach (DependencyManifest dependencyManifest in dependencyManifests) {
-                    dependencyManifest.GlobalAttributesProvider = expertManifest;
+                    dependencyManifest.GlobalAttributesProvider = manifest;
                 }
             }
 
-            return expertManifest;
-        }
-
-        private static ExpertManifest LoadInternal(string manifest) {
-            if (manifest.EndsWith(".xml")) {
-                return Create(manifest);
-            }
-
-            string path = ResolveLoadFromPath(manifest);
-            var loadResult = LoadInternal(path);
-            loadResult.ModulesDirectory = manifest;
-
-            return loadResult;
-        }
-
-        private static string ResolveLoadFromPath(string directory) {
-            string path = directory;
-
-            if (path.IndexOf("Modules", StringComparison.OrdinalIgnoreCase) == -1) {
-                path = Path.Combine(path, "Modules");
-            }
-
-            if (!Directory.Exists(path)) {
-                throw new DirectoryNotFoundException(path);
-            }
-
-            return Path.Combine(path, PathHelper.PathToProductManifest);
+            return manifest;
         }
 
         public virtual string GetPathToBinaries(ExpertModule expertModule, string dropPath) {

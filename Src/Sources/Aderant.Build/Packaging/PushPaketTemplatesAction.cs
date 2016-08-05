@@ -27,7 +27,7 @@ namespace Aderant.Build.Packaging {
             var sw = new Stopwatch();
             sw.Start();
 
-            this.logger.Info("Pushing paket templates to internal nuget server {0}", BuildConstants.NugetServerUrl);
+            this.logger.Info("Pushing paket templates to internal nuget server {0}", BuildConstants.PackageServerUrl);
             try {
                 var tasks = new List<Task>();
 
@@ -40,7 +40,7 @@ namespace Aderant.Build.Packaging {
                     this.logger.Info("Pushing {0}...", moduleFolder.Split('\\').Last());
 
                     // push nuget package to the server
-                    var arguments = string.Format(@"push url {0} file {1} apikey {2}", BuildConstants.NugetServerUrl, packageFile, BuildConstants.NugetServerApiKey);
+                    var arguments = string.Format(@"push url {0} file {1} apikey {2}", BuildConstants.PackageServerUrl, packageFile, BuildConstants.NugetServerApiKey);
                     var processFilePath = Path.Combine(buildScriptsDirectory, "paket.exe");
                     if (executeInParallel) {
                         tasks.Add(BuildInfrastructureHelper.StartProcessAsync(processFilePath, arguments, moduleFolder, OnReceiveStandardErrorOrOutputData));

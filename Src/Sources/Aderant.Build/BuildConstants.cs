@@ -14,8 +14,10 @@ namespace Aderant.Build {
 
         public static string NugetServerApiKey = "abc";
         
-        public static string NugetServerUrl = "http://packages.ap.aderant.com/packages/nuget";
+        public static string PackageServerUrl = "http://packages.ap.aderant.com/packages/nuget";
 
-        public static string NugetServerClearCacheUrl = NugetServerUrl + "/ClearCache()";
+        public static string NugetServerClearCacheUrl = PackageServerUrl + "/ClearCache()";
+
+        public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
     }
 }

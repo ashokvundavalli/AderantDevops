@@ -56,12 +56,23 @@
     <Reference Include="MSBuild.Community.Tasks">
       <HintPath>..\..\Src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
+    <Reference Include="paket, Version=3.9.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Src\Build\paket.exe</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDependentAssemblyPaths Condition=" '$(VS100COMNTOOLS)' != '' " Include="$(VS100COMNTOOLS)..\IDE\PrivateAssemblies">
@@ -98,6 +109,7 @@
     <None Include="Resources\App.config" />
     <None Include="Resources\bindings.config" />
     <None Include="Resources\clients.config" />
+    <None Include="Resources\test-paket-template" />
     <None Include="Resources\instance.config" />
     <None Include="test.dgml">
       <SubType>Designer</SubType>

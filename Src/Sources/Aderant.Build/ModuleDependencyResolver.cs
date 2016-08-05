@@ -78,12 +78,11 @@ namespace Aderant.Build {
         /// Copies the dependencies.
         /// </summary>
         /// <param name="dependenciesDirectory">The dependencies directory.</param>
-        /// <param name="mode">The mode.</param>
         /// <param name="buildScriptsDirectory">The build scripts directory.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
-        public async Task Resolve(string dependenciesDirectory, DependencyFetchMode mode, string buildScriptsDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task Resolve(string dependenciesDirectory, string buildScriptsDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
             if (!Directory.Exists(dependenciesDirectory)) {
                 Directory.CreateDirectory(dependenciesDirectory);
             }
@@ -100,7 +99,7 @@ namespace Aderant.Build {
             // Remove the modules from the dependency tree that we are currently building. This is done as the dependencies don't need to
             // come from the drop but instead they will be produced by this build
             if (modulesInBuild != null) {
-                referencedModules = GetReferencedModulesForBuild(mode, referencedModules);
+                referencedModules = GetReferencedModulesForBuild(referencedModules);
             }
 
             referencedModules = PostProcess(referencedModules);
@@ -109,37 +108,35 @@ namespace Aderant.Build {
 
             var fileSystem = new PhysicalFileSystem(moduleDirectory);
 
-            await PackageRestore(mode, fileSystem, referencedModules);
+            await PackageRestore(fileSystem, referencedModules);
 
             if (Outdated) {
                 // Return early if we are showing outdated packages as we don't want to "gd" over the dependencies
                 return;
             }
 
-            await LegacyGetDependencies(dependenciesDirectory, mode, cancellationToken, referencedModules.Where(m => m.RepositoryType == RepositoryType.Folder));
+            await LegacyGetDependencies(dependenciesDirectory, cancellationToken, referencedModules.Where(m => m.RepositoryType == RepositoryType.Folder));
         }
 
-        private async Task PackageRestore(DependencyFetchMode mode, PhysicalFileSystem fileSystem2, IEnumerable<ExpertModule> referencedModules) {
-            using (var retriever = new DependencyManager(fileSystem2, logger)) {
-                retriever.Add(referencedModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
-
-                retriever.Hack();
+        private async Task PackageRestore(IFileSystem2 fileSystem2, IEnumerable<ExpertModule> referencedModules) {
+            using (var manager = new PackageManager(fileSystem2, logger)) {
+                manager.Add(new DependencyFetchContext(), referencedModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
 
                 if (Outdated) {
-                    await retriever.ShowOutdated();
+                    await manager.ShowOutdated();
                     return;
                 }
 
                 if (Update) {
                     logger.Info("Updating packages.");
-                    await retriever.Update(Force);
+                    await manager.Update(Force);
                 }
 
                 logger.Info("Restoring packages.");
-                await retriever.Restore();
+                await manager.Restore();
             }
 
-            await RestorePackages(fileSystem2, mode, referencedModules);
+            await RestorePackages(fileSystem2, referencedModules);
         }
 
         private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> referencedModules) {
@@ -161,7 +158,7 @@ namespace Aderant.Build {
             return referencedModules;
         }
 
-        private async Task LegacyGetDependencies(string dependenciesDirectory, DependencyFetchMode mode, CancellationToken cancellationToken, IEnumerable<ExpertModule> referencedModules) {
+        private async Task LegacyGetDependencies(string dependenciesDirectory, CancellationToken cancellationToken, IEnumerable<ExpertModule> referencedModules) {
             foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
                 // Check if we have been issued CTRL + C from the command line, if so abort.
                 if (cancellationToken != null) {
@@ -177,7 +174,7 @@ namespace Aderant.Build {
                     latestBuild = localModuleDirectory;
                 }
                 if (Directory.Exists(latestBuild)) {
-                    await CopyContentsAsync(dependenciesDirectory, referencedModule, latestBuild, false, mode);
+                    await CopyContentsAsync(dependenciesDirectory, referencedModule, latestBuild, false);
                 }
 
                 OnModuleDependencyResolved(new DependencyResolvedEventArgs {
@@ -189,7 +186,7 @@ namespace Aderant.Build {
             }
         }
 
-        private async Task RestorePackages(IFileSystem2 fileSystem, DependencyFetchMode mode, IEnumerable<ExpertModule> referencedModules) {
+        private async Task RestorePackages(IFileSystem2 fileSystem, IEnumerable<ExpertModule> referencedModules) {
             logger.Info("Performing legacy restore.");
 
             string moduleName = ModuleName ?? string.Empty;
@@ -213,7 +210,7 @@ namespace Aderant.Build {
 
                 logger.Info("Performing legacy restore on " + package);
 
-                if (BuildAll || (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty)) {
+                if (BuildAll || moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase)) {
                     // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                     // used depending on the content type.
 
@@ -227,14 +224,14 @@ namespace Aderant.Build {
             }
         }
 
-        private IEnumerable<ExpertModule> GetReferencedModulesForBuild(DependencyFetchMode mode, IEnumerable<ExpertModule> referencedModules) {
+        private IEnumerable<ExpertModule> GetReferencedModulesForBuild(IEnumerable<ExpertModule> referencedModules) {
             var builder = new DependencyBuilder(expertManifest);
             var modules = builder.GetAllModules().ToList();
             var moduleDependencyGraph = builder.GetModuleDependencies().ToList();
 
             var modulesRequiredForBuild = GetDependenciesRequiredForBuild(modules, moduleDependencyGraph, modulesInBuild);
 
-            if (modulesRequiredForBuild.Count == 0 && mode == DependencyFetchMode.ThirdParty) {
+            if (modulesRequiredForBuild.Count == 0) {
                 // We don't require any external dependencies to build - however we need to move the third party modules to the dependency folder
                 // always
                 referencedModules = referencedModules.Where(m => m.ModuleType == ModuleType.ThirdParty);
@@ -277,7 +274,7 @@ namespace Aderant.Build {
             return dependenciesRequiredForBuild;
         }
 
-        private async Task CopyContentsAsync(string moduleDependenciesDirectory, ExpertModule referencedModule, string latestBuildPath, bool useHardLinks, DependencyFetchMode mode) {
+        private async Task CopyContentsAsync(string moduleDependenciesDirectory, ExpertModule referencedModule, string latestBuildPath, bool useHardLinks) {
             DirectoryInfo directory = new DirectoryInfo(moduleDependenciesDirectory);
 
             if (directory.Parent == null) {
@@ -288,7 +285,7 @@ namespace Aderant.Build {
 
             Task task;
 
-            if (referencedModule.ModuleType == ModuleType.ThirdParty && (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase) || mode == DependencyFetchMode.ThirdParty)) {
+            if (referencedModule.ModuleType == ModuleType.ThirdParty && (moduleName.StartsWith("Web.", StringComparison.OrdinalIgnoreCase) || moduleName.StartsWith("Mobile.", StringComparison.OrdinalIgnoreCase))) {
                 // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                 // used depending on the content type.
 
@@ -434,6 +431,16 @@ namespace Aderant.Build {
                 }
                 return false;
             }
+        }
+    }
+
+    internal class DependencyFetchContext : IPackageContext {
+        public bool IncludeDevelopmentDependencies {
+            get { return true; } 
+        }
+
+        public bool AllowExternalPackages {
+            get { return false; }
         }
     }
 

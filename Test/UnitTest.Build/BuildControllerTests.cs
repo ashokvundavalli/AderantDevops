@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Aderant.Build;
-using Aderant.Build.Tasks;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using BuildPageSummary = Aderant.Build.BuildSummary;
 
 namespace UnitTest.Build {
     [TestClass]
@@ -81,27 +79,6 @@ namespace UnitTest.Build {
 
             Assert.AreEqual(@"\\na.aderant.com\ExpertSuite\Dev\MyBranch\Foo\99.99.99.99\1.0.0.0", detail.DropLocation);
         }
-
-
-
-        //[TestMethod]
-        //public void Integration() {
-        //    BuildDetailPublisher publisher = new BuildDetailPublisher("http://tfs:8080/tfs/aderant", "ExpertSuite");
-
-        //    var config = new ExpertBuildConfiguration(@"Releases\803x") {
-        //        ModuleName = "Applications.ExpertAssistant",
-        //        DropLocation = @"\\na.aderant.com\ExpertSuite"
-        //    };
-
-        //    var definition = publisher.CreateBuildDefinition(config);
-
-        //    var detail = new ExpertBuildDetail("1.8.0.0", "99.99.99.99", config) {
-        //        CompletedSuccessfully = true,
-        //        BuildSummary = new BuildPageSummary { Section = "MySection", Message = "MyMessage" }
-        //    };
-
-        //    publisher.CreateNewBuild(definition, detail);
-        //}
     }
 
 
