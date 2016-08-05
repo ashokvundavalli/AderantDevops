@@ -46,6 +46,9 @@ Write-Host "BUILD_STAGINGDIRECTORY: $ENV:BUILD_STAGINGDIRECTORY"
 Write-Host "AGENT_BUILDDIRECTORY: $ENV:AGENT_BUILDDIRECTORY"
 Get-Variable |%{ Write-Host ("Name : {0}, Value: {1}" -f $_.Name,$_.Value ) }
 
+# Clean up other cloned repositories in case we are recycling a working dir
+gci -Path $Env:BUILD_SOURCESDIRECTORY -Depth 1 -Filter "*_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
 $buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
 
 function Clone($repo, $version) {
