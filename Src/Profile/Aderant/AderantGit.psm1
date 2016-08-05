@@ -66,6 +66,19 @@ function InstallPoshGit() {
 }
 
 function ConfigureGit() {
+    try {        
+        $result = [bool]::Parse((& git config --get core.autocrlf))
+        if ($result) {
+            Write-Host (New-Object string -ArgumentList '*', 80) -ForegroundColor Red
+            Write-Host "Your git config has autocrlf=true which will cause untold chaos." -ForegroundColor Red
+            Write-Host "It will updated to false." -ForegroundColor Red
+            Write-Host (New-Object string -ArgumentList '*', 80) -ForegroundColor Red
+            sleep -Seconds 10
+        }
+    } finally {
+        # Probably don't have git so we are going to fail hard very soon.
+    }
+
     & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
     & git config --global core.autocrlf false
