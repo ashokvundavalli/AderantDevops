@@ -46,7 +46,7 @@ try {
 
         Write-Debug "Current script path: $($MyInvocation.MyCommand.Path)"
 
-        $folder = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)    
+        $folder = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
             
         # Copy and setup _profile script
         $sourceScript = Join-Path $folder -ChildPath "..\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
@@ -59,13 +59,13 @@ try {
             Write-Host "***" -ForegroundColor Yellow
             Write-Host "!!! A Microsoft.PowerShell_profile.ps1 script already exists. If this script has modifications those modifications will be lost." -ForegroundColor Yellow
             Write-Host "***" -ForegroundColor Yellow
+            $text | Out-File $destinationScript -Confirm
+        } else {
+            $text | Out-File $destinationScript
         }
-    
-        $text | Out-File $destinationScript -Confirm
-    
-        #Copy-Item $sourceScript $destinationScript -Confirm
+                
         Set-ItemProperty $destinationScript -name IsReadOnly -value $false
-        Write-Host -NoNewLine "Press any key to continue..."
+        Write-Host "Setup complete."
     }
 } catch {
     Write-Host "An exception occured during profile setup. Sorry about that."
@@ -73,4 +73,3 @@ try {
     Write-Host $_
     Read-Host -Prompt "Press any key to continue"
 }
-
