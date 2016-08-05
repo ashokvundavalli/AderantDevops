@@ -204,7 +204,9 @@ namespace UnitTest.Build {
         ///    Bin/Module/PrerequisitesPowerShell ==&gt; lib/PrerequisitesPowerShell
         ///    Bin/Module/Monitoring ==&gt; lib/Monitoring
         ///    Bin/Module/InstallerManifests ==&gt; lib/InstallerManifests
-        ///    !Bin/Module/*.exe.config.
+        ///    !Bin/Module/*.exe.config
+        ///
+        ///dep [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string test_paket_template_with_dependencies {
             get {
@@ -230,6 +232,27 @@ namespace UnitTest.Build {
         internal static string test_paket_template_without_dependencies {
             get {
                 return ResourceManager.GetString("test_paket_template_without_dependencies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to type file
+        ///id Aderant.Deployment.Core
+        ///authors Aderant
+        ///description
+        ///    Provides libraries and services for deploying an Expert environment.
+        ///files    
+        ///    Bin/Module/*.config ==&gt; lib 
+        ///    Bin/Module/Aderant.* ==&gt; lib 
+        ///    Bin/Module/PrerequisitesPowerShell/* ==&gt; lib/PrerequisitesPowerShell
+        ///    Bin/Module/PrerequisitesPowerShell ==&gt; lib/PrerequisitesPowerShell
+        ///    Bin/Module/Monitoring ==&gt; lib/Monitoring
+        ///    Bin/Module/InstallerManifests ==&gt; lib/InstallerManifests
+        ///    !Bin/Module/*.exe.config.
+        /// </summary>
+        internal static string test_paket_template_without_dependencies_UNIX {
+            get {
+                return ResourceManager.GetString("test_paket_template_without_dependencies_UNIX", resourceCulture);
             }
         }
     }

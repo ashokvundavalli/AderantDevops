@@ -112,6 +112,7 @@
     <None Include="Resources\test-paket-template-without-dependencies" />
     <None Include="Resources\instance.config" />
     <None Include="Resources\test-paket-template-with-dependencies" />
+    <None Include="Resources\test-paket-template-without-dependencies-UNIX" />
     <None Include="test.dgml">
       <SubType>Designer</SubType>
     </None>

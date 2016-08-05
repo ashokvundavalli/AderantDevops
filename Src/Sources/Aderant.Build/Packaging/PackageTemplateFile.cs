@@ -44,6 +44,8 @@ namespace Aderant.Build.Packaging {
         }
 
         public PackageTemplateFile(string contents) {
+            contents = contents.Replace("\n", Environment.NewLine);
+
             textRepresentation = Regex.Split(contents, @"(?<=\r\n)(?!$)");
 
             FindSection("dependencies");
@@ -118,7 +120,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private List<string> CreateTextRepresentation(List<string> list) {
-            return list.Select((s, i) => i == 0 ? s : s.PadLeft(s.Length + 4)).ToList();
+            return list.Select((s, i) => i == 0 ? s : s.PadLeft(s.Length + 4) + Environment.NewLine).ToList();
         }
     }
 }

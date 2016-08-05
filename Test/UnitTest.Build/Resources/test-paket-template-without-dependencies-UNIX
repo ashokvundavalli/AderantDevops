@@ -1,0 +1,13 @@
+﻿type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files    
+    Bin/Module/*.config ==> lib 
+    Bin/Module/Aderant.* ==> lib 
+    Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
+    Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
+    Bin/Module/Monitoring ==> lib/Monitoring
+    Bin/Module/InstallerManifests ==> lib/InstallerManifests
+    !Bin/Module/*.exe.config

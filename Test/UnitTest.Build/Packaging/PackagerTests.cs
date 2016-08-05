@@ -57,7 +57,7 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         public void Adding_new_dependencies_to_template_preserves_document_structure() {
             var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
-            dict.Add(Domain.PackageName("Foo"), Paket.VersionRequirement.AllReleases);
+            dict.Add(Domain.PackageName("Bar"), Paket.VersionRequirement.AllReleases);
 
             MemoryStream stream = null;
 
@@ -68,7 +68,7 @@ namespace UnitTest.Build.Packaging {
                 return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template_with_dependencies));
             });
 
-            Assert.AreEqual(23, dependencies.Count);
+            Assert.AreEqual(2, dependencies.Count);
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
@@ -109,8 +109,55 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo ";
+    Foo 
+"; // Trailing newline isn't significant and is an artifact of the file writer
 
+            using (var reader = new StreamReader(stream)) {
+                stream.Position = 0;
+                var actual = reader.ReadToEnd();
+
+                Assert.IsFalse(string.IsNullOrWhiteSpace(actual));
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void Adding_new_dependencies_to_template_with_unix_line_endings() {
+            var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
+            dict.Add(Domain.PackageName("Foo"), Paket.VersionRequirement.AllReleases);
+            dict.Add(Domain.PackageName("Bar"), Paket.VersionRequirement.AllReleases);
+            dict.Add(Domain.PackageName("Baz"), Paket.VersionRequirement.AllReleases);
+
+            MemoryStream stream = null;
+
+            var dependencies = new Packager(null).ReplicateDependenciesToTemplate(dict, () => {
+                if (stream != null) {
+                    return stream = new MemoryStream();
+                }
+                return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template_without_dependencies_UNIX));
+            });
+
+            Assert.AreEqual(3, dependencies.Count);
+
+            string expected = @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files    
+    Bin/Module/*.config ==> lib 
+    Bin/Module/Aderant.* ==> lib 
+    Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
+    Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
+    Bin/Module/Monitoring ==> lib/Monitoring
+    Bin/Module/InstallerManifests ==> lib/InstallerManifests
+    !Bin/Module/*.exe.config
+dependencies
+    Foo 
+    Bar 
+    Baz 
+"; // Trailing newline isn't significant and is an artifact of the file writer
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
