@@ -1,4 +1,4 @@
-﻿$DebugPreference = 'Continue'
+﻿$DebugPreference = 'SilentlyContinue'
 
 function BuildProject($properties, [bool]$rebuild) {
     # Load the build libraries as this has our shared compile function. This function is shared by the desktop and server bootstrap of Build.Infrastructure
@@ -24,7 +24,7 @@ function LoadAssembly($properties, [string]$targetAssembly) {
 
         #Imports the specified modules without locking it on disk
         $assemblyBytes = [System.IO.File]::ReadAllBytes($targetAssembly)
-        $pdb = [System.IO.Path]::ChangeExtension($targetAssembly, "pdb");        
+        $pdb = [System.IO.Path]::ChangeExtension($targetAssembly, "pdb");
 
         if (Test-Path $pdb) {
             Write-Debug "Importing assembly with symbols"

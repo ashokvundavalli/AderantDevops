@@ -15,7 +15,7 @@
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-    <ProductManifestPath>$(PackageScriptsDirectory)ExpertManifest.xml</ProductManifestPath>
+    <ProductManifestPath Condition="'$(ProductManifestPath)' == ''">$(PackageScriptsDirectory)ExpertManifest.xml</ProductManifestPath>
 
     <!-- Enables the use of a shared dependency directory to speed up the build -->
     <UseSharedDependencyDirectory>true</UseSharedDependencyDirectory>
