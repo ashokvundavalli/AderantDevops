@@ -28,8 +28,6 @@
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
     <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
 
-    <ProductManifestPath Condition="'$(ProductManifestPath)' == ''">$(BuildScriptsDirectory)..\Package\ExpertManifest.xml</ProductManifestPath>
-
     <BuildAssembly>$(BuildToolsDirectory)\Aderant.Build.dll</BuildAssembly>
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
@@ -158,7 +156,42 @@
     <!-- Setup environment for JavaScript tests -->
     <Exec Command="reg import $(BuildScriptsDirectory)Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg" 
           YieldDuringToolExecution="true" />
+  </Target>
 
+  <UsingTask
+    TaskName="GetBranchRootFromServerPath"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)">
+    <ParameterGroup>
+      <BuildProjectFolderPath ParameterType="System.String" Required="true" />
+      <BranchRoot ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Reflection" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Diagnostics" />
+      <Code Type="Fragment" Language="cs">
+        int pos = BuildProjectFolderPath.IndexOf("Modules/", StringComparison.OrdinalIgnoreCase);
+        BranchRoot = BuildProjectFolderPath.Substring(0, pos);
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="FindProductManifest" AfterTargets="PrepareBuildEnvironment" Condition="'$(IsDesktopBuild)' != 'true' And '$(ProductManifestPath)' == ''">
+
+    <GetBranchRootFromServerPath
+      BuildProjectFolderPath="$(BuildProjectFolderPath)">
+      <Output PropertyName="BranchRoot" 
+              TaskParameter="BranchRoot" />
+    </GetBranchRootFromServerPath>
+
+    <PropertyGroup>
+      <ProductManifestServerPath>$(BranchRoot)Modules/ExpertManifest.xml</ProductManifestServerPath>
+      <ProductManifestPath>$(BuildScriptsDirectory)\ExpertManifest.xml</ProductManifestPath>
+    </PropertyGroup>
+
+    <Exec Command="C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\TF.exe /collection:$(TeamFoundationServerUrl) $(ProductManifestServerPath) /output:$(ProductManifestPath)" />
+          
   </Target>
 
   <!--
