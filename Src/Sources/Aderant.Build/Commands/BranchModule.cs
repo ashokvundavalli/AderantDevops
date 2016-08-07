@@ -106,7 +106,7 @@ Checking back in to TFS must be done manually.")]
 
         private void GetBuildFilesForAllModules() {
             // Get and checkout ExpertManifest
-            string serverPathToManifest = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToProductManifest);
+            string serverPathToManifest = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), "ExpertManifest.xml");
 
             Host.UI.WriteLine("Getting latest: " + serverPathToManifest);
             workspace.Get(new string[] {serverPathToManifest}, VersionSpec.Latest, RecursionType.None, GetOptions.None);

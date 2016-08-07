@@ -31,10 +31,13 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 6)]
         public SwitchParameter Force { get; set; }
 
-        // This should be removed when we are fully migrated over. This exists for compatibility with other branches.
+        // This should be removed when we are fully migrated over. This exists for backwards compatibility with other versions of the build tools.
         [Parameter(Mandatory = false, Position = 7, DontShow = true)]
         [Obsolete]
         public SwitchParameter UseThirdPartyFromDrop { get; set; }
+
+        [Parameter(Mandatory = false, Position = 8, HelpMessage = "Specifies the path the product manifest.")]
+        public string ProductManifestPath { get; set; }
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
@@ -60,7 +63,13 @@ namespace Aderant.Build.Commands {
             // e.g Modules\Web.Expenses\Dependencies
             string moduleDependenciesDirectory = Path.Combine(moduleDirectory, "Dependencies");
 
-            string manifest = Path.GetFullPath(Path.Combine(BuildScriptsDirectory, @"..\Package\ExpertManifest.xml"));
+            string manifest = null;
+            if (!string.IsNullOrEmpty(ProductManifestPath)) {
+                manifest = ProductManifestPath;
+            }
+
+            Debug.Assert(manifest != null);
+
             if (File.Exists(manifest)) {
                 DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);
                 

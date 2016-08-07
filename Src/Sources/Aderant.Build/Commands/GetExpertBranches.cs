@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -16,16 +17,22 @@ namespace Aderant.Build.Commands {
             string branchPath = ParameterHelper.GetBranchPath(null, SessionState);
             string branchName = GetBranchName();
             var branches = new List<string>();
-            string rootPath = TempParameterHelper.GetExpertSuitePath(branchName, branchPath);
+
+            //string rootPath = TempParameterHelper.GetExpertSuitePath(branchName, branchPath);
+            int position = branchPath.IndexOf(branchName, StringComparison.OrdinalIgnoreCase);
+            var rootPath = branchPath.Substring(0, position);
+
             string mainPath = Path.Combine(rootPath, "Main");
-            if(Directory.Exists(mainPath) && IsModulePath(mainPath)) {
+
+            if (Directory.Exists(mainPath) && IsModulePath(mainPath)) {
                 branches.Add("Main");
             }
+
             var additionalBranches = from moduleGroup in Directory.GetDirectories(rootPath)
                                      from module in Directory.GetDirectories(moduleGroup)
                                      where IsModulePath(module)
                                      select
-                                         string.Format("{0}\\{1}", new DirectoryInfo(moduleGroup).Name,
+                                         string.Format(CultureInfo.InvariantCulture, "{0}\\{1}", new DirectoryInfo(moduleGroup).Name,
                                                        new DirectoryInfo(module).Name);
             branches.AddRange(additionalBranches);
             
@@ -33,27 +40,12 @@ namespace Aderant.Build.Commands {
         }
 
         private static bool IsModulePath(string modulePath) {
-            return File.Exists(Path.Combine(modulePath, @"Modules\Build.Infrastructure\Src\Package\ExpertManifest.xml"));
+            return File.Exists(Path.Combine(modulePath, @"Modules\Build.Infrastructure\Src\Package\ExpertManifest.xml")) || File.Exists(Path.Combine(modulePath, "Modules", "ExpertManifest.xml"));
         }
 
         private string GetBranchName() {
             return SessionState.PSVariable.GetValue("BranchName", string.Empty).ToString();
         }
         
-    }
-
-    public static class TempParameterHelper {
-        /// <summary>
-        /// Gets the expert suite path.
-        /// </summary>
-        /// <param name="branchName">Name of the branch.</param>
-        /// <param name="branchPath">The branch path.</param>
-        /// <returns></returns>
-        public static string GetExpertSuitePath(string branchName, string branchPath) {
-            if(!Directory.Exists(branchPath)) {
-                throw new DirectoryNotFoundException(branchPath);
-            }
-            return string.Join("\\", branchPath.TrimEnd('\\').Split('\\').Reverse().Skip(branchName.Trim('\\').Split('\\').Count()).Reverse().ToArray());
-        }
     }
 }
