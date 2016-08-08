@@ -253,8 +253,11 @@
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Commands\Assets\OpenTypeStd\" />
+    <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Bold.otf" />
+    <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Light.otf" />
+    <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <!--<ItemGroup>
     <Analyzer Include="$(OutputPath)\Aderant.Build.Analyzer.dll" />
