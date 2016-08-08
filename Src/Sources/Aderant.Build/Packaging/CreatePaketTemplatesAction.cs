@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Aderant.Build.Logging;
 using Aderant.Build.Versioning;
@@ -49,26 +49,34 @@ namespace Aderant.Build.Packaging {
                     this.logger.Info(info);
 
                     var moduleVersion = new Version(1, 0, 0);
-                    var binFolder = Path.Combine(moduleFolder, "bin");
 
-                    // get highest version number of any file in the bin folder of each module
-                    foreach (var file in Directory.EnumerateFiles(binFolder)) {
-                        var version = analyzer.GetVersion(file);
-                        if (version != null) {
+                    // check, if the version number has been set manually via postfix of the third party module folder
+                    var match = Regex.Match(moduleName, @"(.+)(\.\d+\.\d+\.\d+)");
+                    if (match.Success) {
+                        moduleName = match.Groups[1].Value;
+                        Version.TryParse(match.Groups[2].Value.Substring(1), out moduleVersion);
+                    } else {
+                        var binFolder = Path.Combine(moduleFolder, "bin");
 
-                            var fileVersion = new Version();
-                            if (version.FileVersion != null) {
-                                Version.TryParse(version.FileVersion, out fileVersion);
-                            } else if (version.AssemblyVersion != null) {
-                                fileVersion = version.AssemblyVersion;
+                        // get highest version number of any file in the bin folder of each module
+                        foreach (var file in Directory.EnumerateFiles(binFolder)) {
+                            var version = analyzer.GetVersion(file);
+                            if (version != null) {
+
+                                var fileVersion = new Version();
+                                if (version.FileVersion != null) {
+                                    Version.TryParse(version.FileVersion, out fileVersion);
+                                } else if (version.AssemblyVersion != null) {
+                                    fileVersion = version.AssemblyVersion;
+                                }
+
+                                if (fileVersion != null && fileVersion > moduleVersion) {
+                                    moduleVersion = fileVersion;
+                                }
+
+                                info = " * " + Path.GetFileName(file) + " - " + version.FileVersion + " (" + version.AssemblyVersion + ")";
+                                this.logger.Info(info);
                             }
-
-                            if (fileVersion != null && fileVersion > moduleVersion) {
-                                moduleVersion = fileVersion;
-                            }
-
-                            info = " * " + Path.GetFileName(file) + " - " + version.FileVersion + " (" + version.AssemblyVersion + ")";
-                            this.logger.Info(info);
                         }
                     }
 
@@ -117,14 +125,13 @@ files
                     templateContentBuilder.AppendLine("    bin ==> lib");
 
                     File.WriteAllText(paketTemplateFile, templateContentBuilder.ToString());
-                    
+
                     // create nuspec file
                     var arguments = string.Format(@"pack output {0} templatefile {1} version {2}", moduleFolder, paketTemplateFile, semVer);
                     var processFilePath = Path.Combine(buildScriptsDirectory, "paket.exe");
                     if (executeInParallel) {
                         tasks.Add(BuildInfrastructureHelper.StartProcessAsync(processFilePath, arguments, moduleFolder, OnReceiveStandardErrorOrOutputData));
-                    }
-                    else {
+                    } else {
                         BuildInfrastructureHelper.StartProcessAndWaitForExit(processFilePath, arguments, moduleFolder, OnReceiveStandardErrorOrOutputData);
                     }
                 }
