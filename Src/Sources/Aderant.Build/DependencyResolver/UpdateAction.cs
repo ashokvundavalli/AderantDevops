@@ -1,3 +1,4 @@
+using Aderant.Build.DependencyResolver;
 using Microsoft.FSharp.Collections;
 using Paket;
 

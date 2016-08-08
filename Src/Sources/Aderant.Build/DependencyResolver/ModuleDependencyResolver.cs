@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 
 namespace Aderant.Build {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
 
     internal sealed class DependencyResolvedEventArgs : EventArgs {
         public string DependencyProvider { get; set; }

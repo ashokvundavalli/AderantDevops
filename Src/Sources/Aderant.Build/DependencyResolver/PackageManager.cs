@@ -8,7 +8,7 @@ using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 using Paket;
 
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
     internal class PackageManager : IDisposable {
         public IFileSystem2 FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";

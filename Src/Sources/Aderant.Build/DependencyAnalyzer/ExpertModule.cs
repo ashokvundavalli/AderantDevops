@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {

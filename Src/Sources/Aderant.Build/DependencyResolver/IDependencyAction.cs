@@ -1,4 +1,4 @@
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
     internal interface IDependencyAction {
         void Run();
     }

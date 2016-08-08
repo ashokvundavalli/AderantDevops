@@ -1,4 +1,4 @@
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
     internal class DependencySources {
         /// <summary>
         /// Initializes a new instance of the <see cref="DependencySources"/> class.
