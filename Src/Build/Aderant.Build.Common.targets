@@ -190,7 +190,8 @@
       <ProductManifestPath>$(BuildScriptsDirectory)\ExpertManifest.xml</ProductManifestPath>
     </PropertyGroup>
 
-    <Exec Command="C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\TF.exe vc view /collection:$(TeamFoundationServerUrl) $(ProductManifestServerPath) /output:$(ProductManifestPath)" />
+    <Exec Command="TF.exe vc view /collection:$(TeamFoundationServerUrl) $(ProductManifestServerPath) /output:$(ProductManifestPath)"
+          WorkingDirectory="C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\IDE" />
           
   </Target>
 
