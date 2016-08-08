@@ -166,13 +166,13 @@
       <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
     </PropertyGroup>
     
-    <Delete Files="$(BranchBuildProject)"/>
+    <Delete Files="$(BranchBuildProject)" ContinueOnError="true" />
     
     <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
       ProductManifest="$(ProductManifestPath)"
       ModulesInBuild="@(ModulesInBuild)"
-      ProjectFile="$($(BranchBuildProject)" />
+      ProjectFile="$(BranchBuildProject)" />
     
     <Error Condition="!Exists('$(BranchBuildProject)')" />
     
