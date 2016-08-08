@@ -58,9 +58,8 @@ namespace Aderant.Build.Process {
             return visitor.GetDocument();
         }
 
-        internal static void SaveBuildProject(string branchPath, XElement projectDocument) {
-            string buildProject = Path.Combine(branchPath, "BranchBuild.proj");
-            File.WriteAllText(buildProject, projectDocument.ToString(), Encoding.UTF8);
+        internal static void SaveBuildProject(string file, XElement projectDocument) {
+            File.WriteAllText(file, projectDocument.ToString(), Encoding.UTF8);
         }
     }
 }
