@@ -58,7 +58,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Build", "Test\Unit
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD66D46-70EB-4965-8C51-09738F486E31}"
 	ProjectSection(SolutionItems) = preProject
-		Src\Package\ExpertManifest.xml = Src\Package\ExpertManifest.xml
 		Src\Package\GetProduct.ps1 = Src\Package\GetProduct.ps1
 		Src\Package\GetProductTests.ps1 = Src\Package\GetProductTests.ps1
 		Src\Package\GetProductZip.ps1 = Src\Package\GetProductZip.ps1

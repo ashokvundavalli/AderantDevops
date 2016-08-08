@@ -52,7 +52,7 @@ function InstallPoshGit() {
                 return
             }
     
-            if (-not (Get-InstalledModule posh-git)) {
+            if (-not (Get-InstalledModule posh-git -ErrorAction SilentlyContinue)) {
                 Install-Module posh-git
             }            
         } finally {
