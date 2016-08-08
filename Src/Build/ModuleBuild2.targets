@@ -194,8 +194,6 @@ doc.Save(File);
   <PropertyGroup>
     <OnBuildBreakDependsOn>
       BeforeOnBuildBreak;
-      GetChangeSetsOnBuildBreak;
-      DropBuild;
       AfterOnBuildBreak;
     </OnBuildBreakDependsOn>
   </PropertyGroup>
