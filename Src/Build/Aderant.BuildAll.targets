@@ -161,13 +161,20 @@
           AfterTargets="GetAllModuleDependencies">
     
     <Message Text="Creating parallel build project... "/>
+
+    <PropertyGroup>
+      <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
+    </PropertyGroup>
+    
+    <Delete Files="$(BranchBuildProject)"/>
     
     <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
       ProductManifest="$(ProductManifestPath)"
-      ModulesInBuild="@(ModulesInBuild)" />
+      ModulesInBuild="@(ModulesInBuild)"
+      ProjectFile="$($(BranchBuildProject)" />
     
-    <Error Condition="!Exists('$(SolutionRoot)BranchBuild.proj')" />
+    <Error Condition="!Exists('$(BranchBuildProject)')" />
     
   </Target>
 
@@ -230,9 +237,9 @@
 
     <Message Text="$(CommonBuildProperties)" />
 
-    <Error Condition="!Exists('$(SolutionRoot)BranchBuild.proj')" Text="Did not find BranchBuild.proj "/>
+    <Error Condition="!Exists('$(BranchBuildProject)')" Text="Did not find BranchBuild.proj "/>
 
-    <MSBuild Projects="$(SolutionRoot)BranchBuild.proj"
+    <MSBuild Projects="$(BranchBuildProject)"
              Properties="$(CommonBuildProperties)"
              BuildInParallel="$(BuildInParallel)" />
 

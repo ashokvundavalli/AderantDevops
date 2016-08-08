@@ -101,7 +101,6 @@
     <Compile Include="Commands\PushPaketTemplates.cs" />
     <Compile Include="Commands\CreatePaketTemplates.cs" />
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
-    <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />

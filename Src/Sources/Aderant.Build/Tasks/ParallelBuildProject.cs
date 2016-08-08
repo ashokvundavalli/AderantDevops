@@ -25,6 +25,7 @@ namespace Aderant.Build.Tasks {
             ExpertManifest manifest = ExpertManifest.Load(ProductManifest);
             manifest.ModulesDirectory = ModulesDirectory;
 
+            Log.LogMessage("Creating build project...");
             Project project = controller.CreateProject(ModulesDirectory, manifest, ModulesInBuild.Select(m => Path.GetFileName(m.ItemSpec)));
             XElement projectDocument = controller.CreateProjectDocument(project);
 
