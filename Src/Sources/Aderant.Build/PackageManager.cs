@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
-using Aderant.Build.Packaging;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 using Paket;
@@ -65,7 +62,6 @@ namespace Aderant.Build {
             }
 
             if (context.AllowExternalPackages) {
-
             }
 
             AddModules(context, referencedModules, file);
@@ -100,15 +96,15 @@ namespace Aderant.Build {
         public async Task Restore() {
             await Task.Run(() => {
                 if (!HasLockFile()) {
-                    dependencies.Update(false, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+                    new UpdateAction(dependencies, false).Run();
+                } else {
+                    new RestoreAction(dependencies).Run();
                 }
-
-                dependencies.Restore();
             });
         }
 
         public async Task Update(bool force) {
-            await Task.Run(() => { dependencies.Update(force, false, false, false, false, SemVerUpdateMode.NoRestriction, false); });
+            await Task.Run(() => { new UpdateAction(dependencies, force).Run(); });
         }
 
         public async Task ShowOutdated() {
@@ -145,9 +141,5 @@ namespace Aderant.Build {
 
             return null;
         }
-    }
-
-    internal class VersionRequirement {
-        public string ConstraintExpression { get; set; }
     }
 }

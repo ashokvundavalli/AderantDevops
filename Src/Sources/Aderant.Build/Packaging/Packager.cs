@@ -45,10 +45,8 @@ namespace Aderant.Build.Packaging {
                 var dependenciesFile = DependenciesFile.ReadFromFile(spec.DependenciesFile);
 
                 FSharpMap<Domain.PackageName, Paket.VersionRequirement> map = dependenciesFile.GetDependenciesInGroup(Paket.Constants.MainDependencyGroup);
-
-            
+                
                 ReplicateDependenciesToTemplate(map.ToDictionary(d => d.Key, d => d.Value), () => fs.OpenFileForWrite(fs.GetFullPath(file)));
-               
 
                 PackageProcess.Pack(workingDir: fs.Root, 
                     dependenciesFile: dependenciesFile, 

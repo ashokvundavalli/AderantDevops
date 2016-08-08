@@ -97,7 +97,7 @@ namespace Aderant.Build.Commands {
                             Host.UI.WriteLine("Resolved path:" + args.FullPath);
                         };
 
-                        await resolver.Resolve(moduleDependenciesDirectory, BuildScriptsDirectory, CancellationToken.None);
+                        await resolver.Resolve(moduleDependenciesDirectory, CancellationToken.None);
                     }).Wait(); // Wait is used here as to not change the signature of the ProcessRecord method
                 } catch (Exception ex) {
                     Host.UI.WriteErrorLine("Failed to get all module dependencies.");

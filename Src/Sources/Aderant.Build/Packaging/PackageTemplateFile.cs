@@ -44,8 +44,6 @@ namespace Aderant.Build.Packaging {
         }
 
         public PackageTemplateFile(string contents) {
-            contents = contents.Replace("\n", Environment.NewLine);
-
             textRepresentation = Regex.Split(contents, @"(?<=\r\n)(?!$)");
 
             FindSection("dependencies");

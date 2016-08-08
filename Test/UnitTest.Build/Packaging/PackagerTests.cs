@@ -4,7 +4,6 @@ using System.Text;
 using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Paket;
-using VersionRequirement = Aderant.Build.VersionRequirement;
 
 namespace UnitTest.Build.Packaging {
     [TestClass]
@@ -38,7 +37,7 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Branch_name_has_dashes_removed() {
-            string packageVersion = Aderant.Build.Packaging.Packager.CreatePackageVersion(json);
+            string packageVersion = Packager.CreatePackageVersion(json);
 
             Assert.AreEqual("3.0.1-gitversionplay0004", packageVersion);
         }
@@ -56,8 +55,8 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Adding_new_dependencies_to_template_preserves_document_structure() {
-            var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
-            dict.Add(Domain.PackageName("Bar"), Paket.VersionRequirement.AllReleases);
+            var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
+            dict.Add(Domain.PackageName("Bar"), VersionRequirement.AllReleases);
 
             MemoryStream stream = null;
 
@@ -81,8 +80,8 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Adding_new_dependencies_to_template() {
-            var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
-            dict.Add(Domain.PackageName("Foo"), Paket.VersionRequirement.AllReleases);
+            var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
+            dict.Add(Domain.PackageName("Foo"), VersionRequirement.AllReleases);
 
             MemoryStream stream = null;
 
@@ -124,10 +123,10 @@ dependencies
 
         [TestMethod]
         public void Adding_new_dependencies_to_template_with_unix_line_endings() {
-            var dict = new Dictionary<Domain.PackageName, Paket.VersionRequirement>();
-            dict.Add(Domain.PackageName("Foo"), Paket.VersionRequirement.AllReleases);
-            dict.Add(Domain.PackageName("Bar"), Paket.VersionRequirement.AllReleases);
-            dict.Add(Domain.PackageName("Baz"), Paket.VersionRequirement.AllReleases);
+            var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
+            dict.Add(Domain.PackageName("Foo"), VersionRequirement.AllReleases);
+            dict.Add(Domain.PackageName("Bar"), VersionRequirement.AllReleases);
+            dict.Add(Domain.PackageName("Baz"), VersionRequirement.AllReleases);
 
             MemoryStream stream = null;
 

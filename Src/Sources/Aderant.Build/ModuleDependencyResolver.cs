@@ -78,11 +78,10 @@ namespace Aderant.Build {
         /// Copies the dependencies.
         /// </summary>
         /// <param name="dependenciesDirectory">The dependencies directory.</param>
-        /// <param name="buildScriptsDirectory">The build scripts directory.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
-        public async Task Resolve(string dependenciesDirectory, string buildScriptsDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task Resolve(string dependenciesDirectory, CancellationToken cancellationToken = default(CancellationToken)) {
             if (!Directory.Exists(dependenciesDirectory)) {
                 Directory.CreateDirectory(dependenciesDirectory);
             }

@@ -105,6 +105,7 @@
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
+    <Compile Include="IDependencyAction.cs" />
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
     <Compile Include="PackageManager.cs" />
@@ -131,8 +132,10 @@
     <Compile Include="Packaging\VersionParser.cs" />
     <Compile Include="PathUtility.cs" />
     <Compile Include="PhysicalFileSystem.cs" />
+    <Compile Include="RestoreAction.cs" />
     <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
     <Compile Include="Tasks\CreatePaketTemplatesTask.cs" />
+    <Compile Include="UpdateAction.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />
     <Compile Include="Versioning\FileVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer.cs" />
@@ -235,6 +238,7 @@
     <Compile Include="Commands\ProjectFileFolderSync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\WebPackageExtract.cs" />
+    <Compile Include="VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
     <Compile Include="TeamFoundationHelper.cs" />
     <Compile Include="ThirdParty\Lapointe\Attributes\CmdletDescriptionAttribute.cs" />
