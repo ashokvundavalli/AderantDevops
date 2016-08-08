@@ -44,7 +44,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private async Task RetrievePackages(ProductAssemblyContext context) {
-            var fs = new PhysicalFileSystem(Path.Combine(context.ProductDirectory, "package.temp"));
+            var fs = new PhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
             var manager = new PackageManager(fs, logger);
 
             manager.Add(context, context.Modules);

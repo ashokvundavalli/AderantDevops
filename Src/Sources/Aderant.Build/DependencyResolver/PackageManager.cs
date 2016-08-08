@@ -97,9 +97,8 @@ namespace Aderant.Build.DependencyResolver {
             await Task.Run(() => {
                 if (!HasLockFile()) {
                     new UpdateAction(dependencies, false).Run();
-                } else {
-                    new RestoreAction(dependencies).Run();
                 }
+                new RestoreAction(dependencies).Run();
             });
         }
 
