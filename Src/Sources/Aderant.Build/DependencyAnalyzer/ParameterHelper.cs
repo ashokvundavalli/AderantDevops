@@ -64,23 +64,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             return moduleName;
         }
 
-        /// <summary>
-        /// Gets the value of the $BranchLocalDirectory variable
-        /// </summary>
-        /// <param name="state">The state.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">There must be a variable $BranchLocalDirectory in the current host session.</exception>
-        public static string GetBranchLocalDirectory(SessionState state) {
-            string branchLocalDirectory = state.PSVariable.GetValue("BranchLocalDirectory", string.Empty).ToString();
-
-            if (string.IsNullOrEmpty(branchLocalDirectory)) {
-                throw new ArgumentException(
-                    "There must be a variable $BranchLocalDirectory in the current host session.");
-            }
-
-            return branchLocalDirectory;
-        }
-
         public static string GetBranchBinariesDirectory(SessionState state) {
             string branchBinariesDirectory =
                 state.PSVariable.GetValue("BranchBinariesDirectory", string.Empty).ToString();
@@ -145,23 +128,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Attempts to get the branch modules directory.
-        /// </summary>
-        /// <param name="branchModulePath">The branch module path.</param>
-        /// <param name="sessionState">State of the session.</param>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        public static bool TryGetBranchModulesDirectory(string branchModulePath, SessionState sessionState, out string path) {
-            try {
-                path = GetBranchModulesDirectory(branchModulePath, sessionState);
-                return true;
-            } catch {
-                path = null;
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Gets the drop from the current session path.
         /// </summary>
         /// <param name="targetBranch">The target branch.</param>
@@ -188,8 +154,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             return environment;
         }
 
-        public static string GetExpertManifestPath(SessionState sessionState) {
-            var value = sessionState.PSVariable.GetValue("ProductManifestPath").ToString();
+        public static string GetExpertManifestPath(string productManifestPath, SessionState sessionState) {
+            var value = sessionState.PSVariable.GetValue("ProductManifestPath", productManifestPath).ToString();
             if (value != null) {
                 return value;
             }

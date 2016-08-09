@@ -31,7 +31,7 @@ namespace Aderant.Build.Commands {
             }
 
             if (string.IsNullOrEmpty(ProductManifest)) {
-                ProductManifest = ParameterHelper.GetExpertManifestPath(SessionState);
+                ProductManifest = ParameterHelper.GetExpertManifestPath(ProductManifest, SessionState);
             }
 
             if (!string.IsNullOrEmpty(ModuleProject)) {

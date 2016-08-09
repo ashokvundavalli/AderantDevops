@@ -46,6 +46,10 @@ namespace Aderant.Build.Commands {
                 ModuleName = ParameterHelper.GetCurrentModuleName(null, this.SessionState);
             }
 
+            if (string.IsNullOrEmpty(ProductManifestPath)) {
+                ProductManifestPath = ParameterHelper.GetExpertManifestPath(ProductManifestPath, this.SessionState);
+            }
+
             if (string.IsNullOrEmpty(BuildScriptsDirectory)) {
                 BuildScriptsDirectory = Path.Combine(ParameterHelper.GetBranchModulesDirectory(null, this.SessionState), BuildInfrastructureHelper.PathToBuildScriptsFromModules);
             }
@@ -67,8 +71,6 @@ namespace Aderant.Build.Commands {
             if (!string.IsNullOrEmpty(ProductManifestPath)) {
                 manifest = ProductManifestPath;
             }
-
-            Debug.Assert(manifest != null);
 
             if (File.Exists(manifest)) {
                 DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);

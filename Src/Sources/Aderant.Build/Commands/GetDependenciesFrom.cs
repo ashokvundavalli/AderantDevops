@@ -132,7 +132,7 @@ namespace Aderant.Build.Commands {
         }
 
         private DependencyBuilder GetDependencyTree(string branchPath, out IEnumerable<Build> builds) {
-            var manifest = new ExpertManifest(new PhysicalFileSystem(branchPath), ParameterHelper.GetExpertManifestPath(SessionState));
+            var manifest = new ExpertManifest(new PhysicalFileSystem(branchPath), ParameterHelper.GetExpertManifestPath(null, SessionState));
             manifest.ModulesDirectory = ParameterHelper.GetBranchModulesDirectory(null, SessionState);
 
             var builder = new DependencyBuilder(manifest);
