@@ -102,7 +102,7 @@ namespace Aderant.Build.DependencyResolver {
 
             var fileSystem = new PhysicalFileSystem(moduleDirectory);
 
-            await PackageRestore(fileSystem, modules);
+            await PackageRestore(fileSystem, modules, cancellationToken);
 
             if (Outdated) {
                 // Return early if we are showing outdated packages as we don't want to "gd" over the dependencies
@@ -112,7 +112,7 @@ namespace Aderant.Build.DependencyResolver {
             await LegacyGetDependencies(dependenciesDirectory, cancellationToken, modules.Where(m => m.RepositoryType == RepositoryType.Folder));
         }
 
-        private async Task PackageRestore(IFileSystem2 fileSystem2, IEnumerable<ExpertModule> availableModules) {
+        private async Task PackageRestore(IFileSystem2 fileSystem2, IEnumerable<ExpertModule> availableModules, CancellationToken cancellationToken) {
             using (var manager = new PackageManager(fileSystem2, logger)) {
                 manager.Add(new DependencyFetchContext(), availableModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
 
@@ -130,7 +130,7 @@ namespace Aderant.Build.DependencyResolver {
                 await manager.Restore();
             }
 
-            await RestorePackages(fileSystem2, availableModules);
+            await RestorePackages(fileSystem2, availableModules, cancellationToken);
         }
 
         private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> availableModules) {
@@ -180,7 +180,7 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private async Task RestorePackages(IFileSystem2 fileSystem, IEnumerable<ExpertModule> availableModules) {
+        private async Task RestorePackages(IFileSystem2 fileSystem, IEnumerable<ExpertModule> availableModules, CancellationToken cancellationToken) {
             logger.Info("Performing legacy restore.");
 
             string moduleName = ModuleName ?? string.Empty;
@@ -194,6 +194,10 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             foreach (var package in Directory.EnumerateDirectories(packagesDirectory)) {
+                if (cancellationToken != null) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
                 string binariesDirectory = Path.Combine(package, "lib");
                 var referencedModuleName = package.Split('\\').Last();
                 var referencedModule = availableModules.FirstOrDefault(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));

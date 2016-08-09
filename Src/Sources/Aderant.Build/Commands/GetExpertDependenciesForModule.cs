@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Threading;
+using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
@@ -13,6 +14,8 @@ using Task = System.Threading.Tasks.Task;
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "ExpertDependenciesForModule")]
     public class GetExpertDependenciesForModule : PSCmdlet {
+        private CancellationTokenSource cancellationTokenSource;
+
         [Parameter(Mandatory = false, Position = 0)]
         public string ModuleName { get; set; }
 
@@ -76,15 +79,17 @@ namespace Aderant.Build.Commands {
 
             if (!string.IsNullOrEmpty(ProductManifestPath)) {
                 ExpertManifest expertManifest = ExpertManifest.Load(ProductManifestPath, new[] { dependencyManifest });
-                availableModules = expertManifest.GetAll();
+                availableModules = expertManifest.DependencyManifests.SelectMany(s => s.ReferencedModules).Distinct();
             } else {
                 availableModules = dependencyManifest.ReferencedModules;
             }
 
             Stopwatch sw = Stopwatch.StartNew();
 
+            cancellationTokenSource = new CancellationTokenSource();
+
             try {
-                Task.Run(async () => {
+                var task = Task.Run(async () => {
                     var resolver = new ModuleDependencyResolver(availableModules, DropPath, new PowerShellLogger(Host));
 
                     resolver.ModuleName = ModuleName;
@@ -102,30 +107,34 @@ namespace Aderant.Build.Commands {
                         Host.UI.WriteLine("Resolved path:" + args.FullPath);
                     };
 
-                    await resolver.Resolve(moduleDependenciesDirectory, CancellationToken.None);
-                }).Wait(); // Wait is used here as to not change the signature of the ProcessRecord method
-            } catch (Exception ex) {
-                Host.UI.WriteErrorLine("Failed to get all module dependencies.");
+                    await resolver.Resolve(moduleDependenciesDirectory, cancellationTokenSource.Token);
+                });
 
-                AggregateException ae = ex as AggregateException;
-                if (ae != null) {
-                    ae = ae.Flatten();
+                Task.WaitAll(task);
 
-                    ae.Handle(exception => {
-                        WriteError(new ErrorRecord(exception, "0", ErrorCategory.InvalidOperation, null));
+                Host.UI.WriteLine("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"));
+            } catch (AggregateException ex) {
+                ex.Handle(e => {
+                    TaskCanceledException tcex = e as TaskCanceledException;
+                    if (tcex != null) {
+                        Host.UI.WriteLine("Get dependencies aborted.");
                         return true;
-                    });
-                }
+                    }
 
+                    Host.UI.WriteErrorLine("Failed to get all module dependencies.");
+                    WriteError(new ErrorRecord(e, "0", ErrorCategory.InvalidArgument, null));
+
+                    // Not handling any other types of exception.
+                    return false;
+                });
+            } finally {
                 sw.Stop();
-                sw = null;
-                return;
             }
+        }
 
-            sw.Stop();
-
-            // Only print the copy time if the copy was successful 
-            Host.UI.WriteLine("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"));
+        protected override void StopProcessing() {
+            base.StopProcessing();
+            cancellationTokenSource.Cancel();
         }
     }
 }
