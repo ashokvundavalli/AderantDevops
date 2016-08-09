@@ -5,9 +5,18 @@ using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Providers {
     internal class DependencyManifestProvider : IModuleProvider {
+        private readonly IEnumerable<ExpertModule> modules;
         private IList<DependencyManifest> manifests;
         public DependencyManifestProvider(string branchRootOrModulePath) {
             manifests = DependencyManifest.LoadAll(branchRootOrModulePath);
+        }
+
+        public DependencyManifestProvider(IEnumerable<DependencyManifest> manifests) {
+            this.manifests = manifests.ToList();
+        }
+
+        public DependencyManifestProvider(IEnumerable<ExpertModule> modules) {
+            this.modules = modules;
         }
 
         public string ProductManifestPath { get; }

@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
+    // TODO: Obsolete this and replace with PowerShell variant
     public class GetDependencies : Microsoft.Build.Utilities.Task, ICancelableTask {
 
         private CancellationTokenSource cancellationToken;
@@ -149,7 +151,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
-            var resolver = new ModuleDependencyResolver(expertManifest, DropPath, new BuildTaskLogger(this));
+            var resolver = new ModuleDependencyResolver(expertManifest.GetAll(), DropPath, new BuildTaskLogger(this));
             resolver.BuildAll = BuildAll;
             
             if (!string.IsNullOrEmpty(ModuleName)) {

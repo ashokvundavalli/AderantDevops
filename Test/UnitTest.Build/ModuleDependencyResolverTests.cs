@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -98,7 +99,7 @@ namespace UnitTest.Build {
 </ProductManifest>", new[] {dependencyManifest1, dependencyManifest2});
 
 
-            var resolver = new ModuleDependencyResolver(expertManifest, "", new FakeLogger());
+            var resolver = new ModuleDependencyResolver(expertManifest.GetAll(), "", new FakeLogger());
             resolver.SetModulesInBuild(new[] {"Module1"});
 
             await resolver.Resolve(string.Empty);

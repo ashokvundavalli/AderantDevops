@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
+using Aderant.Build.Providers;
 
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
     internal sealed class ModuleDependencyResolver {
-        private readonly ExpertManifest expertManifest;
+        private readonly IEnumerable<ExpertModule> referencedModules;
         private readonly ILogger logger;
         private IList<string> modulesInBuild;
 
@@ -62,12 +62,12 @@ namespace Aderant.Build {
         /// <summary>
         /// Initializes a new instance of the <see cref="ModuleDependencyResolver" /> class.
         /// </summary>
-        /// <param name="expertManifest">The expert manifest.</param>
+        /// <param name="referencedModules">The referenced modules.</param>
         /// <param name="dropPath">The drop path.</param>
         /// <param name="logger">The logger.</param>
-        public ModuleDependencyResolver(ExpertManifest expertManifest, string dropPath, ILogger logger)
+        public ModuleDependencyResolver(IEnumerable<ExpertModule> referencedModules, string dropPath, ILogger logger)
             : this(dropPath) {
-            this.expertManifest = expertManifest;
+            this.referencedModules = referencedModules;
             this.logger = logger;
         }
 
@@ -87,40 +87,34 @@ namespace Aderant.Build {
                 Directory.CreateDirectory(dependenciesDirectory);
             }
 
-            IEnumerable<ExpertModule> referencedModules;
-            if (expertManifest.HasDependencyManifests) {
-                referencedModules = expertManifest.DependencyManifests
-                    .SelectMany(s => s.ReferencedModules)
-                    .Distinct();
-            } else {
-                referencedModules = Enumerable.Empty<ExpertModule>();
-            }
-
             // Remove the modules from the dependency tree that we are currently building. This is done as the dependencies don't need to
             // come from the drop but instead they will be produced by this build
+
+            IEnumerable<ExpertModule> modules = referencedModules.ToList();
+
             if (modulesInBuild != null) {
-                referencedModules = GetReferencedModulesForBuild(referencedModules);
+                modules = GetReferencedModulesForBuild(modules);
             }
 
-            referencedModules = PostProcess(referencedModules);
+            modules = PostProcess(modules);
 
             string moduleDirectory = Path.GetFullPath(Path.Combine(dependenciesDirectory, @"..\"));
 
             var fileSystem = new PhysicalFileSystem(moduleDirectory);
 
-            await PackageRestore(fileSystem, referencedModules);
+            await PackageRestore(fileSystem, modules);
 
             if (Outdated) {
                 // Return early if we are showing outdated packages as we don't want to "gd" over the dependencies
                 return;
             }
 
-            await LegacyGetDependencies(dependenciesDirectory, cancellationToken, referencedModules.Where(m => m.RepositoryType == RepositoryType.Folder));
+            await LegacyGetDependencies(dependenciesDirectory, cancellationToken, modules.Where(m => m.RepositoryType == RepositoryType.Folder));
         }
 
-        private async Task PackageRestore(IFileSystem2 fileSystem2, IEnumerable<ExpertModule> referencedModules) {
+        private async Task PackageRestore(IFileSystem2 fileSystem2, IEnumerable<ExpertModule> availableModules) {
             using (var manager = new PackageManager(fileSystem2, logger)) {
-                manager.Add(new DependencyFetchContext(), referencedModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
+                manager.Add(new DependencyFetchContext(), availableModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
 
                 if (Outdated) {
                     await manager.ShowOutdated();
@@ -136,13 +130,13 @@ namespace Aderant.Build {
                 await manager.Restore();
             }
 
-            await RestorePackages(fileSystem2, referencedModules);
+            await RestorePackages(fileSystem2, availableModules);
         }
 
-        private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> referencedModules) {
+        private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> availableModules) {
             var packagedModules = new string[] {"Aderant.Build.Analyzer"};
 
-            foreach (var module in referencedModules) {
+            foreach (var module in availableModules) {
                 if (module.ModuleType == ModuleType.ThirdParty || module.GetAction == GetAction.NuGet) {
                     module.RepositoryType = RepositoryType.NuGet;
                     continue;
@@ -155,11 +149,11 @@ namespace Aderant.Build {
                 }
             }
 
-            return referencedModules;
+            return availableModules;
         }
 
-        private async Task LegacyGetDependencies(string dependenciesDirectory, CancellationToken cancellationToken, IEnumerable<ExpertModule> referencedModules) {
-            foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
+        private async Task LegacyGetDependencies(string dependenciesDirectory, CancellationToken cancellationToken, IEnumerable<ExpertModule> availableModules) {
+            foreach (var referencedModule in availableModules.OrderBy(m => m.Name)) {
                 // Check if we have been issued CTRL + C from the command line, if so abort.
                 if (cancellationToken != null) {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -167,7 +161,7 @@ namespace Aderant.Build {
 
                 string latestBuild = null;
                 try {
-                    latestBuild = expertManifest.GetPathToBinaries(referencedModule, DependencySources.DropLocation);
+                    latestBuild = referencedModule.GetPathToBinaries(DependencySources.DropLocation);
                 } catch (BuildNotFoundException) {
                     string localModuleDirectory = Path.Combine(dependenciesDirectory, @"..\..\" + referencedModule, "bin", "module");
                     localModuleDirectory = Path.GetFullPath(localModuleDirectory);
@@ -186,7 +180,7 @@ namespace Aderant.Build {
             }
         }
 
-        private async Task RestorePackages(IFileSystem2 fileSystem, IEnumerable<ExpertModule> referencedModules) {
+        private async Task RestorePackages(IFileSystem2 fileSystem, IEnumerable<ExpertModule> availableModules) {
             logger.Info("Performing legacy restore.");
 
             string moduleName = ModuleName ?? string.Empty;
@@ -202,7 +196,7 @@ namespace Aderant.Build {
             foreach (var package in Directory.EnumerateDirectories(packagesDirectory)) {
                 string binariesDirectory = Path.Combine(package, "lib");
                 var referencedModuleName = package.Split('\\').Last();
-                var referencedModule = referencedModules.FirstOrDefault(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
+                var referencedModule = availableModules.FirstOrDefault(m => m.Name.Equals(referencedModuleName, StringComparison.InvariantCultureIgnoreCase));
 
                 if (referencedModule?.ModuleType != ModuleType.ThirdParty) {
                     continue;
@@ -224,8 +218,8 @@ namespace Aderant.Build {
             }
         }
 
-        private IEnumerable<ExpertModule> GetReferencedModulesForBuild(IEnumerable<ExpertModule> referencedModules) {
-            var builder = new DependencyBuilder(expertManifest);
+        private IEnumerable<ExpertModule> GetReferencedModulesForBuild(IEnumerable<ExpertModule> availableModules) {
+            var builder = new DependencyBuilder(new DependencyManifestProvider(availableModules));
             var modules = builder.GetAllModules().ToList();
             var moduleDependencyGraph = builder.GetModuleDependencies().ToList();
 
@@ -234,11 +228,11 @@ namespace Aderant.Build {
             if (modulesRequiredForBuild.Count == 0) {
                 // We don't require any external dependencies to build - however we need to move the third party modules to the dependency folder
                 // always
-                referencedModules = referencedModules.Where(m => m.ModuleType == ModuleType.ThirdParty);
+                availableModules = availableModules.Where(m => m.ModuleType == ModuleType.ThirdParty);
             } else {
-                referencedModules = modulesRequiredForBuild.Concat(referencedModules.Where(m => m.ModuleType == ModuleType.ThirdParty));
+                availableModules = modulesRequiredForBuild.Concat(availableModules.Where(m => m.ModuleType == ModuleType.ThirdParty));
             }
-            return referencedModules;
+            return availableModules;
         }
 
         internal ICollection<ExpertModule> GetDependenciesRequiredForBuild(List<ExpertModule> modules, List<ModuleDependency> moduleDependencyGraph, IList<string> moduleNamesInBuild) {

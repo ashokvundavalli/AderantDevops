@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Task = System.Threading.Tasks.Task;
 
@@ -47,7 +50,7 @@ namespace Aderant.Build.Commands {
             }
 
             if (string.IsNullOrEmpty(ProductManifestPath)) {
-                ProductManifestPath = ParameterHelper.GetExpertManifestPath(ProductManifestPath, this.SessionState);
+                //ProductManifestPath = ParameterHelper.GetExpertManifestPath(ProductManifestPath, this.SessionState);
             }
 
             if (string.IsNullOrEmpty(BuildScriptsDirectory)) {
@@ -62,68 +65,67 @@ namespace Aderant.Build.Commands {
             // e.g Modules\Web.Expenses
             if (string.IsNullOrEmpty(ModulesRootPath)) {
                 moduleDirectory = ParameterHelper.GetCurrentModulePath(ModuleName, SessionState);
-            }  
+            }
 
             // e.g Modules\Web.Expenses\Dependencies
             string moduleDependenciesDirectory = Path.Combine(moduleDirectory, "Dependencies");
 
-            string manifest = null;
+            DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);
+
+            IEnumerable<ExpertModule> availableModules;
+
             if (!string.IsNullOrEmpty(ProductManifestPath)) {
-                manifest = ProductManifestPath;
+                ExpertManifest expertManifest = ExpertManifest.Load(ProductManifestPath, new[] { dependencyManifest });
+                availableModules = expertManifest.GetAll();
+            } else {
+                availableModules = dependencyManifest.ReferencedModules;
             }
 
-            if (File.Exists(manifest)) {
-                DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);
-                
-                ExpertManifest expertManifest = ExpertManifest.Load(manifest, new[] {dependencyManifest});
+            Stopwatch sw = Stopwatch.StartNew();
 
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
+            try {
+                Task.Run(async () => {
+                    var resolver = new ModuleDependencyResolver(availableModules, DropPath, new PowerShellLogger(Host));
 
-                try {
-                    Task.Run(async () => {
-                        var resolver = new ModuleDependencyResolver(expertManifest, DropPath, new PowerShellLogger(Host));
+                    resolver.ModuleName = ModuleName;
+                    resolver.Update = Update.ToBool();
+                    resolver.Outdated = ShowOutdated.ToBool();
+                    resolver.Force = Force.ToBool();
 
-                        resolver.ModuleName = ModuleName;
-                        resolver.Update = Update.ToBool();
-                        resolver.Outdated = ShowOutdated.ToBool();
-                        resolver.Force = Force.ToBool();
+                    resolver.ModuleDependencyResolved += (sender, args) => {
+                        Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, "Getting binaries for ");
+                        Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.DependencyProvider);
+                        Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, " from the branch ");
+                        Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.Branch);
+                        Host.UI.WriteLine(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
 
-                        resolver.ModuleDependencyResolved += (sender, args) => {
-                            Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, "Getting binaries for ");
-                            Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.DependencyProvider);
-                            Host.UI.Write(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, " from the branch ");
-                            Host.UI.Write(ConsoleColor.Green, Host.UI.RawUI.BackgroundColor, args.Branch);
-                            Host.UI.WriteLine(ConsoleColor.Gray, Host.UI.RawUI.BackgroundColor, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));
+                        Host.UI.WriteLine("Resolved path:" + args.FullPath);
+                    };
 
-                            Host.UI.WriteLine("Resolved path:" + args.FullPath);
-                        };
+                    await resolver.Resolve(moduleDependenciesDirectory, CancellationToken.None);
+                }).Wait(); // Wait is used here as to not change the signature of the ProcessRecord method
+            } catch (Exception ex) {
+                Host.UI.WriteErrorLine("Failed to get all module dependencies.");
 
-                        await resolver.Resolve(moduleDependenciesDirectory, CancellationToken.None);
-                    }).Wait(); // Wait is used here as to not change the signature of the ProcessRecord method
-                } catch (Exception ex) {
-                    Host.UI.WriteErrorLine("Failed to get all module dependencies.");
+                AggregateException ae = ex as AggregateException;
+                if (ae != null) {
+                    ae = ae.Flatten();
 
-                    AggregateException ae = ex as AggregateException;
-                    if (ae != null) {
-                        ae = ae.Flatten();
-
-                        ae.Handle(exception => {
-                            WriteError(new ErrorRecord(exception, "0", ErrorCategory.InvalidOperation, null));
-                            return true;
-                        });
-                    }
-
-                    sw.Stop();
-                    sw = null;
-                    return;
+                    ae.Handle(exception => {
+                        WriteError(new ErrorRecord(exception, "0", ErrorCategory.InvalidOperation, null));
+                        return true;
+                    });
                 }
 
                 sw.Stop();
-
-                // Only print the copy time if the copy was successful 
-                Host.UI.WriteLine("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"));
+                sw = null;
+                return;
             }
+
+            sw.Stop();
+
+            // Only print the copy time if the copy was successful 
+            Host.UI.WriteLine("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"));
         }
     }
 }
