@@ -21,53 +21,53 @@ namespace Aderant.Build.Commands {
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
-            if (string.IsNullOrEmpty(ExpertManifestPath)) {
-                throw new InvalidOperationException("Unable to filter modules as no path ExpertManifest.xml was provided");
-            }
+            //if (string.IsNullOrEmpty(ExpertManifestPath)) {
+            //    throw new InvalidOperationException("Unable to filter modules as no path ExpertManifest.xml was provided");
+            //}
 
-            ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath, null, null);
-            DependencyBuilder builder = provider.DependencyAnalyzer;
+            //ModuleWorkspace provider = new ModuleWorkspace(ExpertManifestPath, null, null);
+            //DependencyBuilder builder = provider.DependencyAnalyzer;
 
-            List<ExpertModule> modules = builder.GetAllModules().ToList();
-            List<ModuleDependency> allDependencies = builder.GetModuleDependencies(true).ToList();
+            //List<ExpertModule> modules = builder.GetAllModules().ToList();
+            //List<ModuleDependency> allDependencies = builder.GetModuleDependencies(true).ToList();
 
-            List<ExpertModule> modulesFromManifest = new List<ExpertModule>();
+            //List<ExpertModule> modulesFromManifest = new List<ExpertModule>();
 
-            if (Manifest != null) {
-                GetModulesFromManifest(modules, modulesFromManifest);
+            //if (Manifest != null) {
+            //    GetModulesFromManifest(modules, modulesFromManifest);
 
-                HashSet<ExpertModule> webThirdParty = new HashSet<ExpertModule>();
-                HashSet<ExpertModule> thirdParty = new HashSet<ExpertModule>();
+            //    HashSet<ExpertModule> webThirdParty = new HashSet<ExpertModule>();
+            //    HashSet<ExpertModule> thirdParty = new HashSet<ExpertModule>();
 
-                foreach (var module in modulesFromManifest) {
-                    if (module.ModuleType == ModuleType.ThirdParty || module.ModuleType == ModuleType.Help) {
-                        continue;
-                    }
+            //    foreach (var module in modulesFromManifest) {
+            //        if (module.ModuleType == ModuleType.ThirdParty || module.ModuleType == ModuleType.Help) {
+            //            continue;
+            //        }
 
-                    ExpertModule[] dependencies = (from dependency in allDependencies
-                                                   where dependency.Consumer.Equals(module)
-                                                   select dependency.Provider).Distinct().ToArray();
+            //        ExpertModule[] dependencies = (from dependency in allDependencies
+            //                                       where dependency.Consumer.Equals(module)
+            //                                       select dependency.Provider).Distinct().ToArray();
 
-                    if (module.ModuleType == ModuleType.Web) {
-                        foreach (ExpertModule dependency in dependencies) {
-                            if (dependency.ModuleType == ModuleType.ThirdParty) {
-                                webThirdParty.Add(dependency);
-                            }
-                        }
-                    } else {
-                        foreach (ExpertModule dependency in dependencies) {
-                            if (dependency.ModuleType == ModuleType.ThirdParty) {
-                                thirdParty.Add(dependency);
-                            }
-                        }
-                    }
-                }
+            //        if (module.ModuleType == ModuleType.Web) {
+            //            foreach (ExpertModule dependency in dependencies) {
+            //                if (dependency.ModuleType == ModuleType.ThirdParty) {
+            //                    webThirdParty.Add(dependency);
+            //                }
+            //            }
+            //        } else {
+            //            foreach (ExpertModule dependency in dependencies) {
+            //                if (dependency.ModuleType == ModuleType.ThirdParty) {
+            //                    thirdParty.Add(dependency);
+            //                }
+            //            }
+            //        }
+            //    }
 
-                // Find all of the unique web third party dependencies
-                webThirdParty.ExceptWith(thirdParty);
+            //    // Find all of the unique web third party dependencies
+            //    webThirdParty.ExceptWith(thirdParty);
 
-                WriteObject(webThirdParty);
-            }
+            //    WriteObject(webThirdParty);
+            //}
         }
 
         private void GetModulesFromManifest(IEnumerable<ExpertModule> modules, List<ExpertModule> modulesFromManifest) {
