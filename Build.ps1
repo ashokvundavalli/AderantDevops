@@ -1,21 +1,36 @@
-$paket = "$PSScriptRoot\Src\Build.Tools\paket.exe"
+param(
+)
 
-& $paket restore
 
-$properties = [PSCustomObject]@{
-    PackagesPath = "$PSScriptRoot\packages"
-    RepackTool = "$PSScriptRoot\packages\ILRepack\tools\ILRepack.exe"
+
+task Build {
+
 }
 
-$asm = [System.Reflection.Assembly]::LoadFrom("$PSScriptRoot\Src\Sources\Aderant.Build.Analyzer\bin\Aderant.Build.Analyzer.dll")
+# Gets *.tmp files from the temp directory. The list is used by two tasks.
+$GetTmpFiles = gci $PSScriptRoot\Src\Build.Tools\ -Recurse -File
 
-$results = .\Get-RuntimeDependencies.ps1 -assembly $asm -packagesPath $properties.PackagesPath
 
-$uri = new-object System.Uri $asm.CodeBase
+task BuildPowerShellFarHelp -Inputs $GetTmpFiles -Outputs "$PSScriptRoot\PowerShellFar.dll-Help.xml" {
+    Add-Type -Path $PSScriptRoot\src\Build.Tools\Aderant.Build.dll
+    
+    $ps = [Management.Automation.PowerShell]::Create()
+    $state = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+    [PowerShellFar.Zoo]::Initialize($state)
+    $ps.Runspace = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace($state)
+    $ps.Runspace.Open()
+    #! $ErrorActionPreference = 1 in Convert-Helps does not help to catch errors
+    
+    $null = $ps.AddScript(@"
+`$ErrorActionPreference = 1
+. Helps.ps1
+Convert-Helps "$BuildRoot\Commands\PowerShellFar.dll-Help.ps1" "$Outputs"
+"@)
+    $ps.Invoke()
+}
 
-$assemblies = [string]::Join(" ", ($results.References.Values.GetEnumerator() | % { '"{0}"' -f (new-object System.Uri $_).LocalPath }))
-$referencePaths = [string]::Join(" ", ($results.ReferencePaths.GetEnumerator() | % { '/lib:"{0}"' -f $_ }))
 
-iex "$($properties.RepackTool) $($uri.LocalPath) $assemblies $referencePaths /out:Aderant.Build.Analyzer.dll"
 
-#.\packages\ILRepack\tools\ILRepack.exe C:\Source\Build.Infrastructure\Src\Sources\Aderant.Build.Analyzer\bin\Aderant.Build.Analyzer.dll C:\Source\Build.Infrastructure\packages\System.Collections.Immutable\lib\netstandard1.0\System.Collections.Immutable.dll /lib:C:\Source\Build.Infrastructure\packages\Microsoft.CodeAnalysis.Common\lib\net45 /lib:C:\Source\Build.Infrastructure\packages\Microsoft.CodeAnalysis.CSharp.Workspaces\lib\net45 /lib:C:\Source\Build.Infrastructure\packages\Microsoft.CodeAnalysis.Workspaces.Common\lib\net45 /out:Analzyer.dll
+
+# Install all. Run after Build.
+task . Build, BuildPowerShellFarHelp

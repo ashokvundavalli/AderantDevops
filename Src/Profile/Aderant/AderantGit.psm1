@@ -2,9 +2,6 @@ $currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.Windows
 $isAdminProcess = $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { '' }
 
-# Without this git will look on H:\ for .gitconfig
-$Env:HOME = $Env:USERPROFILE
-
 function global:prompt {
     $realLASTEXITCODE = $LASTEXITCODE    
 
