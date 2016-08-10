@@ -177,7 +177,9 @@
     </Task>
   </UsingTask>
 
-  <Target Name="FindProductManifest" AfterTargets="PrepareBuildEnvironment" Condition="'$(IsDesktopBuild)' != 'true' And '$(ProductManifestPath)' == ''">
+  <Target Name="FindProductManifest" 
+          AfterTargets="PrepareBuildEnvironment" 
+          Condition="'$(IsDesktopBuild)' != 'true' And '$(ProductManifestPath)' == '' And '$(BUILD_REPOSITORY_PROVIDER)' != 'TfsGit'">
 
     <GetBranchRootFromServerPath
       BuildProjectFolderPath="$(BuildProjectFolderPath)">
