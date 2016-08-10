@@ -75,14 +75,7 @@ namespace Aderant.Build.Commands {
 
             DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);
 
-            IEnumerable<ExpertModule> availableModules;
-
-            if (!string.IsNullOrEmpty(ProductManifestPath)) {
-                ExpertManifest expertManifest = ExpertManifest.Load(ProductManifestPath, new[] { dependencyManifest });
-                availableModules = expertManifest.DependencyManifests.SelectMany(s => s.ReferencedModules).Distinct();
-            } else {
-                availableModules = dependencyManifest.ReferencedModules;
-            }
+            IEnumerable<ExpertModule> availableModules = ModuleDependencyResolver.BuildDependencyTree(ProductManifestPath, new[] { dependencyManifest });
 
             Stopwatch sw = Stopwatch.StartNew();
 
@@ -131,7 +124,6 @@ namespace Aderant.Build.Commands {
                 sw.Stop();
             }
         }
-
         protected override void StopProcessing() {
             base.StopProcessing();
             cancellationTokenSource.Cancel();

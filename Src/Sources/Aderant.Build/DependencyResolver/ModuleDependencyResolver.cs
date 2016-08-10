@@ -134,7 +134,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private IEnumerable<ExpertModule> PostProcess(IEnumerable<ExpertModule> availableModules) {
-            var packagedModules = new string[] {"Aderant.Build.Analyzer"};
+            var packagedModules = new string[] { "Aderant.Build.Analyzer" };
 
             foreach (var module in availableModules) {
                 if (module.ModuleType == ModuleType.ThirdParty || module.GetAction == GetAction.NuGet) {
@@ -303,7 +303,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private class WebContentDestinationRule {
-            private static readonly char[] directorySeparatorCharArray = new[] {Path.DirectorySeparatorChar};
+            private static readonly char[] directorySeparatorCharArray = new[] { Path.DirectorySeparatorChar };
             private readonly ExpertModule module;
             private readonly string moduleDependenciesDirectory;
 
@@ -353,7 +353,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private static class GetDependencyCopyHelper {
-            private static string[] portableExecutableExtensions = {".dll", ".exe"};
+            private static string[] portableExecutableExtensions = { ".dll", ".exe" };
 
             private static string[] extensions = {
                 // Exclude documentation files
@@ -389,7 +389,6 @@ namespace Aderant.Build.DependencyResolver {
 
                 return file.FullName;
             }
-
 
             internal static bool CommonExcludeFilesFromCopy(FileInfo[] directoryContents, FileInfo file) {
                 foreach (var extension in extensions) {
@@ -430,11 +429,24 @@ namespace Aderant.Build.DependencyResolver {
                 return false;
             }
         }
+
+        public static IEnumerable<ExpertModule> BuildDependencyTree(string productManifestPath, IEnumerable<DependencyManifest> dependencyManifests) {
+            IEnumerable<DependencyManifest> availableModules;
+
+            if (!string.IsNullOrEmpty(productManifestPath)) {
+                ExpertManifest expertManifest = ExpertManifest.Load(productManifestPath, dependencyManifests);
+                availableModules = expertManifest.DependencyManifests;
+            } else {
+                availableModules = dependencyManifests;
+            }
+
+            return availableModules.SelectMany(s => s.ReferencedModules).Distinct();
+        }
     }
 
     internal class DependencyFetchContext : IPackageContext {
         public bool IncludeDevelopmentDependencies {
-            get { return true; } 
+            get { return true; }
         }
 
         public bool AllowExternalPackages {

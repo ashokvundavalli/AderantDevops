@@ -89,15 +89,10 @@ namespace Aderant.Build.Tasks {
             if (!File.Exists(manifest)) {
                 throw new FileNotFoundException("Could not locate ExpertManifest at:", manifest);
             }
-
-            var dependencyManifests = GetDependencyManifests();
-
-            ExpertManifest expertManifest = ExpertManifest.Load(manifest, dependencyManifests);
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
-            ModuleDependencyResolver resolver = CreateModuleResolver(expertManifest);
+            
+            Stopwatch sw = Stopwatch.StartNew();
+            
+            ModuleDependencyResolver resolver = CreateModuleResolver(ProductManifest);
 
             try {
                 System.Threading.Tasks.Task.Run(async () => {
@@ -120,9 +115,9 @@ namespace Aderant.Build.Tasks {
                 }
 
                 return false;
+            } finally {
+                sw.Stop();
             }
-
-            sw.Stop();
 
             // Only print the copy time if the copy was successful 
             Log.LogMessage("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"), null);
@@ -150,8 +145,12 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private ModuleDependencyResolver CreateModuleResolver(ExpertManifest expertManifest) {
-            var resolver = new ModuleDependencyResolver(expertManifest.GetAll(), DropPath, new BuildTaskLogger(this));
+        private ModuleDependencyResolver CreateModuleResolver(string expertManifest) {
+            var dependencyManifests = GetDependencyManifests();
+
+            IEnumerable<ExpertModule> modules = ModuleDependencyResolver.BuildDependencyTree(expertManifest, dependencyManifests);
+
+            var resolver = new ModuleDependencyResolver(modules, DropPath, new BuildTaskLogger(this));
             resolver.BuildAll = BuildAll;
             
             if (!string.IsNullOrEmpty(ModuleName)) {
