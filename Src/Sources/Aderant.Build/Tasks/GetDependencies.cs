@@ -7,6 +7,7 @@ using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
+using Aderant.Build.Providers;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -145,9 +146,15 @@ namespace Aderant.Build.Tasks {
         }
 
         private ModuleDependencyResolver CreateModuleResolver(string expertManifest) {
-            var dependencyManifests = GetDependencyManifests();
+            IEnumerable<string> modulesInBuild = null;
 
-            IEnumerable<ExpertModule> modules = ModuleDependencyResolver.BuildDependencyTree(expertManifest, dependencyManifests);
+            if (ModulesInBuild != null) {
+                modulesInBuild = ModulesInBuild.Select(m => Path.GetFileName(Path.GetFullPath(m.ItemSpec)));
+            }
+
+            var dependencyManifests = GetDependencyManifests();
+            
+            IEnumerable<ExpertModule> modules = ModuleDependencyResolver.GetAvailableModuleDependencyTree(expertManifest, dependencyManifests, modulesInBuild);
 
             var resolver = new ModuleDependencyResolver(modules, DropPath, new BuildTaskLogger(this));
             resolver.BuildAll = BuildAll;
@@ -155,10 +162,6 @@ namespace Aderant.Build.Tasks {
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
                 Log.LogMessage(MessageImportance.Normal, "Fetch modules for: " + resolver.ModuleName, null);
-            }
-
-            if (ModulesInBuild != null) {
-                resolver.SetModulesInBuild(ModulesInBuild.Select(m => Path.GetFileName(Path.GetFullPath(m.ItemSpec))));
             }
 
             resolver.ModuleDependencyResolved += (sender, args) => Log.LogMessage(MessageImportance.Normal, "Getting binaries for {0} from the branch {1} {2}", args.DependencyProvider, args.Branch, (args.ResolvedUsingHardlink ? " (local version)" : string.Empty));

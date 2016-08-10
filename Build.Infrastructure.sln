@@ -71,6 +71,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		paket.dependencies = paket.dependencies
 		profilesetup.cmd = profilesetup.cmd
+		Build\RunBuildAll.ps1 = Build\RunBuildAll.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTest.Build", "Test\IntegrationTest.Build\IntegrationTest.Build.csproj", "{473D8878-64C8-46BD-8AE3-A79CD3ECC353}"

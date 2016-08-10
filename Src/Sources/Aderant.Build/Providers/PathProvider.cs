@@ -105,16 +105,6 @@ namespace Aderant.Build.Providers {
             get { return @"Modules.proj"; }
         }
 
-        ///// <summary>
-        ///// Gets the path to the product manifest file from the module root.
-        ///// </summary>
-        ///// <value>
-        ///// The path to product manifest.
-        ///// </value>
-        //public static string PathToProductManifest {
-        //    get { return @"Build.Infrastructure\Src\Package\ExpertManifest.xml"; }
-        //}
-
         /// <summary>
         /// Gets the source control path to module directory.
         /// </summary>
@@ -158,7 +148,5 @@ namespace Aderant.Build.Providers {
 
             return dropLocationDirectory;
         }
-
-
     }
 }

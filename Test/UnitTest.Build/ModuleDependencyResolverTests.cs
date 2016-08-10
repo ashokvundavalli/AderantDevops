@@ -100,7 +100,6 @@ namespace UnitTest.Build {
 
 
             var resolver = new ModuleDependencyResolver(expertManifest.GetAll(), "", new FakeLogger());
-            resolver.SetModulesInBuild(new[] {"Module1"});
 
             await resolver.Resolve(string.Empty);
 

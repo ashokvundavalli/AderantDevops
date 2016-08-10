@@ -6,13 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
-using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver {
     internal sealed class ModuleDependencyResolver {
         private readonly IEnumerable<ExpertModule> referencedModules;
         private readonly ILogger logger;
-        private IList<string> modulesInBuild;
 
         /// <summary>
         /// Occurs when a module dependency is copied.
@@ -26,18 +24,6 @@ namespace Aderant.Build.DependencyResolver {
         /// The dependency sources.
         /// </value>
         public DependencySources DependencySources { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the modules in build.
-        /// </summary>
-        /// <param name="value">
-        ///     The modules in build.
-        /// </param>
-        public void SetModulesInBuild(IEnumerable<string> value) {
-            if (value != null) {
-                modulesInBuild = value.ToList();
-            }
-        }
 
         /// <summary>
         /// Gets or sets the name of the module currently in context.
@@ -87,14 +73,7 @@ namespace Aderant.Build.DependencyResolver {
                 Directory.CreateDirectory(dependenciesDirectory);
             }
 
-            // Remove the modules from the dependency tree that we are currently building. This is done as the dependencies don't need to
-            // come from the drop but instead they will be produced by this build
-
-            IEnumerable<ExpertModule> modules = referencedModules.ToList();
-
-            if (modulesInBuild != null) {
-                modules = GetReferencedModulesForBuild(modules);
-            }
+           IEnumerable<ExpertModule> modules = referencedModules.ToList();
 
             modules = PostProcess(modules);
 
@@ -220,56 +199,6 @@ namespace Aderant.Build.DependencyResolver {
 
                 referencedModule.Deploy(dependenciesDirectory);
             }
-        }
-
-        private IEnumerable<ExpertModule> GetReferencedModulesForBuild(IEnumerable<ExpertModule> availableModules) {
-            var builder = new DependencyBuilder(new DependencyManifestProvider(availableModules));
-            var modules = builder.GetAllModules().ToList();
-            var moduleDependencyGraph = builder.GetModuleDependencies().ToList();
-
-            var modulesRequiredForBuild = GetDependenciesRequiredForBuild(modules, moduleDependencyGraph, modulesInBuild);
-
-            if (modulesRequiredForBuild.Count == 0) {
-                // We don't require any external dependencies to build - however we need to move the third party modules to the dependency folder
-                // always
-                availableModules = availableModules.Where(m => m.ModuleType == ModuleType.ThirdParty);
-            } else {
-                availableModules = modulesRequiredForBuild.Concat(availableModules.Where(m => m.ModuleType == ModuleType.ThirdParty));
-            }
-            return availableModules;
-        }
-
-        internal ICollection<ExpertModule> GetDependenciesRequiredForBuild(List<ExpertModule> modules, List<ModuleDependency> moduleDependencyGraph, IList<string> moduleNamesInBuild) {
-            // This unique set of modules we need to build the current build queue.
-            var dependenciesRequiredForBuild = new HashSet<ExpertModule>();
-
-            var modulesInBuild = new HashSet<string>(moduleNamesInBuild, StringComparer.OrdinalIgnoreCase);
-
-            foreach (var name in modulesInBuild) {
-                ExpertModule module = null;
-                try {
-                    module = modules.Single(expertModule => string.Equals(expertModule.Name, name, StringComparison.OrdinalIgnoreCase));
-                } catch (InvalidOperationException) {
-                    throw new InvalidOperationException("Module: " + name + " does not exist in the Expert Manifest.");
-                }
-
-                IEnumerable<ExpertModule> dependenciesRequiredForModule = moduleDependencyGraph
-                    .Where(dependency => dependency.Consumer.Equals(module)) // Find the module in the dependency graph
-                    .Select(dependency => dependency.Provider);
-
-                foreach (var dependency in dependenciesRequiredForModule) {
-                    // Don't add the self pointer (Module1 <==> Module1)
-                    if (!string.Equals(dependency.Name, name, StringComparison.OrdinalIgnoreCase)) {
-                        // Test if the current build set contains the dependency - if it does we will be building the dependency
-                        // rather than getting it from the drop
-                        if (!modulesInBuild.Contains(dependency.Name)) {
-                            dependenciesRequiredForBuild.Add(dependency);
-                        }
-                    }
-                }
-            }
-
-            return dependenciesRequiredForBuild;
         }
 
         private async Task CopyContentsAsync(string moduleDependenciesDirectory, ExpertModule referencedModule, string latestBuildPath, bool useHardLinks) {
@@ -430,17 +359,76 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        public static IEnumerable<ExpertModule> BuildDependencyTree(string productManifestPath, IEnumerable<DependencyManifest> dependencyManifests) {
+        public static IEnumerable<ExpertModule> GetAvailableModuleDependencyTree(string productManifestPath, IEnumerable<DependencyManifest> dependencyManifests, IEnumerable<string> modulesInBuild = null) {
             IEnumerable<DependencyManifest> availableModules;
 
+            ExpertManifest manifest = null;
+
             if (!string.IsNullOrEmpty(productManifestPath)) {
-                ExpertManifest expertManifest = ExpertManifest.Load(productManifestPath, dependencyManifests);
-                availableModules = expertManifest.DependencyManifests;
+                manifest = ExpertManifest.Load(productManifestPath, dependencyManifests);
+                availableModules = manifest.DependencyManifests;
             } else {
                 availableModules = dependencyManifests;
             }
+            
+            var referencedModules = availableModules.SelectMany(s => s.ReferencedModules).Distinct();
 
-            return availableModules.SelectMany(s => s.ReferencedModules).Distinct();
+            if (modulesInBuild != null && manifest != null) {
+                // Remove the modules from the dependency tree that we are currently building. This is done as the dependencies don't need to
+                // come from the drop but instead they will be produced by this build
+                referencedModules = GetReferencedModulesForBuild(manifest, referencedModules, modulesInBuild);
+            }
+
+            return referencedModules;
+        }
+
+        private static IEnumerable<ExpertModule> GetReferencedModulesForBuild(ExpertManifest availableModules, IEnumerable<ExpertModule> inBuild, IEnumerable<string> modulesInBuild) {
+            var builder = new DependencyBuilder(availableModules);
+            var modules = builder.GetAllModules().ToList();
+            var moduleDependencyGraph = builder.GetModuleDependencies().ToList();
+
+            var modulesRequiredForBuild = GetDependenciesRequiredForBuild(modules, moduleDependencyGraph, modulesInBuild);
+
+            if (modulesRequiredForBuild.Count == 0) {
+                // We don't require any external dependencies to build - however we need to move the third party modules to the dependency folder always
+                inBuild = inBuild.Where(m => m.ModuleType == ModuleType.ThirdParty);
+            } else {
+                inBuild = modulesRequiredForBuild.Concat(inBuild.Where(m => m.ModuleType == ModuleType.ThirdParty));
+            }
+            return inBuild;
+        }
+
+        internal static ICollection<ExpertModule> GetDependenciesRequiredForBuild(List<ExpertModule> modules, List<ModuleDependency> moduleDependencyGraph, IEnumerable<string> moduleNamesInBuild) {
+            // This unique set of modules we need to build the current build queue.
+            var dependenciesRequiredForBuild = new HashSet<ExpertModule>();
+
+            var modulesInBuild = new HashSet<string>(moduleNamesInBuild, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var name in modulesInBuild) {
+                ExpertModule module = null;
+                try {
+                    module = modules.Single(expertModule => string.Equals(expertModule.Name, name, StringComparison.OrdinalIgnoreCase));
+                } catch (InvalidOperationException) {
+                    throw new InvalidOperationException("Module: " + name + " does not exist in the Expert Manifest.");
+                }
+
+                IEnumerable<ExpertModule> dependenciesRequiredForModule = moduleDependencyGraph
+                    .Where(dependency => dependency.Consumer.Equals(module)) // Find the module in the dependency graph
+                    .Select(dependency => dependency.Provider);
+
+                foreach (var dependency in dependenciesRequiredForModule) {
+                    // Don't add the self pointer (Module1 <==> Module1)
+                    if (!string.Equals(dependency.Name, name, StringComparison.OrdinalIgnoreCase)) {
+                        // Test if the current build set contains the dependency - if it does we will be building the dependency
+                        // rather than getting it from the drop
+                        if (!modulesInBuild.Contains(dependency.Name)) {
+                            dependenciesRequiredForBuild.Add(dependency);
+                        }
+                    }
+                }
+            }
+
+            return dependenciesRequiredForBuild;
         }
     }
 

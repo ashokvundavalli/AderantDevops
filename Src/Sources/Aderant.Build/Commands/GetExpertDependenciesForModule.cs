@@ -75,7 +75,7 @@ namespace Aderant.Build.Commands {
 
             DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(moduleDirectory);
 
-            IEnumerable<ExpertModule> availableModules = ModuleDependencyResolver.BuildDependencyTree(ProductManifestPath, new[] { dependencyManifest });
+            IEnumerable<ExpertModule> availableModules = ModuleDependencyResolver.GetAvailableModuleDependencyTree(ProductManifestPath, new[] { dependencyManifest });
 
             Stopwatch sw = Stopwatch.StartNew();
 

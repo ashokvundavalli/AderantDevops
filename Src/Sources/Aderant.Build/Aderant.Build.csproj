@@ -175,7 +175,7 @@
     <Compile Include="Commands\BranchModule.cs" />
     <Compile Include="Commands\CopyBinToEnvironment.cs" />
     <Compile Include="Process\DefinitionParametersConfigurator.cs" />
-    <Compile Include="Commands\ExpertManifestUpdate.cs" />
+    <Compile Include="Commands\ExpertManifestForBranchCommand.cs" />
     <Compile Include="Commands\GetExpertBranches.cs" />
     <Compile Include="Commands\GetDependencies.cs" />
     <Compile Include="Commands\GetDependenciesFrom.cs" />

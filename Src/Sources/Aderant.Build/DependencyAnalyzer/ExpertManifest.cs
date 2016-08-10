@@ -9,7 +9,7 @@ using Aderant.Build.Providers;
 namespace Aderant.Build.DependencyAnalyzer {
 
     internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
-        const LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace;
+        const LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo;
 
         private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
@@ -30,7 +30,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The product manifest path.
         /// </value>
         public string ProductManifestPath {
-            get { return new Uri(manifest.BaseUri).LocalPath; }
+            get; private set;
         }
 
         /// <summary>
@@ -202,6 +202,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             using (Stream stream = fileSystem.OpenFile(manifestPath)) {
                 var document = XDocument.Load(stream, loadOptions);
                 this.manifest = document;
+                this.ProductManifestPath = manifestPath;
             }
 
             Initialize();
