@@ -12,7 +12,6 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Tasks {
     // TODO: Obsolete this and replace with PowerShell variant
     public class GetDependencies : Microsoft.Build.Utilities.Task, ICancelableTask {
-
         private CancellationTokenSource cancellationToken;
 
         [Required]
@@ -73,13 +72,13 @@ namespace Aderant.Build.Tasks {
         static GetDependencies() {
             VisualStudioEnvironmentContext.SetupContext();
         }
-        
+
         public override bool Execute() {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
             ProductManifest = Path.GetFullPath(ProductManifest);
 
             LogParameters();
-            
+
             LogModulesInBuild();
 
             // e.g Modules\Web.Expenses\Dependencies
@@ -89,9 +88,9 @@ namespace Aderant.Build.Tasks {
             if (!File.Exists(manifest)) {
                 throw new FileNotFoundException("Could not locate ExpertManifest at:", manifest);
             }
-            
+
             Stopwatch sw = Stopwatch.StartNew();
-            
+
             ModuleDependencyResolver resolver = CreateModuleResolver(ProductManifest);
 
             try {
@@ -152,7 +151,7 @@ namespace Aderant.Build.Tasks {
 
             var resolver = new ModuleDependencyResolver(modules, DropPath, new BuildTaskLogger(this));
             resolver.BuildAll = BuildAll;
-            
+
             if (!string.IsNullOrEmpty(ModuleName)) {
                 resolver.ModuleName = ModuleName;
                 Log.LogMessage(MessageImportance.Normal, "Fetch modules for: " + resolver.ModuleName, null);
@@ -182,12 +181,7 @@ namespace Aderant.Build.Tasks {
                 manifests = DependencyManifest.LoadAll(ModulesRootPath);
             } else {
                 DependencyManifest dependencyManifest = DependencyManifest.LoadFromModule(ModulesRootPath);
-
-                if (dependencyManifest.ReferencedModules.Count == 0) {
-                    return null;
-                }
-
-                manifests = new[] {dependencyManifest};
+                manifests = new[] { dependencyManifest };
             }
             return manifests;
         }
