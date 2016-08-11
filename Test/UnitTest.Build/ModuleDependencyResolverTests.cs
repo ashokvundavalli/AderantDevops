@@ -38,7 +38,7 @@ namespace UnitTest.Build {
                 Provider = modules[1]
             });
 
-            ICollection<ExpertModule> build = resolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] {"Foo", "Bar"});
+            ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] {"Foo", "Bar"});
 
             Assert.AreEqual(0, build.Count, "Did not expect any modules as all modules and their dependencies are being built");
         }
@@ -67,7 +67,7 @@ namespace UnitTest.Build {
                 Provider = modules[1]
             });
 
-            ICollection<ExpertModule> build = resolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] {"Foo"});
+            ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] {"Foo"});
 
             Assert.AreEqual(1, build.Count);
         }

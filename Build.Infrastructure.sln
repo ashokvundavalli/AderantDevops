@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\BuildProcess.ps1 = Src\Build\BuildProcess.ps1
 		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
 		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
+		Src\Build\dir.proj = Src\Build\dir.proj
 		Src\Build\InvokeServerBuild.ps1 = Src\Build\InvokeServerBuild.ps1
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
 		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1

@@ -96,6 +96,7 @@
     </Compile>
     <Compile Include="SourceIndexStreamTests.cs" />
     <Compile Include="SourceIndexTests.cs" />
+    <Compile Include="Tasks\ProjectConformityCheckTests.cs" />
     <Compile Include="TestModuleProviderBase.cs" />
     <Compile Include="TfsBuildInformationTest.cs" />
     <Compile Include="UpdateSplashScreenImageTests.cs" />
@@ -131,6 +132,7 @@
     <Content Include="Resources\GoodBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\CSharpProject.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">

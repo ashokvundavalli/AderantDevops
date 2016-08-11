@@ -113,6 +113,18 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;  
+        ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
+        ///&lt;/Project&gt;.
+        /// </summary>
+        internal static string CSharpProject {
+            get {
+                return ResourceManager.GetString("CSharpProject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;environment name=&quot;Local&quot; networkSharePath=&quot;C:\ExpertShare&quot; sourcePath=&quot;C:\tfs\expertsuite\releases\803x\Binaries\ExpertSource&quot; networkDeploymentType=&quot;NetworkCustom&quot; createClickOnceDeployments=&quot;true&quot; owner=&quot;cmsdbo&quot; expertServiceUser=&quot;ADERANT_AP\service.expert.ap&quot; expertServicePassword=&quot;bBh4t9wdtZN+hR2LMh6wVw==&quot; networkLoadBalancer=&quot;&quot; removeOnError=&quot;true&quot; skipPackageImport=&quot;false&quot; isDevEnvironment=&quot;true&quot; failOnSDKDependencyFailure=&quot;false&quot; reportServerUser=&quot;cmsdbo&quot; repo [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string environment {

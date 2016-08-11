@@ -12,6 +12,10 @@
            AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
            Condition="'$(IsCustomBuild)' != 'true'" />
 
+  <UsingTask TaskName="ProjectConformityCheck"
+         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+         Condition="'$(IsCustomBuild)' != 'true'" />
+
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
   </PropertyGroup>
@@ -217,19 +221,7 @@
   <Target Name="ApplyCodeAnalzyer" 
           BeforeTargets="CoreCompile">
     
-    <PropertyGroup>
-      <PackageDependenciesFileDirectory>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'paket.dependencies'))</PackageDependenciesFileDirectory>
-    </PropertyGroup>
-    
-    <Error Condition="'$(PackageDependenciesFileDirectory)' == ''" Text="No paket.dependencies file found" />
-    
-    <ItemGroup>
-      <Analyzer Remove="@(Analyzer)" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Analyzer Include="$(PackageDependenciesFileDirectory)\packages\Aderant.Build.Analyzer\analyzers\dotnet\cs\*.dll" />
-    </ItemGroup>
+    <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" />
   </Target>
   
 
