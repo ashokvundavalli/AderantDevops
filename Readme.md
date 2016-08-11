@@ -19,7 +19,9 @@ If you installed Git yourself then you'll need to [re-install](#if-you-don't-hav
 
 * Run
 
-```.\profilesetup.cmd```
+```
+.\profilesetup.cmd
+```
 
 This will install and configure the developer tools. 
 If you have never had the developer tools installed the next time you start PowerShell you will be asked a series of questions which will configure the tools for you.
