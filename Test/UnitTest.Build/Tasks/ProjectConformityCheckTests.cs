@@ -26,8 +26,7 @@ namespace UnitTest.Build.Tasks {
 </Project>";
 
             var fs = new Moq.Mock<IFileSystem2>();
-
-            var p = new Project(XDocument.Parse(Resources.CSharpProject).CreateReader());
+            var p = ProjectConformityController.CreateProject(XDocument.Parse(Resources.CSharpProject));
 
             var controller = new ProjectConformityController(fs.Object, p);
             controller.AddDirProjectIfNecessary();
