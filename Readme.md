@@ -24,13 +24,17 @@ To support this there are a number of changes to the current development cycle.
 
 In the previous model each branch has a copy of Build.Infrastructure. The tooling would use the scripts and data from the currently selected branch.
 For example, if your branch context was ```Dev\MyBranch``` then the GetProduct.ps1, ExpertManifest.xml etc. would be used from this branch.
-To support the isolation of Build Infrastructure it was necessary to move the Expert Manifest. 
-The manifest describes the contents of your branch and how to perform product assembly. While this concept of a manifest will be replaced over time for now it needs to stay. A change in the location means a change to the development workflow. 
+To support the isolation of Build Infrastructure it was necessary to move the Expert Manifest out of Build.Infrastructure.
+The manifest describes the contents of your branch and how to perform product assembly. While this concept of a manifest will be replaced in time, for now it needs to stay. 
+
+The change of the manifest location means a change to the development workflow. 
 
 Previously dev and QA would need to "get latest" on the Build.Infrastructure module. 
 You now need the latest manifest for your branch which is located ```$/ExpertSuite/<folder>/<branch>/Modules/ExpertManifest.xml```
 
 ![Expert Manifest Lication](Doc/Images/expert-manifest-location.png)
+
+ * [Warning Ratchet](./Doc/Warning-Ratchet.md)
 
 ### Getting Started with Git Integration ###
 
