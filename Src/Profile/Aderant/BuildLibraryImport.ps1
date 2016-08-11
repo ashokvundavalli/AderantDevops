@@ -66,6 +66,10 @@ function UpdateOrBuildAssembly($properties) {
     $outdatedAderantBuildFile = $false
 
     pushd $PSScriptRoot
+    [string]$branch = & git rev-parse --abbrev-ref HEAD
+    if ($branch -eq "master") {
+        & git pull
+    }
     [string]$head = & git rev-parse HEAD
     popd   
 

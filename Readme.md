@@ -15,9 +15,12 @@ Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-
 ```profilesetup.cmd```
 
 This will install and configure the developer tools. 
-The next time you start PowerShell you will be asked a series of questions which will configure the tools for you.
+
+If you have never had the developer tools installed the next time you start PowerShell you will be asked a series of questions which will configure the tools for you.
 
 ### What's new? ###
+
+**Productization**
 
 The Build Infrastructure module has now been extracted from TF VC and elevated to a common set of build automation services and libraries. 
 To support this there are a number of changes to the current development cycle.
@@ -32,8 +35,12 @@ The change of the manifest location means a change to the development workflow.
 Previously dev and QA would need to "get latest" on the Build.Infrastructure module. 
 You now need the latest manifest for your branch which is located ```$/ExpertSuite/<folder>/<branch>/Modules/ExpertManifest.xml```
 
-![Expert Manifest Lication](Doc/Images/expert-manifest-location.png)
+***Get-Product will always get the latest version of this file before hand.***
 
+![Expert Manifest Location](Doc/Images/expert-manifest-location.png)
+
+**Features**
+ * [Code Analysis](./Doc/Code-Analysis.md)
  * [Warning Ratchet](./Doc/Warning-Ratchet.md)
 
 ### Getting Started with Git Integration ###
