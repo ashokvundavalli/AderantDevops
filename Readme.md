@@ -6,13 +6,13 @@ The tools provide a set of PowerShell extensions which enable you to retrieve de
 
 Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395) installed.
 
-* Start PowerShell or a Command Prompt
+* Start PowerShell
 * Clone the repository 
 ```git clone http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure C:\Source\Build.Infrastructure```
 * Change directory 
 ```cd C:\Source\Build.Infrastructure```
 * Run 
-```profilesetup.cmd```
+```.\profilesetup.cmd```
 
 This will install and configure the developer tools. 
 
