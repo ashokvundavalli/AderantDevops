@@ -23,7 +23,7 @@
     the F5 experience by virtue of the CopyLinkedContentFiles target  
   -->
 
-  <!--ExternalContent item group defines the unprocessed content provided by dependency modules or by the file system in the module dependency directory
+ <!--ExternalContent item group defines the unprocessed content provided by dependency modules or by the file system in the module dependency directory
 
     Wildcards don't get expanded when you use the MS Build item selector (@->) so we stuck with a hardcoded list of folders to process.
     Ideally this syntax would work @(Modules->'$(DependenciesDirectory)Web.*\%(Identity\*.js') ... but it doesn't expand the * item unless it passes
@@ -31,10 +31,9 @@
   -->
   <PropertyGroup>
     <UnitTestProjectGuid>3AC096D0-A1C2-E12C-1390-A8335801FDAB</UnitTestProjectGuid>
-    <EnableContentLink Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</EnableContentLink>
-    <EnableContentLink Condition="'$(IsDesktopBuild)' != '' And '$(IsDesktopBuild)' == 'true'">true</EnableContentLink>
+    <EnableContentLink Condition="'$(BuildingInsideVisualStudio)' == 'true' Or '$(IsDesktopBuild)' != 'false'">true</EnableContentLink>
     <EnableContentLink Condition="'$(ProjectTypeGuids.ToUpper().Contains($(UnitTestProjectGuid)))' == 'true'">false</EnableContentLink>
-
+    
     <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
     <DependencyManifestContent>$([System.IO.File]::ReadAllText('$(DependencyManifest)'))</DependencyManifestContent>
     <Pattern>="((Web|Mobile)\..*?)"</Pattern>
@@ -51,9 +50,9 @@
 
     <RegexEscapedDependencyPath>$([System.Text.RegularExpressions.Regex]::Escape('$(DependenciesDirectory)'))</RegexEscapedDependencyPath>
   </PropertyGroup>
-
-
-
+  
+ 
+  
   <ItemGroup>
     <!-- This section controls what modules will be linked to directly in your workspace -->
     <LinkTo Include="Web.Foundation"
@@ -125,7 +124,7 @@
   </Choose>
 
   <ItemGroup>
-    <!--
+  <!--
       Creates the list of modules from the dependency manifest like Web.Foundation, Web.Presentation etc
       Extend this collection to extend the content inclusion pipeline from the depenedencies folder
   -->
@@ -147,8 +146,8 @@
     </LinkedProjectContent>
 
     <LinkedProjectContent Include="@(LinkTo)">
-      <Items>$([System.IO.Directory]::GetFiles('%(RelativePath)\Scripts\%(Identity)', '*.html', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>Content</Type>
+        <Items>$([System.IO.Directory]::GetFiles('%(RelativePath)\Scripts\%(Identity)', '*.html', System.IO.SearchOption.AllDirectories))</Items>
+        <Type>Content</Type>
     </LinkedProjectContent>
 
     <LinkedProjectContent Include="@(LinkTo)">
@@ -271,7 +270,7 @@
       <Type>Content</Type>
     </ExternalContent>
   </ItemGroup>
-
+  
   <!-- Helpers -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Helpers\**\*.xml;
@@ -321,7 +320,7 @@
 
       <!-- Test if this is direct or transitive content like Modules\Web.SMB\Dependencies\Web.Presentation\Scripts\Web.Foundation\add2home.js -->
       <ContentIsNonTransitive>$([System.Text.RegularExpressions.Regex]::IsMatch('%(DependenciesRelativePath)', '%(RegexContentPattern)'))</ContentIsNonTransitive>
-
+      
 
       <RegexNestedWebPattern>%(RegexEscapedIdentity)(.*)(Web|Mobile|Thirdparty|ThirdParty)\.\w*?\\</RegexNestedWebPattern>
       <!-- Test if this is nested content like Modules\Web.SMB\Dependencies\Web.Presentation\Scripts\Web.Foundation\add2home.js -->
@@ -332,7 +331,7 @@
     </AllDependencyContent>
 
     <AllDirectContent Include="@(AllDependencyContent->WithMetadataValue('ContentIsNonTransitive', 'True'))" />
-
+    
     <AllDirectNotNestedContent Include="@(AllDependencyContent->WithMetadataValue('ContentIsNestedWeb', 'False'))" />
 
     <!-- 
@@ -344,11 +343,11 @@
         ProjectRelativePath returns a path that represents the relative include path within the project eg Scripts\Web.Foundation\foo.js
       -->
       <ProjectRelativePath>$([System.Text.RegularExpressions.Regex]::Replace(%(DependenciesRelativePath), '^(.*?\\.*?)', ''))</ProjectRelativePath>
-
+      
     </DependencyContent>
+    
 
-
-
+   
     <DependencyContent Include="@(AllDirectNotNestedContent->WithMetadataValue('IsReferenced', 'True'))">
       <!--         
         ProjectRelativePath returns a path that represents the relative include path within the project eg Scripts\Web.Foundation\foo.js
@@ -427,7 +426,7 @@
   </Choose>
 
 
-
+   
 
   <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
 
@@ -435,12 +434,12 @@
       <ContentToCopy Include="@(Content->HasMetadata('Link'))">
         <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
       </ContentToCopy>
-
+      
       <ContentToCopy Include="@(TypeScriptCompile->HasMetadata('Link'))">
         <OriginalItemSpec>%(FullPath)</OriginalItemSpec>
       </ContentToCopy>
     </ItemGroup>
-
+    
   </Target>
 
 
@@ -450,18 +449,18 @@
           DependsOnTargets="CollectLinkedContentFiles"
           Condition="'$(LinkedBuild)' != 'true' And '$(EnableContentLink)' == 'true'"
           BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
-          Inputs="@(ContentToCopy)"
+          Inputs="@(ContentToCopy)" 
           Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
 
     <!-- Only copy files with the Link attribute set -->
     <Copy SourceFiles="%(ContentToCopy.OriginalItemSpec)"
           DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
           SkipUnchangedFiles="true"
-          OverwriteReadOnlyFiles="true"
+          OverwriteReadOnlyFiles="true" 
           UseHardlinksIfPossible="true" />
-
+    
   </Target>
-
+  
   <Target Name="AfterCopyLinkedContentFiles" AfterTargets="CopyLinkedContentFiles">
     <!--
        Aspx content hangs Visual studio if you attempt to add a breakpoint to an ASPX file and the file is actually a link (very annoying). 
@@ -513,12 +512,12 @@ Link:                     %(AllReferencedContent.Link)
 Type:                     %(AllReferencedContent.Type)" />-->
 
 
-
+  
 
     <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
 
     <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />
-  </Target>
+</Target>
 </Project>
 
 
