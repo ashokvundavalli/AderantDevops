@@ -41,8 +41,18 @@ namespace Aderant.Build.Tasks {
         }
 
         public void Unload() {
-            project.ProjectCollection.UnloadProject(project);
-            project.ProjectCollection.Dispose();
+            try {
+                project.ProjectCollection.UnloadProject(project);
+            } catch (NullReferenceException) {
+                // Bug in MS Build. If SkipEvaluation is true, then Unload will throw as it wants to access the Imports collection which is not
+                // initialized
+            } finally {
+                try {
+                    project.ProjectCollection.Dispose();
+                } catch {
+                    
+                }
+            }
         }
 
         public static Project CreateProject(string path) {
