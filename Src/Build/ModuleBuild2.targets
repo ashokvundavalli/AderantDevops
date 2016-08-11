@@ -198,6 +198,9 @@ doc.Save(File);
     </OnBuildBreakDependsOn>
   </PropertyGroup>
 
+  <Target Name="BeforeOnBuildBreak" />
+  <Target Name="AfterOnBuildBreak" />
+
   <Target Name="OnBuildBreak"
           Condition="('$(IsDesktopBuild)'!='true')"
           DependsOnTargets="$(OnBuildBreakDependsOn)">

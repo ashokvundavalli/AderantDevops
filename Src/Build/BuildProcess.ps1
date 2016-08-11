@@ -95,6 +95,8 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
         
         if ($currentBuildCount -gt $lastGoodBuild) {
             RenderWarningShields $true $currentBuildCount $lastGoodBuild
+            $ratchet.DiffWarnings($teamProject, [int]$buildDefinitionId, [int]$buildId)
+
             throw "Warning count has increased since the last good build"
         }
         RenderWarningShields $false $currentBuildCount $lastGoodBuild
@@ -179,16 +181,16 @@ task Build {
             $commonArgs = "$commonArgs /p:CleanBin=true"
         }
 
+        # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing 
+        # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
+        $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
+
         try {
             pushd $Repository
              
             if ($IsDesktopBuild) {
                 Start-Process -FilePath $MSBuildLocation\MSBuild.exe -ArgumentList $commonArgs -Wait -NoNewWindow
             } else {
-                # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing 
-                # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
-                $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
-
                 . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
             }
         } finally {
@@ -258,7 +260,8 @@ task Quality -If (-not $IsDesktopBuild) {
         WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId
     }
     
-    BuildAssociation $vssConnection $teamProject $buildId       
+    # TODO: Decide on what we want here
+    #BuildAssociation $vssConnection $teamProject $buildId       
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
