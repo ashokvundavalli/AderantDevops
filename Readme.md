@@ -1,26 +1,42 @@
-# Expert Build Infrastructure #
+# Expert Build Infrastructure
+
 Welcome to the Expert build system. This repository contains the source code and documentation for the tools and workflows which compile, build, lint and test the Expert Suite code base.
 
-## Getting Started aka Before You Do Anything ##
-The tools provide a set of PowerShell extensions which enable you to retrieve dependencies for products, compile the projects and run the tests.
+## Getting Started aka Before You Do Anything
 
+The tools provide a set of PowerShell extensions which enable you to retrieve dependencies for products, compile the projects and run the tests.
 Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395) installed.
+If you installed Git yourself then you'll need to [re-install](#if-you-don't-have-git-or-installed-it-yourself) using the silent install script.
 
 * Start PowerShell
-* Clone the repository 
+* Clone the repository
+
 ```git clone http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure C:\Source\Build.Infrastructure```
-* Change directory 
+
+* Change directory
+
 ```cd C:\Source\Build.Infrastructure```
-* Run 
+
+* Run
+
 ```.\profilesetup.cmd```
 
 This will install and configure the developer tools. 
-
 If you have never had the developer tools installed the next time you start PowerShell you will be asked a series of questions which will configure the tools for you.
 
-### What's new? ###
+### If you don't have Git or installed it yourself
 
-**Productization**
+Run the silent install from here. This is a special install as it configures Git the way we like it.
+
+[Auckland](file://ap.aderant.com/akl/Software/Development/Git)
+[Tallahassee](file://svfp205/Install/Git)
+
+### User Guide
+* [First Time Setup](./Doc/First-Time-Setup.md)
+
+### What's new
+
+#### Productization
 
 The Build Infrastructure module has now been extracted from TF VC and elevated to a common set of build automation services and libraries. 
 To support this there are a number of changes to the current development cycle.
@@ -39,17 +55,18 @@ You now need the latest manifest for your branch which is located ```$/ExpertSui
 
 ![Expert Manifest Location](Doc/Images/expert-manifest-location.png)
 
-**Features**
- * [Code Analysis](./Doc/Code-Analysis.md)
- * [Warning Ratchet](./Doc/Warning-Ratchet.md)
+## Features
 
-### Getting Started with Git Integration ###
+* [Code Analysis](./Doc/Code-Analysis.md)
+* [Warning Ratchet](./Doc/Warning-Ratchet.md)
+
+### Getting Started with Git Integration
 
 Assuming you have cloned a repository you can manage it using most of the existing build commands such as ```gd```.
 
 For example, to work with the Deployment repository set the build context using ```.```
 
-```
+```bash
 cd C:\Source\Deployment
 cm .
 ```
