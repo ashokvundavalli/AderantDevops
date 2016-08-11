@@ -27,7 +27,7 @@ function BuildProject($properties, [bool]$rebuild) {
 
     pushd $buildScripts
     Invoke-Expression ". .\Build-Libraries.ps1"
-    popd	       
+    popd
 
     CompileBuildLibraryAssembly $buildScripts $rebuild
 }
@@ -68,7 +68,7 @@ function UpdateOrBuildAssembly($properties) {
     pushd $PSScriptRoot
     [string]$branch = & git rev-parse --abbrev-ref HEAD
     if ($branch -eq "master") {
-        & git pull
+        & git pull --ff-only
     }
     [string]$head = & git rev-parse HEAD
     popd   
