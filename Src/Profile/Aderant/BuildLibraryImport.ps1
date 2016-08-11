@@ -77,7 +77,7 @@ function UpdateOrBuildAssembly($properties) {
 
     $version = $Env:EXPERT_BUILD_VERSION
 
-    if ($version -ne $head) {        
+    if ($version -ne $head) {
         $outdatedAderantBuildFile = $true
     }
 

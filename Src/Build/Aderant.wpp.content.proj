@@ -13,7 +13,7 @@
   <PropertyGroup>
     <IncludeFoundationDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_FOUNDATION') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludeFoundationDirectly>
     <IncludePresentationDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_PRESENTATION') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludePresentationDirectly>
-	  <IncludeOTGDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_OTG') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludeOTGDirectly>
+    <IncludeOTGDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_OTG') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludeOTGDirectly>
   </PropertyGroup>
 
   <!-- 
@@ -64,7 +64,7 @@
       <RelativePath>$(ModulesDirectory)%(Identity)\Src\%(Identity)</RelativePath>
     </LinkTo>
     <LinkTo Include="Web.OTG"
-           Condition="'$(IncludeOTGDirectly)' == 'true'">
+            Condition="'$(IncludeOTGDirectly)' == 'true'">
       <RelativePath>$(ModulesDirectory)%(Identity)\Src\%(Identity)</RelativePath>
     </LinkTo>
   </ItemGroup>

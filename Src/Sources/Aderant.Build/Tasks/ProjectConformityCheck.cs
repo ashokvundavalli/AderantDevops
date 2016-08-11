@@ -9,10 +9,9 @@ namespace Aderant.Build.Tasks {
         
         public ITaskItem Project { get; set; }
         public override bool Execute() {
+            var controller = new ProjectConformityController(new PhysicalFileSystem(System.IO.Path.GetDirectoryName(Project.ItemSpec)), new Project(Project.ItemSpec));
 
-            var controller = new ProjectConformityController(new PhysicalFileSystem(Project.GetMetadata("Directory")), new Project(Project.ItemSpec));
-
-            if (controller.AddDirProjIfNecessary()) {
+            if (controller.AddDirProjectIfNecessary()) {
                 Log.LogWarning("The project file {0} does not have a dir.proj import. One will be added.", Project.ItemSpec);
 
                 controller.Save();
@@ -33,7 +32,7 @@ namespace Aderant.Build.Tasks {
             this.project = project;
         }
 
-        public bool AddDirProjIfNecessary() {
+        public bool AddDirProjectIfNecessary() {
             bool added = false;
 
             ProjectImportElement import = project.Xml.Imports.FirstOrDefault(p => p.Project.IndexOf("CommonBuildProject", StringComparison.OrdinalIgnoreCase) >= 0);

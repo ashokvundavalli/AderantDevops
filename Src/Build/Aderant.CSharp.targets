@@ -219,7 +219,7 @@
   
 
   <Target Name="ApplyCodeAnalzyer" 
-          BeforeTargets="CoreCompile">
+          BeforeTargets="CoreCompile;ResolveAssemblyReferences">
     
     <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" />
   </Target>

@@ -30,7 +30,7 @@ namespace UnitTest.Build.Tasks {
             var p = new Project(XDocument.Parse(Resources.CSharpProject).CreateReader());
 
             var controller = new ProjectConformityController(fs.Object, p);
-            controller.AddDirProjIfNecessary();
+            controller.AddDirProjectIfNecessary();
 
             Assert.AreEqual(expected, p.Xml.RawXml);
         }

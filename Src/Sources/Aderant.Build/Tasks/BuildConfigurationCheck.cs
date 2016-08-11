@@ -43,7 +43,7 @@ namespace Aderant.Build.Tasks {
         }
     }
 
-    // The stratergy this class represents should be obseleted by removing the requirement to import the build project from the 
+    // The strategy this class represents should be obsoleted by removing the requirement to import the build project from the 
     // drop location - but that is a much longer term goal so this will do to validate people don't check in invalid configurations for now
     internal class BuildProjectCheck {
         public void CheckForInvalidBranch(string projectFileText, string expectedBranch) {
