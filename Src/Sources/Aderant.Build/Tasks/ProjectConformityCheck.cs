@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-using System.Management.Automation;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
@@ -19,6 +17,8 @@ namespace Aderant.Build.Tasks {
 
                 controller.Save();
             }
+
+            controller.Unload();
 
             return !Log.HasLoggedErrors;
         }
@@ -57,6 +57,10 @@ namespace Aderant.Build.Tasks {
         public void Save() {
             fs.MakeFileWritable(project.FullPath);
             project.Save();
+        }
+
+        public void Unload() {
+            project.ProjectCollection.UnloadProject(project);
         }
     }
 }
