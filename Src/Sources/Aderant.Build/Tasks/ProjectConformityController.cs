@@ -42,21 +42,23 @@ namespace Aderant.Build.Tasks {
 
         public void Unload() {
             project.ProjectCollection.UnloadProject(project);
+            project.ProjectCollection.Dispose();
         }
 
         public static Project CreateProject(string path) {
-            var globalProperties = CreateGlobalProperties();
-            return new Project(path, globalProperties, "14.0");
+            var collection = new ProjectCollection {
+                SkipEvaluation = true
+            };
+
+            return collection.LoadProject(path);
         }
 
-        public static Project CreateProject(XDocument parse) {
-            var globalProperties = CreateGlobalProperties();
-            return new Project(parse.CreateReader(), globalProperties, "14.0");
-        }
+        public static Project CreateProject(XDocument document) {
+            var collection = new ProjectCollection {
+                SkipEvaluation = true
+            };
 
-        private static IDictionary<string, string> CreateGlobalProperties() {
-            IDictionary<string, string> globalProperties = new Dictionary<string, string> { { "EnableContentLink", "false" } };
-            return globalProperties;
+            return collection.LoadProject(document.CreateReader());
         }
     }
 }
