@@ -31,9 +31,10 @@
   -->
   <PropertyGroup>
     <UnitTestProjectGuid>3AC096D0-A1C2-E12C-1390-A8335801FDAB</UnitTestProjectGuid>
-    <EnableContentLink Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</EnableContentLink>
+    <!--<EnableContentLink Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</EnableContentLink>
     <EnableContentLink Condition="'$(IsDesktopBuild)' != '' And '$(IsDesktopBuild)' == 'true'">true</EnableContentLink>
-    <EnableContentLink Condition="'$(ProjectTypeGuids.ToUpper().Contains($(UnitTestProjectGuid)))' == 'true'">false</EnableContentLink>
+    <EnableContentLink Condition="'$(ProjectTypeGuids.ToUpper().Contains($(UnitTestProjectGuid)))' == 'true'">false</EnableContentLink>-->
+    <EnableContentLink>false</EnableContentLink>
 
     <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
     <DependencyManifestContent>$([System.IO.File]::ReadAllText('$(DependencyManifest)'))</DependencyManifestContent>
