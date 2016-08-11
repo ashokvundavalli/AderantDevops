@@ -449,6 +449,9 @@ doc.Save(File);
     </BuildStep>
 
     <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
+    
+    <Copy SourceFiles="$(BuildScriptsDirectory)\dir.proj" DestinationFolder="$(SolutionDirectoryPath)" />
+    <Copy SourceFiles="$(BuildScriptsDirectory)\Aderant.wpp.content.proj" DestinationFolder="$(SolutionDirectoryPath)" />
 
     <GetDependencies
       Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true') or '$(ForceGetDependencies)' == 'true'"
