@@ -134,6 +134,7 @@
     <Compile Include="PhysicalFileSystem.cs" />
     <Compile Include="DependencyResolver\RestoreAction.cs" />
     <Compile Include="Tasks\ProjectConformityCheck.cs" />
+    <Compile Include="Tasks\ProjectConformityController.cs" />
     <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
     <Compile Include="Tasks\CreatePaketTemplatesTask.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
