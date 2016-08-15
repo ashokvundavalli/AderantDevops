@@ -6,7 +6,7 @@ Welcome to the Expert build system. This repository contains the source code and
 
 The tools provide a set of PowerShell extensions which enable you to retrieve dependencies for products, compile the projects and run the tests.
 Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395) installed.
-If you installed Git yourself then you'll need to [re-install](#if-you-don't-have-git-or-installed-it-yourself) using the silent install script.
+If you installed Git yourself then you'll need to [re-install](#if-you-dont-have-git-or-installed-it-yourself) using the silent install script.
 
 * Start PowerShell
 * Clone the repository
