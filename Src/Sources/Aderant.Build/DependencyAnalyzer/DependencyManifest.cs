@@ -99,6 +99,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="modulePath">The module path.</param>
         /// <returns></returns>
         public static DependencyManifest LoadFromModule(string modulePath) {
+            if (modulePath.IndexOf(BuildConstants.BuildInfrastructureDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
+                return new DependencyManifest(BuildConstants.BuildInfrastructureDirectory, new XDocument());
+            }
+
             DependencyManifest dependencyManifest;
             if (TryLoadFromModule(modulePath, out dependencyManifest)) {
                 return dependencyManifest;
