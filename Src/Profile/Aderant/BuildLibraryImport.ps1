@@ -65,13 +65,16 @@ function UpdateOrBuildAssembly($properties) {
 
     $outdatedAderantBuildFile = $false
 
-    pushd $PSScriptRoot
-    [string]$branch = & git rev-parse --abbrev-ref HEAD
-    if ($branch -eq "master") {
-        & git pull --ff-only
+    if (-not $Host.Name.Contains("ISE")) {    
+        # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
+        pushd $PSScriptRoot
+        [string]$branch = & git rev-parse --abbrev-ref HEAD
+        if ($branch -eq "master") {
+            & git pull --ff-only
+        }
+        [string]$head = & git rev-parse HEAD
+        popd   
     }
-    [string]$head = & git rev-parse HEAD
-    popd   
 
     Write-Host "Version: $head"
 
