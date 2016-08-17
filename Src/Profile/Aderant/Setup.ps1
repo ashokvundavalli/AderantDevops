@@ -53,7 +53,7 @@ try {
         $destinationScript = Join-Path $psHomeDirectory -ChildPath "Microsoft.PowerShell_profile.ps1"
     
         $text = Get-Content -Raw $sourceScript
-        $text = [string]::Format($text, $folder)
+        $text = $text -replace "PROFILE_PATH",$folder
     
         if (Test-Path $destinationScript) {
             Write-Host "***" -ForegroundColor Yellow
