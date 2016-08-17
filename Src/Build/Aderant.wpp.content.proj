@@ -31,7 +31,7 @@
   -->
   <PropertyGroup>
     <UnitTestProjectGuid>3AC096D0-A1C2-E12C-1390-A8335801FDAB</UnitTestProjectGuid>
-    <EnableContentLink>true</EnableContentLink>
+    <EnableContentLink Condition="'$(EnableContentLink)' == ''">true</EnableContentLink>
     <EnableContentLink Condition="'$(ProjectTypeGuids.ToUpper().Contains($(UnitTestProjectGuid)))' == 'true'">false</EnableContentLink>
     
     <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
