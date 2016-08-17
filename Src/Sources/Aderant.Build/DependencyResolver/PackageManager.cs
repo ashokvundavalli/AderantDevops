@@ -61,9 +61,6 @@ namespace Aderant.Build.DependencyResolver {
                 }
             }
 
-            if (context.AllowExternalPackages) {
-            }
-
             AddModules(context, referencedModules, file);
         }
 
