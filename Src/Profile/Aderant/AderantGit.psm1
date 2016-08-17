@@ -43,6 +43,11 @@ function InstallPoshGit() {
     # We need Windows 10 or WMF 5 for Install-Module
     if ($host.Version.Major -ge 5) {
         try {
+            if (Test-Path $Env:USERPROFILE\Documents\WindowsPowerShell\Modules\posh-git) {
+                Import-Module posh-git -Global
+                return
+            }
+
             # Optimization, Get-InstalledModule is quite slow so just peek directly
             if (Test-Path $Env:ProgramFiles\WindowsPowerShell\Modules\posh-git) {
                 Import-Module posh-git -Global
@@ -50,7 +55,7 @@ function InstallPoshGit() {
             }
     
             if (-not (Get-InstalledModule posh-git -ErrorAction SilentlyContinue)) {
-                Install-Module posh-git
+                Install-Module posh-git -Scope CurrentUser
             }            
         } finally {
             Import-Module posh-git -Global            
