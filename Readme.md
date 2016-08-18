@@ -61,6 +61,7 @@ You now need the latest manifest for your branch which is located ```$/ExpertSui
 
 * [Code Analysis](./Doc/Code-Analysis.md)
 * [Warning Ratchet](./Doc/Warning-Ratchet.md)
+* [Common Build Project](./Doc/Common-Build-Project.md)
 
 ### Getting Started with Git Integration
 
