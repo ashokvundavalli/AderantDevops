@@ -6,6 +6,7 @@ using Aderant.Build.Logging;
 
 namespace Aderant.Build.Packaging {
     [Cmdlet("Package", "ExpertRelease")]
+    [OutputType(typeof(IProductAssemblyResult))]
     public sealed class ExpertReleaseCommand : PSCmdlet {
         [Parameter(Mandatory = true, Position = 0)]
         [ValidateNotNullOrEmpty]
@@ -26,9 +27,11 @@ namespace Aderant.Build.Packaging {
 
             try {
                 var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
-                assembler.AssembleProduct(Modules, Folders, ProductDirectory);
+                var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory);
+
+                WriteObject(result);
             } catch (AggregateException ex) {
-                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                throw ex.Flatten().InnerException;
             }
         }
     }

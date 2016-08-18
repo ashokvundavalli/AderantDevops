@@ -249,3 +249,8 @@ ModelManifest.xml
 
 *.bak
 /Src/Sources/Aderant.Build.Agent/*.zip
+/Dependencies
+/dir.proj
+/Build.Infrastructure.sln.DotSettings
+/Aderant.wpp.content.proj
+/Src/Build.Tools/paket.exe

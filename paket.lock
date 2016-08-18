@@ -1,4 +1,6 @@
 NUGET
+  remote: http://packages.ap.aderant.com/packages/nuget
+    Aderant.Build.Analyzer (1.0.1)
   remote: https://www.nuget.org/api/v2
     Castle.Core (3.3.3) - framework: >= net45
     Microsoft.AspNet.WebApi.Client (5.2.3) - framework: >= net45
@@ -123,7 +125,7 @@ NUGET
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
       System.Runtime (>= 4.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
-    System.Runtime.Handles (4.0.1) - framework: >= netstandard13
+    System.Runtime.Handles (4.0.1) - framework: netstandard13, >= netstandard15
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: >= netstandard13
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: >= netstandard13
       System.Runtime (>= 4.1) - framework: >= netstandard13
