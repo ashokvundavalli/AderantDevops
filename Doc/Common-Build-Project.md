@@ -1,9 +1,10 @@
-# Common-Build-Project #
+# Common Build Project (dir.proj)
 
-A project hook is installed into all .csproj files during the build. This hook is used to dynamically install the Rosyln code analyzer. Other extensions are planned for the future.
+A project hook is installed into all .csproj files during the build.
 If your project does not have the hook in place it will be added during the build process and a warning will be generated. It is recommended that you commit the .csproj modifications to avoid the warning on each build.
+This hook is used to dynamically install the Rosyln code analyzer into all projects so we have consistent code analysis across all projects. Other extensions leveraging dir.proj are planned for the future.
 
-## How does it work? ##
+## How does it work?
 
 For all .csproj files we inject a special import into the project itself which scans up from the current file to the root drive looking for "dir.proj".
 
