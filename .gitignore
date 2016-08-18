@@ -253,3 +253,4 @@ ModelManifest.xml
 /dir.proj
 /Build.Infrastructure.sln.DotSettings
 /Aderant.wpp.content.proj
+/Src/Build.Tools/paket.exe
