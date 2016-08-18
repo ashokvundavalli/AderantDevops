@@ -56,6 +56,7 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="PresentationCore">
       <Private>False</Private>
