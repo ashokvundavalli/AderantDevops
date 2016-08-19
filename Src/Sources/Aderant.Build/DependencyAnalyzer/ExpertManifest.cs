@@ -14,7 +14,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
 
-
         private List<ExpertModule> modules;
 
         // The directory which contains the modules. Determined by the path to the manifest by convention.
@@ -125,10 +124,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentNullException(nameof(moduleDirectory), "Module directory is not specified");
             }
 
-            string dependencyManifest = fileSystem.GetFiles(Path.Combine(moduleDirectory, moduleName), DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
+            string dependencyManifest = fileSystem.GetFiles(Path.Combine(fileSystem.Root, moduleName), DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
 
             if (dependencyManifest != null) {
-                manifestPath = dependencyManifest;
+                manifestPath = fileSystem.GetFullPath(dependencyManifest);
                 return true;
             }
 
