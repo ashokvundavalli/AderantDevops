@@ -95,8 +95,6 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
         
         if ($currentBuildCount -gt $lastGoodBuild) {
             RenderWarningShields $true $currentBuildCount $lastGoodBuild
-            $ratchet.DiffWarnings($teamProject, [int]$buildDefinitionId, [int]$buildId)
-
             throw "Warning count has increased since the last good build"
         }
         RenderWarningShields $false $currentBuildCount $lastGoodBuild
