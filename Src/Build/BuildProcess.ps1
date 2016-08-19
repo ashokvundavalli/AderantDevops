@@ -74,7 +74,7 @@ use -Path $MSBuildLocation -Name MSBuild
 
 $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
-$dropLocation = "\\dfs.aderant.com\ExpertSuite\Dev\FrameworkNext"
+$dropLocation = "\\dfs.aderant.com\ExpertSuite\Main\"
 
 function GetVssConnection() {
    $endpoint = Get-VstsEndpoint -Name "SystemVssConnection" -Require
@@ -263,20 +263,20 @@ task Quality -If (-not $IsDesktopBuild) {
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
-    $text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
-    $text -match '(?m)(AssemblyFileVersion\(\")(?<version>[0-9]*.[0-9]*.[0-9]*.[0-9]*)' | Out-Null    
-    $version = $Matches.version
+    #$text = Get-Content $Repository\Build\CommonAssemblyInfo.cs -Raw
+    #$text -match '(?m)(AssemblyFileVersion\(\")(?<version>[0-9]*.[0-9]*.[0-9]*.[0-9]*)' | Out-Null    
+    #$version = $Matches.version
 
-    $text = Get-Content $Repository\Build\TFSBuild.rsp -Raw
-    $text -match 'ModuleName=(?<name>[^"]+)' | Out-Null    
-    $name = $Matches.name    
+    #$text = Get-Content $Repository\Build\TFSBuild.rsp -Raw
+    #$text -match 'ModuleName=(?<name>[^"]+)' | Out-Null    
+    #$name = $Matches.name    
     
-    . $Env:EXPERT_BUILD_DIRECTORY\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
+    #. $Env:EXPERT_BUILD_DIRECTORY\Build\CopyToDrop.ps1 -moduleRootPath $Repository -dropRootUNCPath $dropLocation\$name\1.8.0.0 -assemblyFileVersion $version
 
-    $fullDropPath = "$dropLocation\$name\1.8.0.0\$version"
+    #$fullDropPath = "$dropLocation\$name\1.8.0.0\$version"
 
-    # Associate the drop back to the build
-    Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"    
+    ## Associate the drop back to the build
+    #Write-Host "##vso[artifact.associate type=filepath;artifactname=drop]$fullDropPath"    
 }
 
 
