@@ -30,9 +30,8 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        // This data structure is a bit crude. Would be nice if Paket used a sightly less shit format. Plain text is annoying to parse with C#.
         private string[] textRepresentation;
-        private List<DependencyTextLine> dependencyText = new List<DependencyTextLine> ();
+        private List<DependencyTextLine> dependencyText = new List<DependencyTextLine>();
         private List<string> dependencies = new List<string>();
 
         public string[] Lines {
@@ -44,10 +43,20 @@ namespace Aderant.Build.Packaging {
         }
 
         public PackageTemplateFile(string contents) {
-            textRepresentation = Regex.Split(contents, @"(?<=\r\n)(?!$)");
+            textRepresentation = contents.Split(new[] { '\n' });
+
+            NormalizeTextRepresentation();
 
             FindSection("dependencies");
             ExtractDependenciesFromSection();
+        }
+
+        private void NormalizeTextRepresentation() {
+            for (int i = 0; i < textRepresentation.Length; i++) {
+                string line = textRepresentation[i];
+
+                textRepresentation[i] = line.TrimEnd();
+            }
         }
 
         private void ExtractDependenciesFromSection() {
@@ -101,24 +110,29 @@ namespace Aderant.Build.Packaging {
             List<string> lines = textRepresentation.ToList();
 
             List<string> list = dependencies.ToList();
-            list.Insert(0, "dependencies" + Environment.NewLine);
+            list.Insert(0, "dependencies");
 
             if (dependencyText.Any()) {
                 lines.InsertRange(dependencyText[0].LineNumber, CreateTextRepresentation(list));
             } else {
-                lines.Add(Environment.NewLine);
                 lines.AddRange(CreateTextRepresentation(list));
             }
 
             using (var writer = new StreamWriter(stream, Encoding.UTF8, 4096, stream is MemoryStream)) {
-                foreach (var line in lines) {
-                    writer.Write(line);
+                for (int i = 0; i < lines.Count; i++) {
+                    var line = lines[i];
+
+                    if (i == lines.Count - 1) {
+                        writer.Write(line);
+                    } else {
+                        writer.WriteLine(line);
+                    }
                 }
             }
         }
 
         private List<string> CreateTextRepresentation(List<string> list) {
-            return list.Select((s, i) => i == 0 ? s : s.PadLeft(s.Length + 4) + Environment.NewLine).ToList();
+            return list.Select((s, i) => i == 0 ? s : s.PadLeft(s.Length + 4)).ToList();
         }
     }
 }

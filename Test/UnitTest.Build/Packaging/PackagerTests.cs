@@ -77,7 +77,6 @@ namespace UnitTest.Build.Packaging {
             }
         }
 
-
         [TestMethod]
         public void Adding_new_dependencies_to_template() {
             var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
@@ -99,17 +98,16 @@ id Aderant.Deployment.Core
 authors Aderant
 description
     Provides libraries and services for deploying an Expert environment.
-files    
-    Bin/Module/*.config ==> lib 
-    Bin/Module/Aderant.* ==> lib 
+files
+    Bin/Module/*.config ==> lib
+    Bin/Module/Aderant.* ==> lib
     Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
     Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
     Bin/Module/Monitoring ==> lib/Monitoring
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo 
-"; // Trailing newline isn't significant and is an artifact of the file writer
+    Foo";
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
@@ -144,25 +142,74 @@ id Aderant.Deployment.Core
 authors Aderant
 description
     Provides libraries and services for deploying an Expert environment.
-files    
-    Bin/Module/*.config ==> lib 
-    Bin/Module/Aderant.* ==> lib 
+files
+    Bin/Module/*.config ==> lib
+    Bin/Module/Aderant.* ==> lib
     Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
     Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
     Bin/Module/Monitoring ==> lib/Monitoring
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo 
-    Bar 
-    Baz 
-"; // Trailing newline isn't significant and is an artifact of the file writer
+    Foo
+    Bar
+    Baz";
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
                 var actual = reader.ReadToEnd();
 
                 Assert.IsFalse(string.IsNullOrWhiteSpace(actual));
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void Round_trip_does_not_produce_artifacts() {
+            string expected = 
+            @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files
+    Bin/Module/*.config ==> lib
+    Bin/Module/Aderant.* ==> lib
+    Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
+    Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
+    Bin/Module/Monitoring ==> lib/Monitoring
+    Bin/Module/InstallerManifests ==> lib/InstallerManifests
+    !Bin/Module/*.exe.config
+dependencies
+    Foo
+    Bar
+    Baz";
+
+            var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies_UNIX);
+            packageTemplateFile.AddDependency(Domain.PackageName("Foo"), VersionRequirement.AllReleases);
+            packageTemplateFile.AddDependency(Domain.PackageName("Bar"), VersionRequirement.AllReleases);
+            packageTemplateFile.AddDependency(Domain.PackageName("Baz"), VersionRequirement.AllReleases);
+
+            string actual;
+
+            using (var stream = new MemoryStream()) {
+                using (var reader = new StreamReader(stream)) {
+                    packageTemplateFile.Save(stream);
+
+                    stream.Position = 0;
+                    actual = reader.ReadToEnd();
+                }
+            }
+
+            packageTemplateFile = new PackageTemplateFile(actual);
+
+            var stream2 = new MemoryStream();
+            using (var reader = new StreamReader(stream2)) {
+                packageTemplateFile.Save(stream2);
+
+                stream2.Position = 0;
+                actual = reader.ReadToEnd();
 
                 Assert.AreEqual(expected, actual);
             }
