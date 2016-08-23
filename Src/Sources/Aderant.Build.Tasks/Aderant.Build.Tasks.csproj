@@ -59,10 +59,6 @@
       <HintPath>..\..\..\packages\Microsoft.VisualStudio.Services.Client\lib\net45\Microsoft.TeamFoundation.Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Microsoft.TeamFoundation.Core.WebApi">
-      <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.Core.WebApi.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Microsoft.TeamFoundation.WorkItemTracking.WebApi">
       <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.WorkItemTracking.WebApi.dll</HintPath>
       <Private>False</Private>
