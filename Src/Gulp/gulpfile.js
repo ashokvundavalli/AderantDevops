@@ -38,7 +38,7 @@ gulp.task('WatchWeb.Foundation', ['setModule', 'Web.Foundation'], function () {
     copyModule.watchAndCopyChanges('Web.Foundation');
 });
 
-gulp.task('Web.Foundation', function (moduleName, watch) {
+gulp.task('Web.Foundation', function (moduleName, modulesPath, watch) {
     copyModule.setCurrentModule(moduleName);
     console.log("Copying dependencies from Web.Foundation -> " + moduleName);
     copyModule.copy('Web.Foundation');
@@ -51,8 +51,9 @@ gulp.task('WatchWeb.Presentation', ['setModule', 'Web.Presentation'], function (
     copyModule.watchAndCopyChanges('Web.Presentation');
 });
 
-gulp.task('Web.Presentation', function (moduleName, watch) {
+gulp.task('Web.Presentation', function (moduleName, modulesPath, watch) {
     copyModule.setCurrentModule(moduleName);
+	copyModule.setModulesPath(modulesPath);
     console.log("Copying dependencies from Web.Presentation -> " + moduleName);
     copyModule.copy('Web.Presentation');
     //if (watch) {
@@ -64,7 +65,7 @@ gulp.task('WatchWeb.SMB', ['setModule', 'Web.SMB'], function () {
     copyModule.watchAndCopyChanges('Web.SMB');
 });
 
-gulp.task('Web.SMB', function (moduleName, watch) {
+gulp.task('Web.SMB', function (moduleName, modulesPath, watch) {
     copyModule.setCurrentModule(moduleName);
     console.log("Copying dependencies from Web.SMB -> " + moduleName);
     copyModule.copy('Web.SMB');

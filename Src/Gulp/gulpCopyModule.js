@@ -13,6 +13,7 @@ if (require) {
 // module to copy files from source project to destination
 var copyModule = (function (gulp) {
     var currentModuleName;
+	var currentModulesPath;
     var folders = {};
     // only the first filespec is watched, so make that the master (non generated) one
     folders['Scripts'] = { folderType: 'script', filespec: ['.js', '.d.ts', '.html'] };
@@ -66,6 +67,7 @@ var copyModule = (function (gulp) {
             throw "folderName name null";
         var paths = getPathsForModuleAndFolder(moduleName, folderName);
 
+
         // copy to dependency root folder
         gulp.src(paths.scripts, { base: getPath(moduleName, folderName) })
 			.pipe(changed(paths.dependencyRootFolder, { hasChanged: changed.compareSha1Digest })) // compareLastModifiedTime
@@ -99,7 +101,8 @@ var copyModule = (function (gulp) {
             files.push(prefix + '**/*' + folders[folderName].filespec[i].replace("{moduleName}", moduleName));
         }
         var moduleFolder;
-		var moduleRoot = "../../../" + currentModuleName;
+		var moduleRoot = currentModulesPath + "/" + currentModuleName;
+		
 		moduleFolder = moduleRoot + '/Src/' + currentModuleName + '/' + folderName + '/' + moduleName + '/';
         if (folders[folderName].folderType == 'bin') {
             moduleFolder = moduleRoot + '/Src/' + currentModuleName + '/bin/';
@@ -115,17 +118,17 @@ var copyModule = (function (gulp) {
 
     // gets the folder for a single folder in a module
     function getPath(moduleName, folderName) {
-		var moduleRoot = "../../../" + currentModuleName;
+		var moduleRoot = currentModulesPath + "/" + currentModuleName;
         if (!moduleName)
             throw "module name null";
         if (!folderName)
             throw "folderName name null";
         var filespec = folders[folderName];
         if (filespec.folderType == 'script') {
-            return '../../../' + moduleName + '/Src/' + moduleName + '/' + folderName + '/' + moduleName + '/';
+            return currentModulesPath + "/" + moduleName + '/Src/' + moduleName + '/' + folderName + '/' + moduleName + '/';
         }
         if (filespec.folderType == 'bin') {
-            return '../../../' + moduleName + '/Src/' + moduleName + '/bin';
+            return currentModulesPath + "/" + moduleName + '/Src/' + moduleName + '/bin';
         }
         throw "unknown folder type " + filespec.folderType;
     }
@@ -134,10 +137,15 @@ var copyModule = (function (gulp) {
         currentModuleName = moduleName;
     }
 
+    function setModulesPath(modulesPath) {
+        currentModulesPath = modulesPath.replace(/\\/g, '/');
+    }
+
     return {
         copy: copyModule,
         watchAndCopyChanges: watchAndCopyChanges,
-        setCurrentModule: setCurrentModule
+        setCurrentModule: setCurrentModule,
+		setModulesPath: setModulesPath
     };
 })(gulp);
 
