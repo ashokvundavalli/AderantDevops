@@ -142,15 +142,19 @@ namespace Aderant.Build.DependencyResolver {
                 try {
                     latestBuild = referencedModule.GetPathToBinaries(DependencySources.DropLocation);
                 } catch (BuildNotFoundException) {
+                    logger.Info("BuildNotFoundException, Attempting to fetch from local build");
                     string localModuleDirectory = Path.Combine(dependenciesDirectory, @"..\..\" + referencedModule, "bin", "module");
                     localModuleDirectory = Path.GetFullPath(localModuleDirectory);
                     latestBuild = localModuleDirectory;
                 }
                 if (Directory.Exists(latestBuild)) {
                     await CopyContentsAsync(dependenciesDirectory, referencedModule, latestBuild, false);
+                } else {
+                    throw new BuildNotFoundException($"Both the drop location and local path ({latestBuild}) for module {referencedModule} do not exist");
                 }
 
-                OnModuleDependencyResolved(new DependencyResolvedEventArgs {
+
+        OnModuleDependencyResolved(new DependencyResolvedEventArgs {
                     DependencyProvider = referencedModule.Name,
                     Branch = Aderant.Build.Providers.PathHelper.GetBranch(latestBuild, false),
                     ResolvedUsingHardlink = false,
