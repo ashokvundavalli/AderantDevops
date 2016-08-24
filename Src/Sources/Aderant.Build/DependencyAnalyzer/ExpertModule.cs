@@ -285,7 +285,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         protected virtual string GetBinariesPath(string dropLocation) {
             if (AssemblyVersion == null) {
-                throw new ArgumentNullException(nameof(AssemblyVersion), string.Format(CultureInfo.InvariantCulture, "The module {0} from source {1} does not have an assembly version specified", Name, RepositoryType));
+                throw new ArgumentNullException(nameof(AssemblyVersion), string.Format(CultureInfo.InvariantCulture, "The module {0} from source {1} does not have an assembly version specified.", Name, RepositoryType));
             }
 
             dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
