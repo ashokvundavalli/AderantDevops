@@ -284,6 +284,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         protected virtual string GetBinariesPath(string dropLocation) {
             if (AssemblyVersion == null) {
+                System.Diagnostics.Debugger.Launch();
                 throw new ArgumentNullException(nameof(AssemblyVersion), "AssemblyVersion != null");
             }
 
