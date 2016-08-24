@@ -3,6 +3,8 @@
 # Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
 
+$GulpDirectory = (resolve-path ([System.IO.Path]::Combine($PSScriptRoot, "..\..\Gulp"))).path
+
 function SetUserEnvironmentVariableNoWait($name, $value) {
     # SetEnvironmentVariable is very slow as it waits for apps to respond so we have this lovely async work around
 Add-Type -MemberDefinition @"
