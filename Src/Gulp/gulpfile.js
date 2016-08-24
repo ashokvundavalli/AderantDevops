@@ -45,9 +45,6 @@ gulp.task('Web.Foundation', function (moduleName, modulesPath, watch) {
 
     console.log("Copying dependencies from Web.Foundation -> " + moduleName);
     copyModule.copy('Web.Foundation');
-    //if (watch) {
-    //    copyModule.watchAndCopyChanges('Web.Foundation');
-    //}
 });
 
 gulp.task('WatchWeb.Presentation', ['setModule', 'Web.Presentation'], function (modulesPath) {
@@ -60,9 +57,6 @@ gulp.task('Web.Presentation', function (moduleName, modulesPath, watch) {
 	copyModule.setModulesPath(modulesPath);
     console.log("Copying dependencies from Web.Presentation -> " + moduleName);
     copyModule.copy('Web.Presentation');
-    //if (watch) {
-    //    copyModule.watchAndCopyChanges('Web.Presentation');
-    //}
 });
 
 gulp.task('WatchWeb.SMB', ['setModule', 'Web.SMB'], function (modulesPath) {
@@ -75,9 +69,6 @@ gulp.task('Web.SMB', function (moduleName, modulesPath, watch) {
 	copyModule.setModulesPath(modulesPath);
     console.log("Copying dependencies from Web.SMB -> " + moduleName);
     copyModule.copy('Web.SMB');
-    //if (watch) {
-    //    copyModule.watchAndCopyChanges('Web.SMB');
-    //}
 });
 
 gulp.task('WatchAll', ['setModule', 'All'], function (modulesPath) {
@@ -93,11 +84,6 @@ gulp.task('All', ['setModule'], function (modulesPath,watch) {
 	    console.log("Copying dependencies from " + dependentModules[i] + " -> " + currentModule);
 	    copyModule.copy(dependentModules[i]);
 	}
-    //if (watch) {
-    //    for (var i = 0; i < dependentModules.length; i++) {
-    //        copyModule.watchAndCopyChanges(dependentModules[i]);
-    //    }
-    //}
 });
 
 gulp.task('default', ['All']);
