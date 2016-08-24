@@ -34,12 +34,15 @@ gulp.task('setModule', function (moduleName) {
     currentModule = moduleName;
 });
 
-gulp.task('WatchWeb.Foundation', ['setModule', 'Web.Foundation'], function () {
+gulp.task('WatchWeb.Foundation', ['setModule', 'Web.Foundation'], function (modulesPath) {
+	copyModule.setModulesPath(modulesPath);
     copyModule.watchAndCopyChanges('Web.Foundation');
 });
 
 gulp.task('Web.Foundation', function (moduleName, modulesPath, watch) {
     copyModule.setCurrentModule(moduleName);
+	copyModule.setModulesPath(modulesPath);
+
     console.log("Copying dependencies from Web.Foundation -> " + moduleName);
     copyModule.copy('Web.Foundation');
     //if (watch) {
@@ -47,7 +50,8 @@ gulp.task('Web.Foundation', function (moduleName, modulesPath, watch) {
     //}
 });
 
-gulp.task('WatchWeb.Presentation', ['setModule', 'Web.Presentation'], function () {
+gulp.task('WatchWeb.Presentation', ['setModule', 'Web.Presentation'], function (modulesPath) {
+	copyModule.setModulesPath(modulesPath);
     copyModule.watchAndCopyChanges('Web.Presentation');
 });
 
@@ -61,12 +65,14 @@ gulp.task('Web.Presentation', function (moduleName, modulesPath, watch) {
     //}
 });
 
-gulp.task('WatchWeb.SMB', ['setModule', 'Web.SMB'], function () {
+gulp.task('WatchWeb.SMB', ['setModule', 'Web.SMB'], function (modulesPath) {
+	copyModule.setModulesPath(modulesPath);
     copyModule.watchAndCopyChanges('Web.SMB');
 });
 
 gulp.task('Web.SMB', function (moduleName, modulesPath, watch) {
     copyModule.setCurrentModule(moduleName);
+	copyModule.setModulesPath(modulesPath);
     console.log("Copying dependencies from Web.SMB -> " + moduleName);
     copyModule.copy('Web.SMB');
     //if (watch) {
@@ -74,13 +80,15 @@ gulp.task('Web.SMB', function (moduleName, modulesPath, watch) {
     //}
 });
 
-gulp.task('WatchAll', ['setModule', 'All'], function () {
+gulp.task('WatchAll', ['setModule', 'All'], function (modulesPath) {
+	copyModule.setModulesPath(modulesPath);
     for (var i = 0; i < dependentModules.length; i++) {
         copyModule.watchAndCopyChanges(dependentModules[i]);
     }
 });
 
-gulp.task('All', ['setModule'], function (watch) {
+gulp.task('All', ['setModule'], function (modulesPath,watch) {
+	copyModule.setModulesPath(modulesPath);
     for (var i = 0; i < dependentModules.length; i++) {
 	    console.log("Copying dependencies from " + dependentModules[i] + " -> " + currentModule);
 	    copyModule.copy(dependentModules[i]);

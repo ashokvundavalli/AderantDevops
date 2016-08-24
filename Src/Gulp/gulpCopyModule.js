@@ -36,6 +36,7 @@ var copyModule = (function (gulp) {
 
     function watchAndCopyChanges(moduleName) {
         var paths = getWatchPaths(moduleName);
+		
         for (var i = 0; i < paths.length; i++) {
             gulp.watch(paths[i].folder + '**/*' + parseFilespec(paths[i].filespec[0], moduleName), batch({ timeout: 1000 }, function (events, cb) {
                 events.on('data', function (e) {
@@ -118,7 +119,6 @@ var copyModule = (function (gulp) {
 
     // gets the folder for a single folder in a module
     function getPath(moduleName, folderName) {
-		var moduleRoot = currentModulesPath + "/" + currentModuleName;
         if (!moduleName)
             throw "module name null";
         if (!folderName)
