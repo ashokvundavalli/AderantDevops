@@ -53,5 +53,17 @@ namespace UnitTest.Build.Tasks {
 
             Assert.IsTrue(v.Execute());
         }
+
+        [TestMethod]
+        public void Is_test_project() {
+            OrmMappingValidator v = new OrmMappingValidator();
+            v.BuildEngine = new Moq.Mock<IBuildEngine>().Object;
+
+            v.ProjectTypeGuids = new[] { new TaskItem("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}"), new TaskItem("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"),  };
+
+            v.Execute();
+
+            Assert.IsTrue(v.IsTestProject);
+        }
     }
 }

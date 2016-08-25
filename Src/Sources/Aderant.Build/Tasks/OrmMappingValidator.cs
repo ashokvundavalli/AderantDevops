@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace Aderant.Build.Tasks {
     public class OrmMappingValidator : Microsoft.Build.Utilities.Task {
         private static System.Text.RegularExpressions.Regex match = new Regex("(?i)(OrmMappingDefinition)");
+        private static Guid unitTestProjectType = Guid.Parse("3AC096D0-A1C2-E12C-1390-A8335801FDAB");
 
         public ITaskItem[] Content { get; set; }
 
@@ -18,7 +19,36 @@ namespace Aderant.Build.Tasks {
 
         public ITaskItem[] EmbeddedResource { get; set; }
 
+        public ITaskItem[] ProjectTypeGuids { get; set; }
+
+        internal bool IsTestProject { get; set; }
+
         public override bool Execute() {
+            SetProjectType();
+
+            if (!IsTestProject) {
+                if (!ExecuteCore()) {
+                    return false;
+                }
+            }
+
+            return !Log.HasLoggedErrors;
+        }
+
+        private void SetProjectType() {
+            if (ProjectTypeGuids != null) {
+                foreach (var taskItem in ProjectTypeGuids) {
+                    Guid id;
+                    if (Guid.TryParse(taskItem.ItemSpec, out id)) {
+                        if (id == unitTestProjectType) {
+                            IsTestProject = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        private bool ExecuteCore() {
             if (Compile != null) {
                 if (!ValidateTransformValid(Compile)) {
                     return false;
@@ -33,15 +63,22 @@ namespace Aderant.Build.Tasks {
             if (items.Any()) {
                 ValidateEmbeddedResources(EmbeddedResource, items);
             }
-
-            return !Log.HasLoggedErrors;
+            return true;
         }
 
         private bool ValidateTransformValid(ITaskItem[] compile) {
             foreach (var item in compile) {
-                if (match.IsMatch(item.ItemSpec)) {
-                    Log.LogError("You have an {0} which is not a valid ORM mapping file. The correct extension is .hbm.xml. Also ensure the.cs file is not checked in.", item.ItemSpec);
-                    return false;
+                var fullPath = item.GetMetadata("FullPath");
+
+                if (fullPath != null) {
+                    if (fullPath.IndexOf("Test", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        continue;
+                    }
+
+                    if (match.IsMatch(fullPath)) {
+                        Log.LogError("{0} is not a valid ORM mapping file. The correct extension is .hbm.xml. Also ensure the.cs file is not checked in.", fullPath);
+                        return false;
+                    }
                 }
             }
 
