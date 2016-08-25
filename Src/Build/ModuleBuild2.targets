@@ -44,9 +44,6 @@
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
 
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
-
-    <!--This looks weird but it stops the TeamBuild from calling PostBuild - we want to control when it runs-->
-    <SkipPostBuild>true</SkipPostBuild>
   </PropertyGroup>
 
   <ItemGroup>

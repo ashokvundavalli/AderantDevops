@@ -43,7 +43,10 @@
   <Import Project="..\..\Src\Sources\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
   <Import Project="..\..\Src\Sources\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
   <ItemGroup>
-    <Reference Include="Microsoft.Build.Utilities.v3.5, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Build.Utilities.v3.5, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <Aliases>Buildv35</Aliases>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Services.Client, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -96,6 +99,7 @@
     </Compile>
     <Compile Include="SourceIndexStreamTests.cs" />
     <Compile Include="SourceIndexTests.cs" />
+    <Compile Include="Tasks\OrmMappingValidatorTests.cs" />
     <Compile Include="Tasks\ProjectConformityCheckTests.cs" />
     <Compile Include="TestModuleProviderBase.cs" />
     <Compile Include="TfsBuildInformationTest.cs" />
