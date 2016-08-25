@@ -19,7 +19,7 @@ NUGET
       Microsoft.CodeAnalysis.Common (1.2.2)
       Microsoft.Composition (>= 1.0.27)
     Microsoft.Composition (1.0.30)
-    Microsoft.IdentityModel.Clients.ActiveDirectory (3.13.1) - framework: >= net45
+    Microsoft.IdentityModel.Clients.ActiveDirectory (3.13.4) - framework: >= net45
     Microsoft.IdentityModel.Logging (1.0) - framework: >= net451
     Microsoft.IdentityModel.Tokens (5.0) - framework: >= net451
       Microsoft.IdentityModel.Logging (>= 1.0) - framework: >= net451, >= netstandard14
@@ -43,7 +43,7 @@ NUGET
     Microsoft.WindowsAPICodePack-Core (1.1.0.2) - framework: >= net35
     Microsoft.WindowsAPICodePack-Shell (1.1)
       Microsoft.WindowsAPICodePack-Core (>= 1.1) - framework: >= net35
-    Moq (4.5.16)
+    Moq (4.5.21)
       Castle.Core (>= 3.3.3) - framework: >= net45
     Newtonsoft.Json (9.0.1) - framework: >= net45
     System.Collections (4.0.11) - framework: dnxcore50, >= netstandard11
@@ -125,7 +125,7 @@ NUGET
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
       System.Runtime (>= 4.1) - framework: dnxcore50, netstandard10, netstandard13, >= netstandard15
-    System.Runtime.Handles (4.0.1) - framework: netstandard13, >= netstandard15
+    System.Runtime.Handles (4.0.1) - framework: >= netstandard13
       Microsoft.NETCore.Platforms (>= 1.0.1) - framework: >= netstandard13
       Microsoft.NETCore.Targets (>= 1.0.1) - framework: >= netstandard13
       System.Runtime (>= 4.1) - framework: >= netstandard13

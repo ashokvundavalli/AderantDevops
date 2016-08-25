@@ -257,7 +257,6 @@
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Bold.otf" />
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Light.otf" />
