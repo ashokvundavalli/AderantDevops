@@ -13,8 +13,12 @@
            Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="ProjectConformityCheck"
-         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-         Condition="'$(IsCustomBuild)' != 'true'" />
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <UsingTask TaskName="OrmMappingValidator"
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
 
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
@@ -202,22 +206,20 @@
     
   </Target>
 
-  <Target Name="CheckHbmFile" BeforeTargets="CoreBuild">
-    <ItemGroup>
-      <HbmFiles Include="@(Content-> '%(Filename)%(Extension)' )" />
-      <HbmFiles Include="@(Compile-> '%(Filename)%(Extension)' )" />
-    </ItemGroup>
-    
-    <Error Condition="%(HbmFiles.Identity) == 'OrmMappingDefinitions.hbm.xml' Or  %(HbmFiles.Identity) == 'OrmMappingDefinition.hbm.xml'"
-           Text="%0a=========%0aHBM ERROR %0a=========%0aYou have an OrmMappingDefinition.hbm.xml which is not set to EmbeddedResource.%0aThis is almost certainly an error.%0aSet the type of the file to Embedded Resource so it can be loaded by NHibernate." 
-           File="-->" />
-
-    <Error Condition="%(HbmFiles.Identity) == 'OrmMappingDefinitions.cs' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'"
-       Text="%0a=========%0aHBM ERROR %0a=========%0aYou have an OrmMappingDefinition.cs which is not a valid ORM mapping file. The correct extension is .hbm.xml, also ensure the .cs file is not checked in."
-       File="-->" />
-  </Target>
   
+  <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild" 
+          Condition="'$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
+    <OrmMappingValidator
+      Content="@(Content)"
+      Compile="@(Compile)"
+      None="@(None)"
+      EmbeddedResource="@(EmbeddedResource)"
+      ProjectTypeGuids="$(ProjectTypeGuids)" />
+  
+  </Target>  
+
+  
   <Target Name="ApplyCodeAnalzyer" 
           BeforeTargets="CoreCompile;ResolveAssemblyReferences">
     

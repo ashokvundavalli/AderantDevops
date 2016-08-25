@@ -134,6 +134,7 @@
     <Compile Include="PathUtility.cs" />
     <Compile Include="PhysicalFileSystem.cs" />
     <Compile Include="DependencyResolver\RestoreAction.cs" />
+    <Compile Include="Tasks\OrmMappingValidator.cs" />
     <Compile Include="Tasks\ProjectConformityCheck.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
     <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
@@ -256,7 +257,6 @@
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Bold.otf" />
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Light.otf" />
