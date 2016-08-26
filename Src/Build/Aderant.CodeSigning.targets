@@ -114,9 +114,7 @@
     <Message Text="Signing applications in $(BinModuleDirectory)" />
     
     <ItemGroup>
-      <Applications Include="$(BinModuleDirectory)**\*.exe;
-                             $(BinModuleDirectory)**\*Expert*.msi;
-                             $(BinModuleDirectory)**\DeploymentManager.msi"                                    
+      <Applications Include="$(BinModuleDirectory)**\*.exe;"
                     Exclude="$(BinModuleDirectory)**\*CO.exe;
                              $(BinModuleDirectory)**\Aderant.Development*.exe;
                              $(BinModuleDirectory)**\Aderant.MatterCenterIntegration*;
@@ -140,9 +138,28 @@
       YieldDuringToolExecution="true" />
 
   </Target>
-  
 
-  <Target Name="SignClickOnceFiles" AfterTargets="SignApplications" Condition="'$(CodeSigningEnabled)' == 'true'">
+  <Target Name="SignMSInstallers" AfterTargets="SignApplications" Condition="'$(CodeSigningEnabled)' == 'true'">
+    <Message Text="Signing installers in $(BinModuleDirectory)" />
+
+    <ItemGroup>
+      <Installers Include="$(BinModuleDirectory)**\*expert*.msi;
+                           $(BinModuleDirectory)**\deploymentmanager.msi" />
+    </ItemGroup>
+
+    <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
+
+    <Exec
+      Condition="'@(Installers)' != '' And '$(SignToolPath)' != ''"
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd SHA256 /sha1 $(CertificateHash) /s "My" "%(Installers.FullPath)"'
+      YieldDuringToolExecution="true" />
+  </Target>
+  
+  
+  <Target Name="SignClickOnceFiles" AfterTargets="SignMSInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
+    <Message Text="Signing ClickOnce manifests in $(BinModuleDirectory)"/>
     <PropertyGroup>
       <MinVersion Condition="'$(MinVersion)' == ''">8.0.2.0</MinVersion>
     </PropertyGroup>
