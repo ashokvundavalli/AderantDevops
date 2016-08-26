@@ -114,7 +114,7 @@
     <Message Text="Signing applications in $(BinModuleDirectory)" />
     
     <ItemGroup>
-      <Applications Include="$(BinModuleDirectory)**\*.exe;"                                   
+      <Applications Include="$(BinModuleDirectory)**\*.exe;$(BinModuleDirectory)**\*Expert*.msi;$(BinModuleDirectory)**\DeploymentManager.msi"                                    
                     Exclude="$(BinModuleDirectory)**\*CO.exe;
                              $(BinModuleDirectory)**\Aderant.Development*.exe;
                              $(BinModuleDirectory)**\Aderant.MatterCenterIntegration*;
