@@ -90,24 +90,34 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
     $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
 
-    if ($lastGoodBuild) {
-        RenderWarningSummary $currentBuildCount $lastGoodBuild
+    # TODO: abstract to some kind of context 
+    $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
 
+    if ($lastGoodBuild) {
+        Write-Output "The last good build Id: $($ratchet.LastGoodBuildId)"
+
+        RenderWarningSummary $currentBuildCount $lastGoodBuild
+        
         if ($currentBuildCount -gt $lastGoodBuild) {
             RenderWarningShields $true $currentBuildCount $lastGoodBuild
-            throw "Warning count has increased since the last good build"
+                
+            # We always want the master branch to build
+            if ($sourceBranchName -ne "master") {
+                throw "Warning count has increased since the last good build"
+            }
+            return
         }
         RenderWarningShields $false $currentBuildCount $lastGoodBuild
     }
 }
 
 function RenderWarningSummary([int]$this, [int]$last) {
-    Write-Host (New-Object string -ArgumentList '*', 80)
-    Write-Host "=== Warning Summary ==="
-    Write-Host "Last good build warnings: $last"
-    Write-Host "Current build warnings: $this"
-    Write-Host "=== Warning Summary ==="
-    Write-Host (New-Object string -ArgumentList '*', 80)
+    Write-Output (New-Object string -ArgumentList '*', 80)
+    Write-Output "=== Warning Summary ==="
+    Write-Output "Last good build warnings: $last"
+    Write-Output "Current build warnings: $this"
+    Write-Output "=== Warning Summary ==="
+    Write-Output (New-Object string -ArgumentList '*', 80)
 }
 
 function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
