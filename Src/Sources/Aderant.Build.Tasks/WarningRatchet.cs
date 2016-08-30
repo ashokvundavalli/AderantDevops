@@ -15,6 +15,8 @@ namespace Aderant.Build.Tasks {
             this.connection = connection;
         }
 
+        public int LastGoodBuildId { get; private set; }
+
         public async Task<int?> GetLastGoodBuildWarningCountAsync(string teamProject, int buildDefinitionId) {
             var client = connection.GetClient<BuildHttpClient>();
 
@@ -41,6 +43,8 @@ namespace Aderant.Build.Tasks {
 
             Microsoft.TeamFoundation.Build.WebApi.Build build = result.FirstOrDefault();
             if (build != null) {
+                LastGoodBuildId = build.Id;
+
                 var timelineRecords = await client.GetBuildTimelineAsync(teamProject, build.Id);
                 return SumWarnings(timelineRecords);
             }
@@ -49,7 +53,10 @@ namespace Aderant.Build.Tasks {
         }
 
         private static int SumWarnings(Timeline timelineRecords) {
-            return timelineRecords.Records.Sum(s => s.WarningCount).GetValueOrDefault();
+            return timelineRecords.Records
+                .Where(s => s.WarningCount != null)
+                .Sum(s => s.WarningCount)
+                .GetValueOrDefault();
         }
 
         public int? GetLastGoodBuildWarningCount(string teamProject, int buildDefinition) {
