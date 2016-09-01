@@ -33,15 +33,11 @@
     <BuildStepModuleName>$(ModuleName):</BuildStepModuleName>
 
     <!-- Server module build root -->
-    <SolutionRoot Condition="'$(BuildDirectory)' != ''">$(BuildDirectory)\src</SolutionRoot>
+    <SolutionRoot Condition="'$(IsDesktopBuild)' == 'false' And '$(BuildDirectory)' != ''">$(BuildDirectory)\src</SolutionRoot>
 
     <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(SolutionRoot)</SolutionDirectoryPath>
     <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' != ''">$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
     <SolutionDirectoryPath Condition="!HasTrailingSlash('$(SolutionDirectoryPath)')">$(SolutionDirectoryPath)\</SolutionDirectoryPath>
-
-    <!--Custom build for a module-->
-    <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(BuildRoot)</SolutionDirectoryPath>
-    <BuildScriptsDirectory Condition="('$(IsCustomBuild)' == 'true')">$(SolutionDirectoryPath)BuildScripts\</BuildScriptsDirectory>
 
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
@@ -66,7 +62,7 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-  
+
   <!-- Stub for customizers to override -->
   <Target Name="AfterBuild" />
 
@@ -86,7 +82,7 @@
     -->
     <EndToEndIterationDependsOn Condition="'$(BuildAll)' == 'true'"></EndToEndIterationDependsOn>
   </PropertyGroup>
-  
+
   <Target Name="EndToEndIteration"
           DependsOnTargets="$(EndToEndIterationDependsOn)" />
 
@@ -292,7 +288,7 @@ doc.Save(File);
   ==========================================================================================
   -->
   <Target Name="BuildNumberOverrideTarget"
-          DependsOnTargets="SetBuildNumbers" 
+          DependsOnTargets="SetBuildNumbers"
           AfterTargets="PrepareBuildEnvironment">
 
     <PropertyGroup>
@@ -303,7 +299,7 @@ doc.Save(File);
 
 
   <Target Name="UpdateDropLocation"
-          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" 
+          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'"
           AfterTargets="InitializeEndToEndIteration">
 
     <PropertyGroup>
@@ -314,7 +310,7 @@ doc.Save(File);
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       BuildNumber="$(BuildNumber)" />
-    
+
   </Target>
 
 
@@ -449,7 +445,7 @@ doc.Save(File);
     </BuildStep>
 
     <Error Condition="'$(ModuleName)' == ''" Text="ModuleName is undefined. Cannot get dependencies for an unknown module" />
-    
+
     <Copy SourceFiles="$(BuildScriptsDirectory)\dir.proj" DestinationFolder="$(SolutionDirectoryPath)" />
     <Copy SourceFiles="$(BuildScriptsDirectory)\Aderant.wpp.content.proj" DestinationFolder="$(SolutionDirectoryPath)" />
 
