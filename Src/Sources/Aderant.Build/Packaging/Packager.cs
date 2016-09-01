@@ -69,6 +69,8 @@ namespace Aderant.Build.Packaging {
         }
 
         internal List<string> ReplicateDependenciesToTemplate(Dictionary<Domain.PackageName, Paket.VersionRequirement> dependencyMap, Func<Stream> templateFileStream) {
+            //System.Diagnostics.Debugger.Launch();
+
             PackageTemplateFile templateFile;
 
             using (var reader = new StreamReader(templateFileStream())) {
@@ -82,7 +84,6 @@ namespace Aderant.Build.Packaging {
             templateFile.Save(templateFileStream());
 
             return templateFile.Dependencies;
-
         }
 
         private FSharpOption<IEnumerable<string>> GenerateExcludedTemplates() {
