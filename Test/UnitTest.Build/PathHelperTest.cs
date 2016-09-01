@@ -1,4 +1,5 @@
-﻿using Aderant.Build.Providers;
+﻿using System;
+using Aderant.Build.Providers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -31,7 +32,7 @@ namespace UnitTest.Build {
         public void Automation_branch_full_unc() {
             string branch = PathHelper.GetBranch(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.Framework\5.3.1.0\5.3.5568.49992\Bin\Module");
 
-            Assert.AreEqual(@"Automation\UIAutomation", branch);
+            Assert.AreEqual(@"Automation\UIAutomation", branch, true);
         }
     }
 }

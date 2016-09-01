@@ -82,7 +82,6 @@ namespace Aderant.Build.Packaging {
             templateFile.Save(templateFileStream());
 
             return templateFile.Dependencies;
-
         }
 
         private FSharpOption<IEnumerable<string>> GenerateExcludedTemplates() {

@@ -118,16 +118,22 @@ namespace Aderant.Build.Packaging {
                 lines.AddRange(CreateTextRepresentation(list));
             }
 
+        
+
             using (var writer = new StreamWriter(stream, Encoding.UTF8, 4096, stream is MemoryStream)) {
                 for (int i = 0; i < lines.Count; i++) {
                     var line = lines[i];
 
                     if (i == lines.Count - 1) {
-                        writer.Write(line);
+                        writer.Write(line.TrimEnd());
                     } else {
-                        writer.WriteLine(line);
+                        writer.WriteLine(line.TrimEnd());
                     }
                 }
+
+                // Truncate the remainder of the file... 
+                writer.Flush();
+                stream.SetLength(stream.Position);
             }
         }
 
