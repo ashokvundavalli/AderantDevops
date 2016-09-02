@@ -168,42 +168,40 @@ task GetDependencies {
 }
 
 task Build {
-    exec {
-        # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
-        # node has completed build orchestration.
-        $commonArgs = "/nologo /nr:false /m"
-        $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
+    # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
+    # node has completed build orchestration.
+    $commonArgs = "/nologo /nr:false /m"
+    $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
 
-        if (-not $Repository.EndsWith("\")) {
-            $Repository += "\"
-        }
+    if (-not $Repository.EndsWith("\")) {
+        $Repository += "\"
+    }
 
-        if (-not $Env:EXPERT_BUILD_DIRECTORY.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
-            $commonArgs = "$commonArgs /p:EXPERT_BUILD_DIRECTORY=$Env:EXPERT_BUILD_DIRECTORY\"
-        }
+    if (-not $Env:EXPERT_BUILD_DIRECTORY.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+        $commonArgs = "$commonArgs /p:EXPERT_BUILD_DIRECTORY=$Env:EXPERT_BUILD_DIRECTORY\"
+    }
 
-        $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
-        $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
+    $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
+    $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
 
-        if ($Clean) {
-            $commonArgs = "$commonArgs /p:CleanBin=true"
-        }
+    if ($Clean) {
+        $commonArgs = "$commonArgs /p:CleanBin=true"
+    }
 
-        # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
-        # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
-        $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
+    # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
+    # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
+    $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
 
-        try {
-            pushd $Repository
+    try {
+        Push-Location $Repository
 
-            if ($IsDesktopBuild) {
-                Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
-            } else {
-                . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
-            }
-        } finally {
-            popd
-        }
+        if ($IsDesktopBuild) {
+            Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
+        } else {
+            . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+        }    
+    } finally {
+        Pop-Location
     }
 }
 
@@ -350,7 +348,7 @@ function Enter-BuildTask {
 
 function Exit-BuildTask {
     if ($Task.Error) {
-        Write-Output "Task `"$($Task.Name)`" has errored!"
+        Write-Verbose "Task `"$($Task.Name)`" has errored!"
         $script:step.Finish("Done", [Result]::Failed)
     } else {
         $script:step.Finish("Done", [Result]::Succeeded)

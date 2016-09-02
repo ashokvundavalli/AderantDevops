@@ -208,7 +208,8 @@ doc.Save(File);
       <FailedBuildFile>$(FailedBuildFile)\build.failed</FailedBuildFile>
     </PropertyGroup>
 
-    <Touch Files="$(FailedBuildFile)"
+    <Touch Condition="'$(InputDropLocation)' != ''"
+           Files="$(FailedBuildFile)"
            ForceTouch="true"
            AlwaysCreate="true" />
   </Target>
@@ -227,7 +228,6 @@ doc.Save(File);
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
-    <!--<CallTarget Targets="CheckForWrongReferences" />-->
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipTemplateModule" />
@@ -263,16 +263,6 @@ doc.Save(File);
   <Target Name="BuildNumberOverrideTarget"
           DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
 
-    <!--<GetBuildProperties TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-                        BuildUri="$(BuildUri)"
-                        Condition=" '$(IsDesktopBuild)' != 'true' ">
-      <Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
-    </GetBuildProperties>
-
-    <RemoveDir Condition="'$(DropLocation)' != '' And  '$(IsDesktopBuild)' != 'true'"
-               Directories="$(DropLocation)\$(BuildNumber)"
-               ContinueOnError="true" />-->
-
     <PropertyGroup>
       <!-- 
           For a module build, append the name of the module.
@@ -281,23 +271,12 @@ doc.Save(File);
       <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
       <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
 
+      <!-- Useful for later comparasion -->
+      <InputDropLocation>$(DropLocation)</InputDropLocation>
+      
       <DropLocation Condition="'$(IsDesktopBuild)' == 'false'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</DropLocation>
     </PropertyGroup>
   </Target>
-
-
-  <Target Name="UpdateDropLocation"
-          Condition="'$(BuildAll)' != 'true' And '$(IsDesktopBuild)' != 'true'" AfterTargets="BuildNumberOverrideTarget">
-
-    <!-- Set the drop location back to the FileVersion so the log file goes to the right place --><!--
-    <UpdateBuildNumberDropLocation
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      BuildNumber="$(BuildNumber)"
-      DropLocation="$(DropLocation)\$(FileVersion)" />-->
-
-  </Target>
-
 
   <!--
     ==========================================================================================
