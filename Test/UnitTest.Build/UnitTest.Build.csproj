@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuildControllerTests.cs" />
+    <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
@@ -93,6 +94,11 @@
     <Compile Include="Packaging\PackagerTests.cs" />
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Resources\BuildLogs\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
@@ -126,6 +132,8 @@
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\BuildLogs\buildlog_baseline.txt" />
+    <Content Include="Resources\BuildLogs\log_with_more_warnings.txt" />
     <Content Include="Resources\environment.xml" />
     <Content Include="Resources\ExpertManifest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -153,6 +161,11 @@
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\BuildLogs\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>UnitTest.Build.BuildLogProcessor</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

@@ -8,7 +8,7 @@
   "version": {
     "Major": 0,
     "Minor": 2,
-    "Patch": 12
+    "Patch": 16
   },
   "minimumAgentVersion": "1.83.0",
   "inputs": [
@@ -29,7 +29,7 @@
       "name": "Version",
       "type": "string",
       "label": "Version",
-      "defaultValue": "master",
+      "defaultValue": "$(Build.Infrastructure.Branch)",
       "required": false,
       "helpMarkDown": "The version of the tool chain you want to use.",
       "visibleRule": "Repository != Default"
@@ -40,7 +40,7 @@
       "label": "Repository or Path",
       "required": false,
       "helpMarkDown": "The custom repository address or path to the the tool chain you want to use.",
-      "visibleRule": "Repository != None || Repository != Default"
+      "visibleRule": "Repository != None && Repository != Default"
     }
   ],
   "instanceNameFormat": "Run build pipeline",

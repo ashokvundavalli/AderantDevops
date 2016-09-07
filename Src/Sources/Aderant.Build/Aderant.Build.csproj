@@ -120,7 +120,6 @@
     <Compile Include="Logging\ObservableLogReceiver.cs" />
     <Compile Include="Packaging\CreatePaketTemplatesAction.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
-    <Compile Include="Packaging\InvalidPrereleaseLabel.cs" />
     <Compile Include="Packaging\IPackageContext.cs" />
     <Compile Include="Packaging\PackageProductCommand.cs" />
     <Compile Include="Packaging\Packager.cs" />
