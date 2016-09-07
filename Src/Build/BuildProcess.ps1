@@ -94,12 +94,13 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
 
     if ($lastGoodBuild) {
-        Write-Output "The last good build Id: $($ratchet.LastGoodBuildId)"
+        Write-Output "The last good build id was: $($ratchet.LastGoodBuildId)"
 
-        RenderWarningSummary $currentBuildCount $lastGoodBuild
+        PrintWarningSummary $currentBuildCount $lastGoodBuild
         
         if ($currentBuildCount -gt $lastGoodBuild) {
             RenderWarningShields $true $currentBuildCount $lastGoodBuild
+            RenderWarningReport $teamProject $buildId            
                 
             # We always want the master branch to build
             if ($sourceBranchName -ne "master") {
@@ -111,13 +112,24 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     }
 }
 
-function RenderWarningSummary([int]$this, [int]$last) {
+function PrintWarningSummary([int]$this, [int]$last) {
     Write-Output (New-Object string -ArgumentList '*', 80)
     Write-Output "=== Warning Summary ==="
     Write-Output "Last good build warnings: $last"
     Write-Output "Current build warnings: $this"
     Write-Output "=== Warning Summary ==="
     Write-Output (New-Object string -ArgumentList '*', 80)
+}
+
+function RenderWarningReport([string]$teamProject, [int]$buildId) {
+    $report = $ratchet.CreateWarningReport($teamProject, [int]$buildId)
+    
+    $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
+    $stream.WriteLine($report)
+    $stream.Close()
+    $stream.Dispose()
+
+    Write-Output "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Introduced Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
 }
 
 function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
@@ -137,8 +149,9 @@ function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
     $stream.WriteLine($lastGoodShield)
     $stream.WriteLine($thisBuildShield)
     $stream.Close()
+    $stream.Dispose()
 
-    Write-Host "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\Warnings.md"
+    Write-Output "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\Warnings.md"
 }
 
 function BuildAssociation($vssConnection, $teamProject, $buildId) {

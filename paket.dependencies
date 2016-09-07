@@ -14,5 +14,7 @@ nuget Microsoft.WindowsAPICodePack-Shell
 nuget Microsoft.Composition
 nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
-nuget Microsoft.TeamFoundationServer.Client
-nuget Microsoft.VisualStudio.Services.InteractiveClient
+nuget Microsoft.TeamFoundationServer.Client ~> 14.102.0
+nuget Microsoft.VisualStudio.Services.InteractiveClient ~> 14.102.0
+nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
+nuget Newtonsoft.Json ~> 6.0.0

@@ -43,12 +43,6 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
-        [ExpectedException(typeof(InvalidPrereleaseLabel))]
-        public void Package_starting_with_z_throws_exception() {
-            PackageVersion.CreateVersion("zÆ", "lol");
-        }
-
-        [TestMethod]
         public void Unstable_label_throws_no_exceptions() {
             PackageVersion.CreateVersion("unstable", "lol");
         }
