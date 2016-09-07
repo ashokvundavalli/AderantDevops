@@ -86,7 +86,6 @@ namespace Aderant.Build.Tasks {
             var task = GetLastGoodBuildWarningCountAsync(teamProject, buildDefinition);
 
             try {
-                task.Wait();
                 return task.Result;
             } catch (AggregateException ex) {
                 if (ex.InnerException != null) {

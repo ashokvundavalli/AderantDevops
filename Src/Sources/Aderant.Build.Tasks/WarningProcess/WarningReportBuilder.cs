@@ -72,7 +72,7 @@ namespace Aderant.Build.Tasks.WarningProcess {
         private void ExplainDifference(StringBuilder sb, List<WarningEntry> difference, WarningComparison comparison) {
             if (difference.Count != (comparison.Target.Count() - comparison.Source.Count())) {
                 sb.AppendLine("There is no warning origin correlation performed during the build. This may cause more warnings to be present below than expected. " +
-                              "This is because a small code change can alter the origin of one more warnings. For example adding a new property to a type can alter the source lines for existing warnings.");
+                              "This is because a small code change can alter the origin of one or more warnings. For example adding a new property to a type can alter the source lines for existing warnings.");
             }
         }
     }

@@ -9,16 +9,10 @@ namespace Aderant.Build.Tasks.WarningProcess {
             if (ReferenceEquals(this, other)) {
                 return true;
             }
-            if (IsUnresolvedReference) {
-
-            }
             return string.Equals(Message, other.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         public override int GetHashCode() {
-            if (IsUnresolvedReference) {
-                
-            }
             return Message != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(Message) : 0;
         }
 
