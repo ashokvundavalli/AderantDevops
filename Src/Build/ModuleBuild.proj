@@ -14,7 +14,7 @@
   -->
 
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets"
-          Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets') And '$(TeamBuildVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
+          Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\TeamBuild\Microsoft.TeamFoundation.Build.targets') And ('$(TeamBuildRefPath)' != '' And '$(TeamBuildVersion)' == '')" />
 
   <PropertyGroup>
     <NewLine>%0A</NewLine>
