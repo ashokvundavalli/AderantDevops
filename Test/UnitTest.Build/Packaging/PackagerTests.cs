@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Paket;
@@ -54,7 +55,7 @@ namespace UnitTest.Build.Packaging {
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null).ReplicateDependenciesToTemplate(dict, () => {
+            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
@@ -78,7 +79,7 @@ namespace UnitTest.Build.Packaging {
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null).ReplicateDependenciesToTemplate(dict, () => {
+            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
@@ -122,7 +123,7 @@ dependencies
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null).ReplicateDependenciesToTemplate(dict, () => {
+            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
