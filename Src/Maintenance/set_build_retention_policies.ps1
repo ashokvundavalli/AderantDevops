@@ -69,7 +69,7 @@ foreach ($build in $buildDefinitions) {
 
                     Write-Host "Added flavor to $($build.Name)" 
                 } else {
-                    Write-Host "$($build.Name) has arguments.. not updating" 
+                    Write-Host "Skipped $($build.Name) as it has arguments" 
                 }
             }          
         }
