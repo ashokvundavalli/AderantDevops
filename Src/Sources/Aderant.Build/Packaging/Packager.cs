@@ -53,8 +53,6 @@ namespace Aderant.Build.Packaging {
                 
                 ReplicateDependenciesToTemplate(map.ToDictionary(d => d.Key, d => d.Value), () => fs.OpenFileForWrite(fs.GetFullPath(file)));
 
-                //logger.Info("file="+ file + ",dep=" + dependenciesFile);
-
                 try {
                     logger.Info("Processing " + file);
 
@@ -125,8 +123,6 @@ namespace Aderant.Build.Packaging {
                 yield return file;
             }
         }
-
-        
 
         public static string CreatePackageVersion(string versionJson) {
             dynamic o = JsonConvert.DeserializeObject<dynamic>(versionJson);
