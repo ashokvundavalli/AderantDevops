@@ -1,22 +1,26 @@
-﻿$collectionUri = New-Object Uri("http://tfs:8080/tfs/aderant")
+﻿[CmdletBinding()]
+param(
+    [string]$teamProject = "ExpertSuite",
+    [string]$pattern = "*releases.81x*",
+    [switch]$setToRelease = $false
+)
+
+$collectionUri = New-Object Uri("http://tfs:8080/tfs/aderant")
  
 #Load assemblies
-[Void][Reflection.Assembly]::Load("Microsoft.TeamFoundation.Client, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
-[Void][Reflection.Assembly]::Load("Microsoft.TeamFoundation.Build.Client, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
-[Void][Reflection.Assembly]::LoadFrom("$Env:VS120COMNTOOLS\..\IDE\ReferenceAssemblies\v2.0\Microsoft.TeamFoundation.Build.Workflow.dll")
- 
+[Void][Reflection.Assembly]::LoadFrom("C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.Client.dll")
+[Void][Reflection.Assembly]::LoadFrom("C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.Build.Client.dll")
+[Void][Reflection.Assembly]::LoadFrom("C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.Build.Workflow.dll")
+
 # Connect to the team collection
 $tpc = New-Object Microsoft.TeamFoundation.Client.TfsTeamProjectCollection($collectionUri)
 $tpc.EnsureAuthenticated()
  
 # Get the build service
 $bs = $tpc.GetService([Microsoft.TeamFoundation.Build.Client.IBuildServer])
-$qbSpec = $bs.CreateBuildDefinitionSpec("ExpertSuite", "*803Time*")
+$qbSpec = $bs.CreateBuildDefinitionSpec($teamProject, $pattern)
 
-$buildDefinitions = $bs.QueryBuildDefinitions($qbSpec).Definitions 
-
-
-$setToRelease = $false
+$buildDefinitions = $bs.QueryBuildDefinitions($qbSpec).Definitions
 
 foreach ($build in $buildDefinitions) {
     Write-Host "Processing build: $($build.Name)"
@@ -62,6 +66,10 @@ foreach ($build in $buildDefinitions) {
                     $p["MSBuildArguments"] = "/p:BuildFlavor=Release"
                     $build.ProcessParameters = [Microsoft.TeamFoundation.Build.Workflow.WorkflowHelpers]::serializeProcessParameters($p)
                     $build.Save()
+
+                    Write-Host "Added flavor to $($build.Name)" 
+                } else {
+                    Write-Host "$($build.Name) has arguments.. not updating" 
                 }
             }          
         }
