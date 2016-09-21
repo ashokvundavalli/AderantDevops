@@ -138,7 +138,7 @@ namespace Aderant.Build.Packaging {
     /// The Cmdlet for PowerShell "Publish-ExpertPackage"
     /// To pack the project executives into a .nupkg package.
     /// </summary>
-    [Cmdlet(VerbsData.Publish, "ExpertPackage")]
+    [Cmdlet(VerbsCommon.New, "ExpertPackage")]
     [OutputType(typeof(PackResult))]
     public class Package : PSCmdlet {
 

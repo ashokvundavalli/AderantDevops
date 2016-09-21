@@ -7,16 +7,3 @@ Description "Provides code fixes and refactorings for C# projects"
 files
     bin\Aderant.Build.Analyzer.dll ==> analyzers\dotnet\cs
     bin\Aderant.Build.Analyzer.pdb ==> analyzers\dotnet\cs
-dependencies
-    Aderant.Build.Analyzer
-    Microsoft.AspNet.WebApi.Client <= 5.2.2
-    Microsoft.CodeAnalysis.CSharp
-    Microsoft.CodeAnalysis.CSharp.Workspaces
-    Microsoft.Composition
-    Microsoft.TeamFoundationServer.Client >= 14.102 < 14.103
-    Microsoft.VisualStudio.Services.InteractiveClient >= 14.102 < 14.103
-    Microsoft.WindowsAPICodePack-Shell
-    Moq
-    Newtonsoft.Json >= 6.0 < 6.1
-    System.Collections.Immutable <= 1.1.37
-    WindowsAPICodePack-Core
