@@ -346,10 +346,10 @@ return $parsedDate.Ticks + $build
                 if (CheckBuild $buildLog) {               
                     return $pathToLatestSuccessfulPackage
                 } else {
-                    Write-Info "Rejected failed build: $folderName"
+                    Write-Warning "Rejected failed build: $folderName"
                 }                
             } else {
-                Write-Info "Rejected $folderName as it doesn't contain a package."
+                Write-Warning "Rejected $folderName as it doesn't contain a package."
             }
         }
         
