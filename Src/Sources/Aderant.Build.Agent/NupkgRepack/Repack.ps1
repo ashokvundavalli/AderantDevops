@@ -4,9 +4,25 @@ param (
     [string]$searchPattern = "**\*.nupkg"
 )
 
-Import-Module $PSScriptRoot\ps_modules\VstsTaskSdk
+$agentWorkerModulesPath = "$($env:AGENT_HOMEDIRECTORY)\agent\worker\Modules"
 
-Import-Module Microsoft.TeamFoundation.DistributedTask.Task.Common
+$modules = @("$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll",
+                "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll",
+                "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.TestResults\Microsoft.TeamFoundation.DistributedTask.Task.TestResults.dll")
+
+$files = gci -Path "$Env:AGENT_HOMEDIRECTORY\agent\worker\" -Filter "*.dll"
+foreach ($file in $files) {
+    try {
+        [System.Reflection.Assembly]::LoadFrom($file.FullName)| Out-Null
+    } catch {
+    }
+}
+
+foreach ($module in $modules) {
+    Import-Module $module
+}
+
+Import-Module $PSScriptRoot\ps_modules\VstsTaskSdk
 
 Add-Type -AssemblyName "System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 Add-Type -AssemblyName "System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
@@ -87,7 +103,7 @@ function RemoveEncoding([System.IO.Compression.ZipArchive]$archive, [System.IO.C
 foreach ($package in $packages) {
     Write-Host "Processing archive $package"
 
-    $archive = [System.IO.Compression.ZipArchive]::new([System.IO.File]::Open($package.FullName, [System.IO.FileMode]::Open), [System.IO.Compression.ZipArchiveMode]::Update)
+    $archive = [System.IO.Compression.ZipArchive]::new([System.IO.File]::Open($package, [System.IO.FileMode]::Open), [System.IO.Compression.ZipArchiveMode]::Update)
 
     foreach ($entry in [System.Linq.Enumerable]::ToList($archive.Entries)) {
         RemoveEncoding $archive $entry
