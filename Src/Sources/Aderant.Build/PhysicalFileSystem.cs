@@ -222,7 +222,7 @@ namespace Aderant.Build {
             }
         }
 
-        public void CopyDirectory(string source, string destination) {
+        public virtual void CopyDirectory(string source, string destination) {
             if (source == null) {
                 throw new ArgumentNullException(nameof(source));
             }
@@ -232,7 +232,6 @@ namespace Aderant.Build {
 
             string srcFull = GetFullPath(source);
             string destFull = GetFullPath(destination);
-
 
             CopyDirectoryInternal(srcFull, destFull, true);
         }
@@ -248,7 +247,7 @@ namespace Aderant.Build {
             DirectoryInfo[] dirs = dir.GetDirectories();
             // If the destination directory doesn't exist, create it.
             if (!DirectoryExists(destination)) {
-                Directory.CreateDirectory(destination);
+                EnsureDirectory(destination);
             }
 
             // Get the files in the directory and copy them to the new location.

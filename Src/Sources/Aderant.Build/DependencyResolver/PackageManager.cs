@@ -90,28 +90,25 @@ namespace Aderant.Build.DependencyResolver {
             return FileSystem.FileExists(dependencies.GetDependenciesFile().FindLockfile().FullName);
         }
 
-        public async Task Restore() {
-            await Task.Run(() => {
-                if (!HasLockFile()) {
-                    new UpdateAction(dependencies, false).Run();
-                }
-                new RestoreAction(dependencies).Run();
-            });
+        public void Restore() {
+            if (!HasLockFile()) {
+                new UpdateAction(dependencies, false).Run();
+            }
+            new RestoreAction(dependencies).Run();
         }
 
-        public async Task Update(bool force) {
-            await Task.Run(() => { new UpdateAction(dependencies, force).Run(); });
+        public void Update(bool force) {
+            new UpdateAction(dependencies, force).Run();
         }
 
-        public async Task ShowOutdated() {
-            await Task.Run(() => {
-                // TODO: Break UI binding - return a list
-                dependencies.ShowOutdated(true, false);
-            });
+        public void ShowOutdated() {
+            // TODO: Break UI binding - return a list
+            dependencies.ShowOutdated(true, false);
         }
 
         public void Dispose() {
             traceEventsSubscription.Dispose();
+            traceEventsSubscription = null;
         }
 
         public VersionRequirement GetVersionsFor(string name) {

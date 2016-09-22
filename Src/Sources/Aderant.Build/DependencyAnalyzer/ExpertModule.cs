@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Xml.Linq;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Providers;
@@ -333,8 +334,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             string binaries = Path.Combine(build, "Bin", "Module");
 
             if (fileSystem.DirectoryExists(binaries)) {
-                binariesFolder = binaries;
-                return true;
+                // Guard against empty drop folders, if we run into one it will cause lots of runtime problems
+                // due to missing binaries.
+                if (fileSystem.GetFiles(binaries, "*", false).Any()) {
+                    binariesFolder = binaries;
+                    return true;
+                }
             }
             binariesFolder = null;
             return false;

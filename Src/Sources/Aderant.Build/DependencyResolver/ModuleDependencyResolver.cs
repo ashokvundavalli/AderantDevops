@@ -73,7 +73,7 @@ namespace Aderant.Build.DependencyResolver {
                 Directory.CreateDirectory(dependenciesDirectory);
             }
 
-           IEnumerable<ExpertModule> modules = referencedModules.ToList();
+            IEnumerable<ExpertModule> modules = referencedModules.ToList();
 
             modules = PostProcess(modules);
 
@@ -96,17 +96,17 @@ namespace Aderant.Build.DependencyResolver {
                 manager.Add(new DependencyFetchContext(), availableModules.Where(m => m.RepositoryType == RepositoryType.NuGet));
 
                 if (Outdated) {
-                    await manager.ShowOutdated();
+                    manager.ShowOutdated();
                     return;
                 }
 
                 if (Update) {
                     logger.Info("Updating packages.");
-                    await manager.Update(Force);
+                    manager.Update(Force);
                 }
 
                 logger.Info("Restoring packages.");
-                await manager.Restore();
+                manager.Restore();
             }
 
             await RestorePackages(fileSystem2, availableModules, cancellationToken);
@@ -153,8 +153,7 @@ namespace Aderant.Build.DependencyResolver {
                     throw new BuildNotFoundException($"Both the drop location and local path ({latestBuild}) for module {referencedModule} do not exist");
                 }
 
-
-        OnModuleDependencyResolved(new DependencyResolvedEventArgs {
+                OnModuleDependencyResolved(new DependencyResolvedEventArgs {
                     DependencyProvider = referencedModule.Name,
                     Branch = Aderant.Build.Providers.PathHelper.GetBranch(latestBuild, false),
                     ResolvedUsingHardlink = false,
@@ -374,7 +373,7 @@ namespace Aderant.Build.DependencyResolver {
             } else {
                 availableModules = dependencyManifests;
             }
-            
+
             var referencedModules = availableModules.SelectMany(s => s.ReferencedModules).Distinct();
 
             if (modulesInBuild != null && manifest != null) {

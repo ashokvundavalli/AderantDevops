@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
@@ -27,15 +25,13 @@ namespace Aderant.Build.Packaging {
                 ProductDirectory = productDirectory
             });
 
-            operation.Wait();
-
-            return operation.Result;
+            return operation;
         }
 
-        private async Task<IProductAssemblyResult> AssembleProduct(ProductAssemblyContext context) {
+        private IProductAssemblyResult AssembleProduct(ProductAssemblyContext context) {
             RetrieveBuildOutputs(context);
 
-            IEnumerable<string> licenseText = await RetrievePackages(context);
+            IEnumerable<string> licenseText = RetrievePackages(context);
 
             return new ProductAssemblyResult {
                 ThirdPartyLicenses = licenseText
@@ -45,19 +41,19 @@ namespace Aderant.Build.Packaging {
         private void RetrieveBuildOutputs(ProductAssemblyContext context) {
             var fs = new PhysicalFileSystem(context.ProductDirectory);
 
-            Parallel.ForEach(context.BuildOutputs, folder => {
+            foreach (var folder in context.BuildOutputs) {
                 logger.Info("Copying {0} ==> {1}", folder, context.ProductDirectory);
 
                 fs.CopyDirectory(folder, context.ProductDirectory);
-            });
+            }
         }
 
-        private async Task<IEnumerable<string>> RetrievePackages(ProductAssemblyContext context) {
-            var fs = new PhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
+        private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
+            var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
             var manager = new PackageManager(fs, logger);
 
             manager.Add(context, context.Modules);
-            await manager.Restore();
+            manager.Restore();
 
             var packages = fs.GetDirectories("packages").ToArray();
 
@@ -68,32 +64,35 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, PhysicalFileSystem fs, string[] packages) {
+        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem2 fs, string[] packages) {
             ConcurrentBag<string> licenseText = new ConcurrentBag<string>();
 
-            Parallel.ForEach(packages, packageDirectory => {
-                string lib = Path.Combine(packageDirectory, "lib");
-                if (fs.DirectoryExists(lib)) {
+            string[] nupkgEntries = new[] { "lib", "content" };
 
-                    var packageName = Path.GetDirectoryName(packageDirectory);
+            foreach (var packageDirectory in packages) {
+                foreach (var packageDir in nupkgEntries) {
+                    string nupkgDir = Path.Combine(packageDirectory, packageDir);
 
-                    ReadLicenseText(fs, lib, packageName, licenseText);
+                    if (fs.DirectoryExists(nupkgDir)) {
+                        var packageName = Path.GetDirectoryName(packageDirectory);
 
-                    logger.Info("Copying {0} ==> {1}", lib, context.ProductDirectory);
+                        ReadLicenseText(fs, nupkgDir, packageName, licenseText);
 
-                    fs.CopyDirectory(lib, context.ProductDirectory);
+                        logger.Info("Copying {0} ==> {1}", nupkgDir, context.ProductDirectory);
+
+                        fs.CopyDirectory(nupkgDir, context.ProductDirectory);
+                    }
                 }
-            });
+            }
 
             return licenseText;
         }
 
-        private static void ReadLicenseText(PhysicalFileSystem fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
+        private static void ReadLicenseText(IFileSystem2 fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
             IEnumerable<string> licenses = fs.GetFiles(lib, "*license*txt", true);
             foreach (var licenseFile in licenses) {
                 using (Stream stream = fs.OpenFile(licenseFile)) {
                     using (var reader = new StreamReader(stream)) {
-
                         licenseText.Add(new string('=', 80));
                         licenseText.Add(packageName);
                         licenseText.Add(new string('=', 80));
