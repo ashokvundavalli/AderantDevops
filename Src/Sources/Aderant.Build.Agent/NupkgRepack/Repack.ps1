@@ -1,11 +1,12 @@
 # NuGet encodes spaces as %20, we don't want this so we UrlDecode the entries in the package after packaging
-
 [CmdletBinding()]
 param (    
-    [string]$searchPattern
+    [string]$searchPattern = "**\*.nupkg"
 )
 
 Import-Module $PSScriptRoot\ps_modules\VstsTaskSdk
+
+Import-Module Microsoft.TeamFoundation.DistributedTask.Task.Common
 
 Add-Type -AssemblyName "System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 Add-Type -AssemblyName "System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
