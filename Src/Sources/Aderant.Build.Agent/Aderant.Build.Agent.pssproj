@@ -57,6 +57,7 @@
     <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\zh-CN\" />
     <Folder Include="BuildPipeline\ps_modules\VstsTaskSdk\Strings\resources.resjson\zh-TW\" />
     <Folder Include="BuildPipelinePostBuild\" />
+    <Folder Include="NupkgRepack\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuildPipelinePostBuild\PostBuildPipeline.ps1" />
@@ -94,6 +95,12 @@
     <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\TraceFunctions.ps1" />
     <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\VstsTaskSdk.psd1" />
     <Compile Include="BuildPipeline\ps_modules\VstsTaskSdk\VstsTaskSdk.psm1" />
+    <Compile Include="NupkgRepack\Aspose.Pdf.dll" />
+    <Compile Include="NupkgRepack\Aspose.Words.dll" />
+    <Compile Include="NupkgRepack\icon.png" />
+    <Compile Include="NupkgRepack\PostBuildPipeline.ps1" />
+    <Compile Include="NupkgRepack\Repack.ps1" />
+    <Compile Include="NupkgRepack\task.json" />
     <Compile Include="PublishTask.ps1" />
   </ItemGroup>
   <ItemGroup>
