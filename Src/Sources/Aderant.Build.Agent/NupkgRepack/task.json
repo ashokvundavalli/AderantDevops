@@ -1,0 +1,31 @@
+﻿{
+  "id": "bb239d85-3ec8-4579-afc8-3d6e08d811ab",
+  "name": "NupkgRepack",
+  "friendlyName": "Nupkg Repack",
+  "description": "Repacks a nupkg and removes items which have been URL encoded",
+  "category": "Package",
+  "author": "Aderant (michael.baker@aderant.com)",
+  "version": {
+    "Major": 0,
+    "Minor": 1,
+    "Patch": 10
+  },
+  "minimumAgentVersion": "1.83.0",
+  "inputs": [
+    {
+      "name": "searchPattern",
+      "type": "filePath",
+      "label": "Path to nupkg file(s) to repack",
+      "defaultValue": "**\\*.nupkg",
+      "helpMarkDown":
+        "Pattern to search for nupkg  files to repack.\n\nYou can separate multiple patterns with a semicolon, and you can make a pattern negative by prefixing it with \u0027-:\u0027.",
+      "required": true
+    }
+  ],
+  "instanceNameFormat": "Repack",
+  "execution": {
+    "PowerShell3": {
+      "target": "$(currentDirectory)\\Repack.ps1"
+    }
+  }
+}
