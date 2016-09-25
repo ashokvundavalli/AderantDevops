@@ -1,8 +1,7 @@
-using Aderant.Build.DependencyResolver;
 using Microsoft.FSharp.Collections;
 using Paket;
 
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
     internal class UpdateAction : IDependencyAction {
         private readonly Dependencies dependencies;
         private readonly bool force;

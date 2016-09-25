@@ -7,16 +7,16 @@ namespace Aderant.Build.Versioning {
     /// <summary>
     /// Provides a set of discovery services for extracting version number(s) from a source.
     /// </summary>
-    public class FileVersionAnalyzer {
+    internal class FileVersionAnalyzer {
         public Func<string, Stream> OpenFile { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileVersionAnalyzer"/> class.
         /// </summary>
-        public FileVersionAnalyzer(string assemblyLocation) {
-            this.Analyzers = new List<IVersionAnalyzer>();
-            this.Analyzers.Add(new DotNetAnalyzer(assemblyLocation));
-            this.Analyzers.Add(new JavaScriptAnalyzer());
+        public FileVersionAnalyzer() {
+            Analyzers = new List<IVersionAnalyzer>();
+            Analyzers.Add(new DotNetAnalyzer());
+            Analyzers.Add(new JavaScriptAnalyzer());
         }
 
         /// <summary>

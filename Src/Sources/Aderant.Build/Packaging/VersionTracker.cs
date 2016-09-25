@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Packaging.NuGet;
 
 namespace Aderant.Build.Packaging {
     internal class VersionTracker {
@@ -14,7 +15,7 @@ namespace Aderant.Build.Packaging {
                     }
                 }
 
-                NuspecParser.GetVersion(text);
+                NuspecSerializer.GetVersion(text);
             }
         }
     }

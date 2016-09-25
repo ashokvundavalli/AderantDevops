@@ -92,7 +92,10 @@
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="ModuleWorkspaceTests.cs" />
     <Compile Include="NuspecParserTests.cs" />
+    <Compile Include="Packaging\NuspecTests.cs" />
+    <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />
     <Compile Include="Packaging\PackagerTests.cs" />
+    <Compile Include="Packaging\VersionAnalyzerTests.cs" />
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>

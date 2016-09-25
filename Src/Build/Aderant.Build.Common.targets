@@ -28,7 +28,10 @@
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
     <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
 
-    <BuildAssembly>$(BuildToolsDirectory)\Aderant.Build.dll</BuildAssembly>
+    <BuildToolsDirectory>$([System.IO.Path]::GetFullPath('$(BuildToolsDirectory)'))</BuildToolsDirectory>
+    <BuildSourcesDirectory>$([System.IO.Path]::GetFullPath('$(BuildSourcesDirectory)'))</BuildSourcesDirectory>
+
+    <BuildAssembly>$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
   </PropertyGroup>
@@ -97,6 +100,10 @@
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="CheckCertificate"
+             AssemblyFile="$(BuildAssembly)"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+
+  <UsingTask TaskName="ThirdPartyPackager"
              AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
@@ -176,6 +183,13 @@
       </Code>
     </Task>
   </UsingTask>
+
+  <!-- 
+    Import the users project into our project space if they supplied a project to call back into 
+    This makes all of the properties and tasks loaded here available to ProjectToBuild natively
+  -->
+  <Import Project="$(ProjectToBuild)" Condition="'$(ProjectToBuild)' != ''" />
+  
 
   <Target Name="FindProductManifest" 
           AfterTargets="PrepareBuildEnvironment" 

@@ -101,18 +101,24 @@
     <Compile Include="BuildSummary.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
-    <Compile Include="Commands\CreatePaketTemplates.cs" />
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
     <Compile Include="DependencyResolver\IDependencyAction.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
-    <Compile Include="Packaging\NuspecParser.cs" />
+    <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
+    <Compile Include="Packaging\NuGet\PackageDifferencer.cs" />
+    <Compile Include="Packaging\NuGet\NuspecSerializer.cs" />
     <Compile Include="Packaging\ProductAssemblyContext.cs" />
     <Compile Include="Packaging\ProductAssemblyResult.cs" />
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="RetryingPhysicalFileSystem.cs" />
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
@@ -125,7 +131,7 @@
     <Compile Include="AssemblyVersionInspector.cs" />
     <Compile Include="IFileSystem.cs" />
     <Compile Include="Logging\ObservableLogReceiver.cs" />
-    <Compile Include="Packaging\CreatePaketTemplatesAction.cs" />
+    <Compile Include="Packaging\VersionAnalyzer.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
     <Compile Include="Packaging\IPackageContext.cs" />
     <Compile Include="Packaging\PackageProductCommand.cs" />
@@ -140,12 +146,16 @@
     <Compile Include="PathUtility.cs" />
     <Compile Include="PhysicalFileSystem.cs" />
     <Compile Include="DependencyResolver\RestoreAction.cs" />
+    <Compile Include="Packaging\NuGet\Nuspec.cs" />
+    <Compile Include="Packaging\NuGet\NuspecValue.cs" />
     <Compile Include="Tasks\OrmMappingValidator.cs" />
     <Compile Include="Tasks\ProjectConformityCheck.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
     <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
-    <Compile Include="Tasks\CreatePaketTemplatesTask.cs" />
+    <Compile Include="Packaging\NuGet\StringNuspecValue.cs" />
+    <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
+    <Compile Include="Packaging\NuGet\WellKnownTokens.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />
     <Compile Include="Versioning\FileVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer.cs" />
@@ -262,11 +272,18 @@
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Light.otf" />
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Medium.otf" />
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Bold.otf" />
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Light.otf" />
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Template.nuspec" />
   </ItemGroup>
   <!--<ItemGroup>
     <Analyzer Include="$(OutputPath)\Aderant.Build.Analyzer.dll" />
