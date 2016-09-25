@@ -107,6 +107,12 @@
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
     <Compile Include="DependencyResolver\IDependencyAction.cs" />
+    <Compile Include="Packaging\IProductAssemblyResult.cs" />
+    <Compile Include="Packaging\NuspecParser.cs" />
+    <Compile Include="Packaging\ProductAssemblyContext.cs" />
+    <Compile Include="Packaging\ProductAssemblyResult.cs" />
+    <Compile Include="Packaging\RootItemHandler.cs" />
+    <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="RetryingPhysicalFileSystem.cs" />
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />

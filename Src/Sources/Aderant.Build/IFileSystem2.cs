@@ -41,5 +41,7 @@ namespace Aderant.Build {
         DateTimeOffset GetLastAccessed(string path);
 
         void CopyDirectory(string source, string destination);
+
+        void MoveDirectory(string source, string destination);
     }
 }

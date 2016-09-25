@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace Aderant.Build.Packaging {
     internal class ProductAssembler {
         private readonly ILogger logger;
         private ExpertManifest manifest;
+        private VersionTracker versionTracker;
 
         public ProductAssembler(string productManifestPath, ILogger logger) {
             this.logger = logger;
@@ -29,6 +31,8 @@ namespace Aderant.Build.Packaging {
         }
 
         private IProductAssemblyResult AssembleProduct(ProductAssemblyContext context) {
+            versionTracker = new VersionTracker();
+
             RetrieveBuildOutputs(context);
 
             IEnumerable<string> licenseText = RetrievePackages(context);
@@ -50,12 +54,16 @@ namespace Aderant.Build.Packaging {
 
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
             var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
-            var manager = new PackageManager(fs, logger);
 
-            manager.Add(context, context.Modules);
-            manager.Restore();
+            using (var manager = new PackageManager(fs, logger)) {
+                manager.Add(context, context.Modules);
+                manager.Restore();
+            }
 
             var packages = fs.GetDirectories("packages").ToArray();
+
+            // hack
+            packages = packages.Where(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) == -1).ToArray();
 
             var licenseText = CopyPackageContentToProductDirectory(context, fs, packages);
 
@@ -70,17 +78,44 @@ namespace Aderant.Build.Packaging {
             string[] nupkgEntries = new[] { "lib", "content" };
 
             foreach (var packageDirectory in packages) {
+                ExpertModule module = context.GetModuleByPackage(packageDirectory);
+                if (module == null) {
+                    //throw new InvalidOperationException(string.Format("Unable to resolve module for path: {0}. The module should be defined in the product manifest.", packageDirectory));
+                }
+
                 foreach (var packageDir in nupkgEntries) {
                     string nupkgDir = Path.Combine(packageDirectory, packageDir);
+
+                    PhysicalFileSystem packageRelativeFs = new PhysicalFileSystem(fs.GetFullPath(nupkgDir));
 
                     if (fs.DirectoryExists(nupkgDir)) {
                         var packageName = Path.GetDirectoryName(packageDirectory);
 
+                        if (module != null) {
+                            if (context.IsRootItem(module)) {
+                                RootItemHandler processor = new RootItemHandler(packageRelativeFs) {
+                                    Module = module,
+                                };
+
+                                processor.MoveContent(context, fs.GetFullPath(nupkgDir));
+
+                                versionTracker.FileSystem = fs;
+                                versionTracker.RecordVersion(module, fs.GetFullPath(packageDirectory));
+                                continue;
+                            }
+                        }
+
                         ReadLicenseText(fs, nupkgDir, packageName, licenseText);
 
-                        logger.Info("Copying {0} ==> {1}", nupkgDir, context.ProductDirectory);
-
-                        fs.CopyDirectory(nupkgDir, context.ProductDirectory);
+                        string relativeDirectory;
+                        if (module != null) {
+                            relativeDirectory = context.ResolvePackageRelativeDirectory(module);
+                        } else {
+                            relativeDirectory = context.ProductDirectory;
+                        }
+                        
+                        logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
+                        packageRelativeFs.MoveDirectory(fs.GetFullPath(nupkgDir), relativeDirectory);
                     }
                 }
             }
@@ -101,28 +136,5 @@ namespace Aderant.Build.Packaging {
                 }
             }
         }
-    }
-
-    public interface IProductAssemblyResult {
-        IEnumerable<string> ThirdPartyLicenses { get; }
-    }
-
-    public sealed class ProductAssemblyResult : IProductAssemblyResult {
-        public IEnumerable<string> ThirdPartyLicenses { get; internal set; }
-    }
-
-    public sealed class ProductAssemblyContext : IPackageContext {
-        public IEnumerable<ExpertModule> Modules { get; internal set; }
-        public string ProductDirectory { get; internal set; }
-
-        public bool IncludeDevelopmentDependencies {
-            get { return false; }
-        }
-
-        public bool AllowExternalPackages {
-            get { return false; }
-        }
-
-        public IEnumerable<string> BuildOutputs { get; internal set; }
     }
 }

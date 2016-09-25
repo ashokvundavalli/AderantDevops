@@ -19,9 +19,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal IFileSystem2 FileSystem { get; private set; }
 
         private string name;
-        private List<XAttribute> customAttributes;
+        private IList<XAttribute> customAttributes;
         private ModuleType type;
         private bool hasModuleType = false;
+        
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
@@ -56,37 +57,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
         internal ExpertModule(XElement element) : this() {
-            customAttributes = element.Attributes().ToList();
-
-            SetPropertyValue(value => name = value, element, "Name");
-            SetPropertyValue(value => AssemblyVersion = value, element, "AssemblyVersion");
-            SetPropertyValue(value => FileVersion = value, element, "FileVersion");
-            SetPropertyValue(value => Branch = value, element, "Path");
-            SetPropertyValue(SetGetAction, element, "GetAction");
-
-            if (ModuleType == ModuleType.ThirdParty) {
-                RepositoryType = RepositoryType.NuGet;
-            }
-
-            if (GetAction == GetAction.NuGet) {
-                RepositoryType = RepositoryType.NuGet;
-            }
-        }
-
-        private void SetPropertyValue(Action<string> setAction, XElement element, string attributeName) {
-            XAttribute attribute = element.Attribute(attributeName);
-            if (attribute != null) {
-                setAction(attribute.Value);
-
-                // Remove this attribute from the collection as it isn't custom
-                customAttributes.Remove(attribute);
-            }
-        }
-
-        private void SetGetAction(string value) {
-            if (!string.IsNullOrEmpty(value)) {
-                GetAction = (GetAction) Enum.Parse(typeof (GetAction), value.Replace("_", "-"), true);
-            }
+            ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
 
         /// <summary>
@@ -231,6 +202,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         internal RepositoryType RepositoryType { get; set; }
         internal VersionRequirement VersionRequirement { get; set; }
+        public bool Extract { get; set; }
+        public string Target { get; set; }
+        public PackageType PackageRootRelativeDirectory { get; set; }
 
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.

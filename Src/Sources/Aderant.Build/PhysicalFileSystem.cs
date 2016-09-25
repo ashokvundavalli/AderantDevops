@@ -216,6 +216,10 @@ namespace Aderant.Build {
             }
 
             try {
+                string destinationDirectory = Path.GetDirectoryName(destFull);
+
+                EnsureDirectory(destinationDirectory);
+
                 File.Move(srcFull, destFull);
             } catch (IOException) {
                 File.Delete(srcFull);
@@ -234,6 +238,18 @@ namespace Aderant.Build {
             string destFull = GetFullPath(destination);
 
             CopyDirectoryInternal(srcFull, destFull, true);
+        }
+
+        public void MoveDirectory(string source, string destination) {
+            if (!DirectoryExists(destination)) {
+                Directory.Move(source, destination);
+            } else {
+                IEnumerable<string> files = GetFiles(source, true);
+
+                foreach (string file in files) {
+                    MoveFile(file, Path.Combine(destination, file));
+                }
+            }
         }
 
         private void CopyDirectoryInternal(string source, string destination, bool recursive) {
