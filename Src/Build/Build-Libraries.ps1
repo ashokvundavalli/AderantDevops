@@ -321,20 +321,12 @@
     ###
     Function global:PathToLatestSuccessfulPackage([string]$pathToPackages, [string]$packageZipName){
 
-        $sort = @{Expression={
+		# Pad the build index within the same day so the names can be sorted in alphabet order, e.g. 16 -> 0016, 1 -> 0001
+		$ToNatural= { [regex]::Replace($_, '\d+',{$args[0].Value.Padleft(4)})}
 
-# Clean the build name, this gives us "yyyyMMdd.xx"
-$value = $_.FullName -replace "([^ ]*)BuildAll_",""
-
-$date = $value.Split('.')[0]
-$build = $value.Split('.')[1]
-
-$parsedDate = [DateTime]::ParseExact($date, "yyyyMMdd", [CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None)
-return $parsedDate.Ticks + $build
-
-}; Ascending=$false}
-
-        $packagingFolders = dir -Path $pathToPackages -Directory -Filter "*BuildAll*" | Sort-Object $sort
+		$packagingFolders = (dir -Path $pathToPackages |
+				where {$_.PsIsContainer -and $_.name.Contains(".BuildAll")} |
+				sort $ToNatural -Descending)
         
         foreach ($folderName in $packagingFolders) {
             Write-Info "Testing $folderName"
