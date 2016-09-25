@@ -87,6 +87,9 @@ namespace Aderant.Build.Tasks {
 
             string text = specification.Save();
 
+            // Guard for TFS which uses read-only files
+            fileSystem.MakeFileWritable(specFilePath);
+
             fileSystem.AddFile(specFilePath, stream => {
                 using (var writer = new StreamWriter(stream)) {
                     writer.Write(text);
