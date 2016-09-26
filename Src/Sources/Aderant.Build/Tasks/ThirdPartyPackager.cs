@@ -49,7 +49,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private void UpdateSpecification(Version version) {
-            string specificationFilePath = fileSystem.GetFiles(Folder, "*.nuspec", true).FirstOrDefault();
+            string specificationFilePath = fileSystem.GetFiles(Folder, "*.nuspec", true).FirstOrDefault(p => !p.Contains("packages"));
 
             if (specificationFilePath == null) {
                 specificationFilePath = CreateSpecFile(fileSystem);
