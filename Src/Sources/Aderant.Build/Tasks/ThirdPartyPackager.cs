@@ -30,7 +30,6 @@ namespace Aderant.Build.Tasks {
             }
 
             if (IsModified(Folder)) {
-
             }
 
             Version version = GetVersion();
@@ -43,7 +42,6 @@ namespace Aderant.Build.Tasks {
         private bool IsModified(string folder) {
             var diff = new PackageDifferencer(fileSystem, logger);
             diff.IsModified(Path.GetFileName(folder), folder);
-
 
             return false;
         }
@@ -91,8 +89,10 @@ namespace Aderant.Build.Tasks {
             fileSystem.MakeFileWritable(specFilePath);
 
             fileSystem.AddFile(specFilePath, stream => {
-                using (var writer = new StreamWriter(stream)) {
-                    writer.Write(text);
+                using (stream) {
+                    using (var writer = new StreamWriter(stream)) {
+                        writer.Write(text);
+                    }
                 }
             });
         }
@@ -109,8 +109,10 @@ namespace Aderant.Build.Tasks {
             string specFile = Path.Combine(Folder, Path.GetFileName(Folder) + ".nuspec");
 
             fs.AddFile(specFile, stream => {
-                using (StreamWriter writer = new StreamWriter(stream)) {
-                    writer.Write(Resources.TemplateNuspec);
+                using (stream) {
+                    using (StreamWriter writer = new StreamWriter(stream)) {
+                        writer.Write(Resources.TemplateNuspec);
+                    }
                 }
             });
 
