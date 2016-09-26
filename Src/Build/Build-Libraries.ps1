@@ -398,6 +398,8 @@
                 $params += "/NP"
             }
 
+            Write-Host "Calling robocopy with args: $args"
+            
             $classes = @("Lonely", "Tweaked", "Same", "Changed", "Newer", "New File", "Older", "[*]Extra File", "Mismatched")
             $maxClassLength = ($classes | Measure-Object -Maximum -Property Length).Maximum
             $regex = "({0})" -f ($classes -join "|")
@@ -591,7 +593,7 @@
             Remove-Item $jobFile -Force -ErrorAction SilentlyContinue
        } else {
             Write-Host "No dependencies for $modulePath to be resolved, copying entire bin/module."
-            robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NS /NDL /XF /A-:R
+            robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NDL /A-:R
        }
     }
 
@@ -620,7 +622,7 @@
        see GetProduct.ps1 (Function MoveDeploymentManagerFilesToFoler) for details.
     3. 8 to 8.0.1.1 - all deployment files listed in ..\Build.Infrastructure\Src\Package\deploymentManagerFilesList.txt are moved to Binaries\Deployment folder.
     #>
-    Function global:MoveDeploymentFiles([string]$expertVersion, [string]$binariesDirectory, [string]$expertSourceDirectory){
+    Function global:MoveDeploymentFiles([string]$expertVersion, [string]$binariesDirectory, [string]$expertSourceDirectory) {
         switch ($expertVersion) {
             "8" {
                 MoveDeploymentFilesV8 $binariesDirectory $expertSourceDirectory
@@ -630,20 +632,12 @@
              }
             "803" {
                 MoveDeploymentFilesV802 $binariesDirectory $expertSourceDirectory
-             }
-             "8.1.0" {
-                MoveDeploymentFilesV810 $binariesDirectory $expertSourceDirectory
-             }
+             }             
             default {
                 throw "Unknown manifest version $expertVersion"
             }
         }
     }
-
-    Function global:MoveDeploymentFilesV810([string]$binariesDirectory, [string]$expertSourceDirectory) {        
-        gci -Path $expertSourceDirectory -Filter "DeploymentManager.msi" -Recurse | Copy-Item -Destination $binariesDirectory -Force
-    }
-
 
     Function global:MoveDeploymentFilesV8([string]$binariesDirectory, [string]$expertSourceDirectory){
         write "Copying Deployment files for V8."
@@ -940,12 +934,6 @@
         return $false
     }
 
-    function Write-Info {
-        param ([string] $message)
-
-        Write-Host "## $message ##" -ForegroundColor Magenta
-    }
-
 
 <#
 .SYNOPSIS
@@ -1011,11 +999,14 @@ function global:Invoke-Tool {
 Write a message to the host in an error colour
 #>
 function global:Write-Error {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
-        [string]$message
-    )
-     Write-Host '! ' $message -ForegroundColor Red
+        [parameter(ValueFromRemainingArguments=$true)][string[]] $args
+    )    
+
+    $remainingArgs = $args | select -Skip 1
+
+    Write-Host ("! $($args[0])" -f $remainingArgs) -ForegroundColor Red    
 }
 
 <#
@@ -1023,11 +1014,14 @@ function global:Write-Error {
 Write a message to the host in a warning colour
 #>
 function global:Write-Warning {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
-        [string]$message
-    )
-     Write-Host '! ' $message -ForegroundColor Yellow
+        [parameter(ValueFromRemainingArguments=$true)][string[]] $args
+    )    
+
+    $remainingArgs = $args | select -Skip 1
+
+    Write-Host ("! $($args[0])" -f $remainingArgs) -ForegroundColor Yellow    
 }
 
 <#
@@ -1035,15 +1029,14 @@ function global:Write-Warning {
 Write a message to the host in a neutral colour
 #>
 function global:Write-Info {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false)]
-        [string]$message
-    )
-    if(-not $message){
-        Write-Host ''
-    } else {
-        Write-Host $message -ForegroundColor Cyan
-    }
+        [parameter(ValueFromRemainingArguments=$true)][string[]] $args
+    )    
+
+    $remainingArgs = $args | select -Skip 1
+
+    Write-Host ("$($args[0])" -f $remainingArgs) -ForegroundColor Cyan    
 }
 
 
@@ -1052,11 +1045,14 @@ function global:Write-Info {
 Write a message to the host in a green colour
 #>
 function global:Write-Success {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
-        [string]$message
-    )
-    Write-Host $message -ForegroundColor Green
+        [parameter(ValueFromRemainingArguments=$true)][string[]] $args
+    )    
+
+    $remainingArgs = $args | select -Skip 1
+
+    Write-Host ("$($args[0])" -f $remainingArgs) -ForegroundColor Green    
 }
 
 Set-Alias robocopy InvokeRobocopy -Scope Global

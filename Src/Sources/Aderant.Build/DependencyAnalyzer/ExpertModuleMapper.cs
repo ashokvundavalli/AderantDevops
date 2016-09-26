@@ -1,12 +1,23 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class ExpertModuleMapper {
+        public static ExpertModule MapFrom(XElement element, ExpertModule expertModule, out IList<XAttribute> customAttributes) {
+            var mapper = new Mapper(element);
+            mapper.Map(expertModule);
+
+            customAttributes = mapper.CustomAttributes;
+
+            return expertModule;
+        }
+
         internal XElement Save(IEnumerable<ExpertModule> modules, bool isProductManifest) {
             modules = SortManifestNodesByName(modules);
 
@@ -110,5 +121,85 @@ namespace Aderant.Build.DependencyAnalyzer {
                 get { return Encoding.UTF8; }
             }
         }
+    }
+
+    internal class Mapper {
+        private readonly XElement element;
+        private List<XAttribute> customAttributes;
+
+        public Mapper(XElement element) {
+            this.element = element;
+            this.customAttributes = element.Attributes().ToList();
+        }
+
+        public IList<XAttribute> CustomAttributes {
+            get {
+                // Return a copy so we don't leak this instance.
+                return customAttributes.ToList();
+            }
+        }
+
+        public void Map(ExpertModule expertModule) {
+            SetPropertyValue("Name", value => expertModule.Name = value);
+
+            SetPropertyValue("AssemblyVersion", value => expertModule.AssemblyVersion = value);
+
+            SetPropertyValue("FileVersion", value => expertModule.FileVersion = value);
+
+            SetPropertyValue("Path", value => expertModule.Branch = value);
+
+            SetPropertyValue("Extract", value => expertModule.Extract = ToBoolean(value));
+
+            SetPropertyValue("Target", value => expertModule.Target = value);
+
+            SetPropertyValue("PackageType", value => ParseEnum<PackageType>(value));
+
+            SetPropertyValue("GetAction", value => {
+
+                if (!string.IsNullOrEmpty(value)) {
+                    expertModule.GetAction = (GetAction)Enum.Parse(typeof(GetAction), value.Replace("_", "-"), true);
+                }
+
+            });
+
+            if (expertModule.ModuleType == ModuleType.ThirdParty) {
+                expertModule.RepositoryType = RepositoryType.NuGet;
+            }
+
+            if (expertModule.GetAction == GetAction.NuGet) {
+                expertModule.RepositoryType = RepositoryType.NuGet;
+            }
+        }
+
+        private static TEnum ParseEnum<TEnum>(string value) where TEnum : struct {
+            TEnum result;
+            if (Enum.TryParse(value, out result)) {
+                return result;
+            }
+            return result;
+        }
+
+        private static bool ToBoolean(string value) {
+            bool result;
+            if (bool.TryParse(value, out result)) {
+                return result;
+            }
+            return false;
+        }
+
+        private void SetPropertyValue(string attributeName, Action<string> setAction) {
+            XAttribute attribute = element.Attribute(attributeName);
+            if (attribute != null) {
+                setAction(attribute.Value);
+
+                // Remove this attribute from the collection as it isn't custom
+                customAttributes.Remove(attribute);
+            }
+        }
+    }
+
+    public enum PackageType {
+        Binaries,
+        Side,
     }
 }

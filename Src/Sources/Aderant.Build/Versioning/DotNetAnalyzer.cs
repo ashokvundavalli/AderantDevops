@@ -9,10 +9,8 @@ namespace Aderant.Build.Versioning {
         private static string[] assemblyExtensions = new[] { ".dll", ".exe" };
 
         private AppDomain inspectionDomain;
-        private readonly string assemblyLocation;
 
-        public DotNetAnalyzer(string assemblyLocation) {
-            this.assemblyLocation = assemblyLocation;
+        public DotNetAnalyzer() {
         }
 
         public FileVersionDescriptor GetVersion(FileInfo file) {
@@ -45,7 +43,7 @@ namespace Aderant.Build.Versioning {
 
         private AssemblyVersionInspector CreateInspector() {
             Assembly thisAssembly = GetType().Assembly;
-            inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, assemblyLocation, null, false);
+            inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(thisAssembly.Location), null, false);
             AssemblyVersionInspector versionInspector = (AssemblyVersionInspector)inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof(AssemblyVersionInspector).FullName);
             return versionInspector;
         }
