@@ -34,16 +34,6 @@ namespace Aderant.Build.Packaging {
             ExecuteInternal(directory, versions);
 
             var versionPair = versions.Where(v => v.Value != null).OrderByDescending(v => v.Value).FirstOrDefault();
-
-            if (versionPair.Key == null && versionPair.Value == null) {
-                logger.Warning("Auto versioning could not determine a for {0}. Assuming 1.0.0", directory);
-                return new Version(1, 0, 0);
-            }
-
-            if (versionPair.Key != null && versionPair.Value.Major == 0 && versionPair.Value.Minor == 0) {
-                logger.Warning("Auto versioning could not determine a for {0}. Assuming 1.0.0", directory);
-                return new Version(1, 0, 0);
-            }
             return versionPair.Value;
         }
 
@@ -55,7 +45,7 @@ namespace Aderant.Build.Packaging {
                 FileVersionDescriptor version = Analyzer.GetVersion(fileSystem.GetFullPath(file));
 
                 if (version != null) {
-                    var fileVersion = new Version();
+                    Version fileVersion = null;
 
                     if (version.FileVersion != null) {
                         Version.TryParse(version.FileVersion, out fileVersion);
@@ -63,25 +53,13 @@ namespace Aderant.Build.Packaging {
                         fileVersion = version.AssemblyVersion;
                     }
 
-                    //if (fileVersion != null && fileVersion > moduleVersion) {
-                    //    moduleVersion = fileVersion;
-                    //}
+                    // strip version to 3 relevant fileVersion
+                    var major = Math.Max(0, fileVersion.Major);
+                    var minor = Math.Max(0, fileVersion.Minor);
+                    var build = Math.Max(0, fileVersion.Build);
 
-                    //info = " * " + Path.GetFileName(file) + " - " + version.FileVersion + " (" + version.AssemblyVersion + ")";
-                    //this.logger.Info(info);
-
-                    versions[file] = fileVersion;
+                    versions[file] = new Version(major, minor, build);
                 }
-
-                //// strip version to 3 relevant fileVersion
-                //var major = Math.Max(0, fileVersion.Major);
-                //var minor = Math.Max(0, fileVersion.Minor);
-                //var build = Math.Max(0, fileVersion.Build);
-
-                //moduleVersion = new Version(major, minor, build, 0);
-                //if (moduleVersion.Build > 999) {
-                //    moduleVersion = new Version(major, minor, 0, 0);
-                //}
             }
 
             IEnumerable<string> directories = fileSystem.GetDirectories(directory);

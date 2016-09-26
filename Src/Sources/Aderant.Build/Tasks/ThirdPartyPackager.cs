@@ -34,6 +34,7 @@ namespace Aderant.Build.Tasks {
             if (IsModified(Folder)) {
             }
 
+            
             Version version = GetVersion();
 
             UpdateSpecification(version);
@@ -42,7 +43,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private bool IsModified(string folder) {
-            var diff = new PackageDifferencer(fileSystem, logger);
+            var diff = new PackageComparer(fileSystem, logger);
             diff.IsModified(Path.GetFileName(folder), folder);
 
             return false;

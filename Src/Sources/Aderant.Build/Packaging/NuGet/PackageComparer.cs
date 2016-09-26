@@ -7,13 +7,13 @@ using Aderant.Build.DependencyResolver;
 using Aderant.Build.Tasks;
 
 namespace Aderant.Build.Packaging.NuGet {
-    internal class PackageDifferencer {
+    internal class PackageComparer {
         private readonly IFileSystem2 fileSystem;
         private readonly Logging.ILogger logger;
 
         //   private bool packageExists;
 
-        public PackageDifferencer(IFileSystem2 fileSystem, Logging.ILogger logger) {
+        public PackageComparer(IFileSystem2 fileSystem, Logging.ILogger logger) {
             this.fileSystem = fileSystem;
             this.logger = logger;
         }

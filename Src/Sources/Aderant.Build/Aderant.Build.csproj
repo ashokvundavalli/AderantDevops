@@ -108,7 +108,7 @@
     <Compile Include="DependencyResolver\IDependencyAction.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
-    <Compile Include="Packaging\NuGet\PackageDifferencer.cs" />
+    <Compile Include="Packaging\NuGet\PackageComparer.cs" />
     <Compile Include="Packaging\NuGet\NuspecSerializer.cs" />
     <Compile Include="Packaging\ProductAssemblyContext.cs" />
     <Compile Include="Packaging\ProductAssemblyResult.cs" />
