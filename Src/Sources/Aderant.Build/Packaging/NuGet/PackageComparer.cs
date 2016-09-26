@@ -18,7 +18,7 @@ namespace Aderant.Build.Packaging.NuGet {
             this.logger = logger;
         }
 
-        public bool IsModified(string packageName, string folder) {
+        public bool GetChanges(string packageName, string folder) {
             bool packageExists = true;
 
             IEnumerable<string> currentContents = fileSystem.GetFiles(folder, "*", true).ToList();

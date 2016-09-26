@@ -44,7 +44,7 @@ namespace Aderant.Build.Tasks {
 
         private bool IsModified(string folder) {
             var diff = new PackageComparer(fileSystem, logger);
-            diff.IsModified(Path.GetFileName(folder), folder);
+            diff.GetChanges(Path.GetFileName(folder), folder);
 
             return false;
         }

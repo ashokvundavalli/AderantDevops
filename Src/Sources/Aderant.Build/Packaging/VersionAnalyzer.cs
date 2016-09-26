@@ -19,10 +19,7 @@ namespace Aderant.Build.Packaging {
             this.fileSystem = fileSystem;
         }
 
-        public FileVersionAnalyzer Analyzer {
-            get;
-            set;
-        }
+        public FileVersionAnalyzer Analyzer { get; set; }
 
         public Version Execute(string directory) {
             if (Analyzer == null) {
@@ -34,6 +31,11 @@ namespace Aderant.Build.Packaging {
             ExecuteInternal(directory, versions);
 
             var versionPair = versions.Where(v => v.Value != null).OrderByDescending(v => v.Value).FirstOrDefault();
+
+            if (versionPair.Value == null) {
+                return new Version(1, 0, 0);
+            }
+
             return versionPair.Value;
         }
 
@@ -53,8 +55,12 @@ namespace Aderant.Build.Packaging {
                         fileVersion = version.AssemblyVersion;
                     }
 
+                    if (fileVersion == null) {
+                        fileVersion = new Version(1, 0, 0);
+                    }
+
                     // strip version to 3 relevant fileVersion
-                    var major = Math.Max(0, fileVersion.Major);
+                    var major = Math.Max(1, fileVersion.Major);
                     var minor = Math.Max(0, fileVersion.Minor);
                     var build = Math.Max(0, fileVersion.Build);
 
