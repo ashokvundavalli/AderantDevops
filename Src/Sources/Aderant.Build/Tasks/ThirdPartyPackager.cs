@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.NuGet;
@@ -31,9 +33,10 @@ namespace Aderant.Build.Tasks {
 
             Log.LogMessage("Processing folder: {0}", Folder);
 
-            if (IsModified(Folder)) {
+            if (!IsModified(Folder)) {
+                Log.LogMessage("No changes where detected for {0}. It will be excluded from packaging.", Folder);
+                return !Log.HasLoggedErrors;
             }
-
             
             Version version = GetVersion();
 
@@ -43,10 +46,38 @@ namespace Aderant.Build.Tasks {
         }
 
         private bool IsModified(string folder) {
-            var diff = new PackageComparer(fileSystem, logger);
-            diff.GetChanges(Path.GetFileName(folder), folder);
+            var packageName = Path.GetFileName(folder);
+            if (DownloadPackage(packageName)) {
 
-            return false;
+                string existingPackageDirectory = Path.Combine(folder, "packages", packageName);
+
+                PackageComparer comparer = new PackageComparer(fileSystem, logger);
+                return comparer.HasChanges(existingPackageDirectory, folder);
+            }
+
+            return true;
+        }
+
+        private bool DownloadPackage(string packageName) {
+            // Download the existing package
+            try {
+                using (PackageManager packageManager = new PackageManager(fileSystem, logger)) {
+                    packageManager.Add(new DependencyFetchContext(false), new[] {
+                        new ExpertModule {
+                            Name = packageName,
+                            GetAction = GetAction.NuGet
+                        }
+                    });
+                    packageManager.Restore();
+                }
+            } catch (Exception ex) {
+                if (ex.Message.Contains("Could not find versions for package")) {
+                    logger.Warning("Package {0} doesn't exist. Assuming new.", packageName);
+
+                    return false;
+                }
+            }
+            return true;
         }
 
         private void UpdateSpecification(Version version) {
