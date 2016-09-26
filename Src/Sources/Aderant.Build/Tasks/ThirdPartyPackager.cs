@@ -29,6 +29,8 @@ namespace Aderant.Build.Tasks {
                 return !Log.HasLoggedErrors;
             }
 
+            Log.LogMessage("Processing folder: {0}", Folder);
+
             if (IsModified(Folder)) {
             }
 
@@ -51,7 +53,10 @@ namespace Aderant.Build.Tasks {
 
             if (specificationFilePath == null) {
                 specificationFilePath = CreateSpecFile(fileSystem);
+            } else {
+                Log.LogMessage("Located specification file: {0}", specificationFilePath);
             }
+            
 
             string specificationText = ReadSpecFile(fileSystem, specificationFilePath);
 
