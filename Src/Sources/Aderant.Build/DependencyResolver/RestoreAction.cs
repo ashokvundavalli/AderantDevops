@@ -1,9 +1,8 @@
-using Aderant.Build.DependencyResolver;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using Paket;
 
-namespace Aderant.Build {
+namespace Aderant.Build.DependencyResolver {
     internal class RestoreAction : IDependencyAction {
         private readonly Dependencies dependencies;
 

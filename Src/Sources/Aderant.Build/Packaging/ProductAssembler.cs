@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
@@ -12,6 +11,7 @@ namespace Aderant.Build.Packaging {
     internal class ProductAssembler {
         private readonly ILogger logger;
         private ExpertManifest manifest;
+        private VersionTracker versionTracker;
 
         public ProductAssembler(string productManifestPath, ILogger logger) {
             this.logger = logger;
@@ -27,15 +27,15 @@ namespace Aderant.Build.Packaging {
                 ProductDirectory = productDirectory
             });
 
-            operation.Wait();
-
-            return operation.Result;
+            return operation;
         }
 
-        private async Task<IProductAssemblyResult> AssembleProduct(ProductAssemblyContext context) {
+        private IProductAssemblyResult AssembleProduct(ProductAssemblyContext context) {
+            versionTracker = new VersionTracker();
+
             RetrieveBuildOutputs(context);
 
-            IEnumerable<string> licenseText = await RetrievePackages(context);
+            IEnumerable<string> licenseText = RetrievePackages(context);
 
             return new ProductAssemblyResult {
                 ThirdPartyLicenses = licenseText
@@ -45,21 +45,25 @@ namespace Aderant.Build.Packaging {
         private void RetrieveBuildOutputs(ProductAssemblyContext context) {
             var fs = new PhysicalFileSystem(context.ProductDirectory);
 
-            Parallel.ForEach(context.BuildOutputs, folder => {
+            foreach (var folder in context.BuildOutputs) {
                 logger.Info("Copying {0} ==> {1}", folder, context.ProductDirectory);
 
                 fs.CopyDirectory(folder, context.ProductDirectory);
-            });
+            }
         }
 
-        private async Task<IEnumerable<string>> RetrievePackages(ProductAssemblyContext context) {
-            var fs = new PhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
-            var manager = new PackageManager(fs, logger);
+        private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
+            var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
 
-            manager.Add(context, context.Modules);
-            await manager.Restore();
+            using (var manager = new PackageManager(fs, logger)) {
+                manager.Add(context, context.Modules);
+                manager.Restore();
+            }
 
             var packages = fs.GetDirectories("packages").ToArray();
+
+            // hack
+            packages = packages.Where(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) == -1).ToArray();
 
             var licenseText = CopyPackageContentToProductDirectory(context, fs, packages);
 
@@ -68,32 +72,62 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, PhysicalFileSystem fs, string[] packages) {
+        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem2 fs, string[] packages) {
             ConcurrentBag<string> licenseText = new ConcurrentBag<string>();
 
-            Parallel.ForEach(packages, packageDirectory => {
-                string lib = Path.Combine(packageDirectory, "lib");
-                if (fs.DirectoryExists(lib)) {
+            string[] nupkgEntries = new[] { "lib", "content" };
 
-                    var packageName = Path.GetDirectoryName(packageDirectory);
-
-                    ReadLicenseText(fs, lib, packageName, licenseText);
-
-                    logger.Info("Copying {0} ==> {1}", lib, context.ProductDirectory);
-
-                    fs.CopyDirectory(lib, context.ProductDirectory);
+            foreach (var packageDirectory in packages) {
+                ExpertModule module = context.GetModuleByPackage(packageDirectory);
+                if (module == null) {
+                    //throw new InvalidOperationException(string.Format("Unable to resolve module for path: {0}. The module should be defined in the product manifest.", packageDirectory));
                 }
-            });
+
+                foreach (var packageDir in nupkgEntries) {
+                    string nupkgDir = Path.Combine(packageDirectory, packageDir);
+
+                    PhysicalFileSystem packageRelativeFs = new PhysicalFileSystem(fs.GetFullPath(nupkgDir));
+
+                    if (fs.DirectoryExists(nupkgDir)) {
+                        var packageName = Path.GetDirectoryName(packageDirectory);
+
+                        if (module != null) {
+                            if (context.IsRootItem(module)) {
+                                RootItemHandler processor = new RootItemHandler(packageRelativeFs) {
+                                    Module = module,
+                                };
+
+                                processor.MoveContent(context, fs.GetFullPath(nupkgDir));
+
+                                versionTracker.FileSystem = fs;
+                                versionTracker.RecordVersion(module, fs.GetFullPath(packageDirectory));
+                                continue;
+                            }
+                        }
+
+                        ReadLicenseText(fs, nupkgDir, packageName, licenseText);
+
+                        string relativeDirectory;
+                        if (module != null) {
+                            relativeDirectory = context.ResolvePackageRelativeDirectory(module);
+                        } else {
+                            relativeDirectory = context.ProductDirectory;
+                        }
+                        
+                        logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
+                        packageRelativeFs.MoveDirectory(fs.GetFullPath(nupkgDir), relativeDirectory);
+                    }
+                }
+            }
 
             return licenseText;
         }
 
-        private static void ReadLicenseText(PhysicalFileSystem fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
+        private static void ReadLicenseText(IFileSystem2 fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
             IEnumerable<string> licenses = fs.GetFiles(lib, "*license*txt", true);
             foreach (var licenseFile in licenses) {
                 using (Stream stream = fs.OpenFile(licenseFile)) {
                     using (var reader = new StreamReader(stream)) {
-
                         licenseText.Add(new string('=', 80));
                         licenseText.Add(packageName);
                         licenseText.Add(new string('=', 80));
@@ -102,28 +136,5 @@ namespace Aderant.Build.Packaging {
                 }
             }
         }
-    }
-
-    public interface IProductAssemblyResult {
-        IEnumerable<string> ThirdPartyLicenses { get; }
-    }
-
-    public sealed class ProductAssemblyResult : IProductAssemblyResult {
-        public IEnumerable<string> ThirdPartyLicenses { get; internal set; }
-    }
-
-    public sealed class ProductAssemblyContext : IPackageContext {
-        public IEnumerable<ExpertModule> Modules { get; internal set; }
-        public string ProductDirectory { get; internal set; }
-
-        public bool IncludeDevelopmentDependencies {
-            get { return false; }
-        }
-
-        public bool AllowExternalPackages {
-            get { return false; }
-        }
-
-        public IEnumerable<string> BuildOutputs { get; internal set; }
     }
 }

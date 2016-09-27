@@ -21,7 +21,7 @@ namespace UnitTest.Build {
 
             ExpertModule m = new ExpertModule(element);
 
-            Assert.AreEqual("Main", m.Branch);
+            Assert.AreEqual("Main", m.Extract);
         }
 
         [TestMethod]
@@ -42,7 +42,7 @@ Path='\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation'
 ExcludeFromPackaging='true' />"));
 
             Assert.AreEqual("5.3.1.0", module.AssemblyVersion);
-            Assert.AreEqual(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation", module.Branch);
+            Assert.AreEqual(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation", module.Extract);
             Assert.AreEqual(GetAction.SpecificDropLocation, module.GetAction);
             Assert.AreEqual(1, module.CustomAttributes.Count);
             

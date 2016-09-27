@@ -1,0 +1,11 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>Expert.Help.Docs</id>
+    <version>8.1.0-ci-20160922-125752</version>
+    <authors>Aderant</authors>
+    <owners>Aderant</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Aderant Expert Documentation</description>
+  </metadata>
+</package>
