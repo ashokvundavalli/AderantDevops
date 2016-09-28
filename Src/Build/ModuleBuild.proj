@@ -63,8 +63,9 @@
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
 
-  <!-- Stub for customizers to override -->
+  <!-- Stubs for customizers to override -->
   <Target Name="AfterBuild" />
+  <Target Name="AfterModuleBuild" />
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)\Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)\Build\TFSBuild.proj')" />
@@ -262,7 +263,7 @@ doc.Save(File);
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-    <CallTarget Targets="AfterBuild" />
+    <CallTarget Targets="AfterBuild;AfterModuleBuild" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />
