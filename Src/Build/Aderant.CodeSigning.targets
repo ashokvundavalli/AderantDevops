@@ -74,6 +74,7 @@
         ArrayList arrayList = new ArrayList();
 
         foreach (var file in Files) {
+          Log.LogMessage("Scanning: " + file);
           FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(file.ItemSpec);
 
           bool isAderantAssembly = false;;
@@ -85,6 +86,7 @@
             try {
               var assemblyName = AssemblyName.GetAssemblyName(file.ItemSpec);
               arrayList.Add(file);
+              Log.LogMessage("File '" + file + "' was detected as an Aderant asset.");
             } catch (BadImageFormatException) {
             }
           }
@@ -118,7 +120,7 @@
   
   
   <Target Name="SignApplications" AfterTargets="CoreCompile" DependsOnTargets="ValidateSigningEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
-    <Message Text="Signing applications in $(IntermediateOutputPath)" />
+    <Message Text="Signing applications in $(IntermediateOutputPath) for $(MSBuildProjectFile)" />
     
     <ItemGroup>
       <Applications Include="$(IntermediateOutputPath)**\*.exe;"
@@ -152,7 +154,8 @@
 
     <ItemGroup>
       <Installers Include="$(BinModuleDirectory)**\*expert*.msi;
-                           $(BinModuleDirectory)**\deploymentmanager.msi" />
+                           $(BinModuleDirectory)**\deploymentmanager.msi;
+                           $(BinModuleDirectory)**\*wizard*.msi;" />
     </ItemGroup>
 
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
