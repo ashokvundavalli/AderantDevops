@@ -5,7 +5,7 @@
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
     <CertificateHash>9AB8870EE441103F76009BE6141265D0D9B6197C</CertificateHash>
-    <TimestampUrl>&quot;http://timestamp.digicert.com&quot;</TimestampUrl>
+    <TimestampUrl>http://timestamp.digicert.com</TimestampUrl>
     
     <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
     <!-- Nothing like consistency eh? -->
@@ -105,22 +105,29 @@
   </Target>
   
 
-  <Target Name="CheckCodeSigningCertitifcate" AfterTargets="PrepareBuildEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
+  <Target Name="CheckCodeSigningCertitifcate" 
+          AfterTargets="PrepareBuildEnvironment" 
+          Condition="'$(CodeSigningEnabled)' == 'true' And '$(ValidSigningEnvironment)' == ''">
+    
     <CheckCertificate ThumbPrint="$(CertificateHash)" />
+    
+    <PropertyGroup>
+      <ValidSigningEnvironment>true</ValidSigningEnvironment>
+    </PropertyGroup>
   </Target>
   
   
-  <Target Name="SignApplications" DependsOnTargets="ValidateSigningEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
-    <Message Text="Signing applications in $(BinModuleDirectory)" />
+  <Target Name="SignApplications" AfterTargets="CoreCompile" DependsOnTargets="ValidateSigningEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
+    <Message Text="Signing applications in $(IntermediateOutputPath)" />
     
     <ItemGroup>
-      <Applications Include="$(BinModuleDirectory)**\*.exe;"
-                    Exclude="$(BinModuleDirectory)**\*CO.exe;
-                             $(BinModuleDirectory)**\Aderant.Development*.exe;
-                             $(BinModuleDirectory)**\Aderant.MatterCenterIntegration*;
-                             $(BinModuleDirectory)**\ExpertService*;
-                             $(BinModuleDirectory)**\*Update*; 
-                             $(BinModuleDirectory)**\*Performance*" />
+      <Applications Include="$(IntermediateOutputPath)**\*.exe;"
+                    Exclude="$(IntermediateOutputPath)**\*CO.exe;
+                             $(IntermediateOutputPath)**\Aderant.Development*.exe;
+                             $(IntermediateOutputPath)**\Aderant.MatterCenterIntegration*;
+                             $(IntermediateOutputPath)**\ExpertService*;
+                             $(IntermediateOutputPath)**\*Update*; 
+                             $(IntermediateOutputPath)**\*Performance*" />
     </ItemGroup>
     
     <GetAssembliesToSign Files="@(Applications)">
@@ -128,18 +135,19 @@
               ItemName="Assemblies" />
     </GetAssembliesToSign>    
 
-    <Message Text="Signing application: %(Assemblies.Filename)%(Assemblies.Extension)" Condition="'@(Assemblies)' != ''" />
+    <Message Text="Signing application: %(Assemblies.Filename)%(Assemblies.Extension) with version .NET $(TargetFrameworkVersion)" Condition="'@(Assemblies)' != ''" />
 
-    <Exec
-      Condition="'@(Assemblies)' != '' And '$(SignToolPath)' != ''"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd SHA256 /sha1 $(CertificateHash) /s "My" "%(Assemblies.FullPath)"'
-      YieldDuringToolExecution="true" />
-
+    <Microsoft.Build.Tasks.SignFile 
+      Condition="'@(Assemblies)' != ''"
+      CertificateThumbprint="$(CertificateHash)" 
+      TimestampUrl="$(TimestampUrl)"
+      TargetFrameworkVersion="$(TargetFrameworkVersion)" 
+      SigningTarget="@(Assemblies)" />
+    
   </Target>
+          
 
-  <Target Name="SignMSInstallers" AfterTargets="SignApplications" Condition="'$(CodeSigningEnabled)' == 'true'">
+  <Target Name="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
     <Message Text="Signing installers in $(BinModuleDirectory)" />
 
     <ItemGroup>
@@ -158,7 +166,7 @@
   </Target>
   
   
-  <Target Name="SignClickOnceFiles" AfterTargets="SignMSInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
+  <Target Name="SignClickOnceFiles" AfterTargets="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
     <Message Text="Signing ClickOnce manifests in $(BinModuleDirectory)"/>
     <PropertyGroup>
       <MinVersion Condition="'$(MinVersion)' == ''">8.0.2.0</MinVersion>

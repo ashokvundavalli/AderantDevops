@@ -45,7 +45,7 @@
     <ModuleSourceDirectory>$(SolutionDirectoryPath)Src\</ModuleSourceDirectory>
     <ModuleTestDirectory>$(SolutionDirectoryPath)Test\</ModuleTestDirectory>
     <ModuleBuildDirectory>$(SolutionDirectoryPath)Build\</ModuleBuildDirectory>
-    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
+    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>    
 
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
 
@@ -62,9 +62,10 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-
   <!-- Stub for customizers to override -->
   <Target Name="AfterBuild" />
+  
+  <Target Name="AfterModuleBuild" />
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)\Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)\Build\TFSBuild.proj')" />
@@ -263,7 +264,8 @@ doc.Save(File);
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
     <CallTarget Targets="AfterBuild" />
-    <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
+    <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
+    <CallTarget Targets="AfterBuild;AfterModuleBuild" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />
     <CallTarget Targets="FinalizeBuild" />

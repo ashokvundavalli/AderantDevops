@@ -22,7 +22,10 @@
 
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
+    <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
   </PropertyGroup>
+
+  <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
   <UsingTask TaskName="GetProductName" 
              TaskFactory="CodeTaskFactory" 
@@ -217,7 +220,7 @@
       EmbeddedResource="@(EmbeddedResource)"
       ProjectTypeGuids="$(ProjectTypeGuids)" />
   
-  </Target>  
+  </Target>
 
   
   <Target Name="ApplyCodeAnalzyer" 
