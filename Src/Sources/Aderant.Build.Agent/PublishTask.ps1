@@ -1,3 +1,4 @@
+[Cmdletbinding()]
 param(
    [Parameter(Mandatory=$true)][string]$TaskPath,
    [Parameter(Mandatory=$false)][string]$TfsUrl = "http://tfs:8080/tfs/Aderant",
