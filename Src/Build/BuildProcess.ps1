@@ -196,6 +196,7 @@ task Build {
 
     $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
     $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
+    $commonArgs = "$commonArgs /p:BuildFlavor=$Env:Build_Flavor"
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
