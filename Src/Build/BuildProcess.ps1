@@ -88,7 +88,7 @@ function GetVssConnection() {
 function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
     $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
     $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
-    $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
+    $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId) 
 
     # TODO: abstract to some kind of context 
     $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
@@ -100,11 +100,18 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
         
         if ($currentBuildCount -gt $lastGoodBuild) {
             RenderWarningShields $true $currentBuildCount $lastGoodBuild
-            RenderWarningReport $teamProject $buildId            
-                
-            # We always want the master branch to build
-            if ($sourceBranchName -ne "master") {
-                throw "Warning count has increased since the last good build"
+
+            $reporter = $ratchet.GetWarningReporter($teamProject, $buildId)
+            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount         
+
+            RenderWarningReport $reporter  
+
+            # Only fail if the adjusted count exceeds the last build
+            if ($adjustedWarningCount -gt $lastGoodBuild) {                
+                # We always want the master branch to build
+                if ($sourceBranchName -ne "master") {
+                    throw "Warning count has increased since the last good build"
+                }
             }
             return
         }
@@ -121,8 +128,8 @@ function PrintWarningSummary([int]$this, [int]$last) {
     Write-Output (New-Object string -ArgumentList '*', 80)
 }
 
-function RenderWarningReport([string]$teamProject, [int]$buildId) {
-    $report = $ratchet.CreateWarningReport($teamProject, [int]$buildId)
+function RenderWarningReport($reporter) {
+    $report = $reporter.CreateWarningReport()
     
     $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
     $stream.WriteLine($report)
