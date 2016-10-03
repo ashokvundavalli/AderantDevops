@@ -191,12 +191,12 @@ function GetBuildFlavor() {
 	if ($Env:Build_Flavor) {
 		$buildFlvaor = $Env:Build_Flavor
 		Write-Host "....................................................................................................." -foregroundcolor Green
-		Write-Host ".......            Applying Build.Flavor from build difinition to $buildFlvaor       ................" -foregroundcolor Green
+		Write-Host ".......            Using Build.Flavor from build difinition to $buildFlvaor          ................" -foregroundcolor Green
 		Write-Host "....................................................................................................." -foregroundcolor Green
 	} elseif ( $Env:Build_SourceBranch -like "*release*" ) {
 		$buildFlvaor = "release"
 		Write-Host "....................................................................................................." -foregroundcolor Green
-		Write-Host ".......                           Entering release mode                      ........................" -foregroundcolor Green
+		Write-Host ".......                           Build in release mode                      ........................" -foregroundcolor Green
 		Write-Host "....................................................................................................." -foregroundcolor Green
 	} else {
 		$buildFlvaor = "debug"
