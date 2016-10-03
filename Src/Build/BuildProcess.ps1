@@ -115,7 +115,7 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
             RenderWarningShields $true $currentBuildCount $lastGoodBuildCount
 
             $reporter = $ratchet.GetWarningReporter($ratchetRequest)
-            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount         
+            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()         
 
             RenderWarningReport $reporter 
 
