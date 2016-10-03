@@ -253,9 +253,9 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            #Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
+            Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
-            #. $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+            . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
         }    
     } finally {
         Pop-Location
@@ -361,7 +361,7 @@ task Package -Jobs Init, PackageDesktop, PackageServer, {
     if ($script:CreatePackage) {
         Write-Output "Entry point was: $($script:EntryPoint.Value)"
 
-        #. $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository
+        . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository
     }
 }
 
