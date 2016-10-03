@@ -85,31 +85,51 @@ function GetVssConnection() {
    return $vssConnection
 }
 
-function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId) {
-    $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
-    $currentBuildCount = $ratchet.GetBuildWarningCount($teamProject, [int]$buildId)
-    $lastGoodBuild = $ratchet.GetLastGoodBuildWarningCount($teamProject, [int]$buildDefinitionId)
+function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId, [string]$buildDefinitionName, [bool]$isDraft) {
+    Write-Host "Running warning ratchet"
 
-    # TODO: abstract to some kind of context 
+    $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
+    
+    $ratchetRequest = New-Object Aderant.Build.Tasks.WarningRatchetRequest
+    $ratchetRequest.TeamProject = $teamProject
+    $ratchetRequest.BuildId = $buildId
+    $ratchetRequest.BuildDefinitionId = $buildDefinitionId
+    $ratchetRequest.BuildDefinitionName = $buildDefinitionName
+    $ratchetRequest.IsDraft = $isDraft
+
+    $currentBuildCount = $ratchet.GetBuildWarningCount($ratchetRequest)
+    $lastGoodBuildCount = $ratchet.GetLastGoodBuildWarningCount($ratchetRequest) 
+
     $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
 
-    if ($lastGoodBuild) {
-        Write-Output "The last good build id was: $($ratchet.LastGoodBuildId)"
+    if (-not $lastGoodBuildCount) {
+        Write-Host "No last good build found for DefinitionId: $buildDefinitionId IsDraft:$isDraft"
+    }
 
-        PrintWarningSummary $currentBuildCount $lastGoodBuild
+    if ($lastGoodBuildCount) {
+        Write-Host "The last good build id was: $($ratchetRequest.Build.Id)"
+
+        PrintWarningSummary $currentBuildCount $lastGoodBuildCount        
         
-        if ($currentBuildCount -gt $lastGoodBuild) {
-            RenderWarningShields $true $currentBuildCount $lastGoodBuild
-            RenderWarningReport $teamProject $buildId            
-                
-            # We always want the master branch to build
-            if ($sourceBranchName -ne "master") {
-                throw "Warning count has increased since the last good build"
+        if ($currentBuildCount -gt $lastGoodBuildCount) {
+            RenderWarningShields $true $currentBuildCount $lastGoodBuildCount
+
+            $reporter = $ratchet.GetWarningReporter($ratchetRequest)
+            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount         
+
+            RenderWarningReport $reporter 
+
+            # Only fail if the adjusted count exceeds the last build
+            if ($adjustedWarningCount -gt $lastGoodBuildCount) {                
+                # We always want the master branch to build
+                if ($sourceBranchName -ne "master") {
+                    throw "Warning count has increased since the last good build"
+                }
             }
             return
         }
-        RenderWarningShields $false $currentBuildCount $lastGoodBuild
-    }
+        RenderWarningShields $false $currentBuildCount $lastGoodBuildCount      
+    }     
 }
 
 function PrintWarningSummary([int]$this, [int]$last) {
@@ -121,8 +141,8 @@ function PrintWarningSummary([int]$this, [int]$last) {
     Write-Output (New-Object string -ArgumentList '*', 80)
 }
 
-function RenderWarningReport([string]$teamProject, [int]$buildId) {
-    $report = $ratchet.CreateWarningReport($teamProject, [int]$buildId)
+function RenderWarningReport($reporter) {
+    $report = $reporter.CreateWarningReport()
     
     $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
     $stream.WriteLine($report)
@@ -233,9 +253,9 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
+            #Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
-            . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+            #. $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
         }    
     } finally {
         Pop-Location
@@ -297,10 +317,14 @@ task Quality -If (-not $IsDesktopBuild) {
 
     $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require -AsInt)
     $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require -AsInt)
+    $buildNumber = (Get-VstsTaskVariable -Name 'Build.BuildNumber' -Require)
+    $buildDefinitionName = (Get-VstsTaskVariable -Name 'Build.DefinitionName' -Require)
     $teamProject = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)
 
     if ($LimitBuildWarnings) {
-        WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId
+        $isDraft = ($buildNumber.EndsWith(".DRAFT"))
+
+        WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId $buildDefinitionName $isDraft
     }
 
     # TODO: Decide on what we want here
@@ -331,14 +355,13 @@ task PackageDesktop -If ($global:IsDesktopBuild) {
 
 task PackageServer -If (-not $global:IsDesktopBuild -and $script:EntryPoint.Value -eq "PostBuild") -Jobs Quality, {
     $script:CreatePackage = $true
-
 }
 
 task Package -Jobs Init, PackageDesktop, PackageServer, {
     if ($script:CreatePackage) {
         Write-Output "Entry point was: $($script:EntryPoint.Value)"
 
-        . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository
+        #. $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository
     }
 }
 

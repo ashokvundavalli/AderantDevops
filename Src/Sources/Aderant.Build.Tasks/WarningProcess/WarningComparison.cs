@@ -23,5 +23,9 @@ namespace Aderant.Build.Tasks.WarningProcess {
         public IEnumerable<WarningEntry> GetDifference() {
             return Target.Except(Source);
         }
+
+        public int GetAdjustedCount() {
+            return Target.Where(t => !t.IsTransient).Count();
+        }
     }
 }

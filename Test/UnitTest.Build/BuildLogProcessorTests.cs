@@ -50,5 +50,17 @@ Warning CS1591 Missing XML comment for publicly visible type or member 'StoredPr
             var actual = WarningReportBuilder.CreateLine(null);
             Assert.IsNotNull(actual);
         }
+
+        [TestMethod]
+        public void Can_detect_transient_warnings() {
+
+            var json = @"{""count"":1,""value"":[""2016-09-30T02:31:56.5884032Z ##[warning]C:\\Program Files (x86)\\MSBuild\\14.0\\bin\\Microsoft.Common.CurrentVersion.targets(3963,5): Warning MSB3026: Could not copy \""C:\\Program Files (x86)\\MSBuild\\14.0\\bin\\ru\\Microsoft.Build.Engine.resources.dll\"" to \""..\\..\\Bin\\Test\\ru\\Microsoft.Build.Engine.resources.dll\"". Beginning retry 1 in 1000ms. The process cannot access the file '..\\..\\Bin\\Test\\ru\\Microsoft.Build.Engine.resources.dll' because it is being used by another process.""]}";
+
+            var parser = new BuildLogParser();
+            var entries = parser.GetWarningEntries(new StringReader(json)).ToList();
+
+            Assert.AreEqual(1, entries.Count);
+            Assert.IsTrue(entries.First().IsCopyWarning);
+        }
     }
 }
