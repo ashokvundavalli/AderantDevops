@@ -105,6 +105,7 @@
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
+    <Compile Include="DependencyResolver\Class1.cs" />
     <Compile Include="DependencyResolver\IDependencyAction.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
@@ -284,6 +285,7 @@
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
     <None Include="Resources\Nuspec.template" />
   </ItemGroup>
   <!--<ItemGroup>
