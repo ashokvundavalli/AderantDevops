@@ -20,7 +20,13 @@ namespace IntegrationTest.Build {
         [TestMethod]
         public void WarningRatchet() {
             var ratchet = new WarningRatchet(new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
-            ratchet.GetLastGoodBuildWarningCountAsync("ExpertSuite", 7623).Wait();
+
+            var request = new WarningRatchetRequest {
+                TeamProject = "ExpertSuite",
+                BuildId = 7623
+            };
+
+            ratchet.GetLastGoodBuildWarningCountAsync(request).Wait();
         }
     }
 }

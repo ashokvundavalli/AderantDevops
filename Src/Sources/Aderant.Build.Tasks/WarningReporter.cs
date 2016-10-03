@@ -8,18 +8,14 @@ using Microsoft.VisualStudio.Services.Client;
 
 namespace Aderant.Build.Tasks {
     public sealed class WarningReporter {
-        private readonly VssConnection connection;
-        private readonly string teamProject;
-        private readonly int buildId;
+        private readonly VssConnection vssConnection;
+        private readonly WarningRatchetRequest request;
         private WarningComparison comparison;
 
-        public WarningReporter(VssConnection connection, string teamProject, int buildId) {
-            this.connection = connection;
-            this.teamProject = teamProject;
-            this.buildId = buildId;
+        public WarningReporter(VssConnection vssConnection, WarningRatchetRequest request) {
+            this.vssConnection = vssConnection;
+            this.request = request;
         }
-
-        public Microsoft.TeamFoundation.Build.WebApi.Build LastGoodBuild { get; set; }
 
         /// <summary>
         /// Creates the warning report. The analysis of what increased the warning count.
@@ -43,31 +39,33 @@ namespace Aderant.Build.Tasks {
         }
         
         private async Task<string> CreateWarningReportAsync() {
-            if (LastGoodBuild == null) {
-                BuildHttpClient client = connection.GetClient<BuildHttpClient>();
-                Microsoft.TeamFoundation.Build.WebApi.Build buildDetails = await client.GetBuildAsync(teamProject, buildId);
+            if (request.Build == null) {
+                BuildHttpClient client = vssConnection.GetClient<BuildHttpClient>();
+                var build = await client.GetBuildAsync(request.TeamProject, request.BuildId);
 
-                await WarningRatchet.GetLastGoodBuildAsync(teamProject, buildDetails.Definition.Id, client);
+                request.Build = build;
+
+                await WarningRatchet.GetLastGoodBuildAsync(client, request);
             }
 
-            if (LastGoodBuild != null) {
-                BuildHttpClient client = connection.GetClient<BuildHttpClient>();
-                Stream first = await GetLogContentsAsync(client);
-                Stream second = await GetLogContentsAsync(client);
+            if (request.Build != null) {
+                BuildHttpClient client = vssConnection.GetClient<BuildHttpClient>();
+                Stream first = await GetLogContentsAsync(client, request);
+                Stream second = await GetLogContentsAsync(client, request);
 
                 BuildLogProcessor processor = new BuildLogProcessor();
                 comparison = processor.GetWarnings(first, second);
 
-                return processor.CreateWarningReport(comparison, LastGoodBuild.Url);
+                return processor.CreateWarningReport(comparison, request.Build.Url);
             }
 
             return await Task.FromResult(string.Empty);
         }
 
-        private async Task<Stream> GetLogContentsAsync(BuildHttpClient client) {
-            var baseline = await client.GetBuildTimelineAsync(teamProject, buildId);
+        private async Task<Stream> GetLogContentsAsync(BuildHttpClient client, WarningRatchetRequest warningRatchetRequest) {
+            var baseline = await client.GetBuildTimelineAsync(warningRatchetRequest.TeamProject, warningRatchetRequest.BuildId);
 
-            return await GetLogAsync(client, teamProject, buildId, baseline);
+            return await GetLogAsync(client, warningRatchetRequest.TeamProject, warningRatchetRequest.BuildId, baseline);
         }
 
         private static Task<Stream> GetLogAsync(BuildHttpClient client, string teamProject, int buildId, Timeline timeline) {
