@@ -115,9 +115,10 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
             RenderWarningShields $true $currentBuildCount $lastGoodBuildCount
 
             $reporter = $ratchet.GetWarningReporter($ratchetRequest)
-            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()         
-
+            
             RenderWarningReport $reporter 
+
+            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()
 
             # Only fail if the adjusted count exceeds the last build
             if ($adjustedWarningCount -gt $lastGoodBuildCount) {                
