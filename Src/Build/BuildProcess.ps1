@@ -163,6 +163,28 @@ function BuildAssociation($vssConnection, $teamProject, $buildId) {
     $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
 }
 
+# Auto detect build target in debug or release mode by code branch name. If it contains "release" then get into release mode, otherwise debug
+# To force build into release or debug mode, set the varaible "build.flavor" at TFS build definition, Edit, Variables
+# In release mode, the splash screen will remove "(Development)" text and display the current version
+function GetBuildFlavor() {
+	$buildFlvaor = ""
+	if ($Env:Build_Flavor) {
+		$buildFlvaor = $Env:Build_Flavor
+		Write-Host "....................................................................................................." -foregroundcolor Green
+		Write-Host ".......            Applying Build.Flavor from build difinition to $buildFlvaor       ................" -foregroundcolor Green
+		Write-Host "....................................................................................................." -foregroundcolor Green
+	} elseif ( $Env:Build_SourceBranch -like "*release*" ) {
+		$buildFlvaor = "release"
+		Write-Host "....................................................................................................." -foregroundcolor Green
+		Write-Host ".......                           Entering release mode                      ........................" -foregroundcolor Green
+		Write-Host "....................................................................................................." -foregroundcolor Green
+	} else {
+		$buildFlvaor = "debug"
+		Write-Host "....... Build in debug mode ................" -foregroundcolor Green
+	}
+	return [string]$buildFlvaor;
+}
+
 #=================================================================================================
 # Synopsis: Performs a incremental build of the Visual Studio Solution if possible.
 # Applies a common build number, executes unit tests and packages the assemblies as a NuGet
@@ -196,7 +218,8 @@ task Build {
 
     $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
     $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
-    $commonArgs = "$commonArgs /p:BuildFlavor=$Env:Build_Flavor"
+	$buildFlavor = GetBuildFlavor   # to build in debug or release
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
