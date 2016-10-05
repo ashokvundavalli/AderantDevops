@@ -35,63 +35,59 @@ namespace UnitTest.Build {
             Assert.AreEqual("Module0", requirement.Name);
         }
 
-        //[TestMethod]
-        //public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
-        //    var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
+        [TestMethod]
+        public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
+            List<ExpertModule> modules = new List<ExpertModule>();
+            modules.Add(new ExpertModule { Name = "Foo" });
+            modules.Add(new ExpertModule { Name = "Bar" });
 
-        //    List<ExpertModule> modules = new List<ExpertModule>();
-        //    modules.Add(new ExpertModule { Name = "Foo" });
-        //    modules.Add(new ExpertModule { Name = "Bar" });
+            List<ModuleDependency> dependencies = new List<ModuleDependency>();
+            dependencies.Add(new ModuleDependency {
+                Consumer = modules[0],
+                Provider = modules[0]
+            });
 
-        //    List<ModuleDependency> dependencies = new List<ModuleDependency>();
-        //    dependencies.Add(new ModuleDependency {
-        //        Consumer = modules[0],
-        //        Provider = modules[0]
-        //    });
+            dependencies.Add(new ModuleDependency {
+                Consumer = modules[1],
+                Provider = modules[1]
+            });
 
-        //    dependencies.Add(new ModuleDependency {
-        //        Consumer = modules[1],
-        //        Provider = modules[1]
-        //    });
+            dependencies.Add(new ModuleDependency {
+                Consumer = modules[0],
+                Provider = modules[1]
+            });
 
-        //    dependencies.Add(new ModuleDependency {
-        //        Consumer = modules[0],
-        //        Provider = modules[1]
-        //    });
+            ICollection<ExpertModule> build = ResolverRequest.GetDependenciesRequiredForBuild(modules, dependencies, modules);
 
-        //    ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] { "Foo", "Bar" });
+            Assert.AreEqual(0, build.Count, "Did not expect any modules as all modules and their dependencies are being built");
+        }
 
-        //    Assert.AreEqual(0, build.Count, "Did not expect any modules as all modules and their dependencies are being built");
-        //}
+        [TestMethod]
+        public void GetDependenciesRequiredForBuild() {
+            List<ExpertModule> modules = new List<ExpertModule>();
+            modules.Add(new ExpertModule { Name = "Foo" });
+            modules.Add(new ExpertModule { Name = "Bar" });
 
-        //[TestMethod]
-        //public void GetDependenciesRequiredForBuild() {
-        //    var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
+            List<ModuleDependency> dependencies = new List<ModuleDependency>();
+            dependencies.Add(new ModuleDependency {
+                Consumer = modules[0],
+                Provider = modules[0]
+            });
 
-        //    List<ExpertModule> modules = new List<ExpertModule>();
-        //    modules.Add(new ExpertModule { Name = "Foo" });
-        //    modules.Add(new ExpertModule { Name = "Bar" });
+            dependencies.Add(new ModuleDependency {
+                Consumer = modules[1],
+                Provider = modules[1]
+            });
 
-        //    List<ModuleDependency> dependencies = new List<ModuleDependency>();
-        //    dependencies.Add(new ModuleDependency {
-        //        Consumer = modules[0],
-        //        Provider = modules[0]
-        //    });
+            dependencies.Add(new ModuleDependency {
+                Consumer = modules[0],
+                Provider = modules[1]
+            });
 
-        //    dependencies.Add(new ModuleDependency {
-        //        Consumer = modules[1],
-        //        Provider = modules[1]
-        //    });
+            ICollection<ExpertModule> build = ResolverRequest.GetDependenciesRequiredForBuild(modules, dependencies, new List<ExpertModule>() { modules[0] });
 
-        //    dependencies.Add(new ModuleDependency {
-        //        Consumer = modules[0],
-        //        Provider = modules[1]
-        //    });
-
-        //    ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] { "Foo" });
-
-        //    Assert.AreEqual(1, build.Count);
-        //}
+            Assert.AreEqual(1, build.Count);
+        }
 
         [TestMethod]
         public async Task ModuleDependencyResolver_gets_subset_from_drop() {
