@@ -18,9 +18,4 @@ namespace Aderant.Build.DependencyResolver {
             get { return false; }
         }
     }
-
-    internal enum RepositoryType {
-        Folder,
-        NuGet
-    }
 }

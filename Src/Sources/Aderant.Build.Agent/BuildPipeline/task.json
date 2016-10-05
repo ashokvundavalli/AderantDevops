@@ -26,12 +26,12 @@
       }
     },
     {
-      "name": "Version",
+      "name": "Branch",
       "type": "string",
       "label": "Version",
       "defaultValue": "$(Build.Infrastructure.Branch)",
       "required": false,
-      "helpMarkDown": "The version of the tool chain you want to use.",
+      "helpMarkDown": "The branch of the tool chain you want to use.",
       "visibleRule": "Repository != Default"
     },
     {
