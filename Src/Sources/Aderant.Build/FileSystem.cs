@@ -112,9 +112,11 @@ namespace Aderant.Build {
             if (System.IO.File.Exists(destinationFile)) {
                 var success = NativeMethods.DeleteFile(destinationFile);
                 if (!success) {
+                    ClearReadOnly(destinationFile);
+                    success = NativeMethods.DeleteFile(destinationFile);
+                }
+                if (!success) {
                     // sometimes throws a "Handle is not valid" error - don't know why (need to investigate)
-                    //var fileLinkCount = NativeMethods.GetFileLinkCount(destinationFile);
-                    //if (fileLinkCount > 1) {
                     var fileLinks = NativeMethods.GetFileSiblingHardLinks(destinationFile);
                     var randomOtherLink = fileLinks.FirstOrDefault(f => f.ToLowerInvariant() != destinationFile.ToLowerInvariant());
                     if (randomOtherLink != null) {
@@ -122,7 +124,6 @@ namespace Aderant.Build {
                         success = NativeMethods.DeleteFile(destinationFile);
                         SetReadOnly(randomOtherLink);
                     }
-                    //}
                 }
                 if (!success) {
                     throw new IOException(string.Format("Could not delete hard link {0}", destinationFile));
