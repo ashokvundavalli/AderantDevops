@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,70 +7,91 @@ using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
+using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace UnitTest.Build {
     [TestClass]
     public class ModuleDependencyResolverTests {
         [TestMethod]
-        public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
-            var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
+        public void ModuleDependencyResolver_can_load_dependency_manifest() {
+            var mock = new Mock<IFileSystem2>();
 
-            List<ExpertModule> modules = new List<ExpertModule>();
-            modules.Add(new ExpertModule {Name = "Foo"});
-            modules.Add(new ExpertModule {Name = "Bar"});
+            var resolver = new ExpertModuleResolver(mock.Object);
 
-            List<ModuleDependency> dependencies = new List<ModuleDependency>();
-            dependencies.Add(new ModuleDependency {
-                Consumer = modules[0],
-                Provider = modules[0]
-            });
+            resolver.ManifestFinder = s => new MemoryStream(Encoding.UTF8.GetBytes(@"<?xml version='1.0' encoding='utf-8'?>
+<DependencyManifest>
+    <ReferencedModules>
+        <ReferencedModule Name='Module0' AssemblyVersion='1.8.0.0' />    
+    </ReferencedModules>
+</DependencyManifest>"));
 
-            dependencies.Add(new ModuleDependency {
-                Consumer = modules[1],
-                Provider = modules[1]
-            });
+            var requirements = resolver.GetDependencyRequirements(null, new ExpertModule { Name = "Foo" });
 
-            dependencies.Add(new ModuleDependency {
-                Consumer = modules[0],
-                Provider = modules[1]
-            });
+            var requirement = requirements.First();
 
-            ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] {"Foo", "Bar"});
-
-            Assert.AreEqual(0, build.Count, "Did not expect any modules as all modules and their dependencies are being built");
+            Assert.AreEqual("Module0", requirement.Name);
         }
 
-        [TestMethod]
-        public void GetDependenciesRequiredForBuild() {
-            var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
+        //[TestMethod]
+        //public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
+        //    var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
 
-            List<ExpertModule> modules = new List<ExpertModule>();
-            modules.Add(new ExpertModule {Name = "Foo"});
-            modules.Add(new ExpertModule {Name = "Bar"});
+        //    List<ExpertModule> modules = new List<ExpertModule>();
+        //    modules.Add(new ExpertModule { Name = "Foo" });
+        //    modules.Add(new ExpertModule { Name = "Bar" });
 
-            List<ModuleDependency> dependencies = new List<ModuleDependency>();
-            dependencies.Add(new ModuleDependency {
-                Consumer = modules[0],
-                Provider = modules[0]
-            });
+        //    List<ModuleDependency> dependencies = new List<ModuleDependency>();
+        //    dependencies.Add(new ModuleDependency {
+        //        Consumer = modules[0],
+        //        Provider = modules[0]
+        //    });
 
-            dependencies.Add(new ModuleDependency {
-                Consumer = modules[1],
-                Provider = modules[1]
-            });
+        //    dependencies.Add(new ModuleDependency {
+        //        Consumer = modules[1],
+        //        Provider = modules[1]
+        //    });
 
-            dependencies.Add(new ModuleDependency {
-                Consumer = modules[0],
-                Provider = modules[1]
-            });
+        //    dependencies.Add(new ModuleDependency {
+        //        Consumer = modules[0],
+        //        Provider = modules[1]
+        //    });
 
-            ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] {"Foo"});
+        //    ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] { "Foo", "Bar" });
 
-            Assert.AreEqual(1, build.Count);
-        }
+        //    Assert.AreEqual(0, build.Count, "Did not expect any modules as all modules and their dependencies are being built");
+        //}
 
+        //[TestMethod]
+        //public void GetDependenciesRequiredForBuild() {
+        //    var resolver = new ModuleDependencyResolver(null, "", new FakeLogger());
+
+        //    List<ExpertModule> modules = new List<ExpertModule>();
+        //    modules.Add(new ExpertModule { Name = "Foo" });
+        //    modules.Add(new ExpertModule { Name = "Bar" });
+
+        //    List<ModuleDependency> dependencies = new List<ModuleDependency>();
+        //    dependencies.Add(new ModuleDependency {
+        //        Consumer = modules[0],
+        //        Provider = modules[0]
+        //    });
+
+        //    dependencies.Add(new ModuleDependency {
+        //        Consumer = modules[1],
+        //        Provider = modules[1]
+        //    });
+
+        //    dependencies.Add(new ModuleDependency {
+        //        Consumer = modules[0],
+        //        Provider = modules[1]
+        //    });
+
+        //    ICollection<ExpertModule> build = ModuleDependencyResolver.GetDependenciesRequiredForBuild(modules, dependencies, new string[] { "Foo" });
+
+        //    Assert.AreEqual(1, build.Count);
+        //}
 
         [TestMethod]
         public async Task ModuleDependencyResolver_gets_subset_from_drop() {
@@ -96,29 +116,36 @@ namespace UnitTest.Build {
         <Module Name='Module1' AssemblyVersion='1.8.0.0' />
         <Module Name='Module2' AssemblyVersion='1.8.0.0' />
    </Modules>
-</ProductManifest>", new[] {dependencyManifest1, dependencyManifest2});
+</ProductManifest>", new[] { dependencyManifest1, dependencyManifest2 });
 
+            Mock<IFileSystem2> fs = new Mock<IFileSystem2>();
+            var buildFolders = new Mock<FolderDependencySystem>(fs.Object);
 
-            var resolver = new ModuleDependencyResolver(expertManifest.GetAll(), "", new FakeLogger());
+            buildFolders.Setup(s => s.GetBinariesPath(It.IsAny<string>(), It.IsAny<IDependencyRequirement>())).Returns("1.0.0.0\\Bin\\Module");
 
-            await resolver.Resolve(string.Empty);
+            IEnumerable<IDependencyRequirement> requirements = expertManifest.GetAll().Select(DependencyRequirement.Create);
 
-            Assert.AreEqual(1, expertManifest.modulesFetched.Count);
-            Assert.AreEqual("Module0", expertManifest.modulesFetched[0].Name);
+            ExpertModuleResolver resolver = new ExpertModuleResolver(fs.Object);
+            resolver.FolderDependencySystem = buildFolders.Object;
+            resolver.AddDependencySource("Foo", ExpertModuleResolver.DropLocation);
+
+            ResolverRequest request = new ResolverRequest(new FakeLogger(), null, expertManifest.GetAll().ToArray());
+
+            resolver.Resolve(request, requirements);
+
+            var items = request.GetResolvedRequirements().ToList();
+
+            Assert.AreEqual(3, items.Count);
+            Assert.AreEqual("Module0", items[0].Name);
+            Assert.AreEqual("Module1", items[1].Name);
+            Assert.AreEqual("Module2", items[2].Name);
         }
     }
 
     internal class TestExpertManifest : ExpertManifest {
-        internal IList<ExpertModule> modulesFetched = new List<ExpertModule>();
-
-        public TestExpertManifest(string manifest, DependencyManifest[] manifests) : base(XDocument.Parse(manifest)) {
-            base.DependencyManifests = manifests;
-        }
-
-        public override string GetPathToBinaries(ExpertModule expertModule, string dropPath) {
-            modulesFetched.Add(expertModule);
-
-            return null;
+        public TestExpertManifest(string manifest, DependencyManifest[] manifests)
+            : base(XDocument.Parse(manifest)) {
+            DependencyManifests = manifests;
         }
     }
 }

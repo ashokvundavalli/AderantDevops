@@ -99,14 +99,25 @@
     <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />
+    <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
-    <Compile Include="DependencyResolver\Class1.cs" />
+    <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
+    <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
+    <Compile Include="DependencyResolver\FolderDependencySystem.cs" />
+    <Compile Include="DependencyResolver\Resolvers\NupkgResolver.cs" />
+    <Compile Include="DependencyResolver\DependencyRequirement.cs" />
+    <Compile Include="DependencyResolver\Resolvers\ExpertModuleResolver.cs" />
     <Compile Include="DependencyResolver\IDependencyAction.cs" />
+    <Compile Include="DependencyResolver\IDependencyRequirement.cs" />
+    <Compile Include="DependencyResolver\IDependencyResolver.cs" />
+    <Compile Include="DependencyResolver\Resolver.cs" />
+    <Compile Include="DependencyResolver\ResolverRequest.cs" />
+    <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
     <Compile Include="Packaging\NuGet\PackageComparer.cs" />
@@ -124,13 +135,12 @@
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
     <Compile Include="DependencyResolver\PackageManager.cs" />
-    <Compile Include="DependencyResolver\DependencySources.cs" />
+    <Compile Include="DependencyResolver\DependencySource.cs" />
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
     <Compile Include="IFileSystem2.cs" />
     <Compile Include="Logging\FakeLogger.cs" />
     <Compile Include="AssemblyVersionInspector.cs" />
-    <Compile Include="IFileSystem.cs" />
     <Compile Include="Logging\ObservableLogReceiver.cs" />
     <Compile Include="Packaging\VersionAnalyzer.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
@@ -268,6 +278,7 @@
     <Compile Include="ThirdParty\Lapointe\Attributes\RelatedCmdletsAttribute.cs" />
     <Compile Include="ThirdParty\Lapointe\CmdletHelpGenerator.cs" />
     <Compile Include="UpgradeTemplateBuildProcess.cs" />
+    <Compile Include="WebArchiveFileSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\OpenTypeStd\FuturaStd-Bold.otf" />

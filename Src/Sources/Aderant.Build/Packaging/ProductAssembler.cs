@@ -56,7 +56,7 @@ namespace Aderant.Build.Packaging {
             var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
 
             using (var manager = new PackageManager(fs, logger)) {
-                manager.Add(context, context.Modules);
+                manager.Add(context, context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }
 

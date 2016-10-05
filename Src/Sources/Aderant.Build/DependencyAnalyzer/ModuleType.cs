@@ -4,6 +4,7 @@
     /// The type of a module
     /// </summary>
     public enum ModuleType {
+        Unknown,
         /// <summary>
         /// 
         /// </summary>
@@ -35,7 +36,7 @@
         /// <summary>
         /// 
         /// </summary>
-        Unknown,
+
         Database,
         InternalTool,
         /// <summary>
@@ -47,7 +48,9 @@
         /// The tests module type
         /// </summary>
         Test,
+
         Performance,
-        Help
+
+        Help,
     }
 }

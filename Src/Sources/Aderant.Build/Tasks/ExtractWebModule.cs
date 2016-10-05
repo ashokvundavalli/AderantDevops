@@ -1,3 +1,4 @@
+using System.IO;
 using Aderant.Build.DependencyAnalyzer;
 using Microsoft.Build.Framework;
 
@@ -25,7 +26,8 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             Log.LogMessage("Replicating {0} to {1}", ModuleName, DependenciesDirectory);
 
-            WebModule.ExtractModule(ModuleName, DependenciesDirectory);
+            var fs = new WebArchiveFileSystem(DependenciesDirectory);
+            fs.ExtractArchive(Path.Combine(DependenciesDirectory, ModuleName + ".zip"), DependenciesDirectory);
 
             return !Log.HasLoggedErrors;
         }

@@ -9,7 +9,7 @@ using Aderant.Build.Providers;
 namespace Aderant.Build.DependencyAnalyzer {
 
     internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
-        const LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo;
+        private static LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo;
 
         private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
@@ -253,25 +253,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return manifest;
-        }
-
-        public virtual string GetPathToBinaries(ExpertModule expertModule, string dropPath) {
-            // Find the matching Module in the ExpertManifest. The ExpertManifest module may have information detailing
-            // where to get the module from like the current branch, or another branch entirely.
-            ExpertModule internalModule = GetModule(expertModule.Name);
-
-            if (internalModule != null) {
-                string dropLocationDirectory = internalModule.GetPathToBinaries(dropPath);
-
-                if (fileSystem.DirectoryExists(dropLocationDirectory)) {
-                    return dropLocationDirectory;
-                }
-            }
-            string dependentModules = "";
-            foreach (var module in DependencyManifests.Where(a => a.ReferencedModules.Contains(expertModule))) {
-                dependentModules += " " + module.ModuleName;
-            }
-            throw new BuildNotFoundException("No path to binaries found for " + expertModule.Name + ". Modules with dependencies:" + dependentModules);
         }
 
         public XElement MergeAttributes(XElement element) {

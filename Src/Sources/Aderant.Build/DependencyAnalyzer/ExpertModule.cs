@@ -2,32 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Xml.Linq;
 using Aderant.Build.DependencyResolver;
-using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
-    /// Represents a Module under the expert source tree
+    /// Represents a module in the expert code base
     /// </summary>
     [DebuggerDisplay("{Name}")]
     public class ExpertModule : IEquatable<ExpertModule> {
-        internal IFileSystem2 FileSystem { get; private set; }
-
         private string name;
         private IList<XAttribute> customAttributes;
-        private ModuleType type;
-        private bool hasModuleType = false;
-        
+        private ModuleType? type;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
         /// </summary>
         public ExpertModule() {
+            if (!string.IsNullOrEmpty(Branch)) {
+                RepositoryType = RepositoryType.Folder;
+            }
         }
 
         /// <summary>
@@ -41,7 +37,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new ArgumentNullException(nameof(element), "No name element specified");
             }
 
-            var moduleType = GetModuleType(name.Value);
+            ModuleType moduleType = GetModuleType(name.Value);
+
             if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
                 return new ThirdPartyModule(element);
             }
@@ -56,7 +53,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
-        internal ExpertModule(XElement element) : this() {
+        internal ExpertModule(XElement element) 
+            : this() {
             ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
 
@@ -75,11 +73,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>The type of the module.</value>
         public ModuleType ModuleType {
             get {
-                if (!hasModuleType) {
+                if (type == null) {
                     type = GetModuleType(Name);
-                    hasModuleType = true;
                 }
-                return type;
+                return type.Value;
             }
         }
 
@@ -104,52 +101,33 @@ namespace Aderant.Build.DependencyAnalyzer {
             return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
 
-        public static ModuleType GetModuleType(string name) {
-            if (name.StartsWith("LIBRARIES", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Library;
-            }
-            if (name.StartsWith("SERVICES", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Service;
-            }
-            if (name.StartsWith("APPLICATIONS", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Application;
-            }
-            if (name.StartsWith("WORKFLOW", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Sample;
-            }
-            if (name.StartsWith("SDK", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.SDK;
-            }
+        private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
+            { "Libraries", ModuleType.Library },
+            { "Services", ModuleType.Service },
+            { "Applications", ModuleType.Application },
+            { "Workflow", ModuleType.Sample },
+            { "Internal", ModuleType.InternalTool },
+            { "Web", ModuleType.Web },
+            { "Mobile", ModuleType.Web },
+            { "Tests", ModuleType.Test },
+        };
 
-            if (name.StartsWith("THIRDPARTY", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.ThirdParty;
+        public static ModuleType GetModuleType(string name) {
+            string firstPart = name.Split('.')[0];
+
+            ModuleType type;
+
+            if (typeMap.TryGetValue(firstPart, out type)) {
+                return type;
+            }
+           
+            if (Enum.TryParse(firstPart, true, out type)) {
+                return type;
             }
 
             // Help builds to /bin just like a third party module
             if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
                 return ModuleType.Help;
-            }
-
-            if (name.StartsWith("BUILD", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Build;
-            }
-            if (name.StartsWith("INTERNAL", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.InternalTool;
-            }
-            if (name.StartsWith("WEB", StringComparison.OrdinalIgnoreCase) || name.StartsWith("MOBILE", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Web;
-            }
-            if (name.StartsWith("INSTALLS", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Installs;
-            }
-            if (name.StartsWith("TESTS", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Test;
-            }
-            if (name.StartsWith("PERFORMANCE", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Performance;
-            }
-            if (name.Equals("DATABASE", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Database;
             }
 
             return ModuleType.Unknown;
@@ -194,14 +172,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         public ICollection<XAttribute> CustomAttributes {
             get {
                 if (customAttributes == null) {
-                    return (ICollection<XAttribute>) Enumerable.Empty<XAttribute>();
+                    return (ICollection<XAttribute>)Enumerable.Empty<XAttribute>();
                 }
                 return new ReadOnlyCollection<XAttribute>(customAttributes);
             }
         }
 
         internal RepositoryType RepositoryType { get; set; }
-        internal VersionRequirement VersionRequirement { get; set; }
         public bool Extract { get; set; }
         public string Target { get; set; }
         public PackageType PackageRootRelativeDirectory { get; set; }
@@ -217,7 +194,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (!(obj is ExpertModule)) {
                 return false;
             }
-            return Equals((ExpertModule) obj);
+            return Equals((ExpertModule)obj);
         }
 
         /// <summary>
@@ -230,7 +207,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (name != null) {
                 return StringComparer.OrdinalIgnoreCase.GetHashCode(name);
             }
-         
+
             return string.Empty.GetHashCode();
         }
 
@@ -243,123 +220,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         public override string ToString() {
             return Name;
         }
-
-        public string GetPathToBinaries(string dropLocationDirectory) {
-            if (!string.IsNullOrEmpty(Branch)) {
-                if (dropLocationDirectory.StartsWith("\\")) {
-                    dropLocationDirectory = AdjustDropPathToBranch(dropLocationDirectory, this);
-                }
-            }
-
-            return GetBinariesPath(dropLocationDirectory);
-        }
-
-        protected static string AdjustDropPathToBranch(string dropLocationDirectory, ExpertModule module) {
-            return PathHelper.ChangeBranch(dropLocationDirectory, module.Branch);
-        }
-
-        protected virtual string GetBinariesPath(string dropLocation) {
-            if (AssemblyVersion == null) {
-                throw new ArgumentNullException(nameof(AssemblyVersion), string.Format(CultureInfo.InvariantCulture, "The module {0} from source {1} does not have an assembly version specified.", Name, RepositoryType));
-            }
-
-            dropLocation = Path.Combine(dropLocation, Name, AssemblyVersion);
-
-            IFileSystem2 fs = new PhysicalFileSystem(dropLocation);
-
-            if (!fs.DirectoryExists(dropLocation)) {
-                throw new BuildNotFoundException("No drop location for " + Name);
-            }
-
-            var entries = fs.GetDirectories(dropLocation).ToArray();
-            string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
-
-            foreach (string build in orderedBuilds) {
-                var files = fs.GetFiles(build, null, false);
-
-                foreach (string file in files) {
-                    if (file.IndexOf("build.failed", StringComparison.OrdinalIgnoreCase) >= 0) {
-                        break;
-                    }
-
-                    if (file.IndexOf("build.succeeded", StringComparison.OrdinalIgnoreCase) >= 0) {
-                        string binariesPath;
-                        if (HasBinariesFolder(fs.GetFullPath(build), fs, out binariesPath)) {
-                            return binariesPath;
-                        }
-                    }
-                }
-
-                string buildLog = files.FirstOrDefault(f => f.EndsWith("BuildLog.txt", StringComparison.OrdinalIgnoreCase));
-                if (!string.IsNullOrEmpty(buildLog)) {
-                    if (CheckLog(fs.GetFullPath(buildLog))) {
-                        string binariesPath;
-                        if (HasBinariesFolder(fs.GetFullPath(build), fs, out binariesPath)) {
-                            return binariesPath;
-                        }
-                    }
-                }
-            }
-
-            throw new BuildNotFoundException("No latest build found for " + Name);
-        }
-
-        private static bool HasBinariesFolder(string build, IFileSystem2 fileSystem, out string binariesFolder) {
-            string binaries = Path.Combine(build, "Bin", "Module");
-
-            if (fileSystem.DirectoryExists(binaries)) {
-                // Guard against empty drop folders, if we run into one it will cause lots of runtime problems
-                // due to missing binaries.
-                if (fileSystem.GetFiles(binaries, "*", false).Any()) {
-                    binariesFolder = binaries;
-                    return true;
-                }
-            }
-            binariesFolder = null;
-            return false;
-        }
-
-        internal static string[] OrderBuildsByBuildNumber(string[] entries) {
-            // Converts the dotted version into an int64 to get the highest build number
-            // This differs from the PowerShell implementation that padded each part of the version string and used an alphanumeric sort
-
-            List<KeyValuePair<Version, string>> numbers = new List<KeyValuePair<Version, string>>(entries.Length);
-            foreach (var entry in entries) {
-                string directoryName = Path.GetFileName(entry);
-                Version version;
-                if (System.Version.TryParse(directoryName, out version)) {
-                    numbers.Add(new KeyValuePair<Version, string>(version, entry));
-                }
-            }
-
-            return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
-        }
-
-        internal static bool CheckLog(string logfile) {
-            // UCS-2 Little Endian files sometimes get created which makes it difficult
-            // to produce an efficient solution for reading a text file backwards
-            IEnumerable<string> lineReader = File.ReadAllLines(logfile).Reverse().Take(10);
-
-            int i = 0;
-            foreach (string s in lineReader) {
-                if (i > 10) {
-                    break;
-                }
-
-                if (s.IndexOf("0 Error(s)", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    return true;
-                }
-
-                i++;
-            }
-
-            return false;
-        }
-
-        public virtual void Deploy(string moduleDependenciesDirectory) {
-        }
     }
-
 
     /// <summary>
     /// Controls the behaviour of the get action
@@ -382,4 +243,3 @@ namespace Aderant.Build.DependencyAnalyzer {
         NuGet
     }
 }
-
