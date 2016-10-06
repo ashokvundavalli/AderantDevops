@@ -12,7 +12,7 @@ using ModuleType = Aderant.Build.DependencyAnalyzer.ModuleType;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "DependenciesFrom")]
-    public sealed class GetDependenciesFrom : PSCmdlet {
+    public sealed class GetDependenciesFrom : BuildCmdlet {
         [Parameter(Mandatory = false, Position = 0, HelpMessage = "Sets the module name or names which are the dependency providers.")]
         public string[] ProviderModules { get; set; }
 
@@ -34,10 +34,9 @@ namespace Aderant.Build.Commands {
         // If changeset parameter is used this will contain the list of modules in the changeset.
         private List<ExpertModule> localModulesInPendingChanges = new List<ExpertModule>();
 
-        protected override void ProcessRecord() {
+        protected override void Process() {
             var processRecordStopwatch = Stopwatch.StartNew();
-            base.ProcessRecord();
-
+            
             if (PendingChanges) {
                 localModulesInPendingChanges = GetLocalModulesInChangeSet();
             }
