@@ -75,8 +75,18 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual string GetModuleDirectory(ExpertModule module) {
-            if (!modulesRootPath.TrimEnd(Path.DirectorySeparatorChar).EndsWith(module.Name, StringComparison.OrdinalIgnoreCase)) {
-                return Path.Combine(Path.Combine(modulesRootPath, module.Name));
+            bool append = true;
+
+            if (modules.Count == 1) {
+                if (string.Equals(DirectoryContext, "ContinuousIntegration", StringComparison.OrdinalIgnoreCase)) {
+                    append = false;
+                }
+            }
+
+            if (append) {
+                if (!modulesRootPath.TrimEnd(Path.DirectorySeparatorChar).EndsWith(module.Name, StringComparison.OrdinalIgnoreCase)) {
+                    return Path.Combine(Path.Combine(modulesRootPath, module.Name));
+                }
             }
 
             return modulesRootPath;

@@ -11,44 +11,30 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class ExpertModuleResolver : IDependencyResolver {
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
-        
+
         public string Root { get; set; }
 
         public ExpertModuleResolver(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
             this.Root = fileSystem.Root;
-            this.ManifestFinder = LoadManifestFromFile;
+            this.ManifestFinder = FindManifest;
         }
 
         public FolderDependencySystem FolderDependencySystem { get; set; }
 
-        private Stream LoadManifestFromFile(ResolverRequest resolverRequest, string name) {
-            string modulePath = Root;
-
-            bool appendName = !(resolverRequest.Modules.Count() == 1 && !string.Equals(resolverRequest.DirectoryContext, "ContinuousIntegration", StringComparison.OrdinalIgnoreCase));
-
-            if (appendName) {
-                if (!Root.TrimEnd(Path.DirectorySeparatorChar).EndsWith(name, StringComparison.OrdinalIgnoreCase)) {
-                    modulePath = Path.Combine(Root, name);
-                }
-            }
-
-            resolverRequest.Logger.Info("Probing for DependencyManifest under: " + modulePath);
-
-            if (fileSystem.DirectoryExists(modulePath)) {
-                var manifestFile = fileSystem.GetFiles(modulePath, DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
+        private Stream FindManifest(string path) {
+            if (fileSystem.DirectoryExists(path)) {
+                var manifestFile = fileSystem.GetFiles(path, DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
 
                 if (manifestFile != null) {
                     return fileSystem.OpenFile(manifestFile);
                 }
             }
-            
-            resolverRequest.Logger.Info("No DependencyManifest found");
 
             return null;
         }
 
-        internal Func<ResolverRequest, string, Stream> ManifestFinder { get; set; }
+        internal Func<string, Stream> ManifestFinder { get; set; }
 
         public IModuleProvider ModuleFactory { get; set; }
 
@@ -61,7 +47,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
-            Stream stream = ManifestFinder(resolverRequest, module.Name);
+            string moduleDirectory = resolverRequest.GetModuleDirectory(module);
+
+            resolverRequest.Logger.Info("Probing for DependencyManifest under: " + moduleDirectory);
+
+            Stream stream = ManifestFinder(moduleDirectory);
 
             if (stream != null) {
                 DependencyManifest manifest;
@@ -74,6 +64,8 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 foreach (var reference in manifest.ReferencedModules) {
                     yield return DependencyRequirement.Create(reference);
                 }
+            } else {
+                resolverRequest.Logger.Info("No DependencyManifest found");
             }
         }
 
@@ -96,7 +88,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                 resolverRequest.Logger.Info("Resolving requirement: {0}", requirement.Name);
 
-                if (!requirement.Name.IsOneOf(ModuleType.Help)) { 
+                if (!requirement.Name.IsOneOf(ModuleType.Help)) {
                     if (requirement.VersionRequirement.AssemblyVersion == null) {
                         // No assembly version means we cannot resolve this requirement
                         resolverRequest.Unresolved(requirement, this);
@@ -129,7 +121,6 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void CopyContents(ILogger resolverRequestLogger, string moduleDependenciesDirectory, IDependencyRequirement requirement, string latestBuildPath) {
-
             if (requirement.Name.IsOneOf(ModuleType.ThirdParty, ModuleType.Web)) {
                 // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                 // used depending on the content type.
