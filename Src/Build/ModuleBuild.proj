@@ -452,7 +452,7 @@ doc.Save(File);
     <Copy SourceFiles="$(BuildScriptsDirectory)\Aderant.wpp.content.proj" DestinationFolder="$(SolutionDirectoryPath)" />
 
     <GetDependencies
-      Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true') or '$(ForceGetDependencies)' == 'true'"
+      Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true')"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"
       ModuleName="$(ModuleName)"
