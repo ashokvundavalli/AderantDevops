@@ -25,7 +25,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private Stream LoadManifestFromFile(string name) {
             string modulePath = Root;
 
-            if (!Root.EndsWith(name, StringComparison.OrdinalIgnoreCase)) {
+            if (!Root.TrimEnd(Path.DirectorySeparatorChar).EndsWith(name, StringComparison.OrdinalIgnoreCase)) {
                 modulePath = Path.Combine(Root, name);
             }
 
