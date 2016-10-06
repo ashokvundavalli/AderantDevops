@@ -114,8 +114,20 @@
     <Exec Command="PowerShell.exe -NoProfile -File &quot;$(BuildScriptsDirectory)\CleanSymlinks.ps1&quot; $(SolutionRoot)" />
 
     <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
-    <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" ContinueOnError="true" />
-    <RemoveDir Directories="%(ModulesInBuild.FullPath)\packages" ContinueOnError="true" />
+    <!-- Unfortunately the implemenattion of RemoveDir returns a removed directory even if the directory didn't exist so we need
+         to check if the dir exists ourselves
+    -->
+    <ItemGroup>
+      <DeleteList Include="@(ModulesInBuild->'%(FullPath)\Dependencies')" />
+      <DeleteList Include="@(ModulesInBuild->'%(FullPath)\packages')" />
+    </ItemGroup>
+    
+    <RemoveDir Directories="%(DeleteList.FullPath)" Condition="Exists('%(DeleteList.FullPath)')"
+               ContinueOnError="true">
+      <Output TaskParameter="RemovedDirectories" ItemName="RemovedDirectories" />
+    </RemoveDir>
+
+    <!--<Error Condition="'@(RemovedDirectories)' != ''" Text="The following directories should not be checked in @(RemovedDirectories)" />-->
     
     <MSBuild.Community.Tasks.DeleteTree Directories="$(SharedDependencyDirectory)" Recursive="true" />
     <MSBuild.Community.Tasks.DeleteTree Directories="$(SolutionRoot)\_BuildTemp" Recursive="true" />
@@ -125,6 +137,7 @@
     <ItemGroup>
       <Paket Include="$(SolutionRoot)\paket.*"></Paket>
     </ItemGroup>
+    
     <Delete Files="@(Paket)" />
     
   </Target>
