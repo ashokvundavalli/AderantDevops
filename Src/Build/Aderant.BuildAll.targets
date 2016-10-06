@@ -64,21 +64,17 @@
     <Delete Files="$(SolutionRoot)\paket.lock" ContinueOnError="true" />
     
     <GetDependencies
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      WorkspaceOwner="$(WorkspaceOwner)"
-      WorkspaceName="$(WorkspaceName)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
+      DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(DropLocation)"
-      BuildAll="true"
-      ModulesInBuild="@(ModulesInBuild)"
-      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
+      ModulesInBuild="@(ModulesInBuild)" />
 
     <ItemGroup>
       <ModuleDirectories Include="$([System.IO.Directory]::GetDirectories('$(SolutionRoot)'))"
                          Exclude="$(SolutionRoot)Build.Infrastructure;
-                                  $(SolutionRoot)packages;
-                                  $(SolutionRoot)Dependencies;
+                                  $(SharedDependencyDirectory);                                  
+                                  $(SolutionRoot)Dependencies;                                  
                                   $(SolutionRoot)ThirdParty;                                  
                                   $(SolutionRoot)TestRun" />
     </ItemGroup>
@@ -90,7 +86,7 @@
 
     <MakeSymlink
       Link="%(ModuleDirectories.FullPath)\packages"
-      Target="$(SolutionRoot)packages"
+      Target="$(SharedDependencyDirectory)\packages"
       Type="D" />
 
     <!-- 
@@ -115,13 +111,16 @@
 
     <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
 
-    <Exec Command="PowerShell.exe -NoProfile -File &quot;CleanSymlinks.ps1&quot; $(SolutionRoot)" />
+    <Exec Command="PowerShell.exe -NoProfile -File &quot;$(BuildScriptsDirectory)\CleanSymlinks.ps1&quot; $(SolutionRoot)" />
 
     <!-- If the directories already exists then we won't end up with a symlink in the MakeSymlink task -->
     <RemoveDir Directories="%(ModulesInBuild.FullPath)\Dependencies" ContinueOnError="true" />
     <RemoveDir Directories="%(ModulesInBuild.FullPath)\packages" ContinueOnError="true" />
-    <RemoveDir Directories="$(SharedDependencyDirectory)" ContinueOnError="true" />
-    <RemoveDir Directories="$(SolutionRoot)\_BuildTemp" ContinueOnError="true" />
+    
+    <MSBuild.Community.Tasks.DeleteTree Directories="$(SharedDependencyDirectory)" Recursive="true" />
+    <MSBuild.Community.Tasks.DeleteTree Directories="$(SolutionRoot)\_BuildTemp" Recursive="true" />
+
+    <MakeDir Directories="$(SharedDependencyDirectory);" />
 
     <ItemGroup>
       <Paket Include="$(SolutionRoot)\paket.*"></Paket>
@@ -129,7 +128,7 @@
     <Delete Files="@(Paket)" />
     
   </Target>
-
+  
   
   <Target Name="ValidateBranchConfiguration" BeforeTargets="GetAllModuleDependencies">
 
@@ -154,7 +153,6 @@
       ProjectFiles="@(ModulesInBuild->'%(FullPath)\Build\TFSBuild.proj')" />
     
   </Target>
-  
 
   <Target Name="CreateParallelBuildProject" 
           DependsOnTargets="GetAllModuleDependencies" 
@@ -175,7 +173,6 @@
       ProjectFile="$(BranchBuildProject)" />
     
     <Error Condition="!Exists('$(BranchBuildProject)')" />
-    
   </Target>
 
   <Target Name="Version" AfterTargets="GetAllModuleDependencies">

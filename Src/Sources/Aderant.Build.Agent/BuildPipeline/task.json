@@ -19,19 +19,19 @@
       "defaultValue": "Default",
       "required": true,
       "helpMarkDown":
-        "Repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.",
+        "Repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.\r\nIf using a UNC path it must point to the root folder e.g. \\<machine>\\c$\\Source\\Build.Infrastructure\\",
       "options": {
         "Default": "Default",
         "CustomRepository": "Custom"
       }
     },
     {
-      "name": "Version",
+      "name": "Branch",
       "type": "string",
       "label": "Version",
       "defaultValue": "$(Build.Infrastructure.Branch)",
       "required": false,
-      "helpMarkDown": "The version of the tool chain you want to use.",
+      "helpMarkDown": "The branch of the tool chain you want to use.",
       "visibleRule": "Repository != Default"
     },
     {

@@ -1,26 +1,48 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
     internal class PackageManager : IDisposable {
+        private FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
+        private readonly ILogger logger;
         public IFileSystem2 FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
 
-        private IDisposable traceEventsSubscription;
         private Dependencies dependencies;
 
         public PackageManager(IFileSystem2 fileSystem, ILogger logger) {
+            this.logger = logger;
             this.FileSystem = fileSystem;
             dependencies = Initialize();
 
-            traceEventsSubscription = CommonExtensions.SubscribeToObservable(Paket.Logging.@event.Publish, new ObservableLogReceiver(logger));
+            this.logMessageDelegate = OnTraceEvent;
+
+            Paket.Logging.@event.Publish.AddHandler(logMessageDelegate);
+        }
+
+        private void OnTraceEvent(object sender, Paket.Logging.Trace args) {
+            if (args.Level == TraceLevel.Verbose) {
+                logger.Debug(args.Text);
+            }
+
+            if (args.Level == TraceLevel.Info) {
+                logger.Info(args.Text);
+            }
+
+            if (args.Level == TraceLevel.Warning) {
+                logger.Warning(args.Text);
+            }
+
+            if (args.Level == TraceLevel.Error) {
+                logger.Error(args.Text);
+            }
         }
 
         private Dependencies Initialize() {
@@ -41,7 +63,7 @@ namespace Aderant.Build.DependencyResolver {
             return dependencies;
         }
 
-        public void Add(IPackageContext context, IEnumerable<ExpertModule> referencedModules) {
+        public void Add(IPackageContext context, IEnumerable<IDependencyRequirement> requirements) {
             var file = dependencies.GetDependenciesFile();
 
             FileSystem.MakeFileWritable(file.FileName);
@@ -61,22 +83,17 @@ namespace Aderant.Build.DependencyResolver {
                 }
             }
 
-            AddModules(context, referencedModules, file);
+            AddModules(context, requirements, file);
         }
 
-        private void AddModules(IPackageContext context, IEnumerable<ExpertModule> referencedModules, DependenciesFile file) {
-            foreach (var referencedModule in referencedModules.OrderBy(m => m.Name)) {
-                if (referencedModule.ModuleType == ModuleType.ThirdParty || referencedModule.GetAction == GetAction.NuGet) {
-                    // This is not the correct API. One should use dependencies.Add(...) but this is much faster as it doesn't call the server
-                    // As soon as we have a version constraint for a package this will fail as we are passing "" for the package version.
-
-                    string version = string.Empty;
-                    if (referencedModule.VersionRequirement != null) {
-                        version = referencedModule.VersionRequirement.ConstraintExpression;
-                    }
-
-                    file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
+        private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
+            foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
+                string version = string.Empty;
+                if (referencedModule.VersionRequirement != null) {
+                    version = referencedModule.VersionRequirement.ConstraintExpression ?? string.Empty;
                 }
+
+                file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
             }
 
             file.Save();
@@ -107,32 +124,16 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Dispose() {
-            traceEventsSubscription.Dispose();
-            traceEventsSubscription = null;
+            Paket.Logging.@event.Publish.RemoveHandler(logMessageDelegate);
         }
 
-        public VersionRequirement GetVersionsFor(string name) {
+        public IDictionary<string, VersionRequirement> GetDependencies() {
             Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
             var file = dependenciesFile.GetDependenciesFile();
 
-            try {
-                var packageRequirement = file.GetPackage(Constants.MainDependencyGroup, Domain.PackageName(name));
+            FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Constants.MainDependencyGroup);
 
-                if (packageRequirement != null) {
-                    string syntax = packageRequirement.VersionRequirement.ToString();
-
-                    if (!string.IsNullOrEmpty(syntax)) {
-                        return new VersionRequirement {
-                            ConstraintExpression = syntax
-                        };
-                    }
-                }
-            } catch (KeyNotFoundException) {
-                // No entry for package
-                return null;
-            }
-
-            return null;
+            return requirements.ToDictionary(pair => pair.Key.ToString(), pair => new VersionRequirement { ConstraintExpression = pair.Value.ToString() });
         }
     }
 }

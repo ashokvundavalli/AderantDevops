@@ -30,6 +30,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.IsEnabled = true;
         }
 
+        public DependencyManifest(string moduleName, Stream stream) {
+            ModuleName = moduleName;
+            manifest = XDocument.Load(stream, LoadOptions);
+        }
+
         public bool IsEnabled { get; private set; }
 
         /// <summary>
@@ -38,6 +43,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal const string DependencyManifestFileName = "DependencyManifest.xml";
 
         private const LoadOptions LoadOptions = System.Xml.Linq.LoadOptions.SetBaseUri | System.Xml.Linq.LoadOptions.SetLineInfo;
+      
 
         /// <summary>
         /// Gets the name of the module which this manifest is for.
@@ -69,10 +75,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         var module = ExpertModule.Create(mergedElement);
-
-                        if (!string.IsNullOrEmpty(DependencyFile)) {
-                            module.VersionRequirement = new PackageManager(new PhysicalFileSystem(Path.GetDirectoryName(DependencyFile)), null).GetVersionsFor(module.Name);
-                        }
                         
                         if (referencedModules.Contains(module)) {
                             throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
@@ -126,18 +128,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 DependencyManifest dependencyManifest;
                 if (TryLoadFromModule(fs.GetFullPath(directory), out dependencyManifest)) {
                     manifests.Add(dependencyManifest);
-
-                    string dependencyFile = fs.GetFiles(directory, PackageManager.DependenciesFile, true).FirstOrDefault();
-                    if (dependencyFile != null) {
-                        dependencyManifest.DependencyFile = fs.GetFullPath(dependencyFile);
-                    }
                 }
             }
 
             return manifests;
         }
-
-        public string DependencyFile { get; set; }
 
         private static bool TryLoadFromModule(string modulePath, out DependencyManifest manifest) {
             try {

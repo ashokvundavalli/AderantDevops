@@ -12,7 +12,7 @@ using ModuleType = Aderant.Build.DependencyAnalyzer.ModuleType;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.Get, "DependenciesFrom")]
-    public sealed class GetDependenciesFrom : PSCmdlet {
+    public sealed class GetDependenciesFrom : BuildCmdlet {
         [Parameter(Mandatory = false, Position = 0, HelpMessage = "Sets the module name or names which are the dependency providers.")]
         public string[] ProviderModules { get; set; }
 
@@ -34,10 +34,9 @@ namespace Aderant.Build.Commands {
         // If changeset parameter is used this will contain the list of modules in the changeset.
         private List<ExpertModule> localModulesInPendingChanges = new List<ExpertModule>();
 
-        protected override void ProcessRecord() {
+        protected override void Process() {
             var processRecordStopwatch = Stopwatch.StartNew();
-            base.ProcessRecord();
-
+            
             if (PendingChanges) {
                 localModulesInPendingChanges = GetLocalModulesInChangeSet();
             }
@@ -110,8 +109,8 @@ namespace Aderant.Build.Commands {
                             
                             if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
                                 // The source is a web module, these are packaged using webdeploy and need to be unzipped and copied in a specific way.
-                                dependency.Provider.Deploy(targetPath);
-                                //  CallWebPackageExtract(targetPath, branchPath, dependency);
+                                var fs = new WebArchiveFileSystem(targetPath);
+                                fs.ExtractArchive(Path.Combine(sourcePath, dependency.Provider.Name) + ".zip", targetPath);
                             }
 
                             if (dependency.Provider.Name.StartsWith("ThirdParty.", StringComparison.OrdinalIgnoreCase) && dependency.Consumer.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {

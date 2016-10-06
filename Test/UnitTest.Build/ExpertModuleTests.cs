@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -21,7 +22,7 @@ namespace UnitTest.Build {
 
             ExpertModule m = new ExpertModule(element);
 
-            Assert.AreEqual("Main", m.Extract);
+            Assert.AreEqual("Main", m.Branch);
         }
 
         [TestMethod]
@@ -42,13 +43,13 @@ Path='\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation'
 ExcludeFromPackaging='true' />"));
 
             Assert.AreEqual("5.3.1.0", module.AssemblyVersion);
-            Assert.AreEqual(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation", module.Extract);
+            Assert.AreEqual(@"\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation", module.Branch);
             Assert.AreEqual(GetAction.SpecificDropLocation, module.GetAction);
             Assert.AreEqual(1, module.CustomAttributes.Count);
-            
+
             ExpertModuleMapper mapper = new ExpertModuleMapper();
 
-            XElement element = mapper.Save(new[] {module}, true);
+            XElement element = mapper.Save(new[] { module }, true);
 
             XAttribute attribute = element.Element("Module").Attribute("ExcludeFromPackaging");
 
@@ -60,7 +61,7 @@ ExcludeFromPackaging='true' />"));
         [DeploymentItem("Resources\\BadBuildLog.txt")]
         [DeploymentItem("Resources\\GoodBuildLog.txt")]
         public void CheckLog_returns_true_for_log_with_no_errors() {
-            var result = ExpertModule.CheckLog("GoodBuildLog.txt");
+            var result = FolderDependencySystem.CheckLog("GoodBuildLog.txt");
 
             Assert.IsTrue(result);
         }
@@ -69,7 +70,7 @@ ExcludeFromPackaging='true' />"));
         [DeploymentItem("Resources\\BadBuildLog.txt")]
         [DeploymentItem("Resources\\GoodBuildLog.txt")]
         public void CheckLog_returns_false_for_log_with_errors() {
-            var result = ExpertModule.CheckLog("BadBuildLog.txt");
+            var result = FolderDependencySystem.CheckLog("BadBuildLog.txt");
 
             Assert.IsFalse(result);
         }
@@ -159,7 +160,7 @@ ExcludeFromPackaging='true' />"));
             builds.Add("\\\\na.aderant.com\\expertsuite\\dev\\mp2\\Libraries.SoftwareFactory\\1.8.0.0\\1.8.5585.47180");
             builds.Add("\\\\na.aderant.com\\expertsuite\\dev\\mp2\\Libraries.SoftwareFactory\\1.8.0.0\\1.8.5585.5607");
 
-            var actual = ExpertModule.OrderBuildsByBuildNumber(builds.ToArray()).First();
+            var actual = FolderDependencySystem.OrderBuildsByBuildNumber(builds.ToArray()).First();
 
             Assert.AreEqual(@"\\na.aderant.com\expertsuite\Dev\MP2\Libraries.SoftwareFactory\1.8.0.0\1.8.5585.47180", actual, true);
 
@@ -251,7 +252,7 @@ ExcludeFromPackaging='true' />"));
             builds.Add("\\\\na.aderant.com\\expertsuite\\dev\\mp2\\Libraries.SoftwareFactory\\1.8.0.0\\1.8.5585.5607");
             builds.Add("\\\\na.aderant.com\\expertsuite\\dev\\mp2\\Libraries.SoftwareFactory\\1.8.0.0\\1.8.5586.5500");
 
-            var actual = ExpertModule.OrderBuildsByBuildNumber(builds.ToArray()).First();
+            var actual = FolderDependencySystem.OrderBuildsByBuildNumber(builds.ToArray()).First();
 
             Assert.AreEqual(@"\\na.aderant.com\expertsuite\Dev\MP2\Libraries.SoftwareFactory\1.8.0.0\1.8.5586.5500", actual, true);
 
@@ -260,8 +261,44 @@ ExcludeFromPackaging='true' />"));
         [TestMethod]
         public void Mapping_of_manifest_entry_with_NuGet_source() {
             var module = new ExpertModule(XElement.Parse(@"<Module Name='MyModule' AssemblyVersion='5.3.1.0' GetAction='NuGet' />"));
-            
+
             Assert.AreEqual(GetAction.NuGet, module.GetAction);
+        }
+
+        [TestMethod]
+        public void When_branch_is_set_repository_cannot_be_nuget() {
+            var module = ExpertModule.Create(XElement.Parse(@"<Module Name='Marketing.Help' Branch='Main' />"));
+
+            Assert.AreEqual(module.RepositoryType, RepositoryType.Folder);
+        }
+
+        [TestMethod]
+        public void ModuleType_parsing() {
+            Assert.AreEqual(ModuleType.Library, ExpertModule.GetModuleType("Libraries.Foo"));
+            Assert.AreEqual(ModuleType.Service, ExpertModule.GetModuleType("Services.Foo"));
+            Assert.AreEqual(ModuleType.Application, ExpertModule.GetModuleType("Applications.Foo"));
+            Assert.AreEqual(ModuleType.SDK, ExpertModule.GetModuleType("SDK.Foo"));
+            Assert.AreEqual(ModuleType.Sample, ExpertModule.GetModuleType("Workflow.Foo"));
+            Assert.AreEqual(ModuleType.Library, ExpertModule.GetModuleType("Libraries.Foo"));
+            Assert.AreEqual(ModuleType.InternalTool, ExpertModule.GetModuleType("Internal.Foo"));
+            Assert.AreEqual(ModuleType.Build, ExpertModule.GetModuleType("BUILD.Foo"));
+            Assert.AreEqual(ModuleType.Web, ExpertModule.GetModuleType("Web.Foo"));
+            Assert.AreEqual(ModuleType.Web, ExpertModule.GetModuleType("Mobile.Foo"));
+            Assert.AreEqual(ModuleType.Installs, ExpertModule.GetModuleType("Installs.Foo"));
+            Assert.AreEqual(ModuleType.Test, ExpertModule.GetModuleType("Tests.Foo"));
+            Assert.AreEqual(ModuleType.Performance, ExpertModule.GetModuleType("Performance.Foo"));
+            Assert.AreEqual(ModuleType.Database, ExpertModule.GetModuleType("Database.Foo"));
+        }
+
+        [TestMethod]
+        public void ThirdParty_module_name_parsing() {
+            Assert.AreEqual(ModuleType.ThirdParty, ExpertModule.GetModuleType("THIRDPARTY.Foo"));
+            Assert.AreEqual(ModuleType.Help, ExpertModule.GetModuleType("Marketing.Help"));
+        }
+
+        [TestMethod]
+        public void IsOneOf_can_returns_true_when_name_matches() {
+            Assert.IsTrue("Marketing.Help".IsOneOf(ModuleType.Help));
         }
     }
 }
