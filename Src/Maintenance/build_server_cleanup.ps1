@@ -9,6 +9,7 @@ $directoriesToRemove = @(
     "$env:USERPROFILE\Download",
     
     # VSIX extensions installed by the VS SDK targets
+    "$env:LOCALAPPDATA\Microsoft\VisualStudio\12.0Exp\Extensions\Aderant",
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\14.0Exp\Extensions\Aderant",
 
     $env:TEMP,    
@@ -18,6 +19,9 @@ $directoriesToRemove = @(
     "C:\tfs"
 )
 
+Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$directoriesToRemove += $_.Root + "ExpertShare"}
+
 foreach ($dir in $directoriesToRemove) {
     Remove-Item $dir -Verbose -Force -Recurse -ErrorAction SilentlyContinue  
 }
+
