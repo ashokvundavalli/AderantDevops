@@ -44,8 +44,15 @@ namespace Aderant.Build.Commands {
                 ModuleName = ParameterHelper.GetCurrentModuleName(null, this.SessionState);
             }
 
-            if (string.IsNullOrEmpty(ProductManifestPath)) {
-                ProductManifestPath = ParameterHelper.GetExpertManifestPath(ProductManifestPath, this.SessionState);
+            ExpertManifest productManifest = null;
+            try {
+                if (string.IsNullOrEmpty(ProductManifestPath)) {
+                    ProductManifestPath = ParameterHelper.GetExpertManifestPath(ProductManifestPath, this.SessionState);
+                }
+                productManifest = ExpertManifest.Load(ProductManifestPath);
+                productManifest.ModulesDirectory = ModulesRootPath;
+            } catch (ArgumentException) {
+                //git modules don't need ProductManifestPath
             }
 
             if (string.IsNullOrEmpty(DropPath)) {
@@ -53,10 +60,11 @@ namespace Aderant.Build.Commands {
             }
 
             ResolverRequest request = new ResolverRequest(Logger, ModulesRootPath);
-            
-            ExpertManifest productManifest = ExpertManifest.Load(ProductManifestPath);
-            productManifest.ModulesDirectory = ModulesRootPath;
-            request.ModuleFactory = productManifest;
+
+
+            if (productManifest != null) {
+                request.ModuleFactory = productManifest;
+            }
 
             if (!string.IsNullOrEmpty(ModuleName)) {
                 request.AddModule(ModuleName);
