@@ -16,7 +16,8 @@ namespace Aderant.Build.DependencyResolver {
         private string dependenciesDirectory;
         private IFileSystem2 physicalFileSystem;
 
-        public ILogger Logger {
+        public ILogger Logger
+        {
             get { return logger; }
         }
 
@@ -43,7 +44,8 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Gets the modules in this request.
         /// </summary>
-        public IEnumerable<ExpertModule> Modules {
+        public IEnumerable<ExpertModule> Modules
+        {
             get { return modules.Select(s => s.Item).ToList(); }
         }
 
@@ -52,7 +54,8 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Gets a value determining if third party packages should be replicated.
         /// </summary>
-        public bool RequiresReplication {
+        public bool RequiresReplication
+        {
             get { return modules.Any(s => s.RequiresThirdPartyReplication); }
         }
 
@@ -110,8 +113,10 @@ namespace Aderant.Build.DependencyResolver {
                 module = Path.GetFileName(module);
             }
 
-            ExpertModule resolvedModule = ModuleFactory.GetModule(module);
-
+            ExpertModule resolvedModule = null;
+            if (ModuleFactory != null) {
+                resolvedModule = ModuleFactory.GetModule(module);
+            }
             bool requiresThirdPartyReplication = true;
 
             if (resolvedModule == null) {
