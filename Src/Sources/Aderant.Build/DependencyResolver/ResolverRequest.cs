@@ -65,7 +65,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual string GetModuleDirectory(ExpertModule module) {
-            if (!modulesRootPath.EndsWith(module.Name, StringComparison.OrdinalIgnoreCase)) {
+            if (!modulesRootPath.TrimEnd(Path.DirectorySeparatorChar).EndsWith(module.Name, StringComparison.OrdinalIgnoreCase)) {
                 return Path.Combine(Path.Combine(modulesRootPath, module.Name));
             }
 
