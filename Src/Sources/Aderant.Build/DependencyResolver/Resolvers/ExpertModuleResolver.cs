@@ -11,6 +11,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class ExpertModuleResolver : IDependencyResolver {
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
+        private ILogger logger;
 
         public string Root { get; set; }
 
@@ -29,12 +30,20 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 modulePath = Path.Combine(Root, name);
             }
 
+            if (logger != null) {
+                logger.Info("Resolving DependencyManifest under: " + modulePath);
+            }
+
             if (fileSystem.DirectoryExists(modulePath)) {
                 var manifestFile = fileSystem.GetFiles(modulePath, DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
 
                 if (manifestFile != null) {
                     return fileSystem.OpenFile(manifestFile);
                 }
+            }
+
+            if (logger != null) {
+                logger.Info("No DependencyManifest found");
             }
 
             return null;
@@ -53,6 +62,8 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
+            this.logger = resolverRequest.Logger;
+
             Stream stream = ManifestFinder(module.Name);
 
             if (stream != null) {
