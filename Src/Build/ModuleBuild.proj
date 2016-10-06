@@ -453,14 +453,10 @@ doc.Save(File);
 
     <GetDependencies
       Condition="('$(BuildAll)' != 'true' And '$(UseSharedDependencyDirectory)' != 'true') or '$(ForceGetDependencies)' == 'true'"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"
       ModuleName="$(ModuleName)"
-      DropPath="$(BaseDropDirectory)"
-      WorkspaceName="$(WorkspaceName)"
-      WorkspaceOwner="$(WorkspaceOwner)"
-      BuildScriptsDirectory="$(BuildScriptsDirectory)" />
+      DropPath="$(BaseDropDirectory)" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true') And '$(UseSharedDependencyDirectory)' != 'true'"
