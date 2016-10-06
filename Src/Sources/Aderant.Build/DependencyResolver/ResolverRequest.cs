@@ -14,6 +14,7 @@ namespace Aderant.Build.DependencyResolver {
         private List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
         private List<DependencyState<IDependencyRequirement>> dependencies = new List<DependencyState<IDependencyRequirement>>();
         private string dependenciesDirectory;
+        private IFileSystem2 physicalFileSystem;
 
         public ILogger Logger {
             get { return logger; }
@@ -25,9 +26,15 @@ namespace Aderant.Build.DependencyResolver {
         /// <param name="logger">The logger.</param>
         /// <param name="modulesRootPath"></param>
         /// <param name="modules">The modules.</param>
-        public ResolverRequest(ILogger logger, string modulesRootPath, params ExpertModule[] modules) {
+        public ResolverRequest(ILogger logger, string modulesRootPath, params ExpertModule[] modules)
+            : this(logger, new PhysicalFileSystem(modulesRootPath), modules) {
+        }
+
+        private ResolverRequest(ILogger logger, IFileSystem2 physicalFileSystem, params ExpertModule[] modules) {
             this.logger = logger;
-            this.modulesRootPath = modulesRootPath;
+            this.physicalFileSystem = physicalFileSystem;
+            this.modulesRootPath = physicalFileSystem.Root;
+
             if (modules != null) {
                 this.modules.AddRange(modules.Select(m => new ModuleState<ExpertModule>(m)));
             }
@@ -41,6 +48,13 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual IModuleProvider ModuleFactory { get; set; }
+
+        /// <summary>
+        /// Gets a value determining if third party packages should be replicated.
+        /// </summary>
+        public bool RequiresReplication {
+            get { return modules.Any(s => s.RequiresThirdPartyReplication); }
+        }
 
         /// <summary>
         /// Sets the dependencies directory to place dependencies into.
@@ -78,11 +92,17 @@ namespace Aderant.Build.DependencyResolver {
 
             ExpertModule resolvedModule = ModuleFactory.GetModule(module);
 
+            bool requiresThirdPartyReplication = true;
+
             if (resolvedModule == null) {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}.", module));
+                if (!physicalFileSystem.DirectoryExists(".git")) {
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
+                }
+                resolvedModule = new ExpertModule { Name = module };
+                requiresThirdPartyReplication = false;
             }
 
-            modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true });
+            modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = requiresThirdPartyReplication });
         }
 
         public virtual void Unresolved(IDependencyRequirement requirement, object resolver) {
@@ -148,12 +168,12 @@ namespace Aderant.Build.DependencyResolver {
 
         private IEnumerable<ExpertModule> GetReferencedModulesForBuild(IEnumerable<ExpertModule> availableModules, List<ExpertModule> inBuild) {
             var builder = new DependencyBuilder(ModuleFactory);
-       
+
             var moduleDependencyGraph = builder.GetModuleDependencies().ToList();
 
             var modulesRequiredForBuild = GetDependenciesRequiredForBuild(availableModules, moduleDependencyGraph, inBuild);
 
-            if (modulesRequiredForBuild.Count == 0) {
+            if (modulesRequiredForBuild.Any()) {
                 // We don't require any external dependencies to build - however we need to move the third party modules to the dependency folder always
                 inBuild = inBuild.Where(m => m.ModuleType == ModuleType.ThirdParty).ToList();
             } else {
@@ -168,7 +188,6 @@ namespace Aderant.Build.DependencyResolver {
             var dependenciesRequiredForBuild = new HashSet<ExpertModule>();
 
             foreach (var module in inBuild) {
-
                 IEnumerable<ExpertModule> dependenciesRequiredForModule = moduleDependencyGraph
                     .Where(dependency => dependency.Consumer.Equals(module)) // Find the module in the dependency graph
                     .Select(dependency => dependency.Provider);
@@ -203,6 +222,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public bool IsInBuildChain { get; set; }
+        public bool RequiresThirdPartyReplication { get; set; }
     }
 
     internal enum DependencyState {

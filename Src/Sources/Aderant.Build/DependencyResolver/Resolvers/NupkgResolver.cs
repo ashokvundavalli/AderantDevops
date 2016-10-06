@@ -74,7 +74,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                     resolverRequest.Resolved(requirement, this);
 
-                    ReplicateToDependenciesDirectory(resolverRequest, fileSystem, requirement);
+                    if (resolverRequest.RequiresReplication) {
+                        ReplicateToDependenciesDirectory(resolverRequest, fileSystem, requirement);
+                    }
                 }
             }
         }

@@ -110,8 +110,8 @@ namespace Aderant.Build.Commands {
                             
                             if (dependency.Provider.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {
                                 // The source is a web module, these are packaged using webdeploy and need to be unzipped and copied in a specific way.
-                                //dependency.Provider.Deploy(targetPath);
-                                //CallWebPackageExtract(targetPath, branchPath, dependency);
+                                var fs = new WebArchiveFileSystem(targetPath);
+                                fs.ExtractArchive(Path.Combine(sourcePath, dependency.Provider.Name) + ".zip", targetPath);
                             }
 
                             if (dependency.Provider.Name.StartsWith("ThirdParty.", StringComparison.OrdinalIgnoreCase) && dependency.Consumer.Name.StartsWith("Web.", StringComparison.OrdinalIgnoreCase)) {

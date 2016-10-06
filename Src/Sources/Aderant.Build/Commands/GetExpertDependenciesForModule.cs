@@ -53,7 +53,7 @@ namespace Aderant.Build.Commands {
             }
 
             ResolverRequest request = new ResolverRequest(Logger, ModulesRootPath);
-
+            
             ExpertManifest productManifest = ExpertManifest.Load(ProductManifestPath);
             productManifest.ModulesDirectory = ModulesRootPath;
             request.ModuleFactory = productManifest;

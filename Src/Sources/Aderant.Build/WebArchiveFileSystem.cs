@@ -19,7 +19,7 @@ namespace Aderant.Build {
                 throw new FileNotFoundException("Cannot locate zip: " + zipFile);
             }
 
-            //target = Path.Combine(moduleDependenciesDirectory, archive, relativePath);
+        
 
             string name = Path.Combine(moduleDependenciesDirectory, Path.GetFileNameWithoutExtension(zipFile));
 
@@ -32,7 +32,7 @@ namespace Aderant.Build {
 
                     string target;
 
-                    if (relativePath.EndsWith(".dll")) {
+                    if (relativePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) {
                         target = Path.Combine(moduleDependenciesDirectory, Path.GetFileName(relativePath));
                     } else {
                         target = Path.Combine(moduleDependenciesDirectory, name, relativePath);

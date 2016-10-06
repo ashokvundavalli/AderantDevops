@@ -9,8 +9,6 @@ using Aderant.Build.Providers;
 namespace Aderant.Build.DependencyAnalyzer {
 
     internal class ExpertManifest : IModuleProvider, IGlobalAttributesProvider {
-        private static LoadOptions loadOptions = LoadOptions.SetBaseUri | LoadOptions.SetLineInfo;
-
         private readonly IFileSystem2 fileSystem;
         private readonly XDocument manifest;
 
@@ -199,7 +197,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
 
             using (Stream stream = fileSystem.OpenFile(manifestPath)) {
-                var document = XDocument.Load(stream, loadOptions);
+                var document = XDocument.Load(stream);
                 this.manifest = document;
                 this.ProductManifestPath = manifestPath;
             }
@@ -215,7 +213,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void Initialize() {
             this.modules = LoadAllModules().ToList();
 
-            Branch = PathHelper.GetBranch(manifest.BaseUri, false);
+            Branch = PathHelper.GetBranch(ProductManifestPath, false);
         }
 
         /// <summary>
