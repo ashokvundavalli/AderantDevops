@@ -42,6 +42,12 @@ namespace Aderant.Build.Tasks {
         /// </value>
         public ITaskItem[] ModulesInBuild { get; set; }
 
+        /// <summary>
+        /// Gets or sets the type of the build. For example Build All, Continuous Integration or other.
+        /// </summary>
+        /// <value>The type of the build.</value>
+        public string BuildType { get; set; }
+
         public override bool Execute() {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
@@ -63,6 +69,7 @@ namespace Aderant.Build.Tasks {
                 request.ModuleFactory = productManifest;
 
                 request.SetDependenciesDirectory(DependenciesDirectory);
+                request.DirectoryContext = BuildType;
 
                 if (!string.IsNullOrEmpty(ModuleName)) {
                     request.AddModule(ModuleName);
