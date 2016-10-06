@@ -456,6 +456,7 @@ doc.Save(File);
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"
       ModuleName="$(ModuleName)"
+      BuildType="ContinuousIntegration"
       DropPath="$(BaseDropDirectory)" />
 
     <BuildStep

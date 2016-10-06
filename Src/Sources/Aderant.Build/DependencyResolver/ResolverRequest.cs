@@ -57,6 +57,16 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         /// <summary>
+        /// Gets or sets the type of the request.
+        /// </summary>
+        /// <remarks>
+        /// We have XAML continuous integration builds, XAML build all, teambuild desktop build, desktop build VNext, server build VNext.
+        /// All of these use different root path flavors, some with the module name, some without. We need a hint from the build system to figure what the root path means to us
+        /// so we know how to probe for files
+        /// </remarks>
+        public string DirectoryContext { get; set; }
+
+        /// <summary>
         /// Sets the dependencies directory to place dependencies into.
         /// </summary>
         /// <value>The dependencies directory.</value>

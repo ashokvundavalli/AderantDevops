@@ -11,8 +11,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class ExpertModuleResolver : IDependencyResolver {
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
-        private ILogger logger;
-
+        
         public string Root { get; set; }
 
         public ExpertModuleResolver(IFileSystem2 fileSystem) {
@@ -23,16 +22,18 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
         public FolderDependencySystem FolderDependencySystem { get; set; }
 
-        private Stream LoadManifestFromFile(string name) {
+        private Stream LoadManifestFromFile(ResolverRequest resolverRequest, string name) {
             string modulePath = Root;
 
-            if (!Root.TrimEnd(Path.DirectorySeparatorChar).EndsWith(name, StringComparison.OrdinalIgnoreCase)) {
-                modulePath = Path.Combine(Root, name);
+            bool appendName = !(resolverRequest.Modules.Count() == 1 && !string.Equals(resolverRequest.DirectoryContext, "ContinuousIntegration", StringComparison.OrdinalIgnoreCase));
+
+            if (appendName) {
+                if (!Root.TrimEnd(Path.DirectorySeparatorChar).EndsWith(name, StringComparison.OrdinalIgnoreCase)) {
+                    modulePath = Path.Combine(Root, name);
+                }
             }
 
-            if (logger != null) {
-                logger.Info("Resolving DependencyManifest under: " + modulePath);
-            }
+            resolverRequest.Logger.Info("Probing for DependencyManifest under: " + modulePath);
 
             if (fileSystem.DirectoryExists(modulePath)) {
                 var manifestFile = fileSystem.GetFiles(modulePath, DependencyManifest.DependencyManifestFileName, true).FirstOrDefault();
@@ -41,15 +42,13 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                     return fileSystem.OpenFile(manifestFile);
                 }
             }
-
-            if (logger != null) {
-                logger.Info("No DependencyManifest found");
-            }
+            
+            resolverRequest.Logger.Info("No DependencyManifest found");
 
             return null;
         }
 
-        internal Func<string, Stream> ManifestFinder { get; set; }
+        internal Func<ResolverRequest, string, Stream> ManifestFinder { get; set; }
 
         public IModuleProvider ModuleFactory { get; set; }
 
@@ -62,9 +61,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
-            this.logger = resolverRequest.Logger;
-
-            Stream stream = ManifestFinder(module.Name);
+            Stream stream = ManifestFinder(resolverRequest, module.Name);
 
             if (stream != null) {
                 DependencyManifest manifest;
