@@ -67,17 +67,17 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-   <!--Stub for customizers to override--> 
+  <!--Stub for customizers to override--> 
   <Target Name="OnAfterBuild" />
   
   <!-- 
-    RAGE! Because we have multiple flavours of build this gets really complicated. 
+    Because we have multiple flavours of build this gets really complicated. 
     During a build all we can just import from the solution build folder as it will exist since the sources are fetched up front. This matches the physical layout you see on disk when you check out from TFS.
     For a CI build we need to use the XAML BuildType folder, which is actually the Build folder just renamed this is how team build bootstraps the build. For a bug 152618 we only considered the 
     the build directory and didn't consider the type of build (build all, or CI) which created some interesting side effects such as post build events not running during CI builds.
+  
+    Now pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow 
   -->
-
-  <!-- Pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow -->
   <Import Project="$(BuildDirectory)\Build*\TFSBuild.proj" Condition="'$(BuildType)' == 'ContinuousIntegration'" />
   <Import Project="$(SolutionDirectoryPath)\Build*\TFSBuild.proj" Condition="'$(BuildType)' != 'ContinuousIntegration'" />
 
