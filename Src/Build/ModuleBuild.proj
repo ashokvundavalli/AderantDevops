@@ -51,6 +51,7 @@
 
     <!--This looks weird but it stops the TeamBuild from calling PostBuild - we want to control when it runs-->
     <SkipPostBuild>true</SkipPostBuild>
+    <SkipLabel>true</SkipLabel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -63,7 +64,9 @@
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
   <!-- Stub for customizers to override -->
-  <Target Name="OnAfterBuild" />
+  <Target Name="OnAfterBuild">
+    <Message Text="OnAfterBuild (default)" Importance="High" />
+  </Target>
 
   <!-- Pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)\Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)\Build\TFSBuild.proj')" />
