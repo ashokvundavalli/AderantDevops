@@ -75,6 +75,7 @@
 
   <!-- Pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)\Build*\TFSBuild.proj" />
+  <Import Project="$(BuildDirectory)\Build*\TFSBuild.proj" Condition="'$(BuildDirectory)' != ''" />
 
   <!-- 
     Entry point
