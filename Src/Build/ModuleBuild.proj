@@ -63,11 +63,8 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-  <!-- Stub for customizers to override -->
-  <!--<Target Name="OnAfterBuild">
-    <Message Text="OnAfterBuild (default)" Importance="High" />
-  </Target>-->
-
+   <!--Stub for customizers to override--> 
+  <Target Name="OnAfterBuild" />
   
   <!-- 
     RAGE! Because we have multiple flavours of build this gets really complicated. 
@@ -90,7 +87,7 @@
       We don't need the TeamBuild targets during a build all, as they happen in an outer scope. Setting the dependency chain to empty
       stops the targets from running 
     -->
-    <EndToEndIterationDependsOn Condition="'$(BuildAll)' == 'true'"></EndToEndIterationDependsOn>
+    <EndToEndIterationDependsOn Condition="'$(BuildAll)' == 'true'" />
   </PropertyGroup>
 
   <Target Name="EndToEndIteration"
