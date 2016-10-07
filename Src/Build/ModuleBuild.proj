@@ -52,6 +52,10 @@
     <!--This looks weird but it stops the TeamBuild from calling PostBuild - we want to control when it runs-->
     <SkipPostBuild>true</SkipPostBuild>
     <SkipLabel>true</SkipLabel>
+
+    <BuildType>Desktop</BuildType>
+    <BuildType Condition="'$(BuildAll)' == 'true'">BuildAll</BuildType>
+    <BuildType Condition="'$(BuildAll)' != 'true' And '$(BuildDirectory)' != ''">ContinuousIntegration</BuildType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -74,8 +78,8 @@
   -->
 
   <!-- Pull the entry targets into our context. This lets us call into OnAfterBuild for people who want to customize the workflow -->
-  <Import Project="$(SolutionDirectoryPath)\Build*\TFSBuild.proj" />
-  <Import Project="$(BuildDirectory)\Build*\TFSBuild.proj" Condition="'$(BuildDirectory)' != ''" />
+  <Import Project="$(BuildDirectory)\Build*\TFSBuild.proj" Condition="'$(BuildType)' == 'ContinuousIntegration'" />
+  <Import Project="$(SolutionDirectoryPath)\Build*\TFSBuild.proj" Condition="'$(BuildType)' != 'ContinuousIntegration'" />
 
   <!-- 
     Entry point
