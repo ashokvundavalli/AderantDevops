@@ -4,11 +4,11 @@ $ErrorActionPreference = 'Stop'
 
 [string]$repository = Get-VstsInput -Name 'Repository'
 [string]$version = Get-VstsInput -Name 'Version'
-[string]$customRepository = Get-VstsInput -Name 'CustomRepository'
+[string]$CustomSource = Get-VstsInput -Name 'CustomSource'
 
 Write-Host "Repository: $repository"
 Write-Host "Version: $version"
-Write-Host "CustomRepository: $customRepository"
+Write-Host "CustomSource: $CustomSource"
 
 Write-Host "SYSTEM_TEAMPROJECT: $ENV:SYSTEM_TEAMPROJECT"
 Write-Host "SYSTEM_TEAMFOUNDATIONSERVERURI: $ENV:SYSTEM_TEAMFOUNDATIONSERVERURI"
@@ -59,18 +59,20 @@ function Clone($repo, $version) {
     cmd /c "git clone $repo --branch $version --single-branch $buildFolder 2>&1"  
 }
 
-if ($customRepository -and -not [string]::IsNullOrEmpty($customRepository)) {
-    if ($customRepository.StartsWith("http")) {        
-        Clone $customRepository $version
-    } else {
-        # e.g \\wsakl001092\c$\Source\Build.Infrastructure\Src\
-        Write-Output "Copying from path $customRepository"        
-        Copy-Item $customRepository $buildFolder\Src -Recurse
-    }   
-}
-
-if ($repository -eq "default" -or -not $customRepository) {
+if ($repository -eq "default" -or -not $CustomSource) {
+	# By default use script from checked in code at Build.Infrastructure at TFS
     Clone "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
+} else {
+	# During debug of this script it is necessary to use a local copy 
+	if ($CustomSource -and -not [string]::IsNullOrEmpty($CustomSource)) {
+		if ($CustomSource.StartsWith("http")) {        
+			Clone $CustomSource $version
+		} else {
+			# e.g \\wsakl001092\c$\Source\Build.Infrastructure\Src\
+			Write-Output "Copying from path $CustomSource"        
+			Copy-Item $CustomSource $buildFolder\Src -Recurse
+		}   
+	}
 }
 
 $buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")

@@ -61,16 +61,16 @@ namespace UnitTest.Build.BuildLogProcessor {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {&quot;count&quot;:6330,&quot;value&quot;:[&quot;2016-09-06T14:24:37.6531197Z Checking if artifacts directory exists: D:\\1\\_work\\7\\a&quot;,&quot;2016-09-06T14:24:37.6531197Z Deleting artifacts directory.&quot;,&quot;2016-09-06T14:24:37.6560483Z Creating artifacts directory.&quot;,&quot;2016-09-06T14:24:37.6560483Z Checking if test results directory exists: D:\\1\\_work\\7\\TestResults&quot;,&quot;2016-09-06T14:24:37.6570245Z Deleting test results directory.&quot;,&quot;2016-09-06T14:24:37.6570245Z Creating test results directory.&quot;,&quot;2016-09-06T14:24:37.6745961Z Starting: Get so [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string.
         /// </summary>
         internal static string buildlog_baseline {
             get {
                 return ResourceManager.GetString("buildlog_baseline", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to {&quot;count&quot;:6319,&quot;value&quot;:[&quot;2016-09-06T20:11:52.9126475Z Repository: Default&quot;,&quot;2016-09-06T20:11:52.9136241Z Version: &quot;,&quot;2016-09-06T20:11:52.9136241Z CustomRepository: &quot;,&quot;2016-09-06T20:11:52.9136241Z SYSTEM_TEAMPROJECT: ExpertSuite&quot;,&quot;2016-09-06T20:11:52.9146007Z SYSTEM_TEAMFOUNDATIONSERVERURI: http://tfs.ap.aderant.com:8080/tfs/ADERANT/&quot;,&quot;2016-09-06T20:11:52.9165539Z SYSTEM_TEAMFOUNDATIONCOLLECTIONURI: http://tfs.ap.aderant.com:8080/tfs/ADERANT/&quot;,&quot;2016-09-06T20:11:52.9175305Z SYSTEM_COLLECTIONID: 5d9e5fa7-8899-4 [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to {"count":6319,"value":["2016-09-06T20:11:52.9126475Z Repository: Default","2016-09-06T20:11:52.9136241Z Version: ","2016-09-06T20:11:52.9136241Z CustomRepository: ","2016-09-06T20:11:52.9136241Z SYSTEM_TEAMPROJECT: ExpertSuite","2016-09-06T20:11:52.9146007Z SYSTEM_TEAMFOUNDATIONSERVERURI:
         /// </summary>
         internal static string log_with_more_warnings {
             get {
