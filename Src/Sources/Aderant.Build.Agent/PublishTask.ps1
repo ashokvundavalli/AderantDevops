@@ -1,3 +1,5 @@
+# This script takes care of bundling and uploading a task to the TFS server for use with the build system.
+[Cmdletbinding()]
 param(
    [Parameter(Mandatory=$true)][string]$TaskPath,
    [Parameter(Mandatory=$false)][string]$TfsUrl = "http://tfs:8080/tfs/Aderant",

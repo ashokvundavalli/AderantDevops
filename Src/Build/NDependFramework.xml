@@ -99,7 +99,6 @@
     <Name>System.Data</Name>
     <Name>System.Configuration</Name>
     <Name>mscorlib</Name>
-    <Name>Wintellect.Threading</Name>
     <Name>System.Core</Name>
     <Name>IronPython</Name>
     <Name>ICSharpCode.SharpZipLib</Name>

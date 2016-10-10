@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
@@ -62,17 +61,12 @@ namespace Aderant.Build.Tasks {
             // Download the existing package
             try {
                 using (PackageManager packageManager = new PackageManager(fileSystem, logger)) {
-                    packageManager.Add(new DependencyFetchContext(false), new[] {
-                        new ExpertModule {
-                            Name = packageName,
-                            GetAction = GetAction.NuGet
-                        }
-                    });
+                    packageManager.Add(new DependencyFetchContext(false), new[] { DependencyRequirement.Create(packageName) });
                     packageManager.Restore();
                 }
             } catch (Exception ex) {
                 if (ex.Message.Contains("Could not find versions for package")) {
-                    logger.Warning("Package {0} doesn't exist. Assuming new.", packageName);
+                    logger.Warning("Package {0} doesn't exist. Assuming it is a new package.", packageName);
 
                     return false;
                 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using Microsoft.Build.Framework;
@@ -33,9 +35,21 @@ namespace Aderant.Build.Tasks {
             }
 
             try {
+                Target = Path.GetFullPath(Target);
+                Link = Path.GetFullPath(Link);
+
+                if (!Directory.Exists(Target)) {
+                    throw new InvalidOperationException(string.Format("Target: {0} does not exist", Target));
+                }
                 Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
 
-                NativeUtilities.CreateSymbolicLink(Link, Target, (uint)link);
+                if (Directory.Exists(Link)) {
+                    Directory.Delete(Link, true);
+                }
+
+                if (!NativeUtilities.CreateSymbolicLink(Link, Target, (uint)link)) {
+                    Log.LogError("Error: Unable to create symbolic link. " + "(Error Code: " + Marshal.GetLastWin32Error() + ")");
+                }
             } catch (Exception ex) {
                 Log.LogErrorFromException(ex);
                 return false;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 
 namespace Aderant.Build {
-    public interface IFileSystem2 {
+    public interface IFileSystem2 { 
         string Root { get; }
 
         void DeleteDirectory(string path, bool recursive);

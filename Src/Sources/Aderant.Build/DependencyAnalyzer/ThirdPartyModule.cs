@@ -1,16 +1,10 @@
-using System.IO;
 using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
-
-    public class ThirdPartyModule : ExpertModule {
-
-        public ThirdPartyModule(XElement element) : base(element) {
-            
-        }
-
-        protected override string GetBinariesPath(string dropLocationDirectory) {
-            return Path.Combine(dropLocationDirectory, Name, "bin");
+    public sealed class ThirdPartyModule : ExpertModule {
+        public ThirdPartyModule(XElement element)
+            : base(element) {
         }
     }
 }

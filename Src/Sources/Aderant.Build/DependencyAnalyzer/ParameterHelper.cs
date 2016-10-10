@@ -155,9 +155,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public static string GetExpertManifestPath(string productManifestPath, SessionState sessionState) {
-            var value = sessionState.PSVariable.GetValue("ProductManifestPath", productManifestPath).ToString();
+            var value = sessionState.PSVariable.GetValue("ProductManifestPath", productManifestPath);
             if (value != null) {
-                return value;
+                return value.ToString();
             }
 
             throw new ArgumentException("There must be a variable $ProductManifestPath in the current host session.");
