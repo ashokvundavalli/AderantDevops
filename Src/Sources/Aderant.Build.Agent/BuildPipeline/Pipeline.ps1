@@ -68,9 +68,9 @@ if ($repository -eq "default" -or -not $CustomSource) {
 		if ($CustomSource.StartsWith("http")) {        
 			Clone $CustomSource $version
 		} else {
-			# e.g \\wsakl001092\c$\Source\Build.Infrastructure\Src\
+			# e.g \\wsakl001092\c$\Source\Build.Infrastructure
 			Write-Output "Copying from path $CustomSource"        
-			Copy-Item $CustomSource $buildFolder\Src -Recurse
+			Copy-Item $CustomSource $buildFolder -Recurse
 		}   
 	}
 }
