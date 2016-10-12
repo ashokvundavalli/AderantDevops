@@ -592,8 +592,12 @@
             robocopy $binPath $copyToDirectory /S /MT /JOB:$jobFile
             Remove-Item $jobFile -Force -ErrorAction SilentlyContinue
        } else {
-            Write-Host "No dependencies for $modulePath to be resolved, copying entire bin/module."
-            robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NDL /A-:R
+           Write-Host "No dependencies for $modulePath to be resolved, copying entire bin/module."
+           robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NDL /A-:R
+		   if ($ShellContext -and ($modulePath.EndsWith("Deployment") -or (Test-Path (Join-Path $binPath -ChildPath DeploymentManager.msi)))) {
+			   Write-Output "Moving DeploymentManager.msi one folder up."
+			   Move-Item -Path (Join-Path $copyToDirectory -ChildPath DeploymentManager.msi) -Destination (Join-Path $copyToDirectory -ChildPath ..\\) -Force
+		   }
        }
     }
 
