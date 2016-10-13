@@ -570,7 +570,8 @@
 
             Measure-Command {
                 Write-Host "Calculating hashes..."
-                $a = gci -Recurse -Path $binPath | Get-FileHash
+				# *.exe.config files can have exactly matching contents as they are generated automatically.
+                $a = gci -Recurse -Path $binPath | Where-Object {$_.FullName -notlike "*.exe.config"} | Get-FileHash
                 $b = gci -Recurse -Path $dependenciesPath | Get-FileHash
 
                 $hashes = $b | Select-Object -ExpandProperty Hash
