@@ -570,7 +570,8 @@
 
             Measure-Command {
                 Write-Host "Calculating hashes..."
-                $a = gci -Recurse -Path $binPath | Get-FileHash
+				# *.exe.config files can have exactly matching contents as they are generated automatically.
+                $a = gci -Recurse -Path $binPath | Where-Object {$_.FullName -notlike "*.exe.config"} | Get-FileHash
                 $b = gci -Recurse -Path $dependenciesPath | Get-FileHash
 
                 $hashes = $b | Select-Object -ExpandProperty Hash
@@ -592,8 +593,12 @@
             robocopy $binPath $copyToDirectory /S /MT /JOB:$jobFile
             Remove-Item $jobFile -Force -ErrorAction SilentlyContinue
        } else {
-            Write-Host "No dependencies for $modulePath to be resolved, copying entire bin/module."
-            robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NDL /A-:R
+           Write-Host "No dependencies for $modulePath to be resolved, copying entire bin/module."
+           robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NDL /A-:R
+		   if ($ShellContext -and ($modulePath.EndsWith("Deployment") -or (Test-Path (Join-Path $binPath -ChildPath DeploymentManager.msi)))) {
+			   Write-Output "Moving DeploymentManager.msi one folder up."
+			   Move-Item -Path (Join-Path $copyToDirectory -ChildPath DeploymentManager.msi) -Destination (Join-Path $copyToDirectory -ChildPath ..\\) -Force
+		   }
        }
     }
 

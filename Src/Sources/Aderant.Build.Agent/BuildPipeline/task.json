@@ -22,7 +22,7 @@
         "Repository which contains the Build Infrastructure tool chain to use.\r\nYou can also specify a custom http git repository or a UNC path which is useful for rapid testing.\r\nIf using a UNC path it must point to the root folder e.g. \\<machine>\\c$\\Source\\Build.Infrastructure\\",
       "options": {
         "Default": "Default",
-        "CustomRepository": "Custom"
+        "CustomSource": "Custom"
       }
     },
     {
@@ -35,7 +35,7 @@
       "visibleRule": "Repository != Default"
     },
     {
-      "name": "CustomRepository",
+      "name": "CustomSource",
       "type": "string",
       "label": "Repository or Path",
       "required": false,
