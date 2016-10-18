@@ -107,11 +107,11 @@ namespace Aderant.Build.DependencyResolver {
             return FileSystem.FileExists(dependencies.GetDependenciesFile().FindLockfile().FullName);
         }
 
-        public void Restore() {
+        public void Restore(bool force = false) {
             if (!HasLockFile()) {
-                new UpdateAction(dependencies, false).Run();
+                new UpdateAction(dependencies, force).Run();
             }
-            new RestoreAction(dependencies).Run();
+            new RestoreAction(dependencies, force).Run();
         }
 
         public void Update(bool force) {

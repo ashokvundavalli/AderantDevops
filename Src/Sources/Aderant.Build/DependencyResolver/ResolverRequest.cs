@@ -70,6 +70,22 @@ namespace Aderant.Build.DependencyResolver {
         public string DirectoryContext { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to blat everything and force a clean refresh of every package.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if force; otherwise, <c>false</c>.
+        /// </value>
+        public bool Force { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the dependencies should be updated.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if update; otherwise, <c>false</c>.
+        /// </value>
+        public bool Update { get; set; }
+
+        /// <summary>
         /// Sets the dependencies directory to place dependencies into.
         /// </summary>
         /// <value>The dependencies directory.</value>
