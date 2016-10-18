@@ -449,7 +449,7 @@
                                 return
                             }
                             
-                            Wire-Host $line
+                            Write-Host $line
                             return
                         }
                         Write-Host $_                       
