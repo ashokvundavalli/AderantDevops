@@ -77,7 +77,7 @@
           Log.LogMessage("Scanning: " + file);
           FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(file.ItemSpec);
 
-          bool isAderantAssembly = false;;
+          bool isAderantAssembly = false;
           if (versionInfo.CompanyName != null) {
             isAderantAssembly = versionInfo.CompanyName.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0;
           }
