@@ -410,7 +410,7 @@
             [string]$robocopyTool = Invoke-Expression "cmd /c where robocopy.exe"
 
             Invoke-Tool -FileName $robocopyTool -Arguments ($params -join " ") | 
-                ForEach-Object {
+                ForEach {
                     try {
                     if ($_ -and 
                         -not [string]::IsNullOrEmpty($_)) {
