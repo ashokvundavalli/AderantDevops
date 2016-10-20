@@ -79,15 +79,19 @@
 
           bool isAderantAssembly = false;
           if (versionInfo.CompanyName != null) {
+            Log.LogMessage("Reading CompanyName out of file " + file);
             isAderantAssembly = versionInfo.CompanyName.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0;
+            Log.LogMessage("CompanyName: " + versionInfo.CompanyName);
           }
 
           if (isAderantAssembly) {
+            Log.LogMessage("Detected Aderant asset");
             try {
               var assemblyName = AssemblyName.GetAssemblyName(file.ItemSpec);
               arrayList.Add(file);
               Log.LogMessage("File '" + file + "' was detected as an Aderant asset.");
-            } catch (BadImageFormatException) {
+            } catch (BadImageFormatException ex) {
+              Log.LogMessage("Whoops, something went wrong: ", ex.ToString());
             }
           }
         }
