@@ -82,6 +82,8 @@
             Log.LogMessage("Reading CompanyName out of file " + file);
             isAderantAssembly = versionInfo.CompanyName.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0;
             Log.LogMessage("CompanyName: " + versionInfo.CompanyName);
+          } else {
+            Log.LogMessage("CompanyName was not set on file " + file);
           }
 
           if (isAderantAssembly) {
