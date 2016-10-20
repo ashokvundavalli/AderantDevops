@@ -449,7 +449,7 @@
                                 return
                             }
                             
-                            Write-Host $line
+                            Write-Debug $line
                             return
                         }
                         Write-Host $_                       
