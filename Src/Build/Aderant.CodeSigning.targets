@@ -74,24 +74,28 @@
         ArrayList arrayList = new ArrayList();
 
         foreach (var file in Files) {
-          Log.LogMessage("Scanning: " + file);
-          FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(file.ItemSpec);
+          string fullPath = file.GetMetadata("FullPath");
+        
+          Log.LogMessage("ItemSpec: " + file.ItemSpec);
+          Log.LogMessage("Scanning: " + fullPath);
+          FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(fullPath);
+          
 
           bool isAderantAssembly = false;
           if (versionInfo.CompanyName != null) {
-            Log.LogMessage("Reading CompanyName out of file " + file);
+            Log.LogMessage("Reading CompanyName out of file " + fullPath);
             isAderantAssembly = versionInfo.CompanyName.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0;
             Log.LogMessage("CompanyName: " + versionInfo.CompanyName);
           } else {
-            Log.LogMessage("CompanyName was not set on file " + file);
+            Log.LogMessage("CompanyName was not set on file " + fullPath + " (" + versionInfo.FileVersion + ")");
           }
 
           if (isAderantAssembly) {
             Log.LogMessage("Detected Aderant asset");
             try {
-              var assemblyName = AssemblyName.GetAssemblyName(file.ItemSpec);
+              var assemblyName = AssemblyName.GetAssemblyName(fullPath);
               arrayList.Add(file);
-              Log.LogMessage("File '" + file + "' was detected as an Aderant asset.");
+              Log.LogMessage("File '" + fullPath + "' was detected as an Aderant asset.");
             } catch (BadImageFormatException ex) {
               Log.LogMessage("Whoops, something went wrong: ", ex.ToString());
             }
