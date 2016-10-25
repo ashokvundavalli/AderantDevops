@@ -143,15 +143,17 @@ namespace Aderant.DeveloperTools {
             // if this seems to be an ExpertSuite solution, change the preview thumbnail
             var fileName = DTE.Solution.FileName;
             var folders = fileName.Split('\\').ToList();
-            if (folders.IndexOf("Modules") >= 0) {
-                ChangePreviewThumbnail(fileName);
+            var rootDir = Path.GetDirectoryName(fileName);
+            var gitDirAvailable = Directory.Exists(Path.Combine(rootDir, ".git"));
+            if (gitDirAvailable || folders.IndexOf("Modules") >= 0) {
+                ChangePreviewThumbnail(fileName, gitDirAvailable);
             } else {
                 customThumbnail = null;
                 SetMainWindowTitle(cleanOnly: true);
             }
         }
 
-        private void ChangePreviewThumbnail(string fileName) {
+        private void ChangePreviewThumbnail(string fileName, bool gitDirAvailable) {
 
             try {
                 // create custom preview thumbnail
@@ -177,7 +179,7 @@ namespace Aderant.DeveloperTools {
                 customThumbnail.Title = titleBuilder.ToString();
 
                 // generate custom image for preview thumbnail
-                Bitmap bitmap = GenerateBitmap(fileName);
+                Bitmap bitmap = GenerateBitmap(fileName, gitDirAvailable);
                 if (bitmap != null) {
                     customThumbnail.SetImage(bitmap);
 
@@ -211,20 +213,31 @@ namespace Aderant.DeveloperTools {
             DTE.MainWindow.SetFocus();
         }
 
-        private Bitmap GenerateBitmap(string fileName) {
+        private Bitmap GenerateBitmap(string fileName, bool gitDirAvailable) {
 
             // calculate branch and branch area
             string branch = string.Empty;
             string branchArea = string.Empty;
-            var folders = fileName.Split('\\').ToList();
-            var modulesIndex = folders.IndexOf("Modules");
-            if (modulesIndex > 1) {
-                branch = folders[modulesIndex - 1];
-                branchArea = folders[modulesIndex - 2];
-            }
 
-            if (branch == "Main") {
-                branch = "MAIN";
+            if (!gitDirAvailable) {
+                var folders = fileName.Split('\\').ToList();
+                var modulesIndex = folders.IndexOf("Modules");
+                if (modulesIndex > 1) {
+                    branch = folders[modulesIndex - 1];
+                    branchArea = folders[modulesIndex - 2];
+                }
+                if (branch == "Main") {
+                    branch = "MAIN";
+                }
+            } else {
+                branchArea = "ExpertSuite";
+                var rootDir = Path.GetDirectoryName(fileName);
+                var gitDir = Path.Combine(rootDir, ".git");
+                var headFile = Path.Combine(gitDir, "HEAD");
+                if (File.Exists(headFile)) {
+                    var headFileContent = File.ReadAllText(headFile);
+                    branch = headFileContent.Split('/').Last().Replace("\n", string.Empty);
+                }
             }
 
             string branchDisplayName = string.Concat(branchArea.ToUpperInvariant(), " · ", branch.ToUpperInvariant());
@@ -275,59 +288,62 @@ namespace Aderant.DeveloperTools {
                 }
 
                 // display branch information
-                if (modulesIndex > 1) {
-                    var innergrid = new Grid {
-                        HorizontalAlignment = HorizontalAlignment.Stretch,
-                        Margin = new Thickness(5, 2, 5, 2)
-                    };
+                var innergrid = new Grid {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Margin = new Thickness(5, 2, 5, 2)
+                };
 
-                    // branch name
-                    var branchTextBlock = new TextBlock() {
-                        Text = branch,
-                        FontSize = 20,
-                        FontWeight = FontWeights.SemiBold,
-                        TextWrapping = TextWrapping.Wrap,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        VerticalAlignment = VerticalAlignment.Bottom,
-                        Foreground = Brushes.DodgerBlue,
-                    };
-                    if (branch.StartsWith("Framework")) {
-                        branchTextBlock.Foreground = Brushes.ForestGreen;
-                    }
-                    else if (branch.StartsWith("Time")) {
-                        branchTextBlock.Foreground = Brushes.DarkOrchid;
-                    }
-                    else if (branch.StartsWith("Case")) {
-                        branchTextBlock.Foreground = Brushes.DarkRed;
-                    }
-                    else if (branch.StartsWith("Billing")) {
-                        branchTextBlock.Foreground = Brushes.Goldenrod;
-                    }
-                    else if (branch == "MAIN") {
-                        branchTextBlock.Foreground = Brushes.OrangeRed;
-                        branchTextBlock.FontSize = 24;
-                    }
-
-                    // parent folder of branch
-                    var branchAreaTextBlock = new TextBlock() {
-                        Text = branchArea,
-                        FontSize = 22,
-                        FontWeight = FontWeights.SemiBold,
-                        TextWrapping = TextWrapping.Wrap,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Bottom,
-                        Foreground = Brushes.DarkGray,
-                    };
-
-                    // Main branch has no parent folder
-                    if (branchArea == string.Empty) {
-                        branchTextBlock.HorizontalAlignment = HorizontalAlignment.Center;
-                    }
-
-                    innergrid.Children.Add(branchTextBlock);
-                    innergrid.Children.Add(branchAreaTextBlock);
-                    mainGrid.Children.Add(innergrid);
+                // branch name
+                var branchTextBlock = new TextBlock() {
+                    Text = branch,
+                    FontSize = 20,
+                    FontWeight = FontWeights.SemiBold,
+                    TextWrapping = TextWrapping.Wrap,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Foreground = Brushes.DodgerBlue,
+                };
+                if (branch.StartsWith("Framework")) {
+                    branchTextBlock.Foreground = Brushes.ForestGreen;
+                } else if (branch.StartsWith("Time")) {
+                    branchTextBlock.Foreground = Brushes.DarkOrchid;
+                } else if (branch.StartsWith("Case")) {
+                    branchTextBlock.Foreground = Brushes.DarkRed;
+                } else if (branch.StartsWith("Billing")) {
+                    branchTextBlock.Foreground = Brushes.Goldenrod;
+                } else if (branch == "MAIN" || branch == "master") {
+                    branchTextBlock.Foreground = Brushes.OrangeRed;
+                    branchTextBlock.FontSize = 24;
                 }
+
+                // parent folder of branch
+                var branchAreaTextBlock = new TextBlock() {
+                    Text = branchArea,
+                    FontSize = 22,
+                    FontWeight = FontWeights.SemiBold,
+                    TextWrapping = TextWrapping.Wrap,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Foreground = Brushes.DarkGray,
+                };
+
+                // Main branch has no parent folder
+                if (branchArea == string.Empty) {
+                    branchTextBlock.HorizontalAlignment = HorizontalAlignment.Center;
+                }
+
+                innergrid.Children.Add(branchTextBlock);
+                innergrid.Children.Add(branchAreaTextBlock);
+
+                // shrink text to fit
+                var branchviewBox = new Viewbox {
+                    StretchDirection = StretchDirection.DownOnly,
+                    Stretch = Stretch.Uniform,
+                    VerticalAlignment = VerticalAlignment.Bottom
+                };
+                branchviewBox.Child = innergrid;
+
+                mainGrid.Children.Add(branchviewBox);
 
                 // measure and arrange before converting into image
                 mainGrid.Measure(new System.Windows.Size(195, 105));

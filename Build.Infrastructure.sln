@@ -79,6 +79,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTest.Build", "Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples", "Test\Samples\Samples.csproj", "{5A68A8CE-2DB7-420F-8F93-B92E0EC35079}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer", "Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj", "{32045E58-C419-46F1-9429-9F4D99B165FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer.Vsix", "Src\Sources\Aderant.Build.Analyzer.Vsix\Aderant.Build.Analyzer.Vsix.csproj", "{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.Vsix", "Src\Sources\Aderant.DeveloperTools\Aderant.DeveloperTools.Vsix.csproj", "{DB3A5DB7-A1A9-4E34-AFE7-E80B09223204}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.Shared", "Src\Sources\Aderant.DeveloperTools.Shared\Aderant.DeveloperTools.Shared.csproj", "{2FF4C2F0-CDA6-478B-ABC6-D36C1FF2F45C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.XamlAdorner", "Src\Sources\Aderant.DeveloperTools.XamlAdorner\Aderant.DeveloperTools.XamlAdorner.csproj", "{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -113,6 +123,26 @@ Global
 		{5A68A8CE-2DB7-420F-8F93-B92E0EC35079}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A68A8CE-2DB7-420F-8F93-B92E0EC35079}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A68A8CE-2DB7-420F-8F93-B92E0EC35079}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32045E58-C419-46F1-9429-9F4D99B165FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32045E58-C419-46F1-9429-9F4D99B165FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32045E58-C419-46F1-9429-9F4D99B165FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32045E58-C419-46F1-9429-9F4D99B165FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB3A5DB7-A1A9-4E34-AFE7-E80B09223204}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB3A5DB7-A1A9-4E34-AFE7-E80B09223204}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB3A5DB7-A1A9-4E34-AFE7-E80B09223204}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB3A5DB7-A1A9-4E34-AFE7-E80B09223204}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FF4C2F0-CDA6-478B-ABC6-D36C1FF2F45C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FF4C2F0-CDA6-478B-ABC6-D36C1FF2F45C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FF4C2F0-CDA6-478B-ABC6-D36C1FF2F45C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FF4C2F0-CDA6-478B-ABC6-D36C1FF2F45C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
