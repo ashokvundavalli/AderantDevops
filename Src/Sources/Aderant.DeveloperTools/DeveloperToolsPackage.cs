@@ -335,15 +335,18 @@ namespace Aderant.DeveloperTools {
                 innergrid.Children.Add(branchTextBlock);
                 innergrid.Children.Add(branchAreaTextBlock);
 
-                // shrink text to fit
-                var branchviewBox = new Viewbox {
-                    StretchDirection = StretchDirection.DownOnly,
-                    Stretch = Stretch.Uniform,
-                    VerticalAlignment = VerticalAlignment.Bottom
-                };
-                branchviewBox.Child = innergrid;
-
-                mainGrid.Children.Add(branchviewBox);
+                if (branchArea == string.Empty) {
+                    // shrink text to fit
+                    var branchviewBox = new Viewbox {
+                        StretchDirection = StretchDirection.DownOnly,
+                        Stretch = Stretch.Uniform,
+                        VerticalAlignment = VerticalAlignment.Bottom
+                    };
+                    branchviewBox.Child = innergrid;
+                    mainGrid.Children.Add(branchviewBox);
+                } else {
+                    mainGrid.Children.Add(innergrid);
+                }
 
                 // measure and arrange before converting into image
                 mainGrid.Measure(new System.Windows.Size(195, 105));
