@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Aderant.DeveloperTools.Shared;
 using EnvDTE;
 using EnvDTE80;
@@ -47,6 +48,8 @@ namespace Aderant.DeveloperTools {
 
         private string currentCaptionSuffix;
         private System.Timers.Timer timer = new System.Timers.Timer(100);
+        private FileSystemWatcher watcher;
+        private Dispatcher dispatcher;
 
         private DTE2 dtePropertyValue;
 
@@ -110,6 +113,8 @@ namespace Aderant.DeveloperTools {
 
             // listen to any solution that gets opened
             solutionEvents.Opened += SolutionEvents_Opened;
+
+            dispatcher = Dispatcher.CurrentDispatcher;
         }
 
         private void SolutionEvents_Opened() {
@@ -230,6 +235,7 @@ namespace Aderant.DeveloperTools {
                     branch = "MAIN";
                 }
             } else {
+                // this is a git branch
                 branchArea = "ExpertSuite";
                 var rootDir = Path.GetDirectoryName(fileName);
                 var gitDir = Path.Combine(rootDir, ".git");
@@ -237,6 +243,16 @@ namespace Aderant.DeveloperTools {
                 if (File.Exists(headFile)) {
                     var headFileContent = File.ReadAllText(headFile);
                     branch = headFileContent.Split('/').Last().Replace("\n", string.Empty);
+                }
+
+                // watch git branch changes
+                if (watcher == null) {
+                    watcher = new FileSystemWatcher();
+                    watcher.Path = gitDir;
+                    watcher.NotifyFilter = NotifyFilters.LastWrite;
+                    watcher.Filter = "HEAD";
+                    watcher.Changed += OnHeadChanged;
+                    watcher.EnableRaisingEvents = true;
                 }
             }
 
@@ -375,8 +391,11 @@ namespace Aderant.DeveloperTools {
             documentEvents.DocumentOpened += OnIdeEvent;
             documentEvents.DocumentClosing += OnIdeEvent;
 
-
             return bitmap;
+        }
+
+        private void OnHeadChanged(object sender, FileSystemEventArgs e) {
+            dispatcher.Invoke(SolutionEvents_Opened);
         }
 
         private void OnIdeEvent(EnvDTE.Window gotfocus, EnvDTE.Window lostfocus) {
