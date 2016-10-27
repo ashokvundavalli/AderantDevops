@@ -45,11 +45,17 @@ namespace Aderant.DeveloperTools {
     [ProvideOptionPage(typeof(OptionPageGrid), "Aderant Developer Tools", "Options", 0, 0, true)]
     public sealed class DeveloperToolsPackage : Package {
 
+        private SolutionEvents solutionEvents;
+        private DebuggerEvents debuggerEvents;
+        private WindowEvents windowEvents;
+        private DocumentEvents documentEvents;
 
         private string currentCaptionSuffix;
-        private System.Timers.Timer timer = new System.Timers.Timer(100);
-        private FileSystemWatcher watcher;
-        private Dispatcher dispatcher;
+        private TabbedThumbnail customThumbnail;
+        private DateTime headFileLastWriteTimeUtc = DateTime.MinValue;
+        private string resolvedHeadFile;
+        private DispatcherTimer headWatchDispatcherTimer;
+
 
         private DTE2 dtePropertyValue;
 
@@ -68,13 +74,6 @@ namespace Aderant.DeveloperTools {
         public DeveloperToolsPackage() {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
         }
-
-        private SolutionEvents solutionEvents;
-        private DebuggerEvents debuggerEvents;
-        private WindowEvents windowEvents;
-        private DocumentEvents documentEvents;
-
-        private TabbedThumbnail customThumbnail;
 
         /////////////////////////////////////////////////////////////////////////////
         // Overridden Package Implementation
@@ -113,8 +112,6 @@ namespace Aderant.DeveloperTools {
 
             // listen to any solution that gets opened
             solutionEvents.Opened += SolutionEvents_Opened;
-
-            dispatcher = Dispatcher.CurrentDispatcher;
         }
 
         private void SolutionEvents_Opened() {
@@ -245,14 +242,16 @@ namespace Aderant.DeveloperTools {
                     branch = headFileContent.Split('/').Last().Replace("\n", string.Empty);
                 }
 
-                // watch git branch changes
-                if (watcher == null) {
-                    watcher = new FileSystemWatcher();
-                    watcher.Path = gitDir;
-                    watcher.NotifyFilter = NotifyFilters.LastWrite;
-                    watcher.Filter = "HEAD";
-                    watcher.Changed += OnHeadChanged;
-                    watcher.EnableRaisingEvents = true;
+                headFileLastWriteTimeUtc = File.GetLastWriteTimeUtc(headFile);
+                resolvedHeadFile= headFile;
+
+                // watch git branch changes (poll because the FileSystemWatcher is not very reliable)
+                if (headWatchDispatcherTimer == null) {
+                    headWatchDispatcherTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle) {
+                        Interval = TimeSpan.FromSeconds(5)
+                    };
+                    headWatchDispatcherTimer.Tick += HeadWatchDispatcherTimerOnTick;
+                    headWatchDispatcherTimer.Start();
                 }
             }
 
@@ -394,8 +393,12 @@ namespace Aderant.DeveloperTools {
             return bitmap;
         }
 
-        private void OnHeadChanged(object sender, FileSystemEventArgs e) {
-            dispatcher.Invoke(SolutionEvents_Opened);
+        private void HeadWatchDispatcherTimerOnTick(object sender, EventArgs eventArgs) {
+            var resolvedHeadFileLastWriteTimeUtc = File.GetLastWriteTimeUtc(resolvedHeadFile);
+            if (resolvedHeadFileLastWriteTimeUtc != headFileLastWriteTimeUtc) {
+                headFileLastWriteTimeUtc = resolvedHeadFileLastWriteTimeUtc;
+                SolutionEvents_Opened();
+            }
         }
 
         private void OnIdeEvent(EnvDTE.Window gotfocus, EnvDTE.Window lostfocus) {
