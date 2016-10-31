@@ -242,7 +242,7 @@ task Build {
     $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
 	$buildFlavor = $Flavor
 	if ($buildFlavor -eq "")  {
-		GetBuildFlavor   # to build in debug or release
+		$buildFlavor = GetBuildFlavor   # to build in debug or release
 	}
     $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
 
