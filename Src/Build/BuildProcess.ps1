@@ -3,7 +3,8 @@ param(
     [string]$Configuration = 'Release',
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
-    [bool]$LimitBuildWarnings
+    [bool]$LimitBuildWarnings,
+	[string]$Flavor
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -185,25 +186,25 @@ function BuildAssociation($vssConnection, $teamProject, $buildId) {
 }
 
 # Auto detect build target in debug or release mode by code branch name. If it contains "release" then get into release mode, otherwise debug
-# To force build into release or debug mode, set the varaible "build.flavor" at TFS build definition, Edit, Variables
+# To force build into release or debug mode, set the variable "build.flavor" at TFS build definition, Edit, Variables
 # In release mode, the splash screen will remove "(Development)" text and display the current version
 function GetBuildFlavor() {
-	$buildFlvaor = ""
+	$buildFlavor = ""
 	if ($Env:Build_Flavor) {
-		$buildFlvaor = $Env:Build_Flavor
+		$buildFlavor = $Env:Build_Flavor
 		Write-Host "....................................................................................................." -foregroundcolor Green
-		Write-Host ".......            Using Build.Flavor from build difinition to $buildFlvaor          ................" -foregroundcolor Green
+		Write-Host ".......            Using Build.Flavor from build definition to $buildFlavor          ................" -foregroundcolor Green
 		Write-Host "....................................................................................................." -foregroundcolor Green
 	} elseif ( $Env:Build_SourceBranch -like "*release*" ) {
-		$buildFlvaor = "release"
+		$buildFlavor = "release"
 		Write-Host "....................................................................................................." -foregroundcolor Green
 		Write-Host ".......                           Build in release mode                      ........................" -foregroundcolor Green
 		Write-Host "....................................................................................................." -foregroundcolor Green
 	} else {
-		$buildFlvaor = "debug"
+		$buildFlavor = "debug"
 		Write-Host "....... Build in debug mode ................" -foregroundcolor Green
 	}
-	return [string]$buildFlvaor;
+	return [string]$buildFlavor;
 }
 
 #=================================================================================================
@@ -239,7 +240,10 @@ task Build {
 
     $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
     $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
-	$buildFlavor = GetBuildFlavor   # to build in debug or release
+	$buildFlavor = $Flavor
+	if ($buildFlavor -eq "")  {
+		GetBuildFlavor   # to build in debug or release
+	}
     $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
 
     if ($Clean) {
