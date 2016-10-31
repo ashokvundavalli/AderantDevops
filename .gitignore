@@ -246,6 +246,7 @@ ModelManifest.xml
 /Src/Build.Tools/*
 !/Src/Build.Tools/Paket.exe
 !/Src/Build.Tools/plink.exe
+!/Src/Build.Tools/Aderant.DeveloperTools.vsix
 /Test/Dependencies
 
 *.bak
