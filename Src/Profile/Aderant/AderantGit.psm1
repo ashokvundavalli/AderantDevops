@@ -29,14 +29,27 @@ function global:prompt {
     return " "
 }
 
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package) {
+function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release) {
+	if ($debug -and $release) {
+		Write-Error "You can specify either -debug or -release but not both."
+		return
+	}
+	$flavor = ""
+	if ($debug) {
+		$flavor = "Debug"
+		Write-Host "Forcing BuildFlavor to be DEBUG" -ForegroundColor DarkGreen
+	} elseif ($release) {
+		$flavor = "Release"
+		Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
+	}
+
     $path = $global:CurrentModulePath    
 
     if ($package) {
         $task = "Package"
     }    
 
-    & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $path -Clean:$clean.ToBool()
+    & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $path -Clean:$clean.ToBool() -Flavor:$flavor
 }
 
 function InstallPoshGit() {
