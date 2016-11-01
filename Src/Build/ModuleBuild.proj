@@ -69,6 +69,7 @@
 
   <!--Stub for customizers to override--> 
   <Target Name="OnAfterBuild" />
+  <Target Name="PostBuild" />
   
   <!-- 
     Because we have multiple flavours of build this gets really complicated. 
@@ -275,7 +276,7 @@ doc.Save(File);
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
-    <CallTarget Targets="OnAfterBuild" />
+    <CallTarget Targets="OnAfterBuild;PostBuild" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />
     <CallTarget Targets="FinalizeBuild" />
