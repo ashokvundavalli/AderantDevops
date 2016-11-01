@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="b36002e4-cf03-4ed9-9f5c-bf15991e15e4" Version="1.78" Language="en-US" Publisher="Aderant" />
+        <Identity Id="b36002e4-cf03-4ed9-9f5c-bf15991e15e4" Version="1.81" Language="en-US" Publisher="Aderant" />
         <DisplayName>Aderant Developer Tools</DisplayName>
         <Description xml:space="preserve">Changes the task bar preview thumbnail of an ExpertSuite solution to clearly show the module name and the branch where it was opened from. Puts the branch name into the window title and the Solution Explorer caption. Draws an Adorner for x:Static usage (ExpertResources, ExpertBrushes, ExpertImages), e.g. colors, brushes, images, fonts, sizes etc.</Description>
         <Icon>Resources\ExpertIcon.ico</Icon>
