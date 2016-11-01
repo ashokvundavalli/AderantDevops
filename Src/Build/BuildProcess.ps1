@@ -203,6 +203,13 @@ function GetBuildFlavor() {
 	} else {
 		$buildFlavor = "debug"
 		Write-Host "....... Build in debug mode ................" -foregroundcolor Green
+		Write-Host 
+		Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" -ForegroundColor Green
+		Write-Host "!!! Use the -debug or -release switches to force a build flavor !!!" -ForegroundColor White
+		Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" -ForegroundColor Green
+		Write-Host 
+		Write-Host "Continuing in 5 seconds..."
+		Start-Sleep -s 5
 	}
 	return [string]$buildFlavor;
 }
