@@ -14,19 +14,4 @@ namespace IntegrationTest.Build {
             buildAssociation.AssociateWorkItemsToBuildAsync("ExpertSuite", 641161).Wait();
         }
     }
-
-    [TestClass]
-    public class WarningRatchetTests {
-        [TestMethod]
-        public void WarningRatchet() {
-            var ratchet = new WarningRatchet(new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
-
-            var request = new WarningRatchetRequest {
-                TeamProject = "ExpertSuite",
-                BuildId = 7623
-            };
-
-            ratchet.GetLastGoodBuildWarningCountAsync(request).Wait();
-        }
-    }
 }

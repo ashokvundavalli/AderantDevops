@@ -6,37 +6,15 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Client;
 
 namespace Aderant.Build.Tasks {
-    public sealed class WarningRatchetRequest {
-        public string TeamProject { get; set; }
-        public int BuildId { get; set; }
-        public int BuildDefinitionId { get; set; }
-        public string BuildDefinitionName { get; set; }
-        public bool IsDraft { get; set; }
-        public Microsoft.TeamFoundation.Build.WebApi.Build Build { get; internal set; }
-    }
-
     public class WarningRatchet {
         private readonly VssConnection connection;
+        private BuildHttpClient client;
 
         const int MaximumItemCount = 5000;
 
         public WarningRatchet(VssConnection connection) {
             this.connection = connection;
-        }
-
-        public Microsoft.TeamFoundation.Build.WebApi.Build LastGoodBuild { get; private set; }
-
-        private async Task<Microsoft.TeamFoundation.Build.WebApi.Build> GetLastGoodBuildAsync(WarningRatchetRequest request) {
-            var client = connection.GetClient<BuildHttpClient>();
-
-            var build = await GetLastGoodBuildAsync(client, request);
-            if (build != null) {
-                LastGoodBuild = build;
-
-                return build;
-            }
-
-            return null;
+            this.client = connection.GetClient<BuildHttpClient>(); // Return client is shared instance for all calls of GetClient, if you dispose it it's gone forever.
         }
 
         public static async Task<Microsoft.TeamFoundation.Build.WebApi.Build> GetLastGoodBuildAsync(BuildHttpClient client, WarningRatchetRequest request) {
@@ -52,7 +30,7 @@ namespace Aderant.Build.Tasks {
             }
 
             if (request.BuildDefinitionId == 0) {
-                throw new InvalidOperationException("Cannot request a builds with a definition of zero.");
+                throw new InvalidOperationException("Cannot request a build with a definition id of 0.");
             }
 
             var result = await client.GetBuildsAsync(request.TeamProject, new int[] { request.BuildDefinitionId },
@@ -84,13 +62,11 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         /// <param name="request">The request.</param>
         public async Task<int?> GetLastGoodBuildWarningCountAsync(WarningRatchetRequest request) {
-            var build = await GetLastGoodBuildAsync(request);
+            var build = await GetLastGoodBuildAsync(client, request).ConfigureAwait(false);
 
             if (build != null) {
-                request.Build = build;
-                BuildHttpClient client = connection.GetClient<BuildHttpClient>();
-
-                Timeline timelineRecords = await client.GetBuildTimelineAsync(request.TeamProject, build.Id);
+                request.LastGoodBuild = build;
+                var timelineRecords = await client.GetBuildTimelineAsync(request.TeamProject, build.Id).ConfigureAwait(false);
                 return SumWarnings(timelineRecords);
             }
 
@@ -122,7 +98,6 @@ namespace Aderant.Build.Tasks {
         }
 
         public async Task<int> GetBuildWarningCountAsync(WarningRatchetRequest request) {
-            var client = connection.GetClient<BuildHttpClient>();
             var build = await client.GetBuildAsync(request.TeamProject, request.BuildId);
 
             request.Build = build;

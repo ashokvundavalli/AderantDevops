@@ -19,9 +19,9 @@ namespace Aderant.Build.Tasks.WarningProcess {
             return new WarningComparison(baselineWarnings, newerWarnings);
         }
 
-        public string CreateWarningReport(WarningComparison entries, string url) {
+        public string CreateWarningReport(WarningComparison report, string url) {
             var reportBuilder = new WarningReportBuilder();
-            return reportBuilder.CreateReport(entries, url);
+            return reportBuilder.CreateReport(report, url);
         }
 
         private static IEnumerable<WarningEntry> GetWarnings(TextReader reader) {

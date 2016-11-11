@@ -36,7 +36,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.TeamFoundation.Build2.WebApi">
+      <HintPath>..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.Build2.WebApi.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Net.Http.Formatting, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Client\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -53,6 +60,7 @@
   <ItemGroup>
     <Compile Include="BuildAssociationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
