@@ -266,8 +266,7 @@
       <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
 
       <!-- This changes the copy local behaviour for _CopyFilesMarkedCopyLocal -->
-      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>
-      <CreateHardLinksForCopyLocalIfPossible>true</CreateHardLinksForCopyLocalIfPossible>
+      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>      
     </PropertyGroup>
     
     <Message Text="Copy local disabled: $(DisableCopyLocal)" />
