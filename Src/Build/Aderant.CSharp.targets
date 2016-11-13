@@ -226,7 +226,7 @@
         <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
       </ItemGroup>
   
-      <Error Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This probably result in runtime problems. Please fix any reference paths to Microsoft.Data.* assemblies." Condition="'@(DataServiceRedirect)' != ''" />
+      <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any reference paths to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
   </Target>
 
   
