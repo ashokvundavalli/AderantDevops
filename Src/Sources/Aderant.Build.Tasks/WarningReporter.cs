@@ -44,7 +44,7 @@ namespace Aderant.Build.Tasks {
             Microsoft.TeamFoundation.Build.WebApi.Build thisBuild = request.Build;
 
             if (request.Build == null) {
-                Microsoft.TeamFoundation.Build.WebApi.Build build = await client.GetBuildAsync(request.TeamProject, request.BuildId);
+                Microsoft.TeamFoundation.Build.WebApi.Build build = await client.GetBuildAsync(request.TeamProject, request.BuildId).ConfigureAwait(false);
 
                 request.Build = thisBuild = build;
             }
@@ -52,9 +52,9 @@ namespace Aderant.Build.Tasks {
             var lastBuild = await WarningRatchet.GetLastGoodBuildAsync(client, request);
 
             if (thisBuild != null && lastBuild != null) {
-                Stream first = await GetLogContentsAsync(client, request.TeamProject, lastBuild.Id);
+                Stream first = await GetLogContentsAsync(client, request.TeamProject, lastBuild.Id).ConfigureAwait(false);
 
-                Stream second = await GetLogContentsAsync(client, request.TeamProject, thisBuild.Id);
+                Stream second = await GetLogContentsAsync(client, request.TeamProject, thisBuild.Id).ConfigureAwait(false);
 
                 BuildLogProcessor processor = new BuildLogProcessor();
                 comparison = processor.GetWarnings(first, second);
@@ -66,9 +66,9 @@ namespace Aderant.Build.Tasks {
         }
 
         private async Task<Stream> GetLogContentsAsync(BuildHttpClient client, string requestTeamProject, int buildId) {
-            var baseline = await client.GetBuildTimelineAsync(requestTeamProject, buildId);
+            var baseline = await client.GetBuildTimelineAsync(requestTeamProject, buildId).ConfigureAwait(false);
 
-            return await GetLogAsync(client, requestTeamProject, buildId, baseline);
+            return await GetLogAsync(client, requestTeamProject, buildId, baseline).ConfigureAwait(false);
         }
 
         private static Task<Stream> GetLogAsync(BuildHttpClient client, string teamProject, int buildId, Timeline timeline) {
