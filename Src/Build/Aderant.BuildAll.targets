@@ -280,7 +280,7 @@
       <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
       <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>
     </PropertyGroup>
-
+    
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
       Message="Zipping build output"
@@ -340,9 +340,12 @@
 
       <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
 
+      <EliteDocuments Include="$(LocalExpertBinariesDirectory)\Elite Documentation\**\*.*"/>
+      <Documents Include="$(LocalExpertBinariesDirectory)\Documentation\**\*.*"/>
+
       <ZipSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
-        Exclude="@(SharedExclusions);@(EliteRoles);$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
+        Exclude="@(SharedExclusions);@(EliteRoles);@(EliteOverrideFiles);@(EliteDocuments)" />
       <ZipLicenseGeneratorFiles
         Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator\*.*" />
       <ZipRegistrationServiceFiles
@@ -364,11 +367,27 @@
       SourceFiles="@(EliteOverrideFiles)"
       DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
 
+    <!-- Essentially rename Elite.Help.Zip to Expert.Help.Zip -->
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.zip"
+      DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.zip" />
+
+    <Delete
+      Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.zip" />
+
+    <!-- Move the Elite specific docs into the Documents folder-->
+    <Delete
+      Files="@(Documents)" />
+
+    <Copy
+      SourceFiles="@(EliteDocuments)"
+      DestinationFiles="@(EliteDocuments->'$(LocalExpertBinariesDirectory)\Documentation\%(RecursiveDir)%(Filename)%(Extension)')" />
+
     <!-- This item group must go after the copy so that any moved files are included -->
     <ItemGroup>
       <ZipEliteEnterpriseSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
-        Exclude="@(SharedExclusions);@(EliteRoleExclusions)" />
+        Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments)" />
     </ItemGroup>
 
     <!-- Create ZIP for Elite Enterprise ExpertSource -->
