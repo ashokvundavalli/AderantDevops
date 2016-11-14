@@ -113,13 +113,14 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
         PrintWarningSummary $currentBuildCount $lastGoodBuildCount        
         
         if ($currentBuildCount -gt $lastGoodBuildCount) {
-            RenderWarningShields $true $currentBuildCount $lastGoodBuildCount
-
             $reporter = $ratchet.GetWarningReporter($ratchetRequest)
             
             RenderWarningReport $reporter 
 
             [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()
+            Write-Output "Adjusted build warnings: $adjustedWarningCount"
+
+            RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
 
             # Only fail if the adjusted count exceeds the last build
             if ($adjustedWarningCount -gt $lastGoodBuildCount) {                
@@ -151,7 +152,9 @@ function RenderWarningReport($reporter) {
     $stream.Close()
     $stream.Dispose()
 
-    Write-Output "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Introduced Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
+    if (-not [string]::IsNullOrWhiteSpace($report)) {
+        Write-Output "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Introduced Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
+    }
 }
 
 function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
@@ -265,6 +268,8 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
+            [System.Environment]::SetEnvironmentVariable("IsDesktopBuild", "true", [System.EnvironmentVariableTarget]::Process)
+
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs

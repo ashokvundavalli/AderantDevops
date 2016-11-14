@@ -123,11 +123,11 @@
 
     <!-- Find Expert_SplashScreen_ in the "Resource" Items. Remove it from "Resource" Items because we will use a modified version instead. -->
     <ItemGroup>
-      <OriginalSplashScreen Include="@(Resource)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen_', RegexOptions.IgnoreCase)) And %(Extension) == '.png'">
+      <OriginalSplashScreen Include="@(Resource)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen', RegexOptions.IgnoreCase)) And %(Extension) == '.png'">
         <IsResource>true</IsResource>
       </OriginalSplashScreen>
 
-      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And $([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen_', RegexOptions.IgnoreCase)) And %(Extension) == '.png'" >
+      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And $([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen', RegexOptions.IgnoreCase)) And %(Extension) == '.png'" >
         <IsSplashScreen>true</IsSplashScreen>
       </OriginalSplashScreen>
       
@@ -186,7 +186,7 @@
   <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
 
     <!--
-      This changes the search path of the ResolveReferences task to look in the dependencies folder. The normal probe sequence is
+        This changes the search path of the ResolveReferences task to look in the dependencies/packages folder. The normal probe sequence is
       
         (1) Files from current project - indicated by {CandidateAssemblyFiles}
         (2) $(ReferencePath) - the reference path property, which comes from the .USER file.
@@ -199,14 +199,34 @@
         (8) Treat the reference's Include as if it were a real file name.
         (9) Look in the application's output folder (like bin\debug)
             
-    -->
+    -->    
+       
+    <PropertyGroup>     
+        <RootFolder>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..'))</RootFolder>     
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
+        <PackageDirectories Include="@(AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+    </ItemGroup>    
+
     <PropertyGroup>
       <AssemblySearchPaths>
+        @(PackageDirectories);
         ..\..\Dependencies\;
         $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>
     
+  </Target>
+  
+  
+  <Target Name="FailOnAmbiguousAssemblyResolve" AfterTargets="ResolveAssemblyReferences">
+      <ItemGroup>
+        <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
+      </ItemGroup>
+  
+      <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any reference paths to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
   </Target>
 
   
@@ -246,7 +266,7 @@
       <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
 
       <!-- This changes the copy local behaviour for _CopyFilesMarkedCopyLocal -->
-      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>
+      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>      
     </PropertyGroup>
     
     <Message Text="Copy local disabled: $(DisableCopyLocal)" />
@@ -278,6 +298,8 @@
     <ItemGroup>
       <Dependencies Include="..\..\Dependencies\*.dll" />
     </ItemGroup>
+    
+    
 
     <!--FileWritesShareable comes from the Microsoft CopyLocal target -->
     <GetCopyLocalItemsToRemove
