@@ -11,23 +11,36 @@ begin{
     Function CheckAndUpdate-AnalyzerVersion {
         param([string] $analyzerPaketTemplateFilePath)
 
+		# get paket.exe location
 		$paket = [System.IO.Path]::Combine($analyzerPaketTemplateFilePath, "..\..\", "Build", "paket.exe")
+
         Set-Location $analyzerPaketTemplateFilePath
 
+		# initialize paket
         Invoke-Expression "& '$paket' --% init"
 
+		# detect existing analyzer package version
         $versionResult = Invoke-Expression "& '$paket' --% find-package-versions source http://packages.ap.aderant.com/packages/nuget name Aderant.Build.Analyzer max 1"
         $currentVersion = $versionResult[$versionResult.Count - 2]
+
+		# analyze paket.template to find out if the version number increased
         $paketTemplateFile = Join-Path $analyzerPaketTemplateFilePath -ChildPath "paket.template"
         $versionLine = Get-Content $paketTemplateFile | Where { $_.ToString().StartsWith("Version ") }
         $newVersion = $versionLine.Substring(8)  
-              
+        
+		# update package if the version number changed
         if ($currentVersion -ne $newVersion) {
             Write-Host "Packaging and pushing new version $newVersion of Aderant Analyzer."
             $outputPath = Join-Path $analyzerPaketTemplateFilePath -ChildPath "nugets"
+
+			# package it
             $package = Invoke-Expression "& '$paket' --% pack output $outputPath"
             $nupkgFile = (Get-ChildItem -Path $outputPath).FullName
+
+			# push it
             Invoke-Expression "& '$paket' --% push file $nupkgFile url http://packages.ap.aderant.com/packages/ apikey `" `""
+
+			# clean up
             Remove-Item -Path $outputPath -Recurse
         } else {
             Write-Host "Version $currentVersion of Aderant Analyzer is already up to date."
