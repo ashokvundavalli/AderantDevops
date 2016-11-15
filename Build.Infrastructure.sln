@@ -34,6 +34,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Package.ps1 = Src\Build\Package.ps1
 		Src\Build\paket.exe = Src\Build\paket.exe
 		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
+		Src\Build\Update-Analyzer.ps1 = Src\Build\Update-Analyzer.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B175EF-44C3-4EE4-BCAE-3B796D6A986D}"
