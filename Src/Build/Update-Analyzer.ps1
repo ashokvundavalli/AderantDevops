@@ -11,7 +11,7 @@ begin{
     Function CheckAndUpdate-AnalyzerVersion {
         param([string] $analyzerPaketTemplateFilePath)
 
-        $paket = [System.IO.Path]::Combine($Env:EXPERT_BUILD_DIRECTORY, "Build", "paket.exe")
+		$paket = [System.IO.Path]::Combine($analyzerPaketTemplateFilePath, "..\..\", "Build", "paket.exe")
         Set-Location $analyzerPaketTemplateFilePath
 
         Invoke-Expression "& '$paket' --% init"
