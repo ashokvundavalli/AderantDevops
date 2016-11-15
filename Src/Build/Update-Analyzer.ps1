@@ -14,9 +14,9 @@ begin{
         $paket = [System.IO.Path]::Combine($Env:EXPERT_BUILD_DIRECTORY, "Build", "paket.exe")
         Set-Location $analyzerPaketTemplateFilePath
 
-        Invoke-Tool -FileName $paket -Arguments "init" -RequireExitCodeZero 
+        Invoke-Expression "& '$paket' --% init"
 
-        $versionResult = Invoke-Tool -FileName $paket -Arguments "find-package-versions source http://packages.ap.aderant.com/packages/nuget name Aderant.Build.Analyzer max 1"
+        $versionResult = Invoke-Expression "& '$paket' --% find-package-versions source http://packages.ap.aderant.com/packages/nuget name Aderant.Build.Analyzer max 1"
         $currentVersion = $versionResult[$versionResult.Count - 2]
         $paketTemplateFile = Join-Path $analyzerPaketTemplateFilePath -ChildPath "paket.template"
         $versionLine = Get-Content $paketTemplateFile | Where { $_.ToString().StartsWith("Version ") }
@@ -25,9 +25,9 @@ begin{
         if ($currentVersion -ne $newVersion) {
             Write-Output "Packaging and pushing new version $newVersion of Aderant Analyzer."
             $outputPath = Join-Path $analyzerPaketTemplateFilePath -ChildPath "nugets"
-            $package = Invoke-Tool -FileName $paket -Arguments "pack output $outputPath" -RequireExitCodeZero
+            $package = Invoke-Expression "& '$paket' --% pack output $outputPath"
             $nupkgFile = (Get-ChildItem -Path $outputPath).FullName
-            Invoke-Tool -FileName $paket -Arguments "push file $nupkgFile url http://packages.ap.aderant.com/packages/ apikey `" `"" -RequireExitCodeZero
+            Invoke-Expression "& '$paket' --% push file $nupkgFile url http://packages.ap.aderant.com/packages/ apikey `" `""
             Remove-Item -Path $outputPath -Recurse
         } else {
             Write-Output "Version $currentVersion of Aderant Analyzer is already up to date."
@@ -36,6 +36,6 @@ begin{
 }
 
 process{
-    Write-Output "Checking version of Aderant Analyzer..."
+    Write-Output "Checking version of Aderant Analyzer in $analyzerPaketTemplateFilePath ..."
     $isAnalyzerUpToDate = CheckAndUpdate-AnalyzerVersion $analyzerPaketTemplateFilePath
 }
