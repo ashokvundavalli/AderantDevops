@@ -23,19 +23,19 @@ begin{
         $newVersion = $versionLine.Substring(8)  
               
         if ($currentVersion -ne $newVersion) {
-            Write-Info "Packaging and pushing new version $newVersion of Aderant Analyzer."
+            Write-Output "Packaging and pushing new version $newVersion of Aderant Analyzer."
             $outputPath = Join-Path $analyzerPaketTemplateFilePath -ChildPath "nugets"
             $package = Invoke-Tool -FileName $paket -Arguments "pack output $outputPath" -RequireExitCodeZero
             $nupkgFile = (Get-ChildItem -Path $outputPath).FullName
             Invoke-Tool -FileName $paket -Arguments "push file $nupkgFile url http://packages.ap.aderant.com/packages/ apikey `" `"" -RequireExitCodeZero
             Remove-Item -Path $outputPath -Recurse
         } else {
-            Write-Info "Version $currentVersion of Aderant Analyzer is already up to date."
+            Write-Output "Version $currentVersion of Aderant Analyzer is already up to date."
         }
     }  
 }
 
 process{
-    Write-Info "Checking version of Aderant Analyzer..."
+    Write-Output "Checking version of Aderant Analyzer..."
     $isAnalyzerUpToDate = CheckAndUpdate-AnalyzerVersion $analyzerPaketTemplateFilePath
 }
