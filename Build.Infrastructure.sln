@@ -91,6 +91,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.Shar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.XamlAdorner", "Src\Sources\Aderant.DeveloperTools.XamlAdorner\Aderant.DeveloperTools.XamlAdorner.csproj", "{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Aderant.Build.Analyzer", "Test\UnitTest.Aderant.Build.Analyzer\UnitTest.Aderant.Build.Analyzer.csproj", "{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,6 +147,10 @@ Global
 		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -155,5 +161,6 @@ Global
 		{DC82E590-6F89-42E2-9A22-54375D01A492} = {31A06791-2770-4455-94CF-489136D6405A}
 		{473D8878-64C8-46BD-8AE3-A79CD3ECC353} = {31A06791-2770-4455-94CF-489136D6405A}
 		{5A68A8CE-2DB7-420F-8F93-B92E0EC35079} = {31A06791-2770-4455-94CF-489136D6405A}
+		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7} = {31A06791-2770-4455-94CF-489136D6405A}
 	EndGlobalSection
 EndGlobal
