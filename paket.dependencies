@@ -6,7 +6,7 @@ source https://www.nuget.org/api/v2
 # System.Collections.Immutable 1.1.37.0 (or less)
 # as there are binding redirects in devenv.exe.config which redirect to these versions.
 
-nuget Aderant.Build.Analyzer prerelease
+nuget Aderant.Build.Analyzer
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.CSharp.Workspaces
 nuget WindowsAPICodePack-Core
