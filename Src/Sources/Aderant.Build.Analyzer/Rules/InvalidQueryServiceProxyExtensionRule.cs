@@ -61,27 +61,15 @@ namespace Aderant.Build.Analyzer.Rules {
                 return false;
             }
 
-            var innerMemberAccessExpression = memberAccessExpression.Expression as MemberAccessExpressionSyntax;
+            var innerMemberAccessExpression = memberAccessExpression?.Expression as MemberAccessExpressionSyntax;
 
 
-            //(semanticModel.GetSymbolInfo(innerMemberAccessExpression).Symbol as IPropertySymbol).ContainingType.Interfaces
-
-            var symbolInfo = semanticModel.GetSymbolInfo(innerMemberAccessExpression);
-            if (symbolInfo.Symbol != null && symbolInfo.Symbol.ContainingType.Interfaces.Any(i => i.Name == "IQueryServiceProxy")) {
-                return true;
+            if (innerMemberAccessExpression != null) {
+                var symbolInfo = semanticModel.GetSymbolInfo(innerMemberAccessExpression);
+                if (symbolInfo.Symbol != null && (symbolInfo.Symbol.ContainingType.Name == "IQueryServiceProxy" || symbolInfo.Symbol.ContainingType.Interfaces.Any(i => i.Name == "IQueryServiceProxy"))) {
+                    return true;
+                }
             }
-
-            //var identifier = innerMemberAccessExpression.Expression as IdentifierNameSyntax;
-
-            //var symbolInfo = semanticModel.GetSymbolInfo(identifier);
-
-            //// check if the extension method is being called on IQueryServiceProxy which uses OData as the LINQ source
-            //if (symbolInfo.Symbol != null) { 
-            //    var namedTypeSymbol = symbolInfo.Symbol as INamedTypeSymbol;
-            //    if (namedTypeSymbol != null && namedTypeSymbol.Interfaces.Any(i => i.Name == "IQueryServiceProxy")) {
-            //        return true;
-            //    }
-            //}
 
             return false;
         }

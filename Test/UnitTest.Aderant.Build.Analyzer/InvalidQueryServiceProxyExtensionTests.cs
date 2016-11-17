@@ -27,6 +27,7 @@ namespace UnitTest.Aderant.Build.Analyzer {
         class PROGRAM {
             static void Main(string[] args) {
                 var queryServiceProxy = new QueryServiceProxy();
+                var queryServiceProxyAsInterface = new QueryServiceProxy() as IQueryServiceProxy;
 ";
 
         protected override string PostCode => @"
@@ -58,7 +59,7 @@ namespace UnitTest.Aderant.Build.Analyzer {
             var expected = GetDefaultDiagnostic("FirstOrDefault");
             VerifyCSharpDiagnostic(test, expected);
         }
-
+        
         [TestMethod]
         public void FirstOrDefault_WithoutArguments_ShouldPass() {
             var test = InsertCode(@"queryServiceProxy.ExpansionCodes.FirstOrDefault();");
@@ -157,6 +158,121 @@ namespace UnitTest.Aderant.Build.Analyzer {
         [TestMethod]
         public void Count_AfterWherewithArguments_ShouldPass() {
             var test = InsertCode(@"queryServiceProxy.ExpansionCodes.Where(e => e.Id == 0).Count();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+
+
+
+
+
+        [TestMethod]
+        public void FirstOrDefault_WithArguments_ShouldFail_UsingInterface_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.FirstOrDefault(e => e.Id == 0);");
+
+            var expected = GetDefaultDiagnostic("FirstOrDefault");
+            VerifyCSharpDiagnostic(test, expected);
+        }
+
+        [TestMethod]
+        public void FirstOrDefault_WithoutArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.FirstOrDefault();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void FirstOrDefault_AfterWherewithArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Where(e => e.Id == 0).FirstOrDefault();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void First_WithArguments_ShouldFail_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.First(e => e.Id == 0);");
+
+            var expected = GetDefaultDiagnostic("First");
+            VerifyCSharpDiagnostic(test, expected);
+        }
+
+        [TestMethod]
+        public void First_WithoutArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.First();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void First_AfterWherewithArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Where(e => e.Id == 0).First();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void SingleOrDefault_WithArguments_ShouldFail_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.SingleOrDefault(e => e.Id == 0);");
+
+            var expected = GetDefaultDiagnostic("SingleOrDefault");
+            VerifyCSharpDiagnostic(test, expected);
+        }
+
+        [TestMethod]
+        public void SingleOrDefault_WithoutArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.SingleOrDefault();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void SingleOrDefault_AfterWherewithArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Where(e => e.Id == 0).SingleOrDefault();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void Single_WithArguments_ShouldFail_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Single(e => e.Id == 0);");
+
+            var expected = GetDefaultDiagnostic("Single");
+            VerifyCSharpDiagnostic(test, expected);
+        }
+
+        [TestMethod]
+        public void Single_WithoutArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Single();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void Single_AfterWherewithArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Where(e => e.Id == 0).Single();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void Count_WithArguments_ShouldFail_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Count(e => e.Id == 0);");
+
+            var expected = GetDefaultDiagnostic("Count");
+            VerifyCSharpDiagnostic(test, expected);
+        }
+
+        [TestMethod]
+        public void Count_WithoutArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Count();");
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void Count_AfterWherewithArguments_ShouldPass_UsingInterface() {
+            var test = InsertCode(@"queryServiceProxyAsInterface.ExpansionCodes.Where(e => e.Id == 0).Count();");
 
             VerifyCSharpDiagnostic(test);
         }
