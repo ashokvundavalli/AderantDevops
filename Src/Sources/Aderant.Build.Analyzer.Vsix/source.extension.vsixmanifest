@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Aderant.Build.Analyzer..affefbea-c208-4c3b-b3be-29cc4af0e128" Version="1.0" Language="en-US" Publisher="Aderant"/>
+        <Identity Id="Aderant.Build.Analyzer..affefbea-c208-4c3b-b3be-29cc4af0e128" Version="1.0.3" Language="en-US" Publisher="Aderant"/>
         <DisplayName>Aderant.Build.Analyzer</DisplayName>
         <Description xml:space="preserve">An Aderant specific diagnostic and code refactoring extension for the .NET Compiler Platform ("Roslyn").</Description>
     </Metadata>

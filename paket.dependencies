@@ -14,7 +14,20 @@ nuget Microsoft.WindowsAPICodePack-Shell
 nuget Microsoft.Composition
 nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
-nuget Microsoft.TeamFoundationServer.Client ~> 14.102.0
-nuget Microsoft.VisualStudio.Services.InteractiveClient ~> 14.102.0
+nuget Microsoft.TeamFoundationServer.Client >= 14.102 < 14.103
+nuget Microsoft.VisualStudio.Services.InteractiveClient >= 14.102 < 14.103
 nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
-nuget Newtonsoft.Json ~> 6.0.0
+nuget Newtonsoft.Json >= 6.0 < 6.1
+
+group Analyzer
+
+source http://packages.ap.aderant.com/packages/nuget
+source https://www.nuget.org/api/v2
+
+nuget Microsoft.CodeAnalysis.Common <= 1.0
+nuget Microsoft.CodeAnalysis.CSharp <= 1.0
+nuget Microsoft.CodeAnalysis.CSharp.Workspaces <= 1.0
+nuget Microsoft.CodeAnalysis.Workspaces.Common <= 1.0
+nuget Microsoft.Composition <= 1.0.27
+nuget System.Collections.Immutable <= 1.1.36.0
+nuget System.Reflection.Metadata
