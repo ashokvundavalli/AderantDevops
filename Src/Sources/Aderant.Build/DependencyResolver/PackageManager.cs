@@ -99,7 +99,7 @@ namespace Aderant.Build.DependencyResolver {
             file.Save();
 
             if (context.IncludeDevelopmentDependencies) {
-                dependencies.Add(new FSharpOption<string>("Main"), "Aderant.Build.Analyzer", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
+                dependencies.Add(new FSharpOption<string>("Main"), "Aderant.Build.Analyzer prerelease", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
             }
         }
 
