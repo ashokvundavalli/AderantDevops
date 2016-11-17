@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -52,7 +51,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // check if this is a call to an extension method that is not allowed together with arguments
             var memberAccessExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
             extensionName = memberAccessExpression?.Name.ToString();
-            if (extensionName != null && (!extensionName.StartsWith("First") && !extensionName.StartsWith("Single") && extensionName != "Count")) {
+            if (extensionName != null && extensionName != "Count") {
                 return false;
             }
 
