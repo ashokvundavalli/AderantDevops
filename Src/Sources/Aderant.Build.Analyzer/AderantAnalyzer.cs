@@ -31,7 +31,7 @@ namespace Aderant.Build.Analyzer {
         private readonly List<RuleBase> rules = new List<RuleBase> {
             new InvalidRegexRule(),
             new InvalidLogMessageRule(),
-            new InvalidQueryServiceProxyExtensionRule(),
+            //new InvalidQueryServiceProxyExtensionRule(),
             new PropertyChangedNoStringRule(),
             new PropertyChangedNoStringNonFixableRule(),
             new SetPropertyValueNoStringRule(),
