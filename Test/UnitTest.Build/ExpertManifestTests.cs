@@ -26,5 +26,21 @@ namespace UnitTest.Build {
             Assert.AreEqual("1.9.0.0", element.Attribute("AssemblyVersion").Value);
             Assert.AreEqual("branch", element.Attribute("GetAction").Value);
         }
+
+        [TestMethod]
+        public void Version_attribute_creates_version_constraint() {
+            string manifestText = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ProductManifest Name=""Expert"" ExpertVersion=""0"">
+  <Modules>
+    <Module Name=""Foo"" Version=""&lt;= 8.1.1"" GetAction=""NuGet"" />
+</Modules>
+</ProductManifest>";
+
+            var manifest = new ExpertManifest(XDocument.Parse(manifestText));
+
+            var foo = manifest.GetModule("Foo");
+            Assert.IsNotNull(foo.VersionRequirement);
+            Assert.AreEqual("<= 8.1.1", foo.VersionRequirement.ConstraintExpression);
+        }
     }
 }

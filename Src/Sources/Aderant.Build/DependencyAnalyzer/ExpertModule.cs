@@ -183,6 +183,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Target { get; set; }
         public PackageType PackageRootRelativeDirectory { get; set; }
 
+        internal VersionRequirement VersionRequirement {
+            get {
+                var version = customAttributes.FirstOrDefault(s => string.Equals(s.Name.LocalName, "Version"));
+                if (version != null) {
+                    return new VersionRequirement {ConstraintExpression = version.Value};
+                }
+                return null;
+            }
+        }
+
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
         /// </summary>
