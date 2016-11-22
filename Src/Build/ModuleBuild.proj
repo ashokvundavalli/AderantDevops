@@ -264,6 +264,7 @@ doc.Save(File);
     <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="GetModuleDependencies" />
+    <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <!--<CallTarget Targets="CheckForWrongReferences" />-->
@@ -752,10 +753,15 @@ doc.Save(File);
     ==========================================================================================
   -->
 
-  <ItemGroup>
-    <CustomSolutionFiles
-      Include="$(SolutionDirectoryPath)**\*.Custom.sln" />
-  </ItemGroup>
+  <Target 
+    Name="PrepareZipCustomSource" 
+    Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
+    
+    <ItemGroup>
+      <CustomSolutionFiles
+        Include="$(SolutionDirectoryPath)**\*.Custom.sln" />
+    </ItemGroup>
+  </Target>
     
   <Target 
     Name="ZipCustomSource" 
