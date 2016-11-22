@@ -92,8 +92,8 @@ namespace Aderant.Build.DependencyResolver {
                 if (referencedModule.VersionRequirement != null) {
                     version = referencedModule.VersionRequirement.ConstraintExpression ?? string.Empty;
                 }
-
-                if (!referencedModule.Name.Equals("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase)) {
+                
+                if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(Domain.PackageName(referencedModule.Name)))) {
                     file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                 }
             }

@@ -213,7 +213,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void Initialize() {
             this.modules = LoadAllModules().ToList();
 
-            Branch = PathHelper.GetBranch(ProductManifestPath, false);
+            Branch = PathHelper.GetBranch(ProductManifestPath ?? string.Empty, false);
         }
 
         /// <summary>
