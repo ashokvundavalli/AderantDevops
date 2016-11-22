@@ -135,7 +135,21 @@ namespace Aderant.Build.DependencyResolver {
 
             FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Constants.MainDependencyGroup);
 
-            return requirements.ToDictionary(pair => pair.Key.ToString(), pair => new VersionRequirement { ConstraintExpression = pair.Value.ToString() });
+            return requirements.ToDictionary(pair => pair.Key.ToString(), NewRequirement);
+        }
+
+        private VersionRequirement NewRequirement(KeyValuePair<Domain.PackageName, Paket.VersionRequirement> pair) {
+            string tag = string.Empty;
+            if (pair.Value.PreReleases.IsConcrete) {
+                PreReleaseStatus.Concrete concrete = pair.Value.Item2 as Paket.PreReleaseStatus.Concrete;
+                if (concrete != null) {
+                    tag = concrete.Item.Head;
+                }
+            }
+
+            return new VersionRequirement {
+                ConstraintExpression = pair.Value.ToString() + " " + tag
+            };
         }
     }
 }
