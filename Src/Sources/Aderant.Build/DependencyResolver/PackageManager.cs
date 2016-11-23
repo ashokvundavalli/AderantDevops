@@ -92,8 +92,8 @@ namespace Aderant.Build.DependencyResolver {
                 if (referencedModule.VersionRequirement != null) {
                     version = referencedModule.VersionRequirement.ConstraintExpression ?? string.Empty;
                 }
-
-                if (!referencedModule.Name.Equals("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase)) {
+                
+                if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(Domain.PackageName(referencedModule.Name)))) {
                     file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                 }
             }
@@ -135,7 +135,21 @@ namespace Aderant.Build.DependencyResolver {
 
             FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Constants.MainDependencyGroup);
 
-            return requirements.ToDictionary(pair => pair.Key.ToString(), pair => new VersionRequirement { ConstraintExpression = pair.Value.ToString() });
+            return requirements.ToDictionary(pair => pair.Key.ToString(), NewRequirement);
+        }
+
+        private VersionRequirement NewRequirement(KeyValuePair<Domain.PackageName, Paket.VersionRequirement> pair) {
+            string tag = string.Empty;
+            if (pair.Value.PreReleases.IsConcrete) {
+                PreReleaseStatus.Concrete concrete = pair.Value.Item2 as Paket.PreReleaseStatus.Concrete;
+                if (concrete != null) {
+                    tag = concrete.Item.Head;
+                }
+            }
+
+            return new VersionRequirement {
+                ConstraintExpression = pair.Value.ToString() + " " + tag
+            };
         }
     }
 }
