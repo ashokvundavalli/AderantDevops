@@ -226,6 +226,7 @@ doc.Save(File);
   <Target Name="ModuleBuild">
     <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
     <CallTarget Targets="CleanBin" />
+    <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
@@ -604,13 +605,29 @@ doc.Save(File);
     ==========================================================================================
   -->
 
-  <Target Name="ZipCustomSource"
-          Condition="'$(ZipSource)' != 'false' And (Exists('$(SolutionDirectoryPath)$(ModuleName).Custom.sln') and '$(IsCustomBuild)' != 'true')">
+    <Target
+      Name="PrepareZipCustomSource"
+      Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
+
+        <ItemGroup>
+          <CustomSolutionFiles
+            Include="$(SolutionDirectoryPath)**\*.Custom.sln" />
+        </ItemGroup>
+    </Target>
+
+    <Target
+      Name="ZipCustomSource"
+      Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
+      Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
+      Inputs="@(CustomSolutionFiles)">
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
-      <ZipFile>$(ZipFileDirectory)$(ModuleName).Custom.zip</ZipFile>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ZipFile Include="$(ZipFileDirectory)%(CustomSolutionFiles.Filename).zip" />
+    </ItemGroup>
 
     <ItemGroup>
       <SourceFilesToCopyForTransform
@@ -634,7 +651,7 @@ doc.Save(File);
         <DestinationSubDirectory>Build\</DestinationSubDirectory>
       </SourceFilesToCopyForTransform>
 
-      <SourceFilesToCopyForTransform Include="$(SolutionDirectoryPath)*Custom.sln">
+      <SourceFilesToCopyForTransform Include="%(CustomSolutionFiles.FullPath)">
         <DestinationSubDirectory></DestinationSubDirectory>
       </SourceFilesToCopyForTransform>
     </ItemGroup>
@@ -647,8 +664,8 @@ doc.Save(File);
     </PropertyGroup>
 
     <Delete
-      Files="$(ZipFile)"
-      Condition="Exists('$(ZipFile)')" />
+      Files="%(ZipFile.FullPath)"
+      Condition="Exists('%(ZipFile.FullPath)')" />
 
     <RemoveDir
       Condition="Exists('$(TempSolutionDirectory)')"
@@ -664,8 +681,9 @@ doc.Save(File);
        SkipUnchangedFiles="true">
     </Copy>
 
+    
     <!-- Read solution file so we can get the project source-->
-    <ReadLinesFromFile File="$(TempSolutionDirectory)$(ModuleName).Custom.sln">
+    <ReadLinesFromFile File="$(TempSolutionDirectory)%(CustomSolutionFiles.Filename)%(CustomSolutionFiles.Extension)">
       <Output TaskParameter="Lines"
               ItemName="LinesFromSlnFile"/>
     </ReadLinesFromFile>
@@ -725,6 +743,9 @@ doc.Save(File);
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <ZipSourceFiles
+        Remove="@(ZipSourceFiles)" />
+        
+      <ZipSourceFiles
         Include="$(TempSolutionDirectory)**\*.Custom.sln;"/>
 
       <ZipSourceFiles
@@ -759,7 +780,7 @@ doc.Save(File);
 
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipSourceFiles)"
-      ZipFileName="$(ZipFile)"
+      ZipFileName="%(ZipFile.FullPath)"
       WorkingDirectory="$(TempSolutionDirectory)"
       ParallelCompression="false" />
 

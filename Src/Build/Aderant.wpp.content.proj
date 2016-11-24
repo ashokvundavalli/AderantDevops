@@ -7,7 +7,9 @@
     <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildThisFileDirectory)</DependenciesDirectory>
     <DependenciesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))</DependenciesDirectory>
     <DependenciesDirectory Condition="!HasTrailingSlash('$(DependenciesDirectory)')">$(DependenciesDirectory)\</DependenciesDirectory>
-    <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory>
+    <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
+    <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory><!-- only works for TFS modules right now -->
+    <IsGitRepo>$([System.IO.File]::Exists('$(DependenciesDirectory)..\.gitignore'))</IsGitRepo>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -212,12 +214,20 @@
       <Type>TypeScript</Type>
     </ExternalContent>
 
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js">
+    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js" Condition=" $(IsGitRepo) == false ">
+      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
+      <Type>Content</Type>
+    </ThirdPartyContent>
+    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*.js" Condition=" $(IsGitRepo) == true ">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
 
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
+    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts" Condition=" $(IsGitRepo) == false ">
+      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
+      <Type>TypeScript</Type>
+    </ThirdPartyContent>
+    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*.d.ts" Condition=" $(IsGitRepo) == true ">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
     </ThirdPartyContent>
@@ -225,6 +235,7 @@
 
   <!-- Content -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
+      
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Content\**\*;
                               $(DependenciesDirectory)Mobile.*\Content\**\*"
                      Exclude="$(DependenciesDirectory)Web.*\Content\Web.*\**\*.js;
@@ -241,10 +252,19 @@
 
     <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*"
                        Exclude="$(DependenciesDirectory)ThirdParty.*\**\*.js;
-                                $(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
+                                $(DependenciesDirectory)ThirdParty.*\**\*.d.ts"
+                       Condition=" $(IsGitRepo) == false ">
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
+    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*"
+                       Exclude="$(PackagesDirectory)ThirdParty.*\**\*.js;
+                                $(PackagesDirectory)ThirdParty.*\**\*.d.ts"
+                       Condition=" $(IsGitRepo) == true ">
+      <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
+      <Type>Content</Type>
+    </ThirdPartyContent>
+      
   </ItemGroup>
 
   <!-- ViewModels -->
@@ -408,12 +428,12 @@
     <When Condition=" ('$(AssemblyName)' != 'Web.Foundation') And '$(EnableContentLink)' == 'true' ">
       <ItemGroup>
         <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
-        <Content Include="Authentication\Web.Foundation\LogOn.aspx;ManualLogOn\default.aspx" >
+        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx" >
           <Visible>true</Visible>
         </Content>
 
         <Content Include="Authentication\**\*"
-                 Exclude="Authentication\**\LogOn.aspx">
+                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx">
           <Visible>true</Visible>
         </Content>
 
