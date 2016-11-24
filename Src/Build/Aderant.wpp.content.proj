@@ -7,6 +7,7 @@
     <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(MSBuildThisFileDirectory)</DependenciesDirectory>
     <DependenciesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))</DependenciesDirectory>
     <DependenciesDirectory Condition="!HasTrailingSlash('$(DependenciesDirectory)')">$(DependenciesDirectory)\</DependenciesDirectory>
+    <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
     <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory>
   </PropertyGroup>
 
@@ -216,8 +217,16 @@
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
+    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*.js">
+      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
+      <Type>Content</Type>
+    </ThirdPartyContent>
 
     <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
+      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
+      <Type>TypeScript</Type>
+    </ThirdPartyContent>
+    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
     </ThirdPartyContent>
@@ -225,6 +234,7 @@
 
   <!-- Content -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
+      
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Content\**\*;
                               $(DependenciesDirectory)Mobile.*\Content\**\*"
                      Exclude="$(DependenciesDirectory)Web.*\Content\Web.*\**\*.js;
@@ -245,6 +255,13 @@
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
+    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*"
+                       Exclude="$(PackagesDirectory)ThirdParty.*\**\*.js;
+                                $(PackagesDirectory)ThirdParty.*\**\*.d.ts">
+      <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
+      <Type>Content</Type>
+    </ThirdPartyContent>
+      
   </ItemGroup>
 
   <!-- ViewModels -->
