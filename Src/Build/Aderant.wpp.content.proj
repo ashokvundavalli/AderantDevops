@@ -408,12 +408,12 @@
     <When Condition=" ('$(AssemblyName)' != 'Web.Foundation') And '$(EnableContentLink)' == 'true' ">
       <ItemGroup>
         <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
-        <Content Include="Authentication\Web.Foundation\LogOn.aspx;ManualLogOn\default.aspx" >
+        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx" >
           <Visible>true</Visible>
         </Content>
 
         <Content Include="Authentication\**\*"
-                 Exclude="Authentication\**\LogOn.aspx">
+                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx">
           <Visible>true</Visible>
         </Content>
 
