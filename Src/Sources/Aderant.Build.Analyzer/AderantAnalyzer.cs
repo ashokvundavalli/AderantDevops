@@ -31,13 +31,11 @@ namespace Aderant.Build.Analyzer {
         private readonly List<RuleBase> rules = new List<RuleBase> {
             new InvalidRegexRule(),
             new InvalidLogMessageRule(),
-            //new InvalidQueryServiceProxyExtensionRule(),
             new PropertyChangedNoStringRule(),
             new PropertyChangedNoStringNonFixableRule(),
             new SetPropertyValueNoStringRule(),
             new SetPropertyValueNoStringNonFixableRule(),
-            new SqlInjectionErrorRule(),
-            new SqlInjectionWarningRule()
+            new SqlInjectionErrorRule()
         };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics {

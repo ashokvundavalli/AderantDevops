@@ -28,22 +28,40 @@ namespace Aderant.Build.Analyzer.Rules {
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeNodeCommandText, SyntaxKind.ExpressionStatement);
+            context.RegisterSyntaxNodeAction(AnalyzeNodeDatabaseSqlQuery, SyntaxKind.InvocationExpression);
+            context.RegisterSyntaxNodeAction(AnalyzeNodeNewSqlCommand, SyntaxKind.ObjectCreationExpression);
         }
 
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
-            AssignmentExpressionSyntax assignmentExpression = GetCommandTextAssignmentExpression(context);
-
-            if (assignmentExpression == null) {
-                // Do nothing.
+            if (EvaluateNodeCommandTextExpressionStatement(
+                context.SemanticModel,
+                (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
                 return;
             }
 
-            if (IsAssignmentSourceStringLiteralOrConstStringField(context, assignmentExpression)) {
-                // Raise a warning.
+            Diagnostic diagnostic = Diagnostic.Create(Descriptor, context.Node.GetLocation());
+            context.ReportDiagnostic(diagnostic);
+        }
+
+        private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
+            if (EvaluateNodeDatabaseSqlQuery(
+                context.SemanticModel,
+                (InvocationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
                 return;
             }
 
-            Diagnostic diagnostic = Diagnostic.Create(Descriptor, assignmentExpression.GetLocation());
+            Diagnostic diagnostic = Diagnostic.Create(Descriptor, context.Node.GetLocation());
+            context.ReportDiagnostic(diagnostic);
+        }
+
+        private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
+            if (EvaluateNodeNewSqlCommandObjectCreationExpression(
+                context.SemanticModel,
+                (ObjectCreationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
+                return;
+            }
+
+            Diagnostic diagnostic = Diagnostic.Create(Descriptor, context.Node.GetLocation());
             context.ReportDiagnostic(diagnostic);
         }
     }

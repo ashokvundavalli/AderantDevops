@@ -42,7 +42,6 @@
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
-    <Compile Include="Rules\SqlInjectionWarningRule.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
     <None Include="CodeFixes\InvalidRegexCodeFix.cs" />
     <Compile Include="CodeFixes\LowerCaseTypesCodeFix.cs" />

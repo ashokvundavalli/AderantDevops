@@ -97,14 +97,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AderantQueryServiceMigrationTests.cs" />
-    <Compile Include="InvalidQueryServiceProxyExtensionTests.cs" />
-    <Compile Include="InvalidLogMessageTests.cs" />
-    <Compile Include="PropertyChangedNoStringNonFixableTests.cs" />
-    <Compile Include="SetPropertyValueNoStringNonFixableTests.cs" />
-    <Compile Include="SetPropertyValueNoStringTests.cs" />
-    <Compile Include="PropertyChangedNoStringTests.cs" />
-    <Compile Include="InvalidRegexTests.cs" />
+    <Compile Include="Tests\AderantQueryServiceMigrationTests.cs" />
+    <Compile Include="Tests\InvalidQueryServiceProxyExtensionTests.cs" />
+    <Compile Include="Tests\InvalidLogMessageTests.cs" />
+    <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
+    <Compile Include="Tests\SetPropertyValueNoStringNonFixableTests.cs" />
+    <Compile Include="Tests\SetPropertyValueNoStringTests.cs" />
+    <Compile Include="Tests\PropertyChangedNoStringTests.cs" />
+    <Compile Include="Tests\InvalidRegexTests.cs" />
+    <Compile Include="Tests\SqlInjectionErrorTests.cs" />
     <Compile Include="Verifiers\AderantCodeFixVerifier.cs" />
     <Compile Include="Verifiers\CodeFixVerifier.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />

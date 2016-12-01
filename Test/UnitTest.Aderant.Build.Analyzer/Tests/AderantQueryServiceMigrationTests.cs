@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
-namespace UnitTest.Aderant.Build.Analyzer {
+namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class AderantQueryServiceMigrationTests : AderantCodeFixVerifier {
 
