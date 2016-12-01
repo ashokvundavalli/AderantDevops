@@ -841,7 +841,7 @@
         return [System.IO.Path]::GetFullPath($file)
     }
 
-    Function global:CompileBuildLibraryAssembly($buildScriptDirectory, [bool]$forceCompile) {
+    Function global:CompileBuildLibraryAssembly($buildScriptDirectory, [bool]$forceCompile) {	
         $aderantBuildAssembly = GetBuildLibraryAssemblyPath $buildScriptDirectory
         $aderantBuildAnalyzerAssembly = GetBuildAnalyzerLibraryAssemblyPath $buildScriptDirectory
 
@@ -876,8 +876,12 @@
                 return
             }
         }
-
+		
         $file = GetBuildLibraryAssemblyPath $buildScriptDirectory
+		# Looks like the environment hasn't been configured yet, set it up now
+		if (-not (Test-Path $file)) {
+			CompileBuildLibraryAssembly $buildScriptDirectory
+		}
 
         # Load all DLLs to suck in the dependencies of our code
         $buildTools = [System.IO.Path]::GetDirectoryName($file)
