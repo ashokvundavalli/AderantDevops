@@ -842,6 +842,7 @@
     }
 
     Function global:CompileBuildLibraryAssembly($buildScriptDirectory, [bool]$forceCompile) {
+	Write-Debug "No files y2o"
         $aderantBuildAssembly = GetBuildLibraryAssemblyPath $buildScriptDirectory
         $aderantBuildAnalyzerAssembly = GetBuildAnalyzerLibraryAssemblyPath $buildScriptDirectory
 
@@ -876,14 +877,23 @@
                 return
             }
         }
-
+		
         $file = GetBuildLibraryAssemblyPath $buildScriptDirectory
+		# Looks like the environment hasn't been configured yet, set it up now
+		if (-not (Test-Path $file)) {
+			CompileBuildLibraryAssembly $buildScriptDirectory
+		}
 
         # Load all DLLs to suck in the dependencies of our code
         $buildTools = [System.IO.Path]::GetDirectoryName($file)
         Write-Debug "Loading dependencies from $buildTools"
 
         $files = @(Get-ChildItem -Path "$buildTools\*" -Filter "*Aderant.Build*.dll")
+		
+		if (-not $files) {
+			Write-Debug "No files yo"
+		}
+		
         $files += ([System.IO.FileInfo]"$buildScriptDirectory\paket.exe")
 
         foreach ($item in $files) {
