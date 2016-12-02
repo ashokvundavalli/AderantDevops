@@ -75,8 +75,6 @@ use -Path $MSBuildLocation -Name MSBuild
 
 $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
-$dropLocation = "\\dfs.aderant.com\ExpertSuite\Releases\81x"
-
 function GetVssConnection() {
    $endpoint = Get-VstsEndpoint -Name "SystemVssConnection" -Require
    $serviceEndpoint = new-object Microsoft.TeamFoundation.DistributedTask.WebApi.ServiceEndpoint
@@ -230,7 +228,7 @@ task PostBuild -Jobs Init, Package, CopyToDrop, {
 
 task GetDependencies {
     if (-not $IsDesktopBuild) {
-        . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository -dropPath $dropLocation
+        . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository
     }
 }
 
