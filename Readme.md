@@ -8,7 +8,9 @@ The tools provide a set of PowerShell extensions which enable you to retrieve de
 Assuming you already have Git and [PowerShell 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395) installed.
 If you installed Git yourself then you'll need to [re-install](#if-you-dont-have-git-or-installed-it-yourself) using the silent install script.
 
-* Start PowerShell
+![Setup How To](Doc/Images/setup-how-to.gif)
+
+* Start PowerShell as Administrator
 * Clone the repository
 
 ```git clone http://tfs:8080/tfs/Aderant/ExpertSuite/_git/Build.Infrastructure C:\Source\Build.Infrastructure```
