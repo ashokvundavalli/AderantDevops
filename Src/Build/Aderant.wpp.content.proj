@@ -218,7 +218,7 @@
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
-    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*.js" Condition=" $(IsGitRepo) == true ">
+    <ThirdPartyContent Include="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.js" Condition=" $(IsGitRepo) == true ">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
@@ -227,7 +227,7 @@
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
     </ThirdPartyContent>
-    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*.d.ts" Condition=" $(IsGitRepo) == true ">
+    <ThirdPartyContent Include="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.d.ts" Condition=" $(IsGitRepo) == true ">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
     </ThirdPartyContent>
@@ -257,9 +257,9 @@
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
-    <ThirdPartyContent Include="$(PackagesDirectory)ThirdParty.*\**\*"
-                       Exclude="$(PackagesDirectory)ThirdParty.*\**\*.js;
-                                $(PackagesDirectory)ThirdParty.*\**\*.d.ts"
+    <ThirdPartyContent Include="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*"
+                       Exclude="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.js;
+                                $(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.d.ts"
                        Condition=" $(IsGitRepo) == true ">
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
