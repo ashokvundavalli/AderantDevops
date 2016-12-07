@@ -245,7 +245,11 @@ namespace Aderant.Build {
         private IBuildController GetBuildController(IBuildServer buildServer, ExpertBuildConfiguration configuration) {
             // Build Defaults
             IBuildController[] controllers = buildServer.QueryBuildControllers();
-            controllers = controllers.Where(c => c.Agents.Count > 1 && !c.Name.Contains("TLH")).ToArray();
+            controllers = controllers.
+                Where(c => c.Agents.Count > 1)
+                .Where(c => !c.Name.Contains("TLH")) /* Exclude TLH servers by name as they don't know how to build anything */
+                .Where(c => !c.Name.Contains("201")) /* Exclude TLH servers by code as they don't know how to build anything */
+                .ToArray();
 
             if (controllers.Length == 0) {
                 throw new InvalidOperationException("There are no controllers with more than 1 agent or no controllers are available");
