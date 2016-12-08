@@ -214,20 +214,12 @@
       <Type>TypeScript</Type>
     </ExternalContent>
 
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js" Condition=" $(IsGitRepo) == false ">
-      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
-      <Type>Content</Type>
-    </ThirdPartyContent>
-    <ThirdPartyContent Include="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.js" Condition=" $(IsGitRepo) == true ">
+    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
 
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts" Condition=" $(IsGitRepo) == false ">
-      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
-      <Type>TypeScript</Type>
-    </ThirdPartyContent>
-    <ThirdPartyContent Include="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.d.ts" Condition=" $(IsGitRepo) == true ">
+    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
     </ThirdPartyContent>
@@ -252,15 +244,7 @@
 
     <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*"
                        Exclude="$(DependenciesDirectory)ThirdParty.*\**\*.js;
-                                $(DependenciesDirectory)ThirdParty.*\**\*.d.ts"
-                       Condition=" $(IsGitRepo) == false ">
-      <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
-      <Type>Content</Type>
-    </ThirdPartyContent>
-    <ThirdPartyContent Include="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*"
-                       Exclude="$(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.js;
-                                $(PackagesDirectory)JavaScript\ThirdParty.*\lib\**\*.d.ts"
-                       Condition=" $(IsGitRepo) == true ">
+                                $(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
