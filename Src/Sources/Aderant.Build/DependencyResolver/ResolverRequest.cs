@@ -140,7 +140,7 @@ namespace Aderant.Build.DependencyResolver {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
                 }
                 resolvedModule = new ExpertModule { Name = module };
-                requiresThirdPartyReplication = false;
+                requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web."));
             }
 
             modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = requiresThirdPartyReplication });

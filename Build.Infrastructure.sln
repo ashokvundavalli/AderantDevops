@@ -93,6 +93,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.Xaml
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Aderant.Build.Analyzer", "Test\UnitTest.Aderant.Build.Analyzer\UnitTest.Aderant.Build.Analyzer.csproj", "{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{FF9D5E44-F36C-467C-A1CB-31F56A56D091}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectReferenceRewriter", "Src\Sources\ProjectReferenceRewriter\ProjectReferenceRewriter.csproj", "{D048CE25-98C5-48AC-B9F0-848D72C5860D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -151,6 +155,10 @@ Global
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D048CE25-98C5-48AC-B9F0-848D72C5860D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D048CE25-98C5-48AC-B9F0-848D72C5860D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D048CE25-98C5-48AC-B9F0-848D72C5860D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D048CE25-98C5-48AC-B9F0-848D72C5860D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -162,5 +170,6 @@ Global
 		{473D8878-64C8-46BD-8AE3-A79CD3ECC353} = {31A06791-2770-4455-94CF-489136D6405A}
 		{5A68A8CE-2DB7-420F-8F93-B92E0EC35079} = {31A06791-2770-4455-94CF-489136D6405A}
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7} = {31A06791-2770-4455-94CF-489136D6405A}
+		{D048CE25-98C5-48AC-B9F0-848D72C5860D} = {FF9D5E44-F36C-467C-A1CB-31F56A56D091}
 	EndGlobalSection
 EndGlobal
