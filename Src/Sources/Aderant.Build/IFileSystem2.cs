@@ -10,7 +10,7 @@ namespace Aderant.Build {
 
         IEnumerable<string> GetFiles(string path, string filter, bool recursive);
 
-        IEnumerable<string> GetDirectories(string path, bool notRelative = false);
+        IEnumerable<string> GetDirectories(string path, bool recursive = false, bool notRelative = false);
 
         string GetFullPath(string path);
 

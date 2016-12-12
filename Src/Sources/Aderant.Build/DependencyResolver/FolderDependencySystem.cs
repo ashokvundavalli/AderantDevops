@@ -37,7 +37,7 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (requirement.VersionRequirement != null && !string.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
-                string[] entries = fileSystem.GetDirectories(requirementPath, !isRelative).ToArray();
+                string[] entries = fileSystem.GetDirectories(requirementPath, notRelative:!isRelative).ToArray();
                 string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
                 foreach (string build in orderedBuilds) {
