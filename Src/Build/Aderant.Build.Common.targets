@@ -66,6 +66,10 @@
              AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
+  <UsingTask TaskName="CompileLess"
+           AssemblyFile="$(BuildAssembly)"
+           Condition="'$(IsCustomBuild)' != 'true'" />
+  
   <UsingTask TaskName="GetCopyLocalItemsToRemove"
              AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
