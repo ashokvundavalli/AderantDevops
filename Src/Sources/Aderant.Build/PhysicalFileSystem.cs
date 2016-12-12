@@ -112,13 +112,17 @@ namespace Aderant.Build {
             return Enumerable.Empty<string>();
         }
 
-        public virtual IEnumerable<string> GetDirectories(string path, bool recursive = false) {
+        public virtual IEnumerable<string> GetDirectories(string path, bool recursive = false, bool notRelative = false) {
             try {
                 path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
                 if (!Directory.Exists(path)) {
                     return Enumerable.Empty<string>();
                 }
-                return Directory.EnumerateDirectories(path, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).Select(MakeRelativePath);
+                var files = Directory.EnumerateDirectories(path, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                if (notRelative) {
+                    return files;
+                }
+                return files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
 
             } catch (DirectoryNotFoundException) {
