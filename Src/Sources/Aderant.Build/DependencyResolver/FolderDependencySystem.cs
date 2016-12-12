@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Aderant.Build.DependencyResolver {
         /// <param name="requirement">The requirement.</param>
         public virtual string GetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
             string newRequirementPath = AdjustDropPathToBranch(resolverRequestDropPath, requirement);
-
+            bool isRelative = newRequirementPath.Contains(fileSystem.Root);
             string requirementPath = HandleRequirementType(newRequirementPath, requirement);
 
             if (!HasDropPath(requirementPath)) {
@@ -37,7 +38,7 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (requirement.VersionRequirement != null && !string.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
-                string[] entries = fileSystem.GetDirectories(requirementPath).ToArray();
+                string[] entries = fileSystem.GetDirectories(requirementPath, !isRelative).ToArray();
                 string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
                 foreach (string build in orderedBuilds) {

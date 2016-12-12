@@ -112,11 +112,14 @@ namespace Aderant.Build {
             return Enumerable.Empty<string>();
         }
 
-        public virtual IEnumerable<string> GetDirectories(string path) {
+        public virtual IEnumerable<string> GetDirectories(string path, bool notRelative = false) {
             try {
                 path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
                 if (!Directory.Exists(path)) {
                     return Enumerable.Empty<string>();
+                }
+                if (notRelative) {
+                    return Directory.EnumerateDirectories(path);
                 }
                 return Directory.EnumerateDirectories(path).Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
