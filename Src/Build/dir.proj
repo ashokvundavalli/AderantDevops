@@ -8,8 +8,9 @@
   <PropertyGroup>
     <ThisProject>$([System.IO.Path]::GetFileName($(MSBuildProjectFullPath)))</ThisProject>
     <IsWeb>$(ThisProject.StartsWith('Web.'))</IsWeb>
+    <IsMobile>$(ThisProject.StartsWith('Mobile.'))</IsMobile>
   </PropertyGroup>
-
   <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.Content.proj" Condition="'$(IsWeb)' == 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.Content.proj" Condition="'$(IsMobile)' == 'true'" />
 
 </Project>
