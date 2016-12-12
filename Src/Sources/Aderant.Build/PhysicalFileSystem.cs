@@ -120,7 +120,7 @@ namespace Aderant.Build {
                 }
                 var files = Directory.EnumerateDirectories(path, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                 if (notRelative) {
-                    return files
+                    return files;
                 }
                 return files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
