@@ -1,63 +1,43 @@
 ﻿using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Aderant.Build.Tasks {
-    public class CompileLess : Microsoft.Build.Utilities.Task{
-        private Logging.ILogger logger;
+    public class CompileLess : Microsoft.Build.Utilities.Task {
 
         [Required]
-        public string ModulesRootPath { get; set; }
+        public ITaskItem[] LessFiles { get; set; }
 
-        [Required]
-        public string ModuleName { get; set; }
-        
         public override bool Execute() {
-            ModulesRootPath = Path.GetFullPath(ModulesRootPath);
-
-            LogParameters();
-
-            logger = new BuildTaskLogger(this);
             var tasks = new List<Task>();
+            Stopwatch sw = Stopwatch.StartNew();
 
-            var pathToContent = $@"{ModulesRootPath}Src\{ModuleName}\Content";
-            List<string> lessFilesToCompile = new List<string>();
-
-            foreach (string file in Directory.GetFiles(pathToContent)) {
-                if (file.Contains("Skin.") && file.EndsWith(".less")) {
-                    Log.LogMessage($"Compiling less into css for file {file}");
-                    string cssOutputFileName = file.Replace(".less", ".css");
-
-                    tasks.Add(BuildInfrastructureHelper.StartProcessAsync(
-                            "cmd.exe", 
-                            $"/c lessc -ru {file} > {cssOutputFileName}", 
-                            pathToContent, 
-                            OnReceiveStandardErrorOrOutputData)
-                        );
-                }
+            foreach (ITaskItem lessTaskItem in LessFiles) {
+                Log.LogMessage($"Compiling LESS into CSS for file: {lessTaskItem.ItemSpec}");
+                tasks.Add(BuildInfrastructureHelper.StartProcessAsync(
+                        "cmd.exe",
+                        $"/c lessc -ru {lessTaskItem.ItemSpec} {lessTaskItem.ItemSpec.Replace(".less", ".css")}",
+                        ".",
+                        OnReceiveStandardErrorOrOutputData)
+                    );
             }
 
             Task.WaitAll(tasks.ToArray());
+
+            sw.Stop();
+            Log.LogMessage("CompileLess completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"), null);
             return !Log.HasLoggedErrors;
         }
 
         private void OnReceiveStandardErrorOrOutputData(DataReceivedEventArgs e, bool isError, System.Diagnostics.Process process) {
             if (e.Data != null) {
                 if (isError) {
-                    logger.Error("{0}: {1}", process.Id.ToString(), e.Data);
+                    Log.LogError("{0}: {1}", process.Id.ToString(), e.Data);
                 } else {
-                    logger.Debug("{0}: {1}", process.Id.ToString(), e.Data);
+                    Log.LogMessage("{0}: {1}", process.Id.ToString(), e.Data);
                 }
             }
-        }
-
-        private void LogParameters() {
-            Log.LogMessage(MessageImportance.Normal, $"ModulesRootPath: {ModulesRootPath}" , null);
-            Log.LogMessage(MessageImportance.Normal, $"ModuleName: {ModuleName}", null);
         }
 
     }

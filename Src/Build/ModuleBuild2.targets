@@ -441,14 +441,16 @@ doc.Save(File);
   
   <!--
     ==========================================================================================================================
-        Compile less into css 
+        Compile LESS into CSS 
     ==========================================================================================================================
   -->
-  <Target Name="CompileLess"
-          Condition="'$(IsWebModule)' == 'true'">
+  <Target Name="CompileLess">
+    <ItemGroup>
+      <LessFiles Include="$(ModuleSourceDirectory)$(ModuleName)\Content\Skin.*.less" />
+    </ItemGroup>
+    
     <CompileLess 
-        ModuleName="$(ModuleName)"
-        ModulesRootPath="$(SolutionRoot)" />
+      LessFiles="@(LessFiles)" />
   </Target>
   
   <!--
