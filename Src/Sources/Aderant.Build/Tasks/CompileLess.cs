@@ -18,9 +18,10 @@ namespace Aderant.Build.Tasks {
 
             foreach (ITaskItem lessTaskItem in LessFiles) {
                 Log.LogMessage($"Compiling LESS into CSS for file: {lessTaskItem.ItemSpec}");
+                string cssOutputPath = $"{lessTaskItem.GetMetadata("RelativeDir")}{lessTaskItem.GetMetadata("FileName")}.css";
                 tasks.Add(BuildInfrastructureHelper.StartProcessAsync(
                         "cmd.exe",
-                        $"/c {pathToLessCompiler} -ru {lessTaskItem.ItemSpec} {lessTaskItem.ItemSpec.Replace(".less", ".css")}",
+                        $"/c {pathToLessCompiler} -ru {lessTaskItem.ItemSpec} {cssOutputPath}",
                         ".",
                         OnReceiveStandardErrorOrOutputData)
                     );
