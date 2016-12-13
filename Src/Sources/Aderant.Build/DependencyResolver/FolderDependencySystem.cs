@@ -29,7 +29,7 @@ namespace Aderant.Build.DependencyResolver {
         /// <param name="requirement">The requirement.</param>
         public virtual string GetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
             string newRequirementPath = AdjustDropPathToBranch(resolverRequestDropPath, requirement);
-
+            bool notRelative = !newRequirementPath.Contains(fileSystem.Root);
             string requirementPath = HandleRequirementType(newRequirementPath, requirement);
 
             if (!HasDropPath(requirementPath)) {
@@ -37,11 +37,11 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (requirement.VersionRequirement != null && !string.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
-                string[] entries = fileSystem.GetDirectories(requirementPath).ToArray();
+                string[] entries = fileSystem.GetDirectories(requirementPath, notRelative: notRelative).ToArray();
                 string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
                 foreach (string build in orderedBuilds) {
-                    var files = fileSystem.GetFiles(build, null, false);
+                    var files = fileSystem.GetFiles(build, null, false, notRelative);
 
                     foreach (string file in files) {
                         if (file.IndexOf("build.failed", StringComparison.OrdinalIgnoreCase) >= 0) {
