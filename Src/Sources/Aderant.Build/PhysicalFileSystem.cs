@@ -6,7 +6,7 @@ using System.Linq;
 namespace Aderant.Build {
     public class PhysicalFileSystem : IFileSystem2 {
         private readonly string root;
-     
+
         public PhysicalFileSystem(string root) {
             if (String.IsNullOrEmpty(root)) {
                 throw new ArgumentException("Argument cannot be null or empty", nameof(root));
@@ -93,7 +93,7 @@ namespace Aderant.Build {
             return GetFiles(path, null, recursive);
         }
 
-        public virtual IEnumerable<string> GetFiles(string path, string filter, bool recursive) {
+        public virtual IEnumerable<string> GetFiles(string path, string filter, bool recursive, bool notRelative = false) {
             path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
             if (String.IsNullOrEmpty(filter)) {
                 filter = "*.*";
@@ -102,7 +102,8 @@ namespace Aderant.Build {
                 if (!Directory.Exists(path)) {
                     return Enumerable.Empty<string>();
                 }
-                return Directory.EnumerateFiles(path, filter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).Select(MakeRelativePath);
+                var files = Directory.EnumerateFiles(path, filter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                return notRelative ? files : files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
 
             } catch (DirectoryNotFoundException) {
@@ -119,10 +120,7 @@ namespace Aderant.Build {
                     return Enumerable.Empty<string>();
                 }
                 var files = Directory.EnumerateDirectories(path, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                if (notRelative) {
-                    return files;
-                }
-                return files.Select(MakeRelativePath);
+                return notRelative ? files : files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
 
             } catch (DirectoryNotFoundException) {
