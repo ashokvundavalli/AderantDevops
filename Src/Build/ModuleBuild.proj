@@ -269,6 +269,7 @@ doc.Save(File);
     <CallTarget Targets="SetBuildNumbers" />
     <!--<CallTarget Targets="CheckForWrongReferences" />-->
     <CallTarget Targets="UpdateModuleFileVersion"/>
+    <CallTarget Targets="CompileLess" />
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipTemplateModule" />
     <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
@@ -327,7 +328,20 @@ doc.Save(File);
 
   </Target>
 
+  <!--
+    ==========================================================================================================================
+        Compile LESS into CSS 
+    ==========================================================================================================================
+  -->
+  <Target Name="CompileLess">
+    <ItemGroup>
+      <LessFiles Include="$(ModuleSourceDirectory)$(ModuleName)\Content\Skin.*.less" />
+    </ItemGroup>
 
+    <CompileLess
+      LessFiles="@(LessFiles)" />
+  </Target>
+  
   <!--
     ==========================================================================================
         Clean
