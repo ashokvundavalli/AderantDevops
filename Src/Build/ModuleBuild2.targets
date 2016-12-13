@@ -230,7 +230,6 @@ doc.Save(File);
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
-    <CallTarget Targets="CompileLess" />
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipTemplateModule" />
     <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
@@ -437,20 +436,6 @@ doc.Save(File);
                 Singleline="false"
                 Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
                 ReplacementText="${section1}$(FileVersion)${section2}" />
-  </Target>
-  
-  <!--
-    ==========================================================================================================================
-        Compile LESS into CSS 
-    ==========================================================================================================================
-  -->
-  <Target Name="CompileLess">
-    <ItemGroup>
-      <LessFiles Include="$(ModuleSourceDirectory)$(ModuleName)\Content\Skin.*.less" />
-    </ItemGroup>
-    
-    <CompileLess 
-      LessFiles="@(LessFiles)" />
   </Target>
   
   <!--

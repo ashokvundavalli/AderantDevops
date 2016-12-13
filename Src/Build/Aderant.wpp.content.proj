@@ -478,7 +478,7 @@
     <PropertyGroup>
       <EmptyProperty></EmptyProperty>
     </PropertyGroup>
-
+    
     <!-- Build the dll from any linked projects. This project will reference the output assembly of the linked project directly (i.e. we won't use the DLL from 
     the dependencies directory) -->
     <MSBuild Projects="@(LinkTo->'%(RelativePath)\%(Identity).csproj')"
@@ -491,6 +491,15 @@
                          DeployDefaultTarget=$(EmptyProperty);
                          FilesToIncludeTargetFile=$(EmptyProperty);
                          DeployTarget=$(EmptyProperty)" />
+  </Target>
+
+  <Target Name="CompileLess" AfterTargets="CopyLinkedContentFiles">
+    <ItemGroup>
+      <LessFiles Include="$(SolutionDir)\Src\$(ModuleName)\Content\*.less" />
+    </ItemGroup>
+
+    <CompileLess
+      LessFiles="@(LessFiles)" />
   </Target>
 
   <!-- Suppress the TypeScript compile phase if we are building a linked project -->
