@@ -43,6 +43,7 @@
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
+    <Compile Include="Rules\SqlInjectionWarningRule.cs" />
     <None Include="CodeFixes\InvalidRegexCodeFix.cs" />
     <Compile Include="CodeFixes\LowerCaseTypesCodeFix.cs" />
     <Compile Include="Refactorings\MakeConverterRefactoring.cs" />

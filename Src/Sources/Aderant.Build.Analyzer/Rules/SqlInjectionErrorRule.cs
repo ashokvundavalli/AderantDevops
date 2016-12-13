@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
-    public class SqlInjectionErrorRule : SqlInjectionRuleBase {
+    internal class SqlInjectionErrorRule : SqlInjectionRuleBase {
         internal const string DiagnosticId = "Aderant_SqlInjectionError";
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
