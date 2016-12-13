@@ -2,6 +2,7 @@
 using Microsoft.Build.Framework;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Aderant.Build.Tasks {
     public class CompileLess : Microsoft.Build.Utilities.Task {
@@ -12,12 +13,14 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             var tasks = new List<Task>();
             Stopwatch sw = Stopwatch.StartNew();
+            string pathToLessCompiler = Path.GetFullPath($@"../../../{BuildInfrastructureHelper.PathToBuildToolsFromModules}\LessCompiler\lessc.cmd");
 
+            Debugger.Launch();
             foreach (ITaskItem lessTaskItem in LessFiles) {
                 Log.LogMessage($"Compiling LESS into CSS for file: {lessTaskItem.ItemSpec}");
                 tasks.Add(BuildInfrastructureHelper.StartProcessAsync(
                         "cmd.exe",
-                        $"/c lessc -ru {lessTaskItem.ItemSpec} {lessTaskItem.ItemSpec.Replace(".less", ".css")}",
+                        $"/c {pathToLessCompiler} -ru {lessTaskItem.ItemSpec} {lessTaskItem.ItemSpec.Replace(".less", ".css")}",
                         ".",
                         OnReceiveStandardErrorOrOutputData)
                     );
