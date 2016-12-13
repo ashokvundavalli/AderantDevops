@@ -8,7 +8,7 @@ namespace Aderant.Build {
 
         void DeleteDirectory(string path, bool recursive);
 
-        IEnumerable<string> GetFiles(string path, string filter, bool recursive);
+        IEnumerable<string> GetFiles(string path, string filter, bool recursive, bool notRelative = false);
 
         IEnumerable<string> GetDirectories(string path, bool recursive = false, bool notRelative = false);
 
