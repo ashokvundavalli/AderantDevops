@@ -15,7 +15,6 @@ namespace Aderant.Build.Tasks {
             Stopwatch sw = Stopwatch.StartNew();
             string pathToLessCompiler = Path.GetFullPath($@"../../../{BuildInfrastructureHelper.PathToBuildToolsFromModules}\LessCompiler\lessc.cmd");
 
-            Debugger.Launch();
             foreach (ITaskItem lessTaskItem in LessFiles) {
                 Log.LogMessage($"Compiling LESS into CSS for file: {lessTaskItem.ItemSpec}");
                 tasks.Add(BuildInfrastructureHelper.StartProcessAsync(
