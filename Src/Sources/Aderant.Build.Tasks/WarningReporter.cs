@@ -52,6 +52,8 @@ namespace Aderant.Build.Tasks {
             var lastBuild = await WarningRatchet.GetLastGoodBuildAsync(client, request);
 
             if (thisBuild != null && lastBuild != null) {
+                request.LastGoodBuild = lastBuild;
+
                 Stream first = await GetLogContentsAsync(client, request.TeamProject, lastBuild.Id).ConfigureAwait(false);
 
                 Stream second = await GetLogContentsAsync(client, request.TeamProject, thisBuild.Id).ConfigureAwait(false);
@@ -59,7 +61,7 @@ namespace Aderant.Build.Tasks {
                 BuildLogProcessor processor = new BuildLogProcessor();
                 comparison = processor.GetWarnings(first, second);
 
-                return processor.CreateWarningReport(comparison, request.Build.Url);
+                return processor.CreateWarningReport(comparison, request.LastGoodBuild.Url);
             }
 
             return await Task.FromResult(string.Empty);

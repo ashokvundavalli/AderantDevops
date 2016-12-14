@@ -36,7 +36,7 @@ namespace Aderant.Build.Tasks.WarningProcess {
         }
 
         public bool AffectsProjectQuality {
-            get { return IsCopyWarning; }
+            get { return !IsCopyWarning && !IsTestDeploymentIssue; }
         }
 
         public DateTime? Timestamp { get; set; }
