@@ -31,7 +31,7 @@ namespace Aderant.Build.Tasks.WarningProcess {
         }
 
         public int GetAdjustedCount() {
-            return Target.Where(t => !t.AffectsProjectQuality).Count();
+            return Target.Count(t => t.AffectsProjectQuality);
         }
     }
 }
