@@ -20,7 +20,7 @@ namespace Aderant.Build.Tasks.WarningProcess {
                 if (Message != null) {
                     // C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(3963, 5) 
                     // Warning MSB3026 Could not copy "C\Program Files (x86)\MSBuild\14.0\bin\ru\Microsoft.Build.Engine.resources.dll" to "....\Bin\Test\ru\Microsoft.Build.Engine.resources.dll".Beginning retry 1 in 1000ms.The process cannot access the file '....\Bin\Test\ru\Microsoft.Build.Engine.resources.dll' because it is being used by another process.
-                    return Message.IndexOf("MSB3026", StringComparison.Ordinal) >= 0;
+                    return Message.IndexOf("MSB3026", StringComparison.Ordinal) >= 0; 
                 }
                 return false;
             }
@@ -35,7 +35,7 @@ namespace Aderant.Build.Tasks.WarningProcess {
             }
         }
 
-        public bool IsTransient {
+        public bool AffectsProjectQuality {
             get { return IsCopyWarning; }
         }
 

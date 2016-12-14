@@ -106,7 +106,7 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     }
 
     if ($lastGoodBuildCount) {
-        Write-Host "The last good build id was: $($ratchetRequest.Build.Id)"
+        Write-Host "The last good build id was: $($ratchetRequest.LastGoodBuild.Id)"
 
         PrintWarningSummary $currentBuildCount $lastGoodBuildCount        
         
