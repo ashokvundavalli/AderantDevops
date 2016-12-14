@@ -10,6 +10,8 @@
     <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
     <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory><!-- only works for TFS modules right now -->
     <IsGitRepo>$([System.IO.File]::Exists('$(DependenciesDirectory)..\.gitignore'))</IsGitRepo>
+    <ResponseFile>$(SolutionDir)\Build\TFSBuild.rsp</ResponseFile>
+
   </PropertyGroup>
 
   <PropertyGroup>
@@ -493,9 +495,13 @@
                          DeployTarget=$(EmptyProperty)" />
   </Target>
 
-  <Target Name="CompileLess" AfterTargets="CopyLinkedContentFiles">
+  <Target Name="CompileLess" 
+          AfterTargets="CopyLinkedContentFiles"
+          Condition="'$(EnableLESSCompile)' == 'True'">
     <ItemGroup>
-      <LessFiles Include="$(SolutionDir)\Src\$(ModuleName)\Content\*.less" />
+      <!--Exclude any .less files beginning with an '_' from being compiled as a convention-->
+      <LessFiles Include="$(SolutionDir)\Src\$(ModuleName)\Content\*.less" 
+                 Exclude="$(SolutionDir)\Src\$(ModuleName)\Content\_*.less"/>
     </ItemGroup>
 
     <CompileLess

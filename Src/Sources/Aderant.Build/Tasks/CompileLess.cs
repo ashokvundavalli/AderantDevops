@@ -38,6 +38,7 @@ namespace Aderant.Build.Tasks {
             if (e.Data != null) {
                 if (isError) {
                     Log.LogError("{0}: {1}", process.Id.ToString(), e.Data);
+                    Log.LogError("If you didn't intend for this LESS file to be compiled change the filename to begin with an underscore e.g. _Aderant.DontCompileMePls.less");
                 } else {
                     Log.LogMessage("{0}: {1}", process.Id.ToString(), e.Data);
                 }
