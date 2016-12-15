@@ -373,7 +373,6 @@ doc.Save(File);
 
   </Target>
 
-
   <!-- 
     ==========================================================================================
     T4 Template Transformation
@@ -438,8 +437,7 @@ doc.Save(File);
                 Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
                 ReplacementText="${section1}$(FileVersion)${section2}" />
   </Target>
-
-
+  
   <!--
     ==========================================================================================================================
         Compile - rmTransformTemplates 

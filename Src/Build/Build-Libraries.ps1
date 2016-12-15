@@ -534,7 +534,7 @@
                 if ($toModuleDropPath -ilike "*Web.*") {
                     # We need to copy all files for web applications because they are zipped up and not in the
                     # ExpertSource like all other files.
-                    Write-Host "Copying web application files to drop for web applicaiton integration tests."
+                    Write-Host "Copying web application files to drop for web application integration tests."
                     CopyContents -copyFrom $binTestPath -copyTo $dropBinTestPath
                 } else {
                     Write-Host "Copying integration test artifacts to drop"

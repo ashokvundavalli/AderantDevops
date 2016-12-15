@@ -10,6 +10,8 @@
     <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
     <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory><!-- only works for TFS modules right now -->
     <IsGitRepo>$([System.IO.File]::Exists('$(DependenciesDirectory)..\.gitignore'))</IsGitRepo>
+    <ResponseFile>$(SolutionDir)\Build\TFSBuild.rsp</ResponseFile>
+
   </PropertyGroup>
 
   <PropertyGroup>
@@ -478,7 +480,7 @@
     <PropertyGroup>
       <EmptyProperty></EmptyProperty>
     </PropertyGroup>
-
+    
     <!-- Build the dll from any linked projects. This project will reference the output assembly of the linked project directly (i.e. we won't use the DLL from 
     the dependencies directory) -->
     <MSBuild Projects="@(LinkTo->'%(RelativePath)\%(Identity).csproj')"
@@ -491,6 +493,19 @@
                          DeployDefaultTarget=$(EmptyProperty);
                          FilesToIncludeTargetFile=$(EmptyProperty);
                          DeployTarget=$(EmptyProperty)" />
+  </Target>
+
+  <Target Name="CompileLess" 
+          AfterTargets="CopyLinkedContentFiles"
+          Condition="'$(EnableLESSCompile)' == 'True'">
+    <ItemGroup>
+      <!--Exclude any .less files beginning with an '_' from being compiled as a convention-->
+      <LessFiles Include="$(SolutionDir)\Src\$(ModuleName)\Content\*.less" 
+                 Exclude="$(SolutionDir)\Src\$(ModuleName)\Content\_*.less"/>
+    </ItemGroup>
+
+    <CompileLess
+      LessFiles="@(LessFiles)" />
   </Target>
 
   <!-- Suppress the TypeScript compile phase if we are building a linked project -->
