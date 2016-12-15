@@ -10,7 +10,7 @@ namespace Aderant.Build.Analyzer.Rules {
         internal const string DiagnosticId = "Aderant_PropertyChangedNoString";
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Warning;
-        internal override string Id => "Aderant_PropertyChangedNoString";
+        internal override string Id => DiagnosticId;
 
         internal override string Title => "String usage in PropertyChanged";
         internal override string MessageFormat => "PropertyChanged uses string '{0}' instead of nameof({0})";

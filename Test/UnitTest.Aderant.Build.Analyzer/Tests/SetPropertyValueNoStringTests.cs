@@ -1,15 +1,12 @@
-﻿using Aderant.Build.Analyzer;
-using Aderant.Build.Analyzer.CodeFixes;
+﻿using Aderant.Build.Analyzer.CodeFixes;
 using Aderant.Build.Analyzer.Rules;
 using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TestHelper;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
-namespace UnitTest.Aderant.Build.Analyzer {
+namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
-    public class PropertyChangedNoStringTests : AderantCodeFixVerifier {
+    public class SetPropertyValueNoStringTests : AderantCodeFixVerifier {
 
         /// <summary>
         /// Returns the codefix being tested (C#) - to be implemented in non-abstract class
@@ -18,13 +15,13 @@ namespace UnitTest.Aderant.Build.Analyzer {
         /// The CodeFixProvider to be used for CSharp code
         /// </returns>
         protected override CodeFixProvider GetCSharpCodeFixProvider() {
-            return new PropertyChangedNoStringFix();
+            return new SetPropertyValueNoStringFix();
         }
 
         /// <summary>
         /// Gets the rule to be verified.
         /// </summary>
-        protected override RuleBase Rule => new PropertyChangedNoStringRule();
+        protected override RuleBase Rule => new SetPropertyValueNoStringRule();
 
         internal static string SharedPreCode => @"
     using System;
@@ -43,7 +40,7 @@ namespace UnitTest.Aderant.Build.Analyzer {
 
             static string Test { get; set; }
 
-            static void OnPropertyChanged(string str) { 
+            static void SetPropertyValue(string str, int a, int b) { 
                 // do something
             }
 
@@ -53,24 +50,24 @@ namespace UnitTest.Aderant.Build.Analyzer {
         protected override string PreCode => SharedPreCode;
 
         [TestMethod]
-        public void PropertyChange_string_refers_to_class_member() {
-            var test = InsertCode(@"OnPropertyChanged(""Test"");");
+        public void SetPropertyValue_string_refers_to_class_member() {
+            var test = InsertCode(@"SetPropertyValue(""Test"", 0, 0);");
 
             var expected = GetDefaultDiagnostic("Test");
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = InsertCode(@"OnPropertyChanged(nameof(Test));");
+            var fixtest = InsertCode(@"SetPropertyValue(nameof(Test), 0, 0);");
             VerifyCSharpFix(test, fixtest);
         }
 
         [TestMethod]
-        public void PropertyChange_string_refers_to_baseclass_member() {
-            var test = InsertCode(@"OnPropertyChanged(""Test2"");");
+        public void SetPropertyValue_string_refers_to_baseclass_member() {
+            var test = InsertCode(@"SetPropertyValue(""Test2"", 0, 0);");
 
             var expected = GetDefaultDiagnostic("Test2");
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = InsertCode(@"OnPropertyChanged(nameof(Test2));");
+            var fixtest = InsertCode(@"SetPropertyValue(nameof(Test2), 0, 0);");
             VerifyCSharpFix(test, fixtest);
         }
     }

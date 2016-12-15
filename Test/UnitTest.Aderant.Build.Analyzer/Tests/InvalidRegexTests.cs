@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Text.RegularExpressions;
-using Aderant.Build.Analyzer;
 using Aderant.Build.Analyzer.Rules;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TestHelper;
 using UnitTest.Aderant.Build.Analyzer.Verifiers;
 
-namespace UnitTest.Aderant.Build.Analyzer {
+namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class InvalidRegexTests : AderantCodeFixVerifier {
 
