@@ -31,7 +31,8 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
-            if (EvaluateNodeCommandTextExpressionStatement(
+            if (IsProjectIgnored(context) || 
+                EvaluateNodeCommandTextExpressionStatement(
                 context.SemanticModel,
                 (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Warning) {
                 return;

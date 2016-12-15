@@ -1,14 +1,25 @@
 ﻿using System.Collections.Generic;
+using Aderant.Build.Analyzer.Exclusions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
     internal abstract class SqlInjectionRuleBase : RuleBase {
+        protected enum SqlInjectionRuleViolationSeverityEnum {
+            Invalid = -1,
+            None,
+            Info,
+            Warning,
+            Error,
+            Max
+        }
+
         // These rule 'Exceptions' are intentionally hard-coded,
         // to make adding them a process that requires code review.
-            // Docudraft in FirmControl requires the ability to execute dynamic queries,
-            // and would be flagged as an 'error'.
+        //     Docudraft in FirmControl requires the ability to execute dynamic queries,
+        //     and would be flagged as an 'error'.
         private const string RuleExceptionDocudraftIssueSqlNoBatch =
             "Aderant.FirmControl.DocuDraft.DataAccess.SqlBase." +
             "IssueSqlNoBatch(System.Data.SqlClient.SqlConnection, System.Text.StringBuilder, " +
@@ -29,14 +40,7 @@ namespace Aderant.Build.Analyzer.Rules {
             "IssueSql(System.Data.SqlClient.SqlConnection, string, " +
             "System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>, bool)";
 
-        protected enum SqlInjectionRuleViolationSeverityEnum {
-            Invalid = -1,
-            None,
-            Info,
-            Warning,
-            Error,
-            Max
-        }
+        private bool? ignoreProject;
 
         /// <summary>
         /// Evaluates the node 'command text expression statement'.
@@ -353,6 +357,28 @@ namespace Aderant.Build.Analyzer.Rules {
                     invocationExpressionList.Add(invocationExpression);
                 }
             }
+        }
+
+        protected bool IsProjectIgnored(SyntaxNodeAnalysisContext context) {
+            if (ignoreProject.HasValue) {
+                return ignoreProject.Value;
+            }
+
+            string sourceLocation = context.Node.GetLocation().ToString();
+
+            foreach (string exclusion in new SqlInjectionExclusions().ExclusionsList) {
+                if (sourceLocation.Contains(exclusion)) {
+                    ignoreProject = true;
+                }
+            }
+
+            if (ignoreProject == true) {
+                return ignoreProject.Value;
+            }
+
+            ignoreProject = false;
+
+            return ignoreProject.Value;
         }
     }
 }

@@ -41,6 +41,7 @@
     <Compile Include="CodeFixes\AderantQueryServiceMigrationCodeFix.cs" />
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
+    <Compile Include="Exclusions\SqlInjectionExclusions.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
     <Compile Include="Rules\SqlInjectionWarningRule.cs" />
@@ -98,6 +99,7 @@
       <HintPath>..\..\..\packages\analyzer\System.Reflection.Metadata\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.6\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
