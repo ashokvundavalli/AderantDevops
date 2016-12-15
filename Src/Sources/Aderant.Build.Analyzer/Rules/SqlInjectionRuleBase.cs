@@ -151,7 +151,7 @@ namespace Aderant.Build.Analyzer.Rules {
             if (binaryExpressionSyntax == null) {
                 ConditionalExpressionSyntax conditionalExpression = expression as ConditionalExpressionSyntax;
 
-                // If no, cease attempting to navigate the 'tree' and simply evaluate the expression
+                // If no, cease attempting to navigate the 'tree' and just evaluate the expression.
                 if (conditionalExpression == null) {
                     return EvaluateExpressionRuleViolationSeverity(semanticModel, expression);
                 }
@@ -174,7 +174,7 @@ namespace Aderant.Build.Analyzer.Rules {
             BinaryExpressionSyntax left = binaryExpressionSyntax.Left as BinaryExpressionSyntax;
 
             if (left == null) {
-                // If no, cease navigating that side of the 'tree' and simply evaluate the expression.
+                // If no, cease navigating that side of the 'tree' and just evaluate the expression.
                 SqlInjectionRuleViolationSeverityEnum validity =
                     EvaluateExpressionRuleViolationSeverity(semanticModel, binaryExpressionSyntax.Left);
 
@@ -188,8 +188,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 return SqlInjectionRuleViolationSeverityEnum.Error;
             } else {
                 // Otherwise, if the 'left' is a valid binary expression, use recursion to further traverse the 'tree'.
-                SqlInjectionRuleViolationSeverityEnum validity =
-                    EvaluateExpressionTree(semanticModel, left);
+                SqlInjectionRuleViolationSeverityEnum validity = EvaluateExpressionTree(semanticModel, left);
 
                 // If the result is an 'Error' severity, exit early as this is the highest state of severity.
                 if (validity == SqlInjectionRuleViolationSeverityEnum.Error) {
@@ -202,7 +201,7 @@ namespace Aderant.Build.Analyzer.Rules {
             BinaryExpressionSyntax right = binaryExpressionSyntax.Right as BinaryExpressionSyntax;
 
             if (right == null) {
-                // If no, cease navigating that side of the 'tree' and simply evaluate the expression.
+                // If no, cease navigating that side of the 'tree' and just evaluate the expression.
                 SqlInjectionRuleViolationSeverityEnum validity =
                     EvaluateExpressionRuleViolationSeverity(semanticModel, binaryExpressionSyntax.Right);
 
@@ -216,8 +215,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 return SqlInjectionRuleViolationSeverityEnum.Error;
             } else {
                 // Otherwise, if the 'right' is a valid binary expression, use recursion to further traverse the 'tree'.
-                SqlInjectionRuleViolationSeverityEnum validity =
-                    EvaluateExpressionTree(semanticModel, right);
+                SqlInjectionRuleViolationSeverityEnum validity = EvaluateExpressionTree(semanticModel, right);
 
                 // If the result is an 'Error' severity, exit early as this is the highest state of severity.
                 if (validity == SqlInjectionRuleViolationSeverityEnum.Error) {
@@ -359,6 +357,11 @@ namespace Aderant.Build.Analyzer.Rules {
             }
         }
 
+        /// <summary>
+        /// References the 'SqlInjectionExclusions.cs' list of excluded source locations
+        /// and determines if the current project is to be excluded from rule evaluations.
+        /// </summary>
+        /// <param name="context">The context.</param>
         protected bool IsProjectIgnored(SyntaxNodeAnalysisContext context) {
             if (ignoreProject.HasValue) {
                 return ignoreProject.Value;

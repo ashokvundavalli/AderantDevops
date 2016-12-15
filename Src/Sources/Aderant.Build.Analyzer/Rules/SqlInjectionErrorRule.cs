@@ -35,8 +35,8 @@ namespace Aderant.Build.Analyzer.Rules {
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
             if (IsProjectIgnored(context) ||
                 EvaluateNodeCommandTextExpressionStatement(
-                context.SemanticModel,
-                (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
+                    context.SemanticModel,
+                    (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
                 return;
             }
 
@@ -47,8 +47,8 @@ namespace Aderant.Build.Analyzer.Rules {
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
             if (IsProjectIgnored(context) ||
                 EvaluateNodeDatabaseSqlQuery(
-                context.SemanticModel,
-                (InvocationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
+                    context.SemanticModel,
+                    (InvocationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
                 return;
             }
 
@@ -57,10 +57,10 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
-            if (IsProjectIgnored(context)||
+            if (IsProjectIgnored(context) ||
                 EvaluateNodeNewSqlCommandObjectCreationExpression(
-                context.SemanticModel,
-                (ObjectCreationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
+                    context.SemanticModel,
+                    (ObjectCreationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
                 return;
             }
 
