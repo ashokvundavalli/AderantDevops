@@ -8,7 +8,7 @@
     internal class SqlInjectionExclusions {
         internal readonly string[] ExclusionsList = {
             "Services.Query\\Src\\",
-            "Services.Applications.AccountsPayable\\Src\\",
+            "AccountsPayable\\Src\\",
             "Services.Applications.Budgeting\\Src\\",
             "Services.Applications.Case\\Src\\",
             "Services.Applications.CheckRequest\\Src\\",
@@ -21,7 +21,7 @@
             "Services.Applications.MatterPlanning\\Src\\",
             "Services.Applications.Prebill\\Src\\",
             "Services.Applications.Rates\\Src\\",
-            "Services.Applications.Time\\Src\\",
+            "Time\\Src\\",
         };
     }
 }
