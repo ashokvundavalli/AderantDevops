@@ -41,6 +41,7 @@
     <ModuleSourceDirectory>$(SolutionDirectoryPath)Src\</ModuleSourceDirectory>
     <ModuleTestDirectory>$(SolutionDirectoryPath)Test\</ModuleTestDirectory>
     <ModuleBuildDirectory>$(SolutionDirectoryPath)Build\</ModuleBuildDirectory>
+    <DependenciesDirectory>$(SolutionDirectoryPath)Dependencies</DependenciesDirectory>
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
 
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
@@ -380,7 +381,7 @@ doc.Save(File);
   -->
   <Target Name="rmBeforeTransformTemplates">
     <PropertyGroup>
-      <rmT4AssemblyReferencePaths>$(SolutionDirectoryPath)Dependencies\</rmT4AssemblyReferencePaths>
+      <rmT4AssemblyReferencePaths>$(DependenciesDirectory)\</rmT4AssemblyReferencePaths>
       <rmT4AssemblyReferencePaths Condition="Exists('$(OutDir)')">$(rmT4AssemblyReferencePaths);$(OutDir);</rmT4AssemblyReferencePaths>
     </PropertyGroup>
 
@@ -860,9 +861,9 @@ doc.Save(File);
                    Query="configuration/runtime"
                    Value="$(UnitTestAppConfigText)" />
 
-    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+    <MakeSymlink Condition="'@(TestAssemblies)' != '' And Exists('$(DependenciesDirectory)')"
                  Link="$(BinTestDirectory)Dependencies"
-                 Target="$(SolutionDirectoryPath)Dependencies" />
+                 Target="$(DependenciesDirectory)" />
 
     <MakeSymlink Condition="'@(TestAssemblies)' != '' And '$(IsWebModule)' != 'true'"
                  Link="$(BinTestDirectory)ModuleBin"
@@ -1069,7 +1070,7 @@ doc.Save(File);
                  $(SolutionDirectoryPath)CommonBuild\**;
                  $(SolutionDirectoryPath)ThirdPartyBuild.txt;
                  $(ModuleSourceDirectory)**\SharedBin\**;
-                 $(SolutionDirectoryPath)Dependencies\**;
+                 $(DependenciesDirectory)\**;
                  $(SolutionDirectoryPath)**\*.vssscc;
                  $(SolutionDirectoryPath)**\*.vspscc;        
                  $(SolutionDirectoryPath)**\*.sln.cache;
