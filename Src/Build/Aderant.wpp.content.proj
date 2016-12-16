@@ -10,6 +10,7 @@
     <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
     <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory><!-- only works for TFS modules right now -->
     <IsGitRepo>$([System.IO.File]::Exists('$(DependenciesDirectory)..\.gitignore'))</IsGitRepo>
+    <WebModuleName Condition="'$(WebModuleName)' == ''">$(ModuleName)</WebModuleName> <!-- Assume ModuleName and WebModuleName are the same if no WebModule name provided in response file -->
     <ResponseFile>$(SolutionDir)\Build\TFSBuild.rsp</ResponseFile>
 
   </PropertyGroup>
@@ -500,8 +501,8 @@
           Condition="'$(EnableLESSCompile)' == 'True'">
     <ItemGroup>
       <!--Exclude any .less files beginning with an '_' from being compiled as a convention-->
-      <LessFiles Include="$(SolutionDir)\Src\$(ModuleName)\Content\*.less" 
-                 Exclude="$(SolutionDir)\Src\$(ModuleName)\Content\_*.less"/>
+      <LessFiles Include="$(SolutionDir)\Src\$(WebModuleName)\Content\*.less" 
+                 Exclude="$(SolutionDir)\Src\$(WebModuleName)\Content\_*.less"/>
     </ItemGroup>
 
     <CompileLess
