@@ -2,16 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Logging;
 
 namespace Aderant.Build {
     public class PhysicalFileSystem : IFileSystem2 {
         private readonly string root;
+        private ILogger logger;
 
-        public PhysicalFileSystem(string root) {
+
+        public PhysicalFileSystem(string root) : this(root, null) {
+        }
+        public PhysicalFileSystem(string root, ILogger logger) {
             if (String.IsNullOrEmpty(root)) {
-                throw new ArgumentException("Argument cannot be null or empty", nameof(root));
+                throw new ArgumentException($"Argument cannot be null or empty", nameof(root));
             }
             this.root = root;
+            this.logger = logger;
         }
 
         public string Root {
@@ -272,7 +278,17 @@ namespace Aderant.Build {
             FileInfo[] files = dir.GetFiles();
             foreach (FileInfo file in files) {
                 string destinationPath = Path.Combine(destination, file.Name);
-                file.CopyTo(destinationPath, true);
+
+                FileInfo destFile = new FileInfo(destinationPath);
+                if (destFile.Exists) {
+                    if (destFile.IsReadOnly) { // Clear read-only
+                        logger?.Warning($"Overwriting read-only file: {file.Name}.");
+                        destFile.IsReadOnly = false;
+                    }
+                    file.CopyTo(destFile.FullName, true); // Copy and overwrite
+                } else {
+                    file.CopyTo(destinationPath, false);
+                }
             }
 
             // If copying subdirectories, copy them and their contents to new location.

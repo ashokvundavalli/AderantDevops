@@ -73,7 +73,7 @@ namespace Aderant.Build.Commands {
                 request.AddModule(ModuleName);
             }
 
-            ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath));
+            ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger));
             moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
             Resolver resolver = new Resolver(Logger, moduleResolver, new NupkgResolver());
