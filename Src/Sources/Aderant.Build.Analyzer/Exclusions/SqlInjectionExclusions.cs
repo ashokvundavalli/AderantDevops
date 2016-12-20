@@ -10,7 +10,6 @@
             "Services.Query\\Src\\",
             "AccountsPayable\\Src\\",
             "Services.Applications.Budgeting\\Src\\",
-            "Services.Applications.Case\\Src\\",
             "Services.Applications.CheckRequest\\Src\\",
             "Services.Applications.Collections\\Src\\",
             "Services.Applications.Disbursement\\Src\\",
