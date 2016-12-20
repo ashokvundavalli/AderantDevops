@@ -71,7 +71,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                     manager.Update(resolverRequest.Force);
                 }
                 manager.Restore(resolverRequest.Force);
-                
+
                 foreach (var requirement in requirements) {
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -100,6 +100,17 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
+
+                    string webModuleName = requirement.Name.Replace("Aderant", "Web");
+
+                    if (fileSystem.FileExists(Path.Combine(dir, webModuleName + ".zip"))){
+                        //if web zip exists, extract it.
+                        logger.Info("Extracting web package archive {0}", webModuleName);
+                        var newDir = Path.Combine(dir, webModuleName);
+                        requirement = DependencyRequirement.Create(webModuleName, requirement.VersionRequirement);
+                        var fs = new WebArchiveFileSystem(fileSystem.GetFullPath(dir));
+                        fs.ExtractArchive(fileSystem.GetFullPath(newDir + ".zip"), fileSystem.GetFullPath(dir));
+                    }
                     logger.Info("Replicating {0} to {1}", dir, target);
 
                     if (requirement.Name.IsOneOf(ModuleType.ThirdParty, ModuleType.Web)) {
