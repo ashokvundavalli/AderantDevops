@@ -8,6 +8,7 @@ param(
 )
 
 $EntryPoint = Get-Variable "BuildTask"
+$global:BuildFlavor = ""
 
 # The VsTsTaskSdk specifies a prefix of Vsts. Thus commands are renamed from what appears in the source under ps_modules.
 # eg Invoke-Tool becomes Invoke-VstsTool
@@ -204,13 +205,6 @@ function GetBuildFlavor() {
 	} else {
 		$buildFlavor = "debug"
 		Write-Host "....... Build in debug mode ................" -foregroundcolor Green
-		Write-Host 
-		Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" -ForegroundColor Green
-		Write-Host "!!! Use the -debug or -release switches to force a build flavor !!!" -ForegroundColor White
-		Write-Host "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" -ForegroundColor Green
-		Write-Host 
-		Write-Host "Continuing in 5 seconds..."
-		Start-Sleep -s 5
 	}
 	return [string]$buildFlavor;
 }
@@ -221,6 +215,8 @@ function GetBuildFlavor() {
 # package
 #=================================================================================================
 task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
+	# End of all tasks. Print out current build flavor: Debug or Release.
+	Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
 }
 
 task PostBuild -Jobs Init, Package, CopyToDrop, {
@@ -252,7 +248,10 @@ task Build {
 	if ($buildFlavor -eq "")  {
 		$buildFlavor = GetBuildFlavor   # to build in debug or release
 	}
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
+	
+	$global:BuildFlavor = $buildFlavor # to remember and display at the end
+
+	$commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
