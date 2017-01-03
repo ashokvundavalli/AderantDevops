@@ -149,6 +149,8 @@
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj"></Projects>
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
                 Condition="'$(IsDesktopBuild)' == 'false' And '$(TestRunType)' == ''" />
+      <Projects Include="$(BuildSourcesDirectory)WarningRatchet\WarningRatchet.csproj"
+                Condition="'$(IsDesktopBuild)' == 'false'" />
     </ItemGroup>
 
     <MSBuild

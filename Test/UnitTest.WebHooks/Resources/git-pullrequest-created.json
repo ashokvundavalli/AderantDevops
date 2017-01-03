@@ -1,0 +1,87 @@
+﻿{
+    "id": "0f89cc13-f0bf-423e-ad86-bdc9929bd973",
+    "eventType": "git.pullrequest.created",
+    "publisherId": "tfs",
+    "scope": 0,
+    "message": {
+        "text": "Michael Baker created pull request 845 (Merge captain-hook to master) in Build.Infrastructure\r\nhttp://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/",
+        "html": "Michael Baker created <a href=\"http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/pullrequest/845#view=discussion\">pull request 845</a> (Merge captain-hook to master) in <a href=\"http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/\">Build.Infrastructure</a>",
+        "markdown": "Michael Baker created [pull request 845](http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/pullrequest/845#view=discussion) (Merge captain-hook to master) in [Build.Infrastructure](http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/)"
+    },
+    "detailedMessage": {
+        "text": "Michael Baker created pull request 845 (Merge captain-hook to master) in Build.Infrastructure\r\nhttp://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/\r\n - First pass at web hooks for TFS\r\r\n\r\n - Clean up project\r\r\n\r\n - playing around\r\r\n\r\n - tried out identityclient\r\n",
+        "html": "Michael Baker created <a href=\"http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/pullrequest/845#view=discussion\">pull request 845</a> (Merge captain-hook to master) in <a href=\"http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/\">Build.Infrastructure</a><p> - First pass at web hooks for TFS\r</p><p> - Clean up project\r</p><p> - playing around\r</p><p> - tried out identityclient</p>",
+        "markdown": "Michael Baker created [pull request 845](http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/pullrequest/845#view=discussion) (Merge captain-hook to master) in [Build.Infrastructure](http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure/)\r\n - First pass at web hooks for TFS\r\r\n\r\n - Clean up project\r\r\n\r\n - playing around\r\r\n\r\n - tried out identityclient\r\n"
+    },
+    "resource": {
+        "repository": {
+            "id": "a0f7d5b4-270c-450d-9f90-d8b8e31d4a2e",
+            "name": "Build.Infrastructure",
+            "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/git/repositories/a0f7d5b4-270c-450d-9f90-d8b8e31d4a2e",
+            "project": {
+                "id": "44f228f7-b636-4bd3-99ee-eb2f1570d768",
+                "name": "ExpertSuite",
+                "description": "Our core product suite.",
+                "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/projects/44f228f7-b636-4bd3-99ee-eb2f1570d768",
+                "state": "wellFormed",
+                "revision": 289610953
+            },
+            "remoteUrl": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure"
+        },
+        "pullRequestId": 845,
+        "codeReviewId": 1005,
+        "status": "active",
+        "createdBy": {
+            "id": "57ae1508-ab39-4bfb-839b-b322ef6694cd",
+            "displayName": "Michael Baker",
+            "uniqueName": "ADERANT_AP\\michael.baker",
+            "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/Identities/57ae1508-ab39-4bfb-839b-b322ef6694cd",
+            "imageUrl": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_api/_common/identityImage?id=57ae1508-ab39-4bfb-839b-b322ef6694cd"
+        },
+        "creationDate": "2016-12-18T21:58:19.2986297Z",
+        "title": "Merge captain-hook to master",
+        "description": " - First pass at web hooks for TFS\r\n - Clean up project\r\n - playing around\r\n - tried out identityclient",
+        "sourceRefName": "refs/heads/captain-hook",
+        "targetRefName": "refs/heads/master",
+        "mergeStatus": "conflicts",
+        "mergeId": "d2d00c65-b5c3-405c-94e2-7a8aafd88c4f",
+        "lastMergeSourceCommit": {
+            "commitId": "d569b8ea3251b84170bb65e74f4e2dd724de1fcc",
+            "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/git/repositories/a0f7d5b4-270c-450d-9f90-d8b8e31d4a2e/commits/d569b8ea3251b84170bb65e74f4e2dd724de1fcc"
+        },
+        "lastMergeTargetCommit": {
+            "commitId": "5fbd07771caef2c22242ec206d1ff50ef3b0c77d",
+            "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/git/repositories/a0f7d5b4-270c-450d-9f90-d8b8e31d4a2e/commits/5fbd07771caef2c22242ec206d1ff50ef3b0c77d"
+        },
+        "reviewers": [
+            {
+                "reviewerUrl": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/git/repositories/a0f7d5b4-270c-450d-9f90-d8b8e31d4a2e/pullRequests/845/reviewers/f9096848-d82c-478d-9a8f-67d175dd54a1",
+                "vote": 0,
+                "id": "f9096848-d82c-478d-9a8f-67d175dd54a1",
+                "displayName": "[ExpertSuite]\\ExpertSuite Team",
+                "uniqueName": "vstfs:///Classification/TeamProject/44f228f7-b636-4bd3-99ee-eb2f1570d768\\ExpertSuite Team",
+                "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/Identities/f9096848-d82c-478d-9a8f-67d175dd54a1",
+                "imageUrl": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_api/_common/identityImage?id=f9096848-d82c-478d-9a8f-67d175dd54a1",
+                "isContainer": true
+            }
+        ],
+        "url": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/_apis/git/repositories/a0f7d5b4-270c-450d-9f90-d8b8e31d4a2e/pullRequests/845",
+        "supportsIterations": true
+    },
+    "resourceVersion": "1.0-preview.1",
+    "resourceContainers": {
+        "collection": {
+            "id": "5d9e5fa7-8899-4ee4-857a-1c6c6a36ae86",
+            "baseUrl": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/"
+        },
+        "server": {
+            "id": "8187f479-8deb-414c-b770-e747df252224",
+            "baseUrl": "http://tfs.ap.aderant.com:8080/tfs/"
+        },
+        "project": {
+            "id": "44f228f7-b636-4bd3-99ee-eb2f1570d768",
+            "baseUrl": "http://tfs.ap.aderant.com:8080/tfs/ADERANT/"
+        }
+    },
+    "createdDate": "2016-12-18T21:58:20.972Z"
+}

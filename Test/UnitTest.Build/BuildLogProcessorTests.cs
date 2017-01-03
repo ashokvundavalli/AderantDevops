@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Aderant.Build.Tasks;
 using Aderant.Build.Tasks.WarningProcess;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -18,8 +13,8 @@ namespace UnitTest.Build {
             var processor = new Aderant.Build.Tasks.WarningProcess.BuildLogProcessor();
 
             var result = processor.GetWarnings(
-                new StringReader(BuildLogProcessor.Resources.buildlog_baseline),
-                new StringReader(BuildLogProcessor.Resources.log_with_more_warnings));
+                new StringReader(BuildLogProcessor.Resources.buildlog_1),
+                new StringReader(BuildLogProcessor.Resources.buildlog_2));
 
             Assert.AreEqual(1, result.GetDifference().Count());
         }
@@ -29,7 +24,7 @@ namespace UnitTest.Build {
             var actual = WarningReportBuilder.CreateLine(@"Src\Aderant.Database.Build\StoredProcedureDelegateCompiler.cs(13, 23): Warning CS1591: Missing XML comment for publicly visible type or member 'StoredProcedureDelegateCompiler.foo'");
 
             var expected = @"Src\Aderant.Database.Build\StoredProcedureDelegateCompiler.cs(13, 23)  
-Warning CS1591 Missing XML comment for publicly visible type or member 'StoredProcedureDelegateCompiler.foo'";
+Warning CS1591: Missing XML comment for publicly visible type or member 'StoredProcedureDelegateCompiler.foo'";
 
             Assert.IsNotNull(actual);
             Assert.AreEqual(expected, actual);
@@ -43,6 +38,18 @@ Warning CS1591 Missing XML comment for publicly visible type or member 'StoredPr
 
             Assert.IsNotNull(actual);
             Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void Rooted_path_is_not_split() {
+            string text = @"C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(1820,5): Warning MSB3245: Could not resolve this reference. Could not locate the assembly ""Microsoft.VisualStudio.Services.Client"". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors.";
+            var actual = WarningReportBuilder.CreateLine(text);
+
+            string expected = @"C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(1820,5)  
+Warning MSB3245: Could not resolve this reference. Could not locate the assembly ""Microsoft.VisualStudio.Services.Client"". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors.";
+
+            Assert.AreEqual(expected, actual);
+            Assert.IsNotNull(actual);
         }
 
         [TestMethod]
@@ -61,6 +68,14 @@ Warning CS1591 Missing XML comment for publicly visible type or member 'StoredPr
 
             Assert.AreEqual(1, entries.Count);
             Assert.IsTrue(entries.First().IsCopyWarning);
+        }
+
+        [TestMethod]
+        public void Can_parse_plain_text_log_file() {
+            var parser = new BuildLogParser();
+            var entries = parser.GetWarningEntries(new StringReader(BuildLogProcessor.Resources.plain_text_build_log)).ToList();
+
+            Assert.AreEqual(43, entries.Count);
         }
     }
 }

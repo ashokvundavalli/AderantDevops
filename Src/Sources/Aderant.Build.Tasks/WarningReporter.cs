@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.Tasks.WarningProcess;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Client;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Aderant.Build.Tasks {
     public sealed class WarningReporter {
@@ -14,6 +14,13 @@ namespace Aderant.Build.Tasks {
         private BuildHttpClient client;
 
         public WarningReporter(VssConnection vssConnection, WarningRatchetRequest request) {
+            if (vssConnection == null)
+                throw new ArgumentNullException(nameof(vssConnection));
+
+            if (request == null) {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             this.vssConnection = vssConnection;
             this.client = vssConnection.GetClient<BuildHttpClient>(); // Return client is shared instance for all calls of GetClient, if you dispose it it's gone forever.
             this.request = request;
@@ -24,9 +31,7 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         /// <returns>System.String.</returns>
         public string CreateWarningReport() {
-            var task = CreateWarningReportAsync();
-            task.Wait();
-            return task.Result;
+            return CreateWarningReportAsync().Result;
         }
 
         /// <summary>
@@ -55,8 +60,14 @@ namespace Aderant.Build.Tasks {
                 request.LastGoodBuild = lastBuild;
 
                 Stream first = await GetLogContentsAsync(client, request.TeamProject, lastBuild.Id).ConfigureAwait(false);
+                if (first == null) {
+                    throw new InvalidOperationException("Failed to get build log for build " + lastBuild.Id);
+                }
 
                 Stream second = await GetLogContentsAsync(client, request.TeamProject, thisBuild.Id).ConfigureAwait(false);
+                if (second == null) {
+                    throw new InvalidOperationException("Failed to get build log for build " + lastBuild.Id);
+                }
 
                 BuildLogProcessor processor = new BuildLogProcessor();
                 comparison = processor.GetWarnings(first, second);

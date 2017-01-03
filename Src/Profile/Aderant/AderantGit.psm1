@@ -86,7 +86,7 @@ function ConfigureGit() {
         if ($result) {
             Write-Host (New-Object string -ArgumentList '*', 80) -ForegroundColor Red
             Write-Host "Your git config has autocrlf=true which will cause untold chaos." -ForegroundColor Red
-            Write-Host "It will updated to false." -ForegroundColor Red
+            Write-Host "It will be changed to false." -ForegroundColor Red
             Write-Host (New-Object string -ArgumentList '*', 80) -ForegroundColor Red
             sleep -Seconds 10
         }
@@ -97,6 +97,7 @@ function ConfigureGit() {
     & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
     & git config --global core.autocrlf false
+    & git config --global http.emptyAuth true    
 
     # set up notepad++ as the default commit editor
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"

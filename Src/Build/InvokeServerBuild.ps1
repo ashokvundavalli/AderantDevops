@@ -135,7 +135,7 @@ function Format-LoggingCommandData {
 
 $arguments = $CommonArgs
 
-$loggerAssembly = "$Env:AGENT_HOMEDIRECTORY\agent\Worker\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
+$loggerAssembly = "$PSScriptRoot\..\..\lib\Microsoft.TeamFoundation.DistributedTask.MSBuild.Logger.dll"
 $arguments = "$arguments /dl:CentralLogger,`"$loggerAssembly`"*ForwardingLogger,`"$loggerAssembly`""
 
 # Start the detail timeline.        

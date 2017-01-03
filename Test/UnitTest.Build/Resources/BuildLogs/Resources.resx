@@ -118,10 +118,13 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="buildlog_baseline" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>buildlog_baseline.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  <data name="buildlog_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>buildlog-1.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
-  <data name="log_with_more_warnings" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>log_with_more_warnings.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  <data name="buildlog_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>buildlog-2.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="plain_text_build_log" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>plain-text-build-log.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>

@@ -15,6 +15,7 @@ Write-Verbose "NonInteractive: $script:nonInteractive"
 # Import/export functions.
 . "$PSScriptRoot\FindFunctions.ps1"
 . "$PSScriptRoot\InputFunctions.ps1"
+. "$PSScriptRoot\LegacyFindFunctions.ps1"
 . "$PSScriptRoot\LocalizationFunctions.ps1"
 . "$PSScriptRoot\LoggingCommandFunctions.ps1"
 . "$PSScriptRoot\LongPathFunctions.ps1"
@@ -24,12 +25,18 @@ Write-Verbose "NonInteractive: $script:nonInteractive"
 . "$PSScriptRoot\OutFunctions.ps1" # Load the out functions after all of the other functions are loaded.
 Export-ModuleMember -Function @(
         # Find functions.
-        'Find-Files'
+        'Find-Match'
+        'New-FindOptions'
+        'New-MatchOptions'
+        'Select-Match'
         # Input functions.
         'Get-Endpoint'
         'Get-Input'
         'Get-TaskVariable'
+        'Get-TaskVariableInfo'
         'Set-TaskVariable'
+        # Legacy find functions.
+        'Find-Files'
         # Localization functions.
         'Get-LocString'
         'Import-LocStrings'
@@ -52,8 +59,11 @@ Export-ModuleMember -Function @(
         # Out functions.
         'Out-Default'
         # Server OM functions.
+        'Get-AssemblyReference'
         'Get-TfsClientCredentials'
+        'Get-TfsService'
         'Get-VssCredentials'
+        'Get-VssHttpClient'
         # Tool functions.
         'Assert-Path'
         'Invoke-Tool'
@@ -127,7 +137,7 @@ $null = New-Item -Force -Path "function:\global:Invoke-VstsTaskScript" -Value ([
         # Initialize the environment.
         $vstsModule = Get-Module -Name VstsTaskSdk
         Write-Verbose "$($vstsModule.Name) $($vstsModule.Version) commit $($vstsModule.PrivateData.PSData.CommitHash)" 4>&1 | Out-Default
-        & $vstsModule Initialize-SecureInputs 4>&1 | Out-Default
+        & $vstsModule Initialize-Inputs 4>&1 | Out-Default
 
         # Remove the local variable before calling the user's script.
         Remove-Variable -Name vstsModule

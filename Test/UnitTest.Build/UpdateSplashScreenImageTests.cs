@@ -31,8 +31,9 @@ namespace UnitTest.Build {
                 "My Awesome Product", 
                 "Admin");
 
-            Process.Start(updater.OutputFile);
-            Thread.Sleep(500);
+            //Process.Start(updater.OutputFile);
+            //Thread.Sleep(500);
+
         }
     }
 }

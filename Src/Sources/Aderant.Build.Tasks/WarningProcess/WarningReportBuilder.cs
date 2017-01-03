@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Aderant.Build.Tasks.WarningProcess {
     internal class WarningReportBuilder {
@@ -42,37 +43,46 @@ namespace Aderant.Build.Tasks.WarningProcess {
             return sb.ToString();
         }
 
-        internal static string CreateLine(string message) {
-            if (string.IsNullOrWhiteSpace(message)) {
+        // compiler warning messages have source: warning: reason format
+        static Regex warningRegex = new Regex("(?i)warning [A-Z]+[0-9]+:");
+        private static char[] trimChars = new[] { ' ', ':' };
+
+        internal static string CreateLine(string line) {
+            if (string.IsNullOrWhiteSpace(line)) {
                 return string.Empty;
             }
             // example
             // Src\Aderant.Database.Build\StoredProcedureDelegateCompiler.cs(13, 23): Warning CS1591: Missing XML comment for publicly visible type or member 'StoredProcedureDelegateCompiler.foo'
 
             // We don't want ## as it will get interpreted by markdown as a title
-            string line = message.Replace("##[warning]", String.Empty);
+            string cleanline = line.Replace("##[warning]", String.Empty);
 
-            // Some MSBuild warning messages have source: warning: reason format
-            // so we'll just split on the first string
-            string[] parts = line.Split(':');
-            string file = parts[0];
+            var result = warningRegex.Match(cleanline);
+            if (result.Success) {
 
-            if (parts.Length == 1) {
-                return message;
-            }
+                var splitPosition = result.Index;
 
-            string warningMessage = string.Empty;
-            if (parts.Length > 1) {
-                warningMessage = string.Join("", parts.Skip(1)).Trim();
-            }
-          
-            return file + MarkdownLinebreak + Environment.NewLine + warningMessage;
+                var warningText = cleanline.Substring(splitPosition);
+                var file = cleanline.Substring(0, splitPosition);
+       
+                file = file.TrimEnd(trimChars);
+
+                return $"{file}{MarkdownLinebreak}{Environment.NewLine}{warningText}";
+            } 
+
+            return cleanline;
         }
 
         private void ExplainDifference(StringBuilder sb, List<WarningEntry> difference, WarningComparison comparison) {
             if (difference.Count != (comparison.Target.Count() - comparison.Source.Count())) {
                 sb.AppendLine("There is no warning origin correlation performed during the build. This may cause more warnings to be present below than expected. " +
                               "This is because a small code change can alter the origin of one or more warnings. For example adding a new property to a type can alter the source lines for existing warnings.");
+
+                sb.AppendLine();
+
+                sb.AppendLine("If a project uses FxCop for static analysis then there are two warnings logged for every warning. " +
+                              "This means the warning count reported in Visual Studio will differ from that on the command line. " +
+                              "The command line count is used for the warning calculation");
             }
         }
     }

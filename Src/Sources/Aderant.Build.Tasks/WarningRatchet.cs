@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Client;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Aderant.Build.Tasks {
     public class WarningRatchet {
@@ -20,19 +20,23 @@ namespace Aderant.Build.Tasks {
         public static async Task<Microsoft.TeamFoundation.Build.WebApi.Build> GetLastGoodBuildAsync(BuildHttpClient client, WarningRatchetRequest request) {
             string master = "refs/heads/master";
 
-            if (request.IsDraft && !string.IsNullOrEmpty(request.BuildDefinitionName)) {
-                List<DefinitionReference> references = await client.GetDefinitionsAsync(request.TeamProject, request.BuildDefinitionName, DefinitionType.Build);
-                if (references != null) {
-                    DefinitionReference reference = references.FirstOrDefault(item => item.Id != request.BuildDefinitionId);
-                    if (reference != null)
-                        request.BuildDefinitionId = reference.Id;
-                }
-            }
+            //if (request.IsDraft && !string.IsNullOrEmpty(request.BuildDefinitionName)) {
+            //    var references = await client.GetDefinitionsAsync(request.TeamProject, request.BuildDefinitionName, );
+            //    if (references != null) {
+            //        DefinitionReference reference = references.FirstOrDefault(item => item.Id != request.BuildDefinitionId);
+            //        if (reference != null)
+            //            request.BuildDefinitionId = reference.Id;
+            //    }
+            //}
 
             if (request.BuildDefinitionId == 0) {
                 throw new InvalidOperationException("Cannot request a build with a definition id of 0.");
             }
 
+            // This API must match the version that is deployed to the build agent or MissingMethodExceptions will occur as
+            // the agent will have provided us with an incompatible API.
+            // To fix this we need to run this code in a separate process/appdomain/container to that which is provided
+            // by the build agent
             var result = await client.GetBuildsAsync(request.TeamProject, new int[] { request.BuildDefinitionId },
                 queues: null,
                 buildNumber: null,
@@ -44,7 +48,6 @@ namespace Aderant.Build.Tasks {
                 resultFilter: BuildResult.Succeeded,
                 tagFilters: null,
                 properties: null,
-                type: DefinitionType.Build,
                 top: 1,
                 continuationToken: null,
                 maxBuildsPerDefinition: MaximumItemCount,
@@ -98,11 +101,13 @@ namespace Aderant.Build.Tasks {
         }
 
         public async Task<int> GetBuildWarningCountAsync(WarningRatchetRequest request) {
-            var build = await client.GetBuildAsync(request.TeamProject, request.BuildId);
+            if (request.Build == null) {
+                var build = await client.GetBuildAsync(request.TeamProject, request.BuildId);
 
-            request.Build = build;
+                request.Build = build;
+            }
 
-            var timelineRecords = await client.GetBuildTimelineAsync(request.TeamProject, build.Id);
+            var timelineRecords = await client.GetBuildTimelineAsync(request.TeamProject, request.Build.Id);
 
             return SumWarnings(timelineRecords);
         }
@@ -124,6 +129,17 @@ namespace Aderant.Build.Tasks {
             var reporter = new WarningReporter(connection, request);
 
             return reporter;
+        }
+
+        public WarningRatchetRequest CreateNewRequest(string teamProject, int buildId) {
+            var build = client.GetBuildAsync(teamProject, buildId).Result;
+
+            return new WarningRatchetRequest {
+                TeamProject = teamProject,
+                BuildId = buildId,
+                Build = build,
+                BuildDefinitionId = build.Definition.Id,
+            };
         }
     }
 }

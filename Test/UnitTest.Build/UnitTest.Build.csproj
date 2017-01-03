@@ -143,8 +143,9 @@
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\BuildLogs\buildlog_baseline.txt" />
-    <Content Include="Resources\BuildLogs\log_with_more_warnings.txt" />
+    <None Include="Resources\BuildLogs\buildlog-1.json" />
+    <None Include="Resources\BuildLogs\buildlog-2.json" />
+    <Content Include="Resources\BuildLogs\plain-text-build-log.txt" />
     <Content Include="Resources\environment.xml" />
     <Content Include="Resources\ExpertManifest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -175,8 +176,8 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\BuildLogs\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <CustomToolNamespace>UnitTest.Build.BuildLogProcessor</CustomToolNamespace>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

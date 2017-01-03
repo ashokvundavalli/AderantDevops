@@ -1,9 +1,9 @@
-﻿[cmdletbinding()]
+﻿[CmdletBinding()]
 
 $ErrorActionPreference = 'Stop'
 
 [string]$repository = Get-VstsInput -Name 'Repository'
-[string]$version = Get-VstsInput -Name 'Version'
+[string]$version = Get-VstsInput -Name 'Branch'
 [string]$CustomSource = Get-VstsInput -Name 'CustomSource'
 
 Write-Host "Repository: $repository"
@@ -46,34 +46,52 @@ Write-Host "BUILD_STAGINGDIRECTORY: $ENV:BUILD_STAGINGDIRECTORY"
 Write-Host "AGENT_BUILDDIRECTORY: $ENV:AGENT_BUILDDIRECTORY"
 Get-Variable |%{ Write-Host ("Name : {0}, Value: {1}" -f $_.Name,$_.Value ) }
 
+$pathToGit = "C:\Program Files\Git\cmd\git.exe"
+
 # Clean up other cloned repositories in case we are recycling a working dir
 gci -Path $Env:BUILD_SOURCESDIRECTORY -Depth 1 -Filter "*_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
 $buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
 
-function Clone($repo, $version) {
+function SetGitOptions() {  
+    if (-not (Test-Path $pathToGit)) {
+        throw "Git.exe not found at $pathToGit"
+    }
+
+    $hosts = @("tfs", "tfs.ap.aderant.com")
+    foreach ($entry in $hosts) { # Host is a reserved readonly PowerShell variable and so cannot be assigned to
+        & $pathToGit config --global credential.$entry.interactive never
+        & $pathToGit config --global credential.$entry.integrated true                
+    }
+    & $pathToGit config --global http.emptyAuth true
+}
+
+function CloneRepo($repo, $version) {
     if (-not $version) {
         $version = "master"
     }
-    Write-Output "About to clone $repo ($version)"
-    cmd /c "git clone $repo --branch $version --single-branch $buildFolder 2>&1"  
+    Write-Host "About to clone $repo ($version)"
+    cmd /c ""`"$pathToGit`"" clone $repo --branch $version --single-branch $buildFolder 2>&1"
 }
 
 if ($repository -eq "default" -or -not $CustomSource) {
-	# By default use script from checked in code at Build.Infrastructure at TFS
-    Clone "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
+    # By default use script from checked in code at Build.Infrastructure at TFS
+    CloneRepo "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
 } else {
-	# During debug of this script it is necessary to use a local copy 
-	if ($CustomSource -and -not [string]::IsNullOrEmpty($CustomSource)) {
-		if ($CustomSource.StartsWith("http")) {        
-			Clone $CustomSource $version
-		} else {
-			# e.g \\wsakl001092\c$\Source\Build.Infrastructure
-			Write-Output "Copying from path $CustomSource"        
-			Copy-Item $CustomSource $buildFolder -Recurse
-		}   
-	}
+    # During debug of this script it is necessary to use a local copy 
+    if ($CustomSource -and -not [string]::IsNullOrEmpty($CustomSource)) {
+        if ($CustomSource.StartsWith("http")) {        
+            CloneRepo $CustomSource $version
+        } else {
+            # e.g \\wsakl001092\c$\Source\Build.Infrastructure
+            Write-Host "Copying from path $CustomSource"        
+            Copy-Item $CustomSource $buildFolder -Recurse
+        }   
+    }
 }
+
+# Force some sensible options so we don't get prompted for credentials
+SetGitOptions
 
 $buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
     

@@ -1,4 +1,4 @@
-﻿[cmdletbinding()]
+﻿[CmdletBinding()]
 
 [bool]$limitBuildWarnings = Get-VstsInput -Name 'limitBuildWarnings' -AsBool
 

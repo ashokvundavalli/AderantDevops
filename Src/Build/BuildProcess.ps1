@@ -78,43 +78,32 @@ $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
 function GetVssConnection() {
    $endpoint = Get-VstsEndpoint -Name "SystemVssConnection" -Require
-   $serviceEndpoint = new-object Microsoft.TeamFoundation.DistributedTask.WebApi.ServiceEndpoint
-   $serviceEndpoint.Url = [System.Uri]$endpoint.Url
-
-   $vssConnection = [Microsoft.TeamFoundation.DistributedTask.Agent.Common.CredentialsExtensions]::GetVssConnection($serviceEndpoint)
-   return $vssConnection
+   return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new($endpoint.Url, [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
 }
 
-function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinitionId, [string]$buildDefinitionName, [bool]$isDraft) {
+function WarningRatchet() {
     Write-Host "Running warning ratchet"
 
-    $ratchet = New-Object Aderant.Build.Tasks.WarningRatchet -ArgumentList $vssConnection
-    
-    $ratchetRequest = New-Object Aderant.Build.Tasks.WarningRatchetRequest
-    $ratchetRequest.TeamProject = $teamProject
-    $ratchetRequest.BuildId = $buildId
-    $ratchetRequest.BuildDefinitionId = $buildDefinitionId
-    $ratchetRequest.BuildDefinitionName = $buildDefinitionName
-    $ratchetRequest.IsDraft = $isDraft
+    Import-Module $PSScriptRoot\..\Build.Tools\WarningRatchet.dll
+    $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID    
 
-    $currentBuildCount = $ratchet.GetBuildWarningCount($ratchetRequest)
-    $lastGoodBuildCount = $ratchet.GetLastGoodBuildWarningCount($ratchetRequest) 
+    $lastGoodBuildWarningCount = $result.LastGoodBuildCount
+    $currentBuildCount = $result.CurrentBuildCount
+    $ratchet = $result.Ratchet
+    $ratchetRequest = $result.Request
 
-    $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
-
-    if (-not $lastGoodBuildCount) {
-        Write-Host "No last good build found for DefinitionId: $buildDefinitionId IsDraft:$isDraft"
+    if (-not $lastGoodBuildWarningCount) {
+        Write-Host "No last good build found for DefinitionId: $buildDefinitionId"
     }
 
-    if ($lastGoodBuildCount) {
-        Write-Host "The last good build id was: $($ratchetRequest.LastGoodBuild.Id)"
-
-        PrintWarningSummary $currentBuildCount $lastGoodBuildCount        
+    if ($lastGoodBuildWarningCount -ne $null) {
+        [int]$lastGoodBuildCount = $lastGoodBuildWarningCount
+        Write-Host "The last good build id was: $($ratchetRequest.LastGoodBuild.Id) with $($lastGoodBuildCount) warnings"
         
         if ($currentBuildCount -gt $lastGoodBuildCount) {
             $reporter = $ratchet.GetWarningReporter($ratchetRequest)
             
-            RenderWarningReport $reporter 
+            GenerateAndUploadReport $reporter 
 
             [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()
             Write-Output "Adjusted build warnings: $adjustedWarningCount"
@@ -122,7 +111,10 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
             RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
 
             # Only fail if the adjusted count exceeds the last build
-            if ($adjustedWarningCount -gt $lastGoodBuildCount) {                
+            if ($adjustedWarningCount -gt $lastGoodBuildCount) {  
+            
+                $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
+                           
                 # We always want the master branch to build
                 if ($sourceBranchName -ne "master") {
                     throw "Warning count has increased since the last good build"
@@ -134,16 +126,7 @@ function WarningRatchet($vssConnection, $teamProject, $buildId, $buildDefinition
     }     
 }
 
-function PrintWarningSummary([int]$this, [int]$last) {
-    Write-Output (New-Object string -ArgumentList '*', 80)
-    Write-Output "=== Warning Summary ==="
-    Write-Output "Last good build warnings: $last"
-    Write-Output "Current build warnings: $this"
-    Write-Output "=== Warning Summary ==="
-    Write-Output (New-Object string -ArgumentList '*', 80)
-}
-
-function RenderWarningReport($reporter) {
+function GenerateAndUploadReport($reporter) {
     $report = $reporter.CreateWarningReport()
     
     $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
@@ -152,30 +135,12 @@ function RenderWarningReport($reporter) {
     $stream.Dispose()
 
     if (-not [string]::IsNullOrWhiteSpace($report)) {
-        Write-Output "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Introduced Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
+        Write-Output "##vso[task.uploadsummary]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
     }
 }
 
 function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
-    $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\Warnings.md"
-
-    $lastGoodShield = Get-Content -Raw -Path $PSScriptRoot\Resources\last-good-build.svg
-    $lastGoodShield = $lastGoodShield -f $last
-
-    if ($inError) {
-        $thisBuildShield = Get-Content -Raw -Path $PSScriptRoot\Resources\this-build-bad.svg
-    } else {
-        $thisBuildShield = Get-Content -Raw -Path $PSScriptRoot\Resources\this-build-good.svg
-    }
-
-    $thisBuildShield = $thisBuildShield -f $this
-
-    $stream.WriteLine($lastGoodShield)
-    $stream.WriteLine($thisBuildShield)
-    $stream.Close()
-    $stream.Dispose()
-
-    Write-Output "##vso[task.addattachment type=Distributedtask.Core.Summary;name=Build Warnings;]$env:SYSTEM_DEFAULTWORKINGDIRECTORY\Warnings.md"
+    . $PSScriptRoot\PostWarningShields.ps1 -inError $inError -thisBuild $this -lastBuild $last
 }
 
 function BuildAssociation($vssConnection, $teamProject, $buildId) {
@@ -229,6 +194,10 @@ task GetDependencies {
 }
 
 task Build {
+    if (-not $global:IsDesktopBuild) {
+        #[System.AppDomain]::CurrentDomain.remove_AssemblyResolve($global:OnAssemblyResolve)
+    }
+
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
     $commonArgs = "/nologo /nr:false /m"
@@ -294,8 +263,8 @@ task BuildCore (job Build -Safe), {
        if ($testResults) {
             # Bug in Invoke-ResultPublisher, no one subscribes to LogVerbose which throws a NullReferenceException since there is no null check
             # before raising the event
-            $logger = [Microsoft.TeamFoundation.DistributedTask.Task.TestResults.Logger]
-            $job = Register-ObjectEvent -inputObject $logger -eventName LogVerbose -Action { Write-Verbose $_ }
+            #$logger = [Microsoft.TeamFoundation.DistributedTask.Task.TestResults.Logger]
+            #$job = Register-ObjectEvent -inputObject $logger -eventName LogVerbose -Action { Write-Verbose $_ }
 
             $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require)
             $buildUri = (Get-VstsTaskVariable -Name 'Build.BuildUri' -Require)
@@ -327,22 +296,9 @@ task Test {
 }
 
 task Quality -If (-not $IsDesktopBuild) {
-    $vssConnection = GetVssConnection
-
-    $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require -AsInt)
-    $buildDefinitionId = (Get-VstsTaskVariable -Name 'System.DefinitionId' -Require -AsInt)
-    $buildNumber = (Get-VstsTaskVariable -Name 'Build.BuildNumber' -Require)
-    $buildDefinitionName = (Get-VstsTaskVariable -Name 'Build.DefinitionName' -Require)
-    $teamProject = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)
-
     if ($LimitBuildWarnings) {
-        $isDraft = ($buildNumber.EndsWith(".DRAFT"))
-
-        WarningRatchet $vssConnection $teamProject $buildId $buildDefinitionId $buildDefinitionName $isDraft
+        WarningRatchet
     }
-
-    # TODO: Decide on what we want here
-    #BuildAssociation $vssConnection $teamProject $buildId
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
@@ -391,23 +347,56 @@ task Init {
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 
     if (-not $IsDesktopBuild) {
-        $agentWorkerModulesPath = "$($env:AGENT_HOMEDIRECTORY)\agent\worker\Modules"
+		# hoho, fucking hilarious
+		# For some reason we cannot load Microsoft assemblies as we get an exception
+		# "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
+		# so to work around this we just disable strong-name validation....		
+		cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
+		
+		$global:OnAssemblyResolve = [System.ResolveEventHandler] {
+			param($sender, $e)
+			if ($e.Name -like "*resources*") {
+				return $null
+			}
 
-        $modules = @("$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll",
-                     "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll",
-                     "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.TestResults\Microsoft.TeamFoundation.DistributedTask.Task.TestResults.dll")
-
-        $files = gci -Path "$Env:AGENT_HOMEDIRECTORY\agent\worker\" -Filter "*.dll"
-        foreach ($file in $files) {
-            try {
-                [System.Reflection.Assembly]::LoadFrom($file.FullName)| Out-Null
-            } catch {
-            }
-        }
-
-        foreach ($module in $modules) {
-            Import-Module $module
-        }
+            Write-Host "Resolving $($e.Name)"
+			
+			$fileName = $e.Name.Split(",")[0]
+			$fileName = $fileName + ".dll"
+		
+			$probeDirectories = @("$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")       		
+			foreach ($dir in $probeDirectories) {
+				$fullFilePath = "$dir\$fileName"
+				
+				if (Test-Path ($fullFilePath)) {			
+					try {
+						[System.Reflection.Assembly]::LoadFrom($fullFilePath)| Out-Null
+					} catch {
+						Write-Error "Failed to load $fullFilePath. $_.Exception"
+					}	
+				} else {
+					foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+						if ($a.FullName -eq $e.Name) {
+							return $a
+						}
+						if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
+							return $a
+						}
+					}
+				}
+			}
+			
+			Write-Host "File $fullFilePath does not exist so it cannot be loaded. The build will probably fail now"
+			return $null
+		}
+		
+		[System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
+        
+		Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"        				
+			
+		# It's important to load the externals\vstsom version of the Visual Studio assemblies, as the version in \bin is for DotNetCore which doesn't interop well (you get MissingMethodExceptions)
+		[System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\externals\vstsom\Microsoft.VisualStudio.Services.WebApi.dll")
+		[System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\externals\vstsom\Microsoft.VisualStudio.Services.Common.dll")
     }
 
     Write-Info "Established build environment"
