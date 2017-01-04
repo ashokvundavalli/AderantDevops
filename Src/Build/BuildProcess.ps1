@@ -347,15 +347,14 @@ task Init {
         # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
         # so to work around this we just disable strong-name validation....     
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
-        
-        $toolsDirectory = "$PSScriptRoot\..\Build.Tools"
-        Write-Host "Tools directory is: $toolsDirectory"
-        
+              
         $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
             if ($e.Name -like "*resources*") {
                 return $null
             }
+
+            $toolsDirectory = "$PSScriptRoot\..\Build.Tools"
 
             Write-Host "Resolving $($e.Name)"
             
