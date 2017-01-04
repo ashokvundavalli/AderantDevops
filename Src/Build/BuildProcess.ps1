@@ -359,7 +359,7 @@ task Init {
 				return $null
 			}
 
-            Write-Host "Resolving $($e.Name) requested by $($e.RequestingAssembly.Name)"
+            Write-Host "Resolving $($e.Name) requested by $($e.RequestingAssembly.FullName)"
 			
 			$fileName = $e.Name.Split(",")[0]
 			$fileName = $fileName + ".dll"
@@ -386,7 +386,7 @@ task Init {
 				}
 			}
 			
-			Write-Host "File $fullFilePath does not exist so it cannot be loaded. The assembly was requested by $($e.RequestingAssembly.Name). The build will probably fail now."
+			Write-Host "File $fullFilePath does not exist so it cannot be loaded. The assembly was requested by $($e.RequestingAssembly.FullName). The build will probably fail now."
 			return $null
 		}
 		
