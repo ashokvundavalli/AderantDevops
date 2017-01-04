@@ -78,7 +78,7 @@ $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
 function GetVssConnection() {
 	Write-Host "Creating VSS connection"
-	return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new("$Env:SYSTEM_TEAMFOUNDATIONSERVERURI")), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
+	return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
 }
 
 function WarningRatchet() {
@@ -266,10 +266,10 @@ task BuildCore (job Build -Safe), {
             #$logger = [Microsoft.TeamFoundation.DistributedTask.Task.TestResults.Logger]
             #$job = Register-ObjectEvent -inputObject $logger -eventName LogVerbose -Action { Write-Verbose $_ }
 
-            $buildId = (Get-VstsTaskVariable -Name 'Build.BuildId' -Require)
-            $buildUri = (Get-VstsTaskVariable -Name 'Build.BuildUri' -Require)
-            $owner = (Get-VstsTaskVariable -Name 'Build.RequestedFor' -Require)
-            $project = (Get-VstsTaskVariable -Name 'System.TeamProject' -Require)
+            $buildId = $Env:BUILD_BUILDID
+            $buildUri = $Env:BUILD_BUILDURI
+            $owner = $Env:BUILD_REQUESTEDFOR
+            $project = $Env:SYSTEM_TEAMPROJECT
 
             Write-Output "Build Number: $buildId"
             Write-Output "Build Uri: $buildUri"
