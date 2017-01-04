@@ -65,7 +65,7 @@
     </Reference>
     <Reference Include="Microsoft.VisualStudio.Services.WebApi">
       <HintPath>..\..\..\packages\Microsoft.VisualStudio.Services.Client\lib\net45\Microsoft.VisualStudio.Services.WebApi.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MSBuild.Community.Tasks">
       <HintPath>..\..\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
