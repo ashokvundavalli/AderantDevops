@@ -75,6 +75,7 @@ $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 use -Path $MSBuildLocation -Name MSBuild
 
 $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
+$global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 [System.Environment]::SetEnvironmentVariable("IsDesktopBuild", $global:IsDesktopBuild, [System.EnvironmentVariableTarget]::Process)
 
 function GetVssConnection() {
@@ -85,7 +86,7 @@ function GetVssConnection() {
 function WarningRatchet() {
     Write-Host "Running warning ratchet"
 
-    Import-Module $PSScriptRoot\..\Build.Tools\WarningRatchet.dll
+    Import-Module $global:ToolsDirectory\WarningRatchet.dll
     $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID    
 
     $lastGoodBuildWarningCount = $result.LastGoodBuildCount
@@ -354,14 +355,14 @@ task Init {
                 return $null
             }
 
-            $toolsDirectory = "$PSScriptRoot\..\Build.Tools"
+            
 
             Write-Host "Resolving $($e.Name)"
             
             $fileName = $e.Name.Split(",")[0]
             $fileName = $fileName + ".dll"
         
-            $probeDirectories = @($toolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")              
+            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")              
             foreach ($dir in $probeDirectories) {                
                 $fullFilePath = "$dir\$fileName"
 
@@ -398,8 +399,8 @@ task Init {
         
         Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"                      
                 
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
     }
 
     Write-Info "Established build environment"
