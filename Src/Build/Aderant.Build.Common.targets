@@ -145,10 +145,11 @@
           Command="$(BuildScriptsDirectory)\paket.exe restore" WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
 
     <ItemGroup>
-      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj"></Projects>
-      <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj"></Projects>
+      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj" />
+      <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj" />
+      
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
-                Condition="'$(IsDesktopBuild)' == 'false' And '$(TestRunType)' == ''" />
+                Condition="'$(IsDesktopBuild)' == 'false'" />
       <Projects Include="$(BuildSourcesDirectory)WarningRatchet\WarningRatchet.csproj"
                 Condition="'$(IsDesktopBuild)' == 'false'" />
     </ItemGroup>
@@ -157,14 +158,16 @@
       Projects="@(Projects)"
       BuildInParallel="true"
       UnloadProjectsOnCompletion="true"
-      Condition="'$(Rebuild)' != 'true'"/>
+      Properties="ResolveAssemblyReferencesSilent=true"
+      Condition="'$(Rebuild)' != 'true'" />
 
     <MSBuild
       Projects="@(Projects)"
       BuildInParallel="true"
       UnloadProjectsOnCompletion="true"
+      Properties="ResolveAssemblyReferencesSilent=true"
       Targets="Rebuild"
-      Condition="'$(Rebuild)' == 'true'"/>
+      Condition="'$(Rebuild)' == 'true'" />
       
     <PropertyGroup>
       <!-- Setup environment for JavaScript tests -->
