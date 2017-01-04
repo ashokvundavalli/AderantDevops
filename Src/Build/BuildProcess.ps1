@@ -75,6 +75,7 @@ $MSBuildLocation = ${Env:ProgramFiles(x86)} + "\MSBuild\14.0\Bin\"
 use -Path $MSBuildLocation -Name MSBuild
 
 $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
+[System.Environment]::SetEnvironmentVariable("IsDesktopBuild", $global:IsDesktopBuild, [System.EnvironmentVariableTarget]::Process)
 
 function GetVssConnection() {
 	Write-Host "Creating VSS connection"
@@ -194,10 +195,6 @@ task GetDependencies {
 }
 
 task Build {
-    if (-not $global:IsDesktopBuild) {
-        #[System.AppDomain]::CurrentDomain.remove_AssemblyResolve($global:OnAssemblyResolve)
-    }
-
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
     $commonArgs = "/nologo /nr:false /m"
@@ -234,8 +231,6 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            [System.Environment]::SetEnvironmentVariable("IsDesktopBuild", "true", [System.EnvironmentVariableTarget]::Process)
-
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
@@ -337,8 +332,8 @@ task Package -Jobs Init, PackageDesktop, PackageServer, {
 
 task Init {
     . $Env:EXPERT_BUILD_DIRECTORY\Build\Build-Libraries.ps1
-    CompileBuildLibraryAssembly $Env:EXPERT_BUILD_DIRECTORY\Build\
-    LoadLibraryAssembly $Env:EXPERT_BUILD_DIRECTORY\Build\
+    CompileBuildLibraryAssembly "$Env:EXPERT_BUILD_DIRECTORY\Build\"
+    LoadLibraryAssembly "$Env:EXPERT_BUILD_DIRECTORY\Build\"
 
     Write-Info "Build tree"
     .\Show-BuildTree.ps1 -File $PSCommandPath
