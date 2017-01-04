@@ -353,7 +353,7 @@ task Init {
 		# so to work around this we just disable strong-name validation....		
 		cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 		
-		$toolsDirectory = $PSScriptRoot\..\Build.Tools
+		$toolsDirectory = "$PSScriptRoot\..\Build.Tools"
 		
 		$global:OnAssemblyResolve = [System.ResolveEventHandler] {
 			param($sender, $e)
