@@ -12,7 +12,7 @@ namespace IntegrationTest.Build {
         public void WarningRatchet() {
             var ratchet = new WarningRatchet(new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
             
-            var request = ratchet.CreateNewRequest("ExpertSuite", 738400);
+            var request = ratchet.CreateNewRequest("ExpertSuite", 743273);
 
             var reporter = ratchet.GetWarningReporter(request);
             var warningReport = reporter.CreateWarningReport();
