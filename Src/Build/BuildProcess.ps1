@@ -77,8 +77,8 @@ use -Path $MSBuildLocation -Name MSBuild
 $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
 function GetVssConnection() {
-   $endpoint = Get-VstsEndpoint -Name "SystemVssConnection" -Require
-   return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new($endpoint.Url, [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
+	Write-Host "Creating VSS connection"
+	return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new("$Env:SYSTEM_TEAMFOUNDATIONSERVERURI")), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
 }
 
 function WarningRatchet() {
