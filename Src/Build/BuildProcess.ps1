@@ -4,7 +4,7 @@ param(
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
-	[string]$Flavor
+    [string]$Flavor
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -78,8 +78,8 @@ $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 [System.Environment]::SetEnvironmentVariable("IsDesktopBuild", $global:IsDesktopBuild, [System.EnvironmentVariableTarget]::Process)
 
 function GetVssConnection() {
-	Write-Host "Creating VSS connection"
-	return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
+    Write-Host "Creating VSS connection"
+    return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
 }
 
 function WarningRatchet() {
@@ -157,22 +157,22 @@ function BuildAssociation($vssConnection, $teamProject, $buildId) {
 # To force build into release or debug mode, set the variable "build.flavor" at TFS build definition, Edit, Variables
 # In release mode, the splash screen will remove "(Development)" text and display the current version
 function GetBuildFlavor() {
-	$buildFlavor = ""
-	if ($Env:Build_Flavor) {
-		$buildFlavor = $Env:Build_Flavor
-		Write-Host "....................................................................................................." -foregroundcolor Green
-		Write-Host ".......            Using Build.Flavor from build definition to $buildFlavor          ................" -foregroundcolor Green
-		Write-Host "....................................................................................................." -foregroundcolor Green
-	} elseif ( $Env:Build_SourceBranch -like "*release*" ) {
-		$buildFlavor = "release"
-		Write-Host "....................................................................................................." -foregroundcolor Green
-		Write-Host ".......                           Build in release mode                      ........................" -foregroundcolor Green
-		Write-Host "....................................................................................................." -foregroundcolor Green
-	} else {
-		$buildFlavor = "debug"
-		Write-Host "....... Build in debug mode ................" -foregroundcolor Green
-	}
-	return [string]$buildFlavor;
+    $buildFlavor = ""
+    if ($Env:Build_Flavor) {
+        $buildFlavor = $Env:Build_Flavor
+        Write-Host "....................................................................................................." -foregroundcolor Green
+        Write-Host ".......            Using Build.Flavor from build definition to $buildFlavor          ................" -foregroundcolor Green
+        Write-Host "....................................................................................................." -foregroundcolor Green
+    } elseif ( $Env:Build_SourceBranch -like "*release*" ) {
+        $buildFlavor = "release"
+        Write-Host "....................................................................................................." -foregroundcolor Green
+        Write-Host ".......                           Build in release mode                      ........................" -foregroundcolor Green
+        Write-Host "....................................................................................................." -foregroundcolor Green
+    } else {
+        $buildFlavor = "debug"
+        Write-Host "....... Build in debug mode ................" -foregroundcolor Green
+    }
+    return [string]$buildFlavor;
 }
 
 #=================================================================================================
@@ -181,8 +181,8 @@ function GetBuildFlavor() {
 # package
 #=================================================================================================
 task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
-	# End of all tasks. Print out current build flavor: Debug or Release.
-	Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
+    # End of all tasks. Print out current build flavor: Debug or Release.
+    Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
 }
 
 task PostBuild -Jobs Init, Package, CopyToDrop, {
@@ -210,14 +210,14 @@ task Build {
 
     $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
     $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
-	$buildFlavor = $Flavor
-	if ($buildFlavor -eq "")  {
-		$buildFlavor = GetBuildFlavor   # to build in debug or release
-	}
-	
-	$global:BuildFlavor = $buildFlavor # to remember and display at the end
+    $buildFlavor = $Flavor
+    if ($buildFlavor -eq "")  {
+        $buildFlavor = GetBuildFlavor   # to build in debug or release
+    }
+    
+    $global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-	$commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
@@ -342,60 +342,64 @@ task Init {
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 
     if (-not $IsDesktopBuild) {
-		# hoho, fucking hilarious
-		# For some reason we cannot load Microsoft assemblies as we get an exception
-		# "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
-		# so to work around this we just disable strong-name validation....		
-		cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
-		
-		$toolsDirectory = "$PSScriptRoot\..\Build.Tools"
-		
-		$global:OnAssemblyResolve = [System.ResolveEventHandler] {
-			param($sender, $e)
-			if ($e.Name -like "*resources*") {
-				return $null
-			}
+        # hoho, fucking hilarious
+        # For some reason we cannot load Microsoft assemblies as we get an exception
+        # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
+        # so to work around this we just disable strong-name validation....     
+        cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
+        
+        $toolsDirectory = "$PSScriptRoot\..\Build.Tools"
+        
+        $global:OnAssemblyResolve = [System.ResolveEventHandler] {
+            param($sender, $e)
+            if ($e.Name -like "*resources*") {
+                return $null
+            }
 
             Write-Host "Resolving $($e.Name)"
-			
-			$fileName = $e.Name.Split(",")[0]
-			$fileName = $fileName + ".dll"
-		
-			$probeDirectories = @($toolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")       		
-			foreach ($dir in $probeDirectories) {
-				$fullFilePath = "$dir\$fileName"
-				
-				if (Test-Path ($fullFilePath)) {			
-					try {
-						$a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
-						Write-Host "Loaded dependency from $fullFilePath"
-						return $a
-					} catch {
-						Write-Error "Failed to load $fullFilePath. $_.Exception"
-					}	
-				} else {
-					foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
-						if ($a.FullName -eq $e.Name) {
-							return $a
-						}
-						if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
-							return $a
-						}
-					}
-				}
-			}
-			
-			Write-Host "File $fullFilePath does not exist so it cannot be loaded. The build will probably fail now."
-			return $null
-		}
-		
-		[System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
+            
+            $fileName = $e.Name.Split(",")[0]
+            $fileName = $fileName + ".dll"
         
-		Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"        				
-			
-		# It's important to load the externals\vstsom version of the Visual Studio assemblies, as the version in \bin is for DotNetCore which doesn't interop well (you get MissingMethodExceptions)
-		[System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
-		[System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
+            $probeDirectories = @($toolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")              
+            foreach ($dir in $probeDirectories) {                
+                $fullFilePath = "$dir\$fileName"
+
+                Write-Debug "Probing: $fullFilePath"
+                
+                if (Test-Path ($fullFilePath)) {    
+                    Write-Debug "File exists: $fullFilePath"        
+                    try {
+                        $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+                        Write-Debug "Loaded dependency: $fullFilePath"
+                        return $a
+                    } catch {
+                        Write-Error "Failed to load $fullFilePath. $_.Exception"
+                    }   
+                } else {
+                    foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+                        if ($a.FullName -eq $e.Name) {
+                            Write-Debug "Found already loaded match: $a"
+                            return $a
+                        }
+                        if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
+                            Write-Debug "Found already loaded match: $a"
+                            return $a
+                        }
+                    }
+                }
+            }
+            
+            Write-Host "Cannot locate $($e.Name). The build will probably fail now."
+            return $null
+        }
+        
+        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
+        
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"                      
+                
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
     }
 
     Write-Info "Established build environment"
