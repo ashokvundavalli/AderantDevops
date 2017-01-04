@@ -78,7 +78,7 @@ $global:IsDesktopBuild = $Env:BUILD_BUILDURI -eq $null
 
 function GetVssConnection() {
 	Write-Host "Creating VSS connection"
-	return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
+	return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
 }
 
 function WarningRatchet() {
