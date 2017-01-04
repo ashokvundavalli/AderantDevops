@@ -353,6 +353,8 @@ task Init {
 		# so to work around this we just disable strong-name validation....		
 		cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 		
+		$toolsDirectory = $PSScriptRoot\..\Build.Tools
+		
 		$global:OnAssemblyResolve = [System.ResolveEventHandler] {
 			param($sender, $e)
 			if ($e.Name -like "*resources*") {
@@ -364,13 +366,15 @@ task Init {
 			$fileName = $e.Name.Split(",")[0]
 			$fileName = $fileName + ".dll"
 		
-			$probeDirectories = @("$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")       		
+			$probeDirectories = @($toolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")       		
 			foreach ($dir in $probeDirectories) {
 				$fullFilePath = "$dir\$fileName"
 				
 				if (Test-Path ($fullFilePath)) {			
 					try {
-						return [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+						$a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+						Write-Host "Loaded dependency from $fullFilePath"
+						return $a
 					} catch {
 						Write-Error "Failed to load $fullFilePath. $_.Exception"
 					}	
@@ -395,8 +399,8 @@ task Init {
 		Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"        				
 			
 		# It's important to load the externals\vstsom version of the Visual Studio assemblies, as the version in \bin is for DotNetCore which doesn't interop well (you get MissingMethodExceptions)
-		[System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\externals\vstsom\Microsoft.VisualStudio.Services.WebApi.dll")
-		[System.Reflection.Assembly]::LoadFrom("$Env:AGENT_HOMEDIRECTORY\externals\vstsom\Microsoft.VisualStudio.Services.Common.dll")
+		[System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
+		[System.Void][System.Reflection.Assembly]::LoadFrom("$toolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
     }
 
     Write-Info "Established build environment"
