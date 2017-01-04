@@ -386,7 +386,7 @@ task Init {
 				}
 			}
 			
-			Write-Host "File $fullFilePath does not exist so it cannot be loaded. The build will probably fail now"
+			Write-Host "File $fullFilePath does not exist so it cannot be loaded. The assembly was requested by $(e.RequestingAssembly.Name). The build will probably fail now."
 			return $null
 		}
 		
