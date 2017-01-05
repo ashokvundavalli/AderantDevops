@@ -1,7 +1,6 @@
 ﻿using System;
-using Aderant.WebHooks.Actions;
-using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Aderant.WebHooks {
     internal class DefaultServiceFactory : IServiceFactory {

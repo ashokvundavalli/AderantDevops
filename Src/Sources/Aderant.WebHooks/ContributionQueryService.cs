@@ -31,7 +31,7 @@ namespace Aderant.WebHooks {
                 }
             }
 
-            return identities.Distinct();
+            return identities;
         }
 
         private IEnumerable<Contributor> GetGitContributors(Guid teamProjectId) {
@@ -45,7 +45,7 @@ namespace Aderant.WebHooks {
 
             if (server != null) {
                 List<TfvcChangesetRef> tfvcChangesetRefs =
-                    server.GetChangesetsAsync(teamProjectId, maxChangeCount: 1000, includeDetails: true, maxCommentLength: 0, includeWorkItems: false, includeSourceRename: false).Result;
+                    server.GetLastestChangesetAsync(teamProjectId, 0, 1000).Result;
 
                 var grouping = tfvcChangesetRefs.GroupBy(g => g.Author.Id);
                 foreach (var group in grouping) {

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.WebHooks.Model;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.CodeReview.Discussion.WebApi;
 using Microsoft.VisualStudio.Services.CodeReview.WebApi;
 using Microsoft.VisualStudio.Services.Identity;
@@ -26,15 +25,13 @@ namespace Aderant.WebHooks {
             this.connection = connection;
         }
 
-        public virtual Task<List<TfvcChangesetRef>> GetChangesetsAsync(Guid teamProjectId, int maxChangeCount, bool? includeDetails, int? maxCommentLength, bool? includeWorkItems, bool? includeSourceRename) {
+        public virtual Task<List<TfvcChangesetRef>> GetLastestChangesetAsync(Guid teamProjectId, int skip, int top) {
+            
             return connection.GetClient<TfvcHttpClient>()
                 .GetChangesetsAsync(
                     teamProjectId,
-                    maxChangeCount: maxChangeCount,
-                    includeDetails: includeDetails,
-                    includeWorkItems: includeWorkItems,
-                    maxCommentLength: maxCommentLength,
-                    includeSourceRename: includeSourceRename);
+                    skip: skip, 
+                    top: top);
         }
 
         public virtual IEnumerable<Contributor> GetGitContributors(Guid teamProjectId) {

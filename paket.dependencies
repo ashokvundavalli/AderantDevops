@@ -32,6 +32,7 @@ nuget Microsoft.CodeDom.Providers.DotNetCompilerPlatform >= 1.0.0 <= 1.0.0
 nuget Microsoft.Net.Compilers >= 1.0.0 <= 1.0.0
 nuget Newtonsoft.Json < 9.0.0
 
+
 group Analyzer
 
 source http://packages.ap.aderant.com/packages/nuget
