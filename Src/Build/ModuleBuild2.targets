@@ -238,6 +238,7 @@ doc.Save(File);
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
+    <CallTarget Targets="SeedPackagePacking" />
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
@@ -1119,7 +1120,20 @@ doc.Save(File);
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
-
+  <!--
+    ==========================================================================================
+        Zip seed package(s)
+    ==========================================================================================
+  -->
+  <Target Name="SeedPackagePacking">
+    <SeedPackagePacking
+      BuildFrom="$(SolutionDirectoryPath)"
+      SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
+      SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Packages"
+      >
+    </SeedPackagePacking>
+  </Target>
+  
   <!--
     ==========================================================================================
         Index Sources and Publish Symbols        

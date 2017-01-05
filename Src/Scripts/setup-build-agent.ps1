@@ -1,6 +1,12 @@
 ﻿[CmdletBinding()]
 param(
     [Parameter()]
+    $agentsToProvision = $Env:NUMBER_OF_PROCESSORS,
+
+    [Parameter()]
+    $removeAllAgents = $true,
+
+    [Parameter()]
     $agentArchive = "$env:USERPROFILE\Downloads\vsts-agent-win7-x64-2.105.7.zip",
 
     [Parameter()]
@@ -14,82 +20,86 @@ param(
     $workDirectory = "D:\",
 
     [Parameter()]
-    $credentials = (Get-Credential)    
+    $credentials
 )
+
+$ErrorActionPreference = "Stop"
+
+$AgentRootDirectory = "C:\Agents"
 
 # Converted from https://github.com/docker/docker/blob/master/pkg/namesgenerator/names-generator.go
 
 $left = @(
-	"admiring",
-	"adoring",
-	"affectionate",
-	"agitated",
-	"amazing",
-	"angry",
-	"awesome",
-	"backstabbing",
-	"berserk",
-	"big",
-	"boring",
-	"clever",
-	"cocky",
-	"compassionate",
-	"condescending",
-	"cranky",
-	"desperate",
-	"determined",
-	"distracted",
-	"dreamy",
-	"drunk",
-	"eager",
-	"ecstatic",
-	"elastic",
-	"elated",
-	"elegant",
-	"evil",
-	"fervent",
-	"focused",
-	"furious",
-	"gigantic",
-	"gloomy",
-	"goofy",
-	"grave",
-	"happy",
-	"high",
-	"hopeful",
-	"hungry",
-	"infallible",
-	"jolly",
-	"jovial",
-	"kickass",
-	"lonely",
-	"loving",
-	"mad",
-	"modest",
-	"naughty",
-	"nauseous",
-	"nostalgic",
-	"peaceful",
-	"pedantic",
-	"pensive",
-	"prickly",
-	"reverent",
-	"romantic",
-	"sad",
-	"serene",
-	"sharp",
-	"sick",
-	"silly",
-	"sleepy",
-	"small",
-	"stoic",
-	"stupefied",
-	"suspicious",
-	"tender",
-	"thirsty",
-	"tiny",
-	"trusting",
-	"zen"
+    "admiring",
+    "adoring",
+    "affectionate",
+    "agitated",
+    "amazing",
+    "angry",
+    "awesome",
+    "backstabbing",
+    "berserk",
+    "big",
+    "boring",
+    "clever",
+    "cocky",
+    "compassionate",
+    "condescending",
+    "cranky",
+    "desperate",
+    "determined",
+    "distracted",
+    "dreamy",
+    "drunk",
+    "eager",
+    "ecstatic",
+    "elastic",
+    "elated",
+    "elegant",
+    "evil",
+    "fervent",
+    "focused",
+    "furious",
+    "gigantic",
+    "gloomy",
+    "goofy",
+    "grave",
+    "happy",
+    "high",
+    "hopeful",
+    "hungry",
+    "infallible",
+    "jolly",
+    "jovial",
+    "kickass",
+    "lonely",
+    "loving",
+    "mad",
+    "modest",
+    "naughty",
+    "nauseous",
+    "nostalgic",
+    "peaceful",
+    "pedantic",
+    "pensive",
+    "prickly",
+    "reverent",
+    "romantic",
+    "sad",
+    "serene",
+    "sharp",
+    "sick",
+    "silly",
+    "sleepy",
+    "small",
+    "stoic",
+    "stupefied",
+    "suspicious",
+    "tender",
+    "thirsty",
+    "tiny",
+    "trusting",
+    "zen"
 )
 
 $right = @(
@@ -147,23 +157,71 @@ $right = @(
     "zebra"
 )
 
+function GetCredentialsOrPrompt() {
+    $credentialFile = "$PSScriptRoot\credentials.xml"
+
+    if (Test-Path $credentialFile) {
+        return Import-Clixml -Path $credentialFile        
+    }
+
+    if ([System.Environment]::UserInteractive) {
+        ($credentials = Get-Credential) | Export-Clixml -Path $credentialFile
+        return $credentials
+    } else {
+        throw "Process is not interactive so cannot prompt for credentials."
+    }
+}
+
+
 function GetRandomName {
     $leftRnd = Get-Random -Minimum 0 -Maximum $left.Length
     $rightRnd = Get-Random -Minimum 0 -Maximum $right.Length
 
-	return ("{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
+    return ("{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
 }
 
-$agentName = GetRandomName
-$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $agentName)
+function RemoveAllAgents() {
+    if (Test-Path $AgentRootDirectory) {
+        $directories = gci $AgentRootDirectory
 
-$agentInstallationPath = "C:\agents\$agentName"
+        foreach ($directory in $directories) {        
+            cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
 
-Expand-Archive $agentArchive -DestinationPath $agentInstallationPath -Force
-Push-Location -Path $agentInstallationPath
+            Remove-Item -Path $directory.FullName -Force -Recurse -ErrorAction SilentlyContinue
+        }    
+    }
+}
 
-$serviceAccountName = $credentials.UserName
-$serviceAccountPassword = $credentials.GetNetworkCredential().Password
+function ProvisionAgent() {
+    $agentName = GetRandomName
 
-#.\config.cmd --unattended --url $tfsHost --auth Integrated --pool default --agent $agentName --runasservice --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "$workingDirectory" --replace
-.\config.cmd --unattended --url $tfsHost --auth Integrated --pool default --agent $agentName --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "C:\temp\b" --replace
+    if (-not (Test-Path $workDirectory)) {
+        $workDirectory = $Env:SystemDrive + "\"
+    }
+
+    $workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $agentName)
+
+    $agentInstallationPath = "$AgentRootDirectory\$agentName"
+    
+    New-Item -ItemType Directory -Path $AgentRootDirectory -ErrorAction SilentlyContinue
+
+    Expand-Archive $agentArchive -DestinationPath $agentInstallationPath -Force
+    Push-Location -Path $agentInstallationPath
+
+    $credentials = GetCredentialsOrPrompt
+    $serviceAccountName = $credentials.UserName
+    $serviceAccountPassword = $credentials.GetNetworkCredential().Password
+
+    .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --runasservice --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "$workingDirectory" --replace
+}
+
+##
+## Agent Setup ##
+##
+if ($removeAllAgents) {
+    RemoveAllAgents
+}
+
+for ($i = 0; $i -lt $agentsToProvision; $i++) {
+    ProvisionAgent
+}

@@ -80,6 +80,7 @@
       <HintPath>..\..\..\..\ThirdParty\Thirdparty.Microsoft\bin\System.Management.Automation.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Xaml">
       <Private>False</Private>
     </Reference>
@@ -163,6 +164,7 @@
     <Compile Include="Packaging\NuGet\Nuspec.cs" />
     <Compile Include="Packaging\NuGet\NuspecValue.cs" />
     <Compile Include="Tasks\CompileLess.cs" />
+    <Compile Include="Tasks\SeedPackagePacking.cs" />
     <Compile Include="Tasks\OrmMappingValidator.cs" />
     <Compile Include="Tasks\ProjectConformityCheck.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
