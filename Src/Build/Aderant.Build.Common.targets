@@ -111,6 +111,11 @@
              AssemblyFile="$(BuildAssembly)"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
+  <!-- For zip seed packages. -->
+  <UsingTask TaskName="SeedPackagePacking"
+             AssemblyFile="$(BuildAssembly)"
+             Condition="'$(IsCustomBuild)' != 'true'" />
+  
   <PropertyGroup>
     <!-- Visual Studio Environment-->
     <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
