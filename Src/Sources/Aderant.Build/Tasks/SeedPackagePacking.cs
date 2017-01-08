@@ -95,14 +95,21 @@ namespace Aderant.Build.Tasks {
                     var destination = Path.Combine(SeedPackageDrop, packageName + ".zip"); // "...\Bin\Packages\AccountsPayable.zip"
 
                     Log.LogMessage($@"Zipping seed package definitions from .\Src\SeedPackages\{packageName} to .\Bin\Packages\{packageName}.zip");
-                    if (File.Exists(destination)) {
-                        var fi = new FileInfo(destination);
-                        fi.IsReadOnly = false;
-                        File.Delete(destination);
+                    try {
+                        if (File.Exists(destination)) {
+                            var fi = new FileInfo(destination);
+                            fi.IsReadOnly = false;
+                            File.Delete(destination);
+                        }
+                        if (!Directory.Exists(SeedPackageDrop)) {
+                            Directory.CreateDirectory(SeedPackageDrop);
+                        }
+                        ZipFile.CreateFromDirectory(packageSrcDir, destination);
+                        Log.LogMessage($"{dirs.Length} seed package(s) produced.");
+                    } catch (Exception ex) {
+                        throw new Exception($"Error zipping the seed package(s): {ex.Message}. Source directory: {packageSrcDir}. Destination: {destination}");
                     }
-                    ZipFile.CreateFromDirectory(packageSrcDir, destination);
                 }
-                Log.LogMessage($"{dirs.Length} seed package(s) produced.");
             }
         }
 
