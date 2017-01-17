@@ -46,14 +46,12 @@ namespace Aderant.Build.Packaging {
                 OutputPath = Path.Combine(fs.Root, "Bin", "Packages")
             };
 
-            System.Diagnostics.Debugger.Launch();
-
             foreach (var file in GetTemplateFiles()) {
                 var dependenciesFile = DependenciesFile.ReadFromFile(spec.DependenciesFile);
 
                 var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
 
-                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Paket.Constants.MainDependencyGroup));
+                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Constants.MainDependencyGroup));
                 var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
                 
                 ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
@@ -73,7 +71,7 @@ namespace Aderant.Build.Packaging {
                                     excludedTemplates: GenerateExcludedTemplates(), 
                                     lockDependencies: true, 
                                     minimumFromLockFile: true, 
-                                    symbols: false, 
+                                    symbols: false,
                                     includeReferencedProjects: true, 
                                     projectUrl: FSharpOption<string>.None);
 
@@ -97,7 +95,7 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (var item in dependencyMap) {
-                templateFile.AddDependency(item.Key, item.Value);
+                templateFile.AddDependency(item.Key);
             }
 
             templateFile.Save(templateFileStream());

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
-using Microsoft.FSharp.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Paket;
 
@@ -105,7 +103,7 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo";
+    Foo <= LOCKEDVERSION";
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
@@ -149,9 +147,9 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo
-    Bar
-    Baz";
+    Foo <= LOCKEDVERSION
+    Bar <= LOCKEDVERSION
+    Baz <= LOCKEDVERSION";
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
@@ -165,7 +163,7 @@ dependencies
 
         [TestMethod]
         public void Round_trip_does_not_produce_artifacts() {
-            string expected = 
+            string expected =
             @"type file
 id Aderant.Deployment.Core
 authors Aderant
@@ -180,14 +178,14 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo
-    Bar
-    Baz";
+    Foo <= LOCKEDVERSION
+    Bar <= LOCKEDVERSION
+    Baz <= LOCKEDVERSION";
 
             var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies_UNIX);
-            packageTemplateFile.AddDependency(Domain.PackageName("Foo"), SemVer.Zero);
-            packageTemplateFile.AddDependency(Domain.PackageName("Bar"), SemVer.Zero);
-            packageTemplateFile.AddDependency(Domain.PackageName("Baz"), SemVer.Zero);
+            packageTemplateFile.AddDependency(Domain.PackageName("Foo"));
+            packageTemplateFile.AddDependency(Domain.PackageName("Bar"));
+            packageTemplateFile.AddDependency(Domain.PackageName("Baz"));
 
             string actual;
 
@@ -202,14 +200,15 @@ dependencies
 
             packageTemplateFile = new PackageTemplateFile(actual);
 
-            var stream2 = new MemoryStream();
-            using (var reader = new StreamReader(stream2)) {
-                packageTemplateFile.Save(stream2);
+            using (var stream2 = new MemoryStream()) {
+                using (var reader = new StreamReader(stream2)) {
+                    packageTemplateFile.Save(stream2);
 
-                stream2.Position = 0;
-                actual = reader.ReadToEnd();
+                    stream2.Position = 0;
+                    actual = reader.ReadToEnd();
 
-                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+                    Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+                }
             }
         }
 
@@ -230,10 +229,10 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo ~> 1.0.1";
+    Foo <= LOCKEDVERSION";
 
             var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies);
-            packageTemplateFile.AddDependency(Domain.PackageName("Foo"), new SemVerInfo(1, 0, 1, FSharpOption<PreRelease>.None, String.Empty, String.Empty, FSharpOption<string>.None));
+            packageTemplateFile.AddDependency(Domain.PackageName("Foo"));
 
             string actual;
 

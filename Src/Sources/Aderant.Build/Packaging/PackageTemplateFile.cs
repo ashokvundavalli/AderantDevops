@@ -27,12 +27,9 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        public void AddDependency(Domain.PackageName item, SemVerInfo version) {
-            string entry = item.Item1;
-
-            if (version.Major > 0 || version.Minor > 0 || version.Patch > 0) {
-                entry = string.Format("{0} ~> LOCKEDVERSION", item.Item1, version.ToString());
-            }
+        public void AddDependency(Domain.PackageName item) {
+            // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file
+            string entry = string.Format("{0} <= LOCKEDVERSION", item.Item1);
 
             List<string> list;
             if (section.Values != null) {
@@ -44,20 +41,22 @@ namespace Aderant.Build.Packaging {
             List<int> packageNameIndexes = new List<int>();
 
             int index;
-            while (index = list.FindIndex(element => element.IndexOf(item.Item1, StringComparison.OrdinalIgnoreCase)) != -1) {
+            while ((index = FindEntryIndex(item, list)) != -1) {
                 packageNameIndexes.Add(index);
                 list.RemoveAt(index);
             }
-
-            //var index = list.FindIndex(x => x.StartsWith(item.Item1, StringComparison.OrdinalIgnoreCase));
-            //if (index != -1) {
-            if (packageNameIndexes.Any()) { 
-                list.Insert(index, entry);
+            
+            if (packageNameIndexes.Any()) {
+                list.Insert(packageNameIndexes.First(), entry);
             } else {
                 list.Add(entry);
             }
 
             section.SetEntries(list);
+        }
+
+        private static int FindEntryIndex(Domain.PackageName item, List<string> list) {
+            return list.FindIndex(element => element.IndexOf(item.Item1, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         public void Save(Stream stream) {
@@ -66,12 +65,14 @@ namespace Aderant.Build.Packaging {
             }
 
             var sections = parser.Sections;
-            using (var writer = new SectionWriter(new StreamWriter(stream, Encoding.UTF8, 4096, stream is MemoryStream))) {
-                writer.Write(sections);
+            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8, 4096, stream is MemoryStream)) {
+                using (var writer = new SectionWriter(streamWriter)) {
+                    writer.Write(sections);
 
-                // Truncate the remainder of the file... 
-                writer.Flush();
-                stream.SetLength(stream.Position);
+                    // Truncate the remainder of the file... 
+                    writer.Flush();
+                    stream.SetLength(stream.Position);
+                }
             }
         }
     }
