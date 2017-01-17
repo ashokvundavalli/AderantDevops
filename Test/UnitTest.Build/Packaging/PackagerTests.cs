@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Microsoft.FSharp.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Paket;
 
@@ -50,8 +52,8 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Adding_new_dependencies_to_template_preserves_document_structure() {
-            var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
-            dict.Add(Domain.PackageName("Bar"), VersionRequirement.AllReleases);
+            var dict = new Dictionary<Domain.PackageName, SemVerInfo>();
+            dict.Add(Domain.PackageName("Bar"), SemVer.Zero);
 
             MemoryStream stream = null;
 
@@ -74,12 +76,13 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Adding_new_dependencies_to_template() {
-            var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
-            dict.Add(Domain.PackageName("Foo"), VersionRequirement.AllReleases);
+            var dict = new Dictionary<Domain.PackageName, SemVerInfo>();
+            dict.Add(Domain.PackageName("Foo"), SemVer.Zero);
 
             MemoryStream stream = null;
 
-            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
+            var packager = new Packager(null, new FakeLogger());
+            var dependencies = packager.ReplicateDependenciesToTemplate(dict, () => {
                 if (stream != null) {
                     return stream = new MemoryStream();
                 }
@@ -110,16 +113,16 @@ dependencies
 
                 Assert.IsFalse(string.IsNullOrWhiteSpace(actual));
 
-                Assert.AreEqual(expected, actual);
+                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
             }
         }
 
         [TestMethod]
         public void Adding_new_dependencies_to_template_with_unix_line_endings() {
-            var dict = new Dictionary<Domain.PackageName, VersionRequirement>();
-            dict.Add(Domain.PackageName("Foo"), VersionRequirement.AllReleases);
-            dict.Add(Domain.PackageName("Bar"), VersionRequirement.AllReleases);
-            dict.Add(Domain.PackageName("Baz"), VersionRequirement.AllReleases);
+            var dict = new Dictionary<Domain.PackageName, SemVerInfo>();
+            dict.Add(Domain.PackageName("Foo"), SemVer.Zero);
+            dict.Add(Domain.PackageName("Bar"), SemVer.Zero);
+            dict.Add(Domain.PackageName("Baz"), SemVer.Zero);
 
             MemoryStream stream = null;
 
@@ -156,7 +159,7 @@ dependencies
 
                 Assert.IsFalse(string.IsNullOrWhiteSpace(actual));
 
-                Assert.AreEqual(expected, actual);
+                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
             }
         }
 
@@ -182,9 +185,9 @@ dependencies
     Baz";
 
             var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies_UNIX);
-            packageTemplateFile.AddDependency(Domain.PackageName("Foo"), VersionRequirement.AllReleases);
-            packageTemplateFile.AddDependency(Domain.PackageName("Bar"), VersionRequirement.AllReleases);
-            packageTemplateFile.AddDependency(Domain.PackageName("Baz"), VersionRequirement.AllReleases);
+            packageTemplateFile.AddDependency(Domain.PackageName("Foo"), SemVer.Zero);
+            packageTemplateFile.AddDependency(Domain.PackageName("Bar"), SemVer.Zero);
+            packageTemplateFile.AddDependency(Domain.PackageName("Baz"), SemVer.Zero);
 
             string actual;
 
@@ -206,7 +209,53 @@ dependencies
                 stream2.Position = 0;
                 actual = reader.ReadToEnd();
 
-                Assert.AreEqual(expected, actual);
+                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+            }
+        }
+
+        [TestMethod]
+        public void Specific_version_is_written_to_template_file() {
+            string expected =
+            @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files
+    Bin/Module/*.config ==> lib
+    Bin/Module/Aderant.* ==> lib
+    Bin/Module/PrerequisitesPowerShell/* ==> lib/PrerequisitesPowerShell
+    Bin/Module/PrerequisitesPowerShell ==> lib/PrerequisitesPowerShell
+    Bin/Module/Monitoring ==> lib/Monitoring
+    Bin/Module/InstallerManifests ==> lib/InstallerManifests
+    !Bin/Module/*.exe.config
+dependencies
+    Foo ~> 1.0.1";
+
+            var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies);
+            packageTemplateFile.AddDependency(Domain.PackageName("Foo"), new SemVerInfo(1, 0, 1, FSharpOption<PreRelease>.None, String.Empty, String.Empty, FSharpOption<string>.None));
+
+            string actual;
+
+            using (var stream = new MemoryStream()) {
+                using (var reader = new StreamReader(stream)) {
+                    packageTemplateFile.Save(stream);
+
+                    stream.Position = 0;
+                    actual = reader.ReadToEnd();
+                }
+            }
+
+            packageTemplateFile = new PackageTemplateFile(actual);
+
+            var stream2 = new MemoryStream();
+            using (var reader = new StreamReader(stream2)) {
+                packageTemplateFile.Save(stream2);
+
+                stream2.Position = 0;
+                actual = reader.ReadToEnd();
+
+                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
             }
         }
     }

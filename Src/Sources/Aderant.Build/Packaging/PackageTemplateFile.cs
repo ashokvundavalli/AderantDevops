@@ -3,103 +3,61 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Documents;
+using Aderant.Build.Packaging.Parsing;
 using Paket;
 
 namespace Aderant.Build.Packaging {
     internal class PackageTemplateFile {
-        private class DependencyTextLine {
-            public bool Header { get; set; }
+        private IndendedFileParser parser;
+        private Section section;
 
-            private int i;
-            private string line;
-
-            public DependencyTextLine(int i, string line, bool header = false) {
-                Header = header;
-                this.i = i;
-                this.line = line;
-            }
-
-            public string Text {
-                get { return line.TrimStart(); }
-            }
-
-            public int LineNumber {
-                get { return i; }
-            }
-        }
-
-        private string[] textRepresentation;
-        private List<DependencyTextLine> dependencyText = new List<DependencyTextLine>();
-        private List<string> dependencies = new List<string>();
-
-        public string[] Lines {
-            get { return this.textRepresentation; }
-        }
-
-        public List<string> Dependencies {
-            get { return new List<string>(dependencies); }
+        public IReadOnlyCollection<string> Dependencies {
+            get { return section.Values; }
         }
 
         public PackageTemplateFile(string contents) {
-            textRepresentation = contents.Split(new[] { '\n' });
+            parser = new IndendedFileParser();
+            parser.Parse(contents);
 
-            NormalizeTextRepresentation();
+            section = parser["dependencies"];
 
-            FindSection("dependencies");
-            ExtractDependenciesFromSection();
-        }
-
-        private void NormalizeTextRepresentation() {
-            for (int i = 0; i < textRepresentation.Length; i++) {
-                string line = textRepresentation[i];
-
-                textRepresentation[i] = line.TrimEnd();
+            if (section == null) {
+                section = new Section("dependencies");
+                parser.AddSection(section);
             }
         }
 
-        private void ExtractDependenciesFromSection() {
-            if (dependencyText.Any()) {
-                dependencies.AddRange(dependencyText.Where(text => !text.Header).Select(s => s.Text));
+        public void AddDependency(Domain.PackageName item, SemVerInfo version) {
+            string entry = item.Item1;
 
-                var lines = textRepresentation.ToList();
-
-                int start = dependencyText[0].LineNumber;
-
-                lines.RemoveRange(start, dependencyText.Last().LineNumber - start + 1);
-
-                textRepresentation = lines.ToArray();
+            if (version.Major > 0 || version.Minor > 0 || version.Patch > 0) {
+                entry = string.Format("{0} ~> LOCKEDVERSION", item.Item1, version.ToString());
             }
-        }
 
-        private void FindSection(string section) {
-            bool readSection = false;
-
-            for (int i = 0; i < textRepresentation.Length; i++) {
-                string line = textRepresentation[i];
-
-                if (readSection) {
-                    if (!string.IsNullOrEmpty(line)) {
-                        if (char.IsWhiteSpace(line, 0)) {
-                            dependencyText.Add(new DependencyTextLine(i, line));
-                        } else {
-                            break;
-                        }
-                    }
-                }
-
-                if (!readSection && line.StartsWith(section)) {
-                    dependencyText.Add(new DependencyTextLine(i, line, true));
-                    readSection = true;
-                }
+            List<string> list;
+            if (section.Values != null) {
+                list = section.Values.ToList();
+            } else {
+                list = new List<string>();
             }
-        }
 
-        public void AddDependency(Domain.PackageName item, Paket.VersionRequirement value) {
-            if (!dependencies.Any(d => d.StartsWith(item.Item1))) {
-                dependencies.Add(string.Format("{0} {1}", item.Item1, value.ToString()));
+            List<int> packageNameIndexes = new List<int>();
+
+            int index;
+            while (index = list.FindIndex(element => element.IndexOf(item.Item1, StringComparison.OrdinalIgnoreCase)) != -1) {
+                packageNameIndexes.Add(index);
+                list.RemoveAt(index);
             }
+
+            //var index = list.FindIndex(x => x.StartsWith(item.Item1, StringComparison.OrdinalIgnoreCase));
+            //if (index != -1) {
+            if (packageNameIndexes.Any()) { 
+                list.Insert(index, entry);
+            } else {
+                list.Add(entry);
+            }
+
+            section.SetEntries(list);
         }
 
         public void Save(Stream stream) {
@@ -107,38 +65,14 @@ namespace Aderant.Build.Packaging {
                 throw new InvalidOperationException("A writable stream must be provided");
             }
 
-            List<string> lines = textRepresentation.ToList();
-
-            List<string> list = dependencies.ToList();
-            list.Insert(0, "dependencies");
-
-            if (dependencyText.Any()) {
-                lines.InsertRange(dependencyText[0].LineNumber, CreateTextRepresentation(list));
-            } else {
-                lines.AddRange(CreateTextRepresentation(list));
-            }
-
-        
-
-            using (var writer = new StreamWriter(stream, Encoding.UTF8, 4096, stream is MemoryStream)) {
-                for (int i = 0; i < lines.Count; i++) {
-                    var line = lines[i];
-
-                    if (i == lines.Count - 1) {
-                        writer.Write(line.TrimEnd());
-                    } else {
-                        writer.WriteLine(line.TrimEnd());
-                    }
-                }
+            var sections = parser.Sections;
+            using (var writer = new SectionWriter(new StreamWriter(stream, Encoding.UTF8, 4096, stream is MemoryStream))) {
+                writer.Write(sections);
 
                 // Truncate the remainder of the file... 
                 writer.Flush();
                 stream.SetLength(stream.Position);
             }
-        }
-
-        private List<string> CreateTextRepresentation(List<string> list) {
-            return list.Select((s, i) => i == 0 ? s : s.PadLeft(s.Length + 4)).ToList();
         }
     }
 }

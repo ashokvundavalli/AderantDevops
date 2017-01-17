@@ -122,6 +122,7 @@
     <Compile Include="DependencyResolver\Resolver.cs" />
     <Compile Include="DependencyResolver\ResolverRequest.cs" />
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
+    <Compile Include="Packaging\Parsing\IndendedFileParser.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
     <Compile Include="Packaging\NuGet\PackageComparer.cs" />
@@ -129,6 +130,8 @@
     <Compile Include="Packaging\ProductAssemblyContext.cs" />
     <Compile Include="Packaging\ProductAssemblyResult.cs" />
     <Compile Include="Packaging\RootItemHandler.cs" />
+    <Compile Include="Packaging\Parsing\Section.cs" />
+    <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>

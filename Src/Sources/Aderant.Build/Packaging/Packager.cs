@@ -46,12 +46,17 @@ namespace Aderant.Build.Packaging {
                 OutputPath = Path.Combine(fs.Root, "Bin", "Packages")
             };
 
+            System.Diagnostics.Debugger.Launch();
+
             foreach (var file in GetTemplateFiles()) {
                 var dependenciesFile = DependenciesFile.ReadFromFile(spec.DependenciesFile);
 
-                FSharpMap<Domain.PackageName, Paket.VersionRequirement> map = dependenciesFile.GetDependenciesInGroup(Paket.Constants.MainDependencyGroup);
+                var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
+
+                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Paket.Constants.MainDependencyGroup));
+                var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
                 
-                ReplicateDependenciesToTemplate(map.ToDictionary(d => d.Key, d => d.Value), () => fs.OpenFileForWrite(fs.GetFullPath(file)));
+                ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
 
                 try {
                     logger.Info("Processing " + file);
@@ -84,7 +89,7 @@ namespace Aderant.Build.Packaging {
             return new PackResult(spec);
         }
 
-        internal List<string> ReplicateDependenciesToTemplate(Dictionary<Domain.PackageName, Paket.VersionRequirement> dependencyMap, Func<Stream> templateFileStream) {
+        internal IReadOnlyCollection<string> ReplicateDependenciesToTemplate(Dictionary<Domain.PackageName, SemVerInfo> dependencyMap, Func<Stream> templateFileStream) {
             PackageTemplateFile templateFile;
 
             using (var reader = new StreamReader(templateFileStream())) {
@@ -112,11 +117,12 @@ namespace Aderant.Build.Packaging {
             var files = fs.GetFiles(fs.Root, "*paket.template", true);
             
             foreach (var file in files) {
-                // Ignore files with BuildInfrastructureWorkingDirectory
+                // Ignore files under the Build Infrastructure working directory, as it mat contain test resources 
+                // which would erroneously be picked up
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
                 }
-                // Ignore files in obj\ folder which may be created by the compiler
+                // Ignore files under the obj\ folder which may be created by the compiler
                 if (file.IndexOf("obj\\", StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
                 }
