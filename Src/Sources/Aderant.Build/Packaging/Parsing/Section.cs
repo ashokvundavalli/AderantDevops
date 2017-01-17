@@ -46,5 +46,13 @@ namespace Aderant.Build.Packaging.Parsing {
 
             entries = list.ToList();
         }
+
+        public string GetValueWithoutKey() {
+            var parts = line.Split(' ');
+            if (parts.Length >= 1) {
+                return parts[1];
+            }
+            return null;
+        }
     }
 }

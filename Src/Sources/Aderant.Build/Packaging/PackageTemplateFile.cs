@@ -9,21 +9,21 @@ using Paket;
 namespace Aderant.Build.Packaging {
     internal class PackageTemplateFile {
         private IndendedFileParser parser;
-        private Section section;
+        private Section dependencies;
 
         public IReadOnlyCollection<string> Dependencies {
-            get { return section.Values; }
+            get { return dependencies.Values; }
         }
 
         public PackageTemplateFile(string contents) {
             parser = new IndendedFileParser();
             parser.Parse(contents);
 
-            section = parser["dependencies"];
+            dependencies = parser["dependencies"];
 
-            if (section == null) {
-                section = new Section("dependencies");
-                parser.AddSection(section);
+            if (dependencies == null) {
+                dependencies = new Section("dependencies");
+                parser.AddSection(dependencies);
             }
         }
 
@@ -31,12 +31,7 @@ namespace Aderant.Build.Packaging {
             // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file
             string entry = string.Format("{0} <= LOCKEDVERSION", item.Item1);
 
-            List<string> list;
-            if (section.Values != null) {
-                list = section.Values.ToList();
-            } else {
-                list = new List<string>();
-            }
+            var list = InitializeDependenciesList();
 
             List<int> packageNameIndexes = new List<int>();
 
@@ -52,7 +47,17 @@ namespace Aderant.Build.Packaging {
                 list.Add(entry);
             }
 
-            section.SetEntries(list);
+            dependencies.SetEntries(list);
+        }
+
+        private List<string> InitializeDependenciesList() {
+            List<string> list;
+            if (dependencies.Values != null) {
+                list = dependencies.Values.ToList();
+            } else {
+                list = new List<string>();
+            }
+            return list;
         }
 
         private static int FindEntryIndex(Domain.PackageName item, List<string> list) {
@@ -74,6 +79,16 @@ namespace Aderant.Build.Packaging {
                     stream.SetLength(stream.Position);
                 }
             }
+        }
+
+        public void RemoveSelfReferences() {
+            var packageName = parser["id"].GetValueWithoutKey();
+
+            var list = InitializeDependenciesList();
+
+            list.RemoveAll(entry => entry.IndexOf(packageName, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            dependencies.SetEntries(list);
         }
     }
 }

@@ -257,5 +257,43 @@ dependencies
                 Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
             }
         }
+
+        [TestMethod]
+        public void Self_references_are_removed() {
+            string expected =
+            @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+dependencies";
+
+            var packageTemplateFile = new PackageTemplateFile(expected);
+            packageTemplateFile.AddDependency(Domain.PackageName("Aderant.Deployment.Core"));
+
+            string actual;
+
+            using (var stream = new MemoryStream()) {
+                using (var reader = new StreamReader(stream)) {
+                    packageTemplateFile.Save(stream);
+
+                    stream.Position = 0;
+                    actual = reader.ReadToEnd();
+                }
+            }
+
+            packageTemplateFile = new PackageTemplateFile(actual);
+            packageTemplateFile.RemoveSelfReferences();
+
+            var stream2 = new MemoryStream();
+            using (var reader = new StreamReader(stream2)) {
+                packageTemplateFile.Save(stream2);
+
+                stream2.Position = 0;
+                actual = reader.ReadToEnd();
+
+                Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+            }
+        }
     }
 }

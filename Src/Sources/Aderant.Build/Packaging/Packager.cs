@@ -98,6 +98,8 @@ namespace Aderant.Build.Packaging {
                 templateFile.AddDependency(item.Key);
             }
 
+            templateFile.RemoveSelfReferences();
+
             templateFile.Save(templateFileStream());
 
             return templateFile.Dependencies;
