@@ -48,7 +48,14 @@ namespace Aderant.Build.Tasks {
                     // locations within the module.
                     ITaskItem loadedAssembly = analyzedAssemblies.FirstOrDefault(file => string.Equals(file.GetMetadata("FileName"), fileName, StringComparison.OrdinalIgnoreCase));
                     if (loadedAssembly != null) {
-                        Log.LogWarning(string.Format(CultureInfo.InvariantCulture, "Assembly: {0} has already been analyzed from another location. The assembly information will be used from {1}.", item.ItemSpec, loadedAssembly.ItemSpec));
+                        if (!string.Equals(loadedAssembly.GetMetadata("Extension"), ".exe", StringComparison.OrdinalIgnoreCase)) {
+                            Log.LogWarning(
+                                string.Format(
+                                    CultureInfo.InvariantCulture,
+                                    "Assembly: {0} has already been analyzed from another location. The assembly information will be used from {1}.",
+                                    item.ItemSpec,
+                                    loadedAssembly.ItemSpec));
+                        }
 
                         // Copy the platform from the already processed input
                         item.SetMetadata("Platform", loadedAssembly.GetMetadata("Platform"));
