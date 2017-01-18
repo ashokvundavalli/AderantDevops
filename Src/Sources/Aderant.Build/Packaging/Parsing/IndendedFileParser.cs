@@ -32,7 +32,11 @@ namespace Aderant.Build.Packaging.Parsing {
             string line;
 
             while ((line = reader.ReadLine()) != null) {
-                if (line.StartsWith(" ")) {
+                if (line.Length > 0 && char.IsWhiteSpace(line[0])) {
+
+                    // replace tabs with spaces
+                    line = line.Replace("\t", "    ");
+
                     State = ParserState.ReadingList;
 
                     Section section = currentSection;

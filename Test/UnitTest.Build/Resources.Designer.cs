@@ -113,9 +113,10 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;  
+        ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
-        ///&lt;/Project&gt;.
+        ///  &lt;Choose&gt;
+        ///    &lt;When Condition=&quot;$(TargetFrameworkIdentifier) == &apos;.NETFramework&apos; And ($(TargetFrameworkVersion) == &apos;v4.5&apos; Or $(TargetFrameworkVersion) == &apos;v4.5.1&apos; Or $(TargetFrameworkVersion) == &apos;v4.5.2&apos; Or $(TargetFrameworkVersion) == &apos;v4.5.3&apos; Or $(TargetFrameworkVersion) == &apos;v4.6&apos; Or $( [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CSharpProject {
             get {
@@ -223,6 +224,28 @@ namespace UnitTest.Build {
         internal static string test_paket_template_with_dependencies {
             get {
                 return ResourceManager.GetString("test_paket_template_with_dependencies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to type file
+        ///id Aderant.Framework.Core
+        ///authors Aderant
+        ///description
+        ///    Core Framework libraries.
+        ///files
+        ///	Bin/Module/Aderant.Framework.* ==&gt; lib
+        ///	Bin/Module/Aderant.Expressions.* ==&gt; lib
+        ///	Bin/Module/Aderant.Deployment.Client.* ==&gt; lib
+        ///	Bin/Module/Aderant.Framework.Communication.Client.* ==&gt; lib
+        ///	Bin/Module/Aderant.Framework.Communication.Server.* ==&gt; lib
+        ///	Bin/Module/Aderant.Framework.Configuration.* ==&gt; lib
+        ///	Bin/Module/Aderant.Framework.Configuration.Service.* ==&gt; lib
+        ///	Bin/Module/Aderant.Framework.I [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string test_paket_template_with_mixed_whitespace {
+            get {
+                return ResourceManager.GetString("test_paket_template_with_mixed_whitespace", resourceCulture);
             }
         }
         

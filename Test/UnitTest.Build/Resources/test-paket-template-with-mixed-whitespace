@@ -1,0 +1,45 @@
+﻿type file
+id Aderant.Framework.Core
+authors Aderant
+description
+    Core Framework libraries.
+files
+	Bin/Module/Aderant.Framework.* ==> lib
+	Bin/Module/Aderant.Expressions.* ==> lib
+	Bin/Module/Aderant.Deployment.Client.* ==> lib
+	Bin/Module/Aderant.Framework.Communication.Client.* ==> lib
+	Bin/Module/Aderant.Framework.Communication.Server.* ==> lib
+	Bin/Module/Aderant.Framework.Configuration.* ==> lib
+	Bin/Module/Aderant.Framework.Configuration.Service.* ==> lib
+	Bin/Module/Aderant.Framework.Identity.* ==> lib
+	Bin/Module/Aderant.Framework.Persistence.* ==> lib
+	Bin/Module/Aderant.Framework.Scripting.* ==> lib
+	Bin/Module/Aderant.Framework.Security.* ==> lib
+	Bin/Module/Aderant.Framework.ServiceLibrary.* ==> lib
+	Bin/Module/Aderant.Messaging.BusinessEvents.* ==> lib
+	Bin/Module/Aderant.Messaging.Http.* ==> lib
+	Bin/Module/Aderant.Query.Common.* ==> lib
+	Bin/Module/ExpertService.* ==> lib
+	Bin/Module/*.config ==> lib
+	Bin/Module/*.ini ==> lib
+	Bin/Module/log4net*.* ==> lib
+
+dependencies
+    Aderant.Build.Analyzer <= LOCKEDVERSION
+    ThirdParty.DevComponents <= LOCKEDVERSION
+    ThirdParty.ICSharpCode <= LOCKEDVERSION
+    ThirdParty.Infragistics <= LOCKEDVERSION
+    ThirdParty.IronPython.2.7 <= LOCKEDVERSION
+    ThirdParty.Irony <= LOCKEDVERSION
+    ThirdParty.log4net <= LOCKEDVERSION
+    ThirdParty.Microsoft.AspNet.5.2.3 <= LOCKEDVERSION
+    ThirdParty.Microsoft.EntityFramework <= LOCKEDVERSION
+    ThirdParty.Microsoft.OData <= LOCKEDVERSION
+    ThirdParty.Moq <= LOCKEDVERSION
+    ThirdParty.Newtonsoft.Json <= LOCKEDVERSION
+    ThirdParty.NHibernate <= LOCKEDVERSION
+    ThirdParty.NMock <= LOCKEDVERSION
+    ThirdParty.Reactive <= LOCKEDVERSION
+    ThirdParty.RhinoMocks <= LOCKEDVERSION
+    ThirdParty.SignalR.Client <= LOCKEDVERSION
+    ThirdParty.Xceed <= LOCKEDVERSION

@@ -73,6 +73,30 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
+        public void Adding_new_dependencies_to_template_with_tabs_preserves_document_structure() {
+            var dict = new Dictionary<Domain.PackageName, SemVerInfo>();
+            dict.Add(Domain.PackageName("Bar"), SemVer.Zero);
+
+            MemoryStream stream = null;
+
+            var dependencies = new Packager(null, new FakeLogger()).ReplicateDependenciesToTemplate(dict, () => {
+                if (stream != null) {
+                    return stream = new MemoryStream();
+                }
+                return stream = new MemoryStream(Encoding.Default.GetBytes(Resources.test_paket_template_with_mixed_whitespace));
+            });
+
+            Assert.AreEqual(19, dependencies.Count);
+
+            using (var reader = new StreamReader(stream)) {
+                stream.Position = 0;
+                var text = reader.ReadToEnd();
+
+                Assert.IsFalse(string.IsNullOrWhiteSpace(text));
+            }
+        }
+
+        [TestMethod]
         public void Adding_new_dependencies_to_template() {
             var dict = new Dictionary<Domain.PackageName, SemVerInfo>();
             dict.Add(Domain.PackageName("Foo"), SemVer.Zero);

@@ -136,6 +136,7 @@
     <None Include="Resources\test-paket-template-with-dependencies" />
     <None Include="Resources\test-paket-template-without-dependencies-UNIX" />
     <None Include="Resources\Test.nuspec" />
+    <None Include="Resources\test-paket-template-with-mixed-whitespace" />
     <None Include="test.dgml">
       <SubType>Designer</SubType>
     </None>
@@ -174,6 +175,7 @@
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\BuildLogs\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
