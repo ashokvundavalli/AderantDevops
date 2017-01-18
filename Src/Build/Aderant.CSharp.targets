@@ -211,10 +211,10 @@
     </ItemGroup>    
 
     <PropertyGroup>
-      <AssemblySearchPaths>
-        @(PackageDirectories);
-        ..\..\Dependencies\;
+      <AssemblySearchPaths>                        
         $(AssemblySearchPaths);
+        $(RootFolder)\Dependencies\;
+        @(PackageDirectories);
       </AssemblySearchPaths>
     </PropertyGroup>
     
