@@ -110,7 +110,7 @@
   </Choose>
 
   <Choose>
-    <When Condition=" '$(IncludeOTGDirectly)' == 'true' ">
+    <When Condition=" '$(IncludeOTGDirectly)' == 'true' And Exists('$(ModulesDirectory)Web.OTG\Src\Web.OTG\bin\Web.OTG.dll')">
       <ItemGroup>
         <Reference Include="Web.OTG">
           <HintPath>$(ModulesDirectory)Web.OTG\Src\Web.OTG\bin\Web.OTG.dll</HintPath>
@@ -120,7 +120,7 @@
     <Otherwise>
       <ItemGroup>
         <Reference Include="Web.OTG"
-                   Condition="'$(AssemblyName)' != 'Web.OTG'">
+                   Condition="'$(AssemblyName)' != 'Web.OTG' And Exists('..\..\Dependencies\Web.OTG.dll')">
           <HintPath>..\..\Dependencies\Web.OTG.dll</HintPath>
         </Reference>
       </ItemGroup>
