@@ -31,6 +31,16 @@ namespace Aderant.Build.Packaging {
         public void AddDependency(Domain.PackageName item) {
             var packageName = item.Item1;
 
+            var excludedDependencies = parser["excludeddependencies"];
+            if (excludedDependencies != null) {
+                if (excludedDependencies.Values != null) {
+                    if (excludedDependencies.Values.Any(value => value.IndexOf(packageName, StringComparison.OrdinalIgnoreCase) >= 0)) {
+                        // Dependency was explicity excluded so don't add it to the package dependency list
+                        return;
+                    }
+                }
+            }
+
             var @operator = GetOperatorForPackage(packageName);
 
             // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file

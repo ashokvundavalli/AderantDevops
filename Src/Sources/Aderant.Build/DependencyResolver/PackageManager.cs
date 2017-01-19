@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
@@ -94,7 +95,7 @@ namespace Aderant.Build.DependencyResolver {
                 }
                 
                 if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(Domain.PackageName(referencedModule.Name)))) {
-                    file = file.Add(Constants.MainDependencyGroup, Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
+                    file = file.Add(Domain.GroupName(BuildConstants.MainDependencyGroup), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                 }
             }
 
@@ -122,7 +123,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public void ShowOutdated() {
             // TODO: Break UI binding - return a list
-            dependencies.ShowOutdated(true, false);
+            dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(BuildConstants.MainDependencyGroup));
         }
 
         public void Dispose() {
@@ -133,7 +134,7 @@ namespace Aderant.Build.DependencyResolver {
             Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
             var file = dependenciesFile.GetDependenciesFile();
 
-            FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Constants.MainDependencyGroup);
+            FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Domain.GroupName(BuildConstants.MainDependencyGroup));
 
             return requirements.ToDictionary(pair => pair.Key.ToString(), NewRequirement);
         }

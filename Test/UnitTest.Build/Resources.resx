@@ -208,4 +208,7 @@ SRCSRV: end ------------------------------------------------</value>
   <data name="test_paket_template_with_mixed_whitespace" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>resources\test-paket-template-with-mixed-whitespace;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="test_paket_template_with_exclude_section" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\test-paket-template-with-exclude-section.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>

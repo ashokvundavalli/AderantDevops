@@ -1,0 +1,7 @@
+﻿type file
+id Aderant.Deployment.Core
+authors Aderant
+dependencies
+    Foo
+excludeddependencies
+    Bar

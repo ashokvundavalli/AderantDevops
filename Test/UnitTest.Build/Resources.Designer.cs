@@ -229,6 +229,21 @@ namespace UnitTest.Build {
         
         /// <summary>
         ///   Looks up a localized string similar to type file
+        ///id Aderant.Deployment.Core
+        ///authors Aderant
+        ///dependencies
+        ///    Foo
+        ///excludeddependencies
+        ///    Bar.
+        /// </summary>
+        internal static string test_paket_template_with_exclude_section {
+            get {
+                return ResourceManager.GetString("test_paket_template_with_exclude_section", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to type file
         ///id Aderant.Framework.Core
         ///authors Aderant
         ///description

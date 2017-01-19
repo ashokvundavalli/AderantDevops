@@ -127,7 +127,7 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo <= LOCKEDVERSION";
+    Foo ~> LOCKEDVERSION";
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
@@ -171,9 +171,9 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo <= LOCKEDVERSION
-    Bar <= LOCKEDVERSION
-    Baz <= LOCKEDVERSION";
+    Foo ~> LOCKEDVERSION
+    Bar ~> LOCKEDVERSION
+    Baz ~> LOCKEDVERSION";
 
             using (var reader = new StreamReader(stream)) {
                 stream.Position = 0;
@@ -202,9 +202,9 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo <= LOCKEDVERSION
-    Bar <= LOCKEDVERSION
-    Baz <= LOCKEDVERSION";
+    Foo ~> LOCKEDVERSION
+    Bar ~> LOCKEDVERSION
+    Baz ~> LOCKEDVERSION";
 
             var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies_UNIX);
             packageTemplateFile.AddDependency(Domain.PackageName("Foo"));
@@ -253,7 +253,7 @@ files
     Bin/Module/InstallerManifests ==> lib/InstallerManifests
     !Bin/Module/*.exe.config
 dependencies
-    Foo <= LOCKEDVERSION";
+    Foo ~> LOCKEDVERSION";
 
             var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_without_dependencies);
             packageTemplateFile.AddDependency(Domain.PackageName("Foo"));
@@ -317,6 +317,35 @@ dependencies";
                 actual = reader.ReadToEnd();
 
                 Assert.AreEqual(expected.TrimEnd(), actual.TrimEnd());
+            }
+        }
+
+        [TestMethod]
+        public void Excluded_dependencies_are_not_added() {
+            var packageTemplateFile = new PackageTemplateFile(Resources.test_paket_template_with_exclude_section);
+            packageTemplateFile.AddDependency(Domain.PackageName("Bar"));
+
+            string actual;
+
+            using (var stream = new MemoryStream()) {
+                using (var reader = new StreamReader(stream)) {
+                    packageTemplateFile.Save(stream);
+
+                    stream.Position = 0;
+                    actual = reader.ReadToEnd();
+                }
+            }
+
+            packageTemplateFile = new PackageTemplateFile(actual);
+            
+            var stream2 = new MemoryStream();
+            using (var reader = new StreamReader(stream2)) {
+                packageTemplateFile.Save(stream2);
+
+                stream2.Position = 0;
+                actual = reader.ReadToEnd();
+
+                Assert.AreEqual(Resources.test_paket_template_with_exclude_section.Trim(), actual.Trim());
             }
         }
     }

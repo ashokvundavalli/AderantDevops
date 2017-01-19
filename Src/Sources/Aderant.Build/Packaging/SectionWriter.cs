@@ -11,6 +11,8 @@ namespace Aderant.Build.Packaging {
 
         public void Write(IEnumerable<Section> sections) {
             foreach (var section in sections) {
+                Indent = 0;
+
                 // Bug in the base class here, the base class has an private field tabsPending which controls indentation. 
                 // Unfortunately it doesn't get set to true until at least one call to WriteLine is made first which is unfortunate as we
                 // actually want to write the section value with no indentation which would mean calling WriteLineNoTabs().
@@ -18,6 +20,8 @@ namespace Aderant.Build.Packaging {
 
                 if (section.Values != null) {
                     foreach (var entry in section.Values) {
+                        Indent = 0;
+
                         // If the line is already indented, preserve the original indentation 
                         if (entry.StartsWith(" ")) {
                             WriteLineNoTabs(entry.TrimEnd());

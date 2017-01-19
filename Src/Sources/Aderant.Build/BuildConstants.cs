@@ -1,3 +1,5 @@
+using Paket;
+
 namespace Aderant.Build {
     public static class BuildConstants {
         /// <summary>
@@ -19,5 +21,7 @@ namespace Aderant.Build {
         public static string NugetServerClearCacheUrl = PackageServerUrl + "/ClearCache()";
 
         public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
+
+        internal static string MainDependencyGroup = Constants.MainDependencyGroup.ToString();
     }
 }

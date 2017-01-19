@@ -51,7 +51,7 @@ namespace Aderant.Build.Packaging {
 
                 var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
 
-                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Constants.MainDependencyGroup));
+                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(BuildConstants.MainDependencyGroup)));
                 var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
                 
                 ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
@@ -73,7 +73,8 @@ namespace Aderant.Build.Packaging {
                                     minimumFromLockFile: true, 
                                     symbols: false,
                                     includeReferencedProjects: true, 
-                                    projectUrl: FSharpOption<string>.None);
+                                    projectUrl: FSharpOption<string>.None, 
+                                    pinProjectReferences: true);
 
                     packedTemplates ++;
 
