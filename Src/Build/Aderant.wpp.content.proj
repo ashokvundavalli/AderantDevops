@@ -334,9 +334,10 @@
       <ContentIsNestedWeb>$([System.Text.RegularExpressions.Regex]::IsMatch('%(DependenciesRelativePath)', '%(RegexNestedWebPattern)'))</ContentIsNestedWeb>
 
       <!-- Test if the content is from any known modules from the dependency manifest -->
-      <!--<IsReferenced>$(WebModuleText.Contains(%(Module)))</IsReferenced>-->
-      <!--Need a solution for git dependants-->
-      <IsReferenced>true</IsReferenced>
+      <IsReferenced>$(WebModuleText.Contains(%(Module)))</IsReferenced>
+      
+      <!--Can be removed once Mobile.* modules are in git-->
+      <IsReferenced Condition="'%(IsReferenced)' == 'false'">$(MSBuildProjectName.Contains('Mobile.'))</IsReferenced>
     </AllDependencyContent>
 
     <AllDirectContent Include="@(AllDependencyContent->WithMetadataValue('ContentIsNonTransitive', 'True'))" />
