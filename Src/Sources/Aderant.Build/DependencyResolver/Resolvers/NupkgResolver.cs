@@ -107,7 +107,6 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                         //if web zip exists, extract it.
                         logger.Info("Extracting web package archive {0}", webModuleName);
                         var newDir = Path.Combine(dir, webModuleName);
-                        requirement = DependencyRequirement.Create(webModuleName, requirement.VersionRequirement);
                         var fs = new WebArchiveFileSystem(fileSystem.GetFullPath(dir));
                         fs.ExtractArchive(fileSystem.GetFullPath(newDir + ".zip"), fileSystem.GetFullPath(dir));
                     }
