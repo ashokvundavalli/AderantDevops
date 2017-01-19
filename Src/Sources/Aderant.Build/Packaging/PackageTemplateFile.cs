@@ -43,19 +43,25 @@ namespace Aderant.Build.Packaging {
 
             var @operator = GetOperatorForPackage(packageName);
 
-            // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file
-            string entry = string.Format("{0} {1} LOCKEDVERSION", item.Item1, @operator);
-
             var list = InitializeDependenciesList();
 
             List<int> packageNameIndexes = new List<int>();
 
             int index;
             while ((index = FindEntryIndex(item, list)) != -1) {
+                string existingPackageEntry = list[index];
+
+                if (existingPackageEntry.IndexOf("CURRENTVERSION", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    return;
+                }
+
                 packageNameIndexes.Add(index);
                 list.RemoveAt(index);
             }
-            
+
+            // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file
+            string entry = string.Format("{0} {1} LOCKEDVERSION", item.Item1, @operator);
+
             if (packageNameIndexes.Any()) {
                 list.Insert(packageNameIndexes.First(), entry);
             } else {
