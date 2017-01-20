@@ -26,8 +26,14 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             fileSystem = new PhysicalFileSystem(Folder);
 
+            if (!fileSystem.DirectoryExists(Folder)) {
+                return !Log.HasLoggedErrors;
+            }
+
             // Ignore wired folder names like $tf, .git, etc. which has caused problems.
-            if (!fileSystem.DirectoryExists(Folder) || Folder.StartsWith("$") || Folder.StartsWith(".")) {
+            var packageName = Path.GetFileName(Folder)??"";
+            if (packageName.StartsWith("$") || packageName.StartsWith(".")) {
+                Log.LogMessage($"Ignoring strange folder name {packageName}.");
                 return !Log.HasLoggedErrors;
             }
 
