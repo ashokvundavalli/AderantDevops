@@ -504,9 +504,9 @@
           Condition="'$(EnableLESSCompile)' == 'True'">
     <ItemGroup>
       
-      <!--Exclude any .less files beginning with an '_' from being compiled as a convention-->
-      <LessFiles Include="$(SolutionDir)\Src\**\Content\*.less"
-                 Exclude="$(SolutionDir)\Src\**\Content\_*.less"/>
+      <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
+      <LessFiles Include="$(ProjectDir)\Content\*.less"
+                 Exclude="$(ProjectDir)\Content\_*.less" />
     </ItemGroup>
 
     <CompileLess
