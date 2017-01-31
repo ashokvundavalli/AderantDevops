@@ -91,7 +91,7 @@ namespace Aderant.Build.DependencyResolver {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
                 string version = string.Empty;
                 if (referencedModule.VersionRequirement != null) {
-                    version = referencedModule.VersionRequirement.ConstraintExpression ?? string.Empty;
+                    version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
                 }
                 
                 if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(Domain.PackageName(referencedModule.Name)))) {
