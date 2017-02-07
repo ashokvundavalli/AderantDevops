@@ -1059,7 +1059,7 @@ doc.Save(File);
     </ItemGroup>
 
     <ItemGroup>
-      <SourceFilesToCopyForTransform
+      <SourceFilesToCopyForTemplateTransform
           Include="$(SolutionDirectoryPath)Src\**\*"
           Exclude="$(SolutionDirectoryPath)*ABT\**;
                     $(SolutionDirectoryPath)Build\TestResults\**\*
@@ -1088,11 +1088,11 @@ doc.Save(File);
                     $(SolutionDirectoryPath)**\SharedBin\**;
 					          $(SolutionDirectoryPath)Src\**\Web.*\**;">
         <DestinationSubDirectory>Src\</DestinationSubDirectory>
-      </SourceFilesToCopyForTransform>
+      </SourceFilesToCopyForTemplateTransform>
 
-      <SourceFilesToCopyForTransform Include="%(TemplateSolutionFiles.FullPath)">
+      <SourceFilesToCopyForTemplateTransform Include="%(TemplateSolutionFiles.FullPath)">
         <DestinationSubDirectory></DestinationSubDirectory>
-      </SourceFilesToCopyForTransform>
+      </SourceFilesToCopyForTemplateTransform>
     </ItemGroup>
 
     <PropertyGroup>
@@ -1113,15 +1113,15 @@ doc.Save(File);
       Directories="$(TempTemplateSolutionDirectory)"/>
 
     <Copy
-        SourceFiles="@(SourceFilesToCopyForTransform)"
-        DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+        SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
+        DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
         SkipUnchangedFiles="true">
     </Copy>
 
     <!-- Read solution file so we can get the project source-->
     <ReadLinesFromFile File="$(TempTemplateSolutionDirectory)%(TemplateSolutionFiles.Filename)%(TemplateSolutionFiles.Extension)">
       <Output TaskParameter="Lines"
-              ItemName="LinesFromSlnFile"/>
+              ItemName="LinesFromTemplateSlnFile"/>
     </ReadLinesFromFile>
 
 
@@ -1129,23 +1129,23 @@ doc.Save(File);
           This will give lines in this format:
           Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflow.FileOpening.Template", "Src\Workflow.FileOpening.Template\Workflow.FileOpening.Template.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
     -->
-    <RegexMatch Input="@(LinesFromSlnFile)"
+    <RegexMatch Input="@(LinesFromTemplateSlnFile)"
                 Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
-      <Output ItemName="ProjectLines"
+      <Output ItemName="TemplateProjectLines"
               TaskParameter="Output"/> 
     </RegexMatch>
-    <Message Text="&#xA;Project lines in template solution:&#xA;@(ProjectLines, '&#xA;')"/>
+    <Message Text="&#xA;Project lines in template solution:&#xA;@(TemplateProjectLines, '&#xA;')"/>
 
 
     <!--  Remove text before template project name
           This will leave us with:
           Workflow.FileOpening.Template", "Src\Workflow.FileOpening.Template\Workflow.FileOpening.Template.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
     -->
-    <RegexReplace Input="@(ProjectLines)"
+    <RegexReplace Input="@(TemplateProjectLines)"
                   Expression="Project\(&quot;.+&quot;\) = &quot;"
                   Replacement=""
                   Count="1">
-      <Output ItemName="SlnProjects"
+      <Output ItemName="TemplateSlnProjects"
               TaskParameter="Output" />
     </RegexReplace>
 
@@ -1154,7 +1154,7 @@ doc.Save(File);
           This will leave us with the project name:
           Workflow.FileOpening.Template
     -->
-    <RegexReplace Input="@(SlnProjects)"
+    <RegexReplace Input="@(TemplateSlnProjects)"
                   Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
                   Replacement=""
                   Count="1">
@@ -1166,9 +1166,9 @@ doc.Save(File);
 
     <!-- Create property that lists the project folders as an MSBuild include string-->
     <PropertyGroup>
-      <ProjectFoldersIncludeString>$(TempTemplateModuleSourceDirectory)@(TemplateProjects,'\**\*;$(TempTemplateModuleSourceDirectory)')\**\*;</ProjectFoldersIncludeString>
+      <TemplateProjectFoldersIncludeString>$(TempTemplateModuleSourceDirectory)@(TemplateProjects,'\**\*;$(TempTemplateModuleSourceDirectory)')\**\*;</TemplateProjectFoldersIncludeString>
     </PropertyGroup>
-    <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
+    <Message Text="&#xA;TemplateProjectFoldersIncludeString = $(TemplateProjectFoldersIncludeString)&#xA;"/>
 
     <!-- Update the source with the specified transformations file -->
     <SourceTransformationTask
@@ -1185,7 +1185,7 @@ doc.Save(File);
         Include="$(TempTemplateSolutionDirectory)**\*.Template.sln;"/>
 
       <TemplateZipSourceFiles
-        Include="$(ProjectFoldersIncludeString)"
+        Include="$(TemplateProjectFoldersIncludeString)"
         Exclude="$(TempTemplateModuleSourceDirectory)**\*.sln;
                   $(TempTemplateModuleSourceDirectory)**\*.vssscc;
                   $(TempTemplateModuleSourceDirectory)**\*.vspscc;
