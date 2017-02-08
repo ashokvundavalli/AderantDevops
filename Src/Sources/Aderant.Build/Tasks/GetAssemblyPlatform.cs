@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -31,53 +32,63 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (Assemblies != null) {
+                Log.LogMessage(MessageImportance.High, "Determining assembly platform types...");
+
                 Assembly thisAssembly = GetType().Assembly;
 
                 AppDomain inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(thisAssembly.Location), null, false);
 
-                AssemblyInspector inspector = (AssemblyInspector) inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof (AssemblyInspector).FullName);
+                AssemblyInspector inspector = (AssemblyInspector)inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof(AssemblyInspector).FullName);
 
-                List<ITaskItem> analyzedAssemblies = new List<ITaskItem>();
+                Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
                 foreach (ITaskItem item in Assemblies) {
-                    string fileName = item.GetMetadata("FileName");
-                  
-                    // We have already seen this assembly based on it's file name. Loading it again will probably cause a FileLoadException as
-                    // the CLR will not allow the loading of identical assemblies from two different locations in to the same domain.
-                    // This issue can arise where a project has copy local turned on and we end up with the build process finding the same output assembly under multiple
-                    // locations within the module.
-                    ITaskItem loadedAssembly = analyzedAssemblies.FirstOrDefault(file => string.Equals(file.GetMetadata("FileName"), fileName, StringComparison.OrdinalIgnoreCase));
-                    if (loadedAssembly != null) {
-                        if (!string.Equals(loadedAssembly.GetMetadata("Extension"), ".exe", StringComparison.OrdinalIgnoreCase)) {
-                            Log.LogWarning(
-                                string.Format(
-                                    CultureInfo.InvariantCulture,
-                                    "Assembly: {0} has already been analyzed from another location. The assembly information will be used from {1}.",
-                                    item.ItemSpec,
-                                    loadedAssembly.ItemSpec));
-                        }
-
-                        // Copy the platform from the already processed input
-                        item.SetMetadata("Platform", loadedAssembly.GetMetadata("Platform"));
-                        continue;
-                    }
+                    string fullPath = item.GetMetadata("FullPath");
 
                     if ((item.ItemSpec.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || item.ItemSpec.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) && File.Exists(item.ItemSpec)) {
-                        PortableExecutableKinds peKind = inspector.GetAssemblyKind(item.ItemSpec);
+                        string hash;
+                        using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
+                            byte[] fileBytes = File.ReadAllBytes(fullPath);
+                            hash = BitConverter.ToString(cryptoProvider.ComputeHash(fileBytes));
 
-                        if (peKind.HasFlag(PortableExecutableKinds.Required32Bit)) {
-                            MustRun32Bit = true;
+                            analyzedAssemblies[item] = hash;
                         }
+                    
+                        if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
+                            PortableExecutableKinds peKind = inspector.GetAssemblyKind(item.ItemSpec);
 
-                        item.SetMetadata("Platform", peKind.ToString());
+                            if (peKind.HasFlag(PortableExecutableKinds.Required32Bit)) {
+                                MustRun32Bit = true;
+                            }
 
-                        analyzedAssemblies.Add(item);
+                            item.SetMetadata("Platform", peKind.ToString());
+
+                            analyzedAssemblies.Add(item, hash);
+                        }
                     }
                 }
 
                 inspector = null;
                 AppDomain.Unload(inspectionDomain);
                 GC.Collect();
+            }
+
+            return true;
+        }
+
+        private bool ShouldAnalyze(Dictionary<ITaskItem, string> analyzedAssemblies, string hash, ITaskItem item) {
+            // We have already seen this assembly based on it's file name. Loading it again will probably cause a FileLoadException as
+            // the CLR will not allow the loading of identical assemblies from two different locations in to the same domain.
+            // This issue can arise where a project has copy local turned on and we end up with the build process finding the same output assembly under multiple
+            // locations within the module, for example web projects which copy files from the packages\dependencies folder to project\bin
+            foreach (var analyzedAssembly in analyzedAssemblies) {
+                if (string.Equals(analyzedAssembly.Value, hash)) {
+                    var assembly = analyzedAssembly.Key;
+
+                    // Copy the platform from the already processed input
+                    item.SetMetadata("Platform", assembly.GetMetadata("Platform"));
+                    return false;
+                }
             }
 
             return true;
