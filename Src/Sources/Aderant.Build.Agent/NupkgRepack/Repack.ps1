@@ -4,24 +4,6 @@ param (
     [string]$searchPattern = "**\*.nupkg"
 )
 
-$agentWorkerModulesPath = "$($env:AGENT_HOMEDIRECTORY)\agent\worker\Modules"
-
-$modules = @("$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Common\Microsoft.TeamFoundation.DistributedTask.Task.Common.dll",
-                "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.Internal\Microsoft.TeamFoundation.DistributedTask.Task.Internal.dll",
-                "$agentWorkerModulesPath\Microsoft.TeamFoundation.DistributedTask.Task.TestResults\Microsoft.TeamFoundation.DistributedTask.Task.TestResults.dll")
-
-$files = gci -Path "$Env:AGENT_HOMEDIRECTORY\agent\worker\" -Filter "*.dll"
-foreach ($file in $files) {
-    try {
-        [System.Reflection.Assembly]::LoadFrom($file.FullName)| Out-Null
-    } catch {
-    }
-}
-
-foreach ($module in $modules) {
-    Import-Module $module
-}
-
 Import-Module $PSScriptRoot\ps_modules\VstsTaskSdk
 
 Add-Type -AssemblyName "System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
@@ -49,19 +31,19 @@ if ($searchPattern.Contains("*") -or $searchPattern.Contains("?") -or $searchPat
     if ($env:BUILD_SOURCESDIRECTORY)
     {
         Write-Verbose "Using build.sourcesdirectory as root folder"
-        Write-Host "Find-Files -SearchPattern $searchPattern -RootFolder $env:BUILD_SOURCESDIRECTORY"
-        $foundFiles = Find-Files -SearchPattern $searchPattern -RootFolder $env:BUILD_SOURCESDIRECTORY
+        Write-Host "Find-VstsFiles -LegacyPattern $searchPattern -LiteralDirectory $env:BUILD_SOURCESDIRECTORY"
+        $foundFiles = Find-VstsFiles -LegacyPattern $searchPattern -LiteralDirectory $env:BUILD_SOURCESDIRECTORY
     }
     elseif ($env:SYSTEM_ARTIFACTSDIRECTORY)
     {
         Write-Verbose "Using system.artifactsdirectory as root folder"
-        Write-Host "Find-Files -SearchPattern $searchPattern -RootFolder $env:SYSTEM_ARTIFACTSDIRECTORY"
-        $foundFiles = Find-Files -SearchPattern $searchPattern -RootFolder $env:SYSTEM_ARTIFACTSDIRECTORY
+        Write-Host "Find-VstsFiles -LegacyPattern $searchPattern -LiteralDirectory $env:SYSTEM_ARTIFACTSDIRECTORY"
+        $foundFiles = Find-VstsFiles -LegacyPattern $searchPattern -LiteralDirectory $env:SYSTEM_ARTIFACTSDIRECTORY
     }
     else
     {
-        Write-Host "Find-Files -SearchPattern $searchPattern"
-        $foundFiles = Find-Files -SearchPattern $searchPattern
+        Write-Host "Find-VstsFiles -LegacyPattern $searchPattern"
+        $foundFiles = Find-VstsFiles -LegacyPattern $searchPattern
     }
 }
 else
