@@ -50,11 +50,11 @@ namespace Aderant.Build.Tasks {
                         using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
                             byte[] fileBytes = File.ReadAllBytes(fullPath);
                             hash = BitConverter.ToString(cryptoProvider.ComputeHash(fileBytes));
-
-                            analyzedAssemblies[item] = hash;
                         }
                     
                         if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
+                            analyzedAssemblies[item] = hash;
+
                             PortableExecutableKinds peKind = inspector.GetAssemblyKind(item.ItemSpec);
 
                             if (peKind.HasFlag(PortableExecutableKinds.Required32Bit)) {
@@ -62,8 +62,6 @@ namespace Aderant.Build.Tasks {
                             }
 
                             item.SetMetadata("Platform", peKind.ToString());
-
-                            analyzedAssemblies.Add(item, hash);
                         }
                     }
                 }
