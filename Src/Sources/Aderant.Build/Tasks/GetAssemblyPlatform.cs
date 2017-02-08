@@ -32,7 +32,7 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (Assemblies != null) {
-                Log.LogMessage(MessageImportance.High, "Determining assembly platform types...");
+                Log.LogMessage(MessageImportance.High, "Building assembly platform architecture list...");
 
                 Assembly thisAssembly = GetType().Assembly;
 
