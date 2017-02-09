@@ -6,7 +6,8 @@ namespace UnitTest.Build {
     public class IndendedFileParserTests {
 
         [TestMethod]
-        public void Foo() {
+        public void New_line_after_section_start_is_ignored() {
+            // This test ensures we ignore the newline after the "dependencies" keyword and don't create a new empty section 
             string input = @"dependencies
 
     Aderant.Build.Analyzer ~> LOCKEDVERSION
