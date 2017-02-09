@@ -127,7 +127,6 @@ namespace Aderant.Build {
 
         private void ReceiveStandardErrorOrOutputData(DataReceivedEventArgs e, bool isError) {
             if (e.Data != null) {
-
                 if (!toolFailed) {
                     // FxCop is quite unstable. Sometimes it fails with CA0001 which means internal error.
                     // We can retry on these errors.
@@ -143,10 +142,12 @@ namespace Aderant.Build {
                     }
                 }
 
-                Console.WriteLine(e.Data);
+                // Cleanup the message since '[]' is used to send commands.
+                string cleanMessage = e.Data.Replace('[', '{').Replace(']', '{');
+                Console.WriteLine(cleanMessage);
 
                 if (isError) {
-                    Console.Error.WriteLine(e.Data);
+                    Console.Error.WriteLine(cleanMessage);
                 }
             }
         }
