@@ -42,9 +42,10 @@ namespace Aderant.Build.Packaging.Parsing {
                     Section section = currentSection;
                     section.AddEntry(line);
                 } else {
-                    State = ParserState.Initial;
-
-                    sections.Add(currentSection = new Section(line));
+                    if (line.Length > 0) {
+                        State = ParserState.Initial;
+                        sections.Add(currentSection = new Section(line));
+                    }
                 }
             }
 
