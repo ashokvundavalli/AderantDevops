@@ -18,8 +18,11 @@ gulp.task('setModule', function (moduleName) {
 			dependentModules.push("Web.Foundation", "Web.Presentation", "Web.SMB");
 			break;
         case "web.time":
+			dependentModules.push("Web.Foundation", "Web.Presentation", "Web.OTG");
         case "web.workflow":
+			dependentModules.push("Web.Foundation", "Web.Presentation", "Web.OTG");
         case "web.expenses":
+			dependentModules.push("Web.Foundation", "Web.Presentation", "Web.OTG");
         case "web.matterworks":
 		case "web.smb": 
 			dependentModules.push("Web.Foundation", "Web.Presentation");
@@ -57,6 +60,18 @@ gulp.task('Web.Presentation', function (moduleName, modulesPath, watch) {
 	copyModule.setModulesPath(modulesPath);
     console.log("Copying dependencies from Web.Presentation -> " + moduleName);
     copyModule.copy('Web.Presentation');
+});
+
+gulp.task('WatchWeb.OTG', ['setModule', 'Web.OTG'], function (modulesPath) {
+	copyModule.setModulesPath(modulesPath);
+    copyModule.watchAndCopyChanges('Web.OTG');
+});
+
+gulp.task('Web.OTG', function (moduleName, modulesPath, watch) {
+    copyModule.setCurrentModule(moduleName);
+	copyModule.setModulesPath(modulesPath);
+    console.log("Copying dependencies from Web.OTG -> " + moduleName);
+    copyModule.copy('Web.OTG');
 });
 
 gulp.task('WatchWeb.SMB', ['setModule', 'Web.SMB'], function (modulesPath) {

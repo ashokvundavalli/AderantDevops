@@ -18,7 +18,7 @@ var copyModule = (function (gulp) {
     // only the first filespec is watched, so make that the master (non generated) one
     folders['Scripts'] = { folderType: 'script', filespec: ['.js', '.d.ts', '.html'] };
     folders['ViewModels'] = { folderType: 'script', filespec: ['.js', '.d.ts'] };
-    folders['Content'] = { folderType: 'script', filespec: ['.less', '.css'] };
+    folders['Content'] = { folderType: 'script', filespec: ['.less', '.css', '*.eot', '*.svg', '*.ttf', '*.woff'] };
     folders['Views/Shared'] = { folderType: 'script', filespec: ['.cshtml'] };
     folders['Authentication'] = { folderType: 'script', filespec: ['.aspx'] };
     folders['ManualLogon'] = { folderType: 'script', filespec: ['.aspx'] };
