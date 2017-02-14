@@ -42,9 +42,11 @@ namespace Aderant.Build.Tasks {
 
                 Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
-                foreach (ITaskItem item in Assemblies) {
-                    string fullPath = item.GetMetadata("FullPath");
+                var filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin)"));
 
+                foreach (ITaskItem item in filteredAssemblies) {
+                    string fullPath = item.GetMetadata("FullPath");
+                    
                     if ((item.ItemSpec.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || item.ItemSpec.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) && File.Exists(item.ItemSpec)) {
                         string hash;
                         using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
