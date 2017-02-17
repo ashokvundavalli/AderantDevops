@@ -31,7 +31,7 @@ begin {
 		if ($xml.DependencyManifest.DefaultSource) {
 			$dropPath = $xml.DependencyManifest.DefaultSource
 
-            if ($Env:IsDesktopBuild -eq "true") {
+            if ([System.Environment]::UserInteractive) {
                 if ($dropPath.IndexOf($BranchServerDirectory, [System.StringComparison]::OrdinalIgnoreCase) -eq -1) {
                     Write-Warning "The local branch context does not match the 'DefaultSource' attribute of the dependency manifest."
                 }
