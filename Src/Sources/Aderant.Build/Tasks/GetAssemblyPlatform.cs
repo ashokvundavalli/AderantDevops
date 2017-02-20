@@ -42,8 +42,7 @@ namespace Aderant.Build.Tasks {
 
                 Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
-                var filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin)"));
-
+                var filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
                 foreach (ITaskItem item in filteredAssemblies) {
                     string fullPath = item.GetMetadata("FullPath");
                     
