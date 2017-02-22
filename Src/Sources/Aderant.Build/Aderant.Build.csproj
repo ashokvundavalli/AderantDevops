@@ -166,6 +166,7 @@
     <Compile Include="DependencyResolver\RestoreAction.cs" />
     <Compile Include="Packaging\NuGet\Nuspec.cs" />
     <Compile Include="Packaging\NuGet\NuspecValue.cs" />
+    <Compile Include="Tasks\ReplaceProjectReferences.cs" />
     <Compile Include="Tasks\CompileLess.cs" />
     <Compile Include="Tasks\SeedPackagePacking.cs" />
     <Compile Include="Tasks\OrmMappingValidator.cs" />
