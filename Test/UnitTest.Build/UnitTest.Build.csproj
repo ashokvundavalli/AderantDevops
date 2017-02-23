@@ -47,7 +47,9 @@
       <Private>False</Private>
       <Aliases>Buildv35</Aliases>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.Services.Client, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.VisualStudio.Services.Client.dll</HintPath>
@@ -118,6 +120,7 @@
     <Compile Include="SourceIndexTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />
     <Compile Include="Tasks\ProjectConformityCheckTests.cs" />
+    <Compile Include="Tasks\ReplaceProjectReferencesTests.cs" />
     <Compile Include="TestModuleProviderBase.cs" />
     <Compile Include="TfsBuildInformationTest.cs" />
     <Compile Include="UpdateSplashScreenImageTests.cs" />
@@ -146,6 +149,7 @@
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\ReplaceReferencesProject.csproj" />
     <Content Include="Resources\test-paket-template-with-exclude-section.txt" />
     <None Include="Resources\BuildLogs\buildlog-1.json" />
     <None Include="Resources\BuildLogs\buildlog-2.json" />

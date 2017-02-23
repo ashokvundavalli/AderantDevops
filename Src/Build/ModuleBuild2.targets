@@ -734,12 +734,12 @@ doc.Save(File);
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
-    <!-- Update the source with the specified transformations file -->
-    <SourceTransformationTask
-      Condition="($(CustomSolutionTransformsFile) != '')"
-      SourcePath="$(TempSolutionDirectory)"
-      TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(CustomSolutionTransformsFile)" />
-
+      <!-- Update the source with the specified transformations file -->
+      <SourceTransformationTask
+        Condition="($(CustomSolutionTransformsFile) != '')"
+        SourcePath="$(TempSolutionDirectory)"
+        TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(CustomSolutionTransformsFile)" />
+      
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <ZipSourceFiles
@@ -1167,14 +1167,10 @@ doc.Save(File);
     <!-- Create property that lists the project folders as an MSBuild include string-->
     <PropertyGroup>
       <TemplateProjectFoldersIncludeString>$(TempTemplateModuleSourceDirectory)@(TemplateProjects,'\**\*;$(TempTemplateModuleSourceDirectory)')\**\*;</TemplateProjectFoldersIncludeString>
+      <TemplateProjectIncludeString>$(TempTemplateModuleSourceDirectory)@(TemplateProjects,'\**\*.csproj;$(TempTemplateModuleSourceDirectory)')\**\*.csproj;</TemplateProjectIncludeString>
     </PropertyGroup>
     <Message Text="&#xA;TemplateProjectFoldersIncludeString = $(TemplateProjectFoldersIncludeString)&#xA;"/>
-
-    <!-- Update the source with the specified transformations file -->
-    <SourceTransformationTask
-      Condition="($(TemplateSolutionTransformsFile) != '')"
-      SourcePath="$(TempTemplateSolutionDirectory)"
-      TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(TemplateSolutionTransformsFile)" />
+    <Message Text="&#xA;TemplateProjectIncludeString (to replace ProjectReferences) = $(TemplateProjectIncludeString)&#xA;"/>
 
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
@@ -1205,7 +1201,13 @@ doc.Save(File);
                   $(TempTemplateModuleSourceDirectory)**\*resharper.user;
                   $(TempTemplateModuleSourceDirectory)**\*.DotSettings;
                   $(ModuleSourceDirectory)**\*.csproj.user;" />
+
+      <TemplateZipProjectFiles
+        Include="$(TemplateProjectIncludeString)"/>
     </ItemGroup>
+
+    <ReplaceProjectReferences
+      ProjectFileNames="@(TemplateZipProjectFiles)"/>
 
     <MakeDir
       Directories="$(ZipFileDirectory)"/>

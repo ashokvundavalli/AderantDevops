@@ -154,11 +154,11 @@ namespace UnitTest.Build {
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;instanceMetadataConfigurationSection environment=&quot;Local&quot;&gt;
-        ///  &lt;repository name=&quot;_803x&quot; server=&quot;WSAKL001092&quot; userid=&quot;cmsdbo&quot; password=&quot;eozBzG3osa/FNS5EzgQb3Q==&quot; /&gt;
+        ///  &lt;repository name=&quot;_803x&quot; server=&quot;WSAKL001092&quot; /&gt;
         ///  &lt;expertShare uri=&quot;C:\ExpertShare&quot; /&gt;
         ///  &lt;queryService uri=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/FrameworkServices/Query/QueryService.svc&quot; /&gt;
         ///  &lt;notificationService uri=&quot;http://WSAKL001092.ap.aderant.com/Expert_Local/FrameworkServices/Notification/Notifications&quot; /&gt;
-        ///&lt;/instanceMetadataConfigurati [rest of string was truncated]&quot;;.
+        ///&lt;/instanceMetadataConfigurationSection&gt;.
         /// </summary>
         internal static string instance {
             get {
@@ -180,6 +180,25 @@ namespace UnitTest.Build {
         internal static string ProjectFileText1 {
             get {
                 return ResourceManager.GetString("ProjectFileText1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///  &lt;ItemGroup&gt;
+        ///    &lt;Reference Include=&quot;Aderant.FooBar&quot;&gt;
+        ///      &lt;HintPath&gt;..\..\Dependencies\Aderant.FooBar.dll&lt;/HintPath&gt;
+        ///      &lt;Private&gt;False&lt;/Private&gt;
+        ///    &lt;/Reference&gt;
+        ///    &lt;Reference Include=&quot;System.Data.DataSetExtensions&quot; /&gt;
+        ///    &lt;Reference Include=&quot;System.Web.DynamicData&quot; /&gt;
+        ///    &lt;Reference Include=&quot;System.Web.Entity&quot; /&gt;
+        ///    &lt;Reference Include=&quot;Sys [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ReplaceReferencesProject {
+            get {
+                return ResourceManager.GetString("ReplaceReferencesProject", resourceCulture);
             }
         }
         
