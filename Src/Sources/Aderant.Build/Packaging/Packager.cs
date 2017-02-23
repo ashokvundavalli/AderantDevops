@@ -59,27 +59,28 @@ namespace Aderant.Build.Packaging {
                 try {
                     logger.Info("Processing " + file);
 
-                    PackageProcess.Pack(workingDir: fs.Root, 
-                                    dependenciesFile: dependenciesFile, 
-                                    packageOutputPath: spec.OutputPath, 
+                    PackageProcess.Pack(workingDir: fs.Root,
+                                    dependenciesFile: dependenciesFile,
+                                    packageOutputPath: spec.OutputPath,
                                     buildConfig: FSharpOption<string>.Some("Release"),
                                     buildPlatform: FSharpOption<string>.Some("AnyCPU"),
-                                    version: FSharpOption<string>.Some(version), 
-                                    specificVersions: new List<Tuple<string, string>>(), 
-                                    releaseNotes: FSharpOption<string>.None, 
-                                    templateFile: FSharpOption<string>.Some(fs.GetFullPath(file)), 
-                                    excludedTemplates: GenerateExcludedTemplates(), 
-                                    lockDependencies: true, 
-                                    minimumFromLockFile: true, 
+                                    version: FSharpOption<string>.Some(version),
+                                    specificVersions: new List<Tuple<string, string>>(),
+                                    releaseNotes: FSharpOption<string>.None,
+                                    templateFile: FSharpOption<string>.Some(fs.GetFullPath(file)),
+                                    excludedTemplates: GenerateExcludedTemplates(),
+                                    lockDependencies: true,
+                                    minimumFromLockFile: true,
                                     symbols: false,
-                                    includeReferencedProjects: true, 
-                                    projectUrl: FSharpOption<string>.None, 
+                                    includeReferencedProjects: true,
+                                    projectUrl: FSharpOption<string>.None,
                                     pinProjectReferences: true);
 
-                    packedTemplates ++;
+                    packedTemplates++;
 
                 } catch (Exception ex) {
-                    logger.Error(ex.Message);
+                    logger.LogErrorFromException(ex, true, true);
+                    throw;
                 }
             }
 

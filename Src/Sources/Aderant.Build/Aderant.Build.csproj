@@ -122,6 +122,7 @@
     <Compile Include="DependencyResolver\Resolver.cs" />
     <Compile Include="DependencyResolver\ResolverRequest.cs" />
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
+    <Compile Include="Logging\LoggerExtensions.cs" />
     <Compile Include="Packaging\Parsing\IndendedFileParser.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
