@@ -353,9 +353,7 @@ task Init {
             param($sender, $e)
             if ($e.Name -like "*resources*") {
                 return $null
-            }
-
-            
+            }            
 
             Write-Host "Resolving $($e.Name)"
             
