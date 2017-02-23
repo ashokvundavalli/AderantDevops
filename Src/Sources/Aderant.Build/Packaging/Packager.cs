@@ -119,6 +119,9 @@ namespace Aderant.Build.Packaging {
             var files = fs.GetFiles(fs.Root, "*paket.template", true);
             
             foreach (var file in files) {
+                if (file.StartsWith(".git")) {
+                    continue;
+                }
                 // Ignore files under the Build Infrastructure working directory, as it mat contain test resources 
                 // which would erroneously be picked up
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
