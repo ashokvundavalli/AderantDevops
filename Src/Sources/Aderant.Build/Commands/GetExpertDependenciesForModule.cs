@@ -40,6 +40,7 @@ namespace Aderant.Build.Commands {
         public string ProductManifestPath { get; set; }
 
         protected override void Process() {
+            Logger.Info($"Module set to {ModuleName} in GetExpertDependenciesForModule");
             if (string.IsNullOrEmpty(ModuleName)) {
                 ModuleName = ParameterHelper.GetCurrentModuleName(null, this.SessionState);
             }
@@ -70,6 +71,7 @@ namespace Aderant.Build.Commands {
             }
 
             if (!string.IsNullOrEmpty(ModuleName)) {
+                Logger.Info($"Adding module {ModuleName} in GetExpertDependenciesForModule");
                 request.AddModule(ModuleName);
             }
 

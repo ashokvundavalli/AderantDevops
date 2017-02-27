@@ -125,6 +125,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public virtual void AddModule(string module, bool isPartOfBuildChain = false) {
+            Logger.Info($"Adding module {module}");
             if (Path.IsPathRooted(module)) {
                 module = Path.GetFileName(module);
             }
@@ -140,7 +141,10 @@ namespace Aderant.Build.DependencyResolver {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
                 }
                 resolvedModule = new ExpertModule { Name = module };
-                requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web."));
+            }
+
+            if (physicalFileSystem.DirectoryExists(".git")) {
+                requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web.") && !d.Contains("_BUILD_"));
             }
 
             modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = requiresThirdPartyReplication });

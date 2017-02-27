@@ -55,9 +55,11 @@ process {
 		return
 	}
 
+	Write-Host "Module name is $moduleName in LoadDependencies."
     if ([string]::IsNullOrEmpty($moduleName)) {
         # attempt to discover the module name
         $moduleName = ([System.IO.DirectoryInfo]$modulesRootPath).Name
+		Write-Host "Module name set to $moduleName in LoadDependencies."
     }
         
     if ([string]::IsNullOrEmpty($moduleName)) {
