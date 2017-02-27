@@ -64,6 +64,7 @@ function SetGitOptions() {
         & $pathToGit config --global credential.$entry.integrated true                
     }
     & $pathToGit config --global http.emptyAuth true
+    & $pathToGit config --global credential.authority ntlm
 }
 
 function CloneRepo($repo, $version) {
