@@ -191,6 +191,16 @@ task PostBuild -Jobs Init, Package, CopyToDrop, {
 
 task GetDependencies {
     if (-not $IsDesktopBuild) {
+        # VSTS/TFS agent doesn't always pull the entire repository as it recycles the build directories.
+        # This means the local cached repository might be missing information, so want to always ensure we have full local state
+        # for proper version generation, see bugs:
+        # https://github.com/GitTools/GitVersion/issues/285
+        # https://github.com/GitTools/GitVersion/issues/878
+        # https://github.com/GitTools/GitVersion/issues/993
+        # https://github.com/GitTools/GitVersion/issues/912
+        # Basically VSTS is annoying, like all build systems.
+        & git -C $Repository fetch --tags --prune --progress origin
+
         . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository
     }
 }
