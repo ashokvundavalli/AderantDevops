@@ -225,7 +225,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="ModuleBuild">
-    <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
+   <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
@@ -1231,7 +1231,7 @@ doc.Save(File);
     <SeedPackagePacking
       BuildFrom="$(SolutionDirectoryPath)"
       SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
-      SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Packages"
+      SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages"
       >
     </SeedPackagePacking>
   </Target>

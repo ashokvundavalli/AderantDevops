@@ -92,9 +92,9 @@ namespace Aderant.Build.Tasks {
                 foreach (var dir in dirs) {
                     var packageName = dir.Name; // "AccountsPayable"
                     var packageSrcDir = Path.Combine(SeedPackageSrc, packageName); // "...\Src\SeedPackages\AccountsPayable"
-                    var destination = Path.Combine(SeedPackageDrop, packageName + ".zip"); // "...\Bin\Packages\AccountsPayable.zip"
+                    var destination = Path.Combine(SeedPackageDrop, packageName + ".zip"); // "...\Bin\Module\Packages\AccountsPayable.zip"
 
-                    Log.LogMessage($@"Zipping seed package definitions from .\Src\SeedPackages\{packageName} to .\Bin\Packages\{packageName}.zip");
+                    Log.LogMessage($@"Zipping seed package definitions from {packageSrcDir} to {destination}");
                     try {
                         if (File.Exists(destination)) {
                             var fi = new FileInfo(destination);
