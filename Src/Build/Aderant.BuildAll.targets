@@ -367,7 +367,7 @@
       SourceFiles="@(EliteOverrideFiles)"
       DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
 
-    <!-- Essentially rename Elite.Help.Zip to Expert.Help.Zip -->
+    <!-- Essentially rename Elite.Help to Expert.Help -->
     <Copy
       SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx"
       DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.sfx" />
