@@ -367,13 +367,13 @@
       SourceFiles="@(EliteOverrideFiles)"
       DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
 
-    <!-- Essentially rename Elite.Help.Zip to Expert.Help.Zip -->
+    <!-- Essentially rename Elite.Help to Expert.Help -->
     <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.zip"
-      DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.zip" />
+      SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx"
+      DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.sfx" />
 
     <Delete
-      Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.zip" />
+      Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx" />
 
     <!-- Move the Elite specific docs into the Documents folder-->
     <Delete
