@@ -201,8 +201,8 @@
             
     -->    
        
-    <PropertyGroup>     
-        <RootFolder>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..'))</RootFolder>     
+    <PropertyGroup>
+		<RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
     </PropertyGroup>
     
     <ItemGroup>
