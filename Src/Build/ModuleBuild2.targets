@@ -1227,10 +1227,13 @@ doc.Save(File);
   <!--
     ==========================================================================================
         Zip seed package(s)
+        This module will zip all seed package definition files grouped by folder name into zip packages and drop into .\Bin\Packages folder.
+        Note: To temporary bypass this process, set /p:SkipSeedPackage=true in TFSBuild.rsp in the solution to be built.
     ==========================================================================================
   -->
   <Target Name="SeedPackagePacking">
-    <SeedPackagePacking
+    <Message Condition="'$(SkipSeedPackage)' == 'true'" Text="SeedPackagePacking skipped because of the SkipSeedPackage flag." Importance="High"></Message>
+    <SeedPackagePacking Condition="'$(SkipSeedPackage)' != 'true'"
       BuildFrom="$(SolutionDirectoryPath)"
       SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
       SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages"
