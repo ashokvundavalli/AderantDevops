@@ -66,10 +66,12 @@ namespace Aderant.Build.Tasks {
             }
 
             try {
-                // Do validating
-                CheckForSmartFormDeltas();
-                //CheckForUnusedPackagesOrEntries();  // TODO: Ignore this test for now as there is no role file yet. To be added back.
-                CheckForComponentInPackage();
+                if (!SkipPackageValidation) {
+                    // Do validating
+                    CheckForSmartFormDeltas();
+                    //CheckForUnusedPackagesOrEntries();  // TODO: Ignore this test for now as there is no role file yet. To be added back.
+                    CheckForComponentInPackage();
+                }
 
                 // Do zipping
                 ZipSeedPackage();
@@ -80,6 +82,8 @@ namespace Aderant.Build.Tasks {
                 return false;
             }
         }
+
+        public bool SkipPackageValidation { get; set; }
 
         /// <summary>
         /// Compress the seed package folder(s) into .zip package(s).

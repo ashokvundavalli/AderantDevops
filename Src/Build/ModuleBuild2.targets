@@ -231,6 +231,7 @@ doc.Save(File);
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
+    <CallTarget Targets="SeedPackagePacking" />
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipWorkflowTemplateSource" />
     <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
@@ -238,7 +239,7 @@ doc.Save(File);
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-    <CallTarget Targets="SeedPackagePacking" />
+    
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignApplications" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
@@ -1228,17 +1229,18 @@ doc.Save(File);
     ==========================================================================================
         Zip seed package(s)
         This module will zip all seed package definition files grouped by folder name into zip packages and drop into .\Bin\Packages folder.
-        Note: To temporary bypass this process, set /p:SkipSeedPackage=true in TFSBuild.rsp in the solution to be built.
+        Note: To temporary bypass the validation process, set /p:SkipPackageValidation=true in TFSBuild.rsp in the solution to be built.
     ==========================================================================================
   -->
   <Target Name="SeedPackagePacking">
-    <Message Condition="'$(SkipSeedPackage)' == 'true'" Text="SeedPackagePacking skipped because of the SkipSeedPackage flag." Importance="High"></Message>
-    <SeedPackagePacking Condition="'$(SkipSeedPackage)' != 'true'"
+    
+    <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High"></Message>
+    <SeedPackagePacking 
+      SkipPackageValidation="$(SkipPackageValidation)"
       BuildFrom="$(SolutionDirectoryPath)"
       SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
-      SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages"
-      >
-    </SeedPackagePacking>
+      SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages" />
+    
   </Target>
   
   <!--
