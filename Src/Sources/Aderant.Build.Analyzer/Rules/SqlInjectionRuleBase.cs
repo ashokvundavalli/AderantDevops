@@ -94,7 +94,7 @@ namespace Aderant.Build.Analyzer.Rules {
             if (expression == null ||
                 (!expression.Name.ToString().StartsWith("SqlQuery") &&
                  !expression.Name.ToString().StartsWith("IssueSql") &&
-                 !expression.Name.ToString().StartsWith("IssueSql"))) {
+                 !expression.Name.ToString().StartsWith("ExecuteUsingIntegratedSecurity"))) {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
@@ -104,7 +104,8 @@ namespace Aderant.Build.Analyzer.Rules {
             // Exit early if it's not the correct method, or not a method at all.
             if (methodSymbol == null ||
                 (!methodSymbol.ConstructedFrom.ToString().StartsWith("System.Data.Entity.Database.SqlQuery<TElement>(string") &&
-                 !methodSymbol.ConstructedFrom.ToString().StartsWith("Aderant.FirmControl.DocuDraft.DataAccess.ISqlBase.IssueSql"))) {
+                 !methodSymbol.ConstructedFrom.ToString().StartsWith("Aderant.FirmControl.DocuDraft.DataAccess.ISqlBase.IssueSql") &&
+                 !methodSymbol.ConstructedFrom.ToString().StartsWith("Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteUsingIntegratedSecurity"))) {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
