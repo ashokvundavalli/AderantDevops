@@ -984,7 +984,7 @@ doc.Save(File);
   </Target>
 
   <Target Name="OnTestFailure">
-    <CallTarget Targets="AfterRunTests;CopyTrxFile;CopyToDrop;MarkBuildStepAsFailed"/>
+    <CallTarget Targets="AfterRunTests;CopyTrxFile;MarkBuildStepAsFailed"/>
   </Target>
 
 
