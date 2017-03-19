@@ -212,7 +212,7 @@
       <Type>Content</Type>
     </ExternalContent>
 
-    <ExternalContent Include="$(DependenciesDirectory)Web.*\Scripts\Web.*\**\*.d.ts"
+    <ExternalContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)Web.*\Scripts\Web.*\**\*.d.ts"
                      Exclude="$(DependenciesDirectory)Web.*\Scripts\ThirdParty.*\**\*.d.ts">
       <Type>TypeScript</Type>
     </ExternalContent>
@@ -222,7 +222,7 @@
       <Type>Content</Type>
     </ThirdPartyContent>
 
-    <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
+    <ThirdPartyContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
     </ThirdPartyContent>
@@ -264,10 +264,11 @@
       <Type>Content</Type>
     </ExternalContent>
 
-    <ExternalContent Include="$(DependenciesDirectory)Web.*\ViewModels\**\*.d.ts"
+    <ExternalContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)Web.*\ViewModels\**\*.d.ts"
                      Exclude="$(DependenciesDirectory)Web.*\ViewModels\Web.SMB\**\*.d.ts">
       <Type>TypeScript</Type>
     </ExternalContent>
+  
   </ItemGroup>
 
   <!-- Views -->
@@ -525,8 +526,7 @@
     <Message Text="$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))" />
     <Message Text="$([System.IO.Path]::GetFullPath('$(ProjectDir)'))" />
     <Message Text="Referenced web module: %(ReferencedWebModules.Identity)" />
-
-    <!--<Message Text="
+    <!--<Message  Text="
 Identity:                 %(AllReferencedContent.Identity) 
 RecursiveDir:             %(AllReferencedContent.RecursiveDir) 
 FullPath:                 %(AllReferencedContent.FullPath) 
