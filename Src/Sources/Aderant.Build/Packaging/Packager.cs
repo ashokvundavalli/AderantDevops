@@ -53,7 +53,7 @@ namespace Aderant.Build.Packaging {
 
                 var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(BuildConstants.MainDependencyGroup)));
                 var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
-                
+
                 ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
 
                 try {
@@ -102,7 +102,9 @@ namespace Aderant.Build.Packaging {
 
             templateFile.RemoveSelfReferences();
 
-            templateFile.Save(templateFileStream());
+            if (templateFile.IsDirty) {
+                templateFile.Save(templateFileStream());
+            }
 
             return templateFile.Dependencies;
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -35,7 +36,7 @@ namespace Aderant.Build.Packaging {
             if (excludedDependencies != null) {
                 if (excludedDependencies.Values != null) {
                     if (excludedDependencies.Values.Any(value => value.IndexOf(packageName, StringComparison.OrdinalIgnoreCase) >= 0)) {
-                        // Dependency was explicity excluded so don't add it to the package dependency list
+                        // Dependency was explicitly excluded so don't add it to the package dependency list
                         return;
                     }
                 }
@@ -60,7 +61,7 @@ namespace Aderant.Build.Packaging {
             }
 
             // LOCKEDVERSION is a magic Paket token which is replaced with the resolved package version from the lock file
-            string entry = string.Format("{0} {1} LOCKEDVERSION", item.Item1, @operator);
+            string entry = string.Format(CultureInfo.InvariantCulture, "{0} {1} LOCKEDVERSION", item.Item1, @operator);
 
             if (packageNameIndexes.Any()) {
                 list.Insert(packageNameIndexes.First(), entry);
@@ -68,8 +69,12 @@ namespace Aderant.Build.Packaging {
                 list.Add(entry);
             }
 
+            IsDirty = true;
+
             dependencies.SetEntries(list);
         }
+
+        public bool IsDirty { get; private set; }
 
         private static string GetOperatorForPackage(string packageName) {
             // The ~> "twiddle-wakka" operator is borrowed from bundler. It is used to specify a version range.
