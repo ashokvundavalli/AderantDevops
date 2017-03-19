@@ -49,7 +49,7 @@ namespace Aderant.Build.Tasks {
                     LogCertificateStatusMessage(message, false);
                 }
 
-                if ((expirationDate - DateTime.Now).TotalDays <= 14) {
+                if ((expirationDate - DateTime.Now).TotalDays <= 7) {
                     string message = string.Format("The certificate: {0} has less than 14 days until it expires. The certificate is validate until: {1}", name, expirationDate);
                     LogCertificateStatusMessage(message, true);
                 }
