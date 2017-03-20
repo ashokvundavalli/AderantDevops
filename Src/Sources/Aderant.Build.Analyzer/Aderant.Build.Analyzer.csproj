@@ -41,10 +41,12 @@
     <Compile Include="CodeFixes\AderantQueryServiceMigrationCodeFix.cs" />
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
-    <Compile Include="Exclusions\SqlInjectionExclusions.cs" />
+    <Compile Include="SQLInjection\Exclusions\SqlInjectionExclusions.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
     <Compile Include="Rules\SqlInjectionWarningRule.cs" />
+    <Compile Include="SQLInjection\Lists\SQLInjectionBlacklists.cs" />
+    <Compile Include="SQLInjection\Lists\SQLInjectionWhitelists.cs" />
     <None Include="CodeFixes\InvalidRegexCodeFix.cs" />
     <Compile Include="CodeFixes\LowerCaseTypesCodeFix.cs" />
     <Compile Include="Refactorings\MakeConverterRefactoring.cs" />

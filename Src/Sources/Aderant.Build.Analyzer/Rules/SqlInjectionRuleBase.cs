@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Aderant.Build.Analyzer.Exclusions;
+using Aderant.Build.Analyzer.SQLInjection.Lists;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -7,6 +10,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
     internal abstract class SqlInjectionRuleBase : RuleBase {
+        private const int DefaultCapacity = 25;
+
         protected enum SqlInjectionRuleViolationSeverityEnum {
             Invalid = -1,
             None,
@@ -15,30 +20,6 @@ namespace Aderant.Build.Analyzer.Rules {
             Error,
             Max
         }
-
-        // These rule 'Exceptions' are intentionally hard-coded,
-        // to make adding them a process that requires code review.
-        //     Docudraft in FirmControl requires the ability to execute dynamic queries,
-        //     and would be flagged as an 'error'.
-        private const string RuleExceptionDocudraftIssueSqlNoBatch =
-            "Aderant.FirmControl.DocuDraft.DataAccess.SqlBase." +
-            "IssueSqlNoBatch(System.Data.SqlClient.SqlConnection, System.Text.StringBuilder, " +
-            "System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>, bool, bool)";
-
-        private const string RuleExceptionDocudraftIssueSqlNonQuery =
-            "Aderant.FirmControl.DocuDraft.DataAccess.SqlBase." +
-            "IssueSqlNonQuery(System.Data.SqlClient.SqlConnection, string, " +
-            "System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>)";
-
-        private const string RuleExceptionDocudraftIssueSqlToDataTable =
-            "Aderant.FirmControl.DocuDraft.DataAccess.SqlBase." +
-            "IssueSqlToDataTable(System.Data.SqlClient.SqlConnection, string, " +
-            "System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>)";
-
-        private const string RuleExceptionDocudraftIssueSql =
-            "Aderant.FirmControl.DocuDraft.DataAccess.SqlBase." +
-            "IssueSql(System.Data.SqlClient.SqlConnection, string, " +
-            "System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>, bool)";
 
         private bool? ignoreProject;
 
@@ -51,31 +32,26 @@ namespace Aderant.Build.Analyzer.Rules {
             SemanticModel semanticModel,
             ExpressionStatementSyntax node) {
             // Exit early if it's not actually an 'assignment' expression.
-            AssignmentExpressionSyntax assignmentExpression = node.Expression as AssignmentExpressionSyntax;
+            var assignmentExpression = node.Expression as AssignmentExpressionSyntax;
 
             if (assignmentExpression == null) {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
             // Exit early if the assignment expression is not for something called 'CommandText'.
-            MemberAccessExpressionSyntax memberAccessExpression = assignmentExpression.Left as MemberAccessExpressionSyntax;
+            var memberAccessExpression = assignmentExpression.Left as MemberAccessExpressionSyntax;
 
             if (memberAccessExpression?.Name.ToString() != "CommandText") {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
             // Get detailed information regarding the property being accessed.
-            IPropertySymbol propertySymbol = ModelExtensions.GetSymbolInfo(semanticModel, memberAccessExpression).Symbol as IPropertySymbol;
+            var propertySymbol = ModelExtensions.GetSymbolInfo(semanticModel, memberAccessExpression).Symbol as IPropertySymbol;
 
             // Ensure that the 'CommandText' is actually for some form of SQL command, and not something else.
-            if (!(propertySymbol?.ToString().Equals("System.Data.Common.DbCommand.CommandText") ?? false) &&
-                !(propertySymbol?.ToString().Equals("System.Data.IDbCommand.CommandText") ?? false) &&
-                !(propertySymbol?.ToString().Equals("System.Data.SqlClient.SqlCommand.CommandText") ?? false)) {
-                return SqlInjectionRuleViolationSeverityEnum.None;
-            }
-
-            return EvaluateExpressionTree(semanticModel, assignmentExpression.Right)
-                   != SqlInjectionRuleViolationSeverityEnum.None
+            return propertySymbol != null &&
+                   SQLInjectionBlacklists.Properties.Any(value => propertySymbol.ToString().Equals(value.Item2)) &&
+                   EvaluateExpressionTree(semanticModel, assignmentExpression.Right) != SqlInjectionRuleViolationSeverityEnum.None
                 ? EvaluateMethodForSqlParameters(semanticModel, node)
                 : SqlInjectionRuleViolationSeverityEnum.None;
         }
@@ -88,29 +64,29 @@ namespace Aderant.Build.Analyzer.Rules {
         protected SqlInjectionRuleViolationSeverityEnum EvaluateNodeDatabaseSqlQuery(
             SemanticModel semanticModel,
             InvocationExpressionSyntax node) {
-            // Exit early if it's not actually a 'member access' expression, or is not an 'SqlQuery'.
-            MemberAccessExpressionSyntax expression = node.Expression as MemberAccessExpressionSyntax;
+            // Exit early if it's not actually a 'member access' expression, or is not some form of 'SqlQuery'.
+            var expression = node.Expression as MemberAccessExpressionSyntax;
 
-            if (expression == null ||
-                (!expression.Name.ToString().StartsWith("SqlQuery") &&
-                 !expression.Name.ToString().StartsWith("IssueSql") &&
-                 !expression.Name.ToString().StartsWith("ExecuteUsingIntegratedSecurity"))) {
+            if (expression == null) {
+                return SqlInjectionRuleViolationSeverityEnum.None;
+            }
+
+            if (!SQLInjectionBlacklists.Methods.Any(value => expression.Name.ToString().StartsWith(value.Item1))) {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
             // Get detailed information regarding the method being invoked.
-            IMethodSymbol methodSymbol = semanticModel.GetSymbolInfo(expression).Symbol as IMethodSymbol;
+            var methodSymbol = semanticModel.GetSymbolInfo(expression).Symbol as IMethodSymbol;
 
-            // Exit early if it's not the correct method, or not a method at all.
-            if (methodSymbol == null ||
-                (!methodSymbol.ConstructedFrom.ToString().StartsWith("System.Data.Entity.Database.SqlQuery<TElement>(string") &&
-                 !methodSymbol.ConstructedFrom.ToString().StartsWith("Aderant.FirmControl.DocuDraft.DataAccess.ISqlBase.IssueSql") &&
-                 !methodSymbol.ConstructedFrom.ToString().StartsWith("Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteUsingIntegratedSecurity"))) {
+            // Exit early if no method is found.
+            if (methodSymbol == null) {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
+            // Exit early if it's not the correct method.
             // Attempt to examine the first argument (SQL Query Text) to determine the severity of the violation.
-            return node.ArgumentList.Arguments.Any()
+            return SQLInjectionBlacklists.Methods.Any(value => methodSymbol.ConstructedFrom.ToString().StartsWith(value.Item2)) &&
+                   node.ArgumentList.Arguments.Any()
                 ? EvaluateExpressionTree(semanticModel, node.ArgumentList.Arguments.First().Expression)
                 : SqlInjectionRuleViolationSeverityEnum.None;
         }
@@ -146,11 +122,11 @@ namespace Aderant.Build.Analyzer.Rules {
             SemanticModel semanticModel,
             ExpressionSyntax expression) {
             // Is the provided expression a binary expression? E.g. A + B or C * D.
-            BinaryExpressionSyntax binaryExpressionSyntax = expression as BinaryExpressionSyntax;
+            var binaryExpressionSyntax = expression as BinaryExpressionSyntax;
 
             // If no, is it a conditional 'X ? Y : Z' expression?
             if (binaryExpressionSyntax == null) {
-                ConditionalExpressionSyntax conditionalExpression = expression as ConditionalExpressionSyntax;
+                var conditionalExpression = expression as ConditionalExpressionSyntax;
 
                 // If no, cease attempting to navigate the 'tree' and just evaluate the expression.
                 if (conditionalExpression == null) {
@@ -172,7 +148,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Begin navigating the 'tree', starting with the 'left' side. E.g. 'X' in the expression: X + Y.
             // Is the 'left' side also a binary expression?
-            BinaryExpressionSyntax left = binaryExpressionSyntax.Left as BinaryExpressionSyntax;
+            var left = binaryExpressionSyntax.Left as BinaryExpressionSyntax;
 
             if (left == null) {
                 // If no, cease navigating that side of the 'tree' and just evaluate the expression.
@@ -199,7 +175,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Repeat the process with the 'right' side of the 'tree'. E.g. 'Y' in the expression: X + Y.
             // Is the 'right' side also a binary expression?
-            BinaryExpressionSyntax right = binaryExpressionSyntax.Right as BinaryExpressionSyntax;
+            var right = binaryExpressionSyntax.Right as BinaryExpressionSyntax;
 
             if (right == null) {
                 // If no, cease navigating that side of the 'tree' and just evaluate the expression.
@@ -241,6 +217,18 @@ namespace Aderant.Build.Analyzer.Rules {
                 return SqlInjectionRuleViolationSeverityEnum.None;
             }
 
+            // If the expression is a property accessor contained within the whitelist.
+            var memberAccessExpression = expression as MemberAccessExpressionSyntax;
+
+            if (memberAccessExpression != null) {
+                var typeSymbol = semanticModel.GetSymbolInfo(memberAccessExpression.Expression).Symbol as INamedTypeSymbol;
+
+                return typeSymbol == null ||
+                    SQLInjectionWhitelists.Properties.Any(value => typeSymbol.OriginalDefinition.ToString().Contains(value.Item2))
+                    ? SqlInjectionRuleViolationSeverityEnum.None
+                    : SqlInjectionRuleViolationSeverityEnum.Error;
+            }
+
             // If the expression is not a variable of some description,
             // there is no use-case where this is acceptable, so default to an error.
             if (!(expression is IdentifierNameSyntax)) {
@@ -250,7 +238,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // Get detailed information regarding the expression.
             ISymbol symbol = semanticModel.GetSymbolInfo(expression).Symbol;
 
-            ILocalSymbol localSymbol = symbol as ILocalSymbol;
+            var localSymbol = symbol as ILocalSymbol;
 
             // If the expression is a local variable,
             // Return a severity of 'None' if the variable is a constant string from the 'System' namespace.
@@ -263,7 +251,7 @@ namespace Aderant.Build.Analyzer.Rules {
                     : SqlInjectionRuleViolationSeverityEnum.Error;
             }
 
-            IFieldSymbol fieldSymbol = symbol as IFieldSymbol;
+            var fieldSymbol = symbol as IFieldSymbol;
 
             // If the expression is a class-level field,
             // Return a severity of 'None' if the field is a constant string from the 'System' namespace.
@@ -304,28 +292,25 @@ namespace Aderant.Build.Analyzer.Rules {
             IMethodSymbol parentMethodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration);
 
             if (parentMethodSymbol == null ||
-                (!parentMethodSymbol.OriginalDefinition.ToString().Equals(RuleExceptionDocudraftIssueSqlNoBatch) &&
-                 !parentMethodSymbol.OriginalDefinition.ToString().Equals(RuleExceptionDocudraftIssueSqlNonQuery) &&
-                 !parentMethodSymbol.OriginalDefinition.ToString().Equals(RuleExceptionDocudraftIssueSqlToDataTable) &&
-                 !parentMethodSymbol.OriginalDefinition.ToString().Equals(RuleExceptionDocudraftIssueSql))) {
+                !SQLInjectionWhitelists.Methods.Any(value => parentMethodSymbol.OriginalDefinition.ToString().Equals(value.Item2))) {
                 return SqlInjectionRuleViolationSeverityEnum.Error;
             }
 
-            // '25' was chosen to reduce the impact of multiple instantiations of the array during the below recursive iteration.
-            List<InvocationExpressionSyntax> invocationExpressionList = new List<InvocationExpressionSyntax>(25);
+            // The default capacity was chosen to reduce the impact of multiple instantiations of the array during the below recursive iteration.
+            var invocationExpressionList = new List<InvocationExpressionSyntax>(DefaultCapacity);
 
             // This is a recursive method that iterates through every child node and retrieves the (method) invocation expressions.
             GetInvocationExpressionsFromChildNodes(ref invocationExpressionList, methodDeclaration);
 
             foreach (InvocationExpressionSyntax invocationExpression in invocationExpressionList) {
-                MemberAccessExpressionSyntax memberAccessExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
+                var memberAccessExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
 
                 if (memberAccessExpression == null ||
                     !memberAccessExpression.Name.ToString().StartsWith("Add")) {
                     continue;
                 }
 
-                IMethodSymbol methodSymbol = semanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IMethodSymbol;
+                var methodSymbol = semanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IMethodSymbol;
 
                 if (methodSymbol == null ||
                     methodSymbol.ToString().Equals("System.Data.SqlClient.SqlParameterCollection.Add(System.Data.SqlClient.SqlParameter)") ||
@@ -356,6 +341,46 @@ namespace Aderant.Build.Analyzer.Rules {
                     invocationExpressionList.Add(invocationExpression);
                 }
             }
+        }
+
+        /// <summary>
+        /// Examines the specified context to determine if the method containing
+        /// the targeted node includes a code analysis suppression attribute.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        protected bool IsAnalysisSuppressed(SyntaxNodeAnalysisContext context) {
+            MethodDeclarationSyntax methodDeclaration = null;
+
+            // Climb the syntax tree looking for a method declaration.
+            foreach (SyntaxNode ancestor in context.Node.Ancestors()) {
+                methodDeclaration = ancestor as MethodDeclarationSyntax;
+
+                if (methodDeclaration != null) {
+                    break;
+                }
+            }
+
+            if (methodDeclaration == null) {
+                return false;
+            }
+
+            foreach (AttributeListSyntax attributeList in methodDeclaration.ChildNodes().OfType<AttributeListSyntax>()) {
+                foreach (AttributeSyntax attribute in attributeList.Attributes) {
+                    if (attribute.Name.ToString().Equals("ExcludeFromCodeCoverage")) {
+                        return true;
+                    }
+
+                    if (!attribute.Name.ToString().Equals("SuppressMessage")) {
+                        continue;
+                    }
+
+                    if (attribute.ArgumentList.Arguments[0].ToString().Equals("\"SQL Injection\"", StringComparison.OrdinalIgnoreCase) &&
+                        attribute.ArgumentList.Arguments[1].ToString().StartsWith("\"Aderant_SqlInjection", StringComparison.OrdinalIgnoreCase)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>

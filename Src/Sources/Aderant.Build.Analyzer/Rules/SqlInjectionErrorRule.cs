@@ -18,13 +18,13 @@ namespace Aderant.Build.Analyzer.Rules {
         internal override string Description => "Use Stored Procedure DSL.";
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-            id: Id,
-            title: Title,
-            messageFormat: MessageFormat,
-            category: AnalyzerCategory.Syntax,
-            defaultSeverity: Severity,
-            isEnabledByDefault: true,
-            description: Description);
+            Id,
+            Title,
+            MessageFormat,
+            AnalyzerCategory.Syntax,
+            Severity,
+            true,
+            Description);
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeNodeCommandText, SyntaxKind.ExpressionStatement);
@@ -34,6 +34,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
             if (IsProjectIgnored(context) ||
+                IsAnalysisSuppressed(context) ||
                 EvaluateNodeCommandTextExpressionStatement(
                     context.SemanticModel,
                     (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
@@ -46,6 +47,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
             if (IsProjectIgnored(context) ||
+                IsAnalysisSuppressed(context) ||
                 EvaluateNodeDatabaseSqlQuery(
                     context.SemanticModel,
                     (InvocationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
@@ -58,6 +60,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
         private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
             if (IsProjectIgnored(context) ||
+                IsAnalysisSuppressed(context) ||
                 EvaluateNodeNewSqlCommandObjectCreationExpression(
                     context.SemanticModel,
                     (ObjectCreationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
