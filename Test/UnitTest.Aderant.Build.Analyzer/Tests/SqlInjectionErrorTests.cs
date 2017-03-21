@@ -470,59 +470,6 @@ namespace Test {
         }
 
         [TestMethod]
-        public void SqlInjectionError_Attribute_ExcludeFromCodeCoverage() {
-            const string test = @"
-using System;
-using System.Diagnostics.CodeAnalysis;
-
-namespace Test {
-    public class Program {
-        [ExcludeFromCodeCoverage]
-        public static void Main() {
-            string test = ""Test"";
-
-            using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
-                using (var command = connection.CreateCommand()) {
-                    command.CommandText = test;
-                }
-            }
-        }
-    }
-}
-
-namespace Aderant.Framework.Persistence {
-    public class FrameworkDb {
-        public static Connection CreateConnection() {
-            return new Connection();
-        }
-    }
-
-    public class Connection : IDisposable {
-        public System.Data.Common.DbCommand CreateCommand() {
-            return new System.Data.Common.DbCommand();
-        }
-
-        public void Dispose() {
-            // Empty.
-        }
-    }
-}
-
-namespace System.Data.Common {
-    public class DbCommand : IDisposable {
-        public string CommandText { get; set; }
-
-        public void Dispose() {
-            // Empty.
-        }
-    }
-}
-";
-
-            VerifyCSharpDiagnostic(InsertCode(test));
-        }
-
-        [TestMethod]
         public void SqlInjectionError_Attribute_SuppressMessage() {
             const string test = @"
 using System;

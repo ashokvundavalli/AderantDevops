@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Aderant.Build.Analyzer.Exclusions;
 using Aderant.Build.Analyzer.SQLInjection.Lists;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -20,8 +19,6 @@ namespace Aderant.Build.Analyzer.Rules {
             Error,
             Max
         }
-
-        private bool? ignoreProject;
 
         /// <summary>
         /// Evaluates the node 'command text expression statement'.
@@ -224,7 +221,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 var typeSymbol = semanticModel.GetSymbolInfo(memberAccessExpression.Expression).Symbol as INamedTypeSymbol;
 
                 return typeSymbol == null ||
-                    SQLInjectionWhitelists.Properties.Any(value => typeSymbol.OriginalDefinition.ToString().Contains(value.Item2))
+                       SQLInjectionWhitelists.Properties.Any(value => typeSymbol.OriginalDefinition.ToString().Contains(value.Item2))
                     ? SqlInjectionRuleViolationSeverityEnum.None
                     : SqlInjectionRuleViolationSeverityEnum.Error;
             }
@@ -366,11 +363,8 @@ namespace Aderant.Build.Analyzer.Rules {
 
             foreach (AttributeListSyntax attributeList in methodDeclaration.ChildNodes().OfType<AttributeListSyntax>()) {
                 foreach (AttributeSyntax attribute in attributeList.Attributes) {
-                    if (attribute.Name.ToString().Equals("ExcludeFromCodeCoverage")) {
-                        return true;
-                    }
-
-                    if (!attribute.Name.ToString().Equals("SuppressMessage")) {
+                    if (!attribute.Name.ToString().Equals("SuppressMessage") &&
+                        !attribute.Name.ToString().Equals("System.Diagnostics.CodeAnalysis.SuppressMessage")) {
                         continue;
                     }
 
@@ -381,33 +375,6 @@ namespace Aderant.Build.Analyzer.Rules {
                 }
             }
             return false;
-        }
-
-        /// <summary>
-        /// References the 'SqlInjectionExclusions.cs' list of excluded source locations
-        /// and determines if the current project is to be excluded from rule evaluations.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        protected bool IsProjectIgnored(SyntaxNodeAnalysisContext context) {
-            if (ignoreProject.HasValue) {
-                return ignoreProject.Value;
-            }
-
-            string sourceLocation = context.Node.GetLocation().ToString();
-
-            foreach (string exclusion in new SqlInjectionExclusions().ExclusionsList) {
-                if (sourceLocation.Contains(exclusion)) {
-                    ignoreProject = true;
-                }
-            }
-
-            if (ignoreProject == true) {
-                return ignoreProject.Value;
-            }
-
-            ignoreProject = false;
-
-            return ignoreProject.Value;
         }
     }
 }

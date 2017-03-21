@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
@@ -57,8 +58,14 @@ namespace Aderant.Build.DependencyResolver {
                 if (dependencies == null) {
                     // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems 
                     // as it will no doubt locate something it shouldn't use (eg one from another product)
-                    Dependencies.Init(FileSystem.Root);
-                    dependencies = Dependencies.Locate(FileSystem.Root);
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("source " + BuildConstants.PackageServerUrl);
+                    sb.AppendLine("source " + @"C:\Temp\Packages");
+
+                    DependenciesFile file = Paket.DependenciesFile.FromCode(FileSystem.Root, sb.ToString());
+                    file.Save();
+
+                    dependencies = new Paket.Dependencies(FileSystem.Root + "\\paket.dependencies");
                 }
             }
             return dependencies;

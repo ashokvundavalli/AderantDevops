@@ -13,7 +13,8 @@ namespace Aderant.Build.Analyzer.Rules {
 
         internal override string Title => "SQL Injection Error";
 
-        internal override string MessageFormat => "Database command is vulnerable to SQL injection. Use Stored Procedure DSL.";
+        internal override string MessageFormat
+            => "Database command is vulnerable to SQL injection. Consider parameterizing the command or using the Stored Procedure DSL (http://ttwiki/wiki/index.php?title=Stored_Procedure_DSL).";
 
         internal override string Description => "Use Stored Procedure DSL.";
 
@@ -33,8 +34,7 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
-            if (IsProjectIgnored(context) ||
-                IsAnalysisSuppressed(context) ||
+            if (IsAnalysisSuppressed(context) ||
                 EvaluateNodeCommandTextExpressionStatement(
                     context.SemanticModel,
                     (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
@@ -46,8 +46,7 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
-            if (IsProjectIgnored(context) ||
-                IsAnalysisSuppressed(context) ||
+            if (IsAnalysisSuppressed(context) ||
                 EvaluateNodeDatabaseSqlQuery(
                     context.SemanticModel,
                     (InvocationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
@@ -59,8 +58,7 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
-            if (IsProjectIgnored(context) ||
-                IsAnalysisSuppressed(context) ||
+            if (IsAnalysisSuppressed(context) ||
                 EvaluateNodeNewSqlCommandObjectCreationExpression(
                     context.SemanticModel,
                     (ObjectCreationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Error) {
