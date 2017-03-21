@@ -1,6 +1,6 @@
 NUGET
   remote: http://packages.ap.aderant.com/packages/nuget
-    Aderant.Build.Analyzer (1.0.4)
+    Aderant.Build.Analyzer (1.1.0)
   remote: https://www.nuget.org/api/v2
     Castle.Core (4.0) - framework: >= net45, >= netstandard13
       System.AppContext (>= 4.1) - framework: >= netstandard13
@@ -1111,7 +1111,7 @@ NUGET
     WebActivatorEx (2.2)
       Microsoft.Web.Infrastructure (>= 1.0)
     WindowsAPICodePack-Core (1.1.2)
-    WindowsAzure.ServiceBus (3.4.6) - framework: >= net45
+    WindowsAzure.ServiceBus (4.0) - framework: >= net45
 
 GROUP Analyzer
 NUGET
