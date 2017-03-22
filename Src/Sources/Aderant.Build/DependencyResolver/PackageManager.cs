@@ -94,17 +94,23 @@ namespace Aderant.Build.DependencyResolver {
                 if (referencedModule.VersionRequirement != null) {
                     version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
                 }
+
+                var name = Domain.PackageName(referencedModule.Name);
                 
-                if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(Domain.PackageName(referencedModule.Name)))) {
+                if (referencedModule.ReplaceVersionConstraint) {
+                    try {
+                        file = file.Remove(Domain.GroupName(BuildConstants.MainDependencyGroup), name);
+                    } catch {
+                        
+                    }
+                }
+
+                if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(name))) {
                     file = file.Add(Domain.GroupName(BuildConstants.MainDependencyGroup), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                 }
             }
 
             file.Save();
-
-            if (context.IncludeDevelopmentDependencies) {
-                dependencies.Add(new FSharpOption<string>("Main"), "Aderant.Build.Analyzer", "", true, true, false, false, false, false, SemVerUpdateMode.NoRestriction, false);
-            }
         }
 
         private bool HasLockFile() {

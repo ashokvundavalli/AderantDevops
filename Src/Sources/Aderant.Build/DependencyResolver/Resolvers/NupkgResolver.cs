@@ -77,6 +77,13 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                     resolverRequest.Resolved(requirement, this);
 
+                    if (requirement.ReplicateToDependencies.HasValue) {
+                        // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
+                        if (!requirement.ReplicateToDependencies.Value) {
+                            continue;
+                        }
+                    }
+
                     if (resolverRequest.RequiresReplication) {
                         ReplicateToDependenciesDirectory(resolverRequest, fileSystem, requirement);
                     }

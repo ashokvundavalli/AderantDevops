@@ -76,5 +76,15 @@ namespace Aderant.Build.DependencyResolver {
         public static bool operator !=(DependencyRequirement left, DependencyRequirement right) {
             return !Equals(left, right);
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance can override (blat) any contraint expression in your dependency file.
+        /// </summary>
+        public bool ReplaceVersionConstraint { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
+        /// </summary>
+        public bool? ReplicateToDependencies { get; set; }
     }
 }

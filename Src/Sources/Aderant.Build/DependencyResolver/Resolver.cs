@@ -34,8 +34,10 @@ namespace Aderant.Build.DependencyResolver {
 
             GatherRequirements(resolverRequest, requirements);
 
+            AddAlwaysRequired(resolverRequest, requirements);
+
             RemoveRequirementsBeingBuilt(resolverRequest, requirements);
-            
+
             List<IDependencyRequirement> distinctRequirements = requirements.Distinct().ToList();
 
             logger.Info("Required inputs: {0}", string.Join(",", distinctRequirements.Select(s => s.Name)));
@@ -50,6 +52,32 @@ namespace Aderant.Build.DependencyResolver {
             if (distinctRequirements.Any()) {
                 throw new InvalidOperationException($"The following requirements could not be resolved: {string.Join(", ", distinctRequirements.Select(s => s.Name))}");
             }
+        }
+
+        private void AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
+            ExpertModule module = null;
+
+            if (resolverRequest.ModuleFactory != null) {
+                module = resolverRequest.ModuleFactory.GetModule("Aderant.Build.Analyzer");
+            }
+
+            IDependencyRequirement analyzer = requirements.FirstOrDefault(r => string.Equals(r.Name, "Aderant.Build.Analyzer"));
+
+            if (analyzer != null) {
+                requirements.Remove(analyzer);
+            }
+
+            IDependencyRequirement requirement;
+            if (module != null) {
+                requirement = DependencyRequirement.Create(module);
+            } else {
+                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer");
+            }
+
+            requirement.ReplaceVersionConstraint = true;
+            requirement.ReplicateToDependencies = false;
+
+            requirements.Add(requirement);
         }
 
         private void GatherRequirements(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {

@@ -106,6 +106,7 @@
     <Compile Include="Packaging\VersionAnalyzerTests.cs" />
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="ResolverRequestTests.cs" />
+    <Compile Include="ResolverTests.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
