@@ -13,6 +13,8 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
     using System.Linq;
     using System.Threading.Tasks;
     using System.Diagnostics;
+    using System.Data;
+    using System.Data.SqlClient;
 
     namespace ConsoleApplication1 {
         class PROGRAM {
@@ -68,7 +70,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
         /// <param name="messageParameters">The message parameters.</param>
         /// <returns></returns>
         protected DiagnosticResult GetDiagnostic(int lineNumber, int column, params object[] messageParameters) {
-            return GenerateDiagostic(
+            return GenerateDiagnostic(
                 Rule.Id,
                 Rule.MessageFormat,
                 Rule.Severity,
@@ -96,7 +98,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Verifiers {
         /// <param name="column">The column.</param>
         /// <param name="messageParameters">The message parameters.</param>
         /// <returns></returns>
-        protected DiagnosticResult GenerateDiagostic(string id, string messageFormat, DiagnosticSeverity severity, int lineNumber, int column, object[] messageParameters) {
+        protected DiagnosticResult GenerateDiagnostic(string id, string messageFormat, DiagnosticSeverity severity, int lineNumber, int column, object[] messageParameters) {
             return new DiagnosticResult {
                 Id = id,
                 Message = string.Format(messageFormat, messageParameters),

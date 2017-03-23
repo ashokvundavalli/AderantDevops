@@ -34,7 +34,7 @@ namespace Aderant.Build.Analyzer.Rules {
             if (IsAnalysisSuppressed(context) ||
                 EvaluateNodeCommandTextExpressionStatement(
                     context.SemanticModel,
-                    (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverityEnum.Warning) {
+                    (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverity.Warning) {
                 return;
             }
 

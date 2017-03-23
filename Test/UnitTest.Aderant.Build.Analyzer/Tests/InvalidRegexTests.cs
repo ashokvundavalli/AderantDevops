@@ -13,7 +13,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         /// <summary>
         /// Gets the types for additional assembly references.
         /// </summary>
-        protected override Type[] TypesForAddigionalAssemblyReferences => new Type[] { typeof(Regex) };
+        protected override Type[] TypesForAdditionalAssemblyReferences => new Type[] { typeof(Regex) };
 
         protected override string PreCode => @"
     using System;

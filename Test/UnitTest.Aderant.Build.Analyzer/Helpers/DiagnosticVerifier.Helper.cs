@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -18,8 +19,9 @@ namespace TestHelper {
         private static readonly MetadataReference SystemCoreReference = MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location);
         private static readonly MetadataReference CSharpSymbolsReference = MetadataReference.CreateFromFile(typeof(CSharpCompilation).Assembly.Location);
         private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile(typeof(Compilation).Assembly.Location);
+        private static readonly MetadataReference SqlClientReference = MetadataReference.CreateFromFile(typeof(SqlCommand).Assembly.Location);
 
-        protected virtual Type[] TypesForAddigionalAssemblyReferences => new Type[] { };
+        protected virtual Type[] TypesForAdditionalAssemblyReferences => new Type[] { };
 
         internal static string DefaultFilePathPrefix = "Test";
         internal static string CSharpDefaultFileExt = "cs";
@@ -29,7 +31,7 @@ namespace TestHelper {
         #region  Get Diagnostics
 
         /// <summary>
-        /// Given classes in the form of strings, their language, and an IDiagnosticAnlayzer to apply to it, return the diagnostics found in the string after converting it to a document.
+        /// Given classes in the form of strings, their language, and an IDiagnosticAnalyzer to apply to it, return the diagnostics found in the string after converting it to a document.
         /// </summary>
         /// <param name="sources">Classes in the form of strings</param>
         /// <param name="language">The language the source classes are in</param>
@@ -137,10 +139,11 @@ namespace TestHelper {
                 .AddMetadataReference(projectId, CorlibReference)
                 .AddMetadataReference(projectId, SystemCoreReference)
                 .AddMetadataReference(projectId, CSharpSymbolsReference)
-                .AddMetadataReference(projectId, CodeAnalysisReference);
+                .AddMetadataReference(projectId, CodeAnalysisReference)
+                .AddMetadataReference(projectId, SqlClientReference);
 
             // Add additional assembly references based on type array
-            foreach (var type in TypesForAddigionalAssemblyReferences) {
+            foreach (var type in TypesForAdditionalAssemblyReferences) {
                 solution = solution.AddMetadataReference(projectId, MetadataReference.CreateFromFile(type.Assembly.Location));
             }
 
