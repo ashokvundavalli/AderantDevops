@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
-    <CertificateHash>9AB8870EE441103F76009BE6141265D0D9B6197C</CertificateHash>
+    <CertificateHash>1c2a3e8f5e969fd0a526f917100f6231faacb460</CertificateHash>
     <TimestampUrl>http://timestamp.digicert.com</TimestampUrl>
     
     <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
