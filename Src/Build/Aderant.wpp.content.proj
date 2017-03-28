@@ -222,6 +222,11 @@
       <Type>Content</Type>
     </ThirdPartyContent>
 
+    <ThirdPartyContent Include="$(PackagesDirectory)javascript\ThirdParty.*\lib\**\*.js">
+      <RelativePath>Scripts\$([System.String]::Copy('%(RecursiveDir)').Replace('\lib', ''))</RelativePath>
+      <Type>Content</Type>
+    </ThirdPartyContent>
+
     <ThirdPartyContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
       <Type>TypeScript</Type>
@@ -249,6 +254,13 @@
                        Exclude="$(DependenciesDirectory)ThirdParty.*\**\*.js;
                                 $(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
       <RelativePath>Content\Includes\%(RecursiveDir)</RelativePath>
+      <Type>Content</Type>
+    </ThirdPartyContent>
+
+    <ThirdPartyContent Include="$(PackagesDirectory)javascript\ThirdParty.*\lib\**\*"
+                       Exclude="$(PackagesDirectory)javascript\ThirdParty.*\lib\**\*.js;
+                                $(PackagesDirectory)javascript\ThirdParty.*\lib\**\*.d.ts">
+      <RelativePath>Content\Includes\$([System.String]::Copy('%(RecursiveDir)').Replace('\lib', ''))</RelativePath>
       <Type>Content</Type>
     </ThirdPartyContent>
 
@@ -526,7 +538,7 @@
     <Message Text="$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))" />
     <Message Text="$([System.IO.Path]::GetFullPath('$(ProjectDir)'))" />
     <Message Text="Referenced web module: %(ReferencedWebModules.Identity)" />
-    <!--<Message  Text="
+     <!--<Message  Text="
 Identity:                 %(AllReferencedContent.Identity) 
 RecursiveDir:             %(AllReferencedContent.RecursiveDir) 
 FullPath:                 %(AllReferencedContent.FullPath) 
