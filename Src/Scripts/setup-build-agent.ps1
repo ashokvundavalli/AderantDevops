@@ -1,9 +1,9 @@
 ﻿[CmdletBinding()]
 param(
     [Parameter()]
-    $agentsToProvision = $Env:NUMBER_OF_PROCESSORS,
+    $agentsToProvision = ($Env:NUMBER_OF_PROCESSORS / 2),
 
-    [Parameter()]
+    [Switch]
     $removeAllAgents = $true,
 
     [Parameter()]
@@ -30,76 +30,76 @@ $AgentRootDirectory = "C:\Agents"
 # Converted from https://github.com/docker/docker/blob/master/pkg/namesgenerator/names-generator.go
 
 $left = @(
-    "admiring",
-    "adoring",
-    "affectionate",
-    "agitated",
-    "amazing",
-    "angry",
-    "awesome",
-    "backstabbing",
-    "berserk",
-    "big",
-    "boring",
-    "clever",
-    "cocky",
-    "compassionate",
-    "condescending",
-    "cranky",
-    "desperate",
-    "determined",
-    "distracted",
-    "dreamy",
-    "drunk",
-    "eager",
-    "ecstatic",
-    "elastic",
-    "elated",
-    "elegant",
-    "evil",
-    "fervent",
-    "focused",
-    "furious",
-    "gigantic",
-    "gloomy",
-    "goofy",
-    "grave",
-    "happy",
-    "high",
-    "hopeful",
-    "hungry",
-    "infallible",
-    "jolly",
-    "jovial",
-    "kickass",
-    "lonely",
-    "loving",
-    "mad",
-    "modest",
-    "naughty",
-    "nauseous",
-    "nostalgic",
-    "peaceful",
-    "pedantic",
-    "pensive",
-    "prickly",
-    "reverent",
-    "romantic",
-    "sad",
-    "serene",
-    "sharp",
-    "sick",
-    "silly",
-    "sleepy",
-    "small",
-    "stoic",
-    "stupefied",
-    "suspicious",
-    "tender",
-    "thirsty",
-    "tiny",
-    "trusting",
-    "zen"
+	"admiring",
+	"adoring",
+	"affectionate",
+	"agitated",
+	"amazing",
+	"angry",
+	"awesome",
+	"backstabbing",
+	"berserk",
+	"big",
+	"boring",
+	"clever",
+	"cocky",
+	"compassionate",
+	"condescending",
+	"cranky",
+	"desperate",
+	"determined",
+	"distracted",
+	"dreamy",
+	"drunk",
+	"eager",
+	"ecstatic",
+	"elastic",
+	"elated",
+	"elegant",
+	"evil",
+	"fervent",
+	"focused",
+	"furious",
+	"gigantic",
+	"gloomy",
+	"goofy",
+	"grave",
+	"happy",
+	"high",
+	"hopeful",
+	"hungry",
+	"infallible",
+	"jolly",
+	"jovial",
+	"kickass",
+	"lonely",
+	"loving",
+	"mad",
+	"modest",
+	"naughty",
+	"nauseous",
+	"nostalgic",
+	"peaceful",
+	"pedantic",
+	"pensive",
+	"prickly",
+	"reverent",
+	"romantic",
+	"sad",
+	"serene",
+	"sharp",
+	"sick",
+	"silly",
+	"sleepy",
+	"small",
+	"stoic",
+	"stupefied",
+	"suspicious",
+	"tender",
+	"thirsty",
+	"tiny",
+	"trusting",
+	"zen"
 )
 
 $right = @(
@@ -177,7 +177,7 @@ function GetRandomName {
     $leftRnd = Get-Random -Minimum 0 -Maximum $left.Length
     $rightRnd = Get-Random -Minimum 0 -Maximum $right.Length
 
-    return ("{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
+	return ("{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
 }
 
 function RemoveAllAgents() {
@@ -196,10 +196,18 @@ function ProvisionAgent() {
     $agentName = GetRandomName
 
     if (-not (Test-Path $workDirectory)) {
-        $workDirectory = $Env:SystemDrive + "\"
+	    $workDirectory = $Env:SystemDrive + "\"
     }
 
-    $workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $agentName)
+    $scratchDirectoryName = Get-Random -Maximum 1024
+
+    $workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $scratchDirectoryName)
+
+    Write-Host "Agent: $agentName Working directory $workingDirectory"
+
+    if (Test-Path $workingDirectory) {
+        return
+    }    
 
     $agentInstallationPath = "$AgentRootDirectory\$agentName"
     
@@ -211,6 +219,8 @@ function ProvisionAgent() {
     $credentials = GetCredentialsOrPrompt
     $serviceAccountName = $credentials.UserName
     $serviceAccountPassword = $credentials.GetNetworkCredential().Password
+
+    Write-Host "Installing agent $agentName"
 
     .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --runasservice --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "$workingDirectory" --replace
 }
