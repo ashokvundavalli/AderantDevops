@@ -8,9 +8,16 @@
   <PropertyGroup>
     <ThisProject>$([System.IO.Path]::GetFileName($(MSBuildProjectFullPath)))</ThisProject>
     <IsWeb>$(ThisProject.StartsWith('Web.'))</IsWeb>
-    <IsMobile>$(ThisProject.StartsWith('Mobile.'))</IsMobile>
+    <IsMobile>$(ThisProject.StartsWith('Mobile.'))</IsMobile>  
+	<RunTSLint Condition="'$(RunTSLint)' == ''">false</RunTSLint>
   </PropertyGroup>
   <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.Content.proj" Condition="'$(IsWeb)' == 'true'" />
   <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.Content.proj" Condition="'$(IsMobile)' == 'true'" />
 
+  <Import Project="$(MSBuildThisFileDirectory)packages\development\TSLint.MSBuild\build\TSLint.MSBuild.targets" Condition="'$(RunTSLint)' == 'true' And '$(IsWeb)' == 'true'" />
+  <PropertyGroup Condition="'$(IsWeb)' == 'true'">
+    <TSLintConfig>$(MSBuildProjectDirectory)\tslint.json</TSLintConfig>
+    <TSLintCli>$(MSBuildThisFileDirectory)\packages\Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
+    <TSLintBreakBuildOnError>true</TSLintBreakBuildOnError>
+  </PropertyGroup>
 </Project>

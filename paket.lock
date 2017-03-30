@@ -1,6 +1,6 @@
 NUGET
   remote: http://packages.ap.aderant.com/packages/nuget
-    Aderant.Build.Analyzer (1.1.0)
+    Aderant.Build.Analyzer (1.1.1)
   remote: https://www.nuget.org/api/v2
     Castle.Core (4.0) - framework: >= net45, >= netstandard13
       System.AppContext (>= 4.1) - framework: >= netstandard13
@@ -65,7 +65,7 @@ NUGET
     Microsoft.CodeDom.Providers.DotNetCompilerPlatform (1.0)
       Microsoft.Net.Compilers (>= 1.0)
     Microsoft.Composition (1.0.30)
-    Microsoft.IdentityModel.Clients.ActiveDirectory (3.13.8)
+    Microsoft.IdentityModel.Clients.ActiveDirectory (3.13.9)
       NETStandard.Library (>= 1.6) - framework: >= netstandard14
       System.Runtime.Serialization.Json (>= 4.0.2) - framework: >= netstandard14
       System.Runtime.Serialization.Primitives (>= 4.1.1) - framework: >= netstandard14
@@ -211,7 +211,7 @@ NUGET
     Microsoft.WindowsAPICodePack-Core (1.1.0.2) - framework: >= net35
     Microsoft.WindowsAPICodePack-Shell (1.1)
       Microsoft.WindowsAPICodePack-Core (>= 1.1) - framework: >= net35
-    Moq (4.7.1)
+    Moq (4.7.8)
       Castle.Core (>= 4.0) - framework: >= net45, >= netstandard13
       System.Collections (>= 4.0.11) - framework: >= netstandard13
       System.Collections.Concurrent (>= 4.0.12) - framework: >= netstandard13
