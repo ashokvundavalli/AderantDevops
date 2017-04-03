@@ -1,12 +1,12 @@
 source http://packages.ap.aderant.com/packages/nuget
 source https://www.nuget.org/api/v2
+framework: >= net35
 
 # For compatibility with VS 2015 Update 2 and 3 we need
 # Microsoft.CodeAnalysis.CSharp 1.2.0.0
 # System.Collections.Immutable 1.1.37.0 (or less)
 # as there are binding redirects in devenv.exe.config which redirect to these versions.
 
-nuget Aderant.Build.Analyzer
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.CSharp.Workspaces
 nuget WindowsAPICodePack-Core
