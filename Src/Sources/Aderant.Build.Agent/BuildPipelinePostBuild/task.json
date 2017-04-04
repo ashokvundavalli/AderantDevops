@@ -8,7 +8,7 @@
   "version": {
     "Major": 0,
     "Minor": 1,
-    "Patch": 7
+    "Patch": 14
   },
   "minimumAgentVersion": "1.83.0",
   "inputs": [
@@ -20,6 +20,15 @@
       "required": true,
       "helpMarkDown":
         "Specifies if the build will be failed if the number of warnings increase relative to the last good build on the master branch."
+    },
+    {
+      "name": "cleanBuildDirectoryOnCompletion",
+      "type": "boolean",
+      "label": "Clean build directory on completion",
+      "defaultValue": true,
+      "required": true,
+      "helpMarkDown":
+        "Specifies if the build scratch directory will be cleaned if the build completes successfully. Enabling this means that no build artifacts will be available after this task completes."
     }
   ],
   "instanceNameFormat": "Run post build pipeline",

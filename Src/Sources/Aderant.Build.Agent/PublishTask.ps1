@@ -3,7 +3,6 @@
 param(
    [Parameter(Mandatory=$true)][string]$TaskPath,
    [Parameter(Mandatory=$false)][string]$TfsUrl = "http://tfs:8080/tfs/Aderant",
-   [PSCredential]$Credential = (Get-Credential),
    [switch]$Overwrite = $false
 )
 
@@ -38,4 +37,4 @@ if ($Overwrite) {
 }
 
 # Actually upload it
-Invoke-RestMethod -Uri $url -Credential $Credential -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem
+Invoke-RestMethod -Uri $url -Headers $headers -ContentType application/octet-stream -Method Put -InFile $taskZipItem -UseDefaultCredentials
