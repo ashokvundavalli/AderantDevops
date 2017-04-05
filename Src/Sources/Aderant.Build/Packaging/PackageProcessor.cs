@@ -5,7 +5,6 @@ using System.Linq;
 using System.Management.Automation.Host;
 using Aderant.Build.Logging;
 using Aderant.Build.TeamFoundation;
-using Paket;
 
 namespace Aderant.Build.Packaging {
     public class PackageProcessor {
