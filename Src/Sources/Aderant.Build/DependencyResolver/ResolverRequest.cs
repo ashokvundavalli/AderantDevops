@@ -9,10 +9,10 @@ using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver {
     internal class ResolverRequest {
+        internal List<DependencyState<IDependencyRequirement>> dependencies = new List<DependencyState<IDependencyRequirement>>();
         private readonly ILogger logger;
         private readonly string modulesRootPath;
         private List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
-        private List<DependencyState<IDependencyRequirement>> dependencies = new List<DependencyState<IDependencyRequirement>>();
         private string dependenciesDirectory;
         private IFileSystem2 physicalFileSystem;
 
@@ -164,8 +164,8 @@ namespace Aderant.Build.DependencyResolver {
             stateItem.Resolver = resolver;
         }
 
-        private DependencyState<IDependencyRequirement> GetOrAdd(IDependencyRequirement requirement) {
-            DependencyState<IDependencyRequirement> dependency = dependencies.FirstOrDefault(s => Equals(s.Item, requirement));
+        internal DependencyState<IDependencyRequirement> GetOrAdd(IDependencyRequirement requirement) {
+            DependencyState<IDependencyRequirement> dependency = dependencies.FirstOrDefault(s => Equals(s.Item.Name, requirement.Name));
 
             if (dependency == null) {
                 dependency = new DependencyState<IDependencyRequirement>();

@@ -105,8 +105,29 @@ function ConfigureGit() {
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
 }
 
-InstallPoshGit
-ConfigureGit
+function CheckModuleVersion(){
+# Check for PackageManagement 1.0.0.0
+	Import-Module PackageManagement
+	$packageManagerVerion = (Get-Module PackageManagement).Version
+	if (!$packageManagerVerion) {
+	    Write-Warning "PackageManagement not detected, please install PackageManagement ver. 1.0.0.1 or later"
+	    return $false 
+	}
+	if ($packageManagerVerion.ToString().Equals("1.0.0.0")) {
+	    Write-Warning "PackageManagement Version 1.0.0.0 detected - this version is buggy and may prevent the installation of tools which enhance the developer experience. If you have issues installing tools such as posh-git using Install-Module you can try replacing the version of PackageManagement in C:\Program Files (x86)\WindowsPowerShell\Modules with a newer version from another machine"
+	    return $false 
+	}
+	return $true
+}
 
-Export-ModuleMember -Function Invoke-Build
-Set-Alias -Name bm -Value Invoke-Build -Scope Global
+
+
+if (CheckModuleVersion) { 
+
+	InstallPoshGit
+	ConfigureGit
+	
+	Export-ModuleMember -Function Invoke-Build
+	Set-Alias -Name bm -Value Invoke-Build -Scope Global
+}
+	
