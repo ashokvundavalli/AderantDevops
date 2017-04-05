@@ -1,6 +1,6 @@
 source http://packages.ap.aderant.com/packages/nuget
 source https://www.nuget.org/api/v2
-framework: net46
+framework: >= net35
 
 # For compatibility with VS 2015 Update 2 and 3 we need
 # Microsoft.CodeAnalysis.CSharp 1.2.0.0
