@@ -5,18 +5,12 @@ using Paket;
 
 namespace Aderant.Build.Packaging {
     public class PackageProcessor {
-        private readonly IFileSystem2 fileSystem2;
         private PowerShellLogger logger;
 
-        public PackageProcessor(object host, string repositoryPath)
-            : this(new PhysicalFileSystem(repositoryPath)) {
+        public PackageProcessor(object host) {
             if (host is PSHostUserInterface) {
                 this.logger = new PowerShellLogger(host as PSHostUserInterface);
             }
-        }
-
-        private PackageProcessor(IFileSystem2 fileSystem2) {
-            this.fileSystem2 = fileSystem2;
         }
 
         public void AssociatePackagesToBuild(string[] packages) {
@@ -27,9 +21,9 @@ namespace Aderant.Build.Packaging {
 
                 string name = nuspec.OfficialName;
                 string nuspecVersion = nuspec.Version;
-            }
 
-            commands.LinkArtifact("Drop", TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\packages\MichaelTest\A");
+                commands.LinkArtifact(nuspecVersion, TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\" + name);
+            }
         }
     }
 }
