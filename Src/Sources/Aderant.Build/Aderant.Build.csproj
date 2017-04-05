@@ -122,7 +122,6 @@
     <Compile Include="DependencyResolver\Resolver.cs" />
     <Compile Include="DependencyResolver\ResolverRequest.cs" />
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
-    <Compile Include="BuildPipeline.cs" />
     <Compile Include="Logging\LoggerExtensions.cs" />
     <Compile Include="Packaging\Package.cs" />
     <Compile Include="Packaging\PackageProcessor.cs" />
