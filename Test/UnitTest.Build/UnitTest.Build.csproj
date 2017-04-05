@@ -93,6 +93,7 @@
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="DependencyManifestTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="IntegrationTestBuilderTests.cs" />

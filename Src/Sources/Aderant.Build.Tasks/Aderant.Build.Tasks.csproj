@@ -47,6 +47,12 @@
   <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
   <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
   <ItemGroup>
+    <Reference Include="Cake.Common">
+      <HintPath>..\..\..\packages\Cake.Common\lib\net45\Cake.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Cake.Core">
+      <HintPath>..\..\..\packages\Cake.Core\lib\net45\Cake.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Build.Utilities.v3.5, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Aliases>Utilities_v3_5</Aliases>
       <Private>False</Private>

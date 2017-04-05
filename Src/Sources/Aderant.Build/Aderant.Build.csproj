@@ -122,7 +122,10 @@
     <Compile Include="DependencyResolver\Resolver.cs" />
     <Compile Include="DependencyResolver\ResolverRequest.cs" />
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
+    <Compile Include="BuildPipeline.cs" />
     <Compile Include="Logging\LoggerExtensions.cs" />
+    <Compile Include="Packaging\Package.cs" />
+    <Compile Include="Packaging\PackageProcessor.cs" />
     <Compile Include="Packaging\Parsing\IndendedFileParser.cs" />
     <Compile Include="Packaging\IProductAssemblyResult.cs" />
     <Compile Include="Packaging\NuGet\NuspecTokenProcessor.cs" />
@@ -133,6 +136,7 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
+    <Compile Include="TeamFoundation\TfBuildArtifactType.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -178,6 +182,8 @@
     <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
     <Compile Include="Packaging\NuGet\WellKnownTokens.cs" />
+    <Compile Include="TeamFoundation\TfBuildCommands.cs" />
+    <Compile Include="TeamFoundation\TfBuildMessageData.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />
     <Compile Include="Versioning\FileVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer.cs" />
@@ -281,7 +287,6 @@
     <Compile Include="Commands\WebPackageExtract.cs" />
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
-    <Compile Include="TeamFoundationHelper.cs" />
     <Compile Include="ThirdParty\Lapointe\Attributes\CmdletDescriptionAttribute.cs" />
     <Compile Include="ThirdParty\Lapointe\Attributes\CmdletGroupAttribute.cs" />
     <Compile Include="ThirdParty\Lapointe\Attributes\ExampleAttribute.cs" />

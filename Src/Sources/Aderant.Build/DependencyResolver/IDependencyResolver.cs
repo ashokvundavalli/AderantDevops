@@ -8,6 +8,7 @@ using Aderant.Build.Providers;
 namespace Aderant.Build.DependencyResolver {
     internal interface IDependencyResolver {
         IModuleProvider ModuleFactory { get; set; }
+        bool? ReplicationExplicitlyDisabled { get; set; }
 
         IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module);
 
