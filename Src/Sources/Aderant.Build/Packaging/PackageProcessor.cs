@@ -22,6 +22,8 @@ namespace Aderant.Build.Packaging {
                 string name = nuspec.OfficialName;
                 string nuspecVersion = nuspec.Version;
 
+                System.Diagnostics.Debugger.Launch();
+
                 commands.LinkArtifact(nuspecVersion, TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\" + name);
             }
         }
