@@ -17,11 +17,11 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        public void AssociatePackagesToBuild(string[] packages) {
+        public void AssociatePackagesToBuild(FileInfo[] packages) {
             TfBuildCommands commands = new TfBuildCommands(logger);
 
-            foreach (string package in packages) {
-                using (ZipArchive archive = ZipFile.OpenRead(package)) {
+            foreach (var package in packages) {
+                using (ZipArchive archive = ZipFile.OpenRead(package.FullName)) {
                     ZipArchiveEntry entry = archive.Entries.FirstOrDefault(e => e.FullName.IndexOf(".nuspec", StringComparison.OrdinalIgnoreCase) >= 0);
 
                     if (entry != null) {
