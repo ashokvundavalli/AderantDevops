@@ -86,11 +86,7 @@ function SetGitOptions() {
 }
 
 function CloneRepo([string]$repo, [string]$version) {
-    if (-not $version) {
-        $version = "master"
-    }
-
-    $directory = GetCloneTargetDirectory $repo + $version
+    $directory = GetCloneTargetDirectory ($repo + $version)
   
     [bool]$doClone = $true
 
@@ -113,15 +109,15 @@ function CloneRepo([string]$repo, [string]$version) {
     if ($doClone) {    
         Write-Host "About to clone $repo ($version)"
 
-        cmd /c "$pathToGit" "clone" "$repo" "--branch" "$version" "--single-branch" "$directory" | Out-Host
+        & "$pathToGit" "clone" "$repo" "--branch" "$version" "--single-branch" "$directory" | Out-Host
     } else {
         Push-Location $directory
 
         Write-Host "About to update $repo in $directory ($version)"
         
-        cmd /c "$pathToGit" "reset" "--hard" "HEAD" | Out-Host
-        cmd /c "$pathToGit" "fetch" "--all" | Out-Host
-        cmd /c "$pathToGit" "reset" "--hard" "origin/$version" | Out-Host
+        & "$pathToGit" "reset" "--hard" "HEAD" | Out-Host
+        & "$pathToGit" "fetch" "--all" | Out-Host
+        & "$pathToGit" "reset" "--hard" "origin/$version" | Out-Host
         
         Pop-Location
     }

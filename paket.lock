@@ -3,10 +3,6 @@ NUGET
   remote: http://packages.ap.aderant.com/packages/nuget
     Aderant.Build.Analyzer (1.2.1)
   remote: https://www.nuget.org/api/v2
-    Cake (0.19.3)
-    Cake.Common (0.19.3)
-      Cake.Core (>= 0.19.3)
-    Cake.Core (0.19.3)
     Castle.Core (4.0)
     Microsoft.AspNet.WebApi.Client (5.2.2)
       Newtonsoft.Json (>= 6.0.4)

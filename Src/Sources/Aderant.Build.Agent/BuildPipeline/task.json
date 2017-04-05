@@ -8,7 +8,7 @@
   "version": {
     "Major": 0,
     "Minor": 2,
-    "Patch": 30
+    "Patch": 35
   },
   "demands": [
     "MSBuild"
