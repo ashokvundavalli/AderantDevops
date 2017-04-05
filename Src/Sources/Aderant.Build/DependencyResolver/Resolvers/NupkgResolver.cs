@@ -135,6 +135,10 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether replication explicitly disabled. 
+        /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
+        /// </summary>
         public bool? ReplicationExplicitlyDisabled { get; set; }
     }
 }
