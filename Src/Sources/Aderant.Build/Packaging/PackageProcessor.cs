@@ -22,26 +22,26 @@ namespace Aderant.Build.Packaging {
 
             foreach (string package in packages) {
                 using (ZipArchive archive = ZipFile.OpenRead(package)) {
-                    var entry = archive.Entries.FirstOrDefault(e => e.FullName.IndexOf(".nuspec", StringComparison.OrdinalIgnoreCase) >= 0);
+                    ZipArchiveEntry entry = archive.Entries.FirstOrDefault(e => e.FullName.IndexOf(".nuspec", StringComparison.OrdinalIgnoreCase) >= 0);
 
                     if (entry != null) {
                         using (Stream stream = entry.Open()) {
-                            var reader = new StreamReader(stream);
+                            using (StreamReader reader = new StreamReader(stream)) {
+                                var nuspec = new NuGet.Nuspec(reader.ReadToEnd());
 
-                            NuGet.Nuspec nuspec = new NuGet.Nuspec(reader.ReadToEnd());
+                                string name = nuspec.Id.Value;
+                                string nuspecVersion = nuspec.Version.Value;
 
-                            string name = nuspec.Id.Value;
-                            string nuspecVersion = nuspec.Version.Value;
+                                if (string.IsNullOrWhiteSpace(name)) {
+                                    throw new ArgumentNullException(nameof(name), "Package name is null or whitespace");
+                                }
 
-                            if (string.IsNullOrWhiteSpace(name)) {
-                                throw new ArgumentNullException(nameof(name), "Package name is null or whitespace");
+                                if (string.IsNullOrWhiteSpace(nuspecVersion)) {
+                                    throw new ArgumentNullException(nameof(nuspecVersion), "Package version is null or whitespace");
+                                }
+
+                                commands.LinkArtifact(nuspecVersion, TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\" + name);
                             }
-
-                            if (string.IsNullOrWhiteSpace(nuspecVersion)) {
-                                throw new ArgumentNullException(nameof(nuspecVersion), "Package version is null or whitespace");
-                            }
-
-                            commands.LinkArtifact(nuspecVersion, TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\" + name);
                         }
                     }
                 }
