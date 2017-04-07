@@ -192,7 +192,7 @@
     <Compile Include="IBuildProcessTemplate.cs" />
     <Compile Include="IntegrationTestContext.cs" />
     <Compile Include="IntegrationTestAssemblyConfig.cs" />
-    <Compile Include="Commands\XElementExtensions.cs" />
+    <Compile Include="XElementExtensions.cs" />
     <Compile Include="IntegrationTestConfigBuilder.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
     <Compile Include="NativeUtilities.cs" />
