@@ -5,6 +5,7 @@ using System.Xml.Linq;
 
 namespace Aderant.Build {
     internal static class XElementExtensions {
+
         /// <summary>
         /// Gets the or add element with the specified name. Optionally accepts a node path e.g. foo/bar/baz.
         /// </summary>
