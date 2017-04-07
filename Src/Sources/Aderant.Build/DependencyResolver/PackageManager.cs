@@ -79,7 +79,7 @@ namespace Aderant.Build.DependencyResolver {
                 }
 
                 if (line.IndexOf("source " + BuildConstants.DefaultNuGetServer, StringComparison.OrdinalIgnoreCase) >= 0) {
-                    lines[i] = "source " + BuildConstants.PackageServerUrl;
+                    lines[i] = "source " + BuildConstants.PackageServerUrl + "\nsource " + BuildConstants.DatabasePackageUri;
                     file.Save();
                     break;
                 }

@@ -18,6 +18,8 @@ namespace Aderant.Build {
         
         public static string PackageServerUrl = "http://packages.ap.aderant.com/packages/nuget";
 
+        public static string DatabasePackageUri = @"\\dfs.aderant.com\packages\ExpertDatabase";
+
         public static string NugetServerClearCacheUrl = PackageServerUrl + "/ClearCache()";
 
         public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
