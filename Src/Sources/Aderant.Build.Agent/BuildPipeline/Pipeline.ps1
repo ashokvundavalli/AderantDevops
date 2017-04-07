@@ -86,7 +86,7 @@ function SetGitOptions() {
 }
 
 function CloneRepo([string]$repo, [string]$version) {
-    if (-not $version) {
+    if ([string]::IsNullOrWhiteSpace($version)) {
         $version = "master"
     }
 
@@ -122,7 +122,8 @@ function CloneRepo([string]$repo, [string]$version) {
         cmd /c "$pathToGit" "reset" "--hard" "HEAD" | Out-Host
         cmd /c "$pathToGit" "fetch" "--all" | Out-Host
         cmd /c "$pathToGit" "reset" "--hard" "origin/$version" | Out-Host
-        
+        cmd /c "$pathToGit" "pull" | Out-Host
+
         Pop-Location
     }
 
