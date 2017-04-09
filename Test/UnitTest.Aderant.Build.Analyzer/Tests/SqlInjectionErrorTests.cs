@@ -19,7 +19,10 @@ using System;
 namespace Test {
     public class Program {
         public static void Main() {
-            string test = ""Test"";
+            Foo(""Test"");
+        }
+
+        public void Foo(string test) {
             using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
                 using (var command = connection.CreateCommand()) {
                     command.CommandText = test;
@@ -58,7 +61,7 @@ namespace System.Data.Common {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(10, 21));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -69,7 +72,10 @@ using System;
 namespace Test {
     public class Program {
         public static void Main() {
-            string test = ""Test"";
+            Foo(""Test"");
+        }
+
+        public static void Foo(string test) {
             using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
                 using (var command = connection.CreateCommand()) {
                     command.CommandText = test;
@@ -108,7 +114,7 @@ namespace System.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(10, 21));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -116,20 +122,14 @@ namespace System.Data {
             const string test = @"
 using System;
 
-namespace Aderant.FirmControl.DocuDraft.DataAccess {
-    public class SqlBase {
+namespace Test {
+    public class Program {
         public static void Main() {
-            IssueSqlNoBatch(null, null, null, false, false);
+            Foo(""Test"");
         }
 
-        public static void IssueSqlNoBatch(
-            System.Data.SqlClient.SqlConnection a,
-            System.Text.StringBuilder b,
-            System.Collections.Generic.List<System.Data.SqlClient.SqlParameter> c,
-            bool d,
-            bool e) {
-            string test = ""Test"";
-            using (var connection = Framework.Persistence.FrameworkDb.CreateConnection()) {
+        public static void Foo(string test) {
+            using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
                 using (var command = connection.CreateCommand()) {
                     command.CommandText = test;
                 }
@@ -146,12 +146,12 @@ namespace Aderant.Framework.Persistence {
     }
 
     public class Connection : IDisposable {
-        public System.Data.SqlClient.SqlCommand CreateCommand() {
+        public System.Data.IDbCommand CreateCommand() {
             return new System.Data.SqlClient.SqlCommand();
         }
 
         public void Dispose() {
-            // Empty.
+            // Empty
         }
     }
 }
@@ -159,26 +159,15 @@ namespace Aderant.Framework.Persistence {
 namespace System.Data.SqlClient {
     public class SqlCommand : IDisposable {
         public string CommandText { get; set; }
-        public SqlParameterCollection Parameters { get; set; }
 
         public void Dispose() {
-            // Empty.
-        }
-    }
-
-    public class Sqlparameter {
-        // Empty.
-    }
-
-    public sealed class SqlParameterCollection {
-        public void Add(SqlParameter parameter) {
             // Empty.
         }
     }
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(19, 21));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -189,7 +178,10 @@ using System;
 namespace Test {
     public class Program {
         public static void Main() {
-            string test = ""Test"";
+            Foo("""");
+        }
+
+        public static void Foo(string test) {
             using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
                 using (var command = connection.CreateCommand()) {
                     command.CommandText = ""Test"" + ""Test"" + test;
@@ -228,7 +220,7 @@ namespace System.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(10, 21));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -335,7 +327,10 @@ namespace Some.Test.Foo {
 namespace Test {
     public class Program {
         public static void Main() {
-            string test = """";
+            Foo("""");
+        }
+
+        public static void Foo(string test) {
             var command = new SqlCommand(test);
         }
     }
@@ -348,7 +343,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(6, 27));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(9, 27));
         }
 
         [TestMethod]
@@ -381,7 +376,10 @@ using System.Data.Entity;
 namespace Test {
     public class Program {
         public static void Main() {
-            string test = """";
+            Foo("""");
+        }
+
+        public static void Foo(string test) {
             new Database().SqlQuery<int>(test);
         }
     }
@@ -396,7 +394,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(8, 13));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(11, 13));
         }
 
         [TestMethod]
@@ -431,7 +429,10 @@ namespace System.Data.Entity {
 namespace Test {
     public class Program {
         public static void Main() {
-            string test = """";
+            Foo("""");
+        }
+
+        public static void Foo(string test) {
             var command = new SqlCommand(true ? test : """");
         }
     }
@@ -444,7 +445,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(6, 27));
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(9, 27));
         }
 
         [TestMethod]
@@ -517,6 +518,238 @@ namespace System.Data.Common {
 ";
 
             VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_PropertyResources_LongForm() {
+            const string test = @"
+using System;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            using (var connection = Aderant.Framework.Persistence.FrameworkDb.CreateConnection()) {
+                using (var command = connection.CreateCommand()) {
+                    command.CommandText = TestApp.Properties.Resources.TestString;
+                }
+            }
+        }
+    }
+}
+
+namespace Aderant.Framework.Persistence {
+    public class FrameworkDb {
+        public static Connection CreateConnection() {
+            return new Connection();
+        }
+    }
+
+    public class Connection : IDisposable {
+        public System.Data.Common.DbCommand CreateCommand() {
+            return new System.Data.Common.DbCommand();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace System.Data.Common {
+    public class DbCommand : IDisposable {
+        public string CommandText { get; set; }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_DataImmutable() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public const string TheConst = ""CONSTANT"";
+
+        public static void Main() {
+            string temp0 = TheConst + ""0"";
+            string temp1 = temp0 + ""1"";
+
+            temp1 = temp0 + ""1"";
+
+            string temp2 = true ? temp1 + ""2"" : """";
+
+            new Database().SqlQuery<int>(temp2);
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_DataImmutable_AdditionalAssignment() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public const string TheConst = ""CONSTANT"";
+
+        public static void Main() {
+            Foo(""Foo"");
+        }
+
+        public static Foo(string test) {
+            string temp0 = TheConst + ""0"";
+            string temp1 = temp0 + ""1"";
+
+            temp1 = temp0 + ""1"";
+
+            string temp2 = true ? temp1 + ""2"" : """";
+
+            new Database().SqlQuery<int>(temp2);
+
+            temp2 = test;
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_DataImmutable_MethodReturn() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public const string TheConst = ""CONSTANT"";
+
+        public static void Main() {
+            string temp0 = TheConst + ""0"";
+            string temp1 = temp0 + Bar();
+
+            temp1 = TheConst;
+
+            string temp2 = true ? temp1 + ""2"" : """";
+
+            new Database().SqlQuery<int>(temp2);
+        }
+
+        public static string Bar() {
+            return string.Empty;
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_DataMutable() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public const string TheConst = ""CONSTANT"";
+
+        public static void Main() {
+            Foo(""Foo"");
+        }
+
+        public static void Foo(string temp1) {
+            string temp0 = TheConst + ""0"";
+            temp1 = temp0 + ""1"";
+
+            string temp2 = true ? temp1 + ""2"" : """";
+
+            new Database().SqlQuery<int>(temp2);
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_DataMutable_MethodReturn() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public const string TheConst = ""CONSTANT"";
+
+        public static void Main() {
+            string temp0 = TheConst + ""0"";
+            string temp1 = temp0 + Bar();
+            string temp2 = true ? temp1 + ""2"" : """";
+
+            new Database().SqlQuery<int>(temp2);
+        }
+
+        public static string Bar() {
+            return string.Empty;
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 13));
         }
     }
 }

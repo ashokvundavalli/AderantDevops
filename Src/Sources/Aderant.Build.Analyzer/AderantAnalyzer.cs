@@ -35,8 +35,7 @@ namespace Aderant.Build.Analyzer {
             new PropertyChangedNoStringNonFixableRule(),
             new SetPropertyValueNoStringRule(),
             new SetPropertyValueNoStringNonFixableRule(),
-            new SqlInjectionErrorRule(),
-            new SqlInjectionWarningRule()
+            new SqlInjectionErrorRule()
         };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics {
