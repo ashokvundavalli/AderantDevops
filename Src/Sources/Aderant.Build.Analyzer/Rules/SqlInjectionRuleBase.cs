@@ -109,16 +109,44 @@ namespace Aderant.Build.Analyzer.Rules {
         protected SqlInjectionRuleViolationSeverity EvaluateNodeNewSqlCommandObjectCreationExpression(
             SemanticModel semanticModel,
             ObjectCreationExpressionSyntax node) {
-            // If the node is a 'new SqlCommand' statement with arguments,
-            // determine if the method's first argument contains immutable data.
-            if (node.ToString().StartsWith("new SqlCommand") &&
-                node.ArgumentList.Arguments.Any()) {
-                return IsDataImmutable(semanticModel, node.ArgumentList.Arguments.First().Expression)
-                    ? SqlInjectionRuleViolationSeverity.None
-                    : SqlInjectionRuleViolationSeverity.Error;
+            // Exit early if the node is not creating a new SqlCommand.
+            if (!node.ToString().StartsWith("new SqlCommand")) {
+                return SqlInjectionRuleViolationSeverity.None;
             }
 
-            return SqlInjectionRuleViolationSeverity.None;
+            // If there were no arguments passed to the creation of the object...
+            if (node.ArgumentList == null) {
+                // ...determine if the object was created using the object initializer syntax.
+                var initializationExpression = node.ChildNodes().OfType<InitializerExpressionSyntax>().FirstOrDefault();
+
+                // If no, objected was created using a parameterless constructor and is not vulnerable to injection at this code point.
+                if (initializationExpression == null) {
+                    return SqlInjectionRuleViolationSeverity.None;
+                }
+
+                // Iterate through all child nodes that are assignment exressions.
+                // Expressions can be in any order.
+                foreach (var assignmentChildNode in initializationExpression.ChildNodes().OfType<AssignmentExpressionSyntax>()) {
+                    if (!string.Equals(assignmentChildNode.Left.ToString(), "CommandText")) {
+                        continue;
+                    }
+
+                    // Determine if the data being assigned to the 'CommandText' property is immutable.
+                    return IsDataImmutable(semanticModel, assignmentChildNode.Right)
+                        ? SqlInjectionRuleViolationSeverity.None
+                        : SqlInjectionRuleViolationSeverity.Error;
+                }
+            }
+
+            // If the argument list exists but is empty, there is nothing to inject into.
+            if (!node.ArgumentList.Arguments.Any()) {
+                return SqlInjectionRuleViolationSeverity.None;
+            }
+
+            // Determine if the first argument is immutable.
+            return IsDataImmutable(semanticModel, node.ArgumentList.Arguments.First().Expression)
+                ? SqlInjectionRuleViolationSeverity.None
+                : SqlInjectionRuleViolationSeverity.Error;
         }
 
         /// <summary>

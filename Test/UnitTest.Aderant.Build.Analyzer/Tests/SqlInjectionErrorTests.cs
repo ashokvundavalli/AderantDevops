@@ -369,6 +369,55 @@ namespace Test {
         }
 
         [TestMethod]
+        public void SqlInjectionError_NewSqlCommand_ObjectInitializer_Diagnostic() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Foo("""");
+        }
+
+        public static Foo(string test) {
+            var command = new SqlCommand {
+                CommandText = test,
+                CommandTimeout = 0
+            };
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(11, 27));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommand_ObjectInitializer_NoDiagnostic() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            var command = new SqlCommand {
+                CommandText = """",
+                CommandTimeout = 0
+            };
+
+            command = new SqlCommand {
+                CommandTimeout = 0,
+                CommandText = """"
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
         public void SqlInjectionError_SqlQuery_Error() {
             const string test = @"
 using System.Data.Entity;
