@@ -93,12 +93,12 @@
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="DependencyManifestTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="IntegrationTestBuilderTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="ModuleWorkspaceTests.cs" />
-    <Compile Include="NuspecParserTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />

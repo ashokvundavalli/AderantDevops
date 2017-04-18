@@ -12,30 +12,39 @@ namespace Aderant.Build.DependencyAnalyzer {
         private List<ExpertModule> referencedModules;
         private IGlobalAttributesProvider globalAttributesProvider;
 
+        public bool IsEnabled { get; private set; }
+
+        public bool? DependencyReplicationEnabled { get; set; }
+
         internal DependencyManifest(string moduleName, XDocument manifest) {
             this.ModuleName = moduleName;
             this.manifest = manifest;
 
-            if (manifest.Root != null) {
-                XAttribute attribute = manifest.Root.Attribute("IsEnabled");
-                if (attribute != null) {
-                    bool value;
-                    if (bool.TryParse(attribute.Value, out value)) {
-                        IsEnabled = value;
-                        return;
-                    }
-                }
-            }
-
-            this.IsEnabled = true;
+            Initialize();
         }
 
         public DependencyManifest(string moduleName, Stream stream) {
             ModuleName = moduleName;
             manifest = XDocument.Load(stream, LoadOptions);
+
+            Initialize();
         }
 
-        public bool IsEnabled { get; private set; }
+        private void Initialize() {
+            IsEnabled = true;
+
+            if (manifest.Root != null) {
+                bool isEnabled;
+                if (manifest.Root.TryGetValueFromAttribute("IsEnabled", out isEnabled, true)) {
+                    IsEnabled = isEnabled;
+                }
+
+                bool? dependencyReplicationEnabled;
+                if (manifest.Root.TryGetValueFromAttribute("DependencyReplication", out dependencyReplicationEnabled, null)) {
+                    DependencyReplicationEnabled = dependencyReplicationEnabled;
+                }
+            }
+        }
 
         /// <summary>
         /// The dependency manifest file file.
@@ -43,7 +52,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal const string DependencyManifestFileName = "DependencyManifest.xml";
 
         private const LoadOptions LoadOptions = System.Xml.Linq.LoadOptions.SetBaseUri | System.Xml.Linq.LoadOptions.SetLineInfo;
-      
 
         /// <summary>
         /// Gets the name of the module which this manifest is for.
@@ -75,7 +83,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         var module = ExpertModule.Create(mergedElement);
-                        
+
                         if (referencedModules.Contains(module)) {
                             throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
                         }
@@ -147,7 +155,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static DependencyManifest LoadFromFile(string modulePath) {
             var fs = new PhysicalFileSystem(modulePath);
             string dependencyManifest = fs.GetFiles(modulePath, DependencyManifestFileName, true).FirstOrDefault();
-            
+
             using (Stream stream = fs.OpenFile(dependencyManifest)) {
                 var document = XDocument.Load(stream, LoadOptions);
 

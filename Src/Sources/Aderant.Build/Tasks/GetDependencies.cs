@@ -72,13 +72,11 @@ namespace Aderant.Build.Tasks {
                 request.DirectoryContext = BuildType;
 
                 if (!string.IsNullOrEmpty(ModuleName)) {
-                    Log.LogMessage($"Adding module {ModuleName} in GetDependencies (1)");
                     request.AddModule(ModuleName);
                 }
 
                 if (ModulesInBuild != null) {
                     foreach (ITaskItem module in ModulesInBuild) {
-                        Log.LogMessage($"Adding module {module.ItemSpec} in GetDependencies (2)");
                         request.AddModule(module.ItemSpec, true);
                     }
                 }
