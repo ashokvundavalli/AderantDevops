@@ -13,7 +13,8 @@ namespace Aderant.Build.Analyzer.Rules {
 
         internal override string Title => "SQL Injection Error";
 
-        internal override string MessageFormat => "Database command is vulnerable to SQL injection. Consider parameterizing the command or using the Stored Procedure DSL.";
+        internal override string MessageFormat => "Database command is vulnerable to SQL injection. " +
+                                                  "Consider parameterizing the command or using the Stored Procedure DSL.";
 
         internal override string Description => "Use Stored Procedure DSL.";
 
@@ -25,7 +26,7 @@ namespace Aderant.Build.Analyzer.Rules {
             Severity,
             true,
             Description,
-            helpLinkUri: "http://ttwiki/wiki/index.php?title=Stored_Procedure_DSL");
+            "http://ttwiki/wiki/index.php?title=Stored_Procedure_DSL");
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeNodeCommandText, SyntaxKind.ExpressionStatement);

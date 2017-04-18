@@ -29,9 +29,7 @@ namespace Aderant.Build.Analyzer.SQLInjection.Lists {
         // Syntax:
         // new Tuple<string, string>("<PropertyName>", "<PropertySignatureStringToMatch>")
         public static readonly Tuple<string, string>[] Properties = {
-            new Tuple<string, string>(
-                "Resources",
-                ".Properties.Resources")
+            // Empty.
         };
     }
 }
