@@ -10,7 +10,9 @@ namespace Aderant.Build.TeamFoundation {
     /// </summary>
     internal sealed class TfBuildCommands {
         private ILogger logger;
-        private const string MessagePrefix = "##[";
+
+        private const string MessagePrefix = "##vso[";
+
         private const string MessagePostfix = "]";
 
         /// <summary>

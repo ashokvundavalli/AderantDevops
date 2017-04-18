@@ -39,7 +39,7 @@ namespace Aderant.Build.Packaging {
                                     throw new ArgumentNullException(nameof(nuspecVersion), "Package version is null or whitespace");
                                 }
 
-                                commands.LinkArtifact(nuspecVersion, TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\" + name);
+                                commands.LinkArtifact(name, TfBuildArtifactType.FilePath, $@"\\dfs.aderant.com\PackageRepository\{name}\{nuspecVersion}");
                             }
                         }
                     }
