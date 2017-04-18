@@ -125,10 +125,16 @@ namespace Aderant.Build.Packaging {
                 if (file.IndexOf(BuildInfrastructureWorkingDirectory, StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
                 }
+
+                if (file.IndexOf("packages\\", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    continue;
+                }
+
                 // Ignore files under the obj\ folder which may be created by the compiler
                 if (file.IndexOf("obj\\", StringComparison.OrdinalIgnoreCase) >= 0) {
                     continue;
                 }
+
                 yield return file;
             }
         }

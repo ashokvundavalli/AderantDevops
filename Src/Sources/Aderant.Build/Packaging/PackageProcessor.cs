@@ -26,25 +26,29 @@ namespace Aderant.Build.Packaging {
                     if (entry != null) {
                         using (Stream stream = entry.Open()) {
                             using (StreamReader reader = new StreamReader(stream)) {
-                                var nuspec = new NuGet.Nuspec(reader.ReadToEnd());
-
-                                string name = nuspec.Id.Value;
-                                string nuspecVersion = nuspec.Version.Value;
-
-                                if (string.IsNullOrWhiteSpace(name)) {
-                                    throw new ArgumentNullException(nameof(name), "Package name is null or whitespace");
-                                }
-
-                                if (string.IsNullOrWhiteSpace(nuspecVersion)) {
-                                    throw new ArgumentNullException(nameof(nuspecVersion), "Package version is null or whitespace");
-                                }
-
-                                commands.LinkArtifact(name, TfBuildArtifactType.FilePath, $@"\\dfs.aderant.com\PackageRepository\{name}\{nuspecVersion}");
+                                AssociatePackageToBuild(reader.ReadToEnd(), commands);
                             }
                         }
                     }
                 }
             }
+        }
+
+        internal void AssociatePackageToBuild(string nuspecText, TfBuildCommands commands) {
+            var nuspec = new NuGet.Nuspec(nuspecText);
+
+            string name = nuspec.Id.Value;
+            string nuspecVersion = nuspec.Version.Value;
+
+            if (string.IsNullOrWhiteSpace(name)) {
+                throw new ArgumentNullException(nameof(name), "Package name is null or whitespace");
+            }
+
+            if (string.IsNullOrWhiteSpace(nuspecVersion)) {
+                throw new ArgumentNullException(nameof(nuspecVersion), "Package version is null or whitespace");
+            }
+
+            commands.LinkArtifact(name, TfBuildArtifactType.FilePath, $@"\\dfs.aderant.com\PackageRepository\{name}\{nuspecVersion}");
         }
     }
 }
