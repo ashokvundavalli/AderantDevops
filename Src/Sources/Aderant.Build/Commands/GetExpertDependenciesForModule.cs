@@ -71,7 +71,6 @@ namespace Aderant.Build.Commands {
             }
 
             if (!string.IsNullOrEmpty(ModuleName)) {
-                Logger.Info($"Adding module {ModuleName} in GetExpertDependenciesForModule");
                 request.AddModule(ModuleName);
             }
 

@@ -84,7 +84,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                         }
                     }
 
-                    if (resolverRequest.RequiresReplication) {
+                    if (resolverRequest.RequiresThirdPartyReplication) {
+                        if (resolverRequest.ReplicationExplicitlyDisabled) {
+                            continue;
+                        }
+
                         ReplicateToDependenciesDirectory(resolverRequest, fileSystem, requirement);
                     }
                 }
@@ -107,10 +111,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
-
                     string webModuleName = requirement.Name.Replace("Aderant", "Web");
 
-                    if (fileSystem.FileExists(Path.Combine(dir, webModuleName + ".zip"))){
+                    if (fileSystem.FileExists(Path.Combine(dir, webModuleName + ".zip"))) {
                         //if web zip exists, extract it.
                         logger.Info("Extracting web package archive {0}", webModuleName);
                         var newDir = Path.Combine(dir, webModuleName);
@@ -131,5 +134,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether replication explicitly disabled. 
+        /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
+        /// </summary>
+        public bool? ReplicationExplicitlyDisabled { get; set; }
     }
 }

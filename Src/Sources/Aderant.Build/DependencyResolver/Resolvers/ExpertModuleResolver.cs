@@ -57,6 +57,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 DependencyManifest manifest;
                 using (stream) {
                     manifest = new DependencyManifest(module.Name, stream);
+
+                    bool? dependencyReplicationEnabled = manifest.DependencyReplicationEnabled;
+                    if (dependencyReplicationEnabled.HasValue) {
+                        ReplicationExplicitlyDisabled = !dependencyReplicationEnabled.Value;
+                    }
                 }
 
                 manifest.GlobalAttributesProvider = ModuleFactory as IGlobalAttributesProvider;
@@ -64,6 +69,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 foreach (var reference in manifest.ReferencedModules) {
                     yield return DependencyRequirement.Create(reference);
                 }
+
             } else {
                 resolverRequest.Logger.Info("No DependencyManifest found");
             }
@@ -149,5 +155,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         public void AddDependencySource(string dropPath, string type) {
             sources.Add(new DependencySource(dropPath, type));
         }
+
+        public bool? ReplicationExplicitlyDisabled { get; set; }
     }
 }

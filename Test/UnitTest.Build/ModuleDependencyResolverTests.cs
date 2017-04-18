@@ -90,7 +90,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        public async Task ModuleDependencyResolver_gets_subset_from_drop() {
+        public void ModuleDependencyResolver_gets_subset_from_drop() {
             var dependencyManifest1 = new DependencyManifest("Module1", XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>

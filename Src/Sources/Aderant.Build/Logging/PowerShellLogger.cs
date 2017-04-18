@@ -7,14 +7,18 @@ namespace Aderant.Build.Logging {
     /// Allows internal components to write to a PowerShell host.
     /// </summary>
     internal class PowerShellLogger : ILogger {
-        private PSHost host;
+        private PSHostUserInterface host;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PowerShellLogger"/> class.
         /// </summary>
         /// <param name="host">The host.</param>
-        public PowerShellLogger(PSHost host) {
-            this.host = host;
+        public PowerShellLogger(PSHost host) : this(host.UI) {
+            
+        }
+
+        public PowerShellLogger(PSHostUserInterface userInterface) {
+            this.host = userInterface;
         }
 
         /// <summary>
@@ -23,7 +27,7 @@ namespace Aderant.Build.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
         public void Debug(string message, params object[] args) {
-            host.UI.WriteDebugLine(FormatMessage(message, args));
+            host.WriteDebugLine(FormatMessage(message, args));
         }
 
         /// <summary>
@@ -32,7 +36,7 @@ namespace Aderant.Build.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
         public void Info(string message, params object[] args) {
-            host.UI.WriteLine(FormatMessage(message, args));
+            host.WriteLine(FormatMessage(message, args));
         }
 
         /// <summary>
@@ -41,7 +45,7 @@ namespace Aderant.Build.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The args.</param>
         public void Warning(string message, params object[] args) {
-            host.UI.WriteWarningLine(FormatMessage(message, args));
+            host.WriteWarningLine(FormatMessage(message, args));
         }
 
         /// <summary>
@@ -50,7 +54,7 @@ namespace Aderant.Build.Logging {
         /// <param name="message">The message.</param>
         /// <param name="args">The arguments.</param>
         public void Error(string message, params object[] args) {
-            host.UI.WriteErrorLine(FormatMessage(message, args));
+            host.WriteErrorLine(FormatMessage(message, args));
         }
 
         private static string FormatMessage(string message, object[] args) {

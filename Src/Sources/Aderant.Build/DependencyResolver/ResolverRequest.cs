@@ -52,7 +52,7 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Gets a value determining if third party packages should be replicated.
         /// </summary>
-        public bool RequiresReplication {
+        public bool RequiresThirdPartyReplication {
             get { return modules.Any(s => s.RequiresThirdPartyReplication); }
         }
 
@@ -81,6 +81,12 @@ namespace Aderant.Build.DependencyResolver {
         ///   <c>true</c> if update; otherwise, <c>false</c>.
         /// </value>
         public bool Update { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether replication explicitly disabled. 
+        /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
+        /// </summary>
+        public bool ReplicationExplicitlyDisabled { get; set; }
 
         /// <summary>
         /// Sets the dependencies directory to place dependencies into.
@@ -123,6 +129,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public virtual void AddModule(string module, bool isPartOfBuildChain = false) {
             Logger.Info($"Adding module {module}");
+
             if (Path.IsPathRooted(module)) {
                 module = Path.GetFileName(module);
             }
