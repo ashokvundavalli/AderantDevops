@@ -118,11 +118,12 @@ function CloneRepo([string]$repo, [string]$version) {
         Push-Location $directory
 
         Write-Host "About to update $repo in $directory ($version)"
-        
-        cmd /c "$pathToGit" "reset" "--hard" "HEAD" | Out-Host
-        cmd /c "$pathToGit" "fetch" "--all" | Out-Host
-        cmd /c "$pathToGit" "reset" "--hard" "origin/$version" | Out-Host
-        cmd /c "$pathToGit" "pull" | Out-Host
+
+        & "$pathToGit" "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*" # Clone may have been to depth 1, so wire up all branches
+        & "$pathToGit" "reset" "--hard" "HEAD" | Out-Host
+        & "$pathToGit" "fetch" "--all" "-v" "--progress" | Out-Host
+        & "$pathToGit" "reset" "--hard" "origin/$version" | Out-Host
+        & "$pathToGit" "pull" | Out-Host
 
         Pop-Location
     }
