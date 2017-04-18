@@ -16,6 +16,11 @@ namespace Aderant.Build.Packaging {
             }
         }
 
+        public void UpdateBuildNumber(string buildNumber) {
+            TfBuildCommands commands = new TfBuildCommands(logger);
+            commands.UpdateBuildNumber(buildNumber);
+        }
+
         public void AssociatePackagesToBuild(FileInfo[] packages) {
             TfBuildCommands commands = new TfBuildCommands(logger);
 
