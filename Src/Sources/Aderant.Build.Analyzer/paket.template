@@ -1,13 +1,13 @@
 ﻿id Aderant.Build.Analyzer
 type project
-Version 1.2.2
+Version 1.2.3
 Authors Aderant
 Description "Provides code fixes and refactorings for C# projects."
 
 files
     bin\Aderant.Build.Analyzer.dll ==> analyzers\dotnet\cs
     bin\Aderant.Build.Analyzer.pdb ==> analyzers\dotnet\cs
-	
-	TSLint\Rules\*.js ==> tslint\rules
-	TSLint\tslint.json ==> tslint
-	TSLint\node_modules ==> tslint\node_modules
+
+    TSLint\Rules\*.js ==> tslint\rules
+    TSLint\tslint.json ==> tslint
+    TSLint\node_modules ==> tslint\node_modules

@@ -418,6 +418,64 @@ namespace Test {
         }
 
         [TestMethod]
+        public void SqlInjectionError_NewSqlCommand_Constructor_Diagnostic() {
+            const string test = @"
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+    }
+
+    internal class Receive {
+        internal SqlCommand Command { get; }
+
+        internal Receive(string sourcePath, int timeout, SqlConnection connection) {
+            Command = new SqlCommand(sourcePath, connection) { CommandType = CommandType.StoredProcedure };
+            Command.Parameters.Add(new SqlParameter(""@eventSourcePath"", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Input, Value = sourcePath });
+            Command.Parameters.Add(new SqlParameter(""@message"", SqlDbType.Xml) { Direction = ParameterDirection.Output });
+            Command.Parameters.Add(new SqlParameter(""@timeout"", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = timeout });
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(16, 23));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommand_Constructor_NoDiagnostic() {
+            const string test = @"
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+    }
+
+    internal class Receive {
+        internal SqlCommand Command { get; }
+
+        internal Receive(string sourcePath, int timeout, SqlConnection connection) {
+            Command = new SqlCommand(""Messaging.GetNextEventFromQueue"", connection) { CommandType = CommandType.StoredProcedure };
+            Command.Parameters.Add(new SqlParameter(""@eventSourcePath"", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Input, Value = sourcePath });
+            Command.Parameters.Add(new SqlParameter(""@message"", SqlDbType.Xml) { Direction = ParameterDirection.Output });
+            Command.Parameters.Add(new SqlParameter(""@timeout"", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = timeout });
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
         public void SqlInjectionError_SqlQuery_Error() {
             const string test = @"
 using System.Data.Entity;

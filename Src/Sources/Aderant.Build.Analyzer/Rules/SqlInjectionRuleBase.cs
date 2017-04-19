@@ -156,21 +156,21 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="variable">The variable.</param>
-        /// <param name="methodDeclaration">The method declaration.</param>
+        /// <param name="baseMethodDeclaration">The base method declaration.</param>
         private static bool EvaluateVariable(
             SemanticModel semanticModel,
             SimpleNameSyntax variable,
-            MethodDeclarationSyntax methodDeclaration = null) {
+            BaseMethodDeclarationSyntax baseMethodDeclaration = null) {
             if (IsExpressionNodeConstantString(semanticModel, variable)) {
                 return true;
             }
 
             // Get the parent method of the variable.
-            if (methodDeclaration == null) {
-                methodDeclaration = GetParentMethodExpression(variable);
+            if (baseMethodDeclaration == null) {
+                baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(variable);
 
                 // Scope outside of a method is not supported.
-                if (methodDeclaration == null) {
+                if (baseMethodDeclaration == null) {
                     return false;
                 }
             }
@@ -188,7 +188,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // Iterates through all assignment expressions (of both types) returning only the most recent of each.
             GetLatestDataAssignmentExpressions(
                 variable,
-                methodDeclaration,
+                baseMethodDeclaration,
                 out latestEqualsValueExpression,
                 out latestAssignmentExpression);
 
@@ -196,7 +196,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // then retrieves the child nodes from that object.
             IEnumerable<SyntaxNode> latestChildren = GetDataAssignmentLatestChildNodes(
                 variable,
-                methodDeclaration,
+                baseMethodDeclaration,
                 latestEqualsValueExpression,
                 latestAssignmentExpression);
 
@@ -212,7 +212,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 // If the data being assigned to the target variable, is also a variable...
                 if (childVariable != null) {
                     // ...recursively repeat this process for that variable, moving up the syntax tree.
-                    if (!EvaluateVariable(semanticModel, childVariable, methodDeclaration)) {
+                    if (!EvaluateVariable(semanticModel, childVariable, baseMethodDeclaration)) {
                         return false;
                     }
                 } else {
@@ -294,8 +294,9 @@ namespace Aderant.Build.Analyzer.Rules {
         /// Gets the method expression for the parent method of the specified node.
         /// </summary>
         /// <param name="node">The node.</param>
-        private static MethodDeclarationSyntax GetParentMethodExpression(SyntaxNode node) {
-            return node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+        private static T GetNodeParentExpressionOfType<T>(SyntaxNode node)
+            where T : SyntaxNode {
+            return node.Ancestors().OfType<T>().FirstOrDefault();
         }
 
         /// <summary>
@@ -380,20 +381,20 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="context">The context.</param>
         protected static bool IsAnalysisSuppressed(SyntaxNodeAnalysisContext context) {
             // Get the parent method of the node.
-            MethodDeclarationSyntax methodDeclaration = GetParentMethodExpression(context.Node);
+            var baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(context.Node);
 
-            // Scope outside of a method is not supported.
-            if (methodDeclaration == null) {
-                return false;
-            }
+            return baseMethodDeclaration != null &&
+                   IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists);
+        }
 
+        private static bool IsAnalysisSuppressed(IEnumerable<AttributeListSyntax> attributeLists) {
             // Attributes can be stacked...
             // [Attribute()]
             // [Attribute()]
             // ...and concatenated...
             // [Attribute(), Attribute()]
             // The below double loop handles both cases, including mix & match.
-            foreach (AttributeListSyntax attributeList in methodDeclaration.ChildNodes().OfType<AttributeListSyntax>()) {
+            foreach (AttributeListSyntax attributeList in attributeLists) {
                 foreach (AttributeSyntax attribute in attributeList.Attributes) {
                     string name = attribute.Name.ToString();
 
@@ -424,17 +425,17 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        /// <param name="methodDeclaration">The method declaration.</param>
+        /// <param name="baseMethodDeclaration">The base method declaration.</param>
         private static bool IsDataImmutable(
             SemanticModel semanticModel,
             SyntaxNode node,
-            MethodDeclarationSyntax methodDeclaration = null) {
+            BaseMethodDeclarationSyntax baseMethodDeclaration = null) {
             // Get the parent method for this node.
-            if (methodDeclaration == null) {
-                methodDeclaration = GetParentMethodExpression(node);
+            if (baseMethodDeclaration == null) {
+                baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
 
                 // If the node is not within a method, use case is out of scope.
-                if (methodDeclaration == null) {
+                if (baseMethodDeclaration == null) {
                     return false;
                 }
             }
@@ -468,8 +469,8 @@ namespace Aderant.Build.Analyzer.Rules {
                     }
 
                     // Recursively determine if both sides of the expression contain immutable data.
-                    if (!IsDataImmutable(semanticModel, addExpression.Left, methodDeclaration) ||
-                        !IsDataImmutable(semanticModel, addExpression.Right, methodDeclaration)) {
+                    if (!IsDataImmutable(semanticModel, addExpression.Left, baseMethodDeclaration) ||
+                        !IsDataImmutable(semanticModel, addExpression.Right, baseMethodDeclaration)) {
                         return false;
                     }
 
@@ -489,7 +490,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
                 if (identifierName != null) {
                     // Traverse the syntax tree to determine if the data assigned to the variable is immutable.
-                    if (EvaluateVariable(semanticModel, identifierName, methodDeclaration)) {
+                    if (EvaluateVariable(semanticModel, identifierName, baseMethodDeclaration)) {
                         continue;
                     }
 
@@ -501,8 +502,8 @@ namespace Aderant.Build.Analyzer.Rules {
 
                 // Evaluate both the WhenTrue and WhenFalse expressions.
                 if (conditionalExpression == null ||
-                    !IsDataImmutable(semanticModel, conditionalExpression.WhenTrue, methodDeclaration) ||
-                    !IsDataImmutable(semanticModel, conditionalExpression.WhenFalse, methodDeclaration)) {
+                    !IsDataImmutable(semanticModel, conditionalExpression.WhenTrue, baseMethodDeclaration) ||
+                    !IsDataImmutable(semanticModel, conditionalExpression.WhenFalse, baseMethodDeclaration)) {
                     return false;
                 }
             }
