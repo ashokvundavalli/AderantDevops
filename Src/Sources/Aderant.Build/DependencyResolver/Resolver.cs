@@ -59,6 +59,10 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
+            if (resolverRequest.Modules.All(m => string.Equals(m.Name, "Build.Infrastructure"))) {
+                return;
+            }
+
             ExpertModule module = null;
 
             if (resolverRequest.ModuleFactory != null) {
