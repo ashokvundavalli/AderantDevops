@@ -58,7 +58,14 @@ namespace Aderant.Build.Packaging {
             // to that original path as the final path to delete. 
             // This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
             // set the actual final folder as the name.
-            commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\");
+            // Aderant.Database.Backup
+            if (name.Equals("Aderant.Database.Backup")) {
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, BuildConstants.DatabasePackageUri);
+            } else {
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, @"\\dfs.aderant.com\PackageRepository\");
+            }
+
+            
         }
     }
 }
