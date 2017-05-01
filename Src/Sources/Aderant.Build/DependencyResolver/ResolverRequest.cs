@@ -121,7 +121,7 @@ namespace Aderant.Build.DependencyResolver {
 
             ExpertModule module = GetOrAdd(requirement).Module;
             if (module == null) {
-                throw new InvalidOperationException(string.Format("Resolver error. Unable to determine locate module directory for requirement {0}.", requirement.Name));
+                throw new InvalidOperationException(string.Format("Resolver error. Unable to determine the directory to place requirement {0} into.", requirement.Name));
             }
 
             return Path.Combine(GetModuleDirectory(module), "Dependencies");

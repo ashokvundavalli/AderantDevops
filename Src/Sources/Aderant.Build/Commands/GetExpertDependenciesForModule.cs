@@ -16,6 +16,10 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 1)]
         public string ModulesRootPath { get; set; }
 
+        /// <summary>
+        /// Gets or sets the directory to place the dependencies into.
+        /// </summary>
+        /// <value>The dependencies directory.</value>
         [Parameter(Mandatory = false, Position = 2)]
         public string DependenciesDirectory { get; set; }
 

@@ -468,6 +468,7 @@ doc.Save(File);
       ModulesRootPath="$(SolutionDirectoryPath)"
       ModuleName="$(ModuleName)"
       BuildType="ContinuousIntegration"
+      DependenciesDirectory="$(DependenciesDirectory)"
       DropPath="$(BaseDropDirectory)" />
 
     <BuildStep
