@@ -1030,7 +1030,7 @@ doc.Save(File);
                    Query="configuration/runtime"
                    Value="$(UnitTestAppConfigText)" />
 
-    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+    <MakeSymlink Condition="'@(TestAssemblies)' != '' And Exists('$(SolutionDirectoryPath)Dependencies')"
                  Link="$(BinTestDirectory)Dependencies"
                  Target="$(SolutionDirectoryPath)Dependencies" />
 
