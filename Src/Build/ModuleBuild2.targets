@@ -33,8 +33,7 @@
 
     <!--Custom build for a module-->
     <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(SolutionRoot)</SolutionDirectoryPath>
-    <BuildScriptsDirectory Condition="('$(IsCustomBuild)' == 'true')">$(SolutionDirectoryPath)BuildScripts\</BuildScriptsDirectory>
-
+    
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
@@ -231,7 +230,7 @@ doc.Save(File);
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
-    <CallTarget Targets="SeedPackagePacking" />
+    <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipWorkflowTemplateSource" />
     <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->

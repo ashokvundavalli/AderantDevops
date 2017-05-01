@@ -9,8 +9,8 @@
              Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="FileUpdate2"
-           AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-           Condition="'$(IsCustomBuild)' != 'true'" />
+             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
+             Condition="'$(IsCustomBuild)' != 'true'" />
 
   <UsingTask TaskName="ProjectConformityCheck"
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
@@ -73,7 +73,7 @@
   <!--
       Creates modified version of CommonAssemblyInfo.cs without touching the original file
   -->
-  <Target Name="CommonBuildUpdateAssemblyInfo">
+  <Target Name="CommonBuildUpdateAssemblyInfo" Condition="'$(IsCustomBuild)' != 'true'">
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
       <OriginalAssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
@@ -112,7 +112,7 @@
     Updates the product splash screen without touching the original file
   -->
   <Target Name="CommonBuildUpdateSplashscreen"
-          Condition="'$(OutputType)' == 'WinExe' Or '$(OutputType)' == 'winexe'"
+          Condition="'$(IsCustomBuild)' != 'true' And ('$(OutputType)' == 'WinExe' Or '$(OutputType)' == 'winexe')"
           BeforeTargets="BeforeResolveReferences;CoreBuild">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group 
@@ -180,8 +180,13 @@
       <Resource Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsResource)' == 'true'" />
       <SplashScreen Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsSplashScreen)' == 'true'" />
     </ItemGroup>
-  </Target>
+  </Target>  
 
+  
+  <PropertyGroup>
+	<GetReferenceAssemblyPathsDependsOn>$(GetReferenceAssemblyPathsDependsOn);SetupAssemblySearchPaths</GetReferenceAssemblyPathsDependsOn>
+  </PropertyGroup>
+  
   
   <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
 
@@ -217,6 +222,11 @@
         @(PackageDirectories);
       </AssemblySearchPaths>
     </PropertyGroup>
+	
+	<!--Adding additional dependencies searching locations. -->
+	<PropertyGroup>
+        <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AssemblySearchPaths);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures</AssemblySearchPaths>
+	</PropertyGroup>	
     
   </Target>
   
@@ -231,7 +241,7 @@
 
   
   <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild" 
-          Condition="'$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
+          Condition="'$(IsCustomBuild)' != 'true' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
     <OrmMappingValidator
       Content="@(Content)"
@@ -243,7 +253,8 @@
   </Target>
 
   
-  <Target Name="ApplyCodeAnalzyer" 
+  <Target Name="ApplyCodeAnalzyer"
+		  Condition="'$(IsCustomBuild)' != 'true'"
           BeforeTargets="CoreCompile;ResolveAssemblyReferences">
     
     <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" />
@@ -320,6 +331,19 @@
     
     <RemoveDir Directories="@(Directories)" Condition="'%(Files)' == '0'" />
    
+  </Target>
+  
+  <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
+  <PropertyGroup>
+	<AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
+  </PropertyGroup>  
+  
+  <Target Name="CopyOutputs" AfterTargets="Build" Condition="'$(IsCustomBuild)' == 'true'">
+    <ItemGroup>
+      <SourceFiles Include="$(OutDir)\*" />
+    </ItemGroup>
+    
+    <Copy SourceFiles="@(SourceFiles)" DestinationFolder="$(AlternativeOutputDirectory)" />
   </Target>
   
 </Project>

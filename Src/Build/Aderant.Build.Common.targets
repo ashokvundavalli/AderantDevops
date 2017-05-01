@@ -18,13 +18,14 @@
     <IsDesktopBuild Condition="'$(IsDesktopBuild)' == ''">true</IsDesktopBuild>
     
     <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' == ''">$(MSBuildThisFileDirectory)\</BuildScriptsDirectory>
-    <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != ''">$([System.IO.Path]::GetFullPath('$(BuildScriptsDirectory)'))</BuildScriptsDirectory>
+    <BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != ''">$([System.IO.Path]::GetFullPath('$(BuildScriptsDirectory)'))</BuildScriptsDirectory>	
+    <!-- Ensures the ending '\' -->
+  	<BuildScriptsDirectory Condition="'$(BuildScriptsDirectory)' != '' and !HasTrailingSlash('$(BuildScriptsDirectory)')">$(BuildScriptsDirectory)\</BuildScriptsDirectory>
     
     <!-- Inject per CSharp project overrides. This target is imported once for each CSharp project and allows us access to project level variables -->
-    <CustomAfterMicrosoftCSharpTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
+    <CustomAfterMicrosoftCSharpTargets>$(BuildScriptsDirectory)Aderant.CSharp.targets</CustomAfterMicrosoftCSharpTargets>
     <CustomAfterMicrosoftCommonTargets Condition="'$(IsCustomBuild)' != 'true'">$(BuildScriptsDirectory)Aderant.CustomAfterMicrosoftCommon.targets</CustomAfterMicrosoftCommonTargets>
-    
-    <BuildScriptsDirectory Condition="!HasTrailingSlash('$(BuildScriptsDirectory)')">$(BuildScriptsDirectory)\</BuildScriptsDirectory>
+        
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
     <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
 
