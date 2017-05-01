@@ -17,30 +17,34 @@ namespace Aderant.Build.Commands {
         public string ModulesRootPath { get; set; }
 
         [Parameter(Mandatory = false, Position = 2)]
+        public string DependenciesDirectory { get; set; }
+
+        [Parameter(Mandatory = false, Position = 3)]
         public string DropPath { get; set; }
 
-        [Parameter(Mandatory = true, Position = 3)]
+        [Parameter(Mandatory = true, Position = 4)]
         public string BuildScriptsDirectory { get; set; }
 
-        [Parameter(Mandatory = false, Position = 4)]
+        [Parameter(Mandatory = false, Position = 5)]
         public SwitchParameter Update { get; set; }
 
-        [Parameter(Mandatory = false, Position = 5)]
+        [Parameter(Mandatory = false, Position = 6)]
         public SwitchParameter ShowOutdated { get; set; }
 
-        [Parameter(Mandatory = false, Position = 6)]
+        [Parameter(Mandatory = false, Position = 7)]
         public SwitchParameter Force { get; set; }
 
         // This should be removed when we are fully migrated over. This exists for backwards compatibility with other versions of the build tools.
-        [Parameter(Mandatory = false, Position = 7, DontShow = true)]
+        [Parameter(Mandatory = false, Position = 8, DontShow = true)]
         [Obsolete]
         public SwitchParameter UseThirdPartyFromDrop { get; set; }
 
-        [Parameter(Mandatory = false, Position = 8, HelpMessage = "Specifies the path the product manifest.")]
+        [Parameter(Mandatory = false, Position = 9, HelpMessage = "Specifies the path the product manifest.")]
         public string ProductManifestPath { get; set; }
 
         protected override void Process() {
-            Logger.Info($"Module set to {ModuleName} in GetExpertDependenciesForModule");
+            Logger.Info($"Module set to {ModuleName}");
+
             if (string.IsNullOrEmpty(ModuleName)) {
                 ModuleName = ParameterHelper.GetCurrentModuleName(null, this.SessionState);
             }
@@ -65,13 +69,16 @@ namespace Aderant.Build.Commands {
                 Update = Update
             };
 
-
             if (productManifest != null) {
                 request.ModuleFactory = productManifest;
             }
 
             if (!string.IsNullOrEmpty(ModuleName)) {
                 request.AddModule(ModuleName);
+            }
+
+            if (!string.IsNullOrEmpty(DependenciesDirectory)) {
+                request.SetDependenciesDirectory(DependenciesDirectory);
             }
 
             ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger));
