@@ -9,55 +9,44 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
     internal abstract class SqlInjectionRuleBase : RuleBase {
-        private const int DefaultCapacity = 25;
-
-        protected enum SqlInjectionRuleViolationSeverity {
-            Invalid = -1,
-            None,
-            Info,
-            Warning,
-            Error,
-            Max
-        }
-
         /// <summary>
         /// Evaluates the node 'command text expression statement'.
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        protected SqlInjectionRuleViolationSeverity EvaluateNodeCommandTextExpressionStatement(
+        protected RuleViolationSeverityEnum EvaluateNodeCommandTextExpressionStatement(
             SemanticModel semanticModel,
             ExpressionStatementSyntax node) {
             // Exit early if it's not actually an 'assignment' expression.
             var assignmentExpression = node.Expression as AssignmentExpressionSyntax;
 
             if (assignmentExpression == null) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Exit early if the assignment expression is not for something called 'CommandText'.
             var memberAccessExpression = assignmentExpression.Left as MemberAccessExpressionSyntax;
 
             if (memberAccessExpression?.Name.ToString() != "CommandText") {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Get detailed information regarding the property being accessed.
-            var propertySymbol = ModelExtensions.GetSymbolInfo(semanticModel, memberAccessExpression).Symbol as IPropertySymbol;
+            var propertySymbol = semanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IPropertySymbol;
 
             if (propertySymbol == null) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // If the current property is not blacklisted.
             if (!SQLInjectionBlacklists.Properties.Any(value => propertySymbol.ToString().Equals(value.Item2))) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Determine if the data being assigned to the property is immutable.
             return IsDataImmutable(semanticModel, assignmentExpression.Right)
-                ? SqlInjectionRuleViolationSeverity.None
-                : SqlInjectionRuleViolationSeverity.Error;
+                ? RuleViolationSeverityEnum.None
+                : RuleViolationSeverityEnum.Error;
         }
 
         /// <summary>
@@ -65,19 +54,19 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        protected SqlInjectionRuleViolationSeverity EvaluateNodeDatabaseSqlQuery(
+        protected RuleViolationSeverityEnum EvaluateNodeDatabaseSqlQuery(
             SemanticModel semanticModel,
             InvocationExpressionSyntax node) {
             // Exit early if it's not actually a 'member access' expression, or is not some form of 'SqlQuery'.
             var expression = node.Expression as MemberAccessExpressionSyntax;
 
             if (expression == null) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // If the method being invoked is not blacklisted (basic check).
             if (!SQLInjectionBlacklists.Methods.Any(value => expression.Name.ToString().StartsWith(value.Item1))) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Get detailed information regarding the method being invoked.
@@ -85,20 +74,20 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Exit early if no method is found.
             if (methodSymbol == null) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // If the method being invoked is not blacklisted (detailed check).
             // Or no arguments are passed to the method.
             if (!SQLInjectionBlacklists.Methods.Any(value => methodSymbol.ConstructedFrom.ToString().StartsWith(value.Item2)) ||
                 !node.ArgumentList.Arguments.Any()) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Determine if the method's first argument contains immutable data.
             return IsDataImmutable(semanticModel, node.ArgumentList.Arguments.First().Expression)
-                ? SqlInjectionRuleViolationSeverity.None
-                : SqlInjectionRuleViolationSeverity.Error;
+                ? RuleViolationSeverityEnum.None
+                : RuleViolationSeverityEnum.Error;
         }
 
         /// <summary>
@@ -106,12 +95,12 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        protected SqlInjectionRuleViolationSeverity EvaluateNodeNewSqlCommandObjectCreationExpression(
+        protected RuleViolationSeverityEnum EvaluateNodeNewSqlCommandObjectCreationExpression(
             SemanticModel semanticModel,
             ObjectCreationExpressionSyntax node) {
             // Exit early if the node is not creating a new SqlCommand.
             if (!node.ToString().StartsWith("new SqlCommand")) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // If there were no arguments passed to the creation of the object...
@@ -121,7 +110,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
                 // If no, objected was created using a parameterless constructor and is not vulnerable to injection at this code point.
                 if (initializationExpression == null) {
-                    return SqlInjectionRuleViolationSeverity.None;
+                    return RuleViolationSeverityEnum.None;
                 }
 
                 // Iterate through all child nodes that are assignment exressions.
@@ -133,20 +122,20 @@ namespace Aderant.Build.Analyzer.Rules {
 
                     // Determine if the data being assigned to the 'CommandText' property is immutable.
                     return IsDataImmutable(semanticModel, assignmentChildNode.Right)
-                        ? SqlInjectionRuleViolationSeverity.None
-                        : SqlInjectionRuleViolationSeverity.Error;
+                        ? RuleViolationSeverityEnum.None
+                        : RuleViolationSeverityEnum.Error;
                 }
             }
 
             // If the argument list exists but is empty, there is nothing to inject into.
             if (!node.ArgumentList.Arguments.Any()) {
-                return SqlInjectionRuleViolationSeverity.None;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Determine if the first argument is immutable.
             return IsDataImmutable(semanticModel, node.ArgumentList.Arguments.First().Expression)
-                ? SqlInjectionRuleViolationSeverity.None
-                : SqlInjectionRuleViolationSeverity.Error;
+                ? RuleViolationSeverityEnum.None
+                : RuleViolationSeverityEnum.Error;
         }
 
         /// <summary>
@@ -254,52 +243,6 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         /// <summary>
-        /// Recursively iterates through all child nodes,
-        /// adding any expressions of the specified type to the referenced list.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="expressionList">The invocation expression list.</param>
-        /// <param name="node">The node.</param>
-        /// <param name="stopNode">
-        /// Acts as a shortcut in the syntax tree recursive search method.
-        /// Searching will stop when this node is found in the tree.
-        /// </param>
-        /// <returns>True if the 'StopNode' has been found, otherwise False.</returns>
-        private static bool GetExpressionsFromChildNodes<T>(
-            ref List<T> expressionList,
-            SyntaxNode node,
-            SyntaxNode stopNode = null) where T : SyntaxNode {
-            foreach (var childNode in node.ChildNodes()) {
-                // Syntax tree navigation will cease if this node is found.
-                if (childNode.Equals(stopNode)) {
-                    return true;
-                }
-
-                var expression = childNode as T;
-
-                if (expression == null) {
-                    // Recursion.
-                    if (GetExpressionsFromChildNodes(ref expressionList, childNode, stopNode)) {
-                        return true;
-                    }
-                } else {
-                    expressionList.Add(expression);
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Gets the method expression for the parent method of the specified node.
-        /// </summary>
-        /// <param name="node">The node.</param>
-        private static T GetNodeParentExpressionOfType<T>(SyntaxNode node)
-            where T : SyntaxNode {
-            return node.Ancestors().OfType<T>().FirstOrDefault();
-        }
-
-        /// <summary>
         /// Gets the latest data assignment expressions for the specified variable from the specified starting node.
         /// </summary>
         /// <param name="variable">The variable.</param>
@@ -372,52 +315,6 @@ namespace Aderant.Build.Analyzer.Rules {
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Examines the specified context to determine if the method containing
-        /// the targeted node includes a code analysis suppression attribute.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        protected static bool IsAnalysisSuppressed(SyntaxNodeAnalysisContext context) {
-            // Get the parent method of the node.
-            var baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(context.Node);
-
-            return baseMethodDeclaration != null &&
-                   IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists);
-        }
-
-        private static bool IsAnalysisSuppressed(IEnumerable<AttributeListSyntax> attributeLists) {
-            // Attributes can be stacked...
-            // [Attribute()]
-            // [Attribute()]
-            // ...and concatenated...
-            // [Attribute(), Attribute()]
-            // The below double loop handles both cases, including mix & match.
-            foreach (AttributeListSyntax attributeList in attributeLists) {
-                foreach (AttributeSyntax attribute in attributeList.Attributes) {
-                    string name = attribute.Name.ToString();
-
-                    if (!name.Equals("SuppressMessage") && !name.Equals("System.Diagnostics.CodeAnalysis.SuppressMessage")) {
-                        continue;
-                    }
-
-                    string category = attribute.ArgumentList.Arguments[0].ToString();
-                    string checkId = attribute.ArgumentList.Arguments[1].ToString();
-
-                    if (category.Equals("\"SQL Injection\"", StringComparison.OrdinalIgnoreCase) &&
-                        checkId.StartsWith("\"Aderant_SqlInjection", StringComparison.OrdinalIgnoreCase)) {
-                        return true;
-                    }
-
-                    if (category.Equals("\"Microsoft.Security\"", StringComparison.OrdinalIgnoreCase) &&
-                        checkId.StartsWith("\"CA2100:", StringComparison.OrdinalIgnoreCase)) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
         }
 
         /// <summary>

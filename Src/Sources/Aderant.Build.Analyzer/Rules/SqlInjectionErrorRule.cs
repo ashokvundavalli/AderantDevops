@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -6,6 +7,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Aderant.Build.Analyzer.Rules {
     internal class SqlInjectionErrorRule : SqlInjectionRuleBase {
         internal const string DiagnosticId = "Aderant_SqlInjectionError";
+
+        internal static Tuple<string, string>[] ValidSuppressionMessages = {
+            new Tuple<string, string>("\"SQL Injection\"", "\"Aderant_SqlInjectionError\""),
+            new Tuple<string, string>("\"Microsoft.Security\"", "\"CA2100:")
+        };
 
         internal override DiagnosticSeverity Severity => DiagnosticSeverity.Error;
 
@@ -35,10 +41,10 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
-            if (IsAnalysisSuppressed(context) ||
+            if (IsAnalysisSuppressed(context, ValidSuppressionMessages) ||
                 EvaluateNodeCommandTextExpressionStatement(
                     context.SemanticModel,
-                    (ExpressionStatementSyntax)context.Node) != SqlInjectionRuleViolationSeverity.Error) {
+                    (ExpressionStatementSyntax)context.Node) != RuleViolationSeverityEnum.Error) {
                 return;
             }
 
@@ -47,10 +53,10 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
-            if (IsAnalysisSuppressed(context) ||
+            if (IsAnalysisSuppressed(context, ValidSuppressionMessages) ||
                 EvaluateNodeDatabaseSqlQuery(
                     context.SemanticModel,
-                    (InvocationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverity.Error) {
+                    (InvocationExpressionSyntax)context.Node) != RuleViolationSeverityEnum.Error) {
                 return;
             }
 
@@ -59,10 +65,10 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
-            if (IsAnalysisSuppressed(context) ||
+            if (IsAnalysisSuppressed(context, ValidSuppressionMessages) ||
                 EvaluateNodeNewSqlCommandObjectCreationExpression(
                     context.SemanticModel,
-                    (ObjectCreationExpressionSyntax)context.Node) != SqlInjectionRuleViolationSeverity.Error) {
+                    (ObjectCreationExpressionSyntax)context.Node) != RuleViolationSeverityEnum.Error) {
                 return;
             }
 

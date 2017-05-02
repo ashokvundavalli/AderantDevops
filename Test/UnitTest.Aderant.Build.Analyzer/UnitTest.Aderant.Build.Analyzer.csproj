@@ -101,6 +101,7 @@
     <Compile Include="Tests\InvalidQueryServiceProxyExtensionTests.cs" />
     <Compile Include="Tests\InvalidLogMessageTests.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
+    <Compile Include="Tests\QueryServiceQueryAllTests.cs" />
     <Compile Include="Tests\SetPropertyValueNoStringNonFixableTests.cs" />
     <Compile Include="Tests\SetPropertyValueNoStringTests.cs" />
     <Compile Include="Tests\PropertyChangedNoStringTests.cs" />

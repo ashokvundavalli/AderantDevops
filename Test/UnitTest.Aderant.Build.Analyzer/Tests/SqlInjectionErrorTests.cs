@@ -61,7 +61,7 @@ namespace System.Data.Common {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -114,7 +114,7 @@ namespace System.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -167,7 +167,7 @@ namespace System.Data.SqlClient {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -220,7 +220,7 @@ namespace System.Data {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -269,7 +269,7 @@ namespace System.Data {
     }
 }
 ";
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(11, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(11, 21));
         }
 
         [TestMethod]
@@ -318,7 +318,7 @@ namespace Some.Test.Foo {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -343,7 +343,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(9, 27));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(9, 27));
         }
 
         [TestMethod]
@@ -365,7 +365,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -389,7 +389,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(11, 27));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(11, 27));
         }
 
         [TestMethod]
@@ -414,7 +414,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -443,7 +443,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(16, 23));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(16, 23));
         }
 
         [TestMethod]
@@ -472,7 +472,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -501,7 +501,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(11, 13));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(11, 13));
         }
 
         [TestMethod]
@@ -527,7 +527,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -552,7 +552,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(9, 27));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(9, 27));
         }
 
         [TestMethod]
@@ -574,7 +574,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -624,7 +624,7 @@ namespace System.Data.Common {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -673,7 +673,7 @@ namespace System.Data.Common {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -707,7 +707,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -747,7 +747,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -785,7 +785,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -821,7 +821,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test));
+            VerifyCSharpDiagnostic(test);
         }
 
         [TestMethod]
@@ -856,7 +856,7 @@ namespace System.Data.Entity {
 }
 ";
 
-            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(13, 13));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 13));
         }
     }
 }
