@@ -57,6 +57,9 @@
 
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
+  
+  <!-- Stub for customizers to override -->
+  <Target Name="PreBuild" />
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
@@ -224,16 +227,16 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="ModuleBuild">
-   <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
+    <CallTarget Targets="PrepareBuildEnvironment" Condition="'$(BuildAll)' != 'true'"/>
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
+    <CallTarget Targets="PreBuild" /> 
     <CallTarget Targets="Build" />
     <CallTarget Targets="ZipWorkflowTemplateSource" />
-    <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
