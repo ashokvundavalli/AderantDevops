@@ -22,8 +22,16 @@ namespace Aderant.Build.Analyzer.SQLInjection.Lists {
         public static readonly Tuple<string, string>[] Methods = {
             new Tuple<string, string>("SqlQuery", "System.Data.Entity.Database.SqlQuery<TElement>(string"),
             new Tuple<string, string>("IssueSql", "Aderant.FirmControl.DocuDraft.DataAccess.ISqlBase.IssueSql"),
-            new Tuple<string, string>("Execute", "Aderant.Framework.Deployment.Controllers.IDatabaseController.Execute"),
-            new Tuple<string, string>("ExecuteUsingIntegratedSecurity", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteUsingIntegratedSecurity")
+            new Tuple<string, string>("Execute", "Aderant.Framework.Deployment.Controllers.IDatabaseController.Execute(string"),
+            new Tuple<string, string>("ExecuteUsingIntegratedSecurity", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteUsingIntegratedSecurity(string"),
+            new Tuple<string, string>("AddUserToRole", "Aderant.Framework.Deployment.Controllers.IDatabaseController.AddUserToRole(string"),
+            new Tuple<string, string>("ExecuteScalar", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteScalar<TResult>(string"),
+            new Tuple<string, string>("ExecuteScalar", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteScalar(string"),
+            new Tuple<string, string>("ExecuteWithResult", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteWithResult(string"),
+            new Tuple<string, string>("ExecuteWithFullResult", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteWithFullResult<T>(string"),
+            new Tuple<string, string>("ExecuteWithResultUsingIntegratedSecurity", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteWithResultUsingIntegratedSecurity(string"),
+            new Tuple<string, string>("ExecuteProcedure", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteProcedure(string"),
+            new Tuple<string, string>("ExecuteProcedureToList", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteProcedureToList(string")
         };
     }
 }

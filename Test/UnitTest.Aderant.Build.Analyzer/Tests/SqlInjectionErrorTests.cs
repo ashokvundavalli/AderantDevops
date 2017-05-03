@@ -12,6 +12,132 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         protected override string PostCode => string.Empty;
 
         [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_MutableData() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+    }
+
+    public static class PartClass {
+        private static void Foo() {
+            string test = Bar();
+
+            Execute(test);
+        }
+
+        private static void Execute(string sql) {
+            using (var connection = new SqlConnection()) {
+                using (var command = connection.CreateCommand()) {
+                    command.CommandText = sql;
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static string Bar() {
+            return string.Empty;
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(15, 21));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_MethodNotPrivate() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+    }
+
+    public static class PartClass {
+        private static void Foo() {
+            Execute(""Test"");
+        }
+
+        public static void Execute(string sql) {
+            using (var connection = new SqlConnection()) {
+                using (var command = connection.CreateCommand()) {
+                    command.CommandText = sql;
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(19, 21));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_PartialClass() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            // Empty.
+        }
+    }
+
+    public static partial class PartClass {
+        private static void Foo() {
+            Execute(""Test"");
+        }
+
+        private static void Execute(string sql) {
+            using (var connection = new SqlConnection()) {
+                using (var command = connection.CreateCommand()) {
+                    command.CommandText = sql;
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(19, 21));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_CommandText_MethodParameter_NoDiagnostic() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Execute(""Test"", new SqlConnection());
+        }
+
+        private static void Execute(string sql, SqlConnection connection) {
+            using (var command = connection.CreateCommand()) {
+                command.CommandText = sql;
+                command.ExecuteNonQuery();
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
         public void SqlInjectionError_System_Data_Common_DbCommand() {
             const string test = @"
 using System;
@@ -324,6 +450,8 @@ namespace Some.Test.Foo {
         [TestMethod]
         public void SqlInjectionError_NewSqlCommand_Diagnostic() {
             const string test = @"
+using System.Data.SqlClient;
+
 namespace Test {
     public class Program {
         public static void Main() {
@@ -334,21 +462,17 @@ namespace Test {
             var command = new SqlCommand(test);
         }
     }
-
-    public class SqlCommand {
-        public SqlCommand(string test) {
-            // Empty.
-        }
-    }
 }
 ";
 
-            VerifyCSharpDiagnostic(test, GetDiagnostic(9, 27));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(11, 27));
         }
 
         [TestMethod]
         public void SqlInjectionError_NewSqlCommand_NoDiagnostic() {
             const string test = @"
+using System.Data.SqlClient;
+
 namespace Test {
     public class Program {
         public static void Main() {
@@ -356,11 +480,47 @@ namespace Test {
             var command = new SqlCommand(test);
         }
     }
+}
+";
 
-    public class SqlCommand {
-        public SqlCommand(string test) {
-            // Empty.
+            VerifyCSharpDiagnostic(test);
         }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommand_StaticField_Diagnostic() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            var command = new SqlCommand(StaticClass.StaticString);
+        }
+    }
+
+    public static class StaticClass {
+        public static string StaticString = ""Test"";
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test, GetDiagnostic(7, 27));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NewSqlCommand_StaticField_NoDiagnostic() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            var command = new SqlCommand(StaticClass.StaticString);
+        }
+    }
+
+    public static class StaticClass {
+        public static readonly string StaticString = ""Test"";
     }
 }
 ";

@@ -82,24 +82,29 @@ namespace Aderant.Build.Analyzer.Rules {
         /// Examines the specified context to determine if the method containing
         /// the targeted node includes a code analysis suppression attribute.
         /// </summary>
-        /// <param name="context">The context.</param>
+        /// <param name="node">The node.</param>
         /// <param name="validSuppressionMessages">The valid suppression messages.</param>
         protected static bool IsAnalysisSuppressed(
-            SyntaxNodeAnalysisContext context,
+            SyntaxNode node,
             Tuple<string, string>[] validSuppressionMessages) {
             // Get the parent method of the node.
-            var baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(context.Node);
+            var baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
 
+            // If node is not within a method, exit early.
             if (baseMethodDeclaration == null) {
                 return false;
             }
 
+            // Get the parent class of the node.
             var parentClass = GetNodeParentExpressionOfType<ClassDeclarationSyntax>(baseMethodDeclaration);
 
+            // If node is not within a class...
             if (parentClass == null) {
+                // Examine suppression on the method only.
                 return IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists, validSuppressionMessages);
             }
 
+            // ...otherwise examine suppression on the class, and then the method.
             return IsAnalysisSuppressed(parentClass.AttributeLists, validSuppressionMessages) ||
                    IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists, validSuppressionMessages);
         }

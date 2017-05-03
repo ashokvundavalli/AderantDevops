@@ -41,12 +41,12 @@ namespace Aderant.Build.Analyzer.Rules {
         private void AnalyzeNodePropertyAccessor(SyntaxNodeAnalysisContext context) {
             // If node is not a member access expression, exit early.
             if (!(context.Node is MemberAccessExpressionSyntax) ||
-                IsAnalysisSuppressed(context, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(context.Node, ValidSuppressionMessages)) {
                 return;
             }
 
             // Determine if the query is valid.
-            if (IsQueryExpressionValid(context.SemanticModel, context.Node)) {
+            if (GetQueryExpressionSeverity(context.SemanticModel, context.Node) == RuleViolationSeverityEnum.None) {
                 return;
             }
 
@@ -59,14 +59,14 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        private static bool IsQueryExpressionValid(SemanticModel semanticModel, SyntaxNode node) {
+        private static RuleViolationSeverityEnum GetQueryExpressionSeverity(SemanticModel semanticModel, SyntaxNode node) {
             // Retrieve the node's child nodes as a list for easier operation.
             var childNodes = node.ChildNodes().ToList();
 
             // For a query, a minimum of two children are expected.
             if (childNodes.Count < 2) {
                 // Exit early.
-                return true;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Get the fully qualified string value of the type relating to the provided syntax expression.
@@ -77,7 +77,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Empty type is not a Query, exit early.
             if (string.IsNullOrWhiteSpace(typeString)) {
-                return true;
+                return RuleViolationSeverityEnum.None;
             }
 
             // If type is not a Query, exit early.
@@ -89,7 +89,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 !typeString.Equals("Aderant.Framework.Query.IConfigurationQuery") &&
                 !typeString.Equals("Aderant.Query.QueryServiceManagementProxy") &&
                 !typeString.Equals("Aderant.Query.IQueryServiceManagementProxy")) {
-                return true;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Get the type of the second child node (the property being accessed).
@@ -102,7 +102,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 !genericType.IsGenericType ||
                 !genericType.ToDisplayString().StartsWith("System.Linq.IQueryable<") ||
                 genericType.TypeArguments.Length < 1) {
-                return true;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Get the generic type parameter.
@@ -115,9 +115,10 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Query is valid if queried class is adorned with the 'IsCacheableAttribute' attribute.
             return genericTypeParameterAttributes.Any(
-                x => x.AttributeClass.ToDisplayString().Equals("Aderant.Query.Annotations.IsCacheableAttribute")) ||
+                x => x.AttributeClass.ToDisplayString().Equals("Aderant.Query.Annotations.IsCacheableAttribute"))
+                ? RuleViolationSeverityEnum.None
                 // Evaluate the methods being invoked upon the query.
-                EvaluateQueryMethods(semanticModel, node, genericTypeParameter);
+                : EvaluateQueryMethods(semanticModel, node, genericTypeParameter);
         }
 
         /// <summary>
@@ -161,10 +162,10 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
         /// <param name="genericTypeParameter"></param>
-        private static bool EvaluateQueryMethods(
+        private static RuleViolationSeverityEnum EvaluateQueryMethods(
             SemanticModel semanticModel,
             SyntaxNode node,
-            ITypeSymbol genericTypeParameter) {
+            ISymbol genericTypeParameter) {
             SyntaxNode parentNode = null;
 
             // Each possible use case uses a different expression syntax.
@@ -182,9 +183,10 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // If the return expression is null,
             // a query is being invoked, but the results aren't being used.
-            return parentNode == null ||
-                   // Evaluate the parent node.
-                   EvaluateParentNode(semanticModel, parentNode, node, genericTypeParameter);
+            return parentNode == null
+                ? RuleViolationSeverityEnum.None
+                // Evaluate the parent node.
+                : EvaluateParentNode(semanticModel, parentNode, node, genericTypeParameter);
         }
 
         /// <summary>
@@ -194,11 +196,11 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="parentNode">The parent node.</param>
         /// <param name="currentNode">The current node.</param>
         /// <param name="genericTypeParameter"></param>
-        private static bool EvaluateParentNode(
+        private static RuleViolationSeverityEnum EvaluateParentNode(
             SemanticModel semanticModel,
             SyntaxNode parentNode,
             SyntaxNode currentNode,
-            ITypeSymbol genericTypeParameter) {
+            ISymbol genericTypeParameter) {
             // Get all method invocations applied to the query.
             var methods = new List<InvocationExpressionSyntax>(DefaultCapacity);
             GetExpressionsFromChildNodes(ref methods, parentNode, currentNode);
@@ -207,7 +209,9 @@ namespace Aderant.Build.Analyzer.Rules {
             if (!methods.Any()) {
                 // If the parent node is a foreach statement, the query is automatically enumerated.
                 // Otherwise the query is not enumerated, and is therefore still valid.
-                return !(parentNode is ForEachStatementSyntax);
+                return parentNode is ForEachStatementSyntax
+                    ? RuleViolationSeverityEnum.Error
+                    : RuleViolationSeverityEnum.None;
             }
 
             // Note:
@@ -233,7 +237,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 // If the method symbol was not retrieved...
                 if (methodSymbol == null) {
                     // ...default to valid.
-                    return true;
+                    return RuleViolationSeverityEnum.None;
                 }
 
                 // If the method is an 'Expand Clause'...
@@ -252,11 +256,13 @@ namespace Aderant.Build.Analyzer.Rules {
                 // If the method returns an IQueryable, the query is filtered and therefore valid.
                 methodSymbol.ReturnType.Name.Equals("IQueryable") ||
                 methodSymbol.ReturnType.ToDisplayString().Equals(genericTypeParameter.ToDisplayString())) {
-                return true;
+                return RuleViolationSeverityEnum.None;
             }
 
             // Determine if the returned type inherits from IQueryable.
-            return methodSymbol.ReturnType.AllInterfaces.Any(x => x.Name.Equals("IQueryable"));
+            return methodSymbol.ReturnType.AllInterfaces.Any(x => x.Name.Equals("IQueryable"))
+                ? RuleViolationSeverityEnum.None
+                : RuleViolationSeverityEnum.Error;
         }
 
         /// <summary>

@@ -41,39 +41,66 @@ namespace Aderant.Build.Analyzer.Rules {
         }
 
         private void AnalyzeNodeCommandText(SyntaxNodeAnalysisContext context) {
-            if (IsAnalysisSuppressed(context, ValidSuppressionMessages) ||
-                EvaluateNodeCommandTextExpressionStatement(
-                    context.SemanticModel,
-                    (ExpressionStatementSyntax)context.Node) != RuleViolationSeverityEnum.Error) {
+            var expression = context.Node as ExpressionStatementSyntax;
+
+            if (expression == null ||
+                IsAnalysisSuppressed(expression, ValidSuppressionMessages)) {
                 return;
             }
 
-            Diagnostic diagnostic = Diagnostic.Create(Descriptor, context.Node.GetLocation());
-            context.ReportDiagnostic(diagnostic);
+            Location location = null;
+
+            if (EvaluateNodeCommandTextExpressionStatement(ref location, context.SemanticModel, expression) != RuleViolationSeverityEnum.Error) {
+                return;
+            }
+
+            if (location == null) {
+                location = context.Node.GetLocation();
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptor, location));
         }
 
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
-            if (IsAnalysisSuppressed(context, ValidSuppressionMessages) ||
-                EvaluateNodeDatabaseSqlQuery(
-                    context.SemanticModel,
-                    (InvocationExpressionSyntax)context.Node) != RuleViolationSeverityEnum.Error) {
+            var expression = context.Node as InvocationExpressionSyntax;
+
+            if (expression == null ||
+                IsAnalysisSuppressed(expression, ValidSuppressionMessages)) {
                 return;
             }
 
-            Diagnostic diagnostic = Diagnostic.Create(Descriptor, context.Node.GetLocation());
-            context.ReportDiagnostic(diagnostic);
+            Location location = null;
+
+            if (EvaluateNodeDatabaseSqlQuery(ref location, context.SemanticModel, expression) != RuleViolationSeverityEnum.Error) {
+                return;
+            }
+
+            if (location == null) {
+                location = context.Node.GetLocation();
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptor, location));
         }
 
         private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
-            if (IsAnalysisSuppressed(context, ValidSuppressionMessages) ||
-                EvaluateNodeNewSqlCommandObjectCreationExpression(
-                    context.SemanticModel,
-                    (ObjectCreationExpressionSyntax)context.Node) != RuleViolationSeverityEnum.Error) {
+            var expression = context.Node as ObjectCreationExpressionSyntax;
+
+            if (expression == null ||
+                IsAnalysisSuppressed(expression, ValidSuppressionMessages)) {
                 return;
             }
 
-            Diagnostic diagnostic = Diagnostic.Create(Descriptor, context.Node.GetLocation());
-            context.ReportDiagnostic(diagnostic);
+            Location location = null;
+
+            if (EvaluateNodeNewSqlCommandObjectCreationExpression(ref location, context.SemanticModel, expression) != RuleViolationSeverityEnum.Error) {
+                return;
+            }
+
+            if (location == null) {
+                location = context.Node.GetLocation();
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptor, location));
         }
     }
 }
