@@ -9,6 +9,7 @@ namespace IntegrationTest.Build {
     [TestClass]
     public class WarningRatchetTests {
         [TestMethod]
+        [Ignore]
         public void WarningRatchet() {
             var ratchet = new WarningRatchet(new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
             

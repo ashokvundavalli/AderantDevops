@@ -1,0 +1,15 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask AssemblyFile="Aderant.Build.dll" TaskName="GetAssembliesWithTraits" />
+  
+  <Target Name="GetAssembliesWithTraits">
+    <ItemGroup>
+      <Files Include="*.dll" />
+    </ItemGroup>
+    
+    <GetAssembliesWithTraits CompanyName="Aderant" Files="@(Files)" />
+    
+    
+  </Target>
+ 
+</Project>
