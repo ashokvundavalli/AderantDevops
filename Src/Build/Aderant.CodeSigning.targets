@@ -110,14 +110,17 @@
   </Target>
 
 
-  <Target Name="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
-    <Message Text="Signing installers in $(BinModuleDirectory)" />
-
+  <Target Name="GetInstallersToSign" BeforeTargets="SignInstallers">
     <ItemGroup>
       <Installers Include="$(BinModuleDirectory)**\*expert*.msi;
                            $(BinModuleDirectory)**\deploymentmanager.msi;
                            $(BinModuleDirectory)**\*wizard*.msi;" />
     </ItemGroup>
+  </Target>
+
+
+  <Target Name="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true' And '@(Installers)' != ''">
+    <Message Text="Signing installers in $(BinModuleDirectory)" />
 
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
 
