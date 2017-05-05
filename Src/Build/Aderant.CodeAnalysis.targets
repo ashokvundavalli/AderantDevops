@@ -16,6 +16,7 @@
     <CodeAnalysisQuiet>false</CodeAnalysisQuiet>
     
     <CodeAnalysisLogFile>$(OutDir)CodeAnalysis\$(TargetFileName).CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisSucceededFile>$(OutDir)CodeAnalysis\$(TargetFileName).lastcodeanalysissucceeded</CodeAnalysisSucceededFile>
   </PropertyGroup>
 
   <Target Name="BeforeRunCodeAnalysisAlways" 
@@ -23,26 +24,29 @@
           Condition="'$(RunCodeAnalysisOnThisProject)' == 'true'">
 
     <PropertyGroup>
-      <IsTestAssembly Condition="$(CodeAnalysisInputAssembly.Contains('UnitTest'))">true</IsTestAssembly>
+      <IsTestProject Condition="$(ProjectTypeGuids.Contains('{3AC096D0-A1C2-E12C-1390-A8335801FDAB}'))">true</IsTestProject>
       
-      <RunCodeAnalysisOnThisProject Condition="'$(IsUnitTestAssembly)' == 'true'">false</RunCodeAnalysisOnThisProject>
+      <RunCodeAnalysisOnThisProject Condition="'$(IsTestProject)' == 'true'">false</RunCodeAnalysisOnThisProject>
     </PropertyGroup>
     
-    <Warning Text="Attempted to run Code Analysis on a unit test assembly $(CodeAnalysisInputAssembly)." Condition="'$(IsTestAssembly)' == 'true'" />
+    <Error Text="Attempted to run Code Analysis on a unit test assembly $(CodeAnalysisInputAssembly)." Condition="'$(IsTestProject)' == 'true'" />
 
     <ItemGroup>
       <CodeAnalysisAssemblies Include="$(CodeAnalysisInputAssembly)" Condition="'$(RunCodeAnalysisOnThisProject)' == 'true'" />
     </ItemGroup>
 
-    <Message Text="Redirecting FxCop to $(CodeAnalysisPath)" Condition="'$(RunCodeAnalysisOnThisProject)' == 'true'"/>
+    <Message Text="Redirecting FxCop to $(CodeAnalysisPath)" Condition="'$(RunCodeAnalysisOnThisProject)' == 'true'" />
+    
     <MakeDir Directories="$(OutDir)CodeAnalysis" Condition="!Exists('$(OutDir)CodeAnalysis') And '$(RunCodeAnalysisOnThisProject)' == 'true'"/>
     
   </Target>
+  
 
   <Target Name="BeforeRunCodeAnalysis"
           BeforeTargets="RunCodeAnalysis"
           Condition="'$(IsDesktopBuild)' == 'false' And '$(RunCodeAnalysisOnThisProject)' == 'true'">
   </Target>
+  
 
   <Target Name="AfterRunCodeAnalysis"
           AfterTargets="RunCodeAnalysis"
@@ -50,7 +54,7 @@
   </Target>
 
   <!-- 
-    When Microsoft update C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v12.0\CodeAnalysis\Microsoft.CodeAnalysis.Targets then this target needs to be updated to match 
+    When Microsoft update C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v14.0\CodeAnalysis\Microsoft.CodeAnalysis.Targets then this target needs to be updated to match 
   -->
   <Target
     Name="RunCodeAnalysis"
@@ -133,6 +137,7 @@
         TreatWarningsAsErrors="$(CodeAnalysisTreatWarningsAsErrors)"
         UpdateProject="$(CodeAnalysisUpdateProject)"
         Verbose="$(CodeAnalysisVerbose)"
+        RuleSetOverrides ="$(CodeAnalysisRuleSetOverrides)"
                   
         StandardErrorImportance="Normal"
         StandardOutputImportance="Normal">
