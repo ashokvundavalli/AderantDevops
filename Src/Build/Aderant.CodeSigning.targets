@@ -83,7 +83,7 @@
   <Target Name="SignApplications" 
           AfterTargets="CoreCompile" 
           DependsOnTargets="ValidateSigningEnvironment" 
-          Condition="'$(CodeSigningEnabled)' == 'true' And '$(IsDesktopBuild)' != 'true'"> <!-- for performance we probably don't want to sign on the desktop as we need to make an HTTP call to the timestamp server -->
+          Condition="'$(CodeSigningEnabled)' == 'true' And '$(TargetFileName)' != '' And '$(IsDesktopBuild)' != 'true'"> <!-- for performance we probably don't want to sign on the desktop as we need to make an HTTP call to the timestamp server -->
 
     <Message Text="Signing applications in $(IntermediateOutputPath) for $(MSBuildProjectFile)" />
 
