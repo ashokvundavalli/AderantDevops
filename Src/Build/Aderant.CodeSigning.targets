@@ -1,6 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0"
-         DefaultTargets="SignApplications">
+         ToolsVersion="14.0">
 
   <PropertyGroup>
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
@@ -80,10 +79,11 @@
     </PropertyGroup>
   </Target>
 
-  <Target Name="SignApplications" 
-          AfterTargets="CoreCompile" 
-          DependsOnTargets="ValidateSigningEnvironment" 
-          Condition="'$(CodeSigningEnabled)' == 'true' And '$(TargetFileName)' != '' And '$(IsDesktopBuild)' != 'true'"> <!-- for performance we probably don't want to sign on the desktop as we need to make an HTTP call to the timestamp server -->
+  <Target Name="SignApplications"
+          AfterTargets="CoreCompile"
+          DependsOnTargets="ValidateSigningEnvironment"
+          Condition="'$(CodeSigningEnabled)' == 'true' And '$(TargetFileName)' != '' And '$(IsDesktopBuild)' != 'true'">
+    <!-- for performance we probably don't want to sign on the desktop as we need to make an HTTP call to the timestamp server -->
 
     <Message Text="Signing applications in $(IntermediateOutputPath) for $(MSBuildProjectFile)" />
 
@@ -110,16 +110,23 @@
   </Target>
 
 
-  <Target Name="GetInstallersToSign" BeforeTargets="SignInstallers">
+  <Target Name="FindInstallersToSign">
     <ItemGroup>
       <Installers Include="$(BinModuleDirectory)**\*expert*.msi;
                            $(BinModuleDirectory)**\deploymentmanager.msi;
                            $(BinModuleDirectory)**\*wizard*.msi;" />
     </ItemGroup>
   </Target>
+  
+
+  <Target Name="SignInstallers"
+          Condition="'$(CodeSigningEnabled)' == 'true'"
+          DependsOnTargets="FindInstallersToSign">
+    <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
+  </Target>
 
 
-  <Target Name="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true' And '@(Installers)' != ''">
+  <Target Name="SignInstallersCore">
     <Message Text="Signing installers in $(BinModuleDirectory)" />
 
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
@@ -128,7 +135,7 @@
       Files="@(Installers)">
       <Output TaskParameter="FilesWithInfo" ItemName="InstallerFilesWithInfo" />
     </Aderant.Build.Tasks.GetFileVersionInfo>
-    
+
     <Error Condition="'%(InstallerFilesWithInfo.ProductName)' == ''" Text="An installer title must be provided for %(InstallerFilesWithInfo.Filename)%(InstallerFilesWithInfo.Extension)" />
 
     <Exec

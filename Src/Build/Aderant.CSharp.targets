@@ -4,19 +4,19 @@
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
 
-  <UsingTask TaskName="UpdateSplashScreenImage"
+  <UsingTask TaskName="Aderant.Build.Tasks.UpdateSplashScreenImage"
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
-  <UsingTask TaskName="FileUpdate2"
+  <UsingTask TaskName="Aderant.Build.Tasks.FileUpdate2"
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
-  <UsingTask TaskName="ProjectConformityCheck"
+  <UsingTask TaskName="Aderant.Build.Tasks.ProjectConformityCheck"
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
-  <UsingTask TaskName="OrmMappingValidator"
+  <UsingTask TaskName="Aderant.Build.Tasks.OrmMappingValidator"
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
@@ -71,44 +71,47 @@
   </PropertyGroup>
 
   
+  
   <Target Name="FindCommonAssemblyInfo" BeforeTargets="CommonBuildUpdateAssemblyInfo">
     
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
-      <OriginalAssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
+      <CommonAssemblyInfoFile Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
       <!-- Now remove the original element -->
-      <Compile Remove="@(OriginalAssemblyInfo)" Condition="@(OriginalAssemblyInfo) != ''" />
+      <Compile Remove="@(CommonAssemblyInfoFile)" Condition="@(CommonAssemblyInfoFile) != ''" />
     </ItemGroup>
 
     <PropertyGroup>
-      <NewCommonAssemblyInfo>$(IntermediateOutputPath)CommonAssemblyInfo.cs</NewCommonAssemblyInfo>
+      <NewCommonAssemblyInfoFile>$(IntermediateOutputPath)CommonAssemblyInfo.cs</NewCommonAssemblyInfoFile>
     </PropertyGroup>
 
     <!-- Include the modified CommonAssemblyInfo.cs file in "Compile" items (instead of the original). -->
     <ItemGroup>
-      <Compile Include="$(NewCommonAssemblyInfo)" Condition="@(OriginalAssemblyInfo) != ''" />
+      <Compile Include="$(NewCommonAssemblyInfoFile)" Condition="@(CommonAssemblyInfoFile) != ''" />
     </ItemGroup>
 
   </Target>
-
+  
+  
   
   <!--
       Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset 
       incremental builds
   -->
   <Target Name="CommonBuildUpdateAssemblyInfo" 
+          DependsOnTargets="FindCommonAssemblyInfo"
           Condition="'$(IsCustomBuild)' != 'true'"
-          Inputs="@(OriginalAssemblyInfo)"
-          Outputs="$(NewCommonAssemblyInfo)">
+          Inputs="@(CommonAssemblyInfoFile)"
+          Outputs="$(NewCommonAssemblyInfoFile)">
     
-    <Copy SourceFiles="@(OriginalAssemblyInfo)" 
-          DestinationFiles="$(NewCommonAssemblyInfo)" 
+    <Copy SourceFiles="@(CommonAssemblyInfoFile)" 
+          DestinationFiles="$(NewCommonAssemblyInfoFile)" 
           OverwriteReadOnlyFiles="true" />
     
     <!-- Update copyright, $1, $2 and $4 are capture groups -->
     <MSBuild.Community.Tasks.FileUpdate
-      Condition="@(OriginalAssemblyInfo) != ''"
-      Files="$(NewCommonAssemblyInfo)"
+      Condition="@(CommonAssemblyInfoFile) != ''"
+      Files="$(NewCommonAssemblyInfoFile)"
       IgnoreCase="true"
       Multiline="true"
       Singleline="false"
@@ -117,7 +120,7 @@
     </MSBuild.Community.Tasks.FileUpdate>
 
     <ItemGroup>
-      <FileWrites Include="$(NewCommonAssemblyInfo)" />
+      <FileWrites Include="$(NewCommonAssemblyInfoFile)" />
     </ItemGroup>
 
   </Target>
@@ -170,8 +173,8 @@
       <SplashScreenVersion Condition="'$(BuildFlavor)' != 'Debug'">Version 8.1</SplashScreenVersion>
       <SplashScreenText>$(ExpertProductName)</SplashScreenText>
     </PropertyGroup>
-    
-    <UpdateSplashScreenImage
+
+    <Aderant.Build.Tasks.UpdateSplashScreenImage
      Condition="'@(OriginalSplashScreen)' != '' And '$(ExpertProductName)' != ''"
      
      TrackerLogDirectory="$(IntermediateOutputPath)"
@@ -183,7 +186,7 @@
      Text="$(SplashScreenText)"
      Version="$(SplashScreenVersion)"
      Style="$(SplashScreenStyle)">
-    </UpdateSplashScreenImage>
+    </Aderant.Build.Tasks.UpdateSplashScreenImage>
 
     <Message Text="Product Name: $(ExpertProductName)" Condition="' $(ExpertProductName)' != ''" />
     <Message Text="Splash screen style: $(SplashScreenStyle)" Condition="' $(SplashScreenStyle)' != ''" />
@@ -257,7 +260,7 @@
   <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild" 
           Condition="'$(IsCustomBuild)' != 'true' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
-    <OrmMappingValidator
+    <Aderant.Build.Tasks.OrmMappingValidator
       Content="@(Content)"
       Compile="@(Compile)"
       None="@(None)"
@@ -270,8 +273,8 @@
   <Target Name="ApplyCodeAnalzyer"
 		  Condition="'$(IsCustomBuild)' != 'true'"
           BeforeTargets="CoreCompile;ResolveAssemblyReferences">
-    
-    <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" />
+
+    <Aderant.Build.Tasks.ProjectConformityCheck Project="$(MSBuildProjectFullPath)" />
   </Target>
   
 
