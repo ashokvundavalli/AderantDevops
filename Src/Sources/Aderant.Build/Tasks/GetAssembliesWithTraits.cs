@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Build.Framework;
@@ -17,7 +18,7 @@ namespace Aderant.Build.Tasks {
         public ITaskItem[] Assemblies { get; set; }
 
         public override bool Execute() {
-            ArrayList arrayList = new ArrayList();
+            List<ITaskItem> arrayList = new List<ITaskItem>();
 
             foreach (var file in Files) {
                 string fullPath = file.GetMetadata("FullPath");
@@ -40,17 +41,13 @@ namespace Aderant.Build.Tasks {
                 }
 
                 if (isMatch) {
-                    Log.LogMessage("Detected Aderant asset");
-                    try {
-                        var assemblyName = AssemblyName.GetAssemblyName(fullPath);
-                        arrayList.Add(file);
-                        Log.LogMessage("File '" + fullPath + "' was detected as an Aderant asset.");
-                    } catch (BadImageFormatException ex) {
-                        Log.LogMessage("Whoops, something went wrong: ", ex.ToString());
-                    }
+                    var taskItem = GetFileVersionInfo.CreateTaskItemFromVersionInfo(file, versionInfo);
+
+                    arrayList.Add(taskItem);
                 }
             }
-            this.Assemblies = (ITaskItem[])arrayList.ToArray(typeof(ITaskItem));
+
+            Assemblies = arrayList.ToArray();
 
             return !Log.HasLoggedErrors;
         }

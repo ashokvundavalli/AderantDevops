@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="14.0"
          DefaultTargets="SignApplications">
 
@@ -6,7 +6,7 @@
     <CodeSigningEnabled Condition="'$(CodeSigningEnabled)' == ''">true</CodeSigningEnabled>
     <CertificateHash>1c2a3e8f5e969fd0a526f917100f6231faacb460</CertificateHash>
     <TimestampUrl>http://timestamp.digicert.com</TimestampUrl>
-    
+
     <!-- Search 32-bit registry first on 32-bit Windows to ensure we get the 32-bit key if present -->
     <!-- Nothing like consistency eh? -->
     <!-- Sign Tool -->
@@ -57,55 +57,7 @@
     <SignToolPath>$(WindowsKitRoot)bin\x64\signtool.exe</SignToolPath>
     <MageToolPath>$(WindowsSdkDir)bin\$(FxToolsDir)\mage.exe</MageToolPath>
   </PropertyGroup>
-  
-  <UsingTask
-    TaskName="GetAssembliesToSign"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-    </ParameterGroup>
-    <Task>      
-      <Using Namespace="System.Reflection" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Diagnostics" />
-      <Code Type="Fragment" Language="cs">
-        ArrayList arrayList = new ArrayList();
 
-        foreach (var file in Files) {
-          string fullPath = file.GetMetadata("FullPath");
-        
-          Log.LogMessage("ItemSpec: " + file.ItemSpec);
-          Log.LogMessage("Scanning: " + fullPath);
-          FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(fullPath);
-          
-
-          bool isAderantAssembly = false;
-          if (versionInfo.CompanyName != null) {
-            Log.LogMessage("Reading CompanyName out of file " + fullPath);
-            isAderantAssembly = versionInfo.CompanyName.IndexOf("Aderant", StringComparison.OrdinalIgnoreCase) >= 0;
-            Log.LogMessage("CompanyName: " + versionInfo.CompanyName);
-          } else {
-            Log.LogMessage("CompanyName was not set on file " + fullPath + " (" + versionInfo.FileVersion + ")");
-          }
-
-          if (isAderantAssembly) {
-            Log.LogMessage("Detected Aderant asset");
-            try {
-              var assemblyName = AssemblyName.GetAssemblyName(fullPath);
-              arrayList.Add(file);
-              Log.LogMessage("File '" + fullPath + "' was detected as an Aderant asset.");
-            } catch (BadImageFormatException ex) {
-              Log.LogMessage("Whoops, something went wrong: ", ex.ToString());
-            }
-          }
-        }
-        this.Assemblies = (ITaskItem[])arrayList.ToArray(typeof(ITaskItem));
-      </Code>
-    </Task>
-  </UsingTask>
-  
 
   <Target Name="ValidateSigningEnvironment">
     <Error Condition="'$(WindowsKitRoot)' == ''" Text="WindowsKitRoot is undefined" />
@@ -115,23 +67,26 @@
     <Error Condition="!Exists($(SignToolPath))" Text="SignTool.exe not found at path $(SignToolPath)" />
     <Error Condition="!Exists($(MageToolPath))" Text="mage.exe not found at path $(MageToolPath)" />
   </Target>
-  
 
-  <Target Name="CheckCodeSigningCertitifcate" 
-          AfterTargets="PrepareBuildEnvironment" 
+
+  <Target Name="CheckCodeSigningCertitifcate"
+          AfterTargets="PrepareBuildEnvironment"
           Condition="'$(CodeSigningEnabled)' == 'true' And '$(ValidSigningEnvironment)' == ''">
-    
+
     <CheckCertificate ThumbPrint="$(CertificateHash)" />
-    
+
     <PropertyGroup>
       <ValidSigningEnvironment>true</ValidSigningEnvironment>
     </PropertyGroup>
   </Target>
-  
-  
-  <Target Name="SignApplications" AfterTargets="CoreCompile" DependsOnTargets="ValidateSigningEnvironment" Condition="'$(CodeSigningEnabled)' == 'true'">
+
+  <Target Name="SignApplications" 
+          AfterTargets="CoreCompile" 
+          DependsOnTargets="ValidateSigningEnvironment" 
+          Condition="'$(CodeSigningEnabled)' == 'true' And '$(IsDesktopBuild)' != 'true'"> <!-- for performance we probably don't want to sign on the desktop as we need to make an HTTP call to the timestamp server -->
+
     <Message Text="Signing applications in $(IntermediateOutputPath) for $(MSBuildProjectFile)" />
-    
+
     <ItemGroup>
       <Applications Include="$(IntermediateOutputPath)**\*.exe;"
                     Exclude="$(IntermediateOutputPath)**\*CO.exe;
@@ -141,23 +96,19 @@
                              $(IntermediateOutputPath)**\*Update*; 
                              $(IntermediateOutputPath)**\*Performance*" />
     </ItemGroup>
-    
-    <GetAssembliesToSign Files="@(Applications)">
-      <Output TaskParameter="Assemblies" 
+
+    <GetAssembliesWithTraits
+        CompanyName="Aderant"
+        Files="@(Applications)">
+      <Output TaskParameter="Assemblies"
               ItemName="Assemblies" />
-    </GetAssembliesToSign>    
+    </GetAssembliesWithTraits>
 
-    <Message Text="Signing application: %(Assemblies.Filename)%(Assemblies.Extension) with version .NET $(TargetFrameworkVersion)" Condition="'@(Assemblies)' != ''" />
+    <Exec Condition="'@(Assemblies)' != ''"
+          Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd sha256 /sha1 $(CertificateHash) /d "%(Assemblies.ProductName)" "%(Assemblies.FullPath)"' />
 
-    <Microsoft.Build.Tasks.SignFile 
-      Condition="'@(Assemblies)' != ''"
-      CertificateThumbprint="$(CertificateHash)" 
-      TimestampUrl="$(TimestampUrl)"
-      TargetFrameworkVersion="$(TargetFrameworkVersion)" 
-      SigningTarget="@(Assemblies)" />
-    
   </Target>
-          
+
 
   <Target Name="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
     <Message Text="Signing installers in $(BinModuleDirectory)" />
@@ -170,21 +121,28 @@
 
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
 
+    <Aderant.Build.Tasks.GetFileVersionInfo
+      Files="@(Installers)">
+      <Output TaskParameter="FilesWithInfo" ItemName="InstallerFilesWithInfo" />
+    </Aderant.Build.Tasks.GetFileVersionInfo>
+    
+    <Error Condition="'%(InstallerFilesWithInfo.ProductName)' == ''" Text="An installer title must be provided for %(InstallerFilesWithInfo.Filename)%(InstallerFilesWithInfo.Extension)" />
+
     <Exec
       Condition="'@(Installers)' != '' And '$(SignToolPath)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd SHA256 /sha1 $(CertificateHash) /s "My" "%(Installers.FullPath)"'
+      Command='"$(SignToolPath)" sign /t $(TimestampUrl) /fd SHA256 /sha1 $(CertificateHash) /s "My" /d "%(InstallerFilesWithInfo.ProductName)" "%(InstallerFilesWithInfo.FullPath)"'
       YieldDuringToolExecution="true" />
   </Target>
-  
-  
+
+
   <Target Name="SignClickOnceFiles" AfterTargets="SignInstallers" Condition="'$(CodeSigningEnabled)' == 'true'">
     <Message Text="Signing ClickOnce manifests in $(BinModuleDirectory)"/>
     <PropertyGroup>
       <MinVersion Condition="'$(MinVersion)' == ''">8.0.2.0</MinVersion>
     </PropertyGroup>
-    
+
     <ItemGroup>
       <!-- Grab all CO content -->
       <ClickOnceSignFiles Include="$(BinModuleDirectory)**\*CO*exe" Exclude="$(BinModuleDirectory)**\app.publish\**" />
@@ -197,17 +155,17 @@
         <Application>$(BinModuleDirectory)%(RecursiveDir)%(FileName).application</Application>
       </ClickOnceSignFiles>
     </ItemGroup>
-    
+
     <Exec Condition="Exists(%(ClickOnceSignFiles.Manifest))"
-          ContinueOnError="false" 
+          ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="&quot;$(MageToolPath)&quot; -sign %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash)" 
+          Command="&quot;$(MageToolPath)&quot; -sign %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash)"
           YieldDuringToolExecution="true" />
 
     <Exec Condition="Exists(%(ClickOnceSignFiles.Manifest)) And Exists(%(ClickOnceSignFiles.Application))"
           ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="&quot;$(MageToolPath)&quot; -update %(ClickOnceSignFiles.Application) -UseManifestForTrust true -IncludeProviderURL false -AppManifest %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash) -MinVersion &quot;$(MinVersion)&quot;" 
+          Command="&quot;$(MageToolPath)&quot; -update %(ClickOnceSignFiles.Application) -UseManifestForTrust true -IncludeProviderURL false -AppManifest %(ClickOnceSignFiles.Manifest) -CertHash $(CertificateHash) -MinVersion &quot;$(MinVersion)&quot;"
           YieldDuringToolExecution="true" />
 
   </Target>

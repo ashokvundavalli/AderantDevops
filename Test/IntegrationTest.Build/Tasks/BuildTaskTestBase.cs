@@ -17,6 +17,10 @@ namespace IntegrationTest.Build.Tasks {
             StringBuilder sb = new StringBuilder();
             sb.Append("\"" + Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets") + "\"");
             sb.Append(" ");
+            sb.Append("/p:NoMSBuildCommunityTasks=true");
+            sb.Append(" ");
+            sb.Append("/p:BuildToolsDirectory=" + "\"" + TestContext.DeploymentDirectory + "\"");
+            sb.Append(" ");
             sb.Append("/Target:" + targetName);
 
             ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(buildTool, "MSBuild.exe"), sb.ToString());

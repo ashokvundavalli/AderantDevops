@@ -65,8 +65,10 @@
   <ItemGroup>
     <Compile Include="BuildAssociationTests.cs" />
     <Compile Include="Tasks\BuildTaskTestBase.cs" />
+    <Compile Include="Tasks\CheckCertificateTests.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tasks\GetFileVersionInfoTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -80,6 +82,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\..\Src\Build\Aderant.Build.Common.targets">
+      <Link>Aderant.Build.Common.targets</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="App.config" />
     <Content Include="IntegrationTest.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

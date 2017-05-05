@@ -3,7 +3,7 @@
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
   ToolsVersion="14.0"
   DefaultTargets="PrepareBuildEnvironment"
-  TreatAsLocalProperty="BuildScriptsDirectory;BuildNumber">
+  TreatAsLocalProperty="BuildScriptsDirectory;BuildToolsDirectory;BuildNumber">
 
   <PropertyGroup Label="TeamBuild">
     <SkipWorkItemCreation>true</SkipWorkItemCreation>
@@ -28,99 +28,57 @@
         
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' == ''">$(BuildScriptsDirectory)..\Build.Tools\</BuildToolsDirectory>
     <BuildSourcesDirectory Condition="'$(BuildSourcesDirectory)' == ''">$(BuildScriptsDirectory)..\Sources\</BuildSourcesDirectory>
-
+      
     <BuildToolsDirectory>$([System.IO.Path]::GetFullPath('$(BuildToolsDirectory)'))</BuildToolsDirectory>
     <BuildSourcesDirectory>$([System.IO.Path]::GetFullPath('$(BuildSourcesDirectory)'))</BuildSourcesDirectory>
+   
+    <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' != '' and !HasTrailingSlash('$(BuildToolsDirectory)')">$(BuildToolsDirectory)\</BuildToolsDirectory>
 
     <BuildAssembly>$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
   </PropertyGroup>
 
+  
+  <!-- NOTE: Using the fully qualified class name in a <UsingTask> tag is faster than using a partially qualified name. -->
+
   <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
-  <UsingTask TaskName="GetAssemblyPlatform"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"                                 AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Gets the dependencies for a given module -->
-  <UsingTask TaskName="GetDependencies"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="MakeSymlink"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="DependencyChecker"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="BuildConfigurationCheck"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="FilterModules"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="ExtractWebModule"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="ReplaceProjectReferences"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="CompileLess"
-           AssemblyFile="$(BuildAssembly)"
-           Condition="'$(IsCustomBuild)' != 'true'" />
-  
-  <UsingTask TaskName="GetCopyLocalItemsToRemove"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="ParallelBuildProjectFactory"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.GetDependencies"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.MakeSymlink"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.DependencyChecker"                                   AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.BuildConfigurationCheck"                             AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.FilterModules"                                       AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.ExtractWebModule"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.ParallelBuildProjectFactory"                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds SCC information into the pdb files for the symbol server -->
-  <UsingTask TaskName="SourceIndex"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Publishes pdb files to the symbol server -->
-  <UsingTask TaskName="PublishSymbols"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.PublishSymbols"                                      AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Creates "fakes" builds in TFS -->
-  <UsingTask TaskName="PublishBuild"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
+  <UsingTask TaskName="Aderant.Build.Tasks.PublishBuild"                                        AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+                                                                
   <!-- Closes and finalizes a build -->
-  <UsingTask TaskName="FinalizeBuild"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.FinalizeBuild"                                       AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds solution build details into TFS so the build can track warnings etc -->
-  <UsingTask TaskName="AddBuildProjectNode"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="CheckCertificate"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
-  <UsingTask TaskName="ThirdPartyPackager"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.AddBuildProjectNode"                                 AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.CheckCertificate"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.ThirdPartyPackager"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- For zip seed packages. -->
-  <UsingTask TaskName="SeedPackagePacking"
-             AssemblyFile="$(BuildAssembly)"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-  
+  <UsingTask TaskName="Aderant.Build.Tasks.SeedPackagePacking"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.GetAssembliesWithTraits"                             AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+
   <PropertyGroup>
     <!-- Visual Studio Environment-->
     <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
@@ -134,7 +92,7 @@
     <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\</MSBuildCommunityTasksPath>
   </PropertyGroup>
 
-  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" />
+  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
 
   <!--
     ==========================================================================================

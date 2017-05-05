@@ -1,15 +1,25 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask AssemblyFile="Aderant.Build.dll" TaskName="GetAssembliesWithTraits" />
+  <Import Project="Aderant.Build.Common.targets" />
+  
+  <ItemGroup>
+    <Files Include="*.dll;" />
+  </ItemGroup>
   
   <Target Name="GetAssembliesWithTraits">
-    <ItemGroup>
-      <Files Include="*.dll" />
-    </ItemGroup>
-    
     <GetAssembliesWithTraits CompanyName="Aderant" Files="@(Files)" />
-    
-    
   </Target>
- 
+
+
+  <Target Name="CheckCertificate">
+    <CheckCertificate Thumbprint="1c2a3e8f5e969fd0a526f917100f6231faacb460" />
+  </Target>
+
+  <Target Name="GetFileVersionInfo">
+    <ItemGroup>
+      <MSI Include="C:\Windows\Installer\**\*.msi" />
+    </ItemGroup>
+    <GetFileVersionInfo Files="@(MSI)" />
+  </Target>
+
 </Project>

@@ -46,7 +46,7 @@
             var fullPath = AssemblyInfo.GetMetadata("FullPath");
             string text = System.IO.File.ReadAllText(fullPath);
 
-            var assemblyTitleExpression = new Regex(@"(AssemblyTitle|AssemblyProduct)\((.*?)\)"); 
+            var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)"); 
             GroupCollection match = assemblyTitleExpression.Match(text).Groups;
             string value = match[match.Count - 1].Value;
 
@@ -70,40 +70,54 @@
     </CompileDependsOn>
   </PropertyGroup>
 
-  <!--
-      Creates modified version of CommonAssemblyInfo.cs without touching the original file
-  -->
-  <Target Name="CommonBuildUpdateAssemblyInfo" Condition="'$(IsCustomBuild)' != 'true'">
+  
+  <Target Name="FindCommonAssemblyInfo" BeforeTargets="CommonBuildUpdateAssemblyInfo">
+    
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
       <OriginalAssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
       <!-- Now remove the original element -->
-      <Compile Remove="@(OriginalAssemblyInfo)" />
+      <Compile Remove="@(OriginalAssemblyInfo)" Condition="@(OriginalAssemblyInfo) != ''" />
     </ItemGroup>
 
     <PropertyGroup>
-      <OutputCommonAssemblyInfo>@(OriginalAssemblyInfo->'$(IntermediateOutputPath)%(Filename)%(Extension)')</OutputCommonAssemblyInfo>
+      <NewCommonAssemblyInfo>$(IntermediateOutputPath)CommonAssemblyInfo.cs</NewCommonAssemblyInfo>
     </PropertyGroup>
-
-    <!-- Update copyright, $1, $2 and $4 are capture groups -->
-    <FileUpdate2 Condition="@(OriginalAssemblyInfo) != ''"
-                      
-                 TrackerLogDirectory="$(IntermediateOutputPath)"
-                 Sources="@(OriginalAssemblyInfo)"
-                 OutputFile="$(OutputCommonAssemblyInfo)"
-                 TrackFileAccess="true"
-                 MinimalRebuildFromTracking="true"
-                 
-                 IgnoreCase="true"
-                 Multiline="true"
-                 Singleline="false"
-                 Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
-                 ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4">
-    </FileUpdate2>
 
     <!-- Include the modified CommonAssemblyInfo.cs file in "Compile" items (instead of the original). -->
     <ItemGroup>
-      <Compile Include="$(OutputCommonAssemblyInfo)" Condition="@(OriginalAssemblyInfo) != ''" />
+      <Compile Include="$(NewCommonAssemblyInfo)" Condition="@(OriginalAssemblyInfo) != ''" />
+    </ItemGroup>
+
+  </Target>
+
+  
+  <!--
+      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset 
+      incremental builds
+  -->
+  <Target Name="CommonBuildUpdateAssemblyInfo" 
+          Condition="'$(IsCustomBuild)' != 'true'"
+          Inputs="@(OriginalAssemblyInfo)"
+          Outputs="$(NewCommonAssemblyInfo)">
+    
+    <Copy SourceFiles="@(OriginalAssemblyInfo)" 
+          DestinationFiles="$(NewCommonAssemblyInfo)" 
+          OverwriteReadOnlyFiles="true" />
+    
+    <!-- Update copyright, $1, $2 and $4 are capture groups -->
+    <MSBuild.Community.Tasks.FileUpdate
+      Condition="@(OriginalAssemblyInfo) != ''"
+      Files="$(NewCommonAssemblyInfo)"
+      IgnoreCase="true"
+      Multiline="true"
+      Singleline="false"
+      Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
+      ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4">
+    </MSBuild.Community.Tasks.FileUpdate>
+
+    <ItemGroup>
+      <FileWrites Include="$(NewCommonAssemblyInfo)" />
     </ItemGroup>
 
   </Target>
@@ -112,7 +126,7 @@
     Updates the product splash screen without touching the original file
   -->
   <Target Name="CommonBuildUpdateSplashscreen"
-          Condition="'$(IsCustomBuild)' != 'true' And ('$(OutputType)' == 'WinExe' Or '$(OutputType)' == 'winexe')"
+          Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe'"
           BeforeTargets="BeforeResolveReferences;CoreBuild">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group 

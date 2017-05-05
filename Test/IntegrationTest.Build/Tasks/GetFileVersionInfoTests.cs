@@ -4,10 +4,10 @@ namespace IntegrationTest.Build.Tasks {
     [TestClass]
     [DeploymentItem("IntegrationTest.targets")]
     [DeploymentItem("Aderant.Build.Common.targets")]
-    public class GetAssembliesWithTraitsTests : BuildTaskTestBase {
+    public class GetFileVersionInfoTests : BuildTaskTestBase {
         [TestMethod]
-        public void GetAssembliesWithTraitsTest() {
-            RunTarget("GetAssembliesWithTraits");
+        public void GetFileVersionInfoTest() {
+            RunTarget("GetFileVersionInfo");
         }
     }
 }
