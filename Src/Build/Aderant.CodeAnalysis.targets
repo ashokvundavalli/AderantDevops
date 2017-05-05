@@ -29,7 +29,7 @@
       <RunCodeAnalysisOnThisProject Condition="'$(IsTestProject)' == 'true'">false</RunCodeAnalysisOnThisProject>
     </PropertyGroup>
     
-    <Error Text="Attempted to run Code Analysis on a unit test assembly $(CodeAnalysisInputAssembly)." Condition="'$(IsTestProject)' == 'true'" />
+    <Warning Text="Attempted to run Code Analysis on a unit test assembly $(CodeAnalysisInputAssembly)." Condition="'$(IsTestProject)' == 'true'" />
 
     <ItemGroup>
       <CodeAnalysisAssemblies Include="$(CodeAnalysisInputAssembly)" Condition="'$(RunCodeAnalysisOnThisProject)' == 'true'" />
