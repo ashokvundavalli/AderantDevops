@@ -60,6 +60,13 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
         private static RuleViolationSeverityEnum GetQueryExpressionSeverity(SemanticModel semanticModel, SyntaxNode node) {
+            // If any of the ancestor nodes are a query expression, exit early.
+            // Example:
+            // from bill in queryServiceProxy.Bills where bill.Id > 0 select bill.Id
+            if (node.Ancestors().Any(x => x is QueryExpressionSyntax)) {
+                return RuleViolationSeverityEnum.None;
+            }
+
             // Retrieve the node's child nodes as a list for easier operation.
             var childNodes = node.ChildNodes().ToList();
 
@@ -118,7 +125,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 x => x.AttributeClass.ToDisplayString().Equals("Aderant.Query.Annotations.IsCacheableAttribute"))
                 ? RuleViolationSeverityEnum.None
                 // Evaluate the methods being invoked upon the query.
-                : EvaluateQueryMethods(semanticModel, node, genericTypeParameter);
+                : EvaluateQueryMethods(semanticModel, node);
         }
 
         /// <summary>
@@ -161,24 +168,24 @@ namespace Aderant.Build.Analyzer.Rules {
         /// </summary>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        /// <param name="genericTypeParameter"></param>
         private static RuleViolationSeverityEnum EvaluateQueryMethods(
             SemanticModel semanticModel,
-            SyntaxNode node,
-            ISymbol genericTypeParameter) {
+            SyntaxNode node) {
             SyntaxNode parentNode = null;
 
             // Each possible use case uses a different expression syntax.
             // Instead of individually handling each use case, traverse 
-            // the tree of ancestor nodes and retrieve the last node before the block node.
+            // the tree of ancestor nodes and retrieve the first node that
+            // is not an invocation or member access expression.
             // This node is only required for its children,
             // and does not require any type-specific handling.
             foreach (var ancestorNode in node.Ancestors()) {
-                if (ancestorNode is BlockSyntax) {
-                    break;
+                if (ancestorNode is MemberAccessExpressionSyntax || ancestorNode is InvocationExpressionSyntax) {
+                    continue;
                 }
 
                 parentNode = ancestorNode;
+                break;
             }
 
             // If the return expression is null,
@@ -186,7 +193,7 @@ namespace Aderant.Build.Analyzer.Rules {
             return parentNode == null
                 ? RuleViolationSeverityEnum.None
                 // Evaluate the parent node.
-                : EvaluateParentNode(semanticModel, parentNode, node, genericTypeParameter);
+                : EvaluateParentNode(semanticModel, parentNode, node);
         }
 
         /// <summary>
@@ -195,12 +202,10 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="parentNode">The parent node.</param>
         /// <param name="currentNode">The current node.</param>
-        /// <param name="genericTypeParameter"></param>
         private static RuleViolationSeverityEnum EvaluateParentNode(
             SemanticModel semanticModel,
             SyntaxNode parentNode,
-            SyntaxNode currentNode,
-            ISymbol genericTypeParameter) {
+            SyntaxNode currentNode) {
             // Get all method invocations applied to the query.
             var methods = new List<InvocationExpressionSyntax>(DefaultCapacity);
             GetExpressionsFromChildNodes(ref methods, parentNode, currentNode);
@@ -252,17 +257,32 @@ namespace Aderant.Build.Analyzer.Rules {
                 break;
             }
 
-            if (methodSymbol == null ||
-                // If the method returns an IQueryable, the query is filtered and therefore valid.
-                methodSymbol.ReturnType.Name.Equals("IQueryable") ||
-                methodSymbol.ReturnType.ToDisplayString().Equals(genericTypeParameter.ToDisplayString())) {
+            if (methodSymbol == null) {
                 return RuleViolationSeverityEnum.None;
             }
 
-            // Determine if the returned type inherits from IQueryable.
-            return methodSymbol.ReturnType.AllInterfaces.Any(x => x.Name.Equals("IQueryable"))
-                ? RuleViolationSeverityEnum.None
-                : RuleViolationSeverityEnum.Error;
+            bool ienumerableFound = false;
+
+            // iterate through all interfaces the method's return type derives from.
+            foreach (var methodInterface in methodSymbol.ReturnType.AllInterfaces) {
+                // If the return type derives from IQueryable, there's no error as the query is not enumerated.
+                if (methodInterface.Name.Equals("IQueryable")) {
+                    return RuleViolationSeverityEnum.None;
+                }
+
+                // If the return type derives from IEnumerable, raise the approperiate flag.
+                // Continue iteration as IQueryable derives from IEnumerable.
+                if (!ienumerableFound &&
+                    methodInterface.Name.Equals("IEnumerable")) {
+                    ienumerableFound = true;
+                }
+            }
+
+            // If the IEnumerable was found, but 'none' was neve returned (as an IQueryable was not also found),
+            // raise an error. Otherwise there's no error, as whatever type is being returned is not a collection of things.
+            return ienumerableFound
+                ? RuleViolationSeverityEnum.Error
+                : RuleViolationSeverityEnum.None;
         }
 
         /// <summary>

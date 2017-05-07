@@ -61,6 +61,22 @@ namespace Aderant.Query.ViewModels {
 }
 ";
 
+
+        [TestMethod]
+        public void QueryServiceQueryAll_QueryExpression() {
+            const string test = @"
+    public class Program {
+        private static readonly IQueryServiceProxy proxy;
+
+        public static void Main() {
+            var test = (from modelItem in proxy.ModelItems where modelItem != null select modelItem).ToList();
+        }
+    }
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
         [TestMethod]
         public void QueryServiceQueryAll_Field_Diagnostic() {
             const string test = @"
