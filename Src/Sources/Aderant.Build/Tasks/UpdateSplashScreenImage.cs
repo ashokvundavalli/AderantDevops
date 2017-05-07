@@ -1,14 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Resources;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Aderant.Build;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
 
@@ -51,6 +46,8 @@ namespace Aderant.Build.Tasks {
                 foreach (SplashScreenText text in parts) {
                     text.Brush = new SolidColorBrush(Colors.White);
                 }
+            } else if (splashScreenStyle.Contains("Reskin")) {
+                SplashScreenText.UpdateTextForNewSplashScreens(parts);
             }
 
             var file = new FileInfo(splashScreenPath);
@@ -75,7 +72,7 @@ namespace Aderant.Build.Tasks {
                                          new Rect(0, 0, originalImageSource.PixelWidth, originalImageSource.PixelHeight));
                 foreach (SplashScreenText text in parts) {
                     if (text.Text != null) {
-                        drawingContext.DrawText(text.FormattedText, text.TopRight);
+                        drawingContext.DrawText(text.FormattedText, text.Position);
                     }
                 }
             }
