@@ -12,7 +12,7 @@ namespace Aderant.Build.Tasks {
         public string Units { get; set; }
 
         public override bool Execute() {
-            if (string.Equals("GB", Units)) {
+            if (string.Equals("GB", Units, StringComparison.OrdinalIgnoreCase)) {
                 long freeSizeInBytes = (long)FreeSpace * 1024 * 1024 * 1024;
 
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
