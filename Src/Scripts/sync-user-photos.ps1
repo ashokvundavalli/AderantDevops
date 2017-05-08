@@ -1,3 +1,5 @@
+Set-StrictMode -Version 2.0
+
 <#
     This script takes care of fetching all identities known to TFS then downloading the user photo (if any) from Office 365 and assigning that photo
     to the Team Foundation identity
@@ -27,7 +29,9 @@ function GetUsers
 
     $ignorePatterns = @("*service*", "*tester*" ,"*build*", "*admin*", "$")
 
-    foreach ($user in $identityService. SearchForUsers("")) {
+    Write-Host "Searching for users..."   
+    
+    foreach ($user in $identityService.SearchForUsers("michael baker")) {
         if ($user.UniqueName -like "ADERANT_EU*") {
             continue
         }
@@ -68,7 +72,7 @@ function SetTeamFoundationProperties($identityService, $user, $imageBytes, $form
 }
 
 
-function ProcessUser($user, $cred, $identityService, [bool]$removeAvatar)
+function ProcessUser($user, $identityService, [bool]$removeAvatar)
 {    
     if ($removeAvatar) {
         $user.SetProperty("Microsoft.TeamFoundation.Identity.Image.Data", $null)
@@ -104,7 +108,7 @@ function ProcessUser($user, $cred, $identityService, [bool]$removeAvatar)
         $uri = "https://outlook.office365.com/EWS/Exchange.asmx/s/GetUserPhoto?email={0}&size=HR648X648" -f $mail
        
         try {
-            $request = Invoke-WebRequest -Uri $uri -Credential $cred -ErrorAction Stop
+            $request = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -ErrorAction Stop
             
             $bitmap = [System.Drawing.Bitmap]::new($request.RawContentStream)
         
@@ -138,16 +142,7 @@ function ProcessUser($user, $cred, $identityService, [bool]$removeAvatar)
 
 
 function Sync() {
-    $credentialFile = "$PSScriptRoot\credentials.xml"
-
-    if (Test-Path $credentialFile) {
-        $cred = Import-Clixml -Path $credentialFile
-    } else {
-        $cred = Get-Credential
-    }
-
     
-    $cred | Export-Clixml -Path $credentialFile
 
     $returnValue = GetUsers  
 
@@ -155,7 +150,7 @@ function Sync() {
     $users = $returnValue.Users
 
     foreach ($user in $users) {
-        ProcessUser $user $cred $service $false
+        ProcessUser $user $service $false
     }
 }
 
