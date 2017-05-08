@@ -21,7 +21,7 @@ namespace Aderant.Build.Tasks {
                     if (d.IsReady) {
                         if (d.DriveType == DriveType.Fixed) {
                             if (d.AvailableFreeSpace < freeSizeInBytes) {
-                                Log.LogError($"Available free space on drive {d.Name} is below minimum requirement of {freeSizeInBytes / 1024 / 1024 / 1024} GB for a reliable build.");
+                                Log.LogError($"Available free space on drive {d.Name} is below minimum requirement of {freeSizeInBytes / 1024 / 1024 / 1024} GB for a reliable build. The build has been aborted until enough free space is available. Please contact developer operations to free up space on {Environment.MachineName}.");
                                 break;
                             }
                         }
