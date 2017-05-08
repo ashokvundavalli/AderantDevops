@@ -144,7 +144,7 @@
       Targets="Rebuild"
       Condition="'$(Rebuild)' == 'true'" />
 
-    <Aderant.Build.Tasks.CheckFreeSpace Condition="'$(IsDesktopBuild)' != 'true'" 
+    <Aderant.Build.Tasks.CheckFreeSpace Condition="'$(IsDesktopBuild)' == 'false'" 
                                         FreeSpace="10" 
                                         Units="GB" />
       
