@@ -31,7 +31,7 @@ function GetUsers
 
     Write-Host "Searching for users..."   
     
-    foreach ($user in $identityService.SearchForUsers("michael baker")) {
+    foreach ($user in $identityService.SearchForUsers("")) {
         if ($user.UniqueName -like "ADERANT_EU*") {
             continue
         }
