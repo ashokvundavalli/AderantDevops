@@ -88,8 +88,7 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
     
     if (-not $user.IsActive) {
         return
-    }
-    
+    }    
             
     $hashTable = @{}
     foreach ($prop in $user.GetProperties()) {
@@ -97,7 +96,7 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
     }
 
     if ($hashTable.ContainsKey("Microsoft.TeamFoundation.Identity.Image.Id")) {
-        Write-Host "Skipping $($user.UniqueName) as a photo is already attached, skipped."
+        Write-Host "Skipping $($user.UniqueName) has a photo is already attached, skipped."
         return
     }
 
@@ -106,31 +105,30 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
     $mail = $user.GetProperty("Mail")
     if ($mail) {
         $uri = "https://outlook.office365.com/EWS/Exchange.asmx/s/GetUserPhoto?email={0}&size=HR648X648" -f $mail
-       
+
         try {
-            $request = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -ErrorAction Stop
+		    $client = [System.Net.WebClient]::new()
+		    $client.Headers[ "Accept" ] = "/"
+	        $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", "Ad3rant0")
+	        $client.DownloadFile($uri, "C:\temp\avatars\$mail.jpg")
+			$client.Dispose()
+			
+			$bitmap = [System.Drawing.Image]::FromFile("C:\temp\avatars\$mail.jpg")		
             
-            $bitmap = [System.Drawing.Bitmap]::new($request.RawContentStream)
-        
-            if ($bitmap) {
-                $bitmap.Save("C:\temp\avatars\$mail.jpg")
+			$format = ""
+			if ([System.Drawing.Imaging.ImageFormat]::Jpeg.Equals($bitmap.RawFormat)) {
+				$format = "image/jpg"
+			} 
+		
+			if ([System.Drawing.Imaging.ImageFormat]::Png.Equals($bitmap.RawFormat)) {
+				$format = "image/png"
+			}
 
-                $format = ""
-                if ([System.Drawing.Imaging.ImageFormat]::Jpeg.Equals($bitmap.RawFormat)) {
-                    $format = "image/jpg"
-                } 
-            
-                if ([System.Drawing.Imaging.ImageFormat]::Png.Equals($bitmap.RawFormat)) {
-                    $format = "image/png"
-                }
+			if ($format) {
+				$converter = [System.Drawing.ImageConverter]::new()
+				[byte[]]$imageBytes = $converter.ConvertTo($bitmap, [byte[]])
 
-                if ($format) {
-                    $converter = [System.Drawing.ImageConverter]::new()
-                    [byte[]]$imageBytes = $converter.ConvertTo($bitmap, [byte[]])
-
-                    SetTeamFoundationProperties $identityService $user $imageBytes $format
-                }
-                
+				SetTeamFoundationProperties $identityService $user $imageBytes $format
             }
         } catch {
             Write-Host "Error updating $($user.UniqueName)" $_.Exception
@@ -142,13 +140,13 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
 
 
 function Sync() {
-    
-
     $returnValue = GetUsers  
 
     $service = $returnValue.Service
     $users = $returnValue.Users
 
+	 New-Item -ItemType Directory -Path "C:\temp\avatars" -ErrorAction SilentlyContinue
+	
     foreach ($user in $users) {
         ProcessUser $user $service $false
     }
