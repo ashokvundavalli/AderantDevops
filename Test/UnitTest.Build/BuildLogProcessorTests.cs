@@ -68,7 +68,34 @@ Warning MSB3245: Could not resolve this reference. Could not locate the assembly
 
             Assert.AreEqual(1, entries.Count);
             Assert.IsTrue(entries.First().IsCopyWarning);
+            Assert.IsFalse(entries.First().AffectsProjectQuality);
         }
+
+        [TestMethod]
+        public void Can_detect_unresolved_references() {
+
+            var json = @"{""count"":1,""value"":[""2016-09-30T02:31:56.5884032Z ##[warning]C:\\Program Files (x86)\\MSBuild\\14.0\\bin\\Microsoft.Common.CurrentVersion.targets(3963,5): Warning MSB3245: Unresolved Reference""]}";
+
+            var parser = new BuildLogParser();
+            var entries = parser.GetWarningEntries(new StringReader(json)).ToList();
+
+            Assert.AreEqual(1, entries.Count);
+            Assert.IsTrue(entries.First().IsUnresolvedReference);
+        }
+
+        [TestMethod]
+        public void Can_detect_Test_Deployment_Issue() {
+
+            var json = @"{""count"":1,""value"":[""2016-09-30T02:31:56.5884032Z ##[warning]C:\\Program Files (x86)\\MSBuild\\14.0\\bin\\Microsoft.Common.CurrentVersion.targets(3963,5): Test Run deployment issue.""]}";
+
+            var parser = new BuildLogParser();
+            var entries = parser.GetWarningEntries(new StringReader(json)).ToList();
+
+            Assert.AreEqual(1, entries.Count);
+            Assert.IsTrue(entries.First().IsTestDeploymentIssue);
+            Assert.IsFalse(entries.First().AffectsProjectQuality);
+        }
+        
 
         [TestMethod]
         public void Can_parse_plain_text_log_file() {
@@ -76,6 +103,18 @@ Warning MSB3245: Could not resolve this reference. Could not locate the assembly
             var entries = parser.GetWarningEntries(new StringReader(BuildLogProcessor.Resources.plain_text_build_log)).ToList();
 
             Assert.AreEqual(43, entries.Count);
+        }
+
+        [TestMethod]
+        public void Can_detect_test_threading_issue() {
+            var json = @"{""count"":1,""value"":[""2016-09-30T02:31:56.5884032Z ##[warning]System.AppDomainUnloadedException: Attempted to access an unloaded AppDomain. This can happen if the test(s) started a thread but did not stop it. Make sure that all the threads started by the test(s) are stopped before completion.""]}";
+
+            var parser = new BuildLogParser();
+            var entries = parser.GetWarningEntries(new StringReader(json)).ToList();
+
+            Assert.AreEqual(1, entries.Count);
+            Assert.IsTrue(entries.First().IsTestThreadingIssue);
+            Assert.IsFalse(entries.First().AffectsProjectQuality);
         }
     }
 }
