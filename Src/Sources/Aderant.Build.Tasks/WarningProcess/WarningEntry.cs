@@ -35,8 +35,17 @@ namespace Aderant.Build.Tasks.WarningProcess {
             }
         }
 
+        public bool IsTestThreadingIssue {
+            get {
+                if (Message != null) {
+                    return Message.IndexOf("Attempted to access an unloaded AppDomain. This can happen if the test(s) started a thread but did not stop it.", StringComparison.Ordinal) >= 0;
+                }
+                return false;
+            }
+        }
+
         public bool AffectsProjectQuality {
-            get { return !IsCopyWarning && !IsTestDeploymentIssue; }
+            get { return !IsCopyWarning && !IsTestDeploymentIssue && !IsTestThreadingIssue; }
         }
 
         public DateTime? Timestamp { get; set; }
