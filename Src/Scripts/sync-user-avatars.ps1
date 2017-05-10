@@ -109,7 +109,7 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
         try {
 		    $client = [System.Net.WebClient]::new()
 		    $client.Headers[ "Accept" ] = "/"
-	        $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", "Ad3rant0")
+	        $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", "$password")
 	        $client.DownloadFile($uri, "C:\temp\avatars\$mail.jpg")
 			$client.Dispose()
 			
