@@ -37,6 +37,10 @@
     <BuildAssembly>$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
+	
+	  <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
+	  <AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
+
   </PropertyGroup>
 
   

@@ -72,7 +72,7 @@
 
   
   
-  <Target Name="FindCommonAssemblyInfo" BeforeTargets="CommonBuildUpdateAssemblyInfo">
+  <Target Name="FindCommonAssemblyInfo" Condition="'$(IsCustomBuild)' != 'true'" BeforeTargets="CommonBuildUpdateAssemblyInfo">
     
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
@@ -201,9 +201,13 @@
 
   
   <PropertyGroup>
-	<GetReferenceAssemblyPathsDependsOn>$(GetReferenceAssemblyPathsDependsOn);SetupAssemblySearchPaths</GetReferenceAssemblyPathsDependsOn>
+  	<GetReferenceAssemblyPathsDependsOn>$(GetReferenceAssemblyPathsDependsOn);SetupAssemblySearchPaths</GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
   
+  <!-- Code to handle project references in Customization build. Note that Aderant.Build.dll should be packed into BuildScripts.zip. -->
+  <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"
+	AssemblyFile="$(BuildScriptsDirectory)\Aderant.Build.dll" />
+
   
   <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
 
@@ -242,9 +246,31 @@
 	
 	<!--Adding additional dependencies searching locations. -->
 	<PropertyGroup>
-        <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AssemblySearchPaths);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures</AssemblySearchPaths>
-	</PropertyGroup>	
-    
+        <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AssemblySearchPaths);$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures</AssemblySearchPaths>
+	</PropertyGroup>
+	
+	<!-- Check if any project references need to be fixed. -->
+	<SmartReference
+    Condition="'$(IsCustomBuild)' == 'true' And '$(ExpertSourceDirectory)' != ''"
+		ProjectReferences="@(ProjectReference)"
+		References="@(Reference)"
+		AlternativeOutputDirectory="$(AlternativeOutputDirectory)"
+		ExpertSourceDirectory="$(ExpertSourceDirectory)"
+		Customization="true">
+		<Output TaskParameter="ModifiedProjectReferences" ItemName="ModifiedProjectReferences" />
+		<Output TaskParameter="ModifiedReferences" ItemName="ModifiedReferences" />
+	</SmartReference>
+	
+	<!-- If any changes happen, update the ModifiedProjectReferences. -->
+	<ItemGroup Condition="'@(ModifiedProjectReferences)' != ''">
+		<ProjectReference Remove="@(ProjectReference)" />
+		<ProjectReference Include="@(ModifiedProjectReferences)" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<Reference Include="@(ModifiedReferences)" />
+	</ItemGroup>
+
   </Target>
   
   
@@ -349,11 +375,6 @@
     <RemoveDir Directories="@(Directories)" Condition="'%(Files)' == '0'" />
    
   </Target>
-  
-  <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
-  <PropertyGroup>
-	<AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
-  </PropertyGroup>  
   
   <Target Name="CopyOutputs" AfterTargets="Build" Condition="'$(IsCustomBuild)' == 'true'">
     <ItemGroup>
