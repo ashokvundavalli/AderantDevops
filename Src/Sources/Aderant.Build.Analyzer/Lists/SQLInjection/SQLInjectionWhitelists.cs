@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Aderant.Build.Analyzer.SQLInjection.Lists {
+namespace Aderant.Build.Analyzer.Lists.SQLInjection {
     /// <summary>
     /// The SQL Injection Code Analysis Rule references this class and iterates through
     /// the below members when determining the severity of a potential violation.
@@ -8,7 +8,7 @@ namespace Aderant.Build.Analyzer.SQLInjection.Lists {
     /// Types referenced below will automatically be flagged as 'safe' during rule evaluation.
     /// To add an additional safe condition, simply add a new line to the relevant collection below, using the stated syntax.
     /// </summary>
-    internal class SQLInjectionWhitelists {
+    internal static class SQLInjectionWhitelists {
         // Syntax:
         // new Tuple<string, string>("<MethodName>", "<FullyQualifiedMethodSignature>")
         public static readonly Tuple<string, string>[] Methods = {

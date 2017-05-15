@@ -59,6 +59,14 @@ namespace Aderant.Query.ViewModels {
         // Empty.
     }
 }
+
+namespace Aderant.Case.Packaging.Helpers {
+    public static class QueryableExtensions {
+        public static IEnumerable<T> WhereContainsBatched<T>(this IQueryable<T> queryable) {
+            return null;
+        }
+    }
+}
 ";
 
 
@@ -70,6 +78,21 @@ namespace Aderant.Query.ViewModels {
 
         public static void Main() {
             var test = (from modelItem in proxy.ModelItems where modelItem != null select modelItem).ToList();
+        }
+    }
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void QueryServiceQueryAll_CaseExtensionMethod() {
+            const string test = @"
+    public class Program {
+        private static readonly IQueryServiceProxy proxy;
+
+        public static void Main() {
+            var test = proxy.ModelItems.WhereContainsBatched().ToList();
         }
     }
 ";
@@ -347,6 +370,23 @@ namespace Aderant.Query.ViewModels {
 ";
 
             VerifyCSharpDiagnostic(InsertCode(test));
+        }
+
+        [TestMethod]
+        public void QueryServiceQueryAll_ForEach_Diagnostic_Expand() {
+            const string test = @"
+    public class Program {
+        private static readonly IQueryServiceProxy proxy;
+
+        public static void Main() {
+            foreach (var modelItem in proxy.ModelItems.Expand(""Test"")) {
+                // Empty.
+            }
+        }
+    }
+";
+
+            VerifyCSharpDiagnostic(InsertCode(test), GetDiagnostic(15, 39));
         }
 
         [TestMethod]

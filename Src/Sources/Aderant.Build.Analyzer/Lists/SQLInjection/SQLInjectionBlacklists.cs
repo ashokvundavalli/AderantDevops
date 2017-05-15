@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Aderant.Build.Analyzer.SQLInjection.Lists {
+namespace Aderant.Build.Analyzer.Lists.SQLInjection {
     /// <summary>
     /// The SQL Injection Code Analysis Rule references this class and iterates through
     /// the below members when determining the severity of a potential violation.

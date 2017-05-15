@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aderant.Build.Analyzer.Lists.QueryAll;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -117,6 +118,11 @@ namespace Aderant.Build.Analyzer.Rules {
             // System.Linq.IQueryable<Aderant.Query.ViewModels.Office>
             var genericTypeParameter = genericType.TypeArguments[0];
 
+            // If the queried type is whitelisted, exit early.
+            if (EvaluateTypeWhitelist(genericTypeParameter) == RuleViolationSeverityEnum.None) {
+                return RuleViolationSeverityEnum.None;
+            }
+
             // Get attributes of parameter type.
             var genericTypeParameterAttributes = genericTypeParameter.GetAttributes();
 
@@ -126,6 +132,20 @@ namespace Aderant.Build.Analyzer.Rules {
                 ? RuleViolationSeverityEnum.None
                 // Evaluate the methods being invoked upon the query.
                 : EvaluateQueryMethods(semanticModel, node);
+        }
+
+        /// <summary>
+        /// Evaluates the specified generic type to determine if it is whitelisted.
+        /// </summary>
+        /// <param name="genericTypeParameter">The generic type parameter.</param>
+        private static RuleViolationSeverityEnum EvaluateTypeWhitelist(ISymbol genericTypeParameter) {
+            // Save the type locally, to avoid potentially creating a large number of strings in memory.
+            var genericTypeName = genericTypeParameter.ToDisplayString();
+
+            // Iterate through all whitelisted types, and evaluate the result.
+            return QueryAllWhitelists.Types.Any(typeName => string.Equals(genericTypeName, typeName, StringComparison.OrdinalIgnoreCase))
+                ? RuleViolationSeverityEnum.None
+                : RuleViolationSeverityEnum.Error;
         }
 
         /// <summary>
@@ -258,12 +278,20 @@ namespace Aderant.Build.Analyzer.Rules {
             }
 
             if (methodSymbol == null) {
+                return parentNode is ForEachStatementSyntax
+                    ? RuleViolationSeverityEnum.Error
+                    : RuleViolationSeverityEnum.None;
+            }
+
+            // If method is Case helper method, or 'AsEnumerable' extension method, exit early.
+            if (methodSymbol.ContainingNamespace.ToDisplayString().Equals("Aderant.Case.Packaging.Helpers") ||
+                methodSymbol.OriginalDefinition.ToDisplayString().Equals("System.Collections.Generic.IEnumerable<TSource>.AsEnumerable<TSource>()")) {
                 return RuleViolationSeverityEnum.None;
             }
 
             bool ienumerableFound = false;
 
-            // iterate through all interfaces the method's return type derives from.
+            // Iterate through all interfaces the method's return type derives from.
             foreach (var methodInterface in methodSymbol.ReturnType.AllInterfaces) {
                 // If the return type derives from IQueryable, there's no error as the query is not enumerated.
                 if (methodInterface.Name.Equals("IQueryable")) {
@@ -278,9 +306,10 @@ namespace Aderant.Build.Analyzer.Rules {
                 }
             }
 
+            // If the parent is a foreach statement, enumeration is automatic, so a violation occured.
             // If the IEnumerable was found, but 'none' was neve returned (as an IQueryable was not also found),
             // raise an error. Otherwise there's no error, as whatever type is being returned is not a collection of things.
-            return ienumerableFound
+            return parentNode is ForEachStatementSyntax || ienumerableFound
                 ? RuleViolationSeverityEnum.Error
                 : RuleViolationSeverityEnum.None;
         }
