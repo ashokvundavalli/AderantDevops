@@ -4,7 +4,8 @@ param(
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
-    [string]$Flavor
+    [string]$Flavor,
+	[switch]$DatabaseBuildPipeline
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -233,6 +234,10 @@ task Build {
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
     }
+
+	if ($DatabaseBuildPipeline.IsPresent) {
+		$commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true"
+	}
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
     # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
