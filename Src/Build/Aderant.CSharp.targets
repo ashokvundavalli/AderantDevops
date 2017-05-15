@@ -204,9 +204,9 @@
   	<GetReferenceAssemblyPathsDependsOn>$(GetReferenceAssemblyPathsDependsOn);SetupAssemblySearchPaths</GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
   
-  <!-- Code to handle project references in Customization build. Note that Aderant.Build.dll should be packed into BuildScripts.zip. -->
+  <!-- Code to handle project references in Customization build. Aderant.Build.dll is packed into BuildScripts.zip in Framework build. -->
   <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"
-	AssemblyFile="$(BuildScriptsDirectory)\Aderant.Build.dll" />
+	AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
   
   <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
