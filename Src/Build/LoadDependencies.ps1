@@ -70,17 +70,24 @@ process {
     [string]$moduleDependenciesDirectory = (Join-Path $modulesRootPath  \Dependencies)
     [string]$moduleDependenciesDirectory = [System.IO.Path]::GetFullPath($moduleDependenciesDirectory)
     
-    Write-Host "Writing Resharper settings file."
-    Copy-Item -Path "$buildScriptsDirectory\..\Profile\sln.DotSettings" -Destination  "$modulesRootPath\$moduleName.sln.DotSettings" -Force
-    sp $modulesRootPath\$moduleName.sln.DotSettings IsReadOnly $false
+    Write-Host "Writing ReSharper settings files."
+	
+	$solutionFiles = Get-ChildItem $modulesRootPath | Where {$_.extension -eq ".sln"}
+	foreach ($solutionFile in $solutionFiles) {
+		$solutionName = $solutionFile.Name.Substring(0, $solutionFile.Name.Length - 4)
+		Write-Host "Writing ReSharper file for $solutionName"
+	
+		Copy-Item -Path "$buildScriptsDirectory\..\Profile\sln.DotSettings" -Destination "$modulesRootPath\$solutionName.sln.DotSettings" -Force
+		sp $modulesRootPath\$solutionName.sln.DotSettings IsReadOnly $false
 
-	$absolutePath = (Resolve-Path "$buildScriptsDirectory\..\..\..")
-	$currentLocation = Get-Location
-	Set-Location $modulesRootPath
-	$relativePath = "..\" + (Resolve-Path -relative $absolutePath)
-	Set-Location $currentLocation
+		$absolutePath = (Resolve-Path "$buildScriptsDirectory\..\..\..")
+		$currentLocation = Get-Location
+		Set-Location $modulesRootPath
+		$relativePath = "..\" + (Resolve-Path -relative $absolutePath)
+		Set-Location $currentLocation
 
-    (Get-Content "$modulesRootPath\$moduleName.sln.DotSettings") | Foreach-Object { ($_ -replace '\[ABSOLUTEPATH\]', $absolutePath) -replace '\[RELATIVEPATH\]', $relativePath }  | Out-File "$modulesRootPath\$moduleName.sln.DotSettings"
+		(Get-Content "$modulesRootPath\$solutionName.sln.DotSettings") | Foreach-Object { ($_ -replace '\[ABSOLUTEPATH\]', $absolutePath) -replace '\[RELATIVEPATH\]', $relativePath }  | Out-File "$modulesRootPath\$solutionName.sln.DotSettings"
+	}
        
     Copy-Item "$PSScriptRoot\dir.proj" -Destination "$modulesRootPath\dir.proj" -Force
     Copy-Item "$PSScriptRoot\Aderant.wpp.content.proj" -Destination "$modulesRootPath\Aderant.wpp.content.proj" -Force
