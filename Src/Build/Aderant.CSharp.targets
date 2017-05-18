@@ -246,7 +246,7 @@
 	
 	<!--Adding additional dependencies searching locations. -->
 	<PropertyGroup>
-        <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AssemblySearchPaths);$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures</AssemblySearchPaths>
+        <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
 	</PropertyGroup>
 	
 	<!-- Check if any project references need to be fixed. -->
