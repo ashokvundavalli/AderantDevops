@@ -325,6 +325,7 @@
                  $(LocalExpertBinariesDirectory)\**\notes.role.xml;
                  $(LocalExpertBinariesDirectory)\**\queryservice.role.xml;
                  $(LocalExpertBinariesDirectory)\**\security.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\webcore.role.xml;
                  $(LocalExpertBinariesDirectory)\**\workflow.role.xml;
                  $(LocalExpertBinariesDirectory)\**\workflowauthoring.role.xml" />
 
