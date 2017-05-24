@@ -130,11 +130,12 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
     <LoadTextTemplatingTask Directory="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\TextTemplating" />
 	
     <ItemGroup>
+      <SearchPaths Include="$(AlternativeOutputDirectory)" />
       <SearchPaths Include="$(ExpertSourceDirectory)" />
     </ItemGroup>
 	
     <PropertyGroup>
-      <EnvironmentVariableProperties Condition="'$(EnvironmentVariableProperties)' == ''">ExpertSourceDirectory=$(ExpertSourceDirectory)</EnvironmentVariableProperties>
+      <EnvironmentVariableProperties Condition="'$(EnvironmentVariableProperties)' == ''">ExpertSourceDirectory=$(ExpertSourceDirectory);ArtifactStaging=$(AlternativeOutputDirectory)</EnvironmentVariableProperties>
     </PropertyGroup>
 
     <!-- Do the Transform, for newer version customization builds, where ExpertSourceDirectory is fed in CustomizationBuilder.exe -->
