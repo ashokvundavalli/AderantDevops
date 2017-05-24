@@ -112,9 +112,11 @@ function WarningRatchet() {
             Write-Output "Adjusted build warnings: $adjustedWarningCount"
 
             RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
+			
+			$permittedWarningsThreshold = 5
 
             # Only fail if the adjusted count exceeds the last build
-            if ($adjustedWarningCount -gt $lastGoodBuildCount) {  
+            if ($adjustedWarningCount -gt $lastGoodBuildCount -and $adjustedWarningCount -gt $permittedWarningsThreshold) {  
             
                 $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
                            
