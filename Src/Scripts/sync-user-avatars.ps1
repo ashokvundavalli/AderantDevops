@@ -95,10 +95,10 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
         $hashTable.Add($prop.Key, $prop.Value)
     }
 
-    if ($hashTable.ContainsKey("Microsoft.TeamFoundation.Identity.Image.Id")) {
-        Write-Host "Skipping $($user.UniqueName) has a photo is already attached, skipped."
-        return
-    }
+    # if ($hashTable.ContainsKey("Microsoft.TeamFoundation.Identity.Image.Id")) {
+    #     Write-Host "Skipping $($user.UniqueName) has a photo is already attached, skipped."
+    #     return
+    # }
 
     Write-Host "Getting user photo for $($user.UniqueName)"
     
