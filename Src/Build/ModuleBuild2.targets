@@ -614,7 +614,7 @@ doc.Save(File);
 
         <ItemGroup>
           <CustomSolutionFiles
-            Include="$(SolutionDirectoryPath)**\*.Custom.sln" />
+            Include="$(SolutionDirectoryPath)\*.Custom.sln" />
         </ItemGroup>
     </Target>
 
@@ -629,6 +629,7 @@ doc.Save(File);
     </PropertyGroup>
 
     <ItemGroup>
+      <ZipFile Remove="@(ZipFile)" />
       <ZipFile Include="$(ZipFileDirectory)%(CustomSolutionFiles.Filename).zip" />
     </ItemGroup>
 
@@ -1043,7 +1044,7 @@ doc.Save(File);
   -->
   <ItemGroup>
     <TemplateSolutionFiles
-      Include="$(SolutionDirectoryPath)**\*.Template.sln"
+      Include="$(SolutionDirectoryPath)\*.Template.sln"
           Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')" />
   </ItemGroup>
 
@@ -1058,6 +1059,7 @@ doc.Save(File);
     </PropertyGroup>
       
     <ItemGroup>
+      <ZipFile Remove="@(ZipFile)" />
       <ZipFile Include="$(ZipFileDirectory)\%(TemplateSolutionFiles.Filename).zip" />
     </ItemGroup>
 
@@ -1118,7 +1120,8 @@ doc.Save(File);
     <Copy
         SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
         DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
-        SkipUnchangedFiles="true">
+        SkipUnchangedFiles="true"
+        UseHardlinksIfPossible="true">
     </Copy>
 
     <!-- Read solution file so we can get the project source-->
