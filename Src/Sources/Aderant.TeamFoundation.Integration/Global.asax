@@ -1,1 +1,1 @@
-﻿<%@ Application Codebehind="Global.asax.cs" Inherits="Aderant.WebHooks.Global" Language="C#" %>
+﻿<%@ Application Codebehind="Global.asax.cs" Inherits="Aderant.TeamFoundation.Integration.Global" Language="C#" %>

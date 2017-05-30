@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aderant.WebHooks;
 using Aderant.WebHooks.Model;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 
-namespace Aderant.WebHooks {
+namespace Aderant.TeamFoundation.Integration {
     internal class ContributionQueryService {
         private readonly ITeamFoundationServer connection;
 

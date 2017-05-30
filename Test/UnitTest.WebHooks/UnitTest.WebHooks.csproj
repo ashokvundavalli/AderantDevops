@@ -76,7 +76,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.WebHooks\Aderant.WebHooks.csproj">
+    <ProjectReference Include="..\..\Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj">
       <Project>{7AA81D68-A831-41BA-B899-062FDAC0C63C}</Project>
       <Name>Aderant.WebHooks</Name>
     </ProjectReference>
@@ -85,6 +85,7 @@
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,6 @@
-﻿<#
+﻿Set-StrictMode -Version 2.0
+
+<#
 .Synopsis
     Functions relating to the modules
 .Example
@@ -85,11 +87,13 @@
         [bool]$getModuleFromSpecificPath=$false
 
         if ($module.HasAttribute("GetAction")) {
-            if ($module.GetAction.ToLower().Equals("branch")) {
+            $getAction = $module.GetAction;
+
+            if ($getAction -eq "branch") {
                 $getModuleFromAnotherBranch = $true
-            } elseif ($module.GetAction.ToLower().Equals("specificdroplocation")) {
+            } elseif ($getAction-eq "specificdroplocation" -or $getAction -eq "specific-path") {
                 $getModuleFromSpecificPath = $true
-            } elseif ($module.GetAction.ToLower().Equals("local")) {
+            } elseif ($getAction -eq "local") {
                 $getModuleLocally = $true
             }
         }

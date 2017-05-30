@@ -5,14 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.WebHooks.Model;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.CodeReview.Discussion.WebApi;
 using Microsoft.VisualStudio.Services.CodeReview.WebApi;
 using Microsoft.VisualStudio.Services.Identity;
 using Microsoft.VisualStudio.Services.Identity.Client;
 using Microsoft.VisualStudio.Services.WebApi;
-using VssConnection = Microsoft.VisualStudio.Services.WebApi.VssConnection;
 
-namespace Aderant.WebHooks {
+namespace Aderant.TeamFoundation.Integration {
     internal class TeamFoundationServer : ITeamFoundationServer {
         private static Dictionary<string, Identity> identityCache = new Dictionary<string, Identity>();
 
@@ -104,7 +104,7 @@ namespace Aderant.WebHooks {
             reviewer.Id = reviewerToAdd.Id.ToString();
             reviewer.IsRequired = false;
             reviewer.Vote = (short)ReviewerVote.None;
-
+            
             if (!string.IsNullOrEmpty(reviewerToAdd.DisplayName)) {
                 reviewer.DisplayName = reviewerToAdd.DisplayName;
             }
@@ -166,7 +166,7 @@ namespace Aderant.WebHooks {
                 IsDeleted = false,
                 Content = content,
                 PublishedDate = DateTime.UtcNow,
-                CommentType = CommentType.System,
+                CommentType = Microsoft.VisualStudio.Services.CodeReview.Discussion.WebApi.CommentType.System,
             };
 
             thread.Comments = new[] {

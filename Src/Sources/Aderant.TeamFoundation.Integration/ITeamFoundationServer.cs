@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Aderant.WebHooks.Model;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 
-namespace Aderant.WebHooks {
+namespace Aderant.TeamFoundation.Integration {
     internal interface ITeamFoundationServer {
         IEnumerable<Contributor> GetGitContributors(Guid teamProjectId);
 
