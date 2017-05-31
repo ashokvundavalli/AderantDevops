@@ -107,7 +107,7 @@
     <Compile Include="Tests\PropertyChangedNoStringTests.cs" />
     <Compile Include="Tests\InvalidRegexTests.cs" />
     <Compile Include="Tests\SqlCommandWithParameters.cs" />
-    <Compile Include="Tests\SqlErrorSuppressionTests.cs" />
+    <Compile Include="Tests\SqlInjectionErrorSuppressionTests.cs" />
     <Compile Include="Tests\SqlInjectionErrorTests.cs" />
     <Compile Include="Verifiers\AderantCodeFixVerifier.cs" />
     <Compile Include="Verifiers\CodeFixVerifier.cs" />

@@ -281,8 +281,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 return RuleViolationSeverityEnum.None;
             }
 
-            // Iterate through all method invocations within the class,
-            // where the type of the method matches the declared method's type.
+            // Iterate through all method invocations within the class, where the type of the method matches the declared method's type.
             foreach (var methodInvocation in methodInvocations.Where(x => Equals(methodDeclarationType, semanticModel.GetSymbolInfo(x).Symbol as IMethodSymbol))) {
                 // If the discovered method does not have any arguments, ignore it.
                 if (methodInvocation.ArgumentList == null || !methodInvocation.ArgumentList.Arguments.Any()) {
@@ -292,7 +291,13 @@ namespace Aderant.Build.Analyzer.Rules {
                 // Evaluate the method's arguments.
                 foreach (var argument in methodInvocation.ArgumentList.Arguments) {
                     // If the argument type is not a System.String, ignore it.
-                    if (!semanticModel.GetTypeInfo(argument.Expression).Type.ToDisplayString().StartsWith("System.String", StringComparison.OrdinalIgnoreCase)) {
+                    if (!semanticModel.GetTypeInfo(argument.Expression).Type
+                            .ContainingNamespace
+                            .ToDisplayString()
+                            .Equals("System", StringComparison.OrdinalIgnoreCase) ||
+                        !semanticModel.GetTypeInfo(argument.Expression).Type
+                            .Name
+                            .Equals("String", StringComparison.OrdinalIgnoreCase)) {
                         continue;
                     }
 

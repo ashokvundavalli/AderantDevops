@@ -5,11 +5,17 @@ using UnitTest.Aderant.Build.Analyzer.Verifiers;
 namespace UnitTest.Aderant.Build.Analyzer.Tests {
     [TestClass]
     public class SqlInjectionErrorTests : AderantCodeFixVerifier {
+        #region Properties
+
         protected override RuleBase Rule => new SqlInjectionErrorRule();
 
         protected override string PreCode => string.Empty;
 
         protected override string PostCode => string.Empty;
+
+        #endregion Properties
+
+        #region Tests: Command Text
 
         [TestMethod]
         public void SqlInjectionError_CommandText_MethodParameter_Diagnostic_MutableData() {
@@ -19,12 +25,6 @@ using System.Data.SqlClient;
 namespace Test {
     public class Program {
         public static void Main() {
-            // Empty.
-        }
-    }
-
-    public static class PartClass {
-        private static void Foo() {
             string test = Bar();
 
             Execute(test);
@@ -46,7 +46,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(test, GetDiagnostic(15, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(9, 21));
         }
 
         [TestMethod]
@@ -57,12 +57,6 @@ using System.Data.SqlClient;
 namespace Test {
     public class Program {
         public static void Main() {
-            // Empty.
-        }
-    }
-
-    public static class PartClass {
-        private static void Foo() {
             Execute(""Test"");
         }
 
@@ -78,7 +72,7 @@ namespace Test {
 }
 ";
 
-            VerifyCSharpDiagnostic(test, GetDiagnostic(19, 21));
+            VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
         [TestMethod]
@@ -136,6 +130,10 @@ namespace Test {
 
             VerifyCSharpDiagnostic(test);
         }
+
+        #endregion Tests: Command Text
+
+        #region Tests: System.Data
 
         [TestMethod]
         public void SqlInjectionError_System_Data_Common_DbCommand() {
@@ -243,6 +241,10 @@ namespace System.Data {
             VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
 
+        #endregion Tests: System.Data
+
+        #region Tests: System.SqlClient
+
         [TestMethod]
         public void SqlInjectionError_System_SqlClient_SqlCommand() {
             const string test = @"
@@ -295,6 +297,10 @@ namespace System.Data.SqlClient {
 
             VerifyCSharpDiagnostic(test, GetDiagnostic(13, 21));
         }
+
+        #endregion Tests: System.SqlClient
+
+        #region Tests: String Literals
 
         [TestMethod]
         public void SqlInjectionError_StringLiteral_And_NonConstLocalVariable() {
@@ -398,8 +404,12 @@ namespace System.Data {
             VerifyCSharpDiagnostic(test, GetDiagnostic(11, 21));
         }
 
+        #endregion Tests: String Literals
+
+        #region Tests: No Diagnostic
+
         [TestMethod]
-        public void SqlInjectionError_NoError() {
+        public void SqlInjectionError_NoDiagnostic() {
             const string test = @"
 using System;
 
@@ -446,6 +456,10 @@ namespace Some.Test.Foo {
 
             VerifyCSharpDiagnostic(test);
         }
+
+        #endregion Tests: No Diagnostic
+
+        #region Tests: New SQL Command
 
         [TestMethod]
         public void SqlInjectionError_NewSqlCommand_Diagnostic() {
@@ -635,6 +649,10 @@ namespace Test {
             VerifyCSharpDiagnostic(test);
         }
 
+        #endregion Tests: New SQL Command
+
+        #region Tests: SQL Query
+
         [TestMethod]
         public void SqlInjectionError_SqlQuery_Error() {
             const string test = @"
@@ -665,7 +683,7 @@ namespace System.Data.Entity {
         }
 
         [TestMethod]
-        public void SqlInjectionError_SqlQuery_NoError() {
+        public void SqlInjectionError_SqlQuery_NoDiagnostic() {
             const string test = @"
 using System.Data.Entity;
 
@@ -689,6 +707,10 @@ namespace System.Data.Entity {
 
             VerifyCSharpDiagnostic(test);
         }
+
+        #endregion Tests: SQL Query
+
+        #region Tests: Conditional Expression
 
         [TestMethod]
         public void SqlInjectionError_ConditionalExpression_Diagnostic() {
@@ -736,6 +758,10 @@ namespace Test {
 
             VerifyCSharpDiagnostic(test);
         }
+
+        #endregion Tests: Conditional Expression
+
+        #region Tests: Property Resources
 
         [TestMethod]
         public void SqlInjectionError_PropertyResources() {
@@ -835,6 +861,10 @@ namespace System.Data.Common {
 
             VerifyCSharpDiagnostic(test);
         }
+
+        #endregion Tests: Property Resources
+
+        #region Tests: Non-Constant Assignment
 
         [TestMethod]
         public void SqlInjectionError_NonConstantAssignment_DataImmutable() {
@@ -1018,5 +1048,7 @@ namespace System.Data.Entity {
 
             VerifyCSharpDiagnostic(test, GetDiagnostic(13, 13));
         }
+
+        #endregion Tests: Non-Constant Assignment
     }
 }

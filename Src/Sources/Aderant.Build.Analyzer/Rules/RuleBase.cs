@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Aderant.Build.Analyzer.Rules {
     public abstract class RuleBase {
+        #region Type Definitions
+
         protected enum RuleViolationSeverityEnum {
             Invalid = -1,
             None,
@@ -16,7 +18,18 @@ namespace Aderant.Build.Analyzer.Rules {
             Max
         }
 
+        #endregion Type Definitions
+
+        #region Fields
+
+        #endregion Fields
+
         protected const int DefaultCapacity = 25;
+
+        private const string SuppressMessageTypeName = "System.Diagnostics.CodeAnalysis.SuppressMessage";
+        private const string TestClassTypeName = "Microsoft.VisualStudio.TestTools.UnitTesting.TestClass";
+
+        #region Properties
 
         internal abstract DiagnosticSeverity Severity { get; }
 
@@ -29,6 +42,10 @@ namespace Aderant.Build.Analyzer.Rules {
         internal abstract string Description { get; }
 
         public abstract DiagnosticDescriptor Descriptor { get; }
+
+        #endregion Properties
+
+        #region Methods
 
         public abstract void Initialize(AnalysisContext context);
 
@@ -121,13 +138,13 @@ namespace Aderant.Build.Analyzer.Rules {
                 foreach (AttributeSyntax attribute in attributeList.Attributes) {
                     string name = attribute.Name.ToString();
 
-                    if (name.Equals("TestClass")) {
+                    // If the class is a test class, automatically suppress any errors.
+                    if (TestClassTypeName.EndsWith(name, StringComparison.Ordinal)) {
                         return true;
                     }
 
                     // If the attribute is not a suppression message, continue.
-                    if (!name.Equals("SuppressMessage") &&
-                        !name.Equals("System.Diagnostics.CodeAnalysis.SuppressMessage")) {
+                    if (!SuppressMessageTypeName.EndsWith(name, StringComparison.Ordinal)) {
                         continue;
                     }
 
@@ -152,5 +169,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
             return false;
         }
+
+        #endregion Methods
     }
 }
