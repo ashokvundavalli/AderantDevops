@@ -305,6 +305,9 @@
     <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\**\*.aspx">
       <RelativePath>Authentication\$([System.IO.Directory]::GetParent(%(FullPath)).Name)\</RelativePath>
     </AspxContent>
+    <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\web.config">
+      <RelativePath>$([System.IO.Directory]::GetParent(%(FullPath)).Name)\</RelativePath>
+    </AspxContent>
     <AspxContent Include="$(DependenciesDirectory)Mobile.*\Authentication\**\*.aspx"
                  Exclude="$(DependenciesDirectory)Mobile.*\Authentication\Web.*\**">
       <RelativePath>Authentication\$([System.String]::Copy('%(RecursiveDir)').Replace('Authentication\', ''))</RelativePath>
@@ -431,7 +434,7 @@
     <When Condition=" ('$(AssemblyName)' != 'Web.Foundation') And '$(EnableContentLink)' == 'true' ">
       <ItemGroup>
         <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
-        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx" >
+        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx;Authentication\web.config" >
           <Visible>true</Visible>
         </Content>
 
