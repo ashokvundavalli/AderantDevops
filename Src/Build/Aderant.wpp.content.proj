@@ -434,8 +434,11 @@
     <When Condition=" ('$(AssemblyName)' != 'Web.Foundation') And '$(EnableContentLink)' == 'true' ">
       <ItemGroup>
         <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
-        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx;
-                 Web.*\Authentication\web.config" >
+        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx;" >
+          <Visible>true</Visible>
+        </Content>
+        
+        <Content Include="Authentication\web.config">
           <Visible>true</Visible>
         </Content>
 
@@ -453,8 +456,8 @@
   </Choose>
 
 
-
-
+  
+    
   <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
 
     <ItemGroup>
@@ -475,7 +478,7 @@
   <Target Name="CopyLinkedContentFiles"
           DependsOnTargets="CollectLinkedContentFiles"
           Condition="'$(LinkedBuild)' != 'true' And '$(EnableContentLink)' == 'true'"
-          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy"
+          BeforeTargets="PreComputeCompileTypeScript;Build;CopyAllFilesToSingleFolderForMsdeploy;PreAutoParameterizationWebConfigConnectionStrings"
           Inputs="@(ContentToCopy)"
           Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
 
@@ -551,9 +554,9 @@ ProjectRelativePath:      %(AllReferencedContent.ProjectRelativePath)
 Link:                     %(AllReferencedContent.Link)
 Type:                     %(AllReferencedContent.Type)" />-->
 
-
-
-
+    
+    
+    
     <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
 
     <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />
