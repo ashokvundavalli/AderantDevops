@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  ToolsVersion="12.0">
+  ToolsVersion="14.0">
 
   <Import Project="$(MSBuildThisFileDirectory)\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" Condition="'$(MSBuildCommunityTasksLib)' == '' And '$(BuildingInsideVisualStudio)' != 'true'" />
 
@@ -112,19 +112,36 @@ Result = uniqueFiles.ToArray();
 
     <RemoveDir Directories="$(DependenciesPackagingDir)" />
   </Target>
-
-  <Target Name="CollectFilesFromContentOverride" AfterTargets="CollectFilesFromContent">
+  
+  
+  <!-- CollectFilesFrom_binDeployableAssemblies is the last step in PublishPipelineCollectFilesCore from Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets-->
+  <Target Name="CollectFilesFromContentCleanUp" AfterTargets="CollectFilesFrom_binDeployableAssemblies">
     <!-- Exclude all environment specific files from packaging -->
     <ItemGroup>
-      <FilesForPackagingFromProject Remove="instance.config" />
-      <FilesForPackagingFromProject Remove="bindings.config" />
-      <FilesForPackagingFromProject Remove="clients.config" />
-      <FilesForPackagingFromProject Remove="extensions.config" />
-      <FilesForPackagingFromProject Remove="packages.config" />
-      <FilesForPackagingFromProject Remove="BuildInfo.config" />
-      <FilesForPackagingFromProject Remove="FrameworkKey.snk" />
+      <ExcludeSpec Include="instance.config" />
+      <ExcludeSpec Include="bindings.config" />
+      <ExcludeSpec Include="clients.config" />
+      <ExcludeSpec Include="extensions.config" />
+      <ExcludeSpec Include="packages.config" />
+      <ExcludeSpec Include="BuildInfo.config" />
+      <ExcludeSpec Include="FrameworkKey.snk" />
     </ItemGroup>
+
+    <Aderant.Build.Tasks.FilterItemGroup
+      ItemGroup="@(FilesForPackagingFromProject)"
+      ExcludeFilterSpec="@(ExcludeSpec)"
+      FilterType="FileName">
+      <Output ItemName="FilteredFilesForPackagingFromProject" TaskParameter="Result" />
+    </Aderant.Build.Tasks.FilterItemGroup>
+
+    <ItemGroup>
+     <FilesForPackagingFromProject Remove="@(FilesForPackagingFromProject)" />
+     <FilesForPackagingFromProject Include="@(FilteredFilesForPackagingFromProject)" />
+    </ItemGroup>
+
   </Target>
+
+
 
   <!-- This target replaces the full path to source that MSDeploy typically uses -->
   <PropertyGroup>

@@ -136,6 +136,7 @@
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
+    <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="Tasks\SmartReference.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />
