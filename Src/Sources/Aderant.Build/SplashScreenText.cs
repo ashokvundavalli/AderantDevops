@@ -119,7 +119,7 @@ namespace Aderant.Build {
         public static void UpdateTextForNewSplashScreens(SplashScreenText[] parts) {
             parts[0].Brush = new SolidColorBrush(Colors.White);
             parts[1].Brush = new SolidColorBrush(Colors.White);
-            parts[2].Brush = new SolidColorBrush(Colors.DarkGray);
+            parts[2].Brush = new SolidColorBrush(Colors.White);
             parts[0].FontSize = 60;
             parts[1].FontSize = 27;
             parts[2].FontSize = 14;
