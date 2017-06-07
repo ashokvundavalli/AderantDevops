@@ -438,7 +438,7 @@
           <Visible>true</Visible>
         </Content>
         
-        <Content Include="Authentication\web.config">
+        <Content Include="Authentication\web.config" Condition="Exists('Authentication\web.config')">
           <Visible>true</Visible>
         </Content>
 
