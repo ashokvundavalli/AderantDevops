@@ -226,7 +226,7 @@ namespace Aderant.Build.Commands {
             }
             if (dontHaveAnyModuleNames && dontHaveAnySourcePaths) {
                 try {
-                    ModuleNames.Add(ParameterHelper.GetCurrentModuleName(null, this.SessionState));
+                    ModuleNames.Add(ParameterHelper.GetCurrentModulePath(null, this.SessionState));
                     dontHaveAnyModuleNames = false;
                 } catch (ArgumentException) {
                     WriteWarning("You have not provided at least one -ModuleNames and I cannot get one from your powershell.");
@@ -255,7 +255,7 @@ namespace Aderant.Build.Commands {
             findTimer.Start();
             //Add BranchPath and ModuleNames to SourcePaths.
             if (!string.IsNullOrEmpty(BranchPath) && moduleNames != null && ModuleNames.Any()) {
-                AddToCollection(GenerateAllSourcePaths(BranchPath, ModuleNames), SourcePaths);
+                GenerateAllSourcePaths(BranchPath, ModuleNames, SourcePaths);
             }
 
             SourceFileNames.Clear();
@@ -290,18 +290,35 @@ namespace Aderant.Build.Commands {
 
         #region Main Search Methods
 
-        private IEnumerable<string> GenerateAllSourcePaths(string branchPath, IEnumerable<string> moduleNames) {
-            List<string> returnPaths = new List<string>();
-            foreach (string name in moduleNames.Where(n => !string.IsNullOrWhiteSpace(n))) {
-                returnPaths.Add(GenerateSourcePath(branchPath, name));
+        private void GenerateAllSourcePaths(string branchPath, IEnumerable<string> moduleNames, ICollection<string> targetCollection) {
+            foreach (string name in moduleNames) {
+                if (string.IsNullOrWhiteSpace(name)) {
+                    continue;
+                }
+                if (name.Contains("\\")) {
+                    string binModulePath = Path.Combine(name, @"bin\module");
+                    if (Directory.Exists(binModulePath)) {
+                        targetCollection.Add(binModulePath);
+                    } else {
+                        var exception = new DirectoryNotFoundException($"Could not find the path [{binModulePath}] Maybe you should use -SourcePaths instead?");
+                        WriteError(new ErrorRecord(exception, null, ErrorCategory.ObjectNotFound, null));
+                    }
+                } else {
+                    string targetPath = GenerateSourcePath(branchPath, name);
+                    if (Directory.Exists(targetPath)) {
+                        targetCollection.Add(targetPath);
+                    } else {
+                        var exception = new DirectoryNotFoundException($"Could not find the path [{targetPath}] have you got the module {name} locally? Is your branch path correct?");
+                        WriteError(new ErrorRecord(exception, null, ErrorCategory.ObjectNotFound, null));
+                    }
+                }
             }
-            return returnPaths;
         }
 
         internal void Find() {
             if (DestinationPaths.All(string.IsNullOrEmpty)) { //if none of them have a value, then complain.
                 var exception = new ArgumentException("Cannot continue: You need to specify destination paths to look in.");
-                WriteError(new ErrorRecord(exception, string.Empty, ErrorCategory.WriteError, DestinationPaths));
+                WriteError(new ErrorRecord(exception, string.Empty, ErrorCategory.InvalidArgument, DestinationPaths));
                 return;
             }
 
@@ -448,19 +465,14 @@ namespace Aderant.Build.Commands {
             }
         }
 
-        private string FindDependenciesDirectoryFromBinFile(string nameOfBinOutputFile) {
+        private string FindDependenciesDirectoryFromBinFile(string nameOfBinOutputFile) { //TODO: should be looking inside packages too
             int index = nameOfBinOutputFile.LastIndexOf("\\Bin\\Module", StringComparison.InvariantCultureIgnoreCase);
             string dependenciesDir = Path.Combine(nameOfBinOutputFile.Substring(0, index), "Dependencies");
             return Directory.Exists(dependenciesDir) ? dependenciesDir : null;
         }
 
-        private static bool DoesExist(IEnumerable<FileToCopy> collection, string path) { //can I make this multi-threaded? How does a .parallelForEach treat a return statement.
-            foreach (FileToCopy file in collection) {
-                if (file.AbsoluteSourceFilePath.Contains(path)) {
-                    return true;
-                }
-            }
-            return false;
+        private static bool DoesExist(IEnumerable<FileToCopy> collection, string path) {
+            return collection.AsParallel().Any(file => file.AbsoluteSourceFilePath.Contains(path));
         }
 
         /// <summary>
@@ -530,7 +542,8 @@ namespace Aderant.Build.Commands {
 
         private static string StringSubtract(string fullPath, string beginningPath) {
             if (fullPath.StartsWith(beginningPath)) {
-                string returnItem = fullPath.Substring(beginningPath.Length + 1);
+                int substringIndex = beginningPath.Length > 0 && beginningPath[beginningPath.Length - 1] != '\\' ? beginningPath.Length + 1 : beginningPath.Length;
+                string returnItem = fullPath.Substring(substringIndex);
                 return returnItem;
             }
             return fullPath;
@@ -579,8 +592,7 @@ namespace Aderant.Build.Commands {
                     isReparsePoint = fileInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
                 }
             }
-            reparseCache[path] = isReparsePoint;
-            return isReparsePoint; 
+            return reparseCache[path] = isReparsePoint;
         }
 
         internal void RemoveLinksToSharedBin(IDictionary<string, ICollection<FileToCopy>> ourFilesToCopy) {
@@ -596,6 +608,10 @@ namespace Aderant.Build.Commands {
                     if (item.DestinationFilePath.Contains("AderantExpert\\Local\\Services\\Workflows")) {
                         list.Value.Remove(item); 
                         AddToWorkflowBinaries(WorkflowName(item.DestinationFilePath), item);
+                    }
+                    //I've wrecked deployment manager on a number of occassions, so I'm skipping these too.
+                    if (item.DestinationFilePath.Contains("AderantExpert\\Install")) {
+                        list.Value.Remove(item);
                     }
                 }
             }
@@ -796,10 +812,14 @@ namespace Aderant.Build.Commands {
             }
             ConcurrentQueue<FileToCopy> copyQueue = new ConcurrentQueue<FileToCopy>();
             //Populate Queue
-            foreach (var list in filesToCopy) {
-                foreach (var item in list.Value) {
+            foreach (KeyValuePair<string, ICollection<FileToCopy>> list in filesToCopy) {
+                foreach (FileToCopy item in list.Value) {
                     copyQueue.Enqueue(item);
                 }
+            }
+            int totalToCopy = copyQueue.Count;
+            if (totalToCopy == 0) {
+                Messaging.AddMessage("Could not find anything to copy. Check the paths you have provided are correct.", MessageType.Warning);
             }
             bool tryAgain = true;
             while (tryAgain) {
@@ -811,16 +831,15 @@ namespace Aderant.Build.Commands {
                     CopyFilesSync(copyQueue);
                 }
                 copyAllTimer.Stop();
-                string failedItemsString;
-                failedItemsString = FailedItems.Count > 0 ? FailedItems.Count + " copy operations have failed." : "Successfully.";
-                Messaging.AddMessage(string.Format("Copy has finished in {0}ms. {1}", copyAllTimer.ElapsedMilliseconds, failedItemsString), MessageType.Progress);
+                string failedItemsString = FailedItems.Count > 0 ? FailedItems.Count + " copy operations have failed." : $"Copied {totalToCopy} items Successfully.";
+                Messaging.AddMessage($"Copy has finished in {copyAllTimer.ElapsedMilliseconds}ms. {failedItemsString}", MessageType.Progress);
                 if (FailedItems.Count > 0) {
-                    Messaging.AddMessage(string.Format("{0} items have failed. Would you like to retry? [y/N]", FailedItems.Count), MessageType.Warning);
+                    Messaging.AddMessage($"{FailedItems.Count} items have failed. Would you like to retry? [y/N]", MessageType.Warning);
                     ConsoleKeyInfo key = Console.ReadKey(); //TODO: need to figure out how to do this using a PSCmdlet method.
                     Console.WriteLine();
                     if (key.KeyChar == 'y' || key.KeyChar == 'Y') {
                         tryAgain = true;
-                        copyQueue = new ConcurrentQueue<FileToCopy>(); //TODO: how do I clear it?
+                        copyQueue = new ConcurrentQueue<FileToCopy>();
                         FileToCopy failedFile;
                         while (FailedItems.TryTake(out failedFile)) {
                             copyQueue.Enqueue(failedFile);
@@ -844,14 +863,10 @@ namespace Aderant.Build.Commands {
                     IsBackground = true,
                 };
                 threads.Add(newThread);
-
-                Messaging.AddMessage(string.Format("Spawned thread {0}.", newThread.Name), MessageType.Debug);
-
                 newThread.Start(copyQueue);
             }
             foreach (Thread thread in threads) {
                 try {
-                    Messaging.AddMessage(string.Format("Joining on thread. IsAlive: {0}", thread.IsAlive.ToString()), MessageType.Debug);
                     thread.Join(); //BUG: sometimes powershell crashes here, but it is not throwing an exception.
                 } catch (ThreadStateException ex) {
                     Messaging.AddMessage("Thread state exception", MessageType.Error, ex);
@@ -869,26 +884,22 @@ namespace Aderant.Build.Commands {
                 try {
                     FileToCopy kvp;
                     while (queue.TryDequeue(out kvp)) {
-                        Messaging.AddMessage(string.Format("{0} is copying to  {1}", Thread.CurrentThread.Name, kvp.DestinationFilePath), MessageType.Debug);
-                        string message;
+                        Messaging.AddMessage($"{Thread.CurrentThread.Name} is copying to  {kvp.DestinationFilePath}", MessageType.Debug);
                         if (CopyFileOperation(kvp)) {
-                            message = "Copy completed";
+                            Messaging.AddMessage($"Copy completed {kvp.DestinationFilePath}", MessageType.Progress);
                         } else {
-                            message = "FAILED to copy";
                             FailedItems.Add(kvp);
                         }
-                        Messaging.AddMessage(string.Format("{0} {1} {2}", Thread.CurrentThread.Name, message, kvp.DestinationFilePath), MessageType.Debug);
-                        Messaging.AddMessage(string.Format("{0} {1}", message, kvp.DestinationFilePath), MessageType.Progress);
+                        
                     }
-                    Messaging.AddMessage(string.Format("Thread {0} ended.", Thread.CurrentThread.Name), MessageType.Debug);
                 } catch (InvalidOperationException ex) {
                     //Queue is empty.
-                    Messaging.AddMessage(string.Format("Thread {0} ended with exception, probably because the queue is empty.", Thread.CurrentThread.Name), MessageType.Error, ex);
+                    Messaging.AddMessage($"Thread {Thread.CurrentThread.Name} ended with exception, probably because the queue is empty.", MessageType.Error, ex);
                     return;
                 }
             } else {
-                string type = sourceAndDestinationQueue != null ? sourceAndDestinationQueue.GetType().ToString() : "null";
-                InvalidCastException exception = new InvalidCastException("Could not convert the input parameter sourceAndDestinationQueue of type " + type + " to a Queue<FileToCopy>.");
+                string type = sourceAndDestinationQueue?.GetType().ToString() ?? "null";
+                InvalidCastException exception = new InvalidCastException("Could not convert the input parameter sourceAndDestinationQueue of type " + type + " to a ConcurrentQueue<FileToCopy>.");
                 exception.Data.Add("AdditionalInfo", "private void ThreadMethod in internal class AsyncCopyController in the namespace DependencyAnalyzer.Cmdlet");
                 try { //toss the exception to get stack trace.
                     throw exception;
@@ -904,15 +915,15 @@ namespace Aderant.Build.Commands {
                     File.Copy(filePaths.AbsoluteSourceFilePath, filePaths.DestinationFilePath, true);
                     return true;
                 } catch (FileNotFoundException ex) {
-                    Messaging.AddMessage(string.Format("Thread {0}: {1}", Thread.CurrentThread.Name, ex.Message), MessageType.Warning);
+                    Messaging.AddMessage($"Thread {Thread.CurrentThread.Name}: {ex.Message}", MessageType.Warning);
                 } catch (IOException ex) {
                     if (ex.Message.Contains("because it is being used by another process")) { //supress these as warnings rather than errors.
-                        Messaging.AddMessage(string.Format("Thread {0}: {1}", Thread.CurrentThread.Name, ex.Message), MessageType.Warning);
+                        Messaging.AddMessage($"Thread {Thread.CurrentThread.Name}: {ex.Message}", MessageType.Warning);
                     } else {
-                        Messaging.AddMessage(string.Format("Thread {0}: {1}", Thread.CurrentThread.Name, ex.Message), MessageType.Error, ex);
+                        Messaging.AddMessage($"Thread {Thread.CurrentThread.Name}: {ex.Message}", MessageType.Error, ex);
                     }
                 } catch (Exception ex) {
-                    Messaging.AddMessage(string.Format("Thread {0}: {1}", Thread.CurrentThread.Name, ex.Message), MessageType.Error, ex);
+                    Messaging.AddMessage($"Thread {Thread.CurrentThread.Name}: {ex.Message}", MessageType.Error, ex);
                 }
             }
             return false;
@@ -921,9 +932,9 @@ namespace Aderant.Build.Commands {
         #endregion Main Copy Methods
 
         internal void PrintGroupByFile(IDictionary<string, ICollection<FileToCopy>> fileNames) {
-            foreach (var list in fileNames) {
+            foreach (KeyValuePair<string, ICollection<FileToCopy>> list in fileNames) {
                 Messaging.AddMessage(list.Key, MessageType.Verbose); //this ignores sub dir in source path.
-                foreach (var item in list.Value) {
+                foreach (FileToCopy item in list.Value) {
                     Messaging.AddMessage("  " + item.DestinationFilePath, MessageType.Verbose);
                 }
             }
