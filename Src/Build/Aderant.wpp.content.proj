@@ -305,9 +305,6 @@
     <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\**\*.aspx">
       <RelativePath>Authentication\$([System.IO.Directory]::GetParent(%(FullPath)).Name)\</RelativePath>
     </AspxContent>
-    <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\web.config">
-      <RelativePath>$([System.IO.Directory]::GetParent(%(FullPath)).Name)\</RelativePath>
-    </AspxContent>
     <AspxContent Include="$(DependenciesDirectory)Mobile.*\Authentication\**\*.aspx"
                  Exclude="$(DependenciesDirectory)Mobile.*\Authentication\Web.*\**">
       <RelativePath>Authentication\$([System.String]::Copy('%(RecursiveDir)').Replace('Authentication\', ''))</RelativePath>
@@ -321,6 +318,14 @@
       <RelativePath>ManualLogOn\$([System.String]::Copy('%(RecursiveDir)').Replace('%(RecursiveDir)', ''))</RelativePath>
     </AspxContent>
   </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="$(DependenciesDirectory)Web.*\Authentication\web.config">
+      <Link>Authentication\%(FileName)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
+  </ItemGroup>
+  
 
   <!-- 
     Content Processing 
@@ -437,13 +442,9 @@
         <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx;" >
           <Visible>true</Visible>
         </Content>
-        
-        <Content Include="Authentication\web.config" Condition="Exists('Authentication\web.config')">
-          <Visible>true</Visible>
-        </Content>
 
         <Content Include="Authentication\**\*"
-                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx">
+                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx;Authentication\**\Web.config">
           <Visible>true</Visible>
         </Content>
 
@@ -557,9 +558,8 @@ Type:                     %(AllReferencedContent.Type)" />-->
     
     
     
-    <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
-
-    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />
+    <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />    
+    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />    
   </Target>
 </Project>
 
