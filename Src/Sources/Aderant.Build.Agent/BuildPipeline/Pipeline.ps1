@@ -1,36 +1,15 @@
 ﻿Set-StrictMode -Version 2
-
 [CmdletBinding()]
 
 $ErrorActionPreference = 'Stop'
 
-[string]$repository = "default"
-[string]$version = "master"
-[string]$customSource = $null
-
-$function = Get-ChildItem Function:\Get-VstsInput -ErrorAction SilentlyContinue
-if (-not ($function)) {
-    # If the Vsts module isn't available then we will just cook up a stub function
-
-    function Get-VstsInput([string]$name) {
-        if ($name -eq "Repository") {
-            return $repository
-        }
-
-        if ($name -eq "Branch") {
-            return $version
-        }
-        return $null
-    }
-}
-
-$repository = Get-VstsInput -Name 'Repository'
-$version = Get-VstsInput -Name 'Branch'
-$customSource = Get-VstsInput -Name 'CustomSource'
+[string]$repository = Get-VstsInput -Name 'Repository'
+[string]$version = Get-VstsInput -Name 'Branch'
+[string]$CustomSource = Get-VstsInput -Name 'CustomSource'
 
 Write-Host "Repository: $repository"
 Write-Host "Version: $version"
-Write-Host "CustomSource: $customSource"
+Write-Host "CustomSource: $CustomSource"
 
 Write-Host "SYSTEM_TEAMPROJECT: $ENV:SYSTEM_TEAMPROJECT"
 Write-Host "SYSTEM_TEAMFOUNDATIONSERVERURI: $ENV:SYSTEM_TEAMFOUNDATIONSERVERURI"
@@ -61,15 +40,19 @@ Write-Host "AGENT_ID: $ENV:AGENT_ID"
 Write-Host "AGENT_HOMEDIRECTORY: $ENV:AGENT_HOMEDIRECTORY"
 Write-Host "AGENT_ROOTDIRECTORY: $ENV:AGENT_ROOTDIRECTORY"
 Write-Host "AGENT_WorkFolder: $ENV:AGENT_WorkFolder"
-Write-Host "AGENT_BUILDDIRECTORY: $ENV:AGENT_BUILDDIRECTORY"
 Write-Host "BUILD_REPOSITORY_LOCALPATH: $ENV:BUILD_REPOSITORY_LOCALPATH"
 Write-Host "BUILD_SOURCESDIRECTORY: $ENV:BUILD_SOURCESDIRECTORY"
 Write-Host "BUILD_ARTIFACTSTAGINGDIRECTORY: $ENV:BUILD_ARTIFACTSTAGINGDIRECTORY"
 Write-Host "BUILD_STAGINGDIRECTORY: $ENV:BUILD_STAGINGDIRECTORY"
-
+Write-Host "AGENT_BUILDDIRECTORY: $ENV:AGENT_BUILDDIRECTORY"
 Get-Variable |%{ Write-Host ("Name : {0}, Value: {1}" -f $_.Name,$_.Value ) }
 
 $pathToGit = "C:\Program Files\Git\cmd\git.exe"
+
+# Clean up other cloned repositories in case we are recycling a working dir
+gci -Path $Env:BUILD_SOURCESDIRECTORY -Depth 1 -Filter "*_BUILD_*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+$buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
 
 function SetGitOptions() {  
     if (-not (Test-Path $pathToGit)) {
@@ -85,98 +68,38 @@ function SetGitOptions() {
     & $pathToGit config --global credential.authority ntlm
 }
 
-function CloneRepo([string]$repo, [string]$version) {
-    if ([string]::IsNullOrWhiteSpace($version)) {
+function CloneRepo($repo, $version) {
+    if (-not $version) {
         $version = "master"
     }
-
-    $directory = GetCloneTargetDirectory $repo + $version
-  
-    [bool]$doClone = $true
-
-    $directories = @("D:\", [System.IO.Path]::GetTempPath())
-
-    foreach ($dir in $directories) {
-        if (Test-Path $dir) {
-            $target = [System.IO.Path]::Combine($dir, "Temp", $directory) # this may create C:\Users\<name>\AppData\Local\Temp\Temp\... but we don't care 
-            
-            if (Test-Path $target) {
-                $doClone = $false
-            }
-
-            Write-Debug "Target: $target"
-
-            $directory = $target
-        }
-    }
-
-    if ($doClone) {    
-        Write-Host "About to clone $repo ($version)"
-
-        cmd /c "$pathToGit" "clone" "$repo" "--branch" "$version" "--single-branch" "$directory" | Out-Host
-    } else {
-        Push-Location $directory
-
-        Write-Host "About to update $repo in $directory ($version)"
-
-        & "$pathToGit" "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*" # Clone may have been to depth 1, so wire up all branches
-        & "$pathToGit" "reset" "--hard" "HEAD" | Out-Host
-        & "$pathToGit" "fetch" "--all" "-v" "--progress" | Out-Host
-        & "$pathToGit" "reset" "--hard" "origin/$version" | Out-Host
-        & "$pathToGit" "pull" | Out-Host
-
-        Pop-Location
-    }
-
-    return $directory
+    Write-Host "About to clone $repo ($version)"
+    cmd /c ""`"$pathToGit`"" clone $repo --branch $version --single-branch $buildFolder 2>&1"
 }
 
-function GetCloneTargetDirectory([string]$text) {
-    $hashAlgorithm = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
-    $hash = $hashAlgorithm.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($text))
-        
-    return [System.BitConverter]::ToString($hash).Replace("-", "")
-}
-
-function SetEnvironmentVariables([string]$directory) {    
-    $expertBuildDirectory = [System.IO.Path]::Combine($directory, "Src")    
-
-    if (-not (Test-Path $expertBuildDirectory)) {
-        throw "Fatal: build directory $expertBuildDirectory does not exist"
-    }
-
-    [System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_DIRECTORY", $expertBuildDirectory, [System.EnvironmentVariableTarget]::Process)
-
-    Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_DIRECTORY;]$expertBuildDirectory")
-}
-
-function CloneBuildSystem() {
-    if ($repository -eq "default" -or -not $customSource) {
-        # By default use script from checked in code at Build.Infrastructure at TFS
-        return CloneRepo "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
-    } else {
-        # During debug of this script it is necessary to use a local copy 
-        if ($customSource -and -not [string]::IsNullOrEmpty($customSource)) {
-            if ($customSource.StartsWith("http")) {        
-                return CloneRepo $customSource $version
-            } else {
-                $buildFolder = [System.IO.Path]::Combine($Env:BUILD_SOURCESDIRECTORY, "_BUILD_" + (Get-Random))    
-                # e.g \\wsakl001092\c$\Source\Build.Infrastructure
-                Write-Host "Copying from path $customSource"        
-                Copy-Item $customSource $buildFolder -Recurse
-
-                return $buildFolder
-            }   
-        }
+if ($repository -eq "default" -or -not $CustomSource) {
+    # By default use script from checked in code at Build.Infrastructure at TFS
+    CloneRepo "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" $version
+} else {
+    # During debug of this script it is necessary to use a local copy 
+    if ($CustomSource -and -not [string]::IsNullOrEmpty($CustomSource)) {
+        if ($CustomSource.StartsWith("http")) {        
+            CloneRepo $CustomSource $version
+        } else {
+            # e.g \\wsakl001092\c$\Source\Build.Infrastructure
+            Write-Host "Copying from path $CustomSource"        
+            Copy-Item $CustomSource $buildFolder -Recurse
+        }   
     }
 }
 
 # Force some sensible options so we don't get prompted for credentials
 SetGitOptions
 
-$buildFolder = CloneBuildSystem
+$buildInfrastructurePath = [System.IO.Path]::Combine($buildFolder, "Src")
+    
+[System.Environment]::SetEnvironmentVariable("EXPERT_BUILD_DIRECTORY", $buildInfrastructurePath, [System.EnvironmentVariableTarget]::Process)
 
-SetEnvironmentVariables $buildFolder
+Write-Host ("##vso[task.setvariable variable=EXPERT_BUILD_DIRECTORY;]$buildInfrastructurePath")
 
 Set-StrictMode -Off
 
