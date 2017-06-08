@@ -319,8 +319,9 @@
     </AspxContent>
   </ItemGroup>
   
+  
   <ItemGroup>
-    <Content Include="$(DependenciesDirectory)Web.*\Authentication\web.config">
+    <Content Include="$(DependenciesDirectory)Web.Foundation\Authentication\web.config" Condition="Exists('$(DependenciesDirectory)Web.Foundation\Authentication\web.config')">
       <Link>Authentication\%(FileName)%(Extension)</Link>
       <Visible>true</Visible>
     </Content>
