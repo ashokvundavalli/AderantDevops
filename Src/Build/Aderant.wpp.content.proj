@@ -325,6 +325,10 @@
       <Link>Authentication\%(FileName)%(Extension)</Link>
       <Visible>true</Visible>
     </Content>
+	<Content Include="$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config" Condition="Exists('$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config')">
+      <Link>ManualLogOn\%(FileName)%(Extension)</Link>
+      <Visible>true</Visible>
+    </Content>
   </ItemGroup>
   
 
@@ -445,12 +449,12 @@
         </Content>
 
         <Content Include="Authentication\**\*"
-                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx;Authentication\**\Web.config">
+                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx;Authentication\**\web.config">
           <Visible>true</Visible>
         </Content>
 
-        <Content Include="ManualLogOn\**\*"
-                 Exclude="ManualLogOn\**\default.aspx">
+        <Content Include="ManualLogOn\*"
+                 Exclude="ManualLogOn\default.aspx;ManualLogOn\Web.config">
           <Visible>true</Visible>
         </Content>
       </ItemGroup>
