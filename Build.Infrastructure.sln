@@ -109,6 +109,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{BEF951AC-BBD
 		Doc\Warning-Ratchet.md = Doc\Warning-Ratchet.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AutomatedDeployment", "AutomatedDeployment", "{661412E6-1121-4540-BEBE-E4BA58AEC643}"
+	ProjectSection(SolutionItems) = preProject
+		Src\AutomatedDeployment\InstallDeploymentManager.ps1 = Src\AutomatedDeployment\InstallDeploymentManager.ps1
+		Src\AutomatedDeployment\UninstallDeploymentManager.ps1 = Src\AutomatedDeployment\UninstallDeploymentManager.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
