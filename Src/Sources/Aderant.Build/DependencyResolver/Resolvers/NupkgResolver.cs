@@ -111,17 +111,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    string webModuleName = requirement.Name.Replace("Aderant", "Web");
-
-                    if (fileSystem.FileExists(Path.Combine(dir, webModuleName + ".zip"))) {
-                        //if web zip exists, extract it.
-                        logger.Info("Extracting web package archive {0}", webModuleName);
-                        var newDir = Path.Combine(dir, webModuleName);
+                    foreach (string zipPath in fileSystem.GetFiles(dir, "Web.*.zip", true, true).Where(f => !f.EndsWith("dependencies.zip"))) {
+                        logger.Info("Extracting web package archive {0}", zipPath);
                         var fs = new WebArchiveFileSystem(fileSystem.GetFullPath(dir));
-                        fs.ExtractArchive(fileSystem.GetFullPath(newDir + ".zip"), fileSystem.GetFullPath(dir));
+                        fs.ExtractArchive(fileSystem.GetFullPath(zipPath), fileSystem.GetFullPath(dir));
+                        logger.Info("Replicating {0} to {1}", dir, target);
                     }
-                    logger.Info("Replicating {0} to {1}", dir, target);
-
                     if (requirement.Name.IsOneOf(ModuleType.ThirdParty, ModuleType.Web)) {
                         // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                         // used depending on the content type.

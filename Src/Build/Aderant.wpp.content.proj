@@ -41,7 +41,7 @@
 
     <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
     <DependencyManifestContent>$([System.IO.File]::ReadAllText('$(DependencyManifest)'))</DependencyManifestContent>
-    <Pattern>="((Web|Mobile)\..*?)"</Pattern>
+    <Pattern>="((Aderant.Web|Web|Mobile)\..*?)"</Pattern>
     <!-- 
       Extract the web modules referenced in the dependency manifest
       The extracted result looks like ="Web.Foundation"
@@ -49,9 +49,11 @@
     <WebModuleText>$([System.Text.RegularExpressions.Regex]::Matches($(DependencyManifestContent), $(Pattern)))</WebModuleText>
     <WebModuleText>$(WebModuleText.Replace('=', '').Replace('"', ''))</WebModuleText>
 
+
     <WebModuleText Condition="'$(IncludeFoundationDirectly)' == 'true'">$(WebModuleText.Replace('Web.Foundation', ''))</WebModuleText>
     <WebModuleText Condition="'$(IncludePresentationDirectly)' == 'true'">$(WebModuleText.Replace('Web.Presentation', ''))</WebModuleText>
     <WebModuleText Condition="'$(IncludeOTGDirectly)' == 'true'">$(WebModuleText.Replace('Web.OTG', ''))</WebModuleText>
+
 
     <RegexEscapedDependencyPath>$([System.Text.RegularExpressions.Regex]::Escape('$(DependenciesDirectory)'))</RegexEscapedDependencyPath>
   </PropertyGroup>
@@ -325,7 +327,7 @@
       <Link>Authentication\%(FileName)%(Extension)</Link>
       <Visible>true</Visible>
     </Content>
-	<Content Include="$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config" Condition="Exists('$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config')">
+    <Content Include="$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config" Condition="Exists('$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config')">
       <Link>ManualLogOn\%(FileName)%(Extension)</Link>
       <Visible>true</Visible>
     </Content>
@@ -347,9 +349,15 @@
 
       <DependencyModule>$([System.Text.RegularExpressions.Regex]::Match('%(DependenciesRelativePath)', '((Web|Mobile)\.\w*?\\)'))</DependencyModule>
       <Module>$([System.String]::Copy(%(DependencyModule)).TrimEnd('\\'))</Module>
+      <GitModule>$([System.String]::Copy(Aderant.%(DependencyModule)).TrimEnd('\\'))</GitModule>
 
       <RegexEscapedIdentity>$([System.Text.RegularExpressions.Regex]::Escape('%(Module)'))</RegexEscapedIdentity>
-      <RegexContentPattern>%(RegexEscapedIdentity)(.*)%(RegexEscapedIdentity)</RegexContentPattern>
+      <RegexEscapedPresentation>$([System.Text.RegularExpressions.Regex]::Escape('Web.Presentation'))</RegexEscapedPresentation>
+      <RegexEscapedFoundation>$([System.Text.RegularExpressions.Regex]::Escape('Web.Foundation'))</RegexEscapedFoundation>
+      <RegexEscapedOTG>$([System.Text.RegularExpressions.Regex]::Escape('Web.OTG'))</RegexEscapedOTG>
+      <RegexContentPattern>%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity))</RegexContentPattern>
+      <RegexContentPattern Condition="'%(Module)' == 'Web.Core'">%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity)|%(RegexEscapedPresentation)|%(RegexEscapedFoundation)|%(RegexEscapedOTG))</RegexContentPattern>
+      
 
       <!-- Test if this is direct or transitive content like Modules\Web.SMB\Dependencies\Web.Presentation\Scripts\Web.Foundation\add2home.js -->
       <ContentIsNonTransitive>$([System.Text.RegularExpressions.Regex]::IsMatch('%(DependenciesRelativePath)', '%(RegexContentPattern)'))</ContentIsNonTransitive>
@@ -364,6 +372,8 @@
       
       <!--Can be removed once Mobile.* modules are in git-->
       <IsReferenced Condition="'%(IsReferenced)' == 'false'">$(MSBuildProjectName.Contains('Mobile.'))</IsReferenced>
+      <!--Can be removed once Mobile.* modules are in git-->
+      <IsReferenced Condition="'%(IsReferenced)' == 'false'">$(WebModuleText.Contains(%(GitModule)))</IsReferenced>
     </AllDependencyContent>
 
     <AllDirectContent Include="@(AllDependencyContent->WithMetadataValue('ContentIsNonTransitive', 'True'))" />
@@ -547,26 +557,38 @@
     msbuild Web.Foundation.csproj /target:_ItemGroupDebug
   -->
   <Target Name="_ItemGroupDebug">
-    <Message Text="AssemblyName: $(AssemblyName) (Enable content link: $(EnableContentLink))" />
+    <!--<Message Text="AssemblyName: $(AssemblyName) (Enable content link: $(EnableContentLink))" />
     <Message Text="$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)'))" />
     <Message Text="$([System.IO.Path]::GetFullPath('$(ProjectDir)'))" />
-    <Message Text="Referenced web module: %(ReferencedWebModules.Identity)" />
-     <!--<Message  Text="
-Identity:                 %(AllReferencedContent.Identity) 
-RecursiveDir:             %(AllReferencedContent.RecursiveDir) 
-FullPath:                 %(AllReferencedContent.FullPath) 
-DependenciesRelativePath: %(AllReferencedContent.DependenciesRelativePath)
-ProjectRelativePath:      %(AllReferencedContent.ProjectRelativePath)            
-Link:                     %(AllReferencedContent.Link)
-Type:                     %(AllReferencedContent.Type)" />-->
+    <Message Text="Referenced web module: %(ReferencedWebModules.Identity)" />-->
+    <!--<Message Condition="'%(AllDependencyContent.IsReferenced)' == 'true'" Text="
+Identity:                 %(AllDependencyContent.Identity) 
+RecursiveDir:             %(AllDependencyContent.RecursiveDir) 
+FullPath:                 %(AllDependencyContent.FullPath) 
+DependenciesRelativePath: %(AllDependencyContent.DependenciesRelativePath)
+ProjectRelativePath:      %(AllDependencyContent.ProjectRelativePath)            
+Link:                     %(AllDependencyContent.Link)
+IsReferenced:             %(AllDependencyContent.IsReferenced)
+RegexEscapedIdentity:     %(AllDependencyContent.RegexEscapedIdentity)
+RegexContentPattern:      %(AllDependencyContent.RegexContentPattern)
+NestedWeb:                %(AllDependencyContent.ContentIsNestedWeb)
+ContentIsNonTransitive:   %(AllDependencyContent.ContentIsNonTransitive)
+GitModule:                %(AllDependencyContent.GitModule)
+Module:                   %(AllDependencyContent.Module)
+Type:                     %(AllDependencyContent.Type)" />
+
+    <Message Text="
+WebModuleText:            $(WebModuleText) "
+    />-->
 
     
     
     
-    <Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />    
-    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />    
+    <!--<Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />    
+    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />-->    
   </Target>
 </Project>
+
 
 
 
