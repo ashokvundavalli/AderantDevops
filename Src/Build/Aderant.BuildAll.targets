@@ -343,6 +343,8 @@
 
       <EliteDocuments Include="$(LocalExpertBinariesDirectory)\Elite Documentation\**\*.*"/>
       <Documents Include="$(LocalExpertBinariesDirectory)\Documentation\**\*.*"/>
+      
+      <InquiriesFiles Include="$(LocalExpertBinariesDirectory)\ExpertSource\Aderant.Inquiries*.dll"/>
 
       <ZipSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
@@ -388,7 +390,7 @@
     <ItemGroup>
       <ZipEliteEnterpriseSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
-        Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments)" />
+        Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments);@(InquiriesFiles)" />
     </ItemGroup>
 
     <!-- Create ZIP for Elite Enterprise ExpertSource -->
