@@ -67,10 +67,10 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-  <!--Stub for customizers to override--> 
+  <!--Stub for customizers to override-->
   <Target Name="OnAfterBuild" />
   <Target Name="PostBuild" />
-  
+
   <!-- 
     Because we have multiple flavours of build this gets really complicated. 
     During a build all we can just import from the solution build folder as it will exist since the sources are fetched up front. This matches the physical layout you see on disk when you check out from TFS.
@@ -757,20 +757,20 @@ doc.Save(File);
     ==========================================================================================
   -->
 
-  <Target 
-    Name="PrepareZipCustomSource" 
+  <Target
+    Name="PrepareZipCustomSource"
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
-    
+
     <ItemGroup>
       <CustomSolutionFiles
         Include="$(SolutionDirectoryPath)**\*.Custom.sln" />
     </ItemGroup>
   </Target>
-    
-  <Target 
-    Name="ZipCustomSource" 
+
+  <Target
+    Name="ZipCustomSource"
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
-    Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip" 
+    Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
     Inputs="@(CustomSolutionFiles)">
 
     <BuildStep
@@ -904,7 +904,7 @@ doc.Save(File);
 
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
-      <ZipSourceFiles 
+      <ZipSourceFiles
         Remove="@(ZipSourceFiles)" />
 
       <ZipSourceFiles
@@ -1092,13 +1092,22 @@ doc.Save(File);
       <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
     </PropertyGroup>
 
+    <!-- Chutzpah - JavaScript UnitTest related -->
+    <ItemGroup>
+      <JavascriptTests Include="$(VsTestWorkingDirectory)Src\**\chutzpah.json" Exclude="$(VsTestWorkingDirectory)Src\**\obj\**" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ChutzpahTestAdapterPath Condition="'@(JavascriptTests)' != ''">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools\Chutzpah\bin"</ChutzpahTestAdapterPath>
+    </PropertyGroup>
+    <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
+
     <!--Run With VSTest-->
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Condition="'$(UnitTestAssemblies)' != ''"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch)' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch) $(ChutzpahTestAdapterPath)' />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"

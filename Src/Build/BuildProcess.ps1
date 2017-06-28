@@ -209,6 +209,10 @@ task GetDependencies {
 }
 
 task Build {
+
+	# Get submodules
+	& git submodule update --init --recursive
+
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
     $commonArgs = "/nologo /nr:false /m"

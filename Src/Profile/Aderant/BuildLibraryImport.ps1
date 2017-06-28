@@ -70,9 +70,11 @@ function UpdateOrBuildAssembly($properties) {
     if (-not $Host.Name.Contains("ISE")) {    
         # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
         pushd $PSScriptRoot
-        [string]$branch = & git rev-parse --abbrev-ref HEAD
+        & git submodule update --init --recursive
+				
+		[string]$branch = & git rev-parse --abbrev-ref HEAD				
         if ($branch -eq "master") {
-            & git pull --ff-only
+            & git pull --ff-only			
         }
         [string]$head = & git rev-parse HEAD
         popd   
