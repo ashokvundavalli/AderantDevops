@@ -91,6 +91,7 @@ process {
        
     Copy-Item "$PSScriptRoot\dir.proj" -Destination "$modulesRootPath\dir.proj" -Force
     Copy-Item "$PSScriptRoot\Aderant.wpp.content.proj" -Destination "$modulesRootPath\Aderant.wpp.content.proj" -Force
+    Copy-Item "$PSScriptRoot\Aderant.wpp.content.v2.proj" -Destination "$modulesRootPath\Aderant.wpp.content.v2.proj" -Force
 
     if (Test-ReparsePoint $moduleDependenciesDirectory) {
         [System.IO.Directory]::Delete($moduleDependenciesDirectory)

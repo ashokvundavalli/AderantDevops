@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!--WebDependencyVersion 2-->
+<!--WebDependencyVersion 3-->
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
   ToolsVersion="14.0">
@@ -11,15 +11,8 @@
     <PackagesDirectory>$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\packages\'))</PackagesDirectory>
     <ModulesDirectory Condition="'$(ModulesDirectory)' == ''">$([System.IO.Path]::GetFullPath('$(DependenciesDirectory)..\..\'))</ModulesDirectory>
     <!-- only works for TFS modules right now -->
-    <IsGitRepo>$([System.IO.File]::Exists('$(DependenciesDirectory)..\.gitignore'))</IsGitRepo>
     <ResponseFile>$(SolutionDir)\Build\TFSBuild.rsp</ResponseFile>
 
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <IncludeFoundationDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_FOUNDATION') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludeFoundationDirectly>
-    <IncludePresentationDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_PRESENTATION') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludePresentationDirectly>
-    <IncludeOTGDirectly Condition="Exists('$(SolutionDir)\LINK_TO_WEB_OTG') And '$(LinkedBuild)' != 'true' And '$(IsDesktopBuild)' != 'false'">true</IncludeOTGDirectly>
   </PropertyGroup>
 
   <!-- 
@@ -50,86 +43,9 @@
     <WebModuleText>$([System.Text.RegularExpressions.Regex]::Matches($(DependencyManifestContent), $(Pattern)))</WebModuleText>
     <WebModuleText>$(WebModuleText.Replace('=', '').Replace('"', ''))</WebModuleText>
 
-
-    <WebModuleText Condition="'$(IncludeFoundationDirectly)' == 'true'">$(WebModuleText.Replace('Web.Foundation', ''))</WebModuleText>
-    <WebModuleText Condition="'$(IncludePresentationDirectly)' == 'true'">$(WebModuleText.Replace('Web.Presentation', ''))</WebModuleText>
-    <WebModuleText Condition="'$(IncludeOTGDirectly)' == 'true'">$(WebModuleText.Replace('Web.OTG', ''))</WebModuleText>
-
-
     <RegexEscapedDependencyPath>$([System.Text.RegularExpressions.Regex]::Escape('$(DependenciesDirectory)'))</RegexEscapedDependencyPath>
   </PropertyGroup>
 
-
-
-  <ItemGroup>
-    <!-- This section controls what modules will be linked to directly in your workspace -->
-    <LinkTo Include="Web.Foundation"
-            Condition="'$(IncludeFoundationDirectly)' == 'true'">
-      <RelativePath>$(ModulesDirectory)%(Identity)\Src\%(Identity)</RelativePath>
-    </LinkTo>
-    <LinkTo Include="Web.Presentation"
-            Condition="'$(IncludePresentationDirectly)' == 'true'">
-      <RelativePath>$(ModulesDirectory)%(Identity)\Src\%(Identity)</RelativePath>
-    </LinkTo>
-    <LinkTo Include="Web.OTG"
-            Condition="'$(IncludeOTGDirectly)' == 'true'">
-      <RelativePath>$(ModulesDirectory)%(Identity)\Src\%(Identity)</RelativePath>
-    </LinkTo>
-  </ItemGroup>
-
-  <Choose>
-    <When Condition=" '$(IncludeFoundationDirectly)' == 'true' ">
-      <ItemGroup>
-        <Reference Include="Web.Foundation">
-          <HintPath>$(ModulesDirectory)Web.Foundation\Src\Web.Foundation\bin\Web.Foundation.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <Reference Include="Web.Foundation"
-                   Condition="'$(AssemblyName)' != 'Web.Foundation'">
-          <HintPath>..\..\Dependencies\Web.Foundation.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
-
-  <Choose>
-    <When Condition=" '$(IncludePresentationDirectly)' == 'true' ">
-      <ItemGroup>
-        <Reference Include="Web.Presentation">
-          <HintPath>$(ModulesDirectory)Web.Presentation\Src\Web.Presentation\bin\Web.Presentation.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <Reference Include="Web.Presentation"
-                   Condition="'$(AssemblyName)' != 'Web.Presentation'">
-          <HintPath>..\..\Dependencies\Web.Presentation.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
-
-  <Choose>
-    <When Condition=" '$(IncludeOTGDirectly)' == 'true' And Exists('$(ModulesDirectory)Web.OTG\Src\Web.OTG\bin\Web.OTG.dll')">
-      <ItemGroup>
-        <Reference Include="Web.OTG">
-          <HintPath>$(ModulesDirectory)Web.OTG\Src\Web.OTG\bin\Web.OTG.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <Reference Include="Web.OTG"
-                   Condition="'$(AssemblyName)' != 'Web.OTG' And Exists('..\..\Dependencies\Web.OTG.dll')">
-          <HintPath>..\..\Dependencies\Web.OTG.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
 
   <ItemGroup>
     <!--
@@ -137,67 +53,6 @@
       Extend this collection to extend the content inclusion pipeline from the depenedencies folder
   -->
     <ReferencedWebModules Include="$(WebModuleText.Split(';'))" />
-  </ItemGroup>
-
-  <!--
-  ******************************************************************************** Content from workspace ********************************************************************************
-  -->
-  <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items>$([System.IO.Directory]::GetFiles('%(RelativePath)\Scripts\%(Identity)', '*.js', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>Content</Type>
-    </LinkedProjectContent>
-
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items>$([System.IO.Directory]::GetFiles('%(RelativePath)\Scripts\%(Identity)', '*.d.ts', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>TypeScript</Type>
-    </LinkedProjectContent>
-
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items>$([System.IO.Directory]::GetFiles('%(RelativePath)\Scripts\%(Identity)', '*.html', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>Content</Type>
-    </LinkedProjectContent>
-
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items Condition="Exists('%(RelativePath)\Content\%(Identity)')">$([System.IO.Directory]::GetFiles('%(RelativePath)\Content\%(Identity)', '*.*', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>Content</Type>
-    </LinkedProjectContent>
-
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items Condition="Exists('%(RelativePath)\ViewModels\%(Identity)')">$([System.IO.Directory]::GetFiles('%(RelativePath)\ViewModels\%(Identity)', '*.js', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>Content</Type>
-    </LinkedProjectContent>
-
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items Condition="Exists('%(RelativePath)\ViewModels\%(Identity)')">$([System.IO.Directory]::GetFiles('%(RelativePath)\ViewModels\%(Identity)', '*.d.ts', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>TypeScript</Type>
-    </LinkedProjectContent>
-
-    <LinkedProjectContent Include="@(LinkTo)">
-      <Items>$([System.IO.Directory]::GetFiles('%(RelativePath)\Views\Shared\%(Identity)', '*.cshtml', System.IO.SearchOption.AllDirectories))</Items>
-      <Type>Content</Type>
-    </LinkedProjectContent>
-
-    <LinkedAspxContent Include="@(LinkTo)">
-      <Items Condition="Exists('%(RelativePath)\Authentication\%(Identity)')">$([System.IO.Directory]::GetFiles('%(RelativePath)\Authentication\%(Identity)', '*.aspx', System.IO.SearchOption.AllDirectories))</Items>
-      <RelativePath>Authentication\%(Identity)</RelativePath>
-    </LinkedAspxContent>
-
-    <LinkedAspxContent Include="@(LinkTo)">
-      <Items Condition="Exists('%(RelativePath)\ManualLogOn\%(Identity)')">$([System.IO.Directory]::GetFiles('%(RelativePath)\ManualLogOn\%(Identity)', '*.aspx', System.IO.SearchOption.AllDirectories))</Items>
-      <RelativePath>ManualLogOn</RelativePath>
-    </LinkedAspxContent>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AllLinkedContent Include="@(LinkedProjectContent->Metadata('Items'))">
-      <!--Save some memory and null out the items array-->
-      <Items />
-    </AllLinkedContent>
-
-    <AspxContent Include="@(LinkedAspxContent->Metadata('Items'))">
-      <Items />
-    </AspxContent>
   </ItemGroup>
 
   <!--
@@ -215,10 +70,6 @@
       <Type>Content</Type>
     </ExternalContent>
 
-    <ExternalContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)Web.*\Scripts\Web.*\**\*.d.ts"
-                     Exclude="$(DependenciesDirectory)Web.*\Scripts\ThirdParty.*\**\*.d.ts">
-      <Type>TypeScript</Type>
-    </ExternalContent>
 
     <ThirdPartyContent Include="$(DependenciesDirectory)ThirdParty.*\**\*.js">
       <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
@@ -230,13 +81,9 @@
       <Type>Content</Type>
     </ThirdPartyContent>
 
-    <ThirdPartyContent Condition="'$(IsGitRepo)' != 'True'" Include="$(DependenciesDirectory)ThirdParty.*\**\*.d.ts">
-      <RelativePath>Scripts\%(RecursiveDir)</RelativePath>
-      <Type>TypeScript</Type>
-    </ThirdPartyContent>
   </ItemGroup>
 
-  <!-- Content -->
+  <!-- Content (Less/Images) -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
 
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Content\**\*;
@@ -283,9 +130,9 @@
                      Exclude="$(DependenciesDirectory)Web.*\ViewModels\Web.SMB\**\*.d.ts">
       <Type>TypeScript</Type>
     </ExternalContent>
-  
-  </ItemGroup>
 
+  </ItemGroup>
+  
   <!-- Views -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Views\**\Shared\**\*.cshtml">
@@ -293,47 +140,6 @@
       <Type>Content</Type>
     </ExternalContent>
   </ItemGroup>
-
-  <!-- Helpers -->
-  <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
-    <ExternalContent Include="$(DependenciesDirectory)Web.*\Helpers\**\*.xml;
-                              $(DependenciesDirectory)Mobile.*\Helpers\**\*.xml">
-      <RelativePath>Helpers</RelativePath>
-      <Type>Content</Type>
-    </ExternalContent>
-  </ItemGroup>
-
-  <!-- Authentication -->
-  <ItemGroup Condition=" '$(IncludeFoundationDirectly)' != 'true' And '$(EnableContentLink)' == 'true' ">
-    <AspxContent Include="$(DependenciesDirectory)Web.*\Authentication\**\*.aspx">
-      <RelativePath>Authentication\$([System.IO.Directory]::GetParent(%(FullPath)).Name)\</RelativePath>
-    </AspxContent>
-    <AspxContent Include="$(DependenciesDirectory)Mobile.*\Authentication\**\*.aspx"
-                 Exclude="$(DependenciesDirectory)Mobile.*\Authentication\Web.*\**">
-      <RelativePath>Authentication\$([System.String]::Copy('%(RecursiveDir)').Replace('Authentication\', ''))</RelativePath>
-    </AspxContent>
-
-    <AspxContent Include="$(DependenciesDirectory)Web.*\ManualLogOn\**\*.aspx">
-      <RelativePath>ManualLogOn\</RelativePath>
-    </AspxContent>
-    <AspxContent Include="$(DependenciesDirectory)Mobile.*\ManualLogOn\*.aspx"
-                 Exclude="$(DependenciesDirectory)Mobile.*\ManualLogOn\Web.*\**">
-      <RelativePath>ManualLogOn\$([System.String]::Copy('%(RecursiveDir)').Replace('%(RecursiveDir)', ''))</RelativePath>
-    </AspxContent>
-  </ItemGroup>
-  
-  
-  <ItemGroup>
-    <Content Include="$(DependenciesDirectory)Web.Foundation\Authentication\web.config" Condition="Exists('$(DependenciesDirectory)Web.Foundation\Authentication\web.config')">
-      <Link>Authentication\%(FileName)%(Extension)</Link>
-      <Visible>true</Visible>
-    </Content>
-    <Content Include="$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config" Condition="Exists('$(DependenciesDirectory)Web.Foundation\ManualLogOn\Web.Foundation\Web.config')">
-      <Link>ManualLogOn\%(FileName)%(Extension)</Link>
-      <Visible>true</Visible>
-    </Content>
-  </ItemGroup>
-  
 
   <!-- 
     Content Processing 
@@ -403,36 +209,10 @@
       <ProjectRelativePath Condition="%(RelativePath) != ''">%(RelativePath)\%(Module)\%(Filename)%(Extension)</ProjectRelativePath>
     </DependencyContent>
 
-
-    <!-- 
-    Developer Experience: Start
-    Content coming from the linked project directly
-    -->
-    <Content Include="@(AllLinkedContent->WithMetadataValue('Type', 'Content'))">
-      <Link>$([System.String]::Copy(%(FullPath)).Replace("%(RelativePath)\", ""))</Link>
-      <Visible>true</Visible>
-    </Content>
-
-    <TypeScriptCompile Include="@(AllLinkedContent->WithMetadataValue('Type', 'TypeScript'))">
-      <Link>$([System.String]::Copy(%(FullPath)).Replace("%(RelativePath)\", ""))</Link>
-      <Visible>true</Visible>
-    </TypeScriptCompile>
-    <!-- 
-    Developer Experience: End
-    -->
-
-
-
     <Content  Include="@(DependencyContent->WithMetadataValue('Type', 'Content'))">
       <Link Condition="%(ProjectRelativePath) != ''">%(ProjectRelativePath)</Link>
       <Visible Condition="%(ProjectRelativePath) != ''">true</Visible>
     </Content>
-
-    <!-- Include all external content marked as TypeScript as TypeScriptCompile -->
-    <TypeScriptCompile Include="@(DependencyContent->WithMetadataValue('Type', 'TypeScript'))">
-      <Link>%(ProjectRelativePath)</Link>
-      <Visible>true</Visible>
-    </TypeScriptCompile>
 
     <!-- And now for our third party library friends! Enter! Stage left! -->
     <Content Include="@(ThirdPartyContent->WithMetadataValue('Type', 'Content'))">
@@ -446,31 +226,6 @@
     </TypeScriptCompile>
   </ItemGroup>
 
-
-  <Choose>
-    <When Condition=" ('$(AssemblyName)' == 'Web.Foundation' Or '$(AssemblyName)' == 'Web.Presentation') And '$(EnableContentLink)' == 'true' ">
-      <!-- We don't need to include Logon.aspx inside Web.Foundation as it provides this file -->
-      <ItemGroup />
-    </When>
-    <When Condition=" ('$(AssemblyName)' != 'Web.Foundation') And '$(EnableContentLink)' == 'true' ">
-      <ItemGroup>
-        <!-- We always want these file to appear in Solution Explorer to make it obvious when you haven't run get-dependencies -->
-        <Content Include="Authentication\Web.Foundation\LogOn.aspx;Authentication\Web.Foundation\LogOff.aspx;ManualLogOn\default.aspx;" >
-          <Visible>true</Visible>
-        </Content>
-
-        <Content Include="Authentication\**\*"
-                 Exclude="Authentication\**\LogOn.aspx;Authentication\**\LogOff.aspx;Authentication\**\web.config">
-          <Visible>true</Visible>
-        </Content>
-
-        <Content Include="ManualLogOn\*"
-                 Exclude="ManualLogOn\default.aspx;ManualLogOn\Web.config">
-          <Visible>true</Visible>
-        </Content>
-      </ItemGroup>
-    </When>
-  </Choose>
 
 
   
@@ -507,35 +262,7 @@
           UseHardlinksIfPossible="true" />
 
   </Target>
-
-  <Target Name="AfterCopyLinkedContentFiles" AfterTargets="CopyLinkedContentFiles">
-    <!--
-       Aspx content hangs Visual studio if you attempt to add a breakpoint to an ASPX file and the file is actually a link (very annoying). 
-       So we need to copy the file instead 
-    -->
-    <Copy SourceFiles="@(AspxContent)"
-          DestinationFiles="@(AspxContent->'%(RelativePath)\%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true"
-          OverwriteReadOnlyFiles="true" />
-
-    <PropertyGroup>
-      <EmptyProperty></EmptyProperty>
-    </PropertyGroup>
-
-    <!-- Build the dll from any linked projects. This project will reference the output assembly of the linked project directly (i.e. we won't use the DLL from 
-    the dependencies directory) -->
-    <MSBuild Projects="@(LinkTo->'%(RelativePath)\%(Identity).csproj')"
-             Condition="'$(IsDesktopBuild)' != 'false'"
-             Targets="Build"
-             Properties="Configuration=Debug;Platform=AnyCPU;
-                         LinkedBuild=true;
-                         PackageAsSingleFile=False;
-                         FilesToIncludeForPublish=$(EmptyProperty);
-                         DeployDefaultTarget=$(EmptyProperty);
-                         FilesToIncludeTargetFile=$(EmptyProperty);
-                         DeployTarget=$(EmptyProperty)" />
-  </Target>
-
+  
   <Target Name="CompileLess"
           AfterTargets="CopyLinkedContentFiles"
           Condition="'$(EnableLESSCompile)' == 'True'">
@@ -589,7 +316,3 @@ WebModuleText:            $(WebModuleText) "
     <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />-->    
   </Target>
 </Project>
-
-
-
-
