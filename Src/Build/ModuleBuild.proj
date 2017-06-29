@@ -461,7 +461,7 @@ doc.Save(File);
 
     <Copy SourceFiles="$(BuildScriptsDirectory)\dir.proj" DestinationFolder="$(SolutionDirectoryPath)" />
     <Copy SourceFiles="$(BuildScriptsDirectory)\Aderant.wpp.content.proj" DestinationFolder="$(SolutionDirectoryPath)" />
-    <Copy SourceFiles="$(BuildScriptsDirectory)\Aderant.wpp.v2.content.proj" DestinationFolder="$(SolutionDirectoryPath)" />
+    <Copy SourceFiles="$(BuildScriptsDirectory)\Aderant.wpp.content.v2.proj" DestinationFolder="$(SolutionDirectoryPath)" />
 
     <PropertyGroup>
       <DependenciesDirectory Condition="'$(DependenciesDirectory)' == ''">$(SolutionDirectoryPath)Dependencies</DependenciesDirectory>
