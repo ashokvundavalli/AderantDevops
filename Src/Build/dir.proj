@@ -15,8 +15,8 @@
   </PropertyGroup>
   
   <!--WebDependency-->
-  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.Content.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == ''" />
-  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.Content.v2.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" />
+  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.content.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == ''" />
+  <Import Project="$(MSBuildThisFileDirectory)\Aderant.wpp.content.v2.proj" Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" />
 
 
   <!--TSLint-->
