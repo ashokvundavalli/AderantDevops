@@ -63,7 +63,7 @@ process {
         if (Test-Path $packResult.OutputPath) {
             [System.IO.FileInfo[]]$packages = gci -Path $packResult.OutputPath -Filter *.nupkg
 
-            if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "/refs/heads/patch*") -and -not $global:IsDesktopBuild) {
+            if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/patch*") -and -not $global:IsDesktopBuild) {
                 $packagingProcess = [Aderant.Build.Packaging.PackageProcessor]::new($Host.UI)
 
                 $buildNumber = ("{0} {1}" -f $Env:BUILD_REPOSITORY_NAME, $versionSem)
