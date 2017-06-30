@@ -72,10 +72,14 @@ process {
                 Write-Host "Pushing packages from: $($packResult.OutputPath)"
                 
                 gci -Path $packResult.OutputPath -Filter *.nupkg | Where-Object { $_.Name -NotMatch "Aderant.Database.Backup" } | % { PushPackage $_.FullName }
-                gci -Path $packResult.OutputPath -Filter Aderant.Database.Backup*.nupkg | % { echo 'D' | xcopy /i $_.FullName "\\dfs.aderant.com\Packages\ExpertDatabase\$($_.Name.Replace("Aderant.Database.Backup.",`"`").Replace(".nupkg", `"\`"))" }
 
                 # Associate the package to the build. This allows TFS garbage collect the outputs when the build is deleted      
                 $packagingProcess.AssociatePackagesToBuild($packages)
+
+                # Special treatment for database backup as the file size is too large. Skipped zipping into a nuget but copying the raw .bak file. Always drop to \\dfs.aderant.com\Packages\ExpertDatabase with overwriting.
+                if ($env:BUILD_DEFINITIONNAME -contains "Database") {
+                    gci -Path $binariesDirectory -Filter Expert*.bak | % { xcopy /i /y $_.FullName "\\dfs.aderant.com\Packages\ExpertDatabase\$versionSem" }
+                }
             }
         }
     } else {
