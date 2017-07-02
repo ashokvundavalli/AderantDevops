@@ -76,9 +76,9 @@ process {
                 # Associate the package to the build. This allows TFS garbage collect the outputs when the build is deleted      
                 $packagingProcess.AssociatePackagesToBuild($packages)
 
-                # Special treatment for database backup as the file size is too large. Skipped zipping into a nuget but copying the raw .bak file. Always drop to \\dfs.aderant.com\Packages\ExpertDatabase with overwriting.
+                # Special dropping location for database backup due to the size: \\dfs.aderant.com\Packages\ExpertDatabase.
                 if ($env:BUILD_DEFINITIONNAME -contains "Database") {
-                    gci -Path $binariesDirectory -Filter Expert*.bak | % { xcopy /i /y $_.FullName "\\dfs.aderant.com\Packages\ExpertDatabase\$versionSem" }
+                    gci -Path $packResult.OutputPath -Filter Aderant.Database.Backup*.nupkg | % { xcopy /i /y $_.FullName "\\dfs.aderant.com\Packages\ExpertDatabase\$versionSem\" }
                 }
             }
         }
