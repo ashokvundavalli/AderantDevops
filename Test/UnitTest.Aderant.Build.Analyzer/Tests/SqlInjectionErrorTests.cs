@@ -1049,6 +1049,103 @@ namespace System.Data.Entity {
             VerifyCSharpDiagnostic(test, GetDiagnostic(13, 13));
         }
 
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_SelfAssignment_NoDiagnostic() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Foo();
+        }
+
+        public static void Foo() {
+            string test = ""Value1"";
+            test = test + "" Value2"";
+
+            new Database().SqlQuery<int>(test);
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_SelfAssignmentWithCoalesce_Diagnostic() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Foo(""FAIL"");
+        }
+
+        public static void Foo(string input) {
+            string test = ""Value1"";
+            test = true ? input : ""this will never happen"";
+
+            new Database().SqlQuery<int>(test);
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(test, GetDiagnostic(14, 13));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NonConstantAssignment_IfStatementSelfAssignment_NoDiagnostic() {
+            const string test = @"
+using System.Data.Entity;
+
+namespace Test {
+    public class Program {
+        public static void Main() {
+            Foo(""FAIL"", true);
+        }
+
+        public static void Foo(string input, bool testBool) {
+            string test = ""Value1"";
+            
+            if(testBool){
+                test = test + "" Value2"";
+            }
+
+            new Database().SqlQuery<int>(test);
+        }
+    }
+}
+
+namespace System.Data.Entity {
+    public class Database {
+        public void SqlQuery<TElement>(string s) {
+            // Empty.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(test);
+
+        }
+
         #endregion Tests: Non-Constant Assignment
     }
 }

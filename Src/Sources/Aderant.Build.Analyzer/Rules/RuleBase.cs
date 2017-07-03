@@ -66,6 +66,16 @@ namespace Aderant.Build.Analyzer.Rules {
             SyntaxNode node,
             SyntaxNode stopNode = null) where T : SyntaxNode {
             foreach (var childNode in node.ChildNodes()) {
+
+                // Stop nodes can exist inside assignment expressions
+                // checking both sides of the expression to make sure it doesn't exist within and ceasing navigation if it does.
+                var assignmentExpression = childNode as AssignmentExpressionSyntax;
+                if (assignmentExpression != null) {
+                    if (assignmentExpression.Left.Equals(stopNode) || assignmentExpression.Right.Contains(stopNode)) {
+                        return true;
+                    }
+                }
+
                 // Syntax tree navigation will cease if this node is found.
                 if (childNode.Equals(stopNode)) {
                     return true;
