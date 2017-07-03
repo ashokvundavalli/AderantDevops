@@ -28,7 +28,7 @@ process {
 	
 	[int]$LASTEXITCODE = 0
 
-    Start-Process msiexec.exe -Wait -ArgumentList "/uninstall $($deploymentManagerMsi.FullName) /quiet"
+    Start-Process msiexec.exe -ArgumentList "/uninstall $($deploymentManagerMsi.FullName) /quiet" -Wait
 
 	if ($LASTEXITCODE -eq 0) {
 		Write-Host "$($deploymentManagerMsi.Name) uninstalled successfully."

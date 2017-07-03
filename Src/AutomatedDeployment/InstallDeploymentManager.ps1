@@ -26,14 +26,12 @@ process {
 
 	Write-Host "Installing $($deploymentManagerMsi.Name)"
 
-	[int]$LASTEXITCODE = 0
+    $installProcess = Start-Process msiexec.exe -ArgumentList "/package $($deploymentManagerMsi.FullName) /quiet" -Wait -PassThru
 
-    Start-Process msiexec.exe -Wait -ArgumentList "/package $($deploymentManagerMsi.FullName) /quiet"
-
-	if ($LASTEXITCODE -eq 0) {
+	if ($installProcess.ExitCode -eq 0) {
 		Write-Host "$($deploymentManagerMsi.Name) installed successfully."
 	} else {
 		Write-Error "Failed to install $($deploymentManagerMsi.Name)"
-		Exit $LASTEXITCODE
+		Exit $installProcess.ExitCode
 	}
 }
