@@ -152,6 +152,8 @@
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\DifferentOutputPathsProject.csproj" />
+    <Content Include="Resources\MatchingOutputPathsProject.csproj" />
     <Content Include="Resources\ReplaceReferencesProject.csproj" />
     <Content Include="Resources\SplashScreens\Expert_2014.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

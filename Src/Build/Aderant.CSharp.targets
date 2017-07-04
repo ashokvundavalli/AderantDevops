@@ -297,10 +297,10 @@
 
   
   <Target Name="ApplyCodeAnalzyer"
-		  Condition="'$(IsCustomBuild)' != 'true'"
+          Condition="'$(IsCustomBuild)' != 'true'"
           BeforeTargets="CoreCompile;ResolveAssemblyReferences">
 
-    <Aderant.Build.Tasks.ProjectConformityCheck Project="$(MSBuildProjectFullPath)" />
+    <Aderant.Build.Tasks.ProjectConformityCheck Project="$(MSBuildProjectFullPath)" IsDesktopBuild="$(IsDesktopBuild)" />
   </Target>
   
 

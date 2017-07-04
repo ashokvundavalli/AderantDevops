@@ -70,5 +70,20 @@ namespace Aderant.Build.Tasks {
 
             return collection.LoadProject(document.CreateReader());
         }
+
+        /// <summary>
+        /// Checks if the project's output paths are valid. 
+        /// </summary>
+        /// <returns>True if all output paths are matching, False if there is any differences. </returns>
+        public bool ValidateProjectOutputPaths() {
+            XDocument doc = XDocument.Parse(project.Xml.RawXml);
+            List<XElement> outPutPaths = doc.Descendants().Where(d => d.Name.LocalName == "OutputPath").ToList();
+
+            if (outPutPaths.Count <= 1) {
+                // There are not multiple output paths to validate against each other.
+                return true;
+            }
+            return (outPutPaths.Select(e => e.Value).Distinct().Count() == 1);
+        }
     }
 }

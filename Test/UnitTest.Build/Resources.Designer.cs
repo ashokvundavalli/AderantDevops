@@ -123,6 +123,24 @@ namespace UnitTest.Build {
                 return ResourceManager.GetString("CSharpProject", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
+        ///  &lt;PropertyGroup Condition=&quot; &apos;$(Configuration)|$(Platform)&apos; == &apos;Debug|AnyCPU&apos; &quot;&gt;
+        ///    &lt;PlatformTarget&gt;AnyCPU&lt;/PlatformTarget&gt;
+        ///    &lt;DebugSymbols&gt;true&lt;/DebugSymbols&gt;
+        ///    &lt;DebugType&gt;full&lt;/DebugType&gt;
+        ///    &lt;Optimize&gt;false&lt;/Optimize&gt;
+        ///    &lt;OutputPath&gt;..\..\Bin\TestApp\&lt;/OutputPath&gt;
+        ///    &lt;Defi [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string DifferentOutputPathsProject {
+            get {
+                return ResourceManager.GetString("DifferentOutputPathsProject", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
@@ -163,6 +181,24 @@ namespace UnitTest.Build {
         internal static string instance {
             get {
                 return ResourceManager.GetString("instance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+        ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;
+        ///  &lt;PropertyGroup Condition=&quot; &apos;$(Configuration)|$(Platform)&apos; == &apos;Debug|AnyCPU&apos; &quot;&gt;
+        ///    &lt;PlatformTarget&gt;AnyCPU&lt;/PlatformTarget&gt;
+        ///    &lt;DebugSymbols&gt;true&lt;/DebugSymbols&gt;
+        ///    &lt;DebugType&gt;full&lt;/DebugType&gt;
+        ///    &lt;Optimize&gt;false&lt;/Optimize&gt;
+        ///    &lt;OutputPath&gt;..\..\Bin\Module\&lt;/OutputPath&gt;
+        ///    &lt;Defin [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MatchingOutputPathsProject {
+            get {
+                return ResourceManager.GetString("MatchingOutputPathsProject", resourceCulture);
             }
         }
         

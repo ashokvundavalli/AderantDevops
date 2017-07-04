@@ -33,5 +33,39 @@ namespace UnitTest.Build.Tasks {
 
             Assert.AreEqual(expected, p.Xml.RawXml);
         }
+
+        [TestMethod]
+        public void ValidateProjectOutputPaths_PassesIfNoOutputPaths() {
+            var fs = new Moq.Mock<IFileSystem2>();
+            var p = ProjectConformityController.CreateProject(XDocument.Parse(Resources.CSharpProject));
+
+            var controller = new ProjectConformityController(fs.Object, p);
+            var isValid = controller.ValidateProjectOutputPaths();
+
+            Assert.IsTrue(isValid);
+        }
+
+
+        [TestMethod]
+        public void ValidateProjectOutputPaths_FailsIfMultipleDifferentOutputPaths() {
+            var fs = new Moq.Mock<IFileSystem2>();
+            var p = ProjectConformityController.CreateProject(XDocument.Parse(Resources.DifferentOutputPathsProject));
+
+            var controller = new ProjectConformityController(fs.Object, p);
+            var isValid = controller.ValidateProjectOutputPaths();
+
+            Assert.IsFalse(isValid);
+        }
+
+        [TestMethod]
+        public void ValidateProjectOutputPaths_PassesIfMultipleMatchingOutputPaths() {
+            var fs = new Moq.Mock<IFileSystem2>();
+            var p = ProjectConformityController.CreateProject(XDocument.Parse(Resources.MatchingOutputPathsProject));
+
+            var controller = new ProjectConformityController(fs.Object, p);
+            var isValid = controller.ValidateProjectOutputPaths();
+
+            Assert.IsTrue(isValid);
+        }
     }
 }
