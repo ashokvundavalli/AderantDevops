@@ -1130,7 +1130,7 @@ doc.Save(File);
         SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
         DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
         SkipUnchangedFiles="true"
-        UseHardlinksIfPossible="true">
+        UseHardlinksIfPossible="false">
     </Copy>
 
     <!-- Read solution file so we can get the project source-->
