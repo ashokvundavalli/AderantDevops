@@ -21,7 +21,7 @@
 #>
 [CmdletBinding()]
 param (
-	[Parameter(Mandatory=$true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest")][string]$command,
+	[Parameter(Mandatory=$true)][ValidateSet("Deploy", "DeploySilent", "Remove", "RemoveSilent", "ExportEnvironmentManifest", "ImportEnvironmentManifest")][string]$command,
 	[Parameter(Mandatory=$true)][string]$serverName,
 	[Parameter(Mandatory=$true)][string]$databaseName,
 	[Parameter(Mandatory=$false)][string]$environmentXml,
