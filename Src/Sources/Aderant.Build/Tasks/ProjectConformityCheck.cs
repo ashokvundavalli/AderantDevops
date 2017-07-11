@@ -15,13 +15,13 @@ namespace Aderant.Build.Tasks {
             try {
                 var controller = new ProjectConformityController(new PhysicalFileSystem(System.IO.Path.GetDirectoryName(Project.ItemSpec)), ProjectConformityController.CreateProject(Project.ItemSpec));
 
-                if (!controller.ValidateProjectOutputPaths()) {
-                    if (IsDesktopBuild) {
-                        Log.LogWarning($"The project file {Project.ItemSpec} contains different output paths for Debug and Release builds. These are expected to be matching.");
-                    } else {
-                        Log.LogError($"The project file {Project.ItemSpec} contains different output paths for Debug and Release builds. These are expected to be matching.");
-                    }
-                }
+                //if (!controller.ValidateProjectOutputPaths()) {
+                //    if (IsDesktopBuild) {
+                 //       Log.LogWarning($"The project file {Project.ItemSpec} contains different output paths for Debug and Release builds. These are expected to be matching.");
+                  //  } else {
+                   //     Log.LogError($"The project file {Project.ItemSpec} contains different output paths for Debug and Release builds. These are expected to be matching.");
+                   // }
+                //}
 
                 if (controller.AddDirProjectIfNecessary()) {
                     Log.LogWarning("The project file {0} does not have a dir.proj import. One will be added.", Project.ItemSpec);
