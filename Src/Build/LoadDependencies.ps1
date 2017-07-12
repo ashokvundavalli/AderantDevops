@@ -70,8 +70,10 @@ process {
     [string]$moduleDependenciesDirectory = (Join-Path $modulesRootPath  \Dependencies)
     [string]$moduleDependenciesDirectory = [System.IO.Path]::GetFullPath($moduleDependenciesDirectory)
     
+    Write-Host "Writing .editorconfig"
+	Copy-Item -Path "$buildScriptsDirectory\..\Profile\.editorconfig" -Destination "$modulesRootPath\" -Force
+
     Write-Host "Writing ReSharper settings files."
-	
 	$solutionFiles = Get-ChildItem $modulesRootPath | Where {$_.extension -eq ".sln"}
 	foreach ($solutionFile in $solutionFiles) {
 		$solutionName = $solutionFile.Name.Substring(0, $solutionFile.Name.Length - 4)

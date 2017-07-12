@@ -96,10 +96,12 @@ function ConfigureGit() {
 
     & git config --global difftool.prompt false
     & git config --global credential.tfs.integrated true
-    & git config --global credential.tfs.aderant.com.integrated true
+    & git config --global credential.tfs.ap.aderant.com.integrated true
     & git config --global core.autocrlf false
     & git config --global http.emptyAuth true
     & git config --global credential.authority ntlm
+	& git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
+
 
     # set up notepad++ as the default commit editor
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
@@ -120,14 +122,10 @@ function CheckModuleVersion(){
 	return $true
 }
 
-
-
 if (CheckModuleVersion) { 
-
 	InstallPoshGit
-	ConfigureGit
-	
 	Export-ModuleMember -Function Invoke-Build
 	Set-Alias -Name bm -Value Invoke-Build -Scope Global
 }
-	
+
+ConfigureGit	
