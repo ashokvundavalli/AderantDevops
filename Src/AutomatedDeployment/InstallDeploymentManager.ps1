@@ -30,6 +30,7 @@ process {
 
 	if ($installProcess.ExitCode -eq 0) {
 		Write-Host "$($deploymentManagerMsi.Name) installed successfully."
+		Exit $installProcess.ExitCode
 	} else {
 		Write-Error "Failed to install $($deploymentManagerMsi.Name)"
 		Exit $installProcess.ExitCode

@@ -24,16 +24,17 @@ process {
 
 	[System.IO.FileInfo]$deploymentManagerMsi = Get-ChildItem -Path $deploymentManagerMsiPath
 
-	Write-Host "Uninstalling DeploymentManager.msi"
+	Write-Host "Uninstalling $($deploymentManagerMsi.Name)"
 	
 	[int]$LASTEXITCODE = 0
 
-    Start-Process msiexec.exe -ArgumentList "/uninstall $($deploymentManagerMsi.FullName) /quiet" -Wait
+    $uninstallProcess = Start-Process msiexec.exe -ArgumentList "/uninstall $($deploymentManagerMsi.FullName) /quiet" -Wait -PassThru
 
-	if ($LASTEXITCODE -eq 0) {
+	if ($uninstallProcess.ExitCode -eq 0) {
 		Write-Host "$($deploymentManagerMsi.Name) uninstalled successfully."
+		Exit $uninstallProcess.ExitCode
 	} else {
 		Write-Error "Failed to uninstall $($deploymentManagerMsi.Name)"
-		Exit $LASTEXITCODE
+		Exit $uninstallProcess.ExitCode
 	}
 }
