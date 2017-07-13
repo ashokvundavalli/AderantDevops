@@ -277,6 +277,18 @@
       LessFiles="@(LessFiles)" />
   </Target>
 
+  <Target Name="custom-tsconfig-->tsc"
+          AfterTargets="CompileTypeScriptWithTSConfig">
+    <ItemGroup>
+      <CustomTSConfigs 
+        Include="$(ProjectDir)**\*custom.tsconfig.json" 
+        Exclude="$(ProjectDir)**\obj\**;
+                 $(ProjectDir)**\bin\**;"/>
+    </ItemGroup>
+
+    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\2.2\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
+ </Target>
+
   <!-- Suppress the TypeScript compile phase if we are building a linked project -->
   <!--<Target Name="CompileTypeScript" Condition="'$(LinkedBuild)' == 'true'" />-->
 

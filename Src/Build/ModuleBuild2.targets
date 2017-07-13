@@ -221,18 +221,6 @@ doc.Save(File);
     <CallTarget Targets="ModuleBuild" />
   </Target>
 
-  <Target Name="TypeScriptPostBuild">
-    <ItemGroup>
-      <PreBuildTSConfigs 
-        Include="$(SolutionDirectoryPath)**\*.postbuild.tsconfig.json" 
-        Exclude="$(SolutionDirectoryPath)**\obj\**;
-                 $(SolutionDirectoryPath)**\packages\**;
-                 $(SolutionDirectoryPath)**\Dependencies\**;" />
-    </ItemGroup>
-
-    <Exec Condition="'@(PreBuildTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\2.2\tsc.exe&quot; --project %(PreBuildTSConfigs.FullPath) "/>
-  </Target>
-
   <!--
     ==========================================================================================
         Build process pipeline
@@ -248,8 +236,7 @@ doc.Save(File);
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="PreBuild" /> 
     <CallTarget Targets="Build" />
-    <CallTarget Targets="ZipWorkflowTemplateSource" />
-    <CallTarget Targets="TypeScriptPostBuild" />
+    <CallTarget Targets="ZipWorkflowTemplateSource" />    
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
