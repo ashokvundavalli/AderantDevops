@@ -18,8 +18,6 @@ namespace Aderant.Build.Tasks {
         }
 
         public static async Task<Microsoft.TeamFoundation.Build.WebApi.Build> GetLastGoodBuildAsync(BuildHttpClient client, WarningRatchetRequest request) {
-            string master = "refs/heads/master";
-
             //if (request.IsDraft && !string.IsNullOrEmpty(request.BuildDefinitionName)) {
             //    var references = await client.GetDefinitionsAsync(request.TeamProject, request.BuildDefinitionName, );
             //    if (references != null) {
@@ -45,7 +43,7 @@ namespace Aderant.Build.Tasks {
                 requestedFor: null,
                 reasonFilter: BuildReason.All,
                 statusFilter: BuildStatus.Completed,
-                resultFilter: BuildResult.Succeeded,
+                resultFilter: BuildResult.PartiallySucceeded | BuildResult.Succeeded,
                 tagFilters: null,
                 properties: null,
                 top: 1,
@@ -53,7 +51,7 @@ namespace Aderant.Build.Tasks {
                 maxBuildsPerDefinition: MaximumItemCount,
                 deletedFilter: QueryDeletedOption.ExcludeDeleted,
                 queryOrder: BuildQueryOrder.FinishTimeDescending,
-                branchName: master,
+                branchName: request.DestinationBranchName,
                 userState: null);
 
             Microsoft.TeamFoundation.Build.WebApi.Build build = result.FirstOrDefault();
@@ -131,7 +129,7 @@ namespace Aderant.Build.Tasks {
             return reporter;
         }
 
-        public WarningRatchetRequest CreateNewRequest(string teamProject, int buildId) {
+        public WarningRatchetRequest CreateNewRequest(string teamProject, int buildId, string destinationBranchName) {
             var build = client.GetBuildAsync(teamProject, buildId).Result;
 
             return new WarningRatchetRequest {
@@ -139,6 +137,7 @@ namespace Aderant.Build.Tasks {
                 BuildId = buildId,
                 Build = build,
                 BuildDefinitionId = build.Definition.Id,
+                DestinationBranchName = destinationBranchName,
             };
         }
     }

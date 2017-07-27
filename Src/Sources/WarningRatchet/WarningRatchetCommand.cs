@@ -15,13 +15,16 @@ namespace WarningRatchet {
         [Parameter(Mandatory = true)]
         public int BuildId { get; set; }
 
+        [Parameter(Mandatory = true)]
+        public string DestinationBranchName { get; set; }
+
         protected override void BeginProcessing() {
             base.BeginProcessing();
 
             var connection = new VssConnection(new Uri(TeamFoundationServer), new VssCredentials());
 
             var ratchet = new Aderant.Build.Tasks.WarningRatchet(connection);
-            var request = ratchet.CreateNewRequest(TeamProject, BuildId);
+            var request = ratchet.CreateNewRequest(TeamProject, BuildId, DestinationBranchName);
 
             var currentBuildCount = ratchet.GetBuildWarningCount(request);
             var lastGoodBuildCount = ratchet.GetLastGoodBuildWarningCount(request);

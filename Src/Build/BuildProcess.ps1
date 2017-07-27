@@ -85,50 +85,56 @@ function GetVssConnection() {
 }
 
 function WarningRatchet() {
-    Write-Host "Running warning ratchet"
+    $destinationBranch = $Env:SYSTEM_PULLREQUEST_TARGETBRANCH
+    $isPullRequest = ![string]::IsNullOrEmpty($destinationBranch)
+    if($isPullRequest) {
+        Write-Host "Running warning ratchet for $destinationBranch"
+        Import-Module $global:ToolsDirectory\WarningRatchet.dll
+        $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID -DestinationBranchName $destinationBranch  
 
-    Import-Module $global:ToolsDirectory\WarningRatchet.dll
-    $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID    
+        $lastGoodBuildWarningCount = $result.LastGoodBuildCount
+        $currentBuildCount = $result.CurrentBuildCount
+        $ratchet = $result.Ratchet
+        $ratchetRequest = $result.Request
 
-    $lastGoodBuildWarningCount = $result.LastGoodBuildCount
-    $currentBuildCount = $result.CurrentBuildCount
-    $ratchet = $result.Ratchet
-    $ratchetRequest = $result.Request
-
-    if (-not $lastGoodBuildWarningCount) {
-        Write-Host "No last good build found for DefinitionId: $buildDefinitionId"
-    }
-
-    if ($lastGoodBuildWarningCount -ne $null) {
-        [int]$lastGoodBuildCount = $lastGoodBuildWarningCount
-        Write-Host "The last good build id was: $($ratchetRequest.LastGoodBuild.Id) with $($lastGoodBuildCount) warnings"
-        
-        if ($currentBuildCount -gt $lastGoodBuildCount) {
-            $reporter = $ratchet.GetWarningReporter($ratchetRequest)
-            
-            GenerateAndUploadReport $reporter 
-
-            [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()
-            Write-Output "Adjusted build warnings: $adjustedWarningCount"
-
-            RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
-			
-			$permittedWarningsThreshold = 5
-
-            # Only fail if the adjusted count exceeds the last build
-            if ($adjustedWarningCount -gt $lastGoodBuildCount -and $adjustedWarningCount -gt $permittedWarningsThreshold) {  
-            
-                $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
-                           
-                # We always want the master branch to build
-                if ($sourceBranchName -ne "master") {
-                    throw "Warning count has increased since the last good build"
-                }
-            }
-            return
+        if (-not $lastGoodBuildWarningCount) {
+            Write-Host "No last good build found for DefinitionId: $buildDefinitionId"
         }
-        RenderWarningShields $false $currentBuildCount $lastGoodBuildCount      
-    }     
+
+        if ($lastGoodBuildWarningCount -ne $null) {
+            [int]$lastGoodBuildCount = $lastGoodBuildWarningCount
+            Write-Host "The last good build id was: $($ratchetRequest.LastGoodBuild.Id) with $($lastGoodBuildCount) warnings"
+
+            if ($currentBuildCount -gt $lastGoodBuildCount) {
+                $reporter = $ratchet.GetWarningReporter($ratchetRequest)
+
+                GenerateAndUploadReport $reporter 
+
+                [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()
+                Write-Output "Adjusted build warnings: $adjustedWarningCount"
+
+                RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
+            
+	    		$permittedWarningsThreshold = 5
+
+                # Only fail if the adjusted count exceeds the last build
+                if ($adjustedWarningCount -gt $lastGoodBuildCount -and $adjustedWarningCount -gt $permittedWarningsThreshold) {  
+                
+                    $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
+
+                    # We always want the master branch to build
+                    if ($sourceBranchName -ne "master") {
+                        throw "Warning count has increased since the last good build"
+                    }
+                }
+                return
+            }
+            RenderWarningShields $false $currentBuildCount $lastGoodBuildCount      
+        }
+    } else {
+        Write-Host "Build is not for a pull request, skipping warning ratchet"
+        return
+    }         
 }
 
 function GenerateAndUploadReport($reporter) {
