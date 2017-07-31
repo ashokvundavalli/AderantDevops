@@ -160,6 +160,7 @@ publish/
 # NuGet v3's project.json files produces more ignoreable files
 *.nuget.props
 *.nuget.targets
+Aderant.wpp.content.v2.proj
 
 # Microsoft Azure Build Output
 csx/
