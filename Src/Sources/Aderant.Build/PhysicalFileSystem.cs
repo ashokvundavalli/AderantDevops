@@ -250,6 +250,7 @@ namespace Aderant.Build {
 
         public void MoveDirectory(string source, string destination) {
             if (!DirectoryExists(destination)) {
+                Directory.CreateDirectory(Directory.GetParent(destination).FullName);
                 Directory.Move(source, destination);
             } else {
                 IEnumerable<string> files = GetFiles(source, true);
