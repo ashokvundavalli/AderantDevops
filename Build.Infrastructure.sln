@@ -112,10 +112,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AutomatedDeployment", "AutomatedDeployment", "{661412E6-1121-4540-BEBE-E4BA58AEC643}"
 	ProjectSection(SolutionItems) = preProject
 		Src\AutomatedDeployment\AutomatedDeploy.ps1 = Src\AutomatedDeployment\AutomatedDeploy.ps1
+		Src\AutomatedDeployment\DeployExpert.ps1 = Src\AutomatedDeployment\DeployExpert.ps1
 		Src\AutomatedDeployment\DeploymentEngine.ps1 = Src\AutomatedDeployment\DeploymentEngine.ps1
 		Src\AutomatedDeployment\EnvironmentGeneration.ps1 = Src\AutomatedDeployment\EnvironmentGeneration.ps1
 		Src\AutomatedDeployment\InstallDeploymentManager.ps1 = Src\AutomatedDeployment\InstallDeploymentManager.ps1
 		Src\AutomatedDeployment\InstallPrereqs.ps1 = Src\AutomatedDeployment\InstallPrereqs.ps1
+		Src\AutomatedDeployment\RemoveExpert.ps1 = Src\AutomatedDeployment\RemoveExpert.ps1
+		Src\AutomatedDeployment\SetShare.ps1 = Src\AutomatedDeployment\SetShare.ps1
 		Src\AutomatedDeployment\UninstallDeploymentManager.ps1 = Src\AutomatedDeployment\UninstallDeploymentManager.ps1
 	EndProjectSection
 EndProject

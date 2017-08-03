@@ -32,8 +32,14 @@ param (
 process {
     $currentDirectory = (Get-Item -Path ".\" -Verbose).FullName
     Import-Module $prereqRoot\expertapplicationserver.ps1
+    
+    Write-Verbose "Imported Expert Application Server scripts" -verbose
+
     cd $prereqRoot
-    install-applicationserverprerequisites -isLoadBalanced $isLoadBalanced -appFabricServiceUser $appFabricServiceUser -appFabricServicePassword $appFabricServicePassword -expertServiceUser $expertServiceUser -windowsSourcePath $windowsSourcePath
+        
+    Invoke-Command -NoNewScope -ScriptBlock {install-applicationserverprerequisites -isLoadBalanced $($isLoadBalanced) -appFabricServiceUser $appFabricServiceUser -appFabricServicePassword $appFabricServicePassword -expertServiceUser $expertServiceUser -windowsSourcePath $windowsSourcePath}
+        
     cd $currentDirectory
+    Write-Verbose "Finished Installing Prereqs" -verbose
 }
 

@@ -31,7 +31,7 @@ param (
 
 process {
 	if (-not (Test-Path $environmentGenerator)){
-		Write-Error "Unable to find EnvironmentGenerator.dll at: $(environmentGenerator)"
+		Write-Error "Unable to find EnvironmentGenerator.dll at: $($environmentGenerator)"
 		Exit 1
 	}
 	
@@ -39,7 +39,6 @@ process {
 	$deploymentCheckExe = Join-Path -Path $autoDeployRoot -ChildPath "DeployCheck.exe"
 	$deploymentFrameworkDll = Join-Path -Path $sourcePath -ChildPath "Aderant.Framework.Deployment.dll"
 	[Reflection.Assembly]::LoadFrom($deploymentFrameworkDll)
-	[Reflection.Assembly]::LoadFrom($deploymentCheckExe)
 	[Reflection.Assembly]::LoadFrom($environmentGeneratorDll)
 	if ($databaseName){
 		$generator = new-object EnvironmentGenerator.EnvironmentManifestGenerator($computerName, $sourcePath, $databaseServerName, $databaseName)
@@ -49,5 +48,5 @@ process {
 	
 
     $generator.GenerateManifest()
-	
+	Exit 0	
 }

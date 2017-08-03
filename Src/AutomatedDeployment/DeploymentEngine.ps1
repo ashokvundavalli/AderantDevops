@@ -46,7 +46,7 @@ process {
 		$parameters = "$parameters /skh"
 	}
 
-	$deploymentEngineProcess = Start-Process -FilePath $deploymentEngine -ArgumentList $parameters -Wait -NoNewWindow -PassThru
+	$deploymentEngineProcess = Start-Process -FilePath $deploymentEngine -ArgumentList $parameters -Wait -NoNewWindow -PassThru 
 
 	Exit $deploymentEngineProcess.ExitCode
 }
