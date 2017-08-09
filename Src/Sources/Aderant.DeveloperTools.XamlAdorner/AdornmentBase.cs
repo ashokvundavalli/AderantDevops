@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -23,14 +22,14 @@ namespace Aderant.DeveloperTools.XamlAdorner {
         private static Dictionary<string, DateTime> lastAssemblyWriteTimes = new Dictionary<string, DateTime>();
         private readonly string assemblyName;
         private readonly string[] resourceDictionaryNames;
-        private string tempPath;
+        
         private string assemblyPath;
-        private string copiedAssemblyPath;
+        
         private static readonly string randomFileName;
         private static readonly string extensionName = "Aderant.DeveloperTools";
 
         static AdornmentBase() {
-            randomFileName = "XamlAdorner"; //Path.GetRandomFileName();
+            randomFileName = "XamlAdorner";
         }
 
         protected AdornmentBase(IWpfTextView view, string[] regexPatterns, string adornmentName, string assemblyName, string[] resourceDictionaryNames) {
@@ -42,16 +41,6 @@ namespace Aderant.DeveloperTools.XamlAdorner {
 
             string expertDevBranchFolder = Environment.GetEnvironmentVariable("ExpertDevBranchFolder");
             assemblyPath = Path.Combine(expertDevBranchFolder, @"Binaries\ExpertSource", string.Concat(assemblyName, ".dll"));
-            copiedAssemblyPath = Path.Combine(Path.GetTempPath(), extensionName, randomFileName, Path.GetFileName(assemblyPath));
-
-            tempPath = Path.Combine(Path.GetTempPath(), extensionName);
-            if (Directory.Exists(tempPath)) {
-                foreach (var subDirectory in Directory.GetDirectories(tempPath).Where(d => Directory.GetCreationTime(d) < DateTime.Now - TimeSpan.FromDays(7))) {
-                    try {
-                        Directory.Delete(subDirectory, recursive: true);
-                    } catch { }
-                }
-            }
 
             if (!assemblies.ContainsKey(assemblyName)) {
                 assemblies.Add(assemblyName, null);
@@ -64,19 +53,16 @@ namespace Aderant.DeveloperTools.XamlAdorner {
 
             var dispatcher = Dispatcher.CurrentDispatcher;
 
-            System.Threading.Tasks.Task.Factory.StartNew(() => {
+            System.Threading.Tasks.Task.Run(() => {
 
                 var lastWriteTime = File.GetLastWriteTime(assemblyPath);
                 bool updateAssembly = false;
-                if (lastAssemblyWriteTimes[this.assemblyName] < lastWriteTime)
-                {
+                if (lastAssemblyWriteTimes[this.assemblyName] < lastWriteTime) {
                     updateAssembly = true;
                     lastAssemblyWriteTimes[this.assemblyName] = lastWriteTime;
                 }
-                if (assemblies[this.assemblyName] == null || updateAssembly)
-                {
-                    CreateNewAssemblyAndCopyToTempFolder(assemblyPath, copiedAssemblyPath);
-                    assemblies[this.assemblyName] = Assembly.LoadFrom(copiedAssemblyPath);
+                if (assemblies[this.assemblyName] == null || updateAssembly) {
+                    assemblies[this.assemblyName] = Assembly.Load(File.ReadAllBytes(assemblyPath));
                 }
 
                 dispatcher.Invoke(() => {
@@ -96,20 +82,6 @@ namespace Aderant.DeveloperTools.XamlAdorner {
             }
         }
 
-        private void CopyResource(string resourceName, string destinationFolder) {
-            var file = Path.Combine(destinationFolder, resourceName);
-            if (!File.Exists(file)) {
-                using (Stream resource = GetType().Assembly.GetManifestResourceStream("Aderant.DeveloperTools.XamlAdorner.Assets." + resourceName)) {
-                    if (resource == null) {
-                        throw new ArgumentException("No such resource", "resourceName");
-                    }
-                    using (Stream output = File.OpenWrite(file)) {
-                        resource.CopyTo(output);
-                    }
-                }
-            }
-        }
-
         private void CreateVisuals(ITextViewLine line) {
             IWpfTextViewLineCollection textViewLines = this.view.TextViewLines;
             string text = null;
@@ -119,20 +91,22 @@ namespace Aderant.DeveloperTools.XamlAdorner {
                     if (match.Success) {
                         int matchStart = line.Start.Position + match.Index;
                         var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(matchStart, matchStart + match.Length - 1));
+
                         try {
-                            var expertResourcesType = assemblies[this.assemblyName].GetTypes().Single(t => t.Name.EndsWith(this.resourceDictionaryNames[i]));
+                            Type expertResourcesType = GetAssemblyTypes(assemblies[this.assemblyName]).Single(t => t.Name.EndsWith(this.resourceDictionaryNames[i]));
+                            
                             text = text.Substring(text.IndexOf(this.resourceDictionaryNames[i], StringComparison.Ordinal));
                             var resourceString = text.Split('}', ';')[0].Split('.')[1].Trim();
                             var resourceParts = text.Split('.')[0].Split('+');
                             PropertyInfo prop = null;
-                            if (resourceParts.Count() == 2) {
+                            if (resourceParts.Length == 2) {
                                 var nestedType = expertResourcesType.GetNestedType(resourceParts[1]);
                                 try {
                                     prop = nestedType.GetProperty(resourceString);
                                 } catch {
                                     return;
                                 }
-                            } else if (resourceParts.Count() == 3) {
+                            } else if (resourceParts.Length == 3) {
                                 var nestedType = expertResourcesType.GetNestedType(resourceParts[1]).GetNestedType(resourceParts[2]);
                                 try {
                                     prop = nestedType.GetProperty(resourceString);
@@ -156,10 +130,18 @@ namespace Aderant.DeveloperTools.XamlAdorner {
                         } catch (Exception ex) {
                             // stop watching
                             this.view.LayoutChanged -= OnLayoutChanged;
-                            MessageBox.Show(ex.ToString(), "Error in Aderant VS Extension");
+                            MessageBox.Show(ex.ToString(), "Error in Aderant VS Extension. Please report this issue.");
                         }
                     }
                 }
+            }
+        }
+
+        private static IEnumerable<Type> GetAssemblyTypes(Assembly assembly) {
+            try {
+                return assembly.GetTypes();
+            } catch (ReflectionTypeLoadException exception) {
+                return exception.Types.Where(x => x != null);
             }
         }
 
@@ -168,50 +150,23 @@ namespace Aderant.DeveloperTools.XamlAdorner {
                 args.Name.StartsWith("Xceed") ||
                 args.Name.StartsWith("Keyoti4") ||
                 args.Name.StartsWith("Mindscape") ||
-                args.Name.StartsWith("Aderant")) {
+                args.Name.StartsWith("Aderant") ||
+                args.Name.StartsWith("DevComponents") ||
+                args.Name.StartsWith("GongSolutions") ||
+                args.Name.StartsWith("ICSharpCode")) {
 
                 string expertDevBranchFolder = Environment.GetEnvironmentVariable("ExpertDevBranchFolder");
                 var assemblyPath = Path.Combine(expertDevBranchFolder, @"Binaries\ExpertSource", string.Concat(args.Name.Split(',')[0], ".dll"));
 
-                var copiedFilePath = Path.Combine(Path.GetDirectoryName(copiedAssemblyPath), Path.GetFileName(assemblyPath));
+                if (File.Exists(assemblyPath)) {
+                    var asembly = Assembly.Load(File.ReadAllBytes(assemblyPath));
 
-                if (!File.Exists(copiedFilePath)) {
-                    File.Copy(assemblyPath, copiedFilePath);
-                    return Assembly.LoadFrom(copiedFilePath);
+                    assemblies[asembly.GetName().Name] = asembly;
+
+                    return asembly;
                 }
-                //CreateNewAssemblyAndCopyToTempFolder(assemblyPath, copiedFilePath);
-
-                //return Assembly.LoadFrom(copiedFilePath);
             }
             return null;
-        }
-
-        private void CreateNewAssemblyAndCopyToTempFolder(string assemblyPath, string copiedAssemblyPath) {
-            Directory.CreateDirectory(Path.GetDirectoryName(copiedAssemblyPath));
-            var expertBinariesPath = Path.GetDirectoryName(assemblyPath);
-            var ilMergedAssemblyPath = Path.Combine(expertBinariesPath, "ILMerge", Path.GetFileName(assemblyPath));
-            //var ilMergedAssemblyPath = assemblyPath.Replace(".dll", ".2.dll");
-
-            //if (!File.Exists(ilMergedAssemblyPath)) {
-            CopyResource("FrameworkKey.snk", expertBinariesPath);
-            CopyResource("ILMerge.exe", expertBinariesPath);
-            CopyResource("ILMerge.exe.config", expertBinariesPath);
-            Directory.CreateDirectory(Path.Combine(expertBinariesPath, "ILMerge"));
-            string ilMergeCommand = string.Format("/C .\\ILMerge.exe {0} /out:ILMerge\\{1} /keyfile:FrameworkKey.snk /targetplatform:v4", Path.GetFileName(assemblyPath), Path.GetFileName(ilMergedAssemblyPath));
-
-            var process = new Process();
-            var startInfo = new ProcessStartInfo();
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.FileName = "cmd.exe";
-            startInfo.Arguments = ilMergeCommand;
-            startInfo.WorkingDirectory = expertBinariesPath + "\\";
-            process.StartInfo = startInfo;
-            process.Start();
-            process.WaitForExit();
-            //}
-            try {
-                File.Copy(Path.Combine(expertBinariesPath, "ILMerge", Path.GetFileName(assemblyPath)), copiedAssemblyPath, true);
-            } catch { }
         }
 
         protected abstract void AdornmentAction(object resource, IWpfTextViewLineCollection textViewLines, SnapshotSpan span);
