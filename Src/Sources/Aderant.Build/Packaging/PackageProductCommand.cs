@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Management.Automation;
 using System.Runtime.ExceptionServices;
 using Aderant.Build.Logging;
+using Microsoft.Build.Framework;
+using Microsoft.TeamFoundation.Build.Client;
 
 namespace Aderant.Build.Packaging {
     [Cmdlet("Package", "ExpertRelease")]
@@ -22,12 +24,30 @@ namespace Aderant.Build.Packaging {
         [ValidateNotNullOrEmpty]
         public string ProductDirectory { get; set; }
 
+        [Parameter(Mandatory = false, Position = 4)]
+        public string TfvcSourceGetVersion { get; set; }
+
+        [Parameter(Mandatory = false, Position = 5)]
+        public string TeamProject {
+            get; set;
+        }
+
+        [Parameter(Mandatory = false, Position = 6)]
+        public string TfvcBranch {
+            get; set;
+        }
+
+        [Parameter(Mandatory = false, Position = 7)]
+        public string TfsBuildId {
+            get; set;
+        }
+
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
             try {
                 var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
-                var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory);
+                var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId);
 
                 WriteObject(result);
             } catch (AggregateException ex) {

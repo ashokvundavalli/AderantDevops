@@ -358,6 +358,26 @@
     <MakeDir
       Directories="$(ZipFileDirectory)"/>
 
+    <MakeDir
+      Directories="$(ZipFileDirectory)\ReleaseManagement"/>
+
+    <!-- Copy commit info file and scripts over. -->
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\..\CommitInfo.json"
+      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\CommitInfo.json" />
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\..\persist-build.ps1"
+      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\persist-build.ps1" />
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\..\persist-build.bat"
+      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\persist-build.bat" />
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\..\undo-buildpersistence.bat"
+      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\undo-buildpersistence.bat" />
+    <Copy
+      SourceFiles="$(LocalExpertBinariesDirectory)\..\_readme.txt"
+      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\_readme.txt" />
+
     <!-- Create ZIP for ExpertSource -->
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipSourceFiles)"
@@ -448,7 +468,7 @@
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true"
+          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true -teamProject $(TeamProject) -tfvcBranchName $(BranchName) -tfvcSourceGetVersion $(SourceGetVersion) -buildUri $(BuildUri)"
           WorkingDirectory="$(PackageScriptsDirectory)" />
 
     <BuildStep

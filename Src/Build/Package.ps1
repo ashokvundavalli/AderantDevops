@@ -30,12 +30,17 @@ process {
 
     Write-Host "Calculating version for: $repository"
 
+    [string] $tags = ''
+
     # Try to get version number from the current git branch infomation.
     try {
         $text = (& $gitVersion $repository /output json | Out-String )    
 
         $versionJson = ConvertFrom-Json $text
         $versionSem = $versionJson.FullSemVer
+
+		$tags = "repo:" + $Env:BUILD_REPOSITORY_NAME + " branch:" + $versionJson.BranchName + " sha:" + $versionJson.Sha + " build:" + $Env:BUILD_BUILDID
+		Write-Host $tags
 
         if (-not $versionSem) {
             Write-Host "##vso[task.logissue type=error;] Unable to get gitversion. The last returned text is: $text"
@@ -61,7 +66,37 @@ process {
 
     if ($packResult) {
         if (Test-Path $packResult.OutputPath) {
-            [System.IO.FileInfo[]]$packages = gci -Path $packResult.OutputPath -Filter *.nupkg
+
+            $packages = gci -Path $packResult.OutputPath -Filter *.nupkg | Where { $_.Name.EndsWith($version + $_.Extension) }
+
+			# modify nuspec file to include commit hash value in the tags section (only for CI build)
+			if ($Env:BUILD_REPOSITORY_NAME) {
+				foreach ($packageFile in $packages) {
+                
+					$zipFilePath = [IO.Path]::ChangeExtension($packageFile.FullName, '.zip')
+					Rename-Item -Path $packageFile.FullName -NewName $zipFilePath
+					$extractedDirectoryName = $packageFile.Basename
+					$extractedDirectoryPath = Join-Path $packResult.OutputPath $extractedDirectoryName
+					New-Item -Force -ItemType Directory -Path $extractedDirectoryPath
+					Expand-Archive $zipFilePath -DestinationPath $extractedDirectoryPath
+
+					$nuspecFile = (gci -Path $extractedDirectoryPath -Filter *.nuspec)[0].FullName
+
+					$nuspecXml = [xml] (Get-Content $nuspecFile)
+					$metadataNode = $nuspecXml.package.metadata
+
+					$tagsNode = $nuspecXml.CreateElement('tags', 'http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd')
+					$tagsNode.set_InnerText($tags)
+					$metadataNode.AppendChild($tagsNode)
+
+					$nuspecXml.Save($nuspecFile)
+
+					gci $nuspecFile | Compress-Archive -DestinationPath $zipFilePath -Update
+					Rename-Item -Path $zipFilePath -NewName $packageFile.FullName
+
+					Remove-Item $extractedDirectoryPath -Recurse -Force
+				}
+			}
 
             if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/patch/81SP1") -and -not $global:IsDesktopBuild) {
                 $packagingProcess = [Aderant.Build.Packaging.PackageProcessor]::new($Host.UI)

@@ -43,13 +43,13 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
 		Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
 	}
 
-    $path = $global:CurrentModulePath    
-
+	$repositoryPath = $global:CurrentModulePath    
+	
     if ($package) {
         $task = "Package"
     }    
 
-    & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $path -Clean:$clean.ToBool() -Flavor:$flavor
+    & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor
 }
 
 function InstallPoshGit() {

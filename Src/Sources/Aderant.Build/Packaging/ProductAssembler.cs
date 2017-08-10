@@ -6,20 +6,45 @@ using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
+using Aderant.Build.Packaging.NuGet;
+using Newtonsoft.Json;
 
 namespace Aderant.Build.Packaging {
     internal class ProductAssembler {
         private readonly ILogger logger;
         private ExpertManifest manifest;
         private VersionTracker versionTracker;
+        private string tfvcSourceGetVersion;
+        private string teamProject;
+        private string tfvcBranch;
+        private string tfsBuildId;
+        private bool isLocalBuild;
 
         public ProductAssembler(string productManifestPath, ILogger logger) {
             this.logger = logger;
             this.manifest = ExpertManifest.Load(productManifestPath);
         }
 
-        public IProductAssemblyResult AssembleProduct(IEnumerable<string> modules, IEnumerable<string> buildOutputs, string productDirectory) {
+        public IProductAssemblyResult AssembleProduct(
+            IEnumerable<string> modules, 
+            IEnumerable<string> buildOutputs, 
+            string productDirectory, 
+            string tfvcSourceGetVersion, 
+            string teamProject, 
+            string tfvcBranch, 
+            string tfsBuildId) {
+
             IEnumerable<ExpertModule> resolvedModules = modules.Select(m => manifest.GetModule(m));
+
+            // the additional TFS info will only be passed in a CI build
+            if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId)) {
+                this.isLocalBuild = true;
+            } else {
+                this.tfvcSourceGetVersion = tfvcSourceGetVersion;
+                this.teamProject = teamProject;
+                this.tfvcBranch = tfvcBranch;
+                this.tfsBuildId = tfsBuildId;
+            }
 
             var operation = AssembleProduct(new ProductAssemblyContext {
                 Modules = resolvedModules,
@@ -72,8 +97,66 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
+        private class SourceCodeInfo {
+            public string FileFormatVersion {
+                get; set;
+            }
+            public TfvcInfo Tfvc {
+                get; set;
+            }
+            public List<GitInfo> Git {
+                get; set;
+            }
+        }
+
+        private class TfvcInfo {
+            public string TeamProject {
+                get; set;
+            }
+            public string Branch {
+                get; set;
+            }
+            public string ChangeSet {
+                get; set;
+            }
+            public string BuildId {
+                get; set;
+            }
+        }
+
+        private class GitInfo {
+            public string Repository {
+                get; set;
+            }
+            public string Branch {
+                get; set;
+            }
+            public string CommitHash {
+                get; set;
+            }
+            public string BuildId {
+                get; set;
+            }
+        }
+
         private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem2 fs, string[] packages) {
             ConcurrentBag<string> licenseText = new ConcurrentBag<string>();
+
+            SourceCodeInfo sourceCodeInfo = null;
+
+            // assemble information about source code for CI build
+            if (!isLocalBuild) {
+                sourceCodeInfo = new SourceCodeInfo {
+                    FileFormatVersion = "1.0", // in case the format of this info changes at some later stage and we need to distinguish between them
+                    Tfvc = new TfvcInfo {
+                        Branch = tfvcBranch,
+                        ChangeSet = tfvcSourceGetVersion,
+                        TeamProject = teamProject,
+                        BuildId = tfsBuildId
+                    },
+                    Git = new List<GitInfo>()
+                };
+            }
 
             string[] nupkgEntries = new[] { "lib", "content" };
 
@@ -105,6 +188,40 @@ namespace Aderant.Build.Packaging {
                             }
                         }
 
+                        // add Git repo source code info (for CI build)
+                        if (!isLocalBuild) {
+                            foreach (string file in fs.GetFiles(fs.GetFullPath(packageDirectory), "*.nuspec", true)) {
+
+                                logger.Info("Analyzing {0}", file);
+
+                                string text;
+                                using (var stream = fs.OpenFile(fs.GetFullPath(file))) {
+                                    using (var reader = new StreamReader(stream)) {
+                                        text = reader.ReadToEnd();
+                                    }
+                                }
+
+                                var branchName = NuspecSerializer.GetBranchName(text);
+                                var commitHash = NuspecSerializer.GetCommitHash(text);
+                                var repositoryName = NuspecSerializer.GetRepositoryName(text);
+                                var buildId = NuspecSerializer.GetBuildId(text);
+
+                                if (sourceCodeInfo != null && !string.IsNullOrEmpty(branchName) && !string.IsNullOrEmpty(commitHash) && !string.IsNullOrEmpty(buildId)) {
+                                    logger.Info("Last commit of {0} ({1}) was {2} for build {3}", repositoryName, branchName, commitHash, buildId);
+
+                                    if (!sourceCodeInfo.Git.Any(g => g.Repository == repositoryName && g.Branch == branchName && g.BuildId == buildId)) {
+                                        sourceCodeInfo.Git.Add(
+                                            new GitInfo {
+                                                Branch = branchName,
+                                                CommitHash = commitHash,
+                                                Repository = repositoryName,
+                                                BuildId = buildId
+                                            });
+                                    }
+                                }
+                            }
+                        }
+
                         ReadLicenseText(fs, nupkgDir, packageName, licenseText);
 
                         string relativeDirectory;
@@ -113,11 +230,20 @@ namespace Aderant.Build.Packaging {
                         } else {
                             relativeDirectory = context.ProductDirectory;
                         }
-                        
+
                         logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
                         packageRelativeFs.MoveDirectory(fs.GetFullPath(nupkgDir), relativeDirectory);
                     }
                 }
+            }
+
+            // write assembled information to file (for CI build)
+            if (!isLocalBuild && sourceCodeInfo != null) {
+                fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "CommitInfo.json"), JsonConvert.SerializeObject(sourceCodeInfo));
+                fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "persist-build.ps1"), Resources.PersistBuildScript);
+                fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "persist-build.bat"), Resources.PersistBuildBatch);
+                fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "_readme.txt"), Resources.PersistBuildReadme);
+                fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "undo-buildpersistence.bat"), Resources.UndoBatch);
             }
 
             return licenseText;

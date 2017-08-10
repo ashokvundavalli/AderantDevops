@@ -122,6 +122,7 @@
     <Compile Include="DependencyResolver\Resolver.cs" />
     <Compile Include="DependencyResolver\ResolverRequest.cs" />
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
+    <Compile Include="FileSystemExtensions.cs" />
     <Compile Include="Logging\LoggerExtensions.cs" />
     <Compile Include="Packaging\Package.cs" />
     <Compile Include="Packaging\PackageProcessor.cs" />
@@ -317,6 +318,12 @@
   <ItemGroup>
     <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
     <None Include="Resources\Nuspec.template" />
+    <None Include="Scripts\undo-buildpersistence.bat" />
+    <None Include="Scripts\persist-build.bat" />
+    <None Include="Scripts\persist-build.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\_readme.txt" />
   </ItemGroup>
   <!--<ItemGroup>
     <Analyzer Include="$(OutputPath)\Aderant.Build.Analyzer.dll" />

@@ -61,6 +61,57 @@ namespace Aderant.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to @echo off
+        ///cls
+        ///echo You are running %~nx0 from %~dp0. Current dir is %cd%
+        ///PowerShell -NoProfile -ExecutionPolicy Bypass -Command &quot;%~dp0\persist-build.ps1&quot;
+        ///pause.
+        /// </summary>
+        internal static string PersistBuildBatch {
+            get {
+                return ResourceManager.GetString("PersistBuildBatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You can use the provided batch scripts to persist this build.
+        ///
+        ///PERSIST-BUILD.BAT - create labels/tags and retain the builds indefinitely
+        ///1. Provide a name (without spaces) that will be used for creating a TFS label and Git tags
+        ///2. Optionally provide a comment for the label/tags
+        ///3. The script will attempt to do a dry run of all actions. If anything goes south here (e.g. due to missing rights or corrupt input file etc.), nothing will be actually happen
+        ///4. After a succesful dry run the script will run ag [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PersistBuildReadme {
+            get {
+                return ResourceManager.GetString("PersistBuildReadme", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to param([switch]$undo) # this switch can be used to reset the build retain flags and quality as well as remove the label and tags from the repositories
+        ///
+        ///
+        ///#setup logging
+        ///$ErrorActionPreference=&quot;SilentlyContinue&quot;
+        ///Stop-Transcript | out-null
+        ///$ErrorActionPreference = &apos;Stop&apos;
+        ///
+        ///# create C:\temp folder if it does not exist
+        ///$tempFolderPath = &quot;C:\temp&quot;
+        ///if (!(Test-Path $tempFolderPath)) {
+        ///    New-Item -ItemType Directory -Path $tempFolderPath
+        ///}
+        ///
+        ///$logFilePath = Join-Path $tempFolderPath persist-build_log.txt [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PersistBuildScript {
+            get {
+                return ResourceManager.GetString("PersistBuildScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;package xmlns=&quot;http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd&quot;&gt;
         ///  &lt;metadata&gt;
@@ -79,6 +130,19 @@ namespace Aderant.Build {
         internal static string TemplateNuspec {
             get {
                 return ResourceManager.GetString("TemplateNuspec", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to @echo off
+        ///cls
+        ///echo You are running %~nx0 from %~dp0. Current dir is %cd%
+        ///PowerShell -NoProfile -ExecutionPolicy Bypass -Command &quot;%~dp0\persist-build.ps1&quot; -undo
+        ///pause.
+        /// </summary>
+        internal static string UndoBatch {
+            get {
+                return ResourceManager.GetString("UndoBatch", resourceCulture);
             }
         }
     }

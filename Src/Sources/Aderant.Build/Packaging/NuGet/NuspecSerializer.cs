@@ -20,6 +20,55 @@ namespace Aderant.Build.Packaging.NuGet {
             return version.Value;
         }
 
+        public static string GetPackageName(string text) {
+            XDocument document = XDocument.Parse(text);
+
+            var id = GetElementValue("id", document);
+
+            return id.Value;
+        }
+
+        public static string GetTags(string text) {
+            XDocument document = XDocument.Parse(text);
+
+            var tags = GetElementValue("tags", document);
+
+            return tags.Value;
+        }
+
+        public static string GetRepositoryName(string text) {
+            return GetTag(text, "repo:");
+        }
+
+        public static string GetBranchName(string text) {
+            return GetTag(text, "branch:");
+        }
+
+        public static string GetCommitHash(string text) {
+            return GetTag(text, "sha:");
+        }
+
+        public static string GetBuildId(string text) {
+            return GetTag(text, "build:");
+        }
+
+        private static string GetTag(string text, string prefix) {
+            try {
+                XDocument document = XDocument.Parse(text);
+
+                var tags = GetElementValue("tags", document);
+
+                var tagList = tags.Value.Split(' ');
+                var tag = tagList.FirstOrDefault(t => t.StartsWith(prefix));
+                if (tag == null) {
+                    return string.Empty;
+                }
+                return tag.Split(':')[1];
+            } catch {
+                return string.Empty;
+            }
+        }
+
         private static XElement GetElementValue(string elementName, XDocument document) {
             return document.Descendants().First(d => String.Equals(d.Name.LocalName, elementName, StringComparison.OrdinalIgnoreCase));
         }
