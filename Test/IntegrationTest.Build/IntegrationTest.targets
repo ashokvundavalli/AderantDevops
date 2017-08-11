@@ -21,5 +21,19 @@
     </ItemGroup>
     <GetFileVersionInfo Files="@(MSI)" />
   </Target>
+  
+  <Target Name="GitVersion">
+    <GitVersion WorkingDirectory="$(MSBuildProjectDirectory)" Discover="true">
+      <Output PropertyName="GitCanonicalBranchName" TaskParameter="CanonicalBranchName" />
+      <Output PropertyName="GitSha" TaskParameter="Sha" />
+      <Output PropertyName="GitCommit" TaskParameter="Commit" />
+      <Output PropertyName="GitFriendlyBranchName" TaskParameter="FriendlyBranchName" />
+    </GitVersion>
+
+    <Message Text="$(GitBranchFriendlyName)" />
+    <Message Text="$(GitCanonicalBranchName)" />
+    <Message Text="$(GitSha)" />
+    <Message Text="$(GitCommit)" />
+  </Target>
 
 </Project>

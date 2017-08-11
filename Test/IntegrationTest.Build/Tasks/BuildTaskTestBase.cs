@@ -1,58 +1,73 @@
-using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using Microsoft.Build.Utilities;
+using Microsoft.Build.Evaluation;
+using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks {
     [TestClass]
     [DeploymentItem("IntegrationTest.targets")]
     [DeploymentItem("Aderant.Build.Common.targets")]
+    [DeploymentItem("SystemUnderTest")]
     public abstract class BuildTaskTestBase {
         public TestContext TestContext { get; set; }
 
         protected void RunTarget(string targetName) {
-            string buildTool = ToolLocationHelper.GetPathToBuildTools("14.0");
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append("\"" + Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets") + "\"");
-            sb.Append(" ");
-            sb.Append("/p:NoMSBuildCommunityTasks=true");
-            sb.Append(" ");
-            sb.Append("/p:BuildToolsDirectory=" + "\"" + TestContext.DeploymentDirectory + "\"");
-            sb.Append(" ");
-            sb.Append("/Target:" + targetName);
-
-            ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(buildTool, "MSBuild.exe"), sb.ToString());
-
-            int exitCode = StartProcessAndWaitForExit(startInfo, (args, isError, process) => {
-                if (args.Data != null)
-                    TestContext.WriteLine(args.Data);
-            });
-
-            Assert.AreEqual(0, exitCode, "Target " + targetName + "has failed");
-        }
-
-        private static int StartProcessAndWaitForExit(ProcessStartInfo startInfo, Action<DataReceivedEventArgs, bool, Process> onReceiveStandardErrorOrOutputData) {
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            startInfo.RedirectStandardError = true;
-            startInfo.RedirectStandardOutput = true;
-
-            var process = new Process {
-                StartInfo = startInfo
+            var globalProperties = new Dictionary<string, string> {
+                { "NoMSBuildCommunityTasks", "true" },
+                { "BuildToolsDirectory", TestContext.DeploymentDirectory }
             };
 
-            process.ErrorDataReceived += (sender, e) => onReceiveStandardErrorOrOutputData(e, true, sender as System.Diagnostics.Process);
-            process.OutputDataReceived += (sender, e) => onReceiveStandardErrorOrOutputData(e, false, sender as System.Diagnostics.Process);
-            process.Start();
-            process.BeginErrorReadLine();
-            process.BeginOutputReadLine();
+            using (var collection = new ProjectCollection(globalProperties)) {
+                collection.RegisterLogger(Logger = new InternalBuildLogger(TestContext)); // Must pass in a logger derived from Microsoft.Build.Framework.ILogger.
 
-            process.WaitForExit();
+                var project = collection.LoadProject(Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"));
+                var result = project.Build(targetName);
 
-            return process.ExitCode;
+                Assert.IsFalse(Logger.HasRaisedErrors);
+            }
+        }
+
+        public InternalBuildLogger Logger { get; set; }
+
+        /// <summary>
+        /// Class to hook msbuild messages.
+        /// </summary>
+        public class InternalBuildLogger : Microsoft.Build.Framework.ILogger {
+            private readonly TestContext textContext;
+
+            public InternalBuildLogger(TestContext textContext) {
+                this.textContext = textContext;
+            }
+
+            public void Initialize(IEventSource eventSource) {
+                eventSource.MessageRaised += new BuildMessageEventHandler(EventSourceMessageRaised);
+                eventSource.WarningRaised += new BuildWarningEventHandler(EventSourceWarningRaised);
+                eventSource.ErrorRaised += new BuildErrorEventHandler(EventSourceErrorRaised);
+            }
+
+            public void Shutdown() {
+            }
+
+            public LoggerVerbosity Verbosity { get; set; }
+            public string Parameters { get; set; }
+
+            void EventSourceErrorRaised(object sender, BuildErrorEventArgs e) {
+                HasRaisedErrors = true;
+                string line = $"[MSBUILD]: ERROR {e.Message} in file {e.File} ({e.LineNumber},{e.ColumnNumber}): ";
+                textContext.WriteLine(line);
+            }
+
+            public bool HasRaisedErrors { get; set; }
+
+            void EventSourceWarningRaised(object sender, BuildWarningEventArgs e) {
+                string line = $"[MSBUILD]: Warning {e.Message} in file {e.File}({e.LineNumber},{e.ColumnNumber}): ";
+                textContext.WriteLine(line);
+            }
+
+            void EventSourceMessageRaised(object sender, BuildMessageEventArgs e) {
+                textContext.WriteLine($"[MSBUILD]: {e.Message}");
+            }
         }
     }
 }

@@ -54,6 +54,10 @@
   <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
   <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
   <ItemGroup>
+    <Reference Include="LibGit2Sharp">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Build\LibGit2Sharp.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
@@ -106,7 +110,6 @@
     <Compile Include="Commands\PushPaketTemplates.cs" />
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
-    <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
@@ -138,6 +141,7 @@
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
+    <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\SmartReference.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />
@@ -201,10 +205,7 @@
     <Compile Include="Tasks\CheckCertificate.cs" />
     <Compile Include="Tasks\FinalizeBuild.cs" />
     <Compile Include="IBuildProcessTemplate.cs" />
-    <Compile Include="IntegrationTestContext.cs" />
-    <Compile Include="IntegrationTestAssemblyConfig.cs" />
     <Compile Include="XElementExtensions.cs" />
-    <Compile Include="IntegrationTestConfigBuilder.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
     <Compile Include="NativeUtilities.cs" />
     <Compile Include="ConsolePackageImporterExecutor.cs" />
@@ -270,10 +271,6 @@
     <Compile Include="Providers\PathProvider.cs" />
     <Compile Include="Providers\ModuleWorkspace.cs" />
     <Compile Include="SplashScreenText.cs" />
-    <Compile Include="SQLDataFileEntry.cs" />
-    <Compile Include="SQLDropDatabase.cs" />
-    <Compile Include="SQLRestoreDatabase.cs" />
-    <Compile Include="SQLBackupDatabase.cs" />
     <Compile Include="Tasks\BuildConfigurationCheck.cs" />
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
     <Compile Include="Tasks\DependencyChecker.cs" />
@@ -282,8 +279,6 @@
     <Compile Include="Tasks\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />
-    <Compile Include="Tasks\RewriteTestConfigs.cs" />
-    <Compile Include="Tasks\SqlFileExecution.cs" />
     <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
     <Compile Include="Tasks\GetAssemblyPlatform.cs" />

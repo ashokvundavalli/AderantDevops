@@ -35,7 +35,32 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <IncludePattern>
+      <!-- 
+        As we want just the folder name in our item group link, we add a wild card to the end of the folders so we can use RecursiveDir to get the folder name 
+        If we don't do this RecursiveDir would return foo\bar\ rather than just bar\
+      -->
+      $(MSBuildProjectDirectory)\..\..\src\Build.Tools\lib\win32\**\*;
+      $(MSBuildProjectDirectory)\..\..\src\Build\**\*;
+    </IncludePattern>
+    <ExcludePattern>
+    </ExcludePattern>
+  </PropertyGroup>
   <ItemGroup>
+    <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Src\Build\LibGit2Sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Build.Framework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.TeamFoundation.Build2.WebApi">
       <HintPath>..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.Build2.WebApi.dll</HintPath>
@@ -69,6 +94,7 @@
     <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\GetFileVersionInfoTests.cs" />
+    <Compile Include="Tasks\GitVersionTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>

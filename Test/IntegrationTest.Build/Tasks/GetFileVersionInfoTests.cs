@@ -8,4 +8,9 @@ namespace IntegrationTest.Build.Tasks {
             RunTarget("GetFileVersionInfo");
         }
     }
+
+
+    namespace IntegrationTest.Build.Tasks
+    {
+    }
 }

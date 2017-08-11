@@ -97,7 +97,6 @@
     <Compile Include="DependencyManifestTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
-    <Compile Include="IntegrationTestBuilderTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="ModuleWorkspaceTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
