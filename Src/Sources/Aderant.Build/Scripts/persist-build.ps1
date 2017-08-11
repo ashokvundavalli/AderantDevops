@@ -331,6 +331,8 @@ while ($liveRun -eq $false) {
         $existingGitTags = Invoke-RestMethod -Uri $getGitTagsUri -ContentType "application/json" -UseDefaultCredentials
         $existingGitTagToModify = $existingGitTags.value | Where { $_.name -eq "refs/tags/$labelName" }
 
+        $modifyGitTagUri = "$($tfsUrl)/$($teamProject)/_apis/git/repositories/$($gitRepo.id)/refs?api-version=2.0"
+
         if ($undo) {
 
             if (!$existingGitTagToModify) {
@@ -338,7 +340,6 @@ while ($liveRun -eq $false) {
             } else {
                 
                 # delete the tag
-                $deleteGitTagUri = "$($tfsUrl)/$($teamProject)/_apis/git/repositories/$($gitRepo.id)/refs?api-version=2.0"
                 $deleteGitTagUriBody = "[ { ""name"": ""refs/tags/$labelName"", ""oldObjectId"": ""$fullHash"" , ""newObjectId"": ""0000000000000000000000000000000000000000"" } ]"
 
                 # *************************************
@@ -346,15 +347,15 @@ while ($liveRun -eq $false) {
                 # *************************************
                 if ($liveRun) {
                     try {
-                        Invoke-RestMethod -Uri $deleteGitTagUri -Body $deleteGitTagUriBody -ContentType "application/json" -UseDefaultCredentials -Method POST
+                        Invoke-RestMethod -Uri $modifyGitTagUri -Body $deleteGitTagUriBody -ContentType "application/json" -UseDefaultCredentials -Method POST
                     } catch {
                         Write-Host "An error occurred trying to remove the Git tag '$labelName' for commit $shortHash. Trying again, otherwise aborting." -ForegroundColor Red
-                        Invoke-RestMethod -Uri $deleteGitTagUri -Body $deleteGitTagUriBody -ContentType "application/json" -UseDefaultCredentials -Method POST
+                        Invoke-RestMethod -Uri $modifyGitTagUri -Body $deleteGitTagUriBody -ContentType "application/json" -UseDefaultCredentials -Method POST
                     }
                 } else {
                     # DRY RUN ONLY
                     Write-Host "Simulating call:" -ForegroundColor Green
-                    Write-Host "Invoke-RestMethod -Uri $deleteGitTagUri -Body $deleteGitTagUriBody -ContentType ""application/json"" -UseDefaultCredentials -Method POST" -ForegroundColor DarkGreen
+                    Write-Host "Invoke-RestMethod -Uri $modifyGitTagUri -Body $deleteGitTagUriBody -ContentType ""application/json"" -UseDefaultCredentials -Method POST" -ForegroundColor DarkGreen
                 }
 
             }
@@ -368,7 +369,7 @@ while ($liveRun -eq $false) {
                 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # this does not work yet with the current REST API version
                 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                if (!$existingGitTagToModify -and $isApiVersion4Available) {
+                if ($isApiVersion4Available) {
 
                     # create the tag
                     $createGitTagUri = "$($tfsUrl)/$($teamProject)/_apis/git/repositories/$($gitRepo.id)/annotatedTags?api-version=4.0"
@@ -392,52 +393,24 @@ while ($liveRun -eq $false) {
                 }
 
 
-                $repoPath = Join-Path $tempPath $gitRepoName
-
-                $isFreshRepository = $false
-
-                if (!(Test-Path $repoPath)) {
-            
-                    # initially clone the git repo into a temporary folder (this has to be done only once)
-
-                    Write-Host "Cloning Git repo $gitRepoName into $repoPath ..."
-                    New-Item -ItemType Directory -Path $repoPath | Out-Null
-            
-                    $ErrorActionPreference = 'SilentlyContinue'
-                    git clone $gitRepo.remoteUrl $repoPath
-                    $ErrorActionPreference = 'Stop'
-
-                    $isFreshRepository = $true
-                }
-
-                cd $repoPath
-
-                # make sure the local repo looks the same as the remote repo
-                if (!$isFreshRepository) {
-                    git fetch origin
-                    git reset --hard origin/master
-                    git tag -d $(git tag)
-
-                    $ErrorActionPreference = 'SilentlyContinue'
-                    git pull | Out-Null
-                    $ErrorActionPreference = 'Stop'
-                }
-
-                # create the tag locally
-                git tag -a $labelName $shortHash -m "$labelComment" -f
+                # create the tag (not annotated as this is not yet supported by the REST API)
+                $createGitTagUriBody = "[ { ""name"": ""refs/tags/$labelName"", ""oldObjectId"": ""0000000000000000000000000000000000000000"" , ""newObjectId"": ""$fullHash"" } ]"
 
                 # *************************************
                 # create the tag in the remote Git repo
                 # *************************************
                 if ($liveRun) {
-                    $ErrorActionPreference = 'SilentlyContinue'
-                    git push --tag
-                    $ErrorActionPreference = 'Stop'
+                    try {
+                        Invoke-RestMethod -Uri $modifyGitTagUri -Body $createGitTagUriBody -ContentType "application/json" -UseDefaultCredentials -Method POST
+                    } catch {
+                        Write-Host "An error occurred trying to create the Git tag '$labelName' for commit $shortHash. Trying again, otherwise aborting." -ForegroundColor Red
+                        Invoke-RestMethod -Uri $modifyGitTagUri -Body $createGitTagUriBody -ContentType "application/json" -UseDefaultCredentials -Method POST
+                    }
                 } else {
                     # DRY RUN ONLY
                     Write-Host "Simulating call:" -ForegroundColor Green
-                    Write-Host "git push --tag" -ForegroundColor DarkGreen
-                }
+                    Write-Host "Invoke-RestMethod -Uri $modifyGitTagUri -Body $createGitTagUriBody -ContentType ""application/json"" -UseDefaultCredentials -Method POST" -ForegroundColor DarkGreen
+                }                               
 
             }
 
