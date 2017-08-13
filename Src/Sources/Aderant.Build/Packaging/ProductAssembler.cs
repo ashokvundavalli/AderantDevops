@@ -18,6 +18,7 @@ namespace Aderant.Build.Packaging {
         private string teamProject;
         private string tfvcBranch;
         private string tfsBuildId;
+        private string tfsBuildNumber;
         private bool isLocalBuild;
 
         public ProductAssembler(string productManifestPath, ILogger logger) {
@@ -32,18 +33,20 @@ namespace Aderant.Build.Packaging {
             string tfvcSourceGetVersion, 
             string teamProject, 
             string tfvcBranch, 
-            string tfsBuildId) {
+            string tfsBuildId,
+            string tfsBuildNumber) {
 
             IEnumerable<ExpertModule> resolvedModules = modules.Select(m => manifest.GetModule(m));
 
             // the additional TFS info will only be passed in a CI build
-            if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId)) {
+            if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
                 this.isLocalBuild = true;
             } else {
                 this.tfvcSourceGetVersion = tfvcSourceGetVersion;
                 this.teamProject = teamProject;
                 this.tfvcBranch = tfvcBranch;
                 this.tfsBuildId = tfsBuildId;
+                this.tfsBuildNumber = tfsBuildNumber;
             }
 
             var operation = AssembleProduct(new ProductAssemblyContext {
@@ -122,6 +125,9 @@ namespace Aderant.Build.Packaging {
             public string BuildId {
                 get; set;
             }
+            public string BuildNumber {
+                get; set;
+            }
         }
 
         private class GitInfo {
@@ -135,6 +141,12 @@ namespace Aderant.Build.Packaging {
                 get; set;
             }
             public string BuildId {
+                get; set;
+            }
+            public string BuildNumber {
+                get; set;
+            }
+            public string PackageVersion {
                 get; set;
             }
         }
@@ -152,7 +164,8 @@ namespace Aderant.Build.Packaging {
                         Branch = tfvcBranch,
                         ChangeSet = tfvcSourceGetVersion,
                         TeamProject = teamProject,
-                        BuildId = tfsBuildId
+                        BuildId = tfsBuildId,
+                        BuildNumber = tfsBuildNumber
                     },
                     Git = new List<GitInfo>()
                 };
@@ -205,6 +218,8 @@ namespace Aderant.Build.Packaging {
                                 var commitHash = NuspecSerializer.GetCommitHash(text);
                                 var repositoryName = NuspecSerializer.GetRepositoryName(text);
                                 var buildId = NuspecSerializer.GetBuildId(text);
+                                var buildNumber = NuspecSerializer.GetBuildNumber(text);
+                                var packageVersion = NuspecSerializer.GetVersion(text);
 
                                 if (sourceCodeInfo != null && !string.IsNullOrEmpty(branchName) && !string.IsNullOrEmpty(commitHash) && !string.IsNullOrEmpty(buildId)) {
                                     logger.Info("Last commit of {0} ({1}) was {2} for build {3}", repositoryName, branchName, commitHash, buildId);
@@ -215,7 +230,9 @@ namespace Aderant.Build.Packaging {
                                                 Branch = branchName,
                                                 CommitHash = commitHash,
                                                 Repository = repositoryName,
-                                                BuildId = buildId
+                                                BuildId = buildId,
+                                                BuildNumber = buildNumber,
+                                                PackageVersion = packageVersion
                                             });
                                     }
                                 }

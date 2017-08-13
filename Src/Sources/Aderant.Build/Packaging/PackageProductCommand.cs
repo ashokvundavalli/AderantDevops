@@ -42,12 +42,17 @@ namespace Aderant.Build.Packaging {
             get; set;
         }
 
+        [Parameter(Mandatory = false, Position = 8)]
+        public string TfsBuildNumber {
+            get; set;
+        }
+
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
             try {
                 var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
-                var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId);
+                var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
 
                 WriteObject(result);
             } catch (AggregateException ex) {

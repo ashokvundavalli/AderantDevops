@@ -46,6 +46,7 @@ process {
             Write-Host "##vso[task.logissue type=error;] Unable to get gitversion. The last returned text is: $text"
         } else {
             Write-Host "Full version is $versionSem"
+			$tags +=  " buildNumber:" + $versionSem
         }
     } catch {
         Write-Error "##vso[task.logissue type=error;] Failed to get correct version number from the git repository. Returned info from GitVersion:"

@@ -2,7 +2,7 @@
 
 
 #setup logging
-$ErrorActionPreference="SilentlyContinue"
+$ErrorActionPreference = "SilentlyContinue"
 Stop-Transcript | out-null
 $ErrorActionPreference = 'Stop'
 
@@ -26,6 +26,12 @@ $tfvcBranchName = $commitInfo.Tfvc.Branch.Replace('\','/')
 $teamProject = $commitInfo.Tfvc.TeamProject
 $buildDefinition = $commitInfo.Tfvc.BuildId.Split('_')[0]
 $buildId = $commitInfo.Tfvc.BuildId
+$buildNumber = $commitInfo.Tfvc.BuildNumber
+
+$buildFriendlyName = $buildId
+if ($buildNumber) {
+	$buildFriendlyName = "'$buildNumber' ($buildId)"
+}
 
 $tfsUrl = "http://tfs:8080/tfs/aderant"
 
@@ -66,35 +72,38 @@ if ($undo) {
 
 # print summary of what is about to happen next
 if ($undo) {
-    Write-Host "`nActions (PLEASE READ CAREFULLY!):`n * TFS`n   - REVERT retaining of build $buildId`n   - Set this build quality BACK TO unassigned`n   - DELETE label $labelSummary for TFVC changeset number $tfvcChangeSet" -ForegroundColor Yellow
+    Write-Host "`n`nActions (PLEASE READ CAREFULLY!):`n`n * TFS`n   - REVERT retaining of build $buildFriendlyName`n   - Set this build quality BACK TO unassigned`n   - DELETE label $labelSummary for TFVC changeset number $tfvcChangeSet`n" -ForegroundColor Yellow
 } else {
-    Write-Host "`nActions (PLEASE READ CAREFULLY!):`n * TFS`n   - Retain build $buildId indefinitely`n   - Set this build quality to 'Released'`n   - Apply label $labelSummary to TFVC changeset number $tfvcChangeSet" -ForegroundColor Yellow
+    Write-Host "`n`nActions (PLEASE READ CAREFULLY!):`n`n * TFS`n   - Retain build $buildFriendlyName indefinitely`n   - Set this build quality to 'Released'`n   - Apply label $labelSummary to TFVC changeset number $tfvcChangeSet`n" -ForegroundColor Yellow
 }
 
-if ($commitInfo.Git.Length -gt 0) {
-    Write-Host " * GIT" -ForegroundColor Yellow
+if ($commitInfo.Git.Length -gt 0) {    
+	if ($undo) {
+		Write-Host " * GIT`n   - REMOVE tag $labelSummary for the following Git repositories`n   - REMOVE tags 'Released' and '$labelName' for the following Git builds and revert retaining of those builds" -ForegroundColor Yellow
+	} else {
+		Write-Host " * GIT`n   - Create tag $labelSummary for the following Git repositories`n   - Create tags 'Released' and '$labelName' for the following Git builds and retain those builds" -ForegroundColor Yellow
+	}
 }
 ForEach ($gitInfo in $commitInfo.Git) {
 
     $shortHash = $gitInfo.CommitHash.Substring(0,7)
-    $gitRepoName = $gitInfo.Repository.ToUpperInvariant()
+    $gitRepoName = $gitInfo.Repository
     $gitBranch = $gitInfo.Branch
     $gitBuildId = $gitInfo.BuildId
+	$gitBuildNumber = $gitInfo.BuildNumber
 
-    Write-Host "   - $gitRepoName (branch: $gitBranch)" -ForegroundColor Yellow
+	$gitBuildFriendlyName = $gitBuildId
+	if ($gitBuildNumber) {
+		$gitBuildFriendlyName = "'$gitRepoName $gitBuildNumber' ($gitBuildId)"
+	}
 
-    if ($undo) {
-        Write-Host "     + REMOVE tag $labelSummary for commit $shortHash" -ForegroundColor Yellow
-		Write-Host "     + REMOVE tags 'Released' and '$labelName' for build $gitBuildId" -ForegroundColor Yellow
-		Write-Host "     + REVERT retaining of build $gitBuildId" -ForegroundColor Yellow
-    } else {
-        Write-Host "     + Create tag $labelSummary for commit $shortHash" -ForegroundColor Yellow
-		Write-Host "     + Create tags 'Released' and '$labelName' for build $gitBuildId" -ForegroundColor Yellow
-		Write-Host "     + Retain build $gitBuildId" -ForegroundColor Yellow
-    }
+	$afterRepoSpaces = " " * [math]::max(1, 22 - $gitRepoName.Length)
+	$afterBranchSpaces = " " * [math]::max(1, 16 - $gitBranch.Length)
+	$afterBranchSpacesSecondLine = " " * ([math]::max(1, 16 - $gitBranch.Length) + $gitBranch.Length)
+    Write-Host "`n   + $($gitRepoName.ToUpperInvariant())$afterRepoSpaces | branch: $gitBranch $afterBranchSpaces| commit: $shortHash`n$afterBranchSpacesSecondLine            | build:  $gitBuildFriendlyName" -ForegroundColor Yellow
 }
 
-Write-Host "`nProceed with dry run (y/n)?" -ForegroundColor Magenta
+Write-Host "`n`nProceed with dry run (y/n)?" -ForegroundColor Magenta
 $dryRunAnswer = Read-Host
 
 if ($dryRunAnswer -ne 'y') {
@@ -135,9 +144,9 @@ while ($liveRun -eq $false) {
     #############################################
 
     if ($undo) {
-        Write-Host "`nRevert retaining of build $buildId and marking it as unassigned ..."
+        Write-Host "`nRevert retaining of build $buildFriendlyName and marking it as unassigned ..."
     } else {
-        Write-Host "`nRetaining build $buildId indefinitely and marking it as 'Released' ..."
+        Write-Host "`nRetaining build $buildFriendlyName indefinitely and marking it as 'Released' ..."
     }
     
     # set the build quality to 'Released' (or reset it if in undo-mode)
@@ -158,9 +167,9 @@ while ($liveRun -eq $false) {
     # check if we need to do anything
     if ($existingV1TfvcBuild.retainIndefinitely -eq $retainIndefinitely) {
         if ($retainIndefinitely) {
-            Write-Host "Build $buildId is already retained. Nothing to do."
+            Write-Host "Build $buildFriendlyName is already retained. Nothing to do."
         } else {
-            Write-Host "Build $buildId is not retained. Nothing to do."
+            Write-Host "Build $buildFriendlyName is not retained. Nothing to do."
         } 
     }
 
@@ -171,7 +180,7 @@ while ($liveRun -eq $false) {
         try {
             Invoke-RestMethod -Uri $getV1TfvcBuildUri -Body $getV1TfvcBuildBody -ContentType "application/json" -UseDefaultCredentials -Method PATCH
         } catch {
-            Write-Host "An error occurred trying to modify the build quality and retain flag of build $buildId. Trying again, otherwise aborting." -ForegroundColor Red
+            Write-Host "An error occurred trying to modify the build quality and retain flag of build $buildFriendlyName. Trying again, otherwise aborting." -ForegroundColor Red
             Invoke-RestMethod -Uri $getV1TfvcBuildUri -Body $getV1TfvcBuildBody -ContentType "application/json" -UseDefaultCredentials -Method PATCH
         }
     } else {
@@ -310,13 +319,18 @@ while ($liveRun -eq $false) {
         $gitBranch = $gitInfo.Branch
         $gitBuildId = $gitInfo.BuildId
 
+		$gitBuildFriendlyName = $gitBuildId
+		if ($gitBuildNumber) {
+			$gitBuildFriendlyName = "'$gitRepoName $gitBuildNumber' ($gitBuildId)"
+		}
+
         # don't worry about the black-listed repos
         if ($exclude -contains $gitRepoName) {
             Write-Host "Ignoring Git repository $gitRepoName`n" -ForegroundColor Gray
             continue
         }
 
-        Write-Host "$gitRepoName ($gitBranch):" -ForegroundColor Yellow
+        Write-Host "`n$gitRepoName ($gitBranch):" -ForegroundColor Yellow
         if ($undo) {
             Write-Host "Removing tag '$labelName' for commit $shortHash"
         } else {
@@ -417,9 +431,9 @@ while ($liveRun -eq $false) {
         }
 
         if ($undo) {
-            Write-Host "`nRevert retaining of Git build $gitBuildId"
+            Write-Host "`nRevert retaining of Git build $gitBuildFriendlyName"
         } else {
-            Write-Host "`nRetaining Git build $gitBuildId"
+            Write-Host "`nRetaining Git build $gitBuildFriendlyName"
         }
 
         $getV2GitBuildUri = "$($tfsUrl)/$($teamProject)/_apis/build/builds/$($gitBuildId)?api-version=2.0"
@@ -430,9 +444,9 @@ while ($liveRun -eq $false) {
         # check if we need to do anything
         if ($existingV2GitBuild.keepForever -eq $retainIndefinitely) {
             if ($retainIndefinitely) {
-                Write-Host "Build $gitBuildId is already retained. Nothing to do."
+                Write-Host "Build $gitBuildFriendlyName is already retained. Nothing to do."
             } else {
-                Write-Host "Build $gitBuildId is not retained. Nothing to do."
+                Write-Host "Build $gitBuildFriendlyName is not retained. Nothing to do."
             } 
         }
 
@@ -446,7 +460,7 @@ while ($liveRun -eq $false) {
             try {
                 Invoke-RestMethod -Uri $getV2GitBuildUri -Body $getV2GitBuildBody -ContentType "application/json" -UseDefaultCredentials -Method PATCH
             } catch {
-                Write-Host "An error occurred trying to retain Git build $gitBuildId. Trying again, otherwise aborting." -ForegroundColor Red
+                Write-Host "An error occurred trying to retain Git build $gitBuildFriendlyName. Trying again, otherwise aborting." -ForegroundColor Red
                 Invoke-RestMethod -Uri $getV2GitBuildUri -Body $getV2GitBuildBody -ContentType "application/json" -UseDefaultCredentials -Method PATCH
             }
         } else {
@@ -474,7 +488,7 @@ while ($liveRun -eq $false) {
                 Invoke-RestMethod -Uri $applyReleasedTagToV2GitBuildUri -UseDefaultCredentials -Method $updateTagMethod
                 Invoke-RestMethod -Uri $applyVersionTagToV2GitBuildUri -UseDefaultCredentials -Method $updateTagMethod
             } catch {
-                Write-Host "An error occurred trying to apply tags to Git build $gitBuildId. Trying again, otherwise aborting." -ForegroundColor Red
+                Write-Host "An error occurred trying to apply tags to Git build $gitBuildFriendlyName. Trying again, otherwise aborting." -ForegroundColor Red
                 Invoke-RestMethod -Uri $applyReleasedTagToV2GitBuildUri -UseDefaultCredentials -Method $updateTagMethod
                 Invoke-RestMethod -Uri $applyVersionTagToV2GitBuildUri -UseDefaultCredentials -Method $updateTagMethod
             }
@@ -484,7 +498,7 @@ while ($liveRun -eq $false) {
             Write-Host "Invoke-RestMethod -Uri $applyReleasedTagToV2GitBuildUri -UseDefaultCredentials -Method $updateTagMethod" -ForegroundColor DarkGreen
             Write-Host "Invoke-RestMethod -Uri $applyVersionTagToV2GitBuildUri -UseDefaultCredentials -Method $updateTagMethod" -ForegroundColor DarkGreen
         }
-        Write-Host "Successfully updated tags"
+        Write-Host "Successfully updated tags`n"
 
     }
 

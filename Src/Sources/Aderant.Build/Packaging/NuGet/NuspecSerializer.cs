@@ -52,6 +52,10 @@ namespace Aderant.Build.Packaging.NuGet {
             return GetTag(text, "build:");
         }
 
+        public static string GetBuildNumber(string text) {
+            return GetTag(text, "buildNumber:");
+        }
+
         private static string GetTag(string text, string prefix) {
             try {
                 XDocument document = XDocument.Parse(text);
