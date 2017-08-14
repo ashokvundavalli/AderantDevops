@@ -22,12 +22,12 @@ namespace Aderant.Build.Analyzer.Rules {
 
         #region Fields
 
-        #endregion Fields
-
         protected const int DefaultCapacity = 25;
 
         private const string SuppressMessageTypeName = "System.Diagnostics.CodeAnalysis.SuppressMessage";
         private const string TestClassTypeName = "Microsoft.VisualStudio.TestTools.UnitTesting.TestClass";
+
+        #endregion Fields
 
         #region Properties
 
@@ -114,6 +114,12 @@ namespace Aderant.Build.Analyzer.Rules {
         protected static bool IsAnalysisSuppressed(
             SyntaxNode node,
             Tuple<string, string>[] validSuppressionMessages) {
+            var classVariable = node as ClassDeclarationSyntax;
+
+            if (classVariable != null) {
+                return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages);
+            }
+
             // Get the parent method of the node.
             var baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
 
@@ -122,21 +128,22 @@ namespace Aderant.Build.Analyzer.Rules {
                 return false;
             }
 
-            // Get the parent class of the node.
-            var parentClass = GetNodeParentExpressionOfType<ClassDeclarationSyntax>(baseMethodDeclaration);
+            // Get the class of the node.
+            classVariable = GetNodeParentExpressionOfType<ClassDeclarationSyntax>(baseMethodDeclaration);
 
             // If node is not within a class...
-            if (parentClass == null) {
+            if (classVariable == null) {
                 // Examine suppression on the method only.
                 return IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists, validSuppressionMessages);
             }
 
             // ...otherwise examine suppression on the class, and then the method.
-            return IsAnalysisSuppressed(parentClass.AttributeLists, validSuppressionMessages) ||
+            return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages) ||
                    IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists, validSuppressionMessages);
         }
 
-        protected static bool IsAnalysisSuppressed(IEnumerable<AttributeListSyntax> attributeLists,
+        protected static bool IsAnalysisSuppressed(
+            IEnumerable<AttributeListSyntax> attributeLists,
             Tuple<string, string>[] validSuppressionMessages) {
             // Attributes can be stacked...
             // [Attribute()]

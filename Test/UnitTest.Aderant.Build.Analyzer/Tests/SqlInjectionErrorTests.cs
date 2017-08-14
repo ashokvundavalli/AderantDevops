@@ -474,6 +474,8 @@ namespace Test {
 
         public static void Foo(string test) {
             var command = new SqlCommand(test);
+
+            command.Dispose();
         }
     }
 }
@@ -492,6 +494,8 @@ namespace Test {
         public static void Main() {
             const string test = """";
             var command = new SqlCommand(test);
+
+            command.Dispose();
         }
     }
 }
@@ -509,6 +513,8 @@ namespace Test {
     public class Program {
         public static void Main() {
             var command = new SqlCommand(StaticClass.StaticString);
+
+            command.Dispose();
         }
     }
 
@@ -530,6 +536,8 @@ namespace Test {
     public class Program {
         public static void Main() {
             var command = new SqlCommand(StaticClass.StaticString);
+
+            command.Dispose();
         }
     }
 
@@ -558,6 +566,8 @@ namespace Test {
                 CommandText = test,
                 CommandTimeout = 0
             };
+
+            command.Dispose();
         }
     }
 }
@@ -579,10 +589,14 @@ namespace Test {
                 CommandTimeout = 0
             };
 
+            command.Dispose();
+
             command = new SqlCommand {
                 CommandTimeout = 0,
                 CommandText = """"
             }
+
+            command.Dispose();
         }
     }
 }
@@ -604,7 +618,7 @@ namespace Test {
         }
     }
 
-    internal class Receive {
+    internal class Receive : System.IDisposable {
         internal SqlCommand Command { get; }
 
         internal Receive(string sourcePath, int timeout, SqlConnection connection) {
@@ -612,6 +626,10 @@ namespace Test {
             Command.Parameters.Add(new SqlParameter(""@eventSourcePath"", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Input, Value = sourcePath });
             Command.Parameters.Add(new SqlParameter(""@message"", SqlDbType.Xml) { Direction = ParameterDirection.Output });
             Command.Parameters.Add(new SqlParameter(""@timeout"", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = timeout });
+        }
+
+        public void Dispose() {
+            Command.Dispose();
         }
     }
 }
@@ -633,7 +651,7 @@ namespace Test {
         }
     }
 
-    internal class Receive {
+    internal class Receive : System.IDisposable {
         internal SqlCommand Command { get; }
 
         internal Receive(string sourcePath, int timeout, SqlConnection connection) {
@@ -641,6 +659,10 @@ namespace Test {
             Command.Parameters.Add(new SqlParameter(""@eventSourcePath"", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Input, Value = sourcePath });
             Command.Parameters.Add(new SqlParameter(""@message"", SqlDbType.Xml) { Direction = ParameterDirection.Output });
             Command.Parameters.Add(new SqlParameter(""@timeout"", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = timeout });
+        }
+
+        public void Dispose() {
+            Command.Dispose();
         }
     }
 }
