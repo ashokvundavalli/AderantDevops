@@ -629,6 +629,9 @@
     }
 
 	Function global:CheckStableBuild([string]$stableBuild){
+		if(-not ($stableBuild -like "*vnext*")){
+			return $true
+		}
 		if(Test-Path $stableBuild) {
 			return $true
 		}
