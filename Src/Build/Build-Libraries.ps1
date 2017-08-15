@@ -319,7 +319,7 @@
     ###
     # Find the last successfully package (Build all and package) build in the drop location.
     ###
-    Function global:PathToLatestSuccessfulPackage([string]$pathToPackages, [string]$packageZipName){
+    Function global:PathToLatestSuccessfulPackage([string]$pathToPackages, [string]$packageZipName, [bool]$unstable){
 
 		# Pad the build index within the same day so the names can be sorted in alphabet order, e.g. 16 -> 0016, 1 -> 0001
 		$ToNatural= { [regex]::Replace($_, '\d+',{$args[0].Value.Padleft(4)})}
@@ -332,14 +332,22 @@
             Write-Info "Testing $folderName"
             
             $buildLog = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\BuildLog.txt")
+			$stableBuild = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\StableBuild.txt")
             [string]$pathToLatestSuccessfulPackage = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath $packageZipName)
 
             if (Test-Path $pathToLatestSuccessfulPackage) {
-                if (CheckBuild $buildLog) {               
-                    return $pathToLatestSuccessfulPackage
-                } else {
-                    Write-Warning "Rejected failed build: $folderName"
-                }                
+				if ($unstable){
+					if (CheckBuild $buildLog) {               
+						return $pathToLatestSuccessfulPackage
+					} else {
+						Write-Warning "Rejected failed build: $folderName"
+					}        
+				}
+				if (CheckStableBuild $stableBuild){
+					return $pathToLatestSuccessfulPackage
+				}  else {
+					Write-Warning "Rejected unstable build: $folderName"
+				}        
             } else {
                 Write-Warning "Rejected $folderName as it doesn't contain a package."
             }
@@ -620,6 +628,12 @@
         }
     }
 
+	Function global:CheckStableBuild([string]$stableBuild){
+		if(Test-Path $stableBuild) {
+			return $true
+		}
+		return $false
+	}
     <#
     We now need to move/copy the deployment manager files depending on the version we are working on.  There are three different scenarios:
     1. 7SP2 and earlier - all files are in Binaries folder.
