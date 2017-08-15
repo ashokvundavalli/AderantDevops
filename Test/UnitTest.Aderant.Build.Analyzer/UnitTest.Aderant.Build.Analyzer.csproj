@@ -119,7 +119,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj">
-      <Project>{32045E58-C419-46F1-9429-9F4D99B165FE}</Project>
+      <Project>{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}</Project>
       <Name>Aderant.Build.Analyzer</Name>
     </ProjectReference>
   </ItemGroup>
