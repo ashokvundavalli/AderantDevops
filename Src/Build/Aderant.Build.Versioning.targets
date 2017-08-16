@@ -74,7 +74,7 @@
         <_Parameter2>$(_PaketLockText)</_Parameter2>
       </AssemblyAttribute>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
       </AssemblyAttribute>
