@@ -3,7 +3,7 @@ using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    public sealed class GitVersion : Microsoft.Build.Utilities.Task {
+    public sealed class GitVersion : Microsoft.Build.Utilities.Task { 
         private string canonicalBranchName;
         private string friendlyBranchName;
         private string sha;
@@ -74,10 +74,17 @@ namespace Aderant.Build.Tasks {
             }
 
             using (var repo = new Repository(WorkingDirectory)) {
-                FriendlyBranchName = repo.Head.FriendlyName;
-                CanonicalBranchName = repo.Head.CanonicalName;
+                friendlyBranchName = repo.Head.FriendlyName;
+                Log.LogMessage(MessageImportance.Low, "Set FriendlyBranchName: " + friendlyBranchName);
+                
+
+                canonicalBranchName = repo.Head.CanonicalName;
+                Log.LogMessage(MessageImportance.Low, "Set CanonicalBranchName: " + canonicalBranchName);
+
                 try {
-                    Sha = repo.Head.Tip.Id.Sha;
+                    sha = repo.Head.Tip.Id.Sha;
+
+                    Log.LogMessage(MessageImportance.Low, "Set Sha: " + sha);
                 } catch {
                 }
             }

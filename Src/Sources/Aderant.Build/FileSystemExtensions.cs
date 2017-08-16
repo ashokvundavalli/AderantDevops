@@ -9,5 +9,13 @@ namespace Aderant.Build {
                 }
             });
         }
+
+        public static string ReadAllText(this IFileSystem2 fileSystem, string path) {
+            using (var fs = fileSystem.OpenFile(path)) {
+                using (var reader = new StreamReader(fs)) {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
     }
 }

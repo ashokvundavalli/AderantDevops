@@ -142,9 +142,11 @@
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
+    <Compile Include="Tasks\Hash.cs" />
     <Compile Include="Tasks\SmartReference.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />
+    <Compile Include="Tasks\WriteLinesToFile.cs" />
     <Compile Include="TeamFoundation\TfBuildArtifactType.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="Resources.Designer.cs">
@@ -275,7 +277,6 @@
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
     <Compile Include="Tasks\DependencyChecker.cs" />
     <Compile Include="Tasks\ExtractWebModule.cs" />
-    <Compile Include="Tasks\FileUpdate2.cs" />
     <Compile Include="Tasks\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />

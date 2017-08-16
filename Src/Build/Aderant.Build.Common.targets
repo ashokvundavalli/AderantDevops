@@ -40,7 +40,6 @@
 	
 	  <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
 	  <AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
-
   </PropertyGroup>
 
   
@@ -85,7 +84,9 @@
   <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.GitVersion"                                          AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
+  <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  
   <PropertyGroup>
     <!-- Visual Studio Environment-->
     <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
@@ -100,6 +101,7 @@
   </PropertyGroup>
 
   <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
+  <Import Project="Aderant.Build.Versioning.targets" />
 
   <!--
     ==========================================================================================

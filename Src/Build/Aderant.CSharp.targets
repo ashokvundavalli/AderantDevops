@@ -8,10 +8,6 @@
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
 
-  <UsingTask TaskName="Aderant.Build.Tasks.FileUpdate2"
-             AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
-             Condition="'$(IsCustomBuild)' != 'true'" />
-
   <UsingTask TaskName="Aderant.Build.Tasks.ProjectConformityCheck"
              AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.dll"
              Condition="'$(IsCustomBuild)' != 'true'" />
@@ -60,70 +56,6 @@
     </Task>
   </UsingTask>
 
-  <!--
-    Defining custom targets to execute before individual project compilation starts.
-  -->
-  <PropertyGroup>
-    <CompileDependsOn>
-      CommonBuildUpdateAssemblyInfo;
-      $(CompileDependsOn);
-    </CompileDependsOn>
-  </PropertyGroup>
-
-  
-  
-  <Target Name="FindCommonAssemblyInfo" Condition="'$(IsCustomBuild)' != 'true'" BeforeTargets="CommonBuildUpdateAssemblyInfo">
-    
-    <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
-    <ItemGroup>
-      <CommonAssemblyInfoFile Include="@(Compile)" Condition="%(Filename) == 'CommonAssemblyInfo' And %(Extension) == '.cs'" />
-      <!-- Now remove the original element -->
-      <Compile Remove="@(CommonAssemblyInfoFile)" Condition="@(CommonAssemblyInfoFile) != ''" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <NewCommonAssemblyInfoFile>$(IntermediateOutputPath)CommonAssemblyInfo.cs</NewCommonAssemblyInfoFile>
-    </PropertyGroup>
-
-    <!-- Include the modified CommonAssemblyInfo.cs file in "Compile" items (instead of the original). -->
-    <ItemGroup>
-      <Compile Include="$(NewCommonAssemblyInfoFile)" Condition="@(CommonAssemblyInfoFile) != ''" />
-    </ItemGroup>
-
-  </Target>
-  
-  
-  
-  <!--
-      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset 
-      incremental builds
-  -->
-  <Target Name="CommonBuildUpdateAssemblyInfo" 
-          DependsOnTargets="FindCommonAssemblyInfo"
-          Condition="'$(IsCustomBuild)' != 'true'"
-          Inputs="@(CommonAssemblyInfoFile)"
-          Outputs="$(NewCommonAssemblyInfoFile)">
-    
-    <Copy SourceFiles="@(CommonAssemblyInfoFile)" 
-          DestinationFiles="$(NewCommonAssemblyInfoFile)" 
-          OverwriteReadOnlyFiles="true" />
-    
-    <!-- Update copyright, $1, $2 and $4 are capture groups -->
-    <MSBuild.Community.Tasks.FileUpdate
-      Condition="@(CommonAssemblyInfoFile) != ''"
-      Files="$(NewCommonAssemblyInfoFile)"
-      IgnoreCase="true"
-      Multiline="true"
-      Singleline="false"
-      Regex="(.*?AssemblyCopyright)(.*?\d{4})(\s*-\s*\d{4})?(.*)"
-      ReplacementText="$1$2-$([System.DateTime]::Now.Year)$4">
-    </MSBuild.Community.Tasks.FileUpdate>
-
-    <ItemGroup>
-      <FileWrites Include="$(NewCommonAssemblyInfoFile)" />
-    </ItemGroup>
-
-  </Target>
 
   <!--
     Updates the product splash screen without touching the original file
@@ -206,7 +138,7 @@
   
   <!-- Code to handle project references in Customization build. Aderant.Build.dll is packed into BuildScripts.zip in Framework build. -->
   <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"
-	AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
+             AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
   
   <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
@@ -228,12 +160,12 @@
     -->    
        
     <PropertyGroup>
-		<RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
+      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
     </PropertyGroup>
     
     <ItemGroup>
-        <AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
-        <PackageDirectories Include="@(AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+      <AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
+      <PackageDirectories Include="@(AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>    
 
     <PropertyGroup>
@@ -243,33 +175,33 @@
         @(PackageDirectories);
       </AssemblySearchPaths>
     </PropertyGroup>
-	
-	<!--Adding additional dependencies searching locations. -->
-	<PropertyGroup>
-        <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
-	</PropertyGroup>
-	
-	<!-- Check if any project references need to be fixed. -->
-	<SmartReference
-    Condition="'$(IsCustomBuild)' == 'true' And '$(ExpertSourceDirectory)' != ''"
-		ProjectReferences="@(ProjectReference)"
-		References="@(Reference)"
-		AlternativeOutputDirectory="$(AlternativeOutputDirectory)"
-		ExpertSourceDirectory="$(ExpertSourceDirectory)"
-		Customization="true">
-		<Output TaskParameter="ModifiedProjectReferences" ItemName="ModifiedProjectReferences" />
-		<Output TaskParameter="ModifiedReferences" ItemName="ModifiedReferences" />
-	</SmartReference>
-	
-	<!-- If any changes happen, update the ModifiedProjectReferences. -->
-	<ItemGroup Condition="'@(ModifiedProjectReferences)' != ''">
-		<ProjectReference Remove="@(ProjectReference)" />
-		<ProjectReference Include="@(ModifiedProjectReferences)" />
-	</ItemGroup>
-	
-	<ItemGroup>
-		<Reference Include="@(ModifiedReferences)" />
-	</ItemGroup>
+
+    <!--Adding additional dependencies searching locations. -->
+    <PropertyGroup>
+      <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
+    </PropertyGroup>
+
+    <!-- Check if any project references need to be fixed. -->
+    <SmartReference
+      Condition="'$(IsCustomBuild)' == 'true' And '$(ExpertSourceDirectory)' != ''"
+      ProjectReferences="@(ProjectReference)"
+      References="@(Reference)"
+      AlternativeOutputDirectory="$(AlternativeOutputDirectory)"
+      ExpertSourceDirectory="$(ExpertSourceDirectory)"
+      Customization="true">
+      <Output TaskParameter="ModifiedProjectReferences" ItemName="ModifiedProjectReferences" />
+      <Output TaskParameter="ModifiedReferences" ItemName="ModifiedReferences" />
+    </SmartReference>
+
+    <!-- If any changes happen, update the ModifiedProjectReferences. -->
+    <ItemGroup Condition="'@(ModifiedProjectReferences)' != ''">
+      <ProjectReference Remove="@(ProjectReference)" />
+      <ProjectReference Include="@(ModifiedProjectReferences)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="@(ModifiedReferences)" />
+    </ItemGroup>
 
   </Target>
   
@@ -336,6 +268,18 @@
       <!-- Replace the Reference item group with the modified version -->
       <Reference Include="@(ReferenceNew)" Condition="'$(DisableCopyLocal)' == 'true'" />
     </ItemGroup>
+  </Target>
+
+
+  <Target Name="AddAssemblyInfo"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="PrepareForBuild;"
+          Condition="'$(GeneratedAssemblyInfoFile)' != ''">
+
+    <ItemGroup>
+      <Compile Include="$(GeneratedAssemblyInfoFile)" />
+    </ItemGroup>
+
   </Target>
   
  
