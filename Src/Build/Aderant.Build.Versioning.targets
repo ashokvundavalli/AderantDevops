@@ -13,7 +13,7 @@
 
 
   <PropertyGroup>
-    <CompileDependsOn>
+    <CompileDependsOn Condition="'$(ProjectGuid)' != ''">
       CommonBuildUpdateAssemblyInfo;
       $(CompileDependsOn);
     </CompileDependsOn>
