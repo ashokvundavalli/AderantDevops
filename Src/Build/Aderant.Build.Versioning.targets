@@ -3,7 +3,7 @@
          ToolsVersion="14.0">
 
   <PropertyGroup>
-    <BuildDependsOn Condition="'$(ProjectGuid)' == ''">$(BuildDependsOn);GenerateAssemblyInfo</BuildDependsOn>
+    <!--<BuildDependsOn Condition="'$(ProjectGuid)' == ''">$(BuildDependsOn);GenerateAssemblyInfo</BuildDependsOn>-->
 
     <DefaultLanguageSourceExtension Condition="'$(DefaultLanguageSourceExtension)' == ''">.cs</DefaultLanguageSourceExtension>
     <Language Condition="'$(Language)' == ''">CS</Language>
@@ -12,12 +12,12 @@
   </PropertyGroup>
 
 
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <CompileDependsOn Condition="'$(ProjectGuid)' != ''">
       CommonBuildUpdateAssemblyInfo;
       $(CompileDependsOn);
     </CompileDependsOn>
-  </PropertyGroup>
+  </PropertyGroup>-->
   
 
   <Target Name="GetAssemblyAttributes">
