@@ -3,7 +3,7 @@
          ToolsVersion="14.0">
 
   <PropertyGroup>
-    <BuildDependsOn Condition="'$(ProjectGuid)' == ''">$(BuildDependsOn);CreateBuildDirectories;GenerateAssemblyInfo</BuildDependsOn>
+    <BuildDependsOn Condition="'$(ProjectGuid)' == ''">$(BuildDependsOn);GenerateAssemblyInfo</BuildDependsOn>
 
     <DefaultLanguageSourceExtension Condition="'$(DefaultLanguageSourceExtension)' == ''">.cs</DefaultLanguageSourceExtension>
     <Language Condition="'$(Language)' == ''">CS</Language>
@@ -103,10 +103,18 @@
   </Target>
 
 
+  <PropertyGroup>
+    <GenerateAssemblyInfoDependsOn>
+      PrepareBuildEnvironment;
+      CreateBuildDirectories;
+      CoreGenerateAssemblyInfo
+    </GenerateAssemblyInfoDependsOn>
+  </PropertyGroup>
+
   <Target Name="GenerateAssemblyInfo"
           Condition="'$(ProjectGuid)' == ''"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="CoreGenerateAssemblyInfo" />
+          DependsOnTargets="$(GenerateAssemblyInfoDependsOn)" />
 
 
   <Target Name="CoreGenerateAssemblyInfo"
