@@ -356,14 +356,30 @@
         Write-Error "No latest build found for [$pathToPackages]"        
     }
 
+
+
     ###
     # Pads each section of the folder name (which is in the format 1.8.3594.41082) with zeroes, so that an alpha sort
     # can be used because each section will now be of the same length.
     ###
     Function global:SortedFolders( [string]$parentFolder ) {
+
+        Function IsAllNumbers( $container ) {
+            $numbers = $container.Name.Replace(".", "")
+
+            $rtn = $null
+            if ([int64]::TryParse($numbers, [ref]$rtn)) {                
+                return $true
+            }
+            
+            Write-Debug "Folder $($container.FullName) is not a valid build drop folder" 
+            return $false
+        }
+
         if (test-path $parentFolder) {
             $sortedFolders =  (dir -Path $parentFolder |
                         where {$_.PsIsContainer} |
+                        where { IsAllNumbers $_ } |
                         Sort-Object {$_.name.Split(".")[0].PadLeft(4,"0")+"."+ $_.name.Split(".")[1].PadLeft(4,"0")+"."+$_.name.Split(".")[2].PadLeft(8,"0")+"."+$_.name.Split(".")[3].PadLeft(8,"0")+"." } -Descending  |
                         select name)
 
@@ -372,6 +388,8 @@
             write-Debug "$parentFolder could not be found because it does not exist"
         }
     }
+
+
 
     ###
     # Delete the files contained in the directory excluding the file name provided
