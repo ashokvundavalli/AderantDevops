@@ -368,7 +368,7 @@
             $numbers = $container.Name.Replace(".", "")
 
             $rtn = $null
-            if ([int64]::TryParse($numbers, [ref]$rtn)) {                
+            if ([int64]::TryParse($numbers, [ref]$rtn)) {
                 return $true
             }
             

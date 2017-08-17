@@ -12,12 +12,12 @@
   </PropertyGroup>
 
 
-  <!--<PropertyGroup>
+  <PropertyGroup>
     <CompileDependsOn Condition="'$(ProjectGuid)' != ''">
       CommonBuildUpdateAssemblyInfo;
       $(CompileDependsOn);
     </CompileDependsOn>
-  </PropertyGroup>-->
+  </PropertyGroup>
   
 
   <Target Name="GetAssemblyAttributes">
