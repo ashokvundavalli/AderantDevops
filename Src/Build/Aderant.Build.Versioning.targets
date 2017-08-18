@@ -3,22 +3,23 @@
          ToolsVersion="14.0">
 
   <PropertyGroup>
-    <!--<BuildDependsOn Condition="'$(ProjectGuid)' == ''">$(BuildDependsOn);GenerateAssemblyInfo</BuildDependsOn>-->
-
     <DefaultLanguageSourceExtension Condition="'$(DefaultLanguageSourceExtension)' == ''">.cs</DefaultLanguageSourceExtension>
     <Language Condition="'$(Language)' == ''">CS</Language>
-
-    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
-  </PropertyGroup>
-
-
-  <PropertyGroup>
-    <CompileDependsOn Condition="'$(ProjectGuid)' != ''">
-      CommonBuildUpdateAssemblyInfo;
-      $(CompileDependsOn);
-    </CompileDependsOn>
   </PropertyGroup>
   
+
+  <PropertyGroup>
+    <OnBeforeCompileDependsOn Condition="'$(IsCustomBuild)' != 'true'">
+      $(OnBeforeCompileDependsOn);
+      GenerateAssemblyInfo;
+      CommonBuildUpdateAssemblyInfo
+    </OnBeforeCompileDependsOn>
+  </PropertyGroup>
+  
+
+  <!-- Stub that lets us hook BeforeCompile without  breaking others that also override BeforeCompile -->
+  <Target Name="OnBeforeCompile" BeforeTargets="BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
+
 
   <Target Name="GetAssemblyAttributes">
 
@@ -44,40 +45,40 @@
     </GitVersion>
 
     <ItemGroup>
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
         <_Parameter1>Git.BranchName</_Parameter1>
         <_Parameter2>$(GitCanonicalBranchName)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
         <_Parameter1>Git.Sha</_Parameter1>
         <_Parameter2>$(GitSha)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_BUILDID)' != ''">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_BUILDID)' != ''">
         <_Parameter1>Build.Id</_Parameter1>
         <_Parameter2>$(BUILD_BUILDID)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_SOURCEVERSION)' != ''">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_SOURCEVERSION)' != ''">
         <_Parameter1>Build.SourceVersion</_Parameter1>
         <_Parameter2>$(BUILD_SOURCEVERSION)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
         <_Parameter1>Build.RepositoiryUri</_Parameter1>
         <_Parameter2>$(BUILD_REPOSITORY_URI)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
         <_Parameter1>Build.PaketLock</_Parameter1>
         <_Parameter2>$(_PaketLockText)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
 
-      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
+      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
-      </AssemblyAttribute>
+      </AssemblyAttributes>
     </ItemGroup>
 
   </Target>
@@ -90,30 +91,40 @@
   -->
   <Target Name="CreateGeneratedAssemblyInfoInputsCacheFile"
           DependsOnTargets="GetAssemblyAttributes">
+
     <PropertyGroup>
-      <GeneratedAssemblyInfoInputsCacheFile>$(ModuleBuildTempDirectory)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
-      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(ModuleBuildTempDirectory)TemporaryGeneratedFile_Versioning.AssemblyInfo$(DefaultLanguageSourceExtension)</GeneratedAssemblyInfoFile>
+      <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
+      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g$(DefaultLanguageSourceExtension)</GeneratedAssemblyInfoFile>
     </PropertyGroup>
 
-    <Hash ItemsToHash="@(AssemblyAttribute->'%(Identity)%(_Parameter2)')">
+    <Hash ItemsToHash="@(AssemblyAttributes->'%(Identity)%(_Parameter2)')">
       <Output TaskParameter="HashResult" PropertyName="_AssemblyAttributesHash" />
     </Hash>
 
-    <Aderant.Build.Tasks.WriteLinesToFile Lines="$(_AssemblyAttributesHash)" File="$(GeneratedAssemblyInfoInputsCacheFile)" Overwrite="true" WriteOnlyWhenDifferent="true" />
-  </Target>
+    <Aderant.Build.Tasks.WriteLinesToFile 
+      Lines="$(_AssemblyAttributesHash)" 
+      File="$(GeneratedAssemblyInfoInputsCacheFile)" 
+      Overwrite="true" 
+      WriteOnlyWhenDifferent="true">
+      <Output PropertyName="_WriteSkipped" TaskParameter="WriteSkipped"/>
+    </Aderant.Build.Tasks.WriteLinesToFile>
 
+    <ItemGroup>
+      <FileWrites Include="$(GeneratedAssemblyInfoInputsCacheFile)" />
+    </ItemGroup>
+
+  </Target>
+  
 
   <PropertyGroup>
     <GenerateAssemblyInfoDependsOn>
-      PrepareBuildEnvironment;
-      CreateBuildDirectories;
+      $(GenerateAssemblyInfoDependsOn);
       CoreGenerateAssemblyInfo
     </GenerateAssemblyInfoDependsOn>
   </PropertyGroup>
 
+
   <Target Name="GenerateAssemblyInfo"
-          Condition="'$(ProjectGuid)' == ''"
-          BeforeTargets="CoreCompile"
           DependsOnTargets="$(GenerateAssemblyInfoDependsOn)" />
 
 
@@ -121,12 +132,11 @@
           DependsOnTargets="CreateGeneratedAssemblyInfoInputsCacheFile"
           Inputs="$(GeneratedAssemblyInfoInputsCacheFile)"
           Outputs="$(GeneratedAssemblyInfoFile)">
-
-    <Error Condition="'$(ModuleBuildDirectory)' == ''"      Text="ModuleBuildDirectory is undefined" />
-    <Error Condition="'@(AssemblyAttribute)' == ''"         Text="No assembly attributes specified" />
+          
+    <Error Condition="'@(AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
     <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''" Text="GeneratedAssemblyInfoFile is undefined" />
 
-    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttribute)" 
+    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttributes)" 
                        Language="$(Language)" 
                        OutputFile="$(GeneratedAssemblyInfoFile)">
     </WriteCodeFragment>
@@ -134,7 +144,7 @@
   </Target>
 
 
-  <Target Name="FindCommonAssemblyInfo" Condition="'$(IsCustomBuild)' != 'true'">
+  <Target Name="FindCommonAssemblyInfo">
 
     <!-- Find CommonAssemblyInfo.cs in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. -->
     <ItemGroup>
@@ -161,7 +171,6 @@
   -->
   <Target Name="CommonBuildUpdateAssemblyInfo"
           DependsOnTargets="FindCommonAssemblyInfo"
-          Condition="'$(IsCustomBuild)' != 'true'"
           Inputs="@(CommonAssemblyInfoFile)"
           Outputs="$(NewCommonAssemblyInfoFile)">
 
@@ -172,6 +181,7 @@
     <!-- Update copyright, $1, $2 and $4 are capture groups -->
     <MSBuild.Community.Tasks.FileUpdate
       Condition="@(CommonAssemblyInfoFile) != ''"
+      Encoding="utf-8-without-bom"
       Files="$(NewCommonAssemblyInfoFile)"
       IgnoreCase="true"
       Multiline="true"

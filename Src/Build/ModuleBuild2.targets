@@ -592,7 +592,7 @@ doc.Save(File);
         IsWebModule=$(IsWebModule);
         $(TeamBuildProperties);
         ExternalConstants=$(ExternalConstants);
-        GeneratedAssemblyInfoFile=$(GeneratedAssemblyInfoFile);
+        SolutionDirectoryPath=$(SolutionDirectoryPath);
       </BuildProperties>
 
       <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
