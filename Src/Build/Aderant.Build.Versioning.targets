@@ -9,10 +9,10 @@
   
 
   <PropertyGroup>
-    <OnBeforeCompileDependsOn Condition="'$(IsCustomBuild)' != 'true'">
+    <OnBeforeCompileDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
       $(OnBeforeCompileDependsOn);
       GenerateAssemblyInfo;
-      CommonBuildUpdateAssemblyInfo
+      AsemblyInfoUpdateCopyright
     </OnBeforeCompileDependsOn>
   </PropertyGroup>
   
@@ -105,9 +105,7 @@
       Lines="$(_AssemblyAttributesHash)" 
       File="$(GeneratedAssemblyInfoInputsCacheFile)" 
       Overwrite="true" 
-      WriteOnlyWhenDifferent="true">
-      <Output PropertyName="_WriteSkipped" TaskParameter="WriteSkipped"/>
-    </Aderant.Build.Tasks.WriteLinesToFile>
+      WriteOnlyWhenDifferent="true" />
 
     <ItemGroup>
       <FileWrites Include="$(GeneratedAssemblyInfoInputsCacheFile)" />
@@ -169,7 +167,7 @@
       Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset 
       incremental builds
   -->
-  <Target Name="CommonBuildUpdateAssemblyInfo"
+  <Target Name="AsemblyInfoUpdateCopyright"
           DependsOnTargets="FindCommonAssemblyInfo"
           Inputs="@(CommonAssemblyInfoFile)"
           Outputs="$(NewCommonAssemblyInfoFile)">
