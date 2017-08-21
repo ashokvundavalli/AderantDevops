@@ -82,7 +82,10 @@ $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 function GetVssConnection() {
     try {
         Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)" 
-        Write-Host "Using VSS connection type: " [Microsoft.VisualStudio.Services.WebApi.VssConnection].Assembly.Location
+        
+        $assemblyLocation = [Microsoft.VisualStudio.Services.WebApi.VssConnection].Assembly.Location
+        
+        Write-Host "Using VSS connection type: $assemblyLocation" 
         
         return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())
     } catch {
