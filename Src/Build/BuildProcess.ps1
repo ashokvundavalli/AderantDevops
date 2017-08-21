@@ -80,8 +80,13 @@ $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 [System.Environment]::SetEnvironmentVariable("IsDesktopBuild", $global:IsDesktopBuild, [System.EnvironmentVariableTarget]::Process)
 
 function GetVssConnection() {
-    Write-Host "Creating VSS connection"
-    return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
+    try {
+        Write-Host "Creating VSS connection to: " $Env:SYSTEM_TEAMFOUNDATIONSERVERURI
+        return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())   
+    } catch {
+        Write-Error "Failed to create VSS connection to: " $Env:SYSTEM_TEAMFOUNDATIONSERVERURI
+        throw $_
+    }
 }
 
 function WarningRatchet() {
