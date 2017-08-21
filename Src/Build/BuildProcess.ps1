@@ -397,14 +397,14 @@ task Init {
             $fileName = $e.Name.Split(",")[0]
             $fileName = $fileName + ".dll"
         
-            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")              
-            foreach ($dir in $probeDirectories) {                
+            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals.2.105.7\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals.2.105.7\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\bin")
+            foreach ($dir in $probeDirectories) {
                 $fullFilePath = "$dir\$fileName"
 
                 Write-Debug "Probing: $fullFilePath"
                 
                 if (Test-Path ($fullFilePath)) {    
-                    Write-Debug "File exists: $fullFilePath"        
+                    Write-Debug "File exists: $fullFilePath"
                     try {
                         $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
                         Write-Debug "Loaded dependency: $fullFilePath"
