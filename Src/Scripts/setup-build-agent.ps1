@@ -7,7 +7,7 @@ param(
     $removeAllAgents = $true,
 
     [Parameter()]
-    $agentArchive = "$env:USERPROFILE\Downloads\vsts-agent-win7-x64-2.105.7.zip",
+    $agentArchive = "$PSScriptRoot\vsts.agent.zip",
 
     [Parameter()]
     $tfsHost = "http://tfs:8080/tfs",
