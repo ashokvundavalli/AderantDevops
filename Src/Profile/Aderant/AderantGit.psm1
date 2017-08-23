@@ -128,4 +128,18 @@ if (CheckModuleVersion) {
 	Set-Alias -Name bm -Value Invoke-Build -Scope Global
 }
 
+function global:New-PullRequest {
+	[string]$currentBranch = git rev-parse --abbrev-ref HEAD
+	[string]$repository = git ls-remote --get-url
+
+	if ((git ls-remote --heads $repository $currentBranch) -ne $null) {
+		[string]$url = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/$($global:CurrentModuleName)/pullrequestcreate?sourceRef=$($currentBranch)&targetRef=master"
+		Start-Process $url
+	} else {
+		Write-Error "No remote branch present. Use git push -u origin $($currentBranch)"
+	}
+}
+
+Export-ModuleMember -Function New-PullRequest -Alias cpr
+
 ConfigureGit	
