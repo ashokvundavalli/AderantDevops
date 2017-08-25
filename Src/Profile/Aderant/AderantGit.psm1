@@ -140,6 +140,7 @@ function global:New-PullRequest {
 	}
 }
 
-Export-ModuleMember -Function New-PullRequest -Alias cpr
+Export-ModuleMember -Function New-PullRequest
+Set-Alias -Name npr -Value New-PullRequest -Scope Global
 
 ConfigureGit	
