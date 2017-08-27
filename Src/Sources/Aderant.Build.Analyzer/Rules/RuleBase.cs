@@ -120,26 +120,29 @@ namespace Aderant.Build.Analyzer.Rules {
                 return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages);
             }
 
-            // Get the parent method of the node.
-            var baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
+            var attributeLists = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node)?.AttributeLists;
 
-            // If node is not within a method, exit early.
-            if (baseMethodDeclaration == null) {
-                return false;
+            if (attributeLists == null) {
+                attributeLists = GetNodeParentExpressionOfType<AccessorDeclarationSyntax>(node)?.AttributeLists;
+
+                if (attributeLists == null) {
+                    // Node is not within a method, exit early.
+                    return false;
+                }
             }
 
             // Get the class of the node.
-            classVariable = GetNodeParentExpressionOfType<ClassDeclarationSyntax>(baseMethodDeclaration);
+            classVariable = GetNodeParentExpressionOfType<ClassDeclarationSyntax>(node);
 
             // If node is not within a class...
             if (classVariable == null) {
                 // Examine suppression on the method only.
-                return IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists, validSuppressionMessages);
+                return IsAnalysisSuppressed(attributeLists.Value, validSuppressionMessages);
             }
 
             // ...otherwise examine suppression on the class, and then the method.
             return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages) ||
-                   IsAnalysisSuppressed(baseMethodDeclaration.AttributeLists, validSuppressionMessages);
+                   IsAnalysisSuppressed(attributeLists.Value, validSuppressionMessages);
         }
 
         protected static bool IsAnalysisSuppressed(

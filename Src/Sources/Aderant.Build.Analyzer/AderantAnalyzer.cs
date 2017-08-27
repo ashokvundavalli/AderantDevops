@@ -22,6 +22,16 @@ namespace Aderant.Build.Analyzer {
         /// <summary>
         /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
         /// </summary>
+        /// <remarks>
+        /// This default constructor is mandatory for the correct operation of the rules analysis engine.
+        /// </remarks>
+        public AderantAnalyzer() {
+            // Empty.
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
+        /// </summary>
         /// <param name="injectedRules">The rules to inject (for unit testing of possibly disabled rules).</param>
         internal AderantAnalyzer(params RuleBase[] injectedRules) {
             foreach (var injectedRule in injectedRules) {

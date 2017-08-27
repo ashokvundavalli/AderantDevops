@@ -239,6 +239,63 @@ namespace Test {
             VerifyCSharpDiagnostic(test);
         }
 
+        [TestMethod]
+        public void SqlInjectionErrorSuppression_Property_Long() {
+            const string test = @"
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        private string someField = null;
+
+        public string SomeProp {
+            get { return string.Empty; }
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(""SQL Injection"", ""Aderant_SQLInjectionError"")]
+            set {
+                using (var connection = new SqlConnection()) {
+                    using (var command = connection.CreateCommand()) {
+                        command.CommandText = value;
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void SqlInjectionErrorSuppression_Property_Short() {
+            const string test = @"
+using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
+
+namespace Test {
+    public class Program {
+        private string someField = null;
+
+        public string SomeProp {
+            get { return string.Empty; }
+            [SuppressMessage(""SQL Injection"", ""Aderant_SQLInjectionError"")]
+            set {
+                using (var connection = new SqlConnection()) {
+                    using (var command = connection.CreateCommand()) {
+                        command.CommandText = value;
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
+        }
+
         #endregion Tests: Suppression
     }
 }
