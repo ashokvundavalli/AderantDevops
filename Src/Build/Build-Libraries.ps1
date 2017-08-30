@@ -49,18 +49,57 @@
     Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath){
 
         $action = FindGetActionTag $module
-        Switch ($action)
-        {
+        Switch ($action) {
           "local"  { LocalPathToModuleBinariesFor $module }
           "local-external-module"  { LocalPathToThirdpartyBinariesFor $module }
-          "current-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action}
-          "other-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action}
-          "other-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action}
-          "current-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action}
-          "specific-path" { ServerPathToModuleBinariesFor $module $module.Path $action}
-          "specific-path-external-module" { ThirdpartyBinariesPathFor $module $module.Path $action}
+          "current-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action }
+          "other-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action }
+          "other-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action }
+          "current-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action }
+          "specific-path" { ServerPathToModuleBinariesFor $module $module.Path $action }
+          "specific-path-external-module" { ThirdpartyBinariesPathFor $module $module.Path $action }
           Default { throw "invalid action [$action]"}
         }
+    }
+
+    function global:AcquireExpertClassicBinaries([string]$moduleName,  [string]$binariesDirectory, [string]$classicPath, [string]$target) {
+		Push-Location
+        $build = Get-ChildItem (Join-Path -Path $classicPath -ChildPath $buildDirectory.Name) -File -Filter "*.zip"
+
+	    if ($build -ne $null) {
+		    [string]$zipExe = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "\7z.exe"
+
+		    if (Test-Path $zipExe) {
+				[string]$filter
+
+				switch ($moduleName) {
+					"Expert.Classic.CS" {
+						$filter = "ApplicationServer\*"
+						break
+					}
+					default {
+						$filter = ""
+						break
+					}
+				}
+
+				& $zipExe x $build.FullName "-o$(Join-Path -Path $binariesDirectory -ChildPath $target)" $filter -r -y
+				[string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
+
+				if (-not (Test-Path $classicBuildNumbersFile)) {
+					New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
+				}
+
+				Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
+			    Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
+		    } else {
+			    Write-Error "Unable to locate 7z.exe at path: $($ShellContext.BuildToolsDirectory)"
+		    }
+	    } else {
+			Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
+		}
+
+		Pop-Location
     }
 
     ##
@@ -228,7 +267,12 @@
             $rootPath = $module.Path
         }
 
-        $binModule = '\Bin\Module'
+        if ($module.Name.Contains("Expert.Classic")) {
+            $modulePath = PathToLatestSuccessfulBuild $module.Path -suppressThrow
+            return $modulePath
+        }
+
+        [string]$binModule = "\Bin\Module"
 
         $pathToModuleAssemblyVersion = Join-Path -Path (Join-Path $rootPath $module.Name) -ChildPath $module.AssemblyVersion
 
@@ -237,6 +281,7 @@
         } else {
             $modulePath = PathToLatestSuccessfulBuild $pathToModuleAssemblyVersion -suppressThrow
         }
+
         return $modulePath
     }
 
@@ -280,8 +325,13 @@
 
         foreach ($folderName in $sortedFolders) {
             $buildLog = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\BuildLog.txt"
-            $pathToLatestSuccessfulBuild = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\Bin\Module"
-            [string]$buildFailed = $null
+
+            [string]$pathToLatestSuccessfulBuild = Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name
+            [string]$successfulBuildBinModule = Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "\Bin\Module"
+
+            if (Test-Path $successfulBuildBinModule) {
+                $pathToLatestSuccessfulBuild = $successfulBuildBinModule
+            }
 
             if ((Test-Path $buildLog) -and (CheckBuild $buildLog) -and (test-path $pathToLatestSuccessfulBuild)) {
                 return $pathToLatestSuccessfulBuild
@@ -304,7 +354,6 @@
         foreach ($folderName in $sortedFolders) {
             $buildLog = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\BuildLog.txt"
             $pathToLatestSuccessfulBuild = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\Bin\Module"
-            [string]$buildFailed = $null
 
             if ((Test-Path $buildLog) -and (CheckBuild $buildLog) -and (test-path $pathToLatestSuccessfulBuild)) {
                 return $folderName.Name

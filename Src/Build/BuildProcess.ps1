@@ -258,7 +258,7 @@ task Build {
     }
 
 	if ($DatabaseBuildPipeline.IsPresent) {
-		$commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true"
+		$commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
 	}
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
