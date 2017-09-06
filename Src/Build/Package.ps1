@@ -109,8 +109,10 @@ process {
                 
                 gci -Path $packResult.OutputPath -Filter *.nupkg | Where-Object { $_.Name -NotMatch "Aderant.Database.Backup" } | % { PushPackage $_.FullName }
 
-                # Associate the package to the build. This allows TFS garbage collect the outputs when the build is deleted      
-                #$packagingProcess.AssociatePackagesToBuild($packages)
+                if ($Env:BUILD_SOURCEBRANCHNAME -eq "master") {
+                    # Associate the package to the build. This allows TFS garbage collect the outputs when the build is deleted      
+                    $packagingProcess.AssociatePackagesToBuild($packages)
+                }
 
                 # Special dropping location for database backup due to the size: \\dfs.aderant.com\Packages\ExpertDatabase.
                 if ($env:BUILD_DEFINITIONNAME -contains "Database") {
