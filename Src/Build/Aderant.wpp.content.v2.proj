@@ -278,6 +278,7 @@
   </Target>
 
   <Target Name="custom-tsconfig-->tsc"
+          Condition="'$(BuildingInsideVisualStudio)' != 'true'"
           AfterTargets="CompileTypeScriptWithTSConfig">
     <ItemGroup>
       <CustomTSConfigs 
