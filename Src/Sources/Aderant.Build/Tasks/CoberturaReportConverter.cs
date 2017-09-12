@@ -12,26 +12,24 @@ namespace Aderant.Build.Tasks {
         [Required]
         public string TargetPath { get; set; }
 
-        private XDocument DotCoverReport { get; set; }
-
-        public XDocument ConvertToCobertura() {
-            if (DotCoverReport == null) {
-                throw new ArgumentNullException(nameof(DotCoverReport));
+        public XDocument ConvertToCobertura(XDocument dotCoverReport) {
+            if (dotCoverReport == null) {
+                throw new ArgumentNullException(nameof(dotCoverReport));
             }
 
-            XDocument result = new XDocument(new XDeclaration("1.0", null, null), CreateRootElement());
+            XDocument result = new XDocument(new XDeclaration("1.0", null, null), CreateRootElement(dotCoverReport));
             result.AddFirst(new XDocumentType("coverage", null, "http://cobertura.sourceforge.net/xml/coverage-04.dtd", null));
 
             return result;
         }
 
-        private XElement CreateRootElement() {
+        private XElement CreateRootElement(XDocument dotCoverReport) {
             long coveredStatements = 0;
             long totalStatements = 0;
 
-            if (DotCoverReport != null) {
-                coveredStatements = Convert.ToInt64(DotCoverReport.Element("Root").Attribute("CoveredStatements").Value);
-                totalStatements = Convert.ToInt64(DotCoverReport.Element("Root").Attribute("TotalStatements").Value);
+            if (dotCoverReport != null) {
+                coveredStatements = Convert.ToInt64(dotCoverReport.Element("Root").Attribute("CoveredStatements").Value);
+                totalStatements = Convert.ToInt64(dotCoverReport.Element("Root").Attribute("TotalStatements").Value);
             }
 
             var rootElement = new XElement("coverage");
@@ -50,12 +48,11 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             try {
-                DotCoverReport = XDocument.Load(ImportPath);
-                XDocument result = ConvertToCobertura();
+                XDocument result = ConvertToCobertura(XDocument.Load(ImportPath));
                 result.Save(TargetPath);
                 return !Log.HasLoggedErrors;
             } catch (Exception e) {
-                Console.WriteLine(e);
+                Log.LogErrorFromException(e);
                 throw;
             }
         }
