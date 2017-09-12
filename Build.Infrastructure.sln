@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
 	ProjectSection(SolutionItems) = preProject
 		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
+		Src\Build\Aderant.Build.Testing.targets = Src\Build\Aderant.Build.Testing.targets
 		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
 		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
 		Src\Build\Aderant.CodeSigning.targets = Src\Build\Aderant.CodeSigning.targets

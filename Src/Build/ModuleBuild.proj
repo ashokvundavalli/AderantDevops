@@ -66,6 +66,7 @@
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
+  <Import Project="Aderant.Build.Testing.targets" />
 
   <!--Stub for customizers to override-->
   <Target Name="OnAfterBuild" />
@@ -706,6 +707,9 @@ doc.Save(File);
 
     <Message Text="Module: %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" Importance="High" />
     <Message Text="Test:   %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Test'" Importance="High" />
+    <ItemGroup>
+      <CodeCoverageFilterList Include="@(ModuleBuildOutput)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
+    </ItemGroup>
 
   </Target>
 
@@ -1039,6 +1043,16 @@ doc.Save(File);
     <MakeSymlink Condition="'@(TestAssemblies)' != '' And '$(IsWebModule)' != 'true'"
                  Link="$(BinTestDirectory)ModuleBin"
                  Target="$(BinModuleDirectory)" />
+                 
+    <PropertyGroup>
+      <!-- Test Result Publishing -->
+      <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
+      <PublishName Condition="'$(TfsBuildNumber)' != ''">$(TfsBuildNumber)</PublishName>
+      <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
+      <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
+      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>
+    </PropertyGroup>
+   
   </Target>
 
 
@@ -1051,85 +1065,36 @@ doc.Save(File);
   </Target>
 
 
-  <Target Name="RunTests"
-          DependsOnTargets="$(RunTestsDependsOn)"
-          Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
+   <Target Name="UpdateTfsBeforeRunTests" BeforeTargets="RunTests"> 
+
+     <BuildStep 
+       Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')" 
+       Message="$(BuildStepModuleName) Running unit tests" 
+       TeamFoundationServerUrl="$(TeamFoundationServerUrl)" 
+       BuildUri="$(BuildURI)"> 
+       <Output 
+         TaskParameter="id" 
+         PropertyName="BuildStepId"/> 
+     </BuildStep> 
+
+   </Target> 
+
+
+  <Target Name="AfterRunTests"
+          AfterTargets="RunTests">
 
     <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true') And ('$(IsCustomBuild)'!='true')"
-      Message="$(BuildStepModuleName) Running unit tests"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId"/>
-    </BuildStep>
-
-    <PropertyGroup>
-      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
-      <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
-
-      <!-- VSTest Setup -->
-      <VsTestDirectory>$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
-      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
-      <PathToTfsLogger>$(VsTestDirectory)\Extensions\Microsoft.VisualStudio.TestPlatform.Extensions.TfsLogger.dll</PathToTfsLogger>
-      <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
-      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
-
-      <!-- Test Result Publishing -->
-      <PublishName Condition="'$(BuildNumber)' != ''">$(BuildNumber)</PublishName>
-      <PublishName Condition="'$(TfsBuildNumber)' != ''">$(TfsBuildNumber)</PublishName>
-      <ResultsFileSwitch>/Logger:trx</ResultsFileSwitch>
-
-      <ResultsFileSwitch Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(PathToTfsLogger)')">/Logger:TfsPublisher;Collection=$(TeamFoundationServerUrl);BuildName=$(PublishName);TeamProject=$(TeamProject);Platform=%(ConfigurationToBuild.PlatformToBuild);Flavor=%(ConfigurationToBuild.FlavorToBuild);RunTitle=$(ModuleName)</ResultsFileSwitch>
-    </PropertyGroup>
-
-    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
-
-    <MakeDir Directories="$(VsTestWorkingDirectory)" />
-
-    <PropertyGroup>
-      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
-      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
-    </PropertyGroup>
-
-    <!-- Chutzpah - JavaScript UnitTest related -->
-    <ItemGroup>
-      <JavascriptTests Include="$(VsTestWorkingDirectory)Src\**\chutzpah.json" Exclude="$(VsTestWorkingDirectory)Src\**\obj\**" />
-    </ItemGroup>
-    <PropertyGroup>
-      <ChutzpahTestAdapterPath Condition="'@(JavascriptTests)' != ''">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools\Chutzpah\bin"</ChutzpahTestAdapterPath>
-    </PropertyGroup>
-    <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
-
-    <!--Run With VSTest-->
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Condition="'$(UnitTestAssemblies)' != ''"
-          WorkingDirectory="$(VsTestWorkingDirectory)"
-          Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterSwitch) $(ChutzpahTestAdapterPath)' />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
+      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true') And '$(TestOutcome)' == 'Succeeded'"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
     <SetBuildProperties
-      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true')"
+      Condition="('$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true') And '$(TestOutcome)' == 'Succeeded'"
       TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
       BuildUri="$(BuildUri)"
       TestStatus="Succeeded" />
-
-    <OnError ExecuteTargets="OnTestFailure" />
-  </Target>
-
-
-  <Target Name="AfterRunTests"
-          AfterTargets="RunTests">
 
     <RemoveDir Directories="$(BinTestDirectory)Dependencies"
                ContinueOnError="true"  />

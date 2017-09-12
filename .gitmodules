@@ -2,3 +2,7 @@
 	path = Src/Build.Tools/Chutzpah
 	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.Chutzpah
 	branch = master
+[submodule "dotCover"]
+	path = Src/Build.Tools/dotCover
+	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.dotCover
+	branch = master

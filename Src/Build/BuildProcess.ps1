@@ -5,7 +5,8 @@ param(
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
     [string]$Flavor,
-	[switch]$DatabaseBuildPipeline
+	[switch]$DatabaseBuildPipeline,
+	[switch]$CodeCoverage
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -259,6 +260,10 @@ task Build {
 
 	if ($DatabaseBuildPipeline.IsPresent) {
 		$commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
+	}
+
+	if ($CodeCoverage.IsPresent) {
+		$commonArgs = "$commonArgs /p:CodeCoverage=true"
 	}
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing

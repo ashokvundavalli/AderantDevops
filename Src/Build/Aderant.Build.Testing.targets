@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+
+
+    <Target Name="RunTests"
+            DependsOnTargets="$(RunTestsDependsOn)"
+            Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
+
+    <PropertyGroup>
+      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
+      <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
+      <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
+
+      <!-- VSTest Setup -->
+      <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
+      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
+      <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
+      <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
+    </PropertyGroup>
+
+    <!-- dotCover Setup -->
+    <ItemGroup Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '@(CodeCoverageFilterList)' != ''">      
+      <CodeCoverageFilters Include="+:%(CodeCoverageFilterList.FileName)"></CodeCoverageFilters>
+    </ItemGroup>
+
+    <PropertyGroup Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''">
+      <DotCoverExecutablePath>$(BuildToolsDirectory)dotCover\bin\dotCover.exe</DotCoverExecutablePath>
+      <DotCoverReportType Condition="'$(IsDesktopBuild)' == 'true'">HTML</DotCoverReportType>
+      <DotCoverReportType Condition="'$(IsDesktopBuild)' != 'true'">XML</DotCoverReportType>
+      <DotCoverReportFile>$(BinTestDirectory)CodeCoverage\dotCoverReport.$(DotCoverReportType)</DotCoverReportFile>
+      <CoberturaReportTarget>$(BinTestDirectory)CodeCoverage\CoberturaReport.xml</CoberturaReportTarget>
+    </PropertyGroup>
+    
+    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
+
+    <MakeDir Directories="$(VsTestWorkingDirectory)" />
+
+    <PropertyGroup>
+      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
+      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
+    </PropertyGroup>
+    
+    <!-- Chutzpah - JavaScript UnitTest related -->
+    <ItemGroup>
+      <JavascriptTests Include="$(VsTestWorkingDirectory)Src\**\chutzpah.json" Exclude="$(VsTestWorkingDirectory)Src\**\obj\**" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ChutzpahTestAdapterPath Condition="'@(JavascriptTests)' != ''">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools\Chutzpah\bin"</ChutzpahTestAdapterPath>
+    </PropertyGroup>
+    <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
+
+    <!-- Run With VSTest -->
+    <Exec Condition="('$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' != 'true') And '$(UnitTestAssemblies)' != ''"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)' />
+
+    <Exec Condition="!Exists('$(DotCoverExecutablePath)')" Command='cd "$(BuildDirectory)\Build.Infrastructure" &amp; git submodule update --init --recursive'></Exec>
+
+    <!-- Run VSTest using dotCover -->
+    <Exec Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
+
+    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
+      <Output TaskParameter="Lines" PropertyName="DotCoverResult" />
+    </ReadLinesFromFile>
+
+    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''">
+      <CodeCoverageValue>$([System.Text.RegularExpressions.Regex]::Match($(DotCoverResult), '(?&lt;="Total",)(.*?)(?=[,])'))</CodeCoverageValue>
+    </PropertyGroup>
+
+    <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="
+
+=============================
+Code coverage percentage: $(CodeCoverageValue)
+=============================
+
+" Importance="high" />
+    
+    <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != '' And '$(CodeCoverageValue)' &lt; '30'" Text="
+Code coverage is less than 30%. Your pay has been docked.
+
+░░░░░░░░░░░█████████████
+░░░░░░░░░███░███░░░░░░██
+███░░░░░██░░░░██░██████████
+████████░░░░░░████░░░░░░░██
+████░░░░░░░░░░██░░██████████
+████░░░░░░░░░░░███░░░░░░░░░██
+████░░░░░░░░░░░██░░██████████
+████░░░░░░░░░░░░████░░░░░░░░█
+████░░░░░░░░░░░░░███░░████░░█
+█████████░░░░░░░░░░████░░░░░█
+███░░░░░██░░░░░░░░░░░░░█████
+░░░░░░░░░███░░░░░░░██████
+░░░░░░░░░░░██░░░░░░██
+░░░░░░░░░░░░███░░░░░██
+░░░░░░░░░░░░░░██░░░░██
+░░░░░░░░░░░░░░░███░░░██
+░░░░░░░░░░░░░░░░░██░░░█
+░░░░░░░░░░░░░░░░░░█░░░█
+░░░░░░░░░░░░░░░░░░██░██
+░░░░░░░░░░░░░░░░░░░███
+" />
+
+    <!-- Run Cobertura Report Converter -->
+    <CoberturaReportConverter Condition="'$(IsDesktopBuild)' != 'true' And '$(UnitTestAssemblies)' != ''"
+      ImportPath="$(DotCoverReportFile)"
+      TargetPath="$(CoberturaReportTarget)">
+    </CoberturaReportConverter>
+
+    <Message Condition="'$(IsDesktopBuild)' != 'true' And '$(UnitTestAssemblies)' != ''" Text="##vso[codecoverage.publish codecoveragetool=Cobertura;summaryfile=$(CoberturaReportTarget);]"></Message>
+
+    <PropertyGroup>
+      <TestOutcome>Succeeded</TestOutcome>
+    </PropertyGroup>
+
+    <OnError ExecuteTargets="OnTestFailure" />
+  </Target>
+
+
+</Project>

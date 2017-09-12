@@ -29,7 +29,7 @@ function global:prompt {
     return " "
 }
 
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release) {
+function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [switch]$codeCoverage) {
 	if ($debug -and $release) {
 		Write-Error "You can specify either -debug or -release but not both."
 		return
@@ -50,6 +50,17 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
     }    
 
     & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor
+
+	if ($LASTEXITCODE -eq 0 -and $codeCoverage.IsPresent) {
+		[string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+
+		if (Test-Path ($codeCoverageReport)) {
+			Write-Host "Displaying dotCover code coverage report."
+			Start-Process $codeCoverageReport
+		} else {
+			Write-Warning "Unable to locate dotCover code coverage report."
+		}
+	}
 }
 
 function InstallPoshGit() {
