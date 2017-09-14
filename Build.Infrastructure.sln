@@ -110,6 +110,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{BEF951AC-BBD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer", "Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj", "{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAnalyzerTest", "Test\IntegrationTest.Build\Resources\RunAnalyzerTest.csproj", "{9299ECBB-0184-498B-A572-559C127BBF4C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -180,6 +182,10 @@ Global
 		{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9299ECBB-0184-498B-A572-559C127BBF4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9299ECBB-0184-498B-A572-559C127BBF4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9299ECBB-0184-498B-A572-559C127BBF4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9299ECBB-0184-498B-A572-559C127BBF4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Build.Evaluation;
@@ -66,7 +67,7 @@ namespace IntegrationTest.Build.Tasks {
             }
 
             void EventSourceMessageRaised(object sender, BuildMessageEventArgs e) {
-                textContext.WriteLine($"[MSBUILD]: {e.Message}");
+                textContext.WriteLine("[MSBUILD]: " + e.Message.Replace("{", "{{").Replace("}", "}}"), Array.Empty<object>());
             }
         }
     }

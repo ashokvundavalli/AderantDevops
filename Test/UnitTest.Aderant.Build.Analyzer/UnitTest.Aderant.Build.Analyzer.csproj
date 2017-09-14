@@ -98,6 +98,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Tests\AderantQueryServiceMigrationTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualityDbConnectionStringTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualityDefaultTransactionScopeTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualitySqlQueryTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualitySystemDiagnosticsTests.cs" />
     <Compile Include="Tests\InvalidQueryServiceProxyExtensionTests.cs" />
     <Compile Include="Tests\InvalidLogMessageTests.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
@@ -129,6 +133,7 @@
   <ItemGroup>
     <None Include="paket.references" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

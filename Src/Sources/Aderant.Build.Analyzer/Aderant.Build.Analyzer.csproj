@@ -74,6 +74,10 @@
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualityDefaultTransactionScopeRule.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualitySqlQueryRule.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualitySystemDiagnosticsRule.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
@@ -95,7 +99,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rules\RuleBase.cs" />
     <None Include="CodeFixes\InvalidRegexCodeFix.cs" />
-    <None Include="paket.references" />
     <None Include="paket.template" />
     <None Include="TSLint\package.json" />
     <None Include="TSLint\tslint.json" />

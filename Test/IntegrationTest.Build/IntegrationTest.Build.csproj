@@ -52,6 +52,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SystemUnderTest\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Content>
+    <Content Include="Resources\RunAnalyzerTest.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
@@ -89,6 +92,10 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BuildAssociationTests.cs" />
+    <Compile Include="RunAnalyzerTests.cs" />
+    <Content Include="Resources\TestClass.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Tasks\BuildTaskTestBase.cs" />
     <Compile Include="Tasks\CheckCertificateTests.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
@@ -98,6 +105,10 @@
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj">
+      <Project>{46204ee0-8a49-4f2f-b776-e5e1f1e79e10}</Project>
+      <Name>Aderant.Build.Analyzer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>

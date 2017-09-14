@@ -36,4 +36,8 @@
     <Message Text="$(GitCommit)" />
   </Target>
 
+  <Target Name="RunAnalyzer">
+    <MSBuild Projects="Resources\RunAnalyzerTest.csproj" />
+  </Target>
+
 </Project>
