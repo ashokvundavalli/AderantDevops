@@ -33,9 +33,12 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
         internal override string Title => "SqlQuery Error";
 
-        internal override string MessageFormat => Description;
+        internal override string MessageFormat => "Replace the usage of this method with an alternative data access strategy " +
+                                                  "such as a Stored Procedure DSL call.";
 
-        internal override string Description => "Remove illegal use of 'SqlQuery()' method.";
+        internal override string Description => "Customizations made to Entity Framework prevent the usage of this method. " +
+                                                "Replace the usage of this method with an alternative data access strategy " +
+                                                "such as a Stored Procedure DSL call.";
 
         #endregion Properties
 
