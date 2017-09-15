@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -67,16 +68,46 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
                 return;
             }
 
-            if (displayString.Equals(
+            if (!displayString.Equals(
                     "System.Data.Entity.Database.SqlQuery(System.Type, string, params object[])",
-                    StringComparison.Ordinal) ||
-                displayString.Equals(
+                    StringComparison.Ordinal) &&
+                !displayString.Equals(
                     "System.Data.Entity.Database.SqlQuery<TElement>(string, params object[])",
                     StringComparison.Ordinal)) {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        Descriptor,
-                        node.GetLocation()));
+                return;
+            }
+
+            var parentClass = node.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+
+            if (parentClass == null) {
+                return;
+            }
+
+            var classSymbol = context.SemanticModel.GetDeclaredSymbol(parentClass);
+
+            if (classSymbol == null) {
+                return;
+            }
+
+            var parentClassName = classSymbol.OriginalDefinition.ToDisplayString();
+
+            const string expertDbContextString = "Aderant.Query.Services.ExpertDbContext";
+
+            if (string.Equals(
+                expertDbContextString,
+                parentClassName,
+                StringComparison.Ordinal)) {
+                context.ReportDiagnostic(Diagnostic.Create(Descriptor, node.GetLocation()));
+                return;
+            }
+
+            var baseClassName = classSymbol.BaseType.OriginalDefinition.ToDisplayString();
+
+            if (string.Equals(
+                expertDbContextString,
+                baseClassName,
+                StringComparison.Ordinal)) {
+                context.ReportDiagnostic(Diagnostic.Create(Descriptor, node.GetLocation()));
             }
         }
 
