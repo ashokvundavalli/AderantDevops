@@ -5,8 +5,9 @@ param(
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
     [string]$Flavor,
-	[switch]$DatabaseBuildPipeline,
-	[switch]$CodeCoverage
+    [switch]$DatabaseBuildPipeline,
+    [switch]$CodeCoverage,
+    [switch]$Integration
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -126,7 +127,7 @@ function WarningRatchet() {
 
                 RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
             
-	    		$permittedWarningsThreshold = 5
+                $permittedWarningsThreshold = 5
 
                 # Only fail if the adjusted count exceeds the last build
                 if ($adjustedWarningCount -gt $lastGoodBuildCount -and $adjustedWarningCount -gt $permittedWarningsThreshold) {  
@@ -227,8 +228,8 @@ task GetDependencies {
 
 task Build {
 
-	# Get submodules
-	& git submodule update --init --recursive
+    # Get submodules
+    & git submodule update --init --recursive
 
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
@@ -264,6 +265,10 @@ task Build {
 
 	if ($CodeCoverage.IsPresent) {
 		$commonArgs = "$commonArgs /p:CodeCoverage=true"
+	}
+
+	if ($Integration.IsPresent) {
+		$commonArgs = "$commonArgs /p:RunIntegrationTests=true"
 	}
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
@@ -437,8 +442,8 @@ task Init {
         
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
         
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"                      
-                
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
+
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
     }
