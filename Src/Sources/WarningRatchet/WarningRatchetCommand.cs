@@ -2,6 +2,7 @@
 using System.Management.Automation;
 using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace WarningRatchet {
