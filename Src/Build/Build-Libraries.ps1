@@ -613,7 +613,7 @@
                     CopyContents -copyFrom $binTestPath -copyTo $dropBinTestPath
                 } else {
                     Write-Host "Copying test artifacts to drop"
-                    & robocopy $modulePath IntegrationTest*.dll*, IntegrationTest*.pdb, *UIAutomation.dll*, *UIAutomation.pdb*, *.rsd, *.rds, *rdl, *.csv, *Helper*.dll "$dropBinTestPath" /s
+                    & robocopy.exe $modulePath "IntegrationTest*.dll*, IntegrationTest*.pdb, *UIAutomation.dll*, *UIAutomation.pdb*, *.rsd, *.rds, *rdl, *.csv, *Helper*.dll" "$dropBinTestPath" /s
                 }
             }
 
