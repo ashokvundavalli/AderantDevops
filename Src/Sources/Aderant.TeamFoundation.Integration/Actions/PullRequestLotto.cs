@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aderant.WebHooks;
 using Aderant.WebHooks.Model;
 using Microsoft.AspNet.WebHooks.Payloads;
 
-namespace Aderant.WebHooks.Actions {
+namespace Aderant.TeamFoundation.Integration.Actions {
     internal class PullRequestLotto : GitRepositoryActionBase<GitPullRequestCreatedPayload> {
         public PullRequestLotto(GitPullRequestCreatedPayload payload)
             : base(payload, payload.Resource.Repository) {
@@ -35,7 +36,7 @@ namespace Aderant.WebHooks.Actions {
                 Contributor lottoWinner = contributors[luckyPersonIndex];
 
                 connection.AddContributorToPullRequest(repositoryInfo.Id, Payload.Resource.PullRequestId, lottoWinner);
-                connection.AddCommentToPullRequest(repositoryInfo.Id, Payload.Resource.PullRequestId, string.Format("{0} won the lottery and was added to this review.", lottoWinner.DisplayName));
+                connection.AddCommentToPullRequest(repositoryInfo.Id, Payload.Resource.PullRequestId, string.Format("{0} won the lottery and was added to this review. Golf clap for {0}", lottoWinner.DisplayName));
             }
         }
     }

@@ -1,7 +1,8 @@
-﻿using Aderant.WebHooks.Model;
+﻿using Aderant.WebHooks;
+using Aderant.WebHooks.Model;
 using Microsoft.AspNet.WebHooks.Payloads;
 
-namespace Aderant.WebHooks.Actions {
+namespace Aderant.TeamFoundation.Integration.Actions {
     internal class GitRepositoryActionBase<T> {
         protected GitRepositoryActionBase(T payload, GitRepository repository) {
             RepositoryInfo = new RepositoryInfo(repository);

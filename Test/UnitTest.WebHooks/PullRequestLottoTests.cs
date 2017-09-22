@@ -1,6 +1,6 @@
 ﻿using System;
-using Aderant.WebHooks;
-using Aderant.WebHooks.Actions;
+using Aderant.TeamFoundation.Integration;
+using Aderant.TeamFoundation.Integration.Actions;
 using Aderant.WebHooks.Model;
 using Microsoft.AspNet.WebHooks.Payloads;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

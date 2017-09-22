@@ -1,6 +1,6 @@
 ﻿using System.Web.Http;
 
-namespace Aderant.WebHooks {
+namespace Aderant.TeamFoundation.Integration {
     internal static class WebApiConfig {
         public static void Register(HttpConfiguration config) {
             // Web API configuration and services
