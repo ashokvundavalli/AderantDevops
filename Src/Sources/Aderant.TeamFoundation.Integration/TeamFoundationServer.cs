@@ -26,7 +26,6 @@ namespace Aderant.TeamFoundation.Integration {
         }
 
         public virtual Task<List<TfvcChangesetRef>> GetLastestChangesetAsync(Guid teamProjectId, int skip, int top) {
-            
             return connection.GetClient<TfvcHttpClient>()
                 .GetChangesetsAsync(
                     teamProjectId,
@@ -85,7 +84,7 @@ namespace Aderant.TeamFoundation.Integration {
                 var authors = commits.Select(s => s.Author);
 
                 foreach (var author in authors) {
-                    if (identities.Any(ident => string.Equals(ident.Name, author.Name))) {
+                    if (identities.Any(ident => string.Equals(ident.Name, author.Name, StringComparison.InvariantCultureIgnoreCase))) {
                         continue;
                     }
                     identities.Add(author);

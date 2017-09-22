@@ -23,11 +23,25 @@ namespace Aderant.TeamFoundation.Integration.Actions {
                     TeamProjectId = new Guid(repositoryInfo.TeamProjectId),
                     SourceControlType = SourceControlType.Tfvc | SourceControlType.Git
                 });
-            
-            AddLottoWinnerToPullRequest(recentContributors, connection, repositoryInfo);
+
+            List<Contributor> list = recentContributors.ToList();
+
+            RemoveSelf(list);
+
+            AddLottoWinnerToPullRequest(list, connection, repositoryInfo);
         }
 
-        private void AddLottoWinnerToPullRequest(IEnumerable<Contributor> recentContributors, ITeamFoundationServer connection, RepositoryInfo repositoryInfo) {
+        private void RemoveSelf(List<Contributor> list) {
+            Guid id;
+            if (Guid.TryParse(Payload.Resource.CreatedBy.Id, out id)) {
+                list.RemoveAll(item => item.Id == id);
+            }
+
+            list.RemoveAll(item => string.Equals(item.DisplayName, Payload.Resource.CreatedBy.DisplayName, StringComparison.InvariantCultureIgnoreCase));
+            list.RemoveAll(item => string.Equals(item.UniqueName, Payload.Resource.CreatedBy.UniqueName, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        private void AddLottoWinnerToPullRequest(List<Contributor> recentContributors, ITeamFoundationServer connection, RepositoryInfo repositoryInfo) {
             var contributors = recentContributors.ToList();
 
             if (contributors.Any()) {
@@ -36,7 +50,7 @@ namespace Aderant.TeamFoundation.Integration.Actions {
                 Contributor lottoWinner = contributors[luckyPersonIndex];
 
                 connection.AddContributorToPullRequest(repositoryInfo.Id, Payload.Resource.PullRequestId, lottoWinner);
-                connection.AddCommentToPullRequest(repositoryInfo.Id, Payload.Resource.PullRequestId, string.Format("{0} won the lottery and was added to this review. Golf clap for {0}", lottoWinner.DisplayName));
+                connection.AddCommentToPullRequest(repositoryInfo.Id, Payload.Resource.PullRequestId, $"{lottoWinner.DisplayName} won the lottery and was added to this review. Golf clap for {lottoWinner.DisplayName}.");
             }
         }
     }

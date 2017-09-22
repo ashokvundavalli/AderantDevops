@@ -1,101 +1,101 @@
-FRAMEWORK: >= NET35
+FRAMEWORK: NET46, NET45
 NUGET
   remote: https://www.nuget.org/api/v2
-    Castle.Core (4.1)
-    Microsoft.AspNet.WebApi.Client (5.2.2)
-      Newtonsoft.Json (>= 6.0.4) - framework: >= net45
-    Microsoft.AspNet.WebApi.Core (5.2.2)
-      Microsoft.AspNet.WebApi.Client (>= 5.2.2)
-    Microsoft.AspNet.WebApi.WebHost (5.2.2)
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2 < 5.3)
-    Microsoft.AspNet.WebHooks.Common (1.2.1)
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
-    Microsoft.AspNet.WebHooks.Receivers (1.2.1)
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
-      Microsoft.AspNet.WebHooks.Common (>= 1.2.1)
-    Microsoft.AspNet.WebHooks.Receivers.Generic (1.2.1)
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
-      Microsoft.AspNet.WebHooks.Common (>= 1.2.1)
-      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1)
-    Microsoft.AspNet.WebHooks.Receivers.VSTS (1.2.1)
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
-      Microsoft.AspNet.WebHooks.Common (>= 1.2.1)
-      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1)
-    Microsoft.CodeAnalysis.Analyzers (1.1)
-    Microsoft.CodeAnalysis.Common (1.2.2)
-      Microsoft.CodeAnalysis.Analyzers (>= 1.1)
-      System.Collections.Immutable (>= 1.1.37)
-      System.Reflection.Metadata (>= 1.2)
-    Microsoft.CodeAnalysis.CSharp (1.2.2)
-      Microsoft.CodeAnalysis.Common (1.2.2)
-    Microsoft.CodeAnalysis.CSharp.Workspaces (1.2.2)
-      Microsoft.CodeAnalysis.CSharp (1.2.2)
-      Microsoft.CodeAnalysis.Workspaces.Common (1.2.2)
-    Microsoft.CodeAnalysis.Workspaces.Common (1.2.2)
-      Microsoft.CodeAnalysis.Common (1.2.2)
-      Microsoft.Composition (>= 1.0.27)
-    Microsoft.CodeDom.Providers.DotNetCompilerPlatform (1.0)
-      Microsoft.Net.Compilers (>= 1.0)
-    Microsoft.Composition (1.0.31)
-      System.Composition (>= 1.0.31)
-    Microsoft.IdentityModel.Clients.ActiveDirectory (3.14.1)
-    Microsoft.Net.Compilers (1.0)
-    Microsoft.TeamFoundationServer.Client (15.104.0-preview)
-      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
-      Microsoft.VisualStudio.Services.Client (15.104.0-preview) - framework: >= net45
-      Newtonsoft.Json (>= 8.0.3) - framework: >= net45
-    Microsoft.TeamFoundationServer.ExtendedClient (15.104.0-preview)
-      Microsoft.AspNet.WebApi.Client (>= 5.2.2)
-      Microsoft.AspNet.WebApi.Core (>= 5.2.2)
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.23.302261847)
-      Microsoft.TeamFoundationServer.Client (15.104.0-preview)
-      Microsoft.VisualStudio.Services.Client (15.104.0-preview)
-      Microsoft.VisualStudio.Services.InteractiveClient (15.104.0-preview)
-      Newtonsoft.Json (>= 8.0.3)
-      System.IdentityModel.Tokens.Jwt (>= 4.0.2.206221351)
-    Microsoft.VisualStudio.Services.Client (15.104.0-preview)
-      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
-      Newtonsoft.Json (>= 8.0.3) - framework: >= net45
-    Microsoft.VisualStudio.Services.InteractiveClient (15.104.0-preview)
-      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: >= net45
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.23.302261847) - framework: >= net45
-      Microsoft.VisualStudio.Services.Client (15.104.0-preview) - framework: >= net45
-      Newtonsoft.Json (>= 8.0.3) - framework: >= net45
-      System.IdentityModel.Tokens.Jwt (>= 4.0.2.206221351) - framework: >= net45
-      WindowsAzure.ServiceBus (>= 2.5.1) - framework: >= net45
-    Microsoft.Web.Infrastructure (1.0)
-    Microsoft.Web.Xdt (2.1.1)
-    Microsoft.WindowsAPICodePack-Core (1.1.0.2)
-    Microsoft.WindowsAPICodePack-Shell (1.1)
-      Microsoft.WindowsAPICodePack-Core (>= 1.1)
-    Moq (4.7.63)
-      Castle.Core (>= 4.1) - framework: >= net45
-    Newtonsoft.Json (8.0.3)
-    RouteMagic (1.3)
-    System.Collections.Immutable (1.1.37)
-    System.Composition (1.0.31)
-      System.Composition.AttributedModel (>= 1.0.31)
-      System.Composition.Convention (>= 1.0.31)
-      System.Composition.Hosting (>= 1.0.31)
-      System.Composition.Runtime (>= 1.0.31)
-      System.Composition.TypedParts (>= 1.0.31)
-    System.Composition.AttributedModel (1.0.31)
-    System.Composition.Convention (1.0.31)
-      System.Composition.AttributedModel (>= 1.0.31)
-    System.Composition.Hosting (1.0.31)
-      System.Composition.Runtime (>= 1.0.31)
-    System.Composition.Runtime (1.0.31)
-    System.Composition.TypedParts (1.0.31)
-      System.Composition.AttributedModel (>= 1.0.31)
-      System.Composition.Hosting (>= 1.0.31)
-      System.Composition.Runtime (>= 1.0.31)
-    System.IdentityModel.Tokens.Jwt (4.0.4.403061554)
-    System.Reflection.Metadata (1.2)
-      System.Collections.Immutable (>= 1.1.37)
-    WebActivatorEx (2.2)
-      Microsoft.Web.Infrastructure (>= 1.0)
-    WindowsAPICodePack-Core (1.1.2)
-    WindowsAzure.ServiceBus (4.1.2)
+    Castle.Core (4.1.1) - framework: net45, net46
+    Microsoft.AspNet.WebApi.Client (5.2.2) - framework: net45, net46
+      Newtonsoft.Json (>= 6.0.4) - framework: net45, net46
+    Microsoft.AspNet.WebApi.Core (5.2.2) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
+    Microsoft.AspNet.WebApi.WebHost (5.2.2) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2 < 5.3) - framework: net45, net46
+    Microsoft.AspNet.WebHooks.Common (1.2.1) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
+    Microsoft.AspNet.WebHooks.Receivers (1.2.1) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
+      Microsoft.AspNet.WebHooks.Common (>= 1.2.1) - framework: net45, net46
+    Microsoft.AspNet.WebHooks.Receivers.Generic (1.2.1) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
+      Microsoft.AspNet.WebHooks.Common (>= 1.2.1) - framework: net45, net46
+      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1) - framework: net45, net46
+    Microsoft.AspNet.WebHooks.Receivers.VSTS (1.2.1) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
+      Microsoft.AspNet.WebHooks.Common (>= 1.2.1) - framework: net45, net46
+      Microsoft.AspNet.WebHooks.Receivers (>= 1.2.1) - framework: net45, net46
+    Microsoft.CodeAnalysis.Analyzers (1.1) - framework: net45, net46
+    Microsoft.CodeAnalysis.Common (1.2.2) - framework: net45, net46
+      Microsoft.CodeAnalysis.Analyzers (>= 1.1) - framework: net45, net46
+      System.Collections.Immutable (>= 1.1.37) - framework: net45, net46
+      System.Reflection.Metadata (>= 1.2) - framework: net45, net46
+    Microsoft.CodeAnalysis.CSharp (1.2.2) - framework: net45, net46
+      Microsoft.CodeAnalysis.Common (1.2.2) - framework: net45, net46
+    Microsoft.CodeAnalysis.CSharp.Workspaces (1.2.2) - framework: net45, net46
+      Microsoft.CodeAnalysis.CSharp (1.2.2) - framework: net45, net46
+      Microsoft.CodeAnalysis.Workspaces.Common (1.2.2) - framework: net45, net46
+    Microsoft.CodeAnalysis.Workspaces.Common (1.2.2) - framework: net45, net46
+      Microsoft.CodeAnalysis.Common (1.2.2) - framework: net45, net46
+      Microsoft.Composition (>= 1.0.27) - framework: net45, net46
+    Microsoft.CodeDom.Providers.DotNetCompilerPlatform (1.0) - framework: net45, net46
+      Microsoft.Net.Compilers (>= 1.0) - framework: net45, net46
+    Microsoft.Composition (1.0.31) - framework: net45, net46
+      System.Composition (>= 1.0.31) - framework: net45, net46
+    Microsoft.IdentityModel.Clients.ActiveDirectory (2.28.4) - framework: net45, net46
+    Microsoft.Net.Compilers (1.0) - framework: net45, net46
+    Microsoft.TeamFoundationServer.Client (14.102) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (14.102) - framework: net45, net46
+      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
+    Microsoft.TeamFoundationServer.ExtendedClient (14.102) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.16.204221202) - framework: net45, net46
+      Microsoft.TeamFoundationServer.Client (14.102) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (14.102) - framework: net45, net46
+      Microsoft.VisualStudio.Services.InteractiveClient (14.102) - framework: net45, net46
+      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
+      System.IdentityModel.Tokens.Jwt (>= 4.0) - framework: net45, net46
+    Microsoft.VisualStudio.Services.Client (14.102) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
+      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
+    Microsoft.VisualStudio.Services.InteractiveClient (14.102) - framework: net45, net46
+      Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.16.204221202) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (14.102) - framework: net45, net46
+      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
+      System.IdentityModel.Tokens.Jwt (>= 4.0) - framework: net45, net46
+      WindowsAzure.ServiceBus (>= 2.5.1) - framework: net45, net46
+    Microsoft.Web.Infrastructure (1.0) - framework: net45, net46
+    Microsoft.Web.Xdt (2.1.1) - framework: net45, net46
+    Microsoft.WindowsAPICodePack-Core (1.1.0.2) - framework: net45, net46
+    Microsoft.WindowsAPICodePack-Shell (1.1) - framework: net45, net46
+      Microsoft.WindowsAPICodePack-Core (>= 1.1) - framework: net45, net46
+    Moq (4.7.99) - framework: net45, net46
+      Castle.Core (>= 4.1.1) - framework: net45, net46
+    Newtonsoft.Json (6.0.8) - framework: net45, net46
+    RouteMagic (1.3) - framework: net45, net46
+    System.Collections.Immutable (1.1.37) - framework: net45, net46
+    System.Composition (1.1) - framework: net45, net46
+      System.Composition.AttributedModel (>= 1.1) - framework: net45, net46
+      System.Composition.Convention (>= 1.1) - framework: net45, net46
+      System.Composition.Hosting (>= 1.1) - framework: net45, net46
+      System.Composition.Runtime (>= 1.1) - framework: net45, net46
+      System.Composition.TypedParts (>= 1.1) - framework: net45, net46
+    System.Composition.AttributedModel (1.1) - framework: net45, net46
+    System.Composition.Convention (1.1) - framework: net45, net46
+      System.Composition.AttributedModel (>= 1.1) - framework: net45, net46
+    System.Composition.Hosting (1.1) - framework: net45, net46
+      System.Composition.Runtime (>= 1.1) - framework: net45, net46
+    System.Composition.Runtime (1.1) - framework: net45, net46
+    System.Composition.TypedParts (1.1) - framework: net45, net46
+      System.Composition.AttributedModel (>= 1.1) - framework: net45, net46
+      System.Composition.Hosting (>= 1.1) - framework: net45, net46
+      System.Composition.Runtime (>= 1.1) - framework: net45, net46
+    System.IdentityModel.Tokens.Jwt (4.0.4.403061554) - framework: net45, net46
+    System.Reflection.Metadata (1.2) - framework: net45, net46
+      System.Collections.Immutable (>= 1.1.37) - framework: net45, net46
+    WebActivatorEx (2.2) - framework: net45, net46
+      Microsoft.Web.Infrastructure (>= 1.0) - framework: net45, net46
+    WindowsAPICodePack-Core (1.1.2) - framework: net45, net46
+    WindowsAzure.ServiceBus (4.1.3) - framework: net45, net46
 
 GROUP Analyzer
 NUGET

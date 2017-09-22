@@ -96,8 +96,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectReferenceTool", "Src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.WebHooks", "Test\UnitTest.WebHooks\UnitTest.WebHooks.csproj", "{415B270C-A913-4BBA-BFB3-E7EC1BB9754F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.WebHooks", "Src\Sources\Aderant.WebHooks\Aderant.WebHooks.csproj", "{7AA81D68-A831-41BA-B899-062FDAC0C63C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarningRatchet", "Src\Sources\WarningRatchet\WarningRatchet.csproj", "{940B72A8-B517-4511-BF66-2F53548A711F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{BEF951AC-BBDF-46C0-8C61-12C3F1667F2F}"
@@ -111,6 +109,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer", "Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj", "{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAnalyzerTest", "Test\IntegrationTest.Build\Resources\RunAnalyzerTest.csproj", "{9299ECBB-0184-498B-A572-559C127BBF4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.TeamFoundation.Integration", "Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj", "{7AA81D68-A831-41BA-B899-062FDAC0C63C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -170,10 +170,6 @@ Global
 		{415B270C-A913-4BBA-BFB3-E7EC1BB9754F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{415B270C-A913-4BBA-BFB3-E7EC1BB9754F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{415B270C-A913-4BBA-BFB3-E7EC1BB9754F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{940B72A8-B517-4511-BF66-2F53548A711F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{940B72A8-B517-4511-BF66-2F53548A711F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{940B72A8-B517-4511-BF66-2F53548A711F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -186,6 +182,10 @@ Global
 		{9299ECBB-0184-498B-A572-559C127BBF4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9299ECBB-0184-498B-A572-559C127BBF4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9299ECBB-0184-498B-A572-559C127BBF4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
