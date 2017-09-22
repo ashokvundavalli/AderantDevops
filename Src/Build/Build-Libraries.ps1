@@ -615,7 +615,7 @@
                     Write-Host "Copying integration test artifacts to drop"
 
                     # *.dll* as we need both the .dll and the .config
-                    Get-ChildItem $modulePath\* -Recurse -Include IntegrationTest*.dll*, IntegrationTest*.pdb, *.rsd, *.rds, *rdl | % { Copy-Item $_.FullName $dropBinTestPath -Force }
+                    Get-ChildItem $modulePath\* -Recurse -Include IntegrationTest*.dll*, IntegrationTest*.pdb, *UIAutomation.dll*, *UIAutomation.pdb*, *.rsd, *.rds, *rdl | % { Copy-Item $_.FullName $dropBinTestPath -Force }
 
                     # We also want any Test Helper assemblies
                     Get-ChildItem $modulePath\* -Recurse -Include *Helper*.dll -Exclude *System*.dll | % { Copy-Item $_.FullName $dropBinTestPath -Force}
