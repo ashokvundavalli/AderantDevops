@@ -468,7 +468,7 @@
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true -teamProject $(TeamProject) -tfvcBranchName $(BranchName) -tfvcSourceGetVersion $(SourceGetVersion) -buildUri $(BuildUri) -tfsBuildNumber $(BuildNumber)"
+          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProductTests.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true -teamProject $(TeamProject) -tfvcBranchName $(BranchName) -tfvcSourceGetVersion $(SourceGetVersion) -buildUri $(BuildUri) -tfsBuildNumber $(BuildNumber)"
           WorkingDirectory="$(PackageScriptsDirectory)" />
 
     <BuildStep
