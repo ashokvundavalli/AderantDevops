@@ -613,7 +613,21 @@
                     CopyContents -copyFrom $binTestPath -copyTo $dropBinTestPath
                 } else {
                     Write-Host "Copying test artifacts to drop"
-                    & robocopy.exe $modulePath "IntegrationTest*.dll*, IntegrationTest*.pdb, *UIAutomation.dll*, *UIAutomation.pdb*, *.rsd, *.rds, *rdl, *.csv, *Helper*.dll" "$dropBinTestPath" /s
+                    
+                    $patterns = @(
+                        "IntegrationTest*.dll*",
+                        "IntegrationTest*.pdb",
+                        "*UIAutomation.dll*",
+                        "*UIAutomation.pdb*",
+                        "*.rsd",
+                        "*.rds",
+                        "*.rdl",
+                        "*.csv",
+                        "*Helper*.dll")
+                    
+                    # Fucking garbage VMBLD301 with its shit old version of robocopy does not support multiple file patterns ffs
+                    # PREPARE THE LOOP CAPTAIN
+                    $patterns | % { & robocopy.exe $binTestPath $_ "$dropBinTestPath" /s }
                 }
             }
 
