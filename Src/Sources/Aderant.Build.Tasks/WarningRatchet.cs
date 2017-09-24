@@ -18,15 +18,6 @@ namespace Aderant.Build.Tasks {
         }
 
         public static async Task<Microsoft.TeamFoundation.Build.WebApi.Build> GetLastGoodBuildAsync(BuildHttpClient client, WarningRatchetRequest request) {
-            //if (request.IsDraft && !string.IsNullOrEmpty(request.BuildDefinitionName)) {
-            //    var references = await client.GetDefinitionsAsync(request.TeamProject, request.BuildDefinitionName, );
-            //    if (references != null) {
-            //        DefinitionReference reference = references.FirstOrDefault(item => item.Id != request.BuildDefinitionId);
-            //        if (reference != null)
-            //            request.BuildDefinitionId = reference.Id;
-            //    }
-            //}
-
             if (request.BuildDefinitionId == 0) {
                 throw new InvalidOperationException("Cannot request a build with a definition id of 0.");
             }
@@ -35,7 +26,7 @@ namespace Aderant.Build.Tasks {
             // the agent will have provided us with an incompatible API.
             // To fix this we need to run this code in a separate process/appdomain/container to that which is provided
             // by the build agent
-            var result = await client.GetBuildsAsync(request.TeamProject, new int[] { request.BuildDefinitionId },
+            var result = await client.GetBuildsAsync2(request.TeamProject, new int[] { request.BuildDefinitionId },
                 queues: null,
                 buildNumber: null,
                 minFinishTime: null,
