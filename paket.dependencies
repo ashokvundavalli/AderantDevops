@@ -24,6 +24,7 @@ nuget Microsoft.AspNet.WebHooks.Receivers
 nuget Microsoft.AspNet.WebHooks.Receivers.Generic
 nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
 #nuget Microsoft.IdentityModel.Clients.ActiveDirectory <= 2.28.4
+nuget Newtonsoft.Json ~> 8.0.0
 
 nuget RouteMagic
 nuget WebActivatorEx
