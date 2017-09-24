@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.WebHooks.Model;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.CodeReview.Discussion.WebApi;
 using Microsoft.VisualStudio.Services.CodeReview.WebApi;
 using Microsoft.VisualStudio.Services.Identity;

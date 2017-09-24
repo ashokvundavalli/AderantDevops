@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.Tasks.WarningProcess;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Client;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Aderant.Build.Tasks {
     public sealed class WarningReporter {

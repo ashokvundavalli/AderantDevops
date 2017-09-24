@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Aderant.Build.Tasks {
     public class WarningRatchet {
-        private readonly VssConnection connection;
+        private readonly Microsoft.VisualStudio.Services.WebApi.VssConnection connection;
         private BuildHttpClient client;
 
         const int MaximumItemCount = 5000;
 
-        public WarningRatchet(VssConnection connection) {
+        public WarningRatchet(Microsoft.VisualStudio.Services.WebApi.VssConnection connection) {
             this.connection = connection;
             this.client = connection.GetClient<BuildHttpClient>(); // Return client is shared instance for all calls of GetClient, if you dispose it it's gone forever.
         }

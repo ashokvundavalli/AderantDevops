@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Management.Automation;
-using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
 
 namespace WarningRatchet {
@@ -21,7 +20,7 @@ namespace WarningRatchet {
         protected override void BeginProcessing() {
             base.BeginProcessing();
 
-            var connection = new VssConnection(new Uri(TeamFoundationServer), new VssCredentials());
+            var connection = new Microsoft.VisualStudio.Services.WebApi.VssConnection(new Uri(TeamFoundationServer), new VssCredentials());
 
             var ratchet = new Aderant.Build.Tasks.WarningRatchet(connection);
             var request = ratchet.CreateNewRequest(TeamProject, BuildId, DestinationBranchName);
