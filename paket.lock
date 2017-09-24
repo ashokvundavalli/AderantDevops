@@ -38,31 +38,41 @@ NUGET
       Microsoft.Net.Compilers (>= 1.0) - framework: net45, net46
     Microsoft.Composition (1.0.31) - framework: net45, net46
       System.Composition (>= 1.0.31) - framework: net45, net46
-    Microsoft.IdentityModel.Clients.ActiveDirectory (2.28.4) - framework: net45, net46
+    Microsoft.IdentityModel.Clients.ActiveDirectory (3.16.1) - framework: net45, net46
+    Microsoft.IdentityModel.Logging (1.1.4) - framework: net45, net46
+    Microsoft.IdentityModel.Tokens (5.1.4) - framework: net45, net46
+      Microsoft.IdentityModel.Logging (>= 1.1.4) - framework: net45, net46
+      Newtonsoft.Json (>= 9.0.1) - framework: net45, net46
     Microsoft.Net.Compilers (1.0) - framework: net45, net46
-    Microsoft.TeamFoundationServer.Client (15.98.0-preview) - framework: net45, net46
+    Microsoft.TeamFoundation.DistributedTask.Common (15.112.1) - framework: net45, net46
+      Microsoft.Tpl.Dataflow (>= 4.5.24) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (15.112.1) - framework: net45, net46
+      Newtonsoft.Json (>= 8.0.3) - framework: net45, net46
+    Microsoft.TeamFoundationServer.Client (15.112.1) - framework: net45, net46
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.98.0-preview) - framework: net45, net46
-      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
-    Microsoft.TeamFoundationServer.ExtendedClient (15.98.0-preview) - framework: net45, net46
+      Microsoft.TeamFoundation.DistributedTask.Common (15.112.1) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (15.112.1) - framework: net45, net46
+      Newtonsoft.Json (>= 8.0.3) - framework: net45, net46
+    Microsoft.TeamFoundationServer.ExtendedClient (15.112.1) - framework: net45, net46
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
       Microsoft.AspNet.WebApi.Core (>= 5.2.2) - framework: net45, net46
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.23.302261847) - framework: net45, net46
-      Microsoft.TeamFoundationServer.Client (15.98.0-preview) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.98.0-preview) - framework: net45, net46
-      Microsoft.VisualStudio.Services.InteractiveClient (15.98.0-preview) - framework: net45, net46
-      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
-      System.IdentityModel.Tokens.Jwt (>= 4.0) - framework: net45, net46
-    Microsoft.VisualStudio.Services.Client (15.98.0-preview) - framework: net45, net46
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.13.5) - framework: net45, net46
+      Microsoft.TeamFoundationServer.Client (15.112.1) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (15.112.1) - framework: net45, net46
+      Microsoft.VisualStudio.Services.InteractiveClient (15.112.1) - framework: net45, net46
+      Newtonsoft.Json (>= 8.0.3) - framework: net45, net46
+      System.IdentityModel.Tokens.Jwt (>= 4.0.2.206221351) - framework: net45, net46
+    Microsoft.Tpl.Dataflow (4.5.24) - framework: net45, net46
+    Microsoft.VisualStudio.Services.Client (15.112.1) - framework: net45, net46
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
-      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
-    Microsoft.VisualStudio.Services.InteractiveClient (15.98.0-preview) - framework: net45, net46
+      Newtonsoft.Json (>= 8.0.3) - framework: net45, net46
+    Microsoft.VisualStudio.Services.InteractiveClient (15.112.1) - framework: net45, net46
       Microsoft.AspNet.WebApi.Client (>= 5.2.2) - framework: net45, net46
-      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 2.23.302261847) - framework: net45, net46
-      Microsoft.VisualStudio.Services.Client (15.98.0-preview) - framework: net45, net46
-      Newtonsoft.Json (>= 6.0.8) - framework: net45, net46
-      System.IdentityModel.Tokens.Jwt (>= 4.0) - framework: net45, net46
-      WindowsAzure.ServiceBus (>= 2.5.1) - framework: net45, net46
+      Microsoft.IdentityModel.Clients.ActiveDirectory (>= 3.13.5) - framework: net45, net46
+      Microsoft.VisualStudio.Services.Client (15.112.1) - framework: net45, net46
+      Newtonsoft.Json (>= 8.0.3) - framework: net45, net46
+      System.IdentityModel.Tokens.Jwt (>= 4.0.2.206221351) - framework: net45, net46
+      WindowsAzure.ServiceBus (>= 3.3.2) - framework: net45, net46
     Microsoft.Web.Infrastructure (1.0) - framework: net45, net46
     Microsoft.Web.Xdt (2.1.1) - framework: net45, net46
     Microsoft.WindowsAPICodePack-Core (1.1.0.2) - framework: net45, net46
@@ -70,7 +80,7 @@ NUGET
       Microsoft.WindowsAPICodePack-Core (>= 1.1) - framework: net45, net46
     Moq (4.7.99) - framework: net45, net46
       Castle.Core (>= 4.1.1) - framework: net45, net46
-    Newtonsoft.Json (6.0.8) - framework: net45, net46
+    Newtonsoft.Json (10.0.3) - framework: net45, net46
     RouteMagic (1.3) - framework: net45, net46
     System.Collections.Immutable (1.1.37) - framework: net45, net46
     System.Composition (1.1) - framework: net45, net46
@@ -89,7 +99,8 @@ NUGET
       System.Composition.AttributedModel (>= 1.1) - framework: net45, net46
       System.Composition.Hosting (>= 1.1) - framework: net45, net46
       System.Composition.Runtime (>= 1.1) - framework: net45, net46
-    System.IdentityModel.Tokens.Jwt (4.0.4.403061554) - framework: net45, net46
+    System.IdentityModel.Tokens.Jwt (5.1.4) - framework: net45, net46
+      Microsoft.IdentityModel.Tokens (>= 5.1.4) - framework: net45, net46
     System.Reflection.Metadata (1.2) - framework: net45, net46
       System.Collections.Immutable (>= 1.1.37) - framework: net45, net46
     WebActivatorEx (2.2) - framework: net45, net46
