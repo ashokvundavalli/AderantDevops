@@ -83,13 +83,13 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj">
-      <Project>{7AA81D68-A831-41BA-B899-062FDAC0C63C}</Project>
-      <Name>Aderant.WebHooks</Name>
-    </ProjectReference>
+    <None Include="Resources\git-pullrequest-created.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\git-pullrequest-created.json" />
+    <ProjectReference Include="..\..\Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj">
+      <Project>{7AA81D68-A831-41BA-B899-062FDAC0C63C}</Project>
+      <Name>Aderant.TeamFoundation.Integration</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
