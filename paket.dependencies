@@ -15,8 +15,8 @@ nuget Microsoft.Composition
 nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
 
-nuget Microsoft.TeamFoundationServer.ExtendedClient <= 14.102.0
-nuget Microsoft.VisualStudio.Services.Client <= 14.102.0
+nuget Microsoft.TeamFoundationServer.ExtendedClient < 16 preview
+nuget Microsoft.VisualStudio.Services.Client < 16 preview
 nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
 nuget Microsoft.AspNet.WebApi.WebHost
 nuget Microsoft.AspNet.WebHooks.Common
