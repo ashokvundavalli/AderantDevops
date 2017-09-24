@@ -430,7 +430,7 @@ namespace Aderant.Build.Commands {
         
         private bool IsFileInDependencies(string absoluteFilePath) {
             string searchName = Path.GetFileName(absoluteFilePath).ToLower();
-            string dependenciesDir = FindDependenciesDirectoryFromBinFile(absoluteFilePath).ToLower();
+            string dependenciesDir = FindDependenciesDirectoryFromBinFile(absoluteFilePath)?.ToLower();
             if (string.IsNullOrEmpty(dependenciesDir)) { //could not find a dependency dir for this file path.
                 return false;
             }
@@ -467,6 +467,9 @@ namespace Aderant.Build.Commands {
 
         private string FindDependenciesDirectoryFromBinFile(string nameOfBinOutputFile) { //TODO: should be looking inside packages too
             int index = nameOfBinOutputFile.LastIndexOf("\\Bin\\Module", StringComparison.InvariantCultureIgnoreCase);
+            if (index < 0) {
+                return null;
+            }
             string dependenciesDir = Path.Combine(nameOfBinOutputFile.Substring(0, index), "Dependencies");
             return Directory.Exists(dependenciesDir) ? dependenciesDir : null;
         }
