@@ -59,9 +59,6 @@
           Timeout="$(TestTimeoutMilliseconds)"
           Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)' />
 
-    <Exec Condition="!Exists('$(DotCoverExecutablePath)') And '$(BuildInfrastructureDirectory)' != ''" Command='cd "$(BuildInfrastructureDirectory)" &amp; git submodule update --init --recursive'></Exec>
-    <Exec Condition="!Exists('$(DotCoverExecutablePath)') And Exists('$(BuildDirectory)\Build.Infrastructure')" Command='cd "$(BuildDirectory)\Build.Infrastructure" &amp; git submodule update --init --recursive'></Exec>
-
     <!-- Run VSTest using dotCover -->
     <Exec Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
           ContinueOnError="false"
