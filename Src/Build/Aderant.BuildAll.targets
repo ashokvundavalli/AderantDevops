@@ -462,13 +462,18 @@
         TaskParameter="id"
         PropertyName="BuildStepId" />
     </BuildStep>
+    
+    <PropertyGroup>
+      <_GetProductScript Condition="'$(_GetProductScript)' == ''">GetProduct.ps1</_GetProductScript>
+      <_GetProductScript Condition="'$(UseGetProductTests)' == 'true'">GetProductTests.ps1</_GetProductScript>      
+    </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProductTests.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true -teamProject $(TeamProject) -tfvcBranchName $(BranchName) -tfvcSourceGetVersion $(SourceGetVersion) -buildUri $(BuildUri) -tfsBuildNumber $(BuildNumber)"
+          Command="Powershell -noprofile $(PackageScriptsDirectory)$(_GetProductScript) -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true -teamProject $(TeamProject) -tfvcBranchName $(BranchName) -tfvcSourceGetVersion $(SourceGetVersion) -buildUri $(BuildUri) -tfsBuildNumber $(BuildNumber)"
           WorkingDirectory="$(PackageScriptsDirectory)" />
 
     <BuildStep
