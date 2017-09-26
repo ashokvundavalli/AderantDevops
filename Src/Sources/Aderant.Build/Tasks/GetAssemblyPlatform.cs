@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -14,6 +13,14 @@ namespace Aderant.Build.Tasks {
     /// then the build process must use the 32-bit of VS Test. 
     /// </summary>
     public sealed class GetAssemblyPlatform : Microsoft.Build.Utilities.Task {
+        private readonly string[] allowedAssemblyExtensions = {
+            ".winmd",
+            ".dll",
+            ".exe"
+        };
+
+        private AppDomain inspectionDomain;
+
         /// <summary>
         /// Gets or sets the assemblies to analyze.
         /// This is an output property (two way) as it need to return modified metadata to the build process.
@@ -34,19 +41,20 @@ namespace Aderant.Build.Tasks {
             if (Assemblies != null) {
                 Log.LogMessage(MessageImportance.High, "Building assembly platform architecture list...");
 
-                Assembly thisAssembly = GetType().Assembly;
-
-                AppDomain inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(thisAssembly.Location), null, false);
-
-                AssemblyInspector inspector = (AssemblyInspector)inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof(AssemblyInspector).FullName);
+                AssemblyInspector inspector = CreateInspector();
 
                 Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
-                var filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
-                foreach (ITaskItem item in filteredAssemblies) {
+                IEnumerable<ITaskItem> filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
+
+                Queue<ITaskItem> scanQueue = new Queue<ITaskItem>(filteredAssemblies);
+               
+                 while (scanQueue.Count > 0) {
+                    var item = scanQueue.Dequeue();
+                  
                     string fullPath = item.GetMetadata("FullPath");
                     
-                    if ((item.ItemSpec.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || item.ItemSpec.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) && File.Exists(item.ItemSpec)) {
+                    if (FileUtilities.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
                         string hash;
                         using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
                             byte[] fileBytes = File.ReadAllBytes(fullPath);
@@ -54,25 +62,53 @@ namespace Aderant.Build.Tasks {
                         }
                     
                         if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
-                            analyzedAssemblies[item] = hash;
+                            try {
+                                PortableExecutableKinds peKind = inspector.GetAssemblyKind(item.ItemSpec);
 
-                            PortableExecutableKinds peKind = inspector.GetAssemblyKind(item.ItemSpec);
+                                if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
+                                    MustRun32Bit = true;
+                                }
 
-                            if (peKind.HasFlag(PortableExecutableKinds.Required32Bit)) {
-                                MustRun32Bit = true;
+                                // Optimization to reduce boxing for the common cases
+                                if (peKind == PortableExecutableKinds.ILOnly) {
+                                    item.SetMetadata("Platform", "ILOnly");
+                                } else if (peKind == PortableExecutableKinds.Required32Bit) {
+                                    item.SetMetadata("Platform", "x86");
+                                } else {
+                                    item.SetMetadata("Platform", peKind.ToString());
+                                }
+
+                                analyzedAssemblies[item] = hash;
+                            } catch (FileLoadException ex) {
+                                Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}. You should delete this file or other file with the same identity to resolve this warning.");
+
+                                inspector = CreateInspector();
+
+                                scanQueue.Enqueue(item);
                             }
-
-                            item.SetMetadata("Platform", peKind.ToString());
                         }
                     }
                 }
 
-                inspector = null;
-                AppDomain.Unload(inspectionDomain);
-                GC.Collect();
+                if (inspectionDomain != null) {
+                    AppDomain.Unload(inspectionDomain);
+                    GC.Collect();
+                }
             }
 
-            return true;
+            return !Log.HasLoggedErrors;
+        }
+
+        private AssemblyInspector CreateInspector() {
+            Assembly thisAssembly = GetType().Assembly;
+
+            if (inspectionDomain != null) {
+                AppDomain.Unload(inspectionDomain);
+                inspectionDomain = null;
+            }
+
+            inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(thisAssembly.Location), null, false);
+            return (AssemblyInspector)inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof(AssemblyInspector).FullName);
         }
 
         private bool ShouldAnalyze(Dictionary<ITaskItem, string> analyzedAssemblies, string hash, ITaskItem item) {

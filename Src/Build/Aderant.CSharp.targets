@@ -155,12 +155,16 @@
         (6) Legacy registered assembly folders, indicated by {AssemblyFolders}
         (7) Resolve to the GAC.
         (8) Treat the reference's Include as if it were a real file name.
-        (9) Look in the application's output folder (like bin\debug)
-            
+        (9) Look in the application's output folder (like bin\debug)            
     -->    
        
     <PropertyGroup>
-      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
+      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>      
+      <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
+      <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
+
+      <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
+      <_FindDependencies>false</_FindDependencies> 
     </PropertyGroup>
     
     <ItemGroup>
@@ -169,10 +173,11 @@
     </ItemGroup>    
 
     <PropertyGroup>
-      <AssemblySearchPaths>                        
-        $(AssemblySearchPaths);
+      <!--This path order places out search paths first-->
+      <AssemblySearchPaths>        
         $(RootFolder)\Dependencies\;
         @(PackageDirectories);
+        $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>
 
@@ -211,7 +216,7 @@
         <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
       </ItemGroup>
   
-      <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any reference paths to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
+      <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any references to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
   </Target>
 
   

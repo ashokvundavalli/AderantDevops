@@ -198,7 +198,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\ExpertIcon.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\Package.ico" />

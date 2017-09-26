@@ -66,7 +66,7 @@
     </Reference>
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -90,6 +90,7 @@
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="FileUtilitiesTests.cs" />
     <Compile Include="DependencyManifestTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />

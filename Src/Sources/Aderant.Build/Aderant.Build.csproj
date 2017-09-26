@@ -141,6 +141,7 @@
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
+    <Compile Include="FileUtilities.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\Hash.cs" />
