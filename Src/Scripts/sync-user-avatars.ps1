@@ -133,7 +133,8 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
         } catch {
             if ($_.Exception.InnerException.Response.StatusCode -ne 404) {
                 Write-Host "Error updating $($user.UniqueName)"
-                Write-Error $_.Exception
+                Write-Host $_                
+                Write-Host $_.Exception.ToString()
                 Write-Error $_
                 return
             }
