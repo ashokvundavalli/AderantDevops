@@ -1,5 +1,7 @@
 Set-StrictMode -Version 2.0
 
+$ErrorActionPreference = 'Stop'
+
 <#
     This script takes care of fetching all identities known to TFS then downloading the user photo (if any) from Office 365 and assigning that photo
     to the Team Foundation identity
@@ -68,7 +70,7 @@ function SetTeamFoundationProperties($identityService, $user, $imageBytes, $form
     $user.SetProperty("Microsoft.TeamFoundation.Identity.CandidateImage.Data", $null)
     $user.SetProperty("Microsoft.TeamFoundation.Identity.CandidateImage.UploadDate", $null)                    
 
-    $identityService.UpdateExtendedProperties($user)
+    #$identityService.UpdateExtendedProperties($user)
 }
 
 
@@ -95,44 +97,51 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
         $hashTable.Add($prop.Key, $prop.Value)
     }
 
-    # if ($hashTable.ContainsKey("Microsoft.TeamFoundation.Identity.Image.Id")) {
-    #     Write-Host "Skipping $($user.UniqueName) has a photo is already attached, skipped."
-    #     return
-    # }
-
     Write-Host "Getting user photo for $($user.UniqueName)"
     
     $mail = $user.GetProperty("Mail")
     if ($mail) {
         $uri = "https://outlook.office365.com/EWS/Exchange.asmx/s/GetUserPhoto?email={0}&size=HR648X648" -f $mail
 
+        $stream = $null
+        $bitmap = $null
         try {
-		    $client = [System.Net.WebClient]::new()
-		    $client.Headers[ "Accept" ] = "/"
-	        $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", "$password")
-	        $client.DownloadFile($uri, "C:\temp\avatars\$mail.jpg")
-			$client.Dispose()
-			
-			$bitmap = [System.Drawing.Image]::FromFile("C:\temp\avatars\$mail.jpg")		
-            
-			$format = ""
-			if ([System.Drawing.Imaging.ImageFormat]::Jpeg.Equals($bitmap.RawFormat)) {
-				$format = "image/jpg"
-			} 
-		
-			if ([System.Drawing.Imaging.ImageFormat]::Png.Equals($bitmap.RawFormat)) {
-				$format = "image/png"
-			}
+            $client = [System.Net.WebClient]::new()
+            $client.Headers[ "Accept" ] = "/"
+            $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", "$Env:password")
+            $imageBytes = $client.DownloadData($uri)
+            $client.Dispose()
 
-			if ($format) {
-				$converter = [System.Drawing.ImageConverter]::new()
-				[byte[]]$imageBytes = $converter.ConvertTo($bitmap, [byte[]])
+            $stream = [System.IO.MemoryStream]::new($imageBytes)
+            $bitmap = [System.Drawing.Image]::FromStream($stream)
 
-				SetTeamFoundationProperties $identityService $user $imageBytes $format
+            $format = ""
+            if ([System.Drawing.Imaging.ImageFormat]::Jpeg.Equals($bitmap.RawFormat)) {                
+                $format = "image/jpg"
+            } 
+          
+            if ([System.Drawing.Imaging.ImageFormat]::Png.Equals($bitmap.RawFormat)) {
+                $format = "image/png"
+            }
+    
+            if ($format) {
+                $converter = [System.Drawing.ImageConverter]::new()
+                [byte[]]$imageBytes = $converter.ConvertTo($bitmap, [byte[]])
+    
+                SetTeamFoundationProperties $identityService $user $imageBytes $format
             }
         } catch {
-            Write-Host "Error updating $($user.UniqueName)" $_.Exception
-        }        
+            if ($_.Exception.InnerException.Response.StatusCode -ne 404) {
+                Write-Host "Error updating $($user.UniqueName)"
+                return
+            }
+            Write-Host "...No image found"
+        } finally {
+            if ($stream) {
+                $stream.Dispose()
+                $bitmap.Dispose()                
+            }
+        }
     } else {
         Write-Host "No address for $($user.UniqueName)"
     }
@@ -143,10 +152,8 @@ function Sync() {
     $returnValue = GetUsers  
 
     $service = $returnValue.Service
-    $users = $returnValue.Users
-
-	 New-Item -ItemType Directory -Path "C:\temp\avatars" -ErrorAction SilentlyContinue
-	
+    $users = $returnValue.Users    
+  
     foreach ($user in $users) {
         ProcessUser $user $service $false
     }
