@@ -69,7 +69,7 @@ namespace Aderant.Build.Tasks {
                                     MustRun32Bit = true;
                                 }
 
-                                // Optimization to reduce boxing for the common cases
+                                // Optimization to reduce boxing for the common case
                                 if (peKind == PortableExecutableKinds.ILOnly) {
                                     item.SetMetadata("Platform", "ILOnly");
                                 } else if (peKind == PortableExecutableKinds.Required32Bit) {

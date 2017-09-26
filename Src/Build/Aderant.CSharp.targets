@@ -164,7 +164,7 @@
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
 
       <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
-      <_FindDependencies>false</_FindDependencies> 
+      <!-- <_FindDependencies>false</_FindDependencies>  -->
     </PropertyGroup>
     
     <ItemGroup>
