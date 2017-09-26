@@ -1,3 +1,9 @@
+param(
+    [parameter(Mandatory=$true)] 
+    [ValidateNotNullOrEmpty()] 
+    [string]$password
+)
+
 Set-StrictMode -Version 2.0
 
 $ErrorActionPreference = 'Stop'
@@ -108,7 +114,7 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
         try {
             $client = [System.Net.WebClient]::new()
             $client.Headers[ "Accept" ] = "/"
-            $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", "$Env:password")
+            $client.Credentials = [System.Net.NetworkCredential]::new("service.tfsbuild.ap@aderant.com", $password)
             $imageBytes = $client.DownloadData($uri)
             $client.Dispose()
 
