@@ -19,7 +19,6 @@ namespace Aderant.Build.DependencyResolver {
                 constraintExpression = value;
 
                 if (!string.IsNullOrWhiteSpace(constraintExpression) && constraintExpression.IndexOfAny(operators) < 0) {
-                    System.Diagnostics.Debugger.Launch();
                     if (!string.IsNullOrEmpty(OriginatingFile)) {
                         throw new InvalidOperationException("The file " + OriginatingFile + " contains an invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
                     }
