@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
@@ -157,6 +158,7 @@ namespace Aderant.Build.DependencyResolver {
             return requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
         }
 
+        private static Regex invalidVersionMarker = new Regex("0[.]0[.]0-\\w*");
         private VersionRequirement NewRequirement(KeyValuePair<Domain.PackageName, Paket.VersionRequirement> pair, string filePath) {
             List<string> prereleases = new List<string>();
 
@@ -180,7 +182,7 @@ namespace Aderant.Build.DependencyResolver {
 
             string expression = pair.Value.ToString();
 
-            if (pair.Value.FormatInNuGetSyntax() == "0.0.0-prerelease") {
+            if (invalidVersionMarker.IsMatch(pair.Value.FormatInNuGetSyntax())) {
                 logger.Warning($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified? This expression will be converted into >= 0");
                 // Dirty fix, if we have a invalid requirement pattern that has no operators we need to convert this to a 
                 // valid paket pattern otherwise a parse exception will occur. However the paket API is dreadful and does not implement ToString() for "min version"
