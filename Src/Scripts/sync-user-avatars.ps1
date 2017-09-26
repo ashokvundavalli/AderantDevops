@@ -67,7 +67,8 @@ function GetUsers
 }
 
 
-function SetTeamFoundationProperties($identityService, $user, $imageBytes, $format) {
+function SetTeamFoundationProperties($identityService, $user, $imageBytes, $format) 
+{
     Write-Host "Updating image for $($user.UniqueName)"
 
     $user.SetProperty("Microsoft.TeamFoundation.Identity.Image.Data", $imageBytes)
@@ -76,7 +77,7 @@ function SetTeamFoundationProperties($identityService, $user, $imageBytes, $form
     $user.SetProperty("Microsoft.TeamFoundation.Identity.CandidateImage.Data", $null)
     $user.SetProperty("Microsoft.TeamFoundation.Identity.CandidateImage.UploadDate", $null)                    
 
-    #$identityService.UpdateExtendedProperties($user)
+    $identityService.UpdateExtendedProperties($user)
 }
 
 
