@@ -8,6 +8,7 @@ namespace Aderant.Build.DependencyResolver {
             '=',
             '>',
             '<',
+            '-' // Supports exact match 1.0.0-ci-20170201-223443
         };
 
         private string constraintExpression;
