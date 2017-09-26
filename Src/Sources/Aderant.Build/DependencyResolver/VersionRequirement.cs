@@ -2,14 +2,29 @@ using System;
 using System.Globalization;
 
 namespace Aderant.Build.DependencyResolver {
-    internal class VersionRequirement : IEquatable<VersionRequirement> {
-        private char[] operators = new char[] {
+    internal class ConstraintExpression {
+        private static char[] operators = new char[] {
             '~',
             '=',
             '>',
             '<',
             '-' // Supports exact match 1.0.0-ci-20170201-223443
         };
+
+        public static char[] Operators {
+            get { return operators; }
+        }
+
+        public static string Parse(string versionValue) {
+            if (!string.IsNullOrWhiteSpace(versionValue) && versionValue.IndexOfAny(Aderant.Build.DependencyResolver.ConstraintExpression.Operators) < 0) {
+                return "= " + versionValue;
+            }
+            return versionValue;
+        }
+    }
+
+    internal class VersionRequirement : IEquatable<VersionRequirement> {
+    
 
         private string constraintExpression;
 
@@ -18,7 +33,7 @@ namespace Aderant.Build.DependencyResolver {
             set {
                 constraintExpression = value;
 
-                if (!string.IsNullOrWhiteSpace(constraintExpression) && constraintExpression.IndexOfAny(operators) < 0) {
+                if (!string.IsNullOrWhiteSpace(constraintExpression) && constraintExpression.IndexOfAny(Aderant.Build.DependencyResolver.ConstraintExpression.Operators) < 0) {
                     if (!string.IsNullOrEmpty(OriginatingFile)) {
                         throw new InvalidOperationException("The file " + OriginatingFile + " contains an invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
                     }

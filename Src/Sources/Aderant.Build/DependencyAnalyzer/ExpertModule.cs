@@ -187,7 +187,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             get {
                 var version = customAttributes.FirstOrDefault(s => string.Equals(s.Name.LocalName, "Version"));
                 if (version != null) {
-                    return new VersionRequirement {ConstraintExpression = version.Value};
+                    return new VersionRequirement {ConstraintExpression = ConstraintExpression.Parse(version.Value)};
                 }
                 return null;
             }
