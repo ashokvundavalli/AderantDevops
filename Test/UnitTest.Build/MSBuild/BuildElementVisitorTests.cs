@@ -26,6 +26,7 @@ namespace UnitTest.Build.MSBuild {
         }
 
         [TestMethod]
+        [Ignore]
         public void CompositeCannotContainComposite() {
             Target parent = new Target("Foo");
 

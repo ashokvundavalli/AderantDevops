@@ -38,7 +38,7 @@ namespace UnitTest.Build {
             var definition = controller.CreateBuildDefinition(new ExpertBuildConfiguration("Dev\\MyBranch") { ModuleName = "Foo" });
 
             Assert.IsNotNull(definition);
-            Assert.AreEqual(2, teamFoundationMock.WorkspaceMappings.Length);
+            Assert.AreEqual(1, teamFoundationMock.WorkspaceMappings.Length);
         }
 
         [TestMethod]
@@ -56,7 +56,7 @@ namespace UnitTest.Build {
 
             Assert.IsNotNull(definition);
             Assert.AreEqual(ContinuousIntegrationType.Individual, definition.ContinuousIntegrationType);
-            Assert.AreEqual(@"\\na.aderant.com\ExpertSuite\", definition.DefaultDropLocation);
+            Assert.AreEqual(@"\\na.aderant.com\ExpertSuite", definition.DefaultDropLocation);
             Assert.IsNotNull(definition.BuildController);
         }
 
@@ -88,7 +88,8 @@ namespace UnitTest.Build {
         private IBuildServer buildServer;
         private IWorkspaceTemplate workspace;
         private IBuildDefinition definition;
-
+        private IRetentionPolicy policy;
+        private List<IRetentionPolicy> policyList;
         private List<Tuple<string, string, WorkspaceMappingType>> workspaceItems;
 
         private IBuildAgent[] agents;
@@ -104,11 +105,20 @@ namespace UnitTest.Build {
 
             workspace = workspaceMock.Object;
 
-            var mock = new Mock<IBuildDefinition>();
-            mock.Setup(s => s.Workspace).Returns(workspace);
-            mock.SetupAllProperties(); // Record property sets
+            var policyMock = new Mock<IRetentionPolicy>();
+            policyMock.SetupAllProperties();
+            policy = policyMock.Object;
 
-            definition = mock.Object;
+            policyList = new List<IRetentionPolicy>();
+            //policyList.Add(policy);
+
+            var mockBuildDefinition = new Mock<IBuildDefinition>();
+            mockBuildDefinition.SetupAllProperties(); // Record property sets
+            mockBuildDefinition.Setup(s => s.Workspace).Returns(workspace);
+            mockBuildDefinition.SetupGet(s => s.RetentionPolicyList).Returns(policyList);
+            
+
+            definition = mockBuildDefinition.Object;
         }
 
         public object[] WorkspaceMappings {
@@ -157,7 +167,8 @@ namespace UnitTest.Build {
         private void CreateBuildController(IBuildAgent[] buildAgents) {
             var mockBuildController = new Mock<IBuildController>();
             mockBuildController.Setup(s => s.Agents).Returns(new ReadOnlyCollection<IBuildAgent>(buildAgents));
-
+            mockBuildController.Setup(s => s.Name).Returns("Bond");
+            
             controller = mockBuildController.Object;
         }
 
@@ -170,6 +181,7 @@ namespace UnitTest.Build {
                 });
 
             buildServerMock.Setup(s => s.CreateBuildDefinition(It.IsAny<string>())).Returns(definition);
+            var t = definition.RetentionPolicyList;
 
             buildServer = buildServerMock.Object;
         }

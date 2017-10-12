@@ -18,6 +18,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void When_instances_are_not_memberwise_identical_instances_are_not_equal() {
             var a = new VersionRequirement {
                 AssemblyVersion = "1",

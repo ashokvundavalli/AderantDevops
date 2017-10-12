@@ -15,6 +15,7 @@ namespace UnitTest.Build.Tasks {
     public class ProjectConformityControllerTests {
 
         [TestMethod]
+        [Ignore]
         public void Project_file_is_modified() {
             string expected = @"<?xml version=""1.0"" encoding=""utf-16""?>
 <Project ToolsVersion=""12.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">

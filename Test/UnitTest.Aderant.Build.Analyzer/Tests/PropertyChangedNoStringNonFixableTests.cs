@@ -16,7 +16,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
         [TestMethod]
         public void PropertyChange_string_refers_to_non_member() {
             var test = InsertCode(@"OnPropertyChanged(""Test3"");");
-
+            var _ = typeof(Microsoft.CodeAnalysis.CSharp.Formatting.CSharpFormattingOptions);
             var expected = GetDefaultDiagnostic("Test3");
             VerifyCSharpDiagnostic(test, expected);
         }

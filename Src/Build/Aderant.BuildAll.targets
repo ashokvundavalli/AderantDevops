@@ -279,6 +279,7 @@
       <LicenseZipFile>$(ZipFileDirectory)\LicenseGenerator.zip</LicenseZipFile>
       <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
       <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>
+      <PipelineOverrideDirectory>$(LocalExpertBinariesDirectory)\AutomatedDeployment</PipelineOverrideDirectory>
     </PropertyGroup>
     
     <BuildStep
@@ -340,7 +341,9 @@
         Exclude="@(SharedRoles);@(EliteRoles)"/>
 
       <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
-
+      
+      <PipelineOverrideFiles Include="$(PipelineOverrideDirectory)\**\Microsoft.TeamFoundation.*dll*" />
+      
       <EliteDocuments Include="$(LocalExpertBinariesDirectory)\Elite Documentation\**\*.*"/>
       <Documents Include="$(LocalExpertBinariesDirectory)\Documentation\**\*.*"/>
       
@@ -349,6 +352,8 @@
       <ZipSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
         Exclude="@(SharedExclusions);@(EliteRoles);@(EliteOverrideFiles);@(EliteDocuments)" />
+      <ZipPipelineFiles
+        Include="@(PipelineOverrideFiles)"/>
       <ZipLicenseGeneratorFiles
         Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator\*.*" />
       <ZipRegistrationServiceFiles
@@ -380,7 +385,7 @@
 
     <!-- Create ZIP for ExpertSource -->
     <MSBuild.Community.Tasks.Zip
-      Files="@(ZipSourceFiles)"
+      Files="@(ZipSourceFiles);@(ZipPipelineFiles)"
       ZipFileName="$(ZipFile)"
       WorkingDirectory="$(LocalExpertBinariesDirectory)"
       ParallelCompression="false" />

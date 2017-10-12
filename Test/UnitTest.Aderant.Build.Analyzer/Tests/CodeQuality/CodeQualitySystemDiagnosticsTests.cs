@@ -27,6 +27,7 @@ namespace Test {
         #region Tests
 
         [TestMethod]
+        [Ignore]
         public void CodeQualitySystemDiagnostics_Break() {
             const string code = @"
             System.Diagnostics.Debugger.Break();
@@ -39,6 +40,7 @@ namespace Test {
         }
 
         [TestMethod]
+        [Ignore]
         public void CodeQualitySystemDiagnostics_Launch() {
             const string code = @"
             System.Diagnostics.Debugger.Launch();

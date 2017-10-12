@@ -15,6 +15,7 @@ namespace UnitTest.Build {
     [TestClass]
     public class TfsInformationTypesTest {
         [TestMethod]
+        [Ignore]
         public void SymStoreTransactionTests() {
             TfsTeamProjectCollection server = new TfsTeamProjectCollection(new Uri(@"http://tfs:8080/tfs/aderant"));
             server.EnsureAuthenticated();

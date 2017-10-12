@@ -228,8 +228,10 @@ namespace Aderant.Build {
         }
 
         private static void ConfigureWorkspaceMapping(ExpertBuildConfiguration configuration, IBuildDefinition buildDefinition) {
-            foreach (IWorkspaceMapping mapping in buildDefinition.Workspace.Mappings.ToArray()) {
-                buildDefinition.Workspace.RemoveMapping(mapping);
+            if (buildDefinition.Workspace.Mappings != null) {
+                foreach (IWorkspaceMapping mapping in buildDefinition.Workspace.Mappings.ToArray()) {
+                    buildDefinition.Workspace.RemoveMapping(mapping);
+                }
             }
 
             // TeamFoundationWorkspace 

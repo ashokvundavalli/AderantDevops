@@ -34,6 +34,7 @@ namespace UnitTest.Build.Tasks {
         }
 
         [TestMethod]
+        [Ignore]
         public void Invalid_hbm_extension_returns_false() {
             OrmMappingValidator v = new OrmMappingValidator();
             v.BuildEngine = new Moq.Mock<IBuildEngine>().Object;

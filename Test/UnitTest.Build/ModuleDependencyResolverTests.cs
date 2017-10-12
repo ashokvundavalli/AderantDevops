@@ -16,6 +16,7 @@ namespace UnitTest.Build {
     [TestClass]
     public class ModuleDependencyResolverTests {
         [TestMethod]
+        [Ignore]
         public void ModuleDependencyResolver_can_load_dependency_manifest() {
             var mock = new Mock<IFileSystem2>();
 
@@ -90,6 +91,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        [Ignore]
         public void ModuleDependencyResolver_gets_subset_from_drop() {
             var dependencyManifest1 = new DependencyManifest("Module1", XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
