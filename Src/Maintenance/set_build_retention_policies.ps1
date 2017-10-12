@@ -1,8 +1,8 @@
 ﻿[CmdletBinding()]
 param(
     [string]$teamProject = "ExpertSuite",
-    [string]$pattern = "*releases.81x*",
-    [switch]$setToRelease = $false
+    [string]$pattern = "*dev.vnext*",
+    [switch]$setToRelease = $true
 )
 
 $collectionUri = New-Object Uri("http://tfs:8080/tfs/aderant")
@@ -56,26 +56,24 @@ foreach ($build in $buildDefinitions) {
     }
 
     if ($build.BuildController -ne $null) {        
-        
         if ($setToRelease) {
             if (-not ($build.Name.Contains("Third"))) {
                 $p = [Microsoft.TeamFoundation.Build.Workflow.WorkflowHelpers]::DeserializeProcessParameters($build.ProcessParameters)
                 $arg = $p["MSBuildArguments"]
 
                 if ([string]::IsNullOrEmpty($arg)) {
-                    $p["MSBuildArguments"] = "/p:BuildFlavor=Release"
+                    $p["MSBuildArguments"] += "/p:BuildFlavor=Release"
                     $build.ProcessParameters = [Microsoft.TeamFoundation.Build.Workflow.WorkflowHelpers]::serializeProcessParameters($p)
                     $build.Save()
 
-                    Write-Host "Added flavor to $($build.Name)" 
+                    Write-Host "Added flavor to $($build.Name)"
                 } else {
-                    Write-Host "Skipped $($build.Name) as it has arguments" 
+                    Write-Host "Skipped $($build.Name) as it has arguments: $($p["MSBuildArguments"])"
                 }
             }          
         }
 
         $build.Save()
-
     } else {
         Write-Warning "Invalid build controller for build: $($build.Name)"
     }    
