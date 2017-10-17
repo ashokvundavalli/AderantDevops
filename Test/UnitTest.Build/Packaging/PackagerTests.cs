@@ -283,6 +283,37 @@ dependencies
         }
 
         [TestMethod]
+        public void Empty_dependencies_section_is_preserved() {
+            string expected =
+                @"type file
+id Aderant.Deployment.Core
+authors Aderant
+description
+    Provides libraries and services for deploying an Expert environment.
+files
+    Bin/Module/*.config ==> lib
+dependencies
+    
+excludeddependencies
+    Aderant.AccountsPayable";
+
+            var packageTemplateFile = new PackageTemplateFile(expected);
+          
+            string actual;
+
+            using (var stream = new MemoryStream()) {
+                using (var reader = new StreamReader(stream)) {
+                    packageTemplateFile.Save(stream);
+
+                    stream.Position = 0;
+                    actual = reader.ReadToEnd();
+                }
+            }
+
+            Assert.AreEqual(expected.Trim(), actual.Trim());
+        }
+
+        [TestMethod]
         public void Self_references_are_removed() {
             string expected =
             @"type file

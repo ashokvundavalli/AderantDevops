@@ -1,6 +1,8 @@
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aderant.Build.Packaging.Parsing;
 
 namespace Aderant.Build.Packaging {
@@ -24,7 +26,11 @@ namespace Aderant.Build.Packaging {
 
                         // If the line is already indented, preserve the original indentation 
                         if (entry.StartsWith(" ")) {
-                            WriteLineNoTabs(entry.TrimEnd());
+                            if (!entry.All(ch => Char.IsWhiteSpace(ch))) {
+                                WriteLineNoTabs(entry.TrimEnd());
+                            } else {
+                                WriteLineNoTabs(entry);
+                            }
                         } else {
                             Indent = 1;
                             WriteLine(entry.TrimEnd());
