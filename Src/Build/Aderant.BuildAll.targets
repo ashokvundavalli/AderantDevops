@@ -348,6 +348,8 @@
       <Documents Include="$(LocalExpertBinariesDirectory)\Documentation\**\*.*"/>
       
       <InquiriesFiles Include="$(LocalExpertBinariesDirectory)\ExpertSource\Aderant.Inquiries*.dll"/>
+   
+      <IntegrationTestDependencies Include="$(LocalExpertBinariesDirectory)\**\UnitTest.*Helpers.*" />
 
       <ZipSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
@@ -358,6 +360,9 @@
         Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator\*.*" />
       <ZipRegistrationServiceFiles
         Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService\*.*" />
+
+      <ZipSourceFiles 
+        Include="@(IntegrationTestDependencies)" />
     </ItemGroup>
 
     <MakeDir
