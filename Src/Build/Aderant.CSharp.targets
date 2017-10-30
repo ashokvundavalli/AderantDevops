@@ -100,9 +100,9 @@
       This task can return a previously generated file to keep incremental builds working.      
     -->
     <PropertyGroup>
-      <SplashScreenVersion Condition="'$(BuildFlavor)' == 'Debug' And '$(TF_BUILD)' == ''">Version 8.2 (Development)</SplashScreenVersion>
-      <SplashScreenVersion Condition="'$(BuildFlavor)' == 'Debug' And '$(TF_BUILD)' != ''">Version 8.2 (Development $(FileVersion))</SplashScreenVersion>
-      <SplashScreenVersion Condition="'$(BuildFlavor)' != 'Debug'">Version 8.2</SplashScreenVersion>
+      <SplashScreenVersion Condition="'$(BuildFlavor)' == 'Debug' And '$(TF_BUILD)' == ''">Version 8.1 (Development)</SplashScreenVersion>
+      <SplashScreenVersion Condition="'$(BuildFlavor)' == 'Debug' And '$(TF_BUILD)' != ''">Version 8.1 (Development $(FileVersion))</SplashScreenVersion>
+      <SplashScreenVersion Condition="'$(BuildFlavor)' != 'Debug'">Version 8.1</SplashScreenVersion>
       <SplashScreenText>$(ExpertProductName)</SplashScreenText>
     </PropertyGroup>
 
