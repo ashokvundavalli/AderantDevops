@@ -11,7 +11,7 @@ namespace Aderant.Build.DependencyResolver {
 
         private const string RefsPrefix = @"refs\heads\";
 
-        public static string BuildDropPath(string moduleName, string component, string quality, string origin, string version) {
+        public static string BuildDropPath(string moduleName, string quality, string origin, string version, string component) {
             if (quality == null) {
                 throw new ArgumentNullException(nameof(quality));
             }
@@ -25,12 +25,6 @@ namespace Aderant.Build.DependencyResolver {
 
             List<string> parts = new List<string>();
             parts.Add(moduleName.Trim().TrimEnd('\"'));
-
-            if (!string.IsNullOrWhiteSpace(component)) {
-                parts.Add(component.Trim());
-            } else {
-                parts.Add("default");
-            }
 
             parts.Add(quality.Trim());
 
@@ -49,6 +43,12 @@ namespace Aderant.Build.DependencyResolver {
 
             if (!string.IsNullOrWhiteSpace(version)) {
                 parts.Add(version.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(component)) {
+                parts.Add(component.Trim());
+            } else {
+                parts.Add("default");
             }
 
             return Path.Combine(parts.ToArray());

@@ -35,9 +35,9 @@ namespace UnitTest.Build.Tasks {
         public void GetBuildDropPathMasterTest() {
             const string origin = @"refs\heads\CopyToDropv2";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
-            string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, Component, quality, origin, buildId);
+            string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, quality, origin, buildId, Component);
 
-            string outputDirectory = Path.Combine(ModuleName, Component, "unstable", "CopyToDropv2", buildId);
+            string outputDirectory = Path.Combine(ModuleName, "unstable", "CopyToDropv2", buildId, Component);
 
             Assert.AreEqual(buildDropPath, outputDirectory);
         }
@@ -46,9 +46,9 @@ namespace UnitTest.Build.Tasks {
         public void GetBuildDropPathPRTest() {
             const string origin = @"refs\pull\10600\merge";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
-            string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, Component, quality, origin, buildId);
+            string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, quality, origin, buildId, Component);
 
-            string outputDirectory = Path.Combine(ModuleName, Component, "pull", "10600", buildId);
+            string outputDirectory = Path.Combine(ModuleName, "pull", "10600", buildId, Component);
 
             Assert.AreEqual(outputDirectory, buildDropPath);
         }
@@ -57,9 +57,9 @@ namespace UnitTest.Build.Tasks {
         public void GetBuildDropPathTfvcTest() {
             const string origin = @"dev\vnext";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
-            string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, Component, quality, origin, buildId);
+            string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, quality, origin, buildId, Component);
 
-            string outputDirectory = Path.Combine(ModuleName, Component, "unstable", "dev.vnext", buildId);
+            string outputDirectory = Path.Combine(ModuleName, "unstable", "dev.vnext", buildId, Component);
 
             Assert.AreEqual(buildDropPath, outputDirectory);
         }

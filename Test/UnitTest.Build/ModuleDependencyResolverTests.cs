@@ -141,23 +141,23 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void Build_path_with_refspec() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", null, "stable", "refs/heads/master", "0001");
+            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "refs/heads/master", "0001", null);
 
-            Assert.AreEqual(@"Foo\default\stable\master\0001", path);
+            Assert.AreEqual(@"Foo\stable\master\0001\default", path);
         }
 
         [TestMethod]
         public void Build_path_with_refspec_leading_slash() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", null, "stable", "/refs/heads/master", "0001");
+            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "/refs/heads/master", "0001", null);
 
-            Assert.AreEqual(@"Foo\default\stable\master\0001", path);
+            Assert.AreEqual(@"Foo\stable\master\0001\default", path);
         }
 
         [TestMethod]
         public void Build_path_with_tfvc_refspec() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", null, "stable", "$/ExpertSuite/dev/vnext", "0001");
+            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "$/ExpertSuite/dev/vnext", "0001", null);
 
-            Assert.AreEqual(@"Foo\default\stable\dev.vnext\0001", path);
+            Assert.AreEqual(@"Foo\stable\dev.vnext\0001\default", path);
         }
     }
 

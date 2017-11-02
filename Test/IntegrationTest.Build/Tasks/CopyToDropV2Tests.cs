@@ -53,7 +53,7 @@ namespace IntegrationTest.Build.Tasks {
                     { "BuildNumber", buildId }
                 });
 
-            string outputDirectory = Path.Combine(dropRoot, ModuleName, "default", "unstable", outputOrigin, buildId);
+            string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
 
             Assert.IsTrue(Directory.Exists(outputDirectory));
             Assert.IsTrue(Directory.Exists(Path.Combine(outputDirectory, "Module")));
@@ -77,7 +77,7 @@ namespace IntegrationTest.Build.Tasks {
                     { "BuildNumber", buildId }
                 });
 
-            string outputDirectory = Path.Combine(dropRoot, ModuleName, "default", "unstable", outputOrigin, buildId);
+            string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
 
             Assert.IsTrue(Directory.Exists(Path.Combine(outputDirectory, "Module")));
             Assert.IsFalse(File.Exists(Path.Combine(outputDirectory, "Module", "Packages.dll")));
@@ -99,7 +99,7 @@ namespace IntegrationTest.Build.Tasks {
                     { "BuildNumber", buildId }
                 });
 
-            string outputDirectory = Path.Combine(dropRoot, ModuleName, "default", "unstable", outputOrigin, buildId);
+            string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
 
             Assert.IsTrue(Directory.Exists(outputDirectory));
             Assert.IsFalse(Directory.Exists(Path.Combine(outputDirectory, "Fluff")));
@@ -120,7 +120,7 @@ namespace IntegrationTest.Build.Tasks {
                     { "BuildNumber", buildId }
                 });
 
-            string outputDirectory = Path.Combine(dropRoot, ModuleName, "default", "unstable", outputOrigin, buildId);
+            string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
 
             Assert.IsTrue(Directory.Exists(outputDirectory));
         }
@@ -140,7 +140,7 @@ namespace IntegrationTest.Build.Tasks {
                     { "BuildNumber", buildId }
                 });
 
-            string outputDirectory = Path.Combine(dropRoot, ModuleName, "default", "pull", outputOrigin, buildId);
+            string outputDirectory = Path.Combine(dropRoot, ModuleName, "pull", outputOrigin, buildId, "default");
 
             Assert.IsTrue(Directory.Exists(outputDirectory));
         }

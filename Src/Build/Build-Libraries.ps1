@@ -688,7 +688,7 @@
 			[void][System.Reflection.Assembly]::Load($assemblyBytes)
 
 			[string]$quality = [Aderant.Build.DependencyResolver.FolderDependencySystem]::GetQualityMoniker($origin)
-			[string]$fullDropPath = [Aderant.Build.DependencyResolver.FolderDependencySystem]::BuildDropPath($moduleName, $component, $quality, $origin, $version)
+			[string]$fullDropPath = [Aderant.Build.DependencyResolver.FolderDependencySystem]::BuildDropPath($moduleName, $quality, $origin, $version, $component)
 
 			return $fullDropPath
 		}
