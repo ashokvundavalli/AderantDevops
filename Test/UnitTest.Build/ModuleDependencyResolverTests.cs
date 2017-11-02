@@ -29,7 +29,7 @@ namespace UnitTest.Build {
     </ReferencedModules>
 </DependencyManifest>"));
 
-            var requirements = resolver.GetDependencyRequirements(null, new ExpertModule { Name = "Foo" });
+            var requirements = ((IDependencyResolver)resolver).GetDependencyRequirements(null, new ExpertModule { Name = "Foo" });
 
             var requirement = requirements.First();
 
@@ -129,7 +129,7 @@ namespace UnitTest.Build {
 
             ResolverRequest request = new ResolverRequest(new FakeLogger(), (IFileSystem2)null, expertManifest.GetAll().ToArray());
 
-            resolver.Resolve(request, requirements);
+            ((IDependencyResolver)resolver).Resolve(request, requirements);
 
             var items = request.GetResolvedRequirements().ToList();
 
@@ -137,6 +137,27 @@ namespace UnitTest.Build {
             Assert.AreEqual("Module0", items[0].Name);
             Assert.AreEqual("Module1", items[1].Name);
             Assert.AreEqual("Module2", items[2].Name);
+        }
+
+        [TestMethod]
+        public void Build_path_with_refspec() {
+            var path = FolderDependencySystem.BuildDropPath("Foo", null, "stable", "refs/heads/master", "0001");
+
+            Assert.AreEqual(@"Foo\default\stable\master\0001", path);
+        }
+
+        [TestMethod]
+        public void Build_path_with_refspec_leading_slash() {
+            var path = FolderDependencySystem.BuildDropPath("Foo", null, "stable", "/refs/heads/master", "0001");
+
+            Assert.AreEqual(@"Foo\default\stable\master\0001", path);
+        }
+
+        [TestMethod]
+        public void Build_path_with_tfvc_refspec() {
+            var path = FolderDependencySystem.BuildDropPath("Foo", null, "stable", "$/ExpertSuite/dev/vnext", "0001");
+
+            Assert.AreEqual(@"Foo\default\stable\dev.vnext\0001", path);
         }
     }
 

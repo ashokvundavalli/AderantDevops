@@ -13,21 +13,32 @@ namespace IntegrationTest.Build.Tasks {
     public abstract class BuildTaskTestBase {
         public TestContext TestContext { get; set; }
 
-        protected void RunTarget(string targetName) {
-            var globalProperties = new Dictionary<string, string> {
+        /// <summary>
+        /// Runs a target in IntegrationTest.targets
+        /// </summary>
+        protected InternalBuildLogger RunTarget(string targetName, IDictionary<string, string> properties = null) {
+            if (properties == null) {
+                properties = new Dictionary<string, string>();
+            }
+
+            Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
                 { "NoMSBuildCommunityTasks", "true" },
-                { "BuildToolsDirectory", TestContext.DeploymentDirectory }
+                { "BuildToolsDirectory", TestContext.DeploymentDirectory },
+                { "BuildInfrastructureDirectory", Directory.GetParent(Directory.GetParent(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName).FullName).FullName }
             };
 
-            using (var collection = new ProjectCollection(globalProperties)) {
+            using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
                 collection.RegisterLogger(Logger = new InternalBuildLogger(TestContext)); // Must pass in a logger derived from Microsoft.Build.Framework.ILogger.
 
-                var project = collection.LoadProject(Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"));
-                var result = project.Build(targetName);
+                Project project = collection.LoadProject(Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"));
+                bool result = project.Build(targetName);
 
                 Assert.IsFalse(Logger.HasRaisedErrors);
+
+                return Logger;
             }
         }
+
 
         public InternalBuildLogger Logger { get; set; }
 

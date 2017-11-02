@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="ModuleBuild"
-         ToolsVersion="14.0"
-         TreatAsLocalProperty="SolutionRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
+  DefaultTargets="ModuleBuild"
+  ToolsVersion="14.0"
+  TreatAsLocalProperty="SolutionRoot;FileVersion;AssemblyVersion;BuildFlavor;BuildNumber">
 
   <!-- 
     =========================================================================================================
@@ -33,7 +33,7 @@
 
     <!--Custom build for a module-->
     <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(SolutionRoot)</SolutionDirectoryPath>
-    
+
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
@@ -58,7 +58,7 @@
 
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
-  
+
   <!-- Stub for customizers to override -->
   <Target Name="PreBuild" />
 
@@ -203,8 +203,8 @@ doc.Save(File);
   <Target Name="AfterOnBuildBreak" />
 
   <Target Name="OnBuildBreak"
-          Condition="('$(IsDesktopBuild)'!='true')"
-          DependsOnTargets="$(OnBuildBreakDependsOn)">
+    Condition="('$(IsDesktopBuild)'!='true')"
+    DependsOnTargets="$(OnBuildBreakDependsOn)">
 
     <PropertyGroup>
       <FailedBuildFile Condition="'$(BuildAll)' == 'true'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</FailedBuildFile>
@@ -213,9 +213,9 @@ doc.Save(File);
     </PropertyGroup>
 
     <Touch Condition="'$(InputDropLocation)' != ''"
-           Files="$(FailedBuildFile)"
-           ForceTouch="true"
-           AlwaysCreate="true" />
+      Files="$(FailedBuildFile)"
+      ForceTouch="true"
+      AlwaysCreate="true" />
   </Target>
 
   <Target Name="AfterCompile">
@@ -235,17 +235,18 @@ doc.Save(File);
     <CallTarget Targets="SetBuildNumbers" />
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
-    <CallTarget Targets="PreBuild" /> 
+    <CallTarget Targets="PreBuild" />
     <CallTarget Targets="Build" />
-    <CallTarget Targets="ZipWorkflowTemplateSource" />    
+    <CallTarget Targets="ZipWorkflowTemplateSource" />
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-    
+
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
+    <CallTarget Targets="CopyToDropV2" />
     <CallTarget Targets="FinalizeBuild" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
@@ -267,22 +268,61 @@ doc.Save(File);
   Override drop location
   ==========================================================================================
   -->
-  <Target Name="BuildNumberOverrideTarget"
-          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
+  <Target Name="SetBuildNumbers">
+    <Message Text="SetBuildNumbers" />
 
-    <PropertyGroup>
-      <!-- 
+    <!--<PropertyGroup>
+      -->
+    <!-- 
           For a module build, append the name of the module.
           If two builds are started at the same time they get the same BuildNumber which breaks the test run as we don't know which build to publish against
       -->
+    <!--
       <BuildNumber Condition="'$(BuildAll)' != 'true'">$(FileVersion) ($(ModuleName))</BuildNumber>
       <BuildNumber Condition="'$(BuildAll)' == 'true'">$(FileVersion)</BuildNumber>
 
-      <!-- Useful for later comparasion -->
+      -->
+    <!-- Useful for later comparasion -->
+    <!--
       <InputDropLocation>$(DropLocation)</InputDropLocation>
       
       <DropLocation Condition="'$(IsDesktopBuild)' == 'false'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</DropLocation>
+    </PropertyGroup>-->
+
+    <PropertyGroup>
+      <GitDir>$(SolutionDirectoryPath).git</GitDir>
+      <IsTfvc Condition="!Exists('$(GitDir)')">true</IsTfvc>
+      <IsGit Condition="'$(IsTfvc)' != 'true'">true</IsGit>
     </PropertyGroup>
+
+    <GitVersion
+      Condition="'$(IsGit)' == 'true'"
+      WorkingDirectory="$(SolutionDirectoryPath)"
+      Discover="true">
+      <Output PropertyName="GitFriendlyBranchName" TaskParameter="FriendlyBranchName" />
+      <Output PropertyName="GitCanonicalBranchName" TaskParameter="CanonicalBranchName" />
+      <Output PropertyName="GitSha" TaskParameter="Sha" />
+      <Output PropertyName="GitCommit" TaskParameter="Commit" />
+    </GitVersion>
+
+    <PropertyGroup Condition="'$(IsTfvc)' == 'true'">
+      <RepositoryType>Tfvc</RepositoryType>
+      <GitOrTfvcBranch>$(TfvcBranch)</GitOrTfvcBranch>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsGit)' == 'true'">
+      <RepositoryType>Git</RepositoryType>
+      <GitOrTfvcBranch>$(GitCanonicalBranchName)</GitOrTfvcBranch>
+
+    </PropertyGroup>
+
+    <Error Condition="'$(IsGit)' == 'true' And '$(GitCanonicalBranchName)' == ''" Text="Git branch could not be determined" />
+    <Error Condition="'$(IsTfvc)' == 'true' And '$(TfvcBranch)' == ''" Text="TFVC branch could not be determined" />
+
+    <Message  Condition="'$(IsGit)' == 'true'" Text="Git sha: $(GitSha)" />
+    <Message  Condition="'$(IsGit)' == 'true'" Text="Git canonical branch name: $(GitCanonicalBranchName)" />
+    <Message  Condition="'$(IsGit)' == 'true'" Text="Git friendly branch name: $(GitFriendlyBranchName)" />
+
   </Target>
 
   <!--
@@ -294,26 +334,26 @@ doc.Save(File);
 
     <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
     <Delete Files="$(SolutionDirectoryPath)TestResults\**\*"
-            ContinueOnError="true" />
+      ContinueOnError="true" />
     <Delete Files="$(ModuleBuildDirectory)TestResults\**\*"
-            ContinueOnError="true" />
+      ContinueOnError="true" />
     <RemoveDir Directories="$(SolutionDirectoryPath)TestResults"
-               ContinueOnError="true" />
+      ContinueOnError="true" />
     <RemoveDir Directories="$(ModuleBuildDirectory)TestResults"
-               ContinueOnError="true" />
+      ContinueOnError="true" />
 
     <RemoveDir Condition="'$(CleanBin)' == 'true'"
-               Directories="$(SolutionDirectoryPath)Bin\Module"
-               ContinueOnError="true" />
+      Directories="$(SolutionDirectoryPath)Bin\Module"
+      ContinueOnError="true" />
     <RemoveDir Condition="'$(CleanBin)' == 'true'"
-               Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
-               ContinueOnError="true" />
+      Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
+      ContinueOnError="true" />
 
     <!-- These can be symlinks so delete them directly -->
     <RemoveDir Directories="$(BinTestDirectory)Dependencies"
-               ContinueOnError="true" />
+      ContinueOnError="true" />
     <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
-               ContinueOnError="true" />
+      ContinueOnError="true" />
 
     <ItemGroup>
       <Folders Include="$(SolutionDirectoryPath)Bin\" />
@@ -325,7 +365,7 @@ doc.Save(File);
     </ItemGroup>
 
     <Error Condition="!HasTrailingSlash('%(Folders.FullPath)')"
-           Text="All paths in the Folders item group must end with a trailing slash" />
+      Text="All paths in the Folders item group must end with a trailing slash" />
 
     <ItemGroup>
       <!-- (?i) means case insensitive -->
@@ -342,17 +382,17 @@ doc.Save(File);
     <Message Condition="$(CleanBin) And @(FoldersToDelete) != ''" Text="Folders to clean: %(FoldersToDelete.FullPath)" />
 
     <MSBuild.Community.Tasks.Attrib
-     Condition="$(CleanBin)"
-     ReadOnly="false"
-     Files="@(FilesToDelete)" />
+      Condition="$(CleanBin)"
+      ReadOnly="false"
+      Files="@(FilesToDelete)" />
 
     <Delete Condition="$(CleanBin)"
-            Files="@(FilesToDelete)"
-            ContinueOnError="true" />
+      Files="@(FilesToDelete)"
+      ContinueOnError="true" />
 
     <RemoveDir Condition="$(CleanBin)"
-               Directories="@(FoldersToDelete)"
-               ContinueOnError="true" />
+      Directories="@(FoldersToDelete)"
+      ContinueOnError="true" />
 
     <MakeDir Directories="$(BinModuleDirectory)" />
 
@@ -362,7 +402,7 @@ doc.Save(File);
 
   <Target Name="CreateBuildDirectories" BeforeTargets="rmBeforeTransformTemplates;Build">
     <MakeDir Directories="$(ModuleBuildTempDirectory)"
-             Condition="'$(ModuleBuildTempDirectory)' != ''" />
+      Condition="'$(ModuleBuildTempDirectory)' != ''" />
   </Target>
 
 
@@ -374,8 +414,8 @@ doc.Save(File);
   <Target Name="CheckForWrongReferences" Condition="'$(IsCustomBuild)' != 'true' And '$(BuildAll)' != 'true'">
 
     <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
+      IgnoreExitCode="false"
+      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
 
   </Target>
 
@@ -394,9 +434,9 @@ doc.Save(File);
       <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process 
            crafted by the developer -->
       <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
-                         Include="$(ModuleSourceDirectory)**\*.tt;
+        Include="$(ModuleSourceDirectory)**\*.tt;
                                   $(ModuleTestDirectory)**\*.tt;"
-                         Exclude="$(ModuleSourceDirectory)**\__*.tt;
+        Exclude="$(ModuleSourceDirectory)**\__*.tt;
                                   $(ModuleSourceDirectory)**\obj\**\*.tt;
                                   $(ModuleTestDirectory)**\obj\**\*.tt;
                                   $(ModuleSourceDirectory)**\PackageTmp\**\*.tt">
@@ -430,20 +470,20 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="UpdateModuleFileVersion"
-          Condition="'$(BUILD_BUILDURI)' != ''">
+    Condition="'$(BUILD_BUILDURI)' != ''">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
     </PropertyGroup>
 
     <FileUpdate Files="$(AssemblyInfoFile)"
-                IgnoreCase="true"
-                Multiline="true"
-                Singleline="false"
-                Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
-                ReplacementText="${section1}$(FileVersion)${section2}" />
+      IgnoreCase="true"
+      Multiline="true"
+      Singleline="false"
+      Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
+      ReplacementText="${section1}$(FileVersion)${section2}" />
   </Target>
-  
+
   <!--
     ==========================================================================================================================
         Compile - rmTransformTemplates 
@@ -460,7 +500,7 @@ doc.Save(File);
   </PropertyGroup>
 
   <Target Name="Build"
-          DependsOnTargets="$(BuildDependsOn)">
+    DependsOnTargets="$(BuildDependsOn)">
 
     <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
@@ -480,13 +520,13 @@ doc.Save(File);
     </PropertyGroup>
 
     <MSBuild Projects="$(SolutionFileName)"
-             Properties="$(BuildProperties)"
-             RemoveProperties="AssemblyVersion"
-             UnloadProjectsOnCompletion="true">
+      Properties="$(BuildProperties)"
+      RemoveProperties="AssemblyVersion"
+      UnloadProjectsOnCompletion="true">
 
       <!--The compiled assemblies from projects-->
       <Output ItemName="CompiledAssemblies"
-              TaskParameter="TargetOutputs" />
+        TaskParameter="TargetOutputs" />
     </MSBuild>
 
     <Message Text="Compiled assemblies: %(CompiledAssemblies.FullPath)" Importance="Low" />
@@ -516,8 +556,8 @@ doc.Save(File);
   </Target>
 
   <Target Name="GetOutputAssembliesFromProjects"
-          AfterTargets="Build"
-          Condition="'$(IsCustomBuild)' != 'true'">
+    AfterTargets="Build"
+    Condition="'$(IsCustomBuild)' != 'true'">
     <!-- This target fixes a problem with TargetOutputs missing assemblies project in the solution file appears in a a post section. A most irritating MS Build bug. See TFS 121911-->
     <ItemGroup>
       <ModuleProjects Include="$(ModuleSourceDirectory)**\**\*.csproj" />
@@ -527,15 +567,15 @@ doc.Save(File);
       Get assembly name from the project file       
     -->
     <XmlPeek Condition="'@(ModuleProjects)' != ''"
-             XmlInputPath="%(ModuleProjects.FullPath)"
-             Query="//p:Project/p:PropertyGroup/p:AssemblyName[.][contains(translate(//p:Project/p:PropertyGroup/p:OutputType, 'LIBRARY', 'library'), 'library')]/text()"
-             Namespaces="&lt;Namespace Prefix='p' Uri='http://schemas.microsoft.com/developer/msbuild/2003'/&gt;">
+      XmlInputPath="%(ModuleProjects.FullPath)"
+      Query="//p:Project/p:PropertyGroup/p:AssemblyName[.][contains(translate(//p:Project/p:PropertyGroup/p:OutputType, 'LIBRARY', 'library'), 'library')]/text()"
+      Namespaces="&lt;Namespace Prefix='p' Uri='http://schemas.microsoft.com/developer/msbuild/2003'/&gt;">
       <Output ItemName="AssemblyName" TaskParameter="Result" />
     </XmlPeek>
 
     <ItemGroup>
       <DllOutputs Condition="'@(ModuleProjects)' != '' And Exists(%(FullPath))"
-                  Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
+        Include="@(AssemblyName->'$(BinModuleDirectory)%(Identity).dll')" />
     </ItemGroup>
 
     <!-- 
@@ -544,20 +584,20 @@ doc.Save(File);
       for out output DLL
     -->
     <CreateItem Include="@(DllOutputs);@(AssemblyName->'$(ModuleSourceDirectory)**\%(Identity).dll')"
-                Exclude="$(ModuleSourceDirectory)**\obj\**">
+      Exclude="$(ModuleSourceDirectory)**\obj\**">
       <Output ItemName="DllOutputs" TaskParameter="Include" />
     </CreateItem>
 
     <ItemGroup>
       <ModuleBuildOutput Condition="'@(ModuleProjects)' != '' And Exists(%(DllOutputs.FullPath))"
-                         Include="@(DllOutputs)">
+        Include="@(DllOutputs)">
         <OutputType>Module</OutputType>
       </ModuleBuildOutput>
     </ItemGroup>
 
     <Message Text="Module: %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" Importance="High" />
     <Message Text="Test:   %(ModuleBuildOutput.FullPath)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Test'" Importance="High" />
-    
+
     <ItemGroup>
       <CodeCoverageFilterList Include="@(ModuleBuildOutput)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
     </ItemGroup>
@@ -614,21 +654,21 @@ doc.Save(File);
     ==========================================================================================
   -->
 
-    <Target
-      Name="PrepareZipCustomSource"
-      Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
+  <Target
+    Name="PrepareZipCustomSource"
+    Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
-        <ItemGroup>
-          <CustomSolutionFiles
-            Include="$(SolutionDirectoryPath)\*.Custom.sln" />
-        </ItemGroup>
-    </Target>
+    <ItemGroup>
+      <CustomSolutionFiles
+        Include="$(SolutionDirectoryPath)\*.Custom.sln" />
+    </ItemGroup>
+  </Target>
 
-    <Target
-      Name="ZipCustomSource"
-      Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
-      Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
-      Inputs="@(CustomSolutionFiles)">
+  <Target
+    Name="ZipCustomSource"
+    Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
+    Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
+    Inputs="@(CustomSolutionFiles)">
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
@@ -641,8 +681,8 @@ doc.Save(File);
 
     <ItemGroup>
       <SourceFilesToCopyForTransform
-          Include="$(SolutionDirectoryPath)Src\**\*"
-          Exclude="$(SolutionDirectoryPath)*ABT\**;
+        Include="$(SolutionDirectoryPath)Src\**\*"
+        Exclude="$(SolutionDirectoryPath)*ABT\**;
                    $(SolutionDirectoryPath)Build\TestResults\**\*
                    $(SolutionDirectoryPath)BuildTemp\**\*;
                    $(SolutionDirectoryPath)**\obj\**;
@@ -656,8 +696,8 @@ doc.Save(File);
       </SourceFilesToCopyForTransform>
 
       <SourceFilesToCopyForTransform
-          Include="$(SolutionDirectoryPath)Build\**\*"
-          Exclude="$(SolutionDirectoryPath)Build\Build.Infrastructure\**\*">
+        Include="$(SolutionDirectoryPath)Build\**\*"
+        Exclude="$(SolutionDirectoryPath)Build\Build.Infrastructure\**\*">
         <DestinationSubDirectory>Build\</DestinationSubDirectory>
       </SourceFilesToCopyForTransform>
 
@@ -686,16 +726,16 @@ doc.Save(File);
       Directories="$(TempSolutionDirectory)"/>
 
     <Copy
-       SourceFiles="@(SourceFilesToCopyForTransform)"
-       DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
-       SkipUnchangedFiles="true">
+      SourceFiles="@(SourceFilesToCopyForTransform)"
+      DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true">
     </Copy>
 
-    
+
     <!-- Read solution file so we can get the project source-->
     <ReadLinesFromFile File="$(TempSolutionDirectory)%(CustomSolutionFiles.Filename)%(CustomSolutionFiles.Extension)">
       <Output TaskParameter="Lines"
-              ItemName="LinesFromSlnFile"/>
+        ItemName="LinesFromSlnFile"/>
     </ReadLinesFromFile>
 
 
@@ -704,9 +744,9 @@ doc.Save(File);
           Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
     -->
     <RegexMatch Input="@(LinesFromSlnFile)"
-                Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
+      Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
       <Output ItemName="ProjectLines"
-              TaskParameter="Output"/>
+        TaskParameter="Output"/>
     </RegexMatch>
     <Message Text="&#xA;Project lines in custom solution:&#xA;@(ProjectLines, '&#xA;')"/>
 
@@ -716,11 +756,11 @@ doc.Save(File);
           Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
     -->
     <RegexReplace Input="@(ProjectLines)"
-                  Expression="Project\(&quot;.+&quot;\) = &quot;"
-                  Replacement=""
-                  Count="1">
+      Expression="Project\(&quot;.+&quot;\) = &quot;"
+      Replacement=""
+      Count="1">
       <Output ItemName="SlnProjects"
-              TaskParameter="Output" />
+        TaskParameter="Output" />
     </RegexReplace>
 
 
@@ -729,11 +769,11 @@ doc.Save(File);
           Aderant.BusinessEntity
     -->
     <RegexReplace Input="@(SlnProjects)"
-                  Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
-                  Replacement=""
-                  Count="1">
+      Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
+      Replacement=""
+      Count="1">
       <Output ItemName ="CustomProjects"
-              TaskParameter="Output" />
+        TaskParameter="Output" />
     </RegexReplace>
     <Message Text="&#xA;Projects in custom solution:&#xA;@(CustomProjects, '&#xA;')"/>
 
@@ -744,17 +784,17 @@ doc.Save(File);
     </PropertyGroup>
     <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
 
-      <!-- Update the source with the specified transformations file -->
-      <SourceTransformationTask
-        Condition="($(CustomSolutionTransformsFile) != '')"
-        SourcePath="$(TempSolutionDirectory)"
-        TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(CustomSolutionTransformsFile)" />
-      
+    <!-- Update the source with the specified transformations file -->
+    <SourceTransformationTask
+      Condition="($(CustomSolutionTransformsFile) != '')"
+      SourcePath="$(TempSolutionDirectory)"
+      TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(CustomSolutionTransformsFile)" />
+
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <ZipSourceFiles
         Remove="@(ZipSourceFiles)" />
-        
+
       <ZipSourceFiles
         Include="$(TempSolutionDirectory)**\*.Custom.sln;"/>
 
@@ -817,10 +857,10 @@ doc.Save(File);
     <ItemGroup>
       <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
                                $(BinTestDirectory)*.Tests.ps1;"
-                      Exclude="$(BinTestDirectory)*Helpers*.dll;
+        Exclude="$(BinTestDirectory)*Helpers*.dll;
                                $(BinTestDirectory)Microsoft.*" />
       <TestAssemblies Condition="'$(RunIntegrationTests)' == 'true'"
-                      Include="$(BinTestDirectory)*IntegrationTest*.dll" />
+        Include="$(BinTestDirectory)*IntegrationTest*.dll" />
     </ItemGroup>
 
     <ItemGroup>
@@ -830,8 +870,8 @@ doc.Save(File);
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
-        Condition="'$(Use32BitTestRunner)' == ''"
-        Assemblies="@(AssembliesToAnalyze)">
+      Condition="'$(Use32BitTestRunner)' == ''"
+      Assemblies="@(AssembliesToAnalyze)">
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
     </GetAssemblyPlatform>
@@ -852,8 +892,8 @@ doc.Save(File);
     </ItemGroup>
 
     <Touch Condition="!Exists(%(TestAssemblyConfigFiles.FullPath))"
-           Files="%(TestAssemblyConfigFiles.FullPath)"
-           AlwaysCreate="true">
+      Files="%(TestAssemblyConfigFiles.FullPath)"
+      AlwaysCreate="true">
       <Output TaskParameter="TouchedFiles" ItemName="TouchedFiles" />
     </Touch>
 
@@ -863,24 +903,24 @@ doc.Save(File);
     </ItemGroup>
 
     <WriteLinesToFile Condition="'@(TouchedFiles)' != ''"
-                      File="%(TouchedFiles.FullPath)"
-                      Lines="@(XmlLinesToWrite)"
-                      Encoding="UTF-8" />
+      File="%(TouchedFiles.FullPath)"
+      Lines="@(XmlLinesToWrite)"
+      Encoding="UTF-8" />
 
     <Error Condition="'$(UnitTestAppConfigText)' == ''" Text="No unit test app.config text defined!" />
 
     <XDocumentPoke Condition="Exists(%(TestAssemblyConfigFiles.FullPath))"
-                   File="%(TestAssemblyConfigFiles.FullPath)"
-                   Query="configuration/runtime"
-                   Value="$(UnitTestAppConfigText)" />
+      File="%(TestAssemblyConfigFiles.FullPath)"
+      Query="configuration/runtime"
+      Value="$(UnitTestAppConfigText)" />
 
     <MakeSymlink Condition="'@(TestAssemblies)' != '' And Exists('$(DependenciesDirectory)')"
-                 Link="$(BinTestDirectory)Dependencies"
-                 Target="$(DependenciesDirectory)" />
+      Link="$(BinTestDirectory)Dependencies"
+      Target="$(DependenciesDirectory)" />
 
     <MakeSymlink Condition="'@(TestAssemblies)' != '' And '$(IsWebModule)' != 'true'"
-                 Link="$(BinTestDirectory)ModuleBin"
-                 Target="$(BinModuleDirectory)" />
+      Link="$(BinTestDirectory)ModuleBin"
+      Target="$(BinModuleDirectory)" />
   </Target>
 
 
@@ -890,22 +930,22 @@ doc.Save(File);
 
   <Target Name="CoreTest">
     <!-- Override Team Build target to do nothing -->
-  </Target> 
+  </Target>
 
 
   <Target Name="AfterRunTests"
-          AfterTargets="RunTests">
+    AfterTargets="RunTests">
 
     <RemoveDir Directories="$(BinTestDirectory)Dependencies"
-               ContinueOnError="true"  />
+      ContinueOnError="true"  />
     <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
-               ContinueOnError="true" />
+      ContinueOnError="true" />
     <RemoveDir Directories="$(BinTestDirectory)TestResults\packages"
-               ContinueOnError="true" />
+      ContinueOnError="true" />
 
     <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
-            Files="@(TestAssemblyConfigFiles)"
-            TreatErrorsAsWarnings="true" />
+      Files="@(TestAssemblyConfigFiles)"
+      TreatErrorsAsWarnings="true" />
   </Target>
 
 
@@ -921,9 +961,9 @@ doc.Save(File);
 
 
   <Target Name="InstallPester"
-          Condition="'$(PSTests)' == 'true'"
-          AfterTargets="BeforeRunTests"
-          BeforeTargets="RunTests">
+    Condition="'$(PSTests)' == 'true'"
+    AfterTargets="BeforeRunTests"
+    BeforeTargets="RunTests">
 
     <Message Condition="'$(PSTests)' == 'true'" Text="Copying Pester files to test run directory." />
 
@@ -945,13 +985,13 @@ doc.Save(File);
     <MakeDir Directories="$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions"/>
 
     <Copy SourceFiles="@(PesterFiles)"
-          DestinationFiles="@(PesterFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\%(Filename)%(Extension)')" />
+      DestinationFiles="@(PesterFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\%(Filename)%(Extension)')" />
 
     <Copy SourceFiles="@(PesterFunctionsFiles)"
-          DestinationFiles="@(PesterFunctionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\%(Filename)%(Extension)')" />
+      DestinationFiles="@(PesterFunctionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\%(Filename)%(Extension)')" />
 
     <Copy SourceFiles="@(PesterFunctionsAssertionsFiles)"
-          DestinationFiles="@(PesterFunctionsAssertionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions\%(Filename)%(Extension)')" />
+      DestinationFiles="@(PesterFunctionsAssertionsFiles->'$(SolutionDirectoryPath)TestResults\packages\Pester\tools\Functions\Assertions\%(Filename)%(Extension)')" />
 
   </Target>
 
@@ -966,19 +1006,19 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="PublishModule"
-          DependsOnTargets="RunTests"
-          Condition="('$(PublishModule)' == 'true')">
+    DependsOnTargets="RunTests"
+    Condition="('$(PublishModule)' == 'true')">
 
     <Message Condition="('$(IsDesktopBuild)'=='true')"
-             Text="Create package to publish" />
+      Text="Create package to publish" />
     <Message Text="## Publish as version $(FileVersion)" />
 
     <MSBuild Projects="$(SolutionFileName)"
-             Properties="ApplicationVersion=$(FileVersion);$(BuildProperties)"
-             Targets="Publish" />
+      Properties="ApplicationVersion=$(FileVersion);$(BuildProperties)"
+      Targets="Publish" />
 
     <Message Condition="('$(IsDesktopBuild)'=='true')"
-             Text="Zip package" />
+      Text="Zip package" />
 
     <PropertyGroup>
       <ClickOnceZipFileDirectory>$(BinModuleDirectory)$(ModuleName).ClickOnce\</ClickOnceZipFileDirectory>
@@ -1014,7 +1054,7 @@ doc.Save(File);
   <ItemGroup>
     <TemplateSolutionFiles
       Include="$(SolutionDirectoryPath)\*.Template.sln"
-          Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')" />
+      Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')" />
   </ItemGroup>
 
   <Target
@@ -1026,7 +1066,7 @@ doc.Save(File);
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
     </PropertyGroup>
-      
+
     <ItemGroup>
       <ZipFile Remove="@(ZipFile)" />
       <ZipFile Include="$(ZipFileDirectory)\%(TemplateSolutionFiles.Filename).zip" />
@@ -1034,8 +1074,8 @@ doc.Save(File);
 
     <ItemGroup>
       <SourceFilesToCopyForTemplateTransform
-          Include="$(SolutionDirectoryPath)Src\**\*"
-          Exclude="$(SolutionDirectoryPath)*ABT\**;
+        Include="$(SolutionDirectoryPath)Src\**\*"
+        Exclude="$(SolutionDirectoryPath)*ABT\**;
                     $(SolutionDirectoryPath)Build\TestResults\**\*
                     $(SolutionDirectoryPath)BuildTemp\**\*;
                     $(SolutionDirectoryPath)**\obj\**;
@@ -1087,16 +1127,16 @@ doc.Save(File);
       Directories="$(TempTemplateSolutionDirectory)"/>
 
     <Copy
-        SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
-        DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
-        SkipUnchangedFiles="true"
-        UseHardlinksIfPossible="false">
+      SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
+      DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      UseHardlinksIfPossible="false">
     </Copy>
 
     <!-- Read solution file so we can get the project source-->
     <ReadLinesFromFile File="$(TempTemplateSolutionDirectory)%(TemplateSolutionFiles.Filename)%(TemplateSolutionFiles.Extension)">
       <Output TaskParameter="Lines"
-              ItemName="LinesFromTemplateSlnFile"/>
+        ItemName="LinesFromTemplateSlnFile"/>
     </ReadLinesFromFile>
 
 
@@ -1105,9 +1145,9 @@ doc.Save(File);
           Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflow.FileOpening.Template", "Src\Workflow.FileOpening.Template\Workflow.FileOpening.Template.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
     -->
     <RegexMatch Input="@(LinesFromTemplateSlnFile)"
-                Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
+      Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
       <Output ItemName="TemplateProjectLines"
-              TaskParameter="Output"/> 
+        TaskParameter="Output"/>
     </RegexMatch>
     <Message Text="&#xA;Project lines in template solution:&#xA;@(TemplateProjectLines, '&#xA;')"/>
 
@@ -1117,11 +1157,11 @@ doc.Save(File);
           Workflow.FileOpening.Template", "Src\Workflow.FileOpening.Template\Workflow.FileOpening.Template.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
     -->
     <RegexReplace Input="@(TemplateProjectLines)"
-                  Expression="Project\(&quot;.+&quot;\) = &quot;"
-                  Replacement=""
-                  Count="1">
+      Expression="Project\(&quot;.+&quot;\) = &quot;"
+      Replacement=""
+      Count="1">
       <Output ItemName="TemplateSlnProjects"
-              TaskParameter="Output" />
+        TaskParameter="Output" />
     </RegexReplace>
 
 
@@ -1130,11 +1170,11 @@ doc.Save(File);
           Workflow.FileOpening.Template
     -->
     <RegexReplace Input="@(TemplateSlnProjects)"
-                  Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
-                  Replacement=""
-                  Count="1">
+      Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
+      Replacement=""
+      Count="1">
       <Output ItemName ="TemplateProjects"
-              TaskParameter="Output" />
+        TaskParameter="Output" />
     </RegexReplace>
     <Message Text="&#xA;Projects in template solution:&#xA;@(TemplateProjects, '&#xA;')"/>
 
@@ -1207,23 +1247,23 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="SeedPackagePacking">
-    
+
     <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High"></Message>
-    <SeedPackagePacking 
+    <SeedPackagePacking
       SkipPackageValidation="$(SkipPackageValidation)"
       BuildFrom="$(SolutionDirectoryPath)"
       SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
       SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages" />
-    
+
   </Target>
-  
+
   <!--
     ==========================================================================================
         Index Sources and Publish Symbols        
     ==========================================================================================
   -->
   <Target Name="IndexSourcesAndPublishSymbols"
-          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
 
     <CallTarget Targets="IndexSourcesAndPublishSymbolsCore" Condition="'@(CompiledAssemblies)' != ''" />
   </Target>
@@ -1255,7 +1295,7 @@ doc.Save(File);
           it prevents TextTranslator loading a message file while unit tests are running and then having those tests fail.
       -->
       <FilesToReplicate Include="$(BinModuleDirectory)**\*"
-                        Exclude="$(BinModuleDirectory)CodeAnalysis\**;
+        Exclude="$(BinModuleDirectory)CodeAnalysis\**;
                                  $(BinModuleDirectory)**\*.pdb;
                                  $(BinModuleDirectory)**\*cmsmsg*.msg;
                                  $(BinModuleDirectory)**\*exe.config;
@@ -1265,20 +1305,20 @@ doc.Save(File);
     <Message Text="Replicating module output to shared dependencies directory: $(SharedDependencyDirectory)" Importance="High "/>
 
     <Copy Condition="!Exists('$(SharedDependencyDirectory)%(FilesToReplicate.RecursiveDir)%(FilesToReplicate.Filename)%(FilesToReplicate.Extension)')"
-          SourceFiles="@(FilesToReplicate)"
-          DestinationFiles="$(SharedDependencyDirectory)%(FilesToReplicate.RecursiveDir)%(FilesToReplicate.Filename)%(FilesToReplicate.Extension)"
-          SkipUnchangedFiles="true"
-          OverwriteReadOnlyFiles="true"
-          UseHardlinksIfPossible="true" />
+      SourceFiles="@(FilesToReplicate)"
+      DestinationFiles="$(SharedDependencyDirectory)%(FilesToReplicate.RecursiveDir)%(FilesToReplicate.Filename)%(FilesToReplicate.Extension)"
+      SkipUnchangedFiles="true"
+      OverwriteReadOnlyFiles="true"
+      UseHardlinksIfPossible="true" />
 
     <ExtractWebModule Condition="$(ModuleName.StartsWith('Web')) Or $(ModuleName.StartsWith('Mobile'))"
-                      ModuleName="$(ModuleName)"
-                      DependenciesDirectory="$(SharedDependencyDirectory)" />
+      ModuleName="$(ModuleName)"
+      DependenciesDirectory="$(SharedDependencyDirectory)" />
 
   </Target>
 
   <Target Name="CopyToDrop"
-          Condition="('$(IsDesktopBuild)'!='true' And '$(IsCustomBuild)' != 'true')">
+    Condition="('$(IsDesktopBuild)'!='true' And '$(IsCustomBuild)' != 'true')">
 
     <!--We have differing ways of determining the drop location depending on the type of build. 
         The simplest way was to have a condition on whether we are build all modules of a single module.-->
@@ -1316,16 +1356,16 @@ doc.Save(File);
     </PropertyGroup>
 
     <Exec
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) $(DropRootUncPathSwitch) $(AssemblyFileVersionSwitch) $(TestFailedSwitch) $(BuildBreakSwitch) $(SuppressUniqueCheckSwitch)'
-          YieldDuringToolExecution="$(YieldDuringCopy)" />
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) $(DropRootUncPathSwitch) $(AssemblyFileVersionSwitch) $(TestFailedSwitch) $(BuildBreakSwitch) $(SuppressUniqueCheckSwitch)'
+      YieldDuringToolExecution="$(YieldDuringCopy)" />
 
     <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
         so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
     -->
     <MakeDir Directories="$(ModuleDropLocation)$(FileVersion)"
-             Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />
+      Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />
 
     <WriteLinesToFile
       Condition="('$(BuildAll)'=='true')"
@@ -1345,8 +1385,8 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="PublishBuild"
-          BeforeTargets="Build;CheckForWrongReferences"
-          Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    BeforeTargets="Build;CheckForWrongReferences"
+    Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Publishing build for: $(ModuleName) [$(FileVersion)]" />
     <Message Text="BaseDropDirectory: $(BaseDropDirectory) [$(DropLocation)]" />
@@ -1398,7 +1438,7 @@ doc.Save(File);
   </PropertyGroup>
 
   <Target Name="NDepend"
-          Condition="('$(IsDesktopBuild)'!='true')" >
+    Condition="('$(IsDesktopBuild)'!='true')" >
 
     <Message Text="*** NDepend " />
     <Message Text="NDependConsoleExePath : $(NDependPath)" />
@@ -1416,17 +1456,17 @@ doc.Save(File);
     <!-- Scan the NDepend Report Files to see if a braking change has been identified -->
 
     <XmlRead ContinueOnError="True"
-             XmlFileName="$(SolutionDirectoryPath)\NDependout\CQLResult.xml"
-             XPath="string(count(//Group[@Status='Warn']))">
+      XmlFileName="$(SolutionDirectoryPath)\NDependout\CQLResult.xml"
+      XPath="string(count(//Group[@Status='Warn']))">
       <Output TaskParameter="Value"
-              PropertyName="NDependWarn" />
+        PropertyName="NDependWarn" />
     </XmlRead>
 
 
     <!-- If braking change identified then need to mark build step as Failed -->
 
     <Error Text="NDepend Breaking Change"
-           Condition="$(NDependWarn) &gt; 0"/>
+      Condition="$(NDependWarn) &gt; 0"/>
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
@@ -1438,7 +1478,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="MarkBuildStepAsFailed"
-          Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Marking build as failed" />
 

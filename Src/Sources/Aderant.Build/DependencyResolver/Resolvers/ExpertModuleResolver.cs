@@ -8,7 +8,8 @@ using Aderant.Build.Logging;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver.Resolvers {
-    internal class ExpertModuleResolver : IDependencyResolver {
+    public class ExpertModuleResolver : IDependencyResolver {
+      
         private readonly IFileSystem2 fileSystem;
         private List<DependencySource> sources = new List<DependencySource>();
 
@@ -20,7 +21,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             this.ManifestFinder = FindManifest;
         }
 
-        public FolderDependencySystem FolderDependencySystem { get; set; }
+        internal FolderDependencySystem FolderDependencySystem { get; set; }
 
         private Stream FindManifest(string path) {
             if (fileSystem.DirectoryExists(path)) {
@@ -46,7 +47,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             get { return "Drop"; }
         }
 
-        public IEnumerable<IDependencyRequirement> GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
+        IEnumerable<IDependencyRequirement> IDependencyResolver.GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             resolverRequest.Logger.Info("Probing for DependencyManifest under: " + moduleDirectory);
@@ -69,13 +70,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 foreach (var reference in manifest.ReferencedModules) {
                     yield return DependencyRequirement.Create(reference);
                 }
-
             } else {
                 resolverRequest.Logger.Info("No DependencyManifest found");
             }
         }
 
-        public void Resolve(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken = default(CancellationToken)) {
+        void IDependencyResolver.Resolve(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             ResolveAll(resolverRequest, requirements, cancellationToken);
         }
 
@@ -144,7 +144,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             fileSystem.CopyDirectory(latestBuildPath, moduleDependenciesDirectory);
         }
 
-        protected virtual string TryGetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
+        internal virtual string TryGetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
             if (FolderDependencySystem == null) {
                 FolderDependencySystem = new FolderDependencySystem(new PhysicalFileSystem(resolverRequestDropPath));
             }

@@ -3,12 +3,87 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
 
 namespace Aderant.Build.DependencyResolver {
-    internal class FolderDependencySystem {
+    public class FolderDependencySystem {
         private readonly IFileSystem2 fileSystem;
+
+        private const string RefsPrefix = @"refs\heads\";
+
+        public static string BuildDropPath(string moduleName, string component, string quality, string origin, string version) {
+            if (quality == null) {
+                throw new ArgumentNullException(nameof(quality));
+            }
+
+            if (origin == null) {
+                throw new ArgumentNullException(nameof(origin));
+            }
+            origin = origin.Replace('/', '\\');
+
+            // <module>\<component>\<quality>\<origin>\<build>
+
+            List<string> parts = new List<string>();
+            parts.Add(moduleName.Trim().TrimEnd('\"'));
+
+            if (!string.IsNullOrWhiteSpace(component)) {
+                parts.Add(component.Trim());
+            } else {
+                parts.Add("default");
+            }
+
+            parts.Add(quality.Trim());
+
+            origin = origin.Trim('\\');
+            origin = RemovePrefix(origin, RefsPrefix);
+            origin = CheckPullRequest(origin);
+
+            if (origin[0] == '$') {
+                // TFVC path
+                origin = PathHelper.GetBranch(origin, false).ToLowerInvariant();
+            }
+
+            origin = origin.Replace('\\', '.');
+
+            parts.Add(origin.Trim());
+
+            if (!string.IsNullOrWhiteSpace(version)) {
+                parts.Add(version.Trim());
+            }
+
+            return Path.Combine(parts.ToArray());
+        }
+
+        private static string CheckPullRequest(string origin) {
+            string result = origin;
+            if (origin.StartsWith(@"pull\", StringComparison.OrdinalIgnoreCase)) {
+                result = origin.Split('\\')[1];
+            }
+            return result;
+        }
+
+        public static string GetQualityMoniker(string origin) {
+
+            origin = origin.Trim('\\');
+
+            origin = RemovePrefix(origin, RefsPrefix);
+            
+            return origin.StartsWith(@"pull\", StringComparison.OrdinalIgnoreCase) ? "pull" : "unstable";
+        }
+
+        internal static string RemovePrefix(string origin, string prefix) {
+            string originString = origin;
+            var items = prefix.Trim('\\').Split('\\');
+            int index;
+            foreach (string item in items) {
+                index = originString.IndexOf(item, StringComparison.Ordinal);
+                if (index >= 0) {
+                    originString = originString.Remove(index, item.Length);
+                }
+            }
+            originString = originString.Trim('\\');
+            return originString;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FolderDependencySystem"/> class.
@@ -18,7 +93,7 @@ namespace Aderant.Build.DependencyResolver {
             this.fileSystem = fileSystem;
         }
 
-        protected virtual bool HasDropPath(string requirementPath) {
+        internal virtual bool HasDropPath(string requirementPath) {
             return fileSystem.DirectoryExists(requirementPath);
         }
 
@@ -27,7 +102,7 @@ namespace Aderant.Build.DependencyResolver {
         /// </summary>
         /// <param name="resolverRequestDropPath">The resolver request drop path.</param>
         /// <param name="requirement">The requirement.</param>
-        public virtual string GetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
+        internal virtual string GetBinariesPath(string resolverRequestDropPath, IDependencyRequirement requirement) {
             string newRequirementPath = AdjustDropPathToBranch(resolverRequestDropPath, requirement);
             bool notRelative = !newRequirementPath.Contains(fileSystem.Root);
             string requirementPath = HandleRequirementType(newRequirementPath, requirement);
@@ -36,7 +111,7 @@ namespace Aderant.Build.DependencyResolver {
                 throw new BuildNotFoundException($"Drop location {requirementPath} does not exist");
             }
 
-            if (requirement.VersionRequirement != null && !string.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
+            if (requirement.VersionRequirement != null && !String.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
                 string[] entries = fileSystem.GetDirectories(requirementPath, notRelative: notRelative).ToArray();
                 string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
@@ -57,7 +132,7 @@ namespace Aderant.Build.DependencyResolver {
                     }
 
                     string buildLog = files.FirstOrDefault(f => f.EndsWith("BuildLog.txt", StringComparison.OrdinalIgnoreCase));
-                    if (!string.IsNullOrEmpty(buildLog)) {
+                    if (!String.IsNullOrEmpty(buildLog)) {
                         if (CheckLog(fileSystem.GetFullPath(buildLog))) {
                             string binariesPath;
                             if (HasBinariesFolder(fileSystem.GetFullPath(build), fileSystem, out binariesPath)) {
@@ -78,10 +153,10 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (requirement.VersionRequirement.AssemblyVersion == null) {
-                throw new ArgumentNullException(nameof(requirement.VersionRequirement.AssemblyVersion), string.Format(CultureInfo.InvariantCulture, "The requirement {0} does not have an assembly version specified.", requirement.Name));
+                throw new ArgumentNullException(nameof(requirement.VersionRequirement.AssemblyVersion), String.Format(CultureInfo.InvariantCulture, "The requirement {0} does not have an assembly version specified.", requirement.Name));
             }
 
-            return Path.Combine(resolverRequestDropPath, requirement.Name, requirement.VersionRequirement.AssemblyVersion); ;
+            return Path.Combine(resolverRequestDropPath, requirement.Name, requirement.VersionRequirement.AssemblyVersion);
         }
 
         private static bool HasBinariesFolder(string build, IFileSystem2 fileSystem, out string binariesFolder) {
@@ -136,11 +211,11 @@ namespace Aderant.Build.DependencyResolver {
             return false;
         }
 
-        protected static string AdjustDropPathToBranch(string dropLocationDirectory, IDependencyRequirement module) {
+        internal static string AdjustDropPathToBranch(string dropLocationDirectory, IDependencyRequirement module) {
             FolderBasedRequirement folderRequirement = module as FolderBasedRequirement;
 
             if (folderRequirement != null) {
-                if (!string.IsNullOrEmpty(folderRequirement.Branch)) {
+                if (!String.IsNullOrEmpty(folderRequirement.Branch)) {
                     return PathHelper.ChangeBranch(dropLocationDirectory, folderRequirement.Branch);
                 }
             }

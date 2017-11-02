@@ -1,4 +1,6 @@
-﻿<#
+﻿. $PSScriptRoot\Bootstrap.ps1
+
+<#
 .Synopsis
     Functions relating to the modules
 .Example
@@ -58,11 +60,11 @@
           "current-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action }
           "specific-path" { ServerPathToModuleBinariesFor $module $module.Path $action }
           "specific-path-external-module" { ThirdpartyBinariesPathFor $module $module.Path $action }
-          Default { throw "invalid action [$action]"}
+          Default { throw "invalid action [$action]" }
         }
     }
 
-    function global:AcquireExpertClassicBinaries([string]$moduleName,  [string]$binariesDirectory, [string]$classicPath, [string]$target) {
+	    function global:AcquireExpertClassicBinaries([string]$moduleName,  [string]$binariesDirectory, [string]$classicPath, [string]$target) {
 		Push-Location
         $build = Get-ChildItem (Join-Path -Path $classicPath -ChildPath $buildDirectory.Name) -File -Filter "*.zip"
 
@@ -324,8 +326,7 @@
         [string]$pathToLatestSuccessfulBuild = $null
 
         foreach ($folderName in $sortedFolders) {
-            $buildLog = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\BuildLog.txt"
-
+            [string]$buildLog = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\BuildLog.txt"
             [string]$pathToLatestSuccessfulBuild = Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name
             [string]$successfulBuildBinModule = Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "\Bin\Module"
 
@@ -405,22 +406,19 @@
         Write-Error "No latest build found for [$pathToPackages]"        
     }
 
-
-
     ###
     # Pads each section of the folder name (which is in the format 1.8.3594.41082) with zeroes, so that an alpha sort
     # can be used because each section will now be of the same length.
     ###
-    Function global:SortedFolders( [string]$parentFolder ) {
-
-        Function IsAllNumbers( $container ) {
+    Function global:SortedFolders([string]$parentFolder) {
+		Function IsAllNumbers($container) {
             $numbers = $container.Name.Replace(".", "")
 
             $rtn = $null
             if ([int64]::TryParse($numbers, [ref]$rtn)) {
                 return $true
             }
-            
+
             Write-Debug "Folder $($container.FullName) is not a valid build drop folder" 
             return $false
         }
@@ -428,7 +426,7 @@
         if (test-path $parentFolder) {
             $sortedFolders =  (dir -Path $parentFolder |
                         where {$_.PsIsContainer} |
-                        where { IsAllNumbers $_ } |
+						where { IsAllNumbers $_ } |
                         Sort-Object {$_.name.Split(".")[0].PadLeft(4,"0")+"."+ $_.name.Split(".")[1].PadLeft(4,"0")+"."+$_.name.Split(".")[2].PadLeft(8,"0")+"."+$_.name.Split(".")[3].PadLeft(8,"0")+"." } -Descending  |
                         select name)
 
@@ -437,8 +435,6 @@
             write-Debug "$parentFolder could not be found because it does not exist"
         }
     }
-
-
 
     ###
     # Delete the files contained in the directory excluding the file name provided
@@ -576,6 +572,235 @@
         }
     }
 
+	# Called from .\CopyToDropV2.ps1
+	function global:CopyFilesToDrop {
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleName,
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleRootPath,
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
+			[string[]]$components,
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$origin,
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
+		)
+
+		begin {
+			Set-StrictMode -Version 2.0
+
+			[string]$commandName = $PSCmdlet.MyInvocation.InvocationName;
+			Write-Host "Executing $($commandName) with parameters:"
+			$parameterList = (Get-Command -Name $commandName).Parameters
+
+			foreach ($parameter in $parameterList) {
+				Get-Variable -Name $parameter.Values.Name -ErrorAction SilentlyContinue
+			}
+		}
+
+		process {
+			[string]$moduleBinPath = Join-Path -Path $moduleRootPath -ChildPath "Bin"
+
+			# Generate excluded file list
+			$dependenciesFiles = Get-ChildItem -Path (Join-Path -Path $moduleRootPath -ChildPath "Dependencies") -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
+			$packageFiles = Get-ChildItem -Path (Join-Path -Path $moduleRootPath -ChildPath "packages") -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
+			# Exclude all directories other than Modules and Test
+			[string[]]$excludedDirectories = Get-ChildItem -Path $moduleBinPath -Exclude "*Module", "*Test" -Directory
+
+			[System.Collections.Generic.HashSet[string]]$excludedFiles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+			$dependenciesFiles | % { [void]$excludedFiles.Add($_) }
+			$packageFiles | % { [void]$excludedFiles.Add($_) }
+
+			# Generate drop location
+			[string]$dropLocation = GetArtifactDropLocation $moduleName $components $origin $version
+			[string]$dropPath = [System.IO.Path]::Combine($dropRoot, $dropLocation)
+
+			Write-Host "Drop path: $($dropPath)"
+
+			try {
+				$jobFile = [System.IO.Path]::GetRandomFileName() + ".RCJ"
+				$jobFile = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath $jobFile
+
+				$sb = [System.Text.StringBuilder]::new()
+				[void]$sb.AppendLine("/XD")
+
+				foreach ($directory in $excludedDirectories) {
+					[void]$sb.AppendLine($directory)
+				}
+
+				[void]$sb.AppendLine("/XF")
+
+				foreach ($file in $excludedFiles) {
+					[void]$sb.AppendLine($file)
+				}
+
+				[void]$sb.AppendLine("*.pfx")
+				[void]$sb.AppendLine("*.trx")
+            
+				[System.IO.File]::WriteAllText($jobFile, $sb.ToString(), [System.Text.Encoding]::ASCII)
+
+				Write-Host "Job File:"
+				Write-Host (Get-Content $jobFile)
+
+				& Robocopy.exe "$($moduleRootPath)\Bin" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"
+
+				# Tell TFS about our drop path so it can be tracked
+				#// Damn build systems. So you would think that TFS would take the path verbatim and just store that away.
+				#// But no, it takes the UNC path you give it and then when the garbage collection occurs it appends the artifact name as a folder
+				#// to that original path as the final path to delete. 
+				#// This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
+				#// set the actual final folder as the name.
+
+				[string[]]$paths =  $dropPath.Split('\')
+				[int]$moduleIndex = $paths.IndexOf($moduleName)
+				[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
+				[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
+
+				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]$($artifactDropPath)"
+			} finally {
+				[System.IO.File]::Delete($jobFile)
+
+				# robocopy has non-standard exit values that are documented here: https://support.microsoft.com/en-us/kb/954404
+				# Exit codes 0-8 are considered success, while all other exit codes indicate at least one failure.
+				# Some build systems treat all non-0 return values as failures, so we massage the exit code into
+				# something that they can understand.            
+				if ($global:LASTEXITCODE -lt 8) {
+					$global:LASTEXITCODE = 0
+				} else {
+					throw "Robocopy failed with error $($global:LASTEXITCODE)"
+				}
+			}
+		}
+	}
+
+    Function global:GetArtifactDropLocation {
+        param(
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleName,
+			[string]$component,
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$origin,
+			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
+        )
+
+		process {
+			Set-StrictMode -Version 2.0
+
+			$global:ToolsDirectory = Join-Path -Path $PSScriptRoot -ChildPath "\..\Build.Tools"
+
+			$assemblyBytes = [System.IO.File]::ReadAllBytes((Join-Path -Path "$PSScriptRoot\..\Build.Tools" -ChildPath "Aderant.Build.dll"))
+			[void][System.Reflection.Assembly]::Load($assemblyBytes)
+
+			[string]$quality = [Aderant.Build.DependencyResolver.FolderDependencySystem]::GetQualityMoniker($origin)
+			[string]$fullDropPath = [Aderant.Build.DependencyResolver.FolderDependencySystem]::BuildDropPath($moduleName, $component, $quality, $origin, $version)
+
+			return $fullDropPath
+		}
+    }
+
+    Function global:CopyFilesToArtifactStagingDirectory {
+        param( 
+        [ValidateNotNullOrEmpty()]
+        [string]$stagingDirectory, 
+       
+        [ValidateNotNullOrEmpty()]
+        [string]$moduleName,
+
+        [ValidateNotNullOrEmpty()]
+        [string]$modulePath,        
+       
+        [ValidateNotNullOrEmpty()]
+        [string]$gitOrTfvcBranch,
+
+        [string]$version,
+
+        [switch]$isDesktopBuild,
+        [switch]$isMasterBuild,
+        [switch]$isPullRequestBuild,
+        [switch]$isComboBuild,
+        [switch]$isPrivateBuildAll        
+        )        
+
+        if (-not $isDesktopBuild.IsPresent)  {
+            $isDesktopBuild = $global:IsDesktopBuild
+        }
+
+        if (-not $isComboBuild.IsPresent)  {
+            $isComboBuild = $global:IsComboBuild
+        }
+
+        Write-Debug "Entering CopyFilesToArtifactStagingDirectory"
+        Write-Debug "Staging directory: $stagingDirectory"
+        Write-Debug "Module name: $moduleName"
+        Write-Debug "GitOrTfvcBranch: $gitOrTfvcBranch"
+        Write-Debug "IsDesktopBuild: $isDesktopBuild"
+        Write-Debug "IsMasterBuild: $isMasterBuild"
+        Write-Debug "IsPullRequestBuild: $isPullRequestBuild"
+        Write-Debug "IsComboBuild: $isComboBuild"
+        Write-Debug "IsPrivateBuildAll: $isPrivateBuildAll"    
+         
+        $dependenciesFiles = Get-ChildItem -Path "$modulePath\Dependencies" -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
+        $packageFiles = Get-ChildItem -Path "$modulePath\packages" -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
+
+        $excludedFiles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $dependenciesFiles | % { [void]$excludedFiles.Add($_) }
+        $packageFiles | % { [void]$excludedFiles.Add($_) }
+
+        #[bool]$hasComponents = $true
+
+        #$source = "$modulePath\Bin\Components"
+
+        #Write-Debug "Testing for component directory: $source"
+
+        #if (-not (Test-Path $source)) {
+        #    $source = "$modulePath\Bin\Module"
+        #    $hasComponents = $false;
+        #}
+
+        #if (-not (Test-Path $source)) {
+        #    throw "Directory $source does not exist so cannot copy files from it."
+        #}
+
+        $dropLocation = GetArtifactDropLocation $moduleName $null $gitOrTfvcBranch $version $isDesktopBuild $isMasterBuild $isPullRequestBuild $isComboBuild $isPrivateBuildAll       
+
+        $dropPath = [System.IO.Path]::Combine($stagingDirectory, $dropLocation)
+
+        Write-Host "Drop path: " $dropPath
+
+        try {
+            $jobFile = [System.IO.Path]::GetRandomFileName() + ".RCJ"
+            $jobFile = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath $jobFile
+
+            $sb = [System.Text.StringBuilder]::new()
+            [void]$sb.AppendLine("/XF")
+            
+            foreach ($item in $excludedFiles) {
+                #[void]$sb.AppendLine($item)
+            }
+            
+            [void]$sb.AppendLine("*.pfx")
+            [void]$sb.AppendLine("*.trx")
+            
+            [System.IO.File]::WriteAllText($jobFile, $sb.ToString(), [System.Text.Encoding]::ASCII)
+
+            Write-Host "Job File:"
+            Write-Host (Get-Content $jobFile)
+
+            & Robocopy.exe "$source" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"
+
+            # Tell TFS about our drop path so it can be tracked
+            #Write-Host "##vso[artifact.associate type=filepath;artifactname=]$dropPath"
+        } finally {
+            [System.IO.File]::Delete($jobFile)
+
+            # robocopy has non-standard exit values that are documented here: https://support.microsoft.com/en-us/kb/954404
+            # Exit codes 0-8 are considered success, while all other exit codes indicate at least one failure.
+            # Some build systems treat all non-0 return values as failures, so we massage the exit code into
+            # something that they can understand.            
+            if ($global:LASTEXITCODE -lt 8) {
+                $global:LASTEXITCODE = 0
+            } else {
+                throw "Robocopy failed with error $($global:LASTEXITCODE)"
+            }
+        }
+    }
+
     <#
     Copy only files from the bin\module and bin\test that are built as part of this module for the drop
     i.e. they are not dependencies
@@ -612,7 +837,7 @@
                     Write-Host "Copying web application files to drop for web application integration tests."
                     CopyContents -copyFrom $binTestPath -copyTo $dropBinTestPath
                 } else {
-                    Write-Host "Copying test artifacts to drop"
+                   Write-Host "Copying integration test artifacts to drop"
                     
                     $patterns = @(
                         "IntegrationTest*.dll*",
@@ -708,11 +933,14 @@
 		if(-not ($stableBuild -like "*vnext*")){
 			return $true
 		}
+
 		if(Test-Path $stableBuild) {
 			return $true
 		}
+
 		return $false
 	}
+
     <#
     We now need to move/copy the deployment manager files depending on the version we are working on.  There are three different scenarios:
     1. 7SP2 and earlier - all files are in Binaries folder.
@@ -1158,3 +1386,105 @@ function global:Write-Success {
 }
 
 Set-Alias robocopy InvokeRobocopy -Scope Global
+
+
+<#
+.SYNPOSIS
+Gets the name of the module from the RSP file
+Build agents may deploy code to a random folder name, and we cannot rely on the repository name to the name of the module as there
+may be more than one module within a repository
+#>
+function global:GetModuleNameFromRsp {
+    param([string]$repository)
+
+    $rsp = [System.IO.Path]::Combine($repository, "Build", "TFSBuild.rsp")
+    if (Test-Path $rsp) {
+        $rspContent = Get-Content -Raw -Path $rsp
+
+        # Match module name up to closing quote
+        if ($rspContent -match "(?m)ModuleName=(`".*?`"$|.*$)") {
+            return $Matches[1].Trim("`"")
+        }
+    } else {
+        throw "No RSP file at $rsp"
+    }
+}
+
+
+if (-not (Get-Command task -ErrorAction SilentlyContinue)) {
+    # If the Invoke-Build framework is not present, we need to create some stubs
+    function Add-BuildTask {
+    }
+    Set-Alias task Add-BuildTask
+}
+
+task Init {
+    CompileBuildLibraryAssembly "$PSScriptRoot"
+    LoadLibraryAssembly "$PSScriptRoot"
+
+    Write-Info "Build tree"
+    .\Show-BuildTree.ps1 -File $PSCommandPath
+   
+    $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
+
+    if ($global:IsDesktopBuild -ne $true) {
+        # hoho, fucking hilarious
+        # For some reason we cannot load Microsoft assemblies as we get an exception
+        # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
+        # so to work around this we just disable strong-name validation....     
+        cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
+              
+        $global:OnAssemblyResolve = [System.ResolveEventHandler] {
+            param($sender, $e)
+            if ($e.Name -like "*resources*") {
+                return $null
+            }            
+
+            Write-Host "Resolving $($e.Name)"
+            
+            $fileName = $e.Name.Split(",")[0]
+            $fileName = $fileName + ".dll"
+        
+            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")              
+            foreach ($dir in $probeDirectories) {                
+                $fullFilePath = "$dir\$fileName"
+
+                Write-Debug "Probing: $fullFilePath"
+                
+                if (Test-Path ($fullFilePath)) {    
+                    Write-Debug "File exists: $fullFilePath"        
+                    try {
+                        $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+                        Write-Debug "Loaded dependency: $fullFilePath"
+                        return $a
+                    } catch {
+                        Write-Error "Failed to load $fullFilePath. $_.Exception"
+                    }   
+                } else {
+                    foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+                        if ($a.FullName -eq $e.Name) {
+                            Write-Debug "Found already loaded match: $a"
+                            return $a
+                        }
+                        if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
+                            Write-Debug "Found already loaded match: $a"
+                            return $a
+                        }
+                    }
+                }
+            }
+            
+            Write-Host "Cannot locate $($e.Name). The build will probably fail now."
+            return $null
+        }
+        
+        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
+        
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"                      
+                
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
+    }
+
+    Write-Info "Established build environment"
+}
