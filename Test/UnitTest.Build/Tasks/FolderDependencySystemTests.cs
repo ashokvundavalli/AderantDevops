@@ -19,32 +19,32 @@ namespace UnitTest.Build.Tasks {
 
         [TestMethod]
         public void GetQualityMasterTest() {
-            const string origin = @"refs\heads\CopyToDropv2";
+            const string origin = "refs/heads/CopyToDropv2";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
-            Assert.AreEqual(quality, "unstable");
+            Assert.AreEqual("unstable", quality);
         }
 
         [TestMethod]
         public void GetQualityPRTest() {
-            const string origin = @"refs\pull\10600\merge";
+            const string origin = "refs/pull/10600/merge";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
-            Assert.AreEqual(quality, "pull");
+            Assert.AreEqual("pull", quality);
         }
 
         [TestMethod]
         public void GetBuildDropPathMasterTest() {
-            const string origin = @"refs\heads\CopyToDropv2";
+            const string origin = "refs/heads/CopyToDropv2";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
             string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, quality, origin, buildId, Component);
 
             string outputDirectory = Path.Combine(ModuleName, "unstable", "CopyToDropv2", buildId, Component);
 
-            Assert.AreEqual(buildDropPath, outputDirectory);
+            Assert.AreEqual(outputDirectory, buildDropPath);
         }
 
         [TestMethod]
         public void GetBuildDropPathPRTest() {
-            const string origin = @"refs\pull\10600\merge";
+            const string origin = "refs/pull/10600/merge";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
             string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, quality, origin, buildId, Component);
 
@@ -55,29 +55,29 @@ namespace UnitTest.Build.Tasks {
 
         [TestMethod]
         public void GetBuildDropPathTfvcTest() {
-            const string origin = @"dev\vnext";
+            const string origin = "dev/vnext";
             string quality = FolderDependencySystem.GetQualityMoniker(origin);
             string buildDropPath = FolderDependencySystem.BuildDropPath(ModuleName, quality, origin, buildId, Component);
 
             string outputDirectory = Path.Combine(ModuleName, "unstable", "dev.vnext", buildId, Component);
 
-            Assert.AreEqual(buildDropPath, outputDirectory);
+            Assert.AreEqual(outputDirectory, buildDropPath);
         }
 
         [TestMethod]
         public void RemovePrefixMasterTest() {
-            string prefix = @"refs\heads\";
-            const string origin = @"refs\heads\Test";
+            string prefix = "refs/heads/";
+            const string origin = "refs/heads/Test";
             string resultOrigin = FolderDependencySystem.RemovePrefix(origin, prefix);
-            Assert.AreEqual(resultOrigin, "Test");
+            Assert.AreEqual("Test", resultOrigin);
         }
 
         [TestMethod]
         public void RemovePrefixPRTest() {
-            string prefix = @"refs\heads\";
-            const string origin = @"refs\pull\10600\merge";
-            string resultOrigin = FolderDependencySystem.RemovePrefix(origin, prefix);
-            Assert.AreEqual(resultOrigin, @"pull\10600\merge");
+            string prefix = "refs\\heads\\";
+            const string origin = "refs\\pull\\10600\\merge";
+            var resultOrigin = FolderDependencySystem.RemovePrefix(origin, prefix);
+            Assert.AreEqual(@"pull\10600\merge", resultOrigin);
         }
     }
 }

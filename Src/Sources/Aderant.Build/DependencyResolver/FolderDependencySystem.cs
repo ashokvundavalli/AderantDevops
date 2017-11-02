@@ -9,7 +9,7 @@ namespace Aderant.Build.DependencyResolver {
     public class FolderDependencySystem {
         private readonly IFileSystem2 fileSystem;
 
-        private const string RefsPrefix = @"refs\heads\";
+        private const string RefsPrefix = "refs\\heads\\";
 
         public static string BuildDropPath(string moduleName, string quality, string origin, string version, string component) {
             if (quality == null) {
@@ -21,7 +21,7 @@ namespace Aderant.Build.DependencyResolver {
             }
             origin = origin.Replace('/', '\\');
 
-            // <module>\<component>\<quality>\<origin>\<build>
+            // <module>\<quality>\<origin>\<build>\<component>
 
             List<string> parts = new List<string>();
             parts.Add(moduleName.Trim().TrimEnd('\"'));
@@ -64,7 +64,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public static string GetQualityMoniker(string origin) {
 
-            origin = origin.Trim('\\');
+            origin = origin.Replace('/', '\\').Trim('\\');
 
             origin = RemovePrefix(origin, RefsPrefix);
             
