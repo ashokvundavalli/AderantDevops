@@ -268,8 +268,8 @@ doc.Save(File);
   Override drop location
   ==========================================================================================
   -->
-  <Target Name="SetBuildNumbers">
-    <Message Text="SetBuildNumbers" />
+  <Target Name="BuildNumberOverrideTarget"
+          DependsOnTargets="SetBuildNumbers" AfterTargets="PrepareBuildEnvironment">
 
     <!--<PropertyGroup>
       -->
