@@ -16,8 +16,8 @@
       <YieldDuringCopy Condition="'$(BuildAll)' != 'true'">false</YieldDuringCopy>
       <YieldDuringCopy Condition="'$(BuildAll)' == 'true'">true</YieldDuringCopy>
       
-      <GenerateFile Condition="'$(BUILD_BUILDID)' != ''">true</GenerateFile>
-      <GenerateFile Condition="'$(GenerateFile)' == ''">false</GenerateFile>
+      <GenerateFile Condition="'$(BUILD_BUILDID)' != ''">$true</GenerateFile>
+      <GenerateFile Condition="'$(GenerateFile)' == ''">$false</GenerateFile>
     </PropertyGroup>
 
     <Exec ContinueOnError="false"
