@@ -17,7 +17,7 @@
       <YieldDuringCopy Condition="'$(BuildAll)' == 'true'">true</YieldDuringCopy>
       
       <GenerateFile Condition="'$(BUILD_BUILDID)' != ''">true</GenerateFile>
-      <GenerateFile Condition="'$(vnext)' == ''">false</GenerateFile>
+      <GenerateFile Condition="'$(GenerateFile)' == ''">false</GenerateFile>
     </PropertyGroup>
 
     <Exec ContinueOnError="false"
