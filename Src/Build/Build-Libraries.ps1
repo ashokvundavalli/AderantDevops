@@ -572,7 +572,7 @@
         }
     }
 
-	# Called from .\CopyToDropV2.ps1
+	# Called by CopyToDropV2
 	function global:CopyFilesToDrop {
 		[CmdletBinding()]
 		param (

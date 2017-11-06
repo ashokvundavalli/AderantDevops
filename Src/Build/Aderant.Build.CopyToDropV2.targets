@@ -15,11 +15,14 @@
 
       <YieldDuringCopy Condition="'$(BuildAll)' != 'true'">false</YieldDuringCopy>
       <YieldDuringCopy Condition="'$(BuildAll)' == 'true'">true</YieldDuringCopy>
+      
+      <GenerateFile Condition="'$(BUILD_BUILDID)' != ''">true</GenerateFile>
+      <GenerateFile Condition="'$(vnext)' == ''">false</GenerateFile>
     </PropertyGroup>
 
     <Exec ContinueOnError="false"
           IgnoreExitCode="false"
-          Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)CopyToDropV2.ps1" -dropRoot &#39;$(DropRoot)&#39; -moduleName &#39;$(ModuleName)&#39; -moduleRootPath &#39;$(SolutionDirectoryPath)&#39; -origin &#39;$(Origin)&#39; -version &#39;$(BuildId)&#39;'
+          Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)CopyToDropV2.ps1" -dropRoot &#39;$(DropRoot)&#39; -moduleName &#39;$(ModuleName)&#39; -moduleRootPath &#39;$(SolutionDirectoryPath)&#39; -origin &#39;$(Origin)&#39; -version &#39;$(BuildId)&#39; -generateFile &#39;$(GenerateFile)&#39;'
           YieldDuringToolExecution="$(YieldDuringCopy)" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />

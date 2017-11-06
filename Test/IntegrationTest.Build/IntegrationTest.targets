@@ -47,7 +47,7 @@
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildInfrastructureDirectory)\Src\Build\CopyToDropV2.ps1" -dropRoot &#39;$(DropRoot)&#39; -moduleName &#39;$(ModuleName)&#39; -moduleRootPath &#39;$(BuildInfrastructureDirectory)\Test\IntegrationTest.Build\Resources\TestModule&#39; -origin &#39;$(Origin)&#39; -version &#39;$(BuildNumber)&#39;'
+      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildInfrastructureDirectory)\Src\Build\CopyToDropV2.ps1" -dropRoot &#39;$(DropRoot)&#39; -moduleName &#39;$(ModuleName)&#39; -moduleRootPath &#39;$(BuildInfrastructureDirectory)\Test\IntegrationTest.Build\Resources\TestModule&#39; -origin &#39;$(Origin)&#39; -version &#39;$(BuildNumber)&#39; -generateFile $(GenerateFile)'
       YieldDuringToolExecution="$(YieldDuringCopy)" />
   </Target>
 

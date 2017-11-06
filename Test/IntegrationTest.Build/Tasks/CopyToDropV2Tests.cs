@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using Aderant.Build.Providers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks {
@@ -31,11 +30,19 @@ namespace IntegrationTest.Build.Tasks {
             } catch {
                 // Ignored
             }
+
+            try {
+                File.Delete(Path.Combine(buildInfrastructureDirectory, @"Test\IntegrationTest.Build\Resources\TestModule\CopyToDrop.ps1"));
+            } catch {
+                // Ignored
+            }
+
         }
 
         private static string tempDropRoot;
         private static string dropRoot;
         private const string ModuleName = "TestModule";
+        private static readonly string buildInfrastructureDirectory = Directory.GetParent(Directory.GetParent(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName).FullName).FullName;
         private static string buildId;
 
         [TestMethod]
@@ -50,7 +57,8 @@ namespace IntegrationTest.Build.Tasks {
                     { "ModuleName", ModuleName },
                     { "DropRoot", dropRoot },
                     { "Origin", origin },
-                    { "BuildNumber", buildId }
+                    { "BuildNumber", buildId },
+                    { "GenerateFile", "$false" }
                 });
 
             string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
@@ -74,7 +82,8 @@ namespace IntegrationTest.Build.Tasks {
                     { "ModuleName", ModuleName },
                     { "DropRoot", dropRoot },
                     { "Origin", origin },
-                    { "BuildNumber", buildId }
+                    { "BuildNumber", buildId },
+                    { "GenerateFile", "$false" }
                 });
 
             string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
@@ -96,7 +105,8 @@ namespace IntegrationTest.Build.Tasks {
                     { "ModuleName", ModuleName },
                     { "DropRoot", dropRoot },
                     { "Origin", origin },
-                    { "BuildNumber", buildId }
+                    { "BuildNumber", buildId },
+                    { "GenerateFile", "$false" }
                 });
 
             string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
@@ -117,7 +127,8 @@ namespace IntegrationTest.Build.Tasks {
                     { "ModuleName", ModuleName },
                     { "DropRoot", dropRoot },
                     { "Origin", origin },
-                    { "BuildNumber", buildId }
+                    { "BuildNumber", buildId },
+                    { "GenerateFile", "$false" }
                 });
 
             string outputDirectory = Path.Combine(dropRoot, ModuleName, "unstable", outputOrigin, buildId, "default");
@@ -137,12 +148,31 @@ namespace IntegrationTest.Build.Tasks {
                     { "ModuleName", ModuleName },
                     { "DropRoot", dropRoot },
                     { "Origin", origin },
-                    { "BuildNumber", buildId }
+                    { "BuildNumber", buildId },
+                    { "GenerateFile", "$false" }
                 });
 
             string outputDirectory = Path.Combine(dropRoot, ModuleName, "pull", outputOrigin, buildId, "default");
 
             Assert.IsTrue(Directory.Exists(outputDirectory));
+        }
+
+        [TestMethod]
+        public void TestVnextScriptGeneration() {
+            dropRoot = Path.Combine(tempDropRoot, MethodBase.GetCurrentMethod().Name);
+            const string origin = @"refs\pull\10600\merge";
+
+            RunTarget(
+                "CopyToDropV2",
+                new Dictionary<string, string> {
+                    { "ModuleName", ModuleName },
+                    { "DropRoot", dropRoot },
+                    { "Origin", origin },
+                    { "BuildNumber", buildId },
+                    { "GenerateFile", "$true" }
+                });
+
+            Assert.IsTrue(File.Exists($@"{buildInfrastructureDirectory}\Test\IntegrationTest.Build\Resources\TestModule\CopyToDrop.ps1"));
         }
     }
 }
