@@ -20,7 +20,7 @@
 
 
   <!--TSLint-->
-  <Import Project="$(MSBuildThisFileDirectory)packages\development\TSLint.MSBuild\build\TSLint.MSBuild.targets" Condition="'$(RunTSLint)' == 'true' And '$(IsWeb)' == 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)packages\development\ThirdParty.TSLint.MSBuild\lib\TSLint.MSBuild.targets" Condition="'$(RunTSLint)' == 'true' And '$(IsWeb)' == 'true'" />
   <PropertyGroup Condition="'$(IsWeb)' == 'true'">
     <TSLintConfig>$(MSBuildProjectDirectory)\tslint.json</TSLintConfig>
     <TSLintCli>$(MSBuildThisFileDirectory)\packages\Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
