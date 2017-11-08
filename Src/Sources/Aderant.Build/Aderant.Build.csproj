@@ -58,6 +58,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Build\LibGit2Sharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.Common\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp">
+      <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.CSharp\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
@@ -143,6 +149,7 @@
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="FileUtilities.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\Hash.cs" />
     <Compile Include="Tasks\SmartReference.cs" />

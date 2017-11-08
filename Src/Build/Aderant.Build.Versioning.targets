@@ -12,13 +12,14 @@
     <OnBeforeCompileDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
       $(OnBeforeCompileDependsOn);
       GenerateAssemblyInfo;
-      AsemblyInfoUpdateCopyright
+      AsemblyInfoUpdateCopyright;
+      ReadVersionInfo
     </OnBeforeCompileDependsOn>
   </PropertyGroup>
   
 
-  <!-- Stub that lets us hook BeforeCompile without  breaking others that also override BeforeCompile -->
-  <Target Name="OnBeforeCompile" BeforeTargets="BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
+  <!-- Stub that lets us hook BeforeCompile without breaking others that also override BeforeCompile -->
+  <Target Name="OnBeforeCompile" BeforeTargets="$(PrepareResourcesDependsOn);BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
 
 
   <Target Name="GetAssemblyAttributes">
@@ -192,6 +193,22 @@
       <FileWrites Include="$(NewCommonAssemblyInfoFile)" />
     </ItemGroup>
 
+  </Target>
+
+
+  <Target Name="ReadVersionInfo">
+    
+    <ItemGroup>
+      <AssemblyInfoFiles Include="$(NewCommonAssemblyInfoFile)" />
+      <AssemblyInfoFiles Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
+    </ItemGroup>
+    
+    <ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfoFiles)">
+      <Output ItemName="CommonAssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" />
+      <Output ItemName="CommonAssemblyVersion"              TaskParameter="AssemblyVersion" />
+      <Output ItemName="CommonAssemblyFileVersion"          TaskParameter="AssemblyFileVersion" />
+    </ReadAssemblyInfo>
+    
   </Target>
 
 </Project>

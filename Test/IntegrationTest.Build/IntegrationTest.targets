@@ -40,6 +40,15 @@
     <MSBuild Projects="Resources\RunAnalyzerTest.csproj" />
   </Target>
 
+  <Target Name="ReadAssemblyInfo">
+    <ReadAssemblyInfo AssemblyInfoFiles="AssemblyInfo.cs">
+      <Output ItemName="AssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" /> 
+      <Output ItemName="AssemblyVersion" TaskParameter="AssemblyVersion" />
+      <Output ItemName="AssemblyFileVersion" TaskParameter="AssemblyFileVersion" />
+    </ReadAssemblyInfo>
+    <Message Text="%(AssemblyInformationalVersion.Major)" />
+  </Target>
+
   <Target Name="CopyToDropV2">
     <PropertyGroup>
       <YieldDuringCopy>false</YieldDuringCopy>

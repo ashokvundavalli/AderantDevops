@@ -62,7 +62,7 @@
   -->
   <Target Name="CommonBuildUpdateSplashscreen"
           Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe'"
-          BeforeTargets="BeforeResolveReferences;CoreBuild">
+          AfterTargets="OnBeforeCompile">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group 
       is not reflected through out the in memory projecct
@@ -99,12 +99,16 @@
     <!-- 
       This task can return a previously generated file to keep incremental builds working.      
     -->
+
     <PropertyGroup>
-      <SplashScreenVersion Condition="'$(BuildFlavor)' == 'Debug' And '$(TF_BUILD)' == ''">Version 8.1 (Development)</SplashScreenVersion>
-      <SplashScreenVersion Condition="'$(BuildFlavor)' == 'Debug' And '$(TF_BUILD)' != ''">Version 8.1 (Development $(FileVersion))</SplashScreenVersion>
-      <SplashScreenVersion Condition="'$(BuildFlavor)' != 'Debug'">Version 8.1</SplashScreenVersion>
+      <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyInformationalVersion)' != ''">%(CommonAssemblyInformationalVersion.Major).%(CommonAssemblyInformationalVersion.Minor)</_VersionText>
+      <_VersionText Condition="'$(_VersionText)' == '' And '@(CommonAssemblyFileVersion)' != ''" >%(CommonAssemblyFileVersion.Major).%(CommonAssemblyFileVersion.Minor)</_VersionText>
+      <_VersionText Condition="'$(_VersionText)' == '1.8' Or '$(_VersionText)' == ''">8.1</_VersionText>
+      <SplashScreenVersion>Version $(_VersionText)</SplashScreenVersion>
       <SplashScreenText>$(ExpertProductName)</SplashScreenText>
     </PropertyGroup>
+
+    <Error Condition="'$(_VersionText)' == ''" Text="The build was unable to find AssemblyInformationalVersion attribute or determine the current value of this attribute. Check that CommonAssemblyInfo.cs is linked to this project." />
 
     <Aderant.Build.Tasks.UpdateSplashScreenImage
      Condition="'@(OriginalSplashScreen)' != '' And '$(ExpertProductName)' != ''"

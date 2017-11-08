@@ -36,7 +36,7 @@ namespace Aderant.Build.Tasks {
 
                     if (existingContents.Length == buffer.Length) {
                         var contentsAsString = buffer.ToString();
-                        
+
                         if (existingContents.Equals(contentsAsString)) {
                             Log.LogMessage(MessageImportance.Low, "Skipping unchanged file", File.ItemSpec);
                             return true;

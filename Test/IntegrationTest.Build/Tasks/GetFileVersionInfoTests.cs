@@ -9,8 +9,4 @@ namespace IntegrationTest.Build.Tasks {
         }
     }
 
-
-    namespace IntegrationTest.Build.Tasks
-    {
-    }
 }
