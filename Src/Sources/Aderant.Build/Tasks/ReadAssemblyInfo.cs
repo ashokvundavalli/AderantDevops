@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,11 +10,15 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
     public class ReadAssemblyInfo : Task {
         private TaskItem assemblyFileVersion;
-
         private TaskItem assemblyInformationalVersion;
         private TaskItem assemblyVersion;
 
-        private static MethodInfo parseText;
+        private static readonly MethodInfo ParseTextMethod;
+        private static readonly List<string> AcceptedCodeAnalysisCSharpVersions = new List<string> {
+            "1.3.1.0",
+            "1.2.0.0",
+            "1.0.0.0"
+        };
 
 
         static ReadAssemblyInfo() {
@@ -24,25 +29,15 @@ namespace Aderant.Build.Tasks {
                     if (immutable != null) {
                         return immutable;
                     }
-                    return Assembly.LoadFile($"{AppDomain.CurrentDomain.BaseDirectory}\\System.Collections.Immutable.dll");
+                    return
+                        Assembly.LoadFile($"{AppDomain.CurrentDomain.BaseDirectory}\\System.Collections.Immutable.dll");
                 }
                 return null;
             };
 
-            Assembly assembly;
-            try {
-                assembly = Assembly.Load(
-                    "Microsoft.CodeAnalysis.CSharp, Version=1.3.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-            } catch {
-                assembly = Assembly.Load(
-                    "Microsoft.CodeAnalysis.CSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-            }
-            if (assembly != null) {
-                parseText = assembly.GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree")
-                    .GetMethods(BindingFlags.Public | BindingFlags.Static).FirstOrDefault(x => x.Name == "ParseText" && x.GetParameters()[0].ParameterType == typeof(string));
-            } else {
-                throw new Exception("Can not find version 1.3.1.0 or 1.0.0.0 of Roslyn (Microsoft.CodeAnalysis.CSharp)");
-            }
+            ParseTextMethod = GetCodeAnalysisCSharpAssembly().GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree")
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(x => x.Name == "ParseText" && x.GetParameters()[0].ParameterType == typeof(string));
         }
 
         [Required]
@@ -69,7 +64,7 @@ namespace Aderant.Build.Tasks {
                     var text = reader.ReadToEnd();
 
 
-                    dynamic tree = parseText.Invoke(null, new object[] {text, null, "", null, CancellationToken.None});
+                    dynamic tree = ParseTextMethod.Invoke(null, new object[] {text, null, "", null, CancellationToken.None});
                     var root = tree.GetRoot();
 
                     var attributeLists = root.DescendantNodes();/*.OfType<AttributeListSyntax>();*/
@@ -121,6 +116,27 @@ namespace Aderant.Build.Tasks {
                         SetMetadata(field, version);
                     }
                 }
+            }
+        }
+
+        private static Assembly GetCodeAnalysisCSharpAssembly() {
+            const string fullNameUnformatted =
+                "Microsoft.CodeAnalysis.CSharp, Version={0}, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+
+            //try load each of the accepted versions
+            foreach (var version in AcceptedCodeAnalysisCSharpVersions) {
+                try {
+                    return Assembly.Load(string.Format(fullNameUnformatted, version));
+                } catch {
+                    continue;
+                }
+            }
+
+            //If we can not find, load by name only
+            try {
+                return Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis.CSharp"));
+            } catch {
+                throw new Exception("Could not find Roslyn binary (Microsoft.CodeAnalysis.CSharp)");
             }
         }
     }
