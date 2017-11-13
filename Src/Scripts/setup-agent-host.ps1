@@ -7,7 +7,7 @@ param(
     $removeAllAgents = $true,
 
     [Parameter()]
-    $agentArchive = "$PSScriptRoot\vsts.agent.zip",
+    $agentArchive = "$env:SystemDrive\Scripts\vsts.agent.zip",
 
     [Parameter()]
     $tfsHost = "http://tfs:8080/tfs",
@@ -226,15 +226,20 @@ function ProvisionAgent() {
     New-Item -ItemType Directory -Path $AgentRootDirectory -ErrorAction SilentlyContinue
 
     Expand-Archive $agentArchive -DestinationPath $agentInstallationPath -Force
-    Push-Location -Path $agentInstallationPath
 
-    $credentials = GetCredentialsOrPrompt
-    $serviceAccountName = $credentials.UserName
-    $serviceAccountPassword = $credentials.GetNetworkCredential().Password
+    try {
+        Push-Location -Path $agentInstallationPath
 
-    Write-Host "Installing agent $agentName"
+        $credentials = GetCredentialsOrPrompt
+        $serviceAccountName = $credentials.UserName
+        $serviceAccountPassword = $credentials.GetNetworkCredential().Password
 
-    .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --runasservice --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "$workingDirectory" --replace
+        Write-Host "Installing agent $agentName"
+
+        .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --runasservice --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "$workingDirectory" --replace
+    } finally {
+        Pop-Location
+    }    
 }
 
 ##
