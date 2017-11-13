@@ -75,6 +75,28 @@ process {
 
     <# 
     ============================================================
+    Clean up Task
+    ============================================================
+    #>
+    Invoke-Command -Session $session -ScriptBlock {
+        $STTrigger = New-ScheduledTaskTrigger -AtStartup
+        $STName = "Cleanup Agent Host"
+        
+        Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
+        
+        #Action to run as
+        $STAction = New-ScheduledTaskAction -Execute "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File $scriptsDirectory\Build.Infrastructure\Src\Scripts\cleanup-agent-host.ps1" -WorkingDirectory $scriptsDirectory        
+        $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
+
+        $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password
+
+        #Register the new scheduled task
+        Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force    
+    } -ArgumentList $scriptsDirectory
+
+
+    <# 
+    ============================================================
     Reboot Task
     ============================================================
     #>
@@ -118,7 +140,7 @@ process {
 
     Invoke-Command -Session $session -ScriptBlock {
         Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
-        & git clone "http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure2" -q
+        & git clone "http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
     } -ArgumentList $scriptsDirectory
 }
 
