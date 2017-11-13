@@ -21,8 +21,12 @@ process {
             $credentials
         )
 
+        # Make me fast
         $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
         $powerPlan.Activate()
+
+        # Make me admin
+        Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\tfsbuildservice$
 
         $scriptsDirectory = "$env:SystemDrive\Scripts"
         

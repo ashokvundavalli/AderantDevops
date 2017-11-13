@@ -7,12 +7,12 @@
     "$env:APPDATA\NuGet",
     "$env:LOCALAPPDATA\NuGet",
     "$env:USERPROFILE\.nuget",
-    
+
     # Shadow copy cache
     "$env:LOCALAPPDATA\assembly",
-        
+
     "$env:USERPROFILE\Download",
-    
+
     # VSIX extensions installed by the VS SDK targets
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\12.0Exp\Extensions\Aderant",
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\14.0Exp\Extensions\Aderant",
@@ -26,8 +26,8 @@ $machineWideDirectories = @(
     "C:\Windows\Temp",
 
     # Yay for people who check in PostBuild events :)
-    "C:\tfs"    
-) 
+    "C:\tfs"
+)
 
 
 $whoAmI = $env:USERNAME
@@ -39,8 +39,8 @@ foreach ($dir in $directoriesToRemove) {
     foreach ($name in $serviceAccounts) {
         $removeTarget = $removeTarget.Replace($whoAmI, $name)
 
-        if (Test-Path $removeTarget) {                        
-            Remove-Item $removeTarget -Verbose -Force -Recurse -ErrorAction SilentlyContinue            
+        if (Test-Path $removeTarget) {
+            Remove-Item $removeTarget -Verbose -Force -Recurse -ErrorAction SilentlyContinue
         } else {
             Write-Debug "Not deleting $removeTarget"
         }
@@ -49,9 +49,11 @@ foreach ($dir in $directoriesToRemove) {
 
 
 foreach ($dir in $machineWideDirectories) {
+  if (Test-Path $dir) {
     Push-Location $dir
-    Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue            
-    Pop-Location   
+    Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue
+    Pop-Location
+  }
 }
 
 Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$directoriesToRemove += $_.Root + "ExpertShare"}
