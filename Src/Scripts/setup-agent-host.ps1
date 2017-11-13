@@ -197,8 +197,13 @@ function SetHighPower() {
     $powerPlan.Activate()
 }
 
+function ConfigureGit() {
+    . $PSScriptRoot\configure-git-for-agent-host.ps1
+}
+
 function ProvisionAgent() {
     SetHighPower 
+    ConfigureGit
 
     $agentName = GetRandomName
 

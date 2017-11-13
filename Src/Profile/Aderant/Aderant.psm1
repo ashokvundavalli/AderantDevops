@@ -1617,7 +1617,7 @@ function Start-DeploymentEngine {
 		Installs Deployment Manager from the current branch binaries directory.
 #>
 function Install-DeploymentManager {
-	powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\InstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
+	& "$global:BranchBinariesDirectory\AutomatedDeployment\InstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
 }
 
 <#
@@ -1630,7 +1630,7 @@ function Install-DeploymentManager {
 		Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
 #>
 function Uninstall-DeploymentManager {
-	powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\UninstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
+	& "$global:BranchBinariesDirectory\AutomatedDeployment\UninstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
 }
 
 #sets up visual studio environment, called from Profile.ps1 when starting PS.
