@@ -188,7 +188,7 @@ namespace Aderant.Build.Packaging {
                         var packageName = Path.GetDirectoryName(packageDirectory);
 
                         if (module != null) {
-                            if (context.IsRootItem(module)) {
+                            if (context.RequiresContentProcessing(module)) {
                                 RootItemHandler processor = new RootItemHandler(packageRelativeFs) {
                                     Module = module,
                                 };

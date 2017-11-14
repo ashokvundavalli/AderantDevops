@@ -35,7 +35,7 @@ namespace Aderant.Build.Packaging {
         }
 
         public string ResolvePackageRelativeDirectory(ExpertModule module) {
-            if (IsRootItem(module)) {
+            if (RequiresContentProcessing(module)) {
                 string path = module.Target.Replace("$", rootDirectory);
                 return Path.GetFullPath(path);
             }
@@ -47,11 +47,37 @@ namespace Aderant.Build.Packaging {
             return ProductDirectory;
         }
 
-        public bool IsRootItem(ExpertModule module) {
+        public bool RequiresContentProcessing(ExpertModule module) {
             if (!string.IsNullOrEmpty(module.Target)) {
-                return module.Target[0] == '$';
+                return module.Target.IndexOf("$", StringComparison.Ordinal) >= 0;
             }
             return false;
+        }
+
+        public IEnumerable<string> ResolvePackageRelativeDestinationDirectories(ExpertModule module) {
+            if (RequiresContentProcessing(module)) {
+                if (!string.IsNullOrEmpty(module.Target)) {
+                    var parts = module.Target.Split(';');
+
+                    foreach (var part in parts) {
+                        string path = part.Replace("$", rootDirectory);
+
+                        yield return Path.GetFullPath(path);
+                    }
+                }
+                yield break;
+            }
+
+            if (!string.IsNullOrEmpty(module.Target)) {
+                var parts = module.Target.Split(';');
+                foreach (var part in parts) {
+                    yield return Path.Combine(ProductDirectory, part);
+
+                }
+                yield break;
+            }
+
+            yield return ProductDirectory;
         }
     }
 }

@@ -16,9 +16,20 @@ namespace Aderant.Build.Packaging {
                 throw new InvalidOperationException("Cannot perform operation as the target property is not set on: " + Module.Name);
             }
 
-            string relativeDirectory = context.ResolvePackageRelativeDirectory(Module);
+            var index = Module.Target.IndexOf(';');
+            if (index == -1) {
+                string relativeDirectory = context.ResolvePackageRelativeDirectory(Module);
+                fs.MoveDirectory(contentDirectory, relativeDirectory);
+            } else {
+                //var destinations = context.ResolvePackageRelativeDestinationDirectories(Module);
 
-            fs.MoveDirectory(contentDirectory, relativeDirectory);
+                //foreach (var destination in destinations) {
+                //    fs.CopyDirectory(contentDirectory, destination);
+                //}
+
+                //fs.DeleteDirectory(contentDirectory, true);
+            }
+            
         }
     }
 }
