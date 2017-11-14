@@ -61,8 +61,14 @@ namespace Aderant.Build.Analyzer {
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(buildId)) {
-                rules.Add(new CodeQualitySystemDiagnosticsRule());
+            if (string.IsNullOrWhiteSpace(buildId)) {
+                return;
+            }
+
+            var diagnosticsRule = new CodeQualitySystemDiagnosticsRule();
+
+            if (rules.All(ruleBase => ruleBase.GetType() != diagnosticsRule.GetType())) {
+                rules.Add(diagnosticsRule);
             }
         }
 

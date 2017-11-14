@@ -27,7 +27,6 @@ namespace Test {
         #region Tests
 
         [TestMethod]
-        [Ignore]
         public void CodeQualitySystemDiagnostics_Break() {
             const string code = @"
             System.Diagnostics.Debugger.Break();
@@ -40,7 +39,6 @@ namespace Test {
         }
 
         [TestMethod]
-        [Ignore]
         public void CodeQualitySystemDiagnostics_Launch() {
             const string code = @"
             System.Diagnostics.Debugger.Launch();
@@ -48,6 +46,25 @@ namespace Test {
 
             VerifyCSharpDiagnostic(
                 InsertCode(code),
+                // Error: System.Diagnostics.Debugger.Launch();
+                GetDiagnostic(6, 13, "System.Diagnostics.Debugger.Launch()"));
+        }
+
+        [TestMethod]
+        public void CodeQualitySystemDiagnostics_TestClass() {
+            const string code = @"
+namespace Test {
+    [TestClass]
+    public class Program {
+        public static void TestMethod() {
+            System.Diagnostics.Debugger.Launch();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
                 // Error: System.Diagnostics.Debugger.Launch();
                 GetDiagnostic(6, 13, "System.Diagnostics.Debugger.Launch()"));
         }

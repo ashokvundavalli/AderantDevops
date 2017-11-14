@@ -108,16 +108,31 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <summary>
         /// Examines the specified context to determine if the method containing
         /// the targeted node includes a code analysis suppression attribute.
+        /// Does not allow analysis of Unit Test classes.
         /// </summary>
         /// <param name="node">The node.</param>
         /// <param name="validSuppressionMessages">The valid suppression messages.</param>
         protected static bool IsAnalysisSuppressed(
             SyntaxNode node,
             Tuple<string, string>[] validSuppressionMessages) {
+            return IsAnalysisSuppressed(node, validSuppressionMessages, false);
+        }
+
+        /// <summary>
+        /// Examines the specified context to determine if the method containing
+        /// the targeted node includes a code analysis suppression attribute.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="validSuppressionMessages">The valid suppression messages.</param>
+        /// <param name="analyzeTests">if set to <c>true</c> [analyze tests].</param>
+        protected static bool IsAnalysisSuppressed(
+            SyntaxNode node,
+            Tuple<string, string>[] validSuppressionMessages,
+            bool analyzeTests) {
             var classVariable = node as ClassDeclarationSyntax;
 
             if (classVariable != null) {
-                return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages);
+                return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages, analyzeTests);
             }
 
             var attributeLists = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node)?.AttributeLists;
@@ -137,17 +152,18 @@ namespace Aderant.Build.Analyzer.Rules {
             // If node is not within a class...
             if (classVariable == null) {
                 // Examine suppression on the method only.
-                return IsAnalysisSuppressed(attributeLists.Value, validSuppressionMessages);
+                return IsAnalysisSuppressed(attributeLists.Value, validSuppressionMessages, analyzeTests);
             }
 
             // ...otherwise examine suppression on the class, and then the method.
-            return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages) ||
-                   IsAnalysisSuppressed(attributeLists.Value, validSuppressionMessages);
+            return IsAnalysisSuppressed(classVariable.AttributeLists, validSuppressionMessages, analyzeTests) ||
+                   IsAnalysisSuppressed(attributeLists.Value, validSuppressionMessages, analyzeTests);
         }
 
         protected static bool IsAnalysisSuppressed(
             IEnumerable<AttributeListSyntax> attributeLists,
-            Tuple<string, string>[] validSuppressionMessages) {
+            Tuple<string, string>[] validSuppressionMessages,
+            bool analyzeTests) {
             // Attributes can be stacked...
             // [Attribute()]
             // [Attribute()]
@@ -159,7 +175,7 @@ namespace Aderant.Build.Analyzer.Rules {
                     string name = attribute.Name.ToString();
 
                     // If the class is a test class, automatically suppress any errors.
-                    if (TestClassTypeName.EndsWith(name, StringComparison.Ordinal)) {
+                    if (!analyzeTests && TestClassTypeName.EndsWith(name, StringComparison.Ordinal)) {
                         return true;
                     }
 

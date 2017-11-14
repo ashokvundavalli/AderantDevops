@@ -50,7 +50,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             var node = (context.Node as InvocationExpressionSyntax)?.Expression as MemberAccessExpressionSyntax;
 
             if (node == null ||
-                IsAnalysisSuppressed(node, ValidSuppressionMessages)) {
+                IsAnalysisSuppressed(node, ValidSuppressionMessages, true)) {
                 return;
             }
 
