@@ -21,13 +21,13 @@ namespace Aderant.Build.Packaging {
                 string relativeDirectory = context.ResolvePackageRelativeDirectory(Module);
                 fs.MoveDirectory(contentDirectory, relativeDirectory);
             } else {
-                //var destinations = context.ResolvePackageRelativeDestinationDirectories(Module);
+                var destinations = context.ResolvePackageRelativeDestinationDirectories(Module);
 
-                //foreach (var destination in destinations) {
-                //    fs.CopyDirectory(contentDirectory, destination);
-                //}
+                foreach (var destination in destinations) {
+                    fs.CopyDirectory(contentDirectory, destination);
+                }
 
-                //fs.DeleteDirectory(contentDirectory, true);
+                fs.DeleteDirectory(contentDirectory, true);
             }
             
         }
