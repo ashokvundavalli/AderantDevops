@@ -370,6 +370,20 @@ namespace Aderant.Build.Tasks {
                         reports = reports.Where(a => a != report).ToList();
                         entryList = entryList.Where(e => e != entry).ToList();
                     }
+
+                    if (entry.StartsWith("managed-report")) {
+                        var splittedReport = report.Split('_', '.').ToList();
+                        splittedReport.Remove("Report");
+                        splittedReport.Remove("xml");
+
+                        var splittedEntry = entry.Split('/').LastOrDefault()?.Split('.');
+
+                        var isManagedReportMatched = splittedEntry != null && splittedEntry.SequenceEqual(splittedReport);
+                        if (isManagedReportMatched) {
+                            reports = reports.Where(a => a != report).ToList();
+                            entryList = entryList.Where(e => e != entry).ToList();
+                        }
+                    }
                 }
                 foreach (var securityPolicy in securityPolicies) {
                     if (securityPolicy.ToLower().Equals(HttpUtility.UrlDecode(entry)?.ToLower(), StringComparison.OrdinalIgnoreCase)) {
