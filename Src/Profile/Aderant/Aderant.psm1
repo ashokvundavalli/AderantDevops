@@ -2961,150 +2961,80 @@ function Get-Database() {
 
 <#
 .SYNOPSIS
-Starts Selenium servers for use in web automated tests. Allows for spawning a hub or node, or a combination of the two that can be used for local testing
-
-.PARAMETER runAs
-Run mode for the Selenium server(s). Default: local
-
-.PARAMETER hubPort
-Port to use when connnecting to the hub. Default: 4444
-
-.PARAMETER hubHost
-IP address to use when connnecting to the hub. Default: 127.0.0.1
-
-.PARAMETER seleniumServerJar
-Jar file name to use for the Selenium 3 server. Default: selenium-server-standalone-3.0.1.jar
-
+Runs UI tests for the current module
+.PARAMETER productname
+    The name of the product you want to run tests against
+.PARAMETER testCaseFilter
+    The vstest testcasefilter string to use
 .EXAMPLE
-Start-SeleniumServers -runAs 'local' will start a hub and node for local testing use
-
-Starts a local Selenium server and node for use in test development or running tests locally
+    Run-ExpertUITest -productname "Web.Inquiries" -testCaseFilter "TestCategory=Smoke"
+    If Inquiries is the current module, all smoke tests for the inquiries product will be executed
 #>
-function Start-SeleniumServers {
-    param(
-        [Parameter(Mandatory=$false)] [string] $runAs = "LOCAL",
-		[Parameter(Mandatory=$false)] [int] $hubPort = 4444,
-		[Parameter(Mandatory=$false)] [string] $hubHost = "127.0.0.1",
-		[Parameter(Mandatory=$false)] [int] $nodePort = 5555,
-		[Parameter(Mandatory=$false)] [string] $nodeHost = "127.0.0.1",
-		[Parameter(Mandatory=$false)] [string] $seleniumServerJar = "selenium-server-standalone-3.5.3.jar"
-    )
-	
-	if(-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-        Write-Warning "You do not have Administrator rights to run this script`nPlease re-run this script as an Administrator"
-        Break
-    }
-
-	Try {
-		if (Get-Process -Name "java" -ErrorAction Stop){
-			Write-Warning "Java processes already running"
-			Stop-Process -Name "java" -Confirm
-		}
-	}
-	Catch {}
-	
-	$serverPath = join-path $ShellContext.BuildToolsDirectory "\$seleniumServerJar"
-	$downloadPath = "https://selenium-release.storage.googleapis.com/3.5/" + $seleniumServerJar
-	if (-Not (Test-Path $serverPath)){
-		Write-Host "Selenium server does not exist on your system. Downloading now..."
-		Start-BitsTransfer -Source $downloadPath -Destination $serverPath
-	}
-	
-	$driverPath = $ShellContext.BuildToolsDirectory
-	$nodeConfig = '{
-	"capabilities":
-      [
-        {
-          "browserName": "chrome",
-          "maxInstances": 3
-        },
-		{
-          "browserName": "MicrosoftEdge",
-          "maxInstances": 3
-        },
-		{
-          "browserName": "internet explorer",
-          "maxInstances": 3
-        },
-        {
-          "browserName": "phantomjs",
-          "maxInstances": 3
-        }
-      ],
-
-		"proxy": "org.openqa.grid.selenium.proxy.DefaultRemoteProxy",
-		"host": '+$nodeHost+',
-		"port": '+$nodePort+',
-		"registerCycle": 5000,
-		"maxSession": 5,
-		"hubPort":'+$hubPort+',
-		"hubHost":'+$hubHost+',
-		"register": true
-	}'
-
-	$tempConfig = New-TemporaryFile
-	$tempConfigPath = $tempConfig.FullName
-	$nodeConfig | Out-File -FilePath $tempConfigPath -encoding ASCII
-	$runAs = $runAs.ToUpper()
-	echo "Running Selenium Server in mode : $runAs"
-	$hubAddress = $hubHost + ":" + $hubPort
-
-	switch ($runAs) {
-		"LOCAL"{
-			echo "Starting Selenium hub"
-			Start-Process java -ArgumentList "-jar $serverPath -role hub -port $hubPort -host $hubHost";
-			echo "Starting Selenium node with connection to hub at $hubAddress"
-			Start-Process java -ArgumentList "-Dwebdriver.edge.driver=$driverPath\MicrosoftWebDriver.exe -Dwebdriver.chrome.driver=$driverPath\chromedriver.exe -Dwebdriver.ie.driver=$driverPath\iedriverserver.exe -jar $serverPath -role node -nodeConfig $tempConfigPath"
-			#PhantomJS disabled until next release that fixes grid support
-			#echo "Starting PhantomJS with connection to hub at $hubAddress"
-			#Start-Process -NoNewWindow $driverPath\phantomjs.exe -ArgumentList "--webdriver=8081 --webdriver-selenium-grid-hub=http://$hubAddress"
-		}
-		"NODE"{
-			echo "Starting Selenium node with connection to hub at $hubAddress"
-			Start-Process java -ArgumentList "-Dwebdriver.edge.driver='C:\Program Files (x86)\Microsoft Web Driver\MicrosoftWebDriver.exe' -Dwebdriver.chrome.driver=$driverPath\chromedriver.exe -Dwebdriver.ie.driver=$driverPath\iedriverserver.exe -jar $serverPath -role node -nodeConfig $tempConfigPath"
-			#PhantomJS disabled until next release that fixes grid support
-			#echo "Starting PhantomJS with connection to hub at $hubAddress"
-			#Start-Process -NoNewWindow $driverPath\phantomjs.exe -ArgumentList "--webdriver=8081 --webdriver-selenium-grid-hub=http://$hubAddress"
-		}
-		"HUB"{
-			echo "Starting Selenium hub"
-			Start-Process java -ArgumentList "-jar $serverPath -role hub -port $hubPort -host $hubHost"
-		}
-		default {
-			Write-Host "No valid run mode entered. Available modes: local, node, hub"
-		}
-	}
-	Write-Output "Selenium servers started as $runAs mode"
-}
-
-<#
-.SYNOPSIS
-Starts the web automation tests for a module
-
-.PARAMETER scope
-Level of tests to run. Default: Smoke
-
-.EXAMPLE
-Start-AutomationTests will run the available autoumated tests
-
-Starts a local Selenium server and node for use in test development or running tests locally then executes
-#>
-function Start-WebUIAutomationTests {
-    param(
-		[Parameter(Mandatory=$true)] [string] $moduleName
-    )
+function Run-ExpertUITests {
+	param(
+		[Parameter(Mandatory=$false)] [string]$productName = "*",
+        [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
+        [Parameter(Mandatory=$false)] [switch]$development
+	)
 	if (-Not $CurrentModuleName) {
 		Write-Error "You must select a module to run this command"
-		 Break
+		Break
 	}
-	$testAssemblyPath = $currentModulePath + "\bin\Test\UIAutomationTest." + $moduleName + ".dll"
+	if (-Not (Get-Command docker -errorAction SilentlyContinue)){
+		Write-Error "Docker not installed. Please install Docker for Windows before running this command"
+		Break
+	}
+	if ($productName -eq "*"){
+		Write-Host "No project name specified. Running sanity test for all test containers"
+	}
+    $testOutputPath = $currentModulePath + "\Bin\Test\"
+	$testAssemblyName = "UIAutomationTest." + $productName + ".dll"
+	$testAssemblyPath = $testOutputPath + $testAssemblyName
+    $runsettingsFile = $testOutputPath + "DevelopmentEnvironment.runsettings"
+    if ($development){
+        $runSettingsContent = '<?xml version="1.0" encoding="utf-8"?>  
+        <RunSettings>
+            <!-- Parameters used by tests at runtime -->  
+            <TestRunParameters>
+                <Parameter name="development" value="true" />
+            </TestRunParameters>
+            <!-- Adapter Specific sections -->  
+        </RunSettings>'
+        if (Test-Path $runsettingsFile){
+            Remove-Item $runsettingsFile
+        }
+        Write-Host "Creating custom runsettings file"
+        New-Item -Path $runsettingsFile -ItemType "file" -Value $runSettingsContent > $null
+    }
 	if (-Not (Test-Path($testAssemblyPath))){
 		Write-Error "Cannot find $testAssemblyPath. Please ensure this module has been built before trying to execute tests"
 		Break
 	}
+	$testAssemblies = (Get-ChildItem -Path $testAssemblyPath -Recurse -Filter $testAssemblyName).FullName
+    $runSettings
+    if ($development){
+        $runSettings = "/Settings:" + $runsettingsFile
+    }
+	vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath $runSettings
+	#/logger:"Console;Flavor=Release" or similar if we want to change logging verbosity in the future or output to trx
+}
 
-	Start-SeleniumServers
-	vstest.console.exe $testAssemblyPath
+<#
+.SYNOPSIS
+    Runs UI sanity tests for the current module
+.PARAMETER productName
+    The name of the product you want to run tests against
+.EXAMPLE
+    Run-ExpertSanityTests -productName "Web.Inquiries"
+    rest "Web.Inquiries" -development
+    This will run the UI sanity tests for the Inquiries product against a development url
+#>
+function Run-ExpertSanityTests {
+	param(
+		[Parameter(Mandatory=$false)] [string]$productName = "*",
+        [Parameter(Mandatory=$false)] [switch]$development
+	)
+	Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development
 }
 
 <#
@@ -3983,8 +3913,8 @@ function Git-Merge {
 
 # export functions and variables we want external to this script
 $functionsToExport = @(
-    [pscustomobject]@{ function='Start-SeleniumServers'},
-    [pscustomobject]@{ function='Start-WebUIAutomationTests'},
+    [pscustomobject]@{ function='Run-ExpertUITests';},
+    [pscustomobject]@{ function='Run-ExpertSanityTests';                      alias='rest'},
     [pscustomobject]@{ function='Backup-ExpertDatabase';                      alias='dbbak'},
     [pscustomobject]@{ function='Branch-Module';                              alias='branch'},
     [pscustomobject]@{ function='Build-ExpertModules';                        alias='bm'},
