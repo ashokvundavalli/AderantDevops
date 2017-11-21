@@ -36,7 +36,8 @@ namespace Aderant.Build.DependencyResolver {
             this.modulesRootPath = physicalFileSystem.Root;
 
             if (modules != null) {
-                this.modules.AddRange(modules.Select(m => new ModuleState<ExpertModule>(m)));
+                var sortedModules = new SortedSet<ExpertModule>(modules);
+                this.modules.AddRange(sortedModules.Select(m => new ModuleState<ExpertModule>(m)));
             }
         }
 

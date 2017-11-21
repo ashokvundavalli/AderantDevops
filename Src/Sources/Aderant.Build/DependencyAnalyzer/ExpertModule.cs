@@ -12,7 +12,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Represents a module in the expert code base
     /// </summary>
     [DebuggerDisplay("{Name}")]
-    public class ExpertModule : IEquatable<ExpertModule> {
+    public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule> {
         private string name;
         private IList<XAttribute> customAttributes;
         private ModuleType? type;
@@ -181,6 +181,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal RepositoryType RepositoryType { get; set; }
         public bool Extract { get; set; }
         public string Target { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
+        /// </summary>
+        public bool ReplicateToDependencies { get; set; } = true;
+
         public PackageType PackageRootRelativeDirectory { get; set; }
 
         internal VersionRequirement VersionRequirement {
@@ -229,6 +235,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         public override string ToString() {
             return Name;
+        }
+
+        public int CompareTo(ExpertModule other) {
+            if (ReferenceEquals(this, other)) {
+                return 0;
+            }
+            if (ReferenceEquals(null, other)) {
+                return 1;
+            }
+            return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
     }
 

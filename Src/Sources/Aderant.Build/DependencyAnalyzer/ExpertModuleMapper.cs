@@ -154,6 +154,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("PackageType", value => ParseEnum<PackageType>(value));
 
+            SetPropertyValue("ReplicateToDependencies", value => expertModule.ReplicateToDependencies = ToBoolean(value));
+
             SetPropertyValue("GetAction", value => {
 
                 if (!string.IsNullOrEmpty(value)) {
@@ -184,6 +186,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (bool.TryParse(value, out result)) {
                 return result;
             }
+
             return false;
         }
 
