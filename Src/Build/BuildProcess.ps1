@@ -113,8 +113,9 @@ function WarningRatchet() {
             Write-Host "No last good build found for DefinitionId: $buildDefinitionId"
         }
 
+        [int]$lastGoodBuildCount = $lastGoodBuildWarningCount
+
         if ($lastGoodBuildWarningCount -ne $null) {
-            [int]$lastGoodBuildCount = $lastGoodBuildWarningCount
             Write-Host "The last good build id was: $($ratchetRequest.LastGoodBuild.Id) with $($lastGoodBuildCount) warnings"
 
             if ($currentBuildCount -gt $lastGoodBuildCount) {
@@ -145,8 +146,9 @@ function WarningRatchet() {
         }
     } else {
         Write-Host "Build is not for a pull request, skipping warning ratchet"
+        RenderWarningShields $false $currentBuildCount $lastGoodBuildCount 
         return
-    }         
+    }
 }
 
 function GenerateAndUploadReport($reporter) {
