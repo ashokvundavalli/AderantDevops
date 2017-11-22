@@ -2971,25 +2971,25 @@ Runs UI tests for the current module
     If Inquiries is the current module, all smoke tests for the inquiries product will be executed
 #>
 function Run-ExpertUITests {
-	param(
-		[Parameter(Mandatory=$false)] [string]$productName = "*",
+    param(
+        [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
         [Parameter(Mandatory=$false)] [switch]$development
-	)
-	if (-Not $CurrentModuleName) {
-		Write-Error "You must select a module to run this command"
-		Break
-	}
-	if (-Not (Get-Command docker -errorAction SilentlyContinue)){
-		Write-Error "Docker not installed. Please install Docker for Windows before running this command"
-		Break
-	}
-	if ($productName -eq "*"){
-		Write-Host "No project name specified. Running sanity test for all test containers"
-	}
+    )
+    if (-Not $CurrentModuleName) {
+        Write-Error "You must select a module to run this command"
+        Break
+    }
+    if (-Not (Get-Command docker -errorAction SilentlyContinue)){
+        Write-Error "Docker not installed. Please install Docker for Windows before running this command"
+        Break
+    }
+    if ($productName -eq "*"){
+        Write-Host "No project name specified. Running sanity test for all test containers"
+    }
     $testOutputPath = $currentModulePath + "\Bin\Test\"
-	$testAssemblyName = "UIAutomationTest." + $productName + ".dll"
-	$testAssemblyPath = $testOutputPath + $testAssemblyName
+    $testAssemblyName = "UIAutomationTest.*" + $productName + "*.dll"
+    $testAssemblyPath = $testOutputPath + $testAssemblyName
     $runsettingsFile = $testOutputPath + "DevelopmentEnvironment.runsettings"
     if ($development){
         $runSettingsContent = '<?xml version="1.0" encoding="utf-8"?>  
@@ -3006,17 +3006,17 @@ function Run-ExpertUITests {
         Write-Host "Creating custom runsettings file"
         New-Item -Path $runsettingsFile -ItemType "file" -Value $runSettingsContent > $null
     }
-	if (-Not (Test-Path($testAssemblyPath))){
-		Write-Error "Cannot find $testAssemblyPath. Please ensure this module has been built before trying to execute tests"
-		Break
-	}
-	$testAssemblies = (Get-ChildItem -Path $testAssemblyPath -Recurse -Filter $testAssemblyName).FullName
+    if (-Not (Test-Path($testAssemblyPath))){
+        Write-Error "Cannot find $testAssemblyPath. Please ensure this module has been built before trying to execute tests"
+        Break
+    }
+    $testAssemblies = (Get-ChildItem -Path $testAssemblyPath -Recurse -Filter $testAssemblyName).FullName
     $runSettings
     if ($development){
         $runSettings = "/Settings:" + $runsettingsFile
     }
-	vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath $runSettings
-	#/logger:"Console;Flavor=Release" or similar if we want to change logging verbosity in the future or output to trx
+    vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath $runSettings
+    #/logger:"Console;Flavor=Release" or similar if we want to change logging verbosity in the future or output to trx
 }
 
 <#
@@ -3030,11 +3030,11 @@ function Run-ExpertUITests {
     This will run the UI sanity tests for the Inquiries product against a development url
 #>
 function Run-ExpertSanityTests {
-	param(
-		[Parameter(Mandatory=$false)] [string]$productName = "*",
+    param(
+        [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [switch]$development
-	)
-	Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development
+    )
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development
 }
 
 <#
