@@ -848,6 +848,7 @@
                         "*.rds",
                         "*.rdl",
                         "*.csv",
+                        "*.bil",
                         "*Helper*.dll")
                     
                     # Fucking garbage VMBLD301 with its shit old version of robocopy does not support multiple file patterns ffs
