@@ -3918,6 +3918,17 @@ function Git-Merge {
 	Stop-Transcript
 }
 
+function Get-ExpertBuildAllVersion () {
+    $path = -join($BranchBinariesDirectory, "\BuildAllZipVersion.txt");
+    if(-Not(Test-Path $path)){
+        "BuildAllZipVersion.txt doesn't exist. your binary folder is probably not from a BuildAll";
+        return;
+    }
+
+    $version = select-string -Path $path -Pattern "BuildAll_[0-9]+.[0-9]+";
+    "$($version.Matches.Value)"
+}
+
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [pscustomobject]@{ function='Run-ExpertUITests';},
@@ -3941,6 +3952,7 @@ $functionsToExport = @(
     [pscustomobject]@{ function='Get-DependenciesForEachModule';              alias='gde'},
     [pscustomobject]@{ function='Get-DependenciesFrom';                       alias='gdf'},
     [pscustomobject]@{ function='Get-EnvironmentFromXml'},
+    [pscustomobject]@{ function='Get-ExpertBuildAllVersion'};
     [pscustomobject]@{ function='Get-ExpertModulesInChangeset'},
 	[pscustomobject]@{ function='Get-Database'},
 	[pscustomobject]@{ function='Get-DatabaseServer'},
