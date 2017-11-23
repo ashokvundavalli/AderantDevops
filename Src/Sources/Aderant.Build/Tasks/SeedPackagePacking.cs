@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Web;
 using System.Xml.Linq;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Aderant.Build.Tasks {
 
@@ -230,6 +231,7 @@ namespace Aderant.Build.Tasks {
             var customizations = new List<string>();
             var dataProviders = new List<string>();
             var reports = new List<string>();
+            var managedReports = new List<string>();
             var securityPolicies = new List<string>();
             var smartForms = new List<string>();
             var smartFormV3S = new List<string>();
@@ -322,6 +324,12 @@ namespace Aderant.Build.Tasks {
                         }
                     }
 
+                    if (seedName.Contains("\\ManagedReports\\")) {
+                        if (!string.IsNullOrEmpty(seedName.Split(new[] { "\\" }, StringSplitOptions.None).LastOrDefault())) {
+                            managedReports.Add(HttpUtility.UrlDecode(seedName.Split(new[] { "\\" }, StringSplitOptions.None).LastOrDefault()));
+                        }
+                    }
+
                     if (seedName.Contains("\\Security Policy\\")) {
                         if (seedDocument.Descendants("policy").Attributes("name")?.Select(a => a.Value).ToList().Count > 0) {
                             securityPolicies.AddRange(seedDocument.Descendants("policy").Attributes("name").Select(a => HttpUtility.UrlDecode("security-policy://" + a.Value)).ToList());
@@ -370,19 +378,17 @@ namespace Aderant.Build.Tasks {
                         reports = reports.Where(a => a != report).ToList();
                         entryList = entryList.Where(e => e != entry).ToList();
                     }
+                }
+                foreach (var managedReport in managedReports) {
+                    var managedReportNormalized = managedReport.ToLower().Split('.').FirstOrDefault() ?? string.Empty;
+                    managedReportNormalized = Regex.Replace(managedReportNormalized, @"\W", "_");
+                    var entryNormalized = HttpUtility.UrlDecode(entry)?.Split(new[] { "/" }, StringSplitOptions.None).LastOrDefault()?.ToLower() ?? string.Empty;
+                    entryNormalized = Regex.Replace(entryNormalized, @"\W", "_");
 
-                    if (entry.StartsWith("managed-report")) {
-                        var splittedReport = report.Split('_', '.').ToList();
-                        splittedReport.Remove("Report");
-                        splittedReport.Remove("xml");
-
-                        var splittedEntry = entry.Split('/').LastOrDefault()?.Split('.');
-
-                        var isManagedReportMatched = splittedEntry != null && splittedEntry.SequenceEqual(splittedReport);
-                        if (isManagedReportMatched) {
-                            reports = reports.Where(a => a != report).ToList();
-                            entryList = entryList.Where(e => e != entry).ToList();
-                        }
+                    var isMatched = managedReportNormalized.EndsWith(entryNormalized);
+                    if (isMatched) {
+                        managedReports = managedReports.Where(a => a != managedReport).ToList();
+                        entryList = entryList.Where(e => e != entry).ToList();
                     }
                 }
                 foreach (var securityPolicy in securityPolicies) {
