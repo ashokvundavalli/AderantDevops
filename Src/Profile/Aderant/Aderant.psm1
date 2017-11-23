@@ -2974,7 +2974,8 @@ function Run-ExpertUITests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
-        [Parameter(Mandatory=$false)] [switch]$development
+        [Parameter(Mandatory=$false)] [switch]$development,
+        [Parameter(Mandatory=$false)] [switch]$noBuild
     )
     if (-Not $CurrentModuleName) {
         Write-Error "You must select a module to run this command"
@@ -2984,39 +2985,45 @@ function Run-ExpertUITests {
         Write-Error "Docker not installed. Please install Docker for Windows before running this command"
         Break
     }
-    if ($productName -eq "*"){
+    if ($productName -eq "*") {
         Write-Host "No project name specified. Running sanity test for all test containers"
     }
+
     $testOutputPath = $currentModulePath + "\Bin\Test\"
     $testAssemblyName = "UIAutomationTest.*" + $productName + "*.dll"
     $testAssemblyPath = $testOutputPath + $testAssemblyName
     $runsettingsFile = $testOutputPath + "DevelopmentEnvironment.runsettings"
-    if ($development){
+    if ($development) {
         $runSettingsContent = '<?xml version="1.0" encoding="utf-8"?>  
         <RunSettings>
             <!-- Parameters used by tests at runtime -->  
             <TestRunParameters>
                 <Parameter name="development" value="true" />
             </TestRunParameters>
-            <!-- Adapter Specific sections -->  
         </RunSettings>'
-        if (Test-Path $runsettingsFile){
+        if (Test-Path $runsettingsFile) {
             Remove-Item $runsettingsFile
         }
         Write-Host "Creating custom runsettings file"
         New-Item -Path $runsettingsFile -ItemType "file" -Value $runSettingsContent > $null
     }
-    if (-Not (Test-Path($testAssemblyPath))){
+
+    if(-Not $noBuild){
+        Get-ChildItem -Path ($currentModulePath + "/Test/*" + $productName + "*/") -Recurse -Filter "UIAutomationTest.*.csproj" | ForEach-Object {$_.FullName} {
+            msbuild $_.FullName
+        }
+    }
+
+    if (-Not (Test-Path($testAssemblyPath))) {
         Write-Error "Cannot find $testAssemblyPath. Please ensure this module has been built before trying to execute tests"
         Break
     }
     $testAssemblies = (Get-ChildItem -Path $testAssemblyPath -Recurse -Filter $testAssemblyName).FullName
     $runSettings
-    if ($development){
+    if ($development) {
         $runSettings = "/Settings:" + $runsettingsFile
     }
-    vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath $runSettings
-    #/logger:"Console;Flavor=Release" or similar if we want to change logging verbosity in the future or output to trx
+    vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath /Logger:trx $runSettings
 }
 
 <#
