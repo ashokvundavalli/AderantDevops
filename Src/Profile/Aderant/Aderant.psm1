@@ -43,22 +43,22 @@ $titles = @(
     "Filling in the Blanks",
     "Mitigating Time-Stream Discontinuities",
     "Blurring Reality Lines",
-	"Reversing the Polarity of the Neutron Flow",
-	"Dropping Expert Database",
-	"Formatting C:\",
+    "Reversing the Polarity of the Neutron Flow",
+    "Dropping Expert Database",
+    "Formatting C:\",
     "Replacing Coffee Machine",
-	"Duplicating Offline Cache"
-	"Replacing Headlight Fluid"
+    "Duplicating Offline Cache"
+    "Replacing Headlight Fluid"
 )
 
 $Host.UI.RawUI.WindowTitle = Get-Random $titles
 
 function Check-Vsix() {
-	[CmdletBinding()]
-	param (
-		[parameter(Mandatory=$true)][string] $vsixName,
-		[parameter(Mandatory=$true)][string] $vsixId,
-		[parameter(Mandatory=$false)][string] $idInVsixmanifest = $vsixId)
+    [CmdletBinding()]
+    param (
+        [parameter(Mandatory=$true)][string] $vsixName,
+        [parameter(Mandatory=$true)][string] $vsixId,
+        [parameter(Mandatory=$false)][string] $idInVsixmanifest = $vsixId)
 
     function Output-VSIXLog {
         $errorsOccurred = $false
@@ -85,7 +85,7 @@ function Check-Vsix() {
                 return
             }
 
-			Write-Host "Installing $vsixName..."
+            Write-Host "Installing $vsixName..."
 
             # uninstall the extension
             Write-Host "Uninstalling $vsixName..."
@@ -115,70 +115,70 @@ function Check-Vsix() {
         }
     }
 
-	Write-Host
-	Write-Host "Detecting $vsixName"
+    Write-Host
+    Write-Host "Detecting $vsixName"
 
 
-	if (-Not $idInVsixmanifest) {
-		$idInVsixmanifest = $vsixId
-	}
-	$extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
-	$developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll"
-	$version = ""
-	$developerTools | ForEach-Object {
-		$manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
-		if (Test-Path $manifest) {
-			$manifestContent = Get-Content $manifest
-			foreach ($line in $manifestContent) {
-				if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
-					$match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
-					$foundVersion = $match.Groups["version"].Value
-					if ($foundVersion -gt $version) {
-						$version = $foundVersion
-					}
-				}
-			}
-		}
-	}
+    if (-Not $idInVsixmanifest) {
+        $idInVsixmanifest = $vsixId
+    }
+    $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
+    $developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll"
+    $version = ""
+    $developerTools | ForEach-Object {
+        $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
+        if (Test-Path $manifest) {
+            $manifestContent = Get-Content $manifest
+            foreach ($line in $manifestContent) {
+                if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
+                    $match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
+                    $foundVersion = $match.Groups["version"].Value
+                    if ($foundVersion -gt $version) {
+                        $version = $foundVersion
+                    }
+                }
+            }
+        }
+    }
 
-	$currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
-	if ($version -eq "") {
-		Write-Host -ForegroundColor DarkRed " $vsixName for Visual Studio are not installed."
-		Write-Host -ForegroundColor DarkRed " If you want them, install them manually via $currentVsixFile"
-	} else {
-		Write-Host " * Found installed version $version"
+    $currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
+    if ($version -eq "") {
+        Write-Host -ForegroundColor DarkRed " $vsixName for Visual Studio are not installed."
+        Write-Host -ForegroundColor DarkRed " If you want them, install them manually via $currentVsixFile"
+    } else {
+        Write-Host " * Found installed version $version"
 
-		if (-not (Test-Path $currentVsixFile)) {
-			Write-Host -ForegroundColor Red "Error: could not find file $currentVsixFile"
-			return
-		}
+        if (-not (Test-Path $currentVsixFile)) {
+            Write-Host -ForegroundColor Red "Error: could not find file $currentVsixFile"
+            return
+        }
 
-		[Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-		$rawFiles = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile).Entries            
-		foreach($rawFile in $rawFiles) {
-			if ($rawFile.Name -eq "extension.vsixmanifest") {
-				$tempFile = Join-Path -Path $env:TEMP -ChildPath $rawFile.FullName
-				[System.IO.Compression.ZipFileExtensions]::ExtractToFile($rawFile, $tempFile, $true)
-				$currentManifestContent = Get-Content $tempFile
-				foreach ($line in $currentManifestContent) {
-					if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
-						$match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
-						$foundVersion = $match.Groups["version"].Value
-						Write-Host " * Current version is $foundVersion"
-						if (($foundVersion -replace "(?<=.\d)\.", "") -gt ($version -replace "(?<=.\d)\.", "")) {
-							Write-Host
-							Write-Host "Updating $vsixName..."
-							InstallVsix
-						} else {
-							Write-Host -ForegroundColor DarkGreen "Your $vsixName are up to date."
-						}
-						break
-					}
-				}
-				break
-			}
-		}
-	}
+        [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+        $rawFiles = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile).Entries            
+        foreach($rawFile in $rawFiles) {
+            if ($rawFile.Name -eq "extension.vsixmanifest") {
+                $tempFile = Join-Path -Path $env:TEMP -ChildPath $rawFile.FullName
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($rawFile, $tempFile, $true)
+                $currentManifestContent = Get-Content $tempFile
+                foreach ($line in $currentManifestContent) {
+                    if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
+                        $match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
+                        $foundVersion = $match.Groups["version"].Value
+                        Write-Host " * Current version is $foundVersion"
+                        if (($foundVersion -replace "(?<=.\d)\.", "") -gt ($version -replace "(?<=.\d)\.", "")) {
+                            Write-Host
+                            Write-Host "Updating $vsixName..."
+                            InstallVsix
+                        } else {
+                            Write-Host -ForegroundColor DarkGreen "Your $vsixName are up to date."
+                        }
+                        break
+                    }
+                }
+                break
+            }
+        }
+    }
 }
 
 <#
@@ -402,13 +402,13 @@ function Switch-BranchFromContainer($newBranchContainer, $previousBranchContaine
 }
 
 function Set-CurrentModule($name, [switch]$quiet){
-	if ($global:CurrentModuleFeature) {
-		if (Get-Module | Where-Object -Property Name -eq $global:CurrentModuleFeature.Name) {
-			Write-Host "Removing module: $($global:CurrentModuleFeature.Name)"
-			Remove-Module $global:CurrentModuleFeature
-		}
-		$global:CurrentModuleFeature = $null
-	}
+    if ($global:CurrentModuleFeature) {
+        if (Get-Module | Where-Object -Property Name -eq $global:CurrentModuleFeature.Name) {
+            Write-Host "Removing module: $($global:CurrentModuleFeature.Name)"
+            Remove-Module $global:CurrentModuleFeature
+        }
+        $global:CurrentModuleFeature = $null
+    }
 
     if (!($name)) {
         if(!($global:CurrentModuleName)){
@@ -465,21 +465,21 @@ function SetRepository([string]$path) {
     $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
     $ShellContext.IsGitRepository = $true
 
-	[string]$currentModuleBuildDirectory = "$path\Build"
+    [string]$currentModuleBuildDirectory = "$path\Build"
 
-	if (Test-Path $currentModuleBuildDirectory) {
-		[string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | ?{ $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
-		if ($featureModule) {
-			ImportFeatureModule $featureModule
-		}
-	}
+    if (Test-Path $currentModuleBuildDirectory) {
+        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | ?{ $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
+        if ($featureModule) {
+            ImportFeatureModule $featureModule
+        }
+    }
 }
 
 function ImportFeatureModule([string]$featureModule) {
-	Import-Module -Name $featureModule -Scope Global -WarningAction SilentlyContinue
-	$global:CurrentModuleFeature = Get-Module | Where-Object -Property Path -eq $featureModule
-	Write-Host "`r`nImported module: $($global:CurrentModuleFeature.Name)" -ForegroundColor Cyan
-	Get-Command -Module $global:CurrentModuleFeature.Name
+    Import-Module -Name $featureModule -Scope Global -WarningAction SilentlyContinue
+    $global:CurrentModuleFeature = Get-Module | Where-Object -Property Path -eq $featureModule
+    Write-Host "`r`nImported module: $($global:CurrentModuleFeature.Name)" -ForegroundColor Cyan
+    Get-Command -Module $global:CurrentModuleFeature.Name
 }
 
 function Get-CurrentModule() {
@@ -548,31 +548,31 @@ function New-BuildModule($name){
 .PARAMETER database
     MANDATORY: The name of the database to use. 
 .PARAMETER saPassword
-	MANDATORY: The sa user password for the database server.
+    MANDATORY: The sa user password for the database server.
 .PARAMETER server
-	The name of the database server. Defaults to the local machine name.
+    The name of the database server. Defaults to the local machine name.
 .PARAMETER instance
-	The database serverinstance that the database resides on.
+    The database serverinstance that the database resides on.
 .PARAMETER version
-	The version to prep the database to. Defaults to 81.
+    The version to prep the database to. Defaults to 81.
 .PARAMETER interactive
-	Starts DBPREPARE in interactive mode
+    Starts DBPREPARE in interactive mode
 #>
 function Prepare-Database (
         [Parameter(Mandatory=$true)]
-		[string]$database,
+        [string]$database,
         [Parameter(Mandatory=$true)]
         [string]$saPassword,
         [string]$server = $env:COMPUTERNAME,
         [string]$instance,
-		[string]$version = "81",
+        [string]$version = "81",
         [switch]$interactive
         ) {
 
     [string]$cmsConnection
     if (-Not [string]::IsNullOrWhiteSpace($instance)) {
-		$instance = "\$instance"    
-		$cmsConnection = "[$server]`r`nVendor=1`r`nLocation=$server$instance`r`nDatabase=$database`r`nTitle=$server.$database`r`nForceManualLogin=0"
+        $instance = "\$instance"    
+        $cmsConnection = "[$server]`r`nVendor=1`r`nLocation=$server$instance`r`nDatabase=$database`r`nTitle=$server.$database`r`nForceManualLogin=0"
         Write-Debug "Running dbprepare against database: $database on server: $server$instance"
     } else {
         $cmsConnection = "[$server]`r`nVendor=1`r`nLocation=$server`r`nDatabase=$database`r`nTitle=$server.$database`r`nForceManualLogin=0"
@@ -589,7 +589,7 @@ function Prepare-Database (
             # If there is an existing connection with incorrect data, dbprepare will open and wait for user input.
             Write-Debug "$server connection present in existing CMS.INI file in %APPDATA%\Aderant."
         }
-	} else {
+    } else {
         Write-Debug "Creating CMS.INI file in %APPDATA%\Aderant with $server connection."
         New-Item $cmsPath -ItemType File -Value $cmsConnection
     }
@@ -618,9 +618,9 @@ function Prepare-Database (
 function Update-Database([string]$manifestName, [switch]$interactive) {
     [string]$fullManifest = ''
 
-	Write-Warning "The 'upd' command is currently unavailable. Please use DBGen for now to update your database."
+    Write-Warning "The 'upd' command is currently unavailable. Please use DBGen for now to update your database."
 
-	return
+    return
 
     if ($global:BranchExpertVersion.StartsWith("8")) {
         $fullManifest = Join-Path -Path $global:BranchBinariesDirectory -ChildPath 'environment.xml'
@@ -811,8 +811,8 @@ function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$releas
     if ($debug) {
         $shell += " -debug"
     } elseif ($release) {
-		$shell += " -release"
-	}
+        $shell += " -release"
+    }
 
     pushd $global:BuildScriptsDirectory
     invoke-expression $shell
@@ -944,16 +944,16 @@ function Get-ProductNoDebugFiles {
 function Get-ProductBuild([switch]$copyToClipboard) {
     $versionFilePath = "$global:BranchBinariesDirectory\BuildAllZipVersion.txt"
     if ([System.IO.File]::Exists($versionFilePath)) {
-		if ((Get-Content -Path $versionFilePath) -match "[^\\]*[\w.]BuildAll_[\w.]*[^\\]") {
-			Write-Host "Current BuildAll version in $global:BranchName` branch:`r`n"
-			Write-Host $Matches[0]
-			if ($copyToClipboard) {
-				Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-				[System.Windows.Forms.Clipboard]::SetText($Matches[0])
-			}
-		} else {
-			Write-Error "Content of BuildAllZipVersion.txt is questionable."
-		}
+        if ((Get-Content -Path $versionFilePath) -match "[^\\]*[\w.]BuildAll_[\w.]*[^\\]") {
+            Write-Host "Current BuildAll version in $global:BranchName` branch:`r`n"
+            Write-Host $Matches[0]
+            if ($copyToClipboard) {
+                Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+                [System.Windows.Forms.Clipboard]::SetText($Matches[0])
+            }
+        } else {
+            Write-Error "Content of BuildAllZipVersion.txt is questionable."
+        }
     } else {
         Write-Error "No BuildAllZipVersion.txt present in $global:BranchBinariesDirectory."
     }
@@ -970,9 +970,9 @@ function Get-ProductZip([switch]$unstable) {
     $zipName = "ExpertBinaries.zip"
     [string]$pathToZip = (PathToLatestSuccessfulPackage -pathToPackages $BranchServerDirectory -packageZipName $zipName -unstable $unstable)
 
-	if (-not $pathToZip) {
-		return
-	}
+    if (-not $pathToZip) {
+        return
+    }
 
     Write-Host "Selected " $pathToZip
 
@@ -981,20 +981,20 @@ function Get-ProductZip([switch]$unstable) {
     Copy-Item -Path $pathToZip -Destination $BranchBinariesDirectory
     $localZip =  (Join-Path $BranchBinariesDirectory $zipName)
     Write-Host "About to extract zip to [$BranchBinariesDirectory]"
-	
-	$zipExe = join-path $ShellContext.BuildToolsDirectory "\7z.exe"
-	if (test-path $zipExe) {
-		$SourceFile=$localZip
-		$Destination=$BranchBinariesDirectory
-		&$zipExe x $SourceFile "-o$Destination" -y
-	} else {
-		Write-Host "Falling back to using Windows zip util as 7-zip does not exist on this system"
-		$shellApplication = new-object -com shell.application
-		$zipPackage = $shellApplication.NameSpace($localZip)
-		$destinationFolder = $shellApplication.NameSpace($global:BranchBinariesDirectory)
-		$destinationFolder.CopyHere($zipPackage.Items())	 
-	}
-	
+    
+    $zipExe = join-path $ShellContext.BuildToolsDirectory "\7z.exe"
+    if (test-path $zipExe) {
+        $SourceFile=$localZip
+        $Destination=$BranchBinariesDirectory
+        &$zipExe x $SourceFile "-o$Destination" -y
+    } else {
+        Write-Host "Falling back to using Windows zip util as 7-zip does not exist on this system"
+        $shellApplication = new-object -com shell.application
+        $zipPackage = $shellApplication.NameSpace($localZip)
+        $destinationFolder = $shellApplication.NameSpace($global:BranchBinariesDirectory)
+        $destinationFolder.CopyHere($zipPackage.Items())     
+    }
+    
     Write-Host "Finished extracting zip"
     [string]$versionFilePath = Join-Path $global:BranchBinariesDirectory "BuildAllZipVersion.txt"
     echo $pathToZip | Out-File -FilePath $versionFilePath
@@ -1059,27 +1059,27 @@ function Get-ProductZip([switch]$unstable) {
 function Build-ExpertModules {
     param ([string[]]$workflowModuleNames, [switch] $changeset = $false, [switch] $clean = $false, [switch]$getDependencies = $false, [switch] $copyBinaries = $false, [switch] $downstream = $false, [switch] $getLatest = $false, [switch] $continue, [string[]] $getLocal, [string[]] $exclude, [string] $skipUntil, [switch]$debug, [switch]$release, [switch]$codeCoverage, [switch]$integration)
 
-	if ($debug -and $release) {
-		Write-Error "You can specify either -debug or -release but not both."
-		return
-	}
+    if ($debug -and $release) {
+        Write-Error "You can specify either -debug or -release but not both."
+        return
+    }
 
-	if ($ShellContext.IsGitRepository) {
-		Write-Error "You cannot run this command for a git repository. Use 'bm' or 'Invoke-Build' instead."
-		return
-	}
+    if ($ShellContext.IsGitRepository) {
+        Write-Error "You cannot run this command for a git repository. Use 'bm' or 'Invoke-Build' instead."
+        return
+    }
 
     $moduleBeforeBuild = $null
 
     try {
-		$currentWorkingDirectory = Get-Location
+        $currentWorkingDirectory = Get-Location
 
         if (!$workflowModuleNames) {
-			if (($global:CurrentModulePath) -and (Test-Path $global:CurrentModulePath)) {
-				 $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name})
-				 $workflowModuleNames = @($moduleBeforeBuild)
-			}
-		}
+            if (($global:CurrentModulePath) -and (Test-Path $global:CurrentModulePath)) {
+                 $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name})
+                 $workflowModuleNames = @($moduleBeforeBuild)
+            }
+        }
 
         $builtModules = @{}
 
@@ -1178,18 +1178,18 @@ function Build-ExpertModules {
         $weHaveSkipped = $false
 
         foreach($module in $modules) {
-			$count++
-			$skipMarkup = ""
+            $count++
+            $skipMarkup = ""
 
-			if ($skipUntil -eq $module) {
-				$weHaveSkipped = $true
-			}
+            if ($skipUntil -eq $module) {
+                $weHaveSkipped = $true
+            }
 
-			if ($skipUntil -and $weHaveSkipped -ne $true){
-				$skipMarkup = " (skipped)"
-			}
+            if ($skipUntil -and $weHaveSkipped -ne $true){
+                $skipMarkup = " (skipped)"
+            }
 
-			write "$count. $module $skipMarkup"
+            write "$count. $module $skipMarkup"
         }
 
         write ""
@@ -1200,111 +1200,111 @@ function Build-ExpertModules {
         $weHaveSkipped = $false
 
         foreach ($module in $modules) {
-			if ($skipUntil -eq $module) {
-				$weHaveSkipped = $true
-			}
+            if ($skipUntil -eq $module) {
+                $weHaveSkipped = $true
+            }
 
-			# If the user specified skipUntil then we will skip over the modules in the list until we reach the specified one.
-			if ($skipUntil -and $weHaveSkipped -eq $false) {
-				Write-Host "************* $module *************"
-				Write-Host "   Skipping  "
-				# Add the module to the list of built modules
-				if (!$builtModules.ContainsKey($module.Name)) {
-					$builtModules.Add($module.Name, $module)
-					$global:LastBuildBuiltModules = $builtModules
-				}
-			} else {
-				# We either have not specified a skip or we have already skipped the modules we need to
-				Set-CurrentModule $module.Name
+            # If the user specified skipUntil then we will skip over the modules in the list until we reach the specified one.
+            if ($skipUntil -and $weHaveSkipped -eq $false) {
+                Write-Host "************* $module *************"
+                Write-Host "   Skipping  "
+                # Add the module to the list of built modules
+                if (!$builtModules.ContainsKey($module.Name)) {
+                    $builtModules.Add($module.Name, $module)
+                    $global:LastBuildBuiltModules = $builtModules
+                }
+            } else {
+                # We either have not specified a skip or we have already skipped the modules we need to
+                Set-CurrentModule $module.Name
 
-				if ($getLatest){
-					Get-LatestSourceForModule $module.Name -branchPath $BranchLocalDirectory
-				}
+                if ($getLatest){
+                    Get-LatestSourceForModule $module.Name -branchPath $BranchLocalDirectory
+                }
 
-				if ($getDependencies -eq $true){
-					Get-DependenciesForCurrentModule
-				}
+                if ($getDependencies -eq $true){
+                    Get-DependenciesForCurrentModule
+                }
 
-				if ($builtModules -and $builtModules.Length -gt 0) {
-					$dependencies = Get-ExpertModuleDependencies -BranchPath $BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
-					Write-Host "************* $module *************"
+                if ($builtModules -and $builtModules.Length -gt 0) {
+                    $dependencies = Get-ExpertModuleDependencies -BranchPath $BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
+                    Write-Host "************* $module *************"
 
-					foreach ($dependencyModule in $dependencies) {
-						Write-Debug "Module dependency: $dependencyModule"
+                    foreach ($dependencyModule in $dependencies) {
+                        Write-Debug "Module dependency: $dependencyModule"
 
-						if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where {$_ -eq $dependencyModule})) {
-							$sourcePath = Join-Path $BranchLocalDirectory Modules\$dependencyModule\Bin\Module
+                        if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where {$_ -eq $dependencyModule})) {
+                            $sourcePath = Join-Path $BranchLocalDirectory Modules\$dependencyModule\Bin\Module
 
-							if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
-								# Probe the new style ThirdParty path
-								$root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules", "ThirdParty")
+                            if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
+                                # Probe the new style ThirdParty path
+                                $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules", "ThirdParty")
 
-								if ([System.IO.Directory]::Exists($root)) {
-									$sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
-								} else {
-									# Fall back to the old style path
-									$root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules")
-									$sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
-								}
-							}
+                                if ([System.IO.Directory]::Exists($root)) {
+                                    $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
+                                } else {
+                                    # Fall back to the old style path
+                                    $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules")
+                                    $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
+                                }
+                            }
 
-							if (-not [System.IO.Directory]::Exists($sourcePath)) {
-								throw "The path $sourcePath does not exist"
-							}
+                            if (-not [System.IO.Directory]::Exists($sourcePath)) {
+                                throw "The path $sourcePath does not exist"
+                            }
 
-							Write-Debug "Local dependency source path: $sourcePath"
+                            Write-Debug "Local dependency source path: $sourcePath"
 
-							$targetPath = Join-Path $BranchLocalDirectory Modules\$module
-							CopyContents $sourcePath "$targetPath\Dependencies"
-						}
-					}
-				}
+                            $targetPath = Join-Path $BranchLocalDirectory Modules\$module
+                            CopyContents $sourcePath "$targetPath\Dependencies"
+                        }
+                    }
+                }
 
-				# Do the Build
-				if ($module.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
-					Start-BuildForCurrentModule $clean $debug -codeCoverage:$codeCoverage.ToBool() -integration:$integration.ToBool()
+                # Do the Build
+                if ($module.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
+                    Start-BuildForCurrentModule $clean $debug -codeCoverage:$codeCoverage.ToBool() -integration:$integration.ToBool()
 
-					pushd $currentWorkingDirectory
+                    pushd $currentWorkingDirectory
 
-					# Check for errors
-					if ($LASTEXITCODE -eq 1) {
-						throw "Build of $module Failed"
-					} elseif ($LASTEXITCODE -eq 0 -and $codeCoverage.IsPresent) {
-						[string]$codeCoverageReport = Join-Path -Path $global:CurrentModulePath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+                    # Check for errors
+                    if ($LASTEXITCODE -eq 1) {
+                        throw "Build of $module Failed"
+                    } elseif ($LASTEXITCODE -eq 0 -and $codeCoverage.IsPresent) {
+                        [string]$codeCoverageReport = Join-Path -Path $global:CurrentModulePath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
 
-						if (Test-Path ($codeCoverageReport)) {
-							Write-Host "Displaying dotCover code coverage report."
-							Start-Process $codeCoverageReport
-						} else {
-							Write-Warning "Unable to locate dotCover code coverage report."
-						}
-					}
-				}
+                        if (Test-Path ($codeCoverageReport)) {
+                            Write-Host "Displaying dotCover code coverage report."
+                            Start-Process $codeCoverageReport
+                        } else {
+                            Write-Warning "Unable to locate dotCover code coverage report."
+                        }
+                    }
+                }
 
-				# Add the module to the list of built modules
-				if (!$builtModules.ContainsKey($module.Name)) {
-					$builtModules.Add($module.Name, $module)
-					$global:LastBuildBuiltModules = $builtModules
-				}
+                # Add the module to the list of built modules
+                if (!$builtModules.ContainsKey($module.Name)) {
+                    $builtModules.Add($module.Name, $module)
+                    $global:LastBuildBuiltModules = $builtModules
+                }
 
-				# Copy binaries to drop folder
-				if ($copyBinaries -eq $true) {
-					Copy-BinariesFromCurrentModule
-				}
-			}
+                # Copy binaries to drop folder
+                if ($copyBinaries -eq $true) {
+                    Copy-BinariesFromCurrentModule
+                }
+            }
 
-			[string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where  {$_ -ne $module}
-		}
+            [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where  {$_ -ne $module}
+        }
 
-		$global:LastBuildRemainingModules = $null
+        $global:LastBuildRemainingModules = $null
 
-		if ($moduleBeforeBuild) {
-			cm $moduleBeforeBuild
-		}
+        if ($moduleBeforeBuild) {
+            cm $moduleBeforeBuild
+        }
     } finally {
         pushd $currentWorkingDirectory
         [Console]::TreatControlCAsInput = $false
-	}
+    }
 }
 
 <#
@@ -1470,10 +1470,10 @@ function Kill-VisualStudio([string[]] $workflowModuleNames, [switch] $killAll = 
     Builds the patch using the local binaries.
 #>
 function Build-ExpertPatch([switch]$noget = $false, [switch]$noproduct = $false) {
-	if(!$noproduct) {
-		Get-ProductZip
-	}	
-    if (!$noget) {		
+    if(!$noproduct) {
+        Get-ProductZip
+    }    
+    if (!$noget) {        
         $cmd = "xcopy \\na.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $PackageScriptsDirectory"
         Invoke-Expression $cmd
     }
@@ -1540,97 +1540,97 @@ function Start-DeploymentManager {
 .Synopsis
     Run DeploymentEngine for your current branch
 .Description
-	Starts DeploymentEngine.exe with the specified command.
+    Starts DeploymentEngine.exe with the specified command.
 .PARAMETER command
-	The action you want the deployment engine to take.
+    The action you want the deployment engine to take.
 .PARAMETER serverName
-	The name of the database server.
+    The name of the database server.
 .PARAMETER databaseName
-	The name of the database containing the environment manifest.
+    The name of the database containing the environment manifest.
 .PARAMETER skipPackageImports
-	Flag to skip package imports.
+    Flag to skip package imports.
 .PARAMETER skipHelpDeployment
-	Flag to skip deployment of Help.
+    Flag to skip deployment of Help.
 .EXAMPLE
-	DeploymentEngine -action Deploy -serverName MyServer01 -databaseName MyMain
+    DeploymentEngine -action Deploy -serverName MyServer01 -databaseName MyMain
     DeploymentEngine -action Remove -serverName MyServer01 -databaseName MyMain
-	DeploymentEngine -action ExportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
-	DeploymentEngine -action ImportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
+    DeploymentEngine -action ExportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
+    DeploymentEngine -action ImportEnvironmentManifest -serverName MyServer01 -databaseName MyMain
 #>
 function Start-DeploymentEngine {
-	[CmdletBinding()]
+    [CmdletBinding()]
     param (
-		[Parameter(Mandatory=$true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")] [string]$command,
-		[Parameter(Mandatory=$false)][string]$serverName,
-		[Parameter(Mandatory=$false)][string]$databaseName,
-		[Parameter(Mandatory=$false)][switch]$skipPackageImports,
-		[Parameter(Mandatory=$false)][switch]$skipHelpDeployment
-	)
+        [Parameter(Mandatory=$true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")] [string]$command,
+        [Parameter(Mandatory=$false)][string]$serverName,
+        [Parameter(Mandatory=$false)][string]$databaseName,
+        [Parameter(Mandatory=$false)][switch]$skipPackageImports,
+        [Parameter(Mandatory=$false)][switch]$skipHelpDeployment
+    )
 
-	process {
-		if (-not (Test-Path $ShellContext.DeploymentEngine)) {
-			Install-DeploymentManager
-		}
+    process {
+        if (-not (Test-Path $ShellContext.DeploymentEngine)) {
+            Install-DeploymentManager
+        }
 
-		$environmentXml = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
+        $environmentXml = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
         
-		if ([string]::IsNullOrWhiteSpace($serverName)) {
-			$serverName = Get-DatabaseServer
-		}
+        if ([string]::IsNullOrWhiteSpace($serverName)) {
+            $serverName = Get-DatabaseServer
+        }
 
-		if ([string]::IsNullOrWhiteSpace($databaseName)) {
-			$databaseName = Get-Database
-		}
+        if ([string]::IsNullOrWhiteSpace($databaseName)) {
+            $databaseName = Get-Database
+        }
 
-		switch ($true) {
-			($skipPackageImports.IsPresent -and $skipHelpDeployment.IsPresent) {
-				powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
-				break
-			}
-			$skipPackageImports.IsPresent {
-				powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports
-				break
-			}
-			$skipHelpDeployment.IsPresnt {
-				powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipHelpDeployment
-				break
-			}
-			default {
-				powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
-				break
-			}
-		}
+        switch ($true) {
+            ($skipPackageImports.IsPresent -and $skipHelpDeployment.IsPresent) {
+                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports -skipHelpDeployment
+                break
+            }
+            $skipPackageImports.IsPresent {
+                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipPackageImports
+                break
+            }
+            $skipHelpDeployment.IsPresnt {
+                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine -skipHelpDeployment
+                break
+            }
+            default {
+                powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command $command -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
+                break
+            }
+        }
 
-		if (($command -eq "Deploy" -or $command -eq "Remove") -and $LASTEXITCODE -eq 0) {
-			powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
-		}
-	}
+        if (($command -eq "Deploy" -or $command -eq "Remove") -and $LASTEXITCODE -eq 0) {
+            powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\DeploymentEngine.ps1" -command "ExportEnvironmentManifest"  -serverName $serverName -databaseName $databaseName -environmentXml $environmentXml -deploymentEngine $ShellContext.DeploymentEngine
+        }
+    }
 }
 
 <#
 .Synopsis
     Installs DeploymentManager.msi from the current branch binaries directory.
 .Description
-	Installs Deployment Manager from the .msi located in the current branch.
+    Installs Deployment Manager from the .msi located in the current branch.
 .EXAMPLE
-	Install-DeploymentManager
-		Installs Deployment Manager from the current branch binaries directory.
+    Install-DeploymentManager
+        Installs Deployment Manager from the current branch binaries directory.
 #>
 function Install-DeploymentManager {
-	& "$global:BranchBinariesDirectory\AutomatedDeployment\InstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
+    & "$global:BranchBinariesDirectory\AutomatedDeployment\InstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
 }
 
 <#
 .Synopsis
     Uninstalls DeploymentManager.msi from the current branch binaries directory.
 .Description
-	Uninstalls Deployment Manager from the .msi located in the current branch.
+    Uninstalls Deployment Manager from the .msi located in the current branch.
 .EXAMPLE
-	Uninstall-DeploymentManager
-		Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
+    Uninstall-DeploymentManager
+        Uninstalls Deployment Manager using the .msi in the current branch binaries directory.
 #>
 function Uninstall-DeploymentManager {
-	& "$global:BranchBinariesDirectory\AutomatedDeployment\UninstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
+    & "$global:BranchBinariesDirectory\AutomatedDeployment\UninstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
 }
 
 #sets up visual studio environment, called from Profile.ps1 when starting PS.
@@ -1824,7 +1824,7 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
     $seventeenDirectory = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe'
     if($seventeen){
         if(Test-Path $seventeenDirectory){
-			$devenv = (Get-Item $seventeenDirectory | select-object -First 1).FullName
+            $devenv = (Get-Item $seventeenDirectory | select-object -First 1).FullName
         }else{
             Write-Host "VS 2017 could not be found ($seventeenDirectory)"
         }
@@ -1835,10 +1835,10 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
         }
         Set-CurrentModule $moduleName
     }
-	$rootPath = Join-Path $BranchLocalDirectory "Modules\$ModuleName"
+    $rootPath = Join-Path $BranchLocalDirectory "Modules\$ModuleName"
     if(!($ModuleName)){
         $ModuleName = $global:CurrentModuleName
-		$rootPath = $global:CurrentModulePath
+        $rootPath = $global:CurrentModulePath
     }
     if(!($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq ""){
         Write-Host -ForegroundColor Yellow "No module specified"
@@ -1865,10 +1865,10 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
             Invoke-Expression "& '$devenv' $moduleSolutionPath"
         }
     } else {
-		$candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
-		if ($candidates.Count -gt 0) {
-			$moduleSolutionPath = Join-Path $rootPath $candidates[0]
-			if($code) {
+        $candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
+        if ($candidates.Count -gt 0) {
+            $moduleSolutionPath = Join-Path $rootPath $candidates[0]
+            if($code) {
                 if(Get-Command code -errorAction SilentlyContinue){
                     Invoke-Expression "code $rootPath"
                 }else{
@@ -1877,9 +1877,9 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
             }else{
                 Invoke-Expression "& '$devenv' $moduleSolutionPath"
             }
-		} else {
-			"There is no solution file at $moduleSolutionPath"
-		}
+        } else {
+            "There is no solution file at $moduleSolutionPath"
+        }
     }
     if (($prevModule) -and (Get-CurrentModule -ne $prevModule)) {
         Set-CurrentModule $prevModule
@@ -2707,17 +2707,17 @@ function Hunt-Zombies {
     } else {
         $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
     }
-	
+    
     foreach($webApp in $expertWebApplications){
         if(-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
-			if($webApp.ApplicationName) {
-			    $iisPath = $webApp.IISPath
-			    $filePath = $webApp.PhysicalPath
+            if($webApp.ApplicationName) {
+                $iisPath = $webApp.IISPath
+                $filePath = $webApp.PhysicalPath
                 Write-Output "Found zombie web application $iisPath, could not find path $filePath."
             }    
-	    }
+        }
     }    
-	Write-Output 'Zombie hunt complete.'
+    Write-Output 'Zombie hunt complete.'
 }
 
 <#
@@ -2737,7 +2737,7 @@ function Remove-Zombies {
         [Parameter(Mandatory=$false)] [string] $virtualPath = ''
     )
 
-	if(-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    if(-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
         Write-Warning "You do not have Administrator rights to run this script`nPlease re-run this script as an Administrator"
         Break
     }
@@ -2750,17 +2750,17 @@ function Remove-Zombies {
     } else {
         $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
     }
-	
+    
     foreach($webApp in $expertWebApplications){
         if(-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
-			if($webApp.ApplicationName) {
-			    $iisPath = $webApp.IISPath
+            if($webApp.ApplicationName) {
+                $iisPath = $webApp.IISPath
                 Remove-Item -Path $iisPath
-			    Write-Output "Removed zombie web application $iisPath"
-			}
+                Write-Output "Removed zombie web application $iisPath"
+            }
         }
-	}
-	Write-Output 'Zombie removal complete.'
+    }
+    Write-Output 'Zombie removal complete.'
 }
 
 <#
@@ -2781,12 +2781,12 @@ function Remove-Zombies {
     Will backup the ExpertDatabase on SVSQL306 to C:\Test\TestBackup.bak
 #>
 function Backup-ExpertDatabase {
-	param(
-		[Parameter(Mandatory=$false)] [string]$serverInstance,
-		[Parameter(Mandatory=$false)] [string]$database,
-		[Parameter(Mandatory=$false)] [string]$backupPath = "C:\AderantExpert\DatabaseBackups",
-		[Parameter(Mandatory=$false)] [string]$backupName
-	)
+    param(
+        [Parameter(Mandatory=$false)] [string]$serverInstance,
+        [Parameter(Mandatory=$false)] [string]$database,
+        [Parameter(Mandatory=$false)] [string]$backupPath = "C:\AderantExpert\DatabaseBackups",
+        [Parameter(Mandatory=$false)] [string]$backupName
+    )
 
     if ([string]::IsNullOrWhiteSpace($serverInstance)) {
         $serverInstance = Get-DatabaseServer
@@ -2796,59 +2796,59 @@ function Backup-ExpertDatabase {
         $database = Get-Database
     }
 
-	if (-Not [string]::IsNullOrWhiteSpace($backupName)) {
-		[string]$backup = "$backupPath\$backupName.bak"
-	}
+    if (-Not [string]::IsNullOrWhiteSpace($backupName)) {
+        [string]$backup = "$backupPath\$backupName.bak"
+    }
 
-	if (-Not (Get-Module -ListAvailable -Name Sqlps)) {
-		Write-Error "The Sqlps module is not available on this system."
-		return
-	}
+    if (-Not (Get-Module -ListAvailable -Name Sqlps)) {
+        Write-Error "The Sqlps module is not available on this system."
+        return
+    }
 
     if (-Not (Test-Path $backupPath)) {
-		try {
-			New-Item $backupPath -Type Directory
+        try {
+            New-Item $backupPath -Type Directory
             Write-Debug "Successfully created directory $backupPath"
-		} catch {
-			Write-Error "Unable to create directory at $backupPath"
+        } catch {
+            Write-Error "Unable to create directory at $backupPath"
             return
-		}
-	}
+        }
+    }
 
-	if ([string]::IsNullOrWhiteSpace($backup)) {
-		[string]$backup = "$backupPath\$database.bak"
-	}
+    if ([string]::IsNullOrWhiteSpace($backup)) {
+        [string]$backup = "$backupPath\$database.bak"
+    }
 
-	if (-not (Get-Module -ListAvailable -Name Sqlps)) {
-		Write-Error "The Sqlps module is not available on this system."
-		return
-	}
+    if (-not (Get-Module -ListAvailable -Name Sqlps)) {
+        Write-Error "The Sqlps module is not available on this system."
+        return
+    }
     
     Remove-Module -Name SqlServer -Force -ErrorAction SilentlyContinue
     Import-Module Sqlps -DisableNameChecking -Force
-	$smoServer = New-Object Microsoft.SqlServer.Management.Smo.Server($serverInstance)
+    $smoServer = New-Object Microsoft.SqlServer.Management.Smo.Server($serverInstance)
 
-	if (-Not $smoServer.Databases[$database]) {
-		Write-Error "Database: $database does not exist on server instance: $serverInstance"
-		$smoServer.ConnectionContext.Disconnect()
-		return
-	}
-		
-	$smoBackup = New-Object Microsoft.SqlServer.Management.Smo.Backup
-	$smoBackup.Database = $database
-	$smoBackup.Devices.AddDevice($backup, "File")
-	$smoBackup.FormatMedia = 1
-	$smoBackup.CompressionOption = 1
-	$smoBackup.Initialize = 1
-	$smoBackup.SkipTapeHeader = 1
+    if (-Not $smoServer.Databases[$database]) {
+        Write-Error "Database: $database does not exist on server instance: $serverInstance"
+        $smoServer.ConnectionContext.Disconnect()
+        return
+    }
+        
+    $smoBackup = New-Object Microsoft.SqlServer.Management.Smo.Backup
+    $smoBackup.Database = $database
+    $smoBackup.Devices.AddDevice($backup, "File")
+    $smoBackup.FormatMedia = 1
+    $smoBackup.CompressionOption = 1
+    $smoBackup.Initialize = 1
+    $smoBackup.SkipTapeHeader = 1
 
-	try {
-		$smoBackup.SqlBackup($smoServer)
-	} catch {
-		Write-Error "Failed to backup database: $database on server instance: $serverInstance"
-	}
+    try {
+        $smoBackup.SqlBackup($smoServer)
+    } catch {
+        Write-Error "Failed to backup database: $database on server instance: $serverInstance"
+    }
 
-	$smoServer.ConnectionContext.Disconnect()
+    $smoServer.ConnectionContext.Disconnect()
 }
 
 <#
@@ -2867,12 +2867,12 @@ function Backup-ExpertDatabase {
     Will restore the Expert database on to the SVSQL306 SQL server.
 #>
 function Restore-ExpertDatabase {
-	[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact='high')]
-	param(
-		[Parameter(Mandatory=$false)] [string]$database,
-		[Parameter(Mandatory=$false)] [string]$serverInstance,
-		[Parameter(Mandatory=$false)] [string]$backup
-	)
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact='high')]
+    param(
+        [Parameter(Mandatory=$false)] [string]$database,
+        [Parameter(Mandatory=$false)] [string]$serverInstance,
+        [Parameter(Mandatory=$false)] [string]$backup
+    )
 
     $ErrorActionPreference = "Stop"
 
@@ -2885,47 +2885,47 @@ function Restore-ExpertDatabase {
     }
 
     if ([string]::IsNullOrWhiteSpace($backup)) {
-		[string]$backupPath = "$global:BranchBinariesDirectory\Database"
-		$backup = Get-ChildItem -Path $backupPath -Recurse | ?{$_.extension -eq ".bak"} | Select-Object -First 1 | Select -ExpandProperty FullName
-		if ([string]::IsNullOrWhiteSpace($backup)) {
-			Write-Error "No backup file found at: $backupPath"
-			return
-		}
+        [string]$backupPath = "$global:BranchBinariesDirectory\Database"
+        $backup = Get-ChildItem -Path $backupPath -Recurse | ?{$_.extension -eq ".bak"} | Select-Object -First 1 | Select -ExpandProperty FullName
+        if ([string]::IsNullOrWhiteSpace($backup)) {
+            Write-Error "No backup file found at: $backupPath"
+            return
+        }
     }
 
-	if (-not (Get-Module -ListAvailable -Name Sqlps)) {
-		Write-Error "The Sqlps module is not available on this system."
-		return
-	}
+    if (-not (Get-Module -ListAvailable -Name Sqlps)) {
+        Write-Error "The Sqlps module is not available on this system."
+        return
+    }
 
-	Write-Host "Note: This is a database restore operation - the existing database will be replaced" -ForegroundColor Yellow
+    Write-Host "Note: This is a database restore operation - the existing database will be replaced" -ForegroundColor Yellow
 
-	if (-not $env:ForceRestoreDatabase -or ($env:ForceRestoreDatabase -eq $false)) {
-		if (-not $PSCmdlet.ShouldProcess($database, "Restore Database: $database")) {
-			return
-		}
-		[Environment]::SetEnvironmentVariable("ForceRestoreDatabase", "True", "User")
-	}
+    if (-not $env:ForceRestoreDatabase -or ($env:ForceRestoreDatabase -eq $false)) {
+        if (-not $PSCmdlet.ShouldProcess($database, "Restore Database: $database")) {
+            return
+        }
+        [Environment]::SetEnvironmentVariable("ForceRestoreDatabase", "True", "User")
+    }
     
-	powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\ProvisionDatabase.ps1" -serverInstance $serverInstance -databaseName $database -backupPath $backup
+    powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\ProvisionDatabase.ps1" -serverInstance $serverInstance -databaseName $database -backupPath $backup
 
-	[string]$environmentManifest = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
+    [string]$environmentManifest = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
 
-	if (Test-Path ($environmentManifest)) {
-		[xml]$environmentXml = Get-Content $environmentManifest
-		$environmentXml.environment.expertDatabaseServer.serverName = $env:COMPUTERNAME
-		$environmentXml.environment.expertDatabaseServer.databaseConnection.databaseName = $database
-		$environmentXml.environment.monitoringDatabaseServer.serverName = $env:COMPUTERNAME
-		$environmentXml.environment.monitoringDatabaseServer.databaseConnection.databaseName = "$($database)Monitoring"
-		$environmentXml.environment.workflowDatabaseServer.serverName = $env:COMPUTERNAME
-		$environmentXml.environment.workflowDatabaseServer.databaseConnection.databaseName = $database
+    if (Test-Path ($environmentManifest)) {
+        [xml]$environmentXml = Get-Content $environmentManifest
+        $environmentXml.environment.expertDatabaseServer.serverName = $env:COMPUTERNAME
+        $environmentXml.environment.expertDatabaseServer.databaseConnection.databaseName = $database
+        $environmentXml.environment.monitoringDatabaseServer.serverName = $env:COMPUTERNAME
+        $environmentXml.environment.monitoringDatabaseServer.databaseConnection.databaseName = "$($database)Monitoring"
+        $environmentXml.environment.workflowDatabaseServer.serverName = $env:COMPUTERNAME
+        $environmentXml.environment.workflowDatabaseServer.databaseConnection.databaseName = $database
 
-		$environmentXml.Save($environmentManifest)
+        $environmentXml.Save($environmentManifest)
 
-		Start-DeploymentEngine -command ImportEnvironmentManifest -serverName $serverInstance -databaseName $database
-	} else {
-		Write-Warning "No environment manifest found to import at: $($environmentManifest)"
-	}
+        Start-DeploymentEngine -command ImportEnvironmentManifest -serverName $serverInstance -databaseName $database
+    } else {
+        Write-Warning "No environment manifest found to import at: $($environmentManifest)"
+    }
 }
 
 <#
@@ -2935,31 +2935,31 @@ function Restore-ExpertDatabase {
     Uses Get-EnvironmentFromXml to return the Database Server\Instance for the current local deployment.
 #>
 function Get-DatabaseServer() {
-	if (-Not (Test-Path ([System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")))) {
-		$databaseServer = $env:COMPUTERNAME	
-		Write-Host "Server instance set to: $databaseServer"
-		return $databaseServer
-	} else {
-		try {
-			[string]$databaseServer = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverName"), "[^/]*$").ToString()
-			Write-Debug "Database server set to: $databaseServer"
-		} catch {
-			throw "Unable to get database server from environment.xml"
-		}
+    if (-Not (Test-Path ([System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")))) {
+        $databaseServer = $env:COMPUTERNAME    
+        Write-Host "Server instance set to: $databaseServer"
+        return $databaseServer
+    } else {
+        try {
+            [string]$databaseServer = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverName"), "[^/]*$").ToString()
+            Write-Debug "Database server set to: $databaseServer"
+        } catch {
+            throw "Unable to get database server from environment.xml"
+        }
 
-		[string]$serverInstance = Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverInstance"
-		
-		if (-not [string]::IsNullOrWhiteSpace($serverInstance)) {
-			[string]$serverInstance = [regex]::Match($serverInstance, "[^/]*$").ToString()
-			$databaseServer = "$($databaseServer)\$($serverInstance)"
-			Write-Debug "Server instance set to: $serverInstance"
-		} else {
-			Write-Debug "Unable to get database server instance from environment.xml"
-		}
+        [string]$serverInstance = Get-EnvironmentFromXml "/environment/expertDatabaseServer/@serverInstance"
+        
+        if (-not [string]::IsNullOrWhiteSpace($serverInstance)) {
+            [string]$serverInstance = [regex]::Match($serverInstance, "[^/]*$").ToString()
+            $databaseServer = "$($databaseServer)\$($serverInstance)"
+            Write-Debug "Server instance set to: $serverInstance"
+        } else {
+            Write-Debug "Unable to get database server instance from environment.xml"
+        }
 
-		Write-Host "Server instance set to: $databaseServer"
-		return $databaseServer
-	}
+        Write-Host "Server instance set to: $databaseServer"
+        return $databaseServer
+    }
 }
 
 <#
@@ -2969,19 +2969,19 @@ function Get-DatabaseServer() {
     Uses Get-EnvironmentFromXml to return the the database name for the current local deployment.
 #>
 function Get-Database() {
-	if (-Not (Test-Path ([System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")))) {
-		$database = Read-Host -Prompt "No environment.xml found. Please specify a database name"
-		return $database
-	} else {
-		try {
-			[string]$database = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/databaseConnection/@databaseName"), "[^/]*$").ToString()
-			Write-Host "Database name set to: $database"
-		} catch {
-			throw "Unable to get database name from environment.xml"
-		}
+    if (-Not (Test-Path ([System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")))) {
+        $database = Read-Host -Prompt "No environment.xml found. Please specify a database name"
+        return $database
+    } else {
+        try {
+            [string]$database = [regex]::Match((Get-EnvironmentFromXml "/environment/expertDatabaseServer/databaseConnection/@databaseName"), "[^/]*$").ToString()
+            Write-Host "Database name set to: $database"
+        } catch {
+            throw "Unable to get database name from environment.xml"
+        }
 
-		return $database
-	}
+        return $database
+    }
 }
 
 <#
@@ -3081,82 +3081,82 @@ function Run-ExpertSanityTests {
 .PARAMETER removeCMSINI
     Removes the CMS.INI file from AppData\Roaming\Aderant.
 .EXAMPLE
-	Clear-ExpertCache -user TTQA1 -environmentName ITEGG -removeCMSINI
+    Clear-ExpertCache -user TTQA1 -environmentName ITEGG -removeCMSINI
     This will clear the local and roaming caches for the ITEGG environment for TTQA1 and remove CMS.INI from AppData\Roaming\Aderant.
 #>
 function Clear-ExpertCache {
-	param(
-		[Parameter(Mandatory=$false)] [string]$user = [Environment]::UserName,
-		[Parameter(Mandatory=$false)] [string]$environmentName,
-		[switch]$removeCMSINI
-	)
+    param(
+        [Parameter(Mandatory=$false)] [string]$user = [Environment]::UserName,
+        [Parameter(Mandatory=$false)] [string]$environmentName,
+        [switch]$removeCMSINI
+    )
 
-	[string]$cache = "Aderant"
-	[string]$localAppData
-	[string]$roamingAppData
-	
-	if (-not [string]::IsNullOrWhiteSpace($environmentName)) {
-		$cache = [string]::Concat($cache, "\$environmentName")
-	}
+    [string]$cache = "Aderant"
+    [string]$localAppData
+    [string]$roamingAppData
+    
+    if (-not [string]::IsNullOrWhiteSpace($environmentName)) {
+        $cache = [string]::Concat($cache, "\$environmentName")
+    }
 
-	if (-not ($user -match [Environment]::UserName)) {
-		$localAppData = "C:\Users\$user\AppData\Local"	
-		$roamingAppData = "C:\Users\$user\AppData\Roaming"
-	} else {
-		$localAppData = $env:LOCALAPPDATA
-		$roamingAppData = $env:APPDATA
-	}
+    if (-not ($user -match [Environment]::UserName)) {
+        $localAppData = "C:\Users\$user\AppData\Local"    
+        $roamingAppData = "C:\Users\$user\AppData\Roaming"
+    } else {
+        $localAppData = $env:LOCALAPPDATA
+        $roamingAppData = $env:APPDATA
+    }
 
-	if (Test-Path("$localAppData\$cache")) {
-		if (-not (Get-Item "$localAppData\$cache").PSIsContainer) {
-			Write-Error "Please specify a valid environment name"
-			Break
-		}
-		try {
-			Get-ChildItem -Path "$localAppData\$cache" -Recurse | Remove-Item -force -recurse
-			if (-not [string]::IsNullOrWhiteSpace($environmentName)) {
-				Remove-Item -Path "$localAppData\$cache" -Force
-			}
-			Write-Host "Successfully cleared $localAppData\$cache"
-		} catch {
-			Write-Warning "Unable to clear $localAppData\$cache"
-		}
-	} else {
-		Write-Host "No cache present at $localAppData\$cache"
-	}
+    if (Test-Path("$localAppData\$cache")) {
+        if (-not (Get-Item "$localAppData\$cache").PSIsContainer) {
+            Write-Error "Please specify a valid environment name"
+            Break
+        }
+        try {
+            Get-ChildItem -Path "$localAppData\$cache" -Recurse | Remove-Item -force -recurse
+            if (-not [string]::IsNullOrWhiteSpace($environmentName)) {
+                Remove-Item -Path "$localAppData\$cache" -Force
+            }
+            Write-Host "Successfully cleared $localAppData\$cache"
+        } catch {
+            Write-Warning "Unable to clear $localAppData\$cache"
+        }
+    } else {
+        Write-Host "No cache present at $localAppData\$cache"
+    }
 
-	if (Test-Path("$roamingAppData\$cache")) {
-		if (-not (Get-Item "$roamingAppData\$cache").PSIsContainer) {
-			Write-Error "Please specify a valid environment name"
-			Break
-		}
-		try {
-			if ([string]::IsNullOrWhiteSpace($environmentName)) {
-				Get-ChildItem -Path "$roamingAppData\$cache" -Recurse |  Remove-Item -Exclude "CMS.INI" -Force -Recurse
-			} else {
-				Get-ChildItem -Path "$roamingAppData\$cache" -Recurse | Remove-Item -Force -Recurse
-				Remove-Item -Path "$roamingAppData\$cache" -Force
-			}
-			Write-Host "Successfully cleared $roamingAppData\$cache"
-		} catch {
-			Write-Error "Unable to clear $roamingAppData\$cache"
-		}
-	} else {
-		Write-Host "No cache present at $roamingAppData\$cache"
-	}
+    if (Test-Path("$roamingAppData\$cache")) {
+        if (-not (Get-Item "$roamingAppData\$cache").PSIsContainer) {
+            Write-Error "Please specify a valid environment name"
+            Break
+        }
+        try {
+            if ([string]::IsNullOrWhiteSpace($environmentName)) {
+                Get-ChildItem -Path "$roamingAppData\$cache" -Recurse |  Remove-Item -Exclude "CMS.INI" -Force -Recurse
+            } else {
+                Get-ChildItem -Path "$roamingAppData\$cache" -Recurse | Remove-Item -Force -Recurse
+                Remove-Item -Path "$roamingAppData\$cache" -Force
+            }
+            Write-Host "Successfully cleared $roamingAppData\$cache"
+        } catch {
+            Write-Error "Unable to clear $roamingAppData\$cache"
+        }
+    } else {
+        Write-Host "No cache present at $roamingAppData\$cache"
+    }
 
-	if ($removeCMSINI.IsPresent) {
-		if (Test-Path("$roamingAppData\Aderant\CMS.INI")) {
-			try {
-				Remove-Item -Path "$roamingAppData\Aderant\CMS.INI" -Force
-				Write-Host "Successfully removed CMS.INI"
-			} catch {
-				Write-Error "Unable to remove CMS.INI at $roamingAppData\Aderant"
-			}
-		} else {
-			Write-Host "No CMS.INI file present at $roamingAppData\Aderant"
-		}
-	}
+    if ($removeCMSINI.IsPresent) {
+        if (Test-Path("$roamingAppData\Aderant\CMS.INI")) {
+            try {
+                Remove-Item -Path "$roamingAppData\Aderant\CMS.INI" -Force
+                Write-Host "Successfully removed CMS.INI"
+            } catch {
+                Write-Error "Unable to remove CMS.INI at $roamingAppData\Aderant"
+            }
+        } else {
+            Write-Host "No CMS.INI file present at $roamingAppData\Aderant"
+        }
+    }
 }
 
 <#
@@ -3171,65 +3171,65 @@ function Clear-ExpertCache {
 .PARAMETER database
     The name of the Expert database.
 .EXAMPLE
-		Change-ExpertOwner -owner Aderant
+        Change-ExpertOwner -owner Aderant
     This will change the system owner to Aderant in the Expert database.
 #>
 function Change-ExpertOwner {
-	[CmdletBinding()]
-	param (
-		[Parameter(Mandatory=$false)] [string]$serverInstance,
-		[Parameter(Mandatory=$false)] [string]$database,
-		[Parameter(Mandatory=$false)] [switch]$force
-	)
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false)] [string]$serverInstance,
+        [Parameter(Mandatory=$false)] [string]$database,
+        [Parameter(Mandatory=$false)] [switch]$force
+    )
 
-	dynamicparam {
-		[string]$parameterName = "owner"
-		$parameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+    dynamicparam {
+        [string]$parameterName = "owner"
+        $parameterAttribute = New-Object System.Management.Automation.ParameterAttribute
         $parameterAttribute.Position = 0
-		$parameterAttribute.Mandatory = $true
-		$attributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-		$attributeCollection.Add($parameterAttribute)
-		$owners = "Aderant", "Clifford, Maximillian & Scott"
+        $parameterAttribute.Mandatory = $true
+        $attributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+        $attributeCollection.Add($parameterAttribute)
+        $owners = "Aderant", "Clifford, Maximillian & Scott"
         $validateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($owners)
-		$attributeCollection.Add($validateSetAttribute)
+        $attributeCollection.Add($validateSetAttribute)
         $runtimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($parameterName, [string], $attributeCollection)
-		$runtimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+        $runtimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
         $runtimeParameterDictionary.Add($parameterName, $runtimeParameter)
         return $runtimeParameterDictionary
-	}
+    }
 
     begin {
         $owner = $PsBoundParameters[$parameterName]
-		if ([string]::IsNullOrEmpty($serverInstance)) {
-			$serverInstance = Get-DatabaseServer
-		} else {
-			Write-Host "Server instance set to: $serverInstance"
-		}
+        if ([string]::IsNullOrEmpty($serverInstance)) {
+            $serverInstance = Get-DatabaseServer
+        } else {
+            Write-Host "Server instance set to: $serverInstance"
+        }
 
-		if ([string]::IsNullOrEmpty($database)) {
-			$database = Get-Database
-		} else {
-			Write-Host "Database name set to: $database"
-		}
+        if ([string]::IsNullOrEmpty($database)) {
+            $database = Get-Database
+        } else {
+            Write-Host "Database name set to: $database"
+        }
 
-		Write-Host "Expert owner: $owner"
+        Write-Host "Expert owner: $owner"
     }
 
-	process {
-		if (-Not (Get-Module -ListAvailable -Name Sqlps)) {
-			Write-Error "The Sqlps module is not available on this system."
-			return
-		}
+    process {
+        if (-Not (Get-Module -ListAvailable -Name Sqlps)) {
+            Write-Error "The Sqlps module is not available on this system."
+            return
+        }
 
-		Import-Module Sqlps -DisableNameChecking
-	
-		if ($owner -contains "Aderant") {
-			[string]$ownerID = "00000000-0000-0000-0000-00000000000A"
-		} else {
-			[string]$ownerID = "402A1B6F-AAB2-4B32-BEFD-D4C9BB556029"
-		}
-		
-		[string]$sql = "DECLARE @OWNER NVARCHAR(100) = '" + $owner + "';
+        Import-Module Sqlps -DisableNameChecking
+    
+        if ($owner -contains "Aderant") {
+            [string]$ownerID = "00000000-0000-0000-0000-00000000000A"
+        } else {
+            [string]$ownerID = "402A1B6F-AAB2-4B32-BEFD-D4C9BB556029"
+        }
+        
+        [string]$sql = "DECLARE @OWNER NVARCHAR(100) = '" + $owner + "';
 DECLARE @OWNERID NVARCHAR(40) = '" + $ownerID + "';
 
 IF NOT EXISTS (SELECT TOP 1 * FROM FWM_OWNER WHERE OWNERID = @OWNERID) BEGIN
@@ -3239,29 +3239,29 @@ END;
 UPDATE FWM_OWNER SET ISSYSTEM = 'Y' WHERE OWNERID = @OWNERID;
 UPDATE FWM_OWNER SET ISSYSTEM = 'N' WHERE OWNERID != @OWNERID;
 UPDATE HBM_PARMS SET FIRM_NAME = @OWNER;"
-	
-	if (-not $force.IsPresent) {
-		Write-Host "Continue?"
-		$answer = Read-Host "Y/N"
+    
+    if (-not $force.IsPresent) {
+        Write-Host "Continue?"
+        $answer = Read-Host "Y/N"
 
         while("Y", "N" -notcontains $answer) {
-	        $answer = Read-Host "Y/N"
+            $answer = Read-Host "Y/N"
         }
 
         if ($answer -eq "N") {
             return
         }
-	}
-	
-	try {
-			Invoke-Sqlcmd -ServerInstance $serverInstance -Database $database -Query $sql
-		} catch {
-			Write-Error "Failed to change Expert owner to: $owner for database: $database"
-			return
-		}
-		
-		Write-Host "Expert owner set to: $owner" -ForegroundColor Cyan
-	}
+    }
+    
+    try {
+            Invoke-Sqlcmd -ServerInstance $serverInstance -Database $database -Query $sql
+        } catch {
+            Write-Error "Failed to change Expert owner to: $owner for database: $database"
+            return
+        }
+        
+        Write-Host "Expert owner set to: $owner" -ForegroundColor Cyan
+    }
 }
 
 <# 
@@ -3294,7 +3294,7 @@ function Get-WorkerProcessIds(){
 
 <#
 .Synopsis
-	Wrapper function that deals with Powershell's peculiar error output when Git uses the error stream.
+    Wrapper function that deals with Powershell's peculiar error output when Git uses the error stream.
 #>
 function Invoke-Git {
     [CmdletBinding()]
@@ -3331,146 +3331,146 @@ function Invoke-Git {
 
 <#
 .Synopsis
-	Starts a merge workflow for all Pull Requests linked to a specific work item.
+    Starts a merge workflow for all Pull Requests linked to a specific work item.
 .Description   
     Takes the bug work item ID that needs to be merged, the merge work item ID that the merge PR should be attached with and the target Git branch name as input.
-	It then tries to cherry pick each linked Pull Request of the bug work item ID to a new feature branch off the given target branch, commit it and create a PR.
-	If a merge conflict occurs, Visual Studio (Experimental Instance, for performance reasons) opens up automatically for manual conflict resolving.
-	After successfully resolving the merge conflict, just close Visual Studio and run this command again. It will remember your last inputs for convenience.
-	Once a Pull Request for the merge operation is created, Internet Explorer will open up automatically and show the created PR which is set to auto-complete. 
-	Additionally, it will automatically do a squash merge and delete the feature branch.
-	The CRTDev group will be associated automatically as an optional reviewer which can be changed manually.
+    It then tries to cherry pick each linked Pull Request of the bug work item ID to a new feature branch off the given target branch, commit it and create a PR.
+    If a merge conflict occurs, Visual Studio (Experimental Instance, for performance reasons) opens up automatically for manual conflict resolving.
+    After successfully resolving the merge conflict, just close Visual Studio and run this command again. It will remember your last inputs for convenience.
+    Once a Pull Request for the merge operation is created, Internet Explorer will open up automatically and show the created PR which is set to auto-complete. 
+    Additionally, it will automatically do a squash merge and delete the feature branch.
+    The CRTDev group will be associated automatically as an optional reviewer which can be changed manually.
 #>
 function Git-Merge {
 
-	# setup logging
-	$ErrorActionPreference = "SilentlyContinue"
-	Stop-Transcript | out-null
-	$ErrorActionPreference = 'Stop'
+    # setup logging
+    $ErrorActionPreference = "SilentlyContinue"
+    Stop-Transcript | out-null
+    $ErrorActionPreference = 'Stop'
 
-	# create C:\temp folder if it does not exist
-	$tempFolderPath = "C:\temp"
-	if (!(Test-Path $tempFolderPath)) {
-		New-Item -ItemType Directory -Path $tempFolderPath
-	}
+    # create C:\temp folder if it does not exist
+    $tempFolderPath = "C:\temp"
+    if (!(Test-Path $tempFolderPath)) {
+        New-Item -ItemType Directory -Path $tempFolderPath
+    }
 
-	$logFilePath = Join-Path $tempFolderPath git-merge_log.txt
-	Start-Transcript -path $logFilePath -append
+    $logFilePath = Join-Path $tempFolderPath git-merge_log.txt
+    Start-Transcript -path $logFilePath -append
 
-	# variables
-	$tfsUrl = "http://tfs:8080/tfs/aderant"
-	$tfsUrlWithProject = "http://tfs:8080/tfs/aderant/ExpertSuite"
-	$bugId = $null
-	$mergeBugId = $null
-	$targetBranch = $null
-	$tempFolderPath = "C:\temp\gitMerge"
-	$gitError = ""
-	$needInput = $true
+    # variables
+    $tfsUrl = "http://tfs:8080/tfs/aderant"
+    $tfsUrlWithProject = "http://tfs:8080/tfs/aderant/ExpertSuite"
+    $bugId = $null
+    $mergeBugId = $null
+    $targetBranch = $null
+    $tempFolderPath = "C:\temp\gitMerge"
+    $gitError = ""
+    $needInput = $true
 
-	# close all open Internet Explorer instances that might have been opened as a COM object
-	# we close all instances, even those that were opened manually - assuming nobody uses that browser any more :-)
-	(New-Object -COM 'Shell.Application').Windows() | Where-Object {
-		$_.Name -like '*Internet Explorer*'
-	} | ForEach-Object {
-		$_.Quit()
-	}
+    # close all open Internet Explorer instances that might have been opened as a COM object
+    # we close all instances, even those that were opened manually - assuming nobody uses that browser any more :-)
+    (New-Object -COM 'Shell.Application').Windows() | Where-Object {
+        $_.Name -like '*Internet Explorer*'
+    } | ForEach-Object {
+        $_.Quit()
+    }
 
-	# create temporary working folder if it does not exist
-	if (!(Test-Path $tempFolderPath)) {
-		Write-Host "`nCreating directory $tempFolderPath" -ForegroundColor Gray
-		New-Item -ItemType Directory -Path $tempFolderPath | Out-Null
-	}
+    # create temporary working folder if it does not exist
+    if (!(Test-Path $tempFolderPath)) {
+        Write-Host "`nCreating directory $tempFolderPath" -ForegroundColor Gray
+        New-Item -ItemType Directory -Path $tempFolderPath | Out-Null
+    }
 
-	# create application settings to save application state (like the previous input so you don't have to provide it again after a conflict or other failure)
-	$appInfoFilePath = Join-Path $tempFolderPath ".app-info"
-	if (!(Test-Path $appInfoFilePath)) {
-		Write-Host "Creating application info file" -ForegroundColor Gray
-		New-Item $appInfoFilePath -ItemType File | Out-Null
-	}
+    # create application settings to save application state (like the previous input so you don't have to provide it again after a conflict or other failure)
+    $appInfoFilePath = Join-Path $tempFolderPath ".app-info"
+    if (!(Test-Path $appInfoFilePath)) {
+        Write-Host "Creating application info file" -ForegroundColor Gray
+        New-Item $appInfoFilePath -ItemType File | Out-Null
+    }
 
-	$autoCreateMergeBug = $false
+    $autoCreateMergeBug = $false
 
-	# grab previous input automatically on request
-	$appInfo = Get-Content $appInfoFilePath
-	if ($appInfo) {
-		$inputs = $appInfo.Split(',')
-		Write-Host "The previous inputs were"
-		Write-Host " * Bug ID:        $($inputs[0])"
-		Write-Host " * Merge Bug ID:  $($inputs[1])"
-		Write-Host " * Target branch: $($inputs[2])"
+    # grab previous input automatically on request
+    $appInfo = Get-Content $appInfoFilePath
+    if ($appInfo) {
+        $inputs = $appInfo.Split(',')
+        Write-Host "The previous inputs were"
+        Write-Host " * Bug ID:        $($inputs[0])"
+        Write-Host " * Merge Bug ID:  $($inputs[1])"
+        Write-Host " * Target branch: $($inputs[2])"
 
-		Write-Host "`nDo you want to use these inputs (y/n)?" -ForegroundColor Magenta
-		$useInputsAnswer = Read-Host
+        Write-Host "`nDo you want to use these inputs (y/n)?" -ForegroundColor Magenta
+        $useInputsAnswer = Read-Host
 
-		if ($useInputsAnswer -eq 'y') {
-			$bugId = $inputs[0]
-			$mergeBugId = $inputs[1]
-			$targetBranch = $inputs[2]
-			$needInput = $false
+        if ($useInputsAnswer -eq 'y') {
+            $bugId = $inputs[0]
+            $mergeBugId = $inputs[1]
+            $targetBranch = $inputs[2]
+            $needInput = $false
 
-			if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
-				$autoCreateMergeBug = $true
-			}
-		}
-	}
+            if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
+                $autoCreateMergeBug = $true
+            }
+        }
+    }
 
-	# grab input manually
-	if ($needInput) {
-		while (!$bugId -or $bugId.Length -le 5) {
-			if ($bugId -and $bugId.Length -le 5) {
-				Write-Host "$bugId is not a valid work item ID" -ForegroundColor Red
-			}
-			$bugId = Read-Host -Prompt "`nWhich bug ID to you want to merge"
-		}
+    # grab input manually
+    if ($needInput) {
+        while (!$bugId -or $bugId.Length -le 5) {
+            if ($bugId -and $bugId.Length -le 5) {
+                Write-Host "$bugId is not a valid work item ID" -ForegroundColor Red
+            }
+            $bugId = Read-Host -Prompt "`nWhich bug ID to you want to merge"
+        }
     
-		while (!$mergeBugId -or $mergeBugId.Length -le 5 -or $mergeBugId -eq $bugId) {
-			$mergeBugId = Read-Host -Prompt "`nWhich merge bug ID to you want the merge operation to be associated with (enter 'c' to automatically create one)"
-			if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
-				$autoCreateMergeBug = $true
-				break
-			}
-			if ($mergeBugId -and $mergeBugId.Length -le 5) {
-				Write-Host "$mergeBugId is not a valid work item ID" -ForegroundColor Red
-			}
-			if ($mergeBugId -eq $bugId) {
-				Write-Host "You cannot use the original work item to be associated with the merge operation" -ForegroundColor Red
-			}
-		}
+        while (!$mergeBugId -or $mergeBugId.Length -le 5 -or $mergeBugId -eq $bugId) {
+            $mergeBugId = Read-Host -Prompt "`nWhich merge bug ID to you want the merge operation to be associated with (enter 'c' to automatically create one)"
+            if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
+                $autoCreateMergeBug = $true
+                break
+            }
+            if ($mergeBugId -and $mergeBugId.Length -le 5) {
+                Write-Host "$mergeBugId is not a valid work item ID" -ForegroundColor Red
+            }
+            if ($mergeBugId -eq $bugId) {
+                Write-Host "You cannot use the original work item to be associated with the merge operation" -ForegroundColor Red
+            }
+        }
 
-		while (!$targetBranch -or $targetBranch.Length -le 1) {
-			$targetBranch = Read-Host -Prompt "`nWhich Git branch to you want to merge to (e.g. master, patch/81SP1 etc. - CASE SENSTITIVE)"
-		}
+        while (!$targetBranch -or $targetBranch.Length -le 1) {
+            $targetBranch = Read-Host -Prompt "`nWhich Git branch to you want to merge to (e.g. master, patch/81SP1 etc. - CASE SENSTITIVE)"
+        }
 
-		Set-Content $appInfoFilePath "$([System.String]::Join(",", @($bugId, $mergeBugId, $targetBranch)))" -Force
-	}
+        Set-Content $appInfoFilePath "$([System.String]::Join(",", @($bugId, $mergeBugId, $targetBranch)))" -Force
+    }
 
-	# get the bug work item from TFS
-	$getWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($bugId)?`$expand=all&api-version=1.0"
-	Write-Host "Invoke-RestMethod -Uri $getWorkItemUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
-	$workItem = Invoke-RestMethod -Uri $getWorkItemUri -ContentType "application/json" -UseDefaultCredentials
+    # get the bug work item from TFS
+    $getWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($bugId)?`$expand=all&api-version=1.0"
+    Write-Host "Invoke-RestMethod -Uri $getWorkItemUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+    $workItem = Invoke-RestMethod -Uri $getWorkItemUri -ContentType "application/json" -UseDefaultCredentials
 
-	# create new IE browser object to show merge PRs (optionally the newly created merge bug)
-	$browser = New-Object -ComObject internetexplorer.application
+    # create new IE browser object to show merge PRs (optionally the newly created merge bug)
+    $browser = New-Object -ComObject internetexplorer.application
 
-	#retrieve or auto-create the merge work item
-	if ($autoCreateMergeBug -eq $true) {
+    #retrieve or auto-create the merge work item
+    if ($autoCreateMergeBug -eq $true) {
 
-	    $assumedIterationPath = "ExpertSuite"
-		switch ($targetBranch) {
-			'master' {
-				$assumedIterationPath += "\\8.2.0.0"
-			}
-			'patch/81SP1' {
-				$assumedIterationPath += "\\8.1.0.2 (HF)"
-			}
-			'releases/10.8102' {
-				$assumedIterationPath += "\\8.1.1 (SP)"
-			}    
-		}
+        $assumedIterationPath = "ExpertSuite"
+        switch ($targetBranch) {
+            'master' {
+                $assumedIterationPath += "\\8.2.0.0"
+            }
+            'patch/81SP1' {
+                $assumedIterationPath += "\\8.1.0.2 (HF)"
+            }
+            'releases/10.8102' {
+                $assumedIterationPath += "\\8.1.1 (SP)"
+            }    
+        }
 
-		# automatically create the merge work item in TFS
-		$createWorkItemUri = "$($tfsUrlWithProject)/_apis/wit/workItems/`$Bug?api-version=1.0"
-		$createWorkItemBody = @"
+        # automatically create the merge work item in TFS
+        $createWorkItemUri = "$($tfsUrlWithProject)/_apis/wit/workItems/`$Bug?api-version=1.0"
+        $createWorkItemBody = @"
 [
   {
     "op": "add",
@@ -3510,18 +3510,18 @@ function Git-Merge {
   }
 ]
 "@
-		Write-Host "Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
-		$createdMergeWorkItem = Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
-		$mergeBugId = $createdMergeWorkItem.id
+        Write-Host "Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+        $createdMergeWorkItem = Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
+        $mergeBugId = $createdMergeWorkItem.id
 
-		# assign the merge work item to the creator and set it to Active
-		$updateWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($createdMergeWorkItem.id)?api-version=1.0"
-		$updateWorkItemBody = @"
+        # assign the merge work item to the creator and set it to Active
+        $updateWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($createdMergeWorkItem.id)?api-version=1.0"
+        $updateWorkItemBody = @"
 [
   {
-	"op": "add",
-	"path": "/fields/System.AssignedTo",
-	"value": "$($createdMergeWorkItem.fields.'System.CreatedBy'.Replace('\', '\\'))"
+    "op": "add",
+    "path": "/fields/System.AssignedTo",
+    "value": "$($createdMergeWorkItem.fields.'System.CreatedBy'.Replace('\', '\\'))"
   },
   {
     "op": "replace",
@@ -3530,135 +3530,135 @@ function Git-Merge {
   }
 ]
 "@
-		Write-Host "Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
-		$updatedMergeWorkItem = Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
+        Write-Host "Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+        $updatedMergeWorkItem = Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
 
-		Write-Host "`nAutomatically created merge work item $mergeBugId. Please verify assignee, area & iteration path.`n" -ForegroundColor Yellow
-		Read-Host -Prompt "A new IE browser window will now open to load the work item for editing. Press any key to continue"
-		$workItemUrl = "$($tfsUrlWithProject)/_workitems?id=$mergeBugId"
-		$browser.navigate($workItemUrl)
-		$browser.visible = $true
-	}
+        Write-Host "`nAutomatically created merge work item $mergeBugId. Please verify assignee, area & iteration path.`n" -ForegroundColor Yellow
+        Read-Host -Prompt "A new IE browser window will now open to load the work item for editing. Press any key to continue"
+        $workItemUrl = "$($tfsUrlWithProject)/_workitems?id=$mergeBugId"
+        $browser.navigate($workItemUrl)
+        $browser.visible = $true
+    }
 
-	# get existing merge work item from TFS
-	$getMergeWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($mergeBugId)?`$expand=all&api-version=1.0"
-	Write-Host "Invoke-RestMethod -Uri $getMergeWorkItemUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
-	$mergeWorkItem = Invoke-RestMethod -Uri $getMergeWorkItemUri -ContentType "application/json" -UseDefaultCredentials
+    # get existing merge work item from TFS
+    $getMergeWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($mergeBugId)?`$expand=all&api-version=1.0"
+    Write-Host "Invoke-RestMethod -Uri $getMergeWorkItemUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+    $mergeWorkItem = Invoke-RestMethod -Uri $getMergeWorkItemUri -ContentType "application/json" -UseDefaultCredentials
 
-	# gather all PRs from the bug work item that need to be merged
-	$repositoriesToProcess = @{}
-	foreach ($relation in $workItem.relations | Where-Object { $_.rel -eq "ArtifactLink" -and $_.attributes.name -eq "Pull Request" }) {
-		$pullRequestUri = $relation.url
-		$pullRequestPath = @($pullRequestUri.Split('/'))[5].Replace("%2f", "/").Replace("%2F", "/")
-		$pullRequestPathParts = @($pullRequestPath.Split('/'))
+    # gather all PRs from the bug work item that need to be merged
+    $repositoriesToProcess = @{}
+    foreach ($relation in $workItem.relations | Where-Object { $_.rel -eq "ArtifactLink" -and $_.attributes.name -eq "Pull Request" }) {
+        $pullRequestUri = $relation.url
+        $pullRequestPath = @($pullRequestUri.Split('/'))[5].Replace("%2f", "/").Replace("%2F", "/")
+        $pullRequestPathParts = @($pullRequestPath.Split('/'))
     
-		$repositoryId = $pullRequestPathParts[1]
-		$pullRequestId = $pullRequestPathParts[2]
-		$getPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$pullRequestId"
+        $repositoryId = $pullRequestPathParts[1]
+        $pullRequestId = $pullRequestPathParts[2]
+        $getPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$pullRequestId"
 
-		# get the pull request object
-		Write-Host "Invoke-RestMethod -Uri $getPullRequestUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
-		$pullRequest = Invoke-RestMethod -Uri $getPullRequestUri -ContentType "application/json" -UseDefaultCredentials
-		if ($pullRequest.status -ne 'completed') {
+        # get the pull request object
+        Write-Host "Invoke-RestMethod -Uri $getPullRequestUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+        $pullRequest = Invoke-RestMethod -Uri $getPullRequestUri -ContentType "application/json" -UseDefaultCredentials
+        if ($pullRequest.status -ne 'completed') {
             continue
         }
-		$repositoryFromPR = $pullRequest.repository
+        $repositoryFromPR = $pullRequest.repository
 
-		# add the containing repository to the dictionary if it hasn't already been added
-		if (-not $repositoriesToProcess.Contains($repositoryFromPR.name)) {
-			$pullRequests = New-Object System.Collections.ArrayList
-			$pullRequests.Add($pullRequest) | Out-Null
-			$repositoriesToProcess.Add($repositoryFromPR.name, $pullRequests)
-		} else {
-			$repositoriesToProcess[$repositoryFromPR.name].Add($pullRequest)
-		}
-	}
+        # add the containing repository to the dictionary if it hasn't already been added
+        if (-not $repositoriesToProcess.Contains($repositoryFromPR.name)) {
+            $pullRequests = New-Object System.Collections.ArrayList
+            $pullRequests.Add($pullRequest) | Out-Null
+            $repositoriesToProcess.Add($repositoryFromPR.name, $pullRequests)
+        } else {
+            $repositoriesToProcess[$repositoryFromPR.name].Add($pullRequest)
+        }
+    }
 
-	# write a summary of what is gonna happen
-	Write-Host "`nMerging bug $($workItem.id) into branch $($targetBranch)" -ForegroundColor Green
-	Write-Host "`-> $($workItem.fields.'System.Title')`n" -ForegroundColor Green
-	Write-Host "Merge bug: $($mergeWorkItem.id) - $($mergeWorkItem.fields.'System.Title')"
-	foreach ($currentRepositoryName in $repositoriesToProcess.Keys) {
-		$repository = $repositoriesToProcess[$currentRepositoryName]
-		Write-Host "`n$currentRepositoryName PRs:"
-		foreach ($pullRequest in $repository) {
-			Write-Host " * $($pullRequest.targetRefName.Substring(11)) - PR $($pullRequest.pullRequestId) - $($pullRequest.title)"
-		}
-	}
-	$hasChangesets = $false
-	$changeSetInfos = ""
-	$allTfvcBranchPaths = [System.Collections.ArrayList]@()
-	foreach ($relation in $workItem.relations | Where-Object { $_.rel -eq "ArtifactLink" -and $_.attributes.name -eq "Fixed in Changeset" }) {
-		if (-not $hasChangesets) {
-			$hasChangesets = $true
-			Write-Host "`nTFVC commits (need to be merged manually):" -ForegroundColor Yellow
-		}
-		$splitUrl = $relation.url.Split('/')
-		$changeSetId = $splitUrl[$splitUrl.Count - 1]
-		$getChangesetUri = "$($tfsUrl)/_apis/tfvc/changesets/$($changeSetId)?includeDetails=true&api-version=1.0"
+    # write a summary of what is gonna happen
+    Write-Host "`nMerging bug $($workItem.id) into branch $($targetBranch)" -ForegroundColor Green
+    Write-Host "`-> $($workItem.fields.'System.Title')`n" -ForegroundColor Green
+    Write-Host "Merge bug: $($mergeWorkItem.id) - $($mergeWorkItem.fields.'System.Title')"
+    foreach ($currentRepositoryName in $repositoriesToProcess.Keys) {
+        $repository = $repositoriesToProcess[$currentRepositoryName]
+        Write-Host "`n$currentRepositoryName PRs:"
+        foreach ($pullRequest in $repository) {
+            Write-Host " * $($pullRequest.targetRefName.Substring(11)) - PR $($pullRequest.pullRequestId) - $($pullRequest.title)"
+        }
+    }
+    $hasChangesets = $false
+    $changeSetInfos = ""
+    $allTfvcBranchPaths = [System.Collections.ArrayList]@()
+    foreach ($relation in $workItem.relations | Where-Object { $_.rel -eq "ArtifactLink" -and $_.attributes.name -eq "Fixed in Changeset" }) {
+        if (-not $hasChangesets) {
+            $hasChangesets = $true
+            Write-Host "`nTFVC commits (need to be merged manually):" -ForegroundColor Yellow
+        }
+        $splitUrl = $relation.url.Split('/')
+        $changeSetId = $splitUrl[$splitUrl.Count - 1]
+        $getChangesetUri = "$($tfsUrl)/_apis/tfvc/changesets/$($changeSetId)?includeDetails=true&api-version=1.0"
 
-		#get the work items from TFS
-		$changeSet = Invoke-RestMethod -Uri $getChangesetUri -ContentType "application/json" -UseDefaultCredentials
-		$getChangesUri = $changeSet._links.changes.href
-		$changes = Invoke-RestMethod -Uri $getChangesUri -ContentType "application/json" -UseDefaultCredentials
-		$tfvcBranchPaths = [System.Collections.ArrayList]@()
-		foreach ($change in $changes.value) {
-			$path = ""
-			$pathParts = $change.item.path.Split('/')
-			foreach ($part in $pathParts) {
-				if ($part -eq "$" -or $part -eq "ExpertSuite") {
-					continue
-				}
-				if ($part -eq "Modules") {
-					break
-				}
-				$path += "$part/"
-			}
-			$path = $path.Substring(0, $path.Length - 1)
-			if (-not $tfvcBranchPaths.Contains($path)) {
-				$tfvcBranchPaths.Add($path) | Out-Null
-			}
-			if (-not $allTfvcBranchPaths.Contains($path)) {
-				$allTfvcBranchPaths.Add($path) | Out-Null
-			}
-		}
-		$changeSetInfo = " * $tfvcBranchPaths - CS $changeSetId - $($relation.attributes.comment)"
-		$changeSetInfos += "$changeSetInfo`n"
-		Write-Host $changeSetInfo
-	}
+        #get the work items from TFS
+        $changeSet = Invoke-RestMethod -Uri $getChangesetUri -ContentType "application/json" -UseDefaultCredentials
+        $getChangesUri = $changeSet._links.changes.href
+        $changes = Invoke-RestMethod -Uri $getChangesUri -ContentType "application/json" -UseDefaultCredentials
+        $tfvcBranchPaths = [System.Collections.ArrayList]@()
+        foreach ($change in $changes.value) {
+            $path = ""
+            $pathParts = $change.item.path.Split('/')
+            foreach ($part in $pathParts) {
+                if ($part -eq "$" -or $part -eq "ExpertSuite") {
+                    continue
+                }
+                if ($part -eq "Modules") {
+                    break
+                }
+                $path += "$part/"
+            }
+            $path = $path.Substring(0, $path.Length - 1)
+            if (-not $tfvcBranchPaths.Contains($path)) {
+                $tfvcBranchPaths.Add($path) | Out-Null
+            }
+            if (-not $allTfvcBranchPaths.Contains($path)) {
+                $allTfvcBranchPaths.Add($path) | Out-Null
+            }
+        }
+        $changeSetInfo = " * $tfvcBranchPaths - CS $changeSetId - $($relation.attributes.comment)"
+        $changeSetInfos += "$changeSetInfo`n"
+        Write-Host $changeSetInfo
+    }
 
-	foreach ($branch in $allTfvcBranchPaths) {
+    foreach ($branch in $allTfvcBranchPaths) {
         Write-Host "`nCreate an additional merge work item for merging the TFVC changesets from $branch to its parent branch (y/n)?" -ForegroundColor Magenta
-	    $additionalMergeBugAnswer = Read-Host
-		if ($additionalMergeBugAnswer -eq 'y') {
+        $additionalMergeBugAnswer = Read-Host
+        if ($additionalMergeBugAnswer -eq 'y') {
 
-			$getBranchUri = "$($tfsUrl)/_apis/tfvc/branches/`$/ExpertSuite/$branch/Modules?includeParent=true&api-version=1.0-preview.1"
-			Write-Host "Invoke-RestMethod -Uri $getBranchUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
-			$branchInfo = Invoke-RestMethod -Uri $getBranchUri -ContentType "application/json" -UseDefaultCredentials
-			$parentBranch = $branchInfo.parent[0].path.Replace("$/ExpertSuite/", "").Replace("/Modules", "")
+            $getBranchUri = "$($tfsUrl)/_apis/tfvc/branches/`$/ExpertSuite/$branch/Modules?includeParent=true&api-version=1.0-preview.1"
+            Write-Host "Invoke-RestMethod -Uri $getBranchUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+            $branchInfo = Invoke-RestMethod -Uri $getBranchUri -ContentType "application/json" -UseDefaultCredentials
+            $parentBranch = $branchInfo.parent[0].path.Replace("$/ExpertSuite/", "").Replace("/Modules", "")
 
-			$assumedIterationPath = "ExpertSuite"
-			switch ($parentBranch) {
-				'Releases/811x' {
-					$assumedIterationPath += "\\8.1.1 (SP)"
-				}
-				'Releases/81x' {
-					$assumedIterationPath += "\\8.1.0"
-				}
-				'Releases/803x' {
-					$assumedIterationPath += "\\8.0.3 (SP)"
-				}
-				'Releases/802x' {
-					$assumedIterationPath += "\\8.0.2 (SP)"
-				}
-				'Releases/801x' {
-					$assumedIterationPath += "\\8.0.1(SP)" # this is not a typo, this iteration path is indeed missing a space...
-				}
-			}
+            $assumedIterationPath = "ExpertSuite"
+            switch ($parentBranch) {
+                'Releases/811x' {
+                    $assumedIterationPath += "\\8.1.1 (SP)"
+                }
+                'Releases/81x' {
+                    $assumedIterationPath += "\\8.1.0"
+                }
+                'Releases/803x' {
+                    $assumedIterationPath += "\\8.0.3 (SP)"
+                }
+                'Releases/802x' {
+                    $assumedIterationPath += "\\8.0.2 (SP)"
+                }
+                'Releases/801x' {
+                    $assumedIterationPath += "\\8.0.1(SP)" # this is not a typo, this iteration path is indeed missing a space...
+                }
+            }
 
-			# automatically create the merge work item in TFS
-			$createAdditionalWorkItemUri = "$($tfsUrlWithProject)/_apis/wit/workItems/`$Bug?api-version=1.0"
-			$createAdditionalWorkItemBody = @"
+            # automatically create the merge work item in TFS
+            $createAdditionalWorkItemUri = "$($tfsUrlWithProject)/_apis/wit/workItems/`$Bug?api-version=1.0"
+            $createAdditionalWorkItemBody = @"
 [
   {
     "op": "add",
@@ -3698,154 +3698,158 @@ function Git-Merge {
   }
 ]
 "@
-			Write-Host "Invoke-RestMethod -Uri $createAdditionalWorkItemUri -Body $createAdditionalWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
-			$additionallyCreatedMergeWorkItem = Invoke-RestMethod -Uri $createAdditionalWorkItemUri -Body $createAdditionalWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
+            Write-Host "Invoke-RestMethod -Uri $createAdditionalWorkItemUri -Body $createAdditionalWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+            $additionallyCreatedMergeWorkItem = Invoke-RestMethod -Uri $createAdditionalWorkItemUri -Body $createAdditionalWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
 
-			# assign the additional merge work item to the creator
-			$updateAdditionalWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($additionallyCreatedMergeWorkItem.id)?api-version=1.0"
-			$updateAdditionalWorkItemBody = @"
+            # assign the additional merge work item to the creator
+            $updateAdditionalWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($additionallyCreatedMergeWorkItem.id)?api-version=1.0"
+            $updateAdditionalWorkItemBody = @"
 [
   {
-	"op": "add",
-	"path": "/fields/System.AssignedTo",
-	"value": "$($additionallyCreatedMergeWorkItem.fields.'System.CreatedBy'.Replace('\', '\\'))"
+    "op": "add",
+    "path": "/fields/System.AssignedTo",
+    "value": "$($additionallyCreatedMergeWorkItem.fields.'System.CreatedBy'.Replace('\', '\\'))"
   }
 ]
 "@
-			Write-Host "Invoke-RestMethod -Uri $updateAdditionalWorkItemUri -Body $updateAdditionalWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
-			$updatedAdditionalMergeWorkItem = Invoke-RestMethod -Uri $updateAdditionalWorkItemUri -Body $updateAdditionalWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
+            Write-Host "Invoke-RestMethod -Uri $updateAdditionalWorkItemUri -Body $updateAdditionalWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+            $updatedAdditionalMergeWorkItem = Invoke-RestMethod -Uri $updateAdditionalWorkItemUri -Body $updateAdditionalWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
 
-			Write-Host "`nAutomatically created additional merge work item $($additionallyCreatedMergeWorkItem.id). Please verify assignee, area & iteration path.`n" -ForegroundColor Yellow
-			Read-Host -Prompt "A new IE browser window will now open to load the work item for editing. Press any key to continue"
-			$workItemUrl = "$($tfsUrlWithProject)/_workitems?id=$($additionallyCreatedMergeWorkItem.id)"
-			$browser.navigate($workItemUrl)
-			$browser.visible = $true
-		}
-	}
+            Write-Host "`nAutomatically created additional merge work item $($additionallyCreatedMergeWorkItem.id). Please verify assignee, area & iteration path.`n" -ForegroundColor Yellow
+            Read-Host -Prompt "A new IE browser window will now open to load the work item for editing. Press any key to continue"
+            $workItemUrl = "$($tfsUrlWithProject)/_workitems?id=$($additionallyCreatedMergeWorkItem.id)"
+            $browser.navigate($workItemUrl)
+            $browser.visible = $true
+        }
+    }
 
-	Write-Host "`nProceed with merging (y/n)?" -ForegroundColor Magenta
-	$proceedAnswer = Read-Host
+    Write-Host "`nProceed with merging (y/n)?" -ForegroundColor Magenta
+    $proceedAnswer = Read-Host
 
-	if ($proceedAnswer -ne 'y') {
-		Write-Host "Aborting."
-		return
-	}
+    if ($proceedAnswer -ne 'y') {
+        Write-Host "Aborting."
+        return
+    }
 
 
-	# create folder for git repo to clone if it does not exist
-	$gitReposPath = Join-Path $tempFolderPath $bugId
-	if (!(Test-Path $gitReposPath)) {
-		Write-Host "`nCreating directory $gitReposPath" -ForegroundColor Gray
-		New-Item -ItemType Directory -Path $gitReposPath | Out-Null
-	}
+    # create folder for git repo to clone if it does not exist
+    $gitReposPath = Join-Path $tempFolderPath $bugId
+    if (!(Test-Path $gitReposPath)) {
+        Write-Host "`nCreating directory $gitReposPath" -ForegroundColor Gray
+        New-Item -ItemType Directory -Path $gitReposPath | Out-Null
+    }
 
-	try {
+    try {
 
-		foreach ($currentRepositoryName in $repositoriesToProcess.Keys) {
+        foreach ($currentRepositoryName in $repositoriesToProcess.Keys) {
 
-			$repository = $repositoriesToProcess[$currentRepositoryName]
-			$repositoryId = $repository[0].repository.id
+            $repository = $repositoriesToProcess[$currentRepositoryName]
+            $repositoryId = $repository[0].repository.id
 
-			Write-Host "`nProcessing $currentRepositoryName" -ForegroundColor Green
+            Write-Host "`nProcessing $currentRepositoryName" -ForegroundColor Green
 
-			$featureBranch = $targetBranch + "-for-merging-$bugId"
+            $featureBranch = $targetBranch + "-for-merging-$bugId"
 
-			cd $gitReposPath
+            cd $gitReposPath
 
-			$currentRepositoryPath = Join-Path $gitReposPath $currentRepositoryName
+            $currentRepositoryPath = Join-Path $gitReposPath $currentRepositoryName
 
-			$isInitialRun = $false
-			if (!(Test-Path $currentRepositoryPath)) {
-				# clone the repository and checkout a new feature branch
-				Write-Host "Cloning repository" -ForegroundColor Gray
-				Write-Host "git clone $($repository[0].repository.remoteUrl)" -ForegroundColor Blue
-				Invoke-Git clone $repository[0].repository.remoteUrl
-				$isInitialRun = $true
-				Write-Host "Done" -ForegroundColor Gray
-			}
+            $isInitialRun = $false
+            if (!(Test-Path $currentRepositoryPath)) {
+                # clone the repository and checkout a new feature branch
+                Write-Host "Cloning repository" -ForegroundColor Gray
+                Write-Host "git clone $($repository[0].repository.remoteUrl)" -ForegroundColor Blue
+                Invoke-Git clone $repository[0].repository.remoteUrl
+                $isInitialRun = $true
+                Write-Host "Done" -ForegroundColor Gray
+            }
 
-			cd $currentRepositoryPath
+            cd $currentRepositoryPath
 
-			if ($isInitialRun) {
-				Write-Host "Creating feature branch" -ForegroundColor Gray
-				Write-Host "git checkout -b $featureBranch origin/$targetBranch" -ForegroundColor Blue
-				Invoke-Git checkout -b $featureBranch origin/$targetBranch
-			}
+            if ($isInitialRun) {
+                Write-Host "Creating feature branch" -ForegroundColor Gray
+                Write-Host "git checkout -b $featureBranch origin/$targetBranch" -ForegroundColor Blue
+                Invoke-Git checkout -b $featureBranch origin/$targetBranch
+            }
 
-			$pullRequestDescription = ""
+            $pullRequestDescription = ""
 
-			# cherry-pick the commits of every associated PR in this repository
-			foreach ($pullRequest in $repository) {
+            # cherry-pick the commits of every associated PR in this repository
+            foreach ($pullRequest in $repository) {
 
-				$pullRequestDescription += "Merging $($pullRequest.title)`n"
+                $pullRequestDescription += "Merging $($pullRequest.title)`n"
 
-				$conflictInfoFilePath = Join-Path (Join-Path $currentRepositoryPath "..\") "$currentRepositoryName.conflicts"
-				$processedInfoFilePath = Join-Path (Join-Path $currentRepositoryPath "..\") "$currentRepositoryName.processed"
-				if (!(Test-Path $processedInfoFilePath)) {
-					Write-Host "Creating processed info file" -ForegroundColor Gray
-					New-Item $processedInfoFilePath -ItemType File | Out-Null
-				}
+                $conflictInfoFilePath = Join-Path (Join-Path $currentRepositoryPath "..\") "$currentRepositoryName.conflicts"
+                $processedInfoFilePath = Join-Path (Join-Path $currentRepositoryPath "..\") "$currentRepositoryName.processed"
+                if (!(Test-Path $processedInfoFilePath)) {
+                    Write-Host "Creating processed info file" -ForegroundColor Gray
+                    New-Item $processedInfoFilePath -ItemType File | Out-Null
+                }
 
-				$lastMergeCommitId = $pullRequest.lastMergeCommit.commitId
+                $lastMergeCommitId = $pullRequest.lastMergeCommit.commitId
 
-				$processedInfo = Get-Content $processedInfoFilePath
-				if (!$processedInfo -or -not (Get-Content $processedInfoFilePath).Contains($pullRequest.pullRequestId)) {
+                $processedInfo = Get-Content $processedInfoFilePath
+                if (!$processedInfo -or -not (Get-Content $processedInfoFilePath).Contains($pullRequest.pullRequestId)) {
 
-					if (!(Test-Path $conflictInfoFilePath) -or -not (Get-Content $conflictInfoFilePath).Contains($pullRequest.pullRequestId)) {
-						Write-Host "Cherry-picking $($lastMergeCommitId.Substring(0,7))" -ForegroundColor Gray
-						Write-Host "git cherry-pick $lastMergeCommitId" -ForegroundColor Blue
-						$gitError = Invoke-Git cherry-pick $lastMergeCommitId
-					}
+                    if (!(Test-Path $conflictInfoFilePath) -or -not (Get-Content $conflictInfoFilePath).Contains($pullRequest.pullRequestId)) {
+                        Write-Host "Cherry-picking $($lastMergeCommitId.Substring(0,7))" -ForegroundColor Gray
+                        Write-Host "git cherry-pick $lastMergeCommitId" -ForegroundColor Blue
+                        $gitError = Invoke-Git cherry-pick $lastMergeCommitId
+                    }
 
-					if ($gitError.Contains('is a merge but no -m option was given')) {
-						Write-Host "Cherry-picking $($lastMergeCommitId.Substring(0,7)) with merge option" -ForegroundColor Gray
-						Write-Host "git cherry-pick -m 1 $lastMergeCommitId" -ForegroundColor Blue
-						$gitError = Invoke-Git cherry-pick -m 1 $lastMergeCommitId
-					}
+                    if ($gitError.Contains('is a merge but no -m option was given')) {
+                        Write-Host "Cherry-picking $($lastMergeCommitId.Substring(0,7)) with merge option" -ForegroundColor Gray
+                        Write-Host "git cherry-pick -m 1 $lastMergeCommitId" -ForegroundColor Blue
+                        $gitError = Invoke-Git cherry-pick -m 1 $lastMergeCommitId
+                    }
 
-					if ($gitError.StartsWith('error: could not apply')) {
-						# merge conflict occurred
-						if (!(Test-Path $conflictInfoFilePath)) {
-							Write-Host "Creating conflict info file" -ForegroundColor Gray
-							New-Item $conflictInfoFilePath -ItemType File | Out-Null
-						}
-						Write-Host "Updating conflict info file" -ForegroundColor Gray
-						$conflictInfo = Get-Content $conflictInfoFilePath
-						if (!$conflictInfo -or -not $conflictInfo.Contains($pullRequest.pullRequestId)) {
-							Add-Content $conflictInfoFilePath "$($pullRequest.pullRequestId)" | Out-Null
-						}
-						$solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
-						Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolving. Press any key to continue"
-						Write-Host "Opening $solutionFilePath for manual conflict resolving" -ForegroundColor Gray
-						Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
-						throw "Please resolve the merge conflict and run this command again."
-					}
+                    if ($gitError.StartsWith('error: could not apply')) {
+                        # merge conflict occurred
+                        if (!(Test-Path $conflictInfoFilePath)) {
+                            Write-Host "Creating conflict info file" -ForegroundColor Gray
+                            New-Item $conflictInfoFilePath -ItemType File | Out-Null
+                        }
+                        Write-Host "Updating conflict info file" -ForegroundColor Gray
+                        $conflictInfo = Get-Content $conflictInfoFilePath
+                        if (!$conflictInfo -or -not $conflictInfo.Contains($pullRequest.pullRequestId)) {
+                            Add-Content $conflictInfoFilePath "$($pullRequest.pullRequestId)" | Out-Null
+                        }
+                        $solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
+                        Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolving. Press any key to continue"
+                        Write-Host "Opening $solutionFilePath for manual conflict resolving" -ForegroundColor Gray
+                        Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
+                        throw "Please resolve the merge conflict and run this command again."
+                    }
 
-					Write-Host "git commit -m ""Cherry picked commit of PR $($pullRequest.pullRequestId)"" --allow-empty" -ForegroundColor Blue
-					$gitError = Invoke-Git commit -m """Cherry picked commit of PR $($pullRequest.pullRequestId)""" --allow-empty
+                    Write-Host "git commit -m ""Cherry picked commit of PR $($pullRequest.pullRequestId)"" --allow-empty" -ForegroundColor Blue
+                    $gitError = Invoke-Git commit -m """Cherry picked commit of PR $($pullRequest.pullRequestId)""" --allow-empty
         
-					if ($gitError) {
-						Write-Host $gitError
-						$solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
-						Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolving. Press any key to continue"
-						Write-Host "Opening $solutionFilePath for manual conflict resolving" -ForegroundColor Gray
-						Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
-						throw "Please resolve the merge conflict and run this command again."
-					}
+                    if ($gitError) {
+                        Write-Host $gitError
+                        $solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
+                        Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolving. Press any key to continue"
+                        Write-Host "Opening $solutionFilePath for manual conflict resolving" -ForegroundColor Gray
+                        Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
+                        throw "Please resolve the merge conflict and run this command again."
+                    }
 
-					Add-Content $processedInfoFilePath "$($pullRequest.pullRequestId)" | Out-Null
-				}
-			}
+                    Add-Content $processedInfoFilePath "$($pullRequest.pullRequestId)" | Out-Null
+                }
+            }
 
-			#publish feature branch
-			Write-Host "Pushing changes to feature branch" -ForegroundColor Gray
-			Write-Host "git push origin $featureBranch" -ForegroundColor Blue
-			Invoke-Git push origin $featureBranch   
-            Invoke-Git notes add -m """Merged: $bugId"""
-            Invoke-Git push origin refs/notes/commits        
+            #publish feature branch
+            Write-Host "Pushing changes to feature branch" -ForegroundColor Gray
+            Write-Host "git push origin $featureBranch" -ForegroundColor Blue
+            $gitError = Invoke-Git push origin $featureBranch   
+
+            if($gitError.Contains("Everything up-to-date")) {
+                Write-Host "No more changes to push to origin for repository $currentRepositoryName, skipping PR creation"
+            } else {
+                Invoke-Git notes add -m """Merged: $bugId"""
+                Invoke-Git push origin refs/notes/commits        
               
-			$createPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests?api-version=3.0"
-			$createPullRequestBody = @"
+                $createPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests?api-version=3.0"
+                $createPullRequestBody = @"
 {
     "sourceRefName": "refs/heads/$featureBranch",
     "targetRefName": "refs/heads/$targetBranch",
@@ -3859,14 +3863,14 @@ function Git-Merge {
 }
 "@
 
-			#create the pull request
-			Write-Host "Creating a pull request from $featureBranch to $targetBranch" -ForegroundColor Gray
-			Write-Host "Invoke-RestMethod -Uri $createPullRequestUri -Body $createPullRequestBody -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
-			$createdPullRequest = Invoke-RestMethod -Uri $createPullRequestUri -Body $createPullRequestBody -ContentType "application/json" -UseDefaultCredentials -Method Post
+                #create the pull request
+                Write-Host "Creating a pull request from $featureBranch to $targetBranch" -ForegroundColor Gray
+                Write-Host "Invoke-RestMethod -Uri $createPullRequestUri -Body $createPullRequestBody -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+                $createdPullRequest = Invoke-RestMethod -Uri $createPullRequestUri -Body $createPullRequestBody -ContentType "application/json" -UseDefaultCredentials -Method Post
 
 
-			$modifyPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$($createdPullRequest.pullRequestId)?api-version=3.0"
-			$modifyPullRequestBody = @"
+                $modifyPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$($createdPullRequest.pullRequestId)?api-version=3.0"
+                $modifyPullRequestBody = @"
 {
     "autoCompleteSetBy": {
     "id": "$($createdPullRequest.createdBy.id)"
@@ -3879,13 +3883,13 @@ function Git-Merge {
 }
 "@
 
-			#update the pull request (setting auto-complete etc.)
-			Write-Host "Setting auto-complete for pull request $($createdPullRequest.pullRequestId)" -ForegroundColor Gray
-			Write-Host "Invoke-RestMethod -Uri $modifyPullRequestUri -Body $modifyPullRequestBody -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
-			$updatedPullRequest = Invoke-RestMethod -Uri $modifyPullRequestUri -Body $modifyPullRequestBody -ContentType "application/json" -UseDefaultCredentials -Method Patch
+                #update the pull request (setting auto-complete etc.)
+                Write-Host "Setting auto-complete for pull request $($createdPullRequest.pullRequestId)" -ForegroundColor Gray
+                Write-Host "Invoke-RestMethod -Uri $modifyPullRequestUri -Body $modifyPullRequestBody -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+                $updatedPullRequest = Invoke-RestMethod -Uri $modifyPullRequestUri -Body $modifyPullRequestBody -ContentType "application/json" -UseDefaultCredentials -Method Patch
 
-			$linkWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($mergeBugId)?api-version=3.0"
-			$linkWorkItemBody = @"
+                $linkWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($mergeBugId)?api-version=3.0"
+                $linkWorkItemBody = @"
 [
     {
     "op": 0,
@@ -3901,46 +3905,47 @@ function Git-Merge {
 ]
 "@
 
-			#update the merge bug id by linking the newly created PR to it
-			Write-Host "Linking for pull request $($createdPullRequest.pullRequestId) to work item $mergeBugId" -ForegroundColor Gray
-			Write-Host "Invoke-RestMethod -Uri $linkWorkItemUri -Body $linkWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials" -ForegroundColor Blue
-			$updatedWorkItem = Invoke-RestMethod -Uri $linkWorkItemUri -Body $linkWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
+                #update the merge bug id by linking the newly created PR to it
+                Write-Host "Linking for pull request $($createdPullRequest.pullRequestId) to work item $mergeBugId" -ForegroundColor Gray
+                Write-Host "Invoke-RestMethod -Uri $linkWorkItemUri -Body $linkWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials" -ForegroundColor Blue
+                $updatedWorkItem = Invoke-RestMethod -Uri $linkWorkItemUri -Body $linkWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
 
-			Read-Host -Prompt "Successfully created pull request. A new IE browser window will now open to review the PR and edit optional reviewers. Press any key to continue"
-			if ($browser.visible -eq $false) {
-				$browser.navigate($updatedPullRequest.repository.remoteUrl + "/pullrequest/" + $createdPullRequest.pullRequestId)
-				$browser.visible = $true
-			} else {
-				$browser.navigate2($updatedPullRequest.repository.remoteUrl + "/pullrequest/" + $createdPullRequest.pullRequestId, "", "_blank")
-			}
-		}
-	} finally {
-	}
+                Read-Host -Prompt "Successfully created pull request. A new IE browser window will now open to review the PR and edit optional reviewers. Press any key to continue"
+                if ($browser.visible -eq $false) {
+                    $browser.navigate($updatedPullRequest.repository.remoteUrl + "/pullrequest/" + $createdPullRequest.pullRequestId)
+                    $browser.visible = $true
+                } else {
+                    $browser.navigate2($updatedPullRequest.repository.remoteUrl + "/pullrequest/" + $createdPullRequest.pullRequestId, "", "_blank")
+                }
+            }
+        }
+    } finally {
+    }
 
-	Write-Host "`nSuccessfully merged all Pull Requests linked to work item $bugId."
-	if ($changeSetInfos.Length -gt 0) {
-		Write-Host "`nPlease remember to manually merge the following linked TFVC changesets:" -ForegroundColor Yellow
-		Write-Host $changeSetInfos
-	}
+    Write-Host "`nSuccessfully merged all Pull Requests linked to work item $bugId."
+    if ($changeSetInfos.Length -gt 0) {
+        Write-Host "`nPlease remember to manually merge the following linked TFVC changesets:" -ForegroundColor Yellow
+        Write-Host $changeSetInfos
+    }
 
-	try {
-		# clean up (take into account symlinks hence don't use Remove-Item as it would delete everything it finds in the symlink folders as well)
-		cd C:\Temp\gitMerge
-		(cmd /c del /f /s /q $gitReposPath) | Out-Null
-		(cmd /c rmdir /s /q $gitReposPath) | Out-Null
-		while (Test-Path $gitReposPath) {
-			(cmd /c rmdir /s /q $gitReposPath) | Out-Null # do it again as rmdir deletes the directories one by one
-		}
-	} catch {
+    try {
+        # clean up (take into account symlinks hence don't use Remove-Item as it would delete everything it finds in the symlink folders as well)
+        cd C:\Temp\gitMerge
+        (cmd /c del /f /s /q $gitReposPath) | Out-Null
+        (cmd /c rmdir /s /q $gitReposPath) | Out-Null
+        while (Test-Path $gitReposPath) {
+            (cmd /c rmdir /s /q $gitReposPath) | Out-Null # do it again as rmdir deletes the directories one by one
+        }
+    } catch {
         [System.Exception]           
         Write-Host $_.Exception.ToString()
-		Write-Host "Could not automatically delete $gitReposPath. You need to clean it up manually." -ForegroundColor Red
-	}
+        Write-Host "Could not automatically delete $gitReposPath. You need to clean it up manually." -ForegroundColor Red
+    }
 
-	Read-Host -Prompt "Press any key to end this script"
+    Read-Host -Prompt "Press any key to end this script"
 
-	Write-Host "`n`nDONE" -ForegroundColor Yellow
-	Stop-Transcript
+    Write-Host "`n`nDONE" -ForegroundColor Yellow
+    Stop-Transcript
 }
 
 function Get-ExpertBuildAllVersion () {
@@ -3964,8 +3969,8 @@ $functionsToExport = @(
     [pscustomobject]@{ function='Build-ExpertModulesOnServer';                alias='bms'},
     [pscustomobject]@{ function='Build-ExpertPatch';},
     [pscustomobject]@{ function='Change-Directory';                           alias='cdir'},
-	[pscustomobject]@{ function='Change-ExpertOwner';},
-	[pscustomobject]@{ function='Clear-ExpertCache';                          alias='ccache'},
+    [pscustomobject]@{ function='Change-ExpertOwner';},
+    [pscustomobject]@{ function='Clear-ExpertCache';                          alias='ccache'},
     [pscustomobject]@{ function='Copy-BinariesFromCurrentModule';             alias='cb'},
     [pscustomobject]@{ function='Disable-ExpertPrompt';                       advanced=$true},
     [pscustomobject]@{ function='Enable-ExpertPrompt';                        advanced=$true},
@@ -3979,17 +3984,17 @@ $functionsToExport = @(
     [pscustomobject]@{ function='Get-EnvironmentFromXml'},
     [pscustomobject]@{ function='Get-ExpertBuildAllVersion'};
     [pscustomobject]@{ function='Get-ExpertModulesInChangeset'},
-	[pscustomobject]@{ function='Get-Database'},
-	[pscustomobject]@{ function='Get-DatabaseServer'},
+    [pscustomobject]@{ function='Get-Database'},
+    [pscustomobject]@{ function='Get-DatabaseServer'},
     [pscustomobject]@{ function='Get-Latest'},
     [pscustomobject]@{ function='Get-LocalDependenciesForCurrentModule';      alias='gdl'},
     [pscustomobject]@{ function='Get-Product'},
     [pscustomobject]@{ function='Get-ProductNoDebugFiles'},
     [pscustomobject]@{ function='Get-ProductBuild';                           alias='gpb'},
     [pscustomobject]@{ function='Get-ProductZip'},
-	[pscustomobject]@{ function='Git-Merge';},
+    [pscustomobject]@{ function='Git-Merge';},
     [pscustomobject]@{ function='Help'},
-	[pscustomobject]@{ function='Install-DeploymentManager'},
+    [pscustomobject]@{ function='Install-DeploymentManager'},
     [pscustomobject]@{ function='Install-LatestSoftwareFactory';              alias='usf'},
     [pscustomobject]@{ function='Install-LatestVisualStudioExtension'},
     [pscustomobject]@{ function='Kill-VisualStudio';                          alias='kvs'},
@@ -4009,7 +4014,7 @@ $functionsToExport = @(
     [pscustomobject]@{ function='SwitchBranchTo';                             alias='Switch-Branch'},
     [pscustomobject]@{ function='Prepare-Database';                           alias='dbprep'},
     [pscustomobject]@{ function='Uninstall-DeploymentManager'},
-	[pscustomobject]@{ function='Update-Database';                            alias='upd'},
+    [pscustomobject]@{ function='Update-Database';                            alias='upd'},
     [pscustomobject]@{ function='Scorch';},
     [pscustomobject]@{ function='Clean';},
     [pscustomobject]@{ function='CleanupIISCache';},
