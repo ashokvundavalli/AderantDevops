@@ -2110,6 +2110,8 @@ Add-ModuleExpansionParameter -CommandName "Open-Directory" -ParameterName "Modul
 Add-ModuleExpansionParameter -CommandName "New-ExpertBuildDefinition" -ParameterName "ModuleName"
 
 Add-ModuleExpansionParameter -CommandName "Clean" -ParameterName "moduleNames"
+Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
+
 Add-ModuleExpansionParameter -CommandName "Scorch" -ParameterName "moduleNames"
 
 Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterName "ModuleName"
@@ -2582,6 +2584,29 @@ function Clean($moduleNames = $global:CurrentModuleName, [switch]$scorch) {
     if ($Scorch){
         Scorch $moduleNames;
     }
+}
+
+<#
+.Synopsis
+    Cleans the old cache files created by IIS Dynamic Compilation.
+.Description
+    Following files will be deleted in the module:
+        *\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files\*
+    Only the files which created X time ago would be removed.
+.PARAMETER LastWriteTime
+    The time to validate whether to remove the file. The files which created/modified earlier(older) then this would be removed.
+.PARAMETER Directory
+    Specify the destination of the IIS Cache.
+.EXAMPLE
+    CleanupIISCache -lastWritetime (Get-Date).AddHours(-1)
+#>
+function CleanupIISCache {
+    param(
+        [Parameter(Mandatory=$false)][datetime] $lastWriteTime = (Get-Date).AddDays(-1),
+        [Parameter(Mandatory=$false)][string] $directory = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'
+    )
+
+    Get-ChildItem $directory | Where-Object { $_.LastWriteTime -lt $lastWriteTime} | Remove-Item -Recurse -Force
 }
 
 <#
@@ -3987,6 +4012,7 @@ $functionsToExport = @(
 	[pscustomobject]@{ function='Update-Database';                            alias='upd'},
     [pscustomobject]@{ function='Scorch';},
     [pscustomobject]@{ function='Clean';},
+    [pscustomobject]@{ function='CleanupIISCache';},
     
     # IIS related functions
     [pscustomobject]@{ function='Hunt-Zombies';                               alias='hz'},
