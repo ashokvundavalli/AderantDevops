@@ -2593,19 +2593,20 @@ function Clean($moduleNames = $global:CurrentModuleName, [switch]$scorch) {
     Following files will be deleted in the module:
         *\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files\*
     Only the files which created X time ago would be removed.
-.PARAMETER LastWriteTime
-    The time to validate whether to remove the file. The files which created/modified earlier(older) then this would be removed.
+.PARAMETER Days
+    Removed all the caches which created/modified $days ago.
 .PARAMETER Directory
     Specify the destination of the IIS Cache.
 .EXAMPLE
-    CleanupIISCache -lastWritetime (Get-Date).AddHours(-1)
+    CleanupIISCache -days 0
 #>
 function CleanupIISCache {
     param(
-        [Parameter(Mandatory=$false)][datetime] $lastWriteTime = (Get-Date).AddDays(-1),
+        [Parameter(Mandatory=$false)][int] $days = 1,
         [Parameter(Mandatory=$false)][string] $directory = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'
     )
 
+    $lastWriteTime = (Get-Date).AddDays(-$days)
     Get-ChildItem $directory | Where-Object { $_.LastWriteTime -lt $lastWriteTime} | Remove-Item -Recurse -Force
 }
 
