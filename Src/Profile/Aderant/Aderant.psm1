@@ -3000,8 +3000,10 @@ function Run-ExpertUITests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
+        [Parameter(Mandatory=$false)] [string]$browserName,
         [Parameter(Mandatory=$false)] [switch]$development,
-        [Parameter(Mandatory=$false)] [switch]$noBuild
+        [Parameter(Mandatory=$false)] [switch]$noBuild,
+        [Parameter(Mandatory=$false)] [switch]$noDocker
     )
     if (-Not $CurrentModuleName) {
         Write-Error "You must select a module to run this command"
@@ -3015,28 +3017,47 @@ function Run-ExpertUITests {
         Write-Host "No project name specified. Running sanity test for all test containers"
     }
 
-    $testOutputPath = $currentModulePath + "\Bin\Test\"
-    $testAssemblyName = "UIAutomationTest.*" + $productName + "*.dll"
+    $testOutputPath = "$currentModulePath\Bin\Test\"
+    $testAssemblyName = "UIAutomationTest.*$productName*.dll"
     $testAssemblyPath = $testOutputPath + $testAssemblyName
-    $runsettingsFile = $testOutputPath + "DevelopmentEnvironment.runsettings"
-    if ($development) {
+    $runsettingsFile = $testOutputPath + "localexecution.runsettings"
+    $runSettings
+
+    if ($development -or $noDocker -or $browserName) {
+        $runSettingsParameters
+        if ($browserName) {
+            $runSettingsParameters += '<Parameter name="BrowserName" value="' + $browserName + '" />
+            '
+        }
+        if ($development) {
+            $runSettingsParameters += '<Parameter name="development" value="true" />
+            '
+        }
+        if ($noDocker) {
+            Get-ChildItem "$CurrentModulePath\Packages\**\InitializeSeleniumServer.ps1" -Recurse | Import-Module
+            Start-SeleniumServers
+            $runSettingsParameters += '<Parameter name="SeleniumWorker" value="http://127.0.0.1:5555/wd/hub" />
+            '
+        }
+
         $runSettingsContent = '<?xml version="1.0" encoding="utf-8"?>  
         <RunSettings>
             <!-- Parameters used by tests at runtime -->  
             <TestRunParameters>
-                <Parameter name="development" value="true" />
-            </TestRunParameters>
+            ' + $runSettingsParameters +
+            '</TestRunParameters>
         </RunSettings>'
         if (Test-Path $runsettingsFile) {
             Remove-Item $runsettingsFile
         }
         Write-Host "Creating custom runsettings file"
         New-Item -Path $runsettingsFile -ItemType "file" -Value $runSettingsContent > $null
+        $runSettings = "/Settings:$runsettingsFile"
     }
 
     if(-Not $noBuild){
-        Get-ChildItem -Path ($currentModulePath + "/Test/*" + $productName + "*/") -Recurse -Filter "UIAutomationTest.*.csproj" | ForEach-Object {$_.FullName} {
-            msbuild $_.FullName
+        Get-ChildItem -Path ("$currentModulePath\Test\*$productName*\") -Recurse -Filter "UIAutomationTest.*.csproj" | ForEach-Object {$_} {
+            msbuild $_
         }
     }
 
@@ -3044,11 +3065,7 @@ function Run-ExpertUITests {
         Write-Error "Cannot find $testAssemblyPath. Please ensure this module has been built before trying to execute tests"
         Break
     }
-    $testAssemblies = (Get-ChildItem -Path $testAssemblyPath -Recurse -Filter $testAssemblyName).FullName
-    $runSettings
-    if ($development) {
-        $runSettings = "/Settings:" + $runsettingsFile
-    }
+    $testAssemblies = Get-ChildItem -Path $testAssemblyPath -Recurse -Filter $testAssemblyName
     vstest.console.exe $testAssemblies /TestCaseFilter:$testCaseFilter /TestAdapterPath:$testOutputPath /Logger:trx $runSettings
 }
 
@@ -3065,9 +3082,12 @@ function Run-ExpertUITests {
 function Run-ExpertSanityTests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
-        [Parameter(Mandatory=$false)] [switch]$development
+        [Parameter(Mandatory=$false)] [string]$browserName,
+        [Parameter(Mandatory=$false)] [switch]$development,
+        [Parameter(Mandatory=$false)] [switch]$noDocker
+
     )
-    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development -noDocker:$noDocker -browserName $browserName
 }
 
 <#
