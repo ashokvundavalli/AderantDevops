@@ -14,7 +14,7 @@
 [string]$global:CurrentModuleName
 [string]$global:CurrentModulePath
 [string]$global:CurrentModuleBuildPath
-[PSModuleInfo]$global:CurrentModuleFeature
+[PSModuleInfo]$global:CurrentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules
 [string[]]$global:LastBuildRemainingModules
 [string[]]$global:LastBuildGetLocal
@@ -804,19 +804,29 @@ Function Output-VSIXLog {
 }
 
 # builds the current module using default parameters
-function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$release, [switch]$codeCoverage, [switch]$integration) {
-    # Parameter must be a string as we are shelling out which we can't pass [switch] to
-    $shell = ".\BuildModule.ps1 -moduleToBuildPath $global:CurrentModulePath -dropRoot $global:BranchServerDirectory -cleanBin $clean -CodeCoverage:$($codeCoverage.ToBool()) -Integration:$($integration.ToBool())"
-
-    if ($debug) {
-        $shell += " -debug"
-    } elseif ($release) {
-        $shell += " -release"
+function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$release, [bool]$codeCoverage, [switch]$integration) {
+    begin {
+        Set-StrictMode -Version 2.0
     }
 
-    pushd $global:BuildScriptsDirectory
-    invoke-expression $shell
-    popd
+    process {
+        # Parameter must be a string as we are shelling out which we can't pass [switch] to
+        [string]$commonArgs = "-moduleToBuildPath $global:CurrentModulePath -dropRoot $global:BranchServerDirectory -cleanBin $clean -Integration:$($integration.ToBool())"
+
+        if ($debug) {
+            $commonArgs += " -debug"
+        } elseif ($release) {
+            $commonArgs += " -release"
+        }
+
+        if ($codeCoverage) {
+            $commonArgs += " -codeCoverage"
+        }
+
+        pushd $global:BuildScriptsDirectory
+        Invoke-Expression -Command ".\BuildModule.ps1 $($commonArgs)"
+        popd
+    }
 }
 
 <#
@@ -1057,253 +1067,259 @@ function Get-ProductZip([switch]$unstable) {
     The dependencies will be fetched before building and the output will be copied to the binaries folder.
 #>
 function Build-ExpertModules {
-    param ([string[]]$workflowModuleNames, [switch] $changeset = $false, [switch] $clean = $false, [switch]$getDependencies = $false, [switch] $copyBinaries = $false, [switch] $downstream = $false, [switch] $getLatest = $false, [switch] $continue, [string[]] $getLocal, [string[]] $exclude, [string] $skipUntil, [switch]$debug, [switch]$release, [switch]$codeCoverage, [switch]$integration)
+    param ([string[]]$workflowModuleNames, [switch] $changeset = $false, [switch] $clean = $false, [switch]$getDependencies = $false, [switch] $copyBinaries = $false, [switch] $downstream = $false, [switch] $getLatest = $false, [switch] $continue, [string[]] $getLocal, [string[]] $exclude, [string] $skipUntil, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$codeCoverageReport)
 
-    if ($debug -and $release) {
-        Write-Error "You can specify either -debug or -release but not both."
-        return
+    begin {
+        Set-StrictMode -Version 2.0
     }
 
-    if ($ShellContext.IsGitRepository) {
-        Write-Error "You cannot run this command for a git repository. Use 'bm' or 'Invoke-Build' instead."
-        return
-    }
-
-    $moduleBeforeBuild = $null
-
-    try {
-        $currentWorkingDirectory = Get-Location
-
-        if (!$workflowModuleNames) {
-            if (($global:CurrentModulePath) -and (Test-Path $global:CurrentModulePath)) {
-                 $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name})
-                 $workflowModuleNames = @($moduleBeforeBuild)
-            }
-        }
-
-        $builtModules = @{}
-
-        if (!$getLocal) {
-            [string[]]$getLocal = @()
-        }
-
-        if (!$exclude) {
-            [string[]]$exclude = @()
-        }
-
-        if ($continue) {
-            if (!$global:LastBuildRemainingModules) {
-                write "No previously failed build found"
-                return
-            }
-
-            $builtModules = $global:LastBuildBuiltModules
-            $workflowModuleNames = $global:LastBuildRemainingModules
-            $getDependencies = $global:LastBuildGetDependencies
-            $copyBinaries = $global:LastBuildCopyBinaries
-            $downstream = $global:LastBuildDownstream
-            $getLatest = $global:LastBuildGetLatest
-            $getLocal = $global:LastBuildGetLocal
-            $exclude = $global:LastBuildExclude
-        }
-
-        if ($changeset) {
-             write ""
-             write "Retrieving Expert modules for current changeset ..."
-             [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModulesWithPendingChanges($global:BranchModulesDirectory)
-             write "Done."
-        }
-
-        # Set the new last build configuration
-        $global:LastBuildGetDependencies = $getDependencies
-        $global:LastBuildCopyBinaries = $copyBinaries
-        $global:LastBuildDownstream = $downstream
-        $global:LastBuildGetLatest = $getLatest
-        $global:LastBuildRemainingModules = $workflowModuleNames
-        $global:LastBuildGetLocal = $getLocal
-        $global:LastBuildExclude = $exclude
-
-        if (!($workflowModuleNames)) {
-            write "No modules specified."
+    process {
+        if ($debug -and $release) {
+            Write-Error "You can specify either -debug or -release but not both."
             return
         }
 
-        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModules($workflowModuleNames)
-
-        if ((Test-Path $BranchLocalDirectory) -ne $true) {
-            write "Branch Root path does not exist: '$BranchLocalDirectory'"
+        if ($ShellContext.IsGitRepository) {
+            Write-Error "You cannot run this command for a git repository. Use 'bm' or 'Invoke-Build' instead."
+            return
         }
 
-        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $global:ProductManifestPath
+        $moduleBeforeBuild = $null
 
-        if (!$modules -or (($modules.Length -ne $workflowModuleNames.Length) -and $workflowModuleNames.Length -gt 0)) {
-            Write-Warning "After sorting builds by order the following modules were excluded."
-            Write-Warning "These modules probably have no dependency manifest or do not exist in the Expert Manifest"
+        try {
+            $currentWorkingDirectory = Get-Location
 
-            (Compare-Object -ReferenceObject $workflowModuleNames -DifferenceObject $modules -Property Name -PassThru) | Select-Object -Property Name
+            if (!$workflowModuleNames) {
+                if (($global:CurrentModulePath) -and (Test-Path $global:CurrentModulePath)) {
+                     $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name})
+                     $workflowModuleNames = @($moduleBeforeBuild)
+                }
+            }
 
-            $message = "Do you want to continue anyway?"
-            $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
-            $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
+            $builtModules = @{}
 
-            $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-            $result = $host.UI.PromptForChoice($null, $message, $options, 0)
+            if (!$getLocal) {
+                [string[]]$getLocal = @()
+            }
 
-            if ($result -ne 0) {
-                write "Module(s) not found."
+            if (!$exclude) {
+                [string[]]$exclude = @()
+            }
+
+            if ($continue) {
+                if (!$global:LastBuildRemainingModules) {
+                    write "No previously failed build found"
+                    return
+                }
+
+                $builtModules = $global:LastBuildBuiltModules
+                $workflowModuleNames = $global:LastBuildRemainingModules
+                $getDependencies = $global:LastBuildGetDependencies
+                $copyBinaries = $global:LastBuildCopyBinaries
+                $downstream = $global:LastBuildDownstream
+                $getLatest = $global:LastBuildGetLatest
+                $getLocal = $global:LastBuildGetLocal
+                $exclude = $global:LastBuildExclude
+            }
+
+            if ($changeset) {
+                 write ""
+                 write "Retrieving Expert modules for current changeset ..."
+                 [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModulesWithPendingChanges($global:BranchModulesDirectory)
+                 write "Done."
+            }
+
+            # Set the new last build configuration
+            $global:LastBuildGetDependencies = $getDependencies
+            $global:LastBuildCopyBinaries = $copyBinaries
+            $global:LastBuildDownstream = $downstream
+            $global:LastBuildGetLatest = $getLatest
+            $global:LastBuildRemainingModules = $workflowModuleNames
+            $global:LastBuildGetLocal = $getLocal
+            $global:LastBuildExclude = $exclude
+
+            if (!($workflowModuleNames)) {
+                write "No modules specified."
                 return
             }
-        }
 
-        if ($exclude -eq $null) {
-            $exclude = @()
-        }
+            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModules($workflowModuleNames)
 
-        if ($downstream -eq $true) {
+            if ((Test-Path $BranchLocalDirectory) -ne $true) {
+                write "Branch Root path does not exist: '$BranchLocalDirectory'"
+            }
+
+            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $global:ProductManifestPath
+
+            if (!$modules -or (($modules.Length -ne $workflowModuleNames.Length) -and $workflowModuleNames.Length -gt 0)) {
+                Write-Warning "After sorting builds by order the following modules were excluded."
+                Write-Warning "These modules probably have no dependency manifest or do not exist in the Expert Manifest"
+
+                (Compare-Object -ReferenceObject $workflowModuleNames -DifferenceObject $modules -Property Name -PassThru) | Select-Object -Property Name
+
+                $message = "Do you want to continue anyway?"
+                $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
+                $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
+
+                $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+                $result = $host.UI.PromptForChoice($null, $message, $options, 0)
+
+                if ($result -ne 0) {
+                    write "Module(s) not found."
+                    return
+                }
+            }
+
+            if ($exclude -eq $null) {
+                $exclude = @()
+            }
+
+            if ($downstream -eq $true) {
+                write ""
+                write "Retrieving downstream modules"
+
+                [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:workspace.DependencyAnalyzer.GetDownstreamModules($modules)
+
+                $modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $modules -ProductManifestPath $global:ProductManifestPath
+                $modules = $modules | Where { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
+                write "Done."
+            }
+
+            $modules = $modules | Where {$exclude -notcontains $_}
+
             write ""
-            write "Retrieving downstream modules"
+            write "********** Build Overview *************"
+            $count = 0
+            $weHaveSkipped = $false
 
-            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:workspace.DependencyAnalyzer.GetDownstreamModules($modules)
+            foreach($module in $modules) {
+                $count++
+                $skipMarkup = ""
 
-            $modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $modules -ProductManifestPath $global:ProductManifestPath
-            $modules = $modules | Where { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
-            write "Done."
-        }
-
-        $modules = $modules | Where {$exclude -notcontains $_}
-
-        write ""
-        write "********** Build Overview *************"
-        $count = 0
-        $weHaveSkipped = $false
-
-        foreach($module in $modules) {
-            $count++
-            $skipMarkup = ""
-
-            if ($skipUntil -eq $module) {
-                $weHaveSkipped = $true
-            }
-
-            if ($skipUntil -and $weHaveSkipped -ne $true){
-                $skipMarkup = " (skipped)"
-            }
-
-            write "$count. $module $skipMarkup"
-        }
-
-        write ""
-        write ""
-        write "Press Ctrl+C to abort"
-        Start-Sleep -m 2000
-
-        $weHaveSkipped = $false
-
-        foreach ($module in $modules) {
-            if ($skipUntil -eq $module) {
-                $weHaveSkipped = $true
-            }
-
-            # If the user specified skipUntil then we will skip over the modules in the list until we reach the specified one.
-            if ($skipUntil -and $weHaveSkipped -eq $false) {
-                Write-Host "************* $module *************"
-                Write-Host "   Skipping  "
-                # Add the module to the list of built modules
-                if (!$builtModules.ContainsKey($module.Name)) {
-                    $builtModules.Add($module.Name, $module)
-                    $global:LastBuildBuiltModules = $builtModules
-                }
-            } else {
-                # We either have not specified a skip or we have already skipped the modules we need to
-                Set-CurrentModule $module.Name
-
-                if ($getLatest){
-                    Get-LatestSourceForModule $module.Name -branchPath $BranchLocalDirectory
+                if ($skipUntil -eq $module) {
+                    $weHaveSkipped = $true
                 }
 
-                if ($getDependencies -eq $true){
-                    Get-DependenciesForCurrentModule
+                if ($skipUntil -and $weHaveSkipped -ne $true){
+                    $skipMarkup = " (skipped)"
                 }
 
-                if ($builtModules -and $builtModules.Length -gt 0) {
-                    $dependencies = Get-ExpertModuleDependencies -BranchPath $BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
+                write "$count. $module $skipMarkup"
+            }
+
+            write ""
+            write ""
+            write "Press Ctrl+C to abort"
+            Start-Sleep -m 2000
+
+            $weHaveSkipped = $false
+
+            foreach ($module in $modules) {
+                if ($skipUntil -eq $module) {
+                    $weHaveSkipped = $true
+                }
+
+                # If the user specified skipUntil then we will skip over the modules in the list until we reach the specified one.
+                if ($skipUntil -and $weHaveSkipped -eq $false) {
                     Write-Host "************* $module *************"
+                    Write-Host "   Skipping  "
+                    # Add the module to the list of built modules
+                    if (!$builtModules.ContainsKey($module.Name)) {
+                        $builtModules.Add($module.Name, $module)
+                        $global:LastBuildBuiltModules = $builtModules
+                    }
+                } else {
+                    # We either have not specified a skip or we have already skipped the modules we need to
+                    Set-CurrentModule $module.Name
 
-                    foreach ($dependencyModule in $dependencies) {
-                        Write-Debug "Module dependency: $dependencyModule"
+                    if ($getLatest){
+                        Get-LatestSourceForModule $module.Name -branchPath $BranchLocalDirectory
+                    }
 
-                        if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where {$_ -eq $dependencyModule})) {
-                            $sourcePath = Join-Path $BranchLocalDirectory Modules\$dependencyModule\Bin\Module
+                    if ($getDependencies -eq $true){
+                        Get-DependenciesForCurrentModule
+                    }
 
-                            if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
-                                # Probe the new style ThirdParty path
-                                $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules", "ThirdParty")
+                    if ($builtModules -and $builtModules.Count -gt 0) {
+                        $dependencies = Get-ExpertModuleDependencies -BranchPath $BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
+                        Write-Host "************* $module *************"
 
-                                if ([System.IO.Directory]::Exists($root)) {
-                                    $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
-                                } else {
-                                    # Fall back to the old style path
-                                    $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules")
-                                    $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
+                        foreach ($dependencyModule in $dependencies) {
+                            Write-Debug "Module dependency: $dependencyModule"
+
+                            if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where {$_ -eq $dependencyModule})) {
+                                $sourcePath = Join-Path $BranchLocalDirectory Modules\$dependencyModule\Bin\Module
+
+                                if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
+                                    # Probe the new style ThirdParty path
+                                    $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules", "ThirdParty")
+
+                                    if ([System.IO.Directory]::Exists($root)) {
+                                        $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
+                                    } else {
+                                        # Fall back to the old style path
+                                        $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules")
+                                        $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
+                                    }
                                 }
+
+                                if (-not [System.IO.Directory]::Exists($sourcePath)) {
+                                    throw "The path $sourcePath does not exist"
+                                }
+
+                                Write-Debug "Local dependency source path: $sourcePath"
+
+                                $targetPath = Join-Path $BranchLocalDirectory Modules\$module
+                                CopyContents $sourcePath "$targetPath\Dependencies"
                             }
-
-                            if (-not [System.IO.Directory]::Exists($sourcePath)) {
-                                throw "The path $sourcePath does not exist"
-                            }
-
-                            Write-Debug "Local dependency source path: $sourcePath"
-
-                            $targetPath = Join-Path $BranchLocalDirectory Modules\$module
-                            CopyContents $sourcePath "$targetPath\Dependencies"
                         }
+                    }
+
+                    # Do the Build
+                    if ($module.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
+                        Start-BuildForCurrentModule $clean $debug -codeCoverage $codeCoverage -integration:$integration.ToBool()
+
+                        pushd $currentWorkingDirectory
+
+                        # Check for errors
+                        if ($LASTEXITCODE -eq 1) {
+                            throw "Build of $module Failed"
+                        } elseif ($LASTEXITCODE -eq 0 -and $codeCoverage -and $codeCoverageReport.IsPresent) {
+                            [string]$codeCoverageReport = Join-Path -Path $global:CurrentModulePath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+
+                            if (Test-Path ($codeCoverageReport)) {
+                                Write-Host "Displaying dotCover code coverage report."
+                                Start-Process $codeCoverageReport
+                            } else {
+                                Write-Warning "Unable to locate dotCover code coverage report."
+                            }
+                        }
+                    }
+
+                    # Add the module to the list of built modules
+                    if (!$builtModules.ContainsKey($module.Name)) {
+                        $builtModules.Add($module.Name, $module)
+                        $global:LastBuildBuiltModules = $builtModules
+                    }
+
+                    # Copy binaries to drop folder
+                    if ($copyBinaries -eq $true) {
+                        Copy-BinariesFromCurrentModule
                     }
                 }
 
-                # Do the Build
-                if ($module.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
-                    Start-BuildForCurrentModule $clean $debug -codeCoverage:$codeCoverage.ToBool() -integration:$integration.ToBool()
-
-                    pushd $currentWorkingDirectory
-
-                    # Check for errors
-                    if ($LASTEXITCODE -eq 1) {
-                        throw "Build of $module Failed"
-                    } elseif ($LASTEXITCODE -eq 0 -and $codeCoverage.IsPresent) {
-                        [string]$codeCoverageReport = Join-Path -Path $global:CurrentModulePath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
-
-                        if (Test-Path ($codeCoverageReport)) {
-                            Write-Host "Displaying dotCover code coverage report."
-                            Start-Process $codeCoverageReport
-                        } else {
-                            Write-Warning "Unable to locate dotCover code coverage report."
-                        }
-                    }
-                }
-
-                # Add the module to the list of built modules
-                if (!$builtModules.ContainsKey($module.Name)) {
-                    $builtModules.Add($module.Name, $module)
-                    $global:LastBuildBuiltModules = $builtModules
-                }
-
-                # Copy binaries to drop folder
-                if ($copyBinaries -eq $true) {
-                    Copy-BinariesFromCurrentModule
-                }
+                [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where  {$_ -ne $module}
             }
 
-            [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where  {$_ -ne $module}
-        }
+            $global:LastBuildRemainingModules = $null
 
-        $global:LastBuildRemainingModules = $null
-
-        if ($moduleBeforeBuild) {
-            cm $moduleBeforeBuild
+            if ($moduleBeforeBuild) {
+                cm $moduleBeforeBuild
+            }
+        } finally {
+            pushd $currentWorkingDirectory
+            [Console]::TreatControlCAsInput = $false
         }
-    } finally {
-        pushd $currentWorkingDirectory
-        [Console]::TreatControlCAsInput = $false
     }
 }
 

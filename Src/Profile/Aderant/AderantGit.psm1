@@ -29,38 +29,46 @@ function global:prompt {
     return " "
 }
 
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [switch]$codeCoverage, [switch]$integration) {
-	if ($debug -and $release) {
-		Write-Error "You can specify either -debug or -release but not both."
-		return
-	}
-	$flavor = ""
-	if ($debug) {
-		$flavor = "Debug"
-		Write-Host "Forcing BuildFlavor to be DEBUG" -ForegroundColor DarkGreen
-	} elseif ($release) {
-		$flavor = "Release"
-		Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
-	}
+function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$codeCoverageReport) {
+    begin {
+        Set-StrictMode -Version 2.0
+    }
 
-	$repositoryPath = $global:CurrentModulePath    
-	
-    if ($package) {
-        $task = "Package"
-    }    
+    process {
+        if ($debug -and $release) {
+            Write-Error "You can specify either -debug or -release but not both."
+            return
+        }
+        $flavor = ""
+        if ($debug) {
+            $flavor = "Debug"
+            Write-Host "Forcing BuildFlavor to be DEBUG" -ForegroundColor DarkGreen
+        } elseif ($release) {
+            $flavor = "Release"
+            Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
+        }
 
-    & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage:$codeCoverage.ToBool() -Integration:$integration.ToBool()
+        $repositoryPath = $global:CurrentModulePath    
+    
+        if ($package) {
+            $task = "Package"
+        }    
 
-	if ($LASTEXITCODE -eq 0 -and $codeCoverage.IsPresent) {
-		[string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool()
+    }
 
-		if (Test-Path ($codeCoverageReport)) {
-			Write-Host "Displaying dotCover code coverage report."
-			Start-Process $codeCoverageReport
-		} else {
-			Write-Warning "Unable to locate dotCover code coverage report."
-		}
-	}
+    end {
+            if ($LASTEXITCODE -eq 0 -and $codeCoverageReport.IsPresent -and $codeCoverage) {
+            [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+
+            if (Test-Path ($codeCoverageReport)) {
+                Write-Host "Displaying dotCover code coverage report."
+                Start-Process $codeCoverageReport
+            } else {
+                Write-Warning "Unable to locate dotCover code coverage report."
+            }
+        }
+    }
 }
 
 function InstallPoshGit() {
@@ -111,7 +119,7 @@ function ConfigureGit() {
     & git config --global core.autocrlf false
     & git config --global http.emptyAuth true
     & git config --global credential.authority ntlm
-	& git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
+    & git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
 
 
     # set up notepad++ as the default commit editor
@@ -120,38 +128,38 @@ function ConfigureGit() {
 
 function CheckModuleVersion(){
 # Check for PackageManagement 1.0.0.0
-	Import-Module PackageManagement
-	$packageManagerVerion = (Get-Module PackageManagement).Version
-	if (!$packageManagerVerion) {
-	    Write-Warning "PackageManagement not detected, please install PackageManagement ver. 1.0.0.1 or later"
-	    return $false 
-	}
-	if ($packageManagerVerion.ToString().Equals("1.0.0.0")) {
-	    Write-Warning "PackageManagement Version 1.0.0.0 detected - this version is buggy and may prevent the installation of tools which enhance the developer experience. If you have issues installing tools such as posh-git using Install-Module you can try replacing the version of PackageManagement in C:\Program Files (x86)\WindowsPowerShell\Modules with a newer version from another machine"
-	    return $false 
-	}
-	return $true
+    Import-Module PackageManagement
+    $packageManagerVerion = (Get-Module PackageManagement).Version
+    if (!$packageManagerVerion) {
+        Write-Warning "PackageManagement not detected, please install PackageManagement ver. 1.0.0.1 or later"
+        return $false 
+    }
+    if ($packageManagerVerion.ToString().Equals("1.0.0.0")) {
+        Write-Warning "PackageManagement Version 1.0.0.0 detected - this version is buggy and may prevent the installation of tools which enhance the developer experience. If you have issues installing tools such as posh-git using Install-Module you can try replacing the version of PackageManagement in C:\Program Files (x86)\WindowsPowerShell\Modules with a newer version from another machine"
+        return $false 
+    }
+    return $true
 }
 
 if (CheckModuleVersion) { 
-	InstallPoshGit
-	Export-ModuleMember -Function Invoke-Build
-	Set-Alias -Name bm -Value Invoke-Build -Scope Global
+    InstallPoshGit
+    Export-ModuleMember -Function Invoke-Build
+    Set-Alias -Name bm -Value Invoke-Build -Scope Global
 }
 
 function global:New-PullRequest {
-	[string]$currentBranch = git rev-parse --abbrev-ref HEAD
-	[string]$repository = git ls-remote --get-url
+    [string]$currentBranch = git rev-parse --abbrev-ref HEAD
+    [string]$repository = git ls-remote --get-url
 
-	if ((git ls-remote --heads $repository $currentBranch) -ne $null) {
-		[string]$url = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/$($global:CurrentModuleName)/pullrequestcreate?sourceRef=$($currentBranch)&targetRef=master"
-		Start-Process $url
-	} else {
-		Write-Error "No remote branch present. Use git push -u origin $($currentBranch)"
-	}
+    if ((git ls-remote --heads $repository $currentBranch) -ne $null) {
+        [string]$url = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/$($global:CurrentModuleName)/pullrequestcreate?sourceRef=$($currentBranch)&targetRef=master"
+        Start-Process $url
+    } else {
+        Write-Error "No remote branch present. Use git push -u origin $($currentBranch)"
+    }
 }
 
 Export-ModuleMember -Function New-PullRequest
 Set-Alias -Name npr -Value New-PullRequest -Scope Global
 
-ConfigureGit	
+ConfigureGit

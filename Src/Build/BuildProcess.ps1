@@ -6,7 +6,7 @@ param(
     [bool]$LimitBuildWarnings,
     [string]$Flavor,
     [switch]$DatabaseBuildPipeline,
-    [switch]$CodeCoverage,
+    [bool]$CodeCoverage,
     [switch]$Integration
 )
 
@@ -261,17 +261,19 @@ task Build {
         $commonArgs = "$commonArgs /p:CleanBin=true"
     }
 
-	if ($DatabaseBuildPipeline.IsPresent) {
-		$commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
-	}
+    if ($DatabaseBuildPipeline.IsPresent) {
+        $commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
+    }
 
-	if ($CodeCoverage.IsPresent) {
-		$commonArgs = "$commonArgs /p:CodeCoverage=true"
-	}
+    if ($CodeCoverage) {
+        $commonArgs = "$commonArgs /p:CodeCoverage=true"
+    } else {
+        $commonArgs = "$commonArgs /p:CodeCoverage=false"
+    }
 
-	if ($Integration.IsPresent) {
-		$commonArgs = "$commonArgs /p:RunIntegrationTests=true"
-	}
+    if ($Integration.IsPresent) {
+        $commonArgs = "$commonArgs /p:RunIntegrationTests=true"
+    }
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
     # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/

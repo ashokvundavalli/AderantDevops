@@ -21,11 +21,11 @@
     </PropertyGroup>
 
     <!-- dotCover Setup -->
-    <ItemGroup Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '@(CodeCoverageFilterList)' != ''">      
+    <ItemGroup Condition="('$(CodeCoverage)' == 'true') And '@(CodeCoverageFilterList)' != ''">      
       <CodeCoverageFilters Include="+:%(CodeCoverageFilterList.FileName)"></CodeCoverageFilters>
     </ItemGroup>
 
-    <PropertyGroup Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''">
+    <PropertyGroup Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''">
       <DotCoverExecutablePath>$(BuildToolsDirectory)dotCover\bin\dotCover.exe</DotCoverExecutablePath>
       <DotCoverReportType Condition="'$(IsDesktopBuild)' == 'true'">HTML</DotCoverReportType>
       <DotCoverReportType Condition="'$(IsDesktopBuild)' != 'true'">XML</DotCoverReportType>
@@ -52,7 +52,7 @@
     <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
 
     <!-- Run With VSTest -->
-    <Exec Condition="('$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' != 'true') And '$(UnitTestAssemblies)' != ''"
+    <Exec Condition="('$(CodeCoverage)' != 'true') And '$(UnitTestAssemblies)' != ''"
           ContinueOnError="false"
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
@@ -60,14 +60,14 @@
           Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)' />
 
     <!-- Run VSTest using dotCover -->
-    <Exec Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
+    <Exec Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
           ContinueOnError="false"
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
           Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
 
-    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' != 'true' Or '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
+    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
       <Output TaskParameter="Lines" PropertyName="DotCoverResult" />
     </ReadLinesFromFile>
 
@@ -110,12 +110,12 @@ Code coverage is less than 30%. Your pay has been docked.
 " />
 
     <!-- Run Cobertura Report Converter -->
-    <CoberturaReportConverter Condition="'$(IsDesktopBuild)' != 'true' And '$(UnitTestAssemblies)' != ''"
+    <CoberturaReportConverter Condition="'$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''"
       ImportPath="$(DotCoverReportFile)"
       TargetPath="$(CoberturaReportTarget)">
     </CoberturaReportConverter>
 
-    <Message Condition="'$(IsDesktopBuild)' != 'true' And '$(UnitTestAssemblies)' != ''" Text="##vso[codecoverage.publish codecoveragetool=Cobertura;summaryfile=$(CoberturaReportTarget);]"></Message>
+    <Message Condition="'$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="##vso[codecoverage.publish codecoveragetool=Cobertura;summaryfile=$(CoberturaReportTarget);]"></Message>
 
     <PropertyGroup>
       <TestOutcome>Succeeded</TestOutcome>
