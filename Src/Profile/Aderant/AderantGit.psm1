@@ -123,6 +123,16 @@ function ConfigureGit() {
     & git config --global credential.authority ntlm
     & git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
 
+    # Global Aliases - Insert nifty git commands here
+
+    # Prints a list of branches you've commited to sorted by date
+    & git config --global alias.branchdates "for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
+
+    # Deletes all untracked files without wiping out any SharedBin symlinks
+    & git config --global alias.scrub "clean -fdx -e SharedBin -e .vscode/"
+
+    # Undoes the last commit
+    & git config --global alias.undo-commit "reset --soft HEAD^"
 
     # set up notepad++ as the default commit editor
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
