@@ -49,7 +49,9 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
         }
 
         $repositoryPath = $global:CurrentModulePath    
-    
+
+        [string]$task = ""
+
         if ($package) {
             $task = "Package"
         }    
