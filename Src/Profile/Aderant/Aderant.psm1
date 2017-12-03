@@ -2780,170 +2780,9 @@ function Remove-Zombies {
     Write-Output 'Zombie removal complete.'
 }
 
-<#
-.Synopsis
-    Backs up the database for the current local deployment.
-.Description
-    Backs up the database for the current local deployment.
-.PARAMETER serverInstance
-    The SQL server\instance the database is on.
-.PARAMETER database
-    The database to backup.
-.PARAMETER backupPath
-    The directory to backup the database to. Defaults to C:\AderantExpert\DatabaseBackups.
-.PARAMETER backupName
-    The name for the database backup. Defaults to the name of the database to backup.
-.EXAMPLE
-        Backup-ExpertDatabase -databaseServer SVSQL306 -database ExpertDatabase -backupPath C:\Test -backupName TestBackup
-    Will backup the ExpertDatabase on SVSQL306 to C:\Test\TestBackup.bak
-#>
-function Backup-ExpertDatabase {
-    param(
-        [Parameter(Mandatory=$false)] [string]$serverInstance,
-        [Parameter(Mandatory=$false)] [string]$database,
-        [Parameter(Mandatory=$false)] [string]$backupPath = "C:\AderantExpert\DatabaseBackups",
-        [Parameter(Mandatory=$false)] [string]$backupName
-    )
 
-    if ([string]::IsNullOrWhiteSpace($serverInstance)) {
-        $serverInstance = Get-DatabaseServer
-    }
 
-    if ([string]::IsNullOrWhiteSpace($database)) {
-        $database = Get-Database
-    }
 
-    if (-Not [string]::IsNullOrWhiteSpace($backupName)) {
-        [string]$backup = "$backupPath\$backupName.bak"
-    }
-
-    if (-Not (Get-Module -ListAvailable -Name Sqlps)) {
-        Write-Error "The Sqlps module is not available on this system."
-        return
-    }
-
-    if (-Not (Test-Path $backupPath)) {
-        try {
-            New-Item $backupPath -Type Directory
-            Write-Debug "Successfully created directory $backupPath"
-        } catch {
-            Write-Error "Unable to create directory at $backupPath"
-            return
-        }
-    }
-
-    if ([string]::IsNullOrWhiteSpace($backup)) {
-        [string]$backup = "$backupPath\$database.bak"
-    }
-
-    if (-not (Get-Module -ListAvailable -Name Sqlps)) {
-        Write-Error "The Sqlps module is not available on this system."
-        return
-    }
-    
-    Remove-Module -Name SqlServer -Force -ErrorAction SilentlyContinue
-    Import-Module Sqlps -DisableNameChecking -Force
-    $smoServer = New-Object Microsoft.SqlServer.Management.Smo.Server($serverInstance)
-
-    if (-Not $smoServer.Databases[$database]) {
-        Write-Error "Database: $database does not exist on server instance: $serverInstance"
-        $smoServer.ConnectionContext.Disconnect()
-        return
-    }
-        
-    $smoBackup = New-Object Microsoft.SqlServer.Management.Smo.Backup
-    $smoBackup.Database = $database
-    $smoBackup.Devices.AddDevice($backup, "File")
-    $smoBackup.FormatMedia = 1
-    $smoBackup.CompressionOption = 1
-    $smoBackup.Initialize = 1
-    $smoBackup.SkipTapeHeader = 1
-
-    try {
-        $smoBackup.SqlBackup($smoServer)
-    } catch {
-        Write-Error "Failed to backup database: $database on server instance: $serverInstance"
-    }
-
-    $smoServer.ConnectionContext.Disconnect()
-}
-
-<#
-.Synopsis
-    Restores the database for the current local deployment.
-.Description
-    Restores the database for the current local deployment.
-.PARAMETER database
-    The name of the database to restore. Defaults to the current Expert database backup at \\[Computer_Name]\C$\AderantExpert\DatabaseBackups.
-.PARAMETER serverInstance
-    The database server\instance the database is on.
-.PARAMETER backup
-    The database backup to restore. Defaults to \\[Computer_Name]\C$\AderantExpert\DatabaseBackups\[database_name].bak.
-.EXAMPLE
-        Restore-ExpertDatabase -database Expert -databaseServer SVSQL306 -backup C:\Test\DatabaseBackup.bak
-    Will restore the Expert database on to the SVSQL306 SQL server.
-#>
-function Restore-ExpertDatabase {
-    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact='high')]
-    param(
-        [Parameter(Mandatory=$false)] [string]$database,
-        [Parameter(Mandatory=$false)] [string]$serverInstance,
-        [Parameter(Mandatory=$false)] [string]$backup
-    )
-
-    $ErrorActionPreference = "Stop"
-
-    if ([string]::IsNullOrWhiteSpace($serverInstance)) {
-        $serverInstance = Get-DatabaseServer
-    }
-
-    if ([string]::IsNullOrWhiteSpace($database)) {
-        $database = Get-Database
-    }
-
-    if ([string]::IsNullOrWhiteSpace($backup)) {
-        [string]$backupPath = "$global:BranchBinariesDirectory\Database"
-        $backup = Get-ChildItem -Path $backupPath -Recurse | ?{$_.extension -eq ".bak"} | Select-Object -First 1 | Select -ExpandProperty FullName
-        if ([string]::IsNullOrWhiteSpace($backup)) {
-            Write-Error "No backup file found at: $backupPath"
-            return
-        }
-    }
-
-    if (-not (Get-Module -ListAvailable -Name Sqlps)) {
-        Write-Error "The Sqlps module is not available on this system."
-        return
-    }
-
-    Write-Host "Note: This is a database restore operation - the existing database will be replaced" -ForegroundColor Yellow
-
-    if (-not $env:ForceRestoreDatabase -or ($env:ForceRestoreDatabase -eq $false)) {
-        if (-not $PSCmdlet.ShouldProcess($database, "Restore Database: $database")) {
-            return
-        }
-        [Environment]::SetEnvironmentVariable("ForceRestoreDatabase", "True", "User")
-    }
-    
-    powershell.exe -NoProfile -NonInteractive -File "$global:BranchBinariesDirectory\AutomatedDeployment\ProvisionDatabase.ps1" -serverInstance $serverInstance -databaseName $database -backupPath $backup
-
-    [string]$environmentManifest = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
-
-    if (Test-Path ($environmentManifest)) {
-        [xml]$environmentXml = Get-Content $environmentManifest
-        $environmentXml.environment.expertDatabaseServer.serverName = $env:COMPUTERNAME
-        $environmentXml.environment.expertDatabaseServer.databaseConnection.databaseName = $database
-        $environmentXml.environment.monitoringDatabaseServer.serverName = $env:COMPUTERNAME
-        $environmentXml.environment.monitoringDatabaseServer.databaseConnection.databaseName = "$($database)Monitoring"
-        $environmentXml.environment.workflowDatabaseServer.serverName = $env:COMPUTERNAME
-        $environmentXml.environment.workflowDatabaseServer.databaseConnection.databaseName = $database
-
-        $environmentXml.Save($environmentManifest)
-
-        Start-DeploymentEngine -command ImportEnvironmentManifest -serverName $serverInstance -databaseName $database
-    } else {
-        Write-Warning "No environment manifest found to import at: $($environmentManifest)"
-    }
-}
 
 <#
 .Synopsis
@@ -3999,8 +3838,7 @@ function Get-ExpertBuildAllVersion () {
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [pscustomobject]@{ function='Run-ExpertUITests';},
-    [pscustomobject]@{ function='Run-ExpertSanityTests';                      alias='rest'},
-    [pscustomobject]@{ function='Backup-ExpertDatabase';                      alias='dbbak'},
+    [pscustomobject]@{ function='Run-ExpertSanityTests';                      alias='rest'},    
     [pscustomobject]@{ function='Branch-Module';                              alias='branch'},
     [pscustomobject]@{ function='Build-ExpertModules';                        alias='bm'},
     [pscustomobject]@{ function='Build-ExpertModulesOnServer';                alias='bms'},
@@ -4039,7 +3877,6 @@ $functionsToExport = @(
     [pscustomobject]@{ function='New-BuildModule';},
     [pscustomobject]@{ function='Open-Directory';                             alias='odir'},
     [pscustomobject]@{ function='Open-ModuleSolution';                        alias='vs'},
-    [pscustomobject]@{ function='Restore-ExpertDatabase';},
     [pscustomobject]@{ function='Set-CurrentModule';                          alias='cm'},
     [pscustomobject]@{ function='Set-Environment';                            advanced=$true},
     [pscustomobject]@{ function='Set-ExpertBranchInfo';},
@@ -4104,6 +3941,8 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
+
+. $PSScriptRoot\Feature.Database.ps1
 
 Enable-ExpertPrompt
 

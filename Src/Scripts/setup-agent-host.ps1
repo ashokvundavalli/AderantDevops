@@ -17,10 +17,7 @@ param(
 
     # The scratch drive for the agent, this is where the intermediate objects will be placed
     [Parameter()]
-    $workDirectory = "D:\",
-
-    [Parameter()]
-    $credentials
+    $workDirectory = "D:\"
 )
 
 $ErrorActionPreference = "Stop"
@@ -157,22 +154,6 @@ $right = @(
     "zebra"
 )
 
-function GetCredentialsOrPrompt() {
-    $credentialFile = "$PSScriptRoot\credentials.xml"
-
-    if (Test-Path $credentialFile) {
-        return Import-Clixml -Path $credentialFile        
-    }
-
-    if ([System.Environment]::UserInteractive) {
-        ($credentials = Get-Credential) | Export-Clixml -Path $credentialFile
-        return $credentials
-    } else {
-        throw "Process is not interactive so cannot prompt for credentials."
-    }
-}
-
-
 function GetRandomName {
     $leftRnd = Get-Random -Minimum 0 -Maximum $left.Length
     $rightRnd = Get-Random -Minimum 0 -Maximum $right.Length
@@ -215,11 +196,7 @@ function ProvisionAgent() {
 
     $workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $scratchDirectoryName)
 
-    Write-Host "Agent: $agentName Working directory $workingDirectory"
-
-    if (Test-Path $workingDirectory) {
-        return
-    }    
+    Write-Host "Agent: $agentName Working directory $workingDirectory"   
 
     $agentInstallationPath = "$AgentRootDirectory\$agentName"
     
@@ -230,13 +207,12 @@ function ProvisionAgent() {
     try {
         Push-Location -Path $agentInstallationPath
 
-        $credentials = GetCredentialsOrPrompt
-        $serviceAccountName = $credentials.UserName
-        $serviceAccountPassword = $credentials.GetNetworkCredential().Password
-
         Write-Host "Installing agent $agentName"
 
-        .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --runasservice --windowslogonaccount $serviceAccountName --windowslogonpassword $serviceAccountPassword --work "$workingDirectory" --replace
+        .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --windowslogonaccount "aderant_ap\tfsbuildservice$" --work "$workingDirectory" --replace
+		
+		$command = "sc create `"VSTS Agent (tfs.$agentName)`" binpath=$agentInstallationPath\bin\AgentService.exe obj= `"aderant_ap\tfsbuildservice$`" start= auto"
+		& cmd /c $command
     } finally {
         Pop-Location
     }    
