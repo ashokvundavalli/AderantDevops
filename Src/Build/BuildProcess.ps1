@@ -265,12 +265,6 @@ task Build {
         $commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
     }
 
-    if ($CodeCoverage) {
-        $commonArgs = "$commonArgs /p:CodeCoverage=true"
-    } else {
-        $commonArgs = "$commonArgs /p:CodeCoverage=false"
-    }
-
     if ($Integration.IsPresent) {
         $commonArgs = "$commonArgs /p:RunIntegrationTests=true"
     }
@@ -283,6 +277,12 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
+            if ($CodeCoverage) {
+                $commonArgs = "$commonArgs /p:CodeCoverage=true"
+            } else {
+                $commonArgs = "$commonArgs /p:CodeCoverage=false"
+            }
+
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
