@@ -121,6 +121,71 @@ function Restore-ExpertDatabase {
     }
 }
 
+<#
+.Synopsis
+    Backs up the database for the current local deployment.
+.Description
+    Backs up the database for the current local deployment.
+.PARAMETER serverInstance
+    The SQL server\instance the database is on.
+.PARAMETER database
+    The database to backup.
+.PARAMETER backupPath
+    The full file path to backup the database to. Defaults to C:\AderantExpert\DatabaseBackups\[database name].bak.
+.EXAMPLE
+        Backup-ExpertDatabase -databaseServer LocalHost -database Test -backupPath C:\Temp\Test.bak
+    Will backup the ExpertDatabase on SVSQL306 to C:\Temp\Test.bak
+#>
+function Backup-ExpertDatabase {
+    param(
+		[Parameter(Mandatory=$false)][Alias("name")][String] $database,    
+		[Parameter(Mandatory=$false)][string]$serverInstance,
+        [Parameter(Mandatory=$false)][string]$backupPath
+    )
+
+	begin {
+		Set-StrictMode -Version 2.0
+
+		if ([string]::IsNullOrWhiteSpace($serverInstance)) {
+			$serverInstance = Get-DatabaseServer
+		}
+
+		if ([string]::IsNullOrWhiteSpace($database)) {
+			$database = Get-Database
+		}
+
+		if ([String]::IsNullOrWhiteSpace($backupPath)) {
+			$backupPath = Join-Path -Path "C:\AderantExpert\DatabaseBackups" -ChildPath "$database.bak"
+		}
+	}
+
+	process {
+		if (-not $backupPath.EndsWith(".bak")) {
+			Write-Error "Invalid backup specified: $backupPath"
+			return
+		}
+
+		[string]$assembly = Join-Path -Path $($global:BranchBinariesDirectory) -ChildPath "Test\UIAutomation\API.Database.dll"
+
+		if (-not (Test-Path $assembly)) {
+			Write-Error "Unable to locate API.Database assembly at: $($assembly)"
+			return
+		}
+
+		[Reflection.Assembly]::LoadFrom($assembly)
+		$smo = New-Object API.Database.ExpertDbServices -ArgumentList "$serverInstance", "$database"
+
+		[String]$backupDirectory = [System.IO.Path]::GetDirectoryName($backupPath)
+
+		if (-not (Test-Path $backupDirectory)) {
+			New-Item -Path $backupDirectory -ItemType Directory -Force | Out-Null
+		}
+
+		Write-Host "Backup path: $backupPath"
+		$smo.BackupDatabase($database, $backupPath)
+	}
+}
+
 Export-ModuleMember Restore-ExpertDatabase
 Export-ModuleMember Backup-ExpertDatabase 
 
