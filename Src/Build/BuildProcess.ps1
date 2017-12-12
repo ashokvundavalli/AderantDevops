@@ -349,9 +349,10 @@ task Quality -If (-not $IsDesktopBuild) {
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
-    . $Repository\CopyToDrop.ps1
+	if (Test-Path "$($Repository)\CopyToDrop.ps1") {
+		. $Repository\CopyToDrop.ps1
+	}
 }
-
 
 task PackageDesktop -If ($global:IsDesktopBuild) {
     $script:CreatePackage = $true
