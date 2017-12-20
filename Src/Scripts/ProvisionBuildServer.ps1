@@ -142,10 +142,34 @@ process {
      } -ArgumentList $scriptsDirectory
 
 
+    <# 
+    ============================================================
+    Docker Task
+    ============================================================
+    #>
+    Invoke-Command -Session $session -ScriptBlock {
+        [string]$docker = "C:\Program Files\Docker\Docker\Docker for Windows.exe"
+
+        if (Test-Path $docker) {
+            $interval = New-TimeSpan -Minutes 1
+            $STTrigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay ($interval)
+            
+            [string]$STName = "Run Docker for Windows"
+            Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
+
+            #Action to run as
+            $STAction = New-ScheduledTaskAction -Execute $docker
+            $STSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -Compatibility Win8
+
+            $principal = New-ScheduledTaskPrincipal -UserID tfsbuildservice$ -LogonType Password
+            #Register the new scheduled task
+            Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger –Principal $principal -Settings $STSettings -Force
+        }
+     } -ArgumentList $scriptsDirectory
+
+
     Invoke-Command -Session $session -ScriptBlock {
         Remove-Item "$scriptsDirectory\Build.Infrastructure" -Force -Recurse -ErrorAction SilentlyContinue
         & git clone "http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/Build.Infrastructure" "$scriptsDirectory\Build.Infrastructure" -q
     } -ArgumentList $scriptsDirectory
 }
-
-
