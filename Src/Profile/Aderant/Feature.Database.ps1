@@ -172,7 +172,8 @@ function Backup-ExpertDatabase {
 			return
 		}
 
-		[Reflection.Assembly]::LoadFrom($assembly)
+		$assemblyBytes = [System.IO.File]::ReadAllBytes($assembly)
+		[void][System.Reflection.Assembly]::Load($assemblyBytes)
 		$smo = New-Object API.Database.ExpertDbServices -ArgumentList "$serverInstance", "$database"
 
 		[String]$backupDirectory = [System.IO.Path]::GetDirectoryName($backupPath)
