@@ -457,6 +457,37 @@ namespace Some.Test.Foo {
             VerifyCSharpDiagnostic(test);
         }
 
+        [TestMethod]
+        public void SqlInjectionError_NoDiagnostic_CommandText() {
+            const string test = @"
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Test {
+    public class Program {
+        internal string TestProp {
+            get {
+                if (true) {
+                    using (var connection = new SqlConnection(""SomeConnectionString"")) {
+                        using (var command = connection.CreateCommand()) {
+                            command.CommandType = CommandType.StoredProcedure;
+                            command.CommandText = ""[configuration].[GetSingleConfigurationValue]"";
+                            command.Parameters.AddWithValue(""path"", ""Technical.Framework"");
+                            command.Parameters.AddWithValue(""name"", ""SomeConfigValue"");
+                        }
+                    }
+                }
+
+                return string.Empty;
+            }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(test);
+        }
+
         #endregion Tests: No Diagnostic
 
         #region Tests: New SQL Command

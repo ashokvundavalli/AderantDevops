@@ -154,23 +154,32 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="location">The location.</param>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="variable">The variable.</param>
-        /// <param name="baseMethodDeclaration">The base method declaration.</param>
+        /// <param name="parentDeclaration">The parent declaration.</param>
         private static RuleViolationSeverityEnum EvaluateVariable(
             ref Location location,
             SemanticModel semanticModel,
             SimpleNameSyntax variable,
-            BaseMethodDeclarationSyntax baseMethodDeclaration = null) {
+            MemberDeclarationSyntax parentDeclaration = null) {
             if (IsExpressionNodeConstantString(semanticModel, variable)) {
                 return RuleViolationSeverityEnum.None;
             }
 
-            // Get the parent method of the variable.
-            if (baseMethodDeclaration == null) {
-                baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(variable);
+            MemberDeclarationSyntax memberDeclaration;
 
-                // Scope outside of a method is not supported.
-                if (baseMethodDeclaration == null) {
-                    return RuleViolationSeverityEnum.Error;
+            // If the parent declaration is not null, use the existing declaration.
+            if (parentDeclaration != null) {
+                memberDeclaration = parentDeclaration;
+            } else {
+                // Otherwise, get the parent method or proeprty declaration.
+                memberDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(variable);
+
+                if (memberDeclaration == null) {
+                    memberDeclaration = GetNodeParentExpressionOfType<BasePropertyDeclarationSyntax>(variable);
+
+                    // If the node is neither within a method nor a property, use case is out of scope.
+                    if (memberDeclaration == null) {
+                        return RuleViolationSeverityEnum.Error;
+                    }
                 }
             }
 
@@ -187,7 +196,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // Iterates through all assignment expressions (of both types) returning only the most recent of each.
             GetLatestDataAssignmentExpressions(
                 variable,
-                baseMethodDeclaration,
+                memberDeclaration,
                 out latestEqualsValueExpression,
                 out latestAssignmentExpression);
 
@@ -195,14 +204,18 @@ namespace Aderant.Build.Analyzer.Rules {
             // then retrieves the child nodes from that object.
             IEnumerable<SyntaxNode> latestChildren = GetDataAssignmentLatestChildNodes(
                 variable,
-                baseMethodDeclaration,
+                memberDeclaration,
                 latestEqualsValueExpression,
                 latestAssignmentExpression);
 
             // If no children were retrieved, then no data was assigned to the variable.
             if (latestChildren == null) {
                 // Variable may be a parameter from a method. Attempt to evaluate it as such.
-                return EvaluateVariableAsMethodParameter(ref location, semanticModel, baseMethodDeclaration, variable);
+                var methodDeclaration = memberDeclaration as BaseMethodDeclarationSyntax;
+
+                return methodDeclaration == null
+                    ? RuleViolationSeverityEnum.Error
+                    : EvaluateVariableAsMethodParameter(ref location, semanticModel, methodDeclaration, variable);
             }
 
             // Iterate through each of the data nodes being assigned to the variable.
@@ -212,7 +225,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 // If the data being assigned to the target variable, is also a variable...
                 if (childVariable != null) {
                     // ...recursively repeat this process for that variable, moving up the syntax tree.
-                    if (EvaluateVariable(ref location, semanticModel, childVariable, baseMethodDeclaration) == RuleViolationSeverityEnum.Error) {
+                    if (EvaluateVariable(ref location, semanticModel, childVariable, memberDeclaration) == RuleViolationSeverityEnum.Error) {
                         return RuleViolationSeverityEnum.Error;
                     }
                 } else {
@@ -425,24 +438,33 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <param name="location">The location.</param>
         /// <param name="semanticModel">The semantic model.</param>
         /// <param name="node">The node.</param>
-        /// <param name="baseMethodDeclaration">The base method declaration.</param>
+        /// <param name="parentDeclaration">The parent declaration.</param>
         private static bool IsDataImmutable(
             ref Location location,
             SemanticModel semanticModel,
             SyntaxNode node,
-            BaseMethodDeclarationSyntax baseMethodDeclaration = null) {
+            MemberDeclarationSyntax parentDeclaration = null) {
             // If the node is a method invocation, fail and exit early.
             if (node is InvocationExpressionSyntax) {
                 return false;
             }
 
-            // Get the parent method for this node.
-            if (baseMethodDeclaration == null) {
-                baseMethodDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
+            MemberDeclarationSyntax memberDeclaration;
 
-                // If the node is not within a method, use case is out of scope.
-                if (baseMethodDeclaration == null) {
-                    return false;
+            // If the parent declaration is not null, use the existing declaration.
+            if (parentDeclaration != null) {
+                memberDeclaration = parentDeclaration;
+            } else {
+                // If the node is neither within a method nor a property, use case is out of scope.
+                memberDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
+
+                if (memberDeclaration == null) {
+                    memberDeclaration = GetNodeParentExpressionOfType<BasePropertyDeclarationSyntax>(node);
+
+                    // If the node is neither within a method nor a property, use case is out of scope.
+                    if (memberDeclaration == null) {
+                        return true;
+                    }
                 }
             }
 
@@ -475,8 +497,8 @@ namespace Aderant.Build.Analyzer.Rules {
                     }
 
                     // Recursively determine if both sides of the expression contain immutable data.
-                    if (!IsDataImmutable(ref location, semanticModel, addExpression.Left, baseMethodDeclaration) ||
-                        !IsDataImmutable(ref location, semanticModel, addExpression.Right, baseMethodDeclaration)) {
+                    if (!IsDataImmutable(ref location, semanticModel, addExpression.Left, memberDeclaration) ||
+                        !IsDataImmutable(ref location, semanticModel, addExpression.Right, memberDeclaration)) {
                         return false;
                     }
 
@@ -502,8 +524,8 @@ namespace Aderant.Build.Analyzer.Rules {
                         var propertySymbol = semanticModel.GetSymbolInfo(name).Symbol as IFieldSymbol;
 
                         if (propertySymbol?.IsConst == true ||
-                            (propertySymbol?.IsStatic == true && propertySymbol.IsReadOnly)) {
-                            return IsDataImmutable(ref location, semanticModel, name, baseMethodDeclaration);
+                            propertySymbol?.IsStatic == true && propertySymbol.IsReadOnly) {
+                            return IsDataImmutable(ref location, semanticModel, name, memberDeclaration);
                         }
                     }
                 }
@@ -513,7 +535,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
                 if (identifierName != null) {
                     // Traverse the syntax tree to determine if the data assigned to the variable is immutable.
-                    if (EvaluateVariable(ref location, semanticModel, identifierName, baseMethodDeclaration) != RuleViolationSeverityEnum.Error) {
+                    if (EvaluateVariable(ref location, semanticModel, identifierName, memberDeclaration) != RuleViolationSeverityEnum.Error) {
                         continue;
                     }
 
@@ -525,8 +547,8 @@ namespace Aderant.Build.Analyzer.Rules {
 
                 // Evaluate both the WhenTrue and WhenFalse expressions.
                 if (conditionalExpression == null ||
-                    !IsDataImmutable(ref location, semanticModel, conditionalExpression.WhenTrue, baseMethodDeclaration) ||
-                    !IsDataImmutable(ref location, semanticModel, conditionalExpression.WhenFalse, baseMethodDeclaration)) {
+                    !IsDataImmutable(ref location, semanticModel, conditionalExpression.WhenTrue, memberDeclaration) ||
+                    !IsDataImmutable(ref location, semanticModel, conditionalExpression.WhenFalse, memberDeclaration)) {
                     return false;
                 }
             }
