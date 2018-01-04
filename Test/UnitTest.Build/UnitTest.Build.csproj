@@ -158,7 +158,7 @@
     <Content Include="Resources\DifferentOutputPathsProject.csproj" />
     <Content Include="Resources\MatchingOutputPathsProject.csproj" />
     <Content Include="Resources\ReplaceReferencesProject.csproj" />
-    <Content Include="Resources\SplashScreens\Expert_2014.png">
+    <Content Include="Resources\SplashScreens\Expert_2014_style.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\test-paket-template-with-exclude-section.txt" />

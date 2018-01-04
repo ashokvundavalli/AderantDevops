@@ -61,6 +61,24 @@ namespace Aderant.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string DoubleSpace {
+            get {
+                return ResourceManager.GetString("DoubleSpace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Found the following test assemblies:.
+        /// </summary>
+        internal static string FoundAssemblies {
+            get {
+                return ResourceManager.GetString("FoundAssemblies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to @echo off
         ///cls
         ///echo You are running %~nx0 from %~dp0. Current dir is %cd%
@@ -78,9 +96,9 @@ namespace Aderant.Build {
         ///
         ///PERSIST-BUILD.BAT - create labels/tags and retain the builds indefinitely
         ///1. Provide a name (without spaces) that will be used for creating a TFS label and Git tags
-        ///2. Optionally provide a comment for the label/tags
+        ///2. Provide a comment for the label/tags
         ///3. The script will attempt to do a dry run of all actions. If anything goes south here (e.g. due to missing rights or corrupt input file etc.), nothing will be actually happen
-        ///4. After a succesful dry run the script will run ag [rest of string was truncated]&quot;;.
+        ///4. After a succesful dry run the script will run again, but th [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string PersistBuildReadme {
             get {
@@ -93,7 +111,7 @@ namespace Aderant.Build {
         ///
         ///
         ///#setup logging
-        ///$ErrorActionPreference=&quot;SilentlyContinue&quot;
+        ///$ErrorActionPreference = &quot;SilentlyContinue&quot;
         ///Stop-Transcript | out-null
         ///$ErrorActionPreference = &apos;Stop&apos;
         ///
@@ -103,7 +121,7 @@ namespace Aderant.Build {
         ///    New-Item -ItemType Directory -Path $tempFolderPath
         ///}
         ///
-        ///$logFilePath = Join-Path $tempFolderPath persist-build_log.txt [rest of string was truncated]&quot;;.
+        ///$logFilePath = Join-Path $tempFolderPath persist-build_log.t [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string PersistBuildScript {
             get {

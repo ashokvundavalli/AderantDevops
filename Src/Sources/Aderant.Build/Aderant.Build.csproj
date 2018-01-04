@@ -139,6 +139,7 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
+    <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="FileUtilities.cs" />

@@ -117,6 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="DoubleSpace" xml:space="preserve">
+    <value />
+    <comment>Used in StartIntegrationTests</comment>
+  </data>
+  <data name="FoundAssemblies" xml:space="preserve">
+    <value>Found the following test assemblies:</value>
+    <comment>Used in StartIntegrationTests</comment>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="PersistBuildBatch" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Scripts\persist-build.bat;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>

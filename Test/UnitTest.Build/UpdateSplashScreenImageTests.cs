@@ -17,7 +17,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         [DeploymentItem(@"Resources\Expert_SplashScreen_Domain Customization Wizard.png")]
-        [DeploymentItem(@"Resources\SplashScreens\Expert_2014.png")]
+        [DeploymentItem(@"Resources\SplashScreens\Expert_2014_style.png")]
         public void Test_splash_screen_generation() {
             UpdateSplashScreenImage updater = new UpdateSplashScreenImage();
             updater.OutputFile = Path.Combine(TestContext.DeploymentDirectory, "Updated.png");
@@ -31,7 +31,7 @@ namespace UnitTest.Build {
                 "My Awesome Product",
                 "Admin");
 
-            Assert.IsTrue(FileEquals(Path.Combine(TestContext.DeploymentDirectory, "Expert_2014.png"), updater.OutputFile));
+            Assert.IsTrue(FileEquals(Path.Combine(TestContext.DeploymentDirectory, "Expert_2014_style.png"), updater.OutputFile), "If this fails in the new year it's because you need to update the splash screen Expert_2014_style.png to include the new year.");
         }
 
         [TestMethod]
