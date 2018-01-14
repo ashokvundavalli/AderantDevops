@@ -67,7 +67,7 @@
           Timeout="$(TestTimeoutMilliseconds)"
           Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
 
-    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
+    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
       <Output TaskParameter="Lines" PropertyName="DotCoverResult" />
     </ReadLinesFromFile>
 
