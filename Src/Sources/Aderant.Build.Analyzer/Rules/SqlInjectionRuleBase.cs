@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aderant.Build.Analyzer.Extensions;
 using Aderant.Build.Analyzer.Lists.SQLInjection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -28,7 +29,7 @@ namespace Aderant.Build.Analyzer.Rules {
             // Exit early if the assignment expression is not for something called 'CommandText'.
             var memberAccessExpression = assignmentExpression.Left as MemberAccessExpressionSyntax;
 
-            if (memberAccessExpression?.Name.ToString() != "CommandText") {
+            if (memberAccessExpression?.Name.Identifier.Text != "CommandText") {
                 return RuleViolationSeverityEnum.None;
             }
 
@@ -171,10 +172,10 @@ namespace Aderant.Build.Analyzer.Rules {
                 memberDeclaration = parentDeclaration;
             } else {
                 // Otherwise, get the parent method or proeprty declaration.
-                memberDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(variable);
+                memberDeclaration = variable.GetAncestorOfType<BaseMethodDeclarationSyntax>();
 
                 if (memberDeclaration == null) {
-                    memberDeclaration = GetNodeParentExpressionOfType<BasePropertyDeclarationSyntax>(variable);
+                    memberDeclaration = variable.GetAncestorOfType<BasePropertyDeclarationSyntax>();
 
                     // If the node is neither within a method nor a property, use case is out of scope.
                     if (memberDeclaration == null) {
@@ -263,7 +264,7 @@ namespace Aderant.Build.Analyzer.Rules {
             }
 
             // Find the parent class for the method.
-            var parentClass = GetNodeParentExpressionOfType<ClassDeclarationSyntax>(method);
+            var parentClass = method.GetAncestorOfType<ClassDeclarationSyntax>();
 
             // If no parent class exists, exit early with an error.
             if (parentClass == null) {
@@ -456,10 +457,10 @@ namespace Aderant.Build.Analyzer.Rules {
                 memberDeclaration = parentDeclaration;
             } else {
                 // If the node is neither within a method nor a property, use case is out of scope.
-                memberDeclaration = GetNodeParentExpressionOfType<BaseMethodDeclarationSyntax>(node);
+                memberDeclaration = node.GetAncestorOfType<BaseMethodDeclarationSyntax>();
 
                 if (memberDeclaration == null) {
-                    memberDeclaration = GetNodeParentExpressionOfType<BasePropertyDeclarationSyntax>(node);
+                    memberDeclaration = node.GetAncestorOfType<BasePropertyDeclarationSyntax>();
 
                     // If the node is neither within a method nor a property, use case is out of scope.
                     if (memberDeclaration == null) {

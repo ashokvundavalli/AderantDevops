@@ -11,6 +11,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 string test = """";
 var command = new SqlCommand(test);
 command.Parameters.AddWithValue(""a"", 1);
+command.Dispose();
 ";
 
             VerifyCSharpDiagnostic(InsertCode(test));

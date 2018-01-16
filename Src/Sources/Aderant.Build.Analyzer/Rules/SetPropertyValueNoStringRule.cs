@@ -16,13 +16,13 @@ namespace Aderant.Build.Analyzer.Rules {
         internal override string Description => "Use nameof() to gain type-safety and refactoring benefits.";
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-           id: Id,
-           title: Title,
-           messageFormat: MessageFormat,
-           category: AnalyzerCategory.Syntax,
-           defaultSeverity: Severity,
-           isEnabledByDefault: true,
-           description: Description);
+           Id,
+           Title,
+           MessageFormat,
+           AnalyzerCategory.Syntax,
+           Severity,
+           true,
+           Description);
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.InvocationExpression);
@@ -44,8 +44,7 @@ namespace Aderant.Build.Analyzer.Rules {
             }
 
             // If the property name is found on this instance, produce a diagnostic.
-            var diagnostic = Diagnostic.Create(Descriptor, invocationExpression.GetLocation(), propertyName);
-            context.ReportDiagnostic(diagnostic);
+            ReportDiagnostic(context, Descriptor, invocationExpression.GetLocation(), invocationExpression, propertyName);
         }
 
         internal static bool TryGetPropertyName(

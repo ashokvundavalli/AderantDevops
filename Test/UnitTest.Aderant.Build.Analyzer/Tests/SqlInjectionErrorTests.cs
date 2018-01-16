@@ -9,10 +9,6 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
 
         protected override RuleBase Rule => new SqlInjectionErrorRule();
 
-        protected override string PreCode => string.Empty;
-
-        protected override string PostCode => string.Empty;
-
         #endregion Properties
 
         #region Tests: Command Text
@@ -115,7 +111,9 @@ using System.Data.SqlClient;
 namespace Test {
     public class Program {
         public static void Main() {
-            Execute(""Test"", new SqlConnection());
+            using (var connection = new SqlConnection()) {
+                Execute(""Test"", connection);
+            }
         }
 
         private static void Execute(string sql, SqlConnection connection) {
@@ -657,6 +655,7 @@ namespace Test {
             Command.Parameters.Add(new SqlParameter(""@eventSourcePath"", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Input, Value = sourcePath });
             Command.Parameters.Add(new SqlParameter(""@message"", SqlDbType.Xml) { Direction = ParameterDirection.Output });
             Command.Parameters.Add(new SqlParameter(""@timeout"", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = timeout });
+            connection.Dispose();
         }
 
         public void Dispose() {
@@ -690,6 +689,7 @@ namespace Test {
             Command.Parameters.Add(new SqlParameter(""@eventSourcePath"", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Input, Value = sourcePath });
             Command.Parameters.Add(new SqlParameter(""@message"", SqlDbType.Xml) { Direction = ParameterDirection.Output });
             Command.Parameters.Add(new SqlParameter(""@timeout"", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = timeout });
+            connection.Dispose();
         }
 
         public void Dispose() {

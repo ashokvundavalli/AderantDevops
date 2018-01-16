@@ -18,20 +18,19 @@ namespace Aderant.Build.Analyzer.Rules {
 
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-            id: Id,
-            title: Title,
-            messageFormat: MessageFormat,
-            category: AnalyzerCategory.Syntax,
-            defaultSeverity: Severity,
-            isEnabledByDefault: true,
-            description: Description);
+            Id,
+            Title,
+            MessageFormat,
+            AnalyzerCategory.Syntax,
+            Severity,
+            true,
+            Description);
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.InvocationExpression);
         }
 
         private void AnalyzeNode(SyntaxNodeAnalysisContext context) {
-
             var invocationExpression = (InvocationExpressionSyntax)context.Node;
             string extensionName;
 
@@ -39,8 +38,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 return;
             }
 
-            var diagnostic = Diagnostic.Create(Descriptor, invocationExpression.GetLocation(), extensionName);
-            context.ReportDiagnostic(diagnostic);
+            ReportDiagnostic(context, Descriptor, invocationExpression.GetLocation(), invocationExpression, extensionName);
         }
 
         internal static bool UsesInvalidExtension(

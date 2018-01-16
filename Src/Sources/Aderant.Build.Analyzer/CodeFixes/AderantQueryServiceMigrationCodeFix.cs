@@ -40,9 +40,9 @@ namespace Aderant.Build.Analyzer.CodeFixes {
             // Register a code action that will invoke the fix. 
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: Title,
-                    createChangedDocument: c => ChangeQuerySyntax(context.Document, queryExpression, c),
-                    equivalenceKey: Title),
+                    Title,
+                    c => ChangeQuerySyntax(context.Document, queryExpression, c),
+                    Title),
                 diagnostic);
         }
 

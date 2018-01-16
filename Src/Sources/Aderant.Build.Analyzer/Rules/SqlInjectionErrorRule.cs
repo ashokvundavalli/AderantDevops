@@ -58,7 +58,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 location = context.Node.GetLocation();
             }
 
-            context.ReportDiagnostic(Diagnostic.Create(Descriptor, location));
+            ReportDiagnostic(context, Descriptor, location, expression);
         }
 
         private void AnalyzeNodeDatabaseSqlQuery(SyntaxNodeAnalysisContext context) {
@@ -79,7 +79,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 location = context.Node.GetLocation();
             }
 
-            context.ReportDiagnostic(Diagnostic.Create(Descriptor, location));
+            ReportDiagnostic(context, Descriptor, location, expression);
         }
 
         private void AnalyzeNodeNewSqlCommand(SyntaxNodeAnalysisContext context) {
@@ -100,7 +100,7 @@ namespace Aderant.Build.Analyzer.Rules {
                 location = context.Node.GetLocation();
             }
 
-            context.ReportDiagnostic(Diagnostic.Create(Descriptor, location));
+            ReportDiagnostic(context, Descriptor, location, expression);
         }
     }
 }

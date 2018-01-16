@@ -67,7 +67,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
 
             if (displayString.Equals("System.Diagnostics.Debugger.Launch()", StringComparison.Ordinal) ||
                 displayString.Equals("System.Diagnostics.Debugger.Break()", StringComparison.Ordinal)) {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptor, node.GetLocation(), displayString));
+                ReportDiagnostic(context, Descriptor, node.GetLocation(), node, displayString);
             }
         }
 

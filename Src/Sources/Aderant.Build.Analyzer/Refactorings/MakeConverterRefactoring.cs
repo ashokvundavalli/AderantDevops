@@ -34,9 +34,9 @@ namespace Aderant.Build.Analyzer.Refactorings {
 
             // If so, create an action to offer a refactoring.
             var action = CodeAction.Create(
-                title: Title, 
-                createChangedDocument: c => ReverseTypeNameAsync(context.Document, classDeclaration, c),
-                equivalenceKey: Title);
+                Title, 
+                c => ReverseTypeNameAsync(context.Document, classDeclaration, c),
+                Title);
 
             // Register this code action.
             context.RegisterRefactoring(action);

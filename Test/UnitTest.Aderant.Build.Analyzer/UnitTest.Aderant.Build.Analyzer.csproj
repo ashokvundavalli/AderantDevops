@@ -102,6 +102,14 @@
     <Compile Include="Tests\CodeQuality\CodeQualityDefaultTransactionScopeTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualitySqlQueryTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualitySystemDiagnosticsTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableConstructorRuleTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableFactoryRegistrationRuleTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableObjectCreationRuleTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableRuleBaseTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableClassRuleTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableFieldPropertyRuleTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableLocalVariableRuleTests.cs" />
+    <Compile Include="Tests\IDisposable\IDisposableMethodInvocationTests.cs" />
     <Compile Include="Tests\InvalidQueryServiceProxyExtensionTests.cs" />
     <Compile Include="Tests\InvalidLogMessageTests.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />

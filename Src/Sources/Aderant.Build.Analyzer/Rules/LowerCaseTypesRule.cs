@@ -15,13 +15,13 @@ namespace Aderant.Build.Analyzer.Rules {
         internal override string Description => "Type names should be all uppercase.";
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-            id: Id,
-            title: Title,
-            messageFormat: MessageFormat,
-            category: AnalyzerCategory.Naming,
-            defaultSeverity: Severity,
-            isEnabledByDefault: true,
-            description: Description);
+            Id,
+            Title,
+            MessageFormat,
+            AnalyzerCategory.Naming,
+            Severity,
+            true,
+            Description);
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
@@ -33,11 +33,8 @@ namespace Aderant.Build.Analyzer.Rules {
 
             // Find just those named type symbols with names containing lowercase letters.
             if (namedTypeSymbol.Name.ToCharArray().Any(char.IsLower)) {
-
                 // For all such symbols, produce a diagnostic.
-                var diagnostic = Diagnostic.Create(Descriptor, namedTypeSymbol.Locations.Last(), namedTypeSymbol.Name);
-
-                context.ReportDiagnostic(diagnostic);
+                ReportDiagnostic(context, Descriptor, namedTypeSymbol.Locations.Last(), namedTypeSymbol.Name);
             }
         }
     }

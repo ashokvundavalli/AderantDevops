@@ -37,9 +37,9 @@ namespace Aderant.Build.Analyzer.CodeFixes {
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: Title,
-                    createChangedDocument: c => UseNameofAsync(context.Document, invocationExpression, c),
-                    equivalenceKey: Title),
+                    Title,
+                    c => UseNameofAsync(context.Document, invocationExpression, c),
+                    Title),
                 diagnostic);
         }
 

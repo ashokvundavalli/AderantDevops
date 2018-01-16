@@ -17,13 +17,13 @@ namespace Aderant.Build.Analyzer.Rules {
         internal override string Description => "Query Service calls should be in the new format.";
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-            id: Id,
-            title: Title,
-            messageFormat: MessageFormat,
-            category: AnalyzerCategory.QueryService2,
-            defaultSeverity: Severity,
-            isEnabledByDefault: true,
-            description: Description);
+            Id,
+            Title,
+            MessageFormat,
+            AnalyzerCategory.QueryService2,
+            Severity,
+            true,
+            Description);
 
         public override void Initialize(AnalysisContext context) {
             //context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
@@ -37,8 +37,7 @@ namespace Aderant.Build.Analyzer.Rules {
             if (invocationNode != null && (typeInfo.Type.Name == "IQueryServiceProxy" || typeInfo.Type.Name == "QueryServiceProxy")) {
                 var accessedItemNode = invocationNode.GetNodeAfterMe();
                 if (accessedItemNode != null && !IsCorrectQueryServiceCall(accessedItemNode)) {
-                    var diagnostic = Diagnostic.Create(Descriptor, accessedItemNode.GetLocation());
-                    context.ReportDiagnostic(diagnostic);
+                    ReportDiagnostic(context, Descriptor, accessedItemNode.GetLocation(), accessedItemNode);
                 }
             }
         }
@@ -49,8 +48,7 @@ namespace Aderant.Build.Analyzer.Rules {
             if (invocationNode != null && invocationNode.Parent.GetType().Name == "MemberAccessExpressionSyntax" && typeInfo.Type != null && (typeInfo.Type.Name == "IQueryServiceProxy" || typeInfo.Type.Name == "QueryServiceProxy")) {
                 var accessedItemNode = invocationNode.GetNodeAfterMe();
                 if (accessedItemNode != null && !IsCorrectQueryServiceCall(accessedItemNode)) {
-                    var diagnostic = Diagnostic.Create(Descriptor, accessedItemNode.GetLocation());
-                    context.ReportDiagnostic(diagnostic);
+                    ReportDiagnostic(context, Descriptor, accessedItemNode.GetLocation(), accessedItemNode);
                 }
             }
         }

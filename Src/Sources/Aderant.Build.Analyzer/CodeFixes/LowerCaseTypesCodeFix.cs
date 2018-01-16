@@ -35,9 +35,9 @@ namespace Aderant.Build.Analyzer.CodeFixes {
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: Title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
-                    equivalenceKey: Title),
+                    Title,
+                    c => MakeUppercaseAsync(context.Document, declaration, c),
+                    Title),
                 diagnostic);
         }
 

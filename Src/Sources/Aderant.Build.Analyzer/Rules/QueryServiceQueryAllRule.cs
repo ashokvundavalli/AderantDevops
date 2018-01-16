@@ -52,7 +52,7 @@ namespace Aderant.Build.Analyzer.Rules {
             }
 
             // Raise diagnostic.
-            context.ReportDiagnostic(Diagnostic.Create(Descriptor, context.Node.GetLocation()));
+            ReportDiagnostic(context, Descriptor, context.Node.GetLocation(), context.Node);
         }
 
         /// <summary>

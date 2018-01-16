@@ -17,13 +17,13 @@ namespace Aderant.Build.Analyzer.Rules {
         internal override string Description => "Regex patterns should be syntactically valid.";
 
         public override DiagnosticDescriptor Descriptor => new DiagnosticDescriptor(
-            id: Id,
-            title: Title,
-            messageFormat: MessageFormat,
-            category: AnalyzerCategory.Syntax,
-            defaultSeverity: Severity,
-            isEnabledByDefault: true,
-            description: Description);
+            Id,
+            Title,
+            MessageFormat,
+            AnalyzerCategory.Syntax,
+            Severity,
+            true,
+            Description);
 
         public override void Initialize(AnalysisContext context) {
             context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.InvocationExpression);
@@ -43,11 +43,8 @@ namespace Aderant.Build.Analyzer.Rules {
             try {
                 System.Text.RegularExpressions.Regex.Match(string.Empty, regex);
             } catch (ArgumentException ex) {
-
                 // If the regex is invalid, produce a diagnostic.
-                var diagnostic = Diagnostic.Create(Descriptor, invocationExpression.GetLocation(), ex.Message);
-
-                context.ReportDiagnostic(diagnostic);
+                ReportDiagnostic(context, Descriptor, invocationExpression.GetLocation(), invocationExpression, ex.Message);
             }
         }
 

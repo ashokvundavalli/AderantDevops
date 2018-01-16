@@ -31,6 +31,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'AutoSuppress|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;AUTOSUPPRESS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\..\..\packages\analyzer\Microsoft.CodeAnalysis.Common\lib\portable-net45+win8\Microsoft.CodeAnalysis.dll</HintPath>
@@ -73,11 +82,15 @@
     <Compile Include="CodeFixes\AderantQueryServiceMigrationCodeFix.cs" />
     <Compile Include="CodeFixes\SetPropertyValueNoStringFix.cs" />
     <Compile Include="CodeFixes\PropertyChangedNoStringFix.cs" />
+    <Compile Include="Extensions\RoslynExtensions.cs" />
+    <Compile Include="Lists\IDisposable\IDisposableWhitelist.cs" />
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDefaultTransactionScopeRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualitySqlQueryRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualitySystemDiagnosticsRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableConstructorRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableFactoryRegistrationRule.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />
@@ -87,6 +100,12 @@
     <Compile Include="Refactorings\MakeConverterRefactoring.cs" />
     <Compile Include="Refactorings\ReverseTypeNameRefactoring.cs" />
     <Compile Include="Rules\AderantQueryServiceMigrationRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableClassRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableFieldPropertyRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableLocalVariableRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableMethodInvocationRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableObjectCreationRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableRuleBase.cs" />
     <Compile Include="Rules\InvalidQueryServiceProxyExtensionRule.cs" />
     <Compile Include="Rules\InvalidLogMessageRule.cs" />
     <Compile Include="Rules\PropertyChangedNoStringNonFixableRule.cs" />

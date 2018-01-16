@@ -97,7 +97,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
                 expertDbContextString,
                 parentClassName,
                 StringComparison.Ordinal)) {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptor, node.GetLocation()));
+                ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
                 return;
             }
 
@@ -107,7 +107,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
                 expertDbContextString,
                 baseClassName,
                 StringComparison.Ordinal)) {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptor, node.GetLocation()));
+                ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
             }
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
+using Aderant.Build.Analyzer.Rules.IDisposable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -42,17 +43,33 @@ namespace Aderant.Build.Analyzer {
         internal AderantAnalyzer(string buildId, params RuleBase[] injectedRules) {
             rules = new List<RuleBase>(
                 new RuleBase[] {
+                    // Regex
                     new InvalidRegexRule(),
                     new InvalidLogMessageRule(),
+
+                    // Properties
                     new PropertyChangedNoStringRule(),
                     new PropertyChangedNoStringNonFixableRule(),
                     new SetPropertyValueNoStringRule(),
                     new SetPropertyValueNoStringNonFixableRule(),
+
+                    // SQL
                     new SqlInjectionErrorRule(),
                     new QueryServiceQueryAllRule(),
+
+                    // Code Quality
                     new CodeQualityDbConnectionStringRule(),
                     new CodeQualityDefaultTransactionScopeRule(),
-                    new CodeQualitySqlQueryRule()
+                    new CodeQualitySqlQueryRule(),
+
+                    // IDisposable
+                    new IDisposableClassRule(),
+                    new IDisposableFieldPropertyRule(),
+                    new IDisposableLocalVariableRule(),
+                    new IDisposableMethodInvocationRule(),
+                    new IDisposableObjectCreationRule(),
+                    new IDisposableFactoryRegistrationRule(),
+                    new IDisposableConstructorRule()
                 });
 
             foreach (var injectedRule in injectedRules) {

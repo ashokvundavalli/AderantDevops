@@ -84,7 +84,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
                     "System.Transactions.TransactionScopeOption, " +
                     "System.Transactions.TransactionOptions, " +
                     "System.Transactions.EnterpriseServicesInteropOption)")) {
-                ReportDiagnostic(context, node);
+                ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
                 return;
             }
 
@@ -108,7 +108,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             }
 
             if (initializerExpression == null) {
-                ReportDiagnostic(context, node);
+                ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
                 return;
             }
 
@@ -132,12 +132,8 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
                 return;
             }
 
-            ReportDiagnostic(context, node);
+            ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
         }
-
-        private void ReportDiagnostic(SyntaxNodeAnalysisContext context, SyntaxNode node) {
-            context.ReportDiagnostic(Diagnostic.Create(Descriptor,node.GetLocation()));
-        } 
 
         #endregion Methods
     }

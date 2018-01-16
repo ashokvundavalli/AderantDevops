@@ -78,10 +78,7 @@ namespace Aderant.Build.Analyzer.Rules.CodeQuality {
             }
 
             if (parentExpression.Name.ToString().Equals("ConnectionString", StringComparison.Ordinal)) {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        Descriptor,
-                        node.GetLocation()));
+                ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
             }
         }
 
