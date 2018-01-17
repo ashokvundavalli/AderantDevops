@@ -113,11 +113,18 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return true;
             }
 
-            return !IDisposableWhitelist.Types.Any(x => x.Item1 == symbol.ContainingNamespace.ToString() && x.Item2 == symbol.Name) &&
-                   symbol.AllInterfaces.Any(
-                       namedTypeSymbol =>
-                           namedTypeSymbol.Name.Equals("IDisposable", StringComparison.Ordinal) &&
-                           namedTypeSymbol.ContainingNamespace.Name.Equals("System", StringComparison.Ordinal));
+            bool isTypeWhitelisted = IDisposableWhitelist
+                .Types
+                .Any(type => type.Item1 == symbol.ContainingNamespace?.ToString() && type.Item2 == symbol.Name);
+
+            if (isTypeWhitelisted) {
+                return false;
+            }
+
+            return symbol.AllInterfaces.Any(
+                namedTypeSymbol =>
+                    namedTypeSymbol.Name?.Equals("IDisposable", StringComparison.Ordinal) == true &&
+                    namedTypeSymbol.ContainingNamespace?.Name?.Equals("System", StringComparison.Ordinal) == true);
         }
 
         /// <summary>
