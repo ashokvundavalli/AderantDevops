@@ -322,6 +322,7 @@
                  $(LocalExpertBinariesDirectory)\**\configuration.role.xml;
                  $(LocalExpertBinariesDirectory)\**\customworkflows.role.xml;
                  $(LocalExpertBinariesDirectory)\**\firmcontrol.role.xml;
+                 $(LocalExpertBinariesDirectory)\**\instrumentation.role.xml;
                  $(LocalExpertBinariesDirectory)\**\messaging.role.xml;
                  $(LocalExpertBinariesDirectory)\**\notes.role.xml;
                  $(LocalExpertBinariesDirectory)\**\queryservice.role.xml;
