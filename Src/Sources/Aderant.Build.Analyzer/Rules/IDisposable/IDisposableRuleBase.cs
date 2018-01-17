@@ -350,14 +350,14 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             string variableName) {
             var conditionalExpression = node as ConditionalAccessExpressionSyntax;
 
+            string name = (conditionalExpression?.Expression as IdentifierNameSyntax)?.Identifier.Text;
+            string expression = (conditionalExpression?.WhenNotNull as InvocationExpressionSyntax)?.Expression.ToString();
+
             // Attempt to evaluate the expression as a conditional expression.
-            //      If the 'Expression' is the variable and the 'WhenNotNull' is a Dispose() method invocation...
-            if ((conditionalExpression?.Expression as IdentifierNameSyntax)?.Identifier.Text.Equals(
-                    variableName,
-                    StringComparison.Ordinal) == true &&
-                (conditionalExpression.WhenNotNull as InvocationExpressionSyntax)?.Expression.ToString().Equals(
-                    ".Dispose",
-                    StringComparison.Ordinal) == true) {
+            //      If the 'Expression' is the variable and the 'WhenNotNull' is a Dispose()/Close() method invocation...
+            if (name?.Equals(variableName, StringComparison.Ordinal) == true &&
+                (expression?.Equals(".Dispose", StringComparison.Ordinal) == true ||
+                 expression?.Equals(".Close", StringComparison.Ordinal) == true)) {
                 // ...add a new 'Dispose' expression to the list of ordered expressions.
                 orderedExpressionTypes.Add(
                     new Tuple<SyntaxNode, ExpressionType, Location>(
@@ -524,11 +524,12 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 .ToList();
 
             // If the first identifier is the name of the field being processed,
-            //     and the second is the Dispose method...
+            //     and the second is the Dispose method (or the Close method)...
             if (identifierNames != null &&
                 identifierNames.Count > 1 &&
                 identifierNames[0].Equals(variableName, StringComparison.Ordinal) &&
-                identifierNames[1].Equals("Dispose", StringComparison.Ordinal)) {
+                (identifierNames[1].Equals("Dispose", StringComparison.Ordinal) ||
+                 identifierNames[1].Equals("Close", StringComparison.Ordinal))) {
                 // ...return the dispose expression type.
                 return ExpressionType.Dispose;
             }

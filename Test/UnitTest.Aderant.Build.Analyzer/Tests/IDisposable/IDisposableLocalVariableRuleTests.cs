@@ -36,6 +36,32 @@ namespace Test {
         }
 
         [TestMethod]
+        public void IDisposableLocalVariableRule_ConditionalOperator_Close() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            var item = new DisposeMe();
+            item?.Close();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Close() {
+            Dispose();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableLocalVariableRule_DisposableObject_NonDisposableProperty() {
             const string code = @"
 namespace Test {

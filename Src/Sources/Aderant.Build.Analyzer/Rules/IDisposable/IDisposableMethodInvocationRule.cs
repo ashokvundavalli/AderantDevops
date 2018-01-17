@@ -65,8 +65,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 parentExpression
                     .ChildNodes()
                     .OfType<IdentifierNameSyntax>()
-                    .Select(x => x.Identifier.Text)
-                    .Any(x => x.Equals("Dispose"))) {
+                    .Select(nameSyntax => nameSyntax.Identifier.Text)
+                    .Any(
+                        text =>
+                            text.Equals("Dispose", StringComparison.Ordinal) ||
+                            text.Equals("Close", StringComparison.Ordinal))) {
                 // ...the Dispose method was invoked as part of the chain, and execution may exit without error.
                 return;
             }
@@ -90,7 +93,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     expression => expression.ChildNodes()
                         .OfType<IdentifierNameSyntax>()
                         .Select(x => x.Identifier.Text))
-                .Any(identifierNames => identifierNames.Any(x => x.Equals("Dispose")))) {
+                .Any(
+                    identifierNames => identifierNames.Any(
+                        text =>
+                            text.Equals("Dispose", StringComparison.Ordinal) ||
+                            text.Equals("Close", StringComparison.Ordinal)))) {
                 // ...the Dispose method was invoked as part of the chain, and execution may exit without error.
                 return;
             }

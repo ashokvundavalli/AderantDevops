@@ -29,49 +29,45 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// </summary>
         /// <param name="context">The context.</param>
         private void ProcessNode(SyntaxNodeAnalysisContext context) {
-            try {
-                var classNode = context.Node as ClassDeclarationSyntax;
+            var classNode = context.Node as ClassDeclarationSyntax;
 
-                // Exit early if execution is not processing a field declaration,
-                //      or if analysis is suppressed.
-                if (classNode == null ||
-                    IsAnalysisSuppressed(classNode, ValidSuppressionMessages) ||
-                    GetIsClassNodeWhitelisted(classNode, context.SemanticModel)) {
-                    return;
-                }
+            // Exit early if execution is not processing a field declaration,
+            //      or if analysis is suppressed.
+            if (classNode == null ||
+                IsAnalysisSuppressed(classNode, ValidSuppressionMessages) ||
+                GetIsClassNodeWhitelisted(classNode, context.SemanticModel)) {
+                return;
+            }
 
-                var declarations = new List<DisposableDeclaration>(DefaultCapacity);
+            var declarations = new List<DisposableDeclaration>(DefaultCapacity);
 
-                // Evaluate the class' field declarations.
-                EvaluateFields(
-                    ref declarations,
-                    classNode.ChildNodes().OfType<FieldDeclarationSyntax>(),
-                    context.SemanticModel);
+            // Evaluate the class' field declarations.
+            EvaluateFields(
+                ref declarations,
+                classNode.ChildNodes().OfType<FieldDeclarationSyntax>(),
+                context.SemanticModel);
 
-                // Evaluate the class' property declarations.
-                EvaluateProperties(
-                    ref declarations,
-                    classNode.ChildNodes().OfType<PropertyDeclarationSyntax>(),
-                    context.SemanticModel);
+            // Evaluate the class' property declarations.
+            EvaluateProperties(
+                ref declarations,
+                classNode.ChildNodes().OfType<PropertyDeclarationSyntax>(),
+                context.SemanticModel);
 
-                // If no declarations were found...
-                if (!declarations.Any()) {
-                    // ...exit early.
-                    return;
-                }
+            // If no declarations were found...
+            if (!declarations.Any()) {
+                // ...exit early.
+                return;
+            }
 
-                List<SyntaxNode> actionsNonStatic;
-                List<SyntaxNode> actionsStatic;
+            List<SyntaxNode> actionsNonStatic;
+            List<SyntaxNode> actionsStatic;
 
-                // Retrieve all action declarations from the current class declaration, split by non-static/static.
-                GetClassActionDeclarations(out actionsNonStatic, out actionsStatic, classNode);
+            // Retrieve all action declarations from the current class declaration, split by non-static/static.
+            GetClassActionDeclarations(out actionsNonStatic, out actionsStatic, classNode);
 
-                // Iterate through and display each diagnostics raised during declaration evaluation.
-                foreach (var diagnostic in EvaluateDeclarations(declarations, actionsNonStatic, actionsStatic)) {
-                    ReportDiagnostic(context, Descriptor, diagnostic.Item3, diagnostic.Item1, diagnostic.Item2);
-                }
-            } catch (Exception exception) {
-                System.Diagnostics.Debugger.Launch();
+            // Iterate through and display each diagnostics raised during declaration evaluation.
+            foreach (var diagnostic in EvaluateDeclarations(declarations, actionsNonStatic, actionsStatic)) {
+                ReportDiagnostic(context, Descriptor, diagnostic.Item3, diagnostic.Item1, diagnostic.Item2);
             }
         }
 

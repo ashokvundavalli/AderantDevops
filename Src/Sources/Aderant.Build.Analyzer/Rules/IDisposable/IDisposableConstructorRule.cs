@@ -328,8 +328,16 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             var invocationExpressions = new List<InvocationExpressionSyntax>();
             GetExpressionsFromChildNodes(ref invocationExpressions, parent);
 
-            return invocationExpressions
-                .Any(invocation => invocation.ToString().EndsWith(".Dispose()", StringComparison.Ordinal));
+            foreach (var expression in invocationExpressions) {
+                var expressionString = expression.ToString();
+
+                if (expressionString.EndsWith(".Dispose()", StringComparison.Ordinal) ||
+                    expressionString.EndsWith(".Close()", StringComparison.Ordinal)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

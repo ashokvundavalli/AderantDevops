@@ -23,7 +23,10 @@ namespace Aderant.Build.Analyzer.Lists.IDisposable {
         // Syntax:
         // new Tuple<string, string>("<Namespace>", "<TypeName>")
         public static readonly Tuple<string, string>[] Types = {
-            // Empty.
+            // Tasks only need to be disposed if AsyncAwaitHandle() is explicitly
+            // called and the implementation does not have a finalizer.
+            // This occurs in roughly 0.001% of use-cases.
+            new Tuple<string, string>("System.Threading.Tasks", "Task")
         };
     }
 }
