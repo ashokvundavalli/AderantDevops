@@ -122,6 +122,7 @@ function ConfigureGit() {
     & git config --global http.emptyAuth true
     & git config --global credential.authority ntlm
     & git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
+    & git config --global fetch.prune true
 
     # Global Aliases - Insert nifty git commands here
 
