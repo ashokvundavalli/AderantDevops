@@ -46,6 +46,9 @@ namespace Aderant.Build.Commands {
         [Parameter(Mandatory = false, Position = 9, HelpMessage = "Specifies the path the product manifest.")]
         public string ProductManifestPath { get; set; }
 
+        [Parameter(Mandatory = false, Position = 10,  DontShow = true)]
+        public string ManifestFile { get; set; }
+
         protected override void Process() {
             Logger.Info($"Module set to {ModuleName}");
 
@@ -85,7 +88,16 @@ namespace Aderant.Build.Commands {
                 request.SetDependenciesDirectory(DependenciesDirectory);
             }
 
-            ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger));
+            ExpertModuleResolver moduleResolver;
+
+            if (!string.IsNullOrWhiteSpace(ManifestFile)) {
+                moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger), ManifestFile);
+                request.RequiresThirdPartyReplication = true;
+                request.Force = true;
+            } else {
+                moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger));
+            }
+            
             moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
             Resolver resolver = new Resolver(Logger, moduleResolver, new NupkgResolver());

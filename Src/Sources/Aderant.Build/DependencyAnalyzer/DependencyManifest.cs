@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
     public class DependencyManifest {
@@ -59,7 +58,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>
         /// The name of the module.
         /// </value>
-        public string ModuleName { get; private set; }
+        public string ModuleName { get; }
 
         /// <summary>
         /// Gets the referenced modules.

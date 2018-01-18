@@ -21,6 +21,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             this.ManifestFinder = FindManifest;
         }
 
+        public ExpertModuleResolver(IFileSystem2 fileSystem, string manifestFile) {
+            this.fileSystem = fileSystem;
+            this.Root = fileSystem.Root;
+            ManifestFinder = s => fileSystem.OpenFile(manifestFile);
+        }
+
         internal FolderDependencySystem FolderDependencySystem { get; set; }
 
         private Stream FindManifest(string path) {

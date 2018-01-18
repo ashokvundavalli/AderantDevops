@@ -15,6 +15,7 @@ namespace Aderant.Build.DependencyResolver {
         private List<ModuleState<ExpertModule>> modules = new List<ModuleState<ExpertModule>>();
         private string dependenciesDirectory;
         private IFileSystem2 physicalFileSystem;
+        private bool requiresThirdPartyReplication;
 
         public ILogger Logger {
             get { return logger; }
@@ -54,7 +55,8 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets a value determining if third party packages should be replicated.
         /// </summary>
         public bool RequiresThirdPartyReplication {
-            get { return modules.Any(s => s.RequiresThirdPartyReplication); }
+            get { return requiresThirdPartyReplication || modules.Any(s => s.RequiresThirdPartyReplication); }
+            set { requiresThirdPartyReplication = value; }
         }
 
         /// <summary>

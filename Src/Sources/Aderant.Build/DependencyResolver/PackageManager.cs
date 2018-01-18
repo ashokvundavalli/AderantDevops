@@ -63,6 +63,7 @@ namespace Aderant.Build.DependencyResolver {
                     dependencies = Dependencies.Locate(FileSystem.Root);
                 }
             }
+
             return dependencies;
         }
 
@@ -72,17 +73,20 @@ namespace Aderant.Build.DependencyResolver {
             FileSystem.MakeFileWritable(file.FileName);
 
             string[] lines = file.Lines;
-            for (int i = 0; i < lines.Length; i++) {
-                string line = lines[i];
 
-                if (line.IndexOf("source " + BuildConstants.PackageServerUrl, StringComparison.OrdinalIgnoreCase) >= 0) {
-                    break;
-                }
+            if (!lines.Contains(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparer.OrdinalIgnoreCase) || !lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
+                for (int i = 0; i < lines.Length; i++) {
+                    if (lines[i].IndexOf("source " + BuildConstants.PackageServerUrl, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                        file.Save();
+                        break;
+                    }
 
-                if (line.IndexOf("source " + BuildConstants.DefaultNuGetServer, StringComparison.OrdinalIgnoreCase) >= 0) {
-                    lines[i] = "source " + BuildConstants.PackageServerUrl + "\nsource " + BuildConstants.DatabasePackageUri;
-                    file.Save();
-                    break;
+                    if (lines[i].IndexOf("source " + BuildConstants.DefaultNuGetServer, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                        file.Save();
+                        break;
+                    }
                 }
             }
 

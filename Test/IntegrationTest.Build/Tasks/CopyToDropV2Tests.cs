@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks {
     [TestClass]
+    [DeploymentItem(@"Resources\", "Resources")]
     public class CopyToDropV2Tests : BuildTaskTestBase {
         [TestInitialize]
         public void TestInitialize() {
@@ -32,7 +33,7 @@ namespace IntegrationTest.Build.Tasks {
             }
 
             try {
-                File.Delete(Path.Combine(buildInfrastructureDirectory, @"Test\IntegrationTest.Build\Resources\TestModule\CopyToDrop.ps1"));
+                File.Delete(Path.Combine(buildInfrastructureDirectory, $@"Test\IntegrationTest.Build\Resources\{ModuleName}\CopyToDrop.ps1"));
             } catch {
                 // Ignored
             }
@@ -41,7 +42,7 @@ namespace IntegrationTest.Build.Tasks {
 
         private static string tempDropRoot;
         private static string dropRoot;
-        private const string ModuleName = "TestModule";
+        private const string ModuleName = "Framework";
         private static readonly string buildInfrastructureDirectory = Directory.GetParent(Directory.GetParent(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName).FullName).FullName;
         private static string buildId;
 
@@ -172,7 +173,7 @@ namespace IntegrationTest.Build.Tasks {
                     { "GenerateFile", "$true" }
                 });
 
-            Assert.IsTrue(File.Exists($@"{buildInfrastructureDirectory}\Test\IntegrationTest.Build\Resources\TestModule\CopyToDrop.ps1"));
+            Assert.IsTrue(File.Exists($@"{buildInfrastructureDirectory}\Test\IntegrationTest.Build\Resources\{ModuleName}\CopyToDrop.ps1"));
         }
     }
 }

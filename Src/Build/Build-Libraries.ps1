@@ -326,7 +326,7 @@
         [string]$pathToLatestSuccessfulBuild = $null
 
         foreach ($folderName in $sortedFolders) {
-            [string]$buildLog = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name ) -ChildPath "\BuildLog.txt"
+            [string]$buildLog = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name) -ChildPath "\BuildLog.txt"
             [string]$pathToLatestSuccessfulBuild = Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name
             [string]$successfulBuildBinModule = Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "\Bin\Module"
 
@@ -334,8 +334,14 @@
                 $pathToLatestSuccessfulBuild = $successfulBuildBinModule
             }
 
-            if ((Test-Path $buildLog) -and (CheckBuild $buildLog) -and (test-path $pathToLatestSuccessfulBuild)) {
+			if (Test-Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath "build.succeeded")) {
                 return $pathToLatestSuccessfulBuild
+			}
+
+            if (Test-Path $buildLog) {
+				if (CheckBuild $buildLog) {
+					return $pathToLatestSuccessfulBuild
+				}
             }
         }
 

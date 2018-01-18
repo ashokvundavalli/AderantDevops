@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 	ProjectSection(SolutionItems) = preProject
 		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
 		Src\Build\Aderant.Build.CopyToDropV2.targets = Src\Build\Aderant.Build.CopyToDropV2.targets
+		Src\Build\Aderant.Build.IntegrationTesting.targets = Src\Build\Aderant.Build.IntegrationTesting.targets
 		Src\Build\Aderant.Build.Testing.targets = Src\Build\Aderant.Build.Testing.targets
 		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
 		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
@@ -28,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\CopyToDropV2.ps1 = Src\Build\CopyToDropV2.ps1
 		Src\Build\dir.proj = Src\Build\dir.proj
 		Src\Build\InvokeServerBuild.ps1 = Src\Build\InvokeServerBuild.ps1
+		Src\Build\LightUpDependencies.ps1 = Src\Build\LightUpDependencies.ps1
+		Src\Build\LightUpManifest.xml = Src\Build\LightUpManifest.xml
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
 		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
@@ -37,6 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
 		Src\Build\Package.ps1 = Src\Build\Package.ps1
 		Src\Build\paket.exe = Src\Build\paket.exe
+		Src\Build\PullServerImage.ps1 = Src\Build\PullServerImage.ps1
 		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
 		Src\Build\Update-Analyzer.ps1 = Src\Build\Update-Analyzer.ps1
 	EndProjectSection
@@ -202,5 +206,6 @@ Global
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7} = {31A06791-2770-4455-94CF-489136D6405A}
 		{215BE033-1FED-4B9D-B1E7-BD5DA8F9A65F} = {FF9D5E44-F36C-467C-A1CB-31F56A56D091}
 		{415B270C-A913-4BBA-BFB3-E7EC1BB9754F} = {31A06791-2770-4455-94CF-489136D6405A}
+		{BEF951AC-BBDF-46C0-8C61-12C3F1667F2F} = {A35EFF81-AC51-4885-A846-83C45FC98F1E}
 	EndGlobalSection
 EndGlobal

@@ -31,7 +31,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="element">The element.</param>
         public static ExpertModule Create(XElement element) {
-            var name = element.Attribute("Name");
+            XAttribute name = element.Attribute("Name");
 
             if (string.IsNullOrEmpty(name?.Value)) {
                 throw new ArgumentNullException(nameof(element), "No name element specified");
@@ -101,7 +101,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
+        private static readonly Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
             { "Libraries", ModuleType.Library },
             { "Services", ModuleType.Service },
             { "Applications", ModuleType.Application },

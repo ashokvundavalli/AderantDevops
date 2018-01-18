@@ -67,6 +67,7 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
   <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <!--Stub for customizers to override-->
   <Target Name="OnAfterBuild" />
@@ -274,6 +275,7 @@ doc.Save(File);
     <CallTarget Targets="ZipTemplateModule" />
     <!--<CallTarget Targets="NDepend" Condition="('$(BuildAll)'!='true')" />-->
     <CallTarget Targets="RunTests" />
+    <CallTarget Targets="RunIntegrationTests" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
@@ -984,7 +986,7 @@ doc.Save(File);
                                $(BinTestDirectory)*.Tests.ps1;"
         Exclude="$(BinTestDirectory)*Helpers*.dll;
                                $(BinTestDirectory)Microsoft.*" />
-      <TestAssemblies Condition="'$(RunIntegrationTests)' == 'true'"
+      <IntegrationTestAssemblies Condition="'$(RunIntegrationTests)' == 'true'"
         Include="$(BinTestDirectory)*IntegrationTest*.dll" />
     </ItemGroup>
 
