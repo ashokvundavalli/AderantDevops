@@ -51,9 +51,10 @@ process {
     }
 
 	[string]$paketLockFile = Join-Path -Path $modulesRootPath -ChildPath "paket.lock"
+	[string]$backupPaketLockFile = "$($paketLockFile).backup"
 
 	if (Test-Path $paketLockFile) {
-		Remove-Item -Path $paketLockFile -Force
+		Rename-Item -Path $paketLockFile -NewName $backupPaketLockFile -Force
 	}
 
 	[string]$paketDependenciesFile = Join-Path -Path $modulesRootPath -ChildPath "paket.dependencies"
@@ -63,4 +64,12 @@ process {
 	}
 
     Get-ExpertDependenciesForModule -ModuleName $moduleName -ModulesRootPath $modulesRootPath -DependenciesDirectory $moduleDependenciesDirectory -DropPath $dropPath -BuildScriptsDirectory $buildScriptsDirectory -ProductManifestPath $global:ProductManifestPath -ManifestFile $manifestFile
+
+	if (Test-Path $paketLockFile) {
+		Remove-Item -Path $paketLockFile -Force
+	}
+
+	if (Test-Path $backupPaketLockFile) {
+		Rename-Item -Path $backupPaketLockFile -NewName $paketLockFile -Force
+	}
 }
