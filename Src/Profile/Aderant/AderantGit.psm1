@@ -134,6 +134,9 @@ function ConfigureGit() {
     # Undoes the last commit
     & git config --global alias.undo-commit "reset --soft HEAD^"
 
+    # Delete all local branches but master and the current one, only if they are fully merged with master.
+    & git config --global alias.br-delete-useless "!f(){ git branch | grep -v 'master' | grep -v ^* | xargs git branch -d; }; f"
+
     # set up notepad++ as the default commit editor
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
 }
