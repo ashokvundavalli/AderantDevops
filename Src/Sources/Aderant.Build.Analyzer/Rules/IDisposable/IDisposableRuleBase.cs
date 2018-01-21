@@ -165,7 +165,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             }  else if (node is FieldDeclarationSyntax) {
                 // If the node is a field declaration expression,
                 //      get the relevant symbol from the field declaration, includes handling for generic collections.
-                symbol = GetFieldDeclarationSymbol((FieldDeclarationSyntax)node, semanticModel);
+                symbol = GetFieldDeclarationSymbol((BaseFieldDeclarationSyntax)node, semanticModel);
             } else if (node is LocalDeclarationStatementSyntax) {
                 // If the node is a local declaration statement syntax,
                 //      get the symbol for the declaration's type symbol.
@@ -177,7 +177,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             } else if (node is PropertyDeclarationSyntax) {
                 // If the node is a property declaration syntax,
                 //      get the property's type's type symbol.
-                symbol = semanticModel.GetTypeInfo(((PropertyDeclarationSyntax)node).Type).Type;
+                symbol = GetPropertyDeclarationSymbol((BasePropertyDeclarationSyntax)node, semanticModel);
             } else if (node is ObjectCreationExpressionSyntax) {
                 // If the node is an object creation syntax,
                 //      get the object's type symbol.
@@ -204,7 +204,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// <param name="node">The node.</param>
         /// <param name="semanticModel">The semantic model.</param>
         protected static ITypeSymbol GetFieldDeclarationSymbol(
-            FieldDeclarationSyntax node,
+            BaseFieldDeclarationSyntax node,
             SemanticModel semanticModel) {
             SyntaxNode typeNode = node.Declaration?.ChildNodes()?.FirstOrDefault();
 
@@ -232,6 +232,45 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             if (displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||
                 displayString.StartsWith("System.Collections.ObjectModel.", StringComparison.Ordinal)) {
                 return (semanticModel.GetTypeInfo(node.Declaration.Type).Type as INamedTypeSymbol)?.TypeArguments[0];
+            }
+
+            return typeSymbol;
+        }
+
+        /// <summary>
+        /// Gets the property declaration symbol.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        protected static ITypeSymbol GetPropertyDeclarationSymbol(
+            BasePropertyDeclarationSyntax node,
+            SemanticModel semanticModel) {
+            SyntaxNode typeNode = node?.ChildNodes()?.FirstOrDefault();
+
+            // If somehow the child node could not be found...
+            if (typeNode == null) {
+                // ...exit.
+                return null;
+            }
+
+            // Get the symbol for the previously located type node.
+            var typeSymbol = semanticModel.GetTypeInfo(typeNode).Type;
+
+            var displayString = typeSymbol?
+                .OriginalDefinition
+                .ToDisplayString();
+
+            if (string.IsNullOrWhiteSpace(displayString)) {
+                return typeSymbol;
+            }
+
+            if (string.Equals("System.Collections.Generic.Dictionary<TKey, TValue>", displayString, StringComparison.Ordinal)) {
+                return (semanticModel.GetTypeInfo(node.Type).Type as INamedTypeSymbol)?.TypeArguments[1];
+            }
+
+            if (displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||
+                displayString.StartsWith("System.Collections.ObjectModel.", StringComparison.Ordinal)) {
+                return (semanticModel.GetTypeInfo(node.Type).Type as INamedTypeSymbol)?.TypeArguments[0];
             }
 
             return typeSymbol;

@@ -294,7 +294,7 @@ namespace Test {
 namespace Aderant.Framework.Extensions {
     public static class IDisposableExtensions {
         public static void DisposeItems(this IEnumerable<System.IDisposable> enumerable) {
-
+            // Empty.
         }
     }
 }
@@ -348,6 +348,284 @@ namespace System.Collections.ObjectModel {
 ";
 
             VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_ObservableCollection_NotDisposed() {
+            const string code = @"
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : System.IDisposable {
+        private readonly ObservableCollection<DisposeMe> items = new ObservableCollection<DisposeMe>();
+
+        private void Method() {
+            items.Add(new DisposeMe());
+            items.RemoveAt(0);
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace System.Collections.ObjectModel {
+    public class ObservableCollection<T> : IList<T>, IEnumerable<T> {
+        public IEnumerator<T> GetEnumerator() {
+            yield break;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
+
+        public void Add(T item) {
+        }
+
+        public void Clear() {
+        }
+
+        public bool Contains(T item) {
+            return false;
+        }
+
+        public void CopyTo(T[] array, int arrayIndex) {
+        }
+
+        public bool Remove(T item) {
+            return false;
+        }
+
+        public int Count { get; }
+        public bool IsReadOnly { get; }
+
+        public int IndexOf(T item) {
+            return 0;
+        }
+
+        public void Insert(int index, T item) {
+        }
+
+        public void RemoveAt(int index) {
+        }
+
+        public T this[int index] {
+            get { return default(T); }
+            set { }
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: private readonly ObservableCollection<DisposeMe> items = new ObservableCollection<DisposeMe>();
+                GetDiagnostic(8, 58, "items"));
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_MultiFieldProperty() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private List<DisposeMe> items;
+
+        private List<DisposeMe> Items => items;
+
+        private List<DisposeMe> Items2 {
+            get { return items; }
+        }
+
+        public void TestMethod() {
+            items = new List<DisposeMe>();
+        }
+
+        public void Dispose() {
+            items?.DisposeItems();
+        }
+    }
+
+    public sealed class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_CompositeDisposable() {
+            const string code = @"
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reactive.Disposables;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private CompositeDisposable item;
+
+        public void TestMethod() {
+            item = new CompositeDisposable();
+        }
+
+        public void Dispose() {
+            item?.Dispose();
+        }
+    }
+}
+
+namespace System.Reactive.Disposables {
+    public sealed class CompositeDisposable : ICollection<IDisposable>, IDisposable {
+        public IEnumerator<IDisposable> GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        public void Add(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void Clear() {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(IDisposable[] array, int arrayIndex) {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public int Count {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsReadOnly {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_CompositeDisposable_NotDisposed() {
+            const string code = @"
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reactive.Disposables;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private CompositeDisposable item;
+
+        public void TestMethod() {
+            item = new CompositeDisposable();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace System.Reactive.Disposables {
+    public sealed class CompositeDisposable : ICollection<IDisposable>, IDisposable {
+        public IEnumerator<IDisposable> GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        public void Add(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void Clear() {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(IDisposable[] array, int arrayIndex) {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public int Count {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsReadOnly {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: private CompositeDisposable item;
+                GetDiagnostic(9, 37, "item"));
         }
 
         #endregion Tests: Field
@@ -579,6 +857,230 @@ namespace Test {
                 GetDiagnostic(11, 17, "item"),
                 // Error: item = new DisposeMe();
                 GetDiagnostic(16, 17, "item"));
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_Property_DisposableCollection() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private List<DisposeMe> Items { get; set; }
+
+        public void TestMethod() {
+            Items = new List<DisposeMe>();
+        }
+
+        public void Dispose() {
+            Items?.DisposeItems();
+        }
+    }
+
+    public sealed class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_Property_DisposableCollection_NotDisposed() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private List<DisposeMe> Items { get; set; }
+
+        public void TestMethod() {
+            Items = new List<DisposeMe>();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+
+    public sealed class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: private List<DisposeMe> Item { get; set; }
+                GetDiagnostic(8, 33, "Items"));
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_CompositeDisposable() {
+            const string code = @"
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reactive.Disposables;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private CompositeDisposable Item { get; set; }
+
+        public void TestMethod() {
+            Item = new CompositeDisposable();
+        }
+
+        public void Dispose() {
+            Item?.Dispose();
+        }
+    }
+}
+
+namespace System.Reactive.Disposables {
+    public sealed class CompositeDisposable : ICollection<IDisposable>, IDisposable {
+        public IEnumerator<IDisposable> GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        public void Add(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void Clear() {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(IDisposable[] array, int arrayIndex) {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public int Count {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsReadOnly {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_CompositeDisposable_NotDisposed() {
+            const string code = @"
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reactive.Disposables;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private CompositeDisposable Item { get; set; }
+
+        public void TestMethod() {
+            Item = new CompositeDisposable();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace System.Reactive.Disposables {
+    public sealed class CompositeDisposable : ICollection<IDisposable>, IDisposable {
+        public IEnumerator<IDisposable> GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            throw new NotImplementedException();
+        }
+
+        public void Add(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void Clear() {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(IDisposable[] array, int arrayIndex) {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(IDisposable item) {
+            throw new NotImplementedException();
+        }
+
+        public int Count {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool IsReadOnly {
+            get {
+                throw new NotImplementedException();
+            }
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: private CompositeDisposable Item { get; set; }
+                GetDiagnostic(9, 37, "Item"));
         }
 
         #endregion Tests: Property

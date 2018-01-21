@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aderant.Build.Analyzer.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -103,17 +104,30 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                         .OfType<IdentifierNameSyntax>()
                         .ToList();
 
+                    string methodName;
+                    string targetName;
+
                     // Two child expressions are expected:
                     //      [0]: The object being operated upon.
                     //      [1]: The method being invoked.
                     // If there are fewer than two child expressions...
                     if (identifierExpressions.Count < 2) {
-                        // ...skip this invocation.
-                        continue;
-                    }
+                        // ...if there are no child expressions...
+                        if (identifierExpressions.Count < 1) {
+                            // ...skip this invocation.
+                            continue;
+                        }
 
-                    string targetName = identifierExpressions[0]?.Identifier.Text;
-                    string methodName = identifierExpressions[1]?.Identifier.Text;
+                        // ...otherwise, examine the invocation as a item?.Method() conditional operator.
+                        var parentConditional = identifierExpressions[0].GetAncestorOfType<ConditionalAccessExpressionSyntax>();
+                        var name = parentConditional?.Expression as IdentifierNameSyntax;
+
+                        targetName = name?.Identifier.Text;
+                        methodName = identifierExpressions[0]?.Identifier.Text;
+                    } else {
+                        targetName = identifierExpressions[0]?.Identifier.Text;
+                        methodName = identifierExpressions[1]?.Identifier.Text;
+                    }
 
                     // If the target being operated upon is not the variable currently being evaluated,
                     //      or if the name of the method is somehow invalid...
@@ -213,10 +227,20 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// </summary>
         /// <param name="node">The node.</param>
         /// <param name="semanticModel">The semantic model.</param>
-        private static DeclarationCollectionType GetFieldDeclarationCollectionType(
-            BaseFieldDeclarationSyntax node,
+        private static DeclarationCollectionType GetFieldPropertyDeclarationCollectionType(
+            MemberDeclarationSyntax node,
             SemanticModel semanticModel) {
-            SyntaxNode typeNode = node.Declaration?.ChildNodes()?.FirstOrDefault();
+            SyntaxNode typeNode = null;
+
+            var fieldNode = node as BaseFieldDeclarationSyntax;
+            if (fieldNode != null) {
+                typeNode = fieldNode.Declaration?.ChildNodes()?.FirstOrDefault();
+            } else {
+                var propertyNode = node as BasePropertyDeclarationSyntax;
+                if (propertyNode != null) {
+                    typeNode = propertyNode.ChildNodes()?.FirstOrDefault();
+                }
+            }
 
             // If somehow the child node could not be found...
             if (typeNode == null) {
@@ -229,6 +253,10 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
             // Return the type of the declaration collection.
             if (string.IsNullOrWhiteSpace(displayString)) {
+                return DeclarationCollectionType.None;
+            }
+
+            if (string.Equals("System.Reactive.Disposables.CompositeDisposable", displayString, StringComparison.Ordinal)) {
                 return DeclarationCollectionType.None;
             }
 
@@ -265,7 +293,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 }
 
                 // Get the type of collection declaration.
-                DeclarationCollectionType declarationCollectionType = GetFieldDeclarationCollectionType(
+                DeclarationCollectionType declarationCollectionType = GetFieldPropertyDeclarationCollectionType(
                     fieldDeclaration,
                     semanticModel);
 
@@ -386,6 +414,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     continue;
                 }
 
+                // Get the type of collection declaration.
+                DeclarationCollectionType declarationCollectionType = GetFieldPropertyDeclarationCollectionType(
+                    propertyDeclaration,
+                    semanticModel);
+
                 // Determine if the property is static.
                 bool isPropertyStatic = GetIsDeclarationStatic(propertyDeclaration.Modifiers);
 
@@ -398,7 +431,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                         propertyDeclaration.Initializer != null &&
                         !(propertyDeclaration.Initializer.Value is LiteralExpressionSyntax),
                         isPropertyStatic,
-                        DeclarationCollectionType.None));
+                        declarationCollectionType));
             }
         }
 
