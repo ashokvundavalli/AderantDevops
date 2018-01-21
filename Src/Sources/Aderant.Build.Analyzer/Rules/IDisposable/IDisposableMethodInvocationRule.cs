@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Aderant.Build.Analyzer.Extensions;
 using Aderant.Build.Analyzer.Lists.IDisposable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -102,40 +104,15 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return;
             }
 
-            List<SyntaxNode> ancestors = node.Ancestors().ToList();
-
-            // Iterate through the node's ancestors.
-            foreach (var ancestorNode in ancestors) {
-                // If the ancestor is a method invocation expression,
-                // wrapping a valid member access expression...
-                var expression = (ancestorNode as InvocationExpressionSyntax)?.Expression as MemberAccessExpressionSyntax;
-
-                if (expression == null) {
-                    continue;
-                }
-
-                // ...and the method invoked is whitelisted...
-                if (GetIsWhitelisted(expression, context.SemanticModel)) {
-                    // ...return without error.
-                    return;
-                }
+            // Process the current node's ancestors, exiting if this node is not a rule violation.
+            if (ProcessAncestorNodes(node.Ancestors().ToList(), context.SemanticModel)) {
+                return;
             }
 
-            // Iterate through the node's ancestors.
-            foreach (var ancestorNode in ancestors) {
-                // If the node is a method argument...
-                if (ancestorNode is ArgumentSyntax) {
-                    // ...break early and error.
-                    break;
-                }
-
-                // If the node is a return statement, or assignment expression...
-                if (ancestorNode is ReturnStatementSyntax ||
-                    ancestorNode is EqualsValueClauseSyntax ||
-                    ancestorNode is AssignmentExpressionSyntax) {
-                    // ...return without error, as this is handled by the local and field rules.
-                    return;
-                }
+            // Process the current node as a workflow dependency invocation,
+            // exiting if the node is a dependency invocation.
+            if (ProcessWorkflowDependency(node, context.SemanticModel)) {
+                return;
             }
 
             // Report the diagnostic.
@@ -249,6 +226,105 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                    IDisposableWhitelist
                        .Methods
                        .Any(signature => signature.Equals(methodDisplayString, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// Processes the ancestor nodes.
+        /// </summary>
+        /// <param name="ancestors">The ancestors.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        private static bool ProcessAncestorNodes(
+            IReadOnlyCollection<SyntaxNode> ancestors,
+            SemanticModel semanticModel) {
+            // Iterate through the node's ancestors.
+            foreach (var ancestorNode in ancestors) {
+                // If the ancestor is a method invocation expression,
+                // wrapping a valid member access expression...
+                var expression = (ancestorNode as InvocationExpressionSyntax)?.Expression as MemberAccessExpressionSyntax;
+
+                if (expression == null) {
+                    continue;
+                }
+
+                // ...and the method invoked is whitelisted...
+                if (GetIsWhitelisted(expression, semanticModel)) {
+                    // ...return without error.
+                    return true;
+                }
+            }
+
+            // Iterate through the node's ancestors.
+            foreach (var ancestorNode in ancestors) {
+                // If the node is a method argument...
+                if (ancestorNode is ArgumentSyntax) {
+                    // ...break early and error.
+                    break;
+                }
+
+                // If the node is a return statement, or assignment expression...
+                if (ancestorNode is ReturnStatementSyntax ||
+                    ancestorNode is EqualsValueClauseSyntax ||
+                    ancestorNode is AssignmentExpressionSyntax) {
+                    // ...return without error, as this is handled by the local and field rules.
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Processes the workflow dependency.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "ReSharper bug.")]
+        private static bool ProcessWorkflowDependency(
+            SyntaxNode node,
+            SemanticModel semanticModel) {
+            // Get the parented invocation expression,
+            // only if the current invocation expression is an argument to the parent.
+            var invocation = node
+                .GetAncestorOfType<ArgumentSyntax>()?
+                .GetAncestorOfType<InvocationExpressionSyntax>();
+
+            // Get the child nodes from the parent invocation expression's member access expression.
+            var childNodes = invocation?
+                .Expression?
+                .ChildNodes()?
+                .OfType<IdentifierNameSyntax>()
+                .ToList();
+
+            // Two child nodes are expected:
+            // 1. The object being acted upon
+            // 2. The action
+            if (childNodes?.Count != 2) {
+                return false;
+            }
+
+            // Get the symbol of the object being acted upon.
+            var parameterSymbol = semanticModel.GetSymbolInfo(childNodes[0]).Symbol as IParameterSymbol;
+
+            // While loop to iterate through base types of symbol.
+            bool isActivityContext = false;
+            var typeSymbol = parameterSymbol?.Type;
+            while (typeSymbol != null) {
+                // If the current type is an ActivityContext, set appropriate flag and exit loop.
+                if (string.Equals(
+                    "System.Activities.ActivityContext",
+                    typeSymbol.OriginalDefinition.ToDisplayString(),
+                    StringComparison.Ordinal)) {
+                    isActivityContext = true;
+                    typeSymbol = null;
+                } else {
+                    // Otherwise, set the current object to be the current object's base type.
+                    typeSymbol = typeSymbol.BaseType;
+                }
+            }
+
+            // If the invocation is the 'GetDependency' method invoked on an ActivityContext object, return true.
+            return isActivityContext &&
+                   string.Equals("GetDependency", childNodes[1].Identifier.Text, StringComparison.Ordinal);
         }
 
         #endregion Methods

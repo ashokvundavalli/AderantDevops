@@ -550,6 +550,96 @@ namespace Test {
 
         #endregion Tests: Remove
 
+        #region Tests: Workflow Dependency
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_WorkflowDependency() {
+            const string code = @"
+using System;
+using System.Activites;
+
+namespace Test.Aderant.Things {
+    public class TestClass {
+        public void TestMethod() {
+            var actContext = new AsyncCodeActivityContext();
+            using (var dependencyObject = actContext.GetDependency(GetDisposeMe)) {
+                // Empty.
+            }
+        }
+
+        private static DisposeMe GetDisposeMe() {
+            return null;
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace System.Activites {
+    public class ActivityContext {
+        public T GetDependency<T>(Func<T> dependency) {
+            return dependency.Invoke();
+        }
+    }
+
+    public class CodeActivityContext : ActivityContext {
+        // Empty.
+    }
+
+    public class AsyncCodeActivityContext : CodeActivityContext {
+        // Empty.
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_WorkflowDependency_NoBaseClass() {
+            const string code = @"
+using System;
+using System.Activites;
+
+namespace Test.Aderant.Things {
+    public class TestClass {
+        public void TestMethod() {
+            var actContext = new ActivityContext();
+            using (var dependencyObject = actContext.GetDependency(GetDisposeMe)) {
+                // Empty.
+            }
+        }
+
+        private static DisposeMe GetDisposeMe() {
+            return null;
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace System.Activites {
+    public class ActivityContext {
+        public T GetDependency<T>(Func<T> dependency) {
+            return dependency.Invoke();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Tests: Workflow Dependency
+
         #region Tests: UI Automation
 
         [TestMethod]
