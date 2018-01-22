@@ -184,7 +184,7 @@
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\ExpertServerImage.zip&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ImageName) }&quot;" />
 
     <!-- Probe it's working. It will not fail the break. Just for reference. -->
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; ProbeServerImage /image:&apos;http://localhost/Expert_Local_$(ImageName)&apos; }&quot;" />
+    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; ProbeServerImage /image:&apos;http://localhost/Expert_$(ImageName)&apos; }&quot;" />
 
   </Target>
 
