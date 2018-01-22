@@ -169,6 +169,10 @@ namespace Aderant.Build.DependencyResolver {
                     binariesFolder = binaries;
                     return true;
                 }
+                if (fileSystem.GetDirectories(binaries, false, false).Any()) {
+                    binariesFolder = binaries;
+                    return true;
+                }
             }
             binariesFolder = null;
             return false;
