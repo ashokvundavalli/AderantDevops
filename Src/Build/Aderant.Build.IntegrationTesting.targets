@@ -102,6 +102,7 @@
 
     <ItemGroup>
       <Packages Include="$(BinModuleDirectory)\Packages\*" />
+      <Packages Include="$(ImageWorkingDirectory)\CommonApplications.zip" />
       <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\clients.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\instance.config" />
     </ItemGroup>

@@ -2,6 +2,7 @@
 <DependencyManifest DefaultSource="\\dfs.aderant.com\expertsuite\Dev\vnext" DependencyReplication="true">
   <ReferencedModules>
     <ReferencedModule Name="Aderant.API.Database" GetAction="NuGet" Version="&gt;= 11.0.0 build" />
+    <ReferencedModule Name="Aderant.Customization" GetAction="NuGet" />
     <ReferencedModule Name="Aderant.Database.Backup" GetAction="NuGet" Version="&gt;= 11.0.0 build" />
     <ReferencedModule Name="Aderant.Deployment.Automation" GetAction="NuGet" />
     <ReferencedModule Name="Aderant.Deployment.Core" GetAction="NuGet" Version="&gt;= 11.0.0 build" />
@@ -10,6 +11,7 @@
     <ReferencedModule Name="Aderant.Presentation.Core" GetAction="NuGet" />
     <ReferencedModule Name="ExpertApplicationServer" AssemblyVersion="1.8.0.0" />
     <ReferencedModule Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Packages" AssemblyVersion="1.8.0.0" />
     <ReferencedModule Name="Services.Query" AssemblyVersion="1.8.0.0" />
     <ReferencedModule Name="Services.Security" AssemblyVersion="1.8.0.0" />
     <ReferencedModule Name="ThirdParty.ICSharpCode" />
