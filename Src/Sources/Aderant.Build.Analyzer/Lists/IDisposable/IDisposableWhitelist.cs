@@ -26,7 +26,19 @@ namespace Aderant.Build.Analyzer.Lists.IDisposable {
             // Tasks only need to be disposed if AsyncAwaitHandle() is explicitly
             // called and the implementation does not have a finalizer.
             // This occurs in roughly 0.001% of use-cases.
-            new Tuple<string, string>("System.Threading.Tasks", "Task")
+            new Tuple<string, string>("System.Threading.Tasks", "Task"),
+
+            // Object is a singleton.
+            new Tuple<string, string>("Aderant.Framework.Communication.Client", "IBusinessEventRaise"),
+
+            // Object is a singleton.
+            new Tuple<string, string>("Aderant.Framework.Configuration", "IConfigurator"),
+
+            // Object is a singleton.
+            new Tuple<string, string>("Aderant.Messaging.Http", "INotificationClientConnection"),
+
+            // Object is a singleton.
+            new Tuple<string, string>("Aderant.Query", "IQueryServiceProxy"),
         };
     }
 }

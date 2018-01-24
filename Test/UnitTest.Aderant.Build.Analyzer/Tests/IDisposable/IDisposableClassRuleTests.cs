@@ -245,6 +245,52 @@ namespace Test {
             VerifyCSharpDiagnostic(code);
         }
 
+        [TestMethod]
+        public void IDisposableClassRule_Disposable_Field_AssignedFromConstructorParam() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass {
+        private IDisposable item;
+
+        public TestClass(IDisposable parm) {
+            (item) = (parm);
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableClassRule_Disposable_Field_AssignedFromConstructorParam_AssignedInMethod() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable item;
+
+        public TestClass(IDisposable parm) {
+            (item) = (parm);
+        }
+
+        public void TestMethod(IDisposable parm) {
+            (item) = (parm);
+        }
+
+        public void Dispose() {
+            item?.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
         #endregion Tests
     }
 }

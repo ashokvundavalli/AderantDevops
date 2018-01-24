@@ -45,13 +45,13 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Evaluate the class' field declarations.
             EvaluateFields(
                 ref declarations,
-                classNode.ChildNodes().OfType<FieldDeclarationSyntax>(),
+                classNode,
                 context.SemanticModel);
 
             // Evaluate the class' property declarations.
             EvaluateProperties(
                 ref declarations,
-                classNode.ChildNodes().OfType<PropertyDeclarationSyntax>(),
+                classNode,
                 context.SemanticModel);
 
             // If no declarations were found...
@@ -276,15 +276,17 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         }
 
         /// <summary>
-        /// Evaluates the specified field declarations.
+        /// Evaluates the specified class' field declarations.
         /// </summary>
         /// <param name="declarations">The declarations.</param>
-        /// <param name="fields">The fields.</param>
+        /// <param name="classNode">The class node.</param>
         /// <param name="semanticModel">The semantic model.</param>
         private static void EvaluateFields(
             ref List<DisposableDeclaration> declarations,
-            IEnumerable<FieldDeclarationSyntax> fields,
+            ClassDeclarationSyntax classNode,
             SemanticModel semanticModel) {
+            var fields = classNode.ChildNodes().OfType<FieldDeclarationSyntax>();
+
             // Iterate through each field declaration found within the class.
             foreach (var fieldDeclaration in fields) {
                 // Ignore any field declarations that do not implement System.IDisposable.
@@ -308,6 +310,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     fieldDeclaration
                         .Declaration
                         .Variables
+                        // Only evaluate members that are assigned values that are not constructor parameters.
+                        .Where(field => !GetIsNodeAssignedFromConstructorParameter(field.Identifier.Text, classNode))
                         .Select(
                             field => new DisposableDeclaration(
                                 field,
@@ -399,18 +403,22 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// Evaluates the specified property declarations.
         /// </summary>
         /// <param name="declarations">The declarations.</param>
-        /// <param name="properties">The properties.</param>
+        /// <param name="classNode">The class node.</param>
         /// <param name="semanticModel">The semantic model.</param>
         private static void EvaluateProperties(
             ref List<DisposableDeclaration> declarations,
-            IEnumerable<PropertyDeclarationSyntax> properties,
+            ClassDeclarationSyntax classNode,
             SemanticModel semanticModel) {
+            var properties = classNode.ChildNodes().OfType<PropertyDeclarationSyntax>();
+
             // Iterate through each property declaration found within the class.
             foreach (var propertyDeclaration in properties) {
                 // Ignore any property declarations that do not implement System.IDisposable.
                 // Ignore any properties that are simply wrappers for backing fields.
+                // Ignore any properties that are only assigned values from constructors.
                 if (!GetIsNodeDisposable(propertyDeclaration, semanticModel) ||
-                    GetIsPropertyFieldWrapper(propertyDeclaration, declarations)) {
+                    GetIsPropertyFieldWrapper(propertyDeclaration, declarations) ||
+                    GetIsNodeAssignedFromConstructorParameter(propertyDeclaration.Identifier.Text, classNode)) {
                     continue;
                 }
 
