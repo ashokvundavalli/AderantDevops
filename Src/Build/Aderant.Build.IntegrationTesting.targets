@@ -94,7 +94,8 @@
   </Target>
 
 
-  <Target Name="PackageImport">
+  <Target Name="PackageImport"
+    Condition="'$(ImportPackages)' == 'true'">
 
     <PropertyGroup>
       <FactoryBin>$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\SharedBin\Factory.bin</FactoryBin>
