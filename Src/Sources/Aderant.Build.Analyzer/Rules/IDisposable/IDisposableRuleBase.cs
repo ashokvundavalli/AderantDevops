@@ -54,11 +54,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return true;
             }
 
-            bool isTypeWhitelisted = IDisposableWhitelist
-                .Types
-                .Any(type => type.Item1 == symbol.ContainingNamespace?.ToString() && type.Item2 == symbol.Name);
-
-            if (isTypeWhitelisted) {
+            if (GetIsTypeWhiteListed(symbol)) {
                 return false;
             }
 
@@ -66,6 +62,16 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 namedTypeSymbol =>
                     namedTypeSymbol.Name?.Equals("IDisposable", StringComparison.Ordinal) == true &&
                     namedTypeSymbol.ContainingNamespace?.Name?.Equals("System", StringComparison.Ordinal) == true);
+        }
+
+        /// <summary>
+        /// Checks if the type is found in <see cref="IDisposableWhitelist.Types"/>.
+        /// </summary>
+        /// <param name="symbol"></param>
+        protected static bool GetIsTypeWhiteListed(ITypeSymbol symbol) {
+            return IDisposableWhitelist
+                .Types
+                .Any(type => type.Item1 == symbol.ContainingNamespace?.ToString() && type.Item2 == symbol.Name);
         }
 
         /// <summary>
