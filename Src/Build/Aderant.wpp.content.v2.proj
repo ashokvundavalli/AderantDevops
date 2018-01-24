@@ -287,7 +287,7 @@
                  $(ProjectDir)**\bin\**;"/>
     </ItemGroup>
 
-    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\2.2\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
+    <Exec Condition="'@(CustomTSConfigs)' != ''" Command="&quot;$(MSBuildProgramFiles32)\Microsoft SDKs\TypeScript\$(TypeScriptToolsVersion)\tsc.exe&quot; --project %(CustomTSConfigs.FullPath) "/>
  </Target>
 
   <!-- Suppress the TypeScript compile phase if we are building a linked project -->
