@@ -166,7 +166,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: Factory.CreateDisposeMe();
-                GetDiagnostic(5, 13));
+                GetDiagnostic(5, 21));
         }
 
         #endregion Tests: Factory
@@ -319,7 +319,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.RemoveAll(x => x != null);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -384,7 +384,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.RemoveAt(0);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -449,7 +449,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.RemoveRange(0, 2);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -514,7 +514,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.Remove(0);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
