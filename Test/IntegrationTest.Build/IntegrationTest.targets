@@ -181,7 +181,7 @@
     </PropertyGroup>
 
     <!-- Light up server image -->
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\ExpertServerImage.zip&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ImageName) }&quot;" />
+    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\$(ImageName)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /servicepassword:$(ServicePassword) /name:$(ImageName) }&quot;" />
 
     <!-- Probe it's working. It will not fail the break. Just for reference. -->
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; ProbeServerImage /image:&apos;http://localhost/Expert_$(ImageName)&apos; }&quot;" />
@@ -204,49 +204,36 @@
 
   </Target>
 
-
-  <Target Name="GenerateEnvironmentManifest">
-
-    <PropertyGroup>
-      <ImageWorkingDirectory>$(ModuleBuildTempDirectory)\Dependencies</ImageWorkingDirectory>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <Packages Include="$(ModuleBuildTempDirectory)\Bin\Module\Packages\*" />
-      <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
-      <ConfigFiles Include="$(ImageWorkingDirectory)\$(ImageName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ImageName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ImageName)\Services\clients.config;$(ImageWorkingDirectory)\$(ImageName)\Services\instance.config" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
-    <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
-
-    <!-- Package Import -->
-    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:'%(Packages.FullPath)' /SourcePath:'$(ImageWorkingDirectory)'" />
-
-  </Target>
-
-
-  <Target Name="PackageImport">
+  <Target Name="PackageImport"
+    Condition="'$(ImportPackages)' == 'true'">
 
     <PropertyGroup>
       <ImageWorkingDirectory>$(ModuleBuildTempDirectory)\Dependencies</ImageWorkingDirectory>
       <FactoryBin>$(ImageWorkingDirectory)\$(ImageName)\SharedBin\Factory.bin</FactoryBin>
     </PropertyGroup>
-    
+
     <ItemGroup>
+      <PreparePackages Include="$(CommonPackageNames)" />
+      <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" />
       <Packages Include="$(ModuleBuildTempDirectory)\Bin\Module\Packages\*" />
       <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ImageName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ImageName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ImageName)\Services\clients.config;$(ImageWorkingDirectory)\$(ImageName)\Services\instance.config" />
     </ItemGroup>
 
+    <Message Text="CommonPackages Identity:%(CommonPackages.Identity)" />
+    <Message Text="Packages Identity:%(Packages.Identity)" />
+
     <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
     <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
 
+    <!-- Common Package Import -->
+    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
+
+
     <!-- Package Import -->
-    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:'%(Packages.FullPath)' /SourcePath:'$(ImageWorkingDirectory)'" />
+    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
 
   </Target>
-
 
   <Target Name="LightsOff">
 
