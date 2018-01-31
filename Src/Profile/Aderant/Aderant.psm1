@@ -2885,7 +2885,7 @@ function Run-ExpertUITests {
             '
         }
         if ($development) {
-            $runSettingsParameters += '<Parameter name="development" value="true" />
+            $runSettingsParameters += '<Parameter name="Development" value="true" />
             '
         }
         if ($noDocker) {
@@ -2943,6 +2943,33 @@ function Run-ExpertSanityTests {
 
     )
     Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development -noDocker:$noDocker -browserName $browserName
+}
+
+<#
+.SYNOPSIS
+    Runs UI visual tests for the current module
+.PARAMETER productName
+    The name of the product you want to run tests against
+.PARAMETER development
+    Run against the developer environment
+.PARAMETER noDocker
+    Don't use docker
+.PARAMETER browserName
+    Browser to use for the test
+.EXAMPLE
+    Run-ExpertVisualTests -productName "Web.Inquiries"
+    rest "Web.Inquiries" -development
+    This will run the UI visual tests for the Inquiries product against a development url
+#>
+function Run-ExpertVisualTests {
+    param(
+        [Parameter(Mandatory=$false)] [string]$productName = "*",
+        [Parameter(Mandatory=$false)] [string]$browserName,
+        [Parameter(Mandatory=$false)] [switch]$development,
+        [Parameter(Mandatory=$false)] [switch]$noDocker
+
+    )
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -development:$development -noDocker:$noDocker -browserName $browserName
 }
 
 <#
@@ -3839,6 +3866,7 @@ function Get-ExpertBuildAllVersion () {
 $functionsToExport = @(
     [pscustomobject]@{ function='Run-ExpertUITests';},
     [pscustomobject]@{ function='Run-ExpertSanityTests';                      alias='rest'},    
+    [pscustomobject]@{ function='Run-ExpertVisualTests';                      alias='revt'},    
     [pscustomobject]@{ function='Branch-Module';                              alias='branch'},
     [pscustomobject]@{ function='Build-ExpertModules';                        alias='bm'},
     [pscustomobject]@{ function='Build-ExpertModulesOnServer';                alias='bms'},
