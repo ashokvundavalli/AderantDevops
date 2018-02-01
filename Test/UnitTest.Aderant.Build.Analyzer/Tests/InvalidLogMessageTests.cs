@@ -27,7 +27,7 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests {
                 int a = 0;
                 double b = 1.5;
                 string c = ""check"";
-                Exception ex = new Exception();
+                Exception ex = new NullReferenceException();
                 NullReferenceException nrex = new NullReferenceException();
 ";
 
