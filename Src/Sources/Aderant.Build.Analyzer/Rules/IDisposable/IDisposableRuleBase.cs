@@ -279,9 +279,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// </summary>
         /// <param name="expressions">The expressions.</param>
         /// <param name="variableName">Name of the variable.</param>
+        /// <param name="semanticModel">The semantic model.</param>
         protected static List<Tuple<SyntaxNode, ExpressionType, Location>> GetOrderedExpressionTypes(
             IEnumerable<SyntaxNode> expressions,
-            string variableName) {
+            string variableName,
+            SemanticModel semanticModel) {
             var orderedExpressionTypes = new List<Tuple<SyntaxNode, ExpressionType, Location>>(DefaultCapacity);
 
             // Iterate through each of the provided expressions.
@@ -298,7 +300,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 }
 
                 // Add ordered assignment expressions, returning null if there are guaranteed to be no valid expressions.
-                if (AddOrderedAssignmentExpressions(ref orderedExpressionTypes, expression, variableName)) {
+                if (AddOrderedAssignmentExpressions(
+                    ref orderedExpressionTypes,
+                    expression,
+                    variableName,
+                    semanticModel)) {
                     return null;
                 }
 
@@ -331,30 +337,48 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// Determines whether the specified node contains child nodes of a type indicating variable assignment.
         /// </summary>
         /// <param name="variable">The variable.</param>
-        protected static bool IsVariableAssigned(SyntaxNode variable) {
+        /// <param name="semanticModel">The semantic model.</param>
+        protected static bool IsVariableAssigned(
+            SyntaxNode variable,
+            SemanticModel semanticModel) {
             // Get all of the child nodes for the declarator.
-            var declaratorSyntaxNodes = new List<SyntaxNode>();
-            GetExpressionsFromChildNodes(ref declaratorSyntaxNodes, variable);
+            var childNodes = new List<SyntaxNode>();
+            GetExpressionsFromChildNodes(ref childNodes, variable);
 
-            // Iterate through each child node.
-            foreach (var syntaxNode in declaratorSyntaxNodes) {
-                // If the child node is neither an object creation nor an invocation expression...
-                if (!(syntaxNode is ObjectCreationExpressionSyntax || syntaxNode is InvocationExpressionSyntax)) {
+            // Iterate through each child node...
+            foreach (var node in childNodes) {
+                // If the node is an invocation expression...
+                if (node is InvocationExpressionSyntax) {
+                    // ...and is also an extension method...
+                    if ((semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol)?.IsExtensionMethod == true) {
+                        // ...ignore the node.
+                        continue;
+                    }
+
+                    // ...otherwise, the variable is considered to be assigned.
+                    return true;
+                }
+
+                // If the node is not an object creation expression...
+                if (!(node is ObjectCreationExpressionSyntax)) {
                     // ...ignore it.
                     continue;
                 }
 
-                // Otherwise, attempt to get the current child node's parent argument list.
-                // If an argument list is found, then the current child node is a parameter to a method, and can be ignored.
-                if (syntaxNode.GetAncestorOfType<ArgumentListSyntax>() != null) {
-                    continue;
+                // If the node is an object creation expression, and is NOT a child to an argument list syntax...
+                // Note:
+                //      Object creation expressions that are children to ArgumentListSyntax
+                //      expressions are parameters to methods, and are not assigned to the variable.
+                // Example:
+                //                                      v------------v ArgumentListSyntax
+                //                                       v----------v  ObjectCreationExpression
+                //      IDisposable item = GetDisposable(new object());
+                if (node.GetAncestorOfType<ArgumentListSyntax>() == null) {
+                    // ...the variable is considered assigned.
+                    return true;
                 }
-
-                // Otherwise, the variable is assigned and must be disposed.
-                return true;
             }
 
-            // Variable is not assigned.
             return false;
         }
 
@@ -368,11 +392,15 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// <param name="orderedExpressionTypes">The ordered expression types.</param>
         /// <param name="node">The node.</param>
         /// <param name="variableName">Name of the variable.</param>
-        /// <returns>if set to <c>true</c> [exit evaluation early] otherwise [continue processing]</returns>
+        /// <param name="semanticModel">The semantic model.</param>
+        /// <returns>
+        /// If set to <c>true</c> [exit evaluation early] otherwise [continue processing].
+        /// </returns>
         private static bool AddOrderedAssignmentExpressions(
             ref List<Tuple<SyntaxNode, ExpressionType, Location>> orderedExpressionTypes,
             SyntaxNode node,
-            string variableName) {
+            string variableName,
+            SemanticModel semanticModel) {
             // Attempt to evaluate the expression as an assignment expression.
             var assignmentExpression = node as AssignmentExpressionSyntax;
 
@@ -383,7 +411,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return false;
             }
 
-            if (!IsVariableAssigned(node)) {
+            if (!IsVariableAssigned(node, semanticModel)) {
                 return false;
             }
 

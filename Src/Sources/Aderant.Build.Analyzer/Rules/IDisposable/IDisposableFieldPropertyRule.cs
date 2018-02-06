@@ -66,9 +66,20 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Retrieve all action declarations from the current class declaration, split by non-static/static.
             GetClassActionDeclarations(out actionsNonStatic, out actionsStatic, classNode);
 
+            var diagnosticResults = EvaluateDeclarations(
+                declarations,
+                actionsNonStatic,
+                actionsStatic,
+                context.SemanticModel);
+
             // Iterate through and display each diagnostics raised during declaration evaluation.
-            foreach (var diagnostic in EvaluateDeclarations(declarations, actionsNonStatic, actionsStatic)) {
-                ReportDiagnostic(context, Descriptor, diagnostic.Item3, diagnostic.Item1, diagnostic.Item2);
+            foreach (var diagnostic in diagnosticResults) {
+                ReportDiagnostic(
+                    context,
+                    Descriptor,
+                    diagnostic.Item3,
+                    diagnostic.Item1,
+                    diagnostic.Item2);
             }
         }
 
@@ -167,10 +178,12 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// <param name="declarations">The declarations.</param>
         /// <param name="actionsNonStatic">The actions non static.</param>
         /// <param name="actionsStatic">The actions static.</param>
+        /// <param name="semanticModel">The semantic model.</param>
         private static IEnumerable<Tuple<SyntaxNode, string, Location>> EvaluateDeclarations(
             IEnumerable<DisposableDeclaration> declarations,
             List<SyntaxNode> actionsNonStatic,
-            List<SyntaxNode> actionsStatic) {
+            List<SyntaxNode> actionsStatic,
+            SemanticModel semanticModel) {
             var diagnostics = new List<Tuple<SyntaxNode, string, Location>>();
 
             // Iterate through each field.
@@ -205,7 +218,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                             ref diagnostics,
                             ref fieldDisposed,
                             declaration,
-                            actions);
+                            actions,
+                            semanticModel);
 
                         break;
                     }
@@ -331,11 +345,13 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// <param name="fieldIsDisposed">if set to <c>true</c> [field is disposed].</param>
         /// <param name="field">The field.</param>
         /// <param name="actions">The actions.</param>
+        /// <param name="semanticModel">The semantic model.</param>
         private static void EvaluateActions(
             ref List<Tuple<SyntaxNode, string, Location>> diagnostics,
             ref bool fieldIsDisposed,
             DisposableDeclaration field,
-            IEnumerable<SyntaxNode> actions) {
+            IEnumerable<SyntaxNode> actions,
+            SemanticModel semanticModel) {
             // Iterate through each action.
             foreach (var action in actions) {
                 var expressionNodes = new List<SyntaxNode>(DefaultCapacity * DefaultCapacity);
@@ -345,7 +361,10 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
                 // Process the previously acquired syntax expressions to create an ordered list of expressions,
                 //      within the current action, that modify the specified variable.
-                var orderedExpressions = GetOrderedExpressionTypes(expressionNodes, field.Name);
+                var orderedExpressions = GetOrderedExpressionTypes(
+                    expressionNodes,
+                    field.Name,
+                    semanticModel);
 
                 // If no expressions modify the field...
                 if (orderedExpressions?.Any() != true) {

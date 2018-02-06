@@ -52,6 +52,13 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return;
             }
 
+            // If the node is a child of an array creation expression...
+            if (node.GetAncestorOfType<ImplicitArrayCreationExpressionSyntax>() != null ||
+                node.GetAncestorOfType<ArrayCreationExpressionSyntax>() != null) {
+                // ...exit.
+                return;
+            }
+
             // Conditional expressions.
             // condition ? true : false
             var currentNode = node.Parent;

@@ -61,6 +61,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return;
             }
 
+            // Exit early if the method is an extension method.
+            if (GetIsNodeExtensionMethod(node, context.SemanticModel)) {
+                return;
+            }
+
             // Attempt to interpret the parent expression as a chained invocation expression.
             // Example:
             //       someObject.SomeMethod().Dispose();
@@ -240,6 +245,17 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             return childNodes[1] != null
                 ? childNodes[1].GetLocation()
                 : node.GetLocation();
+        }
+
+        /// <summary>
+        /// Determines if the node is an extension method.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        private static bool GetIsNodeExtensionMethod(
+            ExpressionSyntax node,
+            SemanticModel semanticModel) {
+            return (semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol)?.IsExtensionMethod == true;
         }
 
         /// <summary>

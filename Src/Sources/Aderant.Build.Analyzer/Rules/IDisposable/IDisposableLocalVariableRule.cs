@@ -67,10 +67,20 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Retrieve every syntax node in the declaration.
             GetExpressionsFromChildNodes(ref declarationChildNodes, parentDeclaration);
 
+            var diagnosticResults = ProcessVariables(
+                variableDeclaratorExpressions,
+                declarationChildNodes,
+                context.SemanticModel);
+
             // Iterate through all of the 'diagnostic' locations and display them.
             // A single class-level field may result in multiple diagnostics if it is used improperly multiple times.
-            foreach (var diagnostic in ProcessVariables(variableDeclaratorExpressions, declarationChildNodes)) {
-                ReportDiagnostic(context, Descriptor, diagnostic.Item3, diagnostic.Item1, diagnostic.Item2);
+            foreach (var diagnostic in diagnosticResults) {
+                ReportDiagnostic(
+                    context,
+                    Descriptor,
+                    diagnostic.Item3,
+                    diagnostic.Item1,
+                    diagnostic.Item2);
             }
         }
 
@@ -79,9 +89,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// </summary>
         /// <param name="declaratorExpressions">The declarator expressions.</param>
         /// <param name="declarationChildNodes">The declaration child nodes.</param>
+        /// <param name="semanticModel">The semantic model.</param>
         private static IEnumerable<Tuple<SyntaxNode, string, Location>> ProcessVariables(
             IEnumerable<VariableDeclaratorSyntax> declaratorExpressions,
-            IReadOnlyCollection<SyntaxNode> declarationChildNodes) {
+            IReadOnlyCollection<SyntaxNode> declarationChildNodes,
+            SemanticModel semanticModel) {
             var diagnostics = new List<Tuple<SyntaxNode, string, Location>>();
 
             // Iterate through each declared local variable.
@@ -91,14 +103,17 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
                 // If the declarator's initializer is not null, and not a literal expression.
                 if (variable.Initializer != null && !(variable.Initializer.Value is LiteralExpressionSyntax)) {
-                    isVariableAssignedAtDeclaration = IsVariableAssigned(variable);
+                    isVariableAssignedAtDeclaration = IsVariableAssigned(variable, semanticModel);
                 }
 
                 // Get the variable's name.
                 string variableName = variable.Identifier.Text;
 
                 // Retrieve an ordered list of every expression modifying the current variable.
-                var orderedExpressions = GetOrderedExpressionTypes(declarationChildNodes, variableName);
+                var orderedExpressions = GetOrderedExpressionTypes(
+                    declarationChildNodes,
+                    variableName,
+                    semanticModel);
 
                 // A null value means a return statement was found to contain the variable.
                 if (orderedExpressions == null) {
