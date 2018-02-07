@@ -1,4 +1,4 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
 
@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <BinModuleDirectory Condition="'$(BinModuleDirectory)' == ''">$(ModuleBuildTempDirectory)\Bin\Module</BinModuleDirectory>
+    <LightUpManifest>$(BuildInfrastructureDirectory)\Src\Build\LightUpManifest.xml</LightUpManifest>
   </PropertyGroup>
 
   <Target Name="GetAssembliesWithTraits">
@@ -126,7 +127,7 @@
     <!-- Get dependencies -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(ModuleBuildTempDirectory)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpManifest.xml&apos; } &quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(ModuleBuildTempDirectory)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
 
     <ItemGroup>
       <FilesToMove Include="$(ImageWorkingDirectory)\ApplicationServerCommon.psm1;$(ImageWorkingDirectory)\SecuritySetup.ps1;$(ImageWorkingDirectory)\TeardownServerImage.ps1"/>
@@ -252,6 +253,62 @@
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
       Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
+
+  </Target>
+
+  <UsingTask TaskName="UpdateLightUpManifest" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <PackageDependency ParameterType="System.String" Required="true" />
+      <LightUpManifest ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Xml.XPath" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            string[] referencedModule = PackageDependency.Split('|');
+        
+            List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
+
+            foreach (string property in referencedModule.Skip(1)) {
+                if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
+                    attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
+                    continue;
+                }
+
+                if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
+                    attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
+                    continue;
+                }
+
+                if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
+                    attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
+                }
+            }
+
+            XElement manifest = XElement.Load(LightUpManifest);
+            manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
+            manifest.Save(LightUpManifest);
+          ]]>
+      </Code>
+    </Task>
+
+  </UsingTask>
+
+  <Target Name="UpdateManifest">
+    <ItemGroup>
+      <PackageDependency Include="$(PackageDependency.Split('§'))" />
+    </ItemGroup>
+
+    <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
+      PackageDependency="%(PackageDependency.Identity)"
+      LightUpManifest="$(LightUpManifest)" />
 
   </Target>
 

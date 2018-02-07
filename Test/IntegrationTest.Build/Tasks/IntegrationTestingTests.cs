@@ -125,6 +125,20 @@ namespace IntegrationTest.Build.Tasks {
             LightsOff();
         }
 
+        [TestMethod]
+        [Ignore]
+        public void UpdateManifestTest() {
+            UpdateManifest();
+        }
+
+        private void UpdateManifest() {
+            RunTarget(
+                "UpdateManifest",
+                new Dictionary<string, string> {
+                    { "PackageDependency", "Aderant.Disbursements|GetAction:NuGet|Version:>= 0 build§Item2|AssemblyVersion:1.8.0.0" }
+                });
+        }
+
         private void UpdateServerImage() {
             RunTarget(
                 "UpdateServerImage",
