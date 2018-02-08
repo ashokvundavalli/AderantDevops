@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <DependencyManifest DefaultSource="\\dfs.aderant.com\expertsuite\Dev\vnext" DependencyReplication="true">
   <ReferencedModules>
     <ReferencedModule Name="Aderant.API.Database" GetAction="NuGet" Version="&gt;= 11.0.0 build" />

@@ -1,4 +1,5 @@
-﻿using Aderant.Build.Analyzer.Rules;
+﻿using Aderant.Build.Analyzer.Lists.IDisposable;
+using Aderant.Build.Analyzer.Rules;
 using Aderant.Build.Analyzer.Rules.IDisposable;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -110,6 +111,24 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
     }
 
     public interface IImplementDisposable : IDisposable{}
+}
+";
+            VerifyCSharpDiagnostic(InsertCode(code));
+        }
+
+        [TestMethod]
+        public void IDisposableFactoryRegistrationRule_BothImplementIDisposable_WhiteListDoesNotInterfere() {
+
+            const string code = @"namespace Aderant.Query {
+    using Aderant.Framework.Factories;
+    using System;
+    [FactoryRegistration(typeof(IQueryServiceProxy))]
+    public class TestClass: IQueryServiceProxy {
+        public void Dispose() {
+        }
+    }
+
+    public interface IQueryServiceProxy : IDisposable{}
 }
 ";
             VerifyCSharpDiagnostic(InsertCode(code));

@@ -48,8 +48,26 @@ namespace Aderant.Build.Tasks.WarningProcess {
             }
         }
 
+        public bool IsTestingRelated {
+            get {
+                if (Message != null) {
+                    return Message.IndexOf("paket.dependencies doesn't contain package Aderant.Build.Analyzer in group Main", StringComparison.Ordinal) >= 0;
+                }
+                return false;
+            }
+        }
+
+        public bool IsPackageImportRelated {
+            get {
+                if (Message != null) {
+                    return Message.IndexOf("One or more rule references for extension point \"ExpertSystem.Menus.GlobalWebMenu\" are invalid and cannot be imported", StringComparison.Ordinal) >= 0;
+                }
+                return false;
+            }
+        }
+
         public bool AffectsProjectQuality {
-            get { return !IsCopyWarning && !IsTestDeploymentIssue && !IsTestThreadingIssue; }
+            get { return !IsCopyWarning && !IsTestDeploymentIssue && !IsTestThreadingIssue && !IsTestingRelated && !IsPackageImportRelated; }
         }
 
         public DateTime? Timestamp { get; set; }

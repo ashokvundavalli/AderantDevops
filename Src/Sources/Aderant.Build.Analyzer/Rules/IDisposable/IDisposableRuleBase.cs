@@ -8,65 +8,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Aderant.Build.Analyzer.Rules.IDisposable {
     internal abstract class IDisposableRuleBase : RuleBase {
-        #region Types
-
-        /// <summary>
-        /// The type of the declared collection.
-        /// </summary>
-        protected enum DeclarationCollectionType {
-            Collection,
-            Dictionary,
-            List,
-            None
-        }
-
-        /// <summary>
-        /// The type of expression for use in ordering expressions.
-        /// </summary>
-        protected enum ExpressionType {
-            None,
-            Assignment,
-            AssignmentNull,
-            Dispose,
-            Using,
-            UsingAssignment,
-            Exit
-        }
-
-        /// <summary>
-        /// Data container for disposable property and field declarations.
-        /// </summary>
-        protected struct DisposableDeclaration {
-            public DisposableDeclaration(
-                SyntaxNode node,
-                string name,
-                Location location,
-                bool isAssignedAtDeclaration,
-                bool isStatic,
-                DeclarationCollectionType collection) {
-                Node = node;
-                Name = name;
-                IsAssignedAtDeclaration = isAssignedAtDeclaration;
-                IsStatic = isStatic;
-                Location = location;
-                CollectionType = collection;
-            }
-
-            public DeclarationCollectionType CollectionType { get; }
-
-            public Location Location { get; }
-
-            public bool IsAssignedAtDeclaration { get; }
-
-            public bool IsStatic { get; }
-
-            public string Name { get; }
-
-            public SyntaxNode Node { get; }
-        }
-
-        #endregion Types
-
         #region Fields
 
         protected const string DiagnosticId = "Aderant_IDisposableDiagnostic";
@@ -113,11 +54,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return true;
             }
 
-            bool isTypeWhitelisted = IDisposableWhitelist
-                .Types
-                .Any(type => type.Item1 == symbol.ContainingNamespace?.ToString() && type.Item2 == symbol.Name);
-
-            if (isTypeWhitelisted) {
+            if (GetIsTypeWhiteListed(symbol)) {
                 return false;
             }
 
@@ -125,6 +62,16 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 namedTypeSymbol =>
                     namedTypeSymbol.Name?.Equals("IDisposable", StringComparison.Ordinal) == true &&
                     namedTypeSymbol.ContainingNamespace?.Name?.Equals("System", StringComparison.Ordinal) == true);
+        }
+
+        /// <summary>
+        /// Checks if the type is found in <see cref="IDisposableWhitelist.Types"/>.
+        /// </summary>
+        /// <param name="symbol"></param>
+        protected static bool GetIsTypeWhiteListed(ITypeSymbol symbol) {
+            return IDisposableWhitelist
+                .Types
+                .Any(type => type.Item1 == symbol.ContainingNamespace?.ToString() && type.Item2 == symbol.Name);
         }
 
         /// <summary>
@@ -196,6 +143,55 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             }
 
             return GetIsDisposable(symbol);
+        }
+
+        /// <summary>
+        /// Determines if the node is assigned from a constructor parameter.
+        /// </summary>
+        /// <param name="memberName">Name of the member.</param>
+        /// <param name="classNode">The class node.</param>
+        protected static bool GetIsNodeAssignedFromConstructorParameter(
+            string memberName,
+            ClassDeclarationSyntax classNode) {
+            IReadOnlyList<AssignmentData> assignmentData = GetAssignmentData(memberName, classNode);
+
+            if (assignmentData.Count < 1) {
+                return false;
+            }
+
+            bool assignedFromParameter = false;
+
+            // Iterate through every assignment in the class.
+            foreach (var data in assignmentData) {
+                if (data.Constructor == null) {
+                    return false;
+                }
+
+                if (data.Parameters.Length < 1) {
+                    continue;
+                }
+
+                // Iterate through and match each value to a parameter in the constructor.
+                foreach (var value in data.Values) {
+                    if (data
+                        .Parameters
+                        .All(
+                            param => string.Equals(
+                                value.Identifier.Text,
+                                param.Identifier.Text,
+                                StringComparison.Ordinal))) {
+                        continue;
+                    }
+
+                    // If any of the values are not a parameter,
+                    // then the property or field must be disposed.
+                    return false;
+                }
+
+                assignedFromParameter = true;
+            }
+
+            return assignedFromParameter;
         }
 
         /// <summary>
@@ -283,9 +279,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// </summary>
         /// <param name="expressions">The expressions.</param>
         /// <param name="variableName">Name of the variable.</param>
+        /// <param name="semanticModel">The semantic model.</param>
         protected static List<Tuple<SyntaxNode, ExpressionType, Location>> GetOrderedExpressionTypes(
             IEnumerable<SyntaxNode> expressions,
-            string variableName) {
+            string variableName,
+            SemanticModel semanticModel) {
             var orderedExpressionTypes = new List<Tuple<SyntaxNode, ExpressionType, Location>>(DefaultCapacity);
 
             // Iterate through each of the provided expressions.
@@ -302,7 +300,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 }
 
                 // Add ordered assignment expressions, returning null if there are guaranteed to be no valid expressions.
-                if (AddOrderedAssignmentExpressions(ref orderedExpressionTypes, expression, variableName)) {
+                if (AddOrderedAssignmentExpressions(
+                    ref orderedExpressionTypes,
+                    expression,
+                    variableName,
+                    semanticModel)) {
                     return null;
                 }
 
@@ -331,6 +333,55 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             return orderedExpressionTypes;
         }
 
+        /// <summary>
+        /// Determines whether the specified node contains child nodes of a type indicating variable assignment.
+        /// </summary>
+        /// <param name="variable">The variable.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        protected static bool IsVariableAssigned(
+            SyntaxNode variable,
+            SemanticModel semanticModel) {
+            // Get all of the child nodes for the declarator.
+            var childNodes = new List<SyntaxNode>();
+            GetExpressionsFromChildNodes(ref childNodes, variable);
+
+            // Iterate through each child node...
+            foreach (var node in childNodes) {
+                // If the node is an invocation expression...
+                if (node is InvocationExpressionSyntax) {
+                    // ...and is also an extension method...
+                    if ((semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol)?.IsExtensionMethod == true) {
+                        // ...ignore the node.
+                        continue;
+                    }
+
+                    // ...otherwise, the variable is considered to be assigned.
+                    return true;
+                }
+
+                // If the node is not an object creation expression...
+                if (!(node is ObjectCreationExpressionSyntax)) {
+                    // ...ignore it.
+                    continue;
+                }
+
+                // If the node is an object creation expression, and is NOT a child to an argument list syntax...
+                // Note:
+                //      Object creation expressions that are children to ArgumentListSyntax
+                //      expressions are parameters to methods, and are not assigned to the variable.
+                // Example:
+                //                                      v------------v ArgumentListSyntax
+                //                                       v----------v  ObjectCreationExpression
+                //      IDisposable item = GetDisposable(new object());
+                if (node.GetAncestorOfType<ArgumentListSyntax>() == null) {
+                    // ...the variable is considered assigned.
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         #endregion Methods: Protected
 
         #region Methods: Private
@@ -341,11 +392,15 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// <param name="orderedExpressionTypes">The ordered expression types.</param>
         /// <param name="node">The node.</param>
         /// <param name="variableName">Name of the variable.</param>
-        /// <returns>if set to <c>true</c> [exit evaluation early] otherwise [continue processing]</returns>
+        /// <param name="semanticModel">The semantic model.</param>
+        /// <returns>
+        /// If set to <c>true</c> [exit evaluation early] otherwise [continue processing].
+        /// </returns>
         private static bool AddOrderedAssignmentExpressions(
             ref List<Tuple<SyntaxNode, ExpressionType, Location>> orderedExpressionTypes,
             SyntaxNode node,
-            string variableName) {
+            string variableName,
+            SemanticModel semanticModel) {
             // Attempt to evaluate the expression as an assignment expression.
             var assignmentExpression = node as AssignmentExpressionSyntax;
 
@@ -356,7 +411,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return false;
             }
 
-            if (!IsVariableAssigned(node)) {
+            if (!IsVariableAssigned(node, semanticModel)) {
                 return false;
             }
 
@@ -620,34 +675,83 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         }
 
         /// <summary>
-        /// Determines whether the specified node contains child nodes of a type indicating variable assignment.
+        /// Gets the class' assignment expression data.
         /// </summary>
-        /// <param name="variable">The variable.</param>
-        protected static bool IsVariableAssigned(SyntaxNode variable) {
-            // Get all of the child nodes for the declarator.
-            var declaratorSyntaxNodes = new List<SyntaxNode>();
-            GetExpressionsFromChildNodes(ref declaratorSyntaxNodes, variable);
+        /// <param name="memberName">Name of the member.</param>
+        /// <param name="classNode">The class node.</param>
+        private static IReadOnlyList<AssignmentData> GetAssignmentData(
+            string memberName,
+            SyntaxNode classNode) {
+            // Get assignment expressions.
+            var assignmentExpressionSyntaxes = new List<AssignmentExpressionSyntax>(DefaultCapacity);
 
-            // Iterate through each child node.
-            foreach (var syntaxNode in declaratorSyntaxNodes) {
-                // If the child node is neither an object creation nor an invocation expression...
-                if (!(syntaxNode is ObjectCreationExpressionSyntax || syntaxNode is InvocationExpressionSyntax)) {
-                    // ...ignore it.
+            GetExpressionsFromChildNodes(ref assignmentExpressionSyntaxes, classNode);
+
+            var assignmentList = assignmentExpressionSyntaxes.ToList();
+
+            var assignmentData = new List<AssignmentData>(assignmentList.Count);
+
+            // Iterate through each expression.
+            foreach (var assignment in assignmentList) {
+                List<SyntaxNode> childNodes = assignment
+                    .ChildNodes()
+                    .ToList();
+
+                // Two child nodes are expected:
+                // 'x' and 'y' in the following expression:
+                // x = y;
+                // Note that y may be more than a simple variable.
+                if (childNodes.Count != 2) {
                     continue;
                 }
 
-                // Otherwise, attempt to get the current child node's parent argument list.
-                // If an argument list is found, then the current child node is a parameter to a method, and can be ignored.
-                if (syntaxNode.GetAncestorOfType<ArgumentListSyntax>() != null) {
+                // Examine the 'left' side of the expression as the assignment target.
+                SyntaxNode target = childNodes[0];
+
+                var identifiers = new List<IdentifierNameSyntax>(1);
+
+                GetExpressionsFromChildNodes(ref identifiers, target);
+
+                // Ignore any assignments that somehow have an unnamed target.
+                if (identifiers.Count != 1) {
                     continue;
                 }
 
-                // Otherwise, the variable is assigned and must be disposed.
-                return true;
+                // Get the target's name.
+                IdentifierNameSyntax targetName = identifiers[0];
+
+                // Examine the 'right' side of the expression as the values.
+                SyntaxNode value = childNodes[1];
+
+                identifiers = new List<IdentifierNameSyntax>();
+
+                GetExpressionsFromChildNodes(ref identifiers, value);
+
+                // Ignore any assignments that have no identifier names as assignment values.
+                if (identifiers.Count < 1) {
+                    continue;
+                }
+
+                // Get the parent constructor syntax for the assignment, if one exists.
+                var constructor = assignment.GetAncestorOfType<ConstructorDeclarationSyntax>();
+
+                // Get the parameters provided to that constructor, if the constructor exists and it has parameters.
+                var parameters = constructor?.ParameterList?.Parameters.ToArray() ?? new ParameterSyntax[0];
+
+                // Create a new data container with the acquired objects.
+                assignmentData.Add(
+                    new AssignmentData(
+                        targetName,
+                        identifiers,
+                        constructor,
+                        parameters));
             }
 
-            // Variable is not assigned.
-            return false;
+            // Return a filtered list of the assignment data.
+            // Only return assignments that affect the specified target.
+            return assignmentData
+                .Where(data => string.Equals(memberName, data.Target.Identifier.Text, StringComparison.Ordinal))
+                .ToList();
         }
 
         #endregion Methods: Private

@@ -1259,6 +1259,12 @@ doc.Save(File);
       SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
       SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages" />
 
+    <SeedPackagePacking
+      SkipPackageValidation="$(SkipPackageValidation)"
+      BuildFrom="$(SolutionDirectoryPath)"
+      SeedPackageSrc = "$(SolutionDirectoryPath)Test\TestPackages"
+      SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Test\TestPackages" />
+
   </Target>
 
   <!--

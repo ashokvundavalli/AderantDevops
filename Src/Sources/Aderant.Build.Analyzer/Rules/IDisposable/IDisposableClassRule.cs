@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -32,6 +33,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Exit early if execution is not processing a class declaration,
             //      or if analysis is suppressed.
             //      or if the class already implements System.IDisposable.
+            //      or if the class declaration is static.
+            //      or if the class is whitelisted.
             if (node == null ||
                 IsAnalysisSuppressed(node, ValidSuppressionMessages) ||
                 GetIsNodeDisposable(node, context.SemanticModel) ||
@@ -40,21 +43,49 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return;
             }
 
-            // Iterate through each of the class declaration's child nodes.
-            foreach (var childNode in node.ChildNodes()) {
-                // If the child node is a field or property declaration,
-                //      and the child node implements System.IDisposable...
-                if ((childNode is FieldDeclarationSyntax || childNode is PropertyDeclarationSyntax) &&
-                    GetIsNodeDisposable(childNode, context.SemanticModel)) {
-                    // ...report a diagnostic.
-                    ReportDiagnostic(
-                        context,
-                        Descriptor,
-                        node.Identifier.GetLocation(),
-                        node,
-                        node.Identifier.Text);
-                    return;
+            // Iterate through each of the class declaration's child nodes that are field or property declarations.
+            var childNodes = node
+                .ChildNodes()
+                .Where(
+                    syntaxNode => syntaxNode is FieldDeclarationSyntax ||
+                                  syntaxNode is PropertyDeclarationSyntax);
+
+            foreach (var childNode in childNodes) {
+                // Ignore any nodes that are not disposable.
+                if (!GetIsNodeDisposable(childNode, context.SemanticModel)) {
+                    continue;
                 }
+
+                // Get the name of all fields/properties being declared.
+                List<string> memberNames = null;
+
+                var field = childNode as FieldDeclarationSyntax;
+                if (field != null) {
+                    memberNames = field.Declaration.Variables.Select(variable => variable.Identifier.Text).ToList();
+                } else {
+                    var property = childNode as PropertyDeclarationSyntax;
+                    if (property != null) {
+                        memberNames = new List<string> { property.Identifier.Text };
+                    }
+                }
+
+                // If there are no members being declared,
+                // or if all members are only assigned from constructor parameters, ignore them.
+                if (memberNames == null ||
+                    memberNames.Count < 1 ||
+                    memberNames.All(memberName => GetIsNodeAssignedFromConstructorParameter(memberName, node))) {
+                    continue;
+                }
+
+                // Otherwise raise a single diagnostic and return.
+                ReportDiagnostic(
+                    context,
+                    Descriptor,
+                    node.Identifier.GetLocation(),
+                    node,
+                    node.Identifier.Text);
+
+                return;
             }
         }
 

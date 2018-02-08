@@ -306,6 +306,12 @@ namespace Aderant.Build.Analyzer.Rules {
             // Generate suppression message.
             string message = GenerateSuppressionMessage(data.Node, diagnosticId, semanticModel);
 
+            // If there is no node data...
+            if (data.Node == null) {
+                // ...ignore the node.
+                return false;
+            }
+
             // If the suppressions file does not exist...
             if (tryResult == null) {
                 // ...create it and suppress this node.
@@ -473,6 +479,8 @@ namespace Aderant.Build.Analyzer.Rules {
                 name = "EqualsValueClause";
             } else if (node is ExpressionSyntax){
                 name = "Expression";
+            } else if (node is ExpressionStatementSyntax) {
+                name = "ExpressionStatement";
             }
 
             return name == null

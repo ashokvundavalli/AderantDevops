@@ -33,7 +33,7 @@ namespace DisposeMe {
 }
 
 namespace Aderant.Framework.Factories {
-    public class IFactory {
+    public class Factory {
         public static Factory Current { get; set; }
 
         public T CreateInstance<T>() where T : DisposeMe.DisposeMe, new() {
@@ -43,7 +43,10 @@ namespace Aderant.Framework.Factories {
 }
 ";
 
-            VerifyCSharpDiagnostic(code);
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: CreateInstance<DisposeMe.DisposeMe>()
+                GetDiagnostic(5, 57));
         }
 
         [TestMethod]
@@ -166,7 +169,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: Factory.CreateDisposeMe();
-                GetDiagnostic(5, 13));
+                GetDiagnostic(5, 21));
         }
 
         #endregion Tests: Factory
@@ -319,7 +322,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.RemoveAll(x => x != null);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -384,7 +387,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.RemoveAt(0);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -449,7 +452,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.RemoveRange(0, 2);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -514,7 +517,7 @@ namespace Test {
             VerifyCSharpDiagnostic(
                 code,
                 // Error: items.Remove(0);
-                GetDiagnostic(11, 13));
+                GetDiagnostic(11, 19));
         }
 
         [TestMethod]
@@ -639,6 +642,60 @@ namespace System.Activites {
         }
 
         #endregion Tests: Workflow Dependency
+
+        #region Tests: Extension Methods
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_ExtensionMethod() {
+            // This test confirms that extension methods performed on
+            // collections of IDisposable items do not raise diagnostics,
+            // as long as the collection itself is disposed.
+            // This test also confirms that variables assigned values from extension methods
+            // from collections of IDisposable items are not flagged as 'require disposal'.
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private List<DisposeMe> Items { get; set; }
+
+        public void TestMethod() {
+            Items = new List<DisposeMe>(new DisposeMe[] { new DisposeMe() });
+            Items.DisposeItems();
+            Items = new List<DisposeMe>(new[] { new DisposeMe() });
+
+            var unused = (Items.FirstOrDefault() ?? Items[0]);
+            unused = (Items.FirstOrDefault() ?? Items[0]);
+        }
+
+        public void Dispose() {
+            Items?.DisposeItems();
+        }
+    }
+
+    public sealed class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Tests: Extension Methods
 
         #region Tests: UI Automation
 

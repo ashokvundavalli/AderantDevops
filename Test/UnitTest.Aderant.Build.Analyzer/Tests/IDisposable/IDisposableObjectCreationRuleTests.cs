@@ -204,6 +204,30 @@ namespace Test {
         }
 
         [TestMethod]
+        public void IDisposableObjectCreationRule_Return_Yield() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+
+namespace Test {
+    public class TestClass {
+        private IEnumerable<IDisposable> Method() {
+            yield return (new DisposeMe());
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableObjectCreationRule_Return_CreationSyntax() {
             const string code = @"
 namespace Test {

@@ -17,16 +17,70 @@
     <ExpertEnvironmentUrl>http://localhost/Expert_$(ExpertEnvironmentName)</ExpertEnvironmentUrl>
     <DatabaseName>$([System.Guid]::NewGuid())</DatabaseName>
     <ServiceAccount Condition="'$(ServiceAccount)' == ''">ADERANT_AP\tfsbuildservice$</ServiceAccount>
+    <LightUpManifest>$(BuildScriptsDirectory)LightUpManifest.xml</LightUpManifest>
   </PropertyGroup>
+
+
+  <UsingTask TaskName="UpdateLightUpManifest" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <PackageDependency ParameterType="System.String" Required="true" />
+      <LightUpManifest ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Xml.XPath" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            string[] referencedModule = PackageDependency.Split('|');
+        
+            List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
+
+            foreach (string property in referencedModule.Skip(1)) {
+                if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
+                    attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
+                    continue;
+                }
+
+                if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
+                    attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
+                    continue;
+                }
+
+                if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
+                    attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
+                }
+            }
+
+            XElement manifest = XElement.Load(LightUpManifest);
+            manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
+            manifest.Save(LightUpManifest);
+          ]]>
+      </Code>
+    </Task>
+  </UsingTask>
 
 
   <Target Name="GetServerImage">
 
     <Message Text="Acquiring Expert server image." />
 
+    <ItemGroup>
+      <PackageDependency Condition="'$(PackageDependency)' != ''" Include="$(PackageDependency.Split('#'))" />
+    </ItemGroup>
+
+    <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
+      PackageDependency="%(PackageDependency.Identity)"
+      LightUpManifest="$(LightUpManifest)" />
+
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildScriptsDirectory)LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(SolutionDirectoryPath)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(BuildScriptsDirectory)LightUpManifest.xml&apos; } &quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildScriptsDirectory)LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(SolutionDirectoryPath)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
 
     <ItemGroup>
       <FilesToMove Include="$(ImageWorkingDirectory)\ApplicationServerCommon.psm1;$(ImageWorkingDirectory)\SecuritySetup.ps1;$(ImageWorkingDirectory)\TeardownServerImage.ps1"/>
@@ -94,13 +148,16 @@
   </Target>
 
 
-  <Target Name="PackageImport">
+  <Target Name="PackageImport"
+    Condition="'$(ImportPackages)' == 'true'">
 
     <PropertyGroup>
       <FactoryBin>$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\SharedBin\Factory.bin</FactoryBin>
     </PropertyGroup>
 
     <ItemGroup>
+      <PreparePackages Include="$(CommonPackageNames)" />
+      <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" Condition="'%(Extension)' == '.zip'"  />
       <Packages Include="$(BinModuleDirectory)\Packages\*" />
       <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\clients.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\instance.config" />
@@ -109,11 +166,17 @@
     <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
     <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
 
+    <!-- Common Package Import -->
+    <Exec Condition="'@(CommonPackages)' != ''"
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
+
     <!-- Package Import -->
     <Exec Condition="'@(Packages)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:'%(Packages.FullPath)' /SourcePath:'$(ImageWorkingDirectory)'" />
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
 
     <OnError ExecuteTargets="LightsOff" />
 
@@ -166,7 +229,7 @@
 
   <Target Name="LightsOff"
     AfterTargets="RunIntegrationTests"
-    Condition="'$(RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
 

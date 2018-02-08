@@ -49,11 +49,20 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // Determine if the invocation is a 'Remove' method invoked upon a collection of IDisposable items.
             if (EvaluateRemoveMethod(node, context.SemanticModel)) {
                 // Report the diagnostic.
-                ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
+                ReportDiagnostic(
+                    context,
+                    Descriptor,
+                    GetDiagnosticLocation(node),
+                    node);
             }
 
             // Exit early if the method's return value does not inherit from the System.IDisposable interface.
             if (!GetIsNodeDisposable(node, context.SemanticModel)) {
+                return;
+            }
+
+            // Exit early if the method is an extension method.
+            if (GetIsNodeExtensionMethod(node, context.SemanticModel)) {
                 return;
             }
 
@@ -116,7 +125,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             }
 
             // Report the diagnostic.
-            ReportDiagnostic(context, Descriptor, node.GetLocation(), node);
+            ReportDiagnostic(
+                context,
+                Descriptor,
+                GetDiagnosticLocation(node),
+                node);
         }
 
         /// <summary>
@@ -208,6 +221,41 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             // return whether the dictionary's value type is IDisposable.
             return typeSymbol.TypeArguments.Length == 2 &&
                    GetIsDisposable(typeSymbol.TypeArguments[1]);
+        }
+
+        /// <summary>
+        /// Gets the location of the diagnostic.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        private static Location GetDiagnosticLocation(InvocationExpressionSyntax node) {
+            if (node == null) {
+                return null;
+            }
+
+            if (node.Expression == null) {
+                return node.GetLocation();
+            }
+
+            var childNodes = node.Expression.ChildNodes()?.ToList();
+
+            if (childNodes == null || childNodes.Count < 2) {
+                return node.GetLocation();
+            }
+
+            return childNodes[1] != null
+                ? childNodes[1].GetLocation()
+                : node.GetLocation();
+        }
+
+        /// <summary>
+        /// Determines if the node is an extension method.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        private static bool GetIsNodeExtensionMethod(
+            ExpressionSyntax node,
+            SemanticModel semanticModel) {
+            return (semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol)?.IsExtensionMethod == true;
         }
 
         /// <summary>

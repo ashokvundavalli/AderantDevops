@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Aderant.Build.Analyzer.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -45,9 +46,13 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return;
             }
 
-            // If the node's parent is a return statement, and is not contained within a property accessor...
-            if (node.Parent is ReturnStatementSyntax &&
-                node.Parent.GetAncestorOfType<AccessorDeclarationSyntax>() == null) {
+            if (ProcessReturnStatements(node, context.SemanticModel)) {
+                return;
+            }
+
+            // If the node is a child of an array creation expression...
+            if (node.GetAncestorOfType<ImplicitArrayCreationExpressionSyntax>() != null ||
+                node.GetAncestorOfType<ArrayCreationExpressionSyntax>() != null) {
                 // ...exit.
                 return;
             }
@@ -106,9 +111,9 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
                 if (string.Equals(methodName, "Add", StringComparison.Ordinal) &&
                     interfaces.Any(
-                        x => string.Equals(
+                        interfaceSymbol => string.Equals(
                             "System.Collections.Generic.IEnumerable<T>",
-                            x.OriginalDefinition.ToDisplayString(),
+                            interfaceSymbol.OriginalDefinition.ToDisplayString(),
                             StringComparison.Ordinal))) {
                     return;
                 }
@@ -116,6 +121,75 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
             // If execution reaches this point, this use case is illegal.
             ReportDiagnostic(context, Descriptor, node.GetLocation(), node, node.Type.ToString());
+        }
+
+        /// <summary>
+        /// Processes the return statements.
+        /// If the object being created is a child to a return statement,
+        /// ignore the object creation if the creation satisfies certian conditions.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="semanticModel">The semantic model.</param>
+        /// <returns>
+        /// True if execution of the node can halt.
+        /// False if execution is to continue.
+        /// </returns>
+        private static bool ProcessReturnStatements(SyntaxNode node, SemanticModel semanticModel) {
+            // Get the return node.
+            var returnNode = node.GetAncestorOfType<ReturnStatementSyntax>() ??
+                             node.GetAncestorOfType<YieldStatementSyntax>() as StatementSyntax;
+
+            if (returnNode == null) {
+                return false;
+            }
+
+            var methodDeclaration = returnNode.GetAncestorOfType<MethodDeclarationSyntax>();
+
+            // Objects that are created and returned outside of a method
+            // are ignored if they are outside of a property accessor.
+            if (methodDeclaration == null) {
+                return returnNode.GetAncestorOfType<AccessorDeclarationSyntax>() == null;
+            }
+
+            // Object creations within methods are ignored if the return type is IDisposable.
+            // As this ensures that no matter what is returned, the resulting object will be disposed.
+            var symbol = semanticModel.GetTypeInfo(methodDeclaration.ReturnType).Type;
+
+            if (GetIsDisposable(symbol)) {
+                return false;
+            }
+
+            var namedSymbol = symbol as INamedTypeSymbol;
+
+            if (namedSymbol == null) {
+                return false;
+            }
+
+            if (!namedSymbol.IsGenericType) {
+                return false;
+            }
+
+            INamedTypeSymbol returnSymbol;
+
+            // Handling for dictionaries vs standard collections.
+            if (string.Equals(
+                namedSymbol.OriginalDefinition.ToDisplayString(),
+                "System.Collections.Generic.Dictionary<TKey, TValue>",
+                StringComparison.Ordinal)) {
+                if (namedSymbol.TypeArguments.Length != 2) {
+                    return false;
+                }
+
+                returnSymbol = namedSymbol.TypeArguments[1] as INamedTypeSymbol;
+            } else {
+                if (namedSymbol.TypeArguments.Length != 1) {
+                    return false;
+                }
+
+                returnSymbol = namedSymbol.TypeArguments[0] as INamedTypeSymbol;
+            }
+
+            return GetIsDisposable(returnSymbol);
         }
 
         #endregion Methods

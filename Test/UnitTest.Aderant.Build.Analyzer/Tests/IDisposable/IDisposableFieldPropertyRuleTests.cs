@@ -628,6 +628,89 @@ namespace System.Reactive.Disposables {
                 GetDiagnostic(9, 37, "item"));
         }
 
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_AssignedFromConstructorParam_AssignedInMethod() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable item;
+
+        public TestClass(IDisposable parm) {
+            (item) = (parm);
+        }
+
+        public void TestMethod(IDisposable parm) {
+            (item) = (parm);
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(6, 29, "item"));
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_AssignedFromConstructorParam_ConditionalAssignment() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable item;
+
+        public TestClass(IDisposable parm) {
+            (item) = (parm) ?? new DisposeMe();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(6, 29, "item"));
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_AssignedFromConstructorParam_ConditionalAssignment_Null() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable item;
+
+        public TestClass(IDisposable parm) {
+            (item) = (parm) ?? null;
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
         #endregion Tests: Field
 
         #region Tests: Property
@@ -1083,6 +1166,35 @@ namespace System.Reactive.Disposables {
                 GetDiagnostic(9, 37, "Item"));
         }
 
-        #endregion Tests: Property
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_AssignedFromConstructorParam_AssignedInMethod() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable Item { get; set; }
+
+        public TestClass(IDisposable parm) {
+            (Item) = (parm);
+        }
+
+        public void TestMethod(IDisposable parm) {
+            (Item) = (parm);
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
     }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                GetDiagnostic(6, 29, "Item"));
+        }
+
+        #endregion Tests: Property
+        }
 }

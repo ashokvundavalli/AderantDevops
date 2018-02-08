@@ -87,10 +87,12 @@
     <Compile Include="Lists\QueryAll\QueryAllWhitelists.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDbConnectionStringRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualityDefaultTransactionScopeRule.cs" />
+    <Compile Include="Rules\CodeQuality\CodeQualityNewExceptionRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualitySqlQueryRule.cs" />
     <Compile Include="Rules\CodeQuality\CodeQualitySystemDiagnosticsRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableConstructorRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableFactoryRegistrationRule.cs" />
+    <Compile Include="Rules\IDisposable\IDisposableRuleTypes.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />

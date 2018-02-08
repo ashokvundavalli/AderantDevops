@@ -272,7 +272,7 @@ namespace Aderant.Build.Tasks {
                     if (Path.GetExtension(seed) == ".xml") {
                         seedDocument = XDocument.Load(seed, LoadOptions.SetLineInfo | LoadOptions.SetBaseUri);
                     }
-                    var seedName = seed.Split(new[] { "SeedPackages\\" }, StringSplitOptions.None)[1];
+                    var seedName = seed.Split(new[] { "SeedPackages\\", "TestPackages\\" }, StringSplitOptions.None)[1];
 
                     if (seedName.Contains("\\AdhocList\\")) {
                         if (!String.IsNullOrEmpty(seedDocument.Descendants("name").FirstOrDefault()?.Value)) {
@@ -413,7 +413,7 @@ namespace Aderant.Build.Tasks {
 
             if (entryList.Count > 0) {
                 var entryListErrors = string.Join("; ", entryList);
-                throw new Exception("CheckForComponentInPackage error: Validation failed. There are missing entries in the seed packages: " 
+                throw new Exception("CheckForComponentInPackage error: Validation failed. There are missing entries in the seed packages: "
                     + entryListErrors);
             }
 

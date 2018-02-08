@@ -1,4 +1,4 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
 
@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <BinModuleDirectory Condition="'$(BinModuleDirectory)' == ''">$(ModuleBuildTempDirectory)\Bin\Module</BinModuleDirectory>
+    <LightUpManifest>$(BuildInfrastructureDirectory)\Src\Build\LightUpManifest.xml</LightUpManifest>
   </PropertyGroup>
 
   <Target Name="GetAssembliesWithTraits">
@@ -126,7 +127,7 @@
     <!-- Get dependencies -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(ModuleBuildTempDirectory)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpManifest.xml&apos; } &quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(ModuleBuildTempDirectory)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
 
     <ItemGroup>
       <FilesToMove Include="$(ImageWorkingDirectory)\ApplicationServerCommon.psm1;$(ImageWorkingDirectory)\SecuritySetup.ps1;$(ImageWorkingDirectory)\TeardownServerImage.ps1"/>
@@ -181,7 +182,7 @@
     </PropertyGroup>
 
     <!-- Light up server image -->
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\ExpertServerImage.zip&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ImageName) }&quot;" />
+    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\$(ImageName)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /servicepassword:$(ServicePassword) /name:$(ImageName) }&quot;" />
 
     <!-- Probe it's working. It will not fail the break. Just for reference. -->
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; ProbeServerImage /image:&apos;http://localhost/Expert_$(ImageName)&apos; }&quot;" />
@@ -204,49 +205,37 @@
 
   </Target>
 
-
-  <Target Name="GenerateEnvironmentManifest">
-
-    <PropertyGroup>
-      <ImageWorkingDirectory>$(ModuleBuildTempDirectory)\Dependencies</ImageWorkingDirectory>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <Packages Include="$(ModuleBuildTempDirectory)\Bin\Module\Packages\*" />
-      <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
-      <ConfigFiles Include="$(ImageWorkingDirectory)\$(ImageName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ImageName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ImageName)\Services\clients.config;$(ImageWorkingDirectory)\$(ImageName)\Services\instance.config" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
-    <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
-
-    <!-- Package Import -->
-    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:'%(Packages.FullPath)' /SourcePath:'$(ImageWorkingDirectory)'" />
-
-  </Target>
-
-
-  <Target Name="PackageImport">
+  <Target Name="PackageImport"
+    Condition="'$(ImportPackages)' == 'true'">
 
     <PropertyGroup>
       <ImageWorkingDirectory>$(ModuleBuildTempDirectory)\Dependencies</ImageWorkingDirectory>
       <FactoryBin>$(ImageWorkingDirectory)\$(ImageName)\SharedBin\Factory.bin</FactoryBin>
     </PropertyGroup>
-    
+
     <ItemGroup>
+      <PreparePackages Include="$(CommonPackageNames)" />
+      <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" Condition="'%(Extension)' == '.zip'" />
       <Packages Include="$(ModuleBuildTempDirectory)\Bin\Module\Packages\*" />
       <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ImageName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ImageName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ImageName)\Services\clients.config;$(ImageWorkingDirectory)\$(ImageName)\Services\instance.config" />
     </ItemGroup>
 
+    <Message Text="CommonPackages Identity:%(CommonPackages.Identity)" />
+    <Message Text="Packages Identity:%(Packages.Identity)" />
+
     <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
     <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
 
+    <!-- Common Package Import -->
+    <Exec Condition="'@(CommonPackages)' != ''" 
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
+
+
     <!-- Package Import -->
-    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:'%(Packages.FullPath)' /SourcePath:'$(ImageWorkingDirectory)'" />
+    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
 
   </Target>
-
 
   <Target Name="LightsOff">
 
@@ -265,6 +254,62 @@
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
       Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
+
+  </Target>
+
+  <UsingTask TaskName="UpdateLightUpManifest" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <PackageDependency ParameterType="System.String" Required="true" />
+      <LightUpManifest ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Xml.XPath" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            string[] referencedModule = PackageDependency.Split('|');
+        
+            List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
+
+            foreach (string property in referencedModule.Skip(1)) {
+                if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
+                    attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
+                    continue;
+                }
+
+                if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
+                    attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
+                    continue;
+                }
+
+                if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
+                    attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
+                }
+            }
+
+            XElement manifest = XElement.Load(LightUpManifest);
+            manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
+            manifest.Save(LightUpManifest);
+          ]]>
+      </Code>
+    </Task>
+
+  </UsingTask>
+
+  <Target Name="UpdateManifest">
+    <ItemGroup>
+      <PackageDependency Include="$(PackageDependency.Split('§'))" />
+    </ItemGroup>
+
+    <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
+      PackageDependency="%(PackageDependency.Identity)"
+      LightUpManifest="$(LightUpManifest)" />
 
   </Target>
 

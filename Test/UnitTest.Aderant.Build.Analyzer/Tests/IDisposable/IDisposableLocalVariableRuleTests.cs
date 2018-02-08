@@ -130,6 +130,64 @@ namespace Test {
         }
 
         [TestMethod]
+        public void IDisposableLocalVariableRule_MethodParameter_ObjectCreation() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item = GetDisposeMe(new object());
+
+            item.Dispose();
+        }
+
+        private static DisposeMe GetDisposeMe(object item) {
+            return new DisposeMe();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_MethodParameter_MethodInvocation() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item = new DisposeMe(SomeMethod());
+
+            item.Dispose();
+        }
+
+        private static object SomeMethod() {
+            return new object();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public DisposeMe(object item) {
+            // Empty.
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableLocalVariableRule_Using() {
             const string code = @"
 namespace Test {

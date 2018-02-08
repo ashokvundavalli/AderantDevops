@@ -55,7 +55,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     continue;
                 }
 
-                if (!GetIsNodeDisposable(expression.Type, context.SemanticModel)) {
+                if (!GetIsNodeDisposable(expression.Type, context.SemanticModel) &&
+                    !GetIsTypeWhiteListed(context.SemanticModel.GetTypeInfo(expression.Type).Type)) {
                     // If registered interface is not disposable, report a diagnostic.
                     ReportDiagnostic(
                         context,

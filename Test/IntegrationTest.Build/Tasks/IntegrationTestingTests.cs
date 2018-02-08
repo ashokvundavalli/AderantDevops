@@ -13,6 +13,8 @@ namespace IntegrationTest.Build.Tasks {
         private readonly string databaseName = string.Concat("Expert_", time);
         private readonly string environmentName = string.Concat("Local_", time);
         private const string ModuleName = "Framework";
+        private const string isImportPackage = "true";
+        private const string CommonPackages = "CommonApplications.zip";
 
         [TestInitialize]
         public void TestInitialize() {
@@ -41,7 +43,7 @@ namespace IntegrationTest.Build.Tasks {
             try {
                 Directory.Delete(Directory.GetParent(moduleBuildTempDirectory).FullName, true);
             } catch {
-            // ignored
+                // ignored
             }
         }
 
@@ -118,8 +120,23 @@ namespace IntegrationTest.Build.Tasks {
             UpdateServerImage();
             LightUp();
             ExecuteQueryViewsScript();
+            PackageImport();
             RunIntegrationTests();
             LightsOff();
+        }
+
+        [TestMethod]
+        [Ignore]
+        public void UpdateManifestTest() {
+            UpdateManifest();
+        }
+
+        private void UpdateManifest() {
+            RunTarget(
+                "UpdateManifest",
+                new Dictionary<string, string> {
+                    { "PackageDependency", "Aderant.Disbursements|GetAction:NuGet|Version:>= 0 build§Item2|AssemblyVersion:1.8.0.0" }
+                });
         }
 
         private void UpdateServerImage() {
@@ -144,8 +161,10 @@ namespace IntegrationTest.Build.Tasks {
             RunTarget(
                 "PackageImport",
                 new Dictionary<string, string> {
+                    { "ImportPackages", isImportPackage },
                     { "ModuleBuildTempDirectory", moduleBuildTempDirectory },
-                    { "ImageName", environmentName }
+                    { "ImageName", environmentName },
+                    { "CommonPackageNames", CommonPackages }
                 });
         }
 
