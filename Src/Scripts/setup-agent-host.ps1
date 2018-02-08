@@ -20,9 +20,15 @@ param(
     $workDirectory = "D:\"
 )
 
+Start-Transcript -Path "$PSScriptRoot\SetupAgentHostLog.txt" -Force
+
 $ErrorActionPreference = "Stop"
 
 $AgentRootDirectory = "C:\Agents"
+
+if ([string]::IsNullOrWhiteSpace($agentArchive)) {
+    $agentArchive = "$PSScriptRoot\vsts.agent.zip"
+}
 
 # Converted from https://github.com/docker/docker/blob/master/pkg/namesgenerator/names-generator.go
 
