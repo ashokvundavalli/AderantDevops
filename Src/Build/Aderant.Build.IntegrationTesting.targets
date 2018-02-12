@@ -158,8 +158,10 @@
     <ItemGroup>
       <PreparePackages Include="$(CommonPackageNames)" />
       <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" Condition="'%(Extension)' == '.zip'"  />
-      <Packages Include="$(BinModuleDirectory)\Packages\*" />
-      <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
+
+      <PackagesToImport Include="$(PackagesToImport)" />
+      <Packages Include="$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)" Condition="'%(Extension)' == '.zip' And Exists('$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)')" />
+      <Packages Include="$(BinModuleDirectory)\Packages\*.zip" Exclude="@(Packages)" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\clients.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\instance.config" />
     </ItemGroup>
 
@@ -176,7 +178,7 @@
     <Exec Condition="'@(Packages)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(BinModuleDirectory)" />
 
     <OnError ExecuteTargets="LightsOff" />
 
