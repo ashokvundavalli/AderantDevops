@@ -7,7 +7,10 @@ using System.IO.Compression;
 using System.Web;
 using System.Xml.Linq;
 using System.Collections.Generic;
+using System.Net;
 using System.Text.RegularExpressions;
+using System.Xml.XPath;
+using Aderant.Build.SeedPackageValidation;
 
 namespace Aderant.Build.Tasks {
 
@@ -40,6 +43,8 @@ namespace Aderant.Build.Tasks {
     ///     ]]>
     /// </summary>
     public class SeedPackagePacking : Microsoft.Build.Utilities.Task {
+        private Dictionary<string, XDocument> documentCache = new Dictionary<string, XDocument>();
+        private List<Error> errors = new List<Error>();
 
         /// <summary>
         /// Path for the project root. Needed for some validation work.
@@ -56,26 +61,29 @@ namespace Aderant.Build.Tasks {
         /// <summary>
         /// Path for seed package zip to be placed at. The default location is (project)\Bin\Packages.
         /// </summary>
-        [Required]
         public string SeedPackageDrop { get; set; }
 
-        public override bool Execute() {
+        public bool ValidationOnly { get; set; }
 
+        public override bool Execute() {
             if (!Directory.Exists(SeedPackageSrc)) {
                 Log.LogMessage("No seed package found. Exiting.");
                 return true;
             }
 
             try {
+                var fileNames = CoreValidate();
+
                 if (!SkipPackageValidation) {
                     // Do validating
-                    CheckForSmartFormDeltas();
                     //CheckForUnusedPackagesOrEntries();  // TODO: Ignore this test for now as there is no role file yet. To be added back.
-                    CheckForComponentInPackage();
+                    CheckForComponentInPackage(fileNames);
                 }
 
-                // Do zipping
-                ZipSeedPackage();
+                if (!ValidationOnly) {
+                    // Do zipping
+                    ZipSeedPackage();
+                }
 
                 return !Log.HasLoggedErrors;
             } catch (Exception ex) {
@@ -83,6 +91,56 @@ namespace Aderant.Build.Tasks {
                 return false;
             }
         }
+
+        private List<string> CoreValidate() {
+            var fileNames = GetFilesInDirectory(SeedPackageSrc).ToList();
+            
+            Validate(fileNames);
+
+            if (errors.Any()) {
+                foreach (var error in errors) {
+                    Log.LogError(error.ToString());
+                }
+            }
+
+            return fileNames;
+        }
+
+        private void Validate(List<string> fileNames) {
+            foreach (var fileName in fileNames) {
+                var document = LoadXmlDocument(fileName);
+
+                CheckForSmartFormDeltas(document, fileName);
+                RuleVersionCheck(document, fileName);
+                SmartFormVersionCheck(document, fileName);
+            }
+        }
+
+        internal List<Error> RuleVersionCheck(XDocument document, string fileName) {
+            var error = FirmRuleVersionError.Validate(fileName, document);
+            if (error != null) {
+                errors.Add(error);
+            }
+
+            return errors;
+        }
+
+        internal List<Error> SmartFormVersionCheck(XDocument document, string fileName) {
+            var error = SmartFormModelError.Validate(fileName, document);
+            if (error != null) {
+                errors.Add(error);
+            }
+
+            return errors;
+        }
+
+        internal void CheckForSmartFormDeltas(XDocument document, string fileName) {
+            var error = SmartFormDeltaError.Validate(fileName, document);
+            if (error != null) {
+                errors.Add(error);
+            }
+        }
+
 
         public bool SkipPackageValidation { get; set; }
 
@@ -120,7 +178,7 @@ namespace Aderant.Build.Tasks {
 
         // Package validations
         private static IEnumerable<string> GetFilesInDirectory(string sourceDir) {
-            string[] fileEntries = Directory.GetFiles(sourceDir);
+            string[] fileEntries = Directory.GetFiles(sourceDir, "*.xml");
             foreach (string fileName in fileEntries) {
                 yield return fileName;
             }
@@ -135,33 +193,21 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private static IEnumerable<string> ValidateFiles(IEnumerable<string> fileNames) {
-            List<string> errors = new List<string>();
-
-            foreach (string fileName in fileNames) {
+        private XDocument LoadXmlDocument(string fileName) {
+            XDocument document;
+            if (!documentCache.TryGetValue(fileName, out document)) {
                 try {
-                    var document = XDocument.Load(fileName);
-
-                    if (document.Descendants("SmartFormDeltas").Descendants().Any()) {
-                        errors.Add($"Please remove 'SmartFormDelta' from : '{Path.GetFullPath(fileName)}'");
-                    }
-                } catch {
-                    // ignored
+                    document = XDocument.Load(fileName);
+                    documentCache[fileName] = document;
+                } catch (Exception) {
+                    Log.LogError($"File {fileName} is not a valid XML document.");
                 }
             }
-
-            return errors;
+            
+            return document;
         }
 
-        public void CheckForSmartFormDeltas() {
-            var fileNames = GetFilesInDirectory(SeedPackageSrc);
-            var errors = ValidateFiles(fileNames).ToArray();
-
-            if (errors.Any()) {
-                var errorJoin = string.Join(Environment.NewLine, errors);
-                throw new Exception("CheckForSmartFormDeltas error: \n" + errorJoin + "\nAnd drink plenty of fluids to keep your body hydrated. ");
-            }
-        }
+    
 
         public void CheckForUnusedPackagesOrEntries() {
             var whiteList = "SampleWorkflows";
@@ -224,7 +270,7 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        public void CheckForComponentInPackage() {
+        public void CheckForComponentInPackage(List<string> fileNames) {
             var whiteList = "SampleWorkflows";
 
             var adHocLists = new List<string>();
@@ -420,4 +466,5 @@ namespace Aderant.Build.Tasks {
             Log.LogMessage("All good.");
         }
     }
+
 }
