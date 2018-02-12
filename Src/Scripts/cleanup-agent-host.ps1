@@ -1,4 +1,6 @@
-﻿$directoriesToRemove = @(
+﻿Start-Transcript -Path ".\CleanupAgentHostLog.txt" -Force
+
+$directoriesToRemove = @(
     # Some unit tests aren't very unit-ty
     "$env:APPDATA\Aderant",
     "$env:LOCALAPPDATA\Aderant",
@@ -31,7 +33,7 @@ $machineWideDirectories = @(
 
 
 $whoAmI = $env:USERNAME
-$serviceAccounts = @("$env:USERNAME", "service.tfsbuild.ap")
+$serviceAccounts = @("$env:USERNAME", "service.tfsbuild.ap", "tfsbuildservice$")
 
 foreach ($dir in $directoriesToRemove) {
     $removeTarget = $dir
