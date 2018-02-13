@@ -31,6 +31,7 @@ process {
         Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
         Add-LocalGroupMember -Group Administrators -Member $credentials.UserName -ErrorAction SilentlyContinue
 		Add-LocalGroupMember -Group docker-users -Member ADERANT_AP\tfsbuildservice$ -ErrorAction SilentlyContinue
+		Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue
 		Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
 
         $scriptsDirectory = "$env:SystemDrive\Scripts"

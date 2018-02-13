@@ -35,6 +35,7 @@ process {
 		"backstabbing",
 		"berserk",
 		"big",
+		"bothersome",
 		"boring",
 		"clever",
 		"cocky",
@@ -64,13 +65,16 @@ process {
 		"hopeful",
 		"hungry",
 		"infallible",
+		"intoxicated",
 		"jolly",
 		"jovial",
+		"kawaii",
 		"kickass",
 		"lonely",
 		"loving",
 		"mad",
 		"modest",
+		"majestic",
 		"naughty",
 		"nauseous",
 		"nostalgic",
@@ -156,7 +160,7 @@ process {
 		$leftRnd = Get-Random -Minimum 0 -Maximum $left.Length
 		$rightRnd = Get-Random -Minimum 0 -Maximum $right.Length
 
-		return ("{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
+		return ("$env:COMPUTERNAME_{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
 	}
 
 	function RemoveAllAgents() {
