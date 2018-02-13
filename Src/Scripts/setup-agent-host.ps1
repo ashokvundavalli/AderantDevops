@@ -160,7 +160,7 @@ process {
 		$leftRnd = Get-Random -Minimum 0 -Maximum $left.Length
 		$rightRnd = Get-Random -Minimum 0 -Maximum $right.Length
 
-		return ("$env:COMPUTERNAME_{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
+		return ("$($env:COMPUTERNAME)_{0}_{1}" -f ($left[$leftRnd], $right[$rightRnd]))
 	}
 
 	function RemoveAllAgents() {
