@@ -15,6 +15,7 @@
       <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <ParallelSwitch>/Parallel</ParallelSwitch>
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
@@ -57,7 +58,7 @@
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(ChutzpahTestAdapterPath)' />
 
     <!-- Run VSTest using dotCover -->
     <Exec Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
@@ -65,7 +66,7 @@
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
 
     <ReadLinesFromFile Condition="('$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
       <Output TaskParameter="Lines" PropertyName="DotCoverResult" />
