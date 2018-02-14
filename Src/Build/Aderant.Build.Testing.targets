@@ -15,7 +15,8 @@
       <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <ParallelSwitch>/Parallel</ParallelSwitch>
+      <IsParallel>$([MSBuild]::ValueOrDefault(`$(IsParallel)`, `true`))</IsParallel>
+      <ParallelSwitch Condition="'$(IsParallel)' == 'true'">/Parallel</ParallelSwitch>
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
