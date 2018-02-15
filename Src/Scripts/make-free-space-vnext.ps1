@@ -1,4 +1,3 @@
-Set-StrictMode -Version 2.0
 # Slightly intelligent deletion of build directory output files using an algorithm to determine 
 # how many hours back to search for folders to delete. Can be run repeatedly and will be more aggressive
 # about how far to go back, based on how much space is free
