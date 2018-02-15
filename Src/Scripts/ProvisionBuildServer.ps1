@@ -208,7 +208,8 @@ process {
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
-		$STTrigger = New-ScheduledTaskTrigger -AtStartup
+        $interval = New-TimeSpan -Hours 2
+        $STTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval $interval
         [string]$STName = "Remove NuGet Cache"
         
         Unregister-ScheduledTask -TaskName $STName -Confirm:$false -ErrorAction SilentlyContinue
