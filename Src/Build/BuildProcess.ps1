@@ -266,7 +266,7 @@ task Build {
     }
 
     if ($Integration.IsPresent) {
-        $commonArgs = "$commonArgs /p:RunIntegrationTests=true"
+        $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
     }
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
