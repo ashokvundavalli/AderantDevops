@@ -65,6 +65,8 @@ namespace Aderant.Build.Tasks {
 
         public bool ValidationOnly { get; set; }
 
+        public bool CheckForComponentInPackage { get; set; } = true;
+
         public override bool Execute() {
             if (!Directory.Exists(SeedPackageSrc)) {
                 Log.LogMessage("No seed package found. Exiting.");
@@ -77,7 +79,9 @@ namespace Aderant.Build.Tasks {
                 if (!SkipPackageValidation) {
                     // Do validating
                     //CheckForUnusedPackagesOrEntries();  // TODO: Ignore this test for now as there is no role file yet. To be added back.
-                    CheckForComponentInPackage(fileNames);
+                    if (CheckForComponentInPackage) {
+                        DoCheckForComponentInPackage(fileNames);
+                    }
                 }
 
                 if (!ValidationOnly) {
@@ -91,6 +95,8 @@ namespace Aderant.Build.Tasks {
                 return false;
             }
         }
+
+        
 
         private List<string> CoreValidate() {
             var fileNames = GetFilesInDirectory(SeedPackageSrc).ToList();
@@ -270,7 +276,7 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        public void CheckForComponentInPackage(List<string> fileNames) {
+        public void DoCheckForComponentInPackage(List<string> fileNames) {
             var whiteList = "SampleWorkflows";
 
             var adHocLists = new List<string>();
@@ -304,11 +310,14 @@ namespace Aderant.Build.Tasks {
                     if (uuid.ToLower().StartsWith("security-resource") || uuid.ToLower().StartsWith("config-value") || uuid.ToLower().StartsWith("config-path")) {
                         continue;
                     }
-                    var tempuuid = uuid.Split(new[] { "://" }, StringSplitOptions.None)[1];
-                    tempuuid = tempuuid.Split(new[] { "/", "?" }, StringSplitOptions.None)[0];
-                    if (!string.IsNullOrEmpty(tempuuid)) {
-                        entryList.Add(uuid.Split(new[] { "://" }, StringSplitOptions.None)[0] + "://" + tempuuid);
+                    var tempuuid = uuid.Split(new[] { "://" }, StringSplitOptions.None).ElementAtOrDefault(1);
+                    if (tempuuid != null) {
+                        tempuuid = tempuuid.Split(new[] { "/", "?" }, StringSplitOptions.None)[0];
+                        if (!string.IsNullOrEmpty(tempuuid)) {
+                            entryList.Add(uuid.Split(new[] { "://" }, StringSplitOptions.None)[0] + "://" + tempuuid);
+                        }
                     }
+
                 }
 
                 var seedData = Directory.GetFiles(package, "*.*", SearchOption.AllDirectories);
@@ -318,16 +327,16 @@ namespace Aderant.Build.Tasks {
                     if (Path.GetExtension(seed) == ".xml") {
                         seedDocument = XDocument.Load(seed, LoadOptions.SetLineInfo | LoadOptions.SetBaseUri);
                     }
-                    var seedName = seed.Split(new[] { "SeedPackages\\", "TestPackages\\" }, StringSplitOptions.None)[1];
+                    var seedName = seed.Split(new[] { "SeedPackages\\", "TestPackages\\" }, StringSplitOptions.None).ElementAtOrDefault(1);
+                    
+                    if (seedName == null) {
+                        continue;
+                    }
 
                     if (seedName.Contains("\\AdhocList\\")) {
                         if (!String.IsNullOrEmpty(seedDocument.Descendants("name").FirstOrDefault()?.Value)) {
                             adHocLists.Add(HttpUtility.UrlDecode("adhoc-list://" + seedDocument.Descendants("name").FirstOrDefault()?.Value));
                         }
-                    }
-
-                    if (seedName.Contains("\\Configuration\\")) {
-                        //Configuration
                     }
 
                     if (seedName.Contains("\\Customization\\")) {
@@ -347,7 +356,6 @@ namespace Aderant.Build.Tasks {
                         }
                         if (seedName.Contains("Rule_")) {
                             if (seedDocument.Descendants().Attributes().Where(a => a.Name.LocalName == "key").Select(v => v.Value).ToList().Count > 0) {
-                                //customizations.AddRange(seedDocument.Descendants().Attributes().Where(a => a.Name.LocalName == "key").Select(v => "rule://" + v.Value.Replace("'", "%27")).ToList());
                                 customizations.AddRange(seedDocument.Descendants().Attributes().Where(a => a.Name.LocalName == "key").Select(v => HttpUtility.UrlDecode("rule://" + v.Value)).ToList());
                             }
                         }
@@ -380,10 +388,6 @@ namespace Aderant.Build.Tasks {
                         if (seedDocument.Descendants("policy").Attributes("name")?.Select(a => a.Value).ToList().Count > 0) {
                             securityPolicies.AddRange(seedDocument.Descendants("policy").Attributes("name").Select(a => HttpUtility.UrlDecode("security-policy://" + a.Value)).ToList());
                         }
-                    }
-
-                    if (seedName.Contains("\\Security Resource\\")) {
-                        //Security resource
                     }
 
                     if (seedName.Contains("\\Smart Form\\")) {
@@ -438,19 +442,19 @@ namespace Aderant.Build.Tasks {
                     }
                 }
                 foreach (var securityPolicy in securityPolicies) {
-                    if (securityPolicy.ToLower().Equals(HttpUtility.UrlDecode(entry)?.ToLower(), StringComparison.OrdinalIgnoreCase)) {
+                    if (string.Equals(securityPolicy, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
                         securityPolicies = securityPolicies.Where(a => a != securityPolicy).ToList();
                         entryList = entryList.Where(e => e != entry).ToList();
                     }
                 }
                 foreach (var smartForm in smartForms) {
-                    if (smartForm.ToLower().Equals(HttpUtility.UrlDecode(entry)?.ToLower(), StringComparison.OrdinalIgnoreCase)) {
+                    if (string.Equals(smartForm, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
                         smartForms = smartForms.Where(a => a != smartForm).ToList();
                         entryList = entryList.Where(e => e != entry).ToList();
                     }
                 }
                 foreach (var smartFormV3 in smartFormV3S) {
-                    if (smartFormV3.ToLower().Equals(HttpUtility.UrlDecode(entry)?.ToLower(), StringComparison.OrdinalIgnoreCase)) {
+                    if (string.Equals(smartFormV3, HttpUtility.UrlDecode(entry), StringComparison.OrdinalIgnoreCase)) {
                         smartFormV3S = smartFormV3S.Where(a => a != smartFormV3).ToList();
                         entryList = entryList.Where(e => e != entry).ToList();
                     }
