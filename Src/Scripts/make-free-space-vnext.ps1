@@ -19,7 +19,7 @@
 param(
     [Parameter(Mandatory=$false)][string]$drive,
     [Parameter(Mandatory=$false)][ValidateSet("agent", "nuget")][string]$strategy,
-    [Parameter(Mandatory=$false)][Int]$olderThan = 24
+    [Parameter(Mandatory=$false)][Int]$olderThan = 7
 )
 
 begin {
