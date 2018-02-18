@@ -18,6 +18,5 @@
     <ReferencedModule Name="ThirdParty.log4net" />
     <ReferencedModule Name="ThirdParty.Reactive" />
     <ReferencedModule Name="ThirdParty.Microsoft.OData" GetAction="NuGet" Version="&gt; 5.8.1-ci" />
-    <ReferencedModule Name="ThirdParty.NHibernate" />
   </ReferencedModules>
 </DependencyManifest>
