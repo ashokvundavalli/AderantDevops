@@ -94,7 +94,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             //      rather than the invocation 'wrapper' expression.
             // From the resulting expressions, retrieve all child expressions that are identifiers.
             // From the identifiers, select the identifier's text value.
-            // If any of the text values are 'Dispose'...
+            // If any of the text values are 'Dispose' or 'Close'...
             if (node
                 .Parent
                 .ChildNodes()
