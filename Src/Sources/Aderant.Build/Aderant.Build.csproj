@@ -143,10 +143,14 @@
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="FileUtilities.cs" />
+    <Compile Include="SeedPackageValidation\Error.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
+    <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\Hash.cs" />
+    <Compile Include="SeedPackageValidation\SmartFormDeltaError.cs" />
+    <Compile Include="SeedPackageValidation\SmartFormModelError.cs" />
     <Compile Include="Tasks\SmartReference.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />

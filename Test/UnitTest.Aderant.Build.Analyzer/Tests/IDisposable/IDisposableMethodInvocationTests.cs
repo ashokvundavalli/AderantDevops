@@ -643,6 +643,68 @@ namespace System.Activites {
 
         #endregion Tests: Workflow Dependency
 
+        #region Tests: Base Class
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_BaseClass_Field() {
+           const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : TestClassBase {
+        public void TestMethod() {
+            field = CreateDisposable();
+        }
+
+        private static IDisposable CreateDisposable() {
+            return null;
+        }
+    }
+
+    public abstract class TestClassBase : IDisposable {
+        public IDisposable field;
+
+        public void Dispose() {
+            field?.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_BaseClass_Property() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : TestClassBase {
+        public void TestMethod() {
+            Property = CreateDisposable();
+        }
+
+        private static IDisposable CreateDisposable() {
+            return null;
+        }
+    }
+
+    public abstract class TestClassBase : IDisposable {
+        public IDisposable Property { get; set; }
+
+        public void Dispose() {
+            Property?.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Tests: Base Class
+
         #region Tests: Extension Methods
 
         [TestMethod]

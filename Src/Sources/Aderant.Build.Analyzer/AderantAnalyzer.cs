@@ -23,7 +23,7 @@ namespace Aderant.Build.Analyzer {
         /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
         /// </summary>
         public AderantAnalyzer()
-            : this(Environment.GetEnvironmentVariable("BUILD_BUILDID")) {
+            : this(GetBuildId()) {
             // Empty.
         }
 
@@ -31,7 +31,7 @@ namespace Aderant.Build.Analyzer {
         /// Initializes a new instance of the <see cref="AderantAnalyzer"/> class.
         /// </summary>
         internal AderantAnalyzer(params RuleBase[] injectedRules)
-            : this(Environment.GetEnvironmentVariable("BUILD_BUILDID"), injectedRules) {
+            : this(GetBuildId(), injectedRules) {
             // Empty.
         }
 
@@ -102,6 +102,14 @@ namespace Aderant.Build.Analyzer {
             foreach (var descriptor in rules) {
                 descriptor.Initialize(context);
             }
+        }
+
+        private static string GetBuildId() {
+            string buildId = Environment.GetEnvironmentVariable("BUILD_BUILDID");
+
+            return string.IsNullOrWhiteSpace(buildId)
+                ? Environment.GetEnvironmentVariable("TF_BUILD")
+                : buildId;
         }
 
         #endregion Methods

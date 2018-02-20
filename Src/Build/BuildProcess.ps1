@@ -266,7 +266,7 @@ task Build {
     }
 
     if ($Integration.IsPresent) {
-        $commonArgs = "$commonArgs /p:RunIntegrationTests=true"
+        $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
     }
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
@@ -285,6 +285,7 @@ task Build {
 
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
+            $commonArgs = "$commonArgs /clp:PerformanceSummary"
             . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
         }    
     } finally {
