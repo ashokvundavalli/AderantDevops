@@ -61,11 +61,11 @@ process {
 		$percentUsed = Get-PercentUsed $drive 
 		$percentUsed = [math]::Round($percentUsed)
 
-		if ($percentUsed -lt 51) {$hours = -48}
-		if (($percentUsed -lt 71) -and ($percentUsed -gt 50)) {$hours = -24}
-		if (($percentUsed -lt 81) -and ($percentUsed -gt 70)) {$hours = -12}
-		if (($percentUsed -lt 91) -and ($percentUsed -gt 80)) {$hours = -6}
-		if (($percentUsed -lt 95) -and ($percentUsed -gt 90)) {$hours = -3}
+		if ($percentUsed -lt 51) {$hours = -2}
+		if (($percentUsed -lt 71) -and ($percentUsed -gt 50)) {$hours = -2}
+		if (($percentUsed -lt 81) -and ($percentUsed -gt 70)) {$hours = -2}
+		if (($percentUsed -lt 91) -and ($percentUsed -gt 80)) {$hours = -1}
+		if (($percentUsed -lt 95) -and ($percentUsed -gt 90)) {$hours = -1}
 		if (($percentUsed -lt 100) -and ($percentUsed -gt 94)) {$hours = $failsafeHoursBack}
     
 		# failsafe to prevent us deleting everything
@@ -92,8 +92,15 @@ process {
 		if ($testing) {
 			Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where{$_.Name -Match "^\d{1,4}$"} | ? {$_.LastWriteTime -lt $limit } | Remove-Item -Recurse -WhatIf -Force
 		} else {
-			 Get-ChildItem $folder -Recurse -Depth 0 -ErrorAction SilentlyContinue | Where{$_.Name -Match "^\d{1,4}$"} | ? {$_.LastWriteTime -lt $limit } | % { cmd.exe /c rmdir /q /s $_.FullName }
+			 $agentDirectories = Get-ChildItem -Path $folder -Directory | Where { $_.Name -Match "^\d{1,4}$" }
+
+            foreach ($directory in $agentDirectories) {
+                Get-ChildItem $directory.FullName -Directory | Where { $_.Name -Match "^\d{1,4}$" } | ? {$_.LastWriteTime -lt $limit } | % { cmd.exe /c rmdir /q /s $_.FullName }
+            }
 		}
+        
+        # Clean up IIS after removing files
+        & $PSScriptRoot\iis-cleanup.ps1
 	}
 
 	################

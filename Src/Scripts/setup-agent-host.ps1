@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory=$false)][string]$tfsHost = "http://tfs:8080/tfs",
     [Parameter(Mandatory=$false)]$agentPool = "default",
 	# The scratch drive for the agent, this is where the intermediate objects will be placed
-    [Parameter(Mandatory=$false)]$workDirectory = "D:\"
+    [Parameter(Mandatory=$false)]$workDirectory
 )
 
 begin {
@@ -15,12 +15,16 @@ begin {
 
 process {
 	Start-Transcript -Path "$env:SystemDrive\Scripts\SetupAgentHostLog.txt" -Force
-	$ErrorActionPreference = 'Stop'
+	$ErrorActionPreference = "Stop"
 	[string]$AgentRootDirectory = "C:\Agents"
 
 	if ([string]::IsNullOrWhiteSpace($agentArchive)) {
 		$agentArchive = "$PSScriptRoot\vsts.agent.zip"
 	}
+    
+    if (-not (Test-Path $workDirectory)) {
+        $workDirectory = $Env:SystemDrive + "\"
+    }
 
 	# Converted from https://github.com/docker/docker/blob/master/pkg/namesgenerator/names-generator.go
 
@@ -184,7 +188,20 @@ process {
 
 				Remove-Item -Path $directory.FullName -Force -Recurse -ErrorAction SilentlyContinue
 			}    
-		}
+		}        
+
+        # Stop IIS while removing build agent directories to prevent file locks
+        Import-Module WebAdministration
+        iisreset.exe /STOP
+        
+        # Clear build agent working directory
+        [string]$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B")
+        Remove-Item -Path "$workingDirectory\*" -Force -Recurse -ErrorAction SilentlyContinue
+        
+        & $PSScriptRoot\iis-cleanup.ps1
+        
+        # Start IIS after removing files
+        iisreset.exe /START
 	}
 
 	function SetHighPower() {
@@ -201,10 +218,6 @@ process {
 		ConfigureGit
 
 		$agentName = GetRandomName
-
-		if (-not (Test-Path $workDirectory)) {
-			$workDirectory = $Env:SystemDrive + "\"
-		}
 
 		$scratchDirectoryName = Get-Random -Maximum 1024
 
