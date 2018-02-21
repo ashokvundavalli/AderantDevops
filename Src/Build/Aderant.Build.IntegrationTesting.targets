@@ -167,6 +167,7 @@
       <PackagesToImport Include="$(PackagesToImport)" />
       <Packages Include="$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)" Condition="'%(Extension)' == '.zip' And Exists('$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)')" />
       <Packages Include="$(BinModuleDirectory)\Packages\*.zip" Exclude="@(Packages)" />
+      <Packages Include="$(BinTestDirectory)\TestPackages\*" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\clients.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\instance.config" />
     </ItemGroup>
 
@@ -242,8 +243,50 @@
   </Target>
 
 
-  <Target Name="LightsOff"
+  <Target Name="RunAutomationTests"
     AfterTargets="RunIntegrationTests"
+    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(RunAutomationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+
+    <ItemGroup>
+      <AutomationTestAssemblies Condition="'$(RunAutomationTests)' == 'true'"
+        Include="$(BinTestDirectory)UIAutomationTest*.dll" />
+    </ItemGroup>
+    <PropertyGroup>
+      <AutomationTestAssemblies>@(AutomationTestAssemblies->'%(FullPath)',' ')</AutomationTestAssemblies>
+      <TestAdapterPath>/TestAdapterPath:"$(BinTestDirectory)"</TestAdapterPath>
+      <!-- VSTest Setup shared from Integration test run -->
+      <AutomationTestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomAutomationTestFilters)&quot;</AutomationTestCaseFilter>
+      
+    </PropertyGroup>
+    
+    <PropertyGroup>
+      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
+      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
+    </PropertyGroup>
+    
+
+
+
+    <!-- Run With VSTest -->
+    <Exec Condition="'$(AutomationTestAssemblies)' != ''"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) $(AutomationTestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
+
+    <PropertyGroup>
+      <TestOutcome>Succeeded</TestOutcome>
+    </PropertyGroup>
+
+    <OnError ExecuteTargets="LightsOff;OnTestFailure" />
+
+  </Target>
+
+
+  <Target Name="LightsOff"
+    AfterTargets="RunIntegrationTests;RunAutomationTests"
     Condition="'$(IsDesktopBuild)' != 'true' And '$(RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
