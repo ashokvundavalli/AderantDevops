@@ -192,8 +192,8 @@
 
 
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
-    Condition="('$(IsDesktopBuild)' != 'true' And '$(RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' == 'true')">
+          DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
+          Condition="('$(IsDesktopBuild)' != 'true' And '$(RunIntegrationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' == 'true')">
 
     <PropertyGroup>
       <IntegrationTestAssemblies>@(IntegrationTestAssemblies->'%(FullPath)',' ')</IntegrationTestAssemblies>
