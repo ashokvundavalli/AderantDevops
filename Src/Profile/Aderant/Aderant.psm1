@@ -2018,7 +2018,7 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
         write "No command name specified."
         return
     }
-    if (!($CommandName)) {
+    if (!($ParameterName)) {
         write "No parameter name specified."
         return
     }    
