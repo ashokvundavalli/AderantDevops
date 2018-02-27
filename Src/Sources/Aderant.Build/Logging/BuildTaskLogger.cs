@@ -2,11 +2,15 @@
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Logging {
-    internal class BuildTaskLogger : ILogger {
+    public class BuildTaskLogger : ILogger {
         internal TaskLoggingHelper Logger { get; private set; }
 
-        internal BuildTaskLogger(Microsoft.Build.Utilities.Task hostTask) {
+        public BuildTaskLogger(Microsoft.Build.Utilities.Task hostTask) {
             Logger = hostTask.Log;
+        }
+
+        public BuildTaskLogger(TaskLoggingHelper helper) {
+            this.Logger = helper;
         }
 
         /// <summary>

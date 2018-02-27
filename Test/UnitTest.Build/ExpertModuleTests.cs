@@ -269,7 +269,7 @@ ExcludeFromPackaging='true' />"));
         public void When_branch_is_set_repository_cannot_be_nuget() {
             var module = ExpertModule.Create(XElement.Parse(@"<Module Name='Marketing.Help' Branch='Main' />"));
 
-            Assert.AreEqual(module.RepositoryType, RepositoryType.Folder);
+            Assert.AreEqual(module.GetAction, GetAction.Branch);
         }
 
         [TestMethod]

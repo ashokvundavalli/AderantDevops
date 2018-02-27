@@ -1,19 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
+
+    [DebuggerDisplay("DependencyManifest: {" + nameof(ModuleName) + "}")]
     public class DependencyManifest {
         private readonly XDocument manifest;
         private List<ExpertModule> referencedModules;
         private IGlobalAttributesProvider globalAttributesProvider;
 
-        public bool IsEnabled { get; private set; }
+        public bool IsEnabled { get; set; }
 
         public bool? DependencyReplicationEnabled { get; set; }
+
+        protected DependencyManifest() {
+        }
 
         internal DependencyManifest(string moduleName, XDocument manifest) {
             this.ModuleName = moduleName;
@@ -58,7 +65,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>
         /// The name of the module.
         /// </value>
-        public string ModuleName { get; }
+        public virtual string ModuleName { get; protected set; }
 
         /// <summary>
         /// Gets the referenced modules.
@@ -67,7 +74,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The referenced modules.
         /// </value>
         /// <exception cref="Aderant.Build.DuplicateModuleInManifestException"></exception>
-        public IList<ExpertModule> ReferencedModules {
+        public virtual IList<ExpertModule> ReferencedModules {
             get {
                 if (referencedModules == null) {
                     referencedModules = new List<ExpertModule>();
@@ -75,13 +82,16 @@ namespace Aderant.Build.DependencyAnalyzer {
                     var elements = manifest.Descendants("ReferencedModule");
 
                     foreach (var element in elements) {
-                        var mergedElement = element;
+                        XElement newElement = element;
 
                         if (GlobalAttributesProvider != null) {
-                            mergedElement = GlobalAttributesProvider.MergeAttributes(mergedElement);
+                            var mergedElement = GlobalAttributesProvider.MergeAttributes(element);
+                            if (mergedElement != null) {
+                                newElement = mergedElement;
+                            }
                         }
 
-                        var module = ExpertModule.Create(mergedElement);
+                        var module = ExpertModule.Create(newElement);
 
                         if (referencedModules.Contains(module)) {
                             throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
@@ -159,6 +169,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var document = XDocument.Load(stream, LoadOptions);
 
                 var manifest = new DependencyManifest(Path.GetFileName(modulePath), document);
+
+                var paketFile = fs.GetFiles(modulePath, "paket.dependencies", false, true).FirstOrDefault();
+                if (!string.IsNullOrEmpty(paketFile)) {
+                    manifest = new PaketView(fs, paketFile, manifest);
+                }
+
                 return manifest;
             }
         }

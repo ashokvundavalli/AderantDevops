@@ -33,7 +33,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             IEnumerable<ExpertModule> modules = provider.GetAll();
 
             sourceBranch = sourceBranch.Replace('/', Path.DirectorySeparatorChar);
-            
+
             EditProductManifest(sourceControl);
 
             var validator = new SourceControlModuleInspector(logger, versionControl);
@@ -64,7 +64,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ExpertModule updatedModule = AddOrUpdateExpertManifestEntry(provider, module.Name);
 
                 if (updatedModule != null) {
-                    if (!provider.IsAvailable(module.Name)) {
+                    if (provider.IsAvailable(module.Name) != ModuleAvailability.Availabile) {
                         // The module is not available in the current branch we need to check if it is available in the other branch
                         string sourceBranchModule = sourceBranchModules.Contains(module.Name, StringComparer.OrdinalIgnoreCase) ? sourceBranch : targetBranch;
 
@@ -96,28 +96,28 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void SynchronizeProductManifestWithModules(ExpertModule module, ITeamFoundationWorkspace workspace) {
-            DependencyManifest manifest;
-            if (provider.TryGetDependencyManifest(module.Name, out manifest)) {
-                logger.Info("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
+            //DependencyManifest manifest;
+            //if (provider.TryGetDependencyManifest(module.Name, out manifest)) {
+            //    logger.Info("Synchronizing Expert Manifest against Dependency Manifest for: {0}", module.Name);
 
-                string dependencyManifestPath;
-                if (provider.TryGetDependencyManifestPath(module.Name, out dependencyManifestPath)) {
-                    DependencyManifest dependencyManifest;
+            //    string dependencyManifestPath;
+            //    if (provider.TryGetDependencyManifestPath(module.Name, out dependencyManifestPath)) {
+            //        DependencyManifest dependencyManifest;
 
-                    if (provider.TryGetDependencyManifest(module.Name, out dependencyManifest)) {
-                        string instanceBeforeSave = File.ReadAllText(dependencyManifestPath);
+            //        if (provider.TryGetDependencyManifest(module.Name, out dependencyManifest)) {
+            //            string instanceBeforeSave = File.ReadAllText(dependencyManifestPath);
 
-                        AddMissingModulesToManifest(manifest.ReferencedModules, provider);
+            //            AddMissingModulesToManifest(manifest.ReferencedModules, provider);
 
-                        string modifiedManifestDocument = dependencyManifest.Save();
+            //            string modifiedManifestDocument = dependencyManifest.Save();
 
-                        if (!string.Equals(instanceBeforeSave, modifiedManifestDocument)) {
-                            workspace.PendEdit(dependencyManifestPath);
-                            File.WriteAllText(dependencyManifestPath, modifiedManifestDocument);
-                        }
-                    }
-                }
-            }
+            //            if (!string.Equals(instanceBeforeSave, modifiedManifestDocument)) {
+            //                workspace.PendEdit(dependencyManifestPath);
+            //                File.WriteAllText(dependencyManifestPath, modifiedManifestDocument);
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         private List<ExpertModule> AddModulesFromSourceControl(IEnumerable<ExpertModule> modules, string targetBranch, VersionControlServer vcs) {

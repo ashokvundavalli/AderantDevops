@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
 		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
 		Src\Build\Aderant.CodeSigning.targets = Src\Build\Aderant.CodeSigning.targets
+		Src\Build\Aderant.ComboBuild.targets = Src\Build\Aderant.ComboBuild.targets
 		Src\Build\Aderant.CSharp.targets = Src\Build\Aderant.CSharp.targets
 		Src\Build\Aderant.CustomAfterMicrosoftCommon.targets = Src\Build\Aderant.CustomAfterMicrosoftCommon.targets
 		Src\Build\Aderant.wpp.content.proj = Src\Build\Aderant.wpp.content.proj
@@ -120,6 +121,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAnalyzerTest", "Test\Int
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.TeamFoundation.Integration", "Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj", "{7AA81D68-A831-41BA-B899-062FDAC0C63C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.BuildTime.Tasks", "Src\Sources\Aderant.BuildTime.Tasks\Aderant.BuildTime.Tasks.csproj", "{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -194,6 +197,10 @@ Global
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -26,7 +26,7 @@ namespace UnitTest.Build {
             throw new System.NotImplementedException();
         }
 
-        public virtual bool IsAvailable(string moduleName) {
+        public virtual ModuleAvailability IsAvailable(string moduleName) {
             throw new System.NotImplementedException();
         }
 
@@ -35,14 +35,18 @@ namespace UnitTest.Build {
         }
 
         public virtual void Add(ExpertModule module) {
-         
+
         }
 
         public virtual void Remove(IEnumerable<ExpertModule> items) {
-           
+
         }
 
         public virtual string Save() {
+            throw new System.NotImplementedException();
+        }
+
+        public void GetRepositoryInfo(string moduleName) {
             throw new System.NotImplementedException();
         }
     }

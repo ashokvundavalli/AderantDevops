@@ -27,7 +27,6 @@ namespace UnitTest.Build {
         #endregion
 
         [TestMethod]
-        [Ignore]
         public void GetModulesReturnsDistinctModules() {
             DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ExpertModule> modules = builder.GetAllModules();
@@ -38,7 +37,6 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [Ignore]
         public void GetModuleDependenciesReturnsCorrectDependencies() {
             DependencyBuilder builder = new DependencyBuilder(BranchPath);
             IEnumerable<ModuleDependency> modulesDependencies = builder.GetModuleDependencies();
@@ -117,8 +115,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [Ignore]
-        [ExpectedException(typeof (CircularDependencyException))]
+        [ExpectedException(typeof(CircularDependencyException))]
         public void WhenDependencyChainIsCircularAnExceptionIsThrown() {
             var provider = new CircularReferenceProvider();
 
@@ -195,8 +192,8 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public override bool IsAvailable(string moduleName) {
-            return true;
+        public override ModuleAvailability IsAvailable(string moduleName) {
+            return ModuleAvailability.Availabile;
         }
     }
 
@@ -284,8 +281,8 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public override bool IsAvailable(string moduleName) {
-            return true;
+        public override ModuleAvailability IsAvailable(string moduleName) {
+            return ModuleAvailability.Availabile;
         }
 
     }
@@ -339,8 +336,8 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public override bool IsAvailable(string moduleName) {
-            return true;
+        public override ModuleAvailability IsAvailable(string moduleName) {
+            return ModuleAvailability.Availabile;
         }
     }
 }

@@ -27,18 +27,18 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets or sets the source.
         /// </summary>
         /// <value>The source.</value>
-        public RepositoryType Source { get; protected set; }
+        public GetAction Source { get; protected set; }
 
         public static IDependencyRequirement Create(ExpertModule reference) {
-            if (reference.RepositoryType == RepositoryType.NuGet) {
-                return new DependencyRequirement(reference.Name, reference.VersionRequirement) { ReplicateToDependencies = reference.ReplicateToDependencies };
+            if (reference.GetAction == GetAction.NuGet) {
+                return new DependencyRequirement(reference.Name, reference.VersionRequirement);
             }
             return new FolderBasedRequirement(reference);
         }
 
         public static IDependencyRequirement Create(string packageName, VersionRequirement version = null) {
             return new DependencyRequirement(packageName, version) {
-                Source = RepositoryType.NuGet
+                Source = GetAction.NuGet
             };
         }
 

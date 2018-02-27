@@ -8,22 +8,50 @@ using System.Xml.Linq;
 using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
+
     /// <summary>
     /// Represents a module in the expert code base
     /// </summary>
-    [DebuggerDisplay("{Name}")]
-    public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule> {
+    [DebuggerDisplay("{Name} ({DebuggerDisplayNames})")]
+    public class ExpertModule : IEquatable<ExpertModule>, IDependencyRef {
         private string name;
         private IList<XAttribute> customAttributes;
         private ModuleType? type;
+        private string solutionRoot;
+        private readonly string[] names;
+        private DependencyManifest manifest;
+        private ICollection<IDependencyRef> dependsOn;
+
+        internal string DebuggerDisplayNames {
+            get {
+                if (names != null) {
+                    return string.Join(", ", names);
+                }
+                return string.Empty;
+            }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
         /// </summary>
         public ExpertModule() {
-            if (!string.IsNullOrEmpty(Branch)) {
-                RepositoryType = RepositoryType.Folder;
+        }
+
+        public ExpertModule(string solutionRoot, string[] names, DependencyManifest manifest) {
+            this.solutionRoot = solutionRoot;
+            this.names = names;
+            this.manifest = manifest;
+            this.Name = names[0];
+        }
+
+        public ICollection<IDependencyRef> DependsOn {
+            get {
+                if (dependsOn == null) {
+                    dependsOn = manifest.ReferencedModules.ToList<IDependencyRef>();
+                }
+                return dependsOn;
             }
+            set { dependsOn = value; }
         }
 
         /// <summary>
@@ -31,7 +59,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         /// <param name="element">The element.</param>
         public static ExpertModule Create(XElement element) {
-            XAttribute name = element.Attribute("Name");
+            var name = element.Attribute("Name");
 
             if (string.IsNullOrEmpty(name?.Value)) {
                 throw new ArgumentNullException(nameof(element), "No name element specified");
@@ -53,7 +81,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
-        internal ExpertModule(XElement element) 
+        internal ExpertModule(XElement element)
             : this() {
             ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
@@ -88,20 +116,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(ExpertModule other) {
-            if (ModuleType != other.ModuleType) {
-                return false;
-            }
-
-            if (Char.IsUpper(Name[0]) && char.IsUpper(other.name[0])) {
-                if (Name[0] != other.name[0]) {
-                    return false;
-                }
-            }
-
-            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
+            return other != null && String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static readonly Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
+        private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
             { "Libraries", ModuleType.Library },
             { "Services", ModuleType.Service },
             { "Applications", ModuleType.Application },
@@ -112,6 +130,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             { "Tests", ModuleType.Test },
         };
 
+
+
         public static ModuleType GetModuleType(string name) {
             string firstPart = name.Split('.')[0];
 
@@ -120,7 +140,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (typeMap.TryGetValue(firstPart, out type)) {
                 return type;
             }
-           
+
             if (Enum.TryParse(firstPart, true, out type)) {
                 return type;
             }
@@ -178,26 +198,21 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal RepositoryType RepositoryType { get; set; }
         public bool Extract { get; set; }
         public string Target { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
-        /// </summary>
-        public bool ReplicateToDependencies { get; set; } = true;
-
         public PackageType PackageRootRelativeDirectory { get; set; }
 
         internal VersionRequirement VersionRequirement {
             get {
                 var version = customAttributes.FirstOrDefault(s => string.Equals(s.Name.LocalName, "Version"));
                 if (version != null) {
-                    return new VersionRequirement {ConstraintExpression = ConstraintExpression.Parse(version.Value)};
+                    return new VersionRequirement { ConstraintExpression = version.Value };
                 }
                 return null;
             }
         }
+
+        public RepositoryType RepositoryType { get; set; }
 
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -237,14 +252,23 @@ namespace Aderant.Build.DependencyAnalyzer {
             return Name;
         }
 
-        public int CompareTo(ExpertModule other) {
-            if (ReferenceEquals(this, other)) {
-                return 0;
+        public static ExpertModule Create(string solutionRoot, string[] names, DependencyManifest manifest) {
+            return new ExpertModule(solutionRoot, names, manifest);
+        }
+
+        public bool Equals(IDependencyRef other) {
+            ExpertModule module = other as ExpertModule;
+            return Equals(module);
+        }
+
+        public bool Match(string depName) {
+            foreach (var name in names) {
+                if (string.Equals(name, depName, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
             }
-            if (ReferenceEquals(null, other)) {
-                return 1;
-            }
-            return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
+
+            return false;
         }
     }
 
