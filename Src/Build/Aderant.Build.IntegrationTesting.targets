@@ -113,13 +113,13 @@
     <PropertyGroup>
       <ImagePath>$(ImageWorkingDirectory)\ExpertServerImage.zip</ImagePath>
       <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
-      <RoleFiles>$(BinModuleDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\</RoleFiles>
+      <RoleFiles>$(BinModuleDirectory);$(BinTestDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\</RoleFiles>
     </PropertyGroup>
     
     <!--Update Server Image -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(BinModuleDirectory)&apos; }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(BinModuleDirectory);$(BinTestDirectory);$(SolutionDirectoryPath)\Packages&apos; }&quot;" />
 
   </Target>
 
