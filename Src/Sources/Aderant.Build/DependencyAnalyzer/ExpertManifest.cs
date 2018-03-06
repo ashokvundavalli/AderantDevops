@@ -281,7 +281,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             set {
                 moduleDirectory = value;
                 if (string.IsNullOrEmpty(Branch)) {
-                    Branch = PathHelper.GetBranch(value);
+                    Branch = "master";//TODO: temporary hard coded to master ??? PathHelper.GetBranch(value);
                 }
             }
         }

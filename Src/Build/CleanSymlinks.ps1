@@ -1,6 +1,7 @@
 [CmdletBinding()]
-Param ($path)
+Param ([string]$path)
          
 Process {
-    dir -Path $path -Force -Recurse -ErrorAction 'SilentlyContinue' | Where { $_.Attributes -match "ReparsePoint"} | % { Remove-Item $_.FullName -Verbose -Force -Recurse }
+    # Symbolic link needs to be removed using [System.IO.Directory]::Delete
+    dir -Path $path -Force -Recurse -ErrorAction 'SilentlyContinue' | Where { $_.Attributes -match "ReparsePoint"} | % { [System.IO.Directory]::Delete($_.FullName, $true) }
 }        

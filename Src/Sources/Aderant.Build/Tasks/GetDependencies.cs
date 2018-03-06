@@ -14,10 +14,8 @@ namespace Aderant.Build.Tasks {
         [Required]
         public string ModulesRootPath { get; set; }
 
-        [Required]
         public string DropPath { get; set; }
 
-        [Required]
         public string ProductManifest { get; set; }
 
         /// <summary>
@@ -49,6 +47,7 @@ namespace Aderant.Build.Tasks {
         public string BuildType { get; set; }
 
         public override bool Execute() {
+
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
             if (ProductManifest != null) {
@@ -59,7 +58,8 @@ namespace Aderant.Build.Tasks {
 
             Stopwatch sw = Stopwatch.StartNew();
 
-            try {
+            //TODO: ??? temporary disabled as this conceals error
+            //try {
                 var logger = new BuildTaskLogger(this);
 
                 ResolverRequest request = new ResolverRequest(logger, ModulesRootPath);
@@ -88,10 +88,10 @@ namespace Aderant.Build.Tasks {
                 resolver.ResolveDependencies(request, cancellationToken.Token);
 
                 return !Log.HasLoggedErrors;
-            } finally {
-                sw.Stop();
-                Log.LogMessage("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"), null);
-            }
+            //} finally {
+            //    sw.Stop();
+            //    Log.LogMessage("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"), null);
+            //}
         }
 
         private void LogParameters() {
