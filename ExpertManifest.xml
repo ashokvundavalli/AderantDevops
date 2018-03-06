@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- this file is temporarily added here for the sequencer branch -->
 <ProductManifest Name="Expert" ExpertVersion="8.1.0">
   <Modules>
     <Module Name="Expert.Classic.CS" GetAction="specificdroplocation" Path="\\dfs.aderant.com\Packages\ExpertDrop\Releases\82\CS\8.2" Target="$/Expert Classic" />
