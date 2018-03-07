@@ -3756,7 +3756,7 @@ function Git-Merge {
 {
     "sourceRefName": "refs/heads/$featureBranch",
     "targetRefName": "refs/heads/$targetBranch",
-    "title": "Merge of $bugId into $targetBranch",
+    "title": "Merge of $bugId into $targetBranch - $($workItem.fields.'System.Title'.Replace('"', '\"'))",
     "description": "$pullRequestDescription",
     "reviewers": [
     {
