@@ -3775,13 +3775,10 @@ function Git-Merge {
                 $modifyPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$($createdPullRequest.pullRequestId)?api-version=3.0"
                 $modifyPullRequestBody = @"
 {
-    "autoCompleteSetBy": {
-    "id": "$($createdPullRequest.createdBy.id)"
-    },
     "completionOptions": {
-    "deleteSourceBranch": "true",
-    "mergeCommitMessage": "Merge of $bugId into $targetBranch",
-    "squashMerge": "true"
+		"deleteSourceBranch": "true",
+		"mergeCommitMessage": "Merge of $bugId into $targetBranch",
+		"squashMerge": "true"
     }
 }
 "@
