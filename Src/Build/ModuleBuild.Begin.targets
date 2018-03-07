@@ -33,7 +33,10 @@
   <Target Name="BeforeModuleBuild">
          
          
-         <!-- <Message Text="MSBuildNodeCount: $(MSBuildNodeCount)"/> -->
+         <!-- <Message Text="MSBuildNodeCount: $(MSBuildNodeCount)"/>
+         
+         
+         -->
 <!-- <Message Text="MSBuildExtensionsPath32: $(MSBuildExtensionsPath32)"/> -->
 <!-- <Message Text="MSBuildProjectDirectoryNoRoot: $(MSBuildProjectDirectoryNoRoot)"/> -->
 <!-- <Message Text="MSBuildToolsPath: $(MSBuildToolsPath)"/> -->
@@ -98,6 +101,8 @@
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
 
+
+
     <ItemGroup>
       <ProjectsToBuild Include="@(BuildGroup)" Condition="%(BuildGroup.IsWebProject) == 'true'">
         <Properties>$(BuildProperties);PackageWeb=true</Properties>
@@ -107,6 +112,9 @@
         <Properties>$(BuildProperties)</Properties>
       </ProjectsToBuild>
     </ItemGroup>
+
+    <Message Text="BuildGroup=@(BuildGroup)"/>
+    <Message Text="BuildProperties=@(BuildProperties)"/>
 
     <MSBuild Projects="@(ProjectsToBuild)" Targets="Build" BuildInParallel="true" Properties="%(ProjectsToBuild.Properties)" />
     
