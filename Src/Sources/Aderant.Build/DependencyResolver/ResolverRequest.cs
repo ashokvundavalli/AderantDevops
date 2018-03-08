@@ -145,7 +145,7 @@ namespace Aderant.Build.DependencyResolver {
 
             if (resolvedModule == null) {
                 if (!physicalFileSystem.DirectoryExists(".git")) {
-                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest or did you copy the source folder in? You need to use the merge script to pull down the source.", module));
                 }
                 resolvedModule = new ExpertModule { Name = module };
             }
