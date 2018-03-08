@@ -581,9 +581,6 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     }
 
     public class SolutionFileParser : ISolutionFileParser {
-        public SolutionFileParser() {
-        }
-
         public ParseResult Parse(string solutionFile) {
             SolutionFile file = SolutionFile.Parse(solutionFile);
 
