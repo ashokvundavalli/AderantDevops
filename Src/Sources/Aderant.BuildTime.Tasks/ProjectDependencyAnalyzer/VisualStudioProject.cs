@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -86,6 +87,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
         public string Name {
             get { return AssemblyName; }
+        }
+
+        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            (visitor as GraphVisitor).Visit(this, outputFile);
         }
 
         public string SolutionFile { get; set; }

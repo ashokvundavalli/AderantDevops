@@ -95,6 +95,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             set { name = Path.GetFileName(value); }
         }
 
+        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            visitor.Visit(this, outputFile);
+        }
+
         /// <summary>
         /// Gets the type of the module.
         /// </summary>
@@ -269,6 +273,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return false;
+        }
+    }
+
+    public abstract class GraphVisitorBase {
+        public virtual void Visit(ExpertModule expertModule, StreamWriter outputFile) {
+            
         }
     }
 
