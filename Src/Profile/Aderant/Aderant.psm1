@@ -2018,7 +2018,7 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
         write "No command name specified."
         return
     }
-    if (!($CommandName)) {
+    if (!($ParameterName)) {
         write "No parameter name specified."
         return
     }    
@@ -2856,7 +2856,7 @@ function Run-ExpertUITests {
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
         [Parameter(Mandatory=$false)] [string]$browserName,
-        [Parameter(Mandatory=$false)] [switch]$development,
+        [Parameter(Mandatory=$false)] [switch]$deployment,
         [Parameter(Mandatory=$false)] [switch]$noBuild,
         [Parameter(Mandatory=$false)] [switch]$noDocker
     )
@@ -2878,20 +2878,20 @@ function Run-ExpertUITests {
     $runsettingsFile = $testOutputPath + "localexecution.runsettings"
     $runSettings
 
-    if ($development -or $noDocker -or $browserName) {
+    if (!$deployment -or $noDocker -or $browserName) {
         $runSettingsParameters
         if ($browserName) {
             $runSettingsParameters += '<Parameter name="BrowserName" value="' + $browserName + '" />
             '
         }
-        if ($development) {
+        if (!$deployment) {
             $runSettingsParameters += '<Parameter name="Development" value="true" />
             '
         }
         if ($noDocker) {
             Get-ChildItem "$CurrentModulePath\Packages\**\InitializeSeleniumServer.ps1" -Recurse | Import-Module
             Start-SeleniumServers
-            $runSettingsParameters += '<Parameter name="SeleniumWorker" value="http://127.0.0.1:5555/wd/hub" />
+            $runSettingsParameters += '<Parameter name="NoDocker" value="true" />
             '
         }
 
@@ -2931,8 +2931,8 @@ function Run-ExpertUITests {
     The name of the product you want to run tests against
 .EXAMPLE
     Run-ExpertSanityTests -productName "Web.Inquiries"
-    rest "Web.Inquiries" -development
-    This will run the UI sanity tests for the Inquiries product against a development url
+    rest "Web.Inquiries" -deployment
+    This will run the UI sanity tests for the Inquiries product against a deployment url
 #>
 function Run-ExpertSanityTests {
     param(
@@ -2942,7 +2942,7 @@ function Run-ExpertSanityTests {
         [Parameter(Mandatory=$false)] [switch]$noDocker
 
     )
-    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -development:$development -noDocker:$noDocker -browserName $browserName
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -deployment:$deployment -noDocker:$noDocker -browserName $browserName
 }
 
 <#
@@ -2958,18 +2958,18 @@ function Run-ExpertSanityTests {
     Browser to use for the test
 .EXAMPLE
     Run-ExpertVisualTests -productName "Web.Inquiries"
-    rest "Web.Inquiries" -development
-    This will run the UI visual tests for the Inquiries product against a development url
+    rest "Web.Inquiries" -deployment
+    This will run the UI visual tests for the Inquiries product against a deployment url
 #>
 function Run-ExpertVisualTests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$browserName,
-        [Parameter(Mandatory=$false)] [switch]$development,
+        [Parameter(Mandatory=$false)] [switch]$deployment,
         [Parameter(Mandatory=$false)] [switch]$noDocker
 
     )
-    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -development:$development -noDocker:$noDocker -browserName $browserName
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -deployment:$deployment -noDocker:$noDocker -browserName $browserName
 }
 
 <#
@@ -3756,7 +3756,7 @@ function Git-Merge {
 {
     "sourceRefName": "refs/heads/$featureBranch",
     "targetRefName": "refs/heads/$targetBranch",
-    "title": "Merge of $bugId into $targetBranch",
+    "title": "Merge of $bugId into $targetBranch - $($workItem.fields.'System.Title'.Replace('"', '\"'))",
     "description": "$pullRequestDescription",
     "reviewers": [
     {
@@ -3775,13 +3775,10 @@ function Git-Merge {
                 $modifyPullRequestUri = "$($tfsUrl)/_apis/git/repositories/$repositoryId/pullrequests/$($createdPullRequest.pullRequestId)?api-version=3.0"
                 $modifyPullRequestBody = @"
 {
-    "autoCompleteSetBy": {
-    "id": "$($createdPullRequest.createdBy.id)"
-    },
     "completionOptions": {
-    "deleteSourceBranch": "true",
-    "mergeCommitMessage": "Merge of $bugId into $targetBranch",
-    "squashMerge": "true"
+		"deleteSourceBranch": "true",
+		"mergeCommitMessage": "Merge of $bugId into $targetBranch",
+		"squashMerge": "true"
     }
 }
 "@

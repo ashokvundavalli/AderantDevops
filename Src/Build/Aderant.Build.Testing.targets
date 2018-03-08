@@ -87,7 +87,7 @@ Code coverage percentage: $(CodeCoverageValue)
 " Importance="high" />
     
     <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != '' And '$(CodeCoverageValue)' &lt; '30'" Text="
-Code coverage is less than 30%. Your pay has been docked.
+Code coverage is less than 30%! The hounds have been released.
 
 ░░░░░░░░░░░█████████████
 ░░░░░░░░░███░███░░░░░░██

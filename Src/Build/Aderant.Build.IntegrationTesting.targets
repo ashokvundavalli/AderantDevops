@@ -113,13 +113,13 @@
     <PropertyGroup>
       <ImagePath>$(ImageWorkingDirectory)\ExpertServerImage.zip</ImagePath>
       <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
-      <RoleFiles>$(BinModuleDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\</RoleFiles>
+      <RoleFiles>$(BinModuleDirectory);$(BinTestDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\</RoleFiles>
     </PropertyGroup>
     
     <!--Update Server Image -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(BinModuleDirectory)&apos; }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ExpertEnvironmentName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(BinModuleDirectory);$(BinTestDirectory);$(SolutionDirectoryPath)\Packages&apos; }&quot;" />
 
   </Target>
 
@@ -142,7 +142,7 @@
     Condition="'$(IsDesktopBuild)' != 'true'">
 
     <Message Text="Lighting up Expert server image: Expert_$(ExpertEnvironmentName)." />
-    
+
     <!-- Light up server image -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
@@ -167,6 +167,7 @@
       <PackagesToImport Include="$(PackagesToImport)" />
       <Packages Include="$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)" Condition="'%(Extension)' == '.zip' And Exists('$(BinModuleDirectory)\Packages\%(PackagesToImport.Identity)')" />
       <Packages Include="$(BinModuleDirectory)\Packages\*.zip" Exclude="@(Packages)" />
+      <Packages Include="$(BinTestDirectory)\TestPackages\*" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\clients.config;$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Services\instance.config" />
     </ItemGroup>
 
@@ -189,10 +190,17 @@
 
   </Target>
 
+  <PropertyGroup>
+    <!-- Allows environment variables to override RSP parameters -->
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
+  </PropertyGroup>
+
 
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
-    Condition="('$(IsDesktopBuild)' != 'true' And '$(RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' == 'true')">
+          DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
+          Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' == 'true')">
 
     <PropertyGroup>
       <IntegrationTestAssemblies>@(IntegrationTestAssemblies->'%(FullPath)',' ')</IntegrationTestAssemblies>
@@ -207,7 +215,7 @@
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
       <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
     </PropertyGroup>
-    
+
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
     <MakeDir Directories="$(VsTestWorkingDirectory)" />
@@ -216,7 +224,7 @@
       <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
       <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
     </PropertyGroup>
-    
+
     <!-- Run With VSTest - Server -->
     <Exec Condition="'$(IntegrationTestAssemblies)' != '' And '$(IsDesktopBuild)' != 'true'"
       ContinueOnError="false"
@@ -242,9 +250,51 @@
   </Target>
 
 
-  <Target Name="LightsOff"
+  <Target Name="RunAutomationTests"
     AfterTargets="RunIntegrationTests"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(RunAutomationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+
+    <ItemGroup>
+      <AutomationTestAssemblies Condition="'$(RunAutomationTests)' == 'true'"
+        Include="$(BinTestDirectory)UIAutomationTest*.dll" />
+    </ItemGroup>
+    <PropertyGroup>
+      <AutomationTestAssemblies>@(AutomationTestAssemblies->'%(FullPath)',' ')</AutomationTestAssemblies>
+      <TestAdapterPath>/TestAdapterPath:"$(BinTestDirectory)"</TestAdapterPath>
+      <!-- VSTest Setup shared from Integration test run -->
+      <AutomationTestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomAutomationTestFilters)&quot;</AutomationTestCaseFilter>
+      
+    </PropertyGroup>
+    
+    <PropertyGroup>
+      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
+      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
+    </PropertyGroup>
+    
+
+
+
+    <!-- Run With VSTest -->
+    <Exec Condition="'$(AutomationTestAssemblies)' != ''"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) $(AutomationTestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
+
+    <PropertyGroup>
+      <TestOutcome>Succeeded</TestOutcome>
+    </PropertyGroup>
+
+    <OnError ExecuteTargets="LightsOff;OnTestFailure" />
+
+  </Target>
+
+
+  <Target Name="LightsOff"
+    AfterTargets="RunIntegrationTests;RunAutomationTests"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
 
