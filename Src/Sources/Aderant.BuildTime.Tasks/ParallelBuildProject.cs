@@ -47,7 +47,7 @@ namespace Aderant.BuildTime.Tasks {
 
         private void Run([CallerFilePath] string sourceFilePath = "") {
             try {
-                var fileSystem = new PhysicalFileSystem(ModulesDirectory);
+                PhysicalFileSystem fileSystem = new PhysicalFileSystem(ModulesDirectory);
 
                 BuildSequencer controller = new BuildSequencer(
                     new BuildTaskLogger(this),

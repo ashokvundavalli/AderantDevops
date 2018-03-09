@@ -49,9 +49,9 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         /// </summary>
         /// <param name="context">The context.</param>
         public List<IDependencyRef> GetDependencyOrder(AnalyzerContext context) {
-            var graph = GetDependencyGraph(context);
+            TopologicalSort<IDependencyRef> graph = GetDependencyGraph(context);
 
-            var vistior = new GraphVisitor();
+            GraphVisitor vistior = new GraphVisitor(fileSystem.Root);
             vistior.BeginVisit(graph);
 
             return GetDependencyOrderFromGraph(graph);
@@ -582,6 +582,12 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     }
 
     internal class GraphVisitor : GraphVisitorBase {
+        public string ModuleRoot { get; }
+
+        public GraphVisitor(string moduleRoot) {
+            ModuleRoot = moduleRoot;
+        }
+
         public override void Visit(ExpertModule expertModule, StreamWriter outputFile) {
             Console.WriteLine(String.Format("|   {0, -60} - {1}", expertModule.Name, expertModule.GetType().Name));
             Console.WriteLine($"|       |--- {expertModule.DependsOn.Count} dependencies");
@@ -616,13 +622,15 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public void BeginVisit(TopologicalSort<IDependencyRef> graph) {
-            using (StreamWriter outputFile = new StreamWriter(@"C:\BranchBuild" + @"\Tree.txt")) {
-                foreach (var item in graph.Vertices) {
+            string treeFile = Path.Combine(ModuleRoot, "Tree.txt");
+
+            using (StreamWriter outputFile = new StreamWriter(treeFile)) {
+                foreach (IDependencyRef item in graph.Vertices) {
                     item.Accept(this, outputFile);
                 }
             }
 
-            Console.WriteLine(@"To view the full dependencies tree, please visit the 'c:\BranchBuild\Tree.txt' file.");
+            Console.WriteLine($@"To view the full dependencies tree, see: {treeFile}");
         }
     }
 
