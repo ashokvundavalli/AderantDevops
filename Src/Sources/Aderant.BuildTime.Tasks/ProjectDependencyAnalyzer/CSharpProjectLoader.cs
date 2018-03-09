@@ -200,7 +200,6 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return isweb;
         }
     }
-
     [DebuggerDisplay("{Name} ({dependencyType})")]
     internal class AssemblyRef : IDependencyRef {
         private readonly DependencyType dependencyType;
@@ -214,6 +213,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; }
+
+        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            (visitor as GraphVisitor).Visit(this, outputFile);
+        }
 
         public bool Equals(IDependencyRef other) {
             if (ReferenceEquals(null, other)) {
@@ -252,6 +255,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; private set; }
+
+        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            (visitor as GraphVisitor).Visit(this, outputFile);
+        }
+
         public Guid? ProjectGuid { get; set; }
 
         public bool Equals(IDependencyRef other) {
@@ -291,11 +299,13 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             VisualStudioProject project = projectVertices.FirstOrDefault(f => f.ProjectGuid == ProjectGuid);
             if (project != null) {
                 if (!string.Equals(project.AssemblyName, this.Name, StringComparison.OrdinalIgnoreCase)) {
-                    
+
                 }
                 Name = project.AssemblyName;
                 this.isResolved = true;
             }
         }
     }
+
+
 }

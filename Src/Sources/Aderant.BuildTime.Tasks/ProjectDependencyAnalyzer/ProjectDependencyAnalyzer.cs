@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.BuildTime.Tasks.Sequencer;
@@ -48,7 +49,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         /// </summary>
         /// <param name="context">The context.</param>
         public List<IDependencyRef> GetDependencyOrder(AnalyzerContext context) {
-            var graph = GetDependencyGraph(context);
+            TopologicalSort<IDependencyRef> graph = GetDependencyGraph(context);
+
+            GraphVisitor vistior = new GraphVisitor(fileSystem.Root);
+            vistior.BeginVisit(graph);
 
             return GetDependencyOrderFromGraph(graph);
         }
@@ -560,12 +564,73 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             get { return module.Name; }
         }
 
+        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            (visitor as GraphVisitor).Visit(this, outputFile);
+
+            foreach (IDependencyRef dep in module.DependsOn) {
+                dep.Accept(visitor, outputFile);
+            }
+        }
+
         public bool Equals(IDependencyRef @ref) {
             var moduleRef = @ref as ModuleRef;
             if (moduleRef != null && string.Equals(Name, moduleRef.Name, StringComparison.OrdinalIgnoreCase)) {
                 return true;
             }
             return false;
+        }
+    }
+
+    internal class GraphVisitor : GraphVisitorBase {
+        public string ModuleRoot { get; }
+
+        public GraphVisitor(string moduleRoot) {
+            ModuleRoot = moduleRoot;
+        }
+
+        public override void Visit(ExpertModule expertModule, StreamWriter outputFile) {
+            Console.WriteLine(String.Format("|   {0, -60} - {1}", expertModule.Name, expertModule.GetType().Name));
+            Console.WriteLine($"|       |--- {expertModule.DependsOn.Count} dependencies");
+
+            outputFile.WriteLine(String.Format("|   {0, -60} - {1}", $"{expertModule.Name} ({expertModule.DependsOn.Count})", expertModule.GetType().Name));
+            foreach (var dependencyRef in expertModule.DependsOn) {
+                outputFile.WriteLine($"|       |---{dependencyRef.Name}");
+            }
+        }
+
+        public void Visit(ModuleRef moduleRef, StreamWriter outputFile) {
+            Console.WriteLine("I am a ModuleRef");
+        }
+
+        public void Visit(AssemblyRef assemblyRef, StreamWriter outputFile) {
+            Console.WriteLine("I am a AssemblyRef");
+        }
+
+        public void Visit(VisualStudioProject visualStudioProject, StreamWriter outputFile) {
+            Console.WriteLine(String.Format("|   {0, -60} - {1}", visualStudioProject.Name, visualStudioProject.GetType().Name));
+            Console.WriteLine($"|       |--- {visualStudioProject.Dependencies.Count} dependencies");
+
+            outputFile.WriteLine(String.Format("|   {0, -60} - {1}", $"{visualStudioProject.Name} ({visualStudioProject.Dependencies.Count})", visualStudioProject.GetType().Name));
+            foreach (var dependencyRef in visualStudioProject.Dependencies) {
+                outputFile.WriteLine($"|       |---{dependencyRef.Name}");
+            }
+        }
+
+        public void Visit(ProjectRef projectRef, StreamWriter outputFile) {
+            Console.WriteLine(String.Format("|   {0, -60} - {1}", projectRef.Name, projectRef.GetType().Name));
+            Console.WriteLine($"|       |---");
+        }
+
+        public void BeginVisit(TopologicalSort<IDependencyRef> graph) {
+            string treeFile = Path.Combine(ModuleRoot, "DependencyGraph.txt");
+
+            using (StreamWriter outputFile = new StreamWriter(treeFile)) {
+                foreach (IDependencyRef item in graph.Vertices) {
+                    item.Accept(this, outputFile);
+                }
+            }
+
+            Console.WriteLine($@"To view the full dependencies graph, see: {treeFile}");
         }
     }
 
@@ -581,9 +646,6 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     }
 
     public class SolutionFileParser : ISolutionFileParser {
-        public SolutionFileParser() {
-        }
-
         public ParseResult Parse(string solutionFile) {
             SolutionFile file = SolutionFile.Parse(solutionFile);
 

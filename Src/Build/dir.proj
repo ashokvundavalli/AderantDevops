@@ -25,6 +25,8 @@
     <TSLintConfig>$(MSBuildProjectDirectory)\tslint.json</TSLintConfig>
     <TSLintCli>$(MSBuildThisFileDirectory)\packages\Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
     <TSLintBreakBuildOnError>true</TSLintBreakBuildOnError>
+    <TSLintTypeCheck>True</TSLintTypeCheck>
+    <TSLintProject>$(MSBuildProjectDirectory)\tsconfig.json</TSLintProject>
   </PropertyGroup>
 
 

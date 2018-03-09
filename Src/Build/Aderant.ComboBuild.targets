@@ -26,12 +26,12 @@
     <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
     <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath( '$(LocalExpertBinariesDirectory)' ))</LocalExpertBinariesDirectory>
 -->
-    <BuildInfrastructureDirectory>C:\Git\Build.Infrastructure</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))))</BuildInfrastructureDirectory>
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-    <ProductManifestPath>C:\git\Build.Infrastructure\ExpertManifest.xml</ProductManifestPath>   
+    <ProductManifestPath>$(BuildInfrastructureDirectory)\ExpertManifest.xml</ProductManifestPath>   
 
     
     <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
@@ -50,7 +50,7 @@
     <IsComboBuild>true</IsComboBuild>
   </PropertyGroup>
 
-  
+
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
 
   <!-- Contains the branch build configuration -->
