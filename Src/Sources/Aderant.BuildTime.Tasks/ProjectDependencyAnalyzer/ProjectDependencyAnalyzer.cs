@@ -399,9 +399,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             foreach (var project in projects) {
                 project.Dependencies.Add(expertModule);
 
-                foreach (var module in dependencies.ReferencedModules) {
-                    project.Dependencies.Add(new ModuleRef(module));
-                }
+                // Don't add this
+                //foreach (var module in dependencies.ReferencedModules) {
+                //    project.Dependencies.Add(new ModuleRef(module));
+                //}
             }
         }
 
@@ -582,10 +583,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     }
 
     internal class GraphVisitor : GraphVisitorBase {
-        public string ModuleRoot { get; }
+        private readonly string moduleRoot;
 
         public GraphVisitor(string moduleRoot) {
-            ModuleRoot = moduleRoot;
+            this.moduleRoot = moduleRoot;
         }
 
         public override void Visit(ExpertModule expertModule, StreamWriter outputFile) {
@@ -622,15 +623,15 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public void BeginVisit(TopologicalSort<IDependencyRef> graph) {
-            string treeFile = Path.Combine(ModuleRoot, "DependencyGraph.txt");
+            string treeFile = Path.Combine(moduleRoot, "DependencyGraph.txt");
 
-            using (StreamWriter outputFile = new StreamWriter(treeFile)) {
+            using (StreamWriter outputFile = new StreamWriter(treeFile, false)) {
                 foreach (IDependencyRef item in graph.Vertices) {
                     item.Accept(this, outputFile);
                 }
             }
 
-            Console.WriteLine($@"To view the full dependencies graph, see: {treeFile}");
+            Console.WriteLine($"To view the full dependencies graph, see: {treeFile}");
         }
     }
 
