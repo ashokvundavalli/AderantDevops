@@ -112,7 +112,10 @@
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(TfvcDropLocation)"
       ModulesInBuild="@(ModulesInBuild)" />
-
+    
+    
+    <Message Text="Finished GetDependencies" />
+    
     <ItemGroup>
       <Files Include="$(SharedDependencyDirectory)**\*" />
     </ItemGroup>
@@ -163,6 +166,7 @@
       <DependencySearchPaths>@(DependencySearchPaths)</DependencySearchPaths>
     </PropertyGroup>
 
+    <Message Text="End of GetAllModuleDependencies"/>
   </Target>
 
 

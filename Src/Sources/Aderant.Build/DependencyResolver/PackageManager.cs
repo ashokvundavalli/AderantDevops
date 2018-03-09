@@ -86,7 +86,13 @@ namespace Aderant.Build.DependencyResolver {
                     }
 
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                        // Hack to replace 
+                        //      source https://www.nuget.org/api/v2
+                        // with 
+                        //      source http://packages.ap.aderant.com/packages/nuget
+                        //      source \\dfs.aderant.com\packages\ExpertDatabase
+                        //      source https://www.nuget.org/api/v2
+                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri, Environment.NewLine, "source ", BuildConstants.DefaultNuGetServer);
                         file.Save();
                         break;
                     }
