@@ -12,7 +12,7 @@ using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
-    internal class PackageManager : IDisposable {
+    internal class PaketPackageManager : IDisposable {
         private FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
         private readonly ILogger logger;
         public IFileSystem2 FileSystem { get; }
@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyResolver {
 
         private Dependencies dependencies;
 
-        public PackageManager(IFileSystem2 fileSystem, ILogger logger) {
+        public PaketPackageManager(IFileSystem2 fileSystem, ILogger logger) {
             this.logger = logger;
             this.FileSystem = fileSystem;
             dependencies = Initialize();

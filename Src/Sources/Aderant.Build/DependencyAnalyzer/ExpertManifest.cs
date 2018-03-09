@@ -281,7 +281,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             set {
                 moduleDirectory = value;
                 if (string.IsNullOrEmpty(Branch)) {
-                    Branch = "master";//TODO: temporary hard coded to master ??? PathHelper.GetBranch(value);
+                    if (Path.IsPathRooted(value)) {
+                        // e.g. C:\temp\big\ -> is Git based
+                        Branch = "master"; //TODO: temporary hard coded to master ???    
+                    } else { // TFS based, to get the TFS branch name
+                        Branch = PathHelper.GetBranch(value);
+                    }
+                    
                 }
             }
         }

@@ -168,7 +168,7 @@
     <Compile Include="RetryingPhysicalFileSystem.cs" />
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
-    <Compile Include="DependencyResolver\PackageManager.cs" />
+    <Compile Include="DependencyResolver\PaketPackageManager.cs" />
     <Compile Include="DependencyResolver\DependencySource.cs" />
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
