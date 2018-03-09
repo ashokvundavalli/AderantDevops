@@ -622,7 +622,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public void BeginVisit(TopologicalSort<IDependencyRef> graph) {
-            string treeFile = Path.Combine(ModuleRoot, "Tree.txt");
+            string treeFile = Path.Combine(ModuleRoot, "DependencyGraph.txt");
 
             using (StreamWriter outputFile = new StreamWriter(treeFile)) {
                 foreach (IDependencyRef item in graph.Vertices) {
@@ -630,7 +630,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 }
             }
 
-            Console.WriteLine($@"To view the full dependencies tree, see: {treeFile}");
+            Console.WriteLine($@"To view the full dependencies graph, see: {treeFile}");
         }
     }
 
