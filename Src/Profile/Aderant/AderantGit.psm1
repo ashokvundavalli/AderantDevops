@@ -29,7 +29,7 @@ function global:prompt {
     return " "
 }
 
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$codeCoverageReport) {
+function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport) {
     begin {
         Set-StrictMode -Version 2.0
     }
@@ -56,11 +56,11 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
             $task = "Package"
         }    
 
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool()
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool()
     }
 
     end {
-            if ($LASTEXITCODE -eq 0 -and $codeCoverageReport.IsPresent -and $codeCoverage) {
+        if ($LASTEXITCODE -eq 0 -and $codeCoverageReport.IsPresent -and $codeCoverage) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
 
             if (Test-Path ($codeCoverageReport)) {
@@ -142,8 +142,8 @@ function ConfigureGit() {
     # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
 }
 
-function CheckModuleVersion(){
-# Check for PackageManagement 1.0.0.0
+function CheckModuleVersion() {
+    # Check for PackageManagement 1.0.0.0
     Import-Module PackageManagement
     $packageManagerVerion = (Get-Module PackageManagement).Version
     if (!$packageManagerVerion) {

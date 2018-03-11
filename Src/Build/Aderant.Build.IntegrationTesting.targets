@@ -201,7 +201,6 @@
   <Target Name="RunIntegrationTests"
           DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
           Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' == 'true')">
-
     <PropertyGroup>
       <IntegrationTestAssemblies>@(IntegrationTestAssemblies->'%(FullPath)',' ')</IntegrationTestAssemblies>
       <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
@@ -251,10 +250,8 @@
 
 
   <Target Name="RunAutomationTests"
-    AfterTargets="RunIntegrationTests"
-    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(RunAutomationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
-
+    Condition="('$(IsDesktopBuild)' != 'true' And '$(RunAutomationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
+    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn);RunIntegrationTests">
     <ItemGroup>
       <AutomationTestAssemblies Condition="'$(RunAutomationTests)' == 'true'"
         Include="$(BinTestDirectory)UIAutomationTest*.dll" />
@@ -264,7 +261,12 @@
       <TestAdapterPath>/TestAdapterPath:"$(BinTestDirectory)"</TestAdapterPath>
       <!-- VSTest Setup shared from Integration test run -->
       <AutomationTestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomAutomationTestFilters)&quot;</AutomationTestCaseFilter>
-      
+      <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
+      <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
+      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
+      <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
     </PropertyGroup>
     
     <PropertyGroup>
@@ -276,13 +278,20 @@
 
 
     <!-- Run With VSTest -->
-    <Exec Condition="'$(AutomationTestAssemblies)' != ''"
+    <Exec Condition="'$(AutomationTestAssemblies)' != '' And '$(IsDesktopBuild)' != 'true'"
           ContinueOnError="false"
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
           Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) $(AutomationTestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
 
+   <!-- Run With VSTest - Desktop -->
+    <Exec Condition="'$(AutomationTestAssemblies)' != '' And '$(IsDesktopBuild)' == 'true'"
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          WorkingDirectory="$(VsTestWorkingDirectory)"
+          Timeout="$(TestTimeoutMilliseconds)"
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) $(AutomationTestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
     <PropertyGroup>
       <TestOutcome>Succeeded</TestOutcome>
     </PropertyGroup>
@@ -291,9 +300,13 @@
 
   </Target>
 
+  <Target Name="LightsOffWrap"
+    DependsOnTargets="RunIntegrationTests;RunAutomationTests"
+    AfterTargets="RunIntegrationTests;RunAutomationTests">
+      <CallTarget Targets="LightsOff" />
+  </Target>
 
   <Target Name="LightsOff"
-    AfterTargets="RunIntegrationTests;RunAutomationTests"
     Condition="'$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
