@@ -79,7 +79,7 @@ namespace Aderant.Build.DependencyResolver {
             if (module != null) {
                 requirement = DependencyRequirement.Create(module);
             } else {
-                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer");
+                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer", BuildConstants.MainDependencyGroup);
             }
 
             requirement.ReplaceVersionConstraint = true;

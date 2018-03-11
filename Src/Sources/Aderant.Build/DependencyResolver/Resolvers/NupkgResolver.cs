@@ -6,6 +6,7 @@ using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
+using Paket;
 
 namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class NupkgResolver : IDependencyResolver {
@@ -20,10 +21,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var pm = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
-                    var requirements = pm.GetDependencies();
-
-                    foreach (var item in requirements) {
-                        yield return DependencyRequirement.Create(item.Key, item.Value);
+                    List<string> groupList = pm.findGroups();
+                    foreach (string groupName in groupList) {
+                        var requirements = pm.GetDependencies(Domain.GroupName(groupName));
+                        foreach (var item in requirements) {
+                            yield return DependencyRequirement.Create(item.Key, groupName, item.Value);
+                        }
                     }
                 }
             }

@@ -6,16 +6,23 @@ namespace Aderant.Build.DependencyResolver {
         protected DependencyRequirement() {
         }
 
-        protected DependencyRequirement(string packageName, VersionRequirement version) {
+        protected DependencyRequirement(string packageName, string groupName, VersionRequirement version) {
             Name = packageName;
+            Group = groupName;
             VersionRequirement = version;
         }
 
         /// <summary>
-        /// Gets or sets the name of thee requirement.
+        /// Gets or sets the name of the requirement.
         /// </summary>
         /// <value>The name.</value>
         public string Name { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the group name of the requirement.
+        /// </summary>
+        /// <value>The group name.</value>
+        public string Group { get; protected set; }
 
         /// <summary>
         /// Gets or sets the version required.
@@ -31,13 +38,13 @@ namespace Aderant.Build.DependencyResolver {
 
         public static IDependencyRequirement Create(ExpertModule reference) {
             if (reference.GetAction == GetAction.NuGet) {
-                return new DependencyRequirement(reference.Name, reference.VersionRequirement);
+                return new DependencyRequirement(reference.Name, BuildConstants.MainDependencyGroup, reference.VersionRequirement);
             }
             return new FolderBasedRequirement(reference);
         }
 
-        public static IDependencyRequirement Create(string packageName, VersionRequirement version = null) {
-            return new DependencyRequirement(packageName, version) {
+        public static IDependencyRequirement Create(string packageName, string groupName, VersionRequirement version = null) {
+            return new DependencyRequirement(packageName, groupName, version) {
                 Source = GetAction.NuGet
             };
         }

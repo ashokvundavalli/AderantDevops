@@ -67,6 +67,23 @@ namespace Aderant.Build.DependencyResolver {
             return dependencies;
         }
 
+        public List<string> findGroups() {
+            List<string> groups = new List<string>();
+            groups.Add(BuildConstants.MainDependencyGroup);
+            string dependenciesFile = $"{FileSystem.Root}\\{DependenciesFile}";
+            using (StreamReader streamReader = new StreamReader(dependenciesFile)) {
+                string line;
+                string groupName;
+                while ((line = streamReader.ReadLine()) != null) {
+                    if (line.StartsWith("group")) {
+                        groupName = line.Replace("group ", "");
+                        groups.Add(groupName);
+                    }
+                }
+            }
+            return groups;
+        }
+
         public void Add(IPackageContext context, IEnumerable<IDependencyRequirement> requirements) {
             var file = dependencies.GetDependenciesFile();
 
@@ -86,7 +103,7 @@ namespace Aderant.Build.DependencyResolver {
                     }
 
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri, Environment.NewLine, "source ", BuildConstants.DefaultNuGetServer);
                         file.Save();
                         break;
                     }
@@ -114,7 +131,7 @@ namespace Aderant.Build.DependencyResolver {
 
                 if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(name))) {
                     try {
-                        file = file.Add(Domain.GroupName(BuildConstants.MainDependencyGroup), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
+                        file = file.Add(Domain.GroupName(referencedModule.Group), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                     } catch (Exception ex) {
                         if (referencedModule.VersionRequirement != null && referencedModule.VersionRequirement.OriginatingFile != null) {
                             string message = ex.Message;
@@ -157,12 +174,20 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IDictionary<string, VersionRequirement> GetDependencies() {
+            return GetDependencies(Domain.GroupName(BuildConstants.MainDependencyGroup));
+        }
+
+        public IDictionary<string, VersionRequirement> GetDependencies(Domain.GroupName groupName) {
             Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
             var file = dependenciesFile.GetDependenciesFile();
 
-            FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Domain.GroupName(BuildConstants.MainDependencyGroup));
-
-            return requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
+            try {
+                FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(groupName);
+                return requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
+            } catch (Exception e) {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         private static Regex invalidVersionPattern = new Regex("0[.]0[.]0-\\w*");
