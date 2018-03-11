@@ -241,17 +241,15 @@ doc.Save(File);
     <CallTarget Targets="ZipWorkflowTemplateSource" />
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="RunIntegrationTests" />
+    <CallTarget Targets="RunAutomationTests" />
     <CallTarget Targets="PublishModule" />
     <CallTarget Targets="IndexSourcesAndPublishSymbols" />
     <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-
     <CallTarget Targets="PostBuild" />
-    
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDropV2" />
     <CallTarget Targets="FinalizeBuild" />
-
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
@@ -1378,7 +1376,7 @@ doc.Save(File);
 
     <WriteLinesToFile
       Condition="('$(BuildAll)'=='true')"
-      File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt"
+      File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt" 
       Lines="Build succeeded via BuildAll - 0 Error(s)"/>
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
@@ -1488,7 +1486,6 @@ doc.Save(File);
   -->
   <Target Name="MarkBuildStepAsFailed"
     Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
-
     <Message Text="Marking build as failed" />
 
     <CallTarget Targets="FinalizeBuild" />

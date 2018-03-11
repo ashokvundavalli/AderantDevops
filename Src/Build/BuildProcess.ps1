@@ -7,7 +7,8 @@ param(
     [string]$Flavor,
     [switch]$DatabaseBuildPipeline,
     [bool]$CodeCoverage,
-    [switch]$Integration
+    [switch]$Integration,
+    [switch]$Automation
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -99,7 +100,7 @@ function GetVssConnection() {
 function WarningRatchet() {
     $destinationBranch = $Env:SYSTEM_PULLREQUEST_TARGETBRANCH
     $isPullRequest = ![string]::IsNullOrEmpty($destinationBranch)
-    if($isPullRequest) {
+    if ($isPullRequest) {
         Write-Host "Running warning ratchet for $destinationBranch"
         Import-Module $global:ToolsDirectory\WarningRatchet.dll
         $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID -DestinationBranchName $destinationBranch  
@@ -171,7 +172,7 @@ function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
 function BuildAssociation($vssConnection, $teamProject, $buildId) {
     $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
 
-    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger,$vssConnection
+    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger, $vssConnection
 
     Write-Output "Associating work items to build: $teamProject/$buildId"
     $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
@@ -249,7 +250,7 @@ task Build {
     $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
     $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
     $buildFlavor = $Flavor
-    if ($buildFlavor -eq "")  {
+    if ($buildFlavor -eq "") {
         $buildFlavor = GetBuildFlavor   # to build in debug or release
     }
     
@@ -267,6 +268,10 @@ task Build {
 
     if ($Integration.IsPresent) {
         $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
+    }
+
+    if ($Automation.IsPresent) {
+        $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
     }
 
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
@@ -294,21 +299,21 @@ task Build {
 }
 
 task BuildCore (job Build -Safe), {
-   # This task always runs after Build
+    # This task always runs after Build
 
-   # TODO:
-   # http://tfs:8080/tfs/Aderant/ExpertSuite/_apis/test/codeCoverage?buildId=630576&flags=1&api-version=2.0-preview
+    # TODO:
+    # http://tfs:8080/tfs/Aderant/ExpertSuite/_apis/test/codeCoverage?buildId=630576&flags=1&api-version=2.0-preview
 
-   if (-not $IsDesktopBuild) {
-       # We always want to try publish test results as a test failure might be the cause of the build failure and so
-       # we want to see the test results on the TFS dashboard for future analysis
-       $vssConnection = GetVssConnection
+    if (-not $IsDesktopBuild) {
+        # We always want to try publish test results as a test failure might be the cause of the build failure and so
+        # we want to see the test results on the TFS dashboard for future analysis
+        $vssConnection = GetVssConnection
 
-       # Fucking PowerShell. On a desktop OS the implicit conversion to string[] picks "FullName", on the build box it picks "Name" which
-       # fucks everything up as the data that gets piped to the ResultPublisher doesn't have the directory info...so we have to explicit
-       $testResults = gci -Path "$Repository\TestResults" -Filter "*.trx" -Recurse | Select-Object -ExpandProperty FullName
+        # Fucking PowerShell. On a desktop OS the implicit conversion to string[] picks "FullName", on the build box it picks "Name" which
+        # fucks everything up as the data that gets piped to the ResultPublisher doesn't have the directory info...so we have to explicit
+        $testResults = gci -Path "$Repository\TestResults" -Filter "*.trx" -Recurse | Select-Object -ExpandProperty FullName
 
-       if ($testResults) {
+        if ($testResults) {
             # Bug in Invoke-ResultPublisher, no one subscribes to LogVerbose which throws a NullReferenceException since there is no null check
             # before raising the event
             #$logger = [Microsoft.TeamFoundation.DistributedTask.Task.TestResults.Logger]
@@ -323,14 +328,14 @@ task BuildCore (job Build -Safe), {
             Write-Output "Build Uri: $buildUri"
 
             Invoke-ResultPublisher -BuildNumber $buildId -BuildUri $buildUri -Connection $vssConnection -ProjectName $project -resultFiles $testResults -ResultType "Trx" -Owner $owner  #-Configuration -Platform
-       }
-   }
+        }
+    }
 
-   # Test for a failure from the Build task and re-throw to fail the build
-   $error = Get-BuildError Build
-   if ($error) {
-       throw $error
-   }
+    # Test for a failure from the Build task and re-throw to fail the build
+    $error = Get-BuildError Build
+    if ($error) {
+        throw $error
+    }
 }
 
 #=================================================================================================
@@ -350,9 +355,9 @@ task Quality -If (-not $IsDesktopBuild) {
 }
 
 task CopyToDrop -If (-not $IsDesktopBuild) {
-	if (Test-Path "$($Repository)\CopyToDrop.ps1") {
-		. $Repository\CopyToDrop.ps1
-	}
+    if (Test-Path "$($Repository)\CopyToDrop.ps1") {
+        . $Repository\CopyToDrop.ps1
+    }
 }
 
 task PackageDesktop -If ($global:IsDesktopBuild) {
@@ -416,7 +421,7 @@ task Init {
                         Write-Error "Failed to load $fullFilePath. $_.Exception"
                     }   
                 } else {
-                    foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+                    foreach ($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
                         if ($a.FullName -eq $e.Name) {
                             Write-Debug "Found already loaded match: $a"
                             return $a
