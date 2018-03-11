@@ -12,7 +12,7 @@ using Microsoft.FSharp.Core;
 using Paket;
 
 namespace Aderant.Build.DependencyResolver {
-    internal class PackageManager : IDisposable {
+    internal class PaketPackageManager : IDisposable {
         private FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
         private readonly ILogger logger;
         public IFileSystem2 FileSystem { get; }
@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyResolver {
 
         private Dependencies dependencies;
 
-        public PackageManager(IFileSystem2 fileSystem, ILogger logger) {
+        public PaketPackageManager(IFileSystem2 fileSystem, ILogger logger) {
             this.logger = logger;
             this.FileSystem = fileSystem;
             dependencies = Initialize();
@@ -103,6 +103,12 @@ namespace Aderant.Build.DependencyResolver {
                     }
 
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
+                        // Hack to replace 
+                        //      source https://www.nuget.org/api/v2
+                        // with 
+                        //      source http://packages.ap.aderant.com/packages/nuget
+                        //      source \\dfs.aderant.com\packages\ExpertDatabase
+                        //      source https://www.nuget.org/api/v2
                         lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri, Environment.NewLine, "source ", BuildConstants.DefaultNuGetServer);
                         file.Save();
                         break;

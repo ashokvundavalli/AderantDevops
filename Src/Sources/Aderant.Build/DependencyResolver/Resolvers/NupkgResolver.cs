@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
+                using (var pm = new PaketPackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
                     List<string> groupList = pm.findGroups();
                     foreach (string groupName in groupList) {
                         var requirements = pm.GetDependencies(Domain.GroupName(groupName));
@@ -68,7 +68,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void PackageRestore(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            using (var manager = new PackageManager(fileSystem, logger)) {
+            using (var manager = new PaketPackageManager(fileSystem, logger)) {
                 manager.Add(new DependencyFetchContext(), requirements);
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);

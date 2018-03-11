@@ -85,10 +85,8 @@ function Check-Vsix() {
                 return
             }
 
-            Write-Host "Installing $vsixName..."
-
             # uninstall the extension
-            Write-Host "Uninstalling $vsixName..."
+            Write-Host "Uninstalling $vsixName"
 
             $vsInstallPath = $env:VS140COMNTOOLS
             $vsix = "$vsInstallPath..\IDE\VSIXInstaller.exe"
@@ -96,8 +94,7 @@ function Check-Vsix() {
             Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($vsixId)" -Wait -PassThru | Out-Null
 
             if ($vsixFile.Exists) {
-                Write-Host "Installing VSIX..."
-
+                Write-Host "Installing $vsixName"
                 Start-Process -FilePath $vsix -ArgumentList "/quiet $($vsixFile.FullName)" -Wait -PassThru | Out-Null
                 $errorsOccurred = Output-VSIXLog
 
@@ -119,20 +116,24 @@ function Check-Vsix() {
     Write-Host "Detecting $vsixName"
 
 
-    if (-Not $idInVsixmanifest) {
+    if (-not $idInVsixmanifest) {
         $idInVsixmanifest = $vsixId
     }
+
     $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
     $developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll"
     $version = ""
     $developerTools | ForEach-Object {
         $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
+
         if (Test-Path $manifest) {
             $manifestContent = Get-Content $manifest
+
             foreach ($line in $manifestContent) {
                 if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
                     $match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
                     $foundVersion = $match.Groups["version"].Value
+
                     if ($foundVersion -gt $version) {
                         $version = $foundVersion
                     }
@@ -142,6 +143,7 @@ function Check-Vsix() {
     }
 
     $currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
+
     if ($version -eq "") {
         Write-Host -ForegroundColor DarkRed " $vsixName for Visual Studio are not installed."
         Write-Host -ForegroundColor DarkRed " If you want them, install them manually via $currentVsixFile"
@@ -154,8 +156,9 @@ function Check-Vsix() {
         }
 
         [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-        $rawFiles = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile).Entries            
-        foreach($rawFile in $rawFiles) {
+        $rawFiles = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile).Entries
+
+        foreach ($rawFile in $rawFiles) {
             if ($rawFile.Name -eq "extension.vsixmanifest") {
                 $tempFile = Join-Path -Path $env:TEMP -ChildPath $rawFile.FullName
                 [System.IO.Compression.ZipFileExtensions]::ExtractToFile($rawFile, $tempFile, $true)
@@ -165,16 +168,18 @@ function Check-Vsix() {
                         $match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
                         $foundVersion = $match.Groups["version"].Value
                         Write-Host " * Current version is $foundVersion"
-                        if (($foundVersion -replace "(?<=.\d)\.", "") -gt ($version -replace "(?<=.\d)\.", "")) {
-                            Write-Host
-                            Write-Host "Updating $vsixName..."
+
+                        if ([System.Convert]::ToInt32(($foundVersion -replace "\.", ""), 10) -gt ([System.Convert]::ToInt32(($version -replace "\.", ""), 10))) {
+                            Write-Host "`r`nUpdating $vsixName"
                             InstallVsix
                         } else {
                             Write-Host -ForegroundColor DarkGreen "Your $vsixName are up to date."
                         }
+
                         break
                     }
                 }
+
                 break
             }
         }

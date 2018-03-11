@@ -67,7 +67,7 @@ namespace Aderant.Build.Tasks {
         private bool DownloadPackage(string packageName) {
             // Download the existing package
             try {
-                using (PackageManager packageManager = new PackageManager(fileSystem, logger)) {
+                using (PaketPackageManager packageManager = new PaketPackageManager(fileSystem, logger)) {
                     packageManager.Add(new DependencyFetchContext(false), new[] { DependencyRequirement.Create(packageName, BuildConstants.MainDependencyGroup) });
                     packageManager.Restore();
                 }
