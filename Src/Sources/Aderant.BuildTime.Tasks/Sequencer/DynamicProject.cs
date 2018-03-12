@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.MSBuild;
@@ -26,12 +27,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             // Create a list of call targets for each build
             Target afterCompile = new Target("AfterCompile");
 
-            bool buildFromHere;
-            if (string.IsNullOrEmpty(buildFrom)) {
-                buildFromHere = true;
-            } else {
-                buildFromHere = false;
-            }
+            bool buildFromHere = string.IsNullOrEmpty(buildFrom);
 
             // Since we may resequence things we want the to start the numbering at 0
             int buildGroupCount = 0;
@@ -70,7 +66,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         BuildInParallel = true,
                         StopOnFirstFailure = true,
                         //Projects = $"@({itemGroup.Name})" // use @ so MSBuild will expand the list for us
-                        Projects = "C:\\git\\Build.Infrastructure\\Src\\Build\\ModuleBuild.Begin.targets",
+                        Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.Begin.targets"),
                         Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                     });
 
@@ -100,14 +96,14 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                     // on the MSBuild Task will be ignored. 
                     // In contrast to that if you use the AdditionalProperties metadata then both values will be used, with a preference going to the AdditionalProperties values.
 
-                    var visualStudioProject = studioProject as VisualStudioProject;
+                    VisualStudioProject visualStudioProject = studioProject as VisualStudioProject;
 
                     if (visualStudioProject != null) {
                         if (!visualStudioProject.IncludeInBuild) {
                             return null;
                         }
 
-                        var item = new ItemGroupItem(visualStudioProject.Path) {
+                        ItemGroupItem item = new ItemGroupItem(visualStudioProject.Path) {
                             ["AdditionalProperties"] = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot),
                             ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                             ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
@@ -118,11 +114,11 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         return item;
                     }
 
-                    var marker = studioProject as ExpertModule;
+                    ExpertModule marker = studioProject as ExpertModule;
                     if (marker != null) {
-                        var properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, marker.Name));
+                        string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, marker.Name));
 
-                        var item = new ItemGroupItem("C:\\Source\\Build.Infrastructure\\Src\\Build\\ModuleBuild.Begin.targets") {
+                        ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.Begin.targets")) {
                             ["AdditionalProperties"] = properties,
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
                         };
