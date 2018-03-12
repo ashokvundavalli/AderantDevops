@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Aderant.Build.DependencyResolver;
 
@@ -13,7 +14,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Represents a module in the expert code base
     /// </summary>
     [DebuggerDisplay("{Name} ({DebuggerDisplayNames})")]
-    public class ExpertModule : IEquatable<ExpertModule>, IDependencyRef {
+    public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
         private string name;
         private IList<XAttribute> customAttributes;
         private ModuleType? type;
@@ -244,6 +245,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return string.Empty.GetHashCode();
+        }
+
+        public int CompareTo(ExpertModule other) {
+            if (other == null) {
+                throw new ArgumentNullException(nameof(other));
+            }
+
+            return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string PadNumbers(string input) {
+            return Regex.Replace(input, "[0-9]+", match => match.Value.PadLeft(10, '0'));
         }
 
         /// <summary>
