@@ -85,38 +85,27 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Add(IPackageContext context, IEnumerable<IDependencyRequirement> requirements) {
-            var file = dependencies.GetDependenciesFile();
-
+            DependenciesFile file = dependencies.GetDependenciesFile();
             FileSystem.MakeFileWritable(file.FileName);
-
+            AddModules(context, requirements, file);
+            file = dependencies.GetDependenciesFile();
             string[] lines = file.Lines;
 
             if (!lines.Contains(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparer.OrdinalIgnoreCase) || !lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
                 for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].IndexOf(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        if (lines[i + 1].IndexOf(string.Concat("source " + BuildConstants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
-                            lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
-                            file.Save();
-                        }
-
-                        break;
-                    }
-
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        // Hack to replace 
-                        //      source https://www.nuget.org/api/v2
-                        // with 
-                        //      source http://packages.ap.aderant.com/packages/nuget
-                        //      source \\dfs.aderant.com\packages\ExpertDatabase
-                        //      source https://www.nuget.org/api/v2
-                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri, Environment.NewLine, "source ", BuildConstants.DefaultNuGetServer);
+                        lines[i] = string.Concat("source ", BuildConstants.DefaultNuGetServer, Environment.NewLine, "source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
                         file.Save();
-                        break;
+                    }
+                }
+            } else if (lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
+                for (int i = 0; i < lines.Length; i++) {
+                    if (lines[i + 1].IndexOf(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
+                        lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                        file.Save();
                     }
                 }
             }
-
-            AddModules(context, requirements, file);
         }
 
         private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
