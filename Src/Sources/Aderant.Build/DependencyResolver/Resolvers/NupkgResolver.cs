@@ -101,13 +101,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
-            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Name);
+            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Group == BuildConstants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
             if (!fileSystem.DirectoryExists(packageDir)) {
-                var javaScriptPackageDir = Path.Combine(fileSystem.Root, "packages", "javascript", requirement.Name);
-                if (!fileSystem.DirectoryExists(javaScriptPackageDir)) {
-                    throw new DirectoryNotFoundException($"Neither {packageDir} nor {javaScriptPackageDir} exist.");
-                }
-                packageDir = javaScriptPackageDir;
+                throw new DirectoryNotFoundException($"{packageDir} does not exist.");
             }
 
             string target = resolverRequest.GetDependenciesDirectory(requirement);
