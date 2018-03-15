@@ -3,6 +3,8 @@ using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.DependencyResolver {
     internal class DependencyRequirement : IDependencyRequirement, IEquatable<DependencyRequirement> {
+        private string group;
+
         protected DependencyRequirement() {
         }
 
@@ -22,7 +24,20 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets or sets the group name of the requirement.
         /// </summary>
         /// <value>The group name.</value>
-        public string Group { get; protected set; }
+        public string Group {
+            get {
+                if (string.IsNullOrWhiteSpace(group)) {
+                    return BuildConstants.MainDependencyGroup;
+                }
+                return group;
+            }
+            protected set {
+                if (value == null) {
+                    throw new ArgumentNullException(nameof(value));
+                }
+                group = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the version required.
