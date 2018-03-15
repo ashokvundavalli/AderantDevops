@@ -2872,7 +2872,7 @@ function Run-ExpertUITests {
         Write-Error "You must select a module to run this command"
         Break
     }
-    if (-Not (Get-Command docker -errorAction SilentlyContinue)){
+    if ([string]::IsNullOrWhiteSpace($dockerHost) -and -Not (Get-Command docker -errorAction SilentlyContinue)){
         Write-Error "Docker not installed. Please install Docker for Windows before running this command"
         Break
     }
