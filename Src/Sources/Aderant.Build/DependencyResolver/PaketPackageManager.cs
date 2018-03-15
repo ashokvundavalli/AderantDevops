@@ -95,18 +95,20 @@ namespace Aderant.Build.DependencyResolver {
                 for (int i = 0; i < lines.Length; i++) {
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
                         lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
-                        file.Save();
                     }
                 }
+
+                file.Save();
             } else if (lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
                 for (int i = 0; i < lines.Length; i++) {
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
                         if (lines[i + 1].IndexOf(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
                             lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
-                            file.Save();
                         }
                     }
                 }
+
+                file.Save();
             }
         }
 
