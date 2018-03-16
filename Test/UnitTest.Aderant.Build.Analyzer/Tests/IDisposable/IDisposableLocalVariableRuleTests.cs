@@ -14,6 +14,181 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #region Tests
 
         [TestMethod]
+        public void IDisposableLocalVariableRule_FlowControl_If_Diagnostic() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            if (true) {
+                DisposeMe item0;
+                item0 = new DisposeMe();
+            } else if (!false) {
+                DisposeMe item1 = new DisposeMe();
+            } else {
+                DisposeMe item2;
+                item2 = new DisposeMe();
+            }
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: item0 = new DisposeMe();
+                GetDiagnostic(7, 17, "item0"),
+                // Error: item1 = new DisposeMe();
+                GetDiagnostic(9, 27, "item1"),
+                // Error: item2 = new DisposeMe();
+                GetDiagnostic(12, 17, "item2"));
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_FlowControl_If_NoDiagnostic() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item;
+
+            if (true) {
+                item = new DisposeMe();
+            } else if (!false) {
+                item = new DisposeMe();
+            } else {
+                item = new DisposeMe();
+            }
+
+            item.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_FlowControl_If_NoDiagnostic_Assigned() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item = new DisposeMe();
+
+            if (true) {
+                item = new DisposeMe();
+            }
+
+            item.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_FlowControl_Switch() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item;
+
+            int i = 0;
+
+            switch (i) {
+                case 0: {
+                    item = new DisposeMe();
+                    break;
+                }
+                case 1:
+                    item = new DisposeMe();
+                    break;
+                default:
+                    item = new DisposeMe();
+                    break;
+            }
+
+            item.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableLocalVariableRule_CollectionAdd() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private readonly List<DisposeMe> items = new List<DisposeMe>(1);
+
+        private void Method() {
+            DisposeMe item;
+
+            item = new DisposeMe();
+
+            items?.Add(item);
+        }
+
+        public void Dispose() {
+            items?.DisposeItems();
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableLocalVariableRule_ConditionalOperator() {
             const string code = @"
 namespace Test {

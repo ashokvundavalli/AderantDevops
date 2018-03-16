@@ -326,6 +326,9 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 // Add ordered conditional and using statement expressions.
                 AddOrderedConditionalExpressions(ref orderedExpressionTypes, expression, variableName);
                 AddOrderedUsingExpressions(ref orderedExpressionTypes, expression, variableName);
+
+                // Add ordered 'collection add' expressions.
+                AddOrderedCollectionAddExpressions(ref orderedExpressionTypes, expression, variableName);
             }
 
             // After iterating through every expression in the method,
@@ -380,6 +383,33 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines if the specified node is flow controlled.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="variable">The variable.</param>
+        protected static bool GetIsNodeFlowControlled(SyntaxNode node, VariableDeclaratorSyntax variable) {
+            SyntaxNode assignmentFlowControlNode = node.Ancestors().FirstOrDefault(
+                ancestor => ancestor is IfStatementSyntax ||
+                            ancestor is ElseClauseSyntax ||
+                            ancestor is SwitchSectionSyntax);
+
+            if (assignmentFlowControlNode == null) {
+                return false;
+            }
+
+            if (variable == null) {
+                return true;
+            }
+
+            SyntaxNode variableFlowControlNode = variable.Ancestors().FirstOrDefault(
+                ancestor => ancestor is IfStatementSyntax ||
+                            ancestor is ElseClauseSyntax ||
+                            ancestor is SwitchSectionSyntax);
+
+            return !Equals(assignmentFlowControlNode, variableFlowControlNode);
         }
 
         #endregion Methods: Protected
@@ -465,6 +495,46 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                         node,
                         ExpressionType.Dispose,
                         node.GetLocation()));
+            }
+        }
+
+        /// <summary>
+        /// Adds the ordered 'collection add' expressions.
+        /// </summary>
+        /// <param name="orderedExpressionTypes">The ordered expression types.</param>
+        /// <param name="node">The node.</param>
+        /// <param name="variableName">Name of the variable.</param>
+        private static void AddOrderedCollectionAddExpressions(
+            ref List<Tuple<SyntaxNode, ExpressionType, Location>> orderedExpressionTypes,
+            SyntaxNode node,
+            string variableName) {
+            // Attempt to evaluate the expression as an argument to a method.
+            var argumentExpression = node as ArgumentSyntax;
+
+            if (argumentExpression == null ||
+                argumentExpression.ChildNodes().All(
+                    syntaxNode => !string.Equals(variableName, (syntaxNode as IdentifierNameSyntax)?.Identifier.Text))) {
+                return;
+            }
+
+            var invocationExpression = argumentExpression
+                .GetAncestorOfType<InvocationExpressionSyntax>();
+
+            if (invocationExpression == null) {
+                return;
+            }
+
+            var memberAccessExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
+
+            if (string.Equals("Add", memberAccessExpression?.Name.Identifier.Text, StringComparison.Ordinal)) {
+                orderedExpressionTypes.Add(new Tuple<SyntaxNode, ExpressionType, Location>(node, ExpressionType.CollectionAdd, node.GetLocation()));
+                return;
+            }
+
+            var memberBindingExpression = invocationExpression.Expression as MemberBindingExpressionSyntax;
+
+            if (string.Equals("Add", memberBindingExpression?.Name.Identifier.Text, StringComparison.Ordinal)) {
+                orderedExpressionTypes.Add(new Tuple<SyntaxNode, ExpressionType, Location>(node, ExpressionType.CollectionAdd, node.GetLocation()));
             }
         }
 

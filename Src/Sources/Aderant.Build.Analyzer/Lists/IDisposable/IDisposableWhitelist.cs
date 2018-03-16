@@ -38,7 +38,7 @@ namespace Aderant.Build.Analyzer.Lists.IDisposable {
             new Tuple<string, string>("Aderant.Messaging.Http", "INotificationClientConnection"),
 
             // Object is a singleton.
-            new Tuple<string, string>("Aderant.Query", "IQueryServiceProxy"),
+            new Tuple<string, string>("Aderant.Query", "IQueryServiceProxy")
         };
     }
 }

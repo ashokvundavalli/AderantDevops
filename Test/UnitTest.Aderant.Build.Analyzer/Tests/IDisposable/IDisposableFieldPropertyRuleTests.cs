@@ -14,6 +14,127 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #region Tests: Field
 
         [TestMethod]
+        public void IDisposableFieldPropertyRule_FlowControl_If() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private DisposeMe item;
+
+        private void Method() {
+            if (true) {
+                item = new DisposeMe();
+            } else if (!false) {
+                item = new DisposeMe();
+            } else {
+                item = new DisposeMe();
+            }
+        }
+
+        public void Dispose() {
+            item?.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_FlowControl_Switch() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private DisposeMe item;
+
+        private void Method() {
+            int i = 0;
+
+            switch (i) {
+                case 0: {
+                    item = new DisposeMe();
+                    break;
+                }
+                case 1:
+                    item = new DisposeMe();
+                    break;
+                default:
+                    item = new DisposeMe();
+                    break;
+            }
+        }
+
+        public void Dispose() {
+            item.Dispose();
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_CollectionAdd() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private readonly List<DisposeMe> items = new List<DisposeMe>(1);
+
+        private DisposeMe item;
+
+        private void Method() {
+            item = new DisposeMe();
+
+            items.Add(item);
+        }
+
+        public void Dispose() {
+            item?.Dispose();
+            items?.DisposeItems();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableFieldPropertyRule_ConstructorParameter_Public() {
             const string code = @"
 using System;
@@ -1196,5 +1317,5 @@ namespace Test {
         }
 
         #endregion Tests: Property
-        }
+    }
 }
