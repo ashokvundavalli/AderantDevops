@@ -49,14 +49,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         /// Gets the drop location well known type.
         /// </summary>
         /// <value>The drop location.</value>
-        public static string DropLocation {
-            get { return "Drop"; }
-        }
+        public static string DropLocation => "Drop";
 
         IEnumerable<IDependencyRequirement> IDependencyResolver.GetDependencyRequirements(ResolverRequest resolverRequest, ExpertModule module) {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
-
-            resolverRequest.Logger.Info("Probing for DependencyManifest under: " + moduleDirectory);
+            resolverRequest.Logger.Info(string.Concat("Probing for DependencyManifest under: ", moduleDirectory));
 
             Stream stream = ManifestFinder(moduleDirectory);
 
@@ -73,7 +70,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                 manifest.GlobalAttributesProvider = ModuleFactory as IGlobalAttributesProvider;
 
-                foreach (var reference in manifest.ReferencedModules) {
+                foreach (ExpertModule reference in manifest.ReferencedModules) {
                     yield return DependencyRequirement.Create(reference);
                 }
             } else {

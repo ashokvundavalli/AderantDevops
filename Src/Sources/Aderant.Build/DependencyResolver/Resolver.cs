@@ -89,7 +89,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void GatherRequirements(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
-            foreach (var module in resolverRequest.Modules) {
+            foreach (ExpertModule module in resolverRequest.Modules) {
                 List<IDependencyRequirement> loopRequirements = new List<IDependencyRequirement>();
 
                 foreach (IDependencyResolver resolver in resolvers) {
@@ -105,7 +105,6 @@ namespace Aderant.Build.DependencyResolver {
                 }
 
                 resolverRequest.AssociateRequirements(module, loopRequirements);
-
                 requirements.AddRange(loopRequirements);
             }
         }
