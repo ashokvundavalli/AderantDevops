@@ -214,11 +214,12 @@ namespace Aderant.Build.DependencyResolver {
             string expression = pair.Value.ToString();
 
             if (invalidVersionPattern.IsMatch(pair.Value.FormatInNuGetSyntax())) {
-                logger.Warning($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified? This expression will be converted into >= 0");
-                // Dirty fix, if we have a invalid requirement pattern that has no operators we need to convert this to a 
-                // valid paket pattern otherwise a parse exception will occur. However the paket API is dreadful and does not implement ToString() for "min version"
-                // so I cheat and check if the NuGet format of the  requirement as this seems to be a reliable marker that we need to fudge the input data.
-                expression = ">= 0";
+                throw new FormatException($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified?");
+                //logger.Warning($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified? This expression will be converted into >= 0");
+                //// Dirty fix, if we have a invalid requirement pattern that has no operators we need to convert this to a 
+                //// valid paket pattern otherwise a parse exception will occur. However the paket API is dreadful and does not implement ToString() for "min version"
+                //// so I cheat and check if the NuGet format of the  requirement as this seems to be a reliable marker that we need to fudge the input data.
+                //expression = ">= 0";
             }
 
             return new VersionRequirement {
