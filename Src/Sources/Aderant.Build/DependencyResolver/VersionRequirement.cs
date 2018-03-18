@@ -24,8 +24,6 @@ namespace Aderant.Build.DependencyResolver {
     }
 
     internal class VersionRequirement : IEquatable<VersionRequirement> {
-    
-
         private string constraintExpression;
 
         public string ConstraintExpression {
