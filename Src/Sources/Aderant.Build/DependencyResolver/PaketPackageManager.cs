@@ -189,7 +189,7 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private static Regex invalidVersionPattern = new Regex("^0[.]0[.]0-\\w*");
+        private static readonly Regex invalidVersionPattern = new Regex("^0[.]0[.]0-\\w*");
         private VersionRequirement NewRequirement(KeyValuePair<Domain.PackageName, Paket.VersionRequirement> pair, string filePath) {
             List<string> prereleases = new List<string>();
 
