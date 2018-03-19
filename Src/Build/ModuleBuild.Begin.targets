@@ -161,11 +161,11 @@
 
 
     <ItemGroup>
-      <DirProject Include="$(MSBuildThisFileDirectory)\dir.proj" />
+      <DirProject Include="$(MSBuildThisFileDirectory)\dir.proj;$(MSBuildThisFileDirectory)\Aderant.wpp.content.proj;$(MSBuildThisFileDirectory)\Aderant.wpp.content.v2.proj" />
     </ItemGroup>
 
     <Copy SourceFiles="@(DirProject)"
-      DestinationFolder="c:\temp"
+      DestinationFolder="$(SolutionRoot)"
       UseHardlinksIfPossible="true"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="true" />
