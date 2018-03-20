@@ -18,9 +18,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!--<BuildInParallel Condition="'$(BuildInParallel)' == '' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
+    <BuildInParallel Condition="'$(BuildInParallel)' == '' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
-    -->
     <!-- Local for factory generation -->
     <!--
     <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
@@ -78,7 +77,7 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
-      ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;SDK.Database;Web.OTG"
+      ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
       BuildFrom="$(BuildFrom)"
