@@ -1200,5 +1200,68 @@ namespace System.Data.Entity {
         }
 
         #endregion Tests: Non-Constant Assignment
+
+        #region Tests: NHibernate Queries
+
+        [TestMethod]
+        public void SqlInjectionError_NHibernate_CreateQuery_Diagnostic() {
+            const string test = @"
+namespace Test {
+    public class Program {
+        private Aderant.Framework.Persistence.IFrameworkSession session;
+
+        public void Method(string input) {
+            session.CreateQuery(input);
+        }
+    }
+}
+
+namespace Aderant.Framework.Persistence {
+    public interface IFrameworkSession {
+        NHibernate.IQuery CreateQuery(string queryString);
+    }
+}
+
+namespace NHibernate {
+    public interface IQuery {
+        
+    }
+}
+";
+            VerifyCSharpDiagnostic(
+                test,
+                // session.CreateQuery(input);
+                GetDiagnostic(7, 13));
+        }
+
+        [TestMethod]
+        public void SqlInjectionError_NHibernate_CreateQuery_NoDiagnostic() {
+            const string test = @"
+namespace Test {
+    public class Program {
+        private Aderant.Framework.Persistence.IFrameworkSession session;
+
+        public void Method() {
+            session.CreateQuery("""");
+        }
+    }
+}
+
+namespace Aderant.Framework.Persistence {
+    public interface IFrameworkSession {
+        NHibernate.IQuery CreateQuery(string queryString);
+    }
+}
+
+namespace NHibernate {
+    public interface IQuery {
+        
+    }
+}
+";
+            VerifyCSharpDiagnostic(test);
+        }
+
+        #endregion Tests: NHibernate Queries
     }
 }
