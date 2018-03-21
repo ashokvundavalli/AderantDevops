@@ -1,4 +1,65 @@
-﻿$DebugPreference = 'SilentlyContinue'
+﻿[CmdletBinding()]
+class ShellContext {
+    ShellContext() {
+        $path = "HKCU:\Software\Aderant\PowerShell"
+        New-Item -Path $path -ErrorAction SilentlyContinue | Out-Null 
+        $this.RegistryHome = $path 
+
+        # Create the path to the cache if it does not exist
+        New-Item -Path $this.CacheDirectory -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+        
+    [String] $BuildScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build"))
+    [String] $BuildToolsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools"))
+    [String] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")
+    [String] $CacheDirectory = [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "AderantPowerShell")
+    [String] $CurrentCommit
+    [String] $RegistryHome
+    [bool] $IsGitRepository 
+    [bool] $PoshGitAvailable 
+
+
+    [object] SetRegistryValue([string]$path, [string]$name, $value) {
+        $fullPath = ($this.RegistryHome + "\" + $path).TrimEnd("\")
+        if (-not (Test-Path $fullPath)) {
+            Write-Debug "Creating path: $fullPath"
+            New-Item -Path $this.RegistryHome -Name $path -Force
+        }  
+
+        Write-Debug "Updating key: $fullPath\$name"
+        $key = New-ItemProperty -Path $fullPath -Name $name -Value $value -Force
+
+        return $key
+    }
+
+    [object] GetRegistryValue([string]$path, [string]$name) {
+        if ([string]::IsNullOrWhitespace($path)) {
+          $path = [string]::Empty
+        }
+        
+        $fullPath = ($this.RegistryHome + "\" + $path).TrimEnd("\")
+        
+        Write-Debug "Retrieving value: $fullPath\$name"
+        
+        if (Test-Path -Path $fullPath) {
+          try {
+            $value = Get-ItemPropertyValue -Path $fullPath -Name $name -ErrorAction SilentlyContinue
+            Write-Debug $value
+            return $value
+          } catch {
+            # Property/value may not exist
+          }
+        }
+
+        return $null
+    }
+}
+
+$ShellContext = [ShellContext]::new()
+
+if (Test-Path "$PSScriptRoot\DEBUG.ps1") {
+  . "$PSScriptRoot\DEBUG.ps1" 
+}
 
 # Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
@@ -57,8 +118,22 @@ function LoadAssembly($properties, [string]$targetAssembly) {
     }
 }
 
+function UpdateSubmodules([string]$head){
+   # Inspect update time tracking data    
+   $commit = $ShellContext.GetRegistryValue("", "LastSubmoduleCommit")   
+   
+    if ($commit -ne $head) {
+       Write-Debug "Submodule update required"
+       & git -C $PSScriptRoot submodule update --init --recursive
+                
+       $ShellContext.SetRegistryValue("", "LastSubmoduleCommit", $head) | Out-Null
+   } else {
+       Write-Debug "Submodule update not required"
+   }   
+}
+
 function UpdateOrBuildAssembly($properties) {    
-    $aderantBuildAssembly = [System.IO.Path]::Combine($properties.BuildToolsDirectory, "Aderant.Build.dll")	
+    $aderantBuildAssembly = [System.IO.Path]::Combine($properties.BuildToolsDirectory, "Aderant.Build.dll") 
     
     if (-not [System.IO.File]::Exists($aderantBuildAssembly)) {
         Write-Host "No Aderant.Build.dll found at $aderantBuildAssembly. Creating..."
@@ -68,16 +143,15 @@ function UpdateOrBuildAssembly($properties) {
     $outdatedAderantBuildFile = $false
 
     if (-not $Host.Name.Contains("ISE")) {    
-        # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
-        pushd $PSScriptRoot
-        & git submodule update --init --recursive
-				
-		[string]$branch = & git rev-parse --abbrev-ref HEAD				
+        # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
+
+        [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
         if ($branch -eq "master") {
-            & git pull --ff-only			
+            & git -C $PSScriptRoot pull --ff-only
         }
-        [string]$head = & git rev-parse HEAD
-        popd   
+        [string]$head = & git -C $PSScriptRoot rev-parse HEAD
+        
+        UpdateSubmodules $head
     }
 
     Write-Host "Version: $head"
@@ -90,22 +164,15 @@ function UpdateOrBuildAssembly($properties) {
 
     if ($outdatedAderantBuildFile) {
         BuildProject $properties $true
-        SetUserEnvironmentVariableNoWait "EXPERT_BUILD_VERSION" $head        
+        SetUserEnvironmentVariableNoWait "EXPERT_BUILD_VERSION" $head
     }
+
+    $ShellContext.CurrentCommit = $head
 
     # Now actually load Aderant.Build.dll
     LoadAssembly $properties $aderantBuildAssembly
 }
 
-$ShellContext = New-Object -TypeName PSObject
-$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildScriptsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build")) }
-$ShellContext | Add-Member -MemberType ScriptProperty -Name BuildToolsDirectory -Value { [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools")) }
-$ShellContext | Add-Member -MemberType ScriptProperty -Name PackagingTool -Value { [System.IO.Path]::Combine($This.BuildScriptsDirectory, "paket.exe") }
-$ShellContext | Add-Member -MemberType NoteProperty -Name IsGitRepository -Value $false
-$ShellContext | Add-Member -MemberType NoteProperty -Name PoshGitAvailable -Value $false
-
 $Env:EXPERT_BUILD_DIRECTORY = Resolve-Path ([System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "..\"))
-
-Write-Debug $ShellContext
 
 UpdateOrBuildAssembly $ShellContext

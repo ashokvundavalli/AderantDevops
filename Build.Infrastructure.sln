@@ -125,6 +125,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repository Tools", "Reposit
 		Src\Repository.Tools\MonoRepo-Sync.ps1 = Src\Repository.Tools\MonoRepo-Sync.ps1
 	EndProjectSection
 EndProject
+Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "UnitTest.PowerShell", "Test\UnitTest.PowerShell\UnitTest.PowerShell.pssproj", "{876D9DB6-F991-45C0-95A5-64F108A0F086}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -199,6 +201,10 @@ Global
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -212,5 +218,6 @@ Global
 		{215BE033-1FED-4B9D-B1E7-BD5DA8F9A65F} = {FF9D5E44-F36C-467C-A1CB-31F56A56D091}
 		{415B270C-A913-4BBA-BFB3-E7EC1BB9754F} = {31A06791-2770-4455-94CF-489136D6405A}
 		{BEF951AC-BBDF-46C0-8C61-12C3F1667F2F} = {A35EFF81-AC51-4885-A846-83C45FC98F1E}
+		{876D9DB6-F991-45C0-95A5-64F108A0F086} = {31A06791-2770-4455-94CF-489136D6405A}
 	EndGlobalSection
 EndGlobal
