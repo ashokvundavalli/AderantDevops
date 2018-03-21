@@ -1,4 +1,23 @@
-﻿[string]$BranchRoot = ""
+﻿. $PSScriptRoot\Caching.ps1
+
+function Measure-Command() {
+[CmdletBinding()]
+param (    
+    [ScriptBlock] $expression,
+    [parameter(Mandatory=$False,ValueFromRemainingArguments=$True)]
+    [string] $name
+  )
+  
+   process { 
+        Microsoft.PowerShell.Utility\Measure-Command -Expression $expression -OutVariable perf
+        
+        if ($name) {
+          Write-Debug ("Performance: `"$name`" took: " + $perf.TotalMilliseconds + " milliseconds")
+        }
+    }
+}
+
+[string]$BranchRoot = ""
 [string]$global:BranchName
 [string]$global:BranchLocalDirectory
 [string]$global:BranchServerDirectory
@@ -60,130 +79,155 @@ function Check-Vsix() {
         [parameter(Mandatory=$true)][string] $vsixId,
         [parameter(Mandatory=$false)][string] $idInVsixmanifest = $vsixId)
 
-    function Output-VSIXLog {
-        $errorsOccurred = $false
-        $temp = $env:TEMP
-        $lastLogFile = Get-ChildItem $temp | Where { $_.Name.StartsWith("VSIX") } | Sort LastWriteTime | Select -last 1
-        if ($lastLogFile -ne $null) {
-            $logFileContent = Get-Content $lastLogFile.FullName
-            foreach ($line in $logFileContent) {
-                if ($line.Contains("Exception")) {
-                    $errorsOccurred = $true
-                    Write-Host -ForegroundColor Red $line
-                    notepad $lastLogFile.FullName
+    Begin {
+        [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null             
+
+        function Output-VSIXLog {
+            $errorsOccurred = $false
+            $temp = $env:TEMP
+            $lastLogFile = Get-ChildItem $temp | Where { $_.Name.StartsWith("VSIX") } | Sort LastWriteTime | Select -last 1
+            if ($lastLogFile -ne $null) {
+                $logFileContent = Get-Content $lastLogFile.FullName
+                foreach ($line in $logFileContent) {
+                    if ($line.Contains("Exception")) {
+                        $errorsOccurred = $true
+                        Write-Host -ForegroundColor Red $line
+                        notepad $lastLogFile.FullName
+                    }
                 }
             }
+            return $errorsOccurred
         }
-        return $errorsOccurred
+
+        function InstallVsix() {
+            try {
+                $vsixFile = gci -Path $ShellContext.BuildToolsDirectory -File -Filter "$vsixName.vsix" -Recurse | Select-Object -First 1
+
+                if (-not ($vsixFile)) {
+                    return
+                }
+
+                Write-Host "Installing $vsixName..."
+
+                # uninstall the extension
+                Write-Host "Uninstalling $vsixName..."
+
+                $vsInstallPath = $env:VS140COMNTOOLS
+                $vsix = "$vsInstallPath..\IDE\VSIXInstaller.exe"
+
+                Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($vsixId)" -Wait -PassThru | Out-Null
+
+                if ($vsixFile.Exists) {
+                    Write-Host "Installing VSIX..."
+
+                    Start-Process -FilePath $vsix -ArgumentList "/quiet $($vsixFile.FullName)" -Wait -PassThru | Out-Null
+                    $errorsOccurred = Output-VSIXLog
+
+                    if (-not $errorsOccurred) {
+                        Write-Host "Updated $($vsixName). Restart Visual Studio for the changes to take effect."
+                    } else {
+                        Write-Host -ForegroundColor Yellow "Something went wrong here. If you open Visual Studio and go to 'Tools -> Extensions and Updates' check if there is the '$vsixName' extension installed and disabled. If so, remove it by hitting 'Uninstall' and try again."
+                    }
+                } else {
+                    Write-Host -ForegroundColor Yellow "No $vsixName VSIX found"
+                }
+            } catch {
+                Write-Host "Exception occurred while restoring packages" -ForegroundColor Red
+                Write-Host $_ -ForegroundColor Red
+            }
+        }
     }
 
-    function InstallVsix() {
-        try {
-            $vsixFile = gci -Path $ShellContext.BuildToolsDirectory -File -Filter "$vsixName.vsix" -Recurse | Select-Object -First 1
+    Process {
+        Set-StrictMode -Version Latest      
 
-            if (-not ($vsixFile)) {
+        if (-Not $idInVsixmanifest) {
+            $idInVsixmanifest = $vsixId
+        }
+       
+        $version = ""
+              
+        $currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
+
+        $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
+        $developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll" -Depth 1
+
+        $developerTools.ForEach({
+            $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
+            if (Test-Path $manifest) {
+                [xml]$manifestContent = Get-Content $manifest  
+                $manifestVersion = $manifestContent.PackageManifest.Metadata.Identity.Version
+
+                $version = [System.Version]::Parse($manifestVersion)
+                }  
+            })       
+
+        $zipFile = $null
+        $reader = $null
+        
+        if ($version -eq "") {
+            Write-Host -ForegroundColor Red " $vsixName for Visual Studio is not installed."
+            Write-Host -ForegroundColor Red " If you want it, install them manually from $currentVsixFile"
+        } else {
+            # Bail out if we have already checked if this version is installed (most often the case)
+            $lastVsixCheckCommit = $ShellContext.GetRegistryValue("", "LastVsixCheckCommit")
+            if ($lastVsixCheckCommit -ne $null) {
+                if ($lastVsixCheckCommit -eq $ShellContext.CurrentCommit) {
+                    Write-Debug "CurrentCommit: $($ShellContext.CurrentCommit)"
+                    Write-Debug "LastVsixCheckCommit: $($lastVsixCheckCommit)"
+                    
+                    Write-Host -ForegroundColor DarkGreen "Your $vsixName is up to date."
+                    return
+                }
+            }
+
+            Write-Host " * Found installed version $version"
+
+            if (-not (Test-Path $currentVsixFile)) {
+                Write-Host -ForegroundColor Red "Error: could not find file $currentVsixFile"
                 return
             }
-
-            # uninstall the extension
-            Write-Host "Uninstalling $vsixName"
-
-            $vsInstallPath = $env:VS140COMNTOOLS
-            $vsix = "$vsInstallPath..\IDE\VSIXInstaller.exe"
-
-            Start-Process -FilePath $vsix -ArgumentList "/q /uninstall:$($vsixId)" -Wait -PassThru | Out-Null
-
-            if ($vsixFile.Exists) {
-                Write-Host "Installing $vsixName"
-                Start-Process -FilePath $vsix -ArgumentList "/quiet $($vsixFile.FullName)" -Wait -PassThru | Out-Null
-                $errorsOccurred = Output-VSIXLog
-
-                if (-not $errorsOccurred) {
-                    Write-Host "Updated $($vsixName). Restart Visual Studio for the changes to take effect."
-                } else {
-                    Write-Host -ForegroundColor Yellow "Something went wrong here. If you open Visual Studio and go to 'Tools -> Extensions and Updates' check if there is the '$vsixName' extension installed and disabled. If so, remove it by hitting 'Uninstall' and try again."
-                }
-            } else {
-                Write-Host -ForegroundColor Yellow "No $vsixName VSIX found"
-            }
-        } catch {
-            Write-Host "Exception occured while restoring packages" -ForegroundColor Red
-            Write-Host $_ -ForegroundColor Red
-        }
-    }
-
-    Write-Host
-    Write-Host "Detecting $vsixName"
-
-
-    if (-not $idInVsixmanifest) {
-        $idInVsixmanifest = $vsixId
-    }
-
-    $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
-    $developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll"
-    $version = ""
-    $developerTools | ForEach-Object {
-        $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
-
-        if (Test-Path $manifest) {
-            $manifestContent = Get-Content $manifest
-
-            foreach ($line in $manifestContent) {
-                if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
-                    $match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
-                    $foundVersion = $match.Groups["version"].Value
-
-                    if ($foundVersion -gt $version) {
-                        $version = $foundVersion
-                    }
-                }
-            }
-        }
-    }
-
-    $currentVsixFile = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "$vsixName.vsix"
-
-    if ($version -eq "") {
-        Write-Host -ForegroundColor DarkRed " $vsixName for Visual Studio are not installed."
-        Write-Host -ForegroundColor DarkRed " If you want them, install them manually via $currentVsixFile"
-    } else {
-        Write-Host " * Found installed version $version"
-
-        if (-not (Test-Path $currentVsixFile)) {
-            Write-Host -ForegroundColor Red "Error: could not find file $currentVsixFile"
-            return
-        }
-
-        [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-        $rawFiles = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile).Entries
-
-        foreach ($rawFile in $rawFiles) {
-            if ($rawFile.Name -eq "extension.vsixmanifest") {
-                $tempFile = Join-Path -Path $env:TEMP -ChildPath $rawFile.FullName
-                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($rawFile, $tempFile, $true)
-                $currentManifestContent = Get-Content $tempFile
-                foreach ($line in $currentManifestContent) {
-                    if ($line.Contains('Id="{0}"' -f $idInVsixmanifest)) {
-                        $match = [System.Text.RegularExpressions.Regex]::Match($line, 'Version="(?<version>[\d\.]+)"')
-                        $foundVersion = $match.Groups["version"].Value
+            
+            $zipFile = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile)
+            $rawFiles = $zipFile.Entries      
+            
+            foreach($rawFile in $rawFiles) {
+                if ($rawFile.Name -eq "extension.vsixmanifest") {    
+                    try {            
+                        $archiveEntryStream = $rawFile.Open()
+                    
+                        $reader = [System.IO.StreamReader]::new($archiveEntryStream)
+                        [xml]$currentManifestContent = $reader.ReadToEnd()
+                    
+                        $foundVersion = [System.Version]::Parse($currentManifestContent.PackageManifest.Metadata.Identity.Version)
                         Write-Host " * Current version is $foundVersion"
-
-                        if ([System.Convert]::ToInt32(($foundVersion -replace "\.", ""), 10) -gt ([System.Convert]::ToInt32(($version -replace "\.", ""), 10))) {
-                            Write-Host "`r`nUpdating $vsixName"
+                    
+                        if ($foundVersion -gt $version) {
+                            Write-Host
+                            Write-Host "Updating $vsixName..."
                             InstallVsix
                         } else {
-                            Write-Host -ForegroundColor DarkGreen "Your $vsixName are up to date."
+                            Write-Host -ForegroundColor DarkGreen "Your $vsixName is up to date."
                         }
-
-                        break
+                    } finally {
+                        $archiveEntryStream.Dispose()
+                        $reader.Dispose()
                     }
+                    break               
                 }
-
-                break
             }
         }
     }
+
+    End {
+        if ($zipFile) {
+            $zipFile.Dispose()
+        }
+        if ($reader) {
+            $reader.Dispose()
+        }
+    }
+    
 }
 
 <#
@@ -515,13 +559,16 @@ function OutputEnvironmentDetails {
     Write-Host "Server Branch Information"
     Write-Host "-----------------------------"
     Write-Host "Path :" $global:BranchServerDirectory
-    Write-Host ""
-    Write-Host "-----------------------------"
-    Write-Host "Current Module Information"
-    Write-Host "-----------------------------"
-    Write-Host "Name :" $global:CurrentModuleName
-    Write-Host "Path :" $global:CurrentModulePath
-    Write-Host ""
+    
+    if ($global:CurrentModuleName -and $global:CurrentModulePath) {    
+      Write-Host ""
+      Write-Host "-----------------------------"
+      Write-Host "Current Module Information"
+      Write-Host "-----------------------------"
+      Write-Host "Name :" $global:CurrentModuleName
+      Write-Host "Path :" $global:CurrentModulePath
+      Write-Host ""
+    }
 }
 
 <#
@@ -2661,43 +2708,50 @@ function InstallPester() {
 
 
 function Help ($searchText) {
+    if ($MyInvocation.ScriptName.EndsWith("_profile.ps1")) {
+      # Backwards compatibility quirk
+      # In some versions of the shell _Profile.ps1 script we call the function "Help" during start up.
+      # If we detect this version, we do not want to show help during the module load for performance reasons so
+      # we bail out if the caller is the _Profile.ps1 file
+      return
+    }
+    
+    $theHelpList = @()
+    
+    foreach ($toExport in $functionsToExport) {
+      if (-not $toExport.advanced) {
+         $ast = (Get-Command $toExport.function).ScriptBlock.Ast
+         if ($ast) {        
+             $help = $ast.GetHelpContent()
+         }
+      
+         if ($toExport.alias) {
+             $theHelpList += [pscustomobject]@{Command=$toExport.alias; Alias=$toExport.Alias; Synopsis=$help.Synopsis}
+         } else {
+             $theHelpList += [pscustomobject]@{Command=$toExport.function; Alias=$null; Synopsis=$help.Synopsis}
+         }
+      }
+    }
 
-    if($searchText){
+    if ($searchText){
         $searchText = "*$searchText*";
-        foreach ($func in $helpList) {
-            $functionName = $func.function;
-            $aliasName = $func.alias;
+        foreach ($func in $theHelpList) {
+            $functionName = $func.function
+            $aliasName = $func.alias
 
             if(($functionName -like $searchText)  -or ($aliasName -like $searchText)){
-                Write-Host -ForegroundColor Green -NoNewline "$functionName, $aliasName ";
-                Write-Host (Get-Help $functionName).Synopsis;
+                Write-Host -ForegroundColor Green -NoNewline "$functionName, $aliasName "
+                Write-Host (Get-Help $functionName).Synopsis
             }
         }
-        return;
+        return
     }
 
     $AderantModuleLocation = Get-AderantModuleLocation
     Write-Host "Using Aderant Module from : $AderantModuleLocation"
-    Write-Host ""
-    Write-Host "The following aliases are defined: "
-    Write-Host ""
 
-    $sortedFunctions = $helpList | Sort-Object -Property Alias -Descending
+    $sortedFunctions = $theHelpList | Sort-Object -Property Alias -Descending
     $sortedFunctions | Format-Table Command, Synopsis
-
-    Write-Host ""
-    Write-Host "Also note that module and branch names will auto-complete when pressing tab"
-    Write-Host ""
-}
-
-function Show-RandomTip {
-    $randomIndex = Get-Random -minimum 0 -maximum ($helpList.length-1);
-    $functionToTip = $helpList[$randomIndex];
-    $functionToTipName = $functionToTip.function;
-    $functionToTipAlias = $functionToTip.alias
-    Write-Host -ForegroundColor Green "$functionToTipName, $functionToTipAlias";
-    Get-Help $functionToTipName
-    Write-Host -ForegroundColor Green "--------------------------------------------------------------------------------------------------"
 }
 
 <#
@@ -2852,6 +2906,8 @@ Runs UI tests for the current module
     The name of the product you want to run tests against
 .PARAMETER testCaseFilter
     The vstest testcasefilter string to use
+.PARAMETER dockerHost
+    The dockerHost to run the docker container on
 .EXAMPLE
     Run-ExpertUITest -productname "Web.Inquiries" -testCaseFilter "TestCategory=Smoke"
     If Inquiries is the current module, all smoke tests for the inquiries product will be executed
@@ -2860,6 +2916,7 @@ function Run-ExpertUITests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
+        [Parameter(Mandatory=$false)] [string]$dockerHost = "",
         [Parameter(Mandatory=$false)] [string]$browserName,
         [Parameter(Mandatory=$false)] [switch]$deployment,
         [Parameter(Mandatory=$false)] [switch]$noBuild,
@@ -2869,7 +2926,7 @@ function Run-ExpertUITests {
         Write-Error "You must select a module to run this command"
         Break
     }
-    if (-Not (Get-Command docker -errorAction SilentlyContinue)){
+    if ([string]::IsNullOrWhiteSpace($dockerHost) -and -Not (Get-Command docker -errorAction SilentlyContinue)){
         Write-Error "Docker not installed. Please install Docker for Windows before running this command"
         Break
     }
@@ -2883,7 +2940,7 @@ function Run-ExpertUITests {
     $runsettingsFile = $testOutputPath + "localexecution.runsettings"
     $runSettings
 
-    if (!$deployment -or $noDocker -or $browserName) {
+    if (!$deployment -or $noDocker -or $browserName -or ![string]::IsNullOrWhiteSpace($dockerHost)) {
         $runSettingsParameters
         if ($browserName) {
             $runSettingsParameters += '<Parameter name="BrowserName" value="' + $browserName + '" />
@@ -2897,6 +2954,10 @@ function Run-ExpertUITests {
             Get-ChildItem "$CurrentModulePath\Packages\**\InitializeSeleniumServer.ps1" -Recurse | Import-Module
             Start-SeleniumServers
             $runSettingsParameters += '<Parameter name="NoDocker" value="true" />
+            '
+        }
+        if (![string]::IsNullOrWhiteSpace($dockerHost)) {
+            $runSettingsParameters += '<Parameter name="DockerHost" value="'+$dockerHost+'" />
             '
         }
 
@@ -2942,12 +3003,13 @@ function Run-ExpertUITests {
 function Run-ExpertSanityTests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
+        [Parameter(Mandatory=$false)] [string]$dockerHost = "",
         [Parameter(Mandatory=$false)] [string]$browserName,
         [Parameter(Mandatory=$false)] [switch]$development,
         [Parameter(Mandatory=$false)] [switch]$noDocker
 
     )
-    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -deployment:$deployment -noDocker:$noDocker -browserName $browserName
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -dockerHost:$dockerHost -deployment:$deployment -noDocker:$noDocker -browserName $browserName
 }
 
 <#
@@ -2969,12 +3031,13 @@ function Run-ExpertSanityTests {
 function Run-ExpertVisualTests {
     param(
         [Parameter(Mandatory=$false)] [string]$productName = "*",
+        [Parameter(Mandatory=$false)] [string]$dockerHost = "",
         [Parameter(Mandatory=$false)] [string]$browserName,
         [Parameter(Mandatory=$false)] [switch]$deployment,
         [Parameter(Mandatory=$false)] [switch]$noDocker
 
     )
-    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -deployment:$deployment -noDocker:$noDocker -browserName $browserName
+    Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -dockerHost:$dockerHost -deployment:$deployment -noDocker:$noDocker -browserName $browserName
 }
 
 <#
@@ -3781,9 +3844,9 @@ function Git-Merge {
                 $modifyPullRequestBody = @"
 {
     "completionOptions": {
-		"deleteSourceBranch": "true",
-		"mergeCommitMessage": "Merge of $bugId into $targetBranch",
-		"squashMerge": "true"
+        "deleteSourceBranch": "true",
+        "mergeCommitMessage": "Merge of $bugId into $targetBranch",
+        "squashMerge": "true"
     }
 }
 "@
@@ -3909,8 +3972,7 @@ $functionsToExport = @(
     [pscustomobject]@{ function='Open-ModuleSolution';                        alias='vs'},
     [pscustomobject]@{ function='Set-CurrentModule';                          alias='cm'},
     [pscustomobject]@{ function='Set-Environment';                            advanced=$true},
-    [pscustomobject]@{ function='Set-ExpertBranchInfo';},
-    [pscustomobject]@{ function='Show-RandomTip';                             alias='tip'},
+    [pscustomobject]@{ function='Set-ExpertBranchInfo';},    
     [pscustomobject]@{ function='Start-dbgen';                                alias='dbgen'},
     [pscustomobject]@{ function='Start-DeploymentEngine';                     alias='de'},
     [pscustomobject]@{ function='Start-DeploymentManager';                    alias='dm'},
@@ -3939,28 +4001,7 @@ foreach ($toExport in $functionsToExport) {
         Set-Alias $toExport.alias  $toExport.function
         Export-ModuleMember -Alias $toExport.alias
     }
-
-    if (-not $toExport.advanced) {
-        # building up a help list to show in the RandomTip function and also the help function
-        $ast = (Get-Command $toExport.function).ScriptBlock.Ast
-        if ($ast) {
-            $help = $ast.GetHelpContent()
-        }
-
-        if ($toExport.alias) {
-            $helpList += [pscustomobject]@{Command=$toExport.alias; Alias=$toExport.Alias; Synopsis=$help.Synopsis}
-        } else {
-            $helpList += [pscustomobject]@{Command=$toExport.function; Alias=$null; Synopsis=$help.Synopsis}
-        }
-    }
 }
-
-#also include all the csharp commandlets in the help list
-# TODO: This is quite slow
-#foreach($csharpCommandlet in Get-Command -Module 'dynamic_code_module_Aderant.Build, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null') {
-    #$help = (Get-Help $csharpCommandlet)
-    #$helpList += [pscustomobject]@{Command=$csharpCommandlet.Name; Alias=$null; Synopsis=$help.Synopsis}
-#}
 
 # paths
 Export-ModuleMember -variable CurrentModuleName
@@ -3974,9 +4015,25 @@ Export-ModuleMember -variable ProductManifestPath
 
 . $PSScriptRoot\Feature.Database.ps1
 
-Enable-ExpertPrompt
+Measure-Command {
+  Enable-ExpertPrompt
+} "Enable-ExpertPrompt"
 
-Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
-Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
+Measure-Command {
+  Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
+} "NUnit3.TestAdapter install"
+
+Measure-Command {
+  Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
+} "Aderant.DeveloperTools install"
+
+
+$ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 
 Set-Environment
+
+Write-Host ''
+Write-Host 'Type ' -NoNewLine
+Write-Host '"help"' -ForegroundColor Green -NoNewLine
+Write-Host " for a command list." -NoNewLine
+Write-Host ''

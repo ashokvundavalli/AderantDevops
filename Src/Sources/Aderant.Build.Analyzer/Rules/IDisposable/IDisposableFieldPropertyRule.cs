@@ -375,9 +375,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 // If the field is assigned at declaration,
                 //      and the first operation performed upon the field is some form of assignment...
                 if (field.IsAssignedAtDeclaration &&
+                    !GetIsNodeFlowControlled(orderedExpressions[0].Item1, null) &&
                     (orderedExpressions[0].Item2 == ExpressionType.Assignment ||
                      orderedExpressions[0].Item2 == ExpressionType.AssignmentNull ||
-                     orderedExpressions[0].Item2 == ExpressionType.UsingAssignment)) {
+                     orderedExpressions[0].Item2 == ExpressionType.UsingAssignment ||
+                     orderedExpressions[0].Item2 == ExpressionType.CollectionAdd)) {
                     // ...add a new diagnostic to the collection.
                     diagnostics.Add(new Tuple<SyntaxNode, string, Location>(field.Node, field.Name, field.Location));
 
@@ -408,9 +410,17 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                         break;
                     }
 
-                    // If the next expression in order is not some form of disposal expression...
+                    // Ignore any nodes that are 'flow controlled' if/else/switch
+                    //      as there could be multiple valid assignments.
+                    if (GetIsNodeFlowControlled(orderedExpressions[i].Item1, null)) {
+                        continue;
+                    }
+
+                    // If the current expression is an assignment expression
+                    //      and the next expression in the list is not some form of disposale or 'Collection Add' expression...
                     if (orderedExpressions[i + 1].Item2 != ExpressionType.Dispose &&
-                        orderedExpressions[i + 1].Item2 != ExpressionType.Using) {
+                        orderedExpressions[i + 1].Item2 != ExpressionType.Using &&
+                        orderedExpressions[i + 1].Item2 != ExpressionType.CollectionAdd) {
                         // ...add a new error to the error collection.
                         diagnostics.Add(new Tuple<SyntaxNode, string, Location>(orderedExpressions[i].Item1, field.Name, orderedExpressions[i].Item3));
                     }

@@ -23,6 +23,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         None,
         Assignment,
         AssignmentNull,
+        CollectionAdd,
         Dispose,
         Using,
         UsingAssignment,
