@@ -145,7 +145,7 @@ namespace Aderant.Build.DependencyResolver {
 
             if (resolvedModule == null) {
                 // THIS CHECK NEEDS TO BE FIXED! Should work if either .git in fs directory root or parent.
-                if (!physicalFileSystem.DirectoryExists(".git") || !physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git"))) {
+                if (!(physicalFileSystem.DirectoryExists(".git") || physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git")))) {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest or did you copy the source folder in? You need to use the merge script to pull down the source.", module));
                 }
                 resolvedModule = new ExpertModule { Name = module };
