@@ -33,6 +33,10 @@ namespace Aderant.Build {
             return Path.Combine(Root, path);
         }
 
+        public string GetParent(string path) {
+            return Directory.GetParent(path).Parent.FullName;
+        }
+
         public virtual void AddFile(string path, Stream stream) {
             if (stream == null) {
                 throw new ArgumentNullException(nameof(stream));

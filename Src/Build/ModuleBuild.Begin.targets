@@ -147,6 +147,14 @@
 ║                     $(ModuleName.PadRight(20))                    ║
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
+    <GetDependencies
+      ProductManifest="$(ProductManifestPath)"
+      ModulesRootPath="$(SolutionDirectoryPath)"
+      ModuleName="$(ModuleName)"
+      BuildType="ContinuousIntegration"
+      DependenciesDirectory="$(DependenciesDirectory)"
+      DropPath="$(BaseDropDirectory)" />
+
   </Target>
 
 

@@ -1,4 +1,5 @@
-﻿. $PSScriptRoot\Caching.ps1
+﻿$Env:RunCodeAnalysisOnThisProject=$False
+. $PSScriptRoot\Caching.ps1
 
 function Measure-Command() {
 [CmdletBinding()]
