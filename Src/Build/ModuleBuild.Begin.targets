@@ -138,6 +138,7 @@
     <DependenciesDirectory>$(SolutionDirectoryPath)Dependencies</DependenciesDirectory>
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
+    <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
   </PropertyGroup>
 
 
@@ -153,7 +154,7 @@
       ModuleName="$(ModuleName)"
       BuildType="ContinuousIntegration"
       DependenciesDirectory="$(DependenciesDirectory)"
-      DropPath="$(BaseDropDirectory)" />
+      DropPath="$(TfvcDropLocation)" />
 
   </Target>
 
