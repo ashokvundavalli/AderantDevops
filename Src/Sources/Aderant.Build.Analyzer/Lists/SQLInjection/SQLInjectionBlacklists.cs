@@ -21,7 +21,6 @@ namespace Aderant.Build.Analyzer.Lists.SQLInjection {
         // new Tuple<string, string>("<MethodName>", "<StartOfFullyQualifiedMethodSignature>")
         public static readonly Tuple<string, string>[] Methods = {
             new Tuple<string, string>("SqlQuery", "System.Data.Entity.Database.SqlQuery<TElement>(string"),
-            new Tuple<string, string>("CreateQuery", "Aderant.Framework.Persistence.IFrameworkSession.CreateQuery(string"),
             new Tuple<string, string>("IssueSql", "Aderant.FirmControl.DocuDraft.DataAccess.ISqlBase.IssueSql"),
             new Tuple<string, string>("Execute", "Aderant.Framework.Deployment.Controllers.IDatabaseController.Execute(string"),
             new Tuple<string, string>("ExecuteUsingIntegratedSecurity", "Aderant.Framework.Deployment.Controllers.IDatabaseController.ExecuteUsingIntegratedSecurity(string"),
