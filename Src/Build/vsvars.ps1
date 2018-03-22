@@ -13,9 +13,7 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear) {
             $variablesFromScript = cmd /c "`"$vsPath\VsDevCmd.bat`"&set"
             $variablesFromScript.ForEach({
                 $v = $_.Split("=")
-                if (-not $globalEnvironmentVariables.ContainsKey($v[0]) -and -not $vars.ContainsKey($v[0])) {
-                    $vars.Add($v[0], $v[1]);
-                }
+                $vars.Add($v[0], $v[1])
             })
 
             PutCacheItem "VsDevCmd.bat" $vars "$vsPath\VsDevCmd.bat", $PSCommandPath
