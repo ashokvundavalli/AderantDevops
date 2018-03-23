@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <BuildInParallel Condition="'$(BuildInParallel)' == '' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
+    <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
     <!-- Local for factory generation -->
     <!--
@@ -114,7 +114,7 @@
     
     
     <Message Text="Finished GetDependencies" />
-    
+
     <ItemGroup>
       <Files Include="$(SharedDependencyDirectory)**\*" />
     </ItemGroup>
@@ -241,7 +241,7 @@
     ==========================================================================================
   -->
   <Target Name="BuildModulesParallel">
-
+    
     <PropertyGroup>
       <CommonBuildProperties>
         BuildAll=true;
