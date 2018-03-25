@@ -248,19 +248,27 @@
 
   </Target>
 
+ <PropertyGroup>
+    <!-- Allows environment variables to override RSP parameters -->
+    <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunAutomationTests'))</_RunAutomationTests>
+    <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">$(RunAutomationTests)</_RunAutomationTests>
+    <_RunAutomationTests Condition="'$(_RunAutomationTests)' == ''">false</_RunAutomationTests>
+  </PropertyGroup>
 
   <Target Name="RunAutomationTests"
-    Condition="('$(IsDesktopBuild)' != 'true' And '$(RunAutomationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
+    Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunAutomationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
     DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn);RunIntegrationTests">
     <ItemGroup>
-      <AutomationTestAssemblies Condition="'$(RunAutomationTests)' == 'true'"
+      <PrepCategories Include="$(CustomAutomationTestFilters)" />
+      <AutomationTestAssemblies Condition="'$(_RunAutomationTests)' == 'true'"
         Include="$(BinTestDirectory)UIAutomationTest*.dll" />
+      <AutomationTestCaseFilter
+         Include="/TestCaseFilter:&quot;TestCategory!=Reporting%(PrepCategories.Identity)&quot;" />
     </ItemGroup>
     <PropertyGroup>
       <AutomationTestAssemblies>@(AutomationTestAssemblies->'%(FullPath)',' ')</AutomationTestAssemblies>
       <TestAdapterPath>/TestAdapterPath:"$(BinTestDirectory)"</TestAdapterPath>
       <!-- VSTest Setup shared from Integration test run -->
-      <AutomationTestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomAutomationTestFilters)&quot;</AutomationTestCaseFilter>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
       <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
@@ -283,7 +291,7 @@
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) $(AutomationTestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
+          Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) %(AutomationTestCaseFilter.Identity) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
 
    <!-- Run With VSTest - Desktop -->
     <Exec Condition="'$(AutomationTestAssemblies)' != '' And '$(IsDesktopBuild)' == 'true'"
@@ -291,7 +299,7 @@
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) $(AutomationTestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(AutomationTestAssemblies) %(AutomationTestCaseFilter.Identity) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(TestAdapterPath)' />
     <PropertyGroup>
       <TestOutcome>Succeeded</TestOutcome>
     </PropertyGroup>
