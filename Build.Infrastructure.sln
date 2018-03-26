@@ -39,7 +39,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\Mobile.Targets = Src\Build\Mobile.Targets
 		Src\Build\ModuleBuild.Begin.targets = Src\Build\ModuleBuild.Begin.targets
 		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
-		Src\Build\ModuleBuild.xaml.targets = Src\Build\ModuleBuild.xaml.targets
 		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
 		Src\Build\Package.ps1 = Src\Build\Package.ps1
 		Src\Build\paket.exe = Src\Build\paket.exe
@@ -214,7 +213,6 @@ Global
 		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{876D9DB6-F991-45C0-95A5-64F108A0F086}.Release|Any CPU.Build.0 = Release|Any CPU
-                
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

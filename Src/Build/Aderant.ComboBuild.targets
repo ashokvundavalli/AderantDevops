@@ -77,7 +77,7 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
       ModulesDirectory="$(SolutionRoot)"
-      ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database"
+      ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
       BuildFrom="$(BuildFrom)"
@@ -258,6 +258,8 @@
         EXPERT_BUILD_DIRECTORY=$(MSBuildThisFileDirectory)..\;
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         AdditionalAssemblySearchPaths=$(DependencySearchPaths);
+        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CopyToDropEnabled=true;
         CompileBuildSystem=false;
         IsComboBuild=$(IsComboBuild);
