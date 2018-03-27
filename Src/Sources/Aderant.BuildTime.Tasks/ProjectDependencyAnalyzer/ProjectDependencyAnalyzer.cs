@@ -17,6 +17,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         private ICollection<string> solutionFileFilters = new List<string>();
         private List<string> parseErrors = new List<string>();
         private Dictionary<Guid, VisualStudioProject> projectByGuidCache = new Dictionary<Guid, VisualStudioProject>();
+        private const string buildT4Task = "Build.T4Task";
 
         public ProjectDependencyAnalyzer(CSharpProjectLoader loader, TextTemplateAnalyzer textTemplateAnalyzer, IFileSystem2 fileSystem) {
             this.loader = loader;
@@ -180,7 +181,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             }
 
             // We don't want to add any dependencies from the Dependency System.
-            // AddDependenciesFromDependencySystem(graph);
+            //AddDependenciesFromDependencySystem(graph);
 
             AddDependenciesFromTextTemplates(graph.Vertices);
 
@@ -189,28 +190,25 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
             ResolveProjectReferences(projectVertices);
 
-            foreach (var v in graph.Vertices) {
+            foreach (IDependencyRef v in graph.Vertices) {
                 AddSyntheticProjectToProjectDependencies(v, graph);
 
                 VisualStudioProject studioProject = v as VisualStudioProject;
 
                 if (studioProject != null) {
-                    if (studioProject.Path == @"C:\agent\_work\4\s\AccountsPayable\Src\Aderant.AccountsPayable.Administration\Aderant.AccountsPayable.Administration.csproj") {
-                        
-                    }
 
                     var solutionRootDependency = moduleVertices.SingleOrDefault(x => x.Match(studioProject.SolutionDirectoryName));
                     if (solutionRootDependency == null) {
-                        continue;
+                        //continue;
+                    } else {
+                        graph.Edge(v, solutionRootDependency);
                     }
-
-                    graph.Edge(v, solutionRootDependency);
 
                     if (studioProject.Dependencies == null) {
                         continue;
                     }
 
-                    foreach (var dep in studioProject.Dependencies) {
+                    foreach (IDependencyRef dep in studioProject.Dependencies) {
                         ModuleRef moduleRef = dep as ModuleRef;
 
                         IDependencyRef target = null;
@@ -287,13 +285,13 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             }
             VisualStudioProject project = dependencyRef as VisualStudioProject;
 
-            if (dependencyRef.Name != "Build.T4Task") {
-                if (project != null && project.Dependencies.Any(d => d.Name == "Build.T4Task")) {
-                    if (project.SolutionDirectoryName == "Build.T4Task") {
+            if (dependencyRef.Name != buildT4Task) {
+                if (project != null && project.Dependencies.Any(d => d.Name == buildT4Task)) {
+                    if (project.SolutionDirectoryName == buildT4Task) {
                         return;
                     }
 
-                    IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == "Build.T4Task");
+                    IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == buildT4Task);
 
                     foreach (var p in projects) {
                         project.Dependencies.Add(p);
@@ -302,8 +300,8 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                 var module = dependencyRef as ExpertModule;
                 if (module != null) {
-                    if (module.DependsOn.Any(d => d.Name == "Build.T4Task")) {
-                        IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == "Build.T4Task");
+                    if (module.DependsOn.Any(d => d.Name == buildT4Task)) {
+                        IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == buildT4Task);
                         foreach (var p in projects) {
                             module.DependsOn.Add(p);
                         }
@@ -314,7 +312,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
         private void PatchInSoftwareFactory(TopologicalSort<IDependencyRef> graph) {
             AddFakeEndNode("Libraries.SoftwareFactory", graph);
-            //AddFakeEndNode("Build.T4Task", graph);
+            //AddFakeEndNode(buildT4Task, graph);
         }
 
         private static void AddFakeEndNode(string name, TopologicalSort<IDependencyRef> graph) {
@@ -447,6 +445,12 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                 if (project != null && visited.Add(project.SolutionRoot)) {
                     List<TextTemplateAssemblyInfo> list = textTemplateAnalyzer.GetDependencies(project.SolutionRoot);
+
+                    //if (list.Any() && project.Dependencies.All(x => x.Name != buildT4Task)) {
+                    //    project.Dependencies.Add(new ExpertModule{
+                    //        Name = buildT4Task
+                    //    });
+                    //}
 
                     AddDependenciesToProjects(project.SolutionRoot, graphVertices, list);
                 }

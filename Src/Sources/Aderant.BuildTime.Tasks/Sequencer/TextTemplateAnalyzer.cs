@@ -39,7 +39,6 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         var reader = new StreamReader(fs);
 
                         var template = new TextTemplateAssemblyInfo(file);
-                        dependencies.Add(template);
 
                         string text;
                         while ((text = reader.ReadLine()) != null) {
@@ -74,6 +73,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                                 }
                             }
                         }
+
+                        dependencies.Add(template);
                     }
                 } catch {
                     continue;
