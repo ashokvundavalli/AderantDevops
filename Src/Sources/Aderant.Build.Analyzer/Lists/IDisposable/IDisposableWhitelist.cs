@@ -14,6 +14,10 @@ namespace Aderant.Build.Analyzer.Lists.IDisposable {
         // Syntax:
         // "<FullyQualifiedSignature>"
         public static readonly string[] Methods = {
+            // PreCondition methods that return the provided object for method chaining. No object is created, so no object must be disposed.
+            "Aderant.Framework.PreCondition.IsNotNull<T>(T, string)",
+            "Aderant.Framework.PreCondition.IsNotNull<T>(T, string, string)",
+
             // These three methods are part of the UI automation testing framework and never run as live code.
             "TestStack.White.Utility.Retry.For(System.Func<bool>, System.TimeSpan, System.TimeSpan?)",                     // 1
             "TestStack.White.Utility.Retry.For<T>(System.Func<T>, System.TimeSpan, System.TimeSpan?)",                     // 2
