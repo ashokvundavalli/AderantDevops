@@ -42,8 +42,8 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                 var projectInfo = (from item in root.Elements("PropertyGroup")
                     where !item.HasAttributes && item.Element("ProjectGuid") != null &&
-                          root.Elements("ItemGroup").Elements("Compile") != null &&
-                          root.Elements("ItemGroup").Elements("Compile").Any() &&
+                          //root.Elements("ItemGroup").Elements("Compile") != null &&
+                          //root.Elements("ItemGroup").Elements("Compile").Any() &&
                           item.Element("RootNamespace") != null && item.Element("AssemblyName") != null && item.Element("OutputType") != null
                     select new {
                         RootNamespace = item.Element("RootNamespace")?.Value,
@@ -51,7 +51,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                         ProjectGuid = Guid.Parse(item.Element("ProjectGuid")?.Value ?? string.Empty),
                         OutputType = item.Element("OutputType")?.Value,
                         Path = visualStudioProjectPath,
-                        ProjectTypeGuids = item.Element("ProjectTypeGuids")?.Value ?? string.Empty,
+                        ProjectTypeGuids = ParseProjectTypeGuids(item),
                     }).FirstOrDefault();
 
                 if (projectInfo != null) {
@@ -80,6 +80,13 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             }
 
             return null;
+        }
+
+        private static string ParseProjectTypeGuids(XElement item) {
+            if (item.Element("ProjectTypeGuids") != null)
+                return item.Element("ProjectTypeGuids").Value;
+            else
+                return string.Empty;
         }
 
         /// <summary>
@@ -213,6 +220,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; }
+        public ICollection<IDependencyRef> Dependencies => null;
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
@@ -255,6 +263,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; private set; }
+        public ICollection<IDependencyRef> Dependencies => null;
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);

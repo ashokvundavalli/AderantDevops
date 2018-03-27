@@ -45,6 +45,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.Name = names[0];
         }
 
+        public ICollection<IDependencyRef> Dependencies => DependsOn;
+
         public ICollection<IDependencyRef> DependsOn {
             get {
                 if (dependsOn == null) {

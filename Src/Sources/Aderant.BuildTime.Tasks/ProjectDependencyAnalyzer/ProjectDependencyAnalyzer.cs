@@ -63,10 +63,40 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             Queue<IDependencyRef> queue;
 
             if (!graph.Sort(out queue)) {
+                DetectCircularDependencies(queue);
                 throw new CircularDependencyException(queue.Select(s => s.Name));
             }
 
             return queue.ToList();
+        }
+
+        internal List<IDependencyRef> DetectCircularDependencies(Queue<IDependencyRef> queue) {
+            IEnumerable<string> moduleNames = queue.Select(s => s.Name);
+            List<IDependencyRef> dependencies = new List<IDependencyRef>();
+
+            foreach (IDependencyRef module in queue) {
+                List<IDependencyRef> dependencyReferences = module.Dependencies.Select(x => x).Where(y => moduleNames.Contains(y.Name)).ToList();
+
+                if (dependencyReferences.Any()) {
+                    dependencies.Add(new ExpertModule { Name = module.Name, DependsOn = dependencyReferences});
+                }
+            }
+
+            if (dependencies.Any()) {
+                Console.WriteLine("Detected circular references. Potential suspects:");
+
+                foreach (IDependencyRef dependency in dependencies) {
+                    Console.WriteLine(dependency.Name);
+
+                    foreach (var item in dependency.Dependencies) {
+                        Console.WriteLine($"\t{item.Name}");
+                    }
+                }
+            } else {
+                Console.WriteLine("Unable to identify circular references.");
+            }
+
+            return dependencies;
         }
 
         private string GetSolutionRootForProject(ICollection<string> ceilingDirectories, ICollection<string> solutionFileNameFilter, string visualStudioProjectPath) {
@@ -148,7 +178,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 }
             }
 
-            AddDependenciesFromDependencySystem(graph);
+            // AddDependenciesFromDependencySystem(graph);
 
             AddDependenciesFromTextTemplates(graph.Vertices);
 
@@ -353,7 +383,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 var project = item as VisualStudioProject;
 
                 if (project != null && visited.Add(project.SolutionRoot)) {
-                    string[] strings = GetAdditionalComponents(project.SolutionRoot).ToArray();
+                    string[] strings = GetAdditionalComponents(project.SolutionRoot).Where(s => s != "Aderant.StoredProcedures").Where(s => s != "Aderant.Libraries.Models").ToArray();
 
                     try {
                         DependencyManifest manifest = DependencyManifest.LoadFromModule(project.SolutionRoot);
@@ -364,6 +394,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                         AddDependenciesToProjects(project.SolutionRoot, graph, module, manifest);
                     } catch {
+                        // Ignore.
                     }
                 }
             }
@@ -397,7 +428,6 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             foreach (var project in projects) {
                 //project.Dependencies.Add(expertModule);
 
-                // Don't add this
                 //foreach (var module in dependencies.ReferencedModules) {
                 //    project.Dependencies.Add(new ModuleRef(module));
                 //}
@@ -560,6 +590,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name => module.Name;
+        public ICollection<IDependencyRef> Dependencies => null;
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
