@@ -61,6 +61,16 @@ namespace IntegrationTest.BuildTime {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] AccountsPayable {
+            get {
+                object obj = ResourceManager.GetObject("AccountsPayable", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;4.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;PropertyGroup&gt;
@@ -129,6 +139,71 @@ namespace IntegrationTest.BuildTime {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;DependencyManifest DefaultSource=&quot;\\dfs.aderant.com\expertsuite\dev\vnext&quot;&gt;
+        ///    &lt;ReferencedModules&gt;
+        ///        &lt;ReferencedModule Name=&quot;Build.T4Task&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///        &lt;ReferencedModule Name=&quot;Libraries.Query&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///        &lt;ReferencedModule Name=&quot;Libraries.SoftwareFactory&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;/ReferencedModules&gt;
+        ///&lt;/DependencyManifest&gt;.
+        /// </summary>
+        internal static string DependencyManifest {
+            get {
+                return ResourceManager.GetString("DependencyManifest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;DependencyManifest DefaultSource=&quot;\\dfs.aderant.com\expertsuite\dev\vnext&quot;&gt;
+        ///  &lt;ReferencedModules&gt;
+        ///    &lt;ReferencedModule Name=&quot;Aderant.Framework.Development&quot; /&gt;
+        ///    &lt;ReferencedModule Name=&quot;Build.T4Task&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;ReferencedModule Name=&quot;Libraries.Entities.Cashmanagement&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;ReferencedModule Name=&quot;Libraries.Entities.Employee&quot; AssemblyVersion=&quot;1.8.0.0&quot; /&gt;
+        ///    &lt;ReferencedModule Name=&quot;Libraries.Entities.Firm&quot; Ass [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string DependencyManifest1 {
+            get {
+                return ResourceManager.GetString("DependencyManifest1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;DependencyManifest DefaultSource=&quot;\\dfs.aderant.com\expertsuite\dev\vnext&quot;&gt;&gt;
+        ///    &lt;ReferencedModules&gt;
+        ///    &lt;/ReferencedModules&gt;
+        ///&lt;/DependencyManifest&gt;.
+        /// </summary>
+        internal static string DependencyManifest2 {
+            get {
+                return ResourceManager.GetString("DependencyManifest2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Deployment {
+            get {
+                object obj = ResourceManager.GetObject("Deployment", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Framework {
+            get {
+                object obj = ResourceManager.GetObject("Framework", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         internal static byte[] HEAD {
@@ -144,6 +219,66 @@ namespace IntegrationTest.BuildTime {
         internal static byte[] Library {
             get {
                 object obj = ResourceManager.GetObject("Library", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] paket {
+            get {
+                object obj = ResourceManager.GetObject("paket", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] paket1 {
+            get {
+                object obj = ResourceManager.GetObject("paket1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] paket2 {
+            get {
+                object obj = ResourceManager.GetObject("paket2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] TFSBuild {
+            get {
+                object obj = ResourceManager.GetObject("TFSBuild", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] TFSBuild1 {
+            get {
+                object obj = ResourceManager.GetObject("TFSBuild1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] TFSBuild2 {
+            get {
+                object obj = ResourceManager.GetObject("TFSBuild2", resourceCulture);
                 return ((byte[])(obj));
             }
         }

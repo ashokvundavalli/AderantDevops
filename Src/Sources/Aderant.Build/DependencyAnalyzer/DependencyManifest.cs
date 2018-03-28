@@ -22,7 +22,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         protected DependencyManifest() {
         }
 
-        internal DependencyManifest(string moduleName, XDocument manifest) {
+        public DependencyManifest(string moduleName, XDocument manifest) {
             this.ModuleName = moduleName;
             this.manifest = manifest;
 
@@ -91,7 +91,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                             }
                         }
 
-                        var module = ExpertModule.Create(newElement);
+                        ExpertModule module = ExpertModule.Create(newElement);
 
                         if (referencedModules.Contains(module)) {
                             throw new DuplicateModuleInManifestException(string.Format(CultureInfo.InvariantCulture, "The module {0} appears more than once in {1}", module.Name, manifest.BaseUri));
@@ -122,6 +122,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return new DependencyManifest(BuildConstants.BuildInfrastructureDirectory, new XDocument());
             }
 
+            return LoadDirectlyFromModule(modulePath);
+        }
+
+        /// <summary>
+        /// Loads a dependency manifest from the given module directory.
+        /// </summary>
+        /// <param name="modulePath">The module path.</param>
+        /// <returns></returns>
+        public static DependencyManifest LoadDirectlyFromModule(string modulePath) {
             DependencyManifest dependencyManifest;
             if (TryLoadFromModule(modulePath, out dependencyManifest)) {
                 return dependencyManifest;

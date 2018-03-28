@@ -263,7 +263,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; private set; }
-        public ICollection<IDependencyRef> Dependencies => null;
+        public ICollection<IDependencyRef> Dependencies { get; set; }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);

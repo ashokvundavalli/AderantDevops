@@ -1,0 +1,23 @@
+source http://packages.ap.aderant.com/packages/nuget
+source \\dfs.aderant.com\packages\ExpertDatabase
+nuget Aderant.Build.Analyzer
+nuget Aderant.Libraries.Models >= 11.0.0 build
+nuget Aderant.StoredProcedures
+nuget Thirdparty.DevComponents
+nuget ThirdParty.ICSharpCode
+nuget ThirdParty.Infragistics
+nuget ThirdParty.IronPython.2.7
+nuget ThirdParty.Irony
+nuget ThirdParty.log4net
+nuget ThirdParty.Microsoft.AspNet.5.2.3
+nuget Thirdparty.Microsoft.EntityFramework
+nuget ThirdParty.Microsoft.OData >= 5.8.1-ci
+nuget ThirdParty.Microsoft.ApplicationInsights
+nuget ThirdParty.Moq
+nuget ThirdParty.Newtonsoft.Json
+nuget ThirdParty.NHibernate
+nuget ThirdParty.NMock
+nuget ThirdParty.Reactive
+nuget ThirdParty.RhinoMocks
+nuget ThirdParty.SignalR.Client > 2.2.2 ci
+nuget ThirdParty.Xceed.6.2

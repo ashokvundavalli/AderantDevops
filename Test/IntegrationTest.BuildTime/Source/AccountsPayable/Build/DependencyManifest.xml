@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DependencyManifest DefaultSource="\\dfs.aderant.com\expertsuite\dev\vnext">
+  <ReferencedModules>
+    <ReferencedModule Name="Aderant.Framework.Development" />
+    <ReferencedModule Name="Build.T4Task" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.Cashmanagement" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.Employee" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.Firm" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.GeneralLedger" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.Parameters" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.Tax" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Entities.Trust" AssemblyVersion="1.8.0.0" />    
+    <ReferencedModule Name="Libraries.Packaging" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Presentation.Firm" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.SoftwareFactory" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Libraries.Workflow" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="SDK" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Services.Applications.FirmControl" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Services.Deployment" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Services.Metadata" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Services.Notes" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Services.Query" AssemblyVersion="1.8.0.0" />
+	<ReferencedModule Name="Services.Query.Constants" AssemblyVersion="1.8.0.0" />
+    <ReferencedModule Name="Services.Security" AssemblyVersion="1.8.0.0" />    
+    <ReferencedModule Name="Web.Foundation" AssemblyVersion="1.8.0.0" />
+  </ReferencedModules>
+</DependencyManifest>

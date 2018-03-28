@@ -53,7 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="BuildMasterPSHost.cs" />
     <Compile Include="GitVersion.cs" />
     <Compile Include="ParallelBuildProject.cs" />
     <Compile Include="PowerShellScriptRunner.cs" />
