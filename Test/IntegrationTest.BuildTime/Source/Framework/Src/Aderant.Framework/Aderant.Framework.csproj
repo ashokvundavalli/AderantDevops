@@ -1,0 +1,1003 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>10.0.20826</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A438AD02-5434-48D1-BA8E-B858AE8A6FDF}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>Aderant.Framework</AssemblyName>
+    <AssemblyOriginatorKeyFile>..\..\Build\FrameworkKey.snk</AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Aderant.Framework</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <SignAssembly>true</SignAssembly>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <FileAlignment>512</FileAlignment>
+    <CommonBuildProject>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), "dir.proj"))</CommonBuildProject>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>..\..\Bin\Module\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DocumentationFile>..\..\Bin\Module\Aderant.Framework.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>1591</NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\..\Bin\Module\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>..\..\Bin\Module\Aderant.Framework.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>1591</NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>pdbonly</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.85.5.452, Culture=neutral, PublicKeyToken=41b332442f1101cc, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\ThirdParty.ICSharpCode\lib\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Irony">
+      <HintPath>..\..\packages\ThirdParty.Irony\lib\Irony.dll</HintPath>
+    </Reference>
+    <Reference Include="Irony.Interpreter">
+      <HintPath>..\..\packages\ThirdParty.Irony\lib\Irony.Interpreter.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\..\packages\ThirdParty.log4net\lib\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.PerfCounterCollector">
+      <HintPath>..\..\packages\ThirdParty.Microsoft.ApplicationInsights\lib\Microsoft.AI.PerfCounterCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.ServerTelemetryChannel">
+      <HintPath>..\..\packages\ThirdParty.Microsoft.ApplicationInsights\lib\Microsoft.AI.ServerTelemetryChannel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ApplicationInsights, Version=2.5.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\ThirdParty.Microsoft.ApplicationInsights\lib\Microsoft.ApplicationInsights.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Data.Services.Client">
+      <HintPath>..\..\packages\ThirdParty.Microsoft.OData\lib\Microsoft.Data.Services.Client.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\ThirdParty.Newtonsoft.Json\lib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.configuration">
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Diagnostics.DiagnosticSource">
+      <HintPath>..\..\packages\ThirdParty.Microsoft.ApplicationInsights\lib\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Reactive, Version=1.0.10621.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\ThirdParty.Reactive\lib\System.Reactive.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security">
+      <Name>System.Security</Name>
+    </Reference>
+    <Reference Include="System.ServiceModel">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Web">
+      <Name>System.Web</Name>
+    </Reference>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Build\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="Aes256EncryptionWithPassphraseAndSalt.cs" />
+    <Compile Include="Analysis\Timer.cs" />
+    <Compile Include="Annotations\CustomizationBuildAttribute.cs" />
+    <Compile Include="ArgumentFault.cs" />
+    <Compile Include="AssemblyInformationalVersionInspector.cs" />
+    <Compile Include="Caching\EventDispatcher.cs" />
+    <Compile Include="Caching\MemoryCache.cs" />
+    <Compile Include="Caching\CacheAddEventArgs.cs" />
+    <Compile Include="Caching\CacheConfiguration.cs" />
+    <Compile Include="Caching\CacheKey.cs" />
+    <Compile Include="Caching\CacheManger.cs" />
+    <Compile Include="Caching\DefaultCollectionCacheManager.cs" />
+    <Compile Include="Caching\CacheMissEventArgs.cs" />
+    <Compile Include="Caching\ICache.cs" />
+    <Compile Include="Caching\CacheEntry.cs" />
+    <Compile Include="Caching\Stores\MemoryStore.cs" />
+    <Compile Include="Caching\Stores\StaticStorage.cs" />
+    <Compile Include="Caching\UpdateMode.cs" />
+    <Compile Include="ChangeTracking\ChangeTrackingException.cs" />
+    <Compile Include="ChangeTracking\ComponentChangeSet.cs" />
+    <Compile Include="ChangeTracking\DomainComponentMapper.cs" />
+    <Compile Include="ChangeTracking\ITrackable.cs" />
+    <Compile Include="ChangeTracking\ObjectNotFoundException.cs" />
+    <Compile Include="ChangeTracking\PropertyDictionary.cs" />
+    <Compile Include="CommandLine\ILaunchable.cs" />
+    <Compile Include="CommandLine\IntrinsicArgumentHandler.cs" />
+    <Compile Include="CommandLine\LaunchableContext.cs" />
+    <Compile Include="Compatibility\AllowAnonymousSmtpAttribute.cs" />
+    <Compile Include="Compatibility\HttpFileShare.cs" />
+    <Compile Include="Compatibility\UseAderantWorkflowManagementAttribute.cs" />
+    <Compile Include="Compatibility\EnhancedSecurityCompatibilityAttribute.cs" />
+    <Compile Include="Component\IComponentResolver.cs" />
+    <Compile Include="ConfigurationByCode\BindingsSectionMerge.cs" />
+    <Compile Include="ConfigurationByCode\ConfigurationSystemProxy.cs" />
+    <Compile Include="ConfigurationByCode\ConfigurationSectionExtension.cs" />
+    <Compile Include="Extensions\IQueryableExtensions.Async.cs" />
+    <Compile Include="Impersonation.cs" />
+    <Compile Include="Interception\InternalDispatcher.cs" />
+    <Compile Include="Interception\FactoryDispatcher.cs" />
+    <Compile Include="Interception\InterceptorRegistry.cs" />
+    <Compile Include="Interception\InvocationDispatchers.cs" />
+    <Compile Include="Reflection\MethodPatching\ByteBuffer.cs" />
+    <Compile Include="Reflection\MethodPatching\CodeInstruction.cs" />
+    <Compile Include="Reflection\MethodPatching\DebuggingContainer.cs" />
+    <Compile Include="Reflection\MethodPatching\DynamicTools.cs" />
+    <Compile Include="Reflection\MethodPatching\Emitter.cs" />
+    <Compile Include="Reflection\MethodPatching\IlInstruction.cs" />
+    <Compile Include="Reflection\MethodPatching\MethodBodyReader.cs" />
+    <Compile Include="Reflection\MethodPatching\MethodCopier.cs" />
+    <Compile Include="Reflection\MethodPatching\MethodPatcher.cs" />
+    <Compile Include="Reflection\MethodPatching\PatchContainer.cs" />
+    <Compile Include="Reflection\MethodPatching\PatchOptions.cs" />
+    <Compile Include="Reflection\MethodPatching\ProtectedRegionInfo.cs" />
+    <Compile Include="Telemetry\TelemetryFeatureHelper.cs" />
+    <Compile Include="Telemetry\TelemetryFeatures.cs" />
+    <Compile Include="Telemetry\DependencyTableStore.cs" />
+    <Compile Include="Telemetry\ObjectInstanceBasedOperationHolder.cs" />
+    <Compile Include="Telemetry\Collectors\RuntimeSqlCommandTracing.cs" />
+    <Compile Include="Telemetry\GlobalTelemetryProperties.cs" />
+    <Compile Include="Telemetry\SetupForApplicationInsights.cs" />
+    <Compile Include="Logging\TraceLogger.cs" />
+    <Compile Include="Reflection\DelegateBuilder.cs" />
+    <Compile Include="Reflection\PropertyValueSetter.cs" />
+    <Compile Include="ServiceBindings.cs" />
+    <Compile Include="ConfigurationByCode\SectionMerger.cs" />
+    <Compile Include="Customization\FirmModelInterfaces.g.cs">
+      <DependentUpon>FirmModelInterfaces.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Customization\IReflectionLoadedAssembly.cs" />
+    <Compile Include="Customization\ParametersModelInterfaces.g.cs">
+      <DependentUpon>ParametersModelInterfaces.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Customization\IViewModelOfflineCache.cs" />
+    <Compile Include="CannotDeleteEntityException.cs" />
+    <Compile Include="ConfigurationByCode\DefaultInstallationSettingsProvider.cs" />
+    <Compile Include="Deployment\InstanceMetadataConfigurationSectionSerializer.cs" />
+    <Compile Include="Deployment\XmlConfigurationSection.cs" />
+    <Compile Include="Domain\PersistZeroForeignKeyAttribute.cs" />
+    <Compile Include="Dto\DateTimeHandler.cs" />
+    <Compile Include="EncryptionWithAesCryptoServiceProvider.cs" />
+    <Compile Include="ExpertConfigurationException.cs" />
+    <Compile Include="Expressions\IParametersExpressionProxy.cs" />
+    <Compile Include="Expressions\IDeviceExpressionProxy.cs" />
+    <Compile Include="Expressions\LinqExpressionComparer.cs" />
+    <Compile Include="Dto\Serialization\Converters\ArrayOrObjectConverter.cs" />
+    <Compile Include="Dto\Serialization\Converters\TypedExpandoConverter.cs" />
+    <Compile Include="Dto\Serialization\Converters\ViewModelChangeConverter.cs" />
+    <Compile Include="Dto\Serialization\Converters\ViewModelJsonContract.cs" />
+    <Compile Include="Dto\Serialization\DelegatingReferenceResolver.cs" />
+    <Compile Include="Dto\Serialization\IPropertyBehaviorContributor.cs" />
+    <Compile Include="Dto\Serialization\LambdaPropertyConfiguration.cs" />
+    <Compile Include="Dto\Serialization\ViewModelCollectionContract.cs" />
+    <Compile Include="Dto\Serialization\ViewModelJsonSerializer.cs" />
+    <Compile Include="Expressions\IQueryExpressionProxy.cs" />
+    <Compile Include="Extensions\IDisposableExtensions.cs" />
+    <Compile Include="Factories\TaskDispatcherHandlerAttribute.cs" />
+    <Compile Include="GarbageCollectionMonitor.cs" />
+    <Compile Include="HashCodeCombiner.cs" />
+    <Compile Include="Data\Procedure.cs" />
+    <Compile Include="Data\ProcedureBase.cs" />
+    <Compile Include="Expressions\V1\Visitors\TypeRewriter.cs" />
+    <Compile Include="ComponentModel\DisplayFormatAttribute.cs" />
+    <Compile Include="ComponentModel\DisplayFormatType.cs" />
+    <Compile Include="Dto\ComponentOperation.cs" />
+    <Compile Include="Expressions\IExpressionV2.cs" />
+    <Compile Include="Expressions\IExpression.cs" />
+    <Compile Include="Factories\FileStreamFactory.cs" />
+    <Compile Include="Factories\IStreamFactory.cs" />
+    <Compile Include="Collections\TopologicalSort.cs" />
+    <Compile Include="ComponentModel\EntityDisplayPropertyAttribute.cs" />
+    <Compile Include="ComponentModel\DisplayNameAttribute.cs" />
+    <Compile Include="ComponentModel\FieldPersistenceAttribute.cs" />
+    <Compile Include="ComponentModel\IsUtcDateAttribute.cs" />
+    <Compile Include="ComponentModel\SummaryPropertyAttribute.cs" />
+    <Compile Include="ComponentModel\TablePersistenceAttribute.cs" />
+    <Compile Include="Component\ComponentException.cs" />
+    <Compile Include="Component\ComponentInfo.cs" />
+    <Compile Include="Component\ComponentMappingAttribute.cs" />
+    <Compile Include="Component\ComponentMappingRole.cs" />
+    <Compile Include="Component\ComponentResolver.cs" />
+    <Compile Include="Component\ComponentSchemeAttribute.cs" />
+    <Compile Include="Component\ComponentUuid.cs" />
+    <Compile Include="Configuration\ConfigurationCacheEvictionEventArgs.cs" />
+    <Compile Include="Configuration\ConfigurationSavedEventArgs.cs" />
+    <Compile Include="Configuration\Dto\IConfigurationViewModel.cs" />
+    <Compile Include="Customization\IDataContract.cs" />
+    <Compile Include="Customization\IDataProviderProperty.cs" />
+    <Compile Include="Customization\IDataProviderResolver.cs" />
+    <Compile Include="Customization\IDataProviderTypeInfo.cs" />
+    <Compile Include="Customization\IExtensionPointRule.cs" />
+    <Compile Include="Customization\IExtensionPointSchedule.cs" />
+    <Compile Include="Customization\IParameter.cs" />
+    <Compile Include="Customization\IResolvedParameter.cs" />
+    <Compile Include="Customization\IRule.cs" />
+    <Compile Include="Customization\IRuleContract.cs" />
+    <Compile Include="Customization\IsCustomColumnAttribute.cs" />
+    <Compile Include="Deployment\ConnectionStringValidator.cs" />
+    <Compile Include="Deployment\FolderManifestGenerator.cs" />
+    <Compile Include="Deployment\IVersionInformation.cs" />
+    <Compile Include="Deployment\Messages\DeploymentMessage.cs" />
+    <Compile Include="DevelopmentEnvironment.cs" />
+    <Compile Include="Domain\IdentifierCorrelation.cs" />
+    <Compile Include="Domain\ISynchronizeIdentifier.cs" />
+    <Compile Include="Dto\ChangeEvent.cs" />
+    <Compile Include="Dto\EntityChangeAction.cs" />
+    <Compile Include="Dto\ContractDataDictionaryDto.cs" />
+    <Compile Include="Dto\IContractDataDictionaryDto.cs" />
+    <Compile Include="Dto\IContractDataDictionaryItemDto.cs" />
+    <Compile Include="Dto\IEnumerableExtensions.cs" />
+    <Compile Include="Dto\PropertyChange.cs" />
+    <Compile Include="Dto\ViewModel.cs" />
+    <Compile Include="Dto\ViewModelChange.cs" />
+    <Compile Include="Dto\ViewModelChangeAction.cs" />
+    <Compile Include="Email\Mapi.cs" />
+    <Compile Include="Email\EmailClient.cs" />
+    <Compile Include="IConfigurationProvider.cs" />
+    <Compile Include="IGarbageCollectionMonitor.cs" />
+    <Compile Include="IInstallationConfig.cs" />
+    <Compile Include="Logging\Appenders\AppDomainAwareFileAppender.cs" />
+    <Compile Include="ServiceEndpointFactory.cs" />
+    <Compile Include="ExpertTableEntities.cs" />
+    <Compile Include="Expressions\V1\Aggregates\AggregateExpressionBase.cs" />
+    <Compile Include="Expressions\V1\Aggregates\AverageExpression.cs" />
+    <Compile Include="Expressions\V1\Aggregates\NoneExpression.cs" />
+    <Compile Include="Expressions\V1\Binders\CommonFunctions.cs" />
+    <Compile Include="Expressions\V1\Binders\ConvertReflectionBinder.cs" />
+    <Compile Include="Expressions\V1\Binders\MathReflectionBinder.cs" />
+    <Compile Include="Expressions\V1\Binders\ReflectionBinder.cs" />
+    <Compile Include="Expressions\V1\Binders\StringReflectionBinder.cs" />
+    <Compile Include="Expressions\V1\ContractExtensions.cs" />
+    <Compile Include="Expressions\InstallationExpressionProxy.cs" />
+    <Compile Include="Expressions\V1\ICollectionReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\IActivityExpressionFactory.cs" />
+    <Compile Include="Expressions\V1\ICustomActivityProperty.cs" />
+    <Compile Include="Expressions\IInstallationExpressionProxy.cs" />
+    <Compile Include="Expressions\V1\IExpressionSerializer.cs" />
+    <Compile Include="Expressions\V1\FlowControl\ConditionalValueExpression.cs" />
+    <Compile Include="Expressions\IUserInfoExpressionProxy.cs" />
+    <Compile Include="Expressions\V1\Logical\NotExpression.cs" />
+    <Compile Include="Expressions\V1\Logical\UnaryExpression.cs" />
+    <Compile Include="Expressions\V1\Special\ExecutionEnvironmentReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\Special\IExecutionEnvironmentReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\ISecurityReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\ISecurityMethodCallExpression.cs" />
+    <Compile Include="Expressions\IUserExpressionProxy.cs" />
+    <Compile Include="Expressions\V1\Special\IUpdateExecutionEnvironmentContext.cs" />
+    <Compile Include="Expressions\V1\Special\ParameterReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\Special\SecurityMethodCallExpression.cs" />
+    <Compile Include="Expressions\V1\Special\SecurityExpression.cs" />
+    <Compile Include="Expressions\V1\Core\UntypedValueExpression.cs" />
+    <Compile Include="Expressions\V1\ExpressionBase.cs" />
+    <Compile Include="Expressions\V1\IAdminParameterExpression.cs" />
+    <Compile Include="Expressions\V1\Special\AdminParameterExpression.cs" />
+    <Compile Include="Expressions\V1\Special\SecurityReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\TypeNotNumericException.cs" />
+    <Compile Include="Expressions\V1\Visitors\DebugExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\Visitors\ExpressionOfTypeVisitor.cs" />
+    <Compile Include="Expressions\V1\Visitors\AggregateFunctionFormat.cs" />
+    <Compile Include="Expressions\V1\Arithmetic\AddExpression.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Expressions\V1\Arithmetic\ArithmeticOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Expressions\V1\Arithmetic\ArithmeticOperationExpression.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Expressions\V1\Arithmetic\DivideOperationExpression.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Expressions\V1\Arithmetic\MultiplyOperationExpression.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Expressions\V1\Arithmetic\SubtractExpression.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Expressions\V1\Collections\WhereExpression.cs" />
+    <Compile Include="Expressions\V1\Collections\CollectionPredicateExpressionBase.cs" />
+    <Compile Include="Expressions\V1\Collections\ICollectionPredicateExpression.cs" />
+    <Compile Include="Expressions\V1\Collections\CollectionEvaluationExpression.cs" />
+    <Compile Include="Expressions\V1\Aggregates\CountExpression.cs" />
+    <Compile Include="Expressions\V1\Collections\ICollectionEvaluationExpression.cs" />
+    <Compile Include="Expressions\V1\Aggregates\MinMaxExpression.cs" />
+    <Compile Include="Expressions\V1\Aggregates\SumExpression.cs" />
+    <Compile Include="Expressions\V1\Binders\IBuiltInMethodBinder.cs" />
+    <Compile Include="Expressions\V1\Aggregates\AllExpression.cs" />
+    <Compile Include="Expressions\V1\Aggregates\AnyExpression.cs" />
+    <Compile Include="Expressions\V1\Collections\WhereExpressionIterator.cs" />
+    <Compile Include="Expressions\V1\IInvalidTerminalExpression.cs" />
+    <Compile Include="Expressions\V1\IExpressionMutator.cs" />
+    <Compile Include="Expressions\V1\Visitors\ExpressionMutator.cs" />
+    <Compile Include="Expressions\V1\Visitors\ParameterExpressionMutator.cs" />
+    <Compile Include="Expressions\V1\Visitors\ParameterReferenceInfo.cs" />
+    <Compile Include="Expressions\V1\Visitors\ReferenceToValueExpressionMutator.cs" />
+    <Compile Include="Expressions\V1\Visitors\VariableVisitor.cs" />
+    <Compile Include="Expressions\V1\ISequenceExpression.cs" />
+    <Compile Include="Expressions\V1\ExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\IActionActivityExpression.cs" />
+    <Compile Include="Expressions\V1\IExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\IMemberAccessExpression.cs" />
+    <Compile Include="Expressions\V1\IMethodCallExpression.cs" />
+    <Compile Include="Expressions\V1\Aggregates\IAggregateExpression.cs" />
+    <Compile Include="Expressions\V1\Visitors\LogicalExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\Logical\AndExpression.cs" />
+    <Compile Include="Expressions\V1\Core\CastExpression.cs" />
+    <Compile Include="Expressions\V1\ILogicalExpression.cs" />
+    <Compile Include="Expressions\V1\Special\ConfigReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\Core\CollectionExpression.cs" />
+    <Compile Include="Expressions\V1\ExpressionEvaluationResult.cs" />
+    <Compile Include="Expressions\V1\Language\ExpressionParser.cs" />
+    <Compile Include="Expressions\V1\Validation\ExpressionValidationResult.cs" />
+    <Compile Include="Expressions\V1\ExpressionValidator.cs" />
+    <Compile Include="Expressions\V1\Core\MethodCallExpression.cs" />
+    <Compile Include="Expressions\V1\ICastExpression.cs" />
+    <Compile Include="Expressions\V1\ICollectionExpression.cs" />
+    <Compile Include="Expressions\V1\IConfigReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\IConstantExpression.cs" />
+    <Compile Include="Expressions\V1\IExpressionEvaluationResult.cs" />
+    <Compile Include="Expressions\V1\Language\ExpertExpressionGrammar.cs" />
+    <Compile Include="Expressions\V1\IExpressionParser.cs" />
+    <Compile Include="Expressions\V1\Assignment\AssignmentExpression.cs" />
+    <Compile Include="Expressions\V1\CommaSeparatedValueParser.cs" />
+    <Compile Include="Expressions\V1\Comparison\ComparisonExpression.cs" />
+    <Compile Include="Expressions\V1\Core\ConstantExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\EqualExpression.cs" />
+    <Compile Include="Expressions\V1\ExpressionComparison.cs" />
+    <Compile Include="Expressions\V1\ExpressionExtensions.cs" />
+    <Compile Include="Expressions\V1\ExpressionFactory.cs" />
+    <Compile Include="Expressions\V1\ExpressionOperator.cs" />
+    <Compile Include="Expressions\V1\ExpressionTypeMismatchException.cs" />
+    <Compile Include="Expressions\V1\ExpressionValueConstants.cs" />
+    <Compile Include="Expressions\V1\IArithmeticOperationExpression.cs" />
+    <Compile Include="Expressions\V1\IComparisonExpression.cs" />
+    <Compile Include="Expressions\V1\IConditionalValueExpression.cs" />
+    <Compile Include="Expressions\V1\FlowControl\IfThenElseExpression.cs" />
+    <Compile Include="Expressions\V1\Core\InvalidTerminalExpression.cs" />
+    <Compile Include="Expressions\V1\InvalidValueExpressionException.cs" />
+    <Compile Include="Expressions\V1\LambdaToExpertExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\Core\MemberAccessExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\NotInCollectionExpression.cs" />
+    <Compile Include="Expressions\V1\Visitors\ExpressionToStringVisitor.cs" />
+    <Compile Include="Expressions\V1\Visitors\InvalidTerminalExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\Visitors\ReferenceExpressionVisitor.cs" />
+    <Compile Include="Expressions\V1\ReferenceValueEvaluationException.cs" />
+    <Compile Include="Expressions\V1\Core\SequenceExpression.cs" />
+    <Compile Include="Expressions\V1\StringComparer.cs" />
+    <Compile Include="Expressions\V1\Comparison\StringContainsExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\StringStartsWithExpression.cs" />
+    <Compile Include="Expressions\V1\TimePeriod.cs" />
+    <Compile Include="Expressions\V1\UnreachableReferenceException.cs" />
+    <Compile Include="Expressions\V1\UnrecognisedExpressionStringException.cs" />
+    <Compile Include="Expressions\V1\ExpressionCache.cs" />
+    <Compile Include="Expressions\V1\ExpressionOfT.cs" />
+    <Compile Include="Expressions\V1\LINQ\ExpressionRewriter.cs" />
+    <Compile Include="Expressions\V1\Comparison\GreaterThanExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\GreaterThanOrEqualExpression.cs" />
+    <Compile Include="Expressions\V1\IExpressionOfT.cs" />
+    <Compile Include="Expressions\V1\Comparison\InCollectionExpression.cs" />
+    <Compile Include="Expressions\V1\IReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\IValueExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\LessThanExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\LessThanOrEqualExpression.cs" />
+    <Compile Include="Expressions\V1\Logical\LogicalExpression.cs" />
+    <Compile Include="Expressions\V1\Comparison\NotEqualExpression.cs" />
+    <Compile Include="Expressions\V1\Logical\OrExpression.cs" />
+    <Compile Include="Expressions\V1\Core\ReferenceExpression.cs" />
+    <Compile Include="Expressions\V1\ReflectionHelper.cs" />
+    <Compile Include="Expressions\V1\IValidationExpression.cs" />
+    <Compile Include="Expressions\V1\IValidationExpressionSet.cs" />
+    <Compile Include="Expressions\V1\Validation\ValidationExpression.cs" />
+    <Compile Include="Expressions\V1\Validation\ValidationExpressionSet.cs" />
+    <Compile Include="Expressions\V1\Core\ValueExpression.cs" />
+    <Compile Include="Customization\CustomizationModelInterfaces.g.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CustomizationModelInterfaces.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Extensions\CompositionMethods.cs" />
+    <Compile Include="Extensions\DateTimeExtensionMethods.cs" />
+    <Compile Include="Extensions\ICloneable.cs" />
+    <Compile Include="Extensions\IQueryableExtensions.cs" />
+    <Compile Include="Dto\NamedDataCollection.cs" />
+    <Compile Include="Dto\NamedDataItem.cs" />
+    <Compile Include="Composition\SafeDirectoryCatalog.cs" />
+    <Compile Include="Factories\FactoryConfigRegistrationAttribute.cs" />
+    <Compile Include="HbmAssemblyAttribute.cs" />
+    <Compile Include="HostEnvironment.cs" />
+    <Compile Include="Component\IComponentInfo.cs" />
+    <Compile Include="Factories\IFactoryMessageLogger.cs" />
+    <Compile Include="GZipEncoder\GZipMessageEncoderFactory.cs" />
+    <Compile Include="GZipEncoder\GZipMessageEncodingBindingElement.cs" />
+    <Compile Include="GZipEncoder\GZipMessageEncodingBindingElementImporter.cs" />
+    <Compile Include="Helpers\Retry.cs" />
+    <Compile Include="IdentifierMetadata.cs" />
+    <Compile Include="Identity\IdentityBindingList.cs" />
+    <Compile Include="Identity\IdentityInfoMapper.cs" />
+    <Compile Include="Identity\IdentityReference.cs" />
+    <Compile Include="Identity\IIdentity.cs" />
+    <Compile Include="Identity\IIdentityInfo.cs" />
+    <Compile Include="Identity\WellKnownGuids.cs" />
+    <Compile Include="Email\IEmailClient.cs" />
+    <Compile Include="IExceptionWithDetail.cs" />
+    <Compile Include="Deployment\InstanceMetadataConfigurationSection.cs" />
+    <Compile Include="ConfigurationByCode\InstallationConfigurator.cs" />
+    <Compile Include="ConfigurationByCode\InstallationConfiguration.cs" />
+    <Compile Include="InstallationExtensions.cs" />
+    <Compile Include="InstallationSetupHelper.cs" />
+    <Compile Include="InvalidEmailAddressException.cs" />
+    <Compile Include="License.cs" />
+    <Compile Include="LicenseEnums.cs" />
+    <Compile Include="LicenseException.cs" />
+    <Compile Include="LicenseResult.cs" />
+    <Compile Include="Licensing.cs" />
+    <Compile Include="Linq\IQueryWrapper.cs" />
+    <Compile Include="Linq\QueryableWrapper.cs" />
+    <Compile Include="Linq\TypeExtensions.cs" />
+    <Compile Include="Linq\DefaultEventHandler.cs" />
+    <Compile Include="Linq\IEventHandler.cs" />
+    <Compile Include="Linq\InterceptionContext.cs" />
+    <Compile Include="Linq\QueryInterceptor.cs" />
+    <Compile Include="Linq\ReflectionHelper.cs" />
+    <Compile Include="Linq\QueryableExpressionExecutingEventArgs.cs" />
+    <Compile Include="Linq\Visitors\ConstantToPropertyRewriter.cs" />
+    <Compile Include="Logging\Log4Net\RemoteLoggingListener.cs" />
+    <Compile Include="Logging\TransportType.cs" />
+    <Compile Include="Logging\IRemoteLogging.cs" />
+    <Compile Include="Logging\Log4Net\LoggingEventReaderWriter.cs" />
+    <Compile Include="Logging\Appenders\RemoteAppender.cs" />
+    <Compile Include="Logging\Log4Net\RemoteAppenderManager.cs" />
+    <Compile Include="Logging\LogEntry.cs" />
+    <Compile Include="Logging\ILoggingCapture.cs" />
+    <Compile Include="Logging\LoggingContext.cs" />
+    <Compile Include="Logging\ClientCaptureLogger.cs" />
+    <Compile Include="Logging\IConfigurableLogger.cs" />
+    <Compile Include="Logging\Log4Net\LogConfigurationBuilder.cs" />
+    <Compile Include="Logging\Log4Net\ILogConfigurationRepository.cs" />
+    <Compile Include="Logging\Log4Net\LogConfigurationRepository.cs" />
+    <Compile Include="Logging\Appenders\ThreadLocalMemoryAppender.cs" />
+    <Compile Include="Logging\RemoteAppenderConfiguration.cs" />
+    <Compile Include="MemoryMappedBuffer.cs" />
+    <Compile Include="MD5Hash.cs" />
+    <Compile Include="MissingEmailAddressException.cs" />
+    <Compile Include="NamedPipe\Communication\IPipeService.cs" />
+    <Compile Include="NamedPipe\Communication\PipeService.cs" />
+    <Compile Include="NamedPipe\Receiver.cs" />
+    <Compile Include="NamedPipe\Sender.cs" />
+    <Compile Include="Packaging\Process\NotifyEventArgs.cs" />
+    <Compile Include="Persistence\ICreateComponent.cs" />
+    <Compile Include="Persistence\ForeignKeyConstraintException.cs" />
+    <Compile Include="Persistence\ORMException.cs" />
+    <Compile Include="Persistence\ORMFault.cs" />
+    <Compile Include="Persistence\SearchResultsDataSet.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SearchResultsDataSet.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Presentation\EntitySummary.cs" />
+    <Compile Include="Presentation\ExchangeRateSummary.cs" />
+    <Compile Include="Presentation\ExpertToolboxItem.cs" />
+    <Compile Include="Presentation\ICurrency.cs" />
+    <Compile Include="Presentation\ICurrencyDataProvider.cs" />
+    <Compile Include="Presentation\IDynamicContainer.cs" />
+    <Compile Include="Presentation\IPropertyWrapper.cs" />
+    <Compile Include="Presentation\LookupEntitySummary.cs" />
+    <Compile Include="Products.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AssemblyResolver.cs" />
+    <Compile Include="BusinessException.cs" />
+    <Compile Include="BusinessFault.cs" />
+    <Compile Include="BusinessRuleException.cs" />
+    <Compile Include="Communication.Client\NetDataContractSerializer.cs" />
+    <Compile Include="Communication.Client\NetDataContractSerializerOperationBehavior.cs" />
+    <Compile Include="CommunicationException.cs" />
+    <Compile Include="CommunicationFault.cs" />
+    <Compile Include="Comparison\ByteArrayComparer.cs" />
+    <Compile Include="Configuration\ConfigurationTarget.cs" />
+    <Compile Include="Configuration\Configurator.cs" />
+    <Compile Include="Configuration\Dto\ConfigurationValue.cs" />
+    <Compile Include="Configuration\Dto\IConfigurationDto.cs" />
+    <Compile Include="Configuration\GetValuesLevelSearch.cs" />
+    <Compile Include="Configuration\IConfigurator.cs" />
+    <Compile Include="ConnectionSettings.cs" />
+    <Compile Include="CodeContext.cs" />
+    <Compile Include="CommandLine\ArgumentAttribute.cs" />
+    <Compile Include="CommandLine\DefaultArgumentAttribute.cs" />
+    <Compile Include="CommandLine\Enums.cs" />
+    <Compile Include="CommandLine\Parser.cs" />
+    <Compile Include="ConfigurationException.cs" />
+    <Compile Include="Comparison\DateTimeComparer.cs" />
+    <Compile Include="DiaganosticCallBack.cs" />
+    <Compile Include="Domain\AggregateRootMetaDataAttribute.cs" />
+    <Compile Include="Domain\ChangesetHelper.cs" />
+    <Compile Include="Domain\CollectionMetaDataAttribute.cs" />
+    <Compile Include="Domain\CompositeCollectionMetaDataAttribute.cs" />
+    <Compile Include="Domain\DomainComponentMetaDataAttribute.cs" />
+    <Compile Include="Dto\DiscriminatorAlreadySetException.cs" />
+    <Compile Include="Dto\DiscriminatorAttribute.cs" />
+    <Compile Include="Dto\DiscriminatorNotSetException.cs" />
+    <Compile Include="Extensions\FactoryExtensionMethods.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Extensions\StringExtensionMethods.cs" />
+    <Compile Include="Factories\Builders\AliasBuilder.cs" />
+    <Compile Include="Factories\Exceptions\BuilderCreationException.cs" />
+    <Compile Include="Factories\Exceptions\FactorySecurityCreationException.cs" />
+    <Compile Include="Factories\FactoryConfiguration.cs" />
+    <Compile Include="Factories\FactoryRegistrationAttributeException.cs" />
+    <Compile Include="Factories\Providers\AttributeRegistrationsProvider.cs" />
+    <Compile Include="Factories\Persisters\BinaryFileRegistrationsPersister.cs" />
+    <Compile Include="Factories\Providers\BinaryFileRegistrationsProvider.cs" />
+    <Compile Include="Factories\Persisters\BinaryRegistrationsPersister.cs" />
+    <Compile Include="Factories\Builders\IInstanceBuilder.cs" />
+    <Compile Include="Factories\Builders\InstanceBuilder.cs" />
+    <Compile Include="Factories\Builders\SingletonBuilder.cs" />
+    <Compile Include="Factories\Exceptions\FactoryInstanceCreationSecurityException.cs" />
+    <Compile Include="Factories\FactoryRegistration.cs" />
+    <Compile Include="Factories\FactoryRegistrationAttribute.cs" />
+    <Compile Include="Factories\IFactoryRegistration.cs" />
+    <Compile Include="Factories\IFactoryRegistrationSecurity.cs" />
+    <Compile Include="Factories\Persisters\IRegistrationPersister.cs" />
+    <Compile Include="Factories\Exceptions\DuplicateFactoryRegistrationException.cs" />
+    <Compile Include="Factories\Exceptions\FactoryRegistrationException.cs" />
+    <Compile Include="Factories\Exceptions\FactoryInstanceCreationException.cs" />
+    <Compile Include="Factories\Exceptions\TypeNotLoadedException.cs" />
+    <Compile Include="Factories\Exceptions\TypeNotRegisteredException.cs" />
+    <Compile Include="Factories\FactoryResourceGenerator.cs" />
+    <Compile Include="Factories\FactoryScope.cs" />
+    <Compile Include="Factories\Persisters\XmlFileRegistrationsPersister.cs" />
+    <Compile Include="Factories\Providers\IRegistrationsProvider.cs" />
+    <Compile Include="Factories\Providers\XmlFileRegistrationsProvider.cs" />
+    <Compile Include="Factories\Persisters\XmlRegistrationsPersister.cs" />
+    <Compile Include="Factories\Providers\XmlRegistrationsProvider.cs" />
+    <Compile Include="Factories\RegistrationsDictionary.cs" />
+    <Compile Include="Factories\Security\CannotReplaceOnceRegisteredSecurity.cs" />
+    <Compile Include="Factories\Security\FrameworkPublicKeyTokenSecurity.cs" />
+    <Compile Include="GeneralFault.cs" />
+    <Compile Include="Factories\AssemblyLoader.cs" />
+    <Compile Include="Factories\IAssemblyLoader.cs" />
+    <Compile Include="Factories\IFactoryConfiguration.cs" />
+    <Compile Include="GeneratedCodeAttribute.cs" />
+    <Compile Include="GenericEqualityComparer.cs" />
+    <Compile Include="Helpers\EmailHelper.cs" />
+    <Compile Include="IAssemblyResolver.cs" />
+    <Compile Include="Identity\Dto\IdentityInfo.cs" />
+    <Compile Include="Identity\Dto\IdentityType.cs" />
+    <Compile Include="Identity\Dto\IIdentityDto.cs" />
+    <Compile Include="IFault.cs" />
+    <Compile Include="IPingable.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IServerPingResult.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NamedValue.cs" />
+    <Compile Include="Persistence\ConnectionException.cs" />
+    <Compile Include="Persistence\DeadlockException.cs" />
+    <Compile Include="Persistence\IAggregateRoot.cs" />
+    <Compile Include="Persistence\IDomainComponent.cs" />
+    <Compile Include="Persistence\IDomainLookup.cs" />
+    <Compile Include="Persistence\DomainRepository\IFrameworkDomainComponent.cs" />
+    <Compile Include="Persistence\IPersistedIdentity.cs" />
+    <Compile Include="Domain\ModelChange.cs" />
+    <Compile Include="Domain\ModelMergeConflict.cs" />
+    <Compile Include="Domain\ModelMergeException.cs" />
+    <Compile Include="Domain\PropertyMetaDataAttribute.cs" />
+    <Compile Include="Dto\DtoBase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Dto\DtoMapper.cs" />
+    <Compile Include="Dto\DtoMapperFactory.cs" />
+    <Compile Include="Dto\DtoProperty.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Dto\DtoSortComparer.cs" />
+    <Compile Include="Dto\FetchItems.cs" />
+    <Compile Include="Dto\IDtoMapper.cs" />
+    <Compile Include="Encryption.cs" />
+    <Compile Include="Factories\Factory.cs" />
+    <Compile Include="Factories\IFactory.cs" />
+    <Compile Include="Factories\IImplementation.cs" />
+    <Compile Include="Factories\Implementation.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IAderantIdentity.cs" />
+    <Compile Include="IdentifierType.cs" />
+    <Compile Include="Dto\IDto.cs" />
+    <Compile Include="IEncryption.cs" />
+    <Compile Include="Installation.cs" />
+    <Compile Include="Integration\IExport.cs" />
+    <Compile Include="Integration\IExporter.cs" />
+    <Compile Include="Integration\IImport.cs" />
+    <Compile Include="Integration\IImporter.cs" />
+    <Compile Include="Integration\ImporterBase.cs" />
+    <Compile Include="Identifier.cs" />
+    <Compile Include="Logging\CriticalEventRepository.cs" />
+    <Compile Include="Logging\DebugLogger.cs" />
+    <Compile Include="Logging\FatalExceptionHandler.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\Log4Net\Logger.cs" />
+    <Compile Include="Logging\Log4Net\LogWriter.cs" />
+    <Compile Include="Logging\Logger.cs" />
+    <Compile Include="MessageDisplayOptions.cs" />
+    <Compile Include="Messages.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Messages.resx</DependentUpon>
+    </Compile>
+    <Compile Include="MissingAssemblyException.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="Persistence\PersistenceException.cs" />
+    <Compile Include="Persistence\PersistenceFault.cs" />
+    <Compile Include="Persistence\UniqueConstraintException.cs" />
+    <Compile Include="PreCondition.cs" />
+    <Compile Include="Presentation\Dto\DtoChange.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\DtoChangeSet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\DtoMergeConflict.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\DtoMergeException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\DtoMergeFault.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\ILimitedResultCollection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\IVersionedDto.cs" />
+    <Compile Include="Presentation\Dto\IVersionedDtoCollection.cs" />
+    <Compile Include="Presentation\Dto\IVersionedDtoCollectionItem.cs" />
+    <Compile Include="Presentation\Dto\IVersionedDtoCommon.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Presentation\Dto\IVersionedDtoProperty.cs" />
+    <Compile Include="Presentation\IDataContractSurrogateObject.cs" />
+    <Compile Include="Properties\Errors.Designer.cs">
+      <DependentUpon>Errors.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Factories\FactoryImplBase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Query\DataProviders\IIdentityInfoDataProvider.cs" />
+    <Compile Include="Query\DataProviders\IPersonOrWorkgroupDataProvider.cs" />
+    <Compile Include="Query\IBatchableQuery.cs" />
+    <Compile Include="Query\IConfigurationQuery.cs" />
+    <Compile Include="Query\ICustomizationQuery.cs" />
+    <Compile Include="Query\IEnvironmentQuery.cs" />
+    <Compile Include="Query\IIdentityQuery.cs" />
+    <Compile Include="Query\IPingQuery.cs" />
+    <Compile Include="Query\ISecurityQuery.cs" />
+    <Compile Include="Query\ILicensingQuery.cs" />
+    <Compile Include="Query\ViewModels\IAdhocList.cs" />
+    <Compile Include="Query\ViewModels\IDataQueryDefinition.cs" />
+    <Compile Include="Query\ViewModels\IEmailReference.cs" />
+    <Compile Include="Query\ViewModels\IEnvironmentDetail.cs" />
+    <Compile Include="Query\ViewModels\IExtensionPoint.cs" />
+    <Compile Include="Query\ViewModels\IRule.cs" />
+    <Compile Include="Query\ViewModels\ISmartForm.cs" />
+    <Compile Include="Registration\IRegistrationService.cs" />
+    <Compile Include="Registration\RegistrationServiceProxy.cs" />
+    <Content Include="Resources\instance_config_template.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Compile Include="Rules\ExecutionEnvironment\ActivityExecutionException.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\InteractiveEventArgs.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\InvalidateEventArgs.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\RuleException.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\SequenceInfo.cs" />
+    <Compile Include="Rules\INotifyContextChanged.cs" />
+    <Compile Include="Rules\RuleFilters.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\DefaultActivityExecutionEnvironment.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\ExecutionEventArgs.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\NotificationEventArgs.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\NotificationStyle.cs" />
+    <Compile Include="Rules\IActionActivity.cs" />
+    <Compile Include="Rules\ExecutionEnvironment\IExecutionEnvironment.cs" />
+    <Compile Include="Rules\INotifyDynamicPropertyChanged.cs" />
+    <Compile Include="ScriptBusinessException.cs" />
+    <Compile Include="ScriptException.cs" />
+    <Compile Include="Scripting\DynamicLanguageRuntimeBuilder.cs" />
+    <Compile Include="Scripting\ILanguageRuntime.cs" />
+    <Compile Include="Scripting\IScriptManager.cs" />
+    <Compile Include="Scripting\IScriptProvider.cs" />
+    <Compile Include="Scripting\IsolatedAppDomainBuilder.cs" />
+    <Compile Include="Scripting\LanguageRuntimeOptions.cs" />
+    <Compile Include="Scripting\PythonResult.cs" />
+    <Compile Include="Scripting\ScriptLanguage.cs" />
+    <Compile Include="Scripting\ScriptMessage.cs" />
+    <Compile Include="Scripting\ScriptResult.cs" />
+    <Compile Include="Scripting\ScriptVariable.cs" />
+    <Compile Include="Factories\StatefulMemoryStreamFactory.cs" />
+    <Compile Include="Security\IClientContext.cs" />
+    <Compile Include="ConfigurationByCode\SectionFactory.cs" />
+    <Compile Include="Security\ISecurityDemand.cs" />
+    <Compile Include="ServerPingResultBase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ConfigurationByCode\ServiceModelSectionFactory.cs" />
+    <Compile Include="ServiceUnavailableException.cs" />
+    <Compile Include="Sql\SQLReadOnlyChecker.cs" />
+    <Compile Include="Sql\SQLInjectionHoleException.cs" />
+    <Compile Include="SystemFailureException.cs" />
+    <Compile Include="SystemFailureFault.cs" />
+    <Compile Include="Properties\TemporarySuppressions.cs" />
+    <Compile Include="SystemMap\BaseComponentAttributeMetadata.cs" />
+    <Compile Include="SystemMap\BaseComponentMetadata.cs" />
+    <Compile Include="SystemMap\ComponentElementMetadata.cs" />
+    <Compile Include="SystemMap\CustomColumnDto.cs" />
+    <Compile Include="SystemMap\CustomTableDto.cs" />
+    <Compile Include="SystemMap\DomainComponentAttributeMetadata.cs" />
+    <Compile Include="SystemMap\DomainComponentHierarchyMetadata.cs" />
+    <Compile Include="SystemMap\DomainComponentMetadata.cs" />
+    <Compile Include="SystemMap\ISystemMapAccessor.cs" />
+    <Compile Include="SystemMap\PersistenceComponentMetadata.cs" />
+    <Compile Include="SystemMap\SystemMapAccessor.cs" />
+    <Compile Include="Telemetry\ApplicationInsightsMode.cs" />
+    <Compile Include="Telemetry\ITelemetryContext.cs" />
+    <Compile Include="Telemetry\SqlPerformanceCounterSetup.cs" />
+    <Compile Include="Telemetry\FrameworkTelemetryClient.cs" />
+    <Compile Include="Telemetry\ITelemetryClient.cs" />
+    <Compile Include="Telemetry\NullTelemetryClient.cs" />
+    <Compile Include="Telemetry\SeverityLevel.cs" />
+    <Compile Include="Telemetry\TelemetryAppender.cs" />
+    <Compile Include="Telemetry\TelemetryClientBuilder.cs" />
+    <Compile Include="Telemetry\TelemetryInitializer.cs" />
+    <Compile Include="TextTranslation\ITextTranslator.cs" />
+    <Compile Include="TextTranslation\Locale.cs" />
+    <Compile Include="TextTranslation\MessageLibrary.cs" />
+    <Compile Include="TextTranslation\MessageLibraryCollection.cs" />
+    <Compile Include="TextTranslation\TextTranslator.cs" />
+    <Compile Include="Identity\UserInfo.cs" />
+    <Compile Include="ValidatedNotNullAttribute.cs" />
+    <Compile Include="ValidationException.cs" />
+    <Compile Include="ValidationFailure.cs" />
+    <Compile Include="ValidationFailureEventArgs.cs" />
+    <Compile Include="ValidationFault.cs" />
+    <Compile Include="VersionInformation.cs" />
+    <Compile Include="VisualStudioVersionChecker.cs" />
+    <Compile Include="Xml\InvalidXmlDocumentException.cs" />
+    <Compile Include="Xml\XmlHelper.cs" />
+    <Compile Include="Properties\Constants.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Constants.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\InstallationText.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>InstallationText.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Factories\FactoryConfiguration.xml" />
+    <EmbeddedResource Include="Messages.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Messages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Constants.resx" />
+    <EmbeddedResource Include="Properties\Errors.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Errors.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\InstallationText.resx" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Microsoft.VisualStudio.Modeling.Sdk.DslDefinition.14.0.dll" />
+    <None Include="Coloured Filters For Debug View.INI">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Exceptions.cd" />
+    <None Include="Expressions\V1\Aggregates\ClassDiagram.cd" />
+    <None Include="Customization\CustomizationModelInterfaces.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CustomizationModelInterfaces.g.cs</LastGenOutput>
+    </None>
+    <None Include="Factories\Builders\Builders.cd" />
+    <None Include="Factories\Exceptions\Exceptions.cd" />
+    <None Include="Factories\Persisters\Persisters.cd" />
+    <None Include="Factories\Providers\Provider.cd" />
+    <None Include="FoundationExceptionsDiagram.cd" />
+    <None Include="InstanceData.xsd">
+      <SubType>
+      </SubType>
+    </None>
+    <None Include="Persistence\SearchResultsDataSet.xsc">
+      <DependentUpon>SearchResultsDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="Persistence\SearchResultsDataSet.xsd">
+      <SubType>Designer</SubType>
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>SearchResultsDataSet.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Persistence\SearchResultsDataSet.xss">
+      <DependentUpon>SearchResultsDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="Resources\FoundationConfiguration.xsd">
+      <SubType>
+      </SubType>
+    </None>
+    <None Include="Resources\FoundationConfiguration.xsx">
+      <DependentUpon>FoundationConfiguration.xsd</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CodeAnalysisDictionary Include="..\..\Build\CustomDictionary.xml">
+      <Link>Properties\CustomDictionary.xml</Link>
+    </CodeAnalysisDictionary>
+    <Content Include="..\..\Build\FrameworkKey.snk">
+      <Link>FrameworkKey.snk</Link>
+    </Content>
+    <None Include="Customization\ParametersModelInterfaces.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ParametersModelInterfaces.g.cs</LastGenOutput>
+    </None>
+    <None Include="Customization\_ModelInterfaceGen.tt" />
+    <None Include="Customization\FirmModelInterfaces.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>FirmModelInterfaces.g.cs</LastGenOutput>
+    </None>
+    <Content Include="log4net-chainsaw.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="log4net.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Aderant.Instrumentation\Aderant.Instrumentation.csproj">
+      <Project>{a0a6d8e3-aa89-4efc-8819-1d85ac91e6bc}</Project>
+      <Name>Aderant.Instrumentation</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(CommonBuildProject)\dir.proj" Condition="$(CommonBuildProject) != ''" />
+</Project>

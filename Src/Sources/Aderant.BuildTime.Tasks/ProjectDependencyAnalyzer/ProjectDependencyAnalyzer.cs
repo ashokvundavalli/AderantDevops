@@ -315,8 +315,9 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             //AddFakeEndNode(buildT4Task, graph);
         }
 
+        // Doesn't look like it's putting it at the end?
         private static void AddFakeEndNode(string name, TopologicalSort<IDependencyRef> graph) {
-            var end = new ProjectRef(name + ".End");
+            ProjectRef end = new ProjectRef(name + ".End");
 
             foreach (var project in graph.Vertices.ToList()) {
                 VisualStudioProject studioProject = project as VisualStudioProject;
@@ -626,13 +627,13 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public override void Visit(ExpertModule expertModule, StreamWriter outputFile) {
-            Console.WriteLine(String.Format("|   {0, -60} - {1}", expertModule.Name, expertModule.GetType().Name));
-            Console.WriteLine($"|       |--- {expertModule.DependsOn.Count} dependencies");
+            Console.WriteLine(String.Format("{0, -60} - {1}", expertModule.Name, expertModule.GetType().Name));
+            Console.WriteLine($"|   |--- {expertModule.DependsOn.Count} dependencies");
 
-            outputFile.WriteLine(String.Format("|   {0, -60} - {1}", $"{expertModule.Name} ({expertModule.DependsOn.Count})", expertModule.GetType().Name));
+            outputFile.WriteLine(String.Format("{0, -60} - {1}", $"{expertModule.Name} ({expertModule.DependsOn.Count})", expertModule.GetType().Name));
 
             foreach (IDependencyRef dependencyRef in expertModule.DependsOn) {
-                outputFile.WriteLine($"|       |---{dependencyRef.Name}");
+                outputFile.WriteLine($"|   |---{dependencyRef.Name}");
             }
         }
 
@@ -641,22 +642,22 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public void Visit(AssemblyRef assemblyRef, StreamWriter outputFile) {
-            Console.WriteLine("I am a AssemblyRef");
+            Console.WriteLine("I am an AssemblyRef");
         }
 
         public void Visit(VisualStudioProject visualStudioProject, StreamWriter outputFile) {
-            Console.WriteLine(String.Format("|   {0, -60} - {1}", visualStudioProject.Name, visualStudioProject.GetType().Name));
-            Console.WriteLine($"|       |--- {visualStudioProject.Dependencies.Count} dependencies");
+            Console.WriteLine(String.Format("{0, -60} - {1}", visualStudioProject.Name, visualStudioProject.GetType().Name));
+            Console.WriteLine($"|   |--- {visualStudioProject.Dependencies.Count} dependencies");
 
-            outputFile.WriteLine(String.Format("|   {0, -60} - {1}", $"{visualStudioProject.Name} ({visualStudioProject.Dependencies.Count})", visualStudioProject.GetType().Name));
+            outputFile.WriteLine(String.Format("{0, -60} - {1}", $"{visualStudioProject.Name} ({visualStudioProject.Dependencies.Count})", visualStudioProject.GetType().Name));
             foreach (var dependencyRef in visualStudioProject.Dependencies) {
-                outputFile.WriteLine($"|       |---{dependencyRef.Name}");
+                outputFile.WriteLine($"|   |---{dependencyRef.Name}");
             }
         }
 
         public void Visit(ProjectRef projectRef, StreamWriter outputFile) {
-            Console.WriteLine(String.Format("|   {0, -60} - {1}", projectRef.Name, projectRef.GetType().Name));
-            Console.WriteLine($"|       |---");
+            Console.WriteLine(String.Format("{0, -60} - {1}", projectRef.Name, projectRef.GetType().Name));
+            Console.WriteLine($"|   |---");
         }
 
         public void BeginVisit(TopologicalSort<IDependencyRef> graph) {

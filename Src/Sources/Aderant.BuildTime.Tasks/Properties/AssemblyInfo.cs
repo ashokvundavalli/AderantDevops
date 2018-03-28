@@ -35,4 +35,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: InternalsVisibleTo("IntegrationTest.Build")]
+[assembly: InternalsVisibleTo("IntegrationTest.BuildTime")]
 [assembly: InternalsVisibleTo("UnitTest.BuildTime")]
