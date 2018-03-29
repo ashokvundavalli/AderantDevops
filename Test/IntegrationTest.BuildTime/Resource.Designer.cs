@@ -196,9 +196,9 @@ namespace IntegrationTest.BuildTime {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] Framework {
+        internal static byte[] File {
             get {
-                object obj = ResourceManager.GetObject("Framework", resourceCulture);
+                object obj = ResourceManager.GetObject("File", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -206,9 +206,9 @@ namespace IntegrationTest.BuildTime {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] HEAD {
+        internal static byte[] Framework {
             get {
-                object obj = ResourceManager.GetObject("HEAD", resourceCulture);
+                object obj = ResourceManager.GetObject("Framework", resourceCulture);
                 return ((byte[])(obj));
             }
         }

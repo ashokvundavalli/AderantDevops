@@ -148,9 +148,6 @@
   <data name="Framework" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Source\Framework\Framework.sln;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="HEAD" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Source\.git\HEAD;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="Library" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Source\AccountsPayable\Src\Aderant.AccountsPayable.Library\Library.tt;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -171,5 +168,8 @@
   </data>
   <data name="TFSBuild2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Source\Deployment\Build\TFSBuild.rsp;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="File" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Source\.git\File;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>
