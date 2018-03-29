@@ -27,6 +27,7 @@ namespace IntegrationTest.BuildTime {
 
             List<IDependencyRef> dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(sourceDirectory));
 
+            // Assert dependency order
             Assert.IsTrue(File.Exists(Path.Combine(sourceDirectory, "DependencyGraph.txt")));
         }
     }

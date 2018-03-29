@@ -90,7 +90,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 foreach (IDependencyRef dependency in dependencies) {
                     Console.WriteLine(dependency.Name);
 
-                    foreach (var item in dependency.Dependencies) {
+                    foreach (IDependencyRef item in dependency.Dependencies) {
                         Console.WriteLine($"\t{item.Name}");
                     }
                 }
@@ -104,7 +104,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         private string GetSolutionRootForProject(ICollection<string> ceilingDirectories, ICollection<string> solutionFileNameFilter, string visualStudioProjectPath) {
             FileInfo info = new FileInfo(visualStudioProjectPath);
             DirectoryInfo directory = info.Directory;
-            FileInfo[] solutionFiles = null;
+            FileInfo[] solutionFiles;
 
             while (true) {
                 if (directory != null) {
@@ -231,7 +231,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     }
                 }
 
-                var m = v as ExpertModule;
+                ExpertModule m = v as ExpertModule;
                 if (m != null) {
                     foreach (IDependencyRef dependencyRef in m.DependsOn) {
                         IDependencyRef target = moduleVertices.SingleOrDefault(x => x.Match(dependencyRef.Name));
@@ -291,7 +291,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                     IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == BuildT4Task);
 
-                    foreach (var p in projects) {
+                    foreach (VisualStudioProject p in projects) {
                         project.Dependencies.Add(p);
                     }
                 }
@@ -300,7 +300,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 if (module != null) {
                     if (module.DependsOn.Any(d => d.Name == BuildT4Task)) {
                         IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == BuildT4Task);
-                        foreach (var p in projects) {
+                        foreach (VisualStudioProject p in projects) {
                             module.DependsOn.Add(p);
                         }
                     }
@@ -377,6 +377,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                 if (project != null && !string.IsNullOrWhiteSpace(project.SolutionRoot)) {
                     visited.Add(project.SolutionRoot);
+                    // Add software factory, T4,
                     // string[] strings = GetAdditionalComponents(project.SolutionRoot).Where(s => s != "Aderant.StoredProcedures").Where(s => s != "Aderant.Libraries.Models").ToArray();
                     DependencyManifest manifest;
 
@@ -438,7 +439,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         private void AddDependenciesFromTextTemplates(ICollection<IDependencyRef> graphVertices) {
             HashSet<string> visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var item in graphVertices) {
+            foreach (IDependencyRef item in graphVertices) {
                 VisualStudioProject project = item as VisualStudioProject;
 
                 if (project != null && visited.Add(project.SolutionRoot)) {
@@ -458,7 +459,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         private void AddDependenciesToProjects(string solutionRoot, ICollection<IDependencyRef> collection, List<TextTemplateAssemblyInfo> templates) {
             IEnumerable<VisualStudioProject> projects = collection.OfType<VisualStudioProject>().Where(p => string.Equals(p.SolutionRoot, solutionRoot, StringComparison.OrdinalIgnoreCase));
 
-            foreach (var project in projects) {
+            foreach (VisualStudioProject project in projects) {
                 foreach (TextTemplateAssemblyInfo template in templates) {
                     //if (!template.AssemblyReferences.Any() && !template.IsDomainModelDslTemplate && !template.IsServiceDslTemplate) {
                     //    continue;
@@ -474,12 +475,12 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
             ExpertModule module = collection.OfType<ExpertModule>().SingleOrDefault(s => s.Match(Path.GetFileName(solutionRoot)));
             if (module != null) {
-                foreach (var template in templates) {
+                foreach (TextTemplateAssemblyInfo template in templates) {
                     if (!template.AssemblyReferences.Any() && !template.IsDomainModelDslTemplate && !template.IsServiceDslTemplate) {
                         continue;
                     }
 
-                    foreach (var reference in template.AssemblyReferences) {
+                    foreach (string reference in template.AssemblyReferences) {
                         module.DependsOn.Add(new AssemblyRef(reference, DependencyType.TextTemplate));
                     }
                 }
@@ -537,7 +538,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     }
                 }
 
-                var m = project as ExpertModule;
+                ExpertModule m = project as ExpertModule;
                 if (m != null) {
                     foreach (var dependency in m.DependsOn)
                     {
@@ -565,6 +566,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
     }
 
+    #region Equality Comparison
     internal class DependencyEqualityComparer : IEqualityComparer<IDependencyRef> {
         public static DependencyEqualityComparer Default = new DependencyEqualityComparer();
 
@@ -690,4 +692,5 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             };
         }
     }
+    #endregion
 }

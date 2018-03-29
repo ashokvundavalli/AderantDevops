@@ -121,7 +121,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         /// The <see cref="XDocument"/> object
         /// </returns>
         private XDocument GetProjectAsXDocument(string visualStudioProjectPath, out XDocument rawDocument) {
-            var xproject = XDocument.Load(visualStudioProjectPath);
+            XDocument xproject = XDocument.Load(visualStudioProjectPath);
             rawDocument = new XDocument(xproject);
 
             if (xproject.Root != null) {

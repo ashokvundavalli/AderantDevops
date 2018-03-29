@@ -45,9 +45,9 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
                 
 
-                var visualStudioProjects = analyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(modulesDirectory));
+                List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(modulesDirectory));
 
-                var studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
+                IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
 
                 foreach (IGrouping<string, VisualStudioProject> projects in studioProjects.GroupBy(g => g.SolutionRoot)) {
                     string solutionRoot = projects.Key;
@@ -71,7 +71,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                     }
                 }
 
-                var groups = analyzer.GetBuildGroups(visualStudioProjects);
+                List<List<IDependencyRef>> groups = analyzer.GetBuildGroups(visualStudioProjects);
 
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
 
