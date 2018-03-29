@@ -37,3 +37,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("IntegrationTest.Build")]
 [assembly: InternalsVisibleTo("IntegrationTest.BuildTime")]
 [assembly: InternalsVisibleTo("UnitTest.BuildTime")]
+[assembly: InternalsVisibleTo("UnitTest.Build")]

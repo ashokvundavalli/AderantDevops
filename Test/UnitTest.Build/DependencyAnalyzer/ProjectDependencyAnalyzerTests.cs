@@ -10,4 +10,5 @@ namespace UnitTest.Build.DependencyAnalyzer {
             // var analyzer = new Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(null, null, null);
         }
     }
+
 }

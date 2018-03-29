@@ -58,11 +58,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     var result = new VisualStudioProject(project, projectInfo.ProjectGuid, projectInfo.AssemblyName, projectInfo.RootNamespace, projectInfo.Path) { IsWebProject = IsWebBuild(xproject) };
 
                     foreach (string reference in FindFileReferences(root)) {
-                        result.Dependencies.Add(new AssemblyRef(reference));
+                        result.DependsOn.Add(new AssemblyRef(reference));
                     }
 
                     foreach (var reference in FindProjectReferences(root)) {
-                        result.Dependencies.Add(reference);
+                        result.DependsOn.Add(reference);
                     }
 
                     if (!string.IsNullOrEmpty(projectInfo.ProjectTypeGuids)) {
@@ -71,7 +71,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                         if (!result.IsWebProject) {
                             result.IsWebProject = projectTypeGuids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids, StringComparer.OrdinalIgnoreCase).Any();
                         }
-                        result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}") || result.Dependencies.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
+                        result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}") || result.DependsOn.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
                     }
 
                     result.OutputType = projectInfo.OutputType;
@@ -207,7 +207,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return isweb;
         }
     }
-    [DebuggerDisplay("{Name} ({dependencyType})")]
+    [DebuggerDisplay("AssemblyReference: {Name} ({dependencyType})")]
     internal class AssemblyRef : IDependencyRef {
         private readonly DependencyType dependencyType;
 
@@ -220,7 +220,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; }
-        public ICollection<IDependencyRef> Dependencies => null;
+        public ICollection<IDependencyRef> DependsOn => null;
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
@@ -254,7 +254,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
     }
 
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("ProjectReference: {Name}")]
     internal class ProjectRef : IDependencyRef {
         private bool isResolved;
 
@@ -263,7 +263,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; private set; }
-        public ICollection<IDependencyRef> Dependencies { get; set; }
+        public ICollection<IDependencyRef> DependsOn { get; set; }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
@@ -300,21 +300,18 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return StringComparer.OrdinalIgnoreCase.GetHashCode(Name) ^ ProjectGuid.GetHashCode();
         }
 
-        public void Resolve(List<VisualStudioProject> projectVertices) {
+        public bool Resolve(List<VisualStudioProject> projectVertices) {
             if (isResolved) {
-                return;
+                return true;
             }
 
             VisualStudioProject project = projectVertices.FirstOrDefault(f => f.ProjectGuid == ProjectGuid);
             if (project != null) {
-                if (!string.Equals(project.AssemblyName, this.Name, StringComparison.OrdinalIgnoreCase)) {
-
-                }
                 Name = project.AssemblyName;
                 this.isResolved = true;
             }
+
+            return false;
         }
     }
-
-
 }
