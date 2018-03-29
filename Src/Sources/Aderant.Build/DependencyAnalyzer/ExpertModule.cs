@@ -13,7 +13,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a module in the expert code base
     /// </summary>
-    [DebuggerDisplay("{Name} ({DebuggerDisplayNames})")]
+    [DebuggerDisplay("Module: {Name} ({DebuggerDisplayNames})")]
     public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
         private string name;
         private IList<XAttribute> customAttributes;
@@ -21,7 +21,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private string solutionRoot;
         private readonly string[] names;
         private DependencyManifest manifest;
-        private ICollection<IDependencyRef> dependsOn;
+        private HashSet<IDependencyRef> dependsOn;
 
         internal string DebuggerDisplayNames {
             get {
@@ -45,16 +45,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.Name = names[0];
         }
 
-        public ICollection<IDependencyRef> Dependencies => DependsOn;
-
         public ICollection<IDependencyRef> DependsOn {
             get {
                 if (dependsOn == null) {
-                    dependsOn = manifest.ReferencedModules.ToList<IDependencyRef>();
+                    if (manifest != null) {
+                        dependsOn = new HashSet<IDependencyRef>(manifest.ReferencedModules.ToList<IDependencyRef>());
+                    } else {
+                        dependsOn = new HashSet<IDependencyRef>();
+                    }
                 }
                 return dependsOn;
             }
-            set { dependsOn = value; }
+            set { dependsOn = new HashSet<IDependencyRef>(value); }
         }
 
         /// <summary>
