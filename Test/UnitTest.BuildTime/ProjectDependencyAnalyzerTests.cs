@@ -1,8 +1,10 @@
-﻿using Aderant.Build;
+﻿using System.Xml.Linq;
+using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.BuildTime.Tasks.Sequencer;
+using System.Collections.Generic;
 
 namespace UnitTest.BuildTime {
     [TestClass]
@@ -19,12 +21,31 @@ namespace UnitTest.BuildTime {
         [TestMethod]
         public void ProcessExpertModuleTest() {
             ProjectDependencyAnalyzer analyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(new PhysicalFileSystem(TestContext.DeploymentDirectory)), new PhysicalFileSystem(TestContext.DeploymentDirectory));
-            ExpertModule expertModule = new ExpertModule { Name = "Test" };
-            expertModule.DependsOn.Add(new ExpertModule { Name = "Test" });
-            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
-            graph.Vertices.Add(expertModule);
+            List<ExpertModule> expertModules = new List<ExpertModule> {
+                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test1" }, new DependencyManifest("Test", new XDocument())),
+                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test2" }, new DependencyManifest("Test", new XDocument())),
+                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test3" }, new DependencyManifest("Test", new XDocument()))
+            };
 
-            graph = analyzer.ProcessExpertModule(expertModule, graph);
+            expertModules[1].DependsOn.Add(expertModules[0]);
+            expertModules[1].DependsOn.Add(expertModules[2]);
+            expertModules[2].DependsOn.Add(expertModules[0]);
+            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
+
+            foreach (ExpertModule module in expertModules) {
+                graph.Edge(module);
+            }
+
+            foreach (ExpertModule module in expertModules) {
+                graph = analyzer.ProcessExpertModule(module, graph);
+            }
+
+            Queue<IDependencyRef> queue;
+            graph.Sort(out queue);
+
+            Assert.AreEqual(queue.Dequeue(), expertModules[0]);
+            Assert.AreEqual(queue.Dequeue(), expertModules[2]);
+            Assert.AreEqual(queue.Dequeue(), expertModules[1]);
         }
     }
 }
