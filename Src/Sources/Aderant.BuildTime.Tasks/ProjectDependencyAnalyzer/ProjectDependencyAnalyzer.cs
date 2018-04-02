@@ -149,16 +149,18 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return null;
         }
 
-        private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
+        private IEnumerable<string> GetProjectFiles(AnalyzerContext context) {
             List<string> projects = new List<string>();
 
             foreach (string directory in context.Directories) {
                 projects.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
             }
 
-            IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+            return projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+        }
 
-            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
+        private void AddDependenciesFromStudioProject(AnalyzerContext context, TopologicalSort<IDependencyRef> graph) {
+            IEnumerable<string> projectFiles = GetProjectFiles(context);
 
             foreach (string projectFile in projectFiles) {
                 string currentProjectFile = projectFile;
@@ -169,7 +171,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
                         this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
                     } else {
-                        
+
                     }
 
                     graph.Edge(studioProject);
@@ -179,6 +181,12 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     parseErrors.Add(currentProjectFile);
                 }
             }
+        }
+
+        private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
+            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
+
+            AddDependenciesFromStudioProject(context, graph);
 
             AddDependenciesFromDependencySystem(graph);
             AddDependenciesFromTextTemplates(graph.Vertices);
@@ -234,7 +242,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     }
                 }
 
-                var m = dependency as ExpertModule;
+                ExpertModule m = dependency as ExpertModule;
                 if (m != null) {
                     foreach (IDependencyRef dependencyRef in m.DependsOn) {
                         IDependencyRef target = moduleVertices.SingleOrDefault(x => x.Match(dependencyRef.Name));
@@ -288,9 +296,8 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         private void AddSyntheticProjectToProjectDependencies(IDependencyRef dependencyRef, TopologicalSort<IDependencyRef> graph) {
-            VisualStudioProject project = dependencyRef as VisualStudioProject;
-
             if (dependencyRef.Name != BuildT4Task) {
+                VisualStudioProject project = dependencyRef as VisualStudioProject;
                 if (project != null && project.DependsOn.Any(d => d.Name == BuildT4Task)) {
                     if (project.SolutionDirectoryName == BuildT4Task) {
                         return;
@@ -298,7 +305,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                     IEnumerable<VisualStudioProject> projects = graph.Vertices.OfType<VisualStudioProject>().Where(s => s.SolutionDirectoryName == BuildT4Task);
 
-                    foreach (var p in projects) {
+                    foreach (VisualStudioProject p in projects) {
                         project.DependsOn.Add(p);
                     }
                 }
