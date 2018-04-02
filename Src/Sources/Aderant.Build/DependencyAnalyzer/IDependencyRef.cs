@@ -20,7 +20,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         ProjectRef,
         VisualStudioProject,
         ThirdPartyModule,
-        WebModule,
-        TextTemplate
+        WebModule
     }
 }

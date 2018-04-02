@@ -27,9 +27,9 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
         }
 
         public List<TextTemplateAssemblyInfo> GetDependencies(string solutionRoot) {
-            var files = fileSystem.GetFiles(solutionRoot, "*.tt*", true, true);
+            IEnumerable<string> files = fileSystem.GetFiles(solutionRoot, "*.tt*", true, true);
 
-            var templateList = files.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+            IEnumerable<string> templateList = files.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
             List<TextTemplateAssemblyInfo> dependencies = new List<TextTemplateAssemblyInfo>();
 
