@@ -15,6 +15,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     [DebuggerDisplay("Module: {Name} ({DebuggerDisplayNames})")]
     public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
+        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private string name;
         private IList<XAttribute> customAttributes;
         private ModuleType? type;

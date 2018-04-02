@@ -113,8 +113,8 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     if (solutionFiles.Length > 0) {
                         bool continueSearch = false;
 
-                        foreach (var solutionFilter in solutionFileNameFilter) {
-                            foreach (var file in solutionFiles) {
+                        foreach (string solutionFilter in solutionFileNameFilter) {
+                            foreach (FileInfo file in solutionFiles) {
                                 if (file.FullName.IndexOf(solutionFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
                                     continueSearch = true;
                                     break;
@@ -149,6 +149,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return null;
         }
 
+
         private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
             List<string> projects = new List<string>();
 
@@ -157,15 +158,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             }
 
             IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
-
             TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
 
             foreach (string projectFile in projectFiles) {
-                string currentProjectFile = projectFile;
-
                 VisualStudioProject studioProject;
-                if (loader.TryParse(context.Directories, currentProjectFile, out studioProject)) {
-
+                if (loader.TryParse(context.Directories, projectFile, out studioProject)) {
                     if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
                         this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
                     } else {
@@ -176,78 +173,90 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                     studioProject.SolutionRoot = GetSolutionRootForProject(context.Directories, solutionFileFilters, studioProject.Path);
                 } else {
-                    parseErrors.Add(currentProjectFile);
+                    parseErrors.Add(projectFile);
                 }
             }
 
             AddDependenciesFromDependencySystem(graph);
             AddDependenciesFromTextTemplates(graph.Vertices);
 
-            List<ExpertModule> moduleVertices = graph.Vertices.OfType<ExpertModule>().ToList();
             List<VisualStudioProject> projectVertices = graph.Vertices.OfType<VisualStudioProject>().ToList();
-
             ResolveProjectReferences(projectVertices);
             AddInitializeAndCompletionNodes(graph, projectVertices);
 
             foreach (IDependencyRef dependency in graph.Vertices) {
                 AddSyntheticProjectToProjectDependencies(dependency, graph);
+                
+                switch (dependency.Type) {
+                    case ReferenceType.VisualStudioProject:
+                        graph = ProcessVisualStudioProject((VisualStudioProject)dependency, graph, projectVertices);
+                        break;
+                    case ReferenceType.ExpertModule:
+                        graph = ProcessExpertModule((ExpertModule)dependency, graph, projectVertices);
+                        break;
+                }
+            }
 
-                VisualStudioProject studioProject = dependency as VisualStudioProject;
+            return graph;
+        }
 
-                if (studioProject != null) {
-                    ExpertModule solutionRootDependency = moduleVertices.SingleOrDefault(x => x.Match(studioProject.SolutionDirectoryName));
-                    if (solutionRootDependency == null) {
-                        //continue;
+        internal TopologicalSort<IDependencyRef> ProcessVisualStudioProject(VisualStudioProject studioProject, TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projectVertices) {
+            if (studioProject == null) {
+                throw new ArgumentNullException(nameof(studioProject));
+            }
+
+            List<ExpertModule> moduleVertices = graph.Vertices.OfType<ExpertModule>().ToList();
+            ExpertModule solutionRootDependency = moduleVertices.SingleOrDefault(x => x.Match(studioProject.SolutionDirectoryName));
+
+            if (solutionRootDependency != null) {
+                graph.Edge(studioProject, solutionRootDependency);
+            }
+
+            studioProject.AddDependency(new DirectoryNode(studioProject.SolutionRoot, false));
+
+            foreach (IDependencyRef dependency in studioProject.DependsOn) {
+                if (dependency.Type == ReferenceType.ModuleRef) {
+                    ModuleRef moduleRef = dependency as ModuleRef;
+                    IDependencyRef target;
+                    if (moduleRef != null) {
+                        ExpertModule moduleTarget = moduleVertices.SingleOrDefault(x => x.Match(dependency.Name));
+                        target = moduleTarget;
                     } else {
-                        graph.Edge(dependency, solutionRootDependency);
+                        target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase)) ?? GetDependentProjectByGuid(dependency, projectVertices);
                     }
 
-                    studioProject.AddDependency(new DirectoryNode(studioProject.SolutionRoot, false));
+                    if (target == null) {
+                        if (dependency is DirectoryNode) {
 
-                    foreach (IDependencyRef dep in studioProject.DependsOn) {
-                        ModuleRef moduleRef = dep as ModuleRef;
-
-                        IDependencyRef target;
-
-                        if (moduleRef != null) {
-                            ExpertModule moduleTarget = moduleVertices.SingleOrDefault(x => x.Match(dep.Name));
-                            target = moduleTarget;
-                        } else {
-                            target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dep.Name, StringComparison.OrdinalIgnoreCase));
-
-                            if (target == null) {
-                                target = GetDependentProjectByGuid(dep, projectVertices);
-                            }
                         }
+                    }
 
-                        if (target == null) {
-                            if (dep is DirectoryNode) {
-                                
-                            }
-                        }
+                    if (target != null) {
+                        graph.Edge(dependency, target);
 
-                        if (target != null) {
-                            graph.Edge(dependency, target);
-
-                            TraceGraph(graph);
-                        }
+                        TraceGraph(graph);
                     }
                 }
+            }
 
-                var m = dependency as ExpertModule;
-                if (m != null) {
-                    foreach (IDependencyRef dependencyRef in m.DependsOn) {
-                        IDependencyRef target = moduleVertices.SingleOrDefault(x => x.Match(dependencyRef.Name));
-                        if (target == null) {
-                            target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependencyRef.Name, StringComparison.OrdinalIgnoreCase));
-                        }
+            return graph;
+        }
 
-                        if (target != null) {
-                            graph.Edge(m, target);
+        internal TopologicalSort<IDependencyRef> ProcessExpertModule(ExpertModule expertModule, TopologicalSort<IDependencyRef> graph) {
+            return ProcessExpertModule(expertModule, graph, graph.Vertices.OfType<VisualStudioProject>().ToList());
+        }
 
-                            TraceGraph(graph);
-                        }
-                    }
+        private TopologicalSort<IDependencyRef> ProcessExpertModule(ExpertModule expertModule, TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projectVertices) {
+            if (expertModule == null) {
+                throw new ArgumentNullException(nameof(expertModule));
+            }
+
+            foreach (IDependencyRef dependencyRef in expertModule.DependsOn) {
+                IDependencyRef target = graph.Vertices.OfType<ExpertModule>().ToList().SingleOrDefault(x => x.Match(dependencyRef.Name)) ?? (IDependencyRef)projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependencyRef.Name, StringComparison.OrdinalIgnoreCase));
+
+                if (target != null) {
+                    graph.Edge(expertModule, target);
+                    TraceGraph(graph);
                 }
             }
 
@@ -558,6 +567,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     [DebuggerDisplay("Module Reference: {Name}")]
     internal class ModuleRef : IDependencyRef {
         private readonly ExpertModule module;
+        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
 
         public ModuleRef(ExpertModule module) {
             this.module = module;

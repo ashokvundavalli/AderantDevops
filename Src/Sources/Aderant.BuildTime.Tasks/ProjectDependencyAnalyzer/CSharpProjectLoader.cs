@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
-
     internal static class WellKnownProjectTypeGuids {
         public static string[] WebProjectGuids = new[] {
             "{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}",
@@ -207,8 +206,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return isweb;
         }
     }
+
     [DebuggerDisplay("AssemblyReference: {Name} ({dependencyType})")]
     internal class AssemblyRef : IDependencyRef {
+        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private readonly DependencyType dependencyType;
 
         public AssemblyRef(string reference) : this(reference, DependencyType.Unknown) {
@@ -256,6 +257,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
     [DebuggerDisplay("ProjectReference: {Name}")]
     internal class ProjectRef : IDependencyRef {
+        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private bool isResolved;
 
         public ProjectRef(string reference) {
