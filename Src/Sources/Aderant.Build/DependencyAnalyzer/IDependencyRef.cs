@@ -19,7 +19,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         ModuleRef,
         ProjectRef,
         VisualStudioProject,
-        ThirdPartyModule,
-        WebModule
+        ThirdPartyModule
     }
 }

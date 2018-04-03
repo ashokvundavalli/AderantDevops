@@ -124,7 +124,6 @@ namespace Aderant.BuildTime.Tasks {
         private readonly IFileSystem2 fileSystem2;
         private readonly string tfvcBranch;
         private readonly string tfvcChangeSet;
-        private readonly IFileSystem2 fileSystem;
 
         public RepositoryInfoProvider(IFileSystem2 fileSystem2, string tfvcBranch, string tfvcChangeSet) {
             this.fileSystem2 = fileSystem2;

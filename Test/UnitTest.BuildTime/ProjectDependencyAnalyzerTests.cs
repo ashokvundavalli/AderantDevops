@@ -18,14 +18,12 @@ namespace UnitTest.BuildTime {
             IDependencyRef expertModule = new ExpertModule(new XElement("ReferencedModule", new XAttribute("Name", "Test")));
             IDependencyRef assemblyRef = new AssemblyRef("Test");
             IDependencyRef directoryNode = new DirectoryNode("Test", false);
-            IDependencyRef moduleRef = new ModuleRef(new ExpertModule(new XElement("ReferencedModule", new XAttribute("Name", "Test"))));
             IDependencyRef projectRef = new ProjectRef("Test");
             IDependencyRef visualStudioProject = new VisualStudioProject(null, Guid.Empty, null, null, null);
 
             Assert.AreEqual(ReferenceType.ExpertModule, expertModule.Type);
             Assert.AreEqual(ReferenceType.AssemblyRef, assemblyRef.Type);
             Assert.AreEqual(ReferenceType.DirectoryNode, directoryNode.Type);
-            Assert.AreEqual(ReferenceType.ModuleRef, moduleRef.Type);
             Assert.AreEqual(ReferenceType.ProjectRef, projectRef.Type);
             Assert.AreEqual(ReferenceType.VisualStudioProject, visualStudioProject.Type);
         }
@@ -38,10 +36,10 @@ namespace UnitTest.BuildTime {
             IDependencyRef directoryNode = new DirectoryNode("Test", false);
             
 
-            List<ModuleRef> moduleRefs = new List<ModuleRef> {
-                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test1" }, new DependencyManifest("Test", new XDocument()))),
-                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test2" }, new DependencyManifest("Test", new XDocument()))),
-                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test3" }, new DependencyManifest("Test", new XDocument())))
+            List<ExpertModule> moduleRefs = new List<ExpertModule> {
+                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test1" }, new DependencyManifest("Test", new XDocument())),
+                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test2" }, new DependencyManifest("Test", new XDocument())),
+                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test3" }, new DependencyManifest("Test", new XDocument()))
             };
 
             moduleRefs[1].DependsOn.Add(moduleRefs[0]);
@@ -52,7 +50,7 @@ namespace UnitTest.BuildTime {
 
             graph.Edge(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test" }, new DependencyManifest("Test", new XDocument())));
 
-            foreach (ModuleRef moduleRef in moduleRefs) {
+            foreach (ExpertModule moduleRef in moduleRefs) {
                 visualStudioProjects.AddDependency(moduleRef);
                 graph.Edge(moduleRef);
             }

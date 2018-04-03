@@ -439,7 +439,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
             foreach (ExpertModule module in dependencies.ReferencedModules) {
                 if (allowed.Contains(module.Name)) {
-                    project.AddDependency(new ModuleRef(module));
+                    project.AddDependency(module);
                 }
             }
         }
@@ -570,8 +570,31 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     /// Represents a reference to a module.
     /// </summary>
     [DebuggerDisplay("Module Reference: {Name}")]
-    internal class ModuleRef : ExpertModule {
-        public ModuleRef(ExpertModule module) : base(module.SolutionRoot, module.Names, module.Manifest) {
+    internal class ModuleRef : IDependencyRef {
+        private readonly ExpertModule module;
+
+        public ModuleRef(ExpertModule module) {
+            this.module = module;
+        }
+
+        public string Name => module.Name;
+        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        public ICollection<IDependencyRef> DependsOn => null;
+
+        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            (visitor as GraphVisitor).Visit(this, outputFile);
+
+            foreach (IDependencyRef dep in module.DependsOn) {
+                dep.Accept(visitor, outputFile);
+            }
+        }
+
+        public bool Equals(IDependencyRef dependency) {
+            var moduleReference = dependency as ModuleRef;
+            if (moduleReference != null && string.Equals(Name, moduleReference.Name, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+            return false;
         }
 
         public override int GetHashCode() {
