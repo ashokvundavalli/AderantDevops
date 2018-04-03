@@ -108,10 +108,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 if (!manifest.ReferencedModules.Any()) {
-                    var dependency = new ModuleDependency {
-                        Consumer = new ExpertModule {
-                            Name = module.Name
-                        }
+                    ModuleDependency dependency = new ModuleDependency {
+                        Consumer = new ExpertModule(module.Name)
                     };
                     dependency.Provider = dependency.Consumer;
                     dependencies.Add(dependency);

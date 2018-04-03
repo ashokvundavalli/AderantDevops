@@ -80,7 +80,9 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 List<IDependencyRef> dependencyReferences = module.DependsOn.Select(x => x).Where(y => moduleNames.Contains(y.Name)).ToList();
 
                 if (dependencyReferences.Any()) {
-                    dependencies.Add(new ExpertModule { Name = module.Name, DependsOn = dependencyReferences});
+                    dependencies.Add(new ExpertModule(module.Name) {
+                        DependsOn = dependencyReferences
+                    });
                 }
             }
 

@@ -36,7 +36,15 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule"/> class.
         /// </summary>
-        public ExpertModule() {
+        internal ExpertModule() {
+        }
+
+        public ExpertModule(string name) {
+            if (string.IsNullOrWhiteSpace(name)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+            }
+
+            Name = name;
         }
 
         public ExpertModule(string solutionRoot, string[] names, DependencyManifest manifest) {

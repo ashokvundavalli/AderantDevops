@@ -37,15 +37,15 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         [TestMethod]
         public void Name_property_returns_module_name() {
-            var node = new ModuleRef(new ExpertModule { Name = "A" });
+            var node = new ModuleRef(new ExpertModule("A"));
 
             Assert.AreEqual("A", node.Name);
         }
 
         [TestMethod]
         public void Equality() {
-            var node1 = new ModuleRef(new ExpertModule { Name = "A" });
-            var node2 = new ModuleRef(new ExpertModule { Name = "A" });
+            var node1 = new ModuleRef(new ExpertModule("A"));
+            var node2 = new ModuleRef(new ExpertModule("A"));
 
             Assert.AreEqual(node1, node2);
             Assert.AreNotSame(node1, node2);
@@ -113,8 +113,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
         public void DependsOn_contains_no_duplicates_for_ModuleRef() {
             var project = new VisualStudioProject(null, Guid.Empty, null, null, null);
 
-            project.DependsOn.Add(new ModuleRef(new ExpertModule { Name = "A" }));
-            project.DependsOn.Add(new ModuleRef(new ExpertModule { Name = "A" }));
+            project.DependsOn.Add(new ModuleRef(new ExpertModule("A")));
+            project.DependsOn.Add(new ModuleRef(new ExpertModule("A")));
 
             Assert.AreEqual(1, project.DependsOn.Count);
         }

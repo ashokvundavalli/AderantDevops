@@ -55,8 +55,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     tfvcBranch = context.TfvcBranch;
                 }
 
-                yield return new ExpertModule {
-                    Name = name,
+                yield return new ExpertModule(name) {
                     RepositoryType = type,
                     Branch = tfvcBranch
                 };
@@ -94,7 +93,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public ExpertModule GetModule(string moduleName) {
             if (fileSystem.DirectoryExists(Path.Combine(fileSystem.Root, moduleName))) {
-                return new ExpertModule { Name = moduleName };
+                return new ExpertModule(moduleName);
             }
 
             return null;
@@ -142,8 +141,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 return wrappedManifest.ReferencedModules.Union(
                     dependencies.Select(s => s.Key.Item1).Select(
-                        s => new ExpertModule {
-                            Name = s,
+                        s => new ExpertModule(s) {
                             GetAction = GetAction.NuGet,
                             RepositoryType = RepositoryType.Git // Probably
                         })).ToList();
@@ -578,7 +576,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 if (line.StartsWith("id ")) {
                                     string alias = line.Substring(3);
 
-                                    aliasTable[alias] = new ExpertModule() { Name = Path.GetFileName(dir) };
+                                    aliasTable[alias] = new ExpertModule(Path.GetFileName(dir));
                                     break;
                                 }
                             }

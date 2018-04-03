@@ -142,16 +142,13 @@ namespace UnitTest.Build {
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
-                new ExpertModule() {
-                    Name = "A",
+                new ExpertModule("A") {
                     Branch = Branch
                 },
-                new ExpertModule() {
-                    Name = "B",
+                new ExpertModule("B") {
                     Branch = Branch
                 },
-                new ExpertModule() {
-                    Name = "C",
+                new ExpertModule("C") {
                     Branch = Branch
                 }
             };
@@ -216,20 +213,16 @@ namespace UnitTest.Build {
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
-                new ExpertModule() {
-                    Name = "A",
+                new ExpertModule("A") {
                     Branch = Branch
                 },
-                new ExpertModule() {
-                    Name = "B",
+                new ExpertModule("B") {
                     Branch = Branch
                 },
-                new ExpertModule() {
-                    Name = "C",
+                new ExpertModule("C") {
                     Branch = Branch
                 },
-                new ExpertModule() {
-                    Name = "D",
+                new ExpertModule("D") {
                     Branch = Branch
                 }
             };
@@ -300,12 +293,10 @@ namespace UnitTest.Build {
 
         public override IEnumerable<ExpertModule> GetAll() {
             return new ExpertModule[] {
-                new ExpertModule() {
-                    Name = "A",
+                new ExpertModule("A") {
                     Branch = Branch
                 },
-                new ExpertModule() {
-                    Name = "B",
+                new ExpertModule("B") {
                     Branch = Branch
                 },
             };

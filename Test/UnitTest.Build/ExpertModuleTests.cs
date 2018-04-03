@@ -10,8 +10,7 @@ namespace UnitTest.Build {
     public class ExpertModuleTests {
         [TestMethod]
         public void WhenSettingNamePropertyAndValueIsFullPathNameIsFolder() {
-            ExpertModule m = new ExpertModule();
-            m.Name = @"C:\tfs\ExpertSuite\Dev\a\Modules\Applications.Foo";
+            ExpertModule m = new ExpertModule(@"C:\tfs\ExpertSuite\Dev\a\Modules\Applications.Foo");
 
             Assert.AreEqual("Applications.Foo", m.Name);
         }

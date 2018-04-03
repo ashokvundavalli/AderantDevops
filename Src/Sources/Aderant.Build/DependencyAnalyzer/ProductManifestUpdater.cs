@@ -129,9 +129,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (modulesMissingFromManifest.Count > 0) {
                 foreach (string name in modulesMissingFromManifest) {
                     if (!string.Equals(name, thirdPartyName, StringComparison.OrdinalIgnoreCase)) {
-                        ExpertModule newModule = new ExpertModule {
-                            Name = name
-                        };
+                        ExpertModule newModule = new ExpertModule(name);
+
                         if (!ExpertModule.IsNonProductModule(newModule.ModuleType)) {
                             logger.Info("Adding module {0} found in source control to Expert Manifest: ", new string[] {
                                 name
@@ -221,8 +220,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             logger.Info("The Expert Manifest did not contain an entry for the module {0}. Adding...", moduleName);
 
-            ExpertModule newModule = new ExpertModule {
-                Name = moduleName,
+            ExpertModule newModule = new ExpertModule(moduleName) {
                 AssemblyVersion = "1.8.0.0"
             };
             manifest.Add(newModule);

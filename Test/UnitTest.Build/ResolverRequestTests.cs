@@ -12,7 +12,7 @@ namespace UnitTest.Build {
         [TestMethod]
         public void When_root_directory_ends_with_module_name() {
             var request = new ResolverRequest(null, "Foo\\My.Module");
-            var actual = request.GetModuleDirectory(new ExpertModule { Name = "My.Module" });
+            var actual = request.GetModuleDirectory(new ExpertModule("My.Module"));
 
             Assert.AreEqual("Foo\\My.Module", actual);
         }
@@ -20,14 +20,14 @@ namespace UnitTest.Build {
         [TestMethod]
         public void When_root_directory_does_not_end_with_module_name() {
             var request = new ResolverRequest(null, "Foo");
-            var actual = request.GetModuleDirectory(new ExpertModule { Name = "My.Module" });
+            var actual = request.GetModuleDirectory(new ExpertModule("My.Module"));
 
             Assert.AreEqual("Foo\\My.Module", actual);
         }
 
         [TestMethod]
         public void SetDependenciesDirectory_sets_dependency_directory() {
-            var request = new ResolverRequest(null, "Foo", new ExpertModule { Name = "Foo" }, new ExpertModule { Name = "Bar" });
+            var request = new ResolverRequest(null, "Foo", new ExpertModule("Foo"), new ExpertModule("Bar"));
 
             request.SetDependenciesDirectory("Baz");
 
@@ -38,9 +38,9 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void SetDependenciesDirectory_sets_dependency_directory2() {
-            var fooModule = new ExpertModule { Name = "Foo" };
+            var fooModule = new ExpertModule("Foo");
 
-            var request = new ResolverRequest(null, "Foo", fooModule, new ExpertModule { Name = "Bar" });
+            var request = new ResolverRequest(null, "Foo", fooModule, new ExpertModule("Bar"));
 
             var barDependency = DependencyRequirement.Create("Bar", BuildConstants.MainDependencyGroup);
 
