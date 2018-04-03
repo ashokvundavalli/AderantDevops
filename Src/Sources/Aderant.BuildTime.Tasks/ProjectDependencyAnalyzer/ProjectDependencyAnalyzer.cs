@@ -221,29 +221,30 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             studioProject.AddDependency(new DirectoryNode(studioProject.SolutionRoot, false));
 
             foreach (IDependencyRef dependency in studioProject.DependsOn) {
-                if (dependency.Type == ReferenceType.ModuleRef) {
-                    ModuleRef moduleRef = dependency as ModuleRef;
-                    IDependencyRef target;
-                    if (moduleRef != null) {
-                        ExpertModule moduleTarget = moduleVertices.SingleOrDefault(x => x.Match(dependency.Name));
-                        target = moduleTarget;
-                    } else {
-                        target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase)) ?? GetDependentProjectByGuid(dependency, projectVertices);
-                    }
+                IDependencyRef target = null;
+                ModuleRef moduleRef = dependency as ModuleRef;
 
+                if (moduleRef != null) {
+                    ExpertModule moduleTarget = moduleVertices.SingleOrDefault(x => x.Match(dependency.Name));
+                    target = moduleTarget;
+                } else {
+                    target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase));
                     if (target == null) {
-                        if (dependency is DirectoryNode) {
-
-                        }
-                    }
-
-                    if (target != null) {
-                        graph.Edge(dependency, target);
-                        TraceGraph(graph);
+                        target = GetDependentProjectByGuid(dependency, projectVertices);
                     }
                 }
-            }
 
+                if (target == null) {
+                    if (dependency is DirectoryNode) {
+
+                    }
+                }
+
+                if (target != null) {
+                    graph.Edge(studioProject, target);
+                    TraceGraph(graph);
+                }
+            }
             return graph;
         }
 
