@@ -43,7 +43,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.SolutionRoot = solutionRoot;
             this.Names = names;
             this.Manifest = manifest;
-            this.Name = names[0];
+            this.Name = !string.IsNullOrWhiteSpace(names[0]) ? names[0] : string.Empty;
         }
 
         public ICollection<IDependencyRef> DependsOn {
