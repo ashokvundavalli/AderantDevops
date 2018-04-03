@@ -6,6 +6,7 @@ using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.BuildTime.Tasks.Sequencer;
 using System.Collections.Generic;
+using System.IO;
 
 namespace UnitTest.BuildTime {
     [TestClass]
@@ -27,6 +28,41 @@ namespace UnitTest.BuildTime {
             Assert.AreEqual(ReferenceType.ModuleRef, moduleRef.Type);
             Assert.AreEqual(ReferenceType.ProjectRef, projectRef.Type);
             Assert.AreEqual(ReferenceType.VisualStudioProject, visualStudioProject.Type);
+        }
+
+        [TestMethod]
+        public void ProcessVisualStudioProjectTest() {
+            ProjectDependencyAnalyzer analyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(new PhysicalFileSystem(TestContext.DeploymentDirectory)), new PhysicalFileSystem(TestContext.DeploymentDirectory));
+
+            VisualStudioProject visualStudioProjects = new VisualStudioProject(null, Guid.Empty, "Test", null, null) { SolutionRoot = Path.Combine(TestContext.DeploymentDirectory, "Test") };
+            IDependencyRef directoryNode = new DirectoryNode("Test", false);
+            
+
+            List<ModuleRef> moduleRefs = new List<ModuleRef> {
+                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test1" }, new DependencyManifest("Test", new XDocument()))),
+                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test2" }, new DependencyManifest("Test", new XDocument()))),
+                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test3" }, new DependencyManifest("Test", new XDocument())))
+            };
+
+            moduleRefs[1].DependsOn.Add(moduleRefs[0]);
+            moduleRefs[1].DependsOn.Add(moduleRefs[2]);
+            moduleRefs[2].DependsOn.Add(moduleRefs[0]);
+
+            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
+
+            graph.Edge(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test" }, new DependencyManifest("Test", new XDocument())));
+
+            foreach (ModuleRef moduleRef in moduleRefs) {
+                visualStudioProjects.AddDependency(moduleRef);
+                graph.Edge(moduleRef);
+            }
+
+            graph.Edge(directoryNode);
+            graph.Edge(visualStudioProjects);
+            graph = analyzer.ProcessVisualStudioProject(visualStudioProjects, graph);
+
+            Queue<IDependencyRef> queue;
+            graph.Sort(out queue);
         }
 
         [TestMethod]
