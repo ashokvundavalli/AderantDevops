@@ -32,50 +32,58 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             // Since we may resequence things we want the to start the numbering at 0
             int buildGroupCount = 0;
 
-            for (int i = 0; i < projectGroups.Count; i++) {
-                List<IDependencyRef> projectGroup = projectGroups[i];
+            string sequenceFile = Path.Combine(fileSystem.Root, "BuildSequence.txt");
+            using (StreamWriter outputFile = new StreamWriter(sequenceFile, false)) {
+                for (int i = 0; i < projectGroups.Count; i++) {
+                    List<IDependencyRef> projectGroup = projectGroups[i];
 
-                // If there are no projects in the item group, no point generating any Xml for this build node
-                if (!projectGroup.Any()) {
-                    continue;
-                }
-
-                if (!buildFromHere) {
-                    buildFromHere = projectGroup.OfType<ExpertModule>().Any(m => string.Equals(m.Name, buildFrom, StringComparison.OrdinalIgnoreCase));
-                }
-
-                if (!buildFromHere) {
-                    continue;
-                }
-
-                ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, isComboBuild, comboBuildProjectFile));
-
-                // e.g. <Target Name="Build2">
-                Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
-                if (buildGroupCount > 0) {
-                    var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == $"Build{buildGroupCount-1}");
-                    if (target != null) {
-                        build.DependsOnTargets.Add(target);
+                    outputFile.WriteLine($"Group ({i})");
+                    foreach (var dependencyRef in projectGroup) {
+                        outputFile.WriteLine($"|   |---{dependencyRef.Name}");
                     }
+
+                    // If there are no projects in the item group, no point generating any Xml for this build node
+                    if (!projectGroup.Any()) {
+                        continue;
+                    }
+
+                    if (!buildFromHere) {
+                        buildFromHere = projectGroup.OfType<ExpertModule>().Any(m => string.Equals(m.Name, buildFrom, StringComparison.OrdinalIgnoreCase));
+                    }
+
+                    if (!buildFromHere) {
+                        continue;
+                    }
+
+                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, isComboBuild, comboBuildProjectFile));
+
+                    // e.g. <Target Name="Build2">
+                    Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
+                    if (buildGroupCount > 0) {
+                        var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == $"Build{buildGroupCount-1}");
+                        if (target != null) {
+                            build.DependsOnTargets.Add(target);
+                        }
+                    }
+
+                    project.Add(itemGroup);
+
+                    build.Add(
+                        new MSBuildTask {
+                            BuildInParallel = true,
+                            StopOnFirstFailure = true,
+                            //Projects = $"@({itemGroup.Name})" // use @ so MSBuild will expand the list for us
+                            Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.Begin.targets"),
+                            Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
+                        });
+
+                    project.Add(build);
+
+                    // e.g <Target Name="AfterCompile" DependsOnTargets="Build0;...n">;
+                    afterCompile.DependsOnTargets.Add(new Target(build.Name));
+
+                    buildGroupCount++;
                 }
-
-                project.Add(itemGroup);
-
-                build.Add(
-                    new MSBuildTask {
-                        BuildInParallel = true,
-                        StopOnFirstFailure = true,
-                        //Projects = $"@({itemGroup.Name})" // use @ so MSBuild will expand the list for us
-                        Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.Begin.targets"),
-                        Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
-                    });
-
-                project.Add(build);
-
-                // e.g <Target Name="AfterCompile" DependsOnTargets="Build0;...n">;
-                afterCompile.DependsOnTargets.Add(new Target(build.Name));
-
-                buildGroupCount++;
             }
 
             project.Add(new PropertyGroup(new Dictionary<string, string> { { "TotalNumberOfBuildGroups", buildGroupCount.ToString(CultureInfo.InvariantCulture) } }));
