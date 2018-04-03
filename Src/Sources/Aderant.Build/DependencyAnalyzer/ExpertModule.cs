@@ -17,17 +17,17 @@ namespace Aderant.Build.DependencyAnalyzer {
     public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
         public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private string name;
-        private IList<XAttribute> customAttributes;
+        private readonly IList<XAttribute> customAttributes;
         private ModuleType? type;
-        private string solutionRoot;
-        private readonly string[] names;
-        private DependencyManifest manifest;
+        public string SolutionRoot;
+        public readonly string[] Names;
+        public DependencyManifest Manifest;
         private HashSet<IDependencyRef> dependsOn;
 
         internal string DebuggerDisplayNames {
             get {
-                if (names != null) {
-                    return string.Join(", ", names);
+                if (Names != null) {
+                    return string.Join(", ", Names);
                 }
                 return string.Empty;
             }
@@ -40,17 +40,17 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public ExpertModule(string solutionRoot, string[] names, DependencyManifest manifest) {
-            this.solutionRoot = solutionRoot;
-            this.names = names;
-            this.manifest = manifest;
+            this.SolutionRoot = solutionRoot;
+            this.Names = names;
+            this.Manifest = manifest;
             this.Name = names[0];
         }
 
         public ICollection<IDependencyRef> DependsOn {
             get {
                 if (dependsOn == null) {
-                    if (manifest != null) {
-                        dependsOn = new HashSet<IDependencyRef>(manifest.ReferencedModules.ToList<IDependencyRef>());
+                    if (Manifest != null) {
+                        dependsOn = new HashSet<IDependencyRef>(Manifest.ReferencedModules.ToList<IDependencyRef>());
                     } else {
                         dependsOn = new HashSet<IDependencyRef>();
                     }
@@ -284,7 +284,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public bool Match(string depName) {
-            foreach (var name in names) {
+            foreach (var name in Names) {
                 if (string.Equals(name, depName, StringComparison.OrdinalIgnoreCase)) {
                     return true;
                 }

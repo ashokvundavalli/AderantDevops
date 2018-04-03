@@ -200,7 +200,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return graph;
         }
 
-        internal TopologicalSort<IDependencyRef> ProcessVisualStudioProject(VisualStudioProject studioProject, TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projectVertices) {
+        internal TopologicalSort<IDependencyRef> ProcessVisualStudioProject(VisualStudioProject studioProject, TopologicalSort<IDependencyRef> graph) {
+            return ProcessVisualStudioProject(studioProject, graph, graph.Vertices.OfType<VisualStudioProject>().ToList());
+        }
+
+        private TopologicalSort<IDependencyRef> ProcessVisualStudioProject(VisualStudioProject studioProject, TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projectVertices) {
             if (studioProject == null) {
                 throw new ArgumentNullException(nameof(studioProject));
             }
@@ -233,7 +237,6 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                     if (target != null) {
                         graph.Edge(dependency, target);
-
                         TraceGraph(graph);
                     }
                 }
@@ -565,31 +568,8 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     /// Represents a reference to a module.
     /// </summary>
     [DebuggerDisplay("Module Reference: {Name}")]
-    internal class ModuleRef : IDependencyRef {
-        private readonly ExpertModule module;
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
-
-        public ModuleRef(ExpertModule module) {
-            this.module = module;
-        }
-
-        public string Name => module.Name;
-        public ICollection<IDependencyRef> DependsOn => null;
-
-        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-            (visitor as GraphVisitor).Visit(this, outputFile);
-
-            foreach (IDependencyRef dep in module.DependsOn) {
-                dep.Accept(visitor, outputFile);
-            }
-        }
-
-        public bool Equals(IDependencyRef dependency) {
-            var moduleReference = dependency as ModuleRef;
-            if (moduleReference != null && string.Equals(Name, moduleReference.Name, StringComparison.OrdinalIgnoreCase)) {
-                return true;
-            }
-            return false;
+    internal class ModuleRef : ExpertModule {
+        public ModuleRef(ExpertModule module) : base(module.SolutionRoot, module.Names, module.Manifest) {
         }
 
         public override int GetHashCode() {
