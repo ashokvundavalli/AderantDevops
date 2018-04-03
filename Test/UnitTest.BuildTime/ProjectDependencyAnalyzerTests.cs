@@ -32,14 +32,13 @@ namespace UnitTest.BuildTime {
         public void ProcessVisualStudioProjectTest() {
             ProjectDependencyAnalyzer analyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(new PhysicalFileSystem(TestContext.DeploymentDirectory)), new PhysicalFileSystem(TestContext.DeploymentDirectory));
 
-            VisualStudioProject visualStudioProjects = new VisualStudioProject(null, Guid.Empty, "Test", null, null) { SolutionRoot = Path.Combine(TestContext.DeploymentDirectory, "Test") };
+            VisualStudioProject visualStudioProject = new VisualStudioProject(null, Guid.Empty, "Test", null, null) { SolutionRoot = Path.Combine(TestContext.DeploymentDirectory, "Test") };
             IDependencyRef directoryNode = new DirectoryNode("Test", false);
             
-
-            List<ExpertModule> moduleRefs = new List<ExpertModule> {
-                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test1" }, new DependencyManifest("Test", new XDocument())),
-                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test2" }, new DependencyManifest("Test", new XDocument())),
-                new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test3" }, new DependencyManifest("Test", new XDocument()))
+            List<ModuleRef> moduleRefs = new List<ModuleRef> {
+                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test1" }, new DependencyManifest("Test", new XDocument()))),
+                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test2" }, new DependencyManifest("Test", new XDocument()))),
+                new ModuleRef(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test3" }, new DependencyManifest("Test", new XDocument())))
             };
 
             moduleRefs[1].DependsOn.Add(moduleRefs[0]);
@@ -50,17 +49,21 @@ namespace UnitTest.BuildTime {
 
             graph.Edge(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test" }, new DependencyManifest("Test", new XDocument())));
 
-            foreach (ExpertModule moduleRef in moduleRefs) {
-                visualStudioProjects.AddDependency(moduleRef);
+            foreach (ModuleRef moduleRef in moduleRefs) {
+                visualStudioProject.AddDependency(moduleRef);
                 graph.Edge(moduleRef);
             }
 
+            graph = analyzer.ProcessVisualStudioProject(visualStudioProject, graph);
             graph.Edge(directoryNode);
-            graph.Edge(visualStudioProjects);
-            graph = analyzer.ProcessVisualStudioProject(visualStudioProjects, graph);
+            graph.Edge(visualStudioProject);
+
+            Assert.AreEqual(6, graph.Vertices.Count);
 
             Queue<IDependencyRef> queue;
             graph.Sort(out queue);
+
+            Assert.AreEqual(queue.ToArray()[5], visualStudioProject);
         }
 
         [TestMethod]
@@ -84,6 +87,8 @@ namespace UnitTest.BuildTime {
             foreach (ExpertModule module in expertModules) {
                 graph = analyzer.ProcessExpertModule(module, graph);
             }
+
+            Assert.AreEqual(3, graph.Vertices.Count);
 
             Queue<IDependencyRef> queue;
             graph.Sort(out queue);

@@ -47,7 +47,6 @@ namespace Aderant.Build.Tasks {
         public string BuildType { get; set; }
 
         public override bool Execute() {
-
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
             if (ProductManifest != null) {

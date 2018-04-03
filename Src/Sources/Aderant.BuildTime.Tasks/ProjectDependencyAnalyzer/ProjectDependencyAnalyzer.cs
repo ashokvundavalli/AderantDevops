@@ -221,7 +221,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             studioProject.AddDependency(new DirectoryNode(studioProject.SolutionRoot, false));
 
             foreach (IDependencyRef dependency in studioProject.DependsOn) {
-                IDependencyRef target = null;
+                IDependencyRef target;
                 ModuleRef moduleRef = dependency as ModuleRef;
 
                 if (moduleRef != null) {
@@ -229,6 +229,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     target = moduleTarget;
                 } else {
                     target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase));
+
                     if (target == null) {
                         target = GetDependentProjectByGuid(dependency, projectVertices);
                     }
@@ -245,6 +246,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     TraceGraph(graph);
                 }
             }
+
             return graph;
         }
 
@@ -580,7 +582,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
         public string Name => module.Name;
         public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
-        public ICollection<IDependencyRef> DependsOn => null;
+
+        public ICollection<IDependencyRef> DependsOn {
+            get { return module.DependsOn; }
+            set { module.DependsOn = value; }
+        }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
