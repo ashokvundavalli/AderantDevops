@@ -13,6 +13,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
     [DebuggerDisplay("DirectoryNode: {Name}")]
     internal sealed class DirectoryNode : IDependencyRef {
+        private ICollection<IDependencyRef> dependsOn;
         public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         public DirectoryNode(string name, bool isCompletion) {
             Name = CreateName(name, isCompletion);
@@ -53,17 +54,21 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         public string Name { get; set; }
-        public ICollection<IDependencyRef> DependsOn { get; set; }
+
+        public ICollection<IDependencyRef> DependsOn {
+            get { return dependsOn ?? (dependsOn = new HashSet<IDependencyRef>()); }
+            set { dependsOn = value; }
+        }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-
         }
 
         public void AddDependency(IDependencyRef dependency) {
-            if (DependsOn == null) {
-                DependsOn = new HashSet<IDependencyRef>();
+            if (dependsOn == null) {
+                dependsOn = new HashSet<IDependencyRef>();
             }
-            DependsOn.Add(dependency);
+
+            dependsOn.Add(dependency);
         }
     }
 

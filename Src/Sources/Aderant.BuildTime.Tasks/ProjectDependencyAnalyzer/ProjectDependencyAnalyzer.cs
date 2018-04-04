@@ -272,23 +272,21 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         private void AddInitializeAndCompletionNodes(TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projects) {
-            var grouping = projects.GroupBy(g => g.SolutionRoot);
+            IEnumerable<IGrouping<string, VisualStudioProject>> grouping = projects.GroupBy(g => g.SolutionRoot);
             
-            foreach (var level in grouping) {
+            foreach (IGrouping<string, VisualStudioProject> level in grouping) {
                 IDependencyRef initializeNode;
                 // Create a new node that represents the start of a directory
                 graph.Edge(initializeNode = new DirectoryNode(level.Key, false));
 
                 // Create a new node that represents the completion of a directory
-                var completionNode = new DirectoryNode(level.Key, true);
-
+                DirectoryNode completionNode = new DirectoryNode(level.Key, true);
+                completionNode.AddDependency(initializeNode);
                 graph.Edge(completionNode, initializeNode);
 
-                foreach (var project in projects.Where(p => p.SolutionRoot == level.Key)) {
+                foreach (VisualStudioProject project in projects.Where(p => p.SolutionRoot == level.Key)) {
                     project.AddDependency(initializeNode);
-
                     completionNode.AddDependency(project);
-
                     graph.Edge(completionNode, project);
                 }
             }
