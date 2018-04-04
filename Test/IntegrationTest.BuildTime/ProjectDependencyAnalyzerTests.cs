@@ -31,8 +31,6 @@ namespace IntegrationTest.BuildTime {
             Assert.AreEqual("Project3", dependencyOrder[2].Name);
             Assert.AreEqual("Project2", dependencyOrder[3].Name);
             Assert.AreEqual("Module.Completion", dependencyOrder[4].Name);
-
-            // Assert dependency order
             Assert.IsTrue(File.Exists(Path.Combine(sourceDirectory, "DependencyGraph.txt")));
         }
     }
