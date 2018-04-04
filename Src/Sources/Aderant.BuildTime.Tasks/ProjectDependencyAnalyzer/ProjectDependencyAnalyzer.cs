@@ -286,6 +286,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
                 foreach (VisualStudioProject project in projects.Where(p => p.SolutionRoot == level.Key)) {
                     project.AddDependency(initializeNode);
+                    graph.Edge(project, initializeNode);
                     completionNode.AddDependency(project);
                     graph.Edge(completionNode, project);
                 }
