@@ -218,8 +218,6 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 graph.Edge(studioProject, solutionRootDependency);
             }
 
-            studioProject.AddDependency(new DirectoryNode(studioProject.SolutionRoot, false));
-
             foreach (IDependencyRef dependency in studioProject.DependsOn) {
                 IDependencyRef target;
                 ModuleRef moduleRef = dependency as ModuleRef;
@@ -276,11 +274,12 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             
             foreach (IGrouping<string, VisualStudioProject> level in grouping) {
                 IDependencyRef initializeNode;
+                string solutionDirectoryName = Path.GetFileName(level.Key);
                 // Create a new node that represents the start of a directory
-                graph.Edge(initializeNode = new DirectoryNode(level.Key, false));
+                graph.Edge(initializeNode = new DirectoryNode(solutionDirectoryName, false));
 
                 // Create a new node that represents the completion of a directory
-                DirectoryNode completionNode = new DirectoryNode(level.Key, true);
+                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, true);
                 completionNode.AddDependency(initializeNode);
                 graph.Edge(completionNode, initializeNode);
 
