@@ -113,6 +113,9 @@ namespace Aderant.Build {
                     return Enumerable.Empty<string>();
                 }
                 var files = Directory.EnumerateFiles(path, filter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                if (files.Count() == 0) {
+                    files = Directory.EnumerateFiles(path, $"*.{filter}", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                }
                 return notRelative ? files : files.Select(MakeRelativePath);
             } catch (UnauthorizedAccessException) {
 
