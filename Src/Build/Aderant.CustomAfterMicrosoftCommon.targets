@@ -10,7 +10,17 @@
 
   <!-- Import the Aderant Code Analysis targets. This will add in our desired Code Analysis behaviour  -->
   <Import Project="$(AderantCodeAnalysisTargets)" Condition="Exists('$(AderantCodeAnalysisTargets)')" />
+  
+  <Target Name="CopyToStagingDirectory" AfterTargets="CopyFilesToOutputDirectory">
     
+    <Copy SourceFiles="@(IntermediateAssembly)"
+      DestinationFolder="$(ArtifactStagingDirectory)"
+      SkipUnchangedFiles="true"
+      UseHardlinksIfPossible="true" />
+  
+  </Target>
+
+
   <Target Name="SetupAlwaysRetryBeforeBuild" AfterTargets="BeforeBuild">
       <!-- 
       As part of our builds, quite a few projects copy files to the binaries directory or other locations.  

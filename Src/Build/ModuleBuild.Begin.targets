@@ -149,7 +149,7 @@
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
 
-    <GetDependencies
+    <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionDirectoryPath)"
       ModuleName="$(ModuleName)"
@@ -182,8 +182,6 @@
   </Target>
 
   <Target Name="Clean"/>
-         
-         
 
-  
-</Project>
+
+  </Project>
