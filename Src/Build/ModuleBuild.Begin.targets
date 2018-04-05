@@ -97,7 +97,7 @@
 
 <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
-║                     Group Start $(BuildGroup.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(4)) ║
+║                     Group Start  $(BuildGroup.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(27)) ║
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
 
@@ -145,7 +145,7 @@
   <Target Name="ModuleEnter">
     <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
-║                     $(ModuleName.PadRight(20))                      ║
+║                     $(ModuleName.PadRight(26))                      ║
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
 
