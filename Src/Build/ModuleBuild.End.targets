@@ -16,15 +16,7 @@
   -->
 
     <PropertyGroup>
-        <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' == ''">$(SolutionRoot)</SolutionDirectoryPath>
-        <SolutionDirectoryPath Condition="'$(SolutionDirectoryPath)' != ''">$([System.IO.Path]::GetFullPath('$(SolutionDirectoryPath)'))</SolutionDirectoryPath>
-        <SolutionDirectoryPath Condition="!HasTrailingSlash('$(SolutionDirectoryPath)')">$(SolutionDirectoryPath)\</SolutionDirectoryPath>
-
-        <!--Custom build for a module-->
-        <SolutionDirectoryPath Condition="('$(IsCustomBuild)' == 'true')">$(SolutionRoot)</SolutionDirectoryPath>
-
         <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
-
     </PropertyGroup>
 
 

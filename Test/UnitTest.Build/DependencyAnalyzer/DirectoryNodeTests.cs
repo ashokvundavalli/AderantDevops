@@ -12,6 +12,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
             DirectoryNode node = new DirectoryNode("A", false);
 
             Assert.AreEqual("A.Initialize", node.Name);
+            Assert.AreEqual("A", node.ModuleName);
+            Assert.IsFalse(node.IsCompletion);
 
         }
 
@@ -20,6 +22,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
             DirectoryNode node = new DirectoryNode("A", true);
 
             Assert.AreEqual("A.Completion", node.Name);
+            Assert.AreEqual("A", node.ModuleName);
+            Assert.IsTrue(node.IsCompletion);
         }
 
         [TestMethod]

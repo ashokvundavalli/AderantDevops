@@ -133,6 +133,22 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         return item;
                     }
 
+
+                    DirectoryNode node = studioProject as DirectoryNode;
+
+                    if (node != null) {
+                        if (node.IsCompletion) {
+                            string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, node.ModuleName));
+
+                            ItemGroupItem item = new ItemGroupItem(
+                                Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.End.targets")) {
+                                ["AdditionalProperties"] = properties,
+                                ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
+                            };
+                            return item;
+                        }
+                    }
+
                     return null;
                 }
             );

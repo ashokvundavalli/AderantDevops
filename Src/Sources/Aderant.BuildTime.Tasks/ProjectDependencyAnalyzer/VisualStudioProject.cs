@@ -15,7 +15,12 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     internal sealed class DirectoryNode : IDependencyRef {
         private ICollection<IDependencyRef> dependsOn;
         public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        public bool IsCompletion { get; set; }
+        public string ModuleName { get; set; }
+
         public DirectoryNode(string name, bool isCompletion) {
+            ModuleName = name;
+            IsCompletion = isCompletion;
             Name = CreateName(name, isCompletion);
         }
 
