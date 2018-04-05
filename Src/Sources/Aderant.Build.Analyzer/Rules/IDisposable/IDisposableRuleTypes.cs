@@ -13,6 +13,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         Collection,
         Dictionary,
         List,
+        Queue,
         None
     }
 

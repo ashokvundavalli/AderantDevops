@@ -117,6 +117,15 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                             StringComparison.Ordinal))) {
                     return;
                 }
+
+                if (string.Equals(methodName, "Enqueue", StringComparison.Ordinal) &&
+                    interfaces.Any(
+                        interfaceSymbol => string.Equals(
+                            "System.Collections.Generic.IEnumerable<T>",
+                            interfaceSymbol.OriginalDefinition.ToDisplayString(),
+                            StringComparison.Ordinal))) {
+                    return;
+                }
             }
 
             // If execution reaches this point, this use case is illegal.

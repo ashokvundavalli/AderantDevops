@@ -225,7 +225,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return (semanticModel.GetTypeInfo(node.Declaration.Type).Type as INamedTypeSymbol)?.TypeArguments[1];
             }
 
-            if (displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||
+            if (string.Equals("Queue<>", displayString, StringComparison.Ordinal) ||
+                displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||
                 displayString.StartsWith("System.Collections.ObjectModel.", StringComparison.Ordinal)) {
                 return (semanticModel.GetTypeInfo(node.Declaration.Type).Type as INamedTypeSymbol)?.TypeArguments[0];
             }
@@ -264,7 +265,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return (semanticModel.GetTypeInfo(node.Type).Type as INamedTypeSymbol)?.TypeArguments[1];
             }
 
-            if (displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||
+            if (string.Equals("Queue<>", displayString, StringComparison.Ordinal) ||
+                displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||
                 displayString.StartsWith("System.Collections.ObjectModel.", StringComparison.Ordinal)) {
                 return (semanticModel.GetTypeInfo(node.Type).Type as INamedTypeSymbol)?.TypeArguments[0];
             }
@@ -526,14 +528,16 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
             var memberAccessExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
 
-            if (string.Equals("Add", memberAccessExpression?.Name.Identifier.Text, StringComparison.Ordinal)) {
+            if (string.Equals("Add", memberAccessExpression?.Name.Identifier.Text, StringComparison.Ordinal) ||
+                string.Equals("Enqueue", memberAccessExpression?.Name.Identifier.Text, StringComparison.Ordinal)) {
                 orderedExpressionTypes.Add(new Tuple<SyntaxNode, ExpressionType, Location>(node, ExpressionType.CollectionAdd, node.GetLocation()));
                 return;
             }
 
             var memberBindingExpression = invocationExpression.Expression as MemberBindingExpressionSyntax;
 
-            if (string.Equals("Add", memberBindingExpression?.Name.Identifier.Text, StringComparison.Ordinal)) {
+            if (string.Equals("Add", memberBindingExpression?.Name.Identifier.Text, StringComparison.Ordinal) ||
+                string.Equals("Enqueue", memberAccessExpression?.Name.Identifier.Text, StringComparison.Ordinal)) {
                 orderedExpressionTypes.Add(new Tuple<SyntaxNode, ExpressionType, Location>(node, ExpressionType.CollectionAdd, node.GetLocation()));
             }
         }

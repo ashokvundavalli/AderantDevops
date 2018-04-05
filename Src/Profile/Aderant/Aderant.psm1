@@ -857,19 +857,23 @@ Function Output-VSIXLog {
 }
 
 # builds the current module using default parameters
-function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$release, [bool]$codeCoverage, [switch]$integration) {
+function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$release, [bool]$codeCoverage, [bool]$integration) {
     begin {
         Set-StrictMode -Version 2.0
     }
 
     process {
         # Parameter must be a string as we are shelling out which we can't pass [switch] to
-        [string]$commonArgs = "-moduleToBuildPath $global:CurrentModulePath -dropRoot $global:BranchServerDirectory -cleanBin $clean -Integration:$($integration.ToBool())"
+        [string]$commonArgs = "-moduleToBuildPath $global:CurrentModulePath -dropRoot $global:BranchServerDirectory -cleanBin $clean"
 
         if ($debug) {
             $commonArgs += " -debug"
         } elseif ($release) {
             $commonArgs += " -release"
+        }
+
+        if ($integration) {
+            $commonArgs += " -integration"
         }
 
         if ($codeCoverage) {
@@ -1330,7 +1334,7 @@ function Build-ExpertModules {
 
                     # Do the Build
                     if ($module.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
-                        Start-BuildForCurrentModule $clean $debug -codeCoverage $codeCoverage -integration:$integration.ToBool()
+                        Start-BuildForCurrentModule $clean $debug -codeCoverage $codeCoverage -integration $integration.IsPresent
 
                         pushd $currentWorkingDirectory
 
