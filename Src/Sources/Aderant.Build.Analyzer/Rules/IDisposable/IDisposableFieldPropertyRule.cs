@@ -153,7 +153,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                     switch (declaration.CollectionType) {
                         case DeclarationCollectionType.Collection:
                         case DeclarationCollectionType.Dictionary:
-                        case DeclarationCollectionType.List: {
+                        case DeclarationCollectionType.List:
+                        case DeclarationCollectionType.Queue: {
                             // If the method name is valid...
                             if (methodName.Equals("DisposeItems", StringComparison.Ordinal) ||
                                 methodName.Equals("RemoveAndDispose", StringComparison.Ordinal) ||
@@ -205,7 +206,8 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 switch (declaration.CollectionType) {
                     case DeclarationCollectionType.Collection:
                     case DeclarationCollectionType.Dictionary:
-                    case DeclarationCollectionType.List: {
+                    case DeclarationCollectionType.List:
+                    case DeclarationCollectionType.Queue: {
                         EvaluateCollectionDisposal(
                             ref fieldDisposed,
                             declaration,
@@ -281,6 +283,10 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             if (string.Equals("System.Collections.Generic.List<TKey, TValue>", displayString, StringComparison.Ordinal) ||
                 string.Equals("System.Collections.Generic.IList<TKey, TValue>", displayString, StringComparison.Ordinal)) {
                 return DeclarationCollectionType.List;
+            }
+
+            if (string.Equals("Queue<>", displayString, StringComparison.Ordinal)) {
+                return DeclarationCollectionType.Queue;
             }
 
             return displayString.StartsWith("System.Collections.Generic.", StringComparison.Ordinal) ||

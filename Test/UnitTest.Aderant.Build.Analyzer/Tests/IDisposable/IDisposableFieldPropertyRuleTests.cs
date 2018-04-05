@@ -14,6 +14,208 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #region Tests: Field
 
         [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_Queue_Diagnostic() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private Queue<IDisposable> queue;
+
+        private void MethodA() {
+            queue = new Queue<IDisposable>();
+
+            var item = new DisposeMe();
+
+            queue.Enqueue(item);
+        }
+
+        private void MethodB() {
+            var item = queue.Dequeue();
+
+            item.Dispose();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: private Queue<IDisposable> queue;
+                GetDiagnostic(8, 36, "queue"));
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_Queue_NoDiagnostic() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private Queue<IDisposable> queue;
+
+        private void MethodA() {
+            queue = new Queue<IDisposable>();
+
+            var item = new DisposeMe();
+
+            queue.Enqueue(item);
+        }
+
+        private void MethodB() {
+            var item = queue.Dequeue();
+
+            item.Dispose();
+        }
+
+        public void Dispose() {
+            queue?.DisposeItems();
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_Queue_Diagnostic() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private Queue<IDisposable> queue { get; set; }
+
+        private void MethodA() {
+            queue = new Queue<IDisposable>();
+
+            var item = new DisposeMe();
+
+            queue.Enqueue(item);
+        }
+
+        private void MethodB() {
+            var item = queue.Dequeue();
+
+            item.Dispose();
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: private Queue<IDisposable> queue { get; set; }
+                GetDiagnostic(8, 36, "queue"));
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_Queue_NoDiagnostic() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private Queue<IDisposable> queue { get; set; }
+
+        private void MethodA() {
+            queue = new Queue<IDisposable>();
+
+            var item = new DisposeMe();
+
+            queue.Enqueue(item);
+        }
+
+        private void MethodB() {
+            var item = queue.Dequeue();
+
+            item.Dispose();
+        }
+
+        public void Dispose() {
+            queue?.DisposeItems();
+        }
+    }
+
+    public class DisposeMe : IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> enumerable) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableFieldPropertyRule_FlowControl_If() {
             const string code = @"
 using System;
