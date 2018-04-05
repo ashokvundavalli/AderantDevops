@@ -2,12 +2,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="AfterModuleBuild"
          ToolsVersion="14.0">
-         
-         
-  <Import Project="$(DirectoryBuildFile)" />
-  <Import Project="Aderant.Build.Common.targets" />
-  <Import Project="RM.TransformTemplates.Targets" />
-  <Import Project="Aderant.TextTransform.targets" />
+
+
+    <Import Project="Aderant.Build.Testing.targets" />
 
   <!--
     ==========================================================================================
@@ -26,7 +23,6 @@
                                $(BinTestDirectory)*.Tests.ps1;"
                 Exclude="$(BinTestDirectory)*Helpers*.dll;
                                $(BinTestDirectory)Microsoft.*" />
-            <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
         </ItemGroup>
 
         <CallTarget Targets="RunTests" />
