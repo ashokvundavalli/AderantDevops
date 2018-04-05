@@ -3,38 +3,24 @@
          DefaultTargets="AfterModuleBuild"
          ToolsVersion="14.0">
 
+    <Import Project="ModuleBuild2.targets" />
 
-    <Import Project="Aderant.Build.Testing.targets" />
-
-  <!--
-    ==========================================================================================
-        Unit Test 
-    ==========================================================================================
-  -->
 
     <Target Name="AfterModuleBuild">
         <MSBuild Projects="@(ProjectsToBuild)" Targets="Build" BuildInParallel="true" Properties="%(ProjectsToBuild.Properties)" />
     </Target>
 
-    <Target Name="Build" DependsOnTargets="$(PrepareModuleForBuildDependsOn)">
+    <Target Name="Build" DependsOnTargets="$(RunTestsDependsOn)">
         <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
 ║                 Unit Testing:    $(ModuleName.PadRight(26))         ║
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
-        <ItemGroup>
-            <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
-                               $(BinTestDirectory)*.Tests.ps1;"
-                Exclude="$(BinTestDirectory)*Helpers*.dll;
-                               $(BinTestDirectory)Microsoft.*" />
-        </ItemGroup>
 
         <CallTarget Targets="RunTests" />
     </Target>
 
-  <Target Name="OnTestFailure">
-      <CallTarget Targets=""/>
-  </Target>
+
 
 
   </Project>
