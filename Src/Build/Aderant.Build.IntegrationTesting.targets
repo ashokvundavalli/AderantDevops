@@ -184,7 +184,7 @@
     <Exec Condition="'@(Packages)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(BinModuleDirectory)" />
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(BinModuleDirectory) /AdditionalPluginDirectories:$(BinModuleDirectory)" />
 
     <OnError ExecuteTargets="LightsOff" />
 
