@@ -16,6 +16,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
     /// </summary>
     internal class DynamicProject {
         private readonly IFileSystem2 fileSystem;
+        private const string InitializeTargets = @"Build\ModuleBuild.Initialize.targets";
+        private const string ComplationTargets = @"Build\ModuleBuild.Completion.targets";
 
         public DynamicProject(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
@@ -73,7 +75,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                             BuildInParallel = true,
                             StopOnFirstFailure = true,
                             //Projects = $"@({itemGroup.Name})" // use @ so MSBuild will expand the list for us
-                            Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.Begin.targets"),
+                            Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets),
                             Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                         });
 
@@ -126,7 +128,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                     if (marker != null) {
                         string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, marker.Name));
 
-                        ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.Begin.targets")) {
+                        ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets)) {
                             ["AdditionalProperties"] = properties,
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
                         };
@@ -141,7 +143,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                             string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, node.ModuleName));
 
                             ItemGroupItem item = new ItemGroupItem(
-                                Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), @"Build\ModuleBuild.End.targets")) {
+                                Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), ComplationTargets)) {
                                 ["AdditionalProperties"] = properties,
                                 ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
                             };
@@ -224,7 +226,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
         //}
 
-        private static char[] newLineArray = Environment.NewLine.ToCharArray();
+        private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
 
         private string AddBuildProperties(VisualStudioProject visualStudioProject, IFileSystem2 fileSystem, string branch, string solutionDirectoryPath) {
             string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(BuildConstants.EntryPointFile, "rsp"));

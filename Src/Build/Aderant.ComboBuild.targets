@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
          ToolsVersion="14.0" 
          DefaultTargets="BuildAndPackage"
-         TreatAsLocalProperty="SolutionRoot">
+         TreatAsLocalProperty="SolutionRoot;AssemblyVersion">
 
 
   <!-- Server build property setup -->
@@ -19,6 +19,13 @@
 
   <PropertyGroup>
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
+    
+    <!--Test configuration-->
+    <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
+    <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">false</RunIntegrationTests>
+    <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
+    <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
+    <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
 
     <!-- Local for factory generation -->
     <!--
