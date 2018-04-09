@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Microsoft.Build.BuildEngine;
 
 namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     internal static class WellKnownProjectTypeGuids {
@@ -76,16 +77,19 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                     result.OutputType = projectInfo.OutputType;
                     return result;
                 }
+
+                throw new InvalidProjectFileException($"Visual Studio project file: {visualStudioProjectPath} is invalid.");
             }
 
             return null;
         }
 
         private static string ParseProjectTypeGuids(XElement item) {
-            if (item.Element("ProjectTypeGuids") != null)
+            if (item.Element("ProjectTypeGuids") != null) {
                 return item.Element("ProjectTypeGuids").Value;
-            else
-                return string.Empty;
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
