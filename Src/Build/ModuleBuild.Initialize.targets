@@ -3,7 +3,6 @@
          DefaultTargets="BeforeModuleBuild"
          ToolsVersion="14.0">
 
-
   <Import Project="$(DirectoryBuildFile)" />
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="RM.TransformTemplates.Targets" />
@@ -137,11 +136,10 @@
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
-    <CleanBin>true</CleanBin>
+    <CleanBin Condition="'$(CleanBin)' == ''">true</CleanBin>
   </PropertyGroup>
 
   <Target Name="InitializeModuleBuild" BeforeTargets="ModuleEnter">
-    <CallTarget Targets="PrepareBuildEnvironment"/>
     <CallTarget Targets="CleanBin" />
     <CallTarget Targets="PrepareZipCustomSource" />
     <CallTarget Targets="ZipCustomSource" />
