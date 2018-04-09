@@ -7,6 +7,11 @@
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
+  <ItemGroup>
+    <AssembliesToAnalyze Include="@(ModuleBuildOutput)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
+    <AssembliesToAnalyze Include="@(BuildOutput)" />
+  </ItemGroup>
+
   <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"
     AssemblyFile="$(BuildAssembly)"
     Condition="'$(IsCustomBuild)' != 'true'" />
