@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="AfterModuleBuild"
-         ToolsVersion="14.0">
+  DefaultTargets="AfterModuleBuild"
+  ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
@@ -32,9 +32,9 @@
 
     <ItemGroup>
       <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
-                               $(BinTestDirectory)*.Tests.ps1;"
+          $(BinTestDirectory)*.Tests.ps1;"
         Exclude="$(BinTestDirectory)*Helpers*.dll;
-                               $(BinTestDirectory)Microsoft.*" />
+          $(BinTestDirectory)Microsoft.*" />
       <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
     </ItemGroup>
 
@@ -100,7 +100,11 @@
 
 
   <Target Name="AfterModuleBuild">
-      <MSBuild Projects="@(ProjectsToBuild)" Targets="Build" BuildInParallel="true" Properties="%(ProjectsToBuild.Properties)" />
+      <MSBuild Projects="@(ProjectsToBuild)"
+        Targets="Build"
+        BuildInParallel="true"
+        Properties="%(ProjectsToBuild.Properties)" />
+
   </Target>
 
 
@@ -109,7 +113,7 @@
 ╔═════════════════════════════════════════════════════════════════════╗
 ║                 Unit Testing:    $(ModuleName.PadRight(26))         ║
 ╚═════════════════════════════════════════════════════════════════════╝
-" Importance="high"></Message>
+" Importance="high" />
 
     <CallTarget Targets="RunTests" />
   </Target>
