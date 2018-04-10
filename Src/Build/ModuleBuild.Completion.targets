@@ -9,12 +9,8 @@
 
   <PropertyGroup>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
+    <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
   </PropertyGroup>
-
-  <ItemGroup>
-    <AssembliesToAnalyze Include="@(ModuleBuildOutput)" Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
-    <AssembliesToAnalyze Include="@(BuildOutput)" />
-  </ItemGroup>
 
   <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"
     AssemblyFile="$(BuildAssembly)"
@@ -227,6 +223,7 @@
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
+
 
   <Target Name="BeforeRunTests">
 

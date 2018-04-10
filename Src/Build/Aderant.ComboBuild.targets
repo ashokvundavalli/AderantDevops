@@ -37,8 +37,7 @@
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-    <ProductManifestPath>$(BuildInfrastructureDirectory)\ExpertManifest.xml</ProductManifestPath>   
-
+    <ProductManifestPath>$(BuildInfrastructureDirectory)\ExpertManifest.xml</ProductManifestPath>
     
     <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
 

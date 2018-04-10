@@ -4,7 +4,7 @@
 
     <Target Name="RunTests"
             DependsOnTargets="$(RunTestsDependsOn)"
-            Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
+            Condition="('$(RunTest)' != 'false') And ('$(IsCustomBuild)' != 'true')">
 
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
