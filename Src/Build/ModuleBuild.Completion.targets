@@ -40,17 +40,15 @@
   <ItemGroup>
     <TemplateSolutionFiles
       Include="$(SolutionDirectoryPath)\*.Template.sln"
-      Condition="('$(IsCustomBuild)'!='true')" />
+      Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')" />
   </ItemGroup>
 
   <Target
     Name="ZipWorkflowTemplateSource"
-    Condition="('$(IsCustomBuild)'!='true')"
+    Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
     Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip"
     Inputs="@(TemplateSolutionFiles)"
     BeforeTargets="BeforeRunTests">
-    
-    <Message Text="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip" />
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
