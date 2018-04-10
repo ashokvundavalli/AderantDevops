@@ -3,57 +3,33 @@
          DefaultTargets="BeforeModuleBuild"
          ToolsVersion="14.0">
 
+  <!-- Derived from DynamicProject.cs -->
   <Import Project="$(DirectoryBuildFile)" />
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.TextTransform.targets" />
 
 
-  <!-- 
-    ==========================================================================================
-        Build Configurations
-    ==========================================================================================
-  -->
-  <!--<ItemGroup>
-    <ConfigurationToBuild
-      Condition="'$(BuildFlavor)' == 'Release'"
-      Include="Release|AnyCPU">
-      <FlavorToBuild>Release</FlavorToBuild>
-      <PlatformToBuild>AnyCPU</PlatformToBuild>
-    </ConfigurationToBuild>
-    <ConfigurationToBuild
-      Condition="'$(BuildFlavor)' == '' Or '$(BuildFlavor)' == 'Debug'"
-      Include="Debug|AnyCPU">
-      <FlavorToBuild>Debug</FlavorToBuild>
-      <PlatformToBuild>AnyCPU</PlatformToBuild>
-    </ConfigurationToBuild>
-  </ItemGroup>-->
-
   <Target Name="BeforeModuleBuild">
-    <!-- <Message Text="MSBuildNodeCount: $(MSBuildNodeCount)"/>
-         
-         
-         -->
-    <!-- <Message Text="MSBuildExtensionsPath32: $(MSBuildExtensionsPath32)"/> -->
-    <!-- <Message Text="MSBuildProjectDirectoryNoRoot: $(MSBuildProjectDirectoryNoRoot)"/> -->
-    <!-- <Message Text="MSBuildToolsPath: $(MSBuildToolsPath)"/> -->
-    <!-- <Message Text="MSBuildToolsVersion: $(MSBuildToolsVersion)"/> -->
-    <!-- <Message Text="MSBuildBinPath: $(MSBuildBinPath)"/> -->
-    <!-- <Message Text="MSBuildExtensionsPath: $(MSBuildExtensionsPath)"/> -->
-    <!-- <Message Text="MSBuildProjectDefaultTargets: $(MSBuildProjectDefaultTargets)"/> -->
-    <!-- <Message Text="MSBuildProjectDirectory: $(MSBuildProjectDirectory)"/>  -->
-    <!-- <Message Text="MSBuildProjectExtension: $(MSBuildProjectExtension)"/> -->
-    <!-- <Message Text="MSBuildProjectFile: $(MSBuildProjectFile)"/> -->
-    <!-- <Message Text="MSBuildProjectFullPath: $(MSBuildProjectFullPath)"/> -->
-    <!-- <Message Text="MSBuildProjectName: $(MSBuildProjectName)"/> -->
-    <!-- <Message Text="MSBuildStartupDirectory: $(MSBuildStartupDirectory)"/> -->
-
+    <Message Text="MSBuildNodeCount: $(MSBuildNodeCount)"/>
+    <Message Text="MSBuildExtensionsPath32: $(MSBuildExtensionsPath32)"/>
+    <Message Text="MSBuildProjectDirectoryNoRoot: $(MSBuildProjectDirectoryNoRoot)"/>
+    <Message Text="MSBuildToolsPath: $(MSBuildToolsPath)"/>
+    <Message Text="MSBuildToolsVersion: $(MSBuildToolsVersion)"/>
+    <Message Text="MSBuildBinPath: $(MSBuildBinPath)"/>
+    <Message Text="MSBuildExtensionsPath: $(MSBuildExtensionsPath)"/>
+    <Message Text="MSBuildProjectDefaultTargets: $(MSBuildProjectDefaultTargets)"/>
+    <Message Text="MSBuildProjectDirectory: $(MSBuildProjectDirectory)"/>
+    <Message Text="MSBuildProjectExtension: $(MSBuildProjectExtension)"/>
+    <Message Text="MSBuildProjectFile: $(MSBuildProjectFile)"/>
+    <Message Text="MSBuildProjectFullPath: $(MSBuildProjectFullPath)"/>
+    <Message Text="MSBuildProjectName: $(MSBuildProjectName)"/>
+    <Message Text="MSBuildStartupDirectory: $(MSBuildStartupDirectory)"/>
     <Message Text="DirectoryBuildFile: $(DirectoryBuildFile)"/>
 
     <ItemGroup>
       <BuildGroup Include="@(Build->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" />
     </ItemGroup>
-
 
     <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
@@ -113,7 +89,15 @@
     <Message Text="BuildGroup=@(BuildGroup)"/>
     <Message Text="BuildProperties=@(BuildProperties)"/>
 
-    <MSBuild Projects="@(ProjectsToBuild)" Targets="Build" BuildInParallel="true" Properties="%(ProjectsToBuild.Properties)" />
+    <MSBuild Projects="@(ProjectsToBuild)"
+      Targets="Build"
+      BuildInParallel="true"
+      Properties="%(ProjectsToBuild.Properties)">
+
+      <!--The compiled assemblies from projects-->
+      <Output ItemName="CompiledAssemblies"
+        TaskParameter="TargetOutputs" />
+    </MSBuild>
 
   </Target>
 
