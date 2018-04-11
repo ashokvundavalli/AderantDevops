@@ -133,9 +133,4 @@
 
   </Target>
 
-  <Target Name="AfterRunTests" AfterTargets="RunTests">
-    <CallTarget Targets="CopyToDropV2" />
-    <CallTarget Targets="FinalizeBuild" />
-  </Target>
-
 </Project>
