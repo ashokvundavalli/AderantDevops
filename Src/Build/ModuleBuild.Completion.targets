@@ -131,6 +131,8 @@
     <CallTarget Targets="CopyToDropV2" />
     <CallTarget Targets="FinalizeBuild" />
 
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
   </Target>
 
 </Project>
