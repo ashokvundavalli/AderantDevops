@@ -3012,7 +3012,7 @@ function Run-ExpertSanityTests {
         [Parameter(Mandatory=$false)] [string]$productName = "*",
         [Parameter(Mandatory=$false)] [string]$dockerHost = "",
         [Parameter(Mandatory=$false)] [string]$browserName,
-        [Parameter(Mandatory=$false)] [switch]$development,
+        [Parameter(Mandatory=$false)] [switch]$deployment,
         [Parameter(Mandatory=$false)] [switch]$noDocker
 
     )
