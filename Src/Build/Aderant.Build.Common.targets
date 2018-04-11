@@ -409,5 +409,18 @@ doc.Save(File);
 
   </Target>
 
+  <Target Name="FinalizeBuild" Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+
+    <Error Condition="'$(PublishedBuildUri)' == ''" Text="Undefined property: PublishedBuildUri" />
+
+    <FinalizeBuild
+      CurrentBuildUri="$(BuildUri)"
+      BuildToFinalizeUri="$(PublishedBuildUri)"
+      ModuleName="$(ModuleName)"
+      TeamFoundationServerUri="$(TeamFoundationServerUrl)"
+      TeamProject="$(TeamProject)" />
+
+  </Target>
+
 
 </Project>

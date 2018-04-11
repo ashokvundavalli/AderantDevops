@@ -131,6 +131,7 @@
     <CallTarget Targets="UpdateModuleFileVersion"/>
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ZipWorkflowTemplateSource" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
   <Target Name="ModuleEnter">
