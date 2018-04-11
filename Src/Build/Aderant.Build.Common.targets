@@ -396,5 +396,18 @@ doc.Save(File);
       YieldDuringToolExecution="true" />
   </Target>
 
+  <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+  <Target Name="MarkBuildStepAsFailed"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    <Message Text="Marking build as failed" />
+
+    <CallTarget Targets="FinalizeBuild" />
+
+  </Target>
+
 
 </Project>
