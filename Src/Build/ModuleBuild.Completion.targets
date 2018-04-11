@@ -4,8 +4,10 @@
   ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.CopyToDropV2.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
+  <Import Project="Aderant.Build.Publish.targets" />
 
   <PropertyGroup>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
@@ -303,14 +305,26 @@
   </Target>
 
 
-  <Target Name="Build" DependsOnTargets="$(RunTestsDependsOn)">
-      <Message Text="
-╔═════════════════════════════════════════════════════════════════════╗
-║                 Unit Testing:    $(ModuleName.PadRight(26))         ║
-╚═════════════════════════════════════════════════════════════════════╝
-" Importance="high" />
+  <!-- Stub for customizers to override -->
+  <Target Name="PostBuild" />
 
+
+  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+
+
+  <Target Name="Build">
     <CallTarget Targets="RunTests" />
+    <CallTarget Targets="RunIntegrationTests" />
+    <CallTarget Targets="RunAutomationTests" />
+    <CallTarget Targets="PublishModule" />
+    <CallTarget Targets="IndexSourcesAndPublishSymbols" />
+    <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
+    <CallTarget Targets="PostBuild" />
+    <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
+    <CallTarget Targets="CopyToDropV2" />
+    <CallTarget Targets="FinalizeBuild" />
+
   </Target>
 
 </Project>
