@@ -1895,6 +1895,7 @@ function global:SetDefaultValue {
 function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [switch]$getLatest, [switch]$code, [switch]$seventeen) {
     $devenv = "devenv"
     $seventeenDirectory = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe'
+
     if ($seventeen) {
         if (Test-Path $seventeenDirectory) {
             $devenv = (Get-Item $seventeenDirectory | select-object -First 1).FullName
@@ -1902,31 +1903,41 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
             Write-Host "VS 2017 could not be found ($seventeenDirectory)"
         }
     }
+
+    $prevModule = $null
+
     if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
         if (-not [string]::IsNullOrEmpty($global:CurrentModuleName)) {
             $prevModule = Get-CurrentModule
         }
+
         Set-CurrentModule $moduleName
     }
+
     $rootPath = Join-Path $BranchLocalDirectory "Modules\$ModuleName"
-    if (!($ModuleName)) {
+    if (-not ($ModuleName)) {
         $ModuleName = $global:CurrentModuleName
         $rootPath = $global:CurrentModulePath
     }
-    if (!($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
+
+    if (-not ($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
         Write-Host -ForegroundColor Yellow "No module specified"
         return
     }
+
     if ($getDependencies) {
         Write-Host "Getting Dependencies for module $ModuleName"
         Get-DependenciesForCurrentModule
     }
+
     if ($getLatest) {
         Write-Host "Getting latest source for module $ModuleName"
         Get-Latest -ModuleName $ModuleName;
     }
+
     Write-Host "Opening solution for module $ModuleName"
     $moduleSolutionPath = Join-Path $rootPath "$ModuleName.sln"
+
     if (Test-Path $moduleSolutionPath) {
         if ($code) {
             if (Get-Command code -errorAction SilentlyContinue) {
@@ -1938,9 +1949,10 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
             Invoke-Expression "& '$devenv' $moduleSolutionPath"
         }
     } else {
-        $candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
+        [System.IO.FileSystemInfo[]]$candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
         if ($candidates.Count -gt 0) {
             $moduleSolutionPath = Join-Path $rootPath $candidates[0]
+
             if ($code) {
                 if (Get-Command code -errorAction SilentlyContinue) {
                     Invoke-Expression "code $rootPath"
@@ -1954,10 +1966,12 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
             "There is no solution file at $moduleSolutionPath"
         }
     }
-    if (($prevModule) -and (Get-CurrentModule -ne $prevModule)) {
+
+    if (($prevModule -ne $null) -and (Get-CurrentModule -ne $prevModule)) {
         Set-CurrentModule $prevModule
     }
 }
+
 <#
 .Synopsis
     Gets the latest source from TFS
