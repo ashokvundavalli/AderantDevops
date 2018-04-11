@@ -7,6 +7,7 @@
   <Import Project="Aderant.Build.CopyToDropV2.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
+  <Import Project="Aderant.Build.OnTestFailure.targets" />
   <Import Project="Aderant.Build.Publish.targets" />
 
   <PropertyGroup>
@@ -129,7 +130,6 @@
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="CopyToDropV2" />
-    <CallTarget Targets="FinalizeBuild" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
