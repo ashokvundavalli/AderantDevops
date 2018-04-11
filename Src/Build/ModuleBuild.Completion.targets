@@ -6,10 +6,12 @@
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
+  <Import Project="Aderant.Build.CopyToDropV2.targets" />
 
   <PropertyGroup>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
+    <CopyToDropV2>true</CopyToDropV2>
   </PropertyGroup>
 
   <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"
@@ -116,6 +118,23 @@
 " Importance="high" />
 
     <CallTarget Targets="RunTests" />
+  </Target>
+
+  <Target Name="AfterRunTests" AfterTargets="RunTests">
+    <CallTarget Targets="CopyToDropV2" />
+  </Target>
+
+  <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+  <Target Name="MarkBuildStepAsFailed"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    <Message Text="Marking build as failed" />
+
+    <CallTarget Targets="FinalizeBuild" />
+
   </Target>
 
 </Project>
