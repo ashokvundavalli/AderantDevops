@@ -1541,12 +1541,15 @@ function Kill-VisualStudio([string[]] $workflowModuleNames, [switch] $killAll = 
         Build-ExpertPatch
     Builds the patch using the local binaries.
 #>
-function Build-ExpertPatch([switch]$noget = $false, [switch]$noproduct = $false) {
+function Build-ExpertPatch([switch]$noget = $false, [switch]$noproduct = $false, [switch]$Pre803 = $false) {
     if(!$noproduct) {
         Get-ProductZip
-    }    
-    if (!$noget) {        
-        $cmd = "xcopy \\na.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $PackageScriptsDirectory"
+    }
+    $cmd = "xcopy \\na.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $PackageScriptsDirectory"
+    if ($Pre803) {
+        $cmd = "xcopy \\na.aderant.com\expertsuite\Main\Build.Tools\Pre803\* /S /Y $PackageScriptsDirectory"
+    }
+    if (!$noget) {                
         Invoke-Expression $cmd
     }
     pushd $PackageScriptsDirectory; .\Patching\BuildPatch.ps1
