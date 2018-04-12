@@ -9,6 +9,8 @@
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
   <Import Project="Aderant.Build.OnTestFailure.targets" />
   <Import Project="Aderant.Build.Publish.targets" />
+  <Import Project="Aderant.CodeSigning.targets" />
+  <Import Project="Mobile.targets" />
 
   <PropertyGroup>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
@@ -30,6 +32,17 @@
       $(RunTestsDependsOn);
       BeforeRunTests;
     </RunTestsDependsOn>
+    <CompletionModuleBuildDependsOn>
+      RunTests;
+      RunIntegrationTests;
+      RunAutomationTests;
+      PublishModule;
+      IndexSourcesAndPublishSymbols;
+      MobileBuild;
+      PostBuild;
+      SignInstallers;
+      CopyToDropV2;
+    </CompletionModuleBuildDependsOn>
   </PropertyGroup>
 
   <Target Name="BeforeRunTests">
@@ -120,16 +133,7 @@
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
 
-  <Target Name="Build">
-    <CallTarget Targets="RunTests" />
-    <CallTarget Targets="RunIntegrationTests" />
-    <CallTarget Targets="RunAutomationTests" />
-    <CallTarget Targets="PublishModule" />
-    <CallTarget Targets="IndexSourcesAndPublishSymbols" />
-    <CallTarget Targets="MobileBuild" Condition="'$(ModuleName.StartsWith(`Mobile`))' == 'true' And '$(PackageMobile)' == 'true'" />
-    <CallTarget Targets="PostBuild" />
-    <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
-    <CallTarget Targets="CopyToDropV2" />
+  <Target Name="Build" DependsOnTargets="$(CompletionModuleBuildDependsOn)">
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 

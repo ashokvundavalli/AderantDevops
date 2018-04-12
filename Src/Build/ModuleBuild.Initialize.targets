@@ -9,6 +9,7 @@
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.TextTransform.targets" />
   <Import Project="Aderant.Build.Zip.targets" />
+  <Import Project="Aderant.Build.Clean.targets" />
 
 
   <Target Name="BeforeModuleBuild">
@@ -107,6 +108,15 @@
       ModuleEnter;
       rmTransformTemplates;
     </PrepareModuleForBuildDependsOn>
+    <InitializeModuleBuildDependsOn>
+      CleanBin;
+      PrepareZipCustomSource;
+      ZipCustomSource;
+      SetBuildNumbers;
+      UpdateModuleFileVersion;
+      SeedPackagePacking;
+      ZipWorkflowTemplateSource;
+    </InitializeModuleBuildDependsOn>
   </PropertyGroup>
 
 
@@ -123,14 +133,7 @@
     <CleanBin Condition="'$(CleanBin)' == ''">true</CleanBin>
   </PropertyGroup>
 
-  <Target Name="InitializeModuleBuild" BeforeTargets="ModuleEnter">
-    <CallTarget Targets="CleanBin" />
-    <CallTarget Targets="PrepareZipCustomSource" />
-    <CallTarget Targets="ZipCustomSource" />
-    <CallTarget Targets="SetBuildNumbers" />
-    <CallTarget Targets="UpdateModuleFileVersion"/>
-    <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
-    <CallTarget Targets="ZipWorkflowTemplateSource" />
+  <Target Name="InitializeModuleBuild" BeforeTargets="ModuleEnter" DependsOnTargets="$(InitializeModuleBuildDependsOn)">
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
@@ -170,82 +173,6 @@
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="true" />
 
-  </Target>
-
-  <Target Name="Clean"/>
-
-  <!--
-    ==========================================================================================
-        Clean
-    ==========================================================================================
-  -->
-  <Target Name="CleanBin">
-
-    <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
-    <Delete Files="$(SolutionDirectoryPath)TestResults\**\*"
-      ContinueOnError="true" />
-    <Delete Files="$(ModuleBuildDirectory)TestResults\**\*"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(SolutionDirectoryPath)TestResults"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(ModuleBuildDirectory)TestResults"
-      ContinueOnError="true" />
-
-    <RemoveDir Condition="'$(CleanBin)' == 'true'"
-      Directories="$(SolutionDirectoryPath)Bin\Module"
-      ContinueOnError="true" />
-    <RemoveDir Condition="'$(CleanBin)' == 'true'"
-      Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
-      ContinueOnError="true" />
-
-    <!-- These can be symlinks so delete them directly -->
-    <RemoveDir Directories="$(BinTestDirectory)Dependencies"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
-      ContinueOnError="true" />
-
-    <ItemGroup>
-      <Folders Include="$(SolutionDirectoryPath)Bin\" />
-      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
-      <Folders Include="$(SolutionDirectoryPath)Src\" />
-      <Folders Include="$(SolutionDirectoryPath)BuildTemp\" />
-      <Folders Include="$(SolutionDirectoryPath)CommonBuild\" />
-      <Folders Include="$(SolutionDirectoryPath)TestResults\" />
-    </ItemGroup>
-
-    <Error Condition="!HasTrailingSlash('%(Folders.FullPath)')"
-      Text="All paths in the Folders item group must end with a trailing slash" />
-
-    <ItemGroup>
-      <!-- (?i) means case insensitive -->
-      <Files Include="%(Folders.RootDir)%(Folders.Directory)\**\obj\**" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Folders.FullPath)', `(?i)Src`))" />
-      <Files Include="%(Folders.RootDir)%(Folders.Directory)\**\**" Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('%(Folders.FullPath)', `(?i)Src`))" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <FilesToDelete Condition="$(CleanBin)" Include="@(Files)" />
-      <FoldersToDelete Condition="$(CleanBin)" Include="%(Files.RelativeDir)" />
-    </ItemGroup>
-
-    <Message Condition="$(CleanBin) And @(FilesToDelete) != ''" Text="Files to clean: %(FilesToDelete.FullPath)" />
-    <Message Condition="$(CleanBin) And @(FoldersToDelete) != ''" Text="Folders to clean: %(FoldersToDelete.FullPath)" />
-
-    <MSBuild.Community.Tasks.Attrib
-      Condition="$(CleanBin)"
-      ReadOnly="false"
-      Files="@(FilesToDelete)" />
-
-    <Delete Condition="$(CleanBin)"
-      Files="@(FilesToDelete)"
-      ContinueOnError="true" />
-
-    <RemoveDir Condition="$(CleanBin)"
-      Directories="@(FoldersToDelete)"
-      ContinueOnError="true" />
-
-    <MakeDir Directories="$(BinModuleDirectory)" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
   <!--

@@ -120,7 +120,7 @@
   
 
   <Target Name="SignInstallers"
-          Condition="'$(CodeSigningEnabled)' == 'true'"
+          Condition="'$(CodeSigningEnabled)' == 'true' And '$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'"
           DependsOnTargets="FindInstallersToSign">
     <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
   </Target>
