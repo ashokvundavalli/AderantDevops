@@ -283,26 +283,27 @@
 
   </Target>
 
-  <!--
-  <Target Name="Package" AfterTargets="BuildAndPackage">
-    -->
-  <!-- 
-      To test via desktop
-      msbuild TFSBuild.proj @TFSBuild.rsp /target:ZipProduct /p:LocalExpertBinariesDirectory=C:\Binaries\ /p:ZipFileDirectory=C:\Output\
-    --><!--
 
-    <OnError ExecuteTargets="SetBuildBreakProperties;OnBuildBreak" />
+  <Target Name="Package" AfterTargets="BuildAndPackage">
+
+
+      <!--To test via desktop
+      msbuild TFSBuild.proj @TFSBuild.rsp /target:ZipProduct /p:LocalExpertBinariesDirectory=C:\Binaries\ /p:ZipFileDirectory=C:\Output\-->
+
+
+    <OnError ExecuteTargets="OnBuildBreak" />
   </Target>
 
-  --><!--
+  <!--
     ==========================================================================================
     Zip output
     ==========================================================================================
-  --><!--
+  -->
   <Target Name="ZipProduct" BeforeTargets="Package">
 
     <PropertyGroup>
-      <ZipFileDirectory Condition="'$(ZipFileDirectory)' == ''">$(BuildAllDropPath)\$(BuildNumber)</ZipFileDirectory>
+      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)</LocalExpertBinariesDirectory>
+      <ZipFileDirectory Condition="'$(ZipFileDirectory)' == ''">$(ArtifactStagingDirectory)</ZipFileDirectory>
       <ZipFile>$(ZipFileDirectory)\ExpertBinaries.zip</ZipFile>
       <EliteEnterpriseZipFile>$(ZipFileDirectory)\ExpertEEIntegrationBinaries.zip</EliteEnterpriseZipFile>
       <LicenseZipFile>$(ZipFileDirectory)\LicenseGenerator.zip</LicenseZipFile>
@@ -322,7 +323,7 @@
 
     <Message Text="Zipping product files"/>
 
-    --><!-- Create ItemGroup used in Zip task.--><!--
+    <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <SharedExclusions
         Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\**\*.*;
@@ -344,7 +345,7 @@
                  $(LocalExpertBinariesDirectory)\**\*.BuildInfo.config;
                  $(LocalExpertBinariesDirectory)\**\DropFolderBuildNumbers.txt;" />
 
-      --><!-- Group of the roles shared between expert and elite --><!--
+      <!-- Group of the roles shared between expert and elite -->
       <SharedRoles
         Include="$(LocalExpertBinariesDirectory)\**\commonapplications.role.xml;
                  $(LocalExpertBinariesDirectory)\**\configuration.role.xml;
@@ -358,12 +359,12 @@
                  $(LocalExpertBinariesDirectory)\**\workflow.role.xml;
                  $(LocalExpertBinariesDirectory)\**\workflowauthoring.role.xml" />
 
-      --><!-- Group of the roles that should be elite only --><!--
+      <!-- Group of the roles that should be elite only -->
       <EliteRoles
         Include="$(LocalExpertBinariesDirectory)\**\eliteintegration.role.xml;
                  $(LocalExpertBinariesDirectory)\**\matterplanningelite.role.xml" />
 
-      --><!-- Create a group of roles to exclude from elite (all roles minus the elite roles and shared roles) --><!--
+      <!-- Create a group of roles to exclude from elite (all roles minus the elite roles and shared roles) -->
       <EliteRoleExclusions
         Include="$(LocalExpertBinariesDirectory)\**\*.role.xml"
         Exclude="@(SharedRoles);@(EliteRoles)"/>
@@ -385,14 +386,14 @@
     <MakeDir
       Directories="$(ZipFileDirectory)"/>
 
-    --><!-- Create ZIP for ExpertSource --><!--
+    <!-- Create ZIP for ExpertSource -->
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipSourceFiles)"
       ZipFileName="$(ZipFile)"
       WorkingDirectory="$(LocalExpertBinariesDirectory)"
       ParallelCompression="false" />
 
-    --><!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. --><!--
+    <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. --><!--
     <Copy
       SourceFiles="@(EliteOverrideFiles)"
       DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
@@ -448,11 +449,11 @@
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
   </Target>
 
   
-  --><!--
+  <!--
   ==========================================================================================
   Package the built modules and place in this builds output folder on the drop.
   ==========================================================================================
