@@ -30,7 +30,7 @@ $machineWideDirectories = @(
     # Yay for people who check in PostBuild events :)
     "C:\tfs",
     
-    ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory()) + "\Temporary ASP.NET Files",
+    ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "Temporary ASP.NET Files"),
         
     "$Env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
 )
