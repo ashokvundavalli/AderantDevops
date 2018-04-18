@@ -20,7 +20,7 @@ $directoriesToRemove = @(
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\14.0Exp\Extensions\Aderant",
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\15.0Exp\Extensions\Aderant",
 
-    $env:TEMP
+    $env:TEMP,
 )
 
 $machineWideDirectories = @(
@@ -28,7 +28,11 @@ $machineWideDirectories = @(
     "C:\Windows\Temp",
 
     # Yay for people who check in PostBuild events :)
-    "C:\tfs"
+    "C:\tfs",
+    
+    ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory()) + "\Temporary ASP.NET Files",
+        
+    "$Env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
 )
 
 
