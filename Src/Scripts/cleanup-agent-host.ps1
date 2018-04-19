@@ -20,7 +20,7 @@ $directoriesToRemove = @(
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\14.0Exp\Extensions\Aderant",
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\15.0Exp\Extensions\Aderant",
 
-    $env:TEMP,
+    $env:TEMP
 )
 
 $machineWideDirectories = @(
