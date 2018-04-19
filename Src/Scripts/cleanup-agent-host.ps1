@@ -28,10 +28,7 @@ $directoriesToRemove = @(
 
 $machineWideDirectories = @(
     "C:\Temp",
-    "C:\Windows\Temp",
-
-    # Yay for people who check in PostBuild events :)
-    "C:\tfs",
+    "C:\Windows\Temp", 
     
     ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "Temporary ASP.NET Files"),
         
@@ -59,6 +56,9 @@ foreach ($dir in $directoriesToRemove) {
 # Should a human run this script, don't nuke their environment
 if (-not [System.Environment]::UserInteractive) {
   Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$machineWideDirectories += $_.Root + "ExpertShare"}
+  
+  # Yay for people who check in PostBuild events :)
+  machineWideDirectories += "C:\tfs"
 }
 
 foreach ($dir in $machineWideDirectories) {
