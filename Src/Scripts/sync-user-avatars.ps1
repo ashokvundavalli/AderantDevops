@@ -136,14 +136,15 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
     
                 SetTeamFoundationProperties $identityService $user $imageBytes $format
             }
-        } catch {
+        } catch [System.Net.WebException] {
             if ($_.Exception.InnerException.Response.StatusCode -ne 404) {
                 Write-Host "Error updating $($user.UniqueName)"
                 Write-Host $_                
                 Write-Host $_.Exception.ToString()
                 return
+            } else {
+                Write-Host "...No image found"
             }
-            Write-Host "...No image found"
         } finally {
             if ($stream) {
                 $stream.Dispose()
