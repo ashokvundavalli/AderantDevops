@@ -1,3 +1,7 @@
+<#
+    This script takes care of fetching all identities known to TFS then downloading the user photo (if any) from Office 365 and assigning that photo
+    to the Team Foundation identity
+#>
 param(
     [parameter(Mandatory=$true)] 
     [ValidateNotNullOrEmpty()] 
@@ -7,11 +11,6 @@ param(
 Set-StrictMode -Version 2.0
 
 $ErrorActionPreference = 'Stop'
-
-<#
-    This script takes care of fetching all identities known to TFS then downloading the user photo (if any) from Office 365 and assigning that photo
-    to the Team Foundation identity
-#>
 
 #Load assemblies
 [Void][Reflection.Assembly]::LoadFrom("C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.Client.dll")
@@ -142,14 +141,13 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
                 Write-Host "Error updating $($user.UniqueName)"
                 Write-Host $_                
                 Write-Host $_.Exception.ToString()
-                Write-Error $_
                 return
             }
             Write-Host "...No image found"
         } finally {
             if ($stream) {
                 $stream.Dispose()
-                $bitmap.Dispose()                
+                $bitmap.Dispose()
             }
         }
     } else {
@@ -165,7 +163,11 @@ function Sync() {
     $users = $returnValue.Users    
   
     foreach ($user in $users) {
-        ProcessUser $user $service $false
+        try {
+            ProcessUser $user $service $false
+        } catch {
+            Write-Output $_.Exception.ToString()
+        }
     }
 }
 
