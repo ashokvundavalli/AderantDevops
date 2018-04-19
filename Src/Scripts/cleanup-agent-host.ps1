@@ -20,7 +20,10 @@ $directoriesToRemove = @(
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\14.0Exp\Extensions\Aderant",
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\15.0Exp\Extensions\Aderant",
 
-    $env:TEMP
+    $env:TEMP,
+
+    # Browser and INET stack cache
+    "$env:LOCALAPPDATA\Microsoft\Windows\INetCache"
 )
 
 $machineWideDirectories = @(
@@ -57,9 +60,13 @@ foreach ($dir in $directoriesToRemove) {
 foreach ($dir in $machineWideDirectories) {
   if (Test-Path $dir) {
     Push-Location $dir
+    Write-Output "Deleting files under $dir"
     Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue
     Pop-Location
   }
 }
 
-Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$directoriesToRemove += $_.Root + "ExpertShare"}
+# Should a human run this script, don't nuke their environment
+if (-not [System.Environment]::UserInteractive) {
+  Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$directoriesToRemove += $_.Root + "ExpertShare"}
+}
