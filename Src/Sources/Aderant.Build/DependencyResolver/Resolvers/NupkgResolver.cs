@@ -6,6 +6,7 @@ using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
+using Paket;
 
 namespace Aderant.Build.DependencyResolver.Resolvers {
     internal class NupkgResolver : IDependencyResolver {
@@ -19,11 +20,13 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
-                    var requirements = pm.GetDependencies();
-
-                    foreach (var item in requirements) {
-                        yield return DependencyRequirement.Create(item.Key, item.Value);
+                using (var pm = new PaketPackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
+                    List<string> groupList = pm.findGroups();
+                    foreach (string groupName in groupList) {
+                        var requirements = pm.GetDependencies(Domain.GroupName(groupName));
+                        foreach (var item in requirements) {
+                            yield return DependencyRequirement.Create(item.Key, groupName, item.Value);
+                        }
                     }
                 }
             }
@@ -65,7 +68,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void PackageRestore(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            using (var manager = new PackageManager(fileSystem, logger)) {
+            using (var manager = new PaketPackageManager(fileSystem, logger)) {
                 manager.Add(new DependencyFetchContext(), requirements);
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);
@@ -98,13 +101,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
-            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Name);
+            if (requirement.Group == "Development") {
+                return;
+            }
+            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Group == BuildConstants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
             if (!fileSystem.DirectoryExists(packageDir)) {
-                var javaScriptPackageDir = Path.Combine(fileSystem.Root, "packages", "javascript", requirement.Name);
-                if (!fileSystem.DirectoryExists(javaScriptPackageDir)) {
-                    throw new DirectoryNotFoundException($"Neither {packageDir} nor {javaScriptPackageDir} exist.");
-                }
-                packageDir = javaScriptPackageDir;
+                throw new DirectoryNotFoundException($"{packageDir} does not exist.");
             }
 
             string target = resolverRequest.GetDependenciesDirectory(requirement);

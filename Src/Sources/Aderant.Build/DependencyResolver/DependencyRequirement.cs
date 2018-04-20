@@ -3,19 +3,41 @@ using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.DependencyResolver {
     internal class DependencyRequirement : IDependencyRequirement, IEquatable<DependencyRequirement> {
+        private string group;
+
         protected DependencyRequirement() {
         }
 
-        protected DependencyRequirement(string packageName, VersionRequirement version) {
+        protected DependencyRequirement(string packageName, string groupName, VersionRequirement version) {
             Name = packageName;
+            Group = groupName;
             VersionRequirement = version;
         }
 
         /// <summary>
-        /// Gets or sets the name of thee requirement.
+        /// Gets or sets the name of the requirement.
         /// </summary>
         /// <value>The name.</value>
         public string Name { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the group name of the requirement.
+        /// </summary>
+        /// <value>The group name.</value>
+        public string Group {
+            get {
+                if (string.IsNullOrWhiteSpace(group)) {
+                    return BuildConstants.MainDependencyGroup;
+                }
+                return group;
+            }
+            protected set {
+                if (value == null) {
+                    throw new ArgumentNullException(nameof(value));
+                }
+                group = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the version required.
@@ -27,18 +49,18 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets or sets the source.
         /// </summary>
         /// <value>The source.</value>
-        public RepositoryType Source { get; protected set; }
+        public GetAction Source { get; protected set; }
 
         public static IDependencyRequirement Create(ExpertModule reference) {
-            if (reference.RepositoryType == RepositoryType.NuGet) {
-                return new DependencyRequirement(reference.Name, reference.VersionRequirement) { ReplicateToDependencies = reference.ReplicateToDependencies };
+            if (reference.GetAction == GetAction.NuGet) {
+                return new DependencyRequirement(reference.Name, BuildConstants.MainDependencyGroup, reference.VersionRequirement);
             }
             return new FolderBasedRequirement(reference);
         }
 
-        public static IDependencyRequirement Create(string packageName, VersionRequirement version = null) {
-            return new DependencyRequirement(packageName, version) {
-                Source = RepositoryType.NuGet
+        public static IDependencyRequirement Create(string packageName, string groupName, VersionRequirement version = null) {
+            return new DependencyRequirement(packageName, groupName, version) {
+                Source = GetAction.NuGet
             };
         }
 

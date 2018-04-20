@@ -83,7 +83,7 @@ namespace Aderant.Build.Packaging {
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
             var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
 
-            using (var manager = new PackageManager(fs, logger)) {
+            using (var manager = new PaketPackageManager(fs, logger)) {
                 manager.Add(context, context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 // (c) Gregory Adam 2009
 
@@ -54,14 +55,25 @@ using System.Collections.Generic;
  */
 namespace Aderant.Build.DependencyAnalyzer {
 
-    internal sealed class TopologicalSort<T> where T : IEquatable<T> {
-        #region Properties
-        #region Properties Private
-        private Dictionary<T, NodeInfo> Nodes = new Dictionary<T, NodeInfo>();
-        #endregion Properties Private
-        #endregion Properties
-        #region Methods
-        #region Methods Public
+    public sealed class TopologicalSort<T> where T : IEquatable<T> {
+        private Dictionary<T, NodeInfo> nodes = new Dictionary<T, NodeInfo>();
+
+        public TopologicalSort<T> Clone() {
+            var items = new Dictionary<T, NodeInfo>();
+
+            foreach (var node in nodes) {
+                items[node.Key] = new NodeInfo() { Successors = new List<T>(node.Value.Successors), PredecessorCount = node.Value.PredecessorCount };
+            }
+
+            return new TopologicalSort<T>() {
+                nodes = items
+            };
+        }
+
+        public ICollection<T> Vertices {
+            get { return nodes.Keys; }
+        }
+
         //-------------------------------------------------------------------------
         /// <summary>
         /// Adds a node with nodeKey
@@ -76,14 +88,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (nodeKey == null)
                 return false;
 
-            if (!Nodes.ContainsKey(nodeKey))
-                Nodes.Add(nodeKey, new NodeInfo());
+            if (!nodes.ContainsKey(nodeKey))
+                nodes.Add(nodeKey, new NodeInfo());
 
             return true;
         }
         //-------------------------------------------------------------------------
         /// <summary>
-        /// Add an Edge where successor depends on predecessor
+        /// Add an Edge where successor depends on predecessor.
         /// Does not complain if the directed arc is already in
         /// </summary>
         /// <param name="successor"></param>
@@ -104,7 +116,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (successor.Equals(predecessor))
                 return false;
 
-            var successorsOfPredecessor = Nodes[predecessor].Successors;
+            var successorsOfPredecessor = nodes[predecessor].Successors;
 
             // if the Edge is already there, keep silent
             if (!successorsOfPredecessor.Contains(successor)) {
@@ -112,7 +124,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 successorsOfPredecessor.Add(successor);
 
                 // increment predecessorrCount of successor
-                Nodes[successor].PredecessorCount++;
+                nodes[successor].PredecessorCount++;
             }
             return true;
 
@@ -126,7 +138,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // (1) go through all the nodes
             //		if the node's predecessorCount == 0
             //			add it to the outputQueue
-            foreach (KeyValuePair<T, NodeInfo> kvp in Nodes)
+            foreach (KeyValuePair<T, NodeInfo> kvp in nodes)
                 if (kvp.Value.PredecessorCount == 0)
                     outputQueue.Enqueue(kvp.Key);
 
@@ -146,12 +158,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 sortedQueue.Enqueue(nodeKey); // add it to sortedQueue
 
-                nodeInfo = Nodes[nodeKey]; // get successors of nodeKey
+                nodeInfo = nodes[nodeKey]; // get successors of nodeKey
 
-                Nodes.Remove(nodeKey);	// remove it from Nodes
+                nodes.Remove(nodeKey);	// remove it from Nodes
 
                 foreach (T successor in nodeInfo.Successors)
-                    if (--Nodes[successor].PredecessorCount == 0)
+                    if (--nodes[successor].PredecessorCount == 0)
                         outputQueue.Enqueue(successor);
 
                 nodeInfo.Clear();
@@ -159,7 +171,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // outputQueue is empty here
-            if (Nodes.Count == 0)
+            if (nodes.Count == 0)
                 return true;	// if there are no nodes left in Nodes, return true
 
             // there is at least one cycle
@@ -172,14 +184,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Clears the Nodes for reuse.  Note that Sort() already does this
         /// </summary>
         public void Clear() {
-            foreach (NodeInfo nodeInfo in Nodes.Values)
+            foreach (NodeInfo nodeInfo in nodes.Values)
                 nodeInfo.Clear();
 
-            Nodes.Clear();
+            nodes.Clear();
         }
         //-------------------------------------------------------------------------
-        #endregion Methods Public
-        #region Methods Private
+
         /// <summary>
         /// puts one cycle in cycleQueue
         /// </summary>
@@ -188,7 +199,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             cycleQueue.Clear(); // Clear the queue, it may have data in it
 
             // init  Cycle info of remaining nodes
-            foreach (NodeInfo nodeInfo in Nodes.Values)
+            foreach (NodeInfo nodeInfo in nodes.Values)
                 nodeInfo.ContainsCycleKey = nodeInfo.CycleWasOutput = false;
 
             // (1) put the predecessor in the CycleKey of the successor
@@ -197,9 +208,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             NodeInfo successorInfo;
 
-            foreach (KeyValuePair<T, NodeInfo> kvp in Nodes) {
+            foreach (KeyValuePair<T, NodeInfo> kvp in nodes) {
                 foreach (T successor in kvp.Value.Successors) {
-                    successorInfo = Nodes[successor];
+                    successorInfo = nodes[successor];
 
                     if (!successorInfo.ContainsCycleKey) {
                         successorInfo.CycleKey = kvp.Key;
@@ -219,7 +230,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // (2) put a cycle in cycleQueue
             NodeInfo cycleNodeInfo;
-            while (!(cycleNodeInfo = Nodes[cycleKey]).CycleWasOutput) {
+            while (!(cycleNodeInfo = nodes[cycleKey]).CycleWasOutput) {
                 if (!cycleNodeInfo.ContainsCycleKey)
                     throw new Exception("program error: nodeInfo.ContainsCycleKey");
 
@@ -231,10 +242,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
 
         }
-        #endregion Methods Private
-        #endregion Methods
 
-        #region Classes Nested
         private class NodeInfo {
             // for construction
             public int PredecessorCount;
@@ -251,6 +259,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
         }
-        #endregion Classes Nested
     }
 }

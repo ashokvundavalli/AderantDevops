@@ -50,10 +50,6 @@
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Services.Common, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.VisualStudio.Services.Common.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.TeamFoundation.SourceControl.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
@@ -94,6 +90,8 @@
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzerTests.cs" />
     <Compile Include="FileUtilitiesTests.cs" />
     <Compile Include="DependencyManifestTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
@@ -185,6 +183,10 @@
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.BuildTime.Tasks\Aderant.BuildTime.Tasks.csproj">
+      <Project>{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}</Project>
+      <Name>Aderant.BuildTime.Tasks</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
       <Project>{66e50d39-8e73-4d16-944b-43f18c308fe0}</Project>

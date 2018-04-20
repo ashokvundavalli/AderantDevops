@@ -1,47 +1,49 @@
-﻿. $PSScriptRoot\Caching.ps1
+﻿Set-StrictMode -Version Latest
+
+[bool]$Env:RunCodeAnalysisOnThisProject = $False
+. $PSScriptRoot\Caching.ps1
 
 function Measure-Command() {
-[CmdletBinding()]
-param (    
-    [ScriptBlock] $expression,
-    [parameter(Mandatory=$False,ValueFromRemainingArguments=$True)]
-    [string] $name
-  )
+    [CmdletBinding()]
+    param (    
+        [ScriptBlock] $expression,
+        [parameter(Mandatory = $False, ValueFromRemainingArguments = $True)]
+        [string] $name
+    )
   
-   process { 
+    process { 
         Microsoft.PowerShell.Utility\Measure-Command -Expression $expression -OutVariable perf
         
         if ($name) {
-          Write-Debug ("Performance: `"$name`" took: " + $perf.TotalMilliseconds + " milliseconds")
+            Write-Debug ("Performance: `"$name`" took: " + $perf.TotalMilliseconds + " milliseconds")
         }
     }
 }
 
 [string]$BranchRoot = ""
-[string]$global:BranchName
-[string]$global:BranchLocalDirectory
-[string]$global:BranchServerDirectory
-[string]$global:BranchModulesDirectory
-[string]$global:BranchBinariesDirectory
-[string]$global:BranchExpertSourceDirectory
-[string]$global:BranchExpertVersion
-[string]$global:BranchEnvironmentDirectory
-[string]$global:BuildScriptsDirectory
-[string]$global:PackageScriptsDirectory
-[string]$global:ModuleCreationScripts
-[string]$global:ProductManifestPath
-[string]$global:CurrentModuleName
-[string]$global:CurrentModulePath
-[string]$global:CurrentModuleBuildPath
+[string]$global:BranchName = ""
+[string]$global:BranchLocalDirectory = ""
+[string]$global:BranchServerDirectory = ""
+[string]$global:BranchModulesDirectory = ""
+[string]$global:BranchBinariesDirectory = ""
+[string]$global:BranchExpertSourceDirectory = ""
+[string]$global:BranchExpertVersion = ""
+[string]$global:BranchEnvironmentDirectory = ""
+[string]$global:BuildScriptsDirectory = ""
+[string]$global:PackageScriptsDirectory = ""
+[string]$global:ModuleCreationScripts = ""
+[string]$global:ProductManifestPath = ""
+[string]$global:CurrentModuleName = ""
+[string]$global:CurrentModulePath = ""
+[string]$global:CurrentModuleBuildPath = ""
 [PSModuleInfo]$global:CurrentModuleFeature = $null
-[string[]]$global:LastBuildBuiltModules
-[string[]]$global:LastBuildRemainingModules
-[string[]]$global:LastBuildGetLocal
-[switch]$global:LastBuildGetDependencies
-[switch]$global:LastBuildCopyBinaries
-[switch]$global:LastBuildDownstream
-[switch]$global:LastBuildGetLatest
-$global:workspace
+[string[]]$global:LastBuildBuiltModules = @()
+[string[]]$global:LastBuildRemainingModules = @()
+[string[]]$global:LastBuildGetLocal = @()
+[bool]$global:LastBuildGetDependencies = $false
+[bool]$global:LastBuildCopyBinaries = $false
+[bool]$global:LastBuildDownstream = $false
+[bool]$global:LastBuildGetLatest = $false
 
 $titles = @(
     "Reticulating Splines",
@@ -66,8 +68,9 @@ $titles = @(
     "Dropping Expert Database",
     "Formatting C:\",
     "Replacing Coffee Machine",
-    "Duplicating Offline Cache"
-    "Replacing Headlight Fluid"
+    "Duplicating Offline Cache",
+    "Replacing Headlight Fluid",
+    "Dailing Roper Hotline"
 )
 
 $Host.UI.RawUI.WindowTitle = Get-Random $titles
@@ -75,9 +78,10 @@ $Host.UI.RawUI.WindowTitle = Get-Random $titles
 function Check-Vsix() {
     [CmdletBinding()]
     param (
-        [parameter(Mandatory=$true)][string] $vsixName,
-        [parameter(Mandatory=$true)][string] $vsixId,
-        [parameter(Mandatory=$false)][string] $idInVsixmanifest = $vsixId)
+        [parameter(Mandatory = $true)][string] $vsixName,
+        [parameter(Mandatory = $true)][string] $vsixId,
+        [parameter(Mandatory = $false)][string] $idInVsixmanifest = $vsixId
+    )
 
     Begin {
         [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null             
@@ -139,8 +143,6 @@ function Check-Vsix() {
     }
 
     Process {
-        Set-StrictMode -Version Latest      
-
         if (-Not $idInVsixmanifest) {
             $idInVsixmanifest = $vsixId
         }
@@ -152,13 +154,13 @@ function Check-Vsix() {
         $extensionsFolder = Join-Path -Path $env:LOCALAPPDATA -ChildPath \Microsoft\VisualStudio\14.0\Extensions\
         $developerTools = Get-ChildItem -Path $extensionsFolder -Recurse -Filter "$vsixName.dll" -Depth 1
 
-        $developerTools.ForEach({
-            $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
-            if (Test-Path $manifest) {
-                [xml]$manifestContent = Get-Content $manifest  
-                $manifestVersion = $manifestContent.PackageManifest.Metadata.Identity.Version
+        $developerTools.ForEach( {
+                $manifest = Join-Path -Path $_.DirectoryName -ChildPath extension.vsixmanifest
+                if (Test-Path $manifest) {
+                    [xml]$manifestContent = Get-Content $manifest  
+                    $manifestVersion = $manifestContent.PackageManifest.Metadata.Identity.Version
 
-                $version = [System.Version]::Parse($manifestVersion)
+                    $version = [System.Version]::Parse($manifestVersion)
                 }  
             })       
 
@@ -191,7 +193,7 @@ function Check-Vsix() {
             $zipFile = [System.IO.Compression.ZipFile]::OpenRead($currentVsixFile)
             $rawFiles = $zipFile.Entries      
             
-            foreach($rawFile in $rawFiles) {
+            foreach ($rawFile in $rawFiles) {
                 if ($rawFile.Name -eq "extension.vsixmanifest") {    
                     try {            
                         $archiveEntryStream = $rawFile.Open()
@@ -247,7 +249,7 @@ function Set-BranchPaths {
     $global:BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
     $global:BranchModulesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath \Modules
     $global:BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath \Binaries
-    $global:BranchEnvironmentDirectory =Join-Path -Path $global:BranchLocalDirectory -ChildPath \Environment
+    $global:BranchEnvironmentDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath \Environment
 
     if ((Test-Path $global:BranchLocalDirectory) -ne $true) {
         Write-Host ""
@@ -271,7 +273,7 @@ function Set-ExpertSourcePath {
 
     if ($global:BranchExpertVersion.StartsWith("8")) {
         $global:BranchExpertSourceDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath \Binaries\ExpertSource
-        if ((Test-Path $global:BranchExpertSourceDirectory) -ne $true){
+        if ((Test-Path $global:BranchExpertSourceDirectory) -ne $true) {
             [System.IO.Directory]::CreateDirectory($global:BranchExpertSourceDirectory) | Out-Null
         }
     } else {
@@ -280,7 +282,6 @@ function Set-ExpertSourcePath {
 }
 
 function Set-ScriptPaths {
-
     if ([System.IO.File]::Exists("$global:BranchModulesDirectory\ExpertManifest.xml")) {
         $root = Resolve-Path "$PSScriptRoot\..\..\..\"
 
@@ -303,31 +304,31 @@ function Initialise-BuildLibraries {
     invoke-expression "$BuildScriptsDirectory\Build-Libraries.ps1"
 }
 
-function ResolveBranchName($branchPath){
-    if (IsMainBanch $branchPath){
+function ResolveBranchName($branchPath) {
+    if (IsMainBanch $branchPath) {
         $name = "MAIN"
-    } elseif (IsDevBanch $branchPath){
+    } elseif (IsDevBanch $branchPath) {
         $name = $branchPath.Substring($branchPath.LastIndexOf("dev\", [System.StringComparison]::OrdinalIgnoreCase))
-    } elseif (IsReleaseBanch $branchPath){
+    } elseif (IsReleaseBanch $branchPath) {
         $name = $branchPath.Substring($branchPath.LastIndexOf("releases\", [System.StringComparison]::OrdinalIgnoreCase))
     }
     return $name
 }
 
-function IsDevBanch([string]$name){
+function IsDevBanch([string]$name) {
     return $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
 }
 
-function IsReleaseBanch([string]$name){
+function IsReleaseBanch([string]$name) {
     return $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
 }
 
-function IsMainBanch([string]$name){
+function IsMainBanch([string]$name) {
     return $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase)
 }
 
 # Called from SwitchBranchTo
-function Set-ChangedBranchPaths([string]$name){
+function Set-ChangedBranchPaths([string]$name) {
     #initialise from default setting
     Write-Host "Change branch to $name"
 
@@ -344,23 +345,23 @@ function Set-ChangedBranchPaths([string]$name){
 
     # get the new and previous name a container parts
     if ((IsDevBanch $global:BranchName) -or (IsReleaseBanch $global:BranchName)) {
-        $previousBranchContainer = $global:BranchName.Substring(0,$global:BranchName.LastIndexOf("\"))
-        $previousBranchName = $global:BranchName.Substring($global:BranchName.LastIndexOf("\")+1)
-    }elseif((IsMainBanch $global:BranchName)){
+        $previousBranchContainer = $global:BranchName.Substring(0, $global:BranchName.LastIndexOf("\"))
+        $previousBranchName = $global:BranchName.Substring($global:BranchName.LastIndexOf("\") + 1)
+    } elseif ((IsMainBanch $global:BranchName)) {
         $previousBranchName = "MAIN"
         $changeToContainerFromMAIN = $true
     }
 
-    if ((IsDevBanch $name) -or (IsReleaseBanch $name)){
-        $newBranchContainer = $name.Substring(0,$name.LastIndexOf("\"))
-        $newBranchName = $name.Substring($name.LastIndexOf("\")+1)
-    } elseif ((IsMainBanch $name)){
+    if ((IsDevBanch $name) -or (IsReleaseBanch $name)) {
+        $newBranchContainer = $name.Substring(0, $name.LastIndexOf("\"))
+        $newBranchName = $name.Substring($name.LastIndexOf("\") + 1)
+    } elseif ((IsMainBanch $name)) {
         $newBranchName = "MAIN"
         $newBranchContainer = "\"
     }
 
     $success = $false
-    if ($changeToContainerFromMAIN){
+    if ($changeToContainerFromMAIN) {
         $success = Switch-BranchFromMAINToContainer $newBranchContainer $newBranchName $previousBranchName
     } else {
         $success = Switch-BranchFromContainer $newBranchContainer $previousBranchContainer $newBranchName $previousBranchName
@@ -375,7 +376,7 @@ function Set-ChangedBranchPaths([string]$name){
     $global:BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Modules" )
 
     $global:BranchBinariesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Binaries" )
-    if ((Test-Path $global:BranchBinariesDirectory) -eq $false){
+    if ((Test-Path $global:BranchBinariesDirectory) -eq $false) {
         New-Item -Path $global:BranchBinariesDirectory -ItemType Directory
     }
 
@@ -387,8 +388,8 @@ function Set-ChangedBranchPaths([string]$name){
 #>
 function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $previousBranchName) {
     #change name and then container and remove extra backslash's
-    $globalBranchName = ($global:BranchName -replace $previousBranchName,$newBranchName)
-    $globalBranchName = $newBranchContainer+"\"+$globalBranchName
+    $globalBranchName = ($global:BranchName -replace $previousBranchName, $newBranchName)
+    $globalBranchName = $newBranchContainer + "\" + $globalBranchName
 
     if ($globalBranchName -eq "\") {
         return $false
@@ -398,7 +399,7 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
     $global:BranchLocalDirectory = $global:BranchLocalDirectory.TrimEnd([System.IO.Path]::DirectorySeparatorChar)
 
     #strip MAIN then add container and name
-    $globalBranchLocalDirectory = $global:BranchLocalDirectory.Substring(0,$global:BranchLocalDirectory.LastIndexOf("\")+1)
+    $globalBranchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf("\") + 1)
     $globalBranchLocalDirectory = (Join-Path -Path $globalBranchLocalDirectory -ChildPath( Join-Path  -Path $newBranchContainer -ChildPath $newBranchName))
 
     if ((Test-Path $globalBranchLocalDirectory) -eq $false) {
@@ -409,7 +410,7 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
     $global:BranchLocalDirectory = $globalBranchLocalDirectory
 
     #strip MAIN then add container and name
-    $global:BranchServerDirectory = $global:BranchServerDirectory.Substring(0,$global:BranchServerDirectory.LastIndexOf("\")+1)
+    $global:BranchServerDirectory = $global:BranchServerDirectory.Substring(0, $global:BranchServerDirectory.LastIndexOf("\") + 1)
     $global:BranchServerDirectory = (Join-Path -Path $global:BranchServerDirectory -ChildPath( Join-Path  -Path $newBranchContainer -ChildPath $newBranchName))
 
     $global:BranchServerDirectory = [System.IO.Path]::GetFullPath($global:BranchServerDirectory)
@@ -420,12 +421,12 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
 <#
  we dont have to do anything special if we change from a container to other branch type
 #>
-function Switch-BranchFromContainer($newBranchContainer, $previousBranchContainer, $newBranchName, $previousBranchName){
+function Switch-BranchFromContainer($newBranchContainer, $previousBranchContainer, $newBranchName, $previousBranchName) {
     #change name and then container and remove extra backslash's
-    $globalBranchName = $global:BranchName.replace($previousBranchName,$newBranchName)
-    $globalBranchName = $globalBranchName.replace($previousBranchContainer,$newBranchContainer)
-    if(IsMainBanch $globalBranchName){
-        $globalBranchName = [System.Text.RegularExpressions.Regex]::Replace($globalBranchName,"[^1-9a-zA-Z_\+]","");
+    $globalBranchName = $global:BranchName.replace($previousBranchName, $newBranchName)
+    $globalBranchName = $globalBranchName.replace($previousBranchContainer, $newBranchContainer)
+    if (IsMainBanch $globalBranchName) {
+        $globalBranchName = [System.Text.RegularExpressions.Regex]::Replace($globalBranchName, "[^1-9a-zA-Z_\+]", "");
     }
 
     if ($globalBranchName -eq "\") {
@@ -450,7 +451,7 @@ function Switch-BranchFromContainer($newBranchContainer, $previousBranchContaine
     return $true
 }
 
-function Set-CurrentModule($name, [switch]$quiet){
+function Set-CurrentModule($name, [switch]$quiet) {
     if ($global:CurrentModuleFeature) {
         if (Get-Module | Where-Object -Property Name -eq $global:CurrentModuleFeature.Name) {
             Write-Host "Removing module: $($global:CurrentModuleFeature.Name)"
@@ -460,7 +461,7 @@ function Set-CurrentModule($name, [switch]$quiet){
     }
 
     if (!($name)) {
-        if(!($global:CurrentModuleName)){
+        if (!($global:CurrentModuleName)) {
             Write-Warning "No current module is set"
             return
         } else {
@@ -489,7 +490,7 @@ function Set-CurrentModule($name, [switch]$quiet){
     Write-Debug "Current module [$global:CurrentModuleName]"
     $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
 
-    if((Test-Path $global:CurrentModulePath) -eq $false){
+    if ((Test-Path $global:CurrentModulePath) -eq $false) {
         Write-Warning "the module [$global:CurrentModuleName] does not exist, please check the spelling."
         $global:CurrentModuleName = ""
         $global:CurrentModulePath = ""
@@ -517,7 +518,7 @@ function SetRepository([string]$path) {
     [string]$currentModuleBuildDirectory = "$path\Build"
 
     if (Test-Path $currentModuleBuildDirectory) {
-        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | ?{ $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
+        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | ? { $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
         if ($featureModule) {
             ImportFeatureModule $featureModule
         }
@@ -561,13 +562,13 @@ function OutputEnvironmentDetails {
     Write-Host "Path :" $global:BranchServerDirectory
     
     if ($global:CurrentModuleName -and $global:CurrentModulePath) {    
-      Write-Host ""
-      Write-Host "-----------------------------"
-      Write-Host "Current Module Information"
-      Write-Host "-----------------------------"
-      Write-Host "Name :" $global:CurrentModuleName
-      Write-Host "Path :" $global:CurrentModulePath
-      Write-Host ""
+        Write-Host ""
+        Write-Host "-----------------------------"
+        Write-Host "Current Module Information"
+        Write-Host "-----------------------------"
+        Write-Host "Name :" $global:CurrentModuleName
+        Write-Host "Path :" $global:CurrentModulePath
+        Write-Host ""
     }
 }
 
@@ -575,7 +576,7 @@ function OutputEnvironmentDetails {
  gets the folder the current script is executing from
  #>
 function Get-ScriptFolder {
-     return Split-Path (Get-Variable MyInvocation).Value.ScriptName
+    return Split-Path (Get-Variable MyInvocation).Value.ScriptName
 }
 
 <#
@@ -585,7 +586,7 @@ function Get-SystemMapConnectionString {
     return (GetDefaultValue "systemMapConnectionString").ToLower()
 }
 
-function New-BuildModule($name){
+function New-BuildModule($name) {
     $shell = ".\create_module.ps1 -ModuleName $name -DestinationFolder $global:BranchModulesDirectory"
     pushd $global:ModuleCreationScripts
     invoke-expression $shell
@@ -611,15 +612,15 @@ function New-BuildModule($name){
     Starts DBPREPARE in interactive mode
 #>
 function Prepare-Database (
-        [Parameter(Mandatory=$true)]
-        [string]$database,
-        [Parameter(Mandatory=$true)]
-        [string]$saPassword,
-        [string]$server = $env:COMPUTERNAME,
-        [string]$instance,
-        [string]$version = "81",
-        [switch]$interactive
-        ) {
+    [Parameter(Mandatory = $true)]
+    [string]$database,
+    [Parameter(Mandatory = $true)]
+    [string]$saPassword,
+    [string]$server = $env:COMPUTERNAME,
+    [string]$instance,
+    [string]$version = "81",
+    [switch]$interactive
+) {
 
     [string]$cmsConnection
     if (-Not [string]::IsNullOrWhiteSpace($instance)) {
@@ -677,8 +678,8 @@ function Update-Database([string]$manifestName, [switch]$interactive) {
     if ($global:BranchExpertVersion.StartsWith("8")) {
         $fullManifest = Join-Path -Path $global:BranchBinariesDirectory -ChildPath 'environment.xml'
     } else {
-        if  ($manifestName -eq $null) {
-            write "Usage: Update-BranchDatabase <manifestName>"
+        if ($manifestName -eq $null) {
+            Write-Host "Usage: Update-BranchDatabase <manifestName>"
             return
         } else {
             $fullManifest = Join-Path -Path $global:BranchEnvironmentDirectory -ChildPath "\$manifestName.environment.xml"
@@ -730,12 +731,11 @@ function Install-LatestSoftwareFactory([switch]$local) {
     #if (Check-LatestSoftwareFactory) {
     #    Write-Host "No update necessary, you have the latest version"
     #} else {
-        if ($local) {
-            Install-LatestVisualStudioExtension -module "Libraries.SoftwareFactory" -local
-        }
-        else {
-            Install-LatestVisualStudioExtension -module "Libraries.SoftwareFactory"
-        }
+    if ($local) {
+        Install-LatestVisualStudioExtension -module "Libraries.SoftwareFactory" -local
+    } else {
+        Install-LatestVisualStudioExtension -module "Libraries.SoftwareFactory"
+    }
     #}
 }
 
@@ -749,11 +749,11 @@ function Install-LatestSoftwareFactory([switch]$local) {
     Will install the latest version of the SDK.Database project
 #>
 function Install-LatestVisualStudioExtension(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [ValidateSet('SDK.Database', 'Libraries.SoftwareFactory')]
-        [String]$module,
-        [switch]$local) {
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('SDK.Database', 'Libraries.SoftwareFactory')]
+    [String]$module,
+    [switch]$local) {
 
     $installDetails = $null
 
@@ -777,14 +777,12 @@ function Install-LatestVisualStudioExtension(
 
     if ($local) {
         Install-LatestVisualStudioExtensionImpl $installDetails -local
-    }
-    else {
+    } else {
         Install-LatestVisualStudioExtensionImpl $installDetails
     }
 }
 
 function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local) {
-
     # uninstall the extension
     Write-Host "Uninstalling $($installDetails.ProductManifestName)..."
     $vsix = "VSIXInstaller.exe"
@@ -804,7 +802,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         $localInstallDirectory = [System.IO.Path]::Combine($global:BranchLocalDirectory, $info.ProductManifestName + ".Install")
 
         [xml]$manifest = Get-Content $global:ProductManifestPath
-        [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object{ $_.Name.Contains($info.ProductManifestName)}
+        [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
 
         Invoke-Expression "$BuildScriptsDirectory\Build-Libraries.ps1"
         $dropPathVSIX = (GetPathToBinaries $module $global:BranchServerDirectory)
@@ -829,7 +827,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         Start-Process -FilePath $vsix -ArgumentList "/quiet $vsixFile" -Wait -PassThru | Out-Null
         $errorsOccurred = Output-VSIXLog
         if (-not $errorsOccurred) {
-        Write-Host "Updated $($info.ProductManifestPathName). Restart Visual Studio for the changes to take effect."
+            Write-Host "Updated $($info.ProductManifestPathName). Restart Visual Studio for the changes to take effect."
         } else {
             Write-Host
             $displayName = $info.ExtensionDisplayName
@@ -906,16 +904,16 @@ function Get-DependenciesForCurrentModule([switch]$noUpdate, [switch]$showOutdat
 function Get-DependenciesForEachModule {
     Get-ExpertModules | % {
         if (-not ($_.Name.StartsWith("ThirdParty.")) `
-            -and -not ($_.Name.StartsWith("ThirdParty.")) `
-            -and -not ($_.Name -eq "Build.T4Task") `
-            -and -not ($_.Name -eq "Thirdparty.ExifJS") `
-            -and -not ($_.Name -eq "Thirdparty.Microsoft.Office.Interop") `
-            -and -not ($_.Name -eq "Marketing.Help") `
-            -and -not ($_.Name -eq "Tests.UIAutomation") `
-            -and -not ($_.Name -eq "UIAutomation.Framework") `
-            -and -not ($_.Name -eq "Expert.Help") `
-            -and -not ($_.Name -eq "Installs.Marketing") `
-            -and -not ($_.Name -eq "Internal.Licensing")) {
+                -and -not ($_.Name.StartsWith("ThirdParty.")) `
+                -and -not ($_.Name -eq "Build.T4Task") `
+                -and -not ($_.Name -eq "Thirdparty.ExifJS") `
+                -and -not ($_.Name -eq "Thirdparty.Microsoft.Office.Interop") `
+                -and -not ($_.Name -eq "Marketing.Help") `
+                -and -not ($_.Name -eq "Tests.UIAutomation") `
+                -and -not ($_.Name -eq "UIAutomation.Framework") `
+                -and -not ($_.Name -eq "Expert.Help") `
+                -and -not ($_.Name -eq "Installs.Marketing") `
+                -and -not ($_.Name -eq "Internal.Licensing")) {
             Write-Host "Getting dependencies for $_..."
             cm $_.Name; gd
         }
@@ -1045,13 +1043,13 @@ function Get-ProductZip([switch]$unstable) {
     $pathToZip = $pathToZip.Trim()
     DeleteContentsFromExcludingFile -directory $BranchBinariesDirectory "environment.xml"
     Copy-Item -Path $pathToZip -Destination $BranchBinariesDirectory
-    $localZip =  (Join-Path $BranchBinariesDirectory $zipName)
+    $localZip = (Join-Path $BranchBinariesDirectory $zipName)
     Write-Host "About to extract zip to [$BranchBinariesDirectory]"
     
     $zipExe = join-path $ShellContext.BuildToolsDirectory "\7z.exe"
     if (test-path $zipExe) {
-        $SourceFile=$localZip
-        $Destination=$BranchBinariesDirectory
+        $SourceFile = $localZip
+        $Destination = $BranchBinariesDirectory
         &$zipExe x $SourceFile "-o$Destination" -y
     } else {
         Write-Host "Falling back to using Windows zip util as 7-zip does not exist on this system"
@@ -1147,8 +1145,8 @@ function Build-ExpertModules {
 
             if (!$workflowModuleNames) {
                 if (($global:CurrentModulePath) -and (Test-Path $global:CurrentModulePath)) {
-                     $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name})
-                     $workflowModuleNames = @($moduleBeforeBuild)
+                    $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name})
+                    $workflowModuleNames = @($moduleBeforeBuild)
                 }
             }
 
@@ -1179,10 +1177,10 @@ function Build-ExpertModules {
             }
 
             if ($changeset) {
-                 write ""
-                 write "Retrieving Expert modules for current changeset ..."
-                 [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModulesWithPendingChanges($global:BranchModulesDirectory)
-                 write "Done."
+                write ""
+                write "Retrieving Expert modules for current changeset ..."
+                [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModulesWithPendingChanges($global:BranchModulesDirectory)
+                write "Done."
             }
 
             # Set the new last build configuration
@@ -1199,7 +1197,7 @@ function Build-ExpertModules {
                 return
             }
 
-            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModules($workflowModuleNames)
+            [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
 
             if ((Test-Path $BranchLocalDirectory) -ne $true) {
                 write "Branch Root path does not exist: '$BranchLocalDirectory'"
@@ -1234,7 +1232,7 @@ function Build-ExpertModules {
                 write ""
                 write "Retrieving downstream modules"
 
-                [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:workspace.DependencyAnalyzer.GetDownstreamModules($modules)
+                [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:Workspace.DependencyAnalyzer.GetDownstreamModules($modules)
 
                 $modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $modules -ProductManifestPath $global:ProductManifestPath
                 $modules = $modules | Where { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
@@ -1248,7 +1246,7 @@ function Build-ExpertModules {
             $count = 0
             $weHaveSkipped = $false
 
-            foreach($module in $modules) {
+            foreach ($module in $modules) {
                 $count++
                 $skipMarkup = ""
 
@@ -1256,7 +1254,7 @@ function Build-ExpertModules {
                     $weHaveSkipped = $true
                 }
 
-                if ($skipUntil -and $weHaveSkipped -ne $true){
+                if ($skipUntil -and $weHaveSkipped -ne $true) {
                     $skipMarkup = " (skipped)"
                 }
 
@@ -1288,11 +1286,11 @@ function Build-ExpertModules {
                     # We either have not specified a skip or we have already skipped the modules we need to
                     Set-CurrentModule $module.Name
 
-                    if ($getLatest){
+                    if ($getLatest) {
                         Get-LatestSourceForModule $module.Name -branchPath $BranchLocalDirectory
                     }
 
-                    if ($getDependencies -eq $true){
+                    if ($getDependencies -eq $true) {
                         Get-DependenciesForCurrentModule
                     }
 
@@ -1364,7 +1362,7 @@ function Build-ExpertModules {
                     }
                 }
 
-                [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where  {$_ -ne $module}
+                [string[]]$global:LastBuildRemainingModules = $global:LastBuildRemainingModules | Where {$_ -ne $module}
             }
 
             $global:LastBuildRemainingModules = $null
@@ -1404,7 +1402,7 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
         return;
     }
 
-    [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModules($workflowModuleNames)
+    [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
 
     if ((Test-Path $BranchLocalDirectory) -ne $true) {
         write "Branch Root path does not exist: '$BranchLocalDirectory'"
@@ -1435,7 +1433,7 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
         write ""
         write "Retrieving downstream modules"
 
-        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:workspace.DependencyAnalyzer.GetDownstreamModules($modules)
+        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = $global:Workspace.DependencyAnalyzer.GetDownstreamModules($modules)
 
         $modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $modules -ProductManifestPath $global:ProductManifestPath
         $modules = $modules | Where { $_.ModuleType -ne [Aderant.Build.DependencyAnalyzer.ModuleType]::Test }
@@ -1448,7 +1446,7 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
     write "********** Build Overview *************"
     $count = 0
     $weHaveSkipped = $false
-    foreach($module in $modules) {
+    foreach ($module in $modules) {
         $count++;
         write "$count. $module";
     }
@@ -1457,8 +1455,8 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
     write "Press Ctrl+C now to abort.";
     Start-Sleep -m 2000;
 
-    foreach($module in $modules) {
-        $sourcePath = $BranchName.replace('\','.') + "." + $module;
+    foreach ($module in $modules) {
+        $sourcePath = $BranchName.replace('\', '.') + "." + $module;
 
         Write-Warning "Build(s) started attempting on server for $module, if you do not wish to watch this build log you can now press 'CTRL+C' to exit.";
         Write-Warning "Exiting will not cancel your current build on server. But it will cancel the subsequent builds if you have multiple modules specified, i.e. -downstream build.";
@@ -1494,18 +1492,18 @@ function Kill-VisualStudio([string[]] $workflowModuleNames, [switch] $killAll = 
         }
     }
 
-    if($killAll) {
+    if ($killAll) {
         Stop-Process -processname devenv;
     } else {
-        $branchNameEscaped = $BranchName.replace('\','\\');
+        $branchNameEscaped = $BranchName.replace('\', '\\');
         if (!($workflowModuleNames)) {
             write "No modules specified.";
             return;
         }
-        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:workspace.GetModules($workflowModuleNames);
+        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames);
         $workflowModuleNames = $workflowModuleNames | Where {$exclude -notcontains $_};
 
-        foreach($module in $workflowModuleNames) {
+        foreach ($module in $workflowModuleNames) {
             $filter = "ExecutablePath LIKE '%devenv%' AND CommandLine LIKE '%$module%' AND CommandLine LIKE '%$branchNameEscaped%'";
             if (@(Get-WmiObject Win32_Process -Filter "$filter").count -eq 1) {
                 Get-WmiObject Win32_Process -Filter "$filter" | Invoke-WmiMethod -Name Terminate;
@@ -1558,17 +1556,17 @@ function Build-ExpertPatch([switch]$noget = $false, [switch]$noproduct = $false,
 
 
 function Get-ExpertModulesInChangeset {
-   return $global:workspace.GetModulesWithPendingChanges($global:BranchModulesDirectory)
+    return $global:Workspace.GetModulesWithPendingChanges($global:BranchModulesDirectory)
 }
 
 function Get-LatestSourceForModule {
- param([string[]] $moduleNames, [string] $branchPath)
+    param([string[]] $moduleNames, [string] $branchPath)
 
- foreach($moduleName in $moduleNames){
-    write "*** Getting latest for $moduleName ****"
-    $path = "$branchPath\Modules\$moduleName"
-    Invoke-Expression "tf get $path /recursive"
- }
+    foreach ($moduleName in $moduleNames) {
+        write "*** Getting latest for $moduleName ****"
+        $path = "$branchPath\Modules\$moduleName"
+        Invoke-Expression "tf get $path /recursive"
+    }
 }
 
 <#
@@ -1635,11 +1633,11 @@ function Start-DeploymentManager {
 function Start-DeploymentEngine {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")] [string]$command,
-        [Parameter(Mandatory=$false)][string]$serverName,
-        [Parameter(Mandatory=$false)][string]$databaseName,
-        [Parameter(Mandatory=$false)][switch]$skipPackageImports,
-        [Parameter(Mandatory=$false)][switch]$skipHelpDeployment
+        [Parameter(Mandatory = $true)][ValidateSet("Deploy", "Remove", "ExportEnvironmentManifest", "ImportEnvironmentManifest", "EnableFilestream", "DeploySilent", "RemoveSilent")] [string]$command,
+        [Parameter(Mandatory = $false)][string]$serverName,
+        [Parameter(Mandatory = $false)][string]$databaseName,
+        [Parameter(Mandatory = $false)][switch]$skipPackageImports,
+        [Parameter(Mandatory = $false)][switch]$skipHelpDeployment
     )
 
     process {
@@ -1721,7 +1719,7 @@ function Set-Environment($initialize = $true) {
 
     OutputEnvironmentDetails
 
-    $global:workspace = new-object -TypeName Aderant.Build.Providers.ModuleWorkspace -ArgumentList $Global:ProductManifestPath,$global:BranchModulesDirectory,"ExpertSuite"
+    $global:Workspace = new-object -TypeName Aderant.Build.Providers.ModuleWorkspace -ArgumentList $Global:ProductManifestPath, $global:BranchModulesDirectory, "ExpertSuite"
 
     if ($initialize) {
         # Setup PowerShell script unit test environment
@@ -1823,7 +1821,7 @@ function SetPathVariable($question, $propertyName) {
         $result = Read-Host $question
 
         if (-not ([string]::IsNullOrEmpty($result))) {
-           if (Test-Path $result) {
+            if (Test-Path $result) {
                 SetDefaultValue $propertyName $result
                 return $result
             } else {
@@ -1850,11 +1848,11 @@ function SetPathVariable($question, $propertyName) {
 
 #>
 function Set-ExpertBranchInfo([string] $devBranchFolder, [string] $dropUncPath) {
-    if((Test-Path $devBranchFolder) -ne $true){
+    if ((Test-Path $devBranchFolder) -ne $true) {
         Write-Error "The path $devBranchFolder does not exist"
     }
 
-    if((Test-Path $dropUncPath) -ne $true){
+    if ((Test-Path $dropUncPath) -ne $true) {
         Write-Error "The path $dropUncPath does not exist"
     }
 
@@ -1897,69 +1895,83 @@ function global:SetDefaultValue {
 function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [switch]$getLatest, [switch]$code, [switch]$seventeen) {
     $devenv = "devenv"
     $seventeenDirectory = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe'
-    if($seventeen){
-        if(Test-Path $seventeenDirectory){
+
+    if ($seventeen) {
+        if (Test-Path $seventeenDirectory) {
             $devenv = (Get-Item $seventeenDirectory | select-object -First 1).FullName
-        }else{
+        } else {
             Write-Host "VS 2017 could not be found ($seventeenDirectory)"
         }
     }
+
+    $prevModule = $null
+
     if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
         if (-not [string]::IsNullOrEmpty($global:CurrentModuleName)) {
             $prevModule = Get-CurrentModule
         }
+
         Set-CurrentModule $moduleName
     }
+
     $rootPath = Join-Path $BranchLocalDirectory "Modules\$ModuleName"
-    if(!($ModuleName)){
+    if (-not ($ModuleName)) {
         $ModuleName = $global:CurrentModuleName
         $rootPath = $global:CurrentModulePath
     }
-    if(!($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq ""){
+
+    if (-not ($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
         Write-Host -ForegroundColor Yellow "No module specified"
         return
     }
+
     if ($getDependencies) {
         Write-Host "Getting Dependencies for module $ModuleName"
         Get-DependenciesForCurrentModule
     }
+
     if ($getLatest) {
         Write-Host "Getting latest source for module $ModuleName"
         Get-Latest -ModuleName $ModuleName;
     }
+
     Write-Host "Opening solution for module $ModuleName"
     $moduleSolutionPath = Join-Path $rootPath "$ModuleName.sln"
-    if(Test-Path $moduleSolutionPath) {
-        if($code) {
-            if(Get-Command code -errorAction SilentlyContinue){
+
+    if (Test-Path $moduleSolutionPath) {
+        if ($code) {
+            if (Get-Command code -errorAction SilentlyContinue) {
                 Invoke-Expression "code $rootPath"
-            }else{
+            } else {
                 Write-Host "VS Code could not be found (code)"
             }
-        }else{
+        } else {
             Invoke-Expression "& '$devenv' $moduleSolutionPath"
         }
     } else {
-        $candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
+        [System.IO.FileSystemInfo[]]$candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
         if ($candidates.Count -gt 0) {
             $moduleSolutionPath = Join-Path $rootPath $candidates[0]
-            if($code) {
-                if(Get-Command code -errorAction SilentlyContinue){
+
+            if ($code) {
+                if (Get-Command code -errorAction SilentlyContinue) {
                     Invoke-Expression "code $rootPath"
-                }else{
+                } else {
                     Write-Host "VS Code could not be found (code)"
                 }
-            }else{
+            } else {
                 Invoke-Expression "& '$devenv' $moduleSolutionPath"
             }
         } else {
             "There is no solution file at $moduleSolutionPath"
         }
     }
-    if (($prevModule) -and (Get-CurrentModule -ne $prevModule)) {
+
+    if (($prevModule -ne $null) -and (Get-CurrentModule -ne $prevModule)) {
         Set-CurrentModule $prevModule
     }
 }
+
 <#
 .Synopsis
     Gets the latest source from TFS
@@ -1979,22 +1991,20 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
         Get-Latest -Branch
     Gets the latest source for the current branch from TFS
 #>
-function Get-Latest([string] $ModuleName, [switch] $Branch)
-{
+function Get-Latest([string] $ModuleName, [switch] $Branch) {
     $sourcePath = $null;
-    if($Branch){
+    if ($Branch) {
         $sourcePath = $global:BranchLocalDirectory
-    }
-    else {
-        if(!($ModuleName)){
+    } else {
+        if (!($ModuleName)) {
             $ModuleName = $global:CurrentModuleName
         }
-        if(!($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq ""){
+        if (!($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
             "No module specified"
             return
         }
         $sourcePath = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
-        if((Test-Path $sourcePath) -eq $False) {
+        if ((Test-Path $sourcePath) -eq $False) {
             "There is no local path $sourcePath. Make sure you are specifying a module that exists in the current branch"
             return
         }
@@ -2009,10 +2019,10 @@ function Start-UITests([switch]$noUpdate, [string]$TestRunnerPath) {
         $TestRunnerPath = "C:\temp\UIAutomation"
     }
     if (-not $noUpdate) {
-    $UITestRunnerPath = "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.TestRunner\5.3.1.0"
-    $shell = Join-Path $BuildScriptsDirectory Build-Libraries.ps1
-    $shell = "& { . $shell; PathToLatestSuccessfulBuild $UITestRunnerPath }"
-    $latestSuccessfulBuild = powershell -noprofile -command $shell
+        $UITestRunnerPath = "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.TestRunner\5.3.1.0"
+        $shell = Join-Path $BuildScriptsDirectory Build-Libraries.ps1
+        $shell = "& { . $shell; PathToLatestSuccessfulBuild $UITestRunnerPath }"
+        $latestSuccessfulBuild = powershell -noprofile -command $shell
         if ( -not (Test-Path $TestRunnerPath)) {
             New-Item $TestRunnerPath -type directory
         }
@@ -2024,22 +2034,19 @@ function Start-UITests([switch]$noUpdate, [string]$TestRunnerPath) {
 
 
 
-function TabExpansion([string] $line, [string] $lastword)
-{
+function TabExpansion([string] $line, [string] $lastword) {
     if (!$lastword.Contains(";")) {
         $aliases = Get-Alias
         $parser = New-Object Aderant.Build.AutoCompletionParser $line, $lastword, $aliases
 
         # Evaluate Branches
         Try {
-            foreach($tabExpansionParm in $global:expertTabBranchExpansions){
+            foreach ($tabExpansionParm in $global:expertTabBranchExpansions) {
                 if ($parser.IsAutoCompletionForParameter($tabExpansionParm.CommandName.ToString(), $tabExpansionParm.ParameterName.ToString(), $tabExpansionParm.IsDefault.IsPresent)) {
                     Get-ExpertBranches $lastword | Get-Unique
                 }
             }
-        }
-        Catch
-        {
+        } Catch {
             [system.exception]
             Write-Host $_.Exception.ToString()
         }        
@@ -2072,7 +2079,7 @@ $global:expertTabBranchExpansions = @()
     Add-ModuleExpansionParameter -CommandName Build-ExpertModules -ParameterName ModuleNames -IsDefault
     Will add tab expansion of module names on the Build-ExpertModules command where the current parameter is the ModuleNames parameter
 #>
-function Add-ModuleExpansionParameter([string] $CommandName, [string] $ParameterName){
+function Add-ModuleExpansionParameter([string] $CommandName, [string] $ParameterName) {
     if (!($CommandName)) {
         write "No command name specified."
         return
@@ -2125,7 +2132,7 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
     Will add tab expansion of branch names on the newBranch command where the current parameter is the newBranch parameter and this is also the first (default) parameter
 
 #>
-function Add-BranchExpansionParameter([string] $CommandName, [string] $ParameterName, [switch] $IsDefault){
+function Add-BranchExpansionParameter([string] $CommandName, [string] $ParameterName, [switch] $IsDefault) {
     if (!($CommandName)) {
         write "No command name specified."
         return
@@ -2199,8 +2206,7 @@ Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterNa
 #>
 function Enable-ExpertPrompt() {
 
-    Function global:prompt
-    {
+    Function global:prompt {
         # set the window title to the branch name
         $Host.UI.RawUI.WindowTitle = "PS - [" + $global:CurrentModuleName + "] on branch [" + $global:BranchName + "]"
 
@@ -2211,7 +2217,7 @@ function Enable-ExpertPrompt() {
         Write-Host ($global:BranchName) -nonewline -foregroundcolor Green
         Write-Host ("]")
 
-        Write-Host ("PS " + $(get-location) +">") -nonewline
+        Write-Host ("PS " + $(get-location) + ">") -nonewline
         return " "
     }
 }
@@ -2224,12 +2230,11 @@ function Enable-ExpertPrompt() {
 #>
 function Disable-ExpertPrompt() {
     # Copy the current prompt function so we can fall back to it if we're not supposed to handle a command
-            Function global:prompt
-            {
-                  $(if (test-path variable:/PSDebugContext) { '[DBG]: ' }
-                  else { '' }) + 'PS ' + $(Get-Location) `
-                  + $(if ($nestedpromptlevel -ge 1) { '>>' }) + '> '
-            }
+    Function global:prompt {
+        $(if (test-path variable:/PSDebugContext) { '[DBG]: ' }
+            else { '' }) + 'PS ' + $(Get-Location) `
+            + $(if ($nestedpromptlevel -ge 1) { '>>' }) + '> '
+    }
 
 }
 
@@ -2239,21 +2244,21 @@ function Disable-ExpertPrompt() {
 .Description
     Generates a System Map using the the default ITE information to the expertsource folder of the current branch
 #>
-function Generate-SystemMap(){
+function Generate-SystemMap() {
     $inDirectory = Join-Path $global:BranchBinariesDirectory 'ExpertSource'
     $systemMapConnectionString = (Get-SystemMapConnectionString)
-    if($systemMapConnectionString.ToLower().Contains("/pdbs:") -and $systemMapConnectionString.ToLower().Contains("/pdbd:") -and $systemMapConnectionString.ToLower().Contains("/pdbid:") -and $systemMapConnectionString.ToLower().Contains("/pdbpw:")){
+    if ($systemMapConnectionString.ToLower().Contains("/pdbs:") -and $systemMapConnectionString.ToLower().Contains("/pdbd:") -and $systemMapConnectionString.ToLower().Contains("/pdbid:") -and $systemMapConnectionString.ToLower().Contains("/pdbpw:")) {
         $connectionParts = $systemMapConnectionString.Split(" ")
         Write-Debug "Connection is [$connectionParts]"
         &$inDirectory\Systemmapbuilder.exe /f:$inDirectory /o:$inDirectory\systemmap.xml /ef:Customization $connectionParts[0] $connectionParts[1] $connectionParts[2] $connectionParts[3]
-    }else{
+    } else {
         Write-Error "Connection string is invalid for use with systemmapbuilder.exe [$systemMapConnectionString]"
     }
 }
 
 function Test-ReparsePoint([string]$path) {
-  $file = Get-Item $path -Force -ea 0
-  return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
+    $file = Get-Item $path -Force -ea 0
+    return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
 
 
@@ -2265,7 +2270,7 @@ function Test-ReparsePoint([string]$path) {
 #>
 function Get-AderantModuleLocation() {
     $aderantModuleBase = (Get-Module -Name Aderant).ModuleBase
-    if (Test-ReparsePoint $aderantModuleBase ){
+    if (Test-ReparsePoint $aderantModuleBase ) {
         # this is a symlink, get the target.
         return Get-SymbolicLinkTarget $aderantModuleBase
     } else {
@@ -2344,7 +2349,8 @@ function Change-Directory(
     if ($BuildScriptsForBranch) {
         cd $global:BuildScriptsDirectory;
     }
-    if ($Binaries) { #product bin
+    if ($Binaries) {
+        #product bin
         cd "$global:BranchBinariesDirectory";
     }
     if ($ExpertSource) {
@@ -2475,7 +2481,8 @@ function Open-Directory(
     if ($BuildScriptsForBranch) {
         Explorer($global:BuildScriptsDirectory);
     }
-    if ($Binaries) { #product bin
+    if ($Binaries) {
+        #product bin
         Explorer("$global:BranchBinariesDirectory");
     }
     if ($ExpertSource) {
@@ -2594,7 +2601,7 @@ function Start-Redeployment([switch]$GetProduct, [switch]$GetProductZip, [switch
     if (-not $dontKillRunning) {
         $running = Get-Process
         foreach ($item in Get-Item -Filter *.exe -Path C:\ExpertShare\*) {
-            foreach($process in $running) {
+            foreach ($process in $running) {
                 if ($process.name -ieq $item.BaseName) {
                     $name = $item.BaseName
                     Write-Host "Attempting to kill $name as it still appears to be running."
@@ -2618,7 +2625,7 @@ function Start-Redeployment([switch]$GetProduct, [switch]$GetProductZip, [switch
     $end = get-date
     $start
     $end
-    $end-$start
+    $end - $start
     Get-Beep; Get-Beep #Audio feedback that we have finished.
 }
 
@@ -2626,8 +2633,8 @@ function Get-Beep() {
     $([char]7)
 }
 
-function tryToRemove ($path){
-    if(Test-Path $path){
+function tryToRemove ($path) {
+    if (Test-Path $path) {
         Remove-Item $path -recurse -Force;
     }
 }
@@ -2656,7 +2663,7 @@ function Clean($moduleNames = $global:CurrentModuleName, [switch]$scorch) {
         tryToRemove $path\Bin\*
         tryToRemove $path\Src\$ModuleName\bin\*
     }
-    if ($Scorch){
+    if ($Scorch) {
         Scorch $moduleNames;
     }
 }
@@ -2677,11 +2684,11 @@ function Clean($moduleNames = $global:CurrentModuleName, [switch]$scorch) {
 #>
 function CleanupIISCache {
     param(
-        [Parameter(Mandatory=$false)][int] $days = 1,
-        [Parameter(Mandatory=$false)][string] $directory = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'
+        [Parameter(Mandatory = $false)][int] $days = 1,
+        [Parameter(Mandatory = $false)][string] $directory = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'
     )
 
-    $lastWriteTime = (Get-Date).AddDays(-$days)
+    $lastWriteTime = (Get-Date).AddDays( - $days)
     Get-ChildItem $directory | Where-Object { $_.LastWriteTime -lt $lastWriteTime} | Remove-Item -Recurse -Force
 }
 
@@ -2694,10 +2701,10 @@ function CleanupIISCache {
     Scorch Web.Presentation, Web.Foundation
 #>
 function Scorch($moduleNames = $global:CurrentModuleName) {
-        foreach ($moduleName in $moduleNames) {
-            $path = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
-            invoke-expression "tfpt scorch $path /recursive /noprompt";
-        }
+    foreach ($moduleName in $moduleNames) {
+        $path = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
+        invoke-expression "tfpt scorch $path /recursive /noprompt";
+    }
 }
 
 
@@ -2716,37 +2723,37 @@ function InstallPester() {
 
 function Help ($searchText) {
     if ($MyInvocation.ScriptName.EndsWith("_profile.ps1")) {
-      # Backwards compatibility quirk
-      # In some versions of the shell _Profile.ps1 script we call the function "Help" during start up.
-      # If we detect this version, we do not want to show help during the module load for performance reasons so
-      # we bail out if the caller is the _Profile.ps1 file
-      return
+        # Backwards compatibility quirk
+        # In some versions of the shell _Profile.ps1 script we call the function "Help" during start up.
+        # If we detect this version, we do not want to show help during the module load for performance reasons so
+        # we bail out if the caller is the _Profile.ps1 file
+        return
     }
     
     $theHelpList = @()
     
     foreach ($toExport in $functionsToExport) {
-      if (-not $toExport.advanced) {
-         $ast = (Get-Command $toExport.function).ScriptBlock.Ast
-         if ($ast) {        
-             $help = $ast.GetHelpContent()
-         }
+        if (-not $toExport.advanced) {
+            $ast = (Get-Command $toExport.function).ScriptBlock.Ast
+            if ($ast) {        
+                $help = $ast.GetHelpContent()
+            }
       
-         if ($toExport.alias) {
-             $theHelpList += [pscustomobject]@{Command=$toExport.alias; Alias=$toExport.Alias; Synopsis=$help.Synopsis}
-         } else {
-             $theHelpList += [pscustomobject]@{Command=$toExport.function; Alias=$null; Synopsis=$help.Synopsis}
-         }
-      }
+            if ($toExport.alias) {
+                $theHelpList += [PSCustomObject]@{Command = $toExport.alias; alias = $toExport.alias; Synopsis = $help.Synopsis}
+            } else {
+                $theHelpList += [PSCustomObject]@{Command = $toExport.function; alias = $null; Synopsis = $help.Synopsis}
+            }
+        }
     }
 
-    if ($searchText){
+    if ($searchText) {
         $searchText = "*$searchText*";
         foreach ($func in $theHelpList) {
             $functionName = $func.function
             $aliasName = $func.alias
 
-            if(($functionName -like $searchText)  -or ($aliasName -like $searchText)){
+            if (($functionName -like $searchText) -or ($aliasName -like $searchText)) {
                 Write-Host -ForegroundColor Green -NoNewline "$functionName, $aliasName "
                 Write-Host (Get-Help $functionName).Synopsis
             }
@@ -2757,7 +2764,7 @@ function Help ($searchText) {
     $AderantModuleLocation = Get-AderantModuleLocation
     Write-Host "Using Aderant Module from : $AderantModuleLocation"
 
-    $sortedFunctions = $theHelpList | Sort-Object -Property Alias -Descending
+    $sortedFunctions = $theHelpList | Sort-Object -Property alias -Descending
     $sortedFunctions | Format-Table Command, Synopsis
 }
 
@@ -2775,9 +2782,9 @@ Finds all the zombie applications in Expert_Local
 #>
 function Hunt-Zombies {
     param(
-        [Parameter(Mandatory=$false)] [string] $virtualPath = ''
+        [Parameter(Mandatory = $false)] [string] $virtualPath = ''
     )
-    if(-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
         Write-Warning "You do not have Administrator rights to run this script`nPlease re-run this script as an Administrator"
         Break
     }
@@ -2785,15 +2792,15 @@ function Hunt-Zombies {
     Import-Module WebAdministration
     Import-Module ApplicationServer
 
-    if([String]::IsNullOrWhitespace($virtualPath)) {
+    if ([String]::IsNullOrWhitespace($virtualPath)) {
         $expertWebApplications = get-ASApplication -SiteName 'Default Web Site'
     } else {
         $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
     }
     
-    foreach($webApp in $expertWebApplications){
-        if(-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
-            if($webApp.ApplicationName) {
+    foreach ($webApp in $expertWebApplications) {
+        if (-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
+            if ($webApp.ApplicationName) {
                 $iisPath = $webApp.IISPath
                 $filePath = $webApp.PhysicalPath
                 Write-Output "Found zombie web application $iisPath, could not find path $filePath."
@@ -2817,10 +2824,10 @@ Removes all the zombie applications in Expert_Local
 #>
 function Remove-Zombies {
     param(
-        [Parameter(Mandatory=$false)] [string] $virtualPath = ''
+        [Parameter(Mandatory = $false)] [string] $virtualPath = ''
     )
 
-    if(-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
         Write-Warning "You do not have Administrator rights to run this script`nPlease re-run this script as an Administrator"
         Break
     }
@@ -2828,15 +2835,15 @@ function Remove-Zombies {
     Import-Module WebAdministration
     Import-Module ApplicationServer
 
-    if([String]::IsNullOrWhitespace($virtualPath)) {
+    if ([String]::IsNullOrWhitespace($virtualPath)) {
         $expertWebApplications = get-ASApplication -SiteName 'Default Web Site'
     } else {
         $expertWebApplications = get-ASApplication -SiteName 'Default Web Site' -VirtualPath $virtualPath
     }
     
-    foreach($webApp in $expertWebApplications){
-        if(-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
-            if($webApp.ApplicationName) {
+    foreach ($webApp in $expertWebApplications) {
+        if (-not ((Test-Path $webApp.IISPath) -band (Test-Path $($webApp.PhysicalPath)))) {
+            if ($webApp.ApplicationName) {
                 $iisPath = $webApp.IISPath
                 Remove-Item -Path $iisPath
                 Write-Output "Removed zombie web application $iisPath"
@@ -2921,19 +2928,19 @@ Runs UI tests for the current module
 #>
 function Run-ExpertUITests {
     param(
-        [Parameter(Mandatory=$false)] [string]$productName = "*",
-        [Parameter(Mandatory=$false)] [string]$testCaseFilter = "TestCategory=Sanity",
-        [Parameter(Mandatory=$false)] [string]$dockerHost = "",
-        [Parameter(Mandatory=$false)] [string]$browserName,
-        [Parameter(Mandatory=$false)] [switch]$deployment,
-        [Parameter(Mandatory=$false)] [switch]$noBuild,
-        [Parameter(Mandatory=$false)] [switch]$noDocker
+        [Parameter(Mandatory = $false)] [string]$productName = "*",
+        [Parameter(Mandatory = $false)] [string]$testCaseFilter = "TestCategory=Sanity",
+        [Parameter(Mandatory = $false)] [string]$dockerHost = "",
+        [Parameter(Mandatory = $false)] [string]$browserName,
+        [Parameter(Mandatory = $false)] [switch]$deployment,
+        [Parameter(Mandatory = $false)] [switch]$noBuild,
+        [Parameter(Mandatory = $false)] [switch]$noDocker
     )
     if (-Not $CurrentModuleName) {
         Write-Error "You must select a module to run this command"
         Break
     }
-    if ([string]::IsNullOrWhiteSpace($dockerHost) -and -Not (Get-Command docker -errorAction SilentlyContinue)){
+    if ([string]::IsNullOrWhiteSpace($dockerHost) -and -Not (Get-Command docker -errorAction SilentlyContinue)) {
         Write-Error "Docker not installed. Please install Docker for Windows before running this command"
         Break
     }
@@ -2964,7 +2971,7 @@ function Run-ExpertUITests {
             '
         }
         if (![string]::IsNullOrWhiteSpace($dockerHost)) {
-            $runSettingsParameters += '<Parameter name="DockerHost" value="'+$dockerHost+'" />
+            $runSettingsParameters += '<Parameter name="DockerHost" value="' + $dockerHost + '" />
             '
         }
 
@@ -2973,7 +2980,7 @@ function Run-ExpertUITests {
             <!-- Parameters used by tests at runtime -->  
             <TestRunParameters>
             ' + $runSettingsParameters +
-            '</TestRunParameters>
+        '</TestRunParameters>
         </RunSettings>'
         if (Test-Path $runsettingsFile) {
             Remove-Item $runsettingsFile
@@ -2983,7 +2990,7 @@ function Run-ExpertUITests {
         $runSettings = "/Settings:$runsettingsFile"
     }
 
-    if(-Not $noBuild){
+    if (-Not $noBuild) {
         Get-ChildItem -Path ("$currentModulePath\Test\*$productName*\") -Recurse -Filter "UIAutomationTest.*.csproj" | ForEach-Object {$_} {
             msbuild $_
         }
@@ -3037,11 +3044,11 @@ function Run-ExpertSanityTests {
 #>
 function Run-ExpertVisualTests {
     param(
-        [Parameter(Mandatory=$false)] [string]$productName = "*",
-        [Parameter(Mandatory=$false)] [string]$dockerHost = "",
-        [Parameter(Mandatory=$false)] [string]$browserName,
-        [Parameter(Mandatory=$false)] [switch]$deployment,
-        [Parameter(Mandatory=$false)] [switch]$noDocker
+        [Parameter(Mandatory = $false)] [string]$productName = "*",
+        [Parameter(Mandatory = $false)] [string]$dockerHost = "",
+        [Parameter(Mandatory = $false)] [string]$browserName,
+        [Parameter(Mandatory = $false)] [switch]$deployment,
+        [Parameter(Mandatory = $false)] [switch]$noDocker
 
     )
     Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Visual" -dockerHost:$dockerHost -deployment:$deployment -noDocker:$noDocker -browserName $browserName
@@ -3064,8 +3071,8 @@ function Run-ExpertVisualTests {
 #>
 function Clear-ExpertCache {
     param(
-        [Parameter(Mandatory=$false)] [string]$user = [Environment]::UserName,
-        [Parameter(Mandatory=$false)] [string]$environmentName,
+        [Parameter(Mandatory = $false)] [string]$user = [Environment]::UserName,
+        [Parameter(Mandatory = $false)] [string]$environmentName,
         [switch]$removeCMSINI
     )
 
@@ -3155,9 +3162,9 @@ function Clear-ExpertCache {
 function Change-ExpertOwner {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false)] [string]$serverInstance,
-        [Parameter(Mandatory=$false)] [string]$database,
-        [Parameter(Mandatory=$false)] [switch]$force
+        [Parameter(Mandatory = $false)] [string]$serverInstance,
+        [Parameter(Mandatory = $false)] [string]$database,
+        [Parameter(Mandatory = $false)] [switch]$force
     )
 
     dynamicparam {
@@ -3218,20 +3225,20 @@ UPDATE FWM_OWNER SET ISSYSTEM = 'Y' WHERE OWNERID = @OWNERID;
 UPDATE FWM_OWNER SET ISSYSTEM = 'N' WHERE OWNERID != @OWNERID;
 UPDATE HBM_PARMS SET FIRM_NAME = @OWNER;"
     
-    if (-not $force.IsPresent) {
-        Write-Host "Continue?"
-        $answer = Read-Host "Y/N"
-
-        while("Y", "N" -notcontains $answer) {
+        if (-not $force.IsPresent) {
+            Write-Host "Continue?"
             $answer = Read-Host "Y/N"
-        }
 
-        if ($answer -eq "N") {
-            return
+            while ("Y", "N" -notcontains $answer) {
+                $answer = Read-Host "Y/N"
+            }
+
+            if ($answer -eq "N") {
+                return
+            }
         }
-    }
     
-    try {
+        try {
             Invoke-Sqlcmd -ServerInstance $serverInstance -Database $database -Query $sql
         } catch {
             Write-Error "Failed to change Expert owner to: $owner for database: $database"
@@ -3252,19 +3259,19 @@ UPDATE HBM_PARMS SET FIRM_NAME = @OWNER;"
 .EXAMPLE
     wpid -all
 #>
-function Get-WorkerProcessIds(){
+function Get-WorkerProcessIds() {
     param ([switch] $all = $false)
 
     $process = "w3wp.exe"
     $processObjects = Get-WmiObject Win32_Process -Filter "name = '$process'" | Select-Object Handle, CommandLine
 
-    ForEach($processObject in $processObjects){
+    ForEach ($processObject in $processObjects) {
         $commandLine = $processObject.CommandLine.Substring($processObject.CommandLine.IndexOf("`"") + 1)
         $commandLineAndHandle = $commandLine.Substring(0, $commandLine.IndexOf("`"")) + " --> " + $processObject.Handle
         
-        If($all -eq $true){
+        If ($all -eq $true) {
             Write-Host $commandLineAndHandle -ForegroundColor Green
-        } Elseif($commandLine.StartsWith("ExpertApplications_")){
+        } Elseif ($commandLine.StartsWith("ExpertApplications_")) {
             Write-Host $commandLineAndHandle -ForegroundColor Green
         }
     }
@@ -3277,14 +3284,14 @@ function Get-WorkerProcessIds(){
 function Invoke-Git {
     [CmdletBinding()]
     param(
-        [parameter(ValueFromRemainingArguments=$true)]
+        [parameter(ValueFromRemainingArguments = $true)]
         [string[]]$Arguments
     )
 
     & {
         [CmdletBinding()]
         param(
-            [parameter(ValueFromRemainingArguments=$true)]
+            [parameter(ValueFromRemainingArguments = $true)]
             [string[]]$InnerArgs
         )
         $process = New-Object System.Diagnostics.Process
@@ -3820,7 +3827,7 @@ function Git-Merge {
             Write-Host "git push origin $featureBranch" -ForegroundColor Blue
             $gitError = Invoke-Git push origin $featureBranch   
 
-            if($gitError.Contains("Everything up-to-date")) {
+            if ($gitError.Contains("Everything up-to-date")) {
                 Write-Host "No more changes to push to origin for repository $currentRepositoryName, skipping PR creation"
             } else {
                 Invoke-Git notes add -m """Merged: $bugId"""
@@ -3924,8 +3931,8 @@ function Git-Merge {
 }
 
 function Get-ExpertBuildAllVersion () {
-    $path = -join($BranchBinariesDirectory, "\BuildAllZipVersion.txt");
-    if(-Not(Test-Path $path)){
+    $path = -join ($BranchBinariesDirectory, "\BuildAllZipVersion.txt");
+    if (-Not(Test-Path $path)) {
         "BuildAllZipVersion.txt doesn't exist. your binary folder is probably not from a BuildAll";
         return;
     }
@@ -3936,66 +3943,66 @@ function Get-ExpertBuildAllVersion () {
 
 # export functions and variables we want external to this script
 $functionsToExport = @(
-    [pscustomobject]@{ function='Run-ExpertUITests';},
-    [pscustomobject]@{ function='Run-ExpertSanityTests';                      alias='rest'},    
-    [pscustomobject]@{ function='Run-ExpertVisualTests';                      alias='revt'},    
-    [pscustomobject]@{ function='Branch-Module';                              alias='branch'},
-    [pscustomobject]@{ function='Build-ExpertModules';                        alias='bm'},
-    [pscustomobject]@{ function='Build-ExpertModulesOnServer';                alias='bms'},
-    [pscustomobject]@{ function='Build-ExpertPatch';},
-    [pscustomobject]@{ function='Change-Directory';                           alias='cdir'},
-    [pscustomobject]@{ function='Change-ExpertOwner';},
-    [pscustomobject]@{ function='Clear-ExpertCache';                          alias='ccache'},
-    [pscustomobject]@{ function='Copy-BinariesFromCurrentModule';             alias='cb'},
-    [pscustomobject]@{ function='Disable-ExpertPrompt';                       advanced=$true},
-    [pscustomobject]@{ function='Enable-ExpertPrompt';                        advanced=$true},
-    [pscustomobject]@{ function='Generate-SystemMap'},
-    [pscustomobject]@{ function='Get-AderantModuleLocation';                  advanced=$true},
-    [pscustomobject]@{ function='Get-Beep';                                   alias='beep'},
-    [pscustomobject]@{ function='Get-CurrentModule'},
-    [pscustomobject]@{ function='Get-DependenciesForCurrentModule';           alias='gd'},
-    [pscustomobject]@{ function='Get-DependenciesForEachModule';              alias='gde'},
-    [pscustomobject]@{ function='Get-DependenciesFrom';                       alias='gdf'},
-    [pscustomobject]@{ function='Get-EnvironmentFromXml'},
-    [pscustomobject]@{ function='Get-ExpertBuildAllVersion'};
-    [pscustomobject]@{ function='Get-ExpertModulesInChangeset'},
-    [pscustomobject]@{ function='Get-Database'},
-    [pscustomobject]@{ function='Get-DatabaseServer'},
-    [pscustomobject]@{ function='Get-Latest'},
-    [pscustomobject]@{ function='Get-LocalDependenciesForCurrentModule';      alias='gdl'},
-    [pscustomobject]@{ function='Get-Product'},
-    [pscustomobject]@{ function='Get-ProductNoDebugFiles'},
-    [pscustomobject]@{ function='Get-ProductBuild';                           alias='gpb'},
-    [pscustomobject]@{ function='Get-ProductZip'},
-    [pscustomobject]@{ function='Git-Merge';},
-    [pscustomobject]@{ function='Help'},
-    [pscustomobject]@{ function='Install-DeploymentManager'},
-    [pscustomobject]@{ function='Install-LatestSoftwareFactory';              alias='usf'},
-    [pscustomobject]@{ function='Install-LatestVisualStudioExtension'},
-    [pscustomobject]@{ function='Kill-VisualStudio';                          alias='kvs'},
-    [pscustomobject]@{ function='Move-Shelveset';},
-    [pscustomobject]@{ function='New-BuildModule';},
-    [pscustomobject]@{ function='Open-Directory';                             alias='odir'},
-    [pscustomobject]@{ function='Open-ModuleSolution';                        alias='vs'},
-    [pscustomobject]@{ function='Set-CurrentModule';                          alias='cm'},
-    [pscustomobject]@{ function='Set-Environment';                            advanced=$true},
-    [pscustomobject]@{ function='Set-ExpertBranchInfo';},    
-    [pscustomobject]@{ function='Start-dbgen';                                alias='dbgen'},
-    [pscustomobject]@{ function='Start-DeploymentEngine';                     alias='de'},
-    [pscustomobject]@{ function='Start-DeploymentManager';                    alias='dm'},
-    [pscustomobject]@{ function='Start-Redeployment';                         alias='redeploy'},
-    [pscustomobject]@{ function='SwitchBranchTo';                             alias='Switch-Branch'},
-    [pscustomobject]@{ function='Prepare-Database';                           alias='dbprep'},
-    [pscustomobject]@{ function='Uninstall-DeploymentManager'},
-    [pscustomobject]@{ function='Update-Database';                            alias='upd'},
-    [pscustomobject]@{ function='Scorch';},
-    [pscustomobject]@{ function='Clean';},
-    [pscustomobject]@{ function='CleanupIISCache';},
+    [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
+    [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },    
+    [PSCustomObject]@{ function = 'Run-ExpertVisualTests'; alias = 'revt'; },    
+    [PSCustomObject]@{ function = 'Branch-Module'; alias = 'branch'; },
+    [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = 'bm'; },
+    [PSCustomObject]@{ function = 'Build-ExpertModulesOnServer'; alias = 'bms'; },
+    [PSCustomObject]@{ function = 'Build-ExpertPatch'; alias = $null; },
+    [PSCustomObject]@{ function = 'Change-Directory'; alias = 'cdir'; },
+    [PSCustomObject]@{ function = 'Change-ExpertOwner'; alias = $null; },
+    [PSCustomObject]@{ function = 'Clear-ExpertCache'; alias = 'ccache'; },
+    [PSCustomObject]@{ function = 'Copy-BinariesFromCurrentModule'; alias = 'cb'; },
+    [PSCustomObject]@{ function = 'Disable-ExpertPrompt'; advanced = $true; alias = $null; },
+    [PSCustomObject]@{ function = 'Enable-ExpertPrompt'; advanced = $true; alias = $null; },
+    [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-AderantModuleLocation'; advanced = $true; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-Beep'; alias = 'beep'; },
+    [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-DependenciesForCurrentModule'; alias = 'gd'; },
+    [PSCustomObject]@{ function = 'Get-DependenciesForEachModule'; alias = 'gde'; },
+    [PSCustomObject]@{ function = 'Get-DependenciesFrom'; alias = 'gdf'; },
+    [PSCustomObject]@{ function = 'Get-EnvironmentFromXml'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-ExpertBuildAllVersion'; alias = $null; };
+    [PSCustomObject]@{ function = 'Get-ExpertModulesInChangeset'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-Database'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-DatabaseServer'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-Latest'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-LocalDependenciesForCurrentModule'; alias = 'gdl'; },
+    [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-ProductNoDebugFiles'; alias = $null; },
+    [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
+    [PSCustomObject]@{ function = 'Get-ProductZip'; alias = $null; },
+    [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
+    [PSCustomObject]@{ function = 'Help'; alias = $null; },
+    [PSCustomObject]@{ function = 'Install-DeploymentManager'; alias = $null; },
+    [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
+    [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
+    [PSCustomObject]@{ function = 'Kill-VisualStudio'; alias = 'kvs'; },
+    [PSCustomObject]@{ function = 'Move-Shelveset'; alias = $null; },
+    [PSCustomObject]@{ function = 'New-BuildModule'; alias = $null; },
+    [PSCustomObject]@{ function = 'Open-Directory'; alias = 'odir'; },
+    [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
+    [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
+    [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
+    [PSCustomObject]@{ function = 'Set-ExpertBranchInfo'; alias = $null; },    
+    [PSCustomObject]@{ function = 'Start-dbgen'; alias = 'dbgen'; },
+    [PSCustomObject]@{ function = 'Start-DeploymentEngine'; alias = 'de'; },
+    [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
+    [PSCustomObject]@{ function = 'Start-Redeployment'; alias = 'redeploy'; },
+    [PSCustomObject]@{ function = 'SwitchBranchTo'; alias = 'Switch-Branch'; },
+    [PSCustomObject]@{ function = 'Prepare-Database'; alias = 'dbprep'; },
+    [PSCustomObject]@{ function = 'Uninstall-DeploymentManager'; alias = $null; },
+    [PSCustomObject]@{ function = 'Update-Database'; alias = 'upd'; },
+    [PSCustomObject]@{ function = 'Scorch'; alias = $null; },
+    [PSCustomObject]@{ function = 'Clean'; alias = $null; },
+    [PSCustomObject]@{ function = 'CleanupIISCache'; alias = $null; },
     
     # IIS related functions
-    [pscustomobject]@{ function='Hunt-Zombies';                               alias='hz'},
-    [pscustomobject]@{ function='Remove-Zombies';                             alias='rz'},
-    [pscustomobject]@{ function='Get-WorkerProcessIds';                       alias='wpid'}
+    [PSCustomObject]@{ function = 'Hunt-Zombies'; alias = 'hz'},
+    [PSCustomObject]@{ function = 'Remove-Zombies'; alias = 'rz'},
+    [PSCustomObject]@{ function = 'Get-WorkerProcessIds'; alias = 'wpid'}
 )
 
 $helpList = @()
@@ -4023,17 +4030,16 @@ Export-ModuleMember -variable ProductManifestPath
 . $PSScriptRoot\Feature.Database.ps1
 
 Measure-Command {
-  Enable-ExpertPrompt
+    Enable-ExpertPrompt
 } "Enable-ExpertPrompt"
 
 Measure-Command {
-  Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
+    Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
 } "NUnit3.TestAdapter install"
 
 Measure-Command {
-  Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
+    Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
 } "Aderant.DeveloperTools install"
-
 
 $ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 

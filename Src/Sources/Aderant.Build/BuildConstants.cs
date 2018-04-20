@@ -7,6 +7,8 @@ namespace Aderant.Build {
         /// </summary>
         public static string BuildInfrastructureDirectory = "Build.Infrastructure";
 
+        public static string EntryPointFile = "TFSBuild.proj";
+
         /// <summary>
         /// The modules directory
         /// </summary>
@@ -15,7 +17,7 @@ namespace Aderant.Build {
         public static string BranchNameVariable = "$(BranchName)";
 
         public static string NugetServerApiKey = "abc";
-        
+
         public static string PackageServerUrl = "http://packages.ap.aderant.com/packages/nuget";
 
         public static string DatabasePackageUri = @"\\dfs.aderant.com\packages\ExpertDatabase";

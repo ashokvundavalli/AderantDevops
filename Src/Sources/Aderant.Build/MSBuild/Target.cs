@@ -1,14 +1,27 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Aderant.Build.MSBuild {
+    public class CallTarget : MSBuildProjectElement {
+        public CallTarget(IEnumerable<string> targets) {
+            Targets = targets.ToArray();
+        }
+
+        public string[] Targets { get; set; }
+
+        public override void Accept(BuildElementVisitor visitor) {
+            visitor.Visit(this);
+        }
+    }
+
     /// <summary>
     /// Represents an MSBuild project Target element.
     /// </summary>
     [DebuggerDisplay("{Name}")]
-    public class Target : Element {
+    public class Target : MSBuildProjectElement {
         private string name;
-        private IList<Element> elements = new List<Element>();
+        private IList<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Target"/> class.
@@ -34,7 +47,7 @@ namespace Aderant.Build.MSBuild {
         /// <summary>
         /// Gets the elements this target owns.
         /// </summary>
-        public IEnumerable<Element> Elements {
+        public IEnumerable<MSBuildProjectElement> Elements {
             get {
                 return elements;
             }
@@ -78,7 +91,7 @@ namespace Aderant.Build.MSBuild {
         /// Adds the specified element to this target.
         /// </summary>
         /// <param name="element">The project.</param>
-        public void Add(Element element) {
+        public void Add(MSBuildProjectElement element) {
             elements.Add(element);
         }
 

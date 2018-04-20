@@ -29,7 +29,7 @@ namespace UnitTest.Build {
     </ReferencedModules>
 </DependencyManifest>"));
 
-            var requirements = ((IDependencyResolver)resolver).GetDependencyRequirements(null, new ExpertModule { Name = "Foo" });
+            var requirements = ((IDependencyResolver)resolver).GetDependencyRequirements(null, new ExpertModule("Foo"));
 
             var requirement = requirements.First();
 
@@ -39,8 +39,8 @@ namespace UnitTest.Build {
         [TestMethod]
         public void GetDependenciesRequiredForBuild_all_dependencies_being_built() {
             List<ExpertModule> modules = new List<ExpertModule>();
-            modules.Add(new ExpertModule { Name = "Foo" });
-            modules.Add(new ExpertModule { Name = "Bar" });
+            modules.Add(new ExpertModule("Foo"));
+            modules.Add(new ExpertModule("Bar"));
 
             List<ModuleDependency> dependencies = new List<ModuleDependency>();
             dependencies.Add(new ModuleDependency {
@@ -66,8 +66,8 @@ namespace UnitTest.Build {
         [TestMethod]
         public void GetDependenciesRequiredForBuild() {
             List<ExpertModule> modules = new List<ExpertModule>();
-            modules.Add(new ExpertModule { Name = "Foo" });
-            modules.Add(new ExpertModule { Name = "Bar" });
+            modules.Add(new ExpertModule("Foo"));
+            modules.Add(new ExpertModule("Bar"));
 
             List<ModuleDependency> dependencies = new List<ModuleDependency>();
             dependencies.Add(new ModuleDependency {

@@ -4,9 +4,15 @@
 
     <Target Name="RunTests"
             DependsOnTargets="$(RunTestsDependsOn)"
-            Condition="('$(RunTest)'!='false') And ('$(IsCustomBuild)'!='true')">
+            Condition="('$(RunTest)' != 'false') And ('$(IsCustomBuild)' != 'true')">
 
-    <PropertyGroup>
+      <Message Text="
+╔═════════════════════════════════════════════════════════════════════╗
+║                 Unit Testing:    $(ModuleName.PadRight(26))         ║
+╚═════════════════════════════════════════════════════════════════════╝
+" Importance="high" />
+
+      <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>
       <VsTestWorkingDirectory>$(SolutionDirectoryPath)</VsTestWorkingDirectory>
       <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>

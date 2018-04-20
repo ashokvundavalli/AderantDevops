@@ -10,8 +10,7 @@ namespace UnitTest.Build {
     public class ExpertModuleTests {
         [TestMethod]
         public void WhenSettingNamePropertyAndValueIsFullPathNameIsFolder() {
-            ExpertModule m = new ExpertModule();
-            m.Name = @"C:\tfs\ExpertSuite\Dev\a\Modules\Applications.Foo";
+            ExpertModule m = new ExpertModule(@"C:\tfs\ExpertSuite\Dev\a\Modules\Applications.Foo");
 
             Assert.AreEqual("Applications.Foo", m.Name);
         }
@@ -269,7 +268,7 @@ ExcludeFromPackaging='true' />"));
         public void When_branch_is_set_repository_cannot_be_nuget() {
             var module = ExpertModule.Create(XElement.Parse(@"<Module Name='Marketing.Help' Branch='Main' />"));
 
-            Assert.AreEqual(module.RepositoryType, RepositoryType.Folder);
+            Assert.AreEqual(module.GetAction, GetAction.Branch);
         }
 
         [TestMethod]

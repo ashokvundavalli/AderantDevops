@@ -112,6 +112,7 @@
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
+    <Compile Include="DependencyAnalyzer\IDependencyRef.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
     <Compile Include="DependencyResolver\FolderDependencySystem.cs" />
     <Compile Include="DependencyResolver\DependencyFetchContext.cs" />
@@ -127,6 +128,8 @@
     <Compile Include="DependencyResolver\WebContentDestinationRule.cs" />
     <Compile Include="FileSystemExtensions.cs" />
     <Compile Include="Logging\LoggerExtensions.cs" />
+    <Compile Include="MSBuild\ItemGroupItem.cs" />
+    <Compile Include="MSBuild\MSBuildProjectElement.cs" />
     <Compile Include="Packaging\Package.cs" />
     <Compile Include="Packaging\PackageProcessor.cs" />
     <Compile Include="Packaging\Parsing\IndendedFileParser.cs" />
@@ -165,7 +168,7 @@
     <Compile Include="RetryingPhysicalFileSystem.cs" />
     <Compile Include="Providers\DependencyManifestProvider.cs" />
     <Compile Include="DependencyAnalyzer\IGlobalAttributesProvider.cs" />
-    <Compile Include="DependencyResolver\PackageManager.cs" />
+    <Compile Include="DependencyResolver\PaketPackageManager.cs" />
     <Compile Include="DependencyResolver\DependencySource.cs" />
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
@@ -221,8 +224,6 @@
     <Compile Include="ConsolePackageImporterExecutor.cs" />
     <Compile Include="Tasks\PublishBuild.cs" />
     <Compile Include="Tasks\ConsolePackageImporter.cs" />
-    <Compile Include="Tasks\ParallelBuildProject.cs" />
-    <Compile Include="Process\ParallelBuildProjectController.cs" />
     <Compile Include="DependencyResolver\DependencyResolvedEventArgs.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
     <Compile Include="DependencyAnalyzer\SourceControlModuleInspector.cs" />
@@ -233,8 +234,6 @@
     <Compile Include="DependencyAnalyzer\DependencyManifest.cs" />
     <Compile Include="DuplicateModuleInManifestException.cs" />
     <Compile Include="DependencyAnalyzer\ThirdPartyModule.cs" />
-    <Compile Include="Process\DynamicProject.cs" />
-    <Compile Include="Process\ParallelBuildVisitor.cs" />
     <Compile Include="Commands\BranchModule.cs" />
     <Compile Include="Commands\CopyBinToEnvironment.cs" />
     <Compile Include="Process\DefinitionParametersConfigurator.cs" />
@@ -251,7 +250,6 @@
     <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
     <Compile Include="Commands\ModuleHelpInitializerCommand.cs" />
     <Compile Include="Commands\NewExpertBuildDefinition.cs" />
-    <Compile Include="Commands\NewParallelBuildProject.cs" />
     <Compile Include="Commands\SortModulesByBuildOrder.cs" />
     <Compile Include="Commands\UpdateBuildAllProject.cs" />
     <Compile Include="DependencyAnalyzer\BuildProjectSequencer.cs" />

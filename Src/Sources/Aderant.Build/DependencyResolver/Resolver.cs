@@ -43,6 +43,10 @@ namespace Aderant.Build.DependencyResolver {
             logger.Info("Required inputs: {0}", string.Join(",", distinctRequirements.Select(s => s.Name)));
 
             foreach (IDependencyResolver resolver in resolvers) {
+                if (resolver.ReplicationExplicitlyDisabled != null) {
+                    resolverRequest.ReplicationExplicitlyDisabled = true;
+                }
+
                 resolver.Resolve(resolverRequest, distinctRequirements, cancellationToken);
 
                 IEnumerable<IDependencyRequirement> unresolved = resolverRequest.GetRequirementsByType(DependencyState.Unresolved);
@@ -75,7 +79,7 @@ namespace Aderant.Build.DependencyResolver {
             if (module != null) {
                 requirement = DependencyRequirement.Create(module);
             } else {
-                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer");
+                requirement = DependencyRequirement.Create("Aderant.Build.Analyzer", BuildConstants.MainDependencyGroup);
             }
 
             requirement.ReplaceVersionConstraint = true;
@@ -85,7 +89,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void GatherRequirements(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
-            foreach (var module in resolverRequest.Modules) {
+            foreach (ExpertModule module in resolverRequest.Modules) {
                 List<IDependencyRequirement> loopRequirements = new List<IDependencyRequirement>();
 
                 foreach (IDependencyResolver resolver in resolvers) {
@@ -101,7 +105,6 @@ namespace Aderant.Build.DependencyResolver {
                 }
 
                 resolverRequest.AssociateRequirements(module, loopRequirements);
-
                 requirements.AddRange(loopRequirements);
             }
         }

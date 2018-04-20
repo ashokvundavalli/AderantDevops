@@ -34,14 +34,19 @@
 
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' != '' and !HasTrailingSlash('$(BuildToolsDirectory)')">$(BuildToolsDirectory)\</BuildToolsDirectory>
 
-    <BuildAssembly>$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
-    <BuildAssembly>$([MSBuild]::Unescape('$(BuildAssembly)'))</BuildAssembly>
-  
+    <BuildAssembly Condition="'$(BuildAssembly)' == ''">$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
+    <BuildTimeTasksAssembly Condition="'$(BuildTimeTasksAssembly)' == ''">$(BuildToolsDirectory)Aderant.BuildTime.Tasks.dll</BuildTimeTasksAssembly>
+
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
 
     <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
     <AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
+
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">\\dfs.aderant.com\Packages\Expert\</ArtifactStagingDirectory>
+
+    <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' == ''">false</CopyToDropEnabled>
+    <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' != 'true' And '$(BUILD_BUILDURI)' != ''">true</CopyToDropEnabled>
   </PropertyGroup>
 
 
@@ -60,7 +65,7 @@
   <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ParallelBuildProjectFactory"                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.BuildTime.Tasks.ParallelBuildProjectFactory"                     AssemblyFile="$(BuildTimeTasksAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds SCC information into the pdb files for the symbol server -->
   <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
@@ -74,9 +79,6 @@
   <!-- Closes and finalizes a build -->
   <UsingTask TaskName="Aderant.Build.Tasks.FinalizeBuild"                                       AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
-  <!-- Converts dotCover XML report to Cobertura XML format -->
-  <UsingTask TaskName="Aderant.Build.Tasks.CoberturaReportConverter"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
   <!-- Adds solution build details into TFS so the build can track warnings etc -->
   <UsingTask TaskName="Aderant.Build.Tasks.AddBuildProjectNode"                                 AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CheckCertificate"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
@@ -88,10 +90,8 @@
   <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.GitVersion"                                          AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.BuildTime.Tasks.RunPowerShell"                                   AssemblyFile="$(BuildTimeTasksAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.BuildTime.Tasks.GitVersion"                                      AssemblyFile="$(BuildTimeTasksAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <PropertyGroup>
     <!-- Visual Studio Environment-->
@@ -107,8 +107,6 @@
   </PropertyGroup>
 
   <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
-  <Import Project="Aderant.Build.Versioning.targets" />
-  <Import Project="Aderant.Build.CopyToDropV2.targets" />
 
   <!--
     ==========================================================================================
@@ -120,7 +118,7 @@
     <!-- This is just a stub -->
   </Target>
 
-  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true'">
+  <Target Name="PrepareBuildEnvironment" Condition="'$(IsCustomBuild)' != 'true' And '$(CompileBuildSystem)' != 'false'">
     <Error Condition="'$(BuildScriptsDirectory)' == ''" Text="No value specified for BuildScriptsDirectory" />
 
     <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
@@ -132,6 +130,7 @@
       <!-- Desktop/Common projects -->
       <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj" />
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj" />
+      <Projects Include="$(BuildSourcesDirectory)Aderant.BuildTime.Tasks\Aderant.BuildTime.Tasks.csproj"/>
 
       <!-- Server/CI projects -->
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
@@ -159,7 +158,7 @@
       Targets="Rebuild"
       Condition="'$(Rebuild)' == 'true'" />
 
-    <Aderant.Build.Tasks.CheckFreeSpace Condition="'$(IsDesktopBuild)' != 'true'"
+    <CheckFreeSpace Condition="'$(IsDesktopBuild)' != 'true'"
       FreeSpace="10"
       Units="GB" />
 
@@ -176,9 +175,6 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
 
     <Exec Command="$(RegCommand)"
       YieldDuringToolExecution="true" />
-
-    <Exec Condition="'$(IsDesktopBuild)' != 'true'" Command='cd "$(MSBuildThisFileDirectory)..\..\" &amp; git submodule update --init --recursive' YieldDuringToolExecution="true" />
-
   </Target>
 
   <UsingTask
@@ -196,6 +192,54 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
       <Code Type="Fragment" Language="cs">
         int pos = BuildProjectFolderPath.IndexOf("Modules/", StringComparison.OrdinalIgnoreCase);
         BranchRoot = BuildProjectFolderPath.Substring(0, pos);
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <UsingTask
+    TaskName="XDocumentPoke"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(CodeTaskFactoryAssembly)" >
+    <ParameterGroup>
+      <File ParameterType="System.String" Required="true" />
+      <Query ParameterType="System.String" Required="true" />
+      <Value ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+        <![CDATA[
+var doc = XDocument.Load(File);
+
+var root = doc.Root;
+
+var parts = Query.Split('/');
+
+// Skip(1) is a bit of a hack - assumes the XPath includes the root element
+foreach (string element in parts.Skip(1)) {
+    var descendant = root.Descendants(element).FirstOrDefault();
+    if (descendant == null) {
+        descendant = new XElement(element);
+        root.Add(descendant);
+    }
+    root = descendant;
+}
+
+var contentToAdd = XElement.Parse(Value);
+
+if (!root.Descendants(contentToAdd.Name).Any()) {
+  root.Add(contentToAdd);
+}
+
+doc.Save(File);
+]]>
       </Code>
     </Task>
   </UsingTask>
@@ -351,6 +395,5 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
       LogStandardErrorAsError="false"
       YieldDuringToolExecution="true" />
   </Target>
-
 
 </Project>

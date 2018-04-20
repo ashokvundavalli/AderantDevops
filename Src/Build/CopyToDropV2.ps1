@@ -25,7 +25,7 @@ param(
 )
 
 process {
-	Set-StrictMode -Version 2.0
+	Set-StrictMode -Version Latest
 	$ErrorActionPreference = "Stop"
 
 	# Identify Build Libraries
@@ -58,7 +58,4 @@ CopyFilesToDrop -moduleName $($moduleName) -moduleRootPath $($moduleRootPath) -d
 		# Copy the module build output from <ModuleName>\Bin\* directory to the drop root
 		CopyFilesToDrop -moduleName $moduleName -moduleRootPath $moduleRootPath -dropRoot $dropRoot -components $components -origin $origin -version $version
 	}
-}
-
-end {
 }

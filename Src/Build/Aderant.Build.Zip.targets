@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  
+    <!--
+    ==========================================================================================
+        Zip Source 
+    ==========================================================================================
+  -->
+
+  <Target
+    Name="PrepareZipCustomSource"
+    Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'">
+
+    <ItemGroup>
+      <CustomSolutionFiles
+        Include="$(SolutionDirectoryPath)\*.Custom.sln" />
+    </ItemGroup>
+  </Target>
+
+  <Target
+    Name="ZipCustomSource"
+    Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
+    Outputs="$(BinModuleDirectory)Customization\%(CustomSolutionFiles.Filename).zip"
+    Inputs="@(CustomSolutionFiles)">
+
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)Customization\</ZipFileDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ZipFile Remove="@(ZipFile)" />
+      <ZipFile Include="$(ZipFileDirectory)%(CustomSolutionFiles.Filename).zip" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <SourceFilesToCopyForTransform
+        Include="$(SolutionDirectoryPath)Src\**\*"
+        Exclude="$(SolutionDirectoryPath)*ABT\**;
+                   $(SolutionDirectoryPath)Build\TestResults\**\*
+                   $(SolutionDirectoryPath)BuildTemp\**\*;
+                   $(SolutionDirectoryPath)**\obj\**;
+                   $(SolutionDirectoryPath)**\_Resharper*\**; 
+                   $(SolutionDirectoryPath)**\*.g*.cs;
+                   $(SolutionDirectoryPath)**\*.pfx;
+                   $(SolutionDirectoryPath)**\*.vssscc;
+                   $(SolutionDirectoryPath)**\*.vspscc;
+                   $(SolutionDirectoryPath)**\*.DotSettings;">
+        <DestinationSubDirectory>Src\</DestinationSubDirectory>
+      </SourceFilesToCopyForTransform>
+
+      <SourceFilesToCopyForTransform
+        Include="$(SolutionDirectoryPath)Build\**\*"
+        Exclude="$(SolutionDirectoryPath)Build\Build.Infrastructure\**\*">
+        <DestinationSubDirectory>Build\</DestinationSubDirectory>
+      </SourceFilesToCopyForTransform>
+
+      <SourceFilesToCopyForTransform Include="%(CustomSolutionFiles.FullPath)">
+        <DestinationSubDirectory></DestinationSubDirectory>
+      </SourceFilesToCopyForTransform>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <TempSolutionDirectory>$(SolutionDirectoryPath)TempTransform\</TempSolutionDirectory>
+      <TempModuleSourceDirectory>$(SolutionDirectoryPath)TempTransform\Src\</TempModuleSourceDirectory>
+      <TempModuleBuildDirectory>$(SolutionDirectoryPath)TempTransform\Build\</TempModuleBuildDirectory>
+      <CustomBuildFilesDirectory>$(SolutionDirectoryPath)TempTransform\BuildScripts\</CustomBuildFilesDirectory>
+    </PropertyGroup>
+
+    <Delete
+      Files="%(ZipFile.FullPath)"
+      Condition="Exists('%(ZipFile.FullPath)')" />
+
+    <RemoveDir
+      Condition="Exists('$(TempSolutionDirectory)')"
+      Directories="$(TempSolutionDirectory)"/>
+
+    <!-- Make a copy of the source files for the custom solution transformation and zip -->
+    <MakeDir
+      Directories="$(TempSolutionDirectory)"/>
+
+    <Copy
+      SourceFiles="@(SourceFilesToCopyForTransform)"
+      DestinationFiles="@(SourceFilesToCopyForTransform->'$(TempSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true">
+    </Copy>
+
+
+    <!-- Read solution file so we can get the project source-->
+    <ReadLinesFromFile File="$(TempSolutionDirectory)%(CustomSolutionFiles.Filename)%(CustomSolutionFiles.Extension)">
+      <Output TaskParameter="Lines"
+        ItemName="LinesFromSlnFile"/>
+    </ReadLinesFromFile>
+
+
+    <!--  Extract the Project lines from the custom solution file.
+          This will give lines in this format:
+          Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexMatch Input="@(LinesFromSlnFile)"
+      Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
+      <Output ItemName="ProjectLines"
+        TaskParameter="Output"/>
+    </RegexMatch>
+    <Message Text="&#xA;Project lines in custom solution:&#xA;@(ProjectLines, '&#xA;')"/>
+
+
+    <!--  Remove text before custom project name
+          This will leave us with:
+          Aderant.BusinessEntity", "Src\Aderant.BusinessEntity\Aderant.BusinessEntity.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexReplace Input="@(ProjectLines)"
+      Expression="Project\(&quot;.+&quot;\) = &quot;"
+      Replacement=""
+      Count="1">
+      <Output ItemName="SlnProjects"
+        TaskParameter="Output" />
+    </RegexReplace>
+
+
+    <!-- Remove text after custom project name
+          This will leave us with the project name:
+          Aderant.BusinessEntity
+    -->
+    <RegexReplace Input="@(SlnProjects)"
+      Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
+      Replacement=""
+      Count="1">
+      <Output ItemName ="CustomProjects"
+        TaskParameter="Output" />
+    </RegexReplace>
+    <Message Text="&#xA;Projects in custom solution:&#xA;@(CustomProjects, '&#xA;')"/>
+
+
+    <!-- Create property that lists the project folders as an MSBuild include string-->
+    <PropertyGroup>
+      <ProjectFoldersIncludeString>$(TempModuleSourceDirectory)@(CustomProjects,'\**\*;$(TempModuleSourceDirectory)')\**\*;</ProjectFoldersIncludeString>
+    </PropertyGroup>
+    <Message Text="&#xA;ProjectFoldersIncludeString = $(ProjectFoldersIncludeString)&#xA;"/>
+
+    <!-- Update the source with the specified transformations file -->
+    <SourceTransformationTask
+      Condition="($(CustomSolutionTransformsFile) != '')"
+      SourcePath="$(TempSolutionDirectory)"
+      TransformsDefinitionFile="$(SolutionDirectoryPath)Build\$(CustomSolutionTransformsFile)" />
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <ZipSourceFiles
+        Remove="@(ZipSourceFiles)" />
+
+      <ZipSourceFiles
+        Include="$(TempSolutionDirectory)**\*.Custom.sln;"/>
+
+      <ZipSourceFiles
+        Include="$(ProjectFoldersIncludeString)"
+        Exclude="$(TempModuleSourceDirectory)**\*.sln;
+                 $(TempModuleSourceDirectory)**\*.vssscc;
+                 $(TempModuleSourceDirectory)**\*.vspscc;
+                 $(TempModuleSourceDirectory)**\*.sln.cache;
+                 $(TempModuleSourceDirectory)**\*.vsmdi;
+                 $(TempModuleSourceDirectory)**\*.testrunconfig;
+                 $(TempModuleSourceDirectory)**\*.suo;
+                 $(TempModuleSourceDirectory)**\*.sln.Debug.vsprops;
+                 $(TempModuleSourceDirectory)**\bin\**;
+                 $(TempModuleSourceDirectory)**\obj\**;
+                 $(TempModuleSourceDirectory)**\UnitTest*\**;
+                 $(TempModuleSourceDirectory)**\IntegrationTest*\**;
+                 $(TempModuleSourceDirectory)**\TestResults\**;
+                 $(TempModuleSourceDirectory)**\Release.txt;
+                 $(TempModuleSourceDirectory)**\Debug.txt;
+                 $(TempModuleSourceDirectory)**\_Resharper*\**;
+                 $(TempModuleSourceDirectory)**\*resharper.user;
+                 $(TempModuleSourceDirectory)**\*.DotSettings;" />
+      <ZipSourceFiles
+        Include="$(TempModuleBuildDirectory)*.*;" />
+      <ZipSourceFiles
+        Include="$(CustomBuildFilesDirectory)*.*;"
+        Exclude="$(CustomBuildFilesDirectory)**\*.pfx; $(CustomBuildFilesDirectory)**\Aderant.CodeSigning*; "/>
+    </ItemGroup>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(ZipSourceFiles)"
+      ZipFileName="%(ZipFile.FullPath)"
+      WorkingDirectory="$(TempSolutionDirectory)"
+      ParallelCompression="false" />
+
+    <RemoveDir
+      Directories="$(TempSolutionDirectory)"/>
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+  
+    <!--
+    ==========================================================================================
+        Zip seed package(s)
+        This module will zip all seed package definition files grouped by folder name into zip packages and drop into .\Bin\Packages folder.
+        Note: To temporary bypass the validation process, set /p:SkipPackageValidation=true in TFSBuild.rsp in the solution to be built.
+    ==========================================================================================
+  -->
+  <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" >
+
+    <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High"></Message>
+    <SeedPackagePacking
+        SkipPackageValidation="$(SkipPackageValidation)"
+        BuildFrom="$(SolutionDirectoryPath)"
+        SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
+        SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages" />
+
+    <SeedPackagePacking
+        SkipPackageValidation="$(SkipPackageValidation)"
+        BuildFrom="$(SolutionDirectoryPath)"
+        SeedPackageSrc = "$(SolutionDirectoryPath)Test\TestPackages"
+        SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Test\TestPackages" />
+
+  </Target>
+  
+    <!--
+    ==========================================================================================
+        Zip Sample Workflow Solutions
+    ==========================================================================================
+  -->
+  <ItemGroup>
+    <TemplateSolutionFiles
+      Include="$(SolutionDirectoryPath)\*.Template.sln"
+      Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')" />
+  </ItemGroup>
+
+  <Target
+    Name="ZipWorkflowTemplateSource"
+    Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
+    Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip"
+    Inputs="@(TemplateSolutionFiles)">
+
+    <PropertyGroup>
+      <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ZipFile Remove="@(ZipFile)" />
+      <ZipFile Include="$(ZipFileDirectory)\%(TemplateSolutionFiles.Filename).zip" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <SourceFilesToCopyForTemplateTransform
+        Include="$(SolutionDirectoryPath)Src\**\*"
+        Exclude="$(SolutionDirectoryPath)*ABT\**;
+                    $(SolutionDirectoryPath)Build\TestResults\**\*
+                    $(SolutionDirectoryPath)BuildTemp\**\*;
+                    $(SolutionDirectoryPath)**\obj\**;
+                    $(SolutionDirectoryPath)**\_Resharper*\**; 
+                    $(SolutionDirectoryPath)**\*.g*.cs;
+                    $(SolutionDirectoryPath)**\*.pfx;
+                    $(SolutionDirectoryPath)**\*.vssscc;
+                    $(SolutionDirectoryPath)**\*.vspscc; 
+                    $(SolutionDirectoryPath)**\*.sln.cache;
+                    $(SolutionDirectoryPath)**\*.vsmdi;      
+                    $(SolutionDirectoryPath)**\*.testrunconfig;
+                    $(SolutionDirectoryPath)**\*.suo;
+                    $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
+                    $(SolutionDirectoryPath)**\TestResults\**;
+                    $(SolutionDirectoryPath)**\Release.txt;
+                    $(SolutionDirectoryPath)**\_Resharper*\**;
+                    $(SolutionDirectoryPath)**\*resharper.user;
+                    $(SolutionDirectoryPath)**\*.DotSettings;
+                    $(SolutionDirectoryPath)**\Bin;      
+                    $(SolutionDirectoryPath)**\obj\**;
+                    $(SolutionDirectoryPath)CommonBuild\**;
+                    $(SolutionDirectoryPath)ThirdPartyBuild.txt;
+                    $(SolutionDirectoryPath)**\*.csproj.user;  
+                    $(SolutionDirectoryPath)**\SharedBin\**;
+					          $(SolutionDirectoryPath)Src\**\Web.*\**;">
+        <DestinationSubDirectory>Src\</DestinationSubDirectory>
+      </SourceFilesToCopyForTemplateTransform>
+
+      <SourceFilesToCopyForTemplateTransform Include="%(TemplateSolutionFiles.FullPath)">
+        <DestinationSubDirectory></DestinationSubDirectory>
+      </SourceFilesToCopyForTemplateTransform>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <TempTemplateSolutionDirectory>$(SolutionDirectoryPath)TempTemplateTransform\</TempTemplateSolutionDirectory>
+      <TempTemplateModuleSourceDirectory>$(SolutionDirectoryPath)TempTemplateTransform\Src\</TempTemplateModuleSourceDirectory>
+    </PropertyGroup>
+
+    <Delete
+      Files="%(ZipFile.FullPath)"
+      Condition="Exists('%(ZipFile.FullPath)')" />
+
+    <RemoveDir
+      Condition="Exists('$(TempTemplateSolutionDirectory)')"
+      Directories="$(TempTemplateSolutionDirectory)"/>
+
+    <!-- Make a copy of the source files for the template solution transformation and zip -->
+    <MakeDir
+      Directories="$(TempTemplateSolutionDirectory)"/>
+
+    <Copy
+      SourceFiles="@(SourceFilesToCopyForTemplateTransform)"
+      DestinationFiles="@(SourceFilesToCopyForTemplateTransform->'$(TempTemplateSolutionDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      UseHardlinksIfPossible="false">
+    </Copy>
+
+    <!-- Read solution file so we can get the project source-->
+    <ReadLinesFromFile File="$(TempTemplateSolutionDirectory)%(TemplateSolutionFiles.Filename)%(TemplateSolutionFiles.Extension)">
+      <Output TaskParameter="Lines"
+        ItemName="LinesFromTemplateSlnFile"/>
+    </ReadLinesFromFile>
+
+
+    <!--  Extract the Project lines from the template solution file.
+          This will give lines in this format:
+          Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflow.FileOpening.Template", "Src\Workflow.FileOpening.Template\Workflow.FileOpening.Template.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexMatch Input="@(LinesFromTemplateSlnFile)"
+      Expression="Project\(&quot;.+&quot;\) = &quot;(.+)&quot;, &quot;.+\.csproj">
+      <Output ItemName="TemplateProjectLines"
+        TaskParameter="Output"/>
+    </RegexMatch>
+    <Message Text="&#xA;Project lines in template solution:&#xA;@(TemplateProjectLines, '&#xA;')"/>
+
+
+    <!--  Remove text before template project name
+          This will leave us with:
+          Workflow.FileOpening.Template", "Src\Workflow.FileOpening.Template\Workflow.FileOpening.Template.csproj", "{E3D98E07-D681-488E-8932-0C96EFEA490E}"
+    -->
+    <RegexReplace Input="@(TemplateProjectLines)"
+      Expression="Project\(&quot;.+&quot;\) = &quot;"
+      Replacement=""
+      Count="1">
+      <Output ItemName="TemplateSlnProjects"
+        TaskParameter="Output" />
+    </RegexReplace>
+
+
+    <!-- Remove text after template project name
+          This will leave us with the project name:
+          Workflow.FileOpening.Template
+    -->
+    <RegexReplace Input="@(TemplateSlnProjects)"
+      Expression="&quot;, &quot;.+\.csproj&quot;, &quot;.+&quot;"
+      Replacement=""
+      Count="1">
+      <Output ItemName ="TemplateProjects"
+        TaskParameter="Output" />
+    </RegexReplace>
+    <Message Text="&#xA;Projects in template solution:&#xA;@(TemplateProjects, '&#xA;')"/>
+
+
+    <!-- Create property that lists the project folders as an MSBuild include string-->
+    <PropertyGroup>
+      <TemplateProjectFoldersIncludeString>$(TempTemplateModuleSourceDirectory)@(TemplateProjects,'\**\*;$(TempTemplateModuleSourceDirectory)')\**\*;</TemplateProjectFoldersIncludeString>
+      <TemplateProjectIncludeString>$(TempTemplateModuleSourceDirectory)@(TemplateProjects,'\**\*.csproj;$(TempTemplateModuleSourceDirectory)')\**\*.csproj;</TemplateProjectIncludeString>
+    </PropertyGroup>
+    <Message Text="&#xA;TemplateProjectFoldersIncludeString = $(TemplateProjectFoldersIncludeString)&#xA;"/>
+    <Message Text="&#xA;TemplateProjectIncludeString (to replace ProjectReferences) = $(TemplateProjectIncludeString)&#xA;"/>
+
+    <!-- Create ItemGroup used in Zip task.-->
+    <ItemGroup>
+      <TemplateZipSourceFiles
+        Remove="@(TemplateZipSourceFiles)" />
+
+      <TemplateZipSourceFiles
+        Include="$(TempTemplateSolutionDirectory)**\*.Template.sln;"/>
+
+      <TemplateZipSourceFiles
+        Include="$(TemplateProjectFoldersIncludeString)"
+        Exclude="$(TempTemplateModuleSourceDirectory)**\*.sln;
+                  $(TempTemplateModuleSourceDirectory)**\*.vssscc;
+                  $(TempTemplateModuleSourceDirectory)**\*.vspscc;
+                  $(TempTemplateModuleSourceDirectory)**\*.sln.cache;
+                  $(TempTemplateModuleSourceDirectory)**\*.vsmdi;
+                  $(TempTemplateModuleSourceDirectory)**\*.testrunconfig;
+                  $(TempTemplateModuleSourceDirectory)**\*.suo;
+                  $(TempTemplateModuleSourceDirectory)**\*.sln.Debug.vsprops;
+                  $(TempTemplateModuleSourceDirectory)**\bin\**;
+                  $(TempTemplateModuleSourceDirectory)**\obj\**;
+                  $(TempTemplateModuleSourceDirectory)**\UnitTest*\**;
+                  $(TempTemplateModuleSourceDirectory)**\IntegrationTest*\**;
+                  $(TempTemplateModuleSourceDirectory)**\TestResults\**;
+                  $(TempTemplateModuleSourceDirectory)**\Release.txt;
+                  $(TempTemplateModuleSourceDirectory)**\Debug.txt;
+                  $(TempTemplateModuleSourceDirectory)**\_Resharper*\**;
+                  $(TempTemplateModuleSourceDirectory)**\*resharper.user;
+                  $(TempTemplateModuleSourceDirectory)**\*.DotSettings;
+                  $(ModuleSourceDirectory)**\*.csproj.user;" />
+
+      <TemplateZipProjectFiles
+        Include="$(TemplateProjectIncludeString)"/>
+    </ItemGroup>
+
+    <ReplaceProjectReferences
+      ProjectFileNames="@(TemplateZipProjectFiles)"/>
+
+    <MakeDir
+      Directories="$(ZipFileDirectory)"/>
+
+    <MSBuild.Community.Tasks.Zip
+      Files="@(TemplateZipSourceFiles)"
+      ZipFileName="%(ZipFile.FullPath)"
+      WorkingDirectory="$(TempTemplateSolutionDirectory)"
+      ParallelCompression="false" />
+
+    <RemoveDir
+      Directories="$(TempTemplateSolutionDirectory)"/>
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+</Project>

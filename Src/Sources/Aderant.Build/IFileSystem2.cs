@@ -14,6 +14,8 @@ namespace Aderant.Build {
 
         string GetFullPath(string path);
 
+        string GetParent(string path);
+
         void DeleteFile(string path);
 
         bool FileExists(string path);

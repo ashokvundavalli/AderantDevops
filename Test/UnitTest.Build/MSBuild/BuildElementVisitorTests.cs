@@ -19,14 +19,13 @@ namespace UnitTest.Build.MSBuild {
             XElement document = visitor.GetDocument();
 
             Assert.IsTrue(document
-                .Descendants(BuildElementVisitor.Xmlns + "Target")
-                .First()
-                .Descendants()
-                .First().Name == BuildElementVisitor.Xmlns + "Message");
+                              .Descendants(BuildElementVisitor.Xmlns + "Target")
+                              .First()
+                              .Descendants()
+                              .First().Name == BuildElementVisitor.Xmlns + "Message");
         }
 
         [TestMethod]
-        [Ignore]
         public void CompositeCannotContainComposite() {
             Target parent = new Target("Foo");
 

@@ -2,17 +2,20 @@ using System.Collections.Generic;
 using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Providers {
-    public interface IModuleProvider {
+    public enum ModuleAvailability {
+        NotAvailabile = -1,
+        Reference,
+        Availabile,
+    }
 
+    public interface IModuleProvider {
         /// <summary>
         /// Gets the product manifest path.
         /// </summary>
         /// <value>
         /// The product manifest path.
         /// </value>
-        string ProductManifestPath {
-            get;
-        }
+        string ProductManifestPath { get; }
 
         /// <summary>
         /// Gets the two part branch name
@@ -20,9 +23,7 @@ namespace Aderant.Build.Providers {
         /// <value>
         /// The branch.
         /// </value>
-        string Branch {
-            get;
-        }
+        string Branch { get; }
 
         /// <summary>
         /// Gets the distinct complete list of available modules and those referenced in Dependency Manifests.
@@ -38,13 +39,13 @@ namespace Aderant.Build.Providers {
         /// <returns></returns>
         bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest);
 
-        /// <summary>
-        /// Tries to the get the path to the dependency manifest for a given module. 
-        /// </summary>
-        /// <param name="moduleName">Name of the module.</param>
-        /// <param name="manifestPath">The manifest path.</param>
-        /// <returns></returns>
-        bool TryGetDependencyManifestPath(string moduleName, out string manifestPath);
+        ///// <summary>
+        ///// Tries to the get the path to the dependency manifest for a given module. 
+        ///// </summary>
+        ///// <param name="moduleName">Name of the module.</param>
+        ///// <param name="manifestPath">The manifest path.</param>
+        ///// <returns></returns>
+        //bool TryGetDependencyManifestPath(string moduleName, out string manifestPath);
 
         /// <summary>
         /// Determines whether the specified module is available to the current branch.
@@ -53,7 +54,7 @@ namespace Aderant.Build.Providers {
         /// <returns>
         ///   <c>true</c> if the specified module name is available; otherwise, <c>false</c>.
         /// </returns>
-        bool IsAvailable(string moduleName);
+        ModuleAvailability IsAvailable(string moduleName);
 
         /// <summary>
         /// Gets the module with the specified name.
@@ -78,5 +79,20 @@ namespace Aderant.Build.Providers {
         /// Saves this instance.
         /// </summary>
         string Save();
+    }
+
+    public interface IModuleGroupingSupport {
+        /// <summary>
+        /// Tries the a container module for this module. For example a module might have an alias or be part of a group. 
+        /// This will return the parent.
+        /// </summary>
+        bool TryGetContainer(string component, out ExpertModule container);
+    }
+
+    public interface IRepositoryInfoProvider {
+        RepositoryInfo GetRepositoryInfo(string moduleName);
+    }
+
+    public class RepositoryInfo {
     }
 }
