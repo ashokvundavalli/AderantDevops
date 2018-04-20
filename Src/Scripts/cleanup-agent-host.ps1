@@ -20,17 +20,20 @@ $directoriesToRemove = @(
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\14.0Exp\Extensions\Aderant",
     "$env:LOCALAPPDATA\Microsoft\VisualStudio\15.0Exp\Extensions\Aderant",
 
-    $env:TEMP
+    $env:TEMP,
+
+    # Browser and INET stack cache
+    "$env:LOCALAPPDATA\Microsoft\Windows\INetCache"
 )
 
 $machineWideDirectories = @(
     "C:\Temp",
-    "C:\Windows\Temp",
-
-    # Yay for people who check in PostBuild events :)
-    "C:\tfs"
+    "C:\Windows\Temp", 
+    
+    ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "Temporary ASP.NET Files"),
+        
+    "$Env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
 )
-
 
 $whoAmI = $env:USERNAME
 $serviceAccounts = @("$env:USERNAME", "service.tfsbuild.ap", "tfsbuildservice$")
@@ -42,20 +45,27 @@ foreach ($dir in $directoriesToRemove) {
         $removeTarget = $removeTarget.Replace($whoAmI, $name)
 
         if (Test-Path $removeTarget) {
+            Write-Output "Deleting files under $removeTarget"
             Remove-Item $removeTarget -Verbose -Force -Recurse -ErrorAction SilentlyContinue
         } else {
-            Write-Debug "Not deleting $removeTarget"
+            Write-Output "Not deleting $removeTarget"
         }
     }
 }
 
+# Should a human run this script, don't nuke their environment
+if (-not [System.Environment]::UserInteractive) {
+  Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$machineWideDirectories += $_.Root + "ExpertShare"}
+  
+  # Yay for people who check in PostBuild events :)
+  machineWideDirectories += "C:\tfs"
+}
 
 foreach ($dir in $machineWideDirectories) {
   if (Test-Path $dir) {
     Push-Location $dir
+    Write-Output "Deleting files under $dir"
     Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue
     Pop-Location
   }
 }
-
-Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$directoriesToRemove += $_.Root + "ExpertShare"}

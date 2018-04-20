@@ -3016,11 +3016,11 @@ function Run-ExpertUITests {
 #>
 function Run-ExpertSanityTests {
     param(
-        [Parameter(Mandatory = $false)] [string]$productName = "*",
-        [Parameter(Mandatory = $false)] [string]$dockerHost = "",
-        [Parameter(Mandatory = $false)] [string]$browserName,
-        [Parameter(Mandatory = $false)] [switch]$development,
-        [Parameter(Mandatory = $false)] [switch]$noDocker
+        [Parameter(Mandatory=$false)] [string]$productName = "*",
+        [Parameter(Mandatory=$false)] [string]$dockerHost = "",
+        [Parameter(Mandatory=$false)] [string]$browserName,
+        [Parameter(Mandatory=$false)] [switch]$deployment,
+        [Parameter(Mandatory=$false)] [switch]$noDocker
 
     )
     Run-ExpertUITests -productName $productName -testCaseFilter "TestCategory=Sanity" -dockerHost:$dockerHost -deployment:$deployment -noDocker:$noDocker -browserName $browserName

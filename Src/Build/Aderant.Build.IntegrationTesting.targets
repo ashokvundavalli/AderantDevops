@@ -37,29 +37,30 @@
       <Using Namespace="System.Xml.XPath" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
-            string[] referencedModule = PackageDependency.Split('|');
-        
-            List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
-
-            foreach (string property in referencedModule.Skip(1)) {
-                if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
-                    attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
-                    continue;
+            string[] dependencies = PackageDependency.Split(';');
+            foreach (var dependency in dependencies) {
+                string[] referencedModule = dependency.Split('|');
+                List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
+                foreach (string property in referencedModule.Skip(1)) {
+                    if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
+                        attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
+                        continue;
+                    }
+                
+                    if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
+                        attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
+                        continue;
+                    }
+                
+                    if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
+                        attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
+                    }
                 }
-
-                if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
-                    attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
-                    continue;
-                }
-
-                if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
-                    attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
-                }
+                
+                XElement manifest = XElement.Load(LightUpManifest);
+                manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
+                manifest.Save(LightUpManifest);
             }
-
-            XElement manifest = XElement.Load(LightUpManifest);
-            manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
-            manifest.Save(LightUpManifest);
           ]]>
       </Code>
     </Task>
