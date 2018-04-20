@@ -1,6 +1,5 @@
 ﻿Set-StrictMode -Version Latest
 
-[bool]$Env:RunCodeAnalysisOnThisProject = $False
 . $PSScriptRoot\Caching.ps1
 
 function Measure-Command() {
