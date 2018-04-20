@@ -137,9 +137,9 @@ function ProcessUser($user, $identityService, [bool]$removeAvatar)
                 SetTeamFoundationProperties $identityService $user $imageBytes $format
             }
         } catch [System.Net.WebException] {
-            if ($_.Exception.InnerException.Response.StatusCode -ne 404) {
+            if ($_.Exception.Response.StatusCode -ne 404) {
                 Write-Host "Error updating $($user.UniqueName)"
-                Write-Host $_                
+                Write-Host $_
                 Write-Host $_.Exception.ToString()
                 return
             } else {
@@ -167,7 +167,7 @@ function Sync() {
         try {
             ProcessUser $user $service $false
         } catch {
-            Write-Output $_.Exception.ToString()
+            Write-Output "Unexpected exception: " + $_.Exception.ToString()
         }
     }
 }

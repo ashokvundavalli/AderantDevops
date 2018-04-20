@@ -31,17 +31,17 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear) {
 
 # VS 2015
 Measure-Command {
-    if (LoadEnvVariables "VS140COMNTOOLS" "2015" ) {
+    if (LoadEnvVariables "VS140COMNTOOLS" "2015") {
         return
     }
 
     # VS 2013
-    if (LoadEnvVariables "VS120COMNTOOLS" "2013" ) {
+    if (LoadEnvVariables "VS120COMNTOOLS" "2013") {
         return
     }
 
     #VS2012
-    if (LoadEnvVariables "VS110COMNTOOLS" "2012" ) {
+    if (LoadEnvVariables "VS110COMNTOOLS" "2012") {
         return
     }
 } "LoadEnvVariables"
