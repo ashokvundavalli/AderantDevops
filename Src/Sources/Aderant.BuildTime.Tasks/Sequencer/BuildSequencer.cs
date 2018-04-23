@@ -26,7 +26,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, string[] codeAnalysisGroup, bool isComboBuild, string comboBuildProjectFile) {
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
@@ -75,7 +75,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
 
-                return dynamicProject.GenerateProject(modulesDirectory, groups, buildFrom, isComboBuild, comboBuildProjectFile);
+                return dynamicProject.GenerateProject(modulesDirectory, groups, buildFrom, codeAnalysisGroup, isComboBuild, comboBuildProjectFile);
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;

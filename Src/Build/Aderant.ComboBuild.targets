@@ -88,6 +88,7 @@
       TfvcBranch="$(TfvcBranch)"
       BuildFrom="$(BuildFrom)"
       ProjectFile="$(BranchBuildProject)"
+      CodeAnalysisGroup="$(CodeAnalysisGroup)"
       IsComboBuild="$(IsComboBuild)"
       ComboBuildProjectFile="$(BuildScriptsDirectory)\ModuleBuild2.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>

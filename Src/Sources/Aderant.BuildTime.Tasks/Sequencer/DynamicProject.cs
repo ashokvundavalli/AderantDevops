@@ -23,7 +23,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string buildFrom, string[] codeAnalysisGroup, bool isComboBuild, string comboBuildProjectFile) {
             Project project = new Project();
 
             // Create a list of call targets for each build
@@ -57,7 +57,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         continue;
                     }
 
-                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, isComboBuild, comboBuildProjectFile));
+                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, codeAnalysisGroup, isComboBuild, comboBuildProjectFile));
 
                     // e.g. <Target Name="Build2">
                     Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
@@ -97,7 +97,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             return project;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, bool isComboBuild, string comboBuildProjectFile) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string[] codeAnalysisGroup, bool isComboBuild, string comboBuildProjectFile) {
             return projectGroup.Select(
                 studioProject => {
                     // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
@@ -113,8 +113,14 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                             return null;
                         }
 
+                        string properties = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot);
+
+                        if (!codeAnalysisGroup.Contains(visualStudioProject.SolutionDirectoryName)) {
+                            properties += ";RunCodeAnalysisOnThisProject=false";
+                        }
+
                         ItemGroupItem item = new ItemGroupItem(visualStudioProject.Path) {
-                            ["AdditionalProperties"] = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot),
+                            ["AdditionalProperties"] = properties,
                             ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                             ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture),
