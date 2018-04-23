@@ -17,7 +17,7 @@ function LoadEnvVariables([string]$environmentVariableName, [string]$vsYear) {
             })
             
             $globalEnvironmentVariables.GetEnumerator().ForEach({ 
-              if ($vars.ContainsKey($_.Key)) { 
+              if ($vars.ContainsKey($_.Key) -and ($_.Key -ne "Path")) { 
                 $vars.Remove($_.Key)
               } 
             })
