@@ -237,7 +237,7 @@ task Build {
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
     $commonArgs = "/nologo /nr:false /m"
-    $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
+    $commonArgs = "$commonArgs C:\Git\Build.Infrastructure\Src\Build\Aderant.ComboBuild.targets"
 
     if (-not $Repository.EndsWith("\")) {
         $Repository += "\"
@@ -274,6 +274,12 @@ task Build {
         $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
     }
 
+    if ($global:CurrentModuleName -ne '') {
+        $commonArgs = "$commonArgs /p:BuildFrom=$global:CurrentModuleName"
+    }
+
+    $commonArgs = "$commonArgs /p:UseSharedDependencyDirectory=false /t:BuildAndPackage"
+
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
     # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
     $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
@@ -287,6 +293,8 @@ task Build {
             } else {
                 $commonArgs = "$commonArgs /p:CodeCoverage=false"
             }
+
+            Write-Host "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx CommonArgs: $commonArgs "
 
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
