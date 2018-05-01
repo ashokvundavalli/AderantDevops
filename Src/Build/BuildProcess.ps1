@@ -294,8 +294,6 @@ task Build {
                 $commonArgs = "$commonArgs /p:CodeCoverage=false"
             }
 
-            Write-Host "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx CommonArgs: $commonArgs "
-
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"

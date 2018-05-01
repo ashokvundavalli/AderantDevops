@@ -477,17 +477,39 @@ function Set-CurrentModule($name, [switch]$quiet) {
     }
 
     if ([System.IO.Path]::IsPathRooted($name)) {
-        if (IsGitRepository $name) {
-            SetRepository $name
-            Set-Location $name
+        $global:CurrentModulePath = $name
+        $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
+        Write-Debug "Setting repository: $name"
+        Import-Module $PSScriptRoot\AderantGit.psm1
+
+        if (IsGitRepository $global:CurrentModulePath) {
+            SetRepository $global:CurrentModulePath
+            Set-Location $global:CurrentModulePath
+            global:Enable-GitPrompt
+            return
+        } elseif (IsGitRepository (([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName)) {
+            $global:CurrentModulePath = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName
+            global:Enable-GitPrompt
+        } else {
+            Enable-ExpertPrompt
+        }
+
+        if (IsGitRepository $global:CurrentModulePath) {
+            SetRepository $global:CurrentModulePath
+            Set-Location $global:CurrentModulePath
             return
         }
+
+        if ((IsGitRepository (([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName))){
+            $global:CurrentModulePath
+        }
+    } else {
+        $global:CurrentModuleName = $name
+
+        Write-Debug "Current module [$global:CurrentModuleName]"
+        $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
+        Enable-ExpertPrompt
     }
-
-    $global:CurrentModuleName = $name
-
-    Write-Debug "Current module [$global:CurrentModuleName]"
-    $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
 
     if ((Test-Path $global:CurrentModulePath) -eq $false) {
         Write-Warning "the module [$global:CurrentModuleName] does not exist, please check the spelling."
@@ -499,19 +521,17 @@ function Set-CurrentModule($name, [switch]$quiet) {
     Write-Debug "Current module path [$global:CurrentModulePath]"
     $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath \Build
 
-    $ShellContext.IsGitRepository = $false
+    $ShellContext.IsGitRepository = $true
 }
 
 function IsGitRepository([string]$path) {
+    if ([System.IO.path]::GetPathRoot($path) -eq $path) {
+        return $false
+    }
     return @(gci -path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
 }
 
 function SetRepository([string]$path) {
-    Write-Debug "Setting repository: $path"
-    Import-Module $PSScriptRoot\AderantGit.psm1
-
-    $global:CurrentModulePath = $path
-    $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
     $ShellContext.IsGitRepository = $true
 
     [string]$currentModuleBuildDirectory = "$path\Build"
@@ -2096,9 +2116,12 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
                 
         # Evaluate Modules
         try {   
-            $parser.GetModuleMatches($wordToComplete, $global:BranchModulesDirectory, $ProductManifestPath) | Get-Unique | ForEach-Object {                    
-                [System.Management.Automation.CompletionResult]::new($_)
-            } 
+            $parser.GetModuleMatches($wordToComplete, $global:BranchModulesDirectory, $ProductManifestPath) | Get-Unique | ForEach-Object {
+                $ModuleToBeImported = Join-Path -Path $global:BranchModulesDirectory -ChildPath $_
+                if (Test-Path (Join-Path -Path $ModuleToBeImported -ChildPath \Build\TFSBuild.rsp)) {
+                    [System.Management.Automation.CompletionResult]::new($ModuleToBeImported)
+                }
+            }
             
             # Probe for known Git repositories
             gci -Path "HKCU:\SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories" | % { Get-ItemProperty $_.pspath } |           
@@ -2212,6 +2235,8 @@ function Enable-ExpertPrompt() {
         Write-Host("")
         Write-Host ("Module [") -nonewline
         Write-Host ($global:CurrentModuleName) -nonewline -foregroundcolor DarkCyan
+        Write-Host ("] at [") -nonewline
+        Write-Host ($global:CurrentModulePath) -nonewline -foregroundcolor DarkCyan
         Write-Host ("] on branch [") -nonewline
         Write-Host ($global:BranchName) -nonewline -foregroundcolor Green
         Write-Host ("]")
