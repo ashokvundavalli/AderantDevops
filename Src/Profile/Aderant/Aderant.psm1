@@ -492,16 +492,9 @@ function Set-CurrentModule($name, [switch]$quiet) {
             global:Enable-GitPrompt
             return
         } elseif (IsGitRepository (([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName)) {
-            $global:CurrentModulePath = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName
             global:Enable-GitPrompt
         } else {
             Enable-ExpertPrompt
-        }
-
-        if (IsGitRepository $global:CurrentModulePath) {
-            SetRepository $global:CurrentModulePath
-            Set-Location $global:CurrentModulePath
-            return
         }
     } else {
         $global:CurrentModuleName = $name
