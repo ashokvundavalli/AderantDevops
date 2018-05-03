@@ -132,7 +132,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                     ExpertModule marker = studioProject as ExpertModule;
                     if (marker != null) {
-                        string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, marker.Name));
+                        string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
+                        string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
 
                         ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets)) {
                             ["AdditionalProperties"] = properties,
@@ -146,7 +147,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                     if (node != null) {
                         if (node.IsCompletion) {
-                            string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, node.ModuleName));
+                            string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == node.ModuleName ? fileSystem.Root : Path.Combine(fileSystem.Root, node.ModuleName);
+                            string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
 
                             ItemGroupItem item = new ItemGroupItem(
                                 Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), ComplationTargets)) {
