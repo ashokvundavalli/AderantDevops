@@ -2275,9 +2275,13 @@ function Generate-SystemMap() {
 
 function Test-ReparsePoint([string]$path) {
     $file = Get-Item $path -Force -ea 0
+
+    if ($file -eq $null) {
+        return $false
+    }
+
     return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
-
 
 <#
 .Synopsis

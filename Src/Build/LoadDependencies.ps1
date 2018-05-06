@@ -24,7 +24,8 @@ begin {
     LoadLibraryAssembly $buildScriptsDirectory
     
     $file = gci $modulesRootPath -Filter DependencyManifest.xml -Recurse | Select-Object -First 1
-   
+    [bool]$abort = $false
+
     if ($file) {
         [xml]$xml = Get-Content $file.FullName
 		
