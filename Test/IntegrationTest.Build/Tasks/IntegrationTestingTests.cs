@@ -9,17 +9,18 @@ namespace IntegrationTest.Build.Tasks {
     [DeploymentItem(@"Resources\", "Resources")]
     public class IntegrationTestingTests : BuildTaskTestBase {
         private string moduleBuildTempDirectory;
-        private static readonly string time = DateTime.UtcNow.ToFileTimeUtc().ToString();
+        //private static readonly string time = DateTime.UtcNow.ToFileTimeUtc().ToString();
+        private static readonly string time = "2018";
         private readonly string databaseName = string.Concat("Expert_", time);
         private readonly string environmentName = string.Concat("Local_", time);
-        private const string ModuleName = "Framework";
+        private const string ModuleName = "ServerImage";
         private const string isImportPackage = "true";
         private const string CommonPackages = "CommonApplications.zip";
 
         [TestInitialize]
         public void TestInitialize() {
             string testContextModuleDirectory = Path.Combine(TestContext.DeploymentDirectory, $@"Resources\{ModuleName}");
-            moduleBuildTempDirectory = Path.Combine(@"C:\Temp", Path.GetRandomFileName(), ModuleName);
+            moduleBuildTempDirectory = Path.Combine(@"C:\Temp", ModuleName);
 
             foreach (string dirPath in Directory.GetDirectories(testContextModuleDirectory, "*", SearchOption.AllDirectories)) {
                 Directory.CreateDirectory(dirPath.Replace(testContextModuleDirectory, moduleBuildTempDirectory));
@@ -35,13 +36,13 @@ namespace IntegrationTest.Build.Tasks {
         [TestCleanup]
         public void TestCleanup() {
             try {
-                LightsOff();
+                //LightsOff();
             } catch {
                 // ignored
             }
 
             try {
-                Directory.Delete(Directory.GetParent(moduleBuildTempDirectory).FullName, true);
+                //Directory.Delete(Directory.GetParent(moduleBuildTempDirectory).FullName, true);
             } catch {
                 // ignored
             }
@@ -114,15 +115,13 @@ namespace IntegrationTest.Build.Tasks {
 
         [TestMethod]
         [Ignore]
-        public void TestLightUpAndLightsOff() {
+        public void TestLightUpAndImportPackage() {
             GetServerImage();
             ProvisionDatabase();
             UpdateServerImage();
             LightUp();
             ExecuteQueryViewsScript();
             PackageImport();
-            RunIntegrationTests();
-            LightsOff();
         }
 
         [TestMethod]
@@ -150,7 +149,7 @@ namespace IntegrationTest.Build.Tasks {
 
         private void ProvisionDatabase() {
             RunTarget(
-                "ProvisionDatabase",
+                "ProvisionExpertDatabase",
                 new Dictionary<string, string> {
                     { "ModuleBuildTempDirectory", moduleBuildTempDirectory },
                     { "DatabaseName", databaseName }
