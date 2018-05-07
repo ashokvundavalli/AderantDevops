@@ -48,8 +48,7 @@
     ##
     # Resolves the path to the binaries for the given module
     ##
-    Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath){
-
+    Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath) {
         $action = FindGetActionTag $module
         Switch ($action) {
           "local"  { LocalPathToModuleBinariesFor $module }
@@ -64,45 +63,45 @@
         }
     }
 
-	    function global:AcquireExpertClassicBinaries([string]$moduleName,  [string]$binariesDirectory, [string]$classicPath, [string]$target) {
-		Push-Location
-        $build = Get-ChildItem (Join-Path -Path $classicPath -ChildPath $buildDirectory.Name) -File -Filter "*.zip"
+	    function global:AcquireExpertClassicBinaries([string]$moduleName, [string]$binariesDirectory, [string]$classicPath, [string]$target) {
+		    Push-Location
+            $build = Get-ChildItem -Path $classicPath -File -Filter "*.zip"
 
-	    if ($build -ne $null) {
-		    [string]$zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
+	        if ($build -ne $null) {
+		        [string]$zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
 
-		    if (Test-Path $zipExe) {
-				[string]$filter
+		        if (Test-Path $zipExe) {
+				    [string]$filter = ""
 
-				switch ($moduleName) {
-					"Expert.Classic.CS" {
-						$filter = "ApplicationServer\*"
-						break
-					}
-					default {
-						$filter = ""
-						break
-					}
-				}
+				    switch ($moduleName) {
+					    "Expert.Classic.CS" {
+						    $filter = "ApplicationServer\*"
+						    break
+					    }
+					    default {
+						    $filter = ""
+						    break
+					    }
+				    }
 
-				& $zipExe x $build.FullName "-o$(Join-Path -Path $binariesDirectory -ChildPath $target)" $filter -r -y
-				[string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
+				    & $zipExe x $build.FullName "-o$(Join-Path -Path $binariesDirectory -ChildPath $target)" $filter -r -y
+				    [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
 
-				if (-not (Test-Path $classicBuildNumbersFile)) {
-					New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
-				}
+				    if (-not (Test-Path $classicBuildNumbersFile)) {
+					    New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
+				    }
 
-				Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
-			    Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
-		    } else {
-			    Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
+				    Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
+			        Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
+		        } else {
+			        Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
+		        }
+	        } else {
+			    Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
 		    }
-	    } else {
-			Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
-		}
 
-		Pop-Location
-    }
+		    Pop-Location
+        }
 
     ##
     # Resolves the path to the binaries for the given module
@@ -120,10 +119,9 @@
     # Find the get action for this module
     ##
     Function global:FindGetActionTag([System.Xml.XmlNode]$module) {
-
-        [bool]$getModuleLocally=$false
-        [bool]$getModuleFromAnotherBranch=$false
-        [bool]$getModuleFromSpecificPath=$false
+        [bool]$getModuleLocally = $false
+        [bool]$getModuleFromAnotherBranch = $false
+        [bool]$getModuleFromSpecificPath = $false
 
         if ($module.HasAttribute("GetAction")) {
             if ($module.GetAction.ToLower().Equals("branch")) {
@@ -140,12 +138,12 @@
                 return "other-branch-external-module"
             }
             return "other-branch"
-        } elseif ($getModuleLocally){
+        } elseif ($getModuleLocally) {
             if ((IsThirdparty $module) -or (IsHelp $module)) {
                 return "local-external-module"
             }
             return "local"
-        } elseif ($getModuleFromSpecificPath){
+        } elseif ($getModuleFromSpecificPath) {
             if ((IsThirdparty $module) -or (IsHelp $module)) {
                 return "specific-path-external-module"
             }
@@ -233,7 +231,7 @@
     ##
     # Thirdparty binaries path from the drop
     ##
-    Function global:ThirdpartyBinariesPathFor([System.Xml.XmlNode]$module, [string]$dropPath, [string]$action="current-branch-external-module"){
+    Function global:ThirdpartyBinariesPathFor([System.Xml.XmlNode]$module, [string]$dropPath, [string]$action = "current-branch-external-module") {
         if (!$dropPath) {
             $rootPath = (Get-DropRootPath)
         } else {
@@ -276,10 +274,15 @@
 
         [string]$binModule = "\Bin\Module"
 
-        $pathToModuleAssemblyVersion = Join-Path -Path (Join-Path $rootPath $module.Name) -ChildPath $module.AssemblyVersion
+        [string]$pathToModuleAssemblyVersion = ""
+        if ($module.PSobject.Properties.Name -match "AssemblyVersion") {
+            $pathToModuleAssemblyVersion = Join-Path -Path (Join-Path $rootPath $module.Name) -ChildPath $module.AssemblyVersion
+        } else {
+            $pathToModuleAssemblyVersion = Join-Path $rootPath -ChildPath $module.Name
+        }
 
         if ($module.HasAttribute("FileVersion")) {
-            $modulePath = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion  -ChildPath $module.FileVersion) -ChildPath $binModule
+            $modulePath = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $module.FileVersion) -ChildPath $binModule
         } else {
             $modulePath = PathToLatestSuccessfulBuild $pathToModuleAssemblyVersion -suppressThrow
         }
