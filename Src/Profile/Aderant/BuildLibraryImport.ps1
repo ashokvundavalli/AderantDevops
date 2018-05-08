@@ -150,7 +150,7 @@ function UpdateOrBuildAssembly($properties) {
         Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
 
         if ($branch -eq "master") {
-            Write-Host $branch -ForegroundColor Cyan -NoNewline
+            Write-Host $branch -ForegroundColor Green -NoNewline
             Write-Host "]`r`n"
             & git -C $PSScriptRoot pull --ff-only
         } else {
