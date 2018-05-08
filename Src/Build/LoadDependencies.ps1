@@ -29,6 +29,7 @@ begin {
     if ($file) {
         [xml]$xml = Get-Content $file.FullName
 		
+        Set-StrictMode -Off
 		if ($xml.DependencyManifest.DefaultSource) {
 			$dropPath = $xml.DependencyManifest.DefaultSource
 
@@ -38,6 +39,7 @@ begin {
                 }
             }            
 		}
+        Set-StrictMode -Version Latest
 
         if ([string]::IsNullOrEmpty($dropPath)) {
             # Empty nodes are converted to string in PowerShell, so we use SelectSingleNode to get an XmlElement instead                
