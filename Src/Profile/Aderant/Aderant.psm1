@@ -1,46 +1,5 @@
 ﻿Set-StrictMode -Version Latest
 
-[string]$global:BuildInfrastructureDirectory = Resolve-Path "$PSScriptRoot\..\..\..\"
-
-function Initialize-Infrastructure {
-    process {
-        Push-Location $global:BuildInfrastructureDirectory
-        [string]$currentBranch = git rev-parse --abbrev-ref HEAD
-
-        Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
-        
-        if ($currentBranch -contains "master") {
-            Write-Host $currentBranch -ForegroundColor Cyan -NoNewline
-            Write-Host "]"
-
-            git fetch
-            
-            [string[]]$commits =  git rev-parse HEAD origin/master
-            
-            if (-not $commits[0] -match $commits[1]) {
-                Write-Warning "Current branch is out of date with origin/master"
-            }
-
-            [string]$changes = git status --porcelain
-
-            if (-not [string]::IsNullOrWhiteSpace($changes)) {
-                Write-Warning "There are pending changes to the current branch."
-            }
-        } else {
-            Write-Host $currentBranch -ForegroundColor Yellow -NoNewline
-            Write-Host "]"
-        }
-
-        Write-Host ""
-    }
-
-    end {
-        Pop-Location
-    }
-}
-
-Initialize-Infrastructure
-
 . $PSScriptRoot\Caching.ps1
 
 function Measure-Command() {
@@ -323,7 +282,7 @@ function Set-ExpertSourcePath {
 
 function Set-ScriptPaths {
     if ([System.IO.File]::Exists("$global:BranchModulesDirectory\ExpertManifest.xml")) {
-        $root = $global:BuildInfrastructureDirectory
+        $root = Resolve-Path "$PSScriptRoot\..\..\..\"
 
         $global:BuildScriptsDirectory = Join-Path -Path $root -ChildPath Src\Build
         $global:PackageScriptsDirectory = Join-Path -Path $root -ChildPath Src\Package
