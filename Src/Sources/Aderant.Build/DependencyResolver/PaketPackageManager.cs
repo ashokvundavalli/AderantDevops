@@ -115,11 +115,11 @@ namespace Aderant.Build.DependencyResolver {
         private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
                 string version = string.Empty;
-                if (referencedModule.VersionRequirement != null) {
-                    version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
+                if (referencedModule.VersionRequirement != null && !string.IsNullOrWhiteSpace(referencedModule.VersionRequirement.ConstraintExpression)) {
+                    version = referencedModule.VersionRequirement.ConstraintExpression;
                 }
 
-                var name = Domain.PackageName(referencedModule.Name);
+                Domain.PackageName name = Domain.PackageName(referencedModule.Name);
 
                 if (referencedModule.ReplaceVersionConstraint) {
                     try {
