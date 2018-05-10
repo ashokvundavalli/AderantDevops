@@ -39,7 +39,7 @@ function global:Enable-GitPrompt{
 }
 
 
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport) {
+function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport, $ModulePath) {
     begin {
         Set-StrictMode -Version Latest
     }
@@ -58,7 +58,11 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
             Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
         }
 
-        $repositoryPath = $global:CurrentModulePath
+        if ([string]::IsNullOrEmpty($ModulePath)){
+            $repositoryPath = $global:CurrentModulePath
+        } else {
+            $repositoryPath = $ModulePath
+        }
 
         [string]$task = ""
 
