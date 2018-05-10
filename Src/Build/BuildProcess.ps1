@@ -237,7 +237,7 @@ task Build {
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
     $commonArgs = "/nologo /nr:false /m"
-    $commonArgs = "$commonArgs C:\Git\Build.Infrastructure\Src\Build\Aderant.ComboBuild.targets"
+    $commonArgs = "$commonArgs $PSScriptRoot\Aderant.ComboBuild.targets"
 
     if (-not $Repository.EndsWith("\")) {
         $Repository += "\"

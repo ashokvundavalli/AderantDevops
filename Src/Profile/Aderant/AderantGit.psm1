@@ -41,7 +41,7 @@ function global:Enable-GitPrompt{
 
 function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport) {
     begin {
-        Set-StrictMode -Version 2.0
+        Set-StrictMode -Version Latest
     }
 
     process {
@@ -58,7 +58,7 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
             Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
         }
 
-        $repositoryPath = $global:CurrentModulePath    
+        $repositoryPath = $global:CurrentModulePath
 
         [string]$task = ""
 
