@@ -49,7 +49,7 @@ function global:Invoke-Build() {
         [bool]$codeCoverage = $true,
         [switch]$integration,
         [switch]$automation,
-        [switch]$codeCoverageReport
+        [switch]$codeCoverageReport,
         [string]$modulePath
     )
 
