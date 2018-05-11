@@ -50,7 +50,8 @@ function global:Invoke-Build() {
         [switch]$integration,
         [switch]$automation,
         [switch]$codeCoverageReport,
-        [string]$modulePath
+        [string]$modulePath,
+        [string]$moduleName
     )
 
     begin {
@@ -71,10 +72,20 @@ function global:Invoke-Build() {
             Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
         }
 
-        if ([string]::IsNullOrEmpty($ModulePath)){
-            $repositoryPath = $global:CurrentModulePath
+        if (-not [string]::IsNullOrEmpty($modulePath)){
+            $repositoryPath = $modulePath
         } else {
-            $repositoryPath = $ModulePath
+            $repositoryPath = $global:CurrentModulePath
+
+            if (-not [string]::IsNullOrEmpty($moduleName)){
+                if (((Test-Path "$repositoryPath\.git") -eq $false) -and ((Test-Path "$repositoryPath\..\.git") -eq $true)) {
+                    $repositoryPath = $(Resolve-Path "$repositoryPath\..\$moduleName")
+                }
+
+                if (Test-Path "$repositoryPath\$moduleName"){
+                    $repositoryPath = $(Resolve-Path $moduleName)
+                }
+            }
         }
 
         [string]$task = ""
