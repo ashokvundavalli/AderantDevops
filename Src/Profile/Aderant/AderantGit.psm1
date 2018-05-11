@@ -63,6 +63,12 @@ function global:Invoke-Build() {
             Write-Error "You can specify either -debug or -release but not both."
             return
         }
+
+        if ((-not [string]::IsNullOrEmpty($modulePath)) -and (-not [string]::IsNullOrEmpty($moduleName))) {
+            Write-Error "You can specify either -modulePath or -moduleName but not both."
+            return
+        }
+
         $flavor = ""
         if ($debug) {
             $flavor = "Debug"
