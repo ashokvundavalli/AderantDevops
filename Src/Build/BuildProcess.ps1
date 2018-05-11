@@ -8,7 +8,8 @@ param(
     [switch]$DatabaseBuildPipeline,
     [bool]$CodeCoverage,
     [switch]$Integration,
-    [switch]$Automation
+    [switch]$Automation,
+    [switch]$SkipPackage
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -374,7 +375,7 @@ task PackageServer -If (-not $global:IsDesktopBuild -and $script:EntryPoint.Valu
     $script:CreatePackage = $true
 }
 
-task Package -Jobs Init, PackageDesktop, PackageServer, {
+task Package -If (-not $SkipPackage.IsPresent) -Jobs Init, PackageDesktop, PackageServer, {
     if ($script:CreatePackage) {
         Write-Output "Entry point was: $($script:EntryPoint.Value)"
 

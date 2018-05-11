@@ -39,7 +39,19 @@ function global:Enable-GitPrompt{
 }
 
 
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport) {
+function global:Invoke-Build() {
+    param (
+        [switch]$force,
+        [switch]$clean,
+        [switch]$package,
+        [switch]$debug,
+        [switch]$release,
+        [bool]$codeCoverage = $true,
+        [switch]$integration,
+        [switch]$automation,
+        [switch]$codeCoverageReport
+    )
+
     begin {
         Set-StrictMode -Version Latest
     }
@@ -61,12 +73,22 @@ function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [
         $repositoryPath = $global:CurrentModulePath
 
         [string]$task = ""
+        
+        [bool]$skipPackage = $false
 
-        if ($package) {
+        if ((Test-Path "$repositoryPath\.git") -eq $false) {
+            $skipPackage = ([System.IO.Directory]::GetFiles($repositoryPath, "*.paket.template", [System.IO.SearchOption]::TopDirectoryOnly)).Length -eq 0
+        }
+
+        if ($package -and -not $skipPackage) {
             $task = "Package"
-        }    
+        }
 
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool()
+        if ($skipPackage) {
+            & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage
+        } else {
+            & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool()
+        }
     }
 
     end {
