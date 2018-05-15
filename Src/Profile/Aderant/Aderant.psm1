@@ -482,12 +482,11 @@ function Set-CurrentModule($name, [switch]$quiet) {
         Write-Debug "Setting repository: $name"
         Import-Module $PSScriptRoot\AderantGit.psm1
 
-        if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.rsp))){
+        if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.*))){
             $global:CurrentModuleName = ""
         }
 
         if (IsGitRepository $global:CurrentModulePath) {
-            $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
             SetRepository $global:CurrentModulePath
             Set-Location $global:CurrentModulePath
             global:Enable-GitPrompt
