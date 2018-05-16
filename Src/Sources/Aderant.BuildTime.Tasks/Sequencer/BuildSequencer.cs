@@ -97,7 +97,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             foreach (var project in visualStudioProjects) {
                 if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase)) {
                     project.IncludeInBuild = true;
-                    project.SolutionFile = result.SoluitionFile;
+                    project.SolutionFile = result.SolutionFile;
                     project.BuildConfiguration = new BuildConfiguration(/*Debug or Release*/configuration.ConfigurationName, /*x86 etc*/configuration.PlatformName );
                     
                     break;
