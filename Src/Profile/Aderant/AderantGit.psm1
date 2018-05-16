@@ -107,9 +107,9 @@ function global:Invoke-Build() {
         }
 
         if ($skipPackage) {
-            & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage
+            & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage
         } else {
-            & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool()
+            & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool()
         }
     }
 

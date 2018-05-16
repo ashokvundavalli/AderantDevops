@@ -1,5 +1,6 @@
 param(
     [string]$Repository,
+    [string]$ModuleName,
     [string]$Configuration = 'Release',
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
@@ -275,7 +276,9 @@ task Build {
         $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
     }
 
-    if ($global:CurrentModuleName -ne '') {
+    if ($ModuleName -ne '') {
+        $commonArgs = "$commonArgs /p:BuildFrom=$ModuleName"
+    } elseif ($global:CurrentModuleName -ne '') {
         $commonArgs = "$commonArgs /p:BuildFrom=$global:CurrentModuleName"
     }
 
