@@ -180,7 +180,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         private static IEnumerable<string> GetProjectItems(XDocument document) {
-            return document.Descendants(msbuild + "Content").Concat(document.Descendants(msbuild + "None")).Select(s => s.Attribute("Include")?.Value);
+            return document.Descendants(msbuild + "Content").Concat(document.Descendants(msbuild + "None")).Concat(document.Descendants(msbuild + "Compile")).Select(s => s.Attribute("Include")?.Value);
         }
 
         /// <summary>
