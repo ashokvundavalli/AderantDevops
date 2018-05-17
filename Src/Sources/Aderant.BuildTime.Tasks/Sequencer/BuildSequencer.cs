@@ -27,6 +27,14 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
         }
 
         public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+
+            System.Diagnostics.Debugger.Launch();
+
+            // fake file list
+            List<string> files = new List<string>();
+            //files.AddRange(Directory.GetFiles(modulesDirectory, "Packager*.*", SearchOption.AllDirectories));
+            files.Add(@"C:\monorepo\Deployment\Src\Aderant.Deployment.Cloning\appserverclone.ps1");
+
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
@@ -44,8 +52,10 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 analyzer.AddExclusionPattern("MomentumFileOpening");
                 analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
                 
-
-                List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(modulesDirectory));
+                var context = new AnalyzerContext();
+                context.AddDirectory(modulesDirectory);
+                context.SetFilesList(files);
+                List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(context);
 
                 IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
 
@@ -72,6 +82,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 }
 
                 List<List<IDependencyRef>> groups = analyzer.GetBuildGroups(visualStudioProjects);
+
 
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
 

@@ -49,6 +49,10 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         /// </summary>
         /// <param name="context">The context.</param>
         public List<IDependencyRef> GetDependencyOrder(AnalyzerContext context) {
+
+            // Load all the necessary project files.
+            LoadProjects(context);
+
             TopologicalSort<IDependencyRef> graph = GetDependencyGraph(context);
 
             GraphVisitor vistior = new GraphVisitor(fileSystem.Root);
@@ -151,22 +155,78 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return null;
         }
 
+        private void LoadProjects(AnalyzerContext context) {
 
-        private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
-            List<string> projects = new List<string>();
+            List<string> projectFiles = new List<string>();
 
             foreach (string directory in context.Directories) {
-                projects.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
+                projectFiles.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
             }
 
-            IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+            //IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+
+            // reduce list
+            // projectFiles = projectFiles.Where(f=>f.Contains("Aderant") && f.Contains("Framework"));
+
+            //var projectFiles = context.ProjectFiles;
+            var files = context.Files;
+
+            foreach (string projectFile in projectFiles) {
+                VisualStudioProject studioProject;
+                if (loader.TryParse(context.Directories, projectFile, out studioProject)) {
+                    if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
+
+                        // check if this proj contains needed files
+                        if (files != null) {
+                            foreach (var file in files) {
+
+                                if (studioProject.ContainsFile(file)) {
+                                    // found one
+                                    this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+
+                    } else {
+
+                    }
+
+
+                    studioProject.SolutionRoot = GetSolutionRootForProject(context.Directories, solutionFileFilters, studioProject.Path);
+                } else {
+                    parseErrors.Add(projectFile);
+                }
+            }
+
+            context.ProjectFiles = projectFiles;
+        }
+
+        private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
+            
+            var projectFiles = context.ProjectFiles;
+
             TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
 
             foreach (string projectFile in projectFiles) {
                 VisualStudioProject studioProject;
                 if (loader.TryParse(context.Directories, projectFile, out studioProject)) {
                     if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
-                        this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+
+                        // check if this proj contains needed files
+                        if (context.Files != null) {
+                            foreach (var file in context.Files) {
+
+                                if (studioProject.ContainsFile(file)) {
+                                    // found one
+                                    this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        
                     } else {
                         
                     }

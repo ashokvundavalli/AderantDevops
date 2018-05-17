@@ -72,6 +72,8 @@ namespace Aderant.BuildTime.Tasks {
                     modulesInBuild = manifest.GetAll().Select(s => s.Name);
                 }
 
+                System.Diagnostics.Debugger.Launch();
+
                 modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 
                 //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
