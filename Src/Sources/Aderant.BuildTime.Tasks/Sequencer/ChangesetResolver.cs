@@ -1,30 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using LibGit2Sharp;
-using Microsoft.Build.Framework;
 
-namespace Aderant.BuildTime.Tasks {
-    public sealed class GitChangeset : Microsoft.Build.Utilities.Task {
+namespace Aderant.BuildTime.Tasks.Sequencer {
+    public class ChangesetResolver {
+
         private string canonicalBranchName;
         private string friendlyBranchName;
 
-        [Required]
         public string WorkingDirectory { get; set; }
 
         public bool Discover { get; set; }
-
-        public ITaskItem GitFolder { get; set; }
 
         public List<Commit> Commits { get; set; }
 
         public List<string> ChangedFiles { get; set; }
 
-        /// <summary>
-        /// The branch being built
-        /// </summary>
-        /// <value>The git branch.</value>
-        [Output]
         public string FriendlyBranchName {
             get {
                 // Server builds checkout a specific commit putting the repository into a DETACHED HEAD state.
@@ -38,7 +33,6 @@ namespace Aderant.BuildTime.Tasks {
             private set { friendlyBranchName = value; }
         }
 
-        [Output]
         public string CanonicalBranchName {
             get {
                 if (string.IsNullOrEmpty(canonicalBranchName) || IsDetachdHead(canonicalBranchName)) {
@@ -49,11 +43,21 @@ namespace Aderant.BuildTime.Tasks {
             private set { canonicalBranchName = value; }
         }
 
-        public override bool Execute() {
-            if (Discover) {
-                string discover = Repository.Discover(WorkingDirectory);
+        public ChangesetResolver(string workingDirectory, bool discover = true) {
+            InitializeFromWorkingDirectory(workingDirectory, discover);
+        }
 
-                WorkingDirectory = discover;
+        public void InitializeFromWorkingDirectory(string workingDirectory, bool discover) {
+            WorkingDirectory = workingDirectory;
+            Discover = discover;
+            if (Discover) {
+                string discoveredDirectory = Repository.Discover(WorkingDirectory);
+
+                WorkingDirectory = discoveredDirectory;
+            }
+
+            if (!Directory.Exists(WorkingDirectory)) {
+                throw new DirectoryNotFoundException($"Can not find path: {WorkingDirectory}");
             }
 
             using (var repo = new Repository(WorkingDirectory)) {
@@ -85,7 +89,7 @@ namespace Aderant.BuildTime.Tasks {
                         }
                     }
 
-                    TreeChanges changes = repo.Diff.Compare<TreeChanges>(Commits[0].Tree, Commits[divergedDistance-1].Parents.FirstOrDefault().Tree);
+                    TreeChanges changes = repo.Diff.Compare<TreeChanges>(Commits[0].Tree, Commits[divergedDistance - 1].Parents.FirstOrDefault().Tree);
                     List<string> changedFiles = new List<string>();
                     foreach (var treeChange in changes) {
                         changedFiles.Add(treeChange.Path);
@@ -96,8 +100,6 @@ namespace Aderant.BuildTime.Tasks {
                 } catch {
                 }
             }
-
-            return !Log.HasLoggedErrors;
         }
 
         private bool IsDetachdHead(string branchName) {

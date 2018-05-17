@@ -1,31 +1,30 @@
 ﻿using System.IO;
 using Aderant.Build.Tasks;
 using Aderant.BuildTime.Tasks;
+using Aderant.BuildTime.Tasks.Sequencer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks {
     [TestClass]
     [DeploymentItem("Aderant.BuildTime.Tasks.dll")]
-    public class GitChangesetTests : BuildTaskTestBase {
+    [DeploymentItem("IntegrationTest.targets")]
+    [DeploymentItem("Aderant.Build.Common.targets")]
+    [DeploymentItem("SystemUnderTest")]
+    public class GitChangesetTests {
         [TestInitialize]
         public void NativeLibraryAvailable() {
-            var foo = typeof(GitChangeset);
+            var foo = typeof(ChangesetResolver);
             string nativeLibraryPath = LibGit2Sharp.GlobalSettings.NativeLibraryPath;
 
             Assert.IsTrue(Directory.Exists(nativeLibraryPath));
         }
 
         [TestMethod]
-        public void GitChangeset_runs_without_exception() {
-            RunTarget("GitChangeset");
-
-            Assert.IsFalse(Logger.HasRaisedErrors);
-        }
-
-        [TestMethod]
         public void GitChangesetExecuteTest() {
-            var changeset = new GitChangeset() {WorkingDirectory = @"C:\Git\Deployment" };
-            changeset.Execute();
+            var changeset = new ChangesetResolver(@"C:\Git\Deployment");
+            if (changeset.FriendlyBranchName != "master") {
+                Assert.IsNotNull(changeset.ChangedFiles);
+            }
         }
     }
 }
