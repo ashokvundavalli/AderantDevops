@@ -28,9 +28,10 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
         public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
 
-            System.Diagnostics.Debugger.Launch();
+            //System.Diagnostics.Debugger.Launch();
 
             // fake file list
+            //todo call git changeset from here to get all changed files list
             List<string> files = new List<string>();
             //files.AddRange(Directory.GetFiles(modulesDirectory, "Packager*.*", SearchOption.AllDirectories));
             files.Add(@"C:\monorepo\Deployment\Src\Aderant.Deployment.Cloning\appserverclone.ps1");

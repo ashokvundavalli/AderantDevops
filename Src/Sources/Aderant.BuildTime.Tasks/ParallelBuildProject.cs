@@ -72,7 +72,7 @@ namespace Aderant.BuildTime.Tasks {
                     modulesInBuild = manifest.GetAll().Select(s => s.Name);
                 }
 
-                System.Diagnostics.Debugger.Launch();
+                //System.Diagnostics.Debugger.Launch();
 
                 modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 
