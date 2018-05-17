@@ -115,7 +115,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                         string properties = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot);
 
-                        if (buildFrom == visualStudioProject.SolutionDirectoryName) {
+                        if (visualStudioProject.SolutionDirectoryName != buildFrom) {
                             properties += ";RunCodeAnalysisOnThisProject=false";
                         }
 

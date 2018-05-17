@@ -739,7 +739,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     }
 
     public class ParseResult {
-        public string SoluitionFile { get; internal set; }
+        public string SolutionFile { get; internal set; }
         public IReadOnlyDictionary<string, ProjectInSolution> ProjectsByGuid { get; internal set; }
         public IReadOnlyList<ProjectInSolution> ProjectsInOrder { get; internal set; }
         public IReadOnlyList<SolutionConfigurationInSolution> SolutionConfigurations { get; internal set; }
@@ -750,7 +750,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             SolutionFile file = SolutionFile.Parse(solutionFile);
 
             return new ParseResult {
-                SoluitionFile = solutionFile,
+                SolutionFile = solutionFile,
                 ProjectsByGuid = file.ProjectsByGuid,
                 ProjectsInOrder = file.ProjectsInOrder,
                 SolutionConfigurations = file.SolutionConfigurations
