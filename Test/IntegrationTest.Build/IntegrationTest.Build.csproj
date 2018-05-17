@@ -146,6 +146,7 @@
     <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\GetFileVersionInfoTests.cs" />
+    <Compile Include="Tasks\GitChangesetTests.cs" />
     <Compile Include="Tasks\GitVersionTests.cs" />
     <Compile Include="Tasks\CopyToDropV2Tests.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
@@ -161,6 +162,10 @@
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.BuildTime.Tasks\Aderant.BuildTime.Tasks.csproj">
+      <Project>{4df05ae4-08a8-4d93-8431-a64b1a901dd3}</Project>
+      <Name>Aderant.BuildTime.Tasks</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
       <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
