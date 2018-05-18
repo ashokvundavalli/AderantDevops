@@ -87,7 +87,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 HashSet<string> h = new HashSet<string>();
                 h.UnionWith(dirtyProjects);
                 // Mark all the downstream projects as dirty.
-                var p = MarkDirtyAll(visualStudioProjects, h);
+                MarkDirtyAll(visualStudioProjects, h);
 
                 // temp for debug
                 var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true);
