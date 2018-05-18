@@ -110,7 +110,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                     VisualStudioProject visualStudioProject = studioProject as VisualStudioProject;
 
                     if (visualStudioProject != null) {
-                        if (!visualStudioProject.IncludeInBuild) {
+                        if ( !visualStudioProject.IncludeInBuild || visualStudioProject.IsDirty ) {
                             return null;
                         }
 

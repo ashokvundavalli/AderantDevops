@@ -90,13 +90,14 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 MarkDirtyAll(visualStudioProjects, h);
 
                 // temp for debug
-                var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true);
-                logger.Info("Dirty projects:");
+                var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
+                logger.Info("NotDirty projects:");
                 foreach (var pp in filteredProjects) {
                     logger.Info("* "+pp.Name);
                 }
+                System.Diagnostics.Debugger.Launch();
 
-                List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(visualStudioProjects);
+                List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
 
 
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
@@ -155,7 +156,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
         private void IncludeInBuild(ParseResult result, ProjectConfigurationInSolution configuration, string absolutePath, IEnumerable<VisualStudioProject> visualStudioProjects) {
             foreach (var project in visualStudioProjects) {
-                if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase)) {
+                if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase) && !project.IsDirty) {
                     project.IncludeInBuild = true;
                     project.SolutionFile = result.SolutionFile;
                     project.BuildConfiguration = new BuildConfiguration(/*Debug or Release*/configuration.ConfigurationName, /*x86 etc*/configuration.PlatformName );
