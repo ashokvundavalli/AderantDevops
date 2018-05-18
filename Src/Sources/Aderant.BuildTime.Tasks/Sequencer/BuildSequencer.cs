@@ -80,7 +80,6 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 }
 
 
-                //System.Diagnostics.Debugger.Launch();
 
                 // Get all the dirty projects due to user's modification.
                 var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
@@ -95,8 +94,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 foreach (var pp in filteredProjects) {
                     logger.Info("* "+pp.Name);
                 }
-                System.Diagnostics.Debugger.Launch();
 
+                // Pass the filtered list in to build only the dirty projects.
                 List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
 
 
@@ -156,7 +155,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
         private void IncludeInBuild(ParseResult result, ProjectConfigurationInSolution configuration, string absolutePath, IEnumerable<VisualStudioProject> visualStudioProjects) {
             foreach (var project in visualStudioProjects) {
-                if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase) && !project.IsDirty) {
+                if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase)) {
                     project.IncludeInBuild = true;
                     project.SolutionFile = result.SolutionFile;
                     project.BuildConfiguration = new BuildConfiguration(/*Debug or Release*/configuration.ConfigurationName, /*x86 etc*/configuration.PlatformName );
