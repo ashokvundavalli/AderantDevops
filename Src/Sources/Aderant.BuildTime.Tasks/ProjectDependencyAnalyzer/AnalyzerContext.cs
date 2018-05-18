@@ -11,6 +11,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
         public IEnumerable<string> ProjectFiles { get; set; }
 
+        /// <summary>
+        /// The root directory of the curent build.
+        /// </summary>
+        public string ModulesDirectory { get; set; }
+
         public AnalyzerContext AddDirectory(string directory) {
             Directories.Add(directory);
 

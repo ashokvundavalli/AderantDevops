@@ -28,13 +28,9 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
         public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
 
-            //System.Diagnostics.Debugger.Launch();
 
-            // fake file list
-            //todo call git changeset from here to get all changed files list
-            List<string> files = new List<string>();
-            //files.AddRange(Directory.GetFiles(modulesDirectory, "Packager*.*", SearchOption.AllDirectories));
-            files.Add(@"C:\monorepo\Deployment\Src\Aderant.Deployment.Cloning\appserverclone.ps1");
+            // Get all changed files list
+            var files = new ChangesetResolver(modulesDirectory).ChangedFiles;
 
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
@@ -56,6 +52,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                 var context = new AnalyzerContext();
                 context.AddDirectory(modulesDirectory);
                 context.SetFilesList(files);
+                context.ModulesDirectory = modulesDirectory;
                 List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(context);
 
                 IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
@@ -82,7 +79,24 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                     }
                 }
 
-                List<List<IDependencyRef>> groups = analyzer.GetBuildGroups(visualStudioProjects);
+
+                //System.Diagnostics.Debugger.Launch();
+
+                // Get all the dirty projects due to user's modification.
+                var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
+                HashSet<string> h = new HashSet<string>();
+                h.UnionWith(dirtyProjects);
+                // Mark all the downstream projects as dirty.
+                var p = MarkDirtyAll(visualStudioProjects, h);
+
+                // temp for debug
+                var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true);
+                logger.Info("Dirty projects:");
+                foreach (var pp in filteredProjects) {
+                    logger.Info("* "+pp.Name);
+                }
+
+                List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(visualStudioProjects);
 
 
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
@@ -91,6 +105,40 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Mark all projects in allProjects where the project depends on any one in projectsToFind.
+        /// </summary>
+        /// <param name="allProjects">The full projects list.</param>
+        /// <param name="projectsToFind">The project name hashset to search for.</param>
+        /// <returns></returns>
+        private List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+
+            var p = allProjects.Where(x => (x as VisualStudioProject)?.DependsOn?.Select(y => y.Name).Intersect(projectsToFind).Any() == true).ToList();
+            p.ForEach(x => {
+                if (x is VisualStudioProject) {
+                    ((VisualStudioProject)x).IsDirty = true;
+                }
+            });
+            return p;
+        }
+
+        /// <summary>
+        /// Mark all projects in allProjects where the project depends on any one in projectsToFind until no more parent project is found.
+        /// </summary>
+        private void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+
+            int newCount=-1;
+
+            List<IDependencyRef> p;
+            while(newCount!=0) {
+                p = MarkDirty(allProjects, projectsToFind).ToList();
+                newCount = p.Count;
+                var newSearchList = new HashSet<string>();
+                newSearchList.UnionWith(p.Select(x => x.Name));
+                projectsToFind = newSearchList;
             }
         }
 

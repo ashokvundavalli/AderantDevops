@@ -85,6 +85,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private readonly XDocument project;
 
+        /// <summary>
+        /// Flag for if the project has been changed. Used for reducing the build set.
+        /// </summary>
+        public bool IsDirty { get; set; } = false;
+
         protected VisualStudioProject() {
         }
 
@@ -172,6 +177,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
             string relativePath = PathUtility.MakeRelative(System.IO.Path.GetDirectoryName(Path), file);
 
+            // todo: convert this to a hash table
             if (projectItems.Contains(relativePath, StringComparer.OrdinalIgnoreCase)) {
                 return true;
             }

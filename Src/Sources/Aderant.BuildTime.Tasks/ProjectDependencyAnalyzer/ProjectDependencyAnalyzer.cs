@@ -50,15 +50,15 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         /// <param name="context">The context.</param>
         public List<IDependencyRef> GetDependencyOrder(AnalyzerContext context) {
 
-            // Load all the necessary project files.
-            LoadProjects(context);
-
+            // Load all the necessary project files and record their dependency relationships.
             TopologicalSort<IDependencyRef> graph = GetDependencyGraph(context);
 
             GraphVisitor vistior = new GraphVisitor(fileSystem.Root);
             vistior.BeginVisit(graph);
 
-            return GetDependencyOrderFromGraph(graph);
+            // Solve the build order.
+            var ordered = GetDependencyOrderFromGraph(graph);
+            return ordered;
         }
 
         public List<List<IDependencyRef>> GetBuildGroups(IEnumerable<IDependencyRef> projects) {
@@ -203,9 +203,19 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             context.ProjectFiles = projectFiles;
         }
 
+        /// <summary>
+        /// Walk through all the project files, along with a possible changeset files list, to determine which projects are needed to be built, and their order.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
-            
-            var projectFiles = context.ProjectFiles;
+
+
+            List<string> projectFiles = new List<string>();
+
+            foreach (string directory in context.Directories) {
+                projectFiles.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
+            }
 
             TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
 
@@ -214,19 +224,22 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
                 if (loader.TryParse(context.Directories, projectFile, out studioProject)) {
                     if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
 
-                        // check if this proj contains needed files
+                        // check if this proj contains needed files, make a mark
                         if (context.Files != null) {
                             foreach (var file in context.Files) {
-
-                                if (studioProject.ContainsFile(file)) {
+                                var fullPath = Path.Combine(context.ModulesDirectory, file);
+                                if (studioProject.ContainsFile(fullPath)) {
                                     // found one
-                                    this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+                                    studioProject.IsDirty = true;
                                     break;
                                 }
                             }
-                            break;
+
                         }
-                        
+
+                        // the project may need to be added regardless of changed or not
+                        this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+
                     } else {
                         
                     }

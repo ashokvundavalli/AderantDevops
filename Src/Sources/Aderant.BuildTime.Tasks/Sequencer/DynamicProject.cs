@@ -41,7 +41,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                     outputFile.WriteLine($"Group ({i})");
                     foreach (var dependencyRef in projectGroup) {
-                        outputFile.WriteLine($"|   |---{dependencyRef.Name}");
+                        var isDirty = (dependencyRef as VisualStudioProject)?.IsDirty == true;
+                        outputFile.WriteLine($"|   |---{dependencyRef.Name}" + (isDirty ? " *" : ""));
                     }
 
                     // If there are no projects in the item group, no point generating any Xml for this build node
