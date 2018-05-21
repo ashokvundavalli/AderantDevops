@@ -5,12 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 
-namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
-
+namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     [DebuggerDisplay("DirectoryNode: {Name}")]
     internal sealed class DirectoryNode : IDependencyRef {
         private ICollection<IDependencyRef> dependsOn;

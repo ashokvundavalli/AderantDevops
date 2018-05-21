@@ -2,8 +2,8 @@
 using System.IO;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.BuildTime {

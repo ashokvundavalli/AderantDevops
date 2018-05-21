@@ -105,6 +105,11 @@
     <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />
+    <Compile Include="Tasks\BuildTime\BuildMasterPSHost.cs" />
+    <Compile Include="Tasks\BuildTime\GitVersion.cs" />
+    <Compile Include="Tasks\BuildTime\ParallelBuildProject.cs" />
+    <Compile Include="Tasks\BuildTime\PowerShellScriptRunner.cs" />
+    <Compile Include="Tasks\BuildTime\RunPowerShell.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
@@ -143,6 +148,15 @@
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="Commands\StartIntegrationTests.cs" />
+    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\AnalyzerContext.cs" />
+    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\CSharpProjectLoader.cs" />
+    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\ProjectDependencyAnalyzer.cs" />
+    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\VisualStudioProject.cs" />
+    <Compile Include="Tasks\BuildTime\Sequencer\BuildSequencer.cs" />
+    <Compile Include="Tasks\BuildTime\Sequencer\ChangesetResolver.cs" />
+    <Compile Include="Tasks\BuildTime\Sequencer\DynamicProject.cs" />
+    <Compile Include="Tasks\BuildTime\Sequencer\ParallelBuildVisitor.cs" />
+    <Compile Include="Tasks\BuildTime\Sequencer\TextTemplateAnalyzer.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="FileUtilities.cs" />

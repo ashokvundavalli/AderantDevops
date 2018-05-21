@@ -8,7 +8,7 @@ using System.Security;
 using Aderant.Build.Logging;
 using Version = System.Version;
 
-namespace Aderant.BuildTime.Tasks {
+namespace Aderant.Build.Tasks.BuildTime {
     public class BuildException : Exception {
         public BuildException(string message)
             : base(message) {

@@ -1,7 +1,5 @@
 ﻿using System.IO;
-using Aderant.Build.Tasks;
-using Aderant.BuildTime.Tasks;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks {

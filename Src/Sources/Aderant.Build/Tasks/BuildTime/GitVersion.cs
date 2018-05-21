@@ -2,7 +2,7 @@
 using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
-namespace Aderant.BuildTime.Tasks {
+namespace Aderant.Build.Tasks.BuildTime {
     public sealed class GitVersion : Microsoft.Build.Utilities.Task {
         private string canonicalBranchName;
         private string friendlyBranchName;

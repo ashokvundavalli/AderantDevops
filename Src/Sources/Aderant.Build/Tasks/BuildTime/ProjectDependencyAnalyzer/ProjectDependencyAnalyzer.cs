@@ -4,12 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.Build.Construction;
 
-namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
+namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     internal class ProjectDependencyAnalyzer {
         private readonly CSharpProjectLoader loader;
         private readonly TextTemplateAnalyzer textTemplateAnalyzer;

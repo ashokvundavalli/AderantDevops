@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using Aderant.Build;
 
-namespace Aderant.BuildTime.Tasks.Sequencer {
+namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     internal class TextTemplateAnalyzer {
         private readonly IFileSystem2 fileSystem;
-        private List<string> excludedPatterns = new List<string>();
-        static Regex nameMatch = new Regex(@"name=""([^""]*)\""", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly List<string> excludedPatterns = new List<string>();
+        static readonly Regex nameMatch = new Regex(@"name=""([^""]*)\""", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         public TextTemplateAnalyzer(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
