@@ -4,16 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-namespace Aderant.BuildTime.Tasks {
+namespace Aderant.Build.Tasks.BuildTime {
     public sealed class ParallelBuildProjectFactory : Task {
         public ITaskItem[] ModulesInBuild { get; set; }
 

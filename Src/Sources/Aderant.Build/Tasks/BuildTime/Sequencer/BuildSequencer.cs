@@ -4,15 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
 using Aderant.Build.Providers;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Microsoft.Build.Construction;
 
-namespace Aderant.BuildTime.Tasks.Sequencer {
+namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     internal class BuildSequencer {
         private readonly ILogger logger;
         private readonly ISolutionFileParser solutionParser;
@@ -34,7 +33,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
-                var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
+                var analyzer = new Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
                 analyzer.AddExclusionPattern("_BUILD_");
                 analyzer.AddExclusionPattern("__");

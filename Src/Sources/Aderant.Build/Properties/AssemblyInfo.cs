@@ -11,4 +11,5 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("UnitTest.Build")]
 [assembly: InternalsVisibleTo("UnitTest.BuildTime")]
 [assembly: InternalsVisibleTo("IntegrationTest.Build")]
+[assembly: InternalsVisibleTo("IntegrationTest.BuildTime")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

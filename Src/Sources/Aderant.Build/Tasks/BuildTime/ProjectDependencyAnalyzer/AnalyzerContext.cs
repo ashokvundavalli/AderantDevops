@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
+namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     public class AnalyzerContext {
         public ICollection<string> Directories { get; set; } = new List<string>();
 

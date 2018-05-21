@@ -5,12 +5,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.MSBuild;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.BuildTime.Tasks.Sequencer {
+namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of Expert modules in dependency order and in parallel
     /// </summary>
