@@ -35,7 +35,6 @@
     <BuildToolsDirectory Condition="'$(BuildToolsDirectory)' != '' and !HasTrailingSlash('$(BuildToolsDirectory)')">$(BuildToolsDirectory)\</BuildToolsDirectory>
 
     <BuildAssembly Condition="'$(BuildAssembly)' == ''">$(BuildToolsDirectory)Aderant.Build.dll</BuildAssembly>
-    <BuildTimeTasksAssembly Condition="'$(BuildTimeTasksAssembly)' == ''">$(BuildToolsDirectory)Aderant.BuildTime.Tasks.dll</BuildTimeTasksAssembly>
 
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
@@ -65,7 +64,7 @@
   <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.BuildTime.Tasks.ParallelBuildProjectFactory"                     AssemblyFile="$(BuildTimeTasksAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.BuildTime.ParallelBuildProjectFactory"               AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds SCC information into the pdb files for the symbol server -->
   <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
@@ -90,8 +89,8 @@
   <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.BuildTime.Tasks.RunPowerShell"                                   AssemblyFile="$(BuildTimeTasksAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.BuildTime.Tasks.GitVersion"                                      AssemblyFile="$(BuildTimeTasksAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.BuildTime.RunPowerShell"                             AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.BuildTime.GitVersion"                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <PropertyGroup>
     <!-- Visual Studio Environment-->
@@ -130,7 +129,6 @@
       <!-- Desktop/Common projects -->
       <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj" />
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj" />
-      <Projects Include="$(BuildSourcesDirectory)Aderant.BuildTime.Tasks\Aderant.BuildTime.Tasks.csproj"/>
 
       <!-- Server/CI projects -->
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj"
