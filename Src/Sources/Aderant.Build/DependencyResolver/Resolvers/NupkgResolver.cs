@@ -21,7 +21,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var pm = new PaketPackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
-                    List<string> groupList = pm.findGroups();
+                    List<string> groupList = pm.FindGroups();
                     foreach (string groupName in groupList) {
                         var requirements = pm.GetDependencies(Domain.GroupName(groupName));
                         foreach (var item in requirements) {

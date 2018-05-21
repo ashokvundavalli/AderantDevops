@@ -1,9 +1,9 @@
 using System;
-using System.Globalization;
+using System.Linq;
 
 namespace Aderant.Build.DependencyResolver {
     internal class ConstraintExpression {
-        private static char[] operators = new char[] {
+        public static char[] Operators { get; } = new char[] {
             '~',
             '=',
             '>',
@@ -11,14 +11,11 @@ namespace Aderant.Build.DependencyResolver {
             '-' // Supports exact match 1.0.0-ci-20170201-223443
         };
 
-        public static char[] Operators {
-            get { return operators; }
-        }
-
         public static string Parse(string versionValue) {
-            if (!string.IsNullOrWhiteSpace(versionValue) && versionValue.IndexOfAny(Aderant.Build.DependencyResolver.ConstraintExpression.Operators) < 0) {
+            if (!string.IsNullOrWhiteSpace(versionValue) && versionValue.IndexOfAny(Operators) < 0) {
                 return "= " + versionValue;
             }
+
             return versionValue;
         }
     }
@@ -31,11 +28,17 @@ namespace Aderant.Build.DependencyResolver {
             set {
                 constraintExpression = value;
 
-                if (!string.IsNullOrWhiteSpace(constraintExpression) && constraintExpression.IndexOfAny(Aderant.Build.DependencyResolver.ConstraintExpression.Operators) < 0) {
-                    if (!string.IsNullOrEmpty(OriginatingFile)) {
-                        throw new InvalidOperationException("The file " + OriginatingFile + " contains an invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
+                if (!string.IsNullOrWhiteSpace(constraintExpression) && constraintExpression.IndexOfAny(DependencyResolver.ConstraintExpression.Operators) == -1) {
+                    if (constraintExpression.Any(char.IsDigit)) {
+                        // Paket can't deal with '=' characters because reasons.
+                        constraintExpression = DependencyResolver.ConstraintExpression.Parse(constraintExpression);
+                    } else {
+                        if (!string.IsNullOrEmpty(OriginatingFile)) {
+                            throw new InvalidOperationException("The file " + OriginatingFile + " contains an invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
+                        }
+
+                        throw new InvalidOperationException("Invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
                     }
-                    throw new InvalidOperationException("Invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
                 } 
             }
         }
