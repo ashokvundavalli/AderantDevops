@@ -261,6 +261,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         propertiesList.Add($"SolutionFileName={Path.GetFileName(visualStudioProject.SolutionFile)}");
                         propertiesList.Add($"SolutionPath={visualStudioProject.SolutionRoot}");
                         propertiesList.Add($"SolutionName={Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile)}");
+                        propertiesList.Add($"BuildProjectReferences={visualStudioProject.IsDirty}");
 
                         if (visualStudioProject.BuildConfiguration != null) {
                             propertiesList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
