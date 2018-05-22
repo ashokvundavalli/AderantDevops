@@ -87,9 +87,9 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 // Mark all the downstream projects as dirty.
                 MarkDirtyAll(visualStudioProjects, h);
 
-                // temp for debug
+                // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
                 var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
-                logger.Info("NotDirty projects:");
+                logger.Info("Dirty projects:");
                 foreach (var pp in filteredProjects) {
                     logger.Info("* "+pp.Name);
                 }
