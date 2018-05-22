@@ -25,7 +25,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, string buildType) {
 
 
             // Get all changed files list
@@ -33,7 +33,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
-                var analyzer = new Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
+                var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
                 analyzer.AddExclusionPattern("_BUILD_");
                 analyzer.AddExclusionPattern("__");
@@ -78,8 +78,6 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                     }
                 }
 
-
-
                 // Get all the dirty projects due to user's modification.
                 var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
                 HashSet<string> h = new HashSet<string>();
@@ -88,11 +86,18 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 MarkDirtyAll(visualStudioProjects, h);
 
                 // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
-                var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
-                logger.Info("Dirty projects:");
-                foreach (var pp in filteredProjects) {
-                    logger.Info("* "+pp.Name);
+                IEnumerable<IDependencyRef> filteredProjects;
+                if (buildType.ToLowerInvariant() == "all") {
+                    filteredProjects = visualStudioProjects;
+                } else {
+                    filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
+
+                    logger.Info("Changed projects:");
+                    foreach (var pp in filteredProjects) {
+                        logger.Info("* " + pp.Name);
+                    }
                 }
+
 
                 // Pass the filtered list in to build only the dirty projects.
                 List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);

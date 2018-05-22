@@ -1,16 +1,17 @@
 param(
     [string]$Repository,
     [string]$ModuleName,
-    [string]$Configuration = 'Release',
+    [string]$Configuration = "Release",
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
     [string]$Flavor,
     [switch]$DatabaseBuildPipeline,
-    [bool]$CodeCoverage,
     [switch]$Integration,
     [switch]$Automation,
-    [switch]$SkipPackage
+    [switch]$SkipPackage,
+    [BuildType]$buildType,
+    [switch]$downstream
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -232,7 +233,6 @@ task GetDependencies {
 }
 
 task Build {
-
     # Get submodules
     & git submodule update --init --recursive
 
@@ -258,7 +258,9 @@ task Build {
     
     $global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
+
+    $commonArgs = "$commonArgs /p:BuildType=$($buildType.ToString())"
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
@@ -292,12 +294,6 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            if ($CodeCoverage) {
-                $commonArgs = "$commonArgs /p:CodeCoverage=true"
-            } else {
-                $commonArgs = "$commonArgs /p:CodeCoverage=false"
-            }
-
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"
