@@ -258,7 +258,9 @@ task Build {
     
     $global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
+
+    $commonArgs = "$commonArgs /p:BuildType=$buildType"
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"

@@ -53,8 +53,8 @@
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
 
     <IsComboBuild>true</IsComboBuild>
-    <BuildMode Condition="'$(BuildMode)' != ''">$(BuildMode)</BuildMode>
-    <BuildMode Condition="'$(BuildMode)' == ''">branch</BuildMode>
+    <BuildType Condition="'$(BuildType)' != ''">$(BuildType)</BuildType>
+    <BuildType Condition="'$(BuildType)' == ''">Branch</BuildType>
   </PropertyGroup>
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
@@ -80,6 +80,8 @@
   </PropertyGroup>
 
   <Target Name="CreateParallelBuildProject">
+    
+    <Message Text="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx BuildType: $(BuildType)" />
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory

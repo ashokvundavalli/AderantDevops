@@ -55,21 +55,19 @@ function global:Invoke-Build {
     )
 
     begin {
-        . $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1
 
-        [BuildType]$buildType = $null
+        [BuildType]$buildType = [BuildType]::Branch
 
-        switch (true) {
+        switch ($true) {
             ($staged.IsPresent) {
                 $buildType = [BuildType]::Staged
             }
             ($all.IsPresent) {
                 $buildType = [BuildType]::All
             }
-            default {
-                $buildType = [BuildType]::Branch
-            }
         }
+
+        write-host "xxxxxxxxxxxxx Build Type: $buildType"
     }
 
     process {
