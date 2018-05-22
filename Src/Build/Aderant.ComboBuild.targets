@@ -53,8 +53,9 @@
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
 
     <IsComboBuild>true</IsComboBuild>
+    <BuildMode Condition="'$(BuildMode)' != ''">$(BuildMode)</BuildMode>
+    <BuildMode Condition="'$(BuildMode)' == ''">branch</BuildMode>
   </PropertyGroup>
-
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
 
@@ -90,6 +91,7 @@
       ProjectFile="$(BranchBuildProject)"
       CodeAnalysisGroup="$(CodeAnalysisGroup)"
       IsComboBuild="$(IsComboBuild)"
+      BuildMode="$(BuildMode)"
       ComboBuildProjectFile="$(BuildScriptsDirectory)\ModuleBuild2.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
