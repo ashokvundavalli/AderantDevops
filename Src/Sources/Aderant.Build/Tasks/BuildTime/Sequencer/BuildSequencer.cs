@@ -25,7 +25,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, string buildMode) {
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, string buildType) {
 
 
             // Get all changed files list
@@ -87,7 +87,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
                 // temp for debug
                 IEnumerable<IDependencyRef> filteredProjects;
-                if (buildMode == "all") {
+                if (buildType.ToLowerInvariant() == "all") {
                     filteredProjects = visualStudioProjects;
                 } else {
                     filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);

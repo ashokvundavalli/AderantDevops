@@ -93,7 +93,7 @@
       ProjectFile="$(BranchBuildProject)"
       CodeAnalysisGroup="$(CodeAnalysisGroup)"
       IsComboBuild="$(IsComboBuild)"
-      BuildMode="$(BuildMode)"
+      BuildType="$(BuildType)"
       ComboBuildProjectFile="$(BuildScriptsDirectory)\ModuleBuild2.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>

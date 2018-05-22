@@ -36,7 +36,7 @@ namespace Aderant.Build.Tasks.BuildTime {
 
         public bool IsComboBuild { get; set; }
 
-        public string BuildMode { get; set; }
+        public string BuildType { get; set; }
 
         public string ComboBuildProjectFile { get; set; }
 
@@ -73,14 +73,12 @@ namespace Aderant.Build.Tasks.BuildTime {
                     modulesInBuild = manifest.GetAll().Select(s => s.Name);
                 }
 
-                //System.Diagnostics.Debugger.Launch();
-
                 modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 
                 //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                var project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, BuildMode);
+                var project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, BuildType);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
