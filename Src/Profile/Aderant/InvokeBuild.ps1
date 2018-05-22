@@ -1,13 +1,7 @@
 Set-StrictMode -Version Latest
 
-Enum BuildType {
-    Staged
-    Branch
-    All
-}
-
 function global:Invoke-Build {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName="Build")]
     param (
         [Parameter(Position=0)]
         [Parameter(ParameterSetName="Incremental")]
@@ -53,6 +47,11 @@ function global:Invoke-Build {
     )
 
     begin {
+        Enum BuildType {
+            Staged
+            Branch
+            All
+        }
 
         [BuildType]$buildType = [BuildType]::Branch
 
@@ -65,10 +64,8 @@ function global:Invoke-Build {
             }
         }
 
-        write-host "xxxxxxxxxxxxx Build Type: $buildType"
-    }
+        Write-Host "Build Type: $buildType" -ForegroundColor DarkGreen
 
-    process {
         [string]$flavor = "Debug"
 
         if ($release.IsPresent) {
@@ -76,7 +73,9 @@ function global:Invoke-Build {
         }
 
         Write-Host "Forcing BuildFlavor to be $($flavor.ToUpper())" -ForegroundColor DarkGreen
+    }
 
+    process {
         if (-not [string]::IsNullOrEmpty($modulePath)){
             $repositoryPath = $modulePath
         } else {
@@ -105,7 +104,7 @@ function global:Invoke-Build {
             $task = "Package"
         }
 
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType ($buildType) -Downstream:$downstream.ToBool()
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType $buildType -Downstream:$downstream.ToBool()
     }
 
     end {

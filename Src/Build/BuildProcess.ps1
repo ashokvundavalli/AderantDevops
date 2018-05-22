@@ -1,7 +1,7 @@
 param(
     [string]$Repository,
     [string]$ModuleName,
-    [string]$Configuration = 'Release',
+    [string]$Configuration = "Release",
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
@@ -10,7 +10,7 @@ param(
     [switch]$Integration,
     [switch]$Automation,
     [switch]$SkipPackage,
-    [Parameter(Mandatory=$true)][BuildType]$buildType,
+    [BuildType]$buildType,
     [switch]$downstream
 )
 
@@ -260,7 +260,7 @@ task Build {
 
     $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
 
-    $commonArgs = "$commonArgs /p:BuildType=$buildType"
+    $commonArgs = "$commonArgs /p:BuildType=$($buildType.ToString())"
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
