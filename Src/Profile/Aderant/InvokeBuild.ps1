@@ -10,11 +10,11 @@ function global:Invoke-Build {
     [CmdletBinding()]
     param (
         [Parameter(Position=0)]
-        [Parameter(ParameterSetName="BuildStaged")]
+        [Parameter(ParameterSetName="Incremental")]
         [switch]$staged,
 
         [Parameter(Position=1)]
-        [Parameter(ParameterSetName="BuildStaged")]
+        [Parameter(ParameterSetName="Incremental")]
         [switch]$downstream,
 
         [Parameter(Position=2)]
@@ -40,15 +40,13 @@ function global:Invoke-Build {
         [switch]$displayCodeCoverage,
 
         [Parameter(Position=9)]
-        [Parameter(ParameterSetName="BuildStaged")]
-        [Parameter(ParameterSetName="BuildBranch")]
+        [Parameter(ParameterSetName="Incremental")]
         [Parameter(ParameterSetName="ModulePath")]
         [ValidateNotNullOrEmpty()]
         [string]$modulePath = "",
 
         [Parameter(Position=10)]
-        [Parameter(ParameterSetName="BuildStaged")]
-        [Parameter(ParameterSetName="BuildBranch")]
+        [Parameter(ParameterSetName="Incremental")]
         [Parameter(ParameterSetName="ModuleName")]
         [ValidateNotNullOrEmpty()]
         [string]$moduleName = ""
