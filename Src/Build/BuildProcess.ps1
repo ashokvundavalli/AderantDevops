@@ -7,10 +7,11 @@ param(
     [bool]$LimitBuildWarnings,
     [string]$Flavor,
     [switch]$DatabaseBuildPipeline,
-    [bool]$CodeCoverage,
     [switch]$Integration,
     [switch]$Automation,
-    [switch]$SkipPackage
+    [switch]$SkipPackage,
+    [Parameter(Mandatory=$true)][BuildType]$buildType,
+    [switch]$downstream
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -232,7 +233,6 @@ task GetDependencies {
 }
 
 task Build {
-
     # Get submodules
     & git submodule update --init --recursive
 
@@ -292,12 +292,6 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            if ($CodeCoverage) {
-                $commonArgs = "$commonArgs /p:CodeCoverage=true"
-            } else {
-                $commonArgs = "$commonArgs /p:CodeCoverage=false"
-            }
-
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"
