@@ -25,7 +25,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, string buildMode) {
 
 
             // Get all changed files list
@@ -78,8 +78,6 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                     }
                 }
 
-
-
                 // Get all the dirty projects due to user's modification.
                 var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
                 HashSet<string> h = new HashSet<string>();
@@ -88,7 +86,12 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 MarkDirtyAll(visualStudioProjects, h);
 
                 // temp for debug
-                var filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
+                IEnumerable<IDependencyRef> filteredProjects;
+                if (buildMode == "all") {
+                    filteredProjects = visualStudioProjects;
+                } else {
+                    filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
+                }
                 logger.Info("NotDirty projects:");
                 foreach (var pp in filteredProjects) {
                     logger.Info("* "+pp.Name);
