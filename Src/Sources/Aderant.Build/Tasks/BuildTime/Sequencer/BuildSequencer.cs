@@ -112,8 +112,8 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// </summary>
         /// <param name="allProjects">The full projects list.</param>
         /// <param name="projectsToFind">The project name hashset to search for.</param>
-        /// <returns></returns>
-        private List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+        /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
+        internal List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
 
             var p = allProjects.Where(x => (x as VisualStudioProject)?.DependsOn?.Select(y => y.Name).Intersect(projectsToFind).Any() == true).ToList();
             p.ForEach(x => {
@@ -125,9 +125,9 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         }
 
         /// <summary>
-        /// Mark all projects in allProjects where the project depends on any one in projectsToFind until no more parent project is found.
+        /// Recursively mark all projects in allProjects where the project depends on any one in projectsToFind until no more parent project is found.
         /// </summary>
-        private void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+        internal void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
 
             int newCount=-1;
 
