@@ -26,7 +26,7 @@ namespace Aderant.Build.Analyzer.Rules {
 
         #region Fields
 
-        protected const int DefaultCapacity = 25;
+        internal const int DefaultCapacity = 25;
 
         private const string generatedCodeTypeName = "System.CodeDom.Compiler.GeneratedCodeAttribute";
         private const string suppressMessageTypeName = "System.Diagnostics.CodeAnalysis.SuppressMessage";
@@ -72,7 +72,7 @@ namespace Aderant.Build.Analyzer.Rules {
         /// <returns>
         /// True if the 'StopNode' has been found, otherwise False.
         /// </returns>
-        protected static bool GetExpressionsFromChildNodes<T>(
+        internal static bool GetExpressionsFromChildNodes<T>(
             ref List<T> expressionList,
             SyntaxNode node,
             SyntaxNode stopNode = null) where T : SyntaxNode {
