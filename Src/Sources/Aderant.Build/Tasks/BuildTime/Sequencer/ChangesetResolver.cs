@@ -46,7 +46,6 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         }
 
         public void InitializeFromWorkingDirectory(string workingDirectory, string buildType, bool discover) {
-            Debugger.Launch();
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
