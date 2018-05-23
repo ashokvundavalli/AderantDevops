@@ -33,7 +33,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
-                var analyzer = new Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
+                var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
                 analyzer.AddExclusionPattern("_BUILD_");
                 analyzer.AddExclusionPattern("__");
@@ -85,17 +85,19 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 // Mark all the downstream projects as dirty.
                 MarkDirtyAll(visualStudioProjects, h);
 
-                // temp for debug
+                // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
                 IEnumerable<IDependencyRef> filteredProjects;
                 if (buildType.ToLowerInvariant() == "all") {
                     filteredProjects = visualStudioProjects;
                 } else {
                     filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false);
+
+                    logger.Info("Changed projects:");
+                    foreach (var pp in filteredProjects) {
+                        logger.Info("* " + pp.Name);
+                    }
                 }
-                logger.Info("NotDirty projects:");
-                foreach (var pp in filteredProjects) {
-                    logger.Info("* "+pp.Name);
-                }
+
 
                 // Pass the filtered list in to build only the dirty projects.
                 List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
@@ -115,8 +117,8 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// </summary>
         /// <param name="allProjects">The full projects list.</param>
         /// <param name="projectsToFind">The project name hashset to search for.</param>
-        /// <returns></returns>
-        private List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+        /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
+        internal List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
 
             var p = allProjects.Where(x => (x as VisualStudioProject)?.DependsOn?.Select(y => y.Name).Intersect(projectsToFind).Any() == true).ToList();
             p.ForEach(x => {
@@ -128,9 +130,9 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         }
 
         /// <summary>
-        /// Mark all projects in allProjects where the project depends on any one in projectsToFind until no more parent project is found.
+        /// Recursively mark all projects in allProjects where the project depends on any one in projectsToFind until no more parent project is found.
         /// </summary>
-        private void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+        internal void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
 
             int newCount=-1;
 

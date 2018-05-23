@@ -41,7 +41,12 @@ namespace Aderant.Build.DependencyResolver {
                 case ".css":
                 case ".less":
                 case ".png":
+                case ".jpg":
                 case ".gif":
+                case ".svg":
+                case ".ttf":
+                case ".woff":
+                case ".eot":
                     return true;
             }
 

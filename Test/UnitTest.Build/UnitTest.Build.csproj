@@ -90,6 +90,7 @@
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
+    <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzerTests.cs" />
     <Compile Include="FileUtilitiesTests.cs" />

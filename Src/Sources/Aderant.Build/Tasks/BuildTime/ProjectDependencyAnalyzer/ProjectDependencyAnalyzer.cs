@@ -722,7 +722,8 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
             Console.WriteLine(String.Format("{0, -60} - {1}", visualStudioProject.Name, visualStudioProject.GetType().Name));
             Console.WriteLine($"|   |--- {visualStudioProject.DependsOn.Count} dependencies");
 
-            outputFile.WriteLine(String.Format("{0, -60} - {1}", $"{visualStudioProject.Name} ({visualStudioProject.DependsOn.Count})", visualStudioProject.GetType().Name));
+            var v = visualStudioProject.IsDirty ? "*" : "";
+            outputFile.WriteLine(String.Format("{0, -60} - {1}", $"{visualStudioProject.Name} {v} ({visualStudioProject.DependsOn.Count}) ", visualStudioProject.GetType().Name));
             foreach (var dependencyRef in visualStudioProject.DependsOn) {
                 outputFile.WriteLine($"|   |---{dependencyRef.Name}");
             }

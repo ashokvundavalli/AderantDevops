@@ -190,7 +190,8 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         /// <summary>
         /// Initialize a new instance of the <see cref="VisualStudioProject"/> class.
         /// </summary>
-        /// <param name="project"></param>a
+        /// <param name="project"></param>
+        /// <param name="projectGuid"></param>
         /// <param name="assemblyName">Name of the assembly generated from the project.</param>
         /// <param name="rootNamespace">The project's root namespace.</param>
         /// <param name="path">The physical location of the project on the disk.</param>
