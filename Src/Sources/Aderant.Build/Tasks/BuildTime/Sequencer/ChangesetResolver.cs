@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using LibGit2Sharp;
@@ -40,11 +41,12 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(string workingDirectory, bool discover = true) {
-            InitializeFromWorkingDirectory(workingDirectory, discover);
+        public ChangesetResolver(string workingDirectory, string buildType = "changed", bool discover = true) {
+            InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
         }
 
-        public void InitializeFromWorkingDirectory(string workingDirectory, bool discover) {
+        public void InitializeFromWorkingDirectory(string workingDirectory, string buildType, bool discover) {
+            Debugger.Launch();
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
@@ -92,10 +94,39 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         changedFiles.Add(treeChange.Path);
                     }
 
-                    ChangedFiles = changedFiles;
+                    if (buildType.ToLowerInvariant() == "changed") {
+                        UpdateChangedFilesFromStatus(repo, changedFiles);
+                    }
+                    
+
+                    ChangedFiles = changedFiles.Distinct().ToList();
 
                 } catch {
                 }
+            }
+        }
+
+        private void UpdateChangedFilesFromStatus(Repository repo, List<string> changedFiles) {
+            RepositoryStatus repositoryStatus = repo.RetrieveStatus(new StatusOptions());
+
+            //Modified
+            foreach (var item in repositoryStatus.Modified) {
+                changedFiles.Add(item.FilePath);
+            }
+
+            //Added
+            foreach (var item in repositoryStatus.Added) {
+                changedFiles.Add(item.FilePath);
+            }
+
+            //Staged
+            foreach (var item in repositoryStatus.Staged) {
+                changedFiles.Add(item.FilePath);
+            }
+
+            //Untracked
+            foreach (var item in repositoryStatus.Untracked) {
+                changedFiles.Add(item.FilePath);
             }
         }
 

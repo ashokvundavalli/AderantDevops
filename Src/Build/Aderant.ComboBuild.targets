@@ -54,7 +54,6 @@
 
     <IsComboBuild>true</IsComboBuild>
     <BuildType Condition="'$(BuildType)' != ''">$(BuildType)</BuildType>
-    <BuildType Condition="'$(BuildType)' == ''">Branch</BuildType>
   </PropertyGroup>
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />

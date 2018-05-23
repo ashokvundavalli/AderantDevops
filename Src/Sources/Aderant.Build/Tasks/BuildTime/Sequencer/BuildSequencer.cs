@@ -29,7 +29,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
 
             // Get all changed files list
-            var files = new ChangesetResolver(modulesDirectory).ChangedFiles;
+            var files = new ChangesetResolver(modulesDirectory, buildType).ChangedFiles;
 
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {

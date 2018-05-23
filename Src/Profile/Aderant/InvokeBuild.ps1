@@ -5,7 +5,7 @@ function global:Invoke-Build {
     param (
         [Parameter(Position=0)]
         [Parameter(ParameterSetName="Incremental")]
-        [switch]$staged,
+        [switch]$branch,
 
         [Parameter(Position=1)]
         [Parameter(ParameterSetName="Incremental")]
@@ -48,16 +48,16 @@ function global:Invoke-Build {
 
     begin {
         Enum BuildType {
-            Staged
+            Changed
             Branch
             All
         }
 
-        [BuildType]$buildType = [BuildType]::Branch
+        [BuildType]$buildType = [BuildType]::Changed
 
         switch ($true) {
-            ($staged.IsPresent) {
-                $buildType = [BuildType]::Staged
+            ($branch.IsPresent) {
+                $buildType = [BuildType]::Branch
             }
             ($all.IsPresent) {
                 $buildType = [BuildType]::All
