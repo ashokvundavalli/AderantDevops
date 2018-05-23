@@ -1,14 +1,17 @@
 param(
     [string]$Repository,
-    [string]$Configuration = 'Release',
+    [string]$ModuleName,
+    [string]$Configuration = "Release",
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
     [string]$Flavor,
     [switch]$DatabaseBuildPipeline,
-    [bool]$CodeCoverage,
     [switch]$Integration,
-    [switch]$Automation
+    [switch]$Automation,
+    [switch]$SkipPackage,
+    [BuildType]$buildType,
+    [switch]$downstream
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -230,14 +233,13 @@ task GetDependencies {
 }
 
 task Build {
-
     # Get submodules
     & git submodule update --init --recursive
 
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master
     # node has completed build orchestration.
     $commonArgs = "/nologo /nr:false /m"
-    $commonArgs = "$commonArgs $Repository\Build\TFSBuild.proj @$Repository\Build\TFSBuild.rsp"
+    $commonArgs = "$commonArgs $PSScriptRoot\Aderant.ComboBuild.targets"
 
     if (-not $Repository.EndsWith("\")) {
         $Repository += "\"
@@ -256,7 +258,9 @@ task Build {
     
     $global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
+
+    $commonArgs = "$commonArgs /p:BuildType=$($buildType.ToString())"
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
@@ -274,6 +278,14 @@ task Build {
         $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
     }
 
+    if ($ModuleName -ne '') {
+        $commonArgs = "$commonArgs /p:BuildFrom=$ModuleName"
+    } elseif ($global:CurrentModuleName -ne '') {
+        $commonArgs = "$commonArgs /p:BuildFrom=$global:CurrentModuleName"
+    }
+
+    $commonArgs = "$commonArgs /p:UseSharedDependencyDirectory=false /t:BuildAndPackage"
+
     # /p:RunWixToolsOutOfProc=true is required due to this bug with stdout processing
     # https://connect.microsoft.com/VisualStudio/feedback/details/1286424/
     $commonArgs = "$commonArgs /p:RunWixToolsOutOfProc=true"
@@ -282,12 +294,6 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            if ($CodeCoverage) {
-                $commonArgs = "$commonArgs /p:CodeCoverage=true"
-            } else {
-                $commonArgs = "$commonArgs /p:CodeCoverage=false"
-            }
-
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"
@@ -368,7 +374,7 @@ task PackageServer -If (-not $global:IsDesktopBuild -and $script:EntryPoint.Valu
     $script:CreatePackage = $true
 }
 
-task Package -Jobs Init, PackageDesktop, PackageServer, {
+task Package -If (-not $SkipPackage.IsPresent) -Jobs Init, PackageDesktop, PackageServer, {
     if ($script:CreatePackage) {
         Write-Output "Entry point was: $($script:EntryPoint.Value)"
 

@@ -4,16 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-namespace Aderant.BuildTime.Tasks {
+namespace Aderant.Build.Tasks.BuildTime {
     public sealed class ParallelBuildProjectFactory : Task {
         public ITaskItem[] ModulesInBuild { get; set; }
 
@@ -33,7 +32,11 @@ namespace Aderant.BuildTime.Tasks {
         [Required]
         public string ProjectFile { get; set; }
 
+        public string[] CodeAnalysisGroup { get; set; }
+
         public bool IsComboBuild { get; set; }
+
+        public string BuildType { get; set; }
 
         public string ComboBuildProjectFile { get; set; }
 
@@ -72,9 +75,10 @@ namespace Aderant.BuildTime.Tasks {
 
                 modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 
+                //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                var project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile);
+                var project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, BuildType);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);

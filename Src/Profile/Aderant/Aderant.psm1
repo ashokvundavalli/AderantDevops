@@ -1,6 +1,5 @@
 ﻿Set-StrictMode -Version Latest
 
-[bool]$Env:RunCodeAnalysisOnThisProject = $False
 . $PSScriptRoot\Caching.ps1
 
 function Measure-Command() {
@@ -478,17 +477,32 @@ function Set-CurrentModule($name, [switch]$quiet) {
     }
 
     if ([System.IO.Path]::IsPathRooted($name)) {
-        if (IsGitRepository $name) {
-            SetRepository $name
-            Set-Location $name
-            return
+        $global:CurrentModulePath = $name
+        $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
+        Write-Debug "Setting repository: $name"
+        Import-Module $PSScriptRoot\AderantGit.psm1
+
+        if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.*))){
+            $global:CurrentModuleName = ""
         }
+
+        if (IsGitRepository $global:CurrentModulePath) {
+            SetRepository $global:CurrentModulePath
+            Set-Location $global:CurrentModulePath
+            global:Enable-GitPrompt
+            return
+        } elseif (IsGitRepository (([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName)) {
+            global:Enable-GitPrompt
+        } else {
+            Enable-ExpertPrompt
+        }
+    } else {
+        $global:CurrentModuleName = $name
+
+        Write-Debug "Current module [$global:CurrentModuleName]"
+        $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
+        Enable-ExpertPrompt
     }
-
-    $global:CurrentModuleName = $name
-
-    Write-Debug "Current module [$global:CurrentModuleName]"
-    $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
 
     if ((Test-Path $global:CurrentModulePath) -eq $false) {
         Write-Warning "the module [$global:CurrentModuleName] does not exist, please check the spelling."
@@ -500,19 +514,17 @@ function Set-CurrentModule($name, [switch]$quiet) {
     Write-Debug "Current module path [$global:CurrentModulePath]"
     $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath \Build
 
-    $ShellContext.IsGitRepository = $false
+    $ShellContext.IsGitRepository = $true
 }
 
 function IsGitRepository([string]$path) {
+    if ([System.IO.path]::GetPathRoot($path) -eq $path) {
+        return $false
+    }
     return @(gci -path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
 }
 
 function SetRepository([string]$path) {
-    Write-Debug "Setting repository: $path"
-    Import-Module $PSScriptRoot\AderantGit.psm1
-
-    $global:CurrentModulePath = $path
-    $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
     $ShellContext.IsGitRepository = $true
 
     [string]$currentModuleBuildDirectory = "$path\Build"
@@ -1121,10 +1133,12 @@ function Get-ProductZip([switch]$unstable) {
     The dependencies will be fetched before building and the output will be copied to the binaries folder.
 #>
 function Build-ExpertModules {
-    param ([string[]]$workflowModuleNames, [switch] $changeset = $false, [switch] $clean = $false, [switch]$getDependencies = $false, [switch] $copyBinaries = $false, [switch] $downstream = $false, [switch] $getLatest = $false, [switch] $continue, [string[]] $getLocal, [string[]] $exclude, [string] $skipUntil, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$codeCoverageReport)
+    param (
+        [string[]]$workflowModuleNames, [switch] $changeset = $false, [switch] $clean = $false, [switch]$getDependencies = $false, [switch] $copyBinaries = $false, [switch] $downstream = $false, [switch] $getLatest = $false, [switch] $continue, [string[]] $getLocal, [string[]] $exclude, [string] $skipUntil, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$codeCoverageReport
+    )
 
     begin {
-        Set-StrictMode -Version 2.0
+        Set-StrictMode -Version Latest
     }
 
     process {
@@ -2097,9 +2111,12 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
                 
         # Evaluate Modules
         try {   
-            $parser.GetModuleMatches($wordToComplete, $global:BranchModulesDirectory, $ProductManifestPath) | Get-Unique | ForEach-Object {                    
-                [System.Management.Automation.CompletionResult]::new($_)
-            } 
+            $parser.GetModuleMatches($wordToComplete, $global:BranchModulesDirectory, $ProductManifestPath) | Get-Unique | ForEach-Object {
+                $ModuleToBeImported = Join-Path -Path $global:BranchModulesDirectory -ChildPath $_
+                if (Test-Path (Join-Path -Path $ModuleToBeImported -ChildPath \Build\TFSBuild.rsp)) {
+                    [System.Management.Automation.CompletionResult]::new($ModuleToBeImported)
+                }
+            }
             
             # Probe for known Git repositories
             gci -Path "HKCU:\SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories" | % { Get-ItemProperty $_.pspath } |           
@@ -2213,6 +2230,8 @@ function Enable-ExpertPrompt() {
         Write-Host("")
         Write-Host ("Module [") -nonewline
         Write-Host ($global:CurrentModuleName) -nonewline -foregroundcolor DarkCyan
+        Write-Host ("] at [") -nonewline
+        Write-Host ($global:CurrentModulePath) -nonewline -foregroundcolor DarkCyan
         Write-Host ("] on branch [") -nonewline
         Write-Host ($global:BranchName) -nonewline -foregroundcolor Green
         Write-Host ("]")
@@ -2250,7 +2269,7 @@ function Generate-SystemMap() {
     if ($systemMapConnectionString.ToLower().Contains("/pdbs:") -and $systemMapConnectionString.ToLower().Contains("/pdbd:") -and $systemMapConnectionString.ToLower().Contains("/pdbid:") -and $systemMapConnectionString.ToLower().Contains("/pdbpw:")) {
         $connectionParts = $systemMapConnectionString.Split(" ")
         Write-Debug "Connection is [$connectionParts]"
-        &$inDirectory\Systemmapbuilder.exe /f:$inDirectory /o:$inDirectory\systemmap.xml /ef:Customization $connectionParts[0] $connectionParts[1] $connectionParts[2] $connectionParts[3]
+        & $inDirectory\Systemmapbuilder.exe /f:$inDirectory /o:$inDirectory\systemmap.xml /ef:Customization $connectionParts[0] $connectionParts[1] $connectionParts[2] $connectionParts[3]
     } else {
         Write-Error "Connection string is invalid for use with systemmapbuilder.exe [$systemMapConnectionString]"
     }
@@ -2258,9 +2277,13 @@ function Generate-SystemMap() {
 
 function Test-ReparsePoint([string]$path) {
     $file = Get-Item $path -Force -ea 0
+
+    if ($file -eq $null) {
+        return $false
+    }
+
     return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
-
 
 <#
 .Synopsis

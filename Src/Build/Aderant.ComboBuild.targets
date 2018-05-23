@@ -53,8 +53,8 @@
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
 
     <IsComboBuild>true</IsComboBuild>
+    <BuildType Condition="'$(BuildType)' != ''">$(BuildType)</BuildType>
   </PropertyGroup>
-
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
 
@@ -79,6 +79,8 @@
   </PropertyGroup>
 
   <Target Name="CreateParallelBuildProject">
+    
+    <Message Text="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx BuildType: $(BuildType)" />
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
@@ -88,7 +90,9 @@
       TfvcBranch="$(TfvcBranch)"
       BuildFrom="$(BuildFrom)"
       ProjectFile="$(BranchBuildProject)"
+      CodeAnalysisGroup="$(CodeAnalysisGroup)"
       IsComboBuild="$(IsComboBuild)"
+      BuildType="$(BuildType)"
       ComboBuildProjectFile="$(BuildScriptsDirectory)\ModuleBuild2.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>

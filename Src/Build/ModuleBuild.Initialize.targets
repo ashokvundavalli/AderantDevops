@@ -130,7 +130,7 @@
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
     <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
-    <CleanBin Condition="'$(CleanBin)' == ''">true</CleanBin>
+    <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
   </PropertyGroup>
 
   <Target Name="InitializeModuleBuild" BeforeTargets="ModuleEnter" DependsOnTargets="$(InitializeModuleBuildDependsOn)">

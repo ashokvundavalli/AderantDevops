@@ -38,6 +38,7 @@ nuget Microsoft.Net.Compilers >= 1.0.0 <= 1.0.0
 group Analyzer
 
 source http://packages.ap.aderant.com/packages/nuget
+source \\dfs.aderant.com\packages\ExpertDatabase
 source https://www.nuget.org/api/v2
 
 nuget Microsoft.CodeAnalysis.Common <= 1.0

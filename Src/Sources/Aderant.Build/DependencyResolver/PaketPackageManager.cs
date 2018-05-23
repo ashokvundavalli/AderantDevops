@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
@@ -13,7 +12,7 @@ using Paket;
 
 namespace Aderant.Build.DependencyResolver {
     internal class PaketPackageManager : IDisposable {
-        private FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
+        private readonly FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
         private readonly ILogger logger;
         public IFileSystem2 FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
@@ -67,20 +66,19 @@ namespace Aderant.Build.DependencyResolver {
             return dependencies;
         }
 
-        public List<string> findGroups() {
-            List<string> groups = new List<string>();
-            groups.Add(BuildConstants.MainDependencyGroup);
-            string dependenciesFile = $"{FileSystem.Root}\\{DependenciesFile}";
+        public List<string> FindGroups() {
+            List<string> groups = new List<string> { BuildConstants.MainDependencyGroup };
+            string dependenciesFile = $@"{FileSystem.Root}\{DependenciesFile}";
+
             using (StreamReader streamReader = new StreamReader(dependenciesFile)) {
                 string line;
-                string groupName;
                 while ((line = streamReader.ReadLine()) != null) {
                     if (line.StartsWith("group")) {
-                        groupName = line.Replace("group ", "");
-                        groups.Add(groupName);
+                        groups.Add(line.Replace("group ", ""));
                     }
                 }
             }
+
             return groups;
         }
 
@@ -115,11 +113,11 @@ namespace Aderant.Build.DependencyResolver {
         private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
                 string version = string.Empty;
-                if (referencedModule.VersionRequirement != null) {
-                    version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
+                if (referencedModule.VersionRequirement != null && !string.IsNullOrWhiteSpace(referencedModule.VersionRequirement.ConstraintExpression)) {
+                    version = referencedModule.VersionRequirement.ConstraintExpression;
                 }
 
-                var name = Domain.PackageName(referencedModule.Name);
+                Domain.PackageName name = Domain.PackageName(referencedModule.Name);
 
                 if (referencedModule.ReplaceVersionConstraint) {
                     try {

@@ -60,10 +60,6 @@
       <Project>{256cb4bf-2ad9-497f-9174-9c4fdd9f6ce3}</Project>
       <Name>Aderant.Build.Tasks</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.BuildTime.Tasks\Aderant.BuildTime.Tasks.csproj">
-      <Project>{4DF05AE4-08A8-4D93-8431-A64B1A901DD3}</Project>
-      <Name>Aderant.BuildTime.Tasks</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
       <Project>{66e50d39-8e73-4d16-944b-43f18c308fe0}</Project>
       <Name>Aderant.Build</Name>

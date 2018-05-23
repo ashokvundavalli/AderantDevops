@@ -2,11 +2,11 @@
 using System.Xml.Linq;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
 using System.Collections.Generic;
 using System.IO;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 
 namespace UnitTest.BuildTime {
     [TestClass]

@@ -2,76 +2,43 @@ $currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.Windows
 $isAdminProcess = $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { '' }
 
-function global:prompt {
-    $realLASTEXITCODE = $LASTEXITCODE    
-
-    $location = Get-Location
-
-    Write-Host "PS $(location)" -NoNewline
-
-    if ($ShellContext.PoshGitAvailable) {
-        Write-VcsStatus
-
-        $status = Get-GitStatus
-
-        if ($status -ne $null) {    
-            $repoName = Split-Path -Leaf (Split-Path $status.GitDir)    
-            $Host.UI.RawUI.WindowTitle = "$script:adminHeader$repoName [$($status.Branch)]"
-        }
-    }
-     
-    Write-Host  "$('>' * ($nestedPromptLevel + 1))" -NoNewline
+function global:Enable-GitPrompt{
+    Function global:prompt {
+        $realLASTEXITCODE = $LASTEXITCODE    
     
-    $global:LASTEXITCODE = $realLASTEXITCODE
-        
-    # Default console looks like this
-    # PS C:\WINDOWS\system32> 
-    return " "
-}
-
-function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport) {
-    begin {
-        Set-StrictMode -Version 2.0
-    }
-
-    process {
-        if ($debug -and $release) {
-            Write-Error "You can specify either -debug or -release but not both."
-            return
-        }
-        $flavor = ""
-        if ($debug) {
-            $flavor = "Debug"
-            Write-Host "Forcing BuildFlavor to be DEBUG" -ForegroundColor DarkGreen
-        } elseif ($release) {
-            $flavor = "Release"
-            Write-Host "Forcing BuildFlavor to be RELEASE" -ForegroundColor DarkGreen
-        }
-
-        $repositoryPath = $global:CurrentModulePath    
-
-        [string]$task = ""
-
-        if ($package) {
-            $task = "Package"
-        }    
-
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -CodeCoverage $codeCoverage -Integration:$integration.ToBool() -Automation:$automation.ToBool()
-    }
-
-    end {
-        if ($LASTEXITCODE -eq 0 -and $codeCoverageReport.IsPresent -and $codeCoverage) {
-            [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
-
-            if (Test-Path ($codeCoverageReport)) {
-                Write-Host "Displaying dotCover code coverage report."
-                Start-Process $codeCoverageReport
-            } else {
-                Write-Warning "Unable to locate dotCover code coverage report."
+        $location = Get-Location
+    
+        Write-Host("")
+        Write-Host ("Module [") -nonewline
+        Write-Host ($global:CurrentModuleName) -nonewline -foregroundcolor DarkCyan
+        Write-Host ("] at [") -nonewline
+        Write-Host ($global:CurrentModulePath) -nonewline -foregroundcolor DarkCyan
+        Write-Host ("]")
+    
+        Write-Host "PS $(location)" -NoNewline
+    
+        if ($ShellContext.PoshGitAvailable) {
+            Write-VcsStatus
+    
+            $status = Get-GitStatus
+    
+            if ($status -ne $null) {    
+                $repoName = Split-Path -Leaf (Split-Path $status.GitDir)    
+                $Host.UI.RawUI.WindowTitle = "$script:adminHeader$repoName [$($status.Branch)]"
             }
         }
+    
+        Write-Host  "$('>' * ($nestedPromptLevel + 1))" -NoNewline
+       
+        $global:LASTEXITCODE = $realLASTEXITCODE
+           
+        # Default console looks like this
+        # PS C:\WINDOWS\system32> 
+        return " "
     }
 }
+
+. $PSScriptRoot\InvokeBuild.ps1
 
 function InstallPoshGit() {
     # We need Windows 10 or WMF 5 for Install-Module

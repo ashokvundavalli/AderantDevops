@@ -5,15 +5,15 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using ILogger = Aderant.Build.Logging.ILogger;
 
-namespace Aderant.BuildTime.Tasks {
+namespace Aderant.Build.Tasks.BuildTime {
     internal sealed class PowerShellScriptRunner {
         private readonly ILogger logger;
 
         public bool ErrorStreamToOutputStream { get; set; }
 
-        private Collection<PSObject> output = new Collection<PSObject>();
-        private Runspace runspace;
-        private PowerShell ps;
+        private readonly Collection<PSObject> output = new Collection<PSObject>();
+        private readonly Runspace runspace;
+        private readonly PowerShell ps;
 
         public event EventHandler<ScriptCompletedEventArgs> ScriptCompleted;
 

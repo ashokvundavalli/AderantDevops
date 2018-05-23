@@ -146,9 +146,18 @@ function UpdateOrBuildAssembly($properties) {
         # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
 
         [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
+
+        Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
+
         if ($branch -eq "master") {
+            Write-Host $branch -ForegroundColor Green -NoNewline
+            Write-Host "]`r`n"
             & git -C $PSScriptRoot pull --ff-only
+        } else {
+            Write-Host $branch -ForegroundColor Yellow -NoNewline
+            Write-Host "]`r`n"
         }
+
         [string]$head = & git -C $PSScriptRoot rev-parse HEAD
         
         UpdateSubmodules $head

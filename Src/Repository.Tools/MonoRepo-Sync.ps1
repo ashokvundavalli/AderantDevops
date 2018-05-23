@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory=$false)][string]$repositoryDirectory,
-    [Parameter(Mandatory=$false)][array]$repositories = @("AccountsPayable", "AderantExpertLauncher", "Billing", "Budgeting", "Build.Infrastructure", "Case", "ClientMatter", "Conflicts", "Customization", "Database", "Deployment", "Disbursements", "Framework", "Inquiries", "MatterPlanning", "Presentation", "UIAutomation.Framework"),
+    [Parameter(Mandatory=$false)][string[]]$repositories = @("AccountsPayable", "AderantExpertLauncher", "Billing", "Budgeting", "Build.Infrastructure", "Case", "ClientMatter", "Conflicts", "Customization", "Database", "Deployment", "Disbursements", "Framework", "Inquiries", "MatterPlanning", "Presentation", "UIAutomation.Framework"),
     [Parameter(Mandatory=$false)][string]$branch = "master",
     [switch]$initialize
 )

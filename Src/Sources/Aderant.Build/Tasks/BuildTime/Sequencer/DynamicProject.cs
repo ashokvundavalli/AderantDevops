@@ -5,12 +5,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.MSBuild;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.BuildTime.Tasks.Sequencer {
+namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of Expert modules in dependency order and in parallel
     /// </summary>
@@ -41,7 +40,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                     outputFile.WriteLine($"Group ({i})");
                     foreach (var dependencyRef in projectGroup) {
-                        outputFile.WriteLine($"|   |---{dependencyRef.Name}");
+                        var isDirty = (dependencyRef as VisualStudioProject)?.IsDirty == true;
+                        outputFile.WriteLine($"|   |---{dependencyRef.Name}" + (isDirty ? " *" : ""));
                     }
 
                     // If there are no projects in the item group, no point generating any Xml for this build node
@@ -57,7 +57,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         continue;
                     }
 
-                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, isComboBuild, comboBuildProjectFile));
+                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom, isComboBuild, comboBuildProjectFile));
 
                     // e.g. <Target Name="Build2">
                     Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
@@ -97,7 +97,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
             return project;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, bool isComboBuild, string comboBuildProjectFile) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
             return projectGroup.Select(
                 studioProject => {
                     // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
@@ -109,12 +109,18 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                     VisualStudioProject visualStudioProject = studioProject as VisualStudioProject;
 
                     if (visualStudioProject != null) {
-                        if (!visualStudioProject.IncludeInBuild) {
+                        if ( !visualStudioProject.IncludeInBuild ) {
                             return null;
                         }
 
+                        string properties = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot);
+
+                        if (visualStudioProject.SolutionDirectoryName != buildFrom) {
+                            properties += ";RunCodeAnalysisOnThisProject=false";
+                        }
+
                         ItemGroupItem item = new ItemGroupItem(visualStudioProject.Path) {
-                            ["AdditionalProperties"] = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot),
+                            ["AdditionalProperties"] = properties,
                             ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                             ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture),
@@ -126,7 +132,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                     ExpertModule marker = studioProject as ExpertModule;
                     if (marker != null) {
-                        string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, marker.Name));
+                        string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
+                        string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
 
                         ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets)) {
                             ["AdditionalProperties"] = properties,
@@ -140,7 +147,8 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
 
                     if (node != null) {
                         if (node.IsCompletion) {
-                            string properties = AddBuildProperties(null, fileSystem, null, Path.Combine(fileSystem.Root, node.ModuleName));
+                            string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == node.ModuleName ? fileSystem.Root : Path.Combine(fileSystem.Root, node.ModuleName);
+                            string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
 
                             ItemGroupItem item = new ItemGroupItem(
                                 Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), ComplationTargets)) {
@@ -253,6 +261,7 @@ namespace Aderant.BuildTime.Tasks.Sequencer {
                         propertiesList.Add($"SolutionFileName={Path.GetFileName(visualStudioProject.SolutionFile)}");
                         propertiesList.Add($"SolutionPath={visualStudioProject.SolutionRoot}");
                         propertiesList.Add($"SolutionName={Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile)}");
+                        propertiesList.Add($"BuildProjectReferences={visualStudioProject.IsDirty}");
 
                         if (visualStudioProject.BuildConfiguration != null) {
                             propertiesList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");

@@ -5,12 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 
-namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
-
+namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     [DebuggerDisplay("DirectoryNode: {Name}")]
     internal sealed class DirectoryNode : IDependencyRef {
         private ICollection<IDependencyRef> dependsOn;
@@ -84,6 +82,11 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     internal class VisualStudioProject : IEquatable<VisualStudioProject>, IDependencyRef {
         public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private readonly XDocument project;
+
+        /// <summary>
+        /// Flag for if the project has been changed. Used for reducing the build set.
+        /// </summary>
+        public bool IsDirty { get; set; } = false;
 
         protected VisualStudioProject() {
         }
@@ -172,6 +175,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
 
             string relativePath = PathUtility.MakeRelative(System.IO.Path.GetDirectoryName(Path), file);
 
+            // todo: convert this to a hash table
             if (projectItems.Contains(relativePath, StringComparer.OrdinalIgnoreCase)) {
                 return true;
             }
@@ -180,13 +184,14 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         }
 
         private static IEnumerable<string> GetProjectItems(XDocument document) {
-            return document.Descendants(msbuild + "Content").Concat(document.Descendants(msbuild + "None")).Select(s => s.Attribute("Include")?.Value);
+            return document.Descendants(msbuild + "Content").Concat(document.Descendants(msbuild + "None")).Concat(document.Descendants(msbuild + "Compile")).Select(s => s.Attribute("Include")?.Value);
         }
 
         /// <summary>
         /// Initialize a new instance of the <see cref="VisualStudioProject"/> class.
         /// </summary>
-        /// <param name="project"></param>a
+        /// <param name="project"></param>
+        /// <param name="projectGuid"></param>
         /// <param name="assemblyName">Name of the assembly generated from the project.</param>
         /// <param name="rootNamespace">The project's root namespace.</param>
         /// <param name="path">The physical location of the project on the disk.</param>

@@ -4,12 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.Sequencer;
+using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.Build.Construction;
 
-namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
+namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     internal class ProjectDependencyAnalyzer {
         private readonly CSharpProjectLoader loader;
         private readonly TextTemplateAnalyzer textTemplateAnalyzer;
@@ -49,12 +48,16 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
         /// </summary>
         /// <param name="context">The context.</param>
         public List<IDependencyRef> GetDependencyOrder(AnalyzerContext context) {
+
+            // Load all the necessary project files and record their dependency relationships.
             TopologicalSort<IDependencyRef> graph = GetDependencyGraph(context);
 
             GraphVisitor vistior = new GraphVisitor(fileSystem.Root);
             vistior.BeginVisit(graph);
 
-            return GetDependencyOrderFromGraph(graph);
+            // Solve the build order.
+            var ordered = GetDependencyOrderFromGraph(graph);
+            return ordered;
         }
 
         public List<List<IDependencyRef>> GetBuildGroups(IEnumerable<IDependencyRef> projects) {
@@ -151,22 +154,91 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             return null;
         }
 
+        private void LoadProjects(AnalyzerContext context) {
 
-        private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
-            List<string> projects = new List<string>();
+            List<string> projectFiles = new List<string>();
 
             foreach (string directory in context.Directories) {
-                projects.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
+                projectFiles.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
             }
 
-            IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+            //IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+
+            // reduce list
+            // projectFiles = projectFiles.Where(f=>f.Contains("Aderant") && f.Contains("Framework"));
+
+            //var projectFiles = context.ProjectFiles;
+            var files = context.Files;
+
+            foreach (string projectFile in projectFiles) {
+                VisualStudioProject studioProject;
+                if (loader.TryParse(context.Directories, projectFile, out studioProject)) {
+                    if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
+
+                        // check if this proj contains needed files
+                        if (files != null) {
+                            foreach (var file in files) {
+
+                                if (studioProject.ContainsFile(file)) {
+                                    // found one
+                                    this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+
+                    } else {
+
+                    }
+
+
+                    studioProject.SolutionRoot = GetSolutionRootForProject(context.Directories, solutionFileFilters, studioProject.Path);
+                } else {
+                    parseErrors.Add(projectFile);
+                }
+            }
+
+            context.ProjectFiles = projectFiles;
+        }
+
+        /// <summary>
+        /// Walk through all the project files, along with a possible changeset files list, to determine which projects are needed to be built, and their order.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
+
+
+            List<string> projectFiles = new List<string>();
+
+            foreach (string directory in context.Directories) {
+                projectFiles.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
+            }
+
             TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
 
             foreach (string projectFile in projectFiles) {
                 VisualStudioProject studioProject;
                 if (loader.TryParse(context.Directories, projectFile, out studioProject)) {
                     if (!projectByGuidCache.ContainsKey(studioProject.ProjectGuid)) {
+
+                        // check if this proj contains needed files, make a mark
+                        if (context.Files != null) {
+                            foreach (var file in context.Files) {
+                                var fullPath = Path.Combine(context.ModulesDirectory, file);
+                                if (studioProject.ContainsFile(fullPath)) {
+                                    // found one
+                                    studioProject.IsDirty = true;
+                                    break;
+                                }
+                            }
+
+                        }
+
+                        // the project may need to be added regardless of changed or not
                         this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
+
                     } else {
                         
                     }
@@ -650,7 +722,8 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             Console.WriteLine(String.Format("{0, -60} - {1}", visualStudioProject.Name, visualStudioProject.GetType().Name));
             Console.WriteLine($"|   |--- {visualStudioProject.DependsOn.Count} dependencies");
 
-            outputFile.WriteLine(String.Format("{0, -60} - {1}", $"{visualStudioProject.Name} ({visualStudioProject.DependsOn.Count})", visualStudioProject.GetType().Name));
+            var v = visualStudioProject.IsDirty ? "*" : "";
+            outputFile.WriteLine(String.Format("{0, -60} - {1}", $"{visualStudioProject.Name} {v} ({visualStudioProject.DependsOn.Count}) ", visualStudioProject.GetType().Name));
             foreach (var dependencyRef in visualStudioProject.DependsOn) {
                 outputFile.WriteLine($"|   |---{dependencyRef.Name}");
             }
@@ -679,7 +752,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
     }
 
     public class ParseResult {
-        public string SoluitionFile { get; internal set; }
+        public string SolutionFile { get; internal set; }
         public IReadOnlyDictionary<string, ProjectInSolution> ProjectsByGuid { get; internal set; }
         public IReadOnlyList<ProjectInSolution> ProjectsInOrder { get; internal set; }
         public IReadOnlyList<SolutionConfigurationInSolution> SolutionConfigurations { get; internal set; }
@@ -690,7 +763,7 @@ namespace Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer {
             SolutionFile file = SolutionFile.Parse(solutionFile);
 
             return new ParseResult {
-                SoluitionFile = solutionFile,
+                SolutionFile = solutionFile,
                 ProjectsByGuid = file.ProjectsByGuid,
                 ProjectsInOrder = file.ProjectsInOrder,
                 SolutionConfigurations = file.SolutionConfigurations

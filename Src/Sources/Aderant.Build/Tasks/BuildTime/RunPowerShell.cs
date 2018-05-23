@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,8 +7,8 @@ using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-namespace Aderant.BuildTime.Tasks {
-    public class RunPowerShell : Microsoft.Build.Utilities.Task {
+namespace Aderant.Build.Tasks.BuildTime {
+    public class RunPowerShell : Task {
         public string Command { get; set; }
 
         public string File { get; set; }

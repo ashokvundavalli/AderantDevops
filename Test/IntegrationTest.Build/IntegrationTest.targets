@@ -116,7 +116,6 @@
 
   <!-- Server Image -->
 
-
   <Target Name="GetServerImage">
 
     <PropertyGroup>
@@ -124,53 +123,61 @@
       <ImageName>Local_$([System.DateTime]::Now.ToFileTimeUtc())</ImageName>
     </PropertyGroup>
 
-    <!-- Get dependencies -->
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(ModuleBuildTempDirectory)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
+    <Message Text="Acquiring Expert server image." />
 
     <ItemGroup>
+      <PackageDependency Condition="'$(PackageDependency)' != ''" Include="$(PackageDependency.Split('#'))" />
+    </ItemGroup>
+
+    <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
+      PackageDependency="%(PackageDependency.Identity)"
+      LightUpManifest="$(LightUpManifest)" />
+
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildInfrastructureDirectory)\Src\Build\LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(ModuleBuildTempDirectory)&apos; -moduleName &apos;$(ModuleName)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
+    <ItemGroup>
       <FilesToMove Include="$(ImageWorkingDirectory)\ApplicationServerCommon.psm1;$(ImageWorkingDirectory)\SecuritySetup.ps1;$(ImageWorkingDirectory)\TeardownServerImage.ps1"/>
-      <!--<StoredProcedures Include="$(ImageWorkingDirectory)\StoredProcedures\*"/>-->
     </ItemGroup>
 
     <MakeDir Directories="$(ImageWorkingDirectory)\bin" />
     <Move SourceFiles="@(FilesToMove)" DestinationFolder="$(ImageWorkingDirectory)\bin" />
-    <!--<Move SourceFiles="@(StoredProcedures)" DestinationFolder="$(ImageWorkingDirectory)" />-->
 
   </Target>
 
-  <Target Name="ProvisionDatabase">
+  <Target Name="ProvisionExpertDatabase">
 
     <PropertyGroup>
       <ImageWorkingDirectory>$(ModuleBuildTempDirectory)\Dependencies</ImageWorkingDirectory>
       <DatabaseName>$(DatabaseName)</DatabaseName>
     </PropertyGroup>
-    
-    <!-- Restore Database -->
+
+    <Message Text="Provisioning Expert database: $(DatabaseName)" />
+
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
       Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\ProvisionDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -backupPath &apos;$(ImageWorkingDirectory)\Expert.bak&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
 
   </Target>
 
-
   <Target Name="UpdateServerImage">
+
+    <Message Text="Updating Expert server image: $(ExpertEnvironmentName)." />
+
     <PropertyGroup>
       <ImageWorkingDirectory>$(ModuleBuildTempDirectory)\Dependencies</ImageWorkingDirectory>
       <ImagePath>$(ImageWorkingDirectory)\ExpertServerImage.zip</ImagePath>
       <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
-      <RoleFiles>$(ModuleBuildTempDirectory)\Bin\Module\;$(ImageWorkingDirectory)\$(ImageName)\Roles\</RoleFiles>
+      <RoleFiles>$(BinModuleDirectory);$(BinTestDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\;$(ModuleBuildTempDirectory)\Bin\Module\;$(ImageWorkingDirectory)\$(ImageName)\Roles\</RoleFiles>
       <ModuleBuild>$(ModuleBuildTempDirectory)\Bin\Module</ModuleBuild>
     </PropertyGroup>
 
-    <Message Text="Updating Expert server image." />
-    
     <!--Update Server Image -->
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ImageName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleBuild)&apos; }&quot;" />
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ImageName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleBuild);$(BinModuleDirectory);$(BinTestDirectory);$(SolutionDirectoryPath)\Packages&apos; }&quot;" />
 
   </Target>
-
 
   <Target Name="LightUpServerImage">
 
@@ -181,11 +188,14 @@
       <ServicePassword>Ad3rant0</ServicePassword>
     </PropertyGroup>
 
-    <!-- Light up server image -->
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\$(ImageName)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /servicepassword:$(ServicePassword) /name:$(ImageName) }&quot;" />
+    <Message Text="Lighting up Expert server image: Expert_$(ExpertEnvironmentName)." />
 
-    <!-- Probe it's working. It will not fail the break. Just for reference. -->
-    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; ProbeServerImage /image:&apos;http://localhost/Expert_$(ImageName)&apos; }&quot;" />
+    <!-- Light up server image -->
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; LightUpServerImage /image:&apos;$(ImageWorkingDirectory)\$(ImageName)&apos; /server:LocalHost /database:$(DatabaseName) /serviceaccount:$(ServiceAccount) /name:$(ImageName) }&quot;" />
+
+    <OnError ExecuteTargets="LightsOff" />
 
   </Target>
 
@@ -215,26 +225,37 @@
 
     <ItemGroup>
       <PreparePackages Include="$(CommonPackageNames)" />
-      <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" Condition="'%(Extension)' == '.zip'" />
+      <CommonPackages Include="$(ImageWorkingDirectory)\Packages\%(PreparePackages.Identity)" Condition="'%(Extension)' == '.zip'"  />
+
+      <PackagesToImport Include="$(PackagesToImport)" />
       <Packages Include="$(ModuleBuildTempDirectory)\Bin\Module\Packages\*" />
       <Packages Include="%(Packages.FullPath)" Condition="'%(Extension)' == '.zip'" />
       <ConfigFiles Include="$(ImageWorkingDirectory)\$(ImageName)\Services\extensions.config;$(ImageWorkingDirectory)\$(ImageName)\Services\bindings.config;$(ImageWorkingDirectory)\$(ImageName)\Services\clients.config;$(ImageWorkingDirectory)\$(ImageName)\Services\instance.config" />
     </ItemGroup>
 
-    <Message Text="CommonPackages Identity:%(CommonPackages.Identity)" />
-    <Message Text="Packages Identity:%(Packages.Identity)" />
-
     <Copy SourceFiles="@(ConfigFiles)" DestinationFolder="$(ImageWorkingDirectory)" />
     <Copy SourceFiles="$(FactoryBin)" DestinationFolder="$(ImageWorkingDirectory)" />
 
     <!-- Common Package Import -->
-    <Exec Condition="'@(CommonPackages)' != ''" 
+    <Exec Condition="'@(CommonPackages)' != ''"
+      ContinueOnError="false"
+      IgnoreExitCode="false"
       Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
 
-
     <!-- Package Import -->
-    <Exec Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
+    <Exec Condition="'@(Packages)' != ''"
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(ModuleBuildTempDirectory)\Bin\Module /AdditionalPluginDirectories:$(ModuleBuildTempDirectory)\Bin\Module" />
 
+    <OnError ExecuteTargets="LightsOff" />
+
+  </Target>
+
+  <Target Name="LightsOffWrap"
+    DependsOnTargets="RunIntegrationTests;RunAutomationTests"
+    AfterTargets="RunIntegrationTests;RunAutomationTests">
+    <CallTarget Targets="LightsOff" />
   </Target>
 
   <Target Name="LightsOff">
@@ -245,13 +266,15 @@
       <ImageName>$(ImageName)</ImageName>
     </PropertyGroup>
 
-    <!-- Remove Server Image -->
-    <Exec ContinueOnError="false"
+    <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
+
+    <Exec ContinueOnError="true"
       IgnoreExitCode="false"
       Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; TeardownServerImage /name:$(ImageName) }&quot;" />
 
-    <!-- Remove Expert Database -->
-    <Exec ContinueOnError="false"
+    <Message Text="Dropping Expert database: $(DatabaseName)." />
+
+    <Exec ContinueOnError="true"
       IgnoreExitCode="false"
       Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DropDatabase.ps1&apos; -serverInstance &apos;LocalHost&apos; -databaseName &apos;$(DatabaseName)&apos; -assembly &apos;$(ImageWorkingDirectory)\API.Database.dll&apos; }&quot;" />
 
@@ -273,33 +296,33 @@
       <Using Namespace="System.Xml.XPath" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
-            string[] referencedModule = PackageDependency.Split('|');
-        
-            List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
-
-            foreach (string property in referencedModule.Skip(1)) {
-                if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
-                    attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
-                    continue;
+            string[] dependencies = PackageDependency.Split(';');
+            foreach (var dependency in dependencies) {
+                string[] referencedModule = dependency.Split('|');
+                List<XAttribute> attributes = new List<XAttribute> { new XAttribute("Name", referencedModule[0]) };
+                foreach (string property in referencedModule.Skip(1)) {
+                    if (property.StartsWith("getaction:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "getaction:") {
+                        attributes.Add(new XAttribute("GetAction", property.Split(new char[] { ':' }, 2)[1]));
+                        continue;
+                    }
+                
+                    if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
+                        attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
+                        continue;
+                    }
+                
+                    if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
+                        attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
+                    }
                 }
-
-                if (property.StartsWith("assemblyversion:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "assemblyversion:") {
-                    attributes.Add(new XAttribute("AssemblyVersion", property.Split(new char[] { ':' }, 2)[1]));
-                    continue;
-                }
-
-                if (property.StartsWith("version:", StringComparison.OrdinalIgnoreCase) && property.ToLower() != "version:") {
-                    attributes.Add(new XAttribute("Version", property.Split(new char[] { ':' }, 2)[1].Trim()));
-                }
+                
+                XElement manifest = XElement.Load(LightUpManifest);
+                manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
+                manifest.Save(LightUpManifest);
             }
-
-            XElement manifest = XElement.Load(LightUpManifest);
-            manifest.XPathSelectElement("/ReferencedModules").Add(new XElement("ReferencedModule", attributes.ToArray()));
-            manifest.Save(LightUpManifest);
           ]]>
       </Code>
     </Task>
-
   </UsingTask>
 
   <Target Name="UpdateManifest">

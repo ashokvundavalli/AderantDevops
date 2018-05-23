@@ -1,12 +1,11 @@
 ﻿using System;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.BuildTime.Tasks.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
     public class DirectoryNodeTests {
-
         [TestMethod]
         public void Node_name_Initialize() {
             DirectoryNode node = new DirectoryNode("A", false);
