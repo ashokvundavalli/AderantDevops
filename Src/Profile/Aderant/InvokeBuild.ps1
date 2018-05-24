@@ -5,11 +5,13 @@ function global:Invoke-Build {
     param (
         [Parameter(Position=0)]
         [Parameter(ParameterSetName="Incremental")]
-        [switch]$branch,
+        [ValidateSet("Changed", "Branch", "All")]
+        [string]$buildType = "Branch",
 
         [Parameter(Position=1)]
         [Parameter(ParameterSetName="Incremental")]
-        [switch]$downstream,
+        [ValidateSet("Direct", "All", "None")]
+        [string]$downStream = "All",
 
         [Parameter(Position=2)]
         [Parameter(ParameterSetName="BuildAll")]
@@ -47,24 +49,7 @@ function global:Invoke-Build {
     )
 
     begin {
-        Enum BuildType {
-            Changed
-            Branch
-            All
-        }
-
-        [BuildType]$buildType = [BuildType]::Changed
-
-        switch ($true) {
-            ($branch.IsPresent) {
-                $buildType = [BuildType]::Branch
-            }
-            ($all.IsPresent) {
-                $buildType = [BuildType]::All
-            }
-        }
-
-        Write-Host "Build Type: $buildType" -ForegroundColor DarkGreen
+        Write-Host "Build Type: $buildType, downstream search option: $downstream " -ForegroundColor DarkGreen
 
         [string]$flavor = "Debug"
 
@@ -104,7 +89,7 @@ function global:Invoke-Build {
             $task = "Package"
         }
 
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType $buildType -Downstream:$downstream.ToBool()
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType $buildType -Downstream $downStream 
     }
 
     end {
