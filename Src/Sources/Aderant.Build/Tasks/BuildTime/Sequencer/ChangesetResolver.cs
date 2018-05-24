@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using LibGit2Sharp;
@@ -26,6 +25,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 if (string.IsNullOrEmpty(friendlyBranchName) || IsDetachdHead(friendlyBranchName)) {
                     return Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME");
                 }
+
                 return friendlyBranchName;
             }
             private set { friendlyBranchName = value; }
@@ -41,11 +41,11 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(string workingDirectory, string buildType = "changed", bool discover = true) {
+        public ChangesetResolver(string workingDirectory, ComboBuildType buildType, bool discover = true) {
             InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
         }
 
-        public void InitializeFromWorkingDirectory(string workingDirectory, string buildType, bool discover) {
+        public void InitializeFromWorkingDirectory(string workingDirectory, ComboBuildType buildType, bool discover) {
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
@@ -63,7 +63,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 CanonicalBranchName = repo.Head.CanonicalName;
 
                 try {
-                    var filter = new CommitFilter {
+                    CommitFilter filter = new CommitFilter {
                         ExcludeReachableFrom = repo.Branches["master"],
                         IncludeReachableFrom = repo.Branches[FriendlyBranchName]
                     };
@@ -77,7 +77,6 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         }
 
                         IEnumerable<Commit> branchCommits = repoBranch.Commits.Take(divergedDistance);
-
                         Commit firstMatch = Commits.FirstOrDefault(a => a == branchCommits.FirstOrDefault(b => b == a));
 
                         if (firstMatch != null) {
@@ -87,19 +86,17 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         }
                     }
 
-                    TreeChanges changes = repo.Diff.Compare<TreeChanges>(Commits[0].Tree, Commits[divergedDistance - 1].Parents.FirstOrDefault().Tree);
+                    TreeChanges changes = repo.Diff.Compare<TreeChanges>(Commits[0].Tree, Commits[divergedDistance - 1].Parents.FirstOrDefault()?.Tree);
                     List<string> changedFiles = new List<string>();
                     foreach (var treeChange in changes) {
                         changedFiles.Add(treeChange.Path);
                     }
 
-                    if (buildType.ToLowerInvariant() == "changed") {
+                    if (buildType == ComboBuildType.Changed) {
                         UpdateChangedFilesFromStatus(repo, changedFiles);
                     }
                     
-
                     ChangedFiles = changedFiles.Distinct().ToList();
-
                 } catch {
                 }
             }

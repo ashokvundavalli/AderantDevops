@@ -25,12 +25,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, string buildType, string downStreamOption) {
-
-
-            // Get all changed files list
-            var files = new ChangesetResolver(modulesDirectory, buildType).ChangedFiles;
-
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, ComboBuildType buildType, string downStreamOption) {
             // This could also fail with a circular reference exception. It it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
@@ -41,16 +36,21 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 analyzer.AddExclusionPattern("Applications.DocuDraftAddIn");
                 analyzer.AddExclusionPattern("UIAutomation");
                 analyzer.AddExclusionPattern("UITest");
-                analyzer.AddExclusionPattern("Applications.Marketing");
-                
+                analyzer.AddExclusionPattern("Applications.Marketing");                
                 analyzer.AddExclusionPattern("Workflow.Integration.Samples");
                 analyzer.AddExclusionPattern("Aderant.Installation");
                 analyzer.AddExclusionPattern("MomentumFileOpening");
                 analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
                 
-                var context = new AnalyzerContext();
+                AnalyzerContext context = new AnalyzerContext();
                 context.AddDirectory(modulesDirectory);
-                context.SetFilesList(files);
+
+                // Get all changed files list
+                if (buildType != ComboBuildType.All) {
+                    List<string> files = new ChangesetResolver(modulesDirectory, buildType).ChangedFiles;
+                    context.SetFilesList(files);
+                }
+
                 context.ModulesDirectory = modulesDirectory;
                 List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(context);
 
@@ -100,7 +100,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// <param name="buildType">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="downStreamOption">Build the directly affected downstream projects, or recursively search for all downstream projects, or none?</param>
         /// <returns></returns>
-        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, string buildType, string downStreamOption) {
+        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType buildType, string downStreamOption) {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
             HashSet<string> h = new HashSet<string>();
@@ -113,14 +113,11 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 case "All":
                     MarkDirtyAll(visualStudioProjects, h);
                     break;
-                case "None":
-                default:
-                    break;
             }
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
             IEnumerable<IDependencyRef> filteredProjects;
-            if (buildType.ToLowerInvariant() == "all") {
+            if (buildType == ComboBuildType.All) {
                 filteredProjects = visualStudioProjects;
             } else {
                 filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false).ToList();

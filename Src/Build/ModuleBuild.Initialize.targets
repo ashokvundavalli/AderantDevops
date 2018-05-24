@@ -119,7 +119,6 @@
     </InitializeModuleBuildDependsOn>
   </PropertyGroup>
 
-
   <PropertyGroup>
     <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
     <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>

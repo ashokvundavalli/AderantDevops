@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Aderant.Build.MSBuild;
 using Aderant.Build.Providers;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
@@ -80,7 +81,7 @@ namespace Aderant.Build.Tasks.BuildTime {
                 //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                var project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, BuildType, DownStream);
+                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, (ComboBuildType)Enum.Parse(typeof(ComboBuildType), BuildType), DownStream);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
@@ -151,5 +152,11 @@ namespace Aderant.Build.Tasks.BuildTime {
                 type = RepositoryType.Tfvc;
             }
         }
+    }
+
+    public enum ComboBuildType {
+        Staged,
+        Changed,
+        All
     }
 }
