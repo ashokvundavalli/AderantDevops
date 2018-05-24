@@ -80,7 +80,7 @@
 
   <Target Name="CreateParallelBuildProject">
     
-    <Message Text="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx BuildType: $(BuildType)" />
+    <Message Text="BuildType: $(BuildType)" />
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
