@@ -6,12 +6,12 @@ function global:Invoke-Build {
         [Parameter(Position=0)]
         [Parameter(ParameterSetName="Incremental")]
         [ValidateSet("Changed", "Branch", "All")]
-        [string]$buildType = "Branch",
+        [BuildType]$buildType = "Branch",
 
         [Parameter(Position=1)]
         [Parameter(ParameterSetName="Incremental")]
         [ValidateSet("Direct", "All", "None")]
-        [string]$downStream = "All",
+        [DownStreamType]$downStream = "All",
 
         [Parameter(Position=2)]
         [Parameter(ParameterSetName="BuildAll")]
@@ -49,6 +49,17 @@ function global:Invoke-Build {
     )
 
     begin {
+        Enum BuildType {
+              Changed
+              Branch
+              All
+        }
+        Enum DownStreamType {
+              Direct
+              All
+              None
+        }
+
         Write-Host "Build Type: $buildType, downstream search option: $downstream " -ForegroundColor DarkGreen
 
         [string]$flavor = "Debug"
@@ -88,7 +99,9 @@ function global:Invoke-Build {
         if ($package -and -not $skipPackage) {
             $task = "Package"
         }
-
+      
+        # For debug
+        # Write-Host "& $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task  -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType $buildType -Downstream $downStream "
         & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType $buildType -Downstream $downStream 
     }
 

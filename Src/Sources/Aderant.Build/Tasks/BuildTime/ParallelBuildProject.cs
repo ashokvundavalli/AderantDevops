@@ -81,7 +81,9 @@ namespace Aderant.Build.Tasks.BuildTime {
                 //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, (ComboBuildType)Enum.Parse(typeof(ComboBuildType), BuildType), DownStream);
+                ComboBuildType buildType = (ComboBuildType)Enum.Parse(typeof(ComboBuildType), BuildType);
+                DownStreamType downstreamType = (DownStreamType)Enum.Parse(typeof(DownStreamType), DownStream);
+                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, buildType, downstreamType);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
@@ -158,5 +160,11 @@ namespace Aderant.Build.Tasks.BuildTime {
         Staged,
         Changed,
         All
+    }
+
+    public enum DownStreamType {
+        Direct,
+        All,
+        None
     }
 }

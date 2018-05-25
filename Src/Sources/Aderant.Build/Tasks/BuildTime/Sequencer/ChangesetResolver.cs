@@ -41,7 +41,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(string workingDirectory, ComboBuildType buildType, bool discover = true) {
+        public ChangesetResolver(string workingDirectory, ComboBuildType buildType=ComboBuildType.Changed, bool discover = true) {
             InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
         }
 
