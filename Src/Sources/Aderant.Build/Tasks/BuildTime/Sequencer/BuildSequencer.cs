@@ -97,10 +97,10 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// According to options, find out which projects are selected to build.
         /// </summary>
         /// <param name="visualStudioProjects">All the projects list.</param>
-        /// <param name="buildType">Build the current branch, the changed files since forking from master, or all?</param>
+        /// <param name="comboBuildType">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="downStreamType">Build the directly affected downstream projects, or recursively search for all downstream projects, or none?</param>
         /// <returns></returns>
-        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType buildType, DownStreamType downStreamType) {
+        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType comboBuildType, DownStreamType downStreamType) {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
             HashSet<string> h = new HashSet<string>();
@@ -117,7 +117,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
             IEnumerable<IDependencyRef> filteredProjects;
-            if (buildType == ComboBuildType.All) {
+            if (comboBuildType == ComboBuildType.All) {
                 filteredProjects = visualStudioProjects;
             } else {
                 filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false).ToList();

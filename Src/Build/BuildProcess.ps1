@@ -10,8 +10,8 @@ param(
     [switch]$Integration,
     [switch]$Automation,
     [switch]$SkipPackage,
-    [string]$buildType,
-    [string]$downstream 
+    [string]$ComboBuildType,
+    [string]$DownStreamType 
 )
 
 $EntryPoint = Get-Variable "BuildTask"
@@ -260,8 +260,8 @@ task Build {
 
     $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
 
-    $commonArgs = "$commonArgs /p:BuildType=$($buildType)" 
-    $commonArgs = "$commonArgs /p:DownStream=$($downstream)" 
+    $commonArgs = "$commonArgs /p:ComboBuildType=$($ComboBuildType)" 
+    $commonArgs = "$commonArgs /p:DownStreamType=$($DownStreamType)" 
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
