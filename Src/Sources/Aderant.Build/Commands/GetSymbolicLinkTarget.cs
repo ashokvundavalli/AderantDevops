@@ -30,22 +30,27 @@ namespace Aderant.Build.Commands {
 
 		protected override void ProcessRecord()
 		{
-			SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
-			if (directoryHandle.IsInvalid)
-				throw new Win32Exception(Marshal.GetLastWin32Error());
+		    StringBuilder path;
+		    int size;
+		    using (SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero)) {
+		        if (directoryHandle.IsInvalid) {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
 
-			StringBuilder path = new StringBuilder(512);
-			int size = GetFinalPathNameByHandle(directoryHandle.DangerousGetHandle(), path, path.Capacity, 0);
-			if (size < 0)
-				throw new Win32Exception(Marshal.GetLastWin32Error());
-			// The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\"
-			// More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
-			if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-				WriteObject(path.ToString().Substring(4));
-			else
-				WriteObject(path.ToString());
+                path = new StringBuilder(512);
+		        size = GetFinalPathNameByHandle(directoryHandle.DangerousGetHandle(), path, path.Capacity, 0);
+		    }
 
-		}
-
+		    if (size < 0) {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\"
+            // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
+            if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\') {
+                WriteObject(path.ToString().Substring(4));
+            } else {
+                WriteObject(path.ToString());
+            }
+        }
 	}
 }
