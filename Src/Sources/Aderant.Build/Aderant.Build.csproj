@@ -115,7 +115,6 @@
     <Compile Include="Commands\PushPaketTemplates.cs" />
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
-    <Compile Include="Commands\UiTestImportPackagesCommand.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
     <Compile Include="DependencyAnalyzer\IDependencyRef.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
@@ -147,7 +146,6 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
-    <Compile Include="Commands\StartIntegrationTests.cs" />
     <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\AnalyzerContext.cs" />
     <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\CSharpProjectLoader.cs" />
     <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\ProjectDependencyAnalyzer.cs" />
@@ -236,7 +234,6 @@
     <Compile Include="Logging\BuildTaskLogger.cs" />
     <Compile Include="NativeUtilities.cs" />
     <Compile Include="Tasks\PublishBuild.cs" />
-    <Compile Include="Tasks\ConsolePackageImporter.cs" />
     <Compile Include="DependencyResolver\DependencyResolvedEventArgs.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleMapper.cs" />
     <Compile Include="DependencyAnalyzer\SourceControlModuleInspector.cs" />
@@ -331,7 +328,6 @@
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DependencyAnalyzer\ExpertBuilds.cd" />
     <None Include="Resources\Nuspec.template" />
     <None Include="Scripts\undo-buildpersistence.bat" />
     <None Include="Scripts\persist-build.bat" />
