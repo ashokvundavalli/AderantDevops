@@ -1,57 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2770-4455-94CF-489136D6405A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Profile", "Profile", "{D6EF2A47-2169-41BB-82BE-538DFB8D7CC1}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
-	ProjectSection(SolutionItems) = preProject
-		Src\Build\Aderant.Build.Clean.targets = Src\Build\Aderant.Build.Clean.targets
-		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
-		Src\Build\Aderant.Build.CopyToDropV2.targets = Src\Build\Aderant.Build.CopyToDropV2.targets
-		Src\Build\Aderant.Build.IntegrationTesting.targets = Src\Build\Aderant.Build.IntegrationTesting.targets
-		Src\Build\Aderant.Build.OnTestFailure.targets = Src\Build\Aderant.Build.OnTestFailure.targets
-		Src\Build\Aderant.Build.Publish.targets = Src\Build\Aderant.Build.Publish.targets
-		Src\Build\Aderant.Build.Testing.targets = Src\Build\Aderant.Build.Testing.targets
-		Src\Build\Aderant.Build.Zip.targets = Src\Build\Aderant.Build.Zip.targets
-		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
-		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
-		Src\Build\Aderant.CodeSigning.targets = Src\Build\Aderant.CodeSigning.targets
-		Src\Build\Aderant.ComboBuild.targets = Src\Build\Aderant.ComboBuild.targets
-		Src\Build\Aderant.CSharp.targets = Src\Build\Aderant.CSharp.targets
-		Src\Build\Aderant.CustomAfterMicrosoftCommon.targets = Src\Build\Aderant.CustomAfterMicrosoftCommon.targets
-		Src\Build\Aderant.TextTransform.targets = Src\Build\Aderant.TextTransform.targets
-		Src\Build\Aderant.wpp.content.proj = Src\Build\Aderant.wpp.content.proj
-		Src\Build\Aderant.wpp.targets = Src\Build\Aderant.wpp.targets
-		Src\Build\Bootstrap.ps1 = Src\Build\Bootstrap.ps1
-		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
-		Src\Build\BuildModule.ps1 = Src\Build\BuildModule.ps1
-		Src\Build\BuildProcess.ps1 = Src\Build\BuildProcess.ps1
-		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
-		Src\Build\CleanSymlinks.ps1 = Src\Build\CleanSymlinks.ps1
-		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
-		Src\Build\CopyToDropV2.ps1 = Src\Build\CopyToDropV2.ps1
-		Src\Build\dir.proj = Src\Build\dir.proj
-		Src\Build\InvokeServerBuild.ps1 = Src\Build\InvokeServerBuild.ps1
-		Src\Build\LightUpDependencies.ps1 = Src\Build\LightUpDependencies.ps1
-		Src\Build\LightUpManifest.xml = Src\Build\LightUpManifest.xml
-		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
-		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
-		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
-		Src\Build\Mobile.Targets = Src\Build\Mobile.Targets
-		Src\Build\ModuleBuild.Completion.targets = Src\Build\ModuleBuild.Completion.targets
-		Src\Build\ModuleBuild.Initialize.targets = Src\Build\ModuleBuild.Initialize.targets
-		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
-		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
-		Src\Build\Package.ps1 = Src\Build\Package.ps1
-		Src\Build\paket.exe = Src\Build\paket.exe
-		Src\Build\PullServerImage.ps1 = Src\Build\PullServerImage.ps1
-		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
-		Src\Build\Update-Analyzer.ps1 = Src\Build\Update-Analyzer.ps1
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B175EF-44C3-4EE4-BCAE-3B796D6A986D}"
 	ProjectSection(SolutionItems) = preProject
@@ -115,24 +69,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.WebHooks", "Test\U
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarningRatchet", "Src\Sources\WarningRatchet\WarningRatchet.csproj", "{940B72A8-B517-4511-BF66-2F53548A711F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{BEF951AC-BBDF-46C0-8C61-12C3F1667F2F}"
-	ProjectSection(SolutionItems) = preProject
-		Doc\Code-Analysis.md = Doc\Code-Analysis.md
-		Doc\Common-Build-Project.md = Doc\Common-Build-Project.md
-		Doc\First-Time-Setup.md = Doc\First-Time-Setup.md
-		Doc\Warning-Ratchet.md = Doc\Warning-Ratchet.md
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer", "Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj", "{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAnalyzerTest", "Test\IntegrationTest.Build\Resources\RunAnalyzerTest.csproj", "{9299ECBB-0184-498B-A572-559C127BBF4C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.TeamFoundation.Integration", "Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj", "{7AA81D68-A831-41BA-B899-062FDAC0C63C}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repository Tools", "Repository Tools", "{93440F8F-7F50-475B-B6F3-0092C4066B57}"
-	ProjectSection(SolutionItems) = preProject
-		Src\Repository.Tools\MonoRepo-Sync.ps1 = Src\Repository.Tools\MonoRepo-Sync.ps1
-	EndProjectSection
 EndProject
 Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "UnitTest.PowerShell", "Test\UnitTest.PowerShell\UnitTest.PowerShell.pssproj", "{876D9DB6-F991-45C0-95A5-64F108A0F086}"
 EndProject
@@ -140,7 +81,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.BuildTime", "Test\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTest.BuildTime", "Test\IntegrationTest.BuildTime\IntegrationTest.BuildTime.csproj", "{F1A3DF24-6D6C-4835-873E-5A09148D60B0}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BuildSrc", "Src\ContentProject\BuildSrc.shproj", "{FDD10972-7785-4BF7-9381-225D2D35C098}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Src\ContentProject\BuildSrc.projitems*{fdd10972-7785-4bf7-9381-225d2d35c098}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -238,9 +184,11 @@ Global
 		{EEF1A8AB-0097-435B-9DBF-7031179FDFA7} = {31A06791-2770-4455-94CF-489136D6405A}
 		{215BE033-1FED-4B9D-B1E7-BD5DA8F9A65F} = {FF9D5E44-F36C-467C-A1CB-31F56A56D091}
 		{415B270C-A913-4BBA-BFB3-E7EC1BB9754F} = {31A06791-2770-4455-94CF-489136D6405A}
-		{BEF951AC-BBDF-46C0-8C61-12C3F1667F2F} = {A35EFF81-AC51-4885-A846-83C45FC98F1E}
 		{876D9DB6-F991-45C0-95A5-64F108A0F086} = {31A06791-2770-4455-94CF-489136D6405A}
 		{4EE1F513-DD7E-4C8D-8B32-D69991F8B790} = {31A06791-2770-4455-94CF-489136D6405A}
 		{F1A3DF24-6D6C-4835-873E-5A09148D60B0} = {31A06791-2770-4455-94CF-489136D6405A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18B1C754-4CEB-4583-8FB8-8B06C521503F}
 	EndGlobalSection
 EndGlobal

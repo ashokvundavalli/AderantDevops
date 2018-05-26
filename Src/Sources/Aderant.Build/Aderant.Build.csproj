@@ -235,7 +235,6 @@
     <Compile Include="XElementExtensions.cs" />
     <Compile Include="Logging\BuildTaskLogger.cs" />
     <Compile Include="NativeUtilities.cs" />
-    <Compile Include="ConsolePackageImporterExecutor.cs" />
     <Compile Include="Tasks\PublishBuild.cs" />
     <Compile Include="Tasks\ConsolePackageImporter.cs" />
     <Compile Include="DependencyResolver\DependencyResolvedEventArgs.cs" />

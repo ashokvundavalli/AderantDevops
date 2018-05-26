@@ -3,12 +3,12 @@
          DefaultTargets="BeforeModuleBuild"
          ToolsVersion="14.0">
 
-  <!-- the DirectoryBuildFile parameter is derived from DynamicProject.cs -->
+  <!-- The DirectoryBuildFile parameter is derived from DynamicProject.cs -->
   <Import Project="$(DirectoryBuildFile)" />
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.TextTransform.targets" />
-  <Import Project="Aderant.Build.Zip.targets" />
+  <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />
   <Import Project="Aderant.Build.Clean.targets" />
 
 

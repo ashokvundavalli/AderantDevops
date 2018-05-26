@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>fdd10972-7785-4bf7-9381-225d2d35c098</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>BuildSrc</Import_RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ExcludePattern>
+    </ExcludePattern>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include=" $(MSBuildThisFileDirectory)\..\Build\**\*;" Exclude="$(ExcludePattern)">
+      <Link>Build\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+    <Content Include=" $(MSBuildThisFileDirectory)\..\Package\**\*;" Exclude="$(ExcludePattern)">
+      <Link>Package\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+    <Content Include=" $(MSBuildThisFileDirectory)\..\Repository.Tools\**\*;" Exclude="$(ExcludePattern)">
+      <Link>Repository.Tools\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+    <Content Include=" $(MSBuildThisFileDirectory)\..\Profile\**\*;" Exclude="$(ExcludePattern)">
+      <Link>Profile\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+    <Content Include=" $(MSBuildThisFileDirectory)\..\Maintenance\**\*;" Exclude="$(ExcludePattern)">
+      <Link>Maintenance\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+        <Content Include=" $(MSBuildThisFileDirectory)\..\Scripts\**\*;" Exclude="$(ExcludePattern)">
+      <Link>Scripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+</Project>
