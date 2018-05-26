@@ -405,20 +405,7 @@ doc.Save(File);
     <MakeDir Directories="$(ModuleBuildTempDirectory)"
       Condition="'$(ModuleBuildTempDirectory)' != ''" />
   </Target>
-
-
-  <!--
-    ==========================================================================================
-        Check For Wrong References
-    ==========================================================================================
-  -->
-  <Target Name="CheckForWrongReferences" Condition="'$(IsCustomBuild)' != 'true' And '$(BuildAll)' != 'true'">
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildScriptsDirectory)Check-ForWrongReferences.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath)' />
-
-  </Target>
+  
 
   <!-- 
     ==========================================================================================
@@ -1392,7 +1379,7 @@ doc.Save(File);
     ==========================================================================================
   -->
   <Target Name="PublishBuild"
-    BeforeTargets="Build;CheckForWrongReferences"
+    BeforeTargets="Build"
     Condition="'$(BuildAll)' == 'true' And '$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
 
     <Message Text="Publishing build for: $(ModuleName) [$(FileVersion)]" />
