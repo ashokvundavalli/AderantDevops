@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Aderant.Build.MSBuild;
 using Aderant.Build.Providers;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
@@ -36,7 +37,9 @@ namespace Aderant.Build.Tasks.BuildTime {
 
         public bool IsComboBuild { get; set; }
 
-        public string BuildType { get; set; }
+        public string ComboBuildType { get; set; }
+
+        public string DownStreamType { get; set; }
 
         public string ComboBuildProjectFile { get; set; }
 
@@ -78,7 +81,9 @@ namespace Aderant.Build.Tasks.BuildTime {
                 //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                var project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, BuildType);
+                ComboBuildType buildType = (ComboBuildType)Enum.Parse(typeof(ComboBuildType), ComboBuildType);
+                DownStreamType downstreamType = (DownStreamType)Enum.Parse(typeof(DownStreamType), DownStreamType);
+                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, buildType, downstreamType);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
@@ -149,5 +154,18 @@ namespace Aderant.Build.Tasks.BuildTime {
                 type = RepositoryType.Tfvc;
             }
         }
+    }
+
+    public enum ComboBuildType {
+        Changed,
+        Branch,
+        Staged,
+        All
+    }
+
+    public enum DownStreamType {
+        Direct,
+        All,
+        None
     }
 }

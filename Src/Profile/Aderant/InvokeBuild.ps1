@@ -5,11 +5,13 @@ function global:Invoke-Build {
     param (
         [Parameter(Position=0)]
         [Parameter(ParameterSetName="Incremental")]
-        [switch]$branch,
+        [ValidateSet("Changed", "Branch", "All")]
+        [ComboBuildType]$comboBuildType = "Branch",
 
         [Parameter(Position=1)]
         [Parameter(ParameterSetName="Incremental")]
-        [switch]$downstream,
+        [ValidateSet("Direct", "All", "None")]
+        [DownStreamType]$downStreamType = "All",
 
         [Parameter(Position=2)]
         [Parameter(ParameterSetName="BuildAll")]
@@ -47,24 +49,18 @@ function global:Invoke-Build {
     )
 
     begin {
-        Enum BuildType {
-            Changed
-            Branch
-            All
+        Enum ComboBuildType {
+              Changed
+              Branch
+              All
+        }
+        Enum DownStreamType {
+              Direct
+              All
+              None
         }
 
-        [BuildType]$buildType = [BuildType]::Changed
-
-        switch ($true) {
-            ($branch.IsPresent) {
-                $buildType = [BuildType]::Branch
-            }
-            ($all.IsPresent) {
-                $buildType = [BuildType]::All
-            }
-        }
-
-        Write-Host "Build Type: $buildType" -ForegroundColor DarkGreen
+        Write-Host "Combo Build Type: $comboBuildType, downstream search type: $downStreamType " -ForegroundColor DarkGreen
 
         [string]$flavor = "Debug"
 
@@ -103,8 +99,8 @@ function global:Invoke-Build {
         if ($package -and -not $skipPackage) {
             $task = "Package"
         }
-
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -BuildType $buildType -Downstream:$downstream.ToBool()
+      
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -ComboBuildType $comboBuildType -DownstreamType $downStreamType
     }
 
     end {
