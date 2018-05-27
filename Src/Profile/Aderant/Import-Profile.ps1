@@ -2,7 +2,9 @@
 class ShellContext {
     ShellContext() {
         $path = "HKCU:\Software\Aderant\PowerShell"
-        New-Item -Path $path -ErrorAction SilentlyContinue | Out-Null 
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -ErrorAction SilentlyContinue | Out-Null 
+        }
         $this.RegistryHome = $path 
 
         # Create the path to the cache if it does not exist
@@ -57,25 +59,10 @@ class ShellContext {
 
 $ShellContext = [ShellContext]::new()
 
-if (Test-Path "$PSScriptRoot\DEBUG.ps1") {
-  . "$PSScriptRoot\DEBUG.ps1" 
-}
-
 # Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
 
 $GulpDirectory = (resolve-path ([System.IO.Path]::Combine($PSScriptRoot, "..\..\Gulp"))).path
-
-function SetUserEnvironmentVariableNoWait($name, $value) {
-    # SetEnvironmentVariable is very slow as it waits for apps to respond so we have this lovely async work around
-Add-Type -MemberDefinition @"
-public static void SetUserEnvironmentVariableNoWait(string name, string value) {
-    System.Threading.ThreadPool.QueueUserWorkItem((_) => System.Environment.SetEnvironmentVariable(name, value, System.EnvironmentVariableTarget.User));
-}
-"@ -Name Internal -NameSpace System -UsingNamespace System.Threading
-
-    [Internal]::SetUserEnvironmentVariableNoWait($name, $value)
-}
 
 function BuildProject($properties, [bool]$rebuild) {
     # Load the build libraries as this has our shared compile function. This function is shared by the desktop and server bootstrap of Build.Infrastructure
@@ -96,6 +83,8 @@ function BuildProject($properties, [bool]$rebuild) {
 }
 
 function LoadAssembly($properties, [string]$targetAssembly) {
+    Set-StrictMode -Version 'Latest'
+
     if ([System.IO.File]::Exists($targetAssembly)) {
         Write-Host "Aderant.Build.dll found at $targetAssembly. Loading..."
 
@@ -114,25 +103,33 @@ function LoadAssembly($properties, [string]$targetAssembly) {
 
         [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($properties.PackagingTool)) | Out-Null
         
-        Import-Module $assembly -DisableNameChecking -Global
+        Get-Module -Name "Aderant" | Remove-Module -Force        
+        Get-Module -Name "dynamic_code_module_Aderant.Build, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" | Remove-Module -Force
+
+        Import-Module $assembly -DisableNameChecking -Global -Force
+    } else {
+        throw "Fatal error. Profile assembly not found"
     }
 }
 
-function UpdateSubmodules([string]$head){
-   # Inspect update time tracking data    
-   $commit = $ShellContext.GetRegistryValue("", "LastSubmoduleCommit")   
-   
-    if ($commit -ne $head) {
-       Write-Debug "Submodule update required"
-       & git -C $PSScriptRoot submodule update --init --recursive
-                
-       $ShellContext.SetRegistryValue("", "LastSubmoduleCommit", $head) | Out-Null
-   } else {
-       Write-Debug "Submodule update not required"
-   }   
+function UpdateSubmodules([string]$head) {
+    Set-StrictMode -Version 'Latest'
+    # Inspect update time tracking data    
+    $commit = $ShellContext.GetRegistryValue("", "LastSubmoduleCommit")   
+    
+     if ($commit -ne $head) {
+        Write-Debug "Submodule update required"
+        & git -C $PSScriptRoot submodule update --init --recursive
+                 
+        $ShellContext.SetRegistryValue("", "LastSubmoduleCommit", $head) | Out-Null
+    } else {
+        Write-Debug "Submodule update not required"
+    }   
 }
 
 function UpdateOrBuildAssembly($properties) {    
+    Set-StrictMode -Version 'Latest'
+
     $aderantBuildAssembly = [System.IO.Path]::Combine($properties.BuildToolsDirectory, "Aderant.Build.dll") 
     
     if (-not [System.IO.File]::Exists($aderantBuildAssembly)) {
@@ -172,8 +169,7 @@ function UpdateOrBuildAssembly($properties) {
     }
 
     if ($outdatedAderantBuildFile) {
-        BuildProject $properties $true
-        SetUserEnvironmentVariableNoWait "EXPERT_BUILD_VERSION" $head
+        BuildProject $properties $true        
     }
 
     $ShellContext.CurrentCommit = $head

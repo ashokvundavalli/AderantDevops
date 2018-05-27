@@ -52,7 +52,7 @@ namespace Aderant.Build.Commands {
         /// <param name="value"></param>
         /// <returns></returns>
         private bool IsNullOrWhiteSpace(String value) {
-            return String.IsNullOrEmpty(value) || value.All(Char.IsWhiteSpace);
+            return String.IsNullOrWhiteSpace(value);
         }
 
         private void SynchronizeProject(string projectFilePath, string projectFileFolder) {

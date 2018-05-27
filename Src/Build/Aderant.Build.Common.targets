@@ -89,7 +89,6 @@
   <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.BuildTime.RunPowerShell"                             AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.BuildTime.GitVersion"                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <PropertyGroup>

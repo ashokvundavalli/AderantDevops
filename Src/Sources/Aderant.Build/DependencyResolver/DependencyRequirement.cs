@@ -58,8 +58,8 @@ namespace Aderant.Build.DependencyResolver {
             return new FolderBasedRequirement(reference);
         }
 
-        public static IDependencyRequirement Create(string packageName, string groupName, VersionRequirement version = null) {
-            return new DependencyRequirement(packageName, groupName, version) {
+        public static IDependencyRequirement Create(string id, string groupName, VersionRequirement version = null) {
+            return new DependencyRequirement(id, groupName, version) {
                 Source = GetAction.NuGet
             };
         }

@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Aderant.Build;
-using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTest.Build {
+namespace UnitTest.Build.Tasks.UpdateSplashScreenImage {
     [TestClass]
     public class UpdateSplashScreenImageTests {
         public TestContext TestContext { get; set; }
 
         [TestMethod]
-        [DeploymentItem(@"Resources\Expert_SplashScreen_Domain Customization Wizard.png")]
-        [DeploymentItem(@"Resources\SplashScreens\Expert_2014_style.png")]
+        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\Expert_SplashScreen_Domain Customization Wizard.png")]
+        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\\Expert_2014_style.png")]
         public void Test_splash_screen_generation() {
-            UpdateSplashScreenImage updater = new UpdateSplashScreenImage();
+            Aderant.Build.Tasks.UpdateSplashScreenImage updater = new Aderant.Build.Tasks.UpdateSplashScreenImage();
             updater.OutputFile = Path.Combine(TestContext.DeploymentDirectory, "Updated.png");
 
             string image = Path.Combine(TestContext.DeploymentDirectory,
@@ -35,9 +28,9 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [DeploymentItem(@"Resources\Expert_SplashScreen_Reskin.png")]
+        [DeploymentItem(@"Tasks\UpdateSplashScreenImage\Expert_SplashScreen_Reskin.png")]
         public void Test_reskinned_splash_screen_generation() {
-            UpdateSplashScreenImage updater = new UpdateSplashScreenImage();
+            Aderant.Build.Tasks.UpdateSplashScreenImage updater = new Aderant.Build.Tasks.UpdateSplashScreenImage();
             updater.OutputFile = Path.Combine(TestContext.DeploymentDirectory, "Updated.png");
 
             string image = Path.Combine(TestContext.DeploymentDirectory, "Expert_SplashScreen_Reskin.png");

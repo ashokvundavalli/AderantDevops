@@ -1,8 +1,9 @@
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyResolver.Parser;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTest.Build {
+namespace UnitTest.Build.DependencyResolver {
     [TestClass]
     public class DependencyManifestTests {
         [TestMethod]
@@ -28,5 +29,13 @@ namespace UnitTest.Build {
 
             Assert.IsNull(dependencyManifest.DependencyReplicationEnabled);
         }
+
+        [TestMethod]
+        public void Parse_v2_DependencyManifest() {
+            DependencyManifest dependencyManifest = DependencyManifestParser.Parse(Resources.DependencyManifest);
+
+            Assert.AreEqual(1, dependencyManifest.Requirements.Count);
+        }
     }
+
 }

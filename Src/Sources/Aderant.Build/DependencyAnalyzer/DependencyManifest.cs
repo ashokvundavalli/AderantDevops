@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
@@ -14,11 +15,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         private List<ExpertModule> referencedModules;
         private IGlobalAttributesProvider globalAttributesProvider;
 
+        private List<IDependencyRequirement> dependencies = new List<IDependencyRequirement>();
+
         public bool IsEnabled { get; set; }
 
         public bool? DependencyReplicationEnabled { get; set; }
 
-        protected DependencyManifest() {
+        public DependencyManifest() {
         }
 
         public DependencyManifest(string moduleName, XDocument manifest) {
@@ -111,6 +114,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        internal ICollection<IDependencyRequirement> Requirements {
+            get { return dependencies; }
+        }
+
         /// <summary>
         /// Loads a dependency manifest from the given module directory.
         /// </summary>
@@ -200,6 +207,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Save() {
             ExpertModuleMapper mapper = new ExpertModuleMapper();
             return mapper.Save(this, manifest);
+        }
+
+        internal void AddRequirement(IDependencyRequirement requirement) {
+            dependencies.Add(requirement);
         }
     }
 }

@@ -171,7 +171,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 .ToList();
 
             if (query.Any()) {
-                throw new BuildException("There are projects with duplicate project GUIDs: " + string.Join(", ", query.Select(s => s.Element)));
+                throw new Exception("There are projects with duplicate project GUIDs: " + string.Join(", ", query.Select(s => s.Element)));
             }
         }
 

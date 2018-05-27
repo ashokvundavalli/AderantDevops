@@ -1,6 +1,17 @@
-﻿Set-StrictMode -Version Latest
+﻿$DebugPreference = 'Continue'
 
-. $PSScriptRoot\Caching.ps1
+Set-StrictMode -Version Latest
+
+Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions'), (Join-Path -Path $PSScriptRoot -ChildPath 'Tasks') -Filter '*.ps1' |
+ForEach-Object { . $_.FullName }
+
+function InitializePrivateData {    
+    $context = (New-BuildContext -Environment "AutoDiscover")
+    Write-Debug ($context | Out-String)
+    $MyInvocation.MyCommand.Module.PrivateData.Context = $context
+}
+
+InitializePrivateData
 
 function Measure-Command() {
     [CmdletBinding()]
@@ -234,8 +245,8 @@ function Check-Vsix() {
 <#
 Expert specific variables
 #>
-$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { "C:\AderantExpert\Install\DeploymentEngine.exe" }
-$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { "C:\AderantExpert\Install\DeploymentManager.exe" }
+$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { "C:\AderantExpert\Install\DeploymentEngine.exe" } -Force
+$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { "C:\AderantExpert\Install\DeploymentManager.exe" } -Force
 
 <#
 Branch information
@@ -2221,8 +2232,7 @@ Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterNa
 .Description
     Enable-ExpertPrompt
 #>
-function Enable-ExpertPrompt() {
-
+function Enable-ExpertPrompt() {  
     Function global:prompt {
         # set the window title to the branch name
         $Host.UI.RawUI.WindowTitle = "PS - [" + $global:CurrentModuleName + "] on branch [" + $global:BranchName + "]"
@@ -4050,6 +4060,8 @@ Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
 
+
+#TODO move
 . $PSScriptRoot\Feature.Database.ps1
 
 Measure-Command {

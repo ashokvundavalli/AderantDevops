@@ -11,10 +11,9 @@ using Aderant.Build.Providers;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks.BuildTime {
-    public sealed class ParallelBuildProjectFactory : Task {
+    public sealed class ParallelBuildProjectFactory : ContextTaskBase {
         public ITaskItem[] ModulesInBuild { get; set; }
 
         public string[] ExcludedModules { get; set; }
@@ -46,7 +45,7 @@ namespace Aderant.Build.Tasks.BuildTime {
         [Output]
         public string[] ModulesInThisBuild { get; set; }
 
-        public override bool Execute() {
+        protected override bool ExecuteTask(Context context) {
             Run();
             return !Log.HasLoggedErrors;
         }

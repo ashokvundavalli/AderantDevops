@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<dependencyManifest version="2" DefaultSource="\\dfs.aderant.com\expertsuite\dev\vnext">
+    <dependencies>
+        <dependency>
+            <artifactId>thirdparty.foo</artifactId>
+            <type></type>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</dependencyManifest>

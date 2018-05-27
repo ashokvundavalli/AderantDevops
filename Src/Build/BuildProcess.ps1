@@ -25,7 +25,7 @@ Enum Result {
     SucceededWithIssues
     Failed
     Cancelled
-    Skipped
+    Skipped 
 }
 
 Enum State {
@@ -188,14 +188,14 @@ function GetBuildFlavor() {
     $buildFlavor = ""
     if ($Env:Build_Flavor) {
         $buildFlavor = $Env:Build_Flavor
-        Write-Host "....................................................................................................." -foregroundcolor Green
-        Write-Host ".......            Using Build.Flavor from build definition to $buildFlavor          ................" -foregroundcolor Green
-        Write-Host "....................................................................................................." -foregroundcolor Green
+        Write-Host "....................................................................................................." -ForegroundColor Green
+        Write-Host ".......            Using Build.Flavor from build definition to $buildFlavor          ................" -ForegroundColor Green
+        Write-Host "....................................................................................................." -ForegroundColor Green
     } elseif ( $Env:Build_SourceBranch -like "*release*" ) {
         $buildFlavor = "release"
-        Write-Host "....................................................................................................." -foregroundcolor Green
-        Write-Host ".......                           Build in release mode                      ........................" -foregroundcolor Green
-        Write-Host "....................................................................................................." -foregroundcolor Green
+        Write-Host "....................................................................................................." -ForegroundColor Green
+        Write-Host ".......                           Build in release mode                      ........................" -ForegroundColor Green
+        Write-Host "....................................................................................................." -ForegroundColor Green
     } else {
         $buildFlavor = "debug"
         Write-Host "....... Build in debug mode ................" -foregroundcolor Green
@@ -293,6 +293,10 @@ task Build {
 
     try {
         Push-Location $Repository
+
+        #TODO - pass this in as a parameter
+        $context = Get-BuildContext
+        $channelId = Publish-BuildContext $context "MSBuild"        
 
         if ($IsDesktopBuild) {
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero

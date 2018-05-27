@@ -184,9 +184,9 @@
   <Target Name="BeforeGetAllModuleDependencies" BeforeTargets="CreateParallelBuildProject">
     <!--<Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />-->
 
-    <RunPowerShell
+    <!--<RunPowerShell
       Command="$(BuildScriptsDirectory)\CleanSymlinks.ps1 &quot;$(SolutionRoot)&quot;">
-    </RunPowerShell>
+    </RunPowerShell>-->
 
     <!--<MakeDir Directories="$(SharedDependencyDirectory)" />-->
   </Target>

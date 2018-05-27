@@ -51,8 +51,7 @@
     <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">$(MSBuildToolsPath)</PathToMSBuild>
     <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">C:\Program Files (x86)\MSBuild\12.0\Bin</PathToMSBuild>
   </PropertyGroup>
-  <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
-  <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
+  <Import Project="..\References.v$(MSBuildToolsVersion).props" />
   <ItemGroup>
     <Reference Include="LibGit2Sharp">
       <SpecificVersion>False</SpecificVersion>
@@ -81,7 +80,6 @@
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\ThirdParty\Thirdparty.Microsoft\bin\System.Management.Automation.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Web" />
@@ -105,11 +103,12 @@
     <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />
-    <Compile Include="Tasks\BuildTime\BuildMasterPSHost.cs" />
+    <Compile Include="BuildMetadata.cs" />
+    <Compile Include="Context.cs" />
+    <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
+    <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\BuildTime\GitVersion.cs" />
     <Compile Include="Tasks\BuildTime\ParallelBuildProject.cs" />
-    <Compile Include="Tasks\BuildTime\PowerShellScriptRunner.cs" />
-    <Compile Include="Tasks\BuildTime\RunPowerShell.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
@@ -161,6 +160,8 @@
     <Compile Include="SeedPackageValidation\Error.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
+    <Compile Include="Ipc\MemoryMappedBuffer.cs" />
+    <Compile Include="Ipc\MemoryMappedBufferReaderWriter.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\Hash.cs" />
@@ -336,9 +337,7 @@
   <ItemGroup>
     <Content Include="Scripts\_readme.txt" />
   </ItemGroup>
-  <!--<ItemGroup>
-    <Analyzer Include="$(OutputPath)\Aderant.Build.Analyzer.dll" />
-  </ItemGroup>-->
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
@@ -348,11 +347,4 @@
     <PostBuildEvent>
     </PostBuildEvent>
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
