@@ -99,7 +99,7 @@
   <ItemGroup>
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
-    <Compile Include="BuildConstants.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />

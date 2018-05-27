@@ -237,7 +237,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
 
         private string AddBuildProperties(VisualStudioProject visualStudioProject, IFileSystem2 fileSystem, string branch, string solutionDirectoryPath) {
-            string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(BuildConstants.EntryPointFile, "rsp"));
+            string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
 
             List<string> propertiesList = new List<string>();
 

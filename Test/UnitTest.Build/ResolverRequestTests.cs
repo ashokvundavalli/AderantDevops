@@ -31,7 +31,7 @@ namespace UnitTest.Build {
 
             request.SetDependenciesDirectory("Baz");
 
-            var actual = request.GetDependenciesDirectory(DependencyRequirement.Create("Foo", BuildConstants.MainDependencyGroup));
+            var actual = request.GetDependenciesDirectory(DependencyRequirement.Create("Foo", Constants.MainDependencyGroup));
 
             Assert.AreEqual("Baz", actual);
         }
@@ -42,7 +42,7 @@ namespace UnitTest.Build {
 
             var request = new ResolverRequest(null, "Foo", fooModule, new ExpertModule("Bar"));
 
-            var barDependency = DependencyRequirement.Create("Bar", BuildConstants.MainDependencyGroup);
+            var barDependency = DependencyRequirement.Create("Bar", Constants.MainDependencyGroup);
 
             request.AssociateRequirements(fooModule, new[] { barDependency });
 
@@ -53,7 +53,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void ResolverRequest_NoExistingDependency() {
-            IDependencyRequirement requirement = DependencyRequirement.Create("a", BuildConstants.MainDependencyGroup);
+            IDependencyRequirement requirement = DependencyRequirement.Create("a", Constants.MainDependencyGroup);
             var resolverRequest = new ResolverRequest(null, "Foo");
             Assert.AreEqual(0, resolverRequest.dependencies.Count);
             var result = resolverRequest.GetOrAdd(requirement);
@@ -63,7 +63,7 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void ResolverRequest_ExistingDependency() {
-            IDependencyRequirement requirement = DependencyRequirement.Create("a", BuildConstants.MainDependencyGroup);
+            IDependencyRequirement requirement = DependencyRequirement.Create("a", Constants.MainDependencyGroup);
             var resolverRequest = new ResolverRequest(null, "Foo");
             Assert.AreEqual(0, resolverRequest.dependencies.Count);
 
@@ -77,8 +77,8 @@ namespace UnitTest.Build {
         [TestMethod]
         public void ResolverRequest_UniqueDependencies() {
             IDependencyRequirement[] requirements = {
-                DependencyRequirement.Create("a", BuildConstants.MainDependencyGroup),
-                DependencyRequirement.Create("b", BuildConstants.MainDependencyGroup)
+                DependencyRequirement.Create("a", Constants.MainDependencyGroup),
+                DependencyRequirement.Create("b", Constants.MainDependencyGroup)
             };
 
             var resolverRequest = new ResolverRequest(null, "Foo");

@@ -48,7 +48,7 @@ namespace Aderant.Build.Packaging {
 
                 var lockFile = LockFile.LoadFrom(dependenciesFile.FindLockfile().FullName);
 
-                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(BuildConstants.MainDependencyGroup)));
+                var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(Constants.MainDependencyGroup)));
                 var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
 
                 ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));

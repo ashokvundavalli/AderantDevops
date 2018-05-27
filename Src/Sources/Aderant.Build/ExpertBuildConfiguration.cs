@@ -114,7 +114,7 @@ namespace Aderant.Build {
                     parts.Add("$");
                     parts.Add(teamProject);
                     parts.AddRange(branchName.NameParts);
-                    parts.Add(BuildConstants.ModulesDirectory);
+                    parts.Add(Constants.ModulesDirectory);
                     parts.Add(folder);
 
                     property = string.Join("/", parts);
@@ -124,7 +124,7 @@ namespace Aderant.Build {
 
         private void BuildSourceControlPaths() {
             BuildServerPathToFolder(ref sourceControlPathToModule, ModuleName);
-            BuildServerPathToFolder(ref buildInfrastructurePath, BuildConstants.BuildInfrastructureDirectory);
+            BuildServerPathToFolder(ref buildInfrastructurePath, Constants.BuildInfrastructureDirectory);
         }
     }
 

@@ -60,7 +60,7 @@ namespace Aderant.Build.Packaging {
             // set the actual final folder as the name.
             // Aderant.Database.Backup
             if (name.Equals("Aderant.Database.Backup")) {
-                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, BuildConstants.DatabasePackageUri);
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, Constants.DatabasePackageUri);
             } else {
                 commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, @"\\svfp311\D$\DFS\PackageRepository\");
             }

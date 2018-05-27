@@ -1,7 +1,7 @@
 using Paket;
 
 namespace Aderant.Build {
-    public static class BuildConstants {
+    public static class Constants {
         /// <summary>
         /// The build infrastructure directory
         /// </summary>
@@ -26,6 +26,8 @@ namespace Aderant.Build {
 
         public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
 
-        internal static string MainDependencyGroup = Constants.MainDependencyGroup.ToString();
+        internal static string MainDependencyGroup = Paket.Constants.MainDependencyGroup.ToString();
+
+        public static string ContextChannelVariable = "ContextChannelId";
     }
 }

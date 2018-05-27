@@ -237,7 +237,7 @@ namespace Aderant.Build {
             // TeamFoundationWorkspace 
             buildDefinition.Workspace.AddMapping(configuration.SourceControlPathToModule, "$(SourceDir)", WorkspaceMappingType.Map);
 
-            buildDefinition.Workspace.RemoveMapping(@"$(SourceDir)\Build\" + BuildConstants.BuildInfrastructureDirectory);
+            buildDefinition.Workspace.RemoveMapping(@"$(SourceDir)\Build\" + Constants.BuildInfrastructureDirectory);
         }
     
         private void ConfigureBuildProcess(ExpertBuildConfiguration configuration, IBuildServer buildServer, IBuildDefinition buildDefinition) {

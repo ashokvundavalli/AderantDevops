@@ -67,7 +67,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public List<string> FindGroups() {
-            List<string> groups = new List<string> { BuildConstants.MainDependencyGroup };
+            List<string> groups = new List<string> { Constants.MainDependencyGroup };
             string dependenciesFile = $@"{FileSystem.Root}\{DependenciesFile}";
 
             using (StreamReader streamReader = new StreamReader(dependenciesFile)) {
@@ -89,19 +89,19 @@ namespace Aderant.Build.DependencyResolver {
             file = dependencies.GetDependenciesFile();
             string[] lines = file.Lines;
 
-            if (!lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
+            if (!lines.Contains(string.Concat("source ", Constants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
                 for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                    if (lines[i].IndexOf(string.Concat("source ", Constants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
+                        lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", Constants.PackageServerUrl, Environment.NewLine, "source ", Constants.DatabasePackageUri);
                     }
                 }
 
                 file.Save();
-            } else if (lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
+            } else if (lines.Contains(string.Concat("source ", Constants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
                 for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].IndexOf(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        if (lines[i + 1].IndexOf(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
-                            lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                    if (lines[i].IndexOf(string.Concat("source ", Constants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
+                        if (lines[i + 1].IndexOf(string.Concat("source ", Constants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
+                            lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", Constants.DatabasePackageUri);
                         }
                     }
                 }
@@ -121,7 +121,7 @@ namespace Aderant.Build.DependencyResolver {
 
                 if (referencedModule.ReplaceVersionConstraint) {
                     try {
-                        file = file.Remove(Domain.GroupName(BuildConstants.MainDependencyGroup), name);
+                        file = file.Remove(Domain.GroupName(Constants.MainDependencyGroup), name);
                     } catch {
                     }
                 }
@@ -163,7 +163,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public void ShowOutdated() {
             // TODO: Break UI binding - return a list
-            dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(BuildConstants.MainDependencyGroup));
+            dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(Constants.MainDependencyGroup));
         }
 
         public void Dispose() {
@@ -171,7 +171,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IDictionary<string, VersionRequirement> GetDependencies() {
-            return GetDependencies(Domain.GroupName(BuildConstants.MainDependencyGroup));
+            return GetDependencies(Domain.GroupName(Constants.MainDependencyGroup));
         }
 
         public IDictionary<string, VersionRequirement> GetDependencies(Domain.GroupName groupName) {

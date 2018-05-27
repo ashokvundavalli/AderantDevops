@@ -104,7 +104,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             if (requirement.Group == "Development") {
                 return;
             }
-            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Group == BuildConstants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
+            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Group == Aderant.Build.Constants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
             if (!fileSystem.DirectoryExists(packageDir)) {
                 throw new DirectoryNotFoundException($"{packageDir} does not exist.");
             }

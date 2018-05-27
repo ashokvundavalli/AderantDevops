@@ -27,7 +27,7 @@ namespace Aderant.Build.DependencyResolver {
         public string Group {
             get {
                 if (string.IsNullOrWhiteSpace(group)) {
-                    return BuildConstants.MainDependencyGroup;
+                    return Constants.MainDependencyGroup;
                 }
                 return group;
             }
@@ -53,7 +53,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public static IDependencyRequirement Create(ExpertModule reference) {
             if (reference.GetAction == GetAction.NuGet) {
-                return new DependencyRequirement(reference.Name, BuildConstants.MainDependencyGroup, reference.VersionRequirement);
+                return new DependencyRequirement(reference.Name, Constants.MainDependencyGroup, reference.VersionRequirement);
             }
             return new FolderBasedRequirement(reference);
         }

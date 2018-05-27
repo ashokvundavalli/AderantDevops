@@ -23,7 +23,7 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         /// <returns></returns>
         protected virtual Context ObtainContext() {
-            channelId = Environment.GetEnvironmentVariable("BuildContextChannelId");
+            channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
 
             object contextObject = MemoryMappedBufferReaderWriter.Read(channelId);
 

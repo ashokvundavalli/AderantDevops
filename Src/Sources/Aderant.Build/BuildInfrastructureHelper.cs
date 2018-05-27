@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 namespace Aderant.Build {
     internal static class BuildInfrastructureHelper {
 
-        internal static string PathToBuildScriptsFromModules = Path.Combine(BuildConstants.BuildInfrastructureDirectory, "Src", "Build");
+        internal static string PathToBuildScriptsFromModules = Path.Combine(Constants.BuildInfrastructureDirectory, "Src", "Build");
 
-        internal static string PathToBuildToolsFromModules = Path.Combine(BuildConstants.BuildInfrastructureDirectory, "Src", "Build.Tools");
+        internal static string PathToBuildToolsFromModules = Path.Combine(Constants.BuildInfrastructureDirectory, "Src", "Build.Tools");
 
         internal static string GetPathToThirdPartyModules(string branchModulesDirectory, string branchName) {
             var branchDirectory = Path.Combine(branchModulesDirectory, @"..\");

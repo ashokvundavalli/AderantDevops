@@ -84,7 +84,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public ModuleAvailability IsAvailable(string moduleName) {
-            bool exists = fileSystem.FileExists(Path.Combine(fileSystem.Root, moduleName, "Build", BuildConstants.EntryPointFile));
+            bool exists = fileSystem.FileExists(Path.Combine(fileSystem.Root, moduleName, "Build", Constants.EntryPointFile));
             if (exists) {
                 return ModuleAvailability.Availabile;
             }
@@ -137,7 +137,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         public override IList<ExpertModule> ReferencedModules {
             get {
                 var dependenciesFile = Paket.DependenciesFile.ReadFromFile(paketFile);
-                var dependencies = dependenciesFile.GetDependenciesInGroup(Paket.Domain.GroupName(BuildConstants.MainDependencyGroup));
+                var dependencies = dependenciesFile.GetDependenciesInGroup(Paket.Domain.GroupName(Constants.MainDependencyGroup));
 
                 return wrappedManifest.ReferencedModules.Union(
                     dependencies.Select(s => s.Key.Item1).Select(

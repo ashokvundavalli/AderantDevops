@@ -20,7 +20,7 @@ function Publish-BuildContext
 
     $fileName = [Aderant.Build.Ipc.MemoryMappedBufferReaderWriter]::WriteData($Context)
 
-    [System.Environment]::SetEnvironmentVariable("BuildContextChannelId", $fileName, [System.EnvironmentVariableTarget]::Process)
+    [System.Environment]::SetEnvironmentVariable([Aderant.Build.Constants]::ContextChannelVariable, $fileName, [System.EnvironmentVariableTarget]::Process)
 
     return $fileName
 }
