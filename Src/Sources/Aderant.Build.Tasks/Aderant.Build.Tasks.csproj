@@ -44,8 +44,7 @@
     <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">$(MSBuildToolsPath)</PathToMSBuild>
     <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">C:\Program Files (x86)\MSBuild\12.0\Bin</PathToMSBuild>
   </PropertyGroup>
-  <Import Project="..\References.v14.props" Condition="'$(MSBuildToolsVersion)' == '14.0'" />
-  <Import Project="..\References.v12.props" Condition="'$(MSBuildToolsVersion)' == '12.0'" />
+  <Import Project="..\References.v$(MSBuildToolsVersion).props" />
   <ItemGroup>
     <Reference Include="Microsoft.Build.Utilities.v3.5, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Aliases>Utilities_v3_5</Aliases>
