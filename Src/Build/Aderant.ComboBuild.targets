@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
-         ToolsVersion="14.0" 
+         ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
+         InitialTargets="DefaultContextProperties"
          TreatAsLocalProperty="SolutionRoot;AssemblyVersion">
 
 
@@ -230,6 +231,14 @@
   </Target>
 
       -->
+
+  <Target Name="DefaultContextProperties">
+    <DefaultContextProperties>
+      <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />      
+    </DefaultContextProperties>
+  </Target>
+  
+
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
     <!-- 
       To invoke this target on the desktop 

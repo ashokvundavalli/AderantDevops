@@ -7,8 +7,7 @@ namespace Aderant.Build.Tasks {
     /// <summary>
     /// Provides the ultimate base class for context aware tasks within the build engine
     /// </summary>
-    public abstract class ContextTaskBase : Task {
-        private string channelId;
+    public abstract class ContextTaskBase : Task {     
 
         public ContextTaskBase() {
         }
@@ -23,11 +22,28 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         /// <returns></returns>
         protected virtual Context ObtainContext() {
-            channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
+            Context context;
 
+            var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build);
+            context = cachedContext as Context;
+            if (context != null) {
+                return context;
+            }
+
+            context = GetContextFromFile();
+
+            BuildEngine4.RegisterTaskObject("BuildContext", context, Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build, false);
+
+            return context;
+        }
+
+        private Context GetContextFromFile() {
+            Context context;
+            var channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
             object contextObject = MemoryMappedBufferReaderWriter.Read(channelId);
 
-            return (Context)contextObject;
+            context = (Context)contextObject;
+            return context;
         }
 
         /// <summary>

@@ -25,6 +25,10 @@ namespace Aderant.Build.Ipc {
         }
 
         public static string WriteData(object data) {
+            if (!data.GetType().IsSerializable) {
+                throw new ArgumentException("Type is not serializable.", nameof(data));
+            }
+
             var name = Guid.NewGuid().ToString("D");
 
             var buffer = new MemoryMappedBuffer(name, MemoryMappedBuffer.DefaultCapacity);
@@ -59,6 +63,10 @@ namespace Aderant.Build.Ipc {
                 return;
             }
 
+            if (!data.GetType().IsSerializable) {
+                throw new ArgumentException("Type is not serializable.", nameof(data));
+            }
+
             lock (syncLock) {
                 if (bufferBroken) {
                     return;
@@ -77,9 +85,10 @@ namespace Aderant.Build.Ipc {
         }
 
         private object Read(byte[] data) {
-            object rawEvent;
 
             lock (syncLock) {
+                object rawEvent;
+
                 using (MemoryStream stream = new MemoryStream(data)) {
                     try {
                         rawEvent = formatter.Deserialize(stream);
