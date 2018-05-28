@@ -19,7 +19,7 @@ function Get-AmbientBuildMetadata
             $Name
         )
 
-        Get-Item -Path ('env:{0}' -f $Name) | Select-Object -ExpandProperty 'Value'
+        Get-Item -Path ('env:{0}' -f $Name) -ErrorAction ignore | Select-Object -ExpandProperty 'Value'
     }
 
     $buildInfo = [Aderant.Build.BuildMetadata]::new()
