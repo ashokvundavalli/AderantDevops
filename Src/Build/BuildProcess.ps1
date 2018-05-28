@@ -17,6 +17,8 @@ param(
 $EntryPoint = Get-Variable "BuildTask"
 $global:BuildFlavor = ""
 
+$DebugPreference = if ($ENV:System_DebugPreference -eq "True") { 'Continue' } else { $DebugPreference }
+
 # The VsTsTaskSdk specifies a prefix of Vsts. Thus commands are renamed from what appears in the source under ps_modules.
 # eg Invoke-Tool becomes Invoke-VstsTool
 
