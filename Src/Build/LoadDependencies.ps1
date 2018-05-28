@@ -39,7 +39,7 @@ begin {
                 }
             }            
 		}
-        Set-StrictMode -Version Latest
+        #Set-StrictMode -Version Latest
 
         if ([string]::IsNullOrEmpty($dropPath)) {
             # Empty nodes are converted to string in PowerShell, so we use SelectSingleNode to get an XmlElement instead                
