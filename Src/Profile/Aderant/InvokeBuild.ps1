@@ -4,14 +4,14 @@ function global:Invoke-Build {
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
         [Parameter(Position=0)]
-        [Parameter(ParameterSetName="Incremental")]
+        [Parameter(ParameterSetName="Build")]
         [ValidateSet("Changed", "Branch", "All")]
-        [ComboBuildType]$comboBuildType = "Branch",
+        [ComboBuildType]$comboBuildType = [ComboBuildType]::Branch,
 
         [Parameter(Position=1)]
-        [Parameter(ParameterSetName="Incremental")]
+        [Parameter(ParameterSetName="Build")]
         [ValidateSet("Direct", "All", "None")]
-        [DownStreamType]$downStreamType = "All",
+        [DownStreamType]$downStreamType = [DownStreamType]::All,
 
         [Parameter(Position=2)]
         [Parameter(ParameterSetName="BuildAll")]
@@ -36,13 +36,13 @@ function global:Invoke-Build {
         [switch]$displayCodeCoverage,
 
         [Parameter(Position=9)]
-        [Parameter(ParameterSetName="Incremental")]
+        [Parameter(ParameterSetName="Build")]
         [Parameter(ParameterSetName="ModulePath")]
         [ValidateNotNullOrEmpty()]
         [string]$modulePath = "",
 
         [Parameter(Position=10)]
-        [Parameter(ParameterSetName="Incremental")]
+        [Parameter(ParameterSetName="Build")]
         [Parameter(ParameterSetName="ModuleName")]
         [ValidateNotNullOrEmpty()]
         [string]$moduleName = ""
