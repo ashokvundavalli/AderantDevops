@@ -36,7 +36,7 @@ function Get-AmbientBuildMetadata
         $buildInfo.ScmCommitId = Get-EnvironmentVariable 'GIT_COMMIT'
         $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
 
-        $build.SetPullRequestInfo(
+        $buildInfo.SetPullRequestInfo(
             (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_PULLREQUESTID'),
             (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
             (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
