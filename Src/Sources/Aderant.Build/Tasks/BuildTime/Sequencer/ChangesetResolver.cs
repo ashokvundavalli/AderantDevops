@@ -58,6 +58,10 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 throw new DirectoryNotFoundException($"Can not find path: {WorkingDirectory}");
             }
 
+            if (buildType != ComboBuildType.Changed || buildType != ComboBuildType.Staged) {
+                return;
+            }
+
             using (var repo = new Repository(WorkingDirectory)) {
                 FriendlyBranchName = repo.Head.FriendlyName;
                 CanonicalBranchName = repo.Head.CanonicalName;

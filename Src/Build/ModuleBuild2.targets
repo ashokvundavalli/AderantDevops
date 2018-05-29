@@ -1352,7 +1352,7 @@ doc.Save(File);
       YieldDuringToolExecution="$(YieldDuringCopy)" />
 
     <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
-        so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
+        so if we get this far we can assume the build is successful so we create a dummy BuildLog   
     -->
     <MakeDir Directories="$(ModuleDropLocation)$(FileVersion)"
       Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />
