@@ -296,7 +296,7 @@ task Build {
     try {
         Push-Location $Repository
 
-        Import-Module "$PSScriptRoot\..\Profile\Aderant\Aderant.psm1"
+        Import-Module "$PSScriptRoot\..\Profile\Aderant\Aderant.psd1"
 
         #TODO - pass this in as a parameter
         $context = Get-BuildContext
