@@ -59,7 +59,19 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
             // Conditional expressions.
             // condition ? true : false
-            var currentNode = node.Parent;
+            var currentNode = node.GetParentIgnoringParentheses();
+
+            if ((currentNode is ConditionalExpressionSyntax || (currentNode as BinaryExpressionSyntax)?.Kind() == SyntaxKind.CoalesceExpression) &&
+                currentNode
+                    .Ancestors()
+                    .Any(
+                        parent =>
+                            parent is VariableDeclaratorSyntax ||
+                            parent is AssignmentExpressionSyntax ||
+                            parent is ReturnStatementSyntax &&
+                            node.GetAncestorOfType<AccessorDeclarationSyntax>() == null)) {
+                return;
+            }
 
             while (currentNode is ConditionalExpressionSyntax) {
                 currentNode = currentNode.Parent;

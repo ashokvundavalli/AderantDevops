@@ -55,5 +55,13 @@ namespace Aderant.Build.Analyzer {
             }
             return peerNode;
         }
+
+        public static SyntaxNode GetParentIgnoringParentheses(this SyntaxNode me) {
+            var currentNode = me.Parent;
+            while (currentNode is ParenthesizedExpressionSyntax) {
+                currentNode = currentNode.Parent;
+            }
+            return currentNode;
+        }
     }
 }
