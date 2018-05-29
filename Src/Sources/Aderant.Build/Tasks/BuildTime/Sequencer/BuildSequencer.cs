@@ -26,7 +26,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         }
 
         public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, ComboBuildType buildType, DownStreamType downStreamType) {
-            // This could also fail with a circular reference exception. It it does we cannot solve the problem.
+            // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
@@ -176,7 +176,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         }
 
         private void IncludeInBuild(ParseResult result, ProjectConfigurationInSolution configuration, string absolutePath, IEnumerable<VisualStudioProject> visualStudioProjects) {
-            foreach (var project in visualStudioProjects) {
+            foreach (VisualStudioProject project in visualStudioProjects) {
                 if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase)) {
                     project.IncludeInBuild = true;
                     project.SolutionFile = result.SolutionFile;

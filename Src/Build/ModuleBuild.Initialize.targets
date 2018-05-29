@@ -61,6 +61,8 @@
         BuildProjectReferences=false;
         <!--$(AssemblyDebugOptions)-->
       </BuildProperties>
+      
+      <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
     </PropertyGroup>
 
     <!--
