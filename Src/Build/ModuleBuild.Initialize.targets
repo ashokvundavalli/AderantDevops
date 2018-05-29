@@ -90,7 +90,7 @@
     </ItemGroup>
 
     <Message Text="BuildGroup=@(BuildGroup)"/>
-    <Message Text="BuildProperties=@(BuildProperties)"/>
+    <Message Text="BuildProperties=$(BuildProperties)"/>
 
     <MSBuild Projects="@(ProjectsToBuild)"
       Targets="Build"
