@@ -304,7 +304,37 @@ namespace Test {
         }
 
         [TestMethod]
-        public void IDisposableObjectCreationRule_NullConditionalOperator() {
+        public void IDisposableObjectCreationRule_Return_ObjectCreationAsMethodParameter() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private bool Method() {
+            return OtherMethod(new DisposeMe());
+        }
+
+        private static bool OtherMethod(DisposeMe item) {
+            return item != null;
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(
+                code,
+                // Error: OtherMethod(new DisposeMe())
+                GetDiagnostic(5, 32, "DisposeMe"));
+        }
+
+        #region Conditional And Coalesce Expression Tests
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_NullCoalesce() {
             const string code = @"
 namespace Test {
     public class TestClass : System.IDisposable {
@@ -336,35 +366,77 @@ namespace Test {
         }
 
         [TestMethod]
-        public void IDisposableObjectCreationRule_Return_ObjectCreationAsMethodParameter() {
-            const string code = @"
+        public void IDisposableObjectCreationRule_NullCoalesce_ReturnStatement() {
+            const string code = @"using System;
 namespace Test {
-    public class TestClass {
-        private bool Method() {
-            return OtherMethod(new DisposeMe());
-        }
+    public class TestClass{
 
-        private static bool OtherMethod(DisposeMe item) {
-            return item != null;
+        public IFoo TestMethod(FooDisposable input) {
+            return input ?? new FooDisposable();
         }
     }
 
-    public class DisposeMe : System.IDisposable {
+    public interface IFoo {
+    }
+
+    public class FooDisposable : IFoo, IDisposable {
         public void Dispose() {
-            // Empty.
+        }
+    }
+}";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_NullCoalesce_LocalVariableAssignment() {
+            const string code = @"using System;
+namespace Test {
+    public class TestClass{
+
+        public void TestMethod(FooDisposable input) {
+            var x = input ?? new FooDisposable();
+            x.Dispose();
+        }
+    }
+
+    public interface IFoo {
+    }
+
+    public class FooDisposable : IFoo, IDisposable {
+        public void Dispose() {
+        }
+    }
+}";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_NullCoalesce_ChainedCoalesce() {
+            const string code = @"using System;
+namespace Test {
+    public class TestClass{
+
+        public void TestMethod(FooDisposable input, FooDisposable input2) {
+            var x = input ?? input2 ?? new FooDisposable();
+            x.Dispose();
+        }
+    }
+
+    public interface IFoo {
+    }
+
+    public class FooDisposable : IFoo, IDisposable {
+        public void Dispose() {
         }
     }
 }
 ";
-
-            VerifyCSharpDiagnostic(
-                code,
-                // Error: OtherMethod(new DisposeMe())
-                GetDiagnostic(5, 32, "DisposeMe"));
+            VerifyCSharpDiagnostic(code);
         }
 
+
         [TestMethod]
-        public void IDisposableObjectCreationRule_InterfaceCoalesce() {
+        public void IDisposableObjectCreationRule_ConditionalExpression_InterfaceConditional() {
             const string code = @"using System;
 namespace Test {
     public class TestClass{
@@ -392,9 +464,179 @@ namespace Test {
                 GetDiagnostic(6, 28, "FooDisposable"));
         }
 
-        #endregion Tests
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalExpression_LocalVariableAssignment() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method(bool useDisposable) {
+            var disposable = bool ? new DisposeMe() : null;
+            disposable?.Dispose();
+        }
+    }
 
-        #region Tests: Base Class
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+
+        public void DoNothing(){
+            // Empty
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalExpression_ChainedConditional() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method(bool useDisposable, bool nestedUseDisposable) {
+            var x = useDisposable ? new DisposeMe() : nestedUseDisposable ? new DisposeMe() : null;
+            x?.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+
+        public void DoNothing() {
+            // Do Nothing.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalExpression_ParenthesizedChainedConditional() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method(bool useDisposable, bool nestedUseDisposable) {
+            var x = useDisposable ? new DisposeMe() : (nestedUseDisposable ? new DisposeMe() : null);
+            x?.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+
+        public void DoNothing() {
+            // Do Nothing.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalExpression_ReturnStatement() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private DisposeMe Method(bool useDisposable) {
+            return useDisposable ? new DisposeMe() : null;
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+
+        public void DoNothing() {
+            // Do Nothing.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalExpression_ThrowsErrorIfNotUsedForAssignment() {
+            const string code = @"namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item = new DisposeMe().ReturnTrue() ? new DisposeMe() : null;
+            item?.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+
+        public bool ReturnTrue() {
+            return true;
+        }
+    }
+}";
+            VerifyCSharpDiagnostic(code, GetDiagnostic(4, 30, "DisposeMe"));
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalExpression_ThrowsErrorIfNotUsedForAssignmentIfParenthesized() {
+            const string code = @"namespace Test {
+    public class TestClass {
+        private void Method() {
+            DisposeMe item = (new DisposeMe()).ReturnTrue() ? new DisposeMe() : null;
+            item?.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+
+        public bool ReturnTrue() {
+            return true;
+        }
+    }
+}";
+            VerifyCSharpDiagnostic(code, GetDiagnostic(4, 31, "DisposeMe"));
+        }
+
+        [TestMethod]
+        public void IDisposableObjectCreationRule_ConditionalAndCoalesce_RandomChainingLocalVariableAssignment() {
+            const string code = @"
+namespace Test {
+    public class TestClass {
+        private void Method(bool useDisposable, bool nestedDispose, DisposeMe disposable1, DisposeMe disposable2) {
+            var x = useDisposable
+                ? (disposable1 ?? disposable2 ?? new DisposeMe())
+                : nestedDispose ? disposable2 ?? new DisposeMe() : disposable1 ?? new DisposeMe();
+            x.Dispose();
+        }
+    }
+
+    public class DisposeMe : System.IDisposable {
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Conditional And Coalesce Expression Tests
+
+            #endregion Tests
+
+            #region Tests: Base Class
 
         [TestMethod]
         public void IDisposableMethodInvocationRule_BaseClass_Field() {
