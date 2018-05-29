@@ -14,12 +14,14 @@ using Microsoft.Build.Construction;
 namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     internal class BuildSequencer {
         private readonly ILogger logger;
+        private readonly Context context;
         private readonly ISolutionFileParser solutionParser;
         private readonly RepositoryInfoProvider repositoryInfoProvider;
         private readonly IFileSystem2 fileSystem;
 
-        public BuildSequencer(ILogger logger, ISolutionFileParser solutionParser, RepositoryInfoProvider repositoryInfoProvider, IFileSystem2 fileSystem) {
+        public BuildSequencer(ILogger logger, Context context, ISolutionFileParser solutionParser, RepositoryInfoProvider repositoryInfoProvider, IFileSystem2 fileSystem) {
             this.logger = logger;
+            this.context = context;
             this.solutionParser = solutionParser;
             this.repositoryInfoProvider = repositoryInfoProvider;
             this.fileSystem = fileSystem;
@@ -42,17 +44,17 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 analyzer.AddExclusionPattern("MomentumFileOpening");
                 analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
                 
-                AnalyzerContext context = new AnalyzerContext();
-                context.AddDirectory(modulesDirectory);
+                AnalyzerContext analyzerContext = new AnalyzerContext();
+                analyzerContext.AddDirectory(modulesDirectory);
 
                 // Get all changed files list
                 if (buildType != ComboBuildType.All) {
-                    List<string> files = new ChangesetResolver(modulesDirectory, buildType).ChangedFiles;
-                    context.SetFilesList(files);
+                    List<string> files = new ChangesetResolver(this.context, modulesDirectory, buildType).ChangedFiles;
+                    analyzerContext.SetFilesList(files);
                 }
 
-                context.ModulesDirectory = modulesDirectory;
-                List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(context);
+                analyzerContext.ModulesDirectory = modulesDirectory;
+                List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(analyzerContext);
 
                 IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
 

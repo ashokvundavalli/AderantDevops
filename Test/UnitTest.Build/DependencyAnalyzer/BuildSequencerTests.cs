@@ -32,7 +32,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var projectList = new List<IDependencyRef> { p1, p2, m1, m2, m3 };
 
-            var sequencer = new BuildSequencer(null, null, null, null);
+            var sequencer = new BuildSequencer(null, null, null, null, null);
 
             // Mark the projects to dirty directly depends on any project in the search list.
             sequencer.MarkDirty(projectList, dirtyProjects);

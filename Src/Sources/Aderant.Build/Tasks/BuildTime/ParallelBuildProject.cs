@@ -46,16 +46,17 @@ namespace Aderant.Build.Tasks.BuildTime {
         public string[] ModulesInThisBuild { get; set; }
 
         protected override bool ExecuteTask(Context context) {
-            Run();
+            Run(context);
             return !Log.HasLoggedErrors;
         }
 
-        private void Run([CallerFilePath] string sourceFilePath = "") {
+        private void Run(Context context, [CallerFilePath] string sourceFilePath = "") {
             try {
                 PhysicalFileSystem fileSystem = new PhysicalFileSystem(ModulesDirectory);
 
                 BuildSequencer controller = new BuildSequencer(
                     new BuildTaskLogger(this),
+                    context,
                     new SolutionFileParser(),
                     new RepositoryInfoProvider(fileSystem, TfvcBranch, TfvcChangeset),
                     fileSystem);

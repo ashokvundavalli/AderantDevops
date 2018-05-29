@@ -63,10 +63,10 @@ namespace Aderant.Build {
             }
         }
 
-        public string[] GetBuildEngineArguments(string commonArgs, string engine) {
+        public string[] GetBuildEngineArguments(string commonArgs, string engineType) {
             List<string> argLst = new List<string>();
 
-            if (string.Equals(engine, "MSBuild", StringComparison.OrdinalIgnoreCase)) {
+            if (string.Equals(engineType, "MSBuild", StringComparison.OrdinalIgnoreCase)) {
                 if (buildMetadata.DebugLoggingEnabled) {
                     argLst.Add("/v:diag");
                 }

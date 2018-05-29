@@ -6,6 +6,7 @@ using LibGit2Sharp;
 
 namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     public class ChangesetResolver {
+        private readonly Context context;
         private string canonicalBranchName;
         private string friendlyBranchName;
 
@@ -41,7 +42,8 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(string workingDirectory, ComboBuildType buildType=ComboBuildType.Changed, bool discover = true) {
+        public ChangesetResolver(Context context, string workingDirectory, ComboBuildType buildType=ComboBuildType.Changed, bool discover = true) {
+            this.context = context;
             InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
         }
 
