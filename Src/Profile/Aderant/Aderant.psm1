@@ -7,7 +7,6 @@ ForEach-Object { . $_.FullName }
 
 function InitializePrivateData {    
     $context = (New-BuildContext -Environment "AutoDiscover")
-    Write-Debug ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Context: $context")
     Write-Debug ($context | Out-String)
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
 }
