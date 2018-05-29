@@ -146,6 +146,15 @@ namespace Aderant.Build.Analyzer.Extensions {
             return node.Ancestors().OfType<T>().FirstOrDefault();
         }
 
+        /// <summary>
+        /// Gets the type of the ancestor or self of.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="node">The node.</param>
+        public static T GetAncestorOrSelfOfType<T>(this SyntaxNode node) {
+            return node.AncestorsAndSelf().OfType<T>().FirstOrDefault();
+        }
+
         #endregion Methods: Syntax Nodes
     }
 }
