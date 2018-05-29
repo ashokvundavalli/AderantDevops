@@ -300,7 +300,12 @@ task Build {
 
         #TODO - pass this in as a parameter
         $context = Get-BuildContext
-        $channelId = Publish-BuildContext $context "MSBuild"        
+        $channelId = Publish-BuildContext $context "MSBuild"
+
+        $args2 = $context.GetBuildEngineArguments($null, "MSBuild")
+        foreach ($arg in $args2) {
+           $commonArgs += " " + $arg
+        }
 
         if ($IsDesktopBuild) {
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero

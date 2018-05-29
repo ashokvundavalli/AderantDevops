@@ -11,6 +11,7 @@ function Get-BuildContext
     $data = $MyInvocation.MyCommand.Module.PrivateData
 
     Write-Debug ($data | Out-String)
+    Write-Debug ($data.Context | Out-String)
 
     return $data.Context
 }

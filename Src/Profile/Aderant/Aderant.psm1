@@ -6,9 +6,7 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filt
 ForEach-Object { . $_.FullName }
 
 function InitializePrivateData {    
-    $context = (New-BuildContext -Environment "AutoDiscover")
-    Write-Debug ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Context: $context")
-    Write-Debug ($context | Out-String)
+    $context = (New-BuildContext -Environment "AutoDiscover")    
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
 }
 

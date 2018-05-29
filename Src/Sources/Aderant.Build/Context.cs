@@ -16,6 +16,8 @@ namespace Aderant.Build {
             Environment = "";
             PipelineName = "";
             TaskName = "";
+
+            
         }
 
         public DirectoryInfo BuildRoot { get; set; }
@@ -59,6 +61,18 @@ namespace Aderant.Build {
                     }
                 }
             }
+        }
+
+        public string[] GetBuildEngineArguments(string commonArgs, string engine) {
+            List<string> argLst = new List<string>();
+
+            if (string.Equals(engine, "MSBuild", StringComparison.OrdinalIgnoreCase)) {
+                if (buildMetadata.DebugLoggingEnabled) {
+                    argLst.Add("/v:diag");
+                }
+            }
+
+            return argLst.ToArray();
         }
     }
 }
