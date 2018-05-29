@@ -246,8 +246,9 @@ function Check-Vsix() {
 <#
 Expert specific variables
 #>
-$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { "C:\AderantExpert\Install\DeploymentEngine.exe" } -Force
-$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { "C:\AderantExpert\Install\DeploymentManager.exe" } -Force
+
+#$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { "C:\AderantExpert\Install\DeploymentEngine.exe" } -Force
+#$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { "C:\AderantExpert\Install\DeploymentManager.exe" } -Force
 
 <#
 Branch information
@@ -4063,23 +4064,23 @@ Export-ModuleMember -variable ProductManifestPath
 
 
 #TODO move
-. $PSScriptRoot\Feature.Database.ps1
+#. $PSScriptRoot\Feature.Database.ps1
 
-Measure-Command {
-    Enable-ExpertPrompt
-} "Enable-ExpertPrompt"
+#Measure-Command {
+#    Enable-ExpertPrompt
+#} "Enable-ExpertPrompt"
 
-Measure-Command {
-    Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
-} "NUnit3.TestAdapter install"
+#Measure-Command {
+#    Check-Vsix "NUnit3.TestAdapter" "0da0f6bd-9bb6-4ae3-87a8-537788622f2d" "NUnit.NUnit3TestAdapter"
+#} "NUnit3.TestAdapter install"
 
-Measure-Command {
-    Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
-} "Aderant.DeveloperTools install"
+#Measure-Command {
+#    Check-Vsix "Aderant.DeveloperTools" "b36002e4-cf03-4ed9-9f5c-bf15991e15e4"
+#} "Aderant.DeveloperTools install"
 
-$ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
+#$ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 
-Set-Environment
+#Set-Environment
 
 Write-Host ''
 Write-Host 'Type ' -NoNewLine
