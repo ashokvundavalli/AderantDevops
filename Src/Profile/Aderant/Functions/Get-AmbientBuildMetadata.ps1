@@ -1,5 +1,4 @@
-function Get-AmbientBuildMetadata
-{
+function Get-AmbientBuildMetadata {
     <#
     .SYNOPSIS
     Gets metadata about the current build.
@@ -11,12 +10,11 @@ function Get-AmbientBuildMetadata
     param(
     )
 
-    Set-StrictMode -Version 'Latest'
+    Set-StrictMode -Version Latest
 
-    function Get-EnvironmentVariable
-    {
-        param(
-            $Name
+    function Get-EnvironmentVariable {
+        param (
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty][string]$Name
         )
 
         Get-Item -Path ('env:{0}' -f $Name) -ErrorAction Ignore | Select-Object -ExpandProperty 'Value'
@@ -24,8 +22,7 @@ function Get-AmbientBuildMetadata
 
     $buildInfo = [Aderant.Build.BuildMetadata]::new()
 
-    if ((Test-Path -Path 'env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI'))
-    {        
+    if ((Test-Path -Path 'env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI')) {        
         $buildInfo.HostEnvironment = "vsts"
 
         $buildInfo.BuildNumber = Get-EnvironmentVariable 'BUILD_BUILDNUMBER'
@@ -41,9 +38,7 @@ function Get-AmbientBuildMetadata
             (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_PULLREQUESTID'),
             (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
             (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
-    }
-    else
-    {        
+    } else {        
         $buildInfo.HostEnvironment = "developer"
     }    
 

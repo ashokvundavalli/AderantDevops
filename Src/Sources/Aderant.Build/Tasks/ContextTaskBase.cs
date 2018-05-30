@@ -36,6 +36,7 @@ namespace Aderant.Build.Tasks {
 
             object cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             Context = cachedContext as Context;
+
             if (Context != null) {
                 Log.LogMessage(MessageImportance.Low, "Obtained context from registered task object");
                 return Context;
@@ -44,6 +45,8 @@ namespace Aderant.Build.Tasks {
             Context = GetContextFromFile();
             Log.LogMessage(MessageImportance.Low, "Obtained context from registered memory mapped file");
             BuildEngine4.RegisterTaskObject("BuildContext", Context, RegisteredTaskObjectLifetime.Build, false);
+
+            Log.LogMessage(MessageImportance.High, $"Context IsDesktopBuild: {Context.IsDesktopBuild}");
 
             return Context;
         }

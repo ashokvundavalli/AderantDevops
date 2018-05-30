@@ -56,13 +56,13 @@ namespace Aderant.Build {
         public IDictionary Variables { get; private set; }
 
         public BuildMetadata BuildMetadata {
-            get { return buildMetadata; }
+            get => buildMetadata;
             set {
                 buildMetadata = value;
 
                 if (value != null) {
                     if (value.HostEnvironment != "developer") {
-                        this.IsDesktopBuild = false;
+                        IsDesktopBuild = false;
                     }
                 }
             }
