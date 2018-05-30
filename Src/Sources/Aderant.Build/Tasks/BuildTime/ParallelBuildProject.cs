@@ -22,8 +22,6 @@ namespace Aderant.Build.Tasks.BuildTime {
 
         public string TfvcBranch { get; set; }
 
-        public string BuildFrom { get; set; }
-
         [Required]
         public string ModulesDirectory { get; set; }
 
