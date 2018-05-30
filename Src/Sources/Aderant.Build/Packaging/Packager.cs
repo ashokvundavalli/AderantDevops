@@ -113,7 +113,7 @@ namespace Aderant.Build.Packaging {
         /// Search for all .paket.template files under all subfolders.
         /// </summary>
         /// <returns>A list containing all templates files being found</returns>
-        private IEnumerable<string> GetTemplateFiles() {
+        internal IEnumerable<string> GetTemplateFiles() {
             var files = fs.GetFiles(fs.Root, "*paket.template", true);
 
             foreach (var file in files) {
