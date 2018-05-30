@@ -115,8 +115,8 @@
     <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
     <Message Text="Getting dependencies for build." />
 
-    <Delete Files="$(SolutionRoot)\paket.dependencies" ContinueOnError="true" />
-    <Delete Files="$(SolutionRoot)\paket.lock" ContinueOnError="true" />
+    <Delete Files="$(SolutionRoot)paket.dependencies" ContinueOnError="true" />
+    <Delete Files="$(SolutionRoot)paket.lock" ContinueOnError="true" />
 
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Aderant.Build.Ipc;
 using Microsoft.Build.Utilities;
 
@@ -7,13 +7,20 @@ namespace Aderant.Build.Tasks {
     /// <summary>
     /// Provides the ultimate base class for context aware tasks within the build engine
     /// </summary>
-    public abstract class ContextTaskBase : Task {     
+    public abstract class ContextTaskBase : Task {
+        internal Context Context { get; set; }
 
-        public ContextTaskBase() {
+        protected ContextTaskBase() {
+            // Initialize context here for testing purposes.
+            //Context = new Context {
+            //    BuildRoot = new DirectoryInfo(@"C:\Git\ExpertSuite\Billing"),
+            //    IsDesktopBuild = true,
+            //    ComboBuildType = ComboBuildType.All
+            //};
         }
 
         public override bool Execute() {
-            var context = ObtainContext();
+            Context context = ObtainContext();
             return ExecuteTask(context);
         }
 
@@ -22,28 +29,29 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         /// <returns></returns>
         protected virtual Context ObtainContext() {
-            Context context;
-
-            var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build);
-            context = cachedContext as Context;
-            if (context != null) {
-                return context;
+            if (Context != null) {
+                return Context;
             }
 
-            context = GetContextFromFile();
+            object cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build);
+            Context = cachedContext as Context;
+            if (Context != null) {
+                return Context;
+            }
 
-            BuildEngine4.RegisterTaskObject("BuildContext", context, Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build, false);
+            Context = GetContextFromFile();
 
-            return context;
+            BuildEngine4.RegisterTaskObject("BuildContext", Context, Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build, false);
+
+            return Context;
         }
 
         private Context GetContextFromFile() {
-            Context context;
-            var channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
+            string channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
             object contextObject = MemoryMappedBufferReaderWriter.Read(channelId);
+            Context = (Context)contextObject;
 
-            context = (Context)contextObject;
-            return context;
+            return Context;
         }
 
         /// <summary>

@@ -29,7 +29,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
                 return friendlyBranchName;
             }
-            private set { friendlyBranchName = value; }
+            private set => friendlyBranchName = value;
         }
 
         public string CanonicalBranchName {
@@ -39,15 +39,15 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 }
                 return canonicalBranchName;
             }
-            private set { canonicalBranchName = value; }
+            private set => canonicalBranchName = value;
         }
 
-        public ChangesetResolver(Context context, string workingDirectory, ComboBuildType buildType=ComboBuildType.Changed, bool discover = true) {
+        public ChangesetResolver(Context context, string workingDirectory, bool discover = true) {
             this.context = context;
-            InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
+            InitializeFromWorkingDirectory(workingDirectory, discover);
         }
 
-        public void InitializeFromWorkingDirectory(string workingDirectory, ComboBuildType buildType, bool discover) {
+        public void InitializeFromWorkingDirectory(string workingDirectory, bool discover) {
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
@@ -60,11 +60,11 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 throw new DirectoryNotFoundException($"Can not find path: {WorkingDirectory}");
             }
 
-            if (buildType != ComboBuildType.Changed || buildType != ComboBuildType.Staged) {
+            if (context.ComboBuildType != ComboBuildType.Changed || context.ComboBuildType != ComboBuildType.Staged) {
                 return;
             }
 
-            using (var repo = new Repository(WorkingDirectory)) {
+            using (Repository repo = new Repository(WorkingDirectory)) {
                 FriendlyBranchName = repo.Head.FriendlyName;
                 CanonicalBranchName = repo.Head.CanonicalName;
 
@@ -98,12 +98,13 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         changedFiles.Add(treeChange.Path);
                     }
 
-                    if (buildType == ComboBuildType.Changed) {
+                    if (context.ComboBuildType == ComboBuildType.Changed) {
                         UpdateChangedFilesFromStatus(repo, changedFiles);
                     }
                     
                     ChangedFiles = changedFiles.Distinct().ToList();
                 } catch {
+                    // Ignored
                 }
             }
         }
@@ -111,23 +112,23 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         private void UpdateChangedFilesFromStatus(Repository repo, List<string> changedFiles) {
             RepositoryStatus repositoryStatus = repo.RetrieveStatus(new StatusOptions());
 
-            //Modified
-            foreach (var item in repositoryStatus.Modified) {
+            // Modified
+            foreach (StatusEntry item in repositoryStatus.Modified) {
                 changedFiles.Add(item.FilePath);
             }
 
-            //Added
-            foreach (var item in repositoryStatus.Added) {
+            // Added
+            foreach (StatusEntry item in repositoryStatus.Added) {
                 changedFiles.Add(item.FilePath);
             }
 
-            //Staged
-            foreach (var item in repositoryStatus.Staged) {
+            // Staged
+            foreach (StatusEntry item in repositoryStatus.Staged) {
                 changedFiles.Add(item.FilePath);
             }
 
-            //Untracked
-            foreach (var item in repositoryStatus.Untracked) {
+            // Untracked
+            foreach (StatusEntry item in repositoryStatus.Untracked) {
                 changedFiles.Add(item.FilePath);
             }
         }

@@ -14,21 +14,23 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     /// Represents a dynamic MSBuild project which will build a set of Expert modules in dependency order and in parallel
     /// </summary>
     internal class DynamicProject {
+        private readonly Context context;
         private readonly IFileSystem2 fileSystem;
         private const string InitializeTargets = @"Build\ModuleBuild.Initialize.targets";
         private const string ComplationTargets = @"Build\ModuleBuild.Completion.targets";
 
-        public DynamicProject(IFileSystem2 fileSystem) {
+        public DynamicProject(Context context, IFileSystem2 fileSystem) {
+            this.context = context;
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string comboBuildProjectFile) {
             Project project = new Project();
 
             // Create a list of call targets for each build
             Target afterCompile = new Target("AfterCompile");
 
-            bool buildFromHere = string.IsNullOrEmpty(buildFrom);
+            bool buildFromHere = string.IsNullOrEmpty(context.BuildFrom);
 
             // Since we may resequence things we want the to start the numbering at 0
             int buildGroupCount = 0;
@@ -40,7 +42,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
                     outputFile.WriteLine($"Group ({i})");
                     foreach (var dependencyRef in projectGroup) {
-                        var isDirty = (dependencyRef as VisualStudioProject)?.IsDirty == true;
+                        bool isDirty = (dependencyRef as VisualStudioProject)?.IsDirty == true;
                         outputFile.WriteLine($"|   |---{dependencyRef.Name}" + (isDirty ? " *" : ""));
                     }
 
@@ -50,14 +52,14 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                     }
 
                     if (!buildFromHere) {
-                        buildFromHere = projectGroup.OfType<ExpertModule>().Any(m => string.Equals(m.Name, buildFrom, StringComparison.OrdinalIgnoreCase));
+                        buildFromHere = projectGroup.OfType<ExpertModule>().Any(m => string.Equals(m.Name, context.BuildFrom, StringComparison.OrdinalIgnoreCase));
                     }
 
                     if (!buildFromHere) {
                         continue;
                     }
 
-                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom, isComboBuild, comboBuildProjectFile));
+                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, context.BuildFrom, comboBuildProjectFile));
 
                     // e.g. <Target Name="Build2">
                     Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
@@ -97,7 +99,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             return project;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom, string comboBuildProjectFile) {
             return projectGroup.Select(
                 studioProject => {
                     // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 

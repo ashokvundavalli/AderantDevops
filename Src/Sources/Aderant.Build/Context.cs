@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Aderant.Build.Tasks.BuildTime;
 
 namespace Aderant.Build {
     [Serializable]
@@ -17,6 +18,12 @@ namespace Aderant.Build {
             PipelineName = "";
             TaskName = "";
         }
+
+        public ComboBuildType ComboBuildType { get; set; }
+
+        public DownStreamType DownStreamType { get; set; }
+
+        public string BuildFrom { get; set; }
 
         public DirectoryInfo BuildRoot { get; set; }
 

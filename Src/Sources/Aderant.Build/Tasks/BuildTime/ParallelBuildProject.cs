@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -34,12 +34,6 @@ namespace Aderant.Build.Tasks.BuildTime {
 
         public string[] CodeAnalysisGroup { get; set; }
 
-        public bool IsComboBuild { get; set; }
-
-        public string ComboBuildType { get; set; }
-
-        public string DownStreamType { get; set; }
-
         public string ComboBuildProjectFile { get; set; }
 
         [Output]
@@ -61,7 +55,7 @@ namespace Aderant.Build.Tasks.BuildTime {
                     new RepositoryInfoProvider(fileSystem, TfvcBranch, TfvcChangeset),
                     fileSystem);
 
-                IModuleProvider manifest = null;
+                IModuleProvider manifest;
                 if (!string.IsNullOrEmpty(ProductManifest)) {
                     manifest = ExpertManifest.Load(ProductManifest);
                     ((ExpertManifest)manifest).ModulesDirectory = ModulesDirectory;
@@ -81,9 +75,7 @@ namespace Aderant.Build.Tasks.BuildTime {
                 //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                ComboBuildType buildType = (ComboBuildType)Enum.Parse(typeof(ComboBuildType), ComboBuildType);
-                DownStreamType downstreamType = (DownStreamType)Enum.Parse(typeof(DownStreamType), DownStreamType);
-                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, buildType, downstreamType);
+                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, ComboBuildProjectFile);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
