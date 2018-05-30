@@ -16,8 +16,6 @@ namespace Aderant.Build {
             Environment = "";
             PipelineName = "";
             TaskName = "";
-
-            
         }
 
         public DirectoryInfo BuildRoot { get; set; }
@@ -63,16 +61,13 @@ namespace Aderant.Build {
             }
         }
 
-        public string[] GetBuildEngineArguments(string commonArgs, string engineType) {
-            List<string> argLst = new List<string>();
-
-            if (string.Equals(engineType, "MSBuild", StringComparison.OrdinalIgnoreCase)) {
-                if (buildMetadata.DebugLoggingEnabled) {
-                    argLst.Add("/v:diag");
-                }
+        public IArgumentBuilder CreateArgumentBuilder(string engineType) {
+            if (engineType == "MSBuild") {
+                return new ComboBuildArgBuilder(this);
             }
 
-            return argLst.ToArray();
+            throw new NotImplementedException("No builder for " + engineType);
         }
     }
+
 }

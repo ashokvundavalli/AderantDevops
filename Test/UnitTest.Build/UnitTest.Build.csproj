@@ -90,6 +90,7 @@
   <ItemGroup>
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
+    <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="Ipc\MemoryMappedBufferTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
@@ -107,6 +108,7 @@
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="ModuleWorkspaceTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
+    <Compile Include="MSBuildArgumentBuilderTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />
@@ -183,17 +185,6 @@
     <Content Include="Resources\CSharpProject.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
-      <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
-      <Name>Aderant.Build.Tasks</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
-      <Project>{66e50d39-8e73-4d16-944b-43f18c308fe0}</Project>
-      <Name>Aderant.Build</Name>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="DependencyResolver\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -208,6 +199,16 @@
       <CustomToolNamespace>UnitTest.Build.BuildLogProcessor</CustomToolNamespace>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
+      <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
+      <Name>Aderant.Build.Tasks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Sources\Aderant.Build\Aderant.Build.csproj">
+      <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
+      <Name>Aderant.Build</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

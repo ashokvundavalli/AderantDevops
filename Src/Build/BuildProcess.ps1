@@ -260,10 +260,7 @@ task Build {
     
     $global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
-
-    $commonArgs = "$commonArgs /p:ComboBuildType=$($ComboBuildType)" 
-    $commonArgs = "$commonArgs /p:DownStreamType=$($DownStreamType)" 
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"    
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
@@ -300,17 +297,16 @@ task Build {
 
         #TODO - pass this in as a parameter
         $context = Get-BuildContext
-        $channelId = Publish-BuildContext $context "MSBuild"
+        $channelId = Publish-BuildContext $context "MSBuild"       
 
-        $args2 = $context.GetBuildEngineArguments($null, "MSBuild")
-        foreach ($arg in $args2) {
-           $commonArgs += " " + $arg
-        }
+        $builder = $context.CreateArgumentBuilder("MSBuild");
+        $allArgs = $builder.GetArguments($commonArgs)
+
+        $commonArgs = [string]::Join(" ", $allArgs)        
 
         if ($IsDesktopBuild) {
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
-        } else {
-            $commonArgs = "$commonArgs /clp:PerformanceSummary"
+        } else {            
             . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
         }    
     } finally {

@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using Aderant.Build;
+using Aderant.Build.Tasks.BuildTime;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -19,7 +21,7 @@ namespace IntegrationTest.Build.Tasks {
 
         [TestMethod]
         public void GitChangesetExecuteTest() {
-            var changeset = new ChangesetResolver(@"C:\Git\Deployment");
+            var changeset = new ChangesetResolver(null, @"C:\Git\Deployment");
             if (changeset.FriendlyBranchName != "master") {
                 Assert.IsNotNull(changeset.ChangedFiles);
             }

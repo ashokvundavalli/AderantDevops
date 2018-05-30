@@ -99,6 +99,7 @@
   <ItemGroup>
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
+    <Compile Include="ComboBuildArgBuilder.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="BuildDetailPublisher.cs" />
     <Compile Include="BuildInfrastructureHelper.cs" />
@@ -106,6 +107,7 @@
     <Compile Include="BuildMetadata.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
+    <Compile Include="IArgumentBuilder.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\BuildTime\GitVersion.cs" />
     <Compile Include="Tasks\BuildTime\ParallelBuildProject.cs" />
