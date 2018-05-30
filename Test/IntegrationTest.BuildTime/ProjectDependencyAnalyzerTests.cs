@@ -9,19 +9,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.BuildTime {
     [TestClass]
     [DeploymentItem("Source", @"Resources\Source")]
+    [DeploymentItem("Resources", "Resources")]
     public class ProjectDependencyAnalyzerTests {
         public TestContext TestContext { get; set; }
-        private string sourceDirectory;
-        private PhysicalFileSystem fileSystem;
-
-        [TestInitialize]
-        public void TestInitialize() {
-            sourceDirectory = Path.Combine(TestContext.DeploymentDirectory, @"Resources\Source");
-            fileSystem = new PhysicalFileSystem(sourceDirectory);
-        }
 
         [TestMethod]
         public void GetDependencyOrderTest() {
+            string sourceDirectory = Path.Combine(TestContext.DeploymentDirectory, @"Resources\Source");
+            PhysicalFileSystem fileSystem = new PhysicalFileSystem(sourceDirectory);
+
             ProjectDependencyAnalyzer projectDependencyAnalyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
             List<IDependencyRef> dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(sourceDirectory));
@@ -32,6 +28,17 @@ namespace IntegrationTest.BuildTime {
             Assert.AreEqual("Project2", dependencyOrder[3].Name);
             Assert.AreEqual("Module.Completion", dependencyOrder[4].Name);
             Assert.IsTrue(File.Exists(Path.Combine(sourceDirectory, "DependencyGraph.txt")));
+        }
+
+        [TestMethod]
+        public void LoadWebProjectTest() {
+            CSharpProjectLoader cSharpProjectLoader = new CSharpProjectLoader();
+
+            VisualStudioProject webProject = cSharpProjectLoader.Parse(Path.Combine(TestContext.DeploymentDirectory, @"Resources\Web.Core.csproj"));
+            VisualStudioProject webProject2 = cSharpProjectLoader.Parse(Path.Combine(TestContext.DeploymentDirectory, @"Resources\Web.PrebillEditor.csproj"));
+
+            Assert.IsTrue(webProject.IsWebProject);
+            Assert.IsTrue(webProject2.IsWebProject);
         }
     }
 }

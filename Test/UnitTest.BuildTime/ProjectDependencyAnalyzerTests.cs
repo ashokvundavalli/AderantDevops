@@ -60,8 +60,7 @@ namespace UnitTest.BuildTime {
 
             Assert.AreEqual(6, graph.Vertices.Count);
 
-            Queue<IDependencyRef> queue;
-            graph.Sort(out queue);
+            graph.Sort(out Queue<IDependencyRef> queue);
 
             Assert.AreEqual(queue.ToArray()[5], visualStudioProject);
         }
