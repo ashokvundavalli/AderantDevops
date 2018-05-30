@@ -12,16 +12,6 @@
         <ViewModels:MainViewModel />
     </Window.DataContext>
 
-    <Window.Resources>
-        <!--<CollectionViewSource Source="{Binding References}" x:Key="ReferenceSource">
-            <CollectionViewSource.GroupDescriptions>
-                <PropertyGroupDescription PropertyName="ProjectName"></PropertyGroupDescription>
-            </CollectionViewSource.GroupDescriptions>
-        </CollectionViewSource>-->
-
-    </Window.Resources>
-
-
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
