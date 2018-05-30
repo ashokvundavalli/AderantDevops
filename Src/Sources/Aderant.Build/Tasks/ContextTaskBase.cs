@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using Aderant.Build.Ipc;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -23,26 +25,29 @@ namespace Aderant.Build.Tasks {
         /// <returns></returns>
         protected virtual Context ObtainContext() {
             Context context;
-
-            var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build);
+            
+            var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             context = cachedContext as Context;
             if (context != null) {
+                Log.LogMessage(MessageImportance.Low, "Obtained context from registered task object");
                 return context;
             }
 
             context = GetContextFromFile();
+            Log.LogMessage(MessageImportance.Low, "Obtained context from registered memory mapped file");
 
-            BuildEngine4.RegisterTaskObject("BuildContext", context, Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build, false);
+            BuildEngine4.RegisterTaskObject("BuildContext", context, RegisteredTaskObjectLifetime.Build, false);
 
             return context;
         }
 
         private Context GetContextFromFile() {
-            Context context;
-            var channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
-            object contextObject = MemoryMappedBufferReaderWriter.Read(channelId);
+            Log.LogMessage(MessageImportance.Low, "Obtaining context from registered memory mapped file");
 
-            context = (Context)contextObject;
+            var channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
+            object contextObject = MemoryMappedBufferReaderWriter.Read(channelId, TimeSpan.FromMilliseconds(1000));
+
+            var context = (Context)contextObject;
             return context;
         }
 

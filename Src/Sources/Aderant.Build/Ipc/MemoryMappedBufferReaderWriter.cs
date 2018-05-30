@@ -38,11 +38,11 @@ namespace Aderant.Build.Ipc {
             return name;
         }
 
-        public static object Read(string name) {
+        public static object Read(string name, TimeSpan timeout) {
             using (var buffer = new MemoryMappedBuffer(name, MemoryMappedBuffer.DefaultCapacity)) {
                 var readerWriter = new MemoryMappedBufferReaderWriter(buffer);
 
-                readerWriter.Read();
+                readerWriter.Read(timeout);
 
                 return readerWriter.IncomingMessage;
             }
@@ -108,14 +108,15 @@ namespace Aderant.Build.Ipc {
         /// Reads the next available message from the underlying buffer.
         /// The message is available in <see cref="IncomingMessage"/>
         /// </summary>
-        public bool Read() {
+        /// <param name="timeout"></param>
+        public bool Read(TimeSpan timeout) {
             if (bufferBroken) {
                 IncomingMessage = null;
                 return false;
             }
 
             try {
-                byte[] bytes = buffer.Read();
+                byte[] bytes = buffer.Read(timeout);
 
                 if (bytes.Length == 0) {
                     IncomingMessage = null;
