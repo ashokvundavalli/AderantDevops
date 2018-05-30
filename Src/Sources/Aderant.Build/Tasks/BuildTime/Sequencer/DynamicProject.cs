@@ -132,8 +132,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         return item;
                     }
 
-                    ExpertModule marker = studioProject as ExpertModule;
-                    if (marker != null) {
+                    if (studioProject is ExpertModule marker) {
                         string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
                         string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
 
@@ -144,10 +143,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         return item;
                     }
 
-
-                    DirectoryNode node = studioProject as DirectoryNode;
-
-                    if (node != null) {
+                    if (studioProject is DirectoryNode node) {
                         if (node.IsCompletion) {
                             string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == node.ModuleName ? fileSystem.Root : Path.Combine(fileSystem.Root, node.ModuleName);
                             string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
