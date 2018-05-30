@@ -56,7 +56,9 @@ namespace Aderant.Build {
         public IDictionary Variables { get; private set; }
 
         public BuildMetadata BuildMetadata {
-            get => buildMetadata;
+            get {
+                return buildMetadata;
+            }
             set {
                 buildMetadata = value;
 
