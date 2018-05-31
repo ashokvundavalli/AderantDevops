@@ -291,8 +291,9 @@ doc.Save(File);
     </PropertyGroup>-->
 
     <PropertyGroup>
+      <ParentGitDirectory>$([System.IO.Directory]::GetParent($(SolutionDirectoryPath).TrimEnd([System.IO.Path]::DirectorySeparatorChar)).FullName)\.git</ParentGitDirectory>
       <GitDir>$(SolutionDirectoryPath).git</GitDir>
-      <IsTfvc Condition="!Exists('$(GitDir)')">true</IsTfvc>
+      <IsTfvc Condition="!Exists('$(GitDir)') And !Exists('$(ParentGitDirectory)')">false</IsTfvc>
       <IsGit Condition="'$(IsTfvc)' != 'true'">true</IsGit>
     </PropertyGroup>
 

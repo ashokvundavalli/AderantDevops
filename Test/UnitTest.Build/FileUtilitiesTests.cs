@@ -19,5 +19,14 @@ namespace UnitTest.Build {
         public void DoesNotHaveExtension() {
             Assert.AreEqual(false, FileUtilities.HasExtension("foo.txt", new string[] { ".EXE", ".DLL" }));
         }
+
+        [TestMethod]
+        public void GetParentDirectoryTest() {
+            IFileSystem2 fileSystem = new PhysicalFileSystem(@"C:\B\737\1\s\Framework\");
+
+            string parentDirectory = fileSystem.GetParent(fileSystem.Root);
+
+            Assert.AreEqual(@"C:\B\737\1\s", parentDirectory);
+        }
     }
 }

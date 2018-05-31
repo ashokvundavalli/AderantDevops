@@ -141,16 +141,19 @@ namespace Aderant.Build.DependencyResolver {
             if (ModuleFactory != null) {
                 resolvedModule = ModuleFactory.GetModule(module);
             }
-            bool requiresThirdPartyReplication = true;
+
+            bool isGit = physicalFileSystem.DirectoryExists(".git") || physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git"));
 
             if (resolvedModule == null) {
-                if (!physicalFileSystem.DirectoryExists(".git")) {
+                if (!isGit) {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
                 }
                 resolvedModule = new ExpertModule { Name = module };
             }
 
-            if (physicalFileSystem.DirectoryExists(".git")) {
+            bool requiresThirdPartyReplication = true;
+
+            if (isGit) {
                 requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web.") && !d.Contains("_BUILD_"));
             }
 

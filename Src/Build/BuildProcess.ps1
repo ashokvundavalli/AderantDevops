@@ -1,6 +1,6 @@
 param(
     [string]$Repository,
-    [string]$Configuration = 'Release',
+    [string]$Configuration = "Release",
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
@@ -10,6 +10,13 @@ param(
     [switch]$Integration,
     [switch]$Automation
 )
+
+[string]$inputRepository = $Repository
+
+if (-not [string]::IsNullOrWhiteSpace($env:directoryToBuild)) {
+    $Repository = "$env:BUILD_SOURCESDIRECTORY\$env:directoryToBuild"
+    Write-Debug "Directory to build: $Repository"
+}
 
 $EntryPoint = Get-Variable "BuildTask"
 $global:BuildFlavor = ""
@@ -223,7 +230,7 @@ task GetDependencies {
         # https://github.com/GitTools/GitVersion/issues/993
         # https://github.com/GitTools/GitVersion/issues/912
         # Basically VSTS is annoying, like all build systems.
-        & git -C $Repository fetch --tags --prune --progress origin
+        & git -C $inputRepository fetch --tags --prune --progress origin
 
         . $Env:EXPERT_BUILD_DIRECTORY\Build\LoadDependencies.ps1 -modulesRootPath $Repository
     }
