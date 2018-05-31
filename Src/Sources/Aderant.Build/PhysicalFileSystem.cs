@@ -34,7 +34,7 @@ namespace Aderant.Build {
         }
 
         public string GetParent(string path) {
-            return Directory.GetParent(path).Parent.FullName;
+            return Directory.GetParent(path.TrimEnd(Path.DirectorySeparatorChar)).FullName;
         }
 
         public virtual void AddFile(string path, Stream stream) {
