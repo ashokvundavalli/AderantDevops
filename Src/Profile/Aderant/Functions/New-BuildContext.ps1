@@ -10,10 +10,9 @@ function New-BuildContext {
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
     param (
-        [Parameter(Mandatory=$true, HelpText="The environment you're building in.")]
+        [Parameter(Mandatory=$true)]
         [string]$Environment,        
 
-        [Parameter(HelpText="The place where downloaded tools should be cached. The default is the build root.")]
         [string]$DownloadRoot
     )
 
