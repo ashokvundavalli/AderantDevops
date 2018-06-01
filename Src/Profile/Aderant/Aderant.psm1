@@ -450,7 +450,7 @@ function Switch-BranchFromContainer($newBranchContainer, $previousBranchContaine
     return $true
 }
 
-function Set-CurrentModule($name, [switch]$quiet){
+function Set-CurrentModule($name, [switch]$quiet) {
     if ($global:CurrentModuleFeature) {
         if (Get-Module | Where-Object -Property Name -eq $global:CurrentModuleFeature.Name) {
             Write-Host "Removing module: $($global:CurrentModuleFeature.Name)"
@@ -460,7 +460,7 @@ function Set-CurrentModule($name, [switch]$quiet){
     }
 
     if (!($name)) {
-        if(!($global:CurrentModuleName)){
+        if (!($global:CurrentModuleName)) {
             Write-Warning "No current module is set"
             return
         } else {
@@ -477,19 +477,34 @@ function Set-CurrentModule($name, [switch]$quiet){
     }
 
     if ([System.IO.Path]::IsPathRooted($name)) {
-        if (IsGitRepository $name) {
-            SetRepository $name
-            Set-Location $name
-            return
+        $global:CurrentModulePath = $name
+        $global:CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:CurrentModulePath)).Name
+        Write-Debug "Setting repository: $name"
+        Import-Module $PSScriptRoot\AderantGit.psm1
+
+        if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.*))){
+            $global:CurrentModuleName = ""
         }
+
+        if (IsGitRepository $global:CurrentModulePath) {
+            SetRepository $global:CurrentModulePath
+            Set-Location $global:CurrentModulePath
+            global:Enable-GitPrompt
+            return
+        } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($global:CurrentModulePath).Parent.FullName)) {
+            global:Enable-GitPrompt
+        } else {
+            Enable-ExpertPrompt
+        }
+    } else {
+        $global:CurrentModuleName = $name
+
+        Write-Debug "Current module [$global:CurrentModuleName]"
+        $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
+        Enable-ExpertPrompt
     }
 
-    $global:CurrentModuleName = $name
-
-    Write-Debug "Current module [$global:CurrentModuleName]"
-    $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
-
-    if((Test-Path $global:CurrentModulePath) -eq $false){
+    if ((Test-Path $global:CurrentModulePath) -eq $false) {
         Write-Warning "the module [$global:CurrentModuleName] does not exist, please check the spelling."
         $global:CurrentModuleName = ""
         $global:CurrentModulePath = ""
@@ -497,27 +512,25 @@ function Set-CurrentModule($name, [switch]$quiet){
     }
 
     Write-Debug "Current module path [$global:CurrentModulePath]"
-    $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath \Build
+    $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath "Build"
 
-    $ShellContext.IsGitRepository = $false
+    $ShellContext.IsGitRepository = $true
 }
 
 function IsGitRepository([string]$path) {
+    if ([System.IO.path]::GetPathRoot($path) -eq $path) {
+        return $false
+    }
     return @(gci -path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
 }
 
 function SetRepository([string]$path) {
-    Write-Debug "Setting repository: $path"
-    Import-Module $PSScriptRoot\AderantGit.psm1
-
-    $global:CurrentModulePath = $path
-    $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
     $ShellContext.IsGitRepository = $true
 
     [string]$currentModuleBuildDirectory = "$path\Build"
 
     if (Test-Path $currentModuleBuildDirectory) {
-        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | ?{ $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
+        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | ? { $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
         if ($featureModule) {
             ImportFeatureModule $featureModule
         }

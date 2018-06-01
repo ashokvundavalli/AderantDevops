@@ -2,31 +2,40 @@ $currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.Windows
 $isAdminProcess = $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { '' }
 
-function global:prompt {
-    $realLASTEXITCODE = $LASTEXITCODE    
-
-    $location = Get-Location
-
-    Write-Host "PS $(location)" -NoNewline
-
-    if ($ShellContext.PoshGitAvailable) {
-        Write-VcsStatus
-
-        $status = Get-GitStatus
-
-        if ($status -ne $null) {    
-            $repoName = Split-Path -Leaf (Split-Path $status.GitDir)    
-            $Host.UI.RawUI.WindowTitle = "$script:adminHeader$repoName [$($status.Branch)]"
-        }
-    }
-     
-    Write-Host  "$('>' * ($nestedPromptLevel + 1))" -NoNewline
+function global:Enable-GitPrompt{
+    Function global:prompt {
+        $realLASTEXITCODE = $LASTEXITCODE    
     
-    $global:LASTEXITCODE = $realLASTEXITCODE
-        
-    # Default console looks like this
-    # PS C:\WINDOWS\system32> 
-    return " "
+        $location = Get-Location
+    
+        Write-Host("")
+        Write-Host ("Module [") -NoNewline
+        Write-Host ($global:CurrentModuleName) -NoNewline -ForegroundColor DarkCyan
+        Write-Host ("] at [") -NoNewline
+        Write-Host ($global:CurrentModulePath) -NoNewline -ForegroundColor DarkCyan
+        Write-Host ("]")
+    
+        Write-Host "PS $(location)" -NoNewline
+    
+        if ($ShellContext.PoshGitAvailable) {
+            Write-VcsStatus
+    
+            $status = Get-GitStatus
+    
+            if ($status -ne $null) {    
+                $repoName = Split-Path -Leaf (Split-Path $status.GitDir)    
+                $Host.UI.RawUI.WindowTitle = "$script:adminHeader$repoName [$($status.Branch)]"
+            }
+        }
+    
+        Write-Host  "$('>' * ($nestedPromptLevel + 1))" -NoNewline
+       
+        $global:LASTEXITCODE = $realLASTEXITCODE
+           
+        # Default console looks like this
+        # PS C:\WINDOWS\system32> 
+        return " "
+    }
 }
 
 function global:Invoke-Build([switch]$force, [switch]$clean, [switch]$package, [switch]$debug, [switch]$release, [bool]$codeCoverage = $true, [switch]$integration, [switch]$automation, [switch]$codeCoverageReport) {
