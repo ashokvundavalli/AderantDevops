@@ -141,17 +141,19 @@ namespace Aderant.Build.DependencyResolver {
             if (ModuleFactory != null) {
                 resolvedModule = ModuleFactory.GetModule(module);
             }
-            bool requiresThirdPartyReplication = true;
+
+            bool isGit = physicalFileSystem.DirectoryExists(".git") || physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git"));
 
             if (resolvedModule == null) {
-                // THIS CHECK NEEDS TO BE FIXED! Should work if either .git in fs directory root or parent.
-                if (!(physicalFileSystem.DirectoryExists(".git") || physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git")))) {
-                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest or did you copy the source folder in? You need to use the merge script to pull down the source.", module));
+                if (!isGit) {
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
                 }
                 resolvedModule = new ExpertModule(module);
             }
 
-            if (physicalFileSystem.DirectoryExists(".git")) {
+            bool requiresThirdPartyReplication = true;
+
+            if (isGit) {
                 requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web.") && !d.Contains("_BUILD_"));
             }
 
