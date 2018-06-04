@@ -6,7 +6,7 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filt
 ForEach-Object { . $_.FullName }
 
 function InitializePrivateData {    
-    $context = (New-BuildContext -Environment "AutoDiscover")    
+    $context = (New-BuildContext -Environment 'AutoDiscover')    
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
 }
 
@@ -15,36 +15,36 @@ InitializePrivateData
 function Measure-Command() {
     [CmdletBinding()]
     param (    
-        [ScriptBlock] $expression,
+        [ScriptBlock]$expression,
         [parameter(Mandatory = $False, ValueFromRemainingArguments = $True)]
-        [string] $name
+        [string]$name
     )
   
     process { 
         Microsoft.PowerShell.Utility\Measure-Command -Expression $expression -OutVariable perf
         
         if ($name) {
-            Write-Debug ("Performance: `"$name`" took: " + $perf.TotalMilliseconds + " milliseconds")
+            Write-Debug ("Performance: $($name) took: $($perf.TotalMilliseconds) milliseconds")
         }
     }
 }
 
-[string]$BranchRoot = ""
-[string]$global:BranchName = ""
-[string]$global:BranchLocalDirectory = ""
-[string]$global:BranchServerDirectory = ""
-[string]$global:BranchModulesDirectory = ""
-[string]$global:BranchBinariesDirectory = ""
-[string]$global:BranchExpertSourceDirectory = ""
-[string]$global:BranchExpertVersion = ""
-[string]$global:BranchEnvironmentDirectory = ""
-[string]$global:BuildScriptsDirectory = ""
-[string]$global:PackageScriptsDirectory = ""
-[string]$global:ModuleCreationScripts = ""
-[string]$global:ProductManifestPath = ""
-[string]$global:CurrentModuleName = ""
-[string]$global:CurrentModulePath = ""
-[string]$global:CurrentModuleBuildPath = ""
+[string]$BranchRoot = ''
+[string]$global:BranchName = ''
+[string]$global:BranchLocalDirectory = ''
+[string]$global:BranchServerDirectory = ''
+[string]$global:BranchModulesDirectory = ''
+[string]$global:BranchBinariesDirectory = ''
+[string]$global:BranchExpertSourceDirectory = ''
+[string]$global:BranchExpertVersion = ''
+[string]$global:BranchEnvironmentDirectory = ''
+[string]$global:BuildScriptsDirectory = ''
+[string]$global:PackageScriptsDirectory = ''
+[string]$global:ModuleCreationScripts = ''
+[string]$global:ProductManifestPath = ''
+[string]$global:CurrentModuleName = ''
+[string]$global:CurrentModulePath = ''
+[string]$global:CurrentModuleBuildPath = ''
 [PSModuleInfo]$global:CurrentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
@@ -1053,9 +1053,9 @@ function Get-ProductBuild([switch]$copyToClipboard) {
     The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
 #>
 function Get-ProductZip([switch]$unstable) {
-    Write-Host "Getting latest product zip from [$BranchServerDirectory]"
+    Write-Host "Getting latest product zip from [$global:BranchServerDirectory]"
     $zipName = "ExpertBinaries.zip"
-    [string]$pathToZip = (PathToLatestSuccessfulPackage -pathToPackages $BranchServerDirectory -packageZipName $zipName -unstable $unstable)
+    [string]$pathToZip = (PathToLatestSuccessfulPackage -pathToPackages $global:BranchServerDirectory -packageZipName $zipName -unstable $unstable)
 
     if (-not $pathToZip) {
         return
@@ -1224,8 +1224,8 @@ function Build-ExpertModules {
 
             [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
 
-            if ((Test-Path $BranchLocalDirectory) -ne $true) {
-                write "Branch Root path does not exist: '$BranchLocalDirectory'"
+            if ((Test-Path $global:BranchLocalDirectory) -ne $true) {
+                write "Branch Root path does not exist: '$global:BranchLocalDirectory'"
             }
 
             [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $global:ProductManifestPath
@@ -1312,7 +1312,7 @@ function Build-ExpertModules {
                     Set-CurrentModule $module.Name
 
                     if ($getLatest) {
-                        Get-LatestSourceForModule $module.Name -branchPath $BranchLocalDirectory
+                        Get-LatestSourceForModule $module.Name -branchPath $global:BranchLocalDirectory
                     }
 
                     if ($getDependencies -eq $true) {
@@ -1320,24 +1320,24 @@ function Build-ExpertModules {
                     }
 
                     if ($builtModules -and $builtModules.Count -gt 0) {
-                        $dependencies = Get-ExpertModuleDependencies -BranchPath $BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
+                        $dependencies = Get-ExpertModuleDependencies -BranchPath $global:BranchLocalDirectory -SourceModule $module -IncludeThirdParty $true
                         Write-Host "************* $module *************"
 
                         foreach ($dependencyModule in $dependencies) {
                             Write-Debug "Module dependency: $dependencyModule"
 
                             if (($dependencyModule -and $dependencyModule.Name -and $builtModules.ContainsKey($dependencyModule.Name)) -or ($getLocal | Where {$_ -eq $dependencyModule})) {
-                                $sourcePath = Join-Path $BranchLocalDirectory Modules\$dependencyModule\Bin\Module
+                                $sourcePath = Join-Path $global:BranchLocalDirectory Modules\$dependencyModule\Bin\Module
 
                                 if ($dependencyModule.ModuleType -eq [Aderant.Build.DependencyAnalyzer.ModuleType]::ThirdParty) {
                                     # Probe the new style ThirdParty path
-                                    $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules", "ThirdParty")
+                                    $root = [System.IO.Path]::Combine($global:BranchLocalDirectory, "Modules", "ThirdParty")
 
                                     if ([System.IO.Directory]::Exists($root)) {
                                         $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
                                     } else {
                                         # Fall back to the old style path
-                                        $root = [System.IO.Path]::Combine($BranchLocalDirectory, "Modules")
+                                        $root = [System.IO.Path]::Combine($global:BranchLocalDirectory, "Modules")
                                         $sourcePath = [System.IO.Path]::Combine($root, $dependencyModule, "Bin")
                                     }
                                 }
@@ -1348,7 +1348,7 @@ function Build-ExpertModules {
 
                                 Write-Debug "Local dependency source path: $sourcePath"
 
-                                $targetPath = Join-Path $BranchLocalDirectory Modules\$module
+                                $targetPath = Join-Path $global:BranchLocalDirectory Modules\$module
                                 CopyContents $sourcePath "$targetPath\Dependencies"
                             }
                         }
@@ -1429,8 +1429,8 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
 
     [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames)
 
-    if ((Test-Path $BranchLocalDirectory) -ne $true) {
-        write "Branch Root path does not exist: '$BranchLocalDirectory'"
+    if ((Test-Path $global:BranchLocalDirectory) -ne $true) {
+        write "Branch Root path does not exist: '$global:BranchLocalDirectory'"
     }
 
     [Aderant.Build.DependencyAnalyzer.ExpertModule[]] $modules = Sort-ExpertModulesByBuildOrder -BranchPath $global:BranchModulesDirectory -Modules $workflowModuleNames -ProductManifestPath $global:ProductManifestPath
@@ -1731,24 +1731,37 @@ function Uninstall-DeploymentManager {
     & "$global:BranchBinariesDirectory\AutomatedDeployment\UninstallDeploymentManager.ps1" -deploymentManagerMsiDirectory $global:BranchBinariesDirectory
 }
 
-#sets up visual studio environment, called from Profile.ps1 when starting PS.
-function Set-Environment($initialize = $true) {
-    if ($initialize) {
-        Set-BranchPaths
-    }
+<#
+.Synopsis
+    Sets up visual studio environment, called from Profile.ps1 when starting PS.
+.Description
+    Sets up visual studio environment, called from Profile.ps1 when starting PS.
+.PARAMETER initialize
+    Sets branch paths and installs Pester.
+#>
+function Set-Environment() {
+    param (
+        [bool]$initialize = $true
+    )
 
-    Set-ScriptPaths
-    Set-ExpertSourcePath
-    Initialise-BuildLibraries
-    Set-VisualStudioVersion
+    process {
+        if ($initialize) {
+            Set-BranchPaths
+        }
 
-    OutputEnvironmentDetails
+        Set-ScriptPaths
+        Set-ExpertSourcePath
+        Initialise-BuildLibraries
+        Set-VisualStudioVersion
 
-    $global:Workspace = new-object -TypeName Aderant.Build.Providers.ModuleWorkspace -ArgumentList $Global:ProductManifestPath, $global:BranchModulesDirectory, "ExpertSuite"
+        OutputEnvironmentDetails
 
-    if ($initialize) {
-        # Setup PowerShell script unit test environment
-        InstallPester
+        $global:Workspace = new-object -TypeName Aderant.Build.Providers.ModuleWorkspace -ArgumentList $global:ProductManifestPath, $global:BranchModulesDirectory, "ExpertSuite"
+
+        if ($initialize) {
+            # Setup PowerShell script unit test environment
+            InstallPester
+        }
     }
 }
 
@@ -1775,15 +1788,15 @@ function SwitchBranchTo($newBranch, [switch] $SetAsDefault) {
     cd $global:BranchLocalDirectory
 
     if ($SetAsDefault) {
-        SetDefaultValue dropRootUNCPath $BranchServerDirectory
-        SetDefaultValue devBranchFolder $BranchLocalDirectory
+        SetDefaultValue dropRootUNCPath $global:BranchServerDirectory
+        SetDefaultValue devBranchFolder $global:BranchLocalDirectory
     }
 }
 
 function Set-VisualStudioVersion() {
     $file = [System.IO.Path]::Combine($global:BuildScriptsDirectory, "vsvars.ps1");
     if (Test-Path $file) {
-        &($file)
+        & $file
     }
 }
 
@@ -1917,67 +1930,68 @@ function global:SetDefaultValue {
     Will open the Libraries.Presentation solution in visual studio
 
 #>
-function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [switch]$getLatest, [switch]$code, [switch]$seventeen) {
-    $devenv = "devenv"
-    $seventeenDirectory = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe'
+function Open-ModuleSolution() {
+    param (
+        [Parameter(Mandatory=$false)][string]$ModuleName,
+        [switch]$getDependencies,
+        [switch]$getLatest,
+        [switch]$code,
+        [switch]$seventeen
+    )
 
-    if ($seventeen) {
-        if (Test-Path $seventeenDirectory) {
-            $devenv = (Get-Item $seventeenDirectory | select-object -First 1).FullName
-        } else {
-            Write-Host "VS 2017 could not be found ($seventeenDirectory)"
-        }
+    begin {
+        [string]$devenv = 'devenv'
     }
 
-    $prevModule = $null
+    process {      
+        if ($seventeen) {
+            [string]$vsSeventeenDirectory = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe'
 
-    if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
-        if (-not [string]::IsNullOrEmpty($global:CurrentModuleName)) {
-            $prevModule = Get-CurrentModule
-        }
-
-        Set-CurrentModule $moduleName
-    }
-
-    $rootPath = Join-Path $BranchLocalDirectory "Modules\$ModuleName"
-    if (-not ($ModuleName)) {
-        $ModuleName = $global:CurrentModuleName
-        $rootPath = $global:CurrentModulePath
-    }
-
-    if (-not ($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
-        Write-Host -ForegroundColor Yellow "No module specified"
-        return
-    }
-
-    if ($getDependencies) {
-        Write-Host "Getting Dependencies for module $ModuleName"
-        Get-DependenciesForCurrentModule
-    }
-
-    if ($getLatest) {
-        Write-Host "Getting latest source for module $ModuleName"
-        Get-Latest -ModuleName $ModuleName;
-    }
-
-    Write-Host "Opening solution for module $ModuleName"
-    $moduleSolutionPath = Join-Path $rootPath "$ModuleName.sln"
-
-    if (Test-Path $moduleSolutionPath) {
-        if ($code) {
-            if (Get-Command code -errorAction SilentlyContinue) {
-                Invoke-Expression "code $rootPath"
+            if (Test-Path $vsSeventeenDirectory) {
+                $devenv = (Get-Item $vsSeventeenDirectory | select-object -First 1).FullName
             } else {
-                Write-Host "VS Code could not be found (code)"
+                Write-Host "VS 2017 could not be found ($vsSeventeenDirectory)"
             }
-        } else {
-            Invoke-Expression "& '$devenv' $moduleSolutionPath"
         }
-    } else {
-        [System.IO.FileSystemInfo[]]$candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
-        if ($candidates.Count -gt 0) {
-            $moduleSolutionPath = Join-Path $rootPath $candidates[0]
 
+        $prevModule = $null
+
+        if (($getDependencies) -and -not [string]::IsNullOrEmpty($ModuleName)) {
+            if (-not [string]::IsNullOrEmpty($global:CurrentModuleName)) {
+                $prevModule = Get-CurrentModule
+            }
+
+            Set-CurrentModule $moduleName
+        }
+
+        [string]$rootPath = ''
+
+        if (-not [string]::IsNullOrWhiteSpace($ModuleName)) {
+            $rootPath = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
+        } else {                
+            $ModuleName = $global:CurrentModuleName
+            $rootPath = $global:CurrentModulePath
+        }
+
+        if (-not ($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
+            Write-Warning 'No module specified.'
+            return
+        }
+
+        if ($getDependencies) {
+            Write-Host "Getting Dependencies for module: $ModuleName"
+            Get-DependenciesForCurrentModule
+        }
+
+        if ($getLatest) {
+            Write-Host "Getting latest source for module: $ModuleName"
+            Get-Latest -ModuleName $ModuleName;
+        }
+
+        Write-Host "Opening solution for module: $ModuleName"
+        $moduleSolutionPath = Join-Path $rootPath "$ModuleName.sln"
+
+        if (Test-Path $moduleSolutionPath) {
             if ($code) {
                 if (Get-Command code -errorAction SilentlyContinue) {
                     Invoke-Expression "code $rootPath"
@@ -1988,12 +2002,27 @@ function Open-ModuleSolution([string] $ModuleName, [switch] $getDependencies, [s
                 Invoke-Expression "& '$devenv' $moduleSolutionPath"
             }
         } else {
-            "There is no solution file at $moduleSolutionPath"
-        }
-    }
+            [System.IO.FileSystemInfo[]]$candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
+            if ($candidates.Count -gt 0) {
+                $moduleSolutionPath = Join-Path $rootPath $candidates[0]
 
-    if (($prevModule -ne $null) -and (Get-CurrentModule -ne $prevModule)) {
-        Set-CurrentModule $prevModule
+                if ($code) {
+                    if (Get-Command code -errorAction SilentlyContinue) {
+                        Invoke-Expression "code $rootPath"
+                    } else {
+                        Write-Host "VS Code could not be found (code)"
+                    }
+                } else {
+                    Invoke-Expression "& '$devenv' $moduleSolutionPath"
+                }
+            } else {
+                "There is no solution file at $moduleSolutionPath"
+            }
+        }
+
+        if (($prevModule -ne $null) -and (Get-CurrentModule -ne $prevModule)) {
+            Set-CurrentModule $prevModule
+        }
     }
 }
 
@@ -2054,7 +2083,7 @@ function Start-UITests([switch]$noUpdate, [string]$TestRunnerPath) {
         Invoke-Expression "robocopy.exe /S /PURGE /NJH /NJS /NS /NC /NP /NFL /NDL /R:5 /W:1 /MT:3 $latestSuccessfulBuild $TestRunnerPath"
     }
     $testTool = Join-Path $TestRunnerPath "UITester.exe"
-    Invoke-Expression "$testTool -BranchModulesDirectory $BranchModulesDirectory -BuildScriptsDirectory $BuildScriptsDirectory -PackageScriptsDirectory $PackageScriptsDirectory -environmentmanifestpath C:\ExpertShare\environment.xml -branchserverdirectory $BranchServerDirectory"
+    Invoke-Expression "$testTool -BranchModulesDirectory $BranchModulesDirectory -BuildScriptsDirectory $BuildScriptsDirectory -PackageScriptsDirectory $PackageScriptsDirectory -environmentmanifestpath C:\ExpertShare\environment.xml -branchserverdirectory $global:BranchServerDirectory"
 }
 
 
@@ -2747,8 +2776,8 @@ function InstallPester() {
     $dir = "cmd /c rmdir `"$env:USERPROFILE\Documents\WindowsPowerShell\Modules\Pester`""
     Invoke-Expression $dir
 
-    if ($BranchLocalDirectory -ne $null) {
-        $expression = "cmd /c mklink /d `"$env:USERPROFILE\Documents\WindowsPowerShell\Modules\Pester`" `"$BranchLocalDirectory\Modules\Build.Infrastructure\Src\Profile\Pester\`""
+    if ($global:BranchLocalDirectory -ne $null) {
+        $expression = "cmd /c mklink /d `"$env:USERPROFILE\Documents\WindowsPowerShell\Modules\Pester`" `"$($global:BranchLocalDirectory)\Modules\Build.Infrastructure\Src\Profile\Pester\`""
         Invoke-Expression $expression
     }
 }
@@ -4078,7 +4107,7 @@ Export-ModuleMember -variable ProductManifestPath
 
 #$ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 
-#Set-Environment
+Set-Environment
 
 Write-Host ''
 Write-Host 'Type ' -NoNewLine
