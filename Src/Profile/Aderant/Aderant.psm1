@@ -24,7 +24,7 @@ function Measure-Command() {
         Microsoft.PowerShell.Utility\Measure-Command -Expression $expression -OutVariable perf
         
         if ($name) {
-            Write-Debug ("Performance: $($name) took: $($perf.TotalMilliseconds) milliseconds")
+            Write-Debug ("Performance: $($name) took: $($perf.TotalMilliseconds) milliseconds.")
         }
     }
 }
@@ -54,32 +54,32 @@ function Measure-Command() {
 [bool]$global:LastBuildDownstream = $false
 [bool]$global:LastBuildGetLatest = $false
 
-$titles = @(
-    "Reticulating Splines",
-    "Attempting to Lock Back-Buffer",
-    "Calculating Inverse Probability Matrices",
-    "Compounding Inert Tessellations",
-    "Decomposing Singular Values",
-    "Dicing Models",
-    "Extracting Resources",
-    "Obfuscating Quigley Matrix",
-    "Fabricating Imaginary Infrastructure",
-    "Activating Deviance Threshold",
-    "Simulating Program Execution",
-    "Abstracting Loading Procedures",
-    "Unfolding Helix Packet",
-    "Iterating Chaos Array",
-    "Calculating Native Restlessness",
-    "Filling in the Blanks",
-    "Mitigating Time-Stream Discontinuities",
-    "Blurring Reality Lines",
-    "Reversing the Polarity of the Neutron Flow",
-    "Dropping Expert Database",
-    "Formatting C:\",
-    "Replacing Coffee Machine",
-    "Duplicating Offline Cache",
-    "Replacing Headlight Fluid",
-    "Dailing Roper Hotline"
+[string[]]$titles = @(
+    'Reticulating Splines',
+    'Attempting to Lock Back-Buffer',
+    'Calculating Inverse Probability Matrices',
+    'Compounding Inert Tessellations',
+    'Decomposing Singular Values',
+    'Dicing Models',
+    'Extracting Resources',
+    'Obfuscating Quigley Matrix',
+    'Fabricating Imaginary Infrastructure',
+    'Activating Deviance Threshold',
+    'Simulating Program Execution',
+    'Abstracting Loading Procedures',
+    'Unfolding Helix Packet',
+    'Iterating Chaos Array',
+    'Calculating Native Restlessness',
+    'Filling in the Blanks',
+    'Mitigating Time-Stream Discontinuities',
+    'Blurring Reality Lines',
+    'Reversing the Polarity of the Neutron Flow',
+    'Dropping Expert Database',
+    'Formatting C:\',
+    'Replacing Coffee Machine',
+    'Duplicating Offline Cache',
+    'Replacing Headlight Fluid',
+    'Dailing Roper Hotline'
 )
 
 $Host.UI.RawUI.WindowTitle = Get-Random $titles
@@ -93,7 +93,7 @@ function Check-Vsix() {
     )
 
     Begin {
-        [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null             
+        [Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null
 
         function Output-VSIXLog {
             $errorsOccurred = $false
