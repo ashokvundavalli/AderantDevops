@@ -20,7 +20,7 @@ namespace IntegrationTest.BuildTime {
 
             ProjectDependencyAnalyzer projectDependencyAnalyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
-            List<IDependencyRef> dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(sourceDirectory));
+            List<IDependencyRef> dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext(null).AddDirectory(sourceDirectory));
 
             Assert.AreEqual("Module.Initialize", dependencyOrder[0].Name);
             Assert.AreEqual("Project1", dependencyOrder[1].Name);
