@@ -52,6 +52,24 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SystemUnderTest\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Content>
+    <None Include="DependencyAnalyzer\Source\Module\Module.sln">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DependencyAnalyzer\Source\Module\Src\Project1\Project1.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DependencyAnalyzer\Source\Module\Src\Project2\Project2.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DependencyAnalyzer\Source\Module\Src\Project3\Project3.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="DependencyAnalyzer\Resources\Web.Core.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DependencyAnalyzer\Resources\Web.PrebillEditor.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Framework\Bin\Module\fake.role.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -138,12 +156,28 @@
     <Content Include="Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzerTests.cs" />
+    <Compile Include="DependencyAnalyzer\Resource.Designer.cs">
+      <DependentUpon>Resource.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="DependencyAnalyzer\Source\Module\Src\Project1\Class1.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DependencyAnalyzer\Source\Module\Src\Project2\Class1.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DependencyAnalyzer\Source\Module\Src\Project3\Class1.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="RunAnalyzerTests.cs" />
     <Content Include="Resources\TestClass.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="Tasks\BuildTaskTestBase.cs" />
     <Compile Include="Tasks\CheckCertificateTests.cs" />
+    <Compile Include="Tasks\ContextTaskBaseTests.cs" />
     <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\GetFileVersionInfoTests.cs" />
@@ -177,6 +211,12 @@
     <None Include="Resources\Framework\Bin\Module\Packages\Security.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DependencyAnalyzer\Resource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
