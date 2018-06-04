@@ -268,10 +268,6 @@ namespace Aderant.Build {
             }
         }
 
-        public string GetParent(string path) {
-            return Directory.GetParent(path.TrimEnd(Path.DirectorySeparatorChar)).FullName;
-        }
-
         private void CopyDirectoryInternal(string source, string destination, bool recursive) {
             // Get the subdirectories for the specified directory.
             DirectoryInfo dir = new DirectoryInfo(source);
