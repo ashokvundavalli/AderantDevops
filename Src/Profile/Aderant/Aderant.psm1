@@ -2689,11 +2689,6 @@ function Start-Redeployment([switch]$GetProduct, [switch]$GetProductZip, [switch
     $start
     $end
     $end - $start
-    Get-Beep; Get-Beep #Audio feedback that we have finished.
-}
-
-function Get-Beep() {
-    $([char]7)
 }
 
 function tryToRemove ($path) {
@@ -4021,7 +4016,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Enable-ExpertPrompt'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-AderantModuleLocation'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-Beep'; alias = 'beep'; },
     [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-DependenciesForCurrentModule'; alias = 'gd'; },
     [PSCustomObject]@{ function = 'Get-DependenciesForEachModule'; alias = 'gde'; },

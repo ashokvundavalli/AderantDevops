@@ -10,6 +10,7 @@ namespace Aderant.Build {
             JobName = "";
             ScmBranch = "";
             ScmCommitId = "";
+            HostEnvironment = HostEnvironment.Developer;
         }
 
         public int BuildNumber { get; set; }
