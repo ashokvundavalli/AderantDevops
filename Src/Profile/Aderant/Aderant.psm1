@@ -489,7 +489,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
 
     if ([System.IO.Path]::IsPathRooted($name)) {
         $global:CurrentModulePath = $name
-        $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
+        $global:CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:CurrentModulePath)).Name
         Write-Debug "Setting repository: $name"
         Import-Module $PSScriptRoot\AderantGit.psm1
 
@@ -502,8 +502,9 @@ function Set-CurrentModule($name, [switch]$quiet) {
             Set-Location $global:CurrentModulePath
             global:Enable-GitPrompt
             return
-        } elseif (IsGitRepository (([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName)) {
+        } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($global:CurrentModulePath).Parent.FullName)) {
             global:Enable-GitPrompt
+            return
         } else {
             Enable-ExpertPrompt
         }
@@ -523,7 +524,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
     }
 
     Write-Debug "Current module path [$global:CurrentModulePath]"
-    $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath \Build
+    $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath "Build"
 
     $ShellContext.IsGitRepository = $true
 }
