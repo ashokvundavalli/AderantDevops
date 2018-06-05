@@ -10,24 +10,21 @@ function New-BuildContext {
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
     param (
-        [Parameter(Mandatory=$true)]
-        [Aderant.Build.EnvironmentType]$Environment,
-
         [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrWhiteSpace()]
+        [ValidateNotNullOrEmpty()]
         [string]$DownloadRoot
     )
 
     begin {
         Set-StrictMode -Version Latest
+
+        . "$PSScriptRoot\Get-AmbientBuildMetadata.ps1"
     }
 
     process {
         [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
 
-        [Aderant.Build.Context]$context = [Aderant.Build.Context]::new()
-        $context.BuildMetadata = $buildMetadata
-        $context.Environment = $Environment
+        [Aderant.Build.Context]$context = [Aderant.Build.Context]::new($buildMetadata)
 
         if (-not [string]::IsNullOrWhiteSpace($DownloadRoot)) {
             $context.DownloadRoot = $DownloadRoot
@@ -36,5 +33,3 @@ function New-BuildContext {
         return $context
     }
 }
-
-Export-ModuleMember -Function New-BuildContext

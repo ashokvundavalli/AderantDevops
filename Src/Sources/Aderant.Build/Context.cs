@@ -8,7 +8,12 @@ namespace Aderant.Build {
     public sealed class Context {
         private BuildMetadata buildMetadata;
 
-        public Context() {
+        public Context() : this(new BuildMetadata()) {
+        }
+
+        public Context(BuildMetadata buildMetadata) {
+            this.buildMetadata = buildMetadata;
+
             Configuration = new Dictionary<object, object>();
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
@@ -25,15 +30,13 @@ namespace Aderant.Build {
 
         public DirectoryInfo BuildRoot { get; set; }
 
-        public bool IsDesktopBuild { get; set; } = true;
+        public bool IsDesktopBuild => BuildMetadata.HostEnvironment.Equals(HostEnvironment.Developer);
 
         public IDictionary Configuration { get; set; }
 
         public FileInfo ConfigurationPath { get; set; }
 
         public DirectoryInfo DownloadRoot { get; set; }
-
-        public EnvironmentType Environment { get; set; }
 
         public DirectoryInfo OutputDirectory { get; set; }
 
@@ -55,16 +58,10 @@ namespace Aderant.Build {
 
         public BuildMetadata BuildMetadata {
             get {
-                return buildMetadata;
+                return buildMetadata ?? new BuildMetadata();
             }
             set {
                 buildMetadata = value;
-
-                if (value != null) {
-                    if (value.HostEnvironment != "developer") {
-                        IsDesktopBuild = false;
-                    }
-                }
             }
         }
 
@@ -75,11 +72,6 @@ namespace Aderant.Build {
 
             throw new NotImplementedException("No builder for " + engineType);
         }
-    }
-
-    public enum EnvironmentType {
-        Developer,
-        Server
     }
 
     public enum ComboBuildType {

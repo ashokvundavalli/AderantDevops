@@ -1,5 +1,3 @@
-Set-StrictMode -Version Latest
-
 function global:Invoke-Build {
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
@@ -47,6 +45,8 @@ function global:Invoke-Build {
     )
 
     begin {
+        Set-StrictMode -Version Latest
+
         Enum ComboBuildType {
               Changed
               Branch
@@ -59,13 +59,9 @@ function global:Invoke-Build {
               None
         }
 
-        Enum EnvironmentType {
-            Developer,
-            Server
-        }
-
         # Get build context
-        [Aderant.Build.Context]$context = New-BuildContext -Environment [EnvironmentType]::Developer
+        . "$PSScriptRoot\New-BuildContext.ps1"
+        [Aderant.Build.Context]$context = New-BuildContext
 
         [ComboBuildType]$comboBuildType = [ComboBuildType]::All
 
@@ -98,9 +94,11 @@ function global:Invoke-Build {
     }
 
     process {
+        [string]$repositoryPath = ''
+
         if (-not [string]::IsNullOrEmpty($modulePath)){
             $repositoryPath = $modulePath
-        } else {
+        } elseif(-not [string]::IsNullOrEmpty($global:CurrentModulePath)) {
             $repositoryPath = $global:CurrentModulePath
 
             if (-not [string]::IsNullOrEmpty($moduleName)){
@@ -112,6 +110,9 @@ function global:Invoke-Build {
                     $repositoryPath = $(Resolve-Path $moduleName)
                 }
             }
+        } else {
+            Write-Error 'No valid module path supplied.'
+            return
         }
 
         [bool]$skipPackage = $false
@@ -126,7 +127,7 @@ function global:Invoke-Build {
             $task = "Package"
         }
       
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -ComboBuildType $comboBuildType -DownstreamType $downStreamType
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -ComboBuildType $comboBuildType -DownstreamType $downStreamType
     }
 
     end {
