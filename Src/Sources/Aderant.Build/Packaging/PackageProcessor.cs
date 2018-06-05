@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -62,10 +62,8 @@ namespace Aderant.Build.Packaging {
             if (name.Equals("Aderant.Database.Backup")) {
                 commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, Constants.DatabasePackageUri);
             } else {
-                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, BuildConstants.PackageRepository);
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, Constants.PackageRepositoryUri);
             }
-
-            
         }
     }
 }
