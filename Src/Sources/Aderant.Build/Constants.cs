@@ -1,6 +1,4 @@
-﻿using Paket;
-
-namespace Aderant.Build {
+﻿namespace Aderant.Build {
     public static class Constants {
         /// <summary>
         /// The build infrastructure directory
