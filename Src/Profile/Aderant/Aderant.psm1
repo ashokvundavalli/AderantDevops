@@ -493,6 +493,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
             return
         } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($global:CurrentModulePath).Parent.FullName)) {
             global:Enable-GitPrompt
+            return
         } else {
             Enable-ExpertPrompt
         }
@@ -514,7 +515,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
     Write-Debug "Current module path [$global:CurrentModulePath]"
     $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath "Build"
 
-    $ShellContext.IsGitRepository = $true
+    $ShellContext.IsGitRepository = $false
 }
 
 function IsGitRepository([string]$path) {
