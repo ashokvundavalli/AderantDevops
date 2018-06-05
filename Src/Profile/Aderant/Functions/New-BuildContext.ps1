@@ -11,8 +11,10 @@ function New-BuildContext {
     [OutputType([Aderant.Build.Context])]
     param (
         [Parameter(Mandatory=$true)]
-        [string]$Environment,        
+        [Aderant.Build.EnvironmentType]$Environment,
 
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrWhiteSpace()]
         [string]$DownloadRoot
     )
 
@@ -25,6 +27,11 @@ function New-BuildContext {
 
         [Aderant.Build.Context]$context = [Aderant.Build.Context]::new()
         $context.BuildMetadata = $buildMetadata
+        $context.Environment = $Environment
+
+        if (-not [string]::IsNullOrWhiteSpace($DownloadRoot)) {
+            $context.DownloadRoot = $DownloadRoot
+        }
 
         return $context
     }

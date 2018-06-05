@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Aderant.Build.Tasks.BuildTime;
 
 namespace Aderant.Build {
     [Serializable]
@@ -14,7 +13,6 @@ namespace Aderant.Build {
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
             Variables = new Dictionary<string, object>();
-            Environment = "";
             PipelineName = "";
             TaskName = "";
         }
@@ -35,7 +33,7 @@ namespace Aderant.Build {
 
         public DirectoryInfo DownloadRoot { get; set; }
 
-        public string Environment { get; set; }
+        public EnvironmentType Environment { get; set; }
 
         public DirectoryInfo OutputDirectory { get; set; }
 
@@ -79,4 +77,21 @@ namespace Aderant.Build {
         }
     }
 
+    public enum EnvironmentType {
+        Developer,
+        Server
+    }
+
+    public enum ComboBuildType {
+        Changed,
+        Branch,
+        Staged,
+        All
+    }
+
+    public enum DownStreamType {
+        Direct,
+        All,
+        None
+    }
 }

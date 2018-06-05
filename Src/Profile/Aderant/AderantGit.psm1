@@ -38,7 +38,7 @@ function global:Enable-GitPrompt{
     }
 }
 
-. $PSScriptRoot\InvokeBuild.ps1
+. $PSScriptRoot\Functions\InvokeBuild.ps1
 
 Install-PoshGit
 Initialize-Git

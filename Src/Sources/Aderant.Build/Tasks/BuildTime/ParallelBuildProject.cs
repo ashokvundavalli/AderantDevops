@@ -145,17 +145,4 @@ namespace Aderant.Build.Tasks.BuildTime {
             }
         }
     }
-
-    public enum ComboBuildType {
-        Changed,
-        Branch,
-        Staged,
-        All
-    }
-
-    public enum DownStreamType {
-        Direct,
-        All,
-        None
-    }
 }

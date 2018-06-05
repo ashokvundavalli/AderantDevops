@@ -9,13 +9,13 @@ function global:Invoke-Build {
         [Parameter(ParameterSetName="Build", Position=1)]
         [switch]$branch,
 
-        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=2)]
-        [ValidateSet('Direct', 'All', 'None')]
-        [DownStreamType]$downStreamType = [DownStreamType]::All,
-
-        [Parameter(Position=3)]
+        [Parameter(Position=2)]
         [Parameter(ParameterSetName="BuildAll")]
         [switch]$all,
+
+        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=3)]
+        [ValidateSet('Direct', 'All', 'None')]
+        [DownStreamType]$downStreamType = [DownStreamType]::All,
 
         [Parameter(Position=4)]
         [switch]$release,
@@ -36,12 +36,12 @@ function global:Invoke-Build {
         [switch]$displayCodeCoverage,
 
         [Parameter(Position=10)]
-        [Parameter(ParameterSetName="Build", ParameterSetName="ModulePath")]
+        [Parameter(ParameterSetName="Build", Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
         [string]$modulePath = '',
 
         [Parameter(Position=11)]
-        [Parameter(ParameterSetName=@("Build", "ModuleName"))]
+        [Parameter(ParameterSetName="Build", Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
         [string]$moduleName = ''
     )
@@ -59,21 +59,34 @@ function global:Invoke-Build {
               None
         }
 
-        # Get build context
-        [Aderant.Build.Context]$context = Get-BuildContext
-
-        if ($context -eq $null) {
-            $context = New-BuildContext -Environment 'Developer'
+        Enum EnvironmentType {
+            Developer,
+            Server
         }
 
-        # Set build context
+        # Get build context
+        [Aderant.Build.Context]$context = New-BuildContext -Environment [EnvironmentType]::Developer
+
+        [ComboBuildType]$comboBuildType = [ComboBuildType]::All
+
+        switch ($true) {
+            $changed.IsPresent {
+                $comboBuildType = [ComboBuildType]::Changed
+                break
+            }
+            $branch.IsPresent {
+                $comboBuildType = [ComboBuildType]::Branch
+                break
+            }
+        }
+
         $context.ComboBuildType = $comboBuildType
 
-        if ($comboBuildType -eq [ComboBuildType]::All) {
-            $context.DownStreamType = [DownstreamType]::All
+        if ($comboBuildType -ne [ComboBuildType]::All) {
+            $context.DownStreamType = $downStreamType
         }
 
-        Write-Host "Combo Build Type: $comboBuildType, downstream search type: $downStreamType " -ForegroundColor DarkGreen
+        Write-Host "Combo Build Type: $comboBuildType, downstream search type: $downStreamType" -ForegroundColor DarkGreen
 
         [string]$flavor = "Debug"
 
@@ -81,7 +94,7 @@ function global:Invoke-Build {
             $flavor = "Release"
         }
 
-        Write-Host "Forcing BuildFlavor to be $($flavor.ToUpper())" -ForegroundColor DarkGreen
+        Write-Host "Forcing BuildFlavor to: $($flavor.ToUpper())" -ForegroundColor DarkGreen
     }
 
     process {
