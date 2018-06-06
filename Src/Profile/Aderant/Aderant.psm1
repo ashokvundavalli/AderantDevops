@@ -955,11 +955,25 @@ function Copy-BinariesFromCurrentModule() {
     Get-Product
 #>
 function Get-Product {
+    param (
+        [switch]$createBackup
+    )
+
     & tf.exe vc 'get' $global:ProductManifestPath
 
     Push-Location -path $global:PackageScriptsDirectory
     & .\GetProduct.ps1 -ProductManifestPath $global:ProductManifestPath -dropRoot $global:BranchServerDirectory -binariesDirectory $global:BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString)
     Pop-Location
+
+    if ($createBackup.IsPresent) {
+        Write-Host 'Creating backup of Binaries folder.'
+        $backupPath = "$global:BranchLocalDirectory\BinariesBackup"
+        if (-not (Test-Path $backupPath)) {
+            New-Item -ItemType Directory -Path $backupPath
+        }
+        Invoke-Expression "robocopy.exe $global:BranchBinariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $global:BranchBinariesDirectory\ExpertSource\Customization" | out-null
+        Write-Host 'Backup complete.'
+    }
 }
 
 <#
