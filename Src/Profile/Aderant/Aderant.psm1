@@ -951,8 +951,10 @@ function Copy-BinariesFromCurrentModule() {
     Uses the expertmanifest from the local Build.Infrastructure\Src\Package directory.
     This will always return the pdb's.
     The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
+.PARAMETER createBackup
+    Creates a backup of the acquired product binaries.
 .EXAMPLE
-    Get-Product
+    Get-Product -createBackup
 #>
 function Get-Product {
     param (
@@ -967,7 +969,7 @@ function Get-Product {
 
     if ($createBackup.IsPresent) {
         Write-Host 'Creating backup of Binaries folder.'
-        $backupPath = "$global:BranchLocalDirectory\BinariesBackup"
+        [string]$backupPath = "$global:BranchLocalDirectory\BinariesBackup"
         if (-not (Test-Path $backupPath)) {
             New-Item -ItemType Directory -Path $backupPath
         }

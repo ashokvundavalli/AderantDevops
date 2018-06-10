@@ -17,8 +17,6 @@ function New-BuildContext {
 
     begin {
         Set-StrictMode -Version Latest
-
-        . "$PSScriptRoot\Get-AmbientBuildMetadata.ps1"
     }
 
     process {
@@ -33,3 +31,5 @@ function New-BuildContext {
         return $context
     }
 }
+
+Export-ModuleMember -Function 'New-BuildContext'

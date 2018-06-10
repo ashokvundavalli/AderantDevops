@@ -60,7 +60,6 @@ function global:Invoke-Build {
         }
 
         # Get build context
-        . "$PSScriptRoot\New-BuildContext.ps1"
         [Aderant.Build.Context]$context = New-BuildContext
 
         [ComboBuildType]$comboBuildType = [ComboBuildType]::All
