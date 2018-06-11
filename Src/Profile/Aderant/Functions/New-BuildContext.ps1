@@ -10,9 +10,8 @@ function New-BuildContext {
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
     param (
-        [Parameter(Mandatory=$true)]
-        [string]$Environment,        
-
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
         [string]$DownloadRoot
     )
 
@@ -23,11 +22,14 @@ function New-BuildContext {
     process {
         [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
 
-        [Aderant.Build.Context]$context = [Aderant.Build.Context]::new()
-        $context.BuildMetadata = $buildMetadata
+        [Aderant.Build.Context]$context = [Aderant.Build.Context]::new($buildMetadata)
+
+        if (-not [string]::IsNullOrWhiteSpace($DownloadRoot)) {
+            $context.DownloadRoot = $DownloadRoot
+        }
 
         return $context
     }
 }
 
-Export-ModuleMember -Function New-BuildContext
+Export-ModuleMember -Function 'New-BuildContext'

@@ -1,66 +1,87 @@
-Set-StrictMode -Version Latest
-
 function global:Invoke-Build {
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
-        [Parameter(Position=0)]
-        [Parameter(ParameterSetName="Build")]
-        [ValidateSet("Changed", "Branch", "All")]
-        [ComboBuildType]$comboBuildType = [ComboBuildType]::Branch,
+        [Parameter(ParameterSetName="Build", Position=0)]
+        [switch]$changed,
 
-        [Parameter(Position=1)]
-        [Parameter(ParameterSetName="Build")]
-        [ValidateSet("Direct", "All", "None")]
-        [DownStreamType]$downStreamType = [DownStreamType]::All,
+        [Parameter(ParameterSetName="Build", Position=1)]
+        [switch]$branch,
 
         [Parameter(Position=2)]
         [Parameter(ParameterSetName="BuildAll")]
         [switch]$all,
 
-        [Parameter(Position=3)]
-        [switch]$release,
+        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=3)]
+        [ValidateSet('Direct', 'All', 'None')]
+        [DownStreamType]$downStreamType = [DownStreamType]::All,
 
         [Parameter(Position=4)]
-        [switch]$clean,
+        [switch]$release,
 
         [Parameter(Position=5)]
-        [switch]$package,
+        [switch]$clean,
 
         [Parameter(Position=6)]
-        [switch]$integration,
+        [switch]$package,
 
         [Parameter(Position=7)]
-        [switch]$automation,
+        [switch]$integration,
 
         [Parameter(Position=8)]
-        [switch]$displayCodeCoverage,
+        [switch]$automation,
 
         [Parameter(Position=9)]
-        [Parameter(ParameterSetName="Build")]
-        [Parameter(ParameterSetName="ModulePath")]
-        [ValidateNotNullOrEmpty()]
-        [string]$modulePath = "",
+        [switch]$displayCodeCoverage,
 
         [Parameter(Position=10)]
-        [Parameter(ParameterSetName="Build")]
-        [Parameter(ParameterSetName="ModuleName")]
+        [Parameter(ParameterSetName="Build", Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
-        [string]$moduleName = ""
+        [string]$modulePath = '',
+
+        [Parameter(Position=11)]
+        [Parameter(ParameterSetName="Build", Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$moduleName = ''
     )
 
     begin {
+        Set-StrictMode -Version Latest
+
         Enum ComboBuildType {
               Changed
               Branch
               All
         }
+
         Enum DownStreamType {
               Direct
               All
               None
         }
 
-        Write-Host "Combo Build Type: $comboBuildType, downstream search type: $downStreamType " -ForegroundColor DarkGreen
+        # Get build context
+        [Aderant.Build.Context]$context = New-BuildContext
+
+        [ComboBuildType]$comboBuildType = [ComboBuildType]::All
+
+        switch ($true) {
+            $changed.IsPresent {
+                $comboBuildType = [ComboBuildType]::Changed
+                break
+            }
+            $branch.IsPresent {
+                $comboBuildType = [ComboBuildType]::Branch
+                break
+            }
+        }
+
+        $context.ComboBuildType = $comboBuildType
+
+        if ($comboBuildType -ne [ComboBuildType]::All) {
+            $context.DownStreamType = $downStreamType
+        }
+
+        Write-Host "Combo Build Type: $comboBuildType, downstream search type: $downStreamType" -ForegroundColor DarkGreen
 
         [string]$flavor = "Debug"
 
@@ -68,13 +89,15 @@ function global:Invoke-Build {
             $flavor = "Release"
         }
 
-        Write-Host "Forcing BuildFlavor to be $($flavor.ToUpper())" -ForegroundColor DarkGreen
+        Write-Host "Forcing BuildFlavor to: $($flavor.ToUpper())" -ForegroundColor DarkGreen
     }
 
     process {
+        [string]$repositoryPath = ''
+
         if (-not [string]::IsNullOrEmpty($modulePath)){
             $repositoryPath = $modulePath
-        } else {
+        } elseif(-not [string]::IsNullOrEmpty($global:CurrentModulePath)) {
             $repositoryPath = $global:CurrentModulePath
 
             if (-not [string]::IsNullOrEmpty($moduleName)){
@@ -86,6 +109,9 @@ function global:Invoke-Build {
                     $repositoryPath = $(Resolve-Path $moduleName)
                 }
             }
+        } else {
+            Write-Error 'No valid module path supplied.'
+            return
         }
 
         [bool]$skipPackage = $false
@@ -100,7 +126,7 @@ function global:Invoke-Build {
             $task = "Package"
         }
       
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -ModuleName $moduleName -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -ComboBuildType $comboBuildType -DownstreamType $downStreamType
+        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -ComboBuildType $comboBuildType -DownstreamType $downStreamType
     }
 
     end {

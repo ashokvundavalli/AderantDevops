@@ -6,7 +6,7 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filt
 ForEach-Object { . $_.FullName }
 
 function InitializePrivateData {    
-    $context = (New-BuildContext -Environment 'AutoDiscover')    
+    $context = New-BuildContext    
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
 }
 
@@ -245,9 +245,6 @@ function Check-Vsix() {
 Expert specific variables
 #>
 
-#$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentEngine -Value { "C:\AderantExpert\Install\DeploymentEngine.exe" } -Force
-#$ShellContext | Add-Member -MemberType ScriptProperty -Name DeploymentManager -Value { "C:\AderantExpert\Install\DeploymentManager.exe" } -Force
-
 <#
 Branch information
 #>
@@ -311,7 +308,7 @@ function Set-ScriptPaths {
     Initialise functions from Build-Libraries.ps1
 #>
 function Initialise-BuildLibraries {
-    invoke-expression "$BuildScriptsDirectory\Build-Libraries.ps1"
+    invoke-expression "$global:BuildScriptsDirectory\Build-Libraries.ps1"
 }
 
 function ResolveBranchName($branchPath) {
@@ -489,7 +486,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
 
     if ([System.IO.Path]::IsPathRooted($name)) {
         $global:CurrentModulePath = $name
-        $global:CurrentModuleName = ([System.IO.DirectoryInfo]$global:CurrentModulePath).Name
+        $global:CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:CurrentModulePath)).Name
         Write-Debug "Setting repository: $name"
         Import-Module $PSScriptRoot\AderantGit.psm1
 
@@ -502,8 +499,9 @@ function Set-CurrentModule($name, [switch]$quiet) {
             Set-Location $global:CurrentModulePath
             global:Enable-GitPrompt
             return
-        } elseif (IsGitRepository (([System.IO.DirectoryInfo]$global:CurrentModulePath).Parent.FullName)) {
+        } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($global:CurrentModulePath).Parent.FullName)) {
             global:Enable-GitPrompt
+            return
         } else {
             Enable-ExpertPrompt
         }
@@ -523,7 +521,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
     }
 
     Write-Debug "Current module path [$global:CurrentModulePath]"
-    $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath \Build
+    $global:CurrentModuleBuildPath = Join-Path -Path $global:CurrentModulePath -ChildPath "Build"
 
     $ShellContext.IsGitRepository = $true
 }
@@ -827,7 +825,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
         [xml]$manifest = Get-Content $global:ProductManifestPath
         [System.Xml.XmlNode]$module = $manifest.ProductManifest.Modules.SelectNodes("Module") | Where-Object { $_.Name.Contains($info.ProductManifestName)}
 
-        Invoke-Expression "$BuildScriptsDirectory\Build-Libraries.ps1"
+        Invoke-Expression "$global:BuildScriptsDirectory\Build-Libraries.ps1"
         $dropPathVSIX = (GetPathToBinaries $module $global:BranchServerDirectory)
 
         if (!(Test-Path $localInstallDirectory)) {
@@ -879,7 +877,7 @@ Function Output-VSIXLog {
 # builds the current module using default parameters
 function Start-BuildForCurrentModule([string]$clean, [bool]$debug, [bool]$release, [bool]$codeCoverage, [bool]$integration) {
     begin {
-        Set-StrictMode -Version 2.0
+        Set-StrictMode -Version Latest
     }
 
     process {
@@ -923,27 +921,6 @@ function Get-DependenciesForCurrentModule([switch]$noUpdate, [switch]$showOutdat
     }
 }
 
-# gets dependencies for each module using default parameters
-function Get-DependenciesForEachModule {
-    Get-ExpertModules | % {
-        if (-not ($_.Name.StartsWith("ThirdParty.")) `
-                -and -not ($_.Name.StartsWith("ThirdParty.")) `
-                -and -not ($_.Name -eq "Build.T4Task") `
-                -and -not ($_.Name -eq "Thirdparty.ExifJS") `
-                -and -not ($_.Name -eq "Thirdparty.Microsoft.Office.Interop") `
-                -and -not ($_.Name -eq "Marketing.Help") `
-                -and -not ($_.Name -eq "Tests.UIAutomation") `
-                -and -not ($_.Name -eq "UIAutomation.Framework") `
-                -and -not ($_.Name -eq "Expert.Help") `
-                -and -not ($_.Name -eq "Installs.Marketing") `
-                -and -not ($_.Name -eq "Internal.Licensing")) {
-            Write-Host "Getting dependencies for $_..."
-            cm $_.Name; gd
-        }
-    }
-}
-
-
 # gets dependencies for current module using default parameters
 function Get-LocalDependenciesForCurrentModule {
     if (Test-Path $global:BuildScriptsDirectory\Load-LocalDependencies.ps1) {
@@ -961,8 +938,6 @@ function Copy-BinariesFromCurrentModule() {
     if ([string]::IsNullOrEmpty($global:CurrentModulePath)) {
         Write-Warning "The current module is not set so the binaries will not be copied"
     } else {
-        Initialise-BuildLibraries
-
         pushd $global:BuildScriptsDirectory
         ResolveAndCopyUniqueBinModuleContent -modulePath $global:CurrentModulePath -copyToDirectory $global:BranchExpertSourceDirectory -suppressUniqueCheck $true
         popd
@@ -976,48 +951,31 @@ function Copy-BinariesFromCurrentModule() {
     Uses the expertmanifest from the local Build.Infrastructure\Src\Package directory.
     This will always return the pdb's.
     The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
-.PARAMETER onlyUpdated
-    Switch to indicate that only updated modules should get pulled in.
 .PARAMETER createBackup
-    Switch to create a backup of the Binaries folder (named BinariesBackup in the same folder) after successfully retrieving the product.
-    This is intended to be used by developers who call Copy-BinariesFromCurrentModules (cb) or Copy-BinToEnvironment and want to have a backup with the original files from the Get-Product call.
+    Creates a backup of the acquired product binaries.
 .EXAMPLE
     Get-Product -createBackup
 #>
-function Get-Product ([switch]$onlyUpdated, [switch]$createBackup) {
-    $buildInfrastructure = $global:PackageScriptsDirectory.Replace("Package", "")
+function Get-Product {
+    param (
+        [switch]$createBackup
+    )
 
-    & tf.exe vc "get" $global:ProductManifestPath
+    & tf.exe vc 'get' $global:ProductManifestPath
 
-    pushd $global:PackageScriptsDirectory
-    & .\GetProduct.ps1 -ProductManifestPath $global:ProductManifestPath -dropRoot $global:BranchServerDirectory -binariesDirectory $global:BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString) -onlyUpdated:$onlyUpdated.ToBool()
-    popd
+    Push-Location -path $global:PackageScriptsDirectory
+    & .\GetProduct.ps1 -ProductManifestPath $global:ProductManifestPath -dropRoot $global:BranchServerDirectory -binariesDirectory $global:BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString)
+    Pop-Location
 
-    if ($createBackup) {
-        Write-Host "Creating backup of Binaries folder."
-        $backupPath = $global:BranchLocalDirectory + "\BinariesBackup"
+    if ($createBackup.IsPresent) {
+        Write-Host 'Creating backup of Binaries folder.'
+        [string]$backupPath = "$global:BranchLocalDirectory\BinariesBackup"
         if (-not (Test-Path $backupPath)) {
             New-Item -ItemType Directory -Path $backupPath
         }
         Invoke-Expression "robocopy.exe $global:BranchBinariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $global:BranchBinariesDirectory\ExpertSource\Customization" | out-null
-        Write-Host "Backup complete."
+        Write-Host 'Backup complete.'
     }
-}
-
-
-<#
-.Synopsis
-    Runs a GetProduct for the current branch but will not contain the pdb's
-.Description
-    Uses the expertmanifest from the local Build.Infrastructure\Src\Package directory.
-    No pdb's returned
-    The binaries will be loaded into your branch binaries directory. e.g. <your_branch_source>\Binaries
-#>
-function Get-ProductNoDebugFiles {
-    $shell = ".\GetProduct.ps1 -ProductManifestPathPath $global:ProductManifestPath -dropRoot $global:BranchServerDirectory -binariesDirectory $global:BranchBinariesDirectory -systemMapConnectionString (Get-SystemMapConnectionString)"
-    pushd $global:PackageScriptsDirectory
-    invoke-expression $shell | Out-Host
-    popd
 }
 
 <#
@@ -1499,58 +1457,6 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
 
 <#
 .Synopsis
-    Forced stopping a visual studio solution for specific module(s).
-.Description
-    Forced stopping a visual studio solution for specific module(s).
-.Example
-    Kill-VisualStudio -killAll, Kill-VisualStudio Web.Case
-    Forced shutting down all opened visual studio solutions; forced shutting down visual studio solution of Web.Case.
-#>
-function Kill-VisualStudio([string[]] $workflowModuleNames, [switch] $killAll = $false) {
-    $moduleBeforeBuild = $null;
-    $currentWorkingDirectory = Get-Location;
-
-    if (!$workflowModuleNames) {
-        if (($global:CurrentModulePath) -and (Test-Path $global:CurrentModulePath)) {
-            $moduleBeforeBuild = (New-Object System.IO.DirectoryInfo $global:CurrentModulePath | foreach {$_.Name});
-            $workflowModuleNames = @($moduleBeforeBuild);
-        }
-    }
-
-    if ($killAll) {
-        Stop-Process -processname devenv;
-    } else {
-        $branchNameEscaped = $BranchName.replace('\', '\\');
-        if (!($workflowModuleNames)) {
-            write "No modules specified.";
-            return;
-        }
-        [Aderant.Build.DependencyAnalyzer.ExpertModule[]]$workflowModuleNames = $global:Workspace.GetModules($workflowModuleNames);
-        $workflowModuleNames = $workflowModuleNames | Where {$exclude -notcontains $_};
-
-        foreach ($module in $workflowModuleNames) {
-            $filter = "ExecutablePath LIKE '%devenv%' AND CommandLine LIKE '%$module%' AND CommandLine LIKE '%$branchNameEscaped%'";
-            if (@(Get-WmiObject Win32_Process -Filter "$filter").count -eq 1) {
-                Get-WmiObject Win32_Process -Filter "$filter" | Invoke-WmiMethod -Name Terminate;
-                Write-Warning "Succeeded. Visual Studio Solution for $module in $BranchName has been forced shutting down.";
-            } else {
-                if (@(Get-WmiObject Win32_Process -Filter "$filter").count -eq 0) {
-                    Write-Warning "Failed. An error occurred, command found none Visual Studio Solution for $module in $BranchName.";
-                } else {
-                    Write-Warning "Failed. An error occurred, command found more than 1 Visual Studio Solutions matches the criteria, please use -killAll option if you wish to kill all.";
-                }
-            }
-        }
-    }
-
-    if ($moduleBeforeBuild) {
-        cm $moduleBeforeBuild;
-    }
-    pushd $currentWorkingDirectory;
-}
-
-<#
-.Synopsis
     Builds a patch for the current branch.
 .Description
     Builds a patch for the current branch. Driven from the PatchingManifest.xml.
@@ -1799,7 +1705,6 @@ function Set-VisualStudioVersion() {
         & $file
     }
 }
-
 
 # gets a value from the global defaults storage, or creates a default
 function global:GetDefaultValue {
@@ -2074,7 +1979,7 @@ function Start-UITests([switch]$noUpdate, [string]$TestRunnerPath) {
     }
     if (-not $noUpdate) {
         $UITestRunnerPath = "\\na.aderant.com\packages\Infrastructure\Automation\UIAutomation\UIAutomation.TestRunner\5.3.1.0"
-        $shell = Join-Path $BuildScriptsDirectory Build-Libraries.ps1
+        $shell = Join-Path $global:BuildScriptsDirectory Build-Libraries.ps1
         $shell = "& { . $shell; PathToLatestSuccessfulBuild $UITestRunnerPath }"
         $latestSuccessfulBuild = powershell -noprofile -command $shell
         if ( -not (Test-Path $TestRunnerPath)) {
@@ -2083,7 +1988,7 @@ function Start-UITests([switch]$noUpdate, [string]$TestRunnerPath) {
         Invoke-Expression "robocopy.exe /S /PURGE /NJH /NJS /NS /NC /NP /NFL /NDL /R:5 /W:1 /MT:3 $latestSuccessfulBuild $TestRunnerPath"
     }
     $testTool = Join-Path $TestRunnerPath "UITester.exe"
-    Invoke-Expression "$testTool -BranchModulesDirectory $BranchModulesDirectory -BuildScriptsDirectory $BuildScriptsDirectory -PackageScriptsDirectory $PackageScriptsDirectory -environmentmanifestpath C:\ExpertShare\environment.xml -branchserverdirectory $global:BranchServerDirectory"
+    Invoke-Expression "$testTool -BranchModulesDirectory $BranchModulesDirectory -BuildScriptsDirectory $global:BuildScriptsDirectory -PackageScriptsDirectory $PackageScriptsDirectory -environmentmanifestpath C:\ExpertShare\environment.xml -branchserverdirectory $global:BranchServerDirectory"
 }
 
 
@@ -2231,7 +2136,6 @@ Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "exclude"
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "skipUntil"
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModulesOnServer" -ParameterName "workflowModuleNames"
-Add-ModuleExpansionParameter -CommandName "Kill-VisualStudio" -ParameterName "workflowModuleNames"
 Add-ModuleExpansionParameter -CommandName "Get-DependenciesForCurrentModule" -ParameterName "onlyUpdated"
 Add-ModuleExpansionParameter -CommandName "Get-Product" -ParameterName "onlyUpdated"
 Add-ModuleExpansionParameter -CommandName "Get-DependenciesFrom" -ParameterName "ProviderModules"
@@ -2341,269 +2245,6 @@ function Get-AderantModuleLocation() {
     }
 }
 
-<#
-.Synopsis
-    cd to the specified directory.
-.Description
-    Will change your working directory to the specified directory. NOTE: this is similar to odir.
-.PARAMETER BuildScripts
-    cd to your powershell directory. (often a symlink to BuildScriptsForBranch)
-.PARAMETER BuildScriptsForBranch
-    cd to your build scripts in Build.Infrastructure.
-.PARAMETER Binaries
-    cd to your branch binaries directory.
-.PARAMETER ExpertSource
-    cd to your branch ExpertSource, often in your binaries directory.
-.PARAMETER LocalBranch
-    cd to your currently selected branch on your local disk.
-.PARAMETER ServerBranch
-    cd to your currently selected branch on the drop server.
-.PARAMETER AllModules
-    cd to the Modules directory for your currently selected branch.
-.PARAMETER Module
-    cd to the currently selected module's directory.
-.PARAMETER ModuleBin
-    cd to the bin directory for your currently selected module.
-.PARAMETER ModuleDependencies
-    cd to the dependency directory for your currently selected module.
-.PARAMETER ExpertShare
-    cd to the ExpertShare for your currently selected branch.
-.PARAMETER ExpertLocal
-    cd to your expert local directory, normally where the binaries for your services are stored.
-.PARAMETER SharedBin
-    cd to your sharedbin directory with the shared binaries for your services.
-.EXAMPLE
-        Change-Directory -ModuleBin
-    Will cd to your currently selected module's bin directory.
-#>
-function Change-Directory(
-    [switch]$BuildScripts, [switch]$BuildScriptsForBranch, [switch]$Binaries, [switch]$ExpertSource, [switch]$LocalBranch, [switch]$ServerBranch, [switch]$AllModules,
-    [switch]$Module, [switch]$ModuleBin, [switch]$ModuleDependencies,
-    [switch]$ExpertShare, [switch]$ExpertLocal, [switch]$SharedBin) {
-
-    if (
-        -not $BuildScripts -and
-        -not $BuildScriptsForBranch -and
-        -not $Binaries -and
-        -not $ExpertSource -and
-        -not $LocalBranch -and
-        -not $ServerBranch -and
-        -not $AllModules -and
-        -not $Module -and
-        -not $ModuleBin -and
-        -not $ModuleDependencies -and
-        -not $ExpertShare -and
-        -not $ExpertLocal -and
-        -not $SharedBin) {
-
-        Write-Host -ForegroundColor Yellow "Please include at least one location.";
-        Write-Host "-BuildScripts, -BuildScriptsForBranch";
-        Write-Host "-Binaries, -ExpertSource, -ExpertShare, -ExpertLocal, -SharedBin";
-        Write-Host "-AllModules, -Module, -ModuleBin, -ModuleDependencies";
-        Write-Host "-LocalBranch, -ServerBranch";
-    }
-
-    if ($BuildScripts) {
-        $path = [System.IO.Path]::Combine("C:\Users\", [Environment]::UserName);
-        $path = [System.IO.Path]::Combine($path, "Documents\WindowsPowerShell");
-        cd $path;
-    }
-    if ($BuildScriptsForBranch) {
-        cd $global:BuildScriptsDirectory;
-    }
-    if ($Binaries) {
-        #product bin
-        cd "$global:BranchBinariesDirectory";
-    }
-    if ($ExpertSource) {
-        cd "$global:BranchExpertSourceDirectory";
-    }
-    if ($LocalBranch) {
-        cd "$global:BranchLocalDirectory";
-    }
-    if ($ServerBranch) {
-        cd "$global:BranchServerDirectory";
-    }
-    if ($AllModules) {
-        cd "$global:BranchModulesDirectory";
-    }
-
-    if ($Module) {
-        if (Test-Path variable:global:CurrentModulePath) {
-            cd "$global:CurrentModulePath";
-        } else {
-            Write-Host -ForegroundColor Yellow "Sorry you do not have a module selected."
-        }
-    }
-    if ($ModuleBin) {
-        if (Test-Path variable:global:CurrentModulePath) {
-            $path = [System.IO.Path]::Combine($global:CurrentModulePath, "Bin");
-            cd $path;
-        } else {
-            Write-Host -ForegroundColor Yellow "Sorry you do not have a module selected."
-        }
-    }
-    if ($ModuleDependencies) {
-        if (Test-Path variable:global:CurrentModulePath) {
-            $path = [System.IO.Path]::Combine($global:CurrentModulePath, "Dependencies");
-            cd $path;
-        } else {
-            Write-Host -ForegroundColor Yellow "Sorry you do not have a module selected."
-        }
-    }
-    if ($ExpertShare) {
-        # C:\ExpertShare
-        $path = Get-EnvironmentFromXml "/environment/@networkSharePath";
-        cd $path;
-    }
-    if ($ExpertLocal) {
-        # C:\AderantExpert\Local
-        $path = Get-EnvironmentFromXml "/environment/servers/server/@expertPath"
-        cd $path;
-    }
-    if ($SharedBin) {
-        # C:\AderantExpert\Local\SharedBin
-        $expertLocalPath = Get-EnvironmentFromXml("/environment/servers/server/@expertPath");
-        $path = [System.IO.Path]::Combine($expertLocalPath, "SharedBin");
-        cd $path;
-    }
-    #TODO: TFS root.
-}
-
-<#
-.Synopsis
-    Open the specified directory in Exploiter.
-.Description
-    Will open all specified directories that exist in Explorer.exe
-.PARAMETER BuildScripts
-    Opens your powershell directory. (often a symlink to BuildScriptsForBranch)
-.PARAMETER BuildScriptsForBranch
-    Opens your build scripts in Build.Infrastructure.
-.PARAMETER Binaries
-    Opens your branch binaries directory.
-.PARAMETER ExpertSource
-    Opens your branch ExpertSource, often in your binaries directory.
-.PARAMETER LocalBranch
-    Opens your currently selected branch on your local disk.
-.PARAMETER ServerBranch
-    Opens your currently selected branch on the drop server.
-.PARAMETER AllModules
-    Opens the Modules directory for your currently selected branch.
-.PARAMETER Module
-    Opens the currently selected module's directory.
-.PARAMETER ModuleBin
-    Opens the bin directory for your currently selected module.
-.PARAMETER ModuleDependencies
-    Opens the dependency directory for your currently selected module.
-.PARAMETER ExpertShare
-    Opens the ExpertShare for your currently selected branch.
-.PARAMETER ExpertLocal
-    Opens your expert local directory, normally where the binaries for your services are stored.
-.PARAMETER SharedBin
-    Opens your sharedbin directory with the shared binaries for your services.
-.EXAMPLE
-        Open-Directory -ModuleBin -SharedBin
-    Will open up both the binary directory of the selected module, and the sharedbin in ExpertLocal.
-#>
-function Open-Directory(
-    [switch]$BuildScripts, [switch]$BuildScriptsForBranch, [switch]$Binaries, [switch]$ExpertSource, [switch]$LocalBranch, [switch]$ServerBranch, [switch]$AllModules,
-    [switch]$Module, [switch]$ModuleBin, [switch]$ModuleDependencies,
-    [switch]$ExpertShare, [switch]$ExpertLocal, [switch]$SharedBin,
-    [string]$ModuleName) {
-
-    #TODO: Could add a $paths which enables the user to specify arbritrary paths.
-
-    if (
-        -not $BuildScripts -and
-        -not $BuildScriptsForBranch -and
-        -not $Binaries -and
-        -not $ExpertSource -and
-        -not $LocalBranch -and
-        -not $ServerBranch -and
-        -not $AllModules -and
-        -not $Module -and
-        -not $ModuleBin -and
-        -not $ModuleDependencies -and
-        -not $ExpertShare -and
-        -not $ExpertLocal -and
-        -not $SharedBin) {
-
-        Write-Host -ForegroundColor Yellow "Please include at least one location.";
-        Write-Host "-BuildScripts, -BuildScriptsForBranch";
-        Write-Host "-Binaries, -ExpertSource, -ExpertShare, -ExpertLocal, -SharedBin";
-        Write-Host "-AllModules, -Module, -ModuleBin, -ModuleDependencies";
-        Write-Host "-LocalBranch, -ServerBranch";
-    }
-
-    if ($BuildScripts) {
-        $path = [System.IO.Path]::Combine("C:\Users\", [Environment]::UserName);
-        $path = [System.IO.Path]::Combine($path, "Documents\WindowsPowerShell");
-        Explorer($path);
-    }
-    if ($BuildScriptsForBranch) {
-        Explorer($global:BuildScriptsDirectory);
-    }
-    if ($Binaries) {
-        #product bin
-        Explorer("$global:BranchBinariesDirectory");
-    }
-    if ($ExpertSource) {
-        Explorer("$global:BranchExpertSourceDirectory");
-    }
-    if ($LocalBranch) {
-        Explorer("$global:BranchLocalDirectory");
-    }
-    if ($ServerBranch) {
-        Explorer("$global:BranchServerDirectory");
-    }
-    if ($AllModules) {
-        Explorer("$global:BranchModulesDirectory");
-    }
-    if ($Module -or $ModuleBin -or $ModuleDependencies) {
-        if (Test-Path variable:global:CurrentModulePath) {
-            if ([string]::IsNullOrWhiteSpace($ModuleName)) {
-                $selectedModulePath = $global:CurrentModulePath;
-            } else {
-                $firstHalf = $global:CurrentModulePath.Substring(0, $global:CurrentModulePath.LastIndexOf("\"));
-                $selectedModulePath = [System.IO.Path]::Combine($firstHalf, $ModuleName);
-            }
-            if (Test-Path variable:selectedModulePath) {
-                if ($Module) {
-                    Explorer("$selectedModulePath");
-                }
-                if ($ModuleBin) {
-                    $path = [System.IO.Path]::Combine($selectedModulePath, "Bin");
-                    Explorer($path);
-                }
-                if ($ModuleDependencies) {
-                    $path = [System.IO.Path]::Combine($selectedModulePath, "Dependencies");
-                    Explorer($path);
-                }
-            } else {
-                Write-Host -ForegroundColor Yellow "You seem to have misspelled the name of the module (or it doesn't exist in the current branch)."
-            }
-        } else {
-            Write-Host -ForegroundColor Yellow "Sorry you do not have a module selected. Please select one first."
-        }
-    }
-    if ($ExpertShare) {
-        # C:\ExpertShare
-        Explorer(Get-EnvironmentFromXml "/environment/@networkSharePath");
-
-    }
-    if ($ExpertLocal) {
-        # C:\AderantExpert\Local
-        Explorer(Get-EnvironmentFromXml "/environment/servers/server/@expertPath")
-    }
-    if ($SharedBin) {
-        # C:\AderantExpert\Local\SharedBin
-        $expertLocalPath = Get-EnvironmentFromXml("/environment/servers/server/@expertPath");
-        $path = [System.IO.Path]::Combine($expertLocalPath, "SharedBin");
-        Explorer($path);
-    }
-    #TODO: TFS
-}
-
 function Explorer([string]$path, [switch]$quiet) {
     if (Test-Path $path) {
         Invoke-Expression "explorer.exe $path";
@@ -2631,68 +2272,6 @@ function Get-EnvironmentFromXml([string]$xpath) {
         Write-Host -ForegroundColor Yellow "I don't know where your Branch Binaries Directory is.";
     }
     return $null;
-}
-
-<#
-.Synopsis
-    Start de remove; de deploy; for the current branch
-.Description
-    Will redeploy your Expert Environment for the current branch. This command beeps twice when it has finished.
-.PARAMETER GetLatestForBranch
-    Will get the latest source code for your current branch.
-.PARAMETER GetProduct
-    Will retrieve the latest product binaries before starting the new deployment.
-.PARAMETER GetProductZip
-    Will retrieve the latest build all product zip binaries before starting the new deployment. (if you specify both -GetProduct and -GetProductZip then you will get the zip file)
-.PARAMETER RestoreDB
-    Will restore the DACPAC.
-.EXAMPLE
-        Start-Redeployment -GetLatestForBranch -GetProduct -RestoreDB
-    Will first get latest source code for the branch,
-    get dependencies for current module,
-    remove your existing deployment,
-    get product,
-    Copy binaries from Applications.Deployment,
-    and finally start your new deployment.
-#>
-function Start-Redeployment([switch]$GetProduct, [switch]$GetProductZip, [switch]$GetProductZipUnstable, [switch]$RestoreDB, [switch]$dontKillRunning, [switch]$GetLatestForBranch) {
-    $start = get-date
-    if ($GetLatestForBranch) {
-        Get-Latest -branch
-    }
-    if (-not $dontKillRunning) {
-        $running = Get-Process
-        foreach ($item in Get-Item -Filter *.exe -Path C:\ExpertShare\*) {
-            foreach ($process in $running) {
-                if ($process.name -ieq $item.BaseName) {
-                    $name = $item.BaseName
-                    Write-Host "Attempting to kill $name as it still appears to be running."
-                    Stop-Process -Name $item.BaseName -Force
-                }
-            }
-        }
-    }
-    de remove;
-    if ($GetProductZip) {
-        Get-ProductZip
-    } elseif ($GetProductZipUnstable) {
-        Get-ProductZip -unstable
-    } elseif ($GetProduct) {
-        Get-Product
-    }
-    if ($RestoreDB) {
-        Restore-ExpertDatabase
-    }
-    de deploy
-    $end = get-date
-    $start
-    $end
-    $end - $start
-    Get-Beep; Get-Beep #Audio feedback that we have finished.
-}
-
-function Get-Beep() {
-    $([char]7)
 }
 
 function tryToRemove ($path) {
@@ -4012,7 +3591,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = 'bm'; },
     [PSCustomObject]@{ function = 'Build-ExpertModulesOnServer'; alias = 'bms'; },
     [PSCustomObject]@{ function = 'Build-ExpertPatch'; alias = $null; },
-    [PSCustomObject]@{ function = 'Change-Directory'; alias = 'cdir'; },
     [PSCustomObject]@{ function = 'Change-ExpertOwner'; alias = $null; },
     [PSCustomObject]@{ function = 'Clear-ExpertCache'; alias = 'ccache'; },
     [PSCustomObject]@{ function = 'Copy-BinariesFromCurrentModule'; alias = 'cb'; },
@@ -4020,10 +3598,8 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Enable-ExpertPrompt'; advanced = $true; alias = $null; },
     [PSCustomObject]@{ function = 'Generate-SystemMap'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-AderantModuleLocation'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-Beep'; alias = 'beep'; },
     [PSCustomObject]@{ function = 'Get-CurrentModule'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-DependenciesForCurrentModule'; alias = 'gd'; },
-    [PSCustomObject]@{ function = 'Get-DependenciesForEachModule'; alias = 'gde'; },
     [PSCustomObject]@{ function = 'Get-DependenciesFrom'; alias = 'gdf'; },
     [PSCustomObject]@{ function = 'Get-EnvironmentFromXml'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ExpertBuildAllVersion'; alias = $null; };
@@ -4041,10 +3617,8 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Install-DeploymentManager'; alias = $null; },
     [PSCustomObject]@{ function = 'Install-LatestSoftwareFactory'; alias = 'usf'; },
     [PSCustomObject]@{ function = 'Install-LatestVisualStudioExtension'; alias = $null; },
-    [PSCustomObject]@{ function = 'Kill-VisualStudio'; alias = 'kvs'; },
     [PSCustomObject]@{ function = 'Move-Shelveset'; alias = $null; },
     [PSCustomObject]@{ function = 'New-BuildModule'; alias = $null; },
-    [PSCustomObject]@{ function = 'Open-Directory'; alias = 'odir'; },
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
     [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
     [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
@@ -4052,7 +3626,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Start-dbgen'; alias = 'dbgen'; },
     [PSCustomObject]@{ function = 'Start-DeploymentEngine'; alias = 'de'; },
     [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
-    [PSCustomObject]@{ function = 'Start-Redeployment'; alias = 'redeploy'; },
     [PSCustomObject]@{ function = 'SwitchBranchTo'; alias = 'Switch-Branch'; },
     [PSCustomObject]@{ function = 'Prepare-Database'; alias = 'dbprep'; },
     [PSCustomObject]@{ function = 'Uninstall-DeploymentManager'; alias = $null; },

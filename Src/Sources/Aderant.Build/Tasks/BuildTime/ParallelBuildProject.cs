@@ -131,7 +131,7 @@ namespace Aderant.Build.Tasks.BuildTime {
         }
 
         public void GetRepositoryInfo(string path, out RepositoryType type, out string tfvcBranch, out string tfvcChangeSet) {
-            var repoDirectory = Path.Combine(path, ".git");
+            string repoDirectory = Path.Combine(path, ".git");
 
             tfvcBranch = null;
             tfvcChangeSet = null;
@@ -144,18 +144,5 @@ namespace Aderant.Build.Tasks.BuildTime {
                 type = RepositoryType.Tfvc;
             }
         }
-    }
-
-    public enum ComboBuildType {
-        Changed,
-        Branch,
-        Staged,
-        All
-    }
-
-    public enum DownStreamType {
-        Direct,
-        All,
-        None
     }
 }
