@@ -32,11 +32,7 @@ namespace Aderant.Build {
 
         public PullRequestInfo PullRequest { get; set; }
 
-        public bool IsPullRequest {
-            get {
-                return PullRequest != null;
-            }
-        }
+        public bool IsPullRequest => PullRequest != null;
 
         /// <summary>
         /// Is the build system itself in debug mode. 
