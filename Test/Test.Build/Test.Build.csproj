@@ -52,16 +52,16 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SystemUnderTest\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Content>
-    <None Include="DependencyAnalyzer\Source\Module\Module.sln">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Module.sln">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="DependencyAnalyzer\Source\Module\Src\Project1\Project1.csproj">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Src\Project1\Project1.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="DependencyAnalyzer\Source\Module\Src\Project2\Project2.csproj">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Src\Project2\Project2.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="DependencyAnalyzer\Source\Module\Src\Project3\Project3.csproj">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Src\Project3\Project3.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Content Include="DependencyAnalyzer\Resources\Web.Core.csproj">
@@ -112,6 +112,30 @@
     <Content Include="Resources\Framework\packages\Packages.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Tasks\ReadAssemblyInfo\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\GitVersion\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\CheckCertificate\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\GetAssembliesWithTraits\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\CopyToDrop\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\RunAnalyzer\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\BuildTimeTests\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tasks\GetFileVersionInfo\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
@@ -153,39 +177,34 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BuildAssociationTests.cs" />
-    <Content Include="Resources\AssemblyInfo.cs">
+    <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzerTests.cs" />
-    <Compile Include="DependencyAnalyzer\Resource.Designer.cs">
-      <DependentUpon>Resource.resx</DependentUpon>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <None Include="DependencyAnalyzer\Source\Module\Src\Project1\Class1.cs">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Src\Project1\Class1.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="DependencyAnalyzer\Source\Module\Src\Project2\Class1.cs">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Src\Project2\Class1.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="DependencyAnalyzer\Source\Module\Src\Project3\Class1.cs">
+    <None Include="DependencyAnalyzer\Resources\Source\Module\Src\Project3\Class1.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="RunAnalyzerTests.cs" />
+    <Compile Include="Tasks\RunAnalyzer\RunAnalyzerTests.cs" />
     <Content Include="Resources\TestClass.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="Tasks\BuildTaskTestBase.cs" />
-    <Compile Include="Tasks\CheckCertificateTests.cs" />
+    <Compile Include="Tasks\CheckCertificate\CheckCertificateTests.cs" />
     <Compile Include="Tasks\ContextTaskBaseTests.cs" />
-    <Compile Include="Tasks\GetAssembliesWithTraitsTests.cs" />
+    <Compile Include="Tasks\GetAssembliesWithTraits\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tasks\GetFileVersionInfoTests.cs" />
-    <Compile Include="Tasks\GitChangesetTests.cs" />
-    <Compile Include="Tasks\GitVersionTests.cs" />
-    <Compile Include="Tasks\CopyToDropV2Tests.cs" />
-    <Compile Include="Tasks\ReadAssemblyInfo.cs" />
-    <Compile Include="Tasks\IntegrationTestingTests.cs" />
+    <Compile Include="Tasks\GetFileVersionInfo\GetFileVersionInfoTests.cs" />
+    <Compile Include="Tasks\GitChangeset\GitChangesetTests.cs" />
+    <Compile Include="Tasks\GitVersion\GitVersionTests.cs" />
+    <Compile Include="Tasks\CopyToDrop\CopyToDropV2Tests.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
+    <Compile Include="Tasks\BuildTimeTests\IntegrationTestingTests.cs" />
     <Compile Include="LightUpManifestTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
@@ -212,12 +231,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="DependencyAnalyzer\Resource.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

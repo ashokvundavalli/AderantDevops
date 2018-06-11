@@ -1,14 +1,12 @@
 using System.IO;
-using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks {
+namespace IntegrationTest.Build.Tasks.GitVersion {
     [TestClass]
-    [DeploymentItem("Aderant.BuildTime.Tasks.dll")]
     public class GitVersionTests : BuildTaskTestBase {
         [TestInitialize]
         public void NativeLibraryAvailable() {
-            var foo = typeof(GitVersion);
+            var foo = typeof(Aderant.Build.Tasks.GitVersion);
             string nativeLibraryPath = LibGit2Sharp.GlobalSettings.NativeLibraryPath;
 
             Assert.IsTrue(Directory.Exists(nativeLibraryPath));

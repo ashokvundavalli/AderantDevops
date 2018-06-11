@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,10 +9,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build.Tasks {
     [TestClass]
     [DeploymentItem("IntegrationTest.targets")]
-    [DeploymentItem("Aderant.Build.Common.targets")]
-    [DeploymentItem("SystemUnderTest")]
+    [DeploymentItem("SystemUnderTest\\")]
+    [DeploymentItem("Tasks\\", "Tasks\\")]
     public abstract class BuildTaskTestBase {
+        private Project project;
+
         public TestContext TestContext { get; set; }
+
+        public InternalBuildLogger Logger { get; set; }
 
         /// <summary>
         /// Runs a target in IntegrationTest.targets
@@ -24,7 +29,7 @@ namespace IntegrationTest.Build.Tasks {
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
                 { "NoMSBuildCommunityTasks", "true" },
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
-                { "BuildInfrastructureDirectory", Directory.GetParent(Directory.GetParent(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName).FullName).FullName }
+                { "BuildInfrastructureDirectory", Path.Combine(TestContext.DeploymentDirectory, @"..\..\") /*TODO: Remove the need for this*/ }
             };
 
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
@@ -33,24 +38,30 @@ namespace IntegrationTest.Build.Tasks {
                 Project project = collection.LoadProject(Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"));
                 bool result = project.Build(targetName);
 
+                this.project = project;
+
                 Assert.IsFalse(Logger.HasRaisedErrors);
 
                 return Logger;
             }
         }
 
+        protected string GetPropertyValue(string property) {
+            return project.GetPropertyValue(property);
+        }
 
-        public InternalBuildLogger Logger { get; set; }
-
-        /// <summary>
-        /// Class to hook msbuild messages.
-        /// </summary>
-        public class InternalBuildLogger : Microsoft.Build.Framework.ILogger {
+        protected ICollection<ProjectItem> GetItemValue(string itemType) {
+            return project.GetItems(itemType);
+        }
+     
+        public class InternalBuildLogger : ILogger {
             private readonly TestContext textContext;
 
             public InternalBuildLogger(TestContext textContext) {
                 this.textContext = textContext;
             }
+
+            public bool HasRaisedErrors { get; set; }
 
             public void Initialize(IEventSource eventSource) {
                 eventSource.MessageRaised += new BuildMessageEventHandler(EventSourceMessageRaised);
@@ -70,8 +81,6 @@ namespace IntegrationTest.Build.Tasks {
                 textContext.WriteLine(line);
             }
 
-            public bool HasRaisedErrors { get; set; }
-
             void EventSourceWarningRaised(object sender, BuildWarningEventArgs e) {
                 string line = $"[MSBUILD]: Warning {e.Message} in file {e.File}({e.LineNumber},{e.ColumnNumber}): ";
                 textContext.WriteLine(line);
@@ -81,5 +90,7 @@ namespace IntegrationTest.Build.Tasks {
                 textContext.WriteLine("[MSBUILD]: " + e.Message.Replace("{", "{{").Replace("}", "}}"), Array.Empty<object>());
             }
         }
+
+       
     }
 }

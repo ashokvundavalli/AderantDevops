@@ -6,10 +6,9 @@ using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.BuildTime {
+namespace IntegrationTest.Build.DependencyAnalyzer {
     [TestClass]
-    [DeploymentItem("Source", @"Resources\Source")]
-    [DeploymentItem("Resources", "Resources")]
+    [DeploymentItem("DependencyAnalyzer\\Resources\\", "Resources")]
     public class ProjectDependencyAnalyzerTests {
         public TestContext TestContext { get; set; }
 

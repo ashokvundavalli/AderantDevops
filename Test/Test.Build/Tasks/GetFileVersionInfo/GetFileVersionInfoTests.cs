@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks {
+namespace IntegrationTest.Build.Tasks.GetFileVersionInfo {
     [TestClass]
     public class GetFileVersionInfoTests : BuildTaskTestBase {
         [TestMethod]
@@ -8,5 +8,4 @@ namespace IntegrationTest.Build.Tasks {
             RunTarget("GetFileVersionInfo");
         }
     }
-
 }

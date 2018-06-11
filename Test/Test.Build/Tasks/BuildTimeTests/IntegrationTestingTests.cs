@@ -4,9 +4,8 @@ using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks {
+namespace IntegrationTest.Build.Tasks.BuildTimeTests {
     [TestClass]
-    [DeploymentItem(@"Resources\", "Resources")]
     public class IntegrationTestingTests : BuildTaskTestBase {
         private string moduleBuildTempDirectory;
         //private static readonly string time = DateTime.UtcNow.ToFileTimeUtc().ToString();

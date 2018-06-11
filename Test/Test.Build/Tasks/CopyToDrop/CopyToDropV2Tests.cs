@@ -4,9 +4,8 @@ using System.IO;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks {
+namespace IntegrationTest.Build.Tasks.CopyToDrop {
     [TestClass]
-    [DeploymentItem(@"Resources\", "Resources")]
     public class CopyToDropV2Tests : BuildTaskTestBase {
         [TestInitialize]
         public void TestInitialize() {

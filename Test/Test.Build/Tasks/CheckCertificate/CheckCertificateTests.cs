@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks {
+namespace IntegrationTest.Build.Tasks.CheckCertificate {
     [TestClass]
     public class CheckCertificateTests : BuildTaskTestBase {
         [TestMethod]
