@@ -1,44 +1,47 @@
-function global:Invoke-Build {
+function Invoke-Build
+{
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
-        [Parameter(ParameterSetName="Build", Position=0)]
-        [switch]$changed,
+        [Parameter(ParameterSetName="Build")]
+        [switch]$changes,
 
-        [Parameter(ParameterSetName="Build", Position=1)]
+        [Parameter(ParameterSetName="Build")]
         [switch]$branch,
 
-        [Parameter(Position=2)]
-        [Parameter(ParameterSetName="BuildAll")]
-        [switch]$all,
+        [Parameter]        
+        [switch]$everything,
 
-        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=3)]
-        [ValidateSet('Direct', 'All', 'None')]
-        [DownStreamType]$downStreamType = [DownStreamType]::All,
+        [Parameter]
+        [switch]$downstream,
 
-        [Parameter(Position=4)]
-        [switch]$release,
-
-        [Parameter(Position=5)]
+        [Parameter]
+        [switch]$transitive,
+        
+        [Parameter]
         [switch]$clean,
 
-        [Parameter(Position=6)]
+        [Parameter]
+        [switch]$release,
+
+        [Parameter]
         [switch]$package,
 
-        [Parameter(Position=7)]
-        [switch]$integration,
+        #[Parameter]
+        #[switch]$integration,
 
-        [Parameter(Position=8)]
-        [switch]$automation,
+        #[Parameter]
+        #[switch]$automation,
 
-        [Parameter(Position=9)]
+        [Parameter]
         [switch]$displayCodeCoverage,
 
-        [Parameter(Position=10)]
+        [Parameter]
         [Parameter(ParameterSetName="Build", Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
         [string]$modulePath = '',
 
-        [Parameter(Position=11)]
+        #TODO: wtf?
+        [Parameter]
         [Parameter(ParameterSetName="Build", Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
         [string]$moduleName = ''
@@ -46,50 +49,17 @@ function global:Invoke-Build {
 
     begin {
         Set-StrictMode -Version Latest
-
-        Enum ComboBuildType {
-              Changed
-              Branch
-              All
-        }
-
-        Enum DownStreamType {
-              Direct
-              All
-              None
-        }
-
-        # Get build context
+                
         [Aderant.Build.Context]$context = New-BuildContext
+        $options = $context.Options 
 
-        [ComboBuildType]$comboBuildType = [ComboBuildType]::All
+        $options.Everything = $everything.IsPresent
+        $options.Downstream = $downstream.IsPresent
+        $options.Transitive = $transitive.IsPresent
+        $options.Clean = $clean.IsPresent
+        $options.Release = $release.IsPresent
 
-        switch ($true) {
-            $changed.IsPresent {
-                $comboBuildType = [ComboBuildType]::Changed
-                break
-            }
-            $branch.IsPresent {
-                $comboBuildType = [ComboBuildType]::Branch
-                break
-            }
-        }
-
-        $context.ComboBuildType = $comboBuildType
-
-        if ($comboBuildType -ne [ComboBuildType]::All) {
-            $context.DownStreamType = $downStreamType
-        }
-
-        Write-Host "Combo Build Type: $comboBuildType, downstream search type: $downStreamType" -ForegroundColor DarkGreen
-
-        [string]$flavor = "Debug"
-
-        if ($release.IsPresent) {
-            $flavor = "Release"
-        }
-
-        Write-Host "Forcing BuildFlavor to: $($flavor.ToUpper())" -ForegroundColor DarkGreen
+        $contex.Options = $options
     }
 
     process {
