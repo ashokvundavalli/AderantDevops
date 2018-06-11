@@ -83,6 +83,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 // According to options, find out which projects are selected to build.
                 var filteredProjects = GetProjectsBuildList(visualStudioProjects, buildType, downStreamType);
 
+                Validate(filteredProjects.Cast<VisualStudioProject>().ToList());
                 // Determine the build groups to get maximum speed.
                 List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
 

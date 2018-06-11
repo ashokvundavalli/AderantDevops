@@ -90,12 +90,8 @@
       ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
-      BuildFrom="$(BuildFrom)"
       ProjectFile="$(BranchBuildProject)"
       CodeAnalysisGroup="$(CodeAnalysisGroup)"
-      IsComboBuild="$(IsComboBuild)"
-      ComboBuildType="$(ComboBuildType)"
-      DownStreamType="$(DownStreamType)"
       ComboBuildProjectFile="$(BuildScriptsDirectory)\ModuleBuild2.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
