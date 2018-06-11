@@ -43,8 +43,8 @@ namespace Aderant.Build.Ipc {
             get { return 16000; }
         }
 
-        public byte[] Read(TimeSpan timeout = default(TimeSpan)) {
-            dataAvailable.WaitOne(timeout);
+        public byte[] Read() {
+            dataAvailable.WaitOne();
 
             byte[] result = ReadBuffer(view);
 

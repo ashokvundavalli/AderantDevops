@@ -10,7 +10,6 @@ namespace Aderant.Build {
             JobName = "";
             ScmBranch = "";
             ScmCommitId = "";
-            HostEnvironment = HostEnvironment.Developer;
         }
 
         public int BuildNumber { get; set; }
@@ -29,11 +28,13 @@ namespace Aderant.Build {
 
         public Uri ScmUri { get; set; }
 
-        public HostEnvironment HostEnvironment { get; set; }
+        public string HostEnvironment { get; set; }
 
         public PullRequestInfo PullRequest { get; set; }
 
-        public bool IsPullRequest => PullRequest != null;
+        public bool IsPullRequest {
+            get { return PullRequest != null; }
+        }
 
         /// <summary>
         /// Is the build system itself in debug mode. 

@@ -27,7 +27,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string comboBuildProjectFile) {
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, ComboBuildType buildType, DownStreamType downStreamType) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
@@ -44,14 +44,16 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 analyzer.AddExclusionPattern("MomentumFileOpening");
                 analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
                 
-                AnalyzerContext analyzerContext = new AnalyzerContext(modulesDirectory);
+                AnalyzerContext analyzerContext = new AnalyzerContext();
+                analyzerContext.AddDirectory(modulesDirectory);
 
                 // Get all changed files list
-                if (context.ComboBuildType != ComboBuildType.All) {
-                    List<string> files = new ChangesetResolver(this.context, modulesDirectory).ChangedFiles;
+                if (buildType != ComboBuildType.All) {
+                    List<string> files = new ChangesetResolver(this.context, modulesDirectory, buildType).ChangedFiles;
                     analyzerContext.SetFilesList(files);
                 }
 
+                analyzerContext.ModulesDirectory = modulesDirectory;
                 List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(analyzerContext);
 
                 IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
@@ -68,6 +70,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                             }
 
                             ProjectConfigurationInSolution config;
+
                             if (projectInSolution.ProjectConfigurations.TryGetValue("Debug|Any CPU", out config)) {
                                 if (config.IncludeInBuild) {
                                     IncludeInBuild(result, config, projectInSolution.AbsolutePath, studioProjects);
@@ -78,16 +81,14 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 }
 
                 // According to options, find out which projects are selected to build.
-                IEnumerable<IDependencyRef> filteredProjects = GetProjectsBuildList(visualStudioProjects);
-
-                Validate(filteredProjects.Cast<VisualStudioProject>().ToList());
+                var filteredProjects = GetProjectsBuildList(visualStudioProjects, buildType, downStreamType);
 
                 // Determine the build groups to get maximum speed.
-                List<List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
+                List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
 
                 // Create the dynamic build project file.
-                DynamicProject dynamicProject = new DynamicProject(context, new PhysicalFileSystem(modulesDirectory));
-                return dynamicProject.GenerateProject(modulesDirectory, groups, comboBuildProjectFile);
+                DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
+                return dynamicProject.GenerateProject(modulesDirectory, groups, buildFrom, isComboBuild, comboBuildProjectFile);
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;
@@ -98,34 +99,36 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// According to options, find out which projects are selected to build.
         /// </summary>
         /// <param name="visualStudioProjects">All the projects list.</param>
+        /// <param name="comboBuildType">Build the current branch, the changed files since forking from master, or all?</param>
+        /// <param name="downStreamType">Build the directly affected downstream projects, or recursively search for all downstream projects, or none?</param>
         /// <returns></returns>
-        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects) {
-            // If we're building everything we don't need to report any projects to Roper.
-            if (context.ComboBuildType == ComboBuildType.All) {
-                return visualStudioProjects;
-            }
-
+        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType comboBuildType, DownStreamType downStreamType) {
             // Get all the dirty projects due to user's modification.
-            HashSet<string> dirtyProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            dirtyProjects.UnionWith(visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList());
+            var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
+            HashSet<string> h = new HashSet<string>();
+            h.UnionWith(dirtyProjects);
             // According to DownStream option, either mark the direct affected or all the recursively affected downstream projects as dirty.
-            switch (context.DownStreamType) {
+            switch (downStreamType) {
                 case DownStreamType.Direct:
-                    MarkDirty(visualStudioProjects, dirtyProjects);
+                    MarkDirty(visualStudioProjects, h);
                     break;
                 case DownStreamType.All:
-                    MarkDirtyAll(visualStudioProjects, dirtyProjects);
+                    MarkDirtyAll(visualStudioProjects, h);
                     break;
             }
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
-            IEnumerable<IDependencyRef> filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false).ToList();
-            logger.Info("Changed projects:");
+            IEnumerable<IDependencyRef> filteredProjects;
+            if (comboBuildType == ComboBuildType.All) {
+                filteredProjects = visualStudioProjects;
+            } else {
+                filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false).ToList();
 
-            foreach (IDependencyRef project in filteredProjects) {
-                logger.Info(string.Concat("* ", project.Name));
+                logger.Info("Changed projects:");
+                foreach (var pp in filteredProjects) {
+                    logger.Info("* " + pp.Name);
+                }
             }
-
             return filteredProjects;
         }
 
@@ -136,6 +139,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// <param name="projectsToFind">The project name hashset to search for.</param>
         /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
         internal List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+
             var p = allProjects.Where(x => (x as VisualStudioProject)?.DependsOn?.Select(y => y.Name).Intersect(projectsToFind).Any() == true).ToList();
             p.ForEach(x => {
                 if (x is VisualStudioProject) {
@@ -149,6 +153,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// Recursively mark all projects in allProjects where the project depends on any one in projectsToFind until no more parent project is found.
         /// </summary>
         internal void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
+
             int newCount=-1;
 
             List<IDependencyRef> p;

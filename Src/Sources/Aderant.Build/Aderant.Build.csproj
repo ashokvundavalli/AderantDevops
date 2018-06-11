@@ -108,6 +108,7 @@
     <Compile Include="Context.cs" />
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
     <Compile Include="IArgumentBuilder.cs" />
+    <Compile Include="Services\FlexService.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\BuildTime\GitVersion.cs" />
     <Compile Include="Tasks\BuildTime\ParallelBuildProject.cs" />

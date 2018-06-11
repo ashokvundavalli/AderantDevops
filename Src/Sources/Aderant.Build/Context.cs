@@ -7,7 +7,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Aderant.Build.Tasks.BuildTime;
 
 namespace Aderant.Build {
     [Serializable]
@@ -22,6 +21,7 @@ namespace Aderant.Build {
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
             Variables = new Dictionary<string, object>();
+            Environment = "";
             PipelineName = "";
             TaskName = "";
         }
@@ -122,7 +122,6 @@ namespace Aderant.Build {
             }
 
             // Otherwise create a new instance and try to add it to the cache.
-           _serviceInstances.TryAdd(typeof(T), CreateService<T>());
 
             // Return the instance from the cache.
             return serviceInstances[typeof(T)] as T;
