@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Aderant.Build.Services;
 using Aderant.Build.Tasks.BuildTime;
 
 namespace Aderant.Build {
@@ -125,7 +126,7 @@ namespace Aderant.Build {
             }
 
             // Otherwise create a new instance and try to add it to the cache.
-           _serviceInstances.TryAdd(typeof(T), CreateService<T>());
+           serviceInstances.TryAdd(typeof(T), CreateService<T>());
 
             // Return the instance from the cache.
             return serviceInstances[typeof(T)] as T;
