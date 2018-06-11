@@ -1,18 +1,18 @@
 ﻿using Aderant.Build;
+using Aderant.Build.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
     [TestClass]
     public class ContextTests {
+
         [TestMethod]
-        public void IsDesktopBuildReturnsCorrectValueTest() {
-            Context context = new Context(new BuildMetadata());
+        public void Service_is_singleton() {
 
-            Assert.IsTrue(context.IsDesktopBuild);
+            var ctx = new Context();
+            FileSystemService fileSystemService = ctx.CreateService<FileSystemService>();
 
-            context.BuildMetadata.HostEnvironment = HostEnvironment.Vsts;
-
-            Assert.IsFalse(context.IsDesktopBuild);
+            Assert.IsNotNull(fileSystemService);
         }
     }
 }
