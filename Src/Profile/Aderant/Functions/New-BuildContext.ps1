@@ -1,35 +1,30 @@
-function New-BuildContext {
+function New-BuildContext
+{
     <#
     .SYNOPSIS
-        Creates a context object to use when running builds.
-    .PARAMETER Environment
-        The environment you're building in.
-    .PARAMETER DownloadRoot
-        The place where downloaded tools should be cached. The default is the build root.
+        Creates a context object to use when running builds.   
     #>
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
-    param (
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string]$DownloadRoot
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]
+        # The environment you're building in.
+        $Environment,        
+
+        [string]
+        # The place where downloaded tools should be cached. The default is the build root.
+        $DownloadRoot
     )
 
-    begin {
-        Set-StrictMode -Version Latest
-    }
+    Set-StrictMode -Version 'Latest'
 
-    process {
-        [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
+    [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
 
-        [Aderant.Build.Context]$context = [Aderant.Build.Context]::new($buildMetadata)
+    $context = [Aderant.Build.Context]::new()
+    $context.BuildMetadata = $buildMetadata  
 
-        if (-not [string]::IsNullOrWhiteSpace($DownloadRoot)) {
-            $context.DownloadRoot = $DownloadRoot
-        }
-
-        return $context
-    }
+    return $context
 }
 
-Export-ModuleMember -Function 'New-BuildContext'
+Export-ModuleMember -Function New-BuildContext

@@ -16,7 +16,8 @@ function Initialize-Git
     ConfigureGit $Context
 }
 
-function ConfigureGit([Aderant.Build.Context]$context) {
+function ConfigureGit([Aderant.Build.Context]$context)
+{
     Write-Debug "Configuring .gitconfig"
 
     try {        

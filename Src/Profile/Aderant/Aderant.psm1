@@ -6,7 +6,7 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filt
 ForEach-Object { . $_.FullName }
 
 function InitializePrivateData {    
-    $context = New-BuildContext    
+    $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
 }
 
@@ -29,22 +29,22 @@ function Measure-Command() {
     }
 }
 
-[string]$BranchRoot = ''
-[string]$global:BranchName = ''
-[string]$global:BranchLocalDirectory = ''
-[string]$global:BranchServerDirectory = ''
-[string]$global:BranchModulesDirectory = ''
-[string]$global:BranchBinariesDirectory = ''
-[string]$global:BranchExpertSourceDirectory = ''
-[string]$global:BranchExpertVersion = ''
-[string]$global:BranchEnvironmentDirectory = ''
-[string]$global:BuildScriptsDirectory = ''
-[string]$global:PackageScriptsDirectory = ''
-[string]$global:ModuleCreationScripts = ''
-[string]$global:ProductManifestPath = ''
-[string]$global:CurrentModuleName = ''
-[string]$global:CurrentModulePath = ''
-[string]$global:CurrentModuleBuildPath = ''
+[string]$BranchRoot = ""
+[string]$global:BranchName = ""
+[string]$global:BranchLocalDirectory = ""
+[string]$global:BranchServerDirectory = ""
+[string]$global:BranchModulesDirectory = ""
+[string]$global:BranchBinariesDirectory = ""
+[string]$global:BranchExpertSourceDirectory = ""
+[string]$global:BranchExpertVersion = ""
+[string]$global:BranchEnvironmentDirectory = ""
+[string]$global:BuildScriptsDirectory = ""
+[string]$global:PackageScriptsDirectory = ""
+[string]$global:ModuleCreationScripts = ""
+[string]$global:ProductManifestPath = ""
+[string]$global:CurrentModuleName = ""
+[string]$global:CurrentModulePath = ""
+[string]$global:CurrentModuleBuildPath = ""
 [PSModuleInfo]$global:CurrentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
@@ -488,7 +488,7 @@ function Set-CurrentModule($name, [switch]$quiet) {
         $global:CurrentModulePath = $name
         $global:CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:CurrentModulePath)).Name
         Write-Debug "Setting repository: $name"
-        Import-Module $PSScriptRoot\AderantGit.psm1
+        Import-Module $PSScriptRoot\Git.psm1 -Global
 
         if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.*))){
             $global:CurrentModuleName = ""
