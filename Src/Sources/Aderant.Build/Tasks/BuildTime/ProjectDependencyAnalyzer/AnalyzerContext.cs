@@ -1,17 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     public class AnalyzerContext {
-        /// <summary>
-        /// The root directory of the curent build.
-        /// </summary>
-        public string ModulesDirectory { get; internal set; }
-
-        public AnalyzerContext(string modulesDirectory) {
-            ModulesDirectory = modulesDirectory;
-            Directories.Add(ModulesDirectory);
-        }
-
         public ICollection<string> Directories { get; set; } = new List<string>();
 
         /// <summary>
@@ -20,6 +10,11 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         public ICollection<string> Files { get; set; } = new List<string>();
 
         public IEnumerable<string> ProjectFiles { get; set; }
+
+        /// <summary>
+        /// The root directory of the curent build.
+        /// </summary>
+        public string ModulesDirectory { get; set; }
 
         public AnalyzerContext AddDirectory(string directory) {
             Directories.Add(directory);
@@ -32,7 +27,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
             return this;
         }
-
         public AnalyzerContext SetFilesList(List<string> filesList) {
             Files = filesList;
 

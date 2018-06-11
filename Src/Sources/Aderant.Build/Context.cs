@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Aderant.Build.Services;
-using Aderant.Build.Tasks.BuildTime;
 
 namespace Aderant.Build {
     [Serializable]
