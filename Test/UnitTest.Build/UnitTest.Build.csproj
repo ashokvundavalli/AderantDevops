@@ -116,6 +116,7 @@
     <Compile Include="Packaging\VersionAnalyzerTests.cs" />
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="ProductAssemblyContextTests.cs" />
+    <Compile Include="ProjectDependencyAnalyzerTests.cs" />
     <Compile Include="ResolverRequestTests.cs" />
     <Compile Include="ResolverTests.cs" />
     <Compile Include="Resources.Designer.cs">
