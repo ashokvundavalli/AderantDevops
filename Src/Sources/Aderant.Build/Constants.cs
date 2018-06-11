@@ -1,6 +1,4 @@
-using Paket;
-
-namespace Aderant.Build {
+﻿namespace Aderant.Build {
     public static class Constants {
         /// <summary>
         /// The build infrastructure directory
@@ -19,6 +17,8 @@ namespace Aderant.Build {
         public static string NugetServerApiKey = "abc";
 
         public static string PackageServerUrl = "http://packages.ap.aderant.com/packages/nuget";
+
+        public static string PackageRepositoryUri = @"\\svfp311\PackageRepository\";
 
         public static string DatabasePackageUri = @"\\dfs.aderant.com\packages\ExpertDatabase";
 

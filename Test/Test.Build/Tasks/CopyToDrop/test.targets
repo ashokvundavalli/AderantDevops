@@ -1,0 +1,14 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+         ToolsVersion="14.0">
+
+  <Target Name="CopyToDropV2">
+    <PropertyGroup>
+      <YieldDuringCopy>false</YieldDuringCopy>
+    </PropertyGroup>
+
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(BuildInfrastructureDirectory)\Src\Build\CopyToDropV2.ps1" -dropRoot &#39;$(DropRoot)&#39; -moduleName &#39;$(ModuleName)&#39; -moduleRootPath &#39;$(BuildInfrastructureDirectory)\Test\IntegrationTest.Build\Resources\$(ModuleName)&#39; -origin &#39;$(Origin)&#39; -version &#39;$(BuildNumber)&#39; -generateFile $(GenerateFile)'
+      YieldDuringToolExecution="$(YieldDuringCopy)" />
+  </Target>
+</Project>

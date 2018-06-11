@@ -10,6 +10,7 @@ namespace Aderant.Build {
             JobName = "";
             ScmBranch = "";
             ScmCommitId = "";
+            HostEnvironment = HostEnvironment.Developer;
         }
 
         public int BuildNumber { get; set; }
@@ -28,7 +29,7 @@ namespace Aderant.Build {
 
         public Uri ScmUri { get; set; }
 
-        public string HostEnvironment { get; set; }
+        public HostEnvironment HostEnvironment { get; set; }
 
         public PullRequestInfo PullRequest { get; set; }
 
@@ -50,6 +51,11 @@ namespace Aderant.Build {
                 TargetBranch = targetBranch
             };
         }
+    }
+
+    public enum HostEnvironment {
+        Developer,
+        Vsts
     }
 
     [Serializable]

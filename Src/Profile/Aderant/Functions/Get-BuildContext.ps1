@@ -1,19 +1,22 @@
-function Get-BuildContext
-{
+function Get-BuildContext {
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
     param()
 
-    Set-StrictMode -Version 'Latest'
+    begin {
+        Set-StrictMode -Version Latest
+    }
+    
+    process {
+        Write-Debug "Retrieving current context"
 
-    Write-Debug "Retrieving current context"
+        $data = $MyInvocation.MyCommand.Module.PrivateData
 
-    $data = $MyInvocation.MyCommand.Module.PrivateData
+        Write-Debug ($data | Out-String)
+        Write-Debug ($data.Context | Out-String)
 
-    Write-Debug ($data | Out-String)
-    Write-Debug ($data.Context | Out-String)
-
-    return $data.Context
+        return $data.Context
+    }
 }
 
 Export-ModuleMember -Function Get-BuildContext

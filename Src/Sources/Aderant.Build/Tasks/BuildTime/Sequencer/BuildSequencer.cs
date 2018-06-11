@@ -67,7 +67,8 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                                 continue;
                             }
 
-                            if (projectInSolution.ProjectConfigurations.TryGetValue("Debug|Any CPU", out ProjectConfigurationInSolution config)) {
+                            ProjectConfigurationInSolution config;
+                            if (projectInSolution.ProjectConfigurations.TryGetValue("Debug|Any CPU", out config)) {
                                 if (config.IncludeInBuild) {
                                     IncludeInBuild(result, config, projectInSolution.AbsolutePath, studioProjects);
                                 }

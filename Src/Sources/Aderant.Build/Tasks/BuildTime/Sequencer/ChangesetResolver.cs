@@ -29,7 +29,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
                 return friendlyBranchName;
             }
-            private set => friendlyBranchName = value;
+            private set { friendlyBranchName = value; }
         }
 
         public string CanonicalBranchName {
@@ -39,7 +39,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 }
                 return canonicalBranchName;
             }
-            private set => canonicalBranchName = value;
+            private set { canonicalBranchName = value; }
         }
 
         public ChangesetResolver(Context context, string workingDirectory, bool discover = true) {

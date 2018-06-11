@@ -7,7 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Aderant.Build.Services;
+using Aderant.Build.Tasks.BuildTime;
 
 namespace Aderant.Build {
     [Serializable]
@@ -22,7 +22,6 @@ namespace Aderant.Build {
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
             Variables = new Dictionary<string, object>();
-            Environment = "";
             PipelineName = "";
             TaskName = "";
         }

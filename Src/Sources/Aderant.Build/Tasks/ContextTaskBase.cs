@@ -1,5 +1,6 @@
 ﻿using System;
 using Aderant.Build.Ipc;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -33,22 +34,27 @@ namespace Aderant.Build.Tasks {
                 return Context;
             }
 
-            object cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build);
+            object cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             Context = cachedContext as Context;
+
             if (Context != null) {
+                Log.LogMessage(MessageImportance.Low, "Obtained context from registered task object");
                 return Context;
             }
 
             Context = GetContextFromFile();
+            Log.LogMessage(MessageImportance.Low, "Obtained context from registered memory mapped file");
+            BuildEngine4.RegisterTaskObject("BuildContext", Context, RegisteredTaskObjectLifetime.Build, false);
 
-            BuildEngine4.RegisterTaskObject("BuildContext", Context, Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build, false);
+            Log.LogMessage(MessageImportance.High, $"Context IsDesktopBuild: {Context.IsDesktopBuild}");
 
             return Context;
         }
 
         private Context GetContextFromFile() {
+            Log.LogMessage(MessageImportance.Low, "Obtaining context from registered memory mapped file");
             string channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
-            object contextObject = MemoryMappedBufferReaderWriter.Read(channelId);
+            object contextObject = MemoryMappedBufferReaderWriter.Read(channelId, TimeSpan.FromMilliseconds(1000));
             Context = (Context)contextObject;
 
             return Context;
