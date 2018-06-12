@@ -1,5 +1,4 @@
-﻿[CmdletBinding()]
-class ShellContext {
+﻿class ShellContext {
     ShellContext() {
         $path = "HKCU:\Software\Aderant\PowerShell"
         if (-not (Test-Path $path)) {
@@ -11,15 +10,32 @@ class ShellContext {
         New-Item -Path $this.CacheDirectory -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
     }
         
-    [String] $BuildScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build"))
-    [String] $BuildToolsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools"))
-    [String] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")
-    [String] $CacheDirectory = [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "AderantPowerShell")
-    [String] $CurrentCommit
-    [String] $RegistryHome
-    [bool] $IsGitRepository 
-    [bool] $PoshGitAvailable 
+    [string] $BuildScriptsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build"))
+    [string] $BuildToolsDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, "..\..\Build.Tools"))
+    [string] $PackagingTool = [System.IO.Path]::Combine($this.BuildScriptsDirectory, "paket.exe")
+    [string] $CacheDirectory = [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "AderantPowerShell")
+    [string] $CurrentCommit
+    [string] $RegistryHome
 
+    [string] $BranchRoot = ""
+    [string] $BranchName = ""
+    [string] $BranchLocalDirectory = ""
+    [string] $BranchServerDirectory = ""
+    [string] $BranchModulesDirectory = ""
+    [string] $BranchBinariesDirectory = ""
+    [string] $BranchExpertSourceDirectory = ""
+    [string] $BranchExpertVersion = ""
+    [string] $BranchEnvironmentDirectory = ""
+             
+    [string] $PackageScriptsDirectory = ""
+    [string] $ModuleCreationScripts = ""
+    [string] $ProductManifestPath = ""
+    [string] $CurrentModuleName = ""
+    [string] $CurrentModulePath = ""
+    [string] $CurrentModuleBuildPath = ""
+
+    [bool] $IsGitRepository 
+    [bool] $PoshGitAvailable
 
     [object] SetRegistryValue([string]$path, [string]$name, $value) {
         $fullPath = ($this.RegistryHome + "\" + $path).TrimEnd("\")

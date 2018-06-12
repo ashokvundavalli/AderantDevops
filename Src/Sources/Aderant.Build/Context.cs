@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
+using Aderant.Build.Services;
 
 namespace Aderant.Build {
+
     [Serializable]
     public sealed class Context {
-        private readonly ConcurrentDictionary<Type, object> serviceInstances = new ConcurrentDictionary<Type, object>();
-        private readonly ConcurrentDictionary<Type, Type> serviceTypes = new ConcurrentDictionary<Type, Type>();
-
         private BuildMetadata buildMetadata;
-     
-        public Context() {
+        private BuildSwitches switches = default(BuildSwitches);
+        private IServiceProviderInternal serviceProvider;
+
+        public Context()
+            : this(ServiceContainer.Default) {
             Configuration = new Dictionary<object, object>();
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
@@ -24,6 +21,11 @@ namespace Aderant.Build {
             Environment = "";
             PipelineName = "";
             TaskName = "";
+        }
+
+        private Context(IServiceProviderInternal serviceProvider) {
+            serviceProvider.Initialize(this);
+            this.serviceProvider = serviceProvider;
         }
 
         public DirectoryInfo BuildRoot { get; set; }
@@ -69,62 +71,34 @@ namespace Aderant.Build {
             }
         }
 
-        public IArgumentBuilder CreateArgumentBuilder(string engineType) {
-            if (engineType == "MSBuild") {
-                return new ComboBuildArgBuilder(this);
-            }
+        public BuildSwitches Switches {
+            get { return switches; }
+            set { switches = value; }
+        }
 
-            throw new NotImplementedException("No builder for " + engineType);
+        public IArgumentBuilder CreateArgumentBuilder(string engineType) {
+            return serviceProvider.GetService<IArgumentBuilder>(engineType);
         }
 
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>
-        public T CreateService<T>() where T : class, IFlexService {
-            Type target;
-            if (!serviceTypes.TryGetValue(typeof(T), out target)) {
-                // Infer the concrete type from the ServiceLocatorAttribute.
-                CustomAttributeData attribute = typeof(T)
-                    .GetTypeInfo()
-                    .CustomAttributes
-                    .FirstOrDefault(x => x.AttributeType == typeof(ExportAttribute));
-
-                if (attribute != null) {
-                    foreach (CustomAttributeNamedArgument arg in attribute.NamedArguments) {
-                        if (string.Equals(arg.MemberName, nameof(ExportAttribute.ContractType), StringComparison.Ordinal)) {
-                            target = arg.TypedValue.Value as Type;
-                        }
-                    }
-                }
-
-                if (target == null) {
-                    throw new KeyNotFoundException(string.Format(CultureInfo.InvariantCulture, "Service mapping not found for key '{0}'.", typeof(T).FullName));
-                }
-
-                serviceTypes.TryAdd(typeof(T), target);
-                target = serviceTypes[typeof(T)];
+        public T GetService<T>() where T : class, IFlexService {
+            IFlexService svc = serviceProvider.GetService(typeof(T)) as IFlexService;
+            if (svc != null) {
+                svc.Initialize(this);
             }
 
-            // Create a new instance.
-            T svc = Activator.CreateInstance(target) as T;
-            svc.Initialize(this);
-            return svc;
+            return (T)svc;
         }
 
-        /// <summary>
-        /// Gets or creates an instance of T.
-        /// </summary>
-        public T GetService<T>() where T : class, IFlexService {
-            // Return the cached instance if one already exists.
-            object instance;
-            if (serviceInstances.TryGetValue(typeof(T), out instance)) {
-                return instance as T;
+        public object GetService(string contract) {
+            IFlexService svc = serviceProvider.GetService<object>(contract, null) as IFlexService;
+            if (svc != null) {
+                svc.Initialize(this);
             }
 
-            // Otherwise create a new instance and try to add it to the cache.
-
-            // Return the instance from the cache.
-            return serviceInstances[typeof(T)] as T;
+            return svc;
         }
     }
 
@@ -141,4 +115,13 @@ namespace Aderant.Build {
         All,
         None
     }
+
+    public struct BuildSwitches {
+        public bool Downstream { get; set; }
+        public bool Transitive { get; set; }
+        public bool Everything { get; set; }
+        public bool Clean { get; set; }
+        public bool Release { get; set; }
+    }
+
 }

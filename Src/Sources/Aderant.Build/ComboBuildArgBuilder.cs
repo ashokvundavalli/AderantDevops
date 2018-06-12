@@ -1,10 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using Aderant.Build.Services;
 
 namespace Aderant.Build {
+
+    [Export(typeof(IArgumentBuilder))]
+    [ExportMetadata(CompositionProperties.ExportContext, WellKnownProperties.MsBuild)]
     internal class ComboBuildArgBuilder : IArgumentBuilder {
         private readonly Context context;
 
-        public ComboBuildArgBuilder(Context context) {
+        [ImportingConstructor]
+        public ComboBuildArgBuilder([Import] Context context) {
             this.context = context;
         }
 

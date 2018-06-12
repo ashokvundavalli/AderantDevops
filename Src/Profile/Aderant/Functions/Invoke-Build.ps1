@@ -1,30 +1,30 @@
-function Invoke-Build
+function Global:Invoke-Build
 {
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
         [Parameter(ParameterSetName="Build")]
-        [switch]$changes,
+        [switch]$Changes,
 
         [Parameter(ParameterSetName="Build")]
-        [switch]$branch,
+        [switch]$Branch,
 
-        [Parameter]        
-        [switch]$everything,
+        [Parameter()]
+        [switch]$Everything,
 
-        [Parameter]
-        [switch]$downstream,
+        [Parameter()]
+        [switch]$Downstream,
 
-        [Parameter]
-        [switch]$transitive,
+        [Parameter()]
+        [switch]$Transitive,
         
-        [Parameter]
-        [switch]$clean,
+        [Parameter()]
+        [switch]$Clean,
 
-        [Parameter]
-        [switch]$release,
+        [Parameter()]
+        [switch]$Release,
 
-        [Parameter]
-        [switch]$package,
+        [Parameter()]
+        [switch]$Package,
 
         #[Parameter]
         #[switch]$integration,
@@ -33,55 +33,56 @@ function Invoke-Build
         #[switch]$automation,
 
         [Parameter]
-        [switch]$displayCodeCoverage,
-
-        [Parameter]
-        [Parameter(ParameterSetName="Build", Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string]$modulePath = '',
-
-        #TODO: wtf?
-        [Parameter]
-        [Parameter(ParameterSetName="Build", Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string]$moduleName = ''
+        [switch]$DisplayCodeCoverage,
+                
+        [Parameter(ParameterSetName="Build", Mandatory=$false)]        
+        [string]$ModulePath = ""
     )
 
     begin {
-        Set-StrictMode -Version Latest
+        
+        Set-StrictMode -Version Latest        
                 
         [Aderant.Build.Context]$context = New-BuildContext
-        $options = $context.Options 
+        $switches = $context.Switches 
 
-        $options.Everything = $everything.IsPresent
-        $options.Downstream = $downstream.IsPresent
-        $options.Transitive = $transitive.IsPresent
-        $options.Clean = $clean.IsPresent
-        $options.Release = $release.IsPresent
+        $switches.Everything = $Everything.IsPresent
+        $switches.Downstream = $Downstream.IsPresent
+        $switches.Transitive = $Transitive.IsPresent
+        $switches.Clean = $Clean.IsPresent
+        $switches.Release = $Release.IsPresent
 
-        $contex.Options = $options
+        $context.Switches = $switches
     }
 
     process {
-        [string]$repositoryPath = ''
+        $service = $context.GetService("Aderant.Build.Services.IFileSystem")
 
-        if (-not [string]::IsNullOrEmpty($modulePath)){
+        [string]$repositoryPath = $null
+
+        #if (-not [string]::IsNullOrEmpty($modulePath)){
+        #    $repositoryPath = $modulePath
+        #} elseif(-not [string]::IsNullOrEmpty($global:CurrentModulePath)) {
+        #    $repositoryPath = $global:CurrentModulePath
+
+        #    if (-not [string]::IsNullOrEmpty($moduleName)){
+        #        if (((Test-Path "$repositoryPath\.git") -eq $false) -and ((Test-Path "$repositoryPath\..\.git") -eq $true)) {
+        #            $repositoryPath = $(Resolve-Path "$repositoryPath\..\$moduleName")
+        #        }
+
+        #        if (Test-Path "$repositoryPath\$moduleName"){
+        #            $repositoryPath = $(Resolve-Path $moduleName)
+        #        }
+        #    }
+        #} else {
+        #    Write-Error 'No valid module path supplied.'
+        #    return
+        #}
+
+        if (-not [string]::IsNullOrEmpty($modulePath)) {
             $repositoryPath = $modulePath
-        } elseif(-not [string]::IsNullOrEmpty($global:CurrentModulePath)) {
-            $repositoryPath = $global:CurrentModulePath
-
-            if (-not [string]::IsNullOrEmpty($moduleName)){
-                if (((Test-Path "$repositoryPath\.git") -eq $false) -and ((Test-Path "$repositoryPath\..\.git") -eq $true)) {
-                    $repositoryPath = $(Resolve-Path "$repositoryPath\..\$moduleName")
-                }
-
-                if (Test-Path "$repositoryPath\$moduleName"){
-                    $repositoryPath = $(Resolve-Path $moduleName)
-                }
-            }
         } else {
-            Write-Error 'No valid module path supplied.'
-            return
+            $repositorypath = $context.GetCurrentRepository()
         }
 
         [bool]$skipPackage = $false

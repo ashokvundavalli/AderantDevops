@@ -11,7 +11,7 @@ using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
 namespace Aderant.Build.Tasks.BuildTime.Sequencer {
     /// <summary>
-    /// Represents a dynamic MSBuild project which will build a set of Expert modules in dependency order and in parallel
+    /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
     internal class DynamicProject {
         private readonly IFileSystem2 fileSystem;
