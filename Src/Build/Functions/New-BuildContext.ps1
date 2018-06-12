@@ -19,10 +19,13 @@ function New-BuildContext
 
     Set-StrictMode -Version 'Latest'
 
+    Write-Debug "Createing new context"
+
     [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
 
     $context = [Aderant.Build.Context]::new()
-    $context.BuildMetadata = $buildMetadata  
+    $context.BuildMetadata = $buildMetadata
+    $context.BuildScriptsDirectory = [System.IO.Path]::Combine($PSScriptRoot, "..\..\..\Build")
 
     return $context
 }

@@ -3,28 +3,28 @@ function Global:Invoke-Build
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
         [Parameter(ParameterSetName="Build")]
-        [switch]$Changes,
+        [switch]$changes,
 
         [Parameter(ParameterSetName="Build")]
-        [switch]$Branch,
+        [switch]$branch,
 
         [Parameter()]
-        [switch]$Everything,
+        [switch]$everything,
 
         [Parameter()]
-        [switch]$Downstream,
+        [switch]$downstream,
 
         [Parameter()]
-        [switch]$Transitive,
+        [switch]$transitive,
         
         [Parameter()]
-        [switch]$Clean,
+        [switch]$clean,
 
         [Parameter()]
-        [switch]$Release,
+        [switch]$release,
 
         [Parameter()]
-        [switch]$Package,
+        [switch]$package,
 
         #[Parameter]
         #[switch]$integration,
@@ -39,18 +39,18 @@ function Global:Invoke-Build
         [string]$ModulePath = ""
     )
 
-    begin {
-        
-        Set-StrictMode -Version Latest        
+    begin {        
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = "Stop"
                 
-        [Aderant.Build.Context]$context = New-BuildContext
+        [Aderant.Build.Context]$context = Get-BuildContext
         $switches = $context.Switches 
 
-        $switches.Everything = $Everything.IsPresent
-        $switches.Downstream = $Downstream.IsPresent
-        $switches.Transitive = $Transitive.IsPresent
-        $switches.Clean = $Clean.IsPresent
-        $switches.Release = $Release.IsPresent
+        $switches.Everything = $everything.IsPresent
+        $switches.Downstream = $downstream.IsPresent
+        $switches.Transitive = $transitive.IsPresent
+        $switches.Clean = $clean.IsPresent
+        $switches.Release = $release.IsPresent
 
         $context.Switches = $switches
     }
@@ -82,22 +82,10 @@ function Global:Invoke-Build
         if (-not [string]::IsNullOrEmpty($modulePath)) {
             $repositoryPath = $modulePath
         } else {
-            $repositorypath = $context.GetCurrentRepository()
+            $repositorypath = $ShellContext.CurrentModulePath
         }
 
-        [bool]$skipPackage = $false
-
-        if ((Test-Path "$repositoryPath\.git") -eq $false) {
-            $skipPackage = ([System.IO.Directory]::GetFiles($repositoryPath, "*.paket.template", [System.IO.SearchOption]::TopDirectoryOnly)).Length -eq 0
-        }
-
-        [string]$task = ""
-
-        if ($package -and -not $skipPackage) {
-            $task = "Package"
-        }
-      
-        & $Env:EXPERT_BUILD_DIRECTORY\Build\Invoke-Build.ps1 -Task "$task" -File $Env:EXPERT_BUILD_DIRECTORY\Build\BuildProcess.ps1 -Repository $repositoryPath -Clean:$clean.ToBool() -Flavor:$flavor -Integration:$integration.ToBool() -Automation:$automation.ToBool() -SkipPackage:$skipPackage -ComboBuildType $comboBuildType -DownstreamType $downStreamType
+        Run-MSBuild ($context.BuildScriptsDirectory + "\FlexBuild.Pipeline.targets") "/target:Build"
     }
 
     end {
