@@ -4,12 +4,16 @@ Set-StrictMode -Version Latest
 
 Enable-RunspaceDebug
 
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1' |
-ForEach-Object { . $_.FullName }
+# Import extensibility functions
+Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 
 function InitializePrivateData {    
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
+
+    if ($context.IsDesktopBuild) {
+        . $PSScriptRoot\ShellContext.ps1
+    }
 }
 
 InitializePrivateData
@@ -32,7 +36,7 @@ function Measure-Command() {
 }
 
 
-[PSModuleInfo]$global:CurrentModuleFeature = $null
+[PSModuleInfo]$currentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
 [string[]]$global:LastBuildGetLocal = @()
@@ -241,9 +245,9 @@ function Set-BranchPaths {
     $ShellContext.BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
     $ShellContext.BranchName = ResolveBranchName $ShellContext.BranchLocalDirectory
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
-    $ShellContext.BranchModulesDirectory = Join-Path -Path $ShellContext.BranchLocalDirectory -ChildPath \Modules
-    $ShellContext.BranchBinariesDirectory = Join-Path -Path $ShellContext.BranchLocalDirectory -ChildPath \Binaries
-    $ShellContext.BranchEnvironmentDirectory = Join-Path -Path $ShellContext.BranchLocalDirectory -ChildPath \Environment
+    $ShellContext.BranchModulesDirectory = Join-Path -Path $ShellContext.BranchLocalDirectory -ChildPath "\Modules"
+    $ShellContext.BranchBinariesDirectory = Join-Path -Path $ShellContext.BranchLocalDirectory -ChildPath "\Binaries"
+    $ShellContext.BranchEnvironmentDirectory = Join-Path -Path $ShellContext.BranchLocalDirectory -ChildPath "\Environment"
 
     if ((Test-Path $ShellContext.BranchLocalDirectory) -ne $true) {
         Write-Host ""
@@ -295,7 +299,7 @@ function Set-ScriptPaths {
     Initialise functions from Build-Libraries.ps1
 #>
 function Initialise-BuildLibraries {
-    Invoke-Expression "$ShellContext.BuildScriptsDirectory\Build-Libraries.ps1"
+    . ($ShellContext.BuildScriptsDirectory + "\Build-Libraries.ps1")
 }
 
 function ResolveBranchName($branchPath) {
@@ -394,7 +398,7 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
 
     #strip MAIN then add container and name
     $globalBranchLocalDirectory = $ShellContext.BranchLocalDirectory.Substring(0, $ShellContext.BranchLocalDirectory.LastIndexOf("\") + 1)
-    $globalBranchLocalDirectory = (Join-Path -Path $globalBranchLocalDirectory -ChildPath( Join-Path  -Path $newBranchContainer -ChildPath $newBranchName))
+    $globalBranchLocalDirectory = (Join-Path -Path $globalBranchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
 
     if ((Test-Path $globalBranchLocalDirectory) -eq $false) {
         return $false
@@ -405,7 +409,7 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
 
     #strip MAIN then add container and name
     $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf("\") + 1)
-    $ShellContext.BranchServerDirectory = (Join-Path -Path $ShellContext.BranchServerDirectory -ChildPath( Join-Path  -Path $newBranchContainer -ChildPath $newBranchName))
+    $ShellContext.BranchServerDirectory = (Join-Path -Path $ShellContext.BranchServerDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
 
     $ShellContext.BranchServerDirectory = [System.IO.Path]::GetFullPath($ShellContext.BranchServerDirectory)
 
@@ -468,8 +472,8 @@ function Set-CurrentModule($name) {
     }
 
     if ([System.IO.Path]::IsPathRooted($name)) {
-        $context.SetCurrentModulePath = $name
-        #$ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath)).Name
+        $ShellContext.CurrentModulePath = $name
+        $ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath)).Name
 
         Write-Debug "Setting repository: $name"
         Import-Module $PSScriptRoot\Git.psm1 -Global
@@ -1973,22 +1977,14 @@ function TabExpansion([string] $line, [string] $lastword) {
     [System.Diagnostics.Debug]::WriteLine("Aderant Build Tools:Falling back to default tab expansion for Last word: $lastword, Line: $line")   
 }
 
-function IsTabOnCommandParameter([string] $line, [string] $lastword, [string] $commandName, [string] $parameterName, [switch] $isDefaultParameter) {
-    # Need to select last command if is a line of commands separated by ";"
-    # Need to ignore auto-completion of parameters
-    # Need to ignore auto-completion of command names
-    #return ($lastword.StartsWith("-") -ne True -and $line -ne $commandName -and (($line.Trim() -eq "$commandName $lastword" -and $isDefaultParameter) -or ($line.Trim() -eq "SwitchBranchTo")))
-}
-
-Export-ModuleMember -Function TabExpansion
-
 $global:expertTabBranchExpansions = @()
 
 <#
 .Synopsis
     Adds a parameter to the expert tab expansions for modules
 .Description
-    Tab Expansion is when pressing tab will auto-complete the value of a parameter. This command allows you to configure autocomplete where a module name or comma separated list of module names is required
+    Tab Expansion is when pressing tab will auto-complete the value of a parameter.
+    This command allows you to configure autocomplete where a module name or comma separated list of module names is required
 .PARAMETER CommandName
     The name of the command (not the alias)
 .PARAMETER ParameterName
@@ -2011,11 +2007,11 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
         param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)
 
         $aliases = Get-Alias
-        $parser = New-Object Aderant.Build.AutoCompletionParser $commandName, $parameterName, $commandAst
+        $parser = [Aderant.Build.AutoCompletionParser]::new($commandName, $parameterName, $commandAst)
                 
         # Evaluate Modules
         try {   
-            $parser.GetModuleMatches($wordToComplete, $ShellContext.BranchModulesDirectory, $ProductManifestPath) | Get-Unique | ForEach-Object {
+            $parser.GetModuleMatches($wordToComplete, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
                 $ModuleToBeImported = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $_
                 if (Test-Path (Join-Path -Path $ModuleToBeImported -ChildPath \Build\TFSBuild.rsp)) {
                     [System.Management.Automation.CompletionResult]::new($ModuleToBeImported)
@@ -2201,18 +2197,6 @@ function Get-AderantModuleLocation() {
     } else {
         # this is a normal folder.
         return $aderantModuleBase
-    }
-}
-
-function Explorer([string]$path, [switch]$quiet) {
-    if (Test-Path $path) {
-        Invoke-Expression "explorer.exe $path";
-        if (-not $quiet) {
-            Write-Host "Opened: $path";
-        }
-    } else {
-        Write-Host -ForegroundColor Red -NoNewline "  Directory does not exist for:";
-        Write-Host " $path";
     }
 }
 
