@@ -252,7 +252,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
                     propertiesList.Add(CreateSinglePropertyLine(properties));
 
-                    propertiesList.Add($"SolutionDirectoryPath={solutionDirectoryPath}\\");
+                    propertiesList.Add($"SolutionDirectoryPath={solutionDirectoryPath}");
 
                     if (visualStudioProject != null) {
                         // MSBuild metaproj compatibility items
