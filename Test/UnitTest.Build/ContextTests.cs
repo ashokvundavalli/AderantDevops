@@ -33,7 +33,7 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        public void GetService_creates_service_from_supplemental_export() {
+        public void GetService_creates_service_from_conditional_export() {
             var ctx = new Context();
             var service = ctx.GetService(typeof(IFileSystem).FullName);
 

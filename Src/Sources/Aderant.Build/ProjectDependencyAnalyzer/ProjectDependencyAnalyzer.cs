@@ -5,8 +5,8 @@ using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.ProjectDependencyAnalyzer;
+using Aderant.Build.ProjectDependencyAnalyzer.Model;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
-using Microsoft.Build.Construction;
 
 namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     internal class ProjectDependencyAnalyzer {
@@ -694,28 +694,5 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         }
     }
 
-    public interface ISolutionFileParser {
-        ParseResult Parse(string solutionFile);
-    }
-
-    public class ParseResult {
-        public string SolutionFile { get; internal set; }
-        public IReadOnlyDictionary<string, ProjectInSolution> ProjectsByGuid { get; internal set; }
-        public IReadOnlyList<ProjectInSolution> ProjectsInOrder { get; internal set; }
-        public IReadOnlyList<SolutionConfigurationInSolution> SolutionConfigurations { get; internal set; }
-    }
-
-    public class SolutionFileParser : ISolutionFileParser {
-        public ParseResult Parse(string solutionFile) {
-            SolutionFile file = SolutionFile.Parse(solutionFile);
-
-            return new ParseResult {
-                SolutionFile = solutionFile,
-                ProjectsByGuid = file.ProjectsByGuid,
-                ProjectsInOrder = file.ProjectsInOrder,
-                SolutionConfigurations = file.SolutionConfigurations
-            };
-        }
-    }
     #endregion
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.ProjectDependencyAnalyzer;
+using Aderant.Build.ProjectDependencyAnalyzer.Model;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

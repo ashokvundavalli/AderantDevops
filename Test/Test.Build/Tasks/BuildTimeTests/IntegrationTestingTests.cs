@@ -8,7 +8,6 @@ namespace IntegrationTest.Build.Tasks.BuildTimeTests {
     [TestClass]
     public class IntegrationTestingTests : BuildTaskTestBase {
         private string moduleBuildTempDirectory;
-        //private static readonly string time = DateTime.UtcNow.ToFileTimeUtc().ToString();
         private static readonly string time = "2018";
         private readonly string databaseName = string.Concat("Expert_", time);
         private readonly string environmentName = string.Concat("Local_", time);

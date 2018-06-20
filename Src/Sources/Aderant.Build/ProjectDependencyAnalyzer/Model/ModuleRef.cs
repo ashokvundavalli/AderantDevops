@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
+namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
     /// <summary>
     /// Represents a reference to a module.
     /// </summary>

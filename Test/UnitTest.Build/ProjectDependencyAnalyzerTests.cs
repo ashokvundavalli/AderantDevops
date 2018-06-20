@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Aderant.Build.DependencyAnalyzer;
 using System.Collections.Generic;
 using System.IO;
+using Aderant.Build.ProjectDependencyAnalyzer.Model;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
 
@@ -12,21 +13,6 @@ namespace UnitTest.BuildTime {
     [TestClass]
     public class ProjectDependencyAnalyzerTests {
         public TestContext TestContext { get; set; }
-
-        [TestMethod]
-        public void DependencyReferenceTypeTest() {
-            IDependencyRef expertModule = new ExpertModule(new XElement("ReferencedModule", new XAttribute("Name", "Test")));
-            IDependencyRef assemblyRef = new AssemblyRef("Test");
-            IDependencyRef directoryNode = new DirectoryNode("Test", false);
-            IDependencyRef projectRef = new ProjectRef("Test");
-            IDependencyRef visualStudioProject = new VisualStudioProject(null, Guid.Empty, null, null, null);
-
-            Assert.AreEqual(ReferenceType.ExpertModule, expertModule.Type);
-            Assert.AreEqual(ReferenceType.AssemblyRef, assemblyRef.Type);
-            Assert.AreEqual(ReferenceType.DirectoryNode, directoryNode.Type);
-            Assert.AreEqual(ReferenceType.ProjectRef, projectRef.Type);
-            Assert.AreEqual(ReferenceType.VisualStudioProject, visualStudioProject.Type);
-        }
 
         [TestMethod]
         public void ProcessVisualStudioProjectTest() {

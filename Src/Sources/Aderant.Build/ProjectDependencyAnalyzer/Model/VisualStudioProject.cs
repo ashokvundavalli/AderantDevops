@@ -6,9 +6,10 @@ using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
 
-namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
+namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
 
     /// <summary>
     /// Object representing a Visual Studio project

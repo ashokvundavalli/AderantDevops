@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.ProjectDependencyAnalyzer;
+using Aderant.Build.ProjectDependencyAnalyzer.Model;
 using Microsoft.Build.BuildEngine;
 
 namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {

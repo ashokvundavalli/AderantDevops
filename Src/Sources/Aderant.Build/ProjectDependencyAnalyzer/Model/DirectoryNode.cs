@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using Aderant.Build.DependencyAnalyzer;
 
-namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
+namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
     [DebuggerDisplay("DirectoryNode: {Name}")]
     internal sealed class DirectoryNode : IDependencyRef {
         private ICollection<IDependencyRef> dependsOn;

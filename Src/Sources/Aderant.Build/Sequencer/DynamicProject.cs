@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.MSBuild;
+using Aderant.Build.ProjectDependencyAnalyzer.Model;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
 namespace Aderant.Build.Tasks.BuildTime.Sequencer {

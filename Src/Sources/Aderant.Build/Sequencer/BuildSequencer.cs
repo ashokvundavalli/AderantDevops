@@ -7,6 +7,9 @@ using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
+using Aderant.Build.ProjectDependencyAnalyzer;
+using Aderant.Build.ProjectDependencyAnalyzer.Model;
+using Aderant.Build.ProjectDependencyAnalyzer.SolutionParser;
 using Aderant.Build.Providers;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 using Microsoft.Build.Construction;
@@ -30,7 +33,10 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, string comboBuildProjectFile, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
-                var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
+                var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(
+                    new CSharpProjectLoader(), 
+                    new TextTemplateAnalyzer(fileSystem), 
+                    fileSystem);
 
                 analyzer.AddExclusionPattern("_BUILD_");
                 analyzer.AddExclusionPattern("__");

@@ -5,7 +5,7 @@ using System.IO;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.Build.ProjectDependencyAnalyzer {
+namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
     [DebuggerDisplay("AssemblyReference: {Name} ({dependencyType})")]
     internal class AssemblyRef : IDependencyRef {
         

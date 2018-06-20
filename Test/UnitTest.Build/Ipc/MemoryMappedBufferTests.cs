@@ -12,7 +12,7 @@ namespace UnitTest.Build.Ipc {
 
         [TestMethod]
         public void Can_write_to_shared_memory_without_exception() {
-            using (var block = new MemoryMappedBuffer(@"Local\" + Guid.NewGuid(), 4096)) {
+            using (var block = new MemoryMappedFile(@"Local\" + Guid.NewGuid(), 4096)) {
                 block.Write(new byte[] { 0x00, 0x01, 0x02 });
             }
         }
@@ -24,7 +24,7 @@ namespace UnitTest.Build.Ipc {
             byte[] input;
             byte[] data;
 
-            using (var block = new MemoryMappedBuffer(@"Local\" + Guid.NewGuid(), capacity)) {
+            using (var block = new MemoryMappedFile(@"Local\" + Guid.NewGuid(), capacity)) {
                 input = new byte[] { 0x00, 0x01, 0x02 };
                 block.Write(input);
 
@@ -37,7 +37,7 @@ namespace UnitTest.Build.Ipc {
 
         [TestMethod]
         public void Can_read_and_write_from_threads() {
-            var block = new MemoryMappedBuffer(@"Local\" + Guid.NewGuid(), 4096);
+            var block = new MemoryMappedFile(@"Local\" + Guid.NewGuid(), 4096);
 
             bool[] run = { true };
 
