@@ -1,5 +1,6 @@
 using System;
 using Aderant.Build.Ipc;
+using Microsoft.Build.Exceptions;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -11,6 +12,8 @@ namespace Aderant.Build.Tasks {
 
         public ContextTaskBase() {
         }
+
+        public string ContextFileName { get; set; }
 
         public override bool Execute() {
             var context = ObtainContext();
@@ -27,8 +30,11 @@ namespace Aderant.Build.Tasks {
             var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", Microsoft.Build.Framework.RegisteredTaskObjectLifetime.Build);
             context = cachedContext as Context;
             if (context != null) {
+                Log.LogMessage("Retrived content from registered task object");
                 return context;
             }
+
+            Log.LogMessage("Retrieving context from file");
 
             context = GetContextFromFile();
 
@@ -39,8 +45,13 @@ namespace Aderant.Build.Tasks {
 
         private Context GetContextFromFile() {
             Context context;
-            var channelId = Environment.GetEnvironmentVariable(Constants.ContextChannelVariable);
-            object contextObject = MemoryMappedBufferReaderWriter.Read(channelId);
+            var channelId = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
+
+            //if (string.IsNullOrEmpty(channelId)) {
+            //    throw new BuildAbortedException("No ");
+            //}
+
+            object contextObject = MemoryMappedFileReaderWriter.Read(channelId);
 
             context = (Context)contextObject;
             return context;
