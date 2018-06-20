@@ -7,9 +7,9 @@ namespace Aderant.Build.Ipc {
     /// <summary>
     /// Reads and writes arbitrary data from a memory mapped file.
     /// </summary>
-    public sealed class MemoryMappedBufferReaderWriter {
+    public sealed class MemoryMappedFileReaderWriter {
         private readonly BinaryFormatter formatter = new BinaryFormatter();
-        private readonly MemoryMappedBuffer buffer;
+        private readonly MemoryMappedFile file;
         private bool bufferBroken;
         private object syncLock = new object();
 
@@ -18,10 +18,10 @@ namespace Aderant.Build.Ipc {
         /// </summary>
         public object IncomingMessage { get; private set; }
 
-        internal MemoryMappedBufferReaderWriter(MemoryMappedBuffer buffer) {
-            this.buffer = buffer;
+        internal MemoryMappedFileReaderWriter(MemoryMappedFile file) {
+            this.file = file;
 
-            this.buffer.Disposing += OnDisposing;
+            this.file.Disposing += OnDisposing;
         }
 
         public static string WriteData(object data) {
@@ -31,16 +31,16 @@ namespace Aderant.Build.Ipc {
 
             var name = Guid.NewGuid().ToString("D");
 
-            var buffer = new MemoryMappedBuffer(name, MemoryMappedBuffer.DefaultCapacity);
-            var readerWriter = new MemoryMappedBufferReaderWriter(buffer);
+            var buffer = new MemoryMappedFile(name, MemoryMappedFile.DefaultCapacity);
+            var readerWriter = new MemoryMappedFileReaderWriter(buffer);
             readerWriter.Write(data);
 
             return name;
         }
 
         public static object Read(string name) {
-            using (var buffer = new MemoryMappedBuffer(name, MemoryMappedBuffer.DefaultCapacity)) {
-                var readerWriter = new MemoryMappedBufferReaderWriter(buffer);
+            using (var buffer = new MemoryMappedFile(name, MemoryMappedFile.DefaultCapacity)) {
+                var readerWriter = new MemoryMappedFileReaderWriter(buffer);
 
                 readerWriter.Read();
 
@@ -51,7 +51,7 @@ namespace Aderant.Build.Ipc {
         private void OnDisposing(object sender, EventArgs args) {
             lock (syncLock) {
                 bufferBroken = true;
-                buffer.Disposing -= OnDisposing;
+                file.Disposing -= OnDisposing;
             }
         }
 
@@ -76,7 +76,7 @@ namespace Aderant.Build.Ipc {
                     formatter.Serialize(stream, data);
 
                     try {
-                        buffer.Write(stream.ToArray());
+                        file.Write(stream.ToArray());
                     } catch (ObjectDisposedException) {
                         bufferBroken = true;
                     }
@@ -115,7 +115,7 @@ namespace Aderant.Build.Ipc {
             }
 
             try {
-                byte[] bytes = buffer.Read();
+                byte[] bytes = file.Read();
 
                 if (bytes.Length == 0) {
                     IncomingMessage = null;

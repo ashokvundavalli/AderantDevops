@@ -9,8 +9,8 @@ namespace Aderant.Build.Ipc {
     /// <summary>
     /// A thread safe IPC channel backed shared memory.
     /// </summary>
-    internal class MemoryMappedBuffer : IDisposable {
-        private MemoryMappedFile buffer;
+    internal class MemoryMappedFile : IDisposable {
+        private System.IO.MemoryMappedFiles.MemoryMappedFile buffer;
         private MemoryMappedViewAccessor view;
         private EventWaitHandle dataAvailable;
         private EventWaitHandle bufferFreeForWriting;
@@ -20,8 +20,8 @@ namespace Aderant.Build.Ipc {
 
         public event EventHandler<EventArgs> Disposing;
 
-        public MemoryMappedBuffer(string bufferName, Int64 capacity) {
-            buffer = MemoryMappedFile.CreateOrOpen(bufferName, capacity, MemoryMappedFileAccess.ReadWrite);
+        public MemoryMappedFile(string bufferName, Int64 capacity) {
+            buffer = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateOrOpen(bufferName, capacity, MemoryMappedFileAccess.ReadWrite);
             view = buffer.CreateViewAccessor(0, 0, MemoryMappedFileAccess.ReadWrite);
 
             string name = GetBufferNameWithoutSession(bufferName);
