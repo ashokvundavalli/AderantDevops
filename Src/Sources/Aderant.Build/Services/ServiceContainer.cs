@@ -6,17 +6,15 @@ using System.Linq;
 using System.Reflection;
 
 namespace Aderant.Build.Services {
-    internal class ServiceContainer : IServiceProvider, IServiceProviderInternal {
+    internal class ServiceContainer : IServiceProvider, IContextualServiceProvider {
 
         public static ServiceContainer Default = new ServiceContainer(new[] { typeof(ServiceContainer).Assembly });
         private CompositionContainer container;
-        private Context context;
-        private MethodInfo svcMethod;
+        //private Context context;
+        private MethodInfo svcMethod = typeof(ServiceContainer).GetMethod("GetService", new Type[] { typeof(Context), typeof(string), typeof(string) });
 
 
         public ServiceContainer(Assembly[] catalogAssemblies) {
-            this.svcMethod = this.GetType().GetMethod("GetService", new Type[] { typeof(string) });
-
             List<Type> types = new List<Type>();
 
             foreach (var asm in catalogAssemblies) {
@@ -33,10 +31,10 @@ namespace Aderant.Build.Services {
         }
 
         public object GetService(Type serviceType) {
-            return svcMethod.MakeGenericMethod(serviceType).Invoke(this, new object[] { null });
+            return svcMethod.MakeGenericMethod(serviceType).Invoke(this, new object[] { null, null, null });
         }
 
-        public T GetService<T>(string contractName = null, string contextValue = null) {
+        public T GetService<T>(Context context, string contractName = null, string scope = null) {
             var batch = new CompositionBatch();
 
             var currentContext = container.GetExportedValueOrDefault<Context>();
@@ -46,14 +44,14 @@ namespace Aderant.Build.Services {
 
             container.Compose(batch);
 
-            if (contextValue != null) {
+            if (scope != null) {
                 // Try bind to an instance with a specific export context (e.g a scope, or key with a particular value)
                 var export = container.GetExports<T, IDictionary<string, object>>()
                     .FirstOrDefault(
                         e => {
                             object value;
-                            if (e.Metadata.TryGetValue(CompositionProperties.ExportContext, out value)) {
-                                if (Equals(value, contextValue)) {
+                            if (e.Metadata.TryGetValue(CompositionProperties.AppliesTo, out value)) {
+                                if (Equals(value, scope)) {
                                     return true;
                                 }
                             }
@@ -71,10 +69,6 @@ namespace Aderant.Build.Services {
             }
 
             return container.GetExportedValue<T>();
-        }
-
-        public void Initialize(Context context) {
-            this.context = context;
         }
     }
 }
