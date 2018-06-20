@@ -12,7 +12,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Create a MS Build project containing an item group of builds sorted and ordered according to critical path
     /// </summary>
     internal sealed class BuildProjectSequencer {
-        private XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+        private XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003"; 
         private static string directorySeparatorChar = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
 
         /// <summary>

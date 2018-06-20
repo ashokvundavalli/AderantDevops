@@ -15,7 +15,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     [DebuggerDisplay("Module: {Name} ({DebuggerDisplayNames})")]
     public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        
         private string name;
         private readonly IList<XAttribute> customAttributes;
         private ModuleType? type;
@@ -56,7 +56,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public ICollection<IDependencyRef> DependsOn {
+        internal ICollection<IDependencyRef> DependsOn {
             get {
                 if (dependsOn == null) {
                     if (Manifest != null) {
@@ -234,6 +234,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public RepositoryType RepositoryType { get; set; }
 
+        string IDependencyRef.Name => throw new NotImplementedException();
+
+        ICollection<IDependencyRef> IDependencyRef.DependsOn => throw new NotImplementedException();
+
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
         /// </summary>
@@ -288,7 +292,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new ExpertModule(solutionRoot, names, manifest);
         }
 
-        public bool Equals(IDependencyRef other) {
+        internal bool Equals(IDependencyRef other) {
             ExpertModule module = other as ExpertModule;
             return Equals(module);
         }
@@ -301,6 +305,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return false;
+        }
+
+        void IDependencyRef.Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
+            throw new NotImplementedException();
+        }
+
+        bool IEquatable<IDependencyRef>.Equals(IDependencyRef other) {
+            throw new NotImplementedException();
         }
     }
 
