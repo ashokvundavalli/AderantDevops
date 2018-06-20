@@ -213,7 +213,7 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
     [DebuggerDisplay("AssemblyReference: {Name} ({dependencyType})")]
     internal class AssemblyRef : IDependencyRef {
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        
         private readonly DependencyType dependencyType;
 
         public AssemblyRef(string reference) : this(reference, DependencyType.Unknown) {
@@ -261,7 +261,7 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
     [DebuggerDisplay("ProjectReference: {Name}")]
     internal class ProjectRef : IDependencyRef {
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        
         private bool isResolved;
 
         public ProjectRef(string reference) {

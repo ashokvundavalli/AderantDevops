@@ -34,12 +34,6 @@ namespace Aderant.Build.Tasks.BuildTime {
 
         public string[] CodeAnalysisGroup { get; set; }
 
-        public bool IsComboBuild { get; set; }
-
-        public string ComboBuildType { get; set; }
-
-        public string DownStreamType { get; set; }
-
         public string ComboBuildProjectFile { get; set; }
 
         [Output]
@@ -78,12 +72,23 @@ namespace Aderant.Build.Tasks.BuildTime {
 
                 modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 
-                //Log.LogMessage($"CodeAnalysisGroup: {string.Join(",", CodeAnalysisGroup)}. Contains: {CodeAnalysisGroup.Contains("Case")}");
                 Log.LogMessage("Creating dynamic project...");
 
-                ComboBuildType buildType = (ComboBuildType)Enum.Parse(typeof(ComboBuildType), ComboBuildType);
-                DownStreamType downstreamType = (DownStreamType)Enum.Parse(typeof(DownStreamType), DownStreamType);
-                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, IsComboBuild, ComboBuildProjectFile, buildType, downstreamType);
+
+                ProjectRelationshipProcessing relationshipProcessing = ProjectRelationshipProcessing.None;
+                if (context.Switches.Downstream) {
+                    relationshipProcessing = ProjectRelationshipProcessing.Direct;
+                }
+
+                if (context.Switches.Transitive) {
+                    relationshipProcessing = ProjectRelationshipProcessing.Transitive;
+                }
+
+                ComboBuildType buildType = ComboBuildType.All;
+
+
+
+                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, ComboBuildProjectFile, buildType, relationshipProcessing);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
@@ -163,9 +168,4 @@ namespace Aderant.Build.Tasks.BuildTime {
         All
     }
 
-    public enum DownStreamType {
-        Direct,
-        All,
-        None
-    }
 }

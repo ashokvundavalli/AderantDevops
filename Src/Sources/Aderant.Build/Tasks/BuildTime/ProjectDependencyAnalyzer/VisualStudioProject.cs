@@ -12,7 +12,7 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     [DebuggerDisplay("DirectoryNode: {Name}")]
     internal sealed class DirectoryNode : IDependencyRef {
         private ICollection<IDependencyRef> dependsOn;
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        
         public bool IsCompletion { get; set; }
         public string ModuleName { get; set; }
 
@@ -80,7 +80,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
     /// </summary>
     [DebuggerDisplay("Project: {AssemblyName} in {SolutionDirectoryName} depends on {DependsOn.Count} objects")]
     internal class VisualStudioProject : IEquatable<VisualStudioProject>, IDependencyRef {
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
         private readonly XDocument project;
 
         /// <summary>

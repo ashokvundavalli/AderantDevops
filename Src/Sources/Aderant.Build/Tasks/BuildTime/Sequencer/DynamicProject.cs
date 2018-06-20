@@ -22,7 +22,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string buildFrom, string comboBuildProjectFile) {
             Project project = new Project();
 
             // Create a list of call targets for each build
@@ -57,7 +57,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         continue;
                     }
 
-                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom, isComboBuild, comboBuildProjectFile));
+                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom, comboBuildProjectFile));
 
                     // e.g. <Target Name="Build2">
                     Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
@@ -97,7 +97,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             return project;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom, bool isComboBuild, string comboBuildProjectFile) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom, string comboBuildProjectFile) {
             return projectGroup.Select(
                 studioProject => {
                     // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 

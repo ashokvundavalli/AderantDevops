@@ -255,19 +255,19 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
             AddDependenciesFromTextTemplates(graph.Vertices);
 
             List<VisualStudioProject> projectVertices = graph.Vertices.OfType<VisualStudioProject>().ToList();
+
             ResolveProjectReferences(projectVertices);
             AddInitializeAndCompletionNodes(graph, projectVertices);
 
             foreach (IDependencyRef dependency in graph.Vertices) {
                 AddSyntheticProjectToProjectDependencies(dependency, graph);
-                
-                switch (dependency.Type) {
-                    case ReferenceType.VisualStudioProject:
-                        graph = ProcessVisualStudioProject((VisualStudioProject)dependency, graph, projectVertices);
-                        break;
-                    case ReferenceType.ExpertModule:
-                        graph = ProcessExpertModule((ExpertModule)dependency, graph, projectVertices);
-                        break;
+
+                if (dependency is VisualStudioProject) {
+                    graph = ProcessVisualStudioProject((VisualStudioProject)dependency, graph, projectVertices);
+                }
+
+                if (dependency is ExpertModule) {
+                    graph = ProcessExpertModule((ExpertModule)dependency, graph, projectVertices);
                 }
             }
 
@@ -651,7 +651,7 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         }
 
         public string Name => module.Name;
-        public ReferenceType Type => (ReferenceType)Enum.Parse(typeof(ReferenceType), GetType().Name);
+        
 
         public ICollection<IDependencyRef> DependsOn {
             get { return module.DependsOn; }

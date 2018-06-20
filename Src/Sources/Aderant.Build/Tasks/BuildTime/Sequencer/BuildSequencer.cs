@@ -27,7 +27,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, bool isComboBuild, string comboBuildProjectFile, ComboBuildType buildType, DownStreamType downStreamType) {
+        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, string comboBuildProjectFile, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
@@ -81,15 +81,16 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                 }
 
                 // According to options, find out which projects are selected to build.
-                var filteredProjects = GetProjectsBuildList(visualStudioProjects, buildType, downStreamType);
+                var filteredProjects = GetProjectsBuildList(visualStudioProjects, buildType, dependencyProcessing);
 
-                Validate(filteredProjects.Cast<VisualStudioProject>().ToList());
+                Validate(filteredProjects);
+
                 // Determine the build groups to get maximum speed.
                 List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
 
                 // Create the dynamic build project file.
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
-                return dynamicProject.GenerateProject(modulesDirectory, groups, buildFrom, isComboBuild, comboBuildProjectFile);
+                return dynamicProject.GenerateProject(modulesDirectory, groups, buildFrom, comboBuildProjectFile);
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;
@@ -101,19 +102,19 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         /// </summary>
         /// <param name="visualStudioProjects">All the projects list.</param>
         /// <param name="comboBuildType">Build the current branch, the changed files since forking from master, or all?</param>
-        /// <param name="downStreamType">Build the directly affected downstream projects, or recursively search for all downstream projects, or none?</param>
+        /// <param name="dependencyProcessing">Build the directly affected downstream projects, or recursively search for all downstream projects, or none?</param>
         /// <returns></returns>
-        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType comboBuildType, DownStreamType downStreamType) {
+        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType comboBuildType, ProjectRelationshipProcessing dependencyProcessing) {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
             HashSet<string> h = new HashSet<string>();
             h.UnionWith(dirtyProjects);
             // According to DownStream option, either mark the direct affected or all the recursively affected downstream projects as dirty.
-            switch (downStreamType) {
-                case DownStreamType.Direct:
+            switch (dependencyProcessing) {
+                case ProjectRelationshipProcessing.Direct:
                     MarkDirty(visualStudioProjects, h);
                     break;
-                case DownStreamType.All:
+                case ProjectRelationshipProcessing.Transitive:
                     MarkDirtyAll(visualStudioProjects, h);
                     break;
             }
@@ -167,7 +168,9 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             }
         }
 
-        private void Validate(List<VisualStudioProject> visualStudioProjects) {
+        private void Validate(IEnumerable<IDependencyRef> visualStudioProjects) {
+            var validator = new ProjectGuidValidator();
+
             var query = visualStudioProjects.GroupBy(x => x.ProjectGuid)
                 .Where(g => g.Count() > 1)
                 .Select(y => new { Element = y.Key, Counter = y.Count() })
