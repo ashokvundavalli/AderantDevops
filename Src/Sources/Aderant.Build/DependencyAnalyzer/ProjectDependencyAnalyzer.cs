@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.ProjectDependencyAnalyzer;
 using Aderant.Build.ProjectDependencyAnalyzer.Model;
 using Aderant.Build.Tasks.BuildTime.Sequencer;
 
@@ -89,20 +88,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
                 }
             }
 
-            if (dependencies.Any()) {
-                Console.WriteLine("Detected circular references. Potential suspects:");
-
-                foreach (IDependencyRef dependency in dependencies) {
-                    Console.WriteLine(dependency.Name);
-
-                    foreach (var item in dependency.DependsOn) {
-                        Console.WriteLine($"\t{item.Name}");
-                    }
-                }
-            } else {
-                Console.WriteLine("Unable to identify circular references.");
-            }
-
             return dependencies;
         }
 
@@ -161,13 +146,7 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
             foreach (string directory in context.Directories) {
                 projectFiles.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
             }
-
-            //IEnumerable<string> projectFiles = projects.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
-
-            // reduce list
-            // projectFiles = projectFiles.Where(f=>f.Contains("Aderant") && f.Contains("Framework"));
-
-            //var projectFiles = context.ProjectFiles;
+    
             var files = context.Files;
 
             foreach (string projectFile in projectFiles) {
@@ -192,7 +171,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
                     }
 
-
                     studioProject.SolutionRoot = GetSolutionRootForProject(context.Directories, solutionFileFilters, studioProject.Path);
                 } else {
                     parseErrors.Add(projectFile);
@@ -208,8 +186,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         /// <param name="context"></param>
         /// <returns></returns>
         private TopologicalSort<IDependencyRef> GetDependencyGraph(AnalyzerContext context) {
-
-
             List<string> projectFiles = new List<string>();
 
             foreach (string directory in context.Directories) {
@@ -313,7 +289,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
                 if (target != null) {
                     graph.Edge(studioProject, target);
-                    TraceGraph(graph);
                 }
             }
 
@@ -334,7 +309,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
                 if (target != null) {
                     graph.Edge(expertModule, target);
-                    TraceGraph(graph);
                 }
             }
 
@@ -357,8 +331,11 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
 
                 foreach (VisualStudioProject project in projects.Where(p => p.SolutionRoot == level.Key)) {
                     project.AddDependency(initializeNode);
+
                     graph.Edge(project, initializeNode);
+
                     completionNode.AddDependency(project);
+
                     graph.Edge(completionNode, project);
                 }
             }
@@ -398,17 +375,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
                             module.DependsOn.Add(p);
                         }
                     }
-                }
-            }
-        }
-
-        private void TraceGraph(TopologicalSort<IDependencyRef> graph) {
-            if (TraceCircularDependency) {
-                TopologicalSort<IDependencyRef> clone = graph.Clone();
-
-                Queue<IDependencyRef> queue;
-                if (!clone.Sort(out queue)) {
-                    throw new CircularDependencyException(queue.Select(s => s.Name));
                 }
             }
         }
@@ -618,27 +584,6 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         }
     }
 
-    #region Equality Comparison
-    internal class DependencyEqualityComparer : IEqualityComparer<IDependencyRef> {
-        public static DependencyEqualityComparer Default = new DependencyEqualityComparer();
-
-        private DependencyEqualityComparer() {
-        }
-
-        public bool Equals(IDependencyRef x, IDependencyRef y) {
-            return x.Equals(y);
-        }
-
-        public int GetHashCode(IDependencyRef obj) {
-            return obj.GetHashCode();
-        }
-    }
-
-    internal enum DependencyType {
-        Unknown = -1,
-        TextTemplate
-    }
-
     internal class GraphVisitor : GraphVisitorBase {
         private readonly string moduleRoot;
 
@@ -694,5 +639,4 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
         }
     }
 
-    #endregion
 }
