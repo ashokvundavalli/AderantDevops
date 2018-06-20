@@ -27,7 +27,5 @@
         public static string DefaultNuGetServer = "https://www.nuget.org/api/v2";
 
         internal static string MainDependencyGroup = Paket.Constants.MainDependencyGroup.ToString();
-
-        public static string ContextChannelVariable = "ContextChannelId";
     }
 }

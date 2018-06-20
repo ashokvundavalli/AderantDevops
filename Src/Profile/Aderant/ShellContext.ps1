@@ -1,3 +1,6 @@
+<#
+    Provides a context object that stores state for when the build tool chain is running interactively 
+#>
 class ShellContext {
     ShellContext() {
         $path = "HKCU:\Software\Aderant\PowerShell"
@@ -72,5 +75,3 @@ class ShellContext {
         return $null
     }
 }
-
-$ShellContext = [ShellContext]::new()

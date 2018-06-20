@@ -69,8 +69,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarningRatchet", "Src\Sourc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer", "Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj", "{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAnalyzerTest", "Test\IntegrationTest.Build\Resources\RunAnalyzerTest.csproj", "{9299ECBB-0184-498B-A572-559C127BBF4C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.TeamFoundation.Integration", "Src\Sources\Aderant.TeamFoundation.Integration\Aderant.TeamFoundation.Integration.csproj", "{7AA81D68-A831-41BA-B899-062FDAC0C63C}"
 EndProject
 Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "UnitTest.PowerShell", "Test\UnitTest.PowerShell\UnitTest.PowerShell.pssproj", "{876D9DB6-F991-45C0-95A5-64F108A0F086}"
@@ -144,10 +142,6 @@ Global
 		{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9299ECBB-0184-498B-A572-559C127BBF4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9299ECBB-0184-498B-A572-559C127BBF4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9299ECBB-0184-498B-A572-559C127BBF4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9299ECBB-0184-498B-A572-559C127BBF4C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AA81D68-A831-41BA-B899-062FDAC0C63C}.Release|Any CPU.ActiveCfg = Release|Any CPU

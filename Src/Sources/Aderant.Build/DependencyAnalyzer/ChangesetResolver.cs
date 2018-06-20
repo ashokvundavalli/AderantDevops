@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Tasks.BuildTime;
 using LibGit2Sharp;
 
-namespace Aderant.Build.Tasks.BuildTime.Sequencer {
+namespace Aderant.Build.DependencyAnalyzer {
     public class ChangesetResolver {
         private readonly Context context;
         private string canonicalBranchName;

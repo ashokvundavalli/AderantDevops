@@ -5,11 +5,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.SolutionParser;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
 using Aderant.Build.Providers;
-using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
-using Aderant.Build.Tasks.BuildTime.Sequencer;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks.BuildTime {
@@ -32,10 +31,6 @@ namespace Aderant.Build.Tasks.BuildTime {
         [Required]
         public string ProjectFile { get; set; }
 
-        public string[] CodeAnalysisGroup { get; set; }
-
-        public string ComboBuildProjectFile { get; set; }
-
         [Output]
         public string[] ModulesInThisBuild { get; set; }
 
@@ -52,7 +47,6 @@ namespace Aderant.Build.Tasks.BuildTime {
                     new BuildTaskLogger(this),
                     context,
                     new SolutionFileParser(),
-                    new RepositoryInfoProvider(fileSystem, TfvcBranch, TfvcChangeset),
                     fileSystem);
 
                 IModuleProvider manifest = null;
@@ -86,9 +80,7 @@ namespace Aderant.Build.Tasks.BuildTime {
 
                 ComboBuildType buildType = ComboBuildType.All;
 
-
-
-                Project project = controller.CreateProject(ModulesDirectory, manifest, modulesInBuild, BuildFrom, ComboBuildProjectFile, buildType, relationshipProcessing);
+                Project project = controller.CreateProject(ModulesDirectory, BuildFrom, buildType, relationshipProcessing);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
                 BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
@@ -131,33 +123,6 @@ namespace Aderant.Build.Tasks.BuildTime {
                 modulesInBuild = modulesInBuild.Union(groupContainers);
             }
             return modulesInBuild;
-        }
-    }
-
-    internal class RepositoryInfoProvider {
-        private readonly IFileSystem2 fileSystem2;
-        private readonly string tfvcBranch;
-        private readonly string tfvcChangeSet;
-
-        public RepositoryInfoProvider(IFileSystem2 fileSystem2, string tfvcBranch, string tfvcChangeSet) {
-            this.fileSystem2 = fileSystem2;
-            this.tfvcBranch = tfvcBranch;
-            this.tfvcChangeSet = tfvcChangeSet;
-        }
-
-        public void GetRepositoryInfo(string path, out RepositoryType type, out string tfvcBranch, out string tfvcChangeSet) {
-            var repoDirectory = Path.Combine(path, ".git");
-
-            tfvcBranch = null;
-            tfvcChangeSet = null;
-
-            if (fileSystem2.DirectoryExists(repoDirectory)) {
-                type = RepositoryType.Git;
-            } else {
-                tfvcBranch = this.tfvcBranch;
-                tfvcChangeSet = this.tfvcChangeSet;
-                type = RepositoryType.Tfvc;
-            }
         }
     }
 

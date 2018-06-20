@@ -1,9 +1,40 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="BeforeModuleBuild"
+         DefaultTargets="BuildThisDirectory"
          ToolsVersion="14.0">
 
-  <!-- The DirectoryBuildFile parameter is derived from DynamicProject.cs -->
+  <PropertyGroup>
+    <BuildThisDirectoryDependsOn>
+      ValidateRequiredProperties;
+      CleanBin;
+      PrepareZipCustomSource;
+      ZipCustomSource;
+      DeployPerDirectoryFiles;
+      ModuleEnter;
+      rmTransformTemplates;
+    </BuildThisDirectoryDependsOn>
+
+    <InitializeModuleBuildDependsOn>
+      SetBuildNumbers;
+      UpdateModuleFileVersion;
+      SeedPackagePacking;
+      ZipWorkflowTemplateSource;
+    </InitializeModuleBuildDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
+    <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
+    <ModuleSourceDirectory>$(SolutionDirectoryPath)Src\</ModuleSourceDirectory>
+    <ModuleTestDirectory>$(SolutionDirectoryPath)Test\</ModuleTestDirectory>
+    <ModuleBuildDirectory>$(SolutionDirectoryPath)Build\</ModuleBuildDirectory>
+    <DependenciesDirectory>$(SolutionDirectoryPath)Dependencies</DependenciesDirectory>
+    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
+    <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
+    <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
+    <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
+  </PropertyGroup>
+
   <Import Project="$(DirectoryBuildFile)" />
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="RM.TransformTemplates.Targets" />
@@ -12,7 +43,15 @@
   <Import Project="Aderant.Build.Clean.targets" />
 
 
-  <Target Name="BeforeModuleBuild">
+  <Target Name="ValidateRequiredProperties">
+    <Error Condition="'$(SolutionRoot)' == ''" Text="SolutionRoot is undefined" />
+
+    <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
+    <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
+  </Target>
+
+
+  <Target Name="BuildThisDirectory" DependsOnTargets="$(BuildThisDirectoryDependsOn)">
     <Message Text="MSBuildNodeCount: $(MSBuildNodeCount)"/>
     <Message Text="MSBuildExtensionsPath32: $(MSBuildExtensionsPath32)"/>
     <Message Text="MSBuildProjectDirectoryNoRoot: $(MSBuildProjectDirectoryNoRoot)"/>
@@ -32,9 +71,6 @@
     <ItemGroup>
       <BuildGroup Include="@(Build->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" />
     </ItemGroup>
-
-    <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
-    <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
 
     <PropertyGroup>
       <IsWebModule>false</IsWebModule>
@@ -77,8 +113,6 @@
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
 
-
-
     <ItemGroup>
       <ProjectsToBuild Include="@(BuildGroup)" Condition="%(BuildGroup.IsWebProject) == 'true'">
         <Properties>$(BuildProperties);PackageWeb=true</Properties>
@@ -93,57 +127,23 @@
     <Message Text="BuildProperties=$(BuildProperties)"/>
 
     <MSBuild Projects="@(ProjectsToBuild)"
-      Targets="Build"
-      BuildInParallel="true"
-      Properties="%(ProjectsToBuild.Properties)">
-
+             Targets="Build"
+             BuildInParallel="true"
+             Properties="%(ProjectsToBuild.Properties)">
       <!--The compiled assemblies from projects-->
       <Output ItemName="CompiledAssemblies"
-        TaskParameter="TargetOutputs" />
+              TaskParameter="TargetOutputs" />
     </MSBuild>
 
   </Target>
 
-
-  <PropertyGroup>
-    <PrepareModuleForBuildDependsOn>
-      ModuleEnter;
-      rmTransformTemplates;
-    </PrepareModuleForBuildDependsOn>
-    <InitializeModuleBuildDependsOn>
-      CleanBin;
-      PrepareZipCustomSource;
-      ZipCustomSource;
-      SetBuildNumbers;
-      UpdateModuleFileVersion;
-      SeedPackagePacking;
-      ZipWorkflowTemplateSource;
-    </InitializeModuleBuildDependsOn>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
-    <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
-    <ModuleSourceDirectory>$(SolutionDirectoryPath)Src\</ModuleSourceDirectory>
-    <ModuleTestDirectory>$(SolutionDirectoryPath)Test\</ModuleTestDirectory>
-    <ModuleBuildDirectory>$(SolutionDirectoryPath)Build\</ModuleBuildDirectory>
-    <DependenciesDirectory>$(SolutionDirectoryPath)Dependencies</DependenciesDirectory>
-    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
-    <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
-    <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
-    <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
-  </PropertyGroup>
-
-  <Target Name="InitializeModuleBuild" BeforeTargets="ModuleEnter" DependsOnTargets="$(InitializeModuleBuildDependsOn)">
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-  </Target>
-
   <Target Name="ModuleEnter">
+
     <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
 ║                     $(ModuleName.PadRight(26))                      ║
 ╚═════════════════════════════════════════════════════════════════════╝
-" Importance="high"></Message>
+" Importance="high" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
@@ -155,7 +155,8 @@
 
   </Target>
 
-  <Target Name="Build" DependsOnTargets="$(PrepareModuleForBuildDependsOn)">
+  <Target Name="DeployPerDirectoryFiles" DependsOnTargets="$(BuildThisDirectoryDependsOn)">
+
     <Message Text="SolutionDirectoryPath: $(SolutionDirectoryPath)" />
     <Message Text="T4TransformEnabled:    $(T4TransformEnabled)" />
     <Message Text="ZipCustomSource:       $(ZipCustomSource)" />

@@ -12,9 +12,7 @@ namespace Aderant.Build.Ipc {
     internal class MemoryMappedFile : IDisposable {
         private System.IO.MemoryMappedFiles.MemoryMappedFile buffer;
         private MemoryMappedViewAccessor view;
-        private EventWaitHandle dataAvailable;
-        private EventWaitHandle bufferFreeForWriting;
-        private TimeSpan writeTimeout;
+        private Semaphore bufferFreeForWriting;
 
         private object syncLock = new object();
 
@@ -25,14 +23,9 @@ namespace Aderant.Build.Ipc {
             view = buffer.CreateViewAccessor(0, 0, MemoryMappedFileAccess.ReadWrite);
 
             string name = GetBufferNameWithoutSession(bufferName);
-
-            // Signals the buffer now contains something.
-            dataAvailable = new EventWaitHandle(false, EventResetMode.AutoReset, name + "_DATA_AVAILABLE");
-
+            
             // Concurrency control, all writers will block on this handle
-            bufferFreeForWriting = new EventWaitHandle(true, EventResetMode.AutoReset, name + "_BUFFER_READY");
-
-            writeTimeout = TimeSpan.FromMilliseconds(1000);
+            bufferFreeForWriting = new Semaphore(1, 1, name + "_BUFFER_READY");
         }
 
         private string GetBufferNameWithoutSession(string bufferName) {
@@ -44,11 +37,15 @@ namespace Aderant.Build.Ipc {
         }
 
         public byte[] Read() {
-            dataAvailable.WaitOne();
+            bufferFreeForWriting.WaitOne();
 
             byte[] result = ReadBuffer(view);
 
-            bufferFreeForWriting.Set();
+            bufferFreeForWriting.Release();
+
+            if (Array.TrueForAll(result, b => b == '\0')) {
+                return null;
+            }
 
             return result;
         }
@@ -58,17 +55,14 @@ namespace Aderant.Build.Ipc {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Payload {0} to be written exceeds view capacity {1}", data.Length, view.Capacity));
             }
 
-            if (!bufferFreeForWriting.WaitOne(writeTimeout)) {
-                // We blocked too long, drop the message
-                return;
-            }
+            bufferFreeForWriting.WaitOne();
 
             lock (syncLock) {
                 WriteBuffer(data);
             }
 
             // Signal readers the data is available
-            dataAvailable.Set();
+            bufferFreeForWriting.Release();
         }
 
         protected virtual void WriteBuffer(byte[] data) {
@@ -124,15 +118,6 @@ namespace Aderant.Build.Ipc {
             if (buffer != null) {
                 try {
                     buffer.Dispose();
-                } catch (ObjectDisposedException) {
-
-                }
-            }
-
-            if (dataAvailable != null) {
-                try {
-                    //dataAvailable.Set();
-                    dataAvailable.Dispose();
                 } catch (ObjectDisposedException) {
 
                 }

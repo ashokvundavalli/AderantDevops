@@ -2,25 +2,21 @@ function Publish-BuildContext
 {
     <#
     .SYNOPSIS
-        Makes the the given build context available to other processes.
+        Makes the given build context available to other processes.
     #>
     [CmdletBinding()]
     [OutputType([string])]
     param(
         [Parameter(Mandatory=$true)]
         [Aderant.Build.Context]
-        $Context,
-
-        [Parameter(Mandatory=$false)]
-        [string]
-        $Environment
+        $Context
     )
 
     Set-StrictMode -Version 'Latest'
 
-    $fileName = [Aderant.Build.Ipc.MemoryMappedBufferReaderWriter]::WriteData($Context)
+    $fileName = [Aderant.Build.Ipc.MemoryMappedFileReaderWriter]::WriteData($Context)
 
-    [System.Environment]::SetEnvironmentVariable([Aderant.Build.Constants]::ContextChannelVariable, $fileName, [System.EnvironmentVariableTarget]::Process)
+    [System.Environment]::SetEnvironmentVariable([Aderant.Build.WellKnownProperties]::ContextFileName, $fileName, [System.EnvironmentVariableTarget]::Process)
 
     return $fileName
 }

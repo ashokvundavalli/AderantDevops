@@ -1,6 +1,6 @@
 ﻿using Microsoft.Build.Construction;
 
-namespace Aderant.Build.ProjectDependencyAnalyzer.SolutionParser {
+namespace Aderant.Build.DependencyAnalyzer.SolutionParser {
     public class SolutionFileParser : ISolutionFileParser {
         public ParseResult Parse(string solutionFile) {
             SolutionFile file = SolutionFile.Parse(solutionFile);

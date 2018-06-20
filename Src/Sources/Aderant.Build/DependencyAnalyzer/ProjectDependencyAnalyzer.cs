@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.ProjectDependencyAnalyzer.Model;
-using Aderant.Build.Tasks.BuildTime.Sequencer;
+using Aderant.Build.DependencyAnalyzer.Model;
 
-namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
+namespace Aderant.Build.DependencyAnalyzer {
     internal class ProjectDependencyAnalyzer {
         private readonly CSharpProjectLoader loader;
         private readonly TextTemplateAnalyzer textTemplateAnalyzer;
@@ -51,8 +49,8 @@ namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
             // Load all the necessary project files and record their dependency relationships.
             TopologicalSort<IDependencyRef> graph = GetDependencyGraph(context);
 
-            GraphVisitor vistior = new GraphVisitor(fileSystem.Root);
-            vistior.BeginVisit(graph);
+            GraphVisitor visitor = new GraphVisitor(fileSystem.Root);
+            visitor.BeginVisit(graph);
 
             // Solve the build order.
             var ordered = GetDependencyOrderFromGraph(graph);

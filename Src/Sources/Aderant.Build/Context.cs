@@ -7,13 +7,17 @@ using Aderant.Build.Services;
 namespace Aderant.Build {
 
     [Serializable]
-    public sealed class Context {
+    public class Context {
         private BuildMetadata buildMetadata;
         private BuildSwitches switches = default(BuildSwitches);
-        private IServiceProviderInternal serviceProvider;
 
-        public Context()
-            : this(ServiceContainer.Default) {
+        [NonSerialized]
+        private IContextualServiceProvider serviceProvider;
+
+        private string buildScriptsDirectory;
+        private bool isDesktopBuild = true;
+
+        public Context() : this(ServiceContainer.Default) { 
             Configuration = new Dictionary<object, object>();
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
@@ -23,14 +27,31 @@ namespace Aderant.Build {
             TaskName = "";
         }
 
-        private Context(IServiceProviderInternal serviceProvider) {
-            serviceProvider.Initialize(this);
+        private Context(IContextualServiceProvider serviceProvider) {
             this.serviceProvider = serviceProvider;
+        }
+
+        public string BuildScriptsDirectory {
+            get {
+                if (string.IsNullOrWhiteSpace(buildScriptsDirectory)) {
+                    throw new ArgumentNullException(nameof(buildScriptsDirectory));
+                }
+                return buildScriptsDirectory;
+            }
+            set {
+                value = Path.GetFullPath(value);
+                buildScriptsDirectory = value;
+            }
         }
 
         public DirectoryInfo BuildRoot { get; set; }
 
-        public bool IsDesktopBuild { get; set; } = true;
+        public bool IsDesktopBuild {
+            get { return isDesktopBuild; }
+            set {
+                isDesktopBuild = value;
+            }
+        }
 
         public IDictionary Configuration { get; set; }
 
@@ -64,8 +85,10 @@ namespace Aderant.Build {
                 buildMetadata = value;
 
                 if (value != null) {
-                    if (value.HostEnvironment != "developer") {
-                        this.IsDesktopBuild = false;
+                    if (!string.IsNullOrWhiteSpace(value.BuildId)) {
+                        IsDesktopBuild = false;
+                    } else {
+                        IsDesktopBuild = true;
                     }
                 }
             }
@@ -75,9 +98,9 @@ namespace Aderant.Build {
             get { return switches; }
             set { switches = value; }
         }
-
+     
         public IArgumentBuilder CreateArgumentBuilder(string engineType) {
-            return serviceProvider.GetService<IArgumentBuilder>(engineType);
+            return serviceProvider.GetService<IArgumentBuilder>(this, engineType);
         }
 
         /// <summary>
@@ -93,7 +116,7 @@ namespace Aderant.Build {
         }
 
         public object GetService(string contract) {
-            IFlexService svc = serviceProvider.GetService<object>(contract, null) as IFlexService;
+            IFlexService svc = serviceProvider.GetService<object>(this, contract, null) as IFlexService;
             if (svc != null) {
                 svc.Initialize(this);
             }
@@ -103,19 +126,7 @@ namespace Aderant.Build {
     }
 
 
-    public enum ComboBuildType {
-        Changed,
-        Branch,
-        Staged,
-        All
-    }
-
-    public enum DownStreamType {
-        Direct,
-        All,
-        None
-    }
-
+    [Serializable]
     public struct BuildSwitches {
         public bool Downstream { get; set; }
         public bool Transitive { get; set; }

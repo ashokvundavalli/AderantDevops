@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
-using Aderant.Build.ProjectDependencyAnalyzer.Model;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Microsoft.Build.BuildEngine;
 
-namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
+namespace Aderant.Build.DependencyAnalyzer {
     internal static class WellKnownProjectTypeGuids {
         public static string[] WebProjectGuids = new[] {
             "{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}",

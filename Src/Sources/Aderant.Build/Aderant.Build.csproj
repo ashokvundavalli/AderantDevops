@@ -100,7 +100,15 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="ComboBuildArgBuilder.cs" />
-    <Compile Include="Services\IServiceProviderInternal.cs" />
+    <Compile Include="DependencyAnalyzer\DependencyType.cs" />
+    <Compile Include="DependencyAnalyzer\SolutionParser\ISolutionFileParser.cs" />
+    <Compile Include="DependencyAnalyzer\Model\AssemblyRef.cs" />
+    <Compile Include="DependencyAnalyzer\Model\DirectoryNode.cs" />
+    <Compile Include="DependencyAnalyzer\Model\ProjectRef.cs" />
+    <Compile Include="DependencyAnalyzer\Model\ModuleRef.cs" />
+    <Compile Include="DependencyAnalyzer\SolutionParser\ParseResult.cs" />
+    <Compile Include="DependencyAnalyzer\SolutionParser\SolutionFileParser.cs" />
+    <Compile Include="Services\IContextualServiceProvider.cs" />
     <Compile Include="Services\CompositionProperties.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="BuildDetailPublisher.cs" />
@@ -113,16 +121,16 @@
     <Compile Include="Services\FileSystemService.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Services\FlexService.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectRelationshipProcessing.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
-    <Compile Include="Tasks\BuildTime\GitVersion.cs" />
-    <Compile Include="Tasks\BuildTime\ParallelBuildProject.cs" />
+    <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
-    <Compile Include="DependencyAnalyzer\IDependencyRef.cs" />
+    <Compile Include="DependencyAnalyzer\Model\IDependencyRef.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
     <Compile Include="DependencyResolver\FolderDependencySystem.cs" />
     <Compile Include="DependencyResolver\DependencyFetchContext.cs" />
@@ -152,15 +160,15 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
-    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\AnalyzerContext.cs" />
-    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\CSharpProjectLoader.cs" />
-    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\ProjectDependencyAnalyzer.cs" />
-    <Compile Include="Tasks\BuildTime\ProjectDependencyAnalyzer\VisualStudioProject.cs" />
-    <Compile Include="Tasks\BuildTime\Sequencer\BuildSequencer.cs" />
-    <Compile Include="Tasks\BuildTime\Sequencer\ChangesetResolver.cs" />
-    <Compile Include="Tasks\BuildTime\Sequencer\DynamicProject.cs" />
-    <Compile Include="Tasks\BuildTime\Sequencer\ParallelBuildVisitor.cs" />
-    <Compile Include="Tasks\BuildTime\Sequencer\TextTemplateAnalyzer.cs" />
+    <Compile Include="DependencyAnalyzer\AnalyzerContext.cs" />
+    <Compile Include="DependencyAnalyzer\CSharpProjectLoader.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzer.cs" />
+    <Compile Include="DependencyAnalyzer\Model\VisualStudioProject.cs" />
+    <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
+    <Compile Include="DependencyAnalyzer\ChangesetResolver.cs" />
+    <Compile Include="DependencyAnalyzer\DynamicProject.cs" />
+    <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplateAnalyzer.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="FileUtilities.cs" />
@@ -168,8 +176,8 @@
     <Compile Include="Tasks\DefaultContextProperties.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
-    <Compile Include="Ipc\MemoryMappedBuffer.cs" />
-    <Compile Include="Ipc\MemoryMappedBufferReaderWriter.cs" />
+    <Compile Include="Ipc\MemoryMappedFile.cs" />
+    <Compile Include="Ipc\MemoryMappedFileReaderWriter.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\Hash.cs" />
@@ -346,7 +354,9 @@
   <ItemGroup>
     <Content Include="Scripts\_readme.txt" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Sequencer\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

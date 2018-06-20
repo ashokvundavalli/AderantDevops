@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using Aderant.Build.Tasks.BuildTime.Sequencer;
+using Aderant.Build.DependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks.GitChangeset {

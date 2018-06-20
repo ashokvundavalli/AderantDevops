@@ -114,7 +114,3 @@ function UpdateOrBuildAssembly($properties) {
     # Now actually load Aderant.Build.dll
     LoadAssembly $properties $aderantBuildAssembly
 }
-
-$Env:EXPERT_BUILD_DIRECTORY = Resolve-Path ([System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "..\"))
-
-UpdateOrBuildAssembly $ShellContext

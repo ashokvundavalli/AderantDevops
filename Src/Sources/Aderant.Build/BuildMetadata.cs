@@ -28,8 +28,6 @@ namespace Aderant.Build {
 
         public Uri ScmUri { get; set; }
 
-        public string HostEnvironment { get; set; }
-
         public PullRequestInfo PullRequest { get; set; }
 
         public bool IsPullRequest {
@@ -52,11 +50,6 @@ namespace Aderant.Build {
                 TargetBranch = targetBranch
             };
         }
-    }
-
-    public enum HostEnvironment {
-        Developer,
-        Vsts
     }
 
     [Serializable]

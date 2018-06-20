@@ -2,16 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
+namespace Aderant.Build.DependencyAnalyzer.Model {
     [DebuggerDisplay("AssemblyReference: {Name} ({dependencyType})")]
     internal class AssemblyRef : IDependencyRef {
-        
+
         private readonly DependencyType dependencyType;
 
-        public AssemblyRef(string reference) : this(reference, DependencyType.Unknown) {
+        public AssemblyRef(string reference)
+            : this(reference, DependencyType.Unknown) {
         }
 
         public AssemblyRef(string dependency, DependencyType dependencyType) {
@@ -20,7 +19,9 @@ namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
         }
 
         public string Name { get; }
-        public ICollection<IDependencyRef> DependsOn => null;
+        public ICollection<IDependencyRef> DependsOn {
+            get { return null; }
+        }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
@@ -30,9 +31,11 @@ namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
             if (ReferenceEquals(null, other)) {
                 return false;
             }
+
             if (ReferenceEquals(this, other)) {
                 return true;
             }
+
             return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -40,12 +43,15 @@ namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
             if (ReferenceEquals(null, obj)) {
                 return false;
             }
+
             if (ReferenceEquals(this, obj)) {
                 return true;
             }
+
             if (obj.GetType() != this.GetType()) {
                 return false;
             }
+
             return Equals((AssemblyRef)obj);
         }
 

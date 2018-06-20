@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
+namespace Aderant.Build.DependencyAnalyzer.Model {
     [DebuggerDisplay("ProjectReference: {Name}")]
     internal class ProjectRef : IDependencyRef {
         

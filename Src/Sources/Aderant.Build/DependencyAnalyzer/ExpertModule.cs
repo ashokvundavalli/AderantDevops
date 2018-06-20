@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -234,9 +235,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public RepositoryType RepositoryType { get; set; }
 
-        string IDependencyRef.Name => throw new NotImplementedException();
+        string IDependencyRef.Name {
+            get { return Name; }
+        }
 
-        ICollection<IDependencyRef> IDependencyRef.DependsOn => throw new NotImplementedException();
+        ICollection<IDependencyRef> IDependencyRef.DependsOn {
+            get { return null; }
+        }
 
         /// <summary>
         /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -308,11 +313,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         void IDependencyRef.Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-            throw new NotImplementedException();
+
         }
 
         bool IEquatable<IDependencyRef>.Equals(IDependencyRef other) {
-            throw new NotImplementedException();
+            ExpertModule expertModule = other as ExpertModule;
+            return expertModule != null && expertModule.Equals(this);
         }
     }
 

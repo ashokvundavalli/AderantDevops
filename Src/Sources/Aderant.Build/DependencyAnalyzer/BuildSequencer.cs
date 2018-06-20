@@ -4,36 +4,31 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.DependencyAnalyzer.SolutionParser;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
-using Aderant.Build.ProjectDependencyAnalyzer;
-using Aderant.Build.ProjectDependencyAnalyzer.Model;
-using Aderant.Build.ProjectDependencyAnalyzer.SolutionParser;
-using Aderant.Build.Providers;
-using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
+using Aderant.Build.Tasks.BuildTime;
 using Microsoft.Build.Construction;
 
-namespace Aderant.Build.Tasks.BuildTime.Sequencer {
+namespace Aderant.Build.DependencyAnalyzer {
     internal class BuildSequencer {
         private readonly ILogger logger;
         private readonly Context context;
         private readonly ISolutionFileParser solutionParser;
-        private readonly RepositoryInfoProvider repositoryInfoProvider;
         private readonly IFileSystem2 fileSystem;
 
-        public BuildSequencer(ILogger logger, Context context, ISolutionFileParser solutionParser, RepositoryInfoProvider repositoryInfoProvider, IFileSystem2 fileSystem) {
+        public BuildSequencer(ILogger logger, Context context, ISolutionFileParser solutionParser, IFileSystem2 fileSystem) {
             this.logger = logger;
             this.context = context;
             this.solutionParser = solutionParser;
-            this.repositoryInfoProvider = repositoryInfoProvider;
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, IModuleProvider moduleProvider, IEnumerable<string> modulesInBuild, string buildFrom, string comboBuildProjectFile, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
+        public Project CreateProject(string modulesDirectory, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
-                var analyzer = new ProjectDependencyAnalyzer.ProjectDependencyAnalyzer(
+                var analyzer = new ProjectDependencyAnalyzer(
                     new CSharpProjectLoader(), 
                     new TextTemplateAnalyzer(fileSystem), 
                     fileSystem);
@@ -96,7 +91,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
 
                 // Create the dynamic build project file.
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
-                return dynamicProject.GenerateProject(modulesDirectory, groups, buildFrom, comboBuildProjectFile);
+                return dynamicProject.GenerateProject(groups, buildFrom);
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;

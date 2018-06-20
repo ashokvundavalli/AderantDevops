@@ -201,19 +201,19 @@
     ==========================================================================================
   -->
   <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" >
-
-    <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High"></Message>
-    <SeedPackagePacking
-        SkipPackageValidation="$(SkipPackageValidation)"
-        BuildFrom="$(SolutionDirectoryPath)"
-        SeedPackageSrc = "$(SolutionDirectoryPath)Src\SeedPackages"
-        SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Module\Packages" />
+    <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High" />
 
     <SeedPackagePacking
         SkipPackageValidation="$(SkipPackageValidation)"
         BuildFrom="$(SolutionDirectoryPath)"
-        SeedPackageSrc = "$(SolutionDirectoryPath)Test\TestPackages"
-        SeedPackageDrop = "$(SolutionDirectoryPath)Bin\Test\TestPackages" />
+        SeedPackageSrc="$(SolutionDirectoryPath)Src\SeedPackages"
+        SeedPackageDrop="$(SolutionDirectoryPath)Bin\Module\Packages" />
+
+    <SeedPackagePacking
+        SkipPackageValidation="$(SkipPackageValidation)"
+        BuildFrom="$(SolutionDirectoryPath)"
+        SeedPackageSrc="$(SolutionDirectoryPath)Test\TestPackages"
+        SeedPackageDrop="$(SolutionDirectoryPath)Bin\Test\TestPackages" />
 
   </Target>
   

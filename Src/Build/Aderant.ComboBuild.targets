@@ -67,6 +67,10 @@
     <ModulesInBuild Include="@(Modules)" />
   </ItemGroup>-->
 
+  <Target Name="RunBuild">
+
+  </Target>
+
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -86,13 +90,12 @@
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
+      ContextFileName="$(ContextFileName)"
       ModulesDirectory="$(SolutionRoot)"
       ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
-      ProjectFile="$(BranchBuildProject)"
-      CodeAnalysisGroup="$(CodeAnalysisGroup)"
-      ComboBuildProjectFile="$(BuildScriptsDirectory)\ModuleBuild2.targets">
+      ProjectFile="$(BranchBuildProject)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
@@ -179,7 +182,7 @@
 
 
   <Target Name="BeforeGetAllModuleDependencies" BeforeTargets="CreateParallelBuildProject">
-    <!--<Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />-->
+    <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
 
     <!--<RunPowerShell
       Command="$(BuildScriptsDirectory)\CleanSymlinks.ps1 &quot;$(SolutionRoot)&quot;">
@@ -230,7 +233,7 @@
 
   <Target Name="DefaultContextProperties">
     <DefaultContextProperties>
-      <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />      
+      <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
     </DefaultContextProperties>
   </Target>
   

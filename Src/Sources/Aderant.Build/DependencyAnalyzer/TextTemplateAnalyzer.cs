@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Aderant.Build.Tasks.BuildTime.Sequencer {
+namespace Aderant.Build.DependencyAnalyzer {
     internal class TextTemplateAnalyzer {
         private readonly IFileSystem2 fileSystem;
         private readonly List<string> excludedPatterns = new List<string>();

@@ -82,10 +82,14 @@ function Global:Invoke-Build
         if (-not [string]::IsNullOrEmpty($modulePath)) {
             $repositoryPath = $modulePath
         } else {
-            $repositorypath = $ShellContext.CurrentModulePath
+            $repositoryPath = $ShellContext.CurrentModulePath
         }
 
-        Run-MSBuild ($context.BuildScriptsDirectory + "\FlexBuild.Pipeline.targets") "/target:Build"
+        $contextFileName = Publish-BuildContext $context
+
+        $builder = $context.CreateArgumentBuilder("MSBuild")
+
+        Run-MSBuild "$($context.BuildScriptsDirectory)\Aderant.ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName"
     }
 
     end {

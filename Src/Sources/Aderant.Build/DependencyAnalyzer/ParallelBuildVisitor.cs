@@ -5,7 +5,7 @@ using System.Xml.Linq;
 using Aderant.Build.MSBuild;
 using Project = Microsoft.Build.Evaluation.Project;
 
-namespace Aderant.Build.Tasks.BuildTime.Sequencer {
+namespace Aderant.Build.DependencyAnalyzer {
     internal sealed class ParallelBuildVisitor : BuildElementVisitor {
         public override XElement GetDocument() {
             XElement projectDocument = base.GetDocument();

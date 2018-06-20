@@ -4,7 +4,7 @@ $settings.EmitTypeInformation = [System.Runtime.Serialization.EmitTypeInformatio
 $settings.UseSimpleDictionaryFormat = $false
 $serializer = [System.Runtime.Serialization.Json.DataContractJsonSerializer]::new([hashtable], $settings)
 
-function PutCacheItem() {
+function global:PutCacheItem() {
     [CmdletBinding()]
     param ([string]$key, $value, [string[]]$fileDependencies)
     Begin {
@@ -38,7 +38,7 @@ function PutCacheItem() {
     }
 }
 
-function GetCacheItem() {
+function global:GetCacheItem() {
     [CmdletBinding()]
     param ([string]$key)
 

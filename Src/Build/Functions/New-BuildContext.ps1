@@ -25,7 +25,7 @@ function New-BuildContext
 
     $context = [Aderant.Build.Context]::new()
     $context.BuildMetadata = $buildMetadata
-    $context.BuildScriptsDirectory = [System.IO.Path]::Combine($PSScriptRoot, "..\..\..\Build")
+    $context.BuildScriptsDirectory = [System.IO.Path]::Combine($PSScriptRoot, "..\")
 
     return $context
 }

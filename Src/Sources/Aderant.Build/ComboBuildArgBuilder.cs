@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using Aderant.Build.Services;
 
 namespace Aderant.Build {
 
     [Export(typeof(IArgumentBuilder))]
-    [ExportMetadata(CompositionProperties.ExportContext, WellKnownProperties.MsBuild)]
+    [ExportMetadata(CompositionProperties.AppliesTo, WellKnownProperties.MsBuild)]
     internal class ComboBuildArgBuilder : IArgumentBuilder {
         private readonly Context context;
 
@@ -15,32 +16,40 @@ namespace Aderant.Build {
         }
 
         public string[] GetArguments(string commandLine) {
-            List<string> argLst = new List<string>();
+            List<string> argList = new List<string>();
 
             if (commandLine != null) {
-                argLst.Add(commandLine);
+                argList.Add(commandLine);
             }
 
             if (context.BuildMetadata != null) {
                 if (context.BuildMetadata.DebugLoggingEnabled) {
-                    argLst.Add("/v:diag");
+                    argList.Add("/v:diag");
                 }
 
                 if (context.BuildMetadata.IsPullRequest) {
-                    argLst.Add("/v:diag");
+                    argList.Add("/v:diag");
                 }
             }
 
+            // Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
+            argList.Add("/nologo");
+            argList.Add("/nr:false");
+
+            // Multi-core build
+            argList.Add("/m");
+
             if (context.IsDesktopBuild) {
-                argLst.Add("/p:IsDesktopBuild=true");
+                argList.Add("/p:IsDesktopBuild=true");
             } else {
-                argLst.Add("/p:IsDesktopBuild=false");
-                argLst.Add("/clp:PerformanceSummary");
+                argList.Add("/p:IsDesktopBuild=false");
+                argList.Add("/clp:PerformanceSummary");
             }
 
-            argLst.Add("/p:ComboBuildType=All");
+            argList.Add(Path.Combine(context.BuildScriptsDirectory, "Aderant.ComboBuild.targets"));
 
-            return argLst.ToArray();
+
+            return argList.ToArray();
         }
     }
 }

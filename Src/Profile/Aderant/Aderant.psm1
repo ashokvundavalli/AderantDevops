@@ -7,34 +7,20 @@ Enable-RunspaceDebug
 # Import extensibility functions
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 
-function InitializePrivateData {    
+$ShellContext = $null
+
+function InitializeModule {
+    . $PSScriptRoot\ShellContext.ps1
+    
+    $script:ShellContext = [ShellContext]::new()
+
+    UpdateOrBuildAssembly $ShellContext
+
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
-
-    if ($context.IsDesktopBuild) {
-        . $PSScriptRoot\ShellContext.ps1
-    }
 }
 
-InitializePrivateData
-
-function Measure-Command() {
-    [CmdletBinding()]
-    param (    
-        [ScriptBlock]$expression,
-        [parameter(Mandatory = $False, ValueFromRemainingArguments = $True)]
-        [string]$name
-    )
-  
-    process { 
-        Microsoft.PowerShell.Utility\Measure-Command -Expression $expression -OutVariable perf
-        
-        if ($name) {
-            Write-Debug ("Performance: $($name) took: $($perf.TotalMilliseconds) milliseconds.")
-        }
-    }
-}
-
+InitializeModule
 
 [PSModuleInfo]$currentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
@@ -3525,6 +3511,13 @@ function Get-ExpertBuildAllVersion () {
     "$($version.Matches.Value)"
 }
 
+function Restart-FlexModule() {
+    Remove-Module Git -ErrorAction SilentlyContinue
+    Remove-Module "dynamic_code_module_Aderant.Build, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" -ErrorAction SilentlyContinue
+    Get-Module
+    Import-Module $PSScriptRoot\Aderant.psd1 -Force -Global
+}
+
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
@@ -3576,6 +3569,7 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Scorch'; alias = $null; },
     [PSCustomObject]@{ function = 'Clean'; alias = $null; },
     [PSCustomObject]@{ function = 'CleanupIISCache'; alias = $null; },
+    [PSCustomObject]@{ function = 'Restart-FlexModule'; alias = $null; },
     
     # IIS related functions
     [PSCustomObject]@{ function = 'Hunt-Zombies'; alias = 'hz'},

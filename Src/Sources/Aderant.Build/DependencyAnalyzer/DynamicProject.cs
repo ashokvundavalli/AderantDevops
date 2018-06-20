@@ -1,29 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.MSBuild;
-using Aderant.Build.ProjectDependencyAnalyzer.Model;
-using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.Build.Tasks.BuildTime.Sequencer {
+namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
     internal class DynamicProject {
         private readonly IFileSystem2 fileSystem;
         private const string InitializeTargets = @"Build\ModuleBuild.Initialize.targets";
-        private const string ComplationTargets = @"Build\ModuleBuild.Completion.targets";
+        private const string CompletionTargets = @"Build\ModuleBuild.Completion.targets";
 
         public DynamicProject(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(string modulesDirectory, List<List<IDependencyRef>> projectGroups, string buildFrom, string comboBuildProjectFile) {
+        public Project GenerateProject(List<List<IDependencyRef>> projectGroups, string buildFrom) {
             Project project = new Project();
 
             // Create a list of call targets for each build
@@ -58,7 +55,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                         continue;
                     }
 
-                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom, comboBuildProjectFile));
+                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom));
 
                     // e.g. <Target Name="Build2">
                     Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
@@ -77,7 +74,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                             StopOnFirstFailure = true,
                             //Projects = $"@({itemGroup.Name})" // use @ so MSBuild will expand the list for us
                             Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets),
-                            Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
+                            Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount.ToString()};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                         });
 
                     project.Add(build);
@@ -98,7 +95,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             return project;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom, string comboBuildProjectFile) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom) {
             return projectGroup.Select(
                 studioProject => {
                     // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
@@ -114,7 +111,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                             return null;
                         }
 
-                        string properties = AddBuildProperties(visualStudioProject, fileSystem, null, visualStudioProject.SolutionRoot);
+                        string properties = AddBuildProperties(visualStudioProject, fileSystem, visualStudioProject.SolutionRoot);
 
                         if (visualStudioProject.SolutionDirectoryName != buildFrom) {
                             properties += ";RunCodeAnalysisOnThisProject=false";
@@ -134,7 +131,7 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                     ExpertModule marker = studioProject as ExpertModule;
                     if (marker != null) {
                     string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
-                        string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
+                        string properties = AddBuildProperties(null, fileSystem, solutionDirectoryPath);
 
                         ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets)) {
                             ["AdditionalProperties"] = properties,
@@ -147,10 +144,10 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                     if (node != null) {
                         if (node.IsCompletion) {
                             string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == node.ModuleName ? fileSystem.Root : Path.Combine(fileSystem.Root, node.ModuleName);
-                            string properties = AddBuildProperties(null, fileSystem, null, solutionDirectoryPath);
+                            string properties = AddBuildProperties(null, fileSystem, solutionDirectoryPath);
 
                             ItemGroupItem item = new ItemGroupItem(
-                                Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), ComplationTargets)) {
+                                Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), CompletionTargets)) {
                                 ["AdditionalProperties"] = properties,
                                 ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
                             };
@@ -163,79 +160,9 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             );
         }
 
-        //private List<IDependencyRef> FilterTree(List<IDependencyRef> builds, string buildFrom)
-        //{
-        //    List<Build.Build> newBuilds = new List<Build.Build>();
-
-        //    for (var i = 0; i < builds.Count; i++)
-        //    {
-        //        var build = builds[i];
-
-        //        var buildFromThisGroup = build.Modules.Any(m => string.Equals(m.Name, buildFrom, StringComparison.OrdinalIgnoreCase));
-
-        //        if (buildFromThisGroup)
-        //        {
-        //            newBuilds.AddRange(builds.Skip(i));
-        //            break;
-        //        }
-        //    }
-
-        //    return newBuilds;
-        //}
-
-        private void AddPostBuildMarkers(List<List<VisualStudioProject>> projectGroups) {
-        }
-
-        //   private void AddPreBuildMarkers(List<List<IProject>> projectGroups) {
-        //// Adds a marker entry before the first occurrence of each unique solution root
-
-        //HashSet<string> alreadySeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        //for (int i = projectGroups.Count - 1; i >= 0; i--) {
-        //    List<IProject> projects = projectGroups[i];
-
-        //    for (var j = projects.Count - 1; j >= 0; j--) {
-        //        VisualStudioProject visualStudioProject = projects[j] as VisualStudioProject;
-
-        //        if (visualStudioProject != null && !alreadySeen.Contains(visualStudioProject.SolutionDirectoryName)) {
-        //            int groupIndex;
-        //            int index;
-        //            LookForFirstOccurrence(visualStudioProject, projectGroups, out groupIndex, out index);
-
-        //            var level = projectGroups[groupIndex];
-
-        //            level.Insert(index, new SolutionMarker(visualStudioProject.SolutionDirectoryName));
-
-        //            alreadySeen.Add(visualStudioProject.SolutionDirectoryName);
-        //        }
-        //    }
-        //}
-        //VisualStudioProject  }
-
-        //private void LookForFirstOccurrence(VisualStudioProject visualStudioProject, List<List<VisualStudioProject>> projectGroups, out int groupIndex, out int index) {
-        //    groupIndex = -1;
-        //    index = -1;
-
-        //    string solutionRoot = visualStudioProject.SolutionRoot;
-
-        //    for (int i = projectGroups.Count - 1; i >= 0; i--) {
-        //        List<IProject> projects = projectGroups[i];
-
-        //        for (var j = projects.Count - 1; j >= 0; j--) {
-        //            VisualStudioProject project = projects[j] as VisualStudioProject;
-
-        //            if (project != null && string.Equals(project.SolutionRoot, solutionRoot, StringComparison.OrdinalIgnoreCase)) {
-        //                groupIndex = i;
-        //                index = j;
-        //            }
-        //        }
-        //    }
-
-        //}
-
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
 
-        private string AddBuildProperties(VisualStudioProject visualStudioProject, IFileSystem2 fileSystem, string branch, string solutionDirectoryPath) {
+        private string AddBuildProperties(VisualStudioProject visualStudioProject, IFileSystem2 fileSystem, string solutionDirectoryPath) {
             string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
 
             List<string> propertiesList = new List<string>();
@@ -254,13 +181,10 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
                     propertiesList.Add($"SolutionDirectoryPath={solutionDirectoryPath}\\");
 
                     if (visualStudioProject != null) {
-                        // MSBuild metaproj compatibility items
-                        propertiesList.Add($"SolutionDir={visualStudioProject.SolutionRoot}");
-                        propertiesList.Add($"SolutionExt={Path.GetExtension(visualStudioProject.SolutionFile)}");
-                        propertiesList.Add($"SolutionFileName={Path.GetFileName(visualStudioProject.SolutionFile)}");
-                        propertiesList.Add($"SolutionPath={visualStudioProject.SolutionRoot}");
-                        propertiesList.Add($"SolutionName={Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile)}");
-                        propertiesList.Add($"BuildProjectReferences={visualStudioProject.IsDirty}");
+                        propertiesList.Add($"SolutionRoot={visualStudioProject.SolutionRoot}");
+                        propertiesList.Add($"BuildProjectReferences={visualStudioProject.IsDirty.ToString()}");
+
+                        AddMetaProjectProperties(visualStudioProject, propertiesList);
 
                         if (visualStudioProject.BuildConfiguration != null) {
                             propertiesList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
@@ -270,6 +194,15 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
             }
 
             return string.Join("; ", propertiesList);
+        }
+
+        private static void AddMetaProjectProperties(VisualStudioProject visualStudioProject, List<string> propertiesList) {
+            // MSBuild metaproj compatibility items (from the generated solution.sln.metaproj)
+            propertiesList.Add($"SolutionDir={visualStudioProject.SolutionRoot}");
+            propertiesList.Add($"SolutionExt={Path.GetExtension(visualStudioProject.SolutionFile)}");
+            propertiesList.Add($"SolutionFileName={Path.GetFileName(visualStudioProject.SolutionFile)}");
+            propertiesList.Add($"SolutionPath={visualStudioProject.SolutionRoot}");
+            propertiesList.Add($"SolutionName={Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile)}");
         }
 
         private string[] RemoveFlavor(string[] properties) {
@@ -295,39 +228,4 @@ namespace Aderant.Build.Tasks.BuildTime.Sequencer {
         }
     }
 
-    [DebuggerDisplay("{SolutionRoot}")]
-    internal class SolutionMarker : IEquatable<SolutionMarker> {
-        public SolutionMarker(string solutionRoot) {
-            if (solutionRoot == null) {
-                throw new ArgumentNullException(nameof(solutionRoot));
-            }
-            SolutionRoot = solutionRoot;
-        }
-
-        public bool Equals(SolutionMarker other) {
-            SolutionMarker marker = other as SolutionMarker;
-            return marker != null && string.Equals(marker.SolutionRoot, this.SolutionRoot, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public override int GetHashCode() {
-            return StringComparer.OrdinalIgnoreCase.GetHashCode(SolutionRoot);
-        }
-
-        public override bool Equals(object obj) {
-            return Equals(obj as VisualStudioProject);
-        }
-
-        public ICollection<IDependencyRef> Dependencies { get; }
-        public string AssemblyName { get; set; }
-        public string SolutionRoot { get; set; }
-        public bool IncludeInBuild { get; set; }
-        public string Path { get; set; }
-    }
-
-    [Serializable]
-    internal class ModuleNotFoundException : Exception {
-        public ModuleNotFoundException(string message)
-            : base(message) {
-        }
-    }
 }

@@ -1,4 +1,4 @@
-﻿namespace Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer {
+﻿namespace Aderant.Build.DependencyAnalyzer {
     internal enum DependencyType {
         Unknown = -1,
         TextTemplate

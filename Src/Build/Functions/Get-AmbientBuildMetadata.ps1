@@ -25,9 +25,7 @@ function Get-AmbientBuildMetadata {
     process {
         $buildInfo = [Aderant.Build.BuildMetadata]::new()
 
-        if ((Test-Path -Path 'env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI')) {        
-            $buildInfo.HostEnvironment = [Aderant.Build.HostEnvironment]::Vsts
-
+        if ((Test-Path -Path 'env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI')) {
             $buildInfo.BuildNumber = Get-EnvironmentVariable 'BUILD_BUILDNUMBER'
             $buildInfo.BuildId = Get-EnvironmentVariable 'BUILD_BUILDID'
             $buildInfo.BuildUri = Get-EnvironmentVariable 'BUILD_BUILDURI'        
@@ -42,7 +40,7 @@ function Get-AmbientBuildMetadata {
                 (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
                 (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
         } else {        
-            $buildInfo.HostEnvironment = [Aderant.Build.HostEnvironment]::Developer
+            
         }
 
         return $buildInfo

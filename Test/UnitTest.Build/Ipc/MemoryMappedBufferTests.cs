@@ -47,12 +47,12 @@ namespace UnitTest.Build.Ipc {
                 }
             });
 
-            List<Byte[]> recievedData = new List<byte[]>();
+            List<Byte[]> receivedData = new List<byte[]>();
 
             var reader = new Thread(() => {
                 while (run[0]) {
                     byte[] read = block.Read();
-                    recievedData.Add(read);
+                    receivedData.Add(read);
                 }
             });
 
@@ -66,8 +66,8 @@ namespace UnitTest.Build.Ipc {
             writer.Join(100);
             reader.Join(100);
 
-            Assert.AreNotEqual(0, recievedData.Count);
-            Assert.IsTrue(recievedData.Select(item => Encoding.ASCII.GetString(item).Trim('\0')).All(str => string.Equals(str, "Michael Baker")));
+            Assert.AreNotEqual(0, receivedData.Count);
+            Assert.IsTrue(receivedData.Select(item => Encoding.ASCII.GetString(item).Trim('\0')).All(str => string.Equals(str, "Michael Baker")));
 
             block.Dispose();
         }

@@ -4,13 +4,8 @@ param(
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
-    [string]$Flavor,
-    [switch]$DatabaseBuildPipeline,
-    [switch]$Integration,
-    [switch]$Automation,
-    [switch]$SkipPackage,
-    [string]$ComboBuildType,
-    [string]$DownStreamType 
+    [string]$Flavor
+    [switch]$SkipPackage
 )
 
 [string]$inputRepository = $Repository
@@ -180,14 +175,6 @@ function RenderWarningShields([bool]$inError, [int]$this, [int]$last) {
     . $PSScriptRoot\PostWarningShields.ps1 -inError $inError -thisBuild $this -lastBuild $last
 }
 
-function BuildAssociation($vssConnection, $teamProject, $buildId) {
-    $logger = New-Object Aderant.Build.Logging.PowerShellLogger -ArgumentList $Host
-
-    $association = New-Object Aderant.Build.Tasks.BuildAssociation -ArgumentList $logger, $vssConnection
-
-    Write-Output "Associating work items to build: $teamProject/$buildId"
-    $association.AssociateWorkItemsToBuild($teamProject, [int]$buildId)
-}
 
 # Auto detect build target in debug or release mode by code branch name. If it contains "release" then get into release mode, otherwise debug
 # To force build into release or debug mode, set the variable "build.flavor" at TFS build definition, Edit, Variables
@@ -257,32 +244,32 @@ task Build {
         $commonArgs = "$commonArgs /p:EXPERT_BUILD_DIRECTORY=$Env:EXPERT_BUILD_DIRECTORY\"
     }
 
-    $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
-    $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
-    $buildFlavor = $Flavor
-    if ($buildFlavor -eq "") {
-        $buildFlavor = GetBuildFlavor   # to build in debug or release
-    }
+ #   $commonArgs = "$commonArgs /p:SolutionRoot=$Repository"
+#    $commonArgs = "$commonArgs /p:IsDesktopBuild=$global:IsDesktopBuild"
+  #  $buildFlavor = $Flavor
+   # if ($buildFlavor -eq "") {
+    #    $buildFlavor = GetBuildFlavor   # to build in debug or release
+    #}
     
-    $global:BuildFlavor = $buildFlavor # to remember and display at the end
+    #$global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"    
+    #$commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"    
 
-    if ($Clean) {
-        $commonArgs = "$commonArgs /p:CleanBin=true"
-    }
+    #if ($Clean) {
+    #    $commonArgs = "$commonArgs /p:CleanBin=true"
+    #}
 
-    if ($DatabaseBuildPipeline.IsPresent) {
-        $commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
-    }
+    #if ($DatabaseBuildPipeline.IsPresent) {
+    #    $commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
+    #}
 
-    if ($Integration.IsPresent) {
-        $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
-    }
+    #if ($Integration.IsPresent) {
+    #    $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
+    #}
 
-    if ($Automation.IsPresent) {
-        $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
-    }
+    #if ($Automation.IsPresent) {
+    #    $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
+    #}
 
     if ($ModuleName -ne '') {
         $commonArgs = "$commonArgs /p:BuildFrom=$ModuleName"
@@ -305,7 +292,7 @@ task Build {
         $context = Get-BuildContext
         $channelId = Publish-BuildContext $context "MSBuild"       
 
-        $builder = $context.CreateArgumentBuilder("MSBuild");
+        $builder = $context.CreateArgumentBuilder("MSBuild")
         $allArgs = $builder.GetArguments($commonArgs)
 
         $commonArgs = [string]::Join(" ", $allArgs)        

@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.Tasks.BuildTime.ProjectDependencyAnalyzer;
 
-namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
+namespace Aderant.Build.DependencyAnalyzer.Model {
     /// <summary>
     /// Represents a reference to a module.
     /// </summary>
@@ -17,8 +15,10 @@ namespace Aderant.Build.ProjectDependencyAnalyzer.Model {
             this.module = module;
         }
 
-        public string Name => module.Name;
-        
+        public string Name {
+            get { return module.Name; }
+        }
+
 
         public ICollection<IDependencyRef> DependsOn {
             get { return module.DependsOn; }
