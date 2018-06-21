@@ -28,15 +28,7 @@ namespace IntegrationTest.Build.DependencyAnalyzer {
             Assert.IsTrue(File.Exists(Path.Combine(sourceDirectory, "DependencyGraph.txt")));
         }
 
-        [TestMethod]
-        public void LoadWebProjectTest() {
-            CSharpProjectLoader cSharpProjectLoader = new CSharpProjectLoader();
-
-            VisualStudioProject webProject = cSharpProjectLoader.Parse(Path.Combine(TestContext.DeploymentDirectory, @"Resources\Web.Core.csproj"));
-            VisualStudioProject webProject2 = cSharpProjectLoader.Parse(Path.Combine(TestContext.DeploymentDirectory, @"Resources\Web.PrebillEditor.csproj"));
-
-            Assert.IsTrue(webProject.IsWebProject);
-            Assert.IsTrue(webProject2.IsWebProject);
-        }
+     
     }
+
 }
