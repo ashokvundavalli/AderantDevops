@@ -19,7 +19,7 @@
     <TransformOutOfDateOnly Condition=" '$(TransformOutOfDateOnly)' =='' ">true</TransformOutOfDateOnly>
 
     <!--Directory into which .tlog files will be written.-->
-    <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(SolutionDirectoryPath)\BuildTemp\T4</TrackerLogDirectory>
+    <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(SolutionDirectoryPath)BuildTemp\T4</TrackerLogDirectory>
 
     <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">true</TrackFileAccess>
   </PropertyGroup>
@@ -67,7 +67,7 @@
     AssemblyFile="$(TransformTask)"
     TaskName="Aderant.TextTransform.Tasks.Transform" />
 
-  <!-- 
+  <!--
     *************************************************************************************************************
       This target is called to transform all templates in the solution
     *************************************************************************************************************
@@ -75,6 +75,7 @@
   <PropertyGroup>
     <TransformTask Condition="'$(VisualStudioVersion)' == '12.0'">Aderant.TextTransform.v12.0.dll</TransformTask>
     <TransformTask Condition="'$(VisualStudioVersion)' == '14.0'">Aderant.TextTransform.v14.0.dll</TransformTask>
+    <TransformTask Condition="'$(VisualStudioVersion)' == '15.0'">Aderant.TextTransform.v14.0.dll</TransformTask>
 
     <TransformTask Condition="'$(ExpertSourceDirectory)' == ''">$(SolutionDirectoryPath)Dependencies\$(TransformTask)</TransformTask>
     <TransformTask Condition="'$(ExpertSourceDirectory)' != ''">$(ExpertSourceDirectory)$(TransformTask)</TransformTask>

@@ -169,7 +169,7 @@
     </ItemGroup>
 
     <Copy SourceFiles="@(DirProject)"
-      DestinationFolder="$(SolutionRoot)"
+      DestinationFolder="$(SolutionDirectoryPath)"
       UseHardlinksIfPossible="true"
       OverwriteReadOnlyFiles="true"
       SkipUnchangedFiles="true" />
