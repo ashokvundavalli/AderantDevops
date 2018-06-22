@@ -178,7 +178,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     propertiesList.Add(CreateSinglePropertyLine(properties));
 
-                    propertiesList.Add($"SolutionDirectoryPath={solutionDirectoryPath}\\");
+                    propertiesList.Add($"SolutionDirectoryPath={solutionDirectoryPath}");
 
                     if (visualStudioProject != null) {
                         propertiesList.Add($"SolutionRoot={visualStudioProject.SolutionRoot}");

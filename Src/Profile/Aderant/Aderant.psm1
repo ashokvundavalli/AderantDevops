@@ -961,17 +961,21 @@ function Get-ProductBuild([switch]$copyToClipboard) {
     if ([System.IO.File]::Exists($versionFilePath)) {
         if ((Get-Content -Path $versionFilePath) -match "[^\\]*[\w.]BuildAll_[\w.]*[^\\]") {
             Write-Host "Current BuildAll version in $ShellContext.BranchName` branch:`r`n"
-            Write-Host $Matches[0]
+
             if ($copyToClipboard) {
                 Add-Type -AssemblyName "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
                 [System.Windows.Forms.Clipboard]::SetText($Matches[0])
             }
+
+            return $Matches[0]
         } else {
             Write-Error "Content of BuildAllZipVersion.txt is questionable."
         }
     } else {
         Write-Error "No BuildAllZipVersion.txt present in $global:BranchBinariesDirectory."
     }
+
+    return $null
 }
 
 <#
@@ -1440,21 +1444,57 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
         Build-ExpertPatch
     Builds the patch using the local binaries.
 #>
-function Build-ExpertPatch([switch]$noget = $false, [switch]$noproduct = $false, [switch]$Pre803 = $false) {
-    if(!$noproduct) {
+function Build-ExpertPatch() {
+    param (
+        [switch]$noget,
+        [switch]$noproduct,
+        [switch]$Pre803,
+        [switch]$noverify,
+		[Parameter(Mandatory=$false)][string]$repositoryPatchBranch
+    )
+
+    if (-not $noproduct.IsPresent) {
         Get-ProductZip
     }
-    $cmd = "xcopy \\na.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $PackageScriptsDirectory"
-    if ($Pre803) {
-        $cmd = "xcopy \\na.aderant.com\expertsuite\Main\Build.Tools\Pre803\* /S /Y $PackageScriptsDirectory"
+
+    [string]$cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\* /S /Y $global:PackageScriptsDirectory"
+    if ($Pre803.IsPresent) {
+        $cmd = "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Pre803\* /S /Y $global:PackageScriptsDirectory"         
+        if (-not $noget.IsPresent) {
+            New-Item -Path "$global:PackageScriptsDirectory\Patching" -ItemType Directory -Force| Out-Null
+            $cmd += "; xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\Patching\* /S /Y $global:PackageScriptsDirectory\Patching" 
+        }
     }
-    if (!$noget) {                
+
+    if (-not $noget.IsPresent) {
         Invoke-Expression $cmd
     }
-    pushd $PackageScriptsDirectory; .\Patching\BuildPatch.ps1
-    popd
+
+    & "$global:PackageScriptsDirectory\Patching\BuildPatch.ps1" -noVerify:$noverify.IsPresent -repositoryPatchBranch $repositoryPatchBranch
 }
 
+<#
+.Synopsis
+    Verify that contents of the patch are created correctly.
+.Description
+    Verify the contents of the patch by checking that commit,PR,changesets are pointing to correct iteration and more.
+.Example
+        Test-PatchItems
+    Verifies the contents based on your current branch and PatchingManifest.xml in your Build.Infrastructure.
+#>
+function Test-PatchItems() {
+    param (
+        [switch]$noget,
+        [Parameter(Mandatory=$false)][string]$repositoryPatchBranch
+    )
+    if (-not $noget.IsPresent) {
+        New-Item -Path "$global:PackageScriptsDirectory\Patching" -ItemType Directory -Force | Out-Null
+        Invoke-Expression "xcopy \\dfs.aderant.com\expertsuite\Main\Build.Tools\Current\Patching\* /S /Y $global:PackageScriptsDirectory\Patching"
+    }
+
+    & "$global:PackageScriptsDirectory\Patching\TestPatch.ps1" -repositoryPatchBranch $repositoryPatchBranch
+    
+}
 
 function Get-ExpertModulesInChangeset {
     return $global:Workspace.GetModulesWithPendingChanges($ShellContext.BranchModulesDirectory)
@@ -3569,7 +3609,6 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Scorch'; alias = $null; },
     [PSCustomObject]@{ function = 'Clean'; alias = $null; },
     [PSCustomObject]@{ function = 'CleanupIISCache'; alias = $null; },
-    [PSCustomObject]@{ function = 'Restart-FlexModule'; alias = $null; },
     
     # IIS related functions
     [PSCustomObject]@{ function = 'Hunt-Zombies'; alias = 'hz'},
