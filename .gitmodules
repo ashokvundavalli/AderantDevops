@@ -6,3 +6,7 @@
 	path = Src/Build.Tools/dotCover
 	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.dotCover
 	branch = master
+[submodule "GitLink"]
+	path = Src/Build.Tools/GitLink
+	url = http://tfs.ap.aderant.com:8080/tfs/ADERANT/ExpertSuite/_git/ThirdParty.GitLink
+	branch = master
