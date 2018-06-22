@@ -69,7 +69,7 @@
     <Message Text="DirectoryBuildFile: $(DirectoryBuildFile)"/>
 
     <ItemGroup>
-      <BuildGroup Include="@(Build->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" />
+      <BuildGroup Include="@(Build->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" /> 
     </ItemGroup>
 
     <PropertyGroup>
