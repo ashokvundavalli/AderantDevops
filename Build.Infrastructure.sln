@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 	ProjectSection(SolutionItems) = preProject
 		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
 		Src\Build\Aderant.Build.CopyToDropV2.targets = Src\Build\Aderant.Build.CopyToDropV2.targets
+		Src\Build\Aderant.Build.GitLink.targets = Src\Build\Aderant.Build.GitLink.targets
 		Src\Build\Aderant.Build.IntegrationTesting.targets = Src\Build\Aderant.Build.IntegrationTesting.targets
 		Src\Build\Aderant.Build.Testing.targets = Src\Build\Aderant.Build.Testing.targets
 		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
