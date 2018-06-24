@@ -1,16 +1,18 @@
 ﻿[CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$server,
+    [Parameter(Mandatory=$false)][string]$agentPool,
     [switch]$skipAgentDownload,
     [switch]$restart
 )
 
 begin {
-    Set-StrictMode -Version 2.0
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = "Continue"
 }
 
 process {
-    if (-not ($server.EndsWith(".ap.aderant.com", "CurrentCultureIgnoreCase"))){
+    if (-not ($server.EndsWith(".ap.aderant.com", "CurrentCultureIgnoreCase"))) {
         $server = "$server.$((gwmi WIN32_ComputerSystem).Domain)"
     }
 
@@ -43,12 +45,13 @@ process {
         $credentials | Export-Clixml -Path $scriptsDirectory\credentials.xml
 
         if (-not $skipDownload) {
-            Write-Host "Downloading Agent Zip"
+            Write-Host "Downloading build agent zip"
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $currentProgressPreference = $ProgressPreference
+            $ProgressPreference = "SilentlyContinue"
 
             try {
-                $currentProgressPreference = $ProgressPreference
-                $ProgressPreference = "SilentlyContinue"
-                wget http://go.microsoft.com/fwlink/?LinkID=851123 -OutFile vsts.agent.zip -UseBasicParsing
+                Invoke-WebRequest -Uri http://go.microsoft.com/fwlink/?LinkID=851123 -OutFile "vsts.agent.zip" -UseBasicParsing
             } finally {
                 $ProgressPreference = $currentProgressPreference
             }
@@ -64,9 +67,9 @@ process {
         return $scriptsDirectory
     }
         
-    $scriptsDirectory = Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload
+    $scriptsDirectory = Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload, $agentPool
 
-    Write-Host "Generating Scheduled Tasks"    
+    Write-Host "Generating Scheduled Tasks"
 
     <# 
     ============================================================
@@ -74,6 +77,10 @@ process {
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
+        if (-not [string]::IsNullOrWhiteSpace($agentPool)) {
+            [Environment]::SetEnvironmentVariable('AgentPool', $agentPool, 'Machine')
+        }
+
         $STTrigger = New-ScheduledTaskTrigger -AtStartup
         [string]$STName = "Setup Agent Host"
         
@@ -86,7 +93,7 @@ process {
 
         #Register the new scheduled task
         Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
-    } -ArgumentList $scriptsDirectory, $credentials
+    } -ArgumentList $scriptsDirectory, $credentials, $agentPool
 
 
     <# 
@@ -158,12 +165,12 @@ process {
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
-        [string]$docker = "C:\Program Files\Docker\Docker\Docker for Windows.exe"
+        [string]$docker = "$env:ProgramFiles\Docker\Docker\Docker for Windows.exe"
 
         if (Test-Path $docker) {
             if ((Get-WmiObject -Class Win32_Service -Filter "Name='docker'") -eq $null) {
                 Write-Host "Registering Docker service"
-                & "C:\Program Files\Docker\Docker\resources\dockerd.exe" --register-service
+                & "$env:ProgramFiles\Docker\Docker\resources\dockerd.exe" --register-service
             }
 
             $interval = New-TimeSpan -Minutes 1
