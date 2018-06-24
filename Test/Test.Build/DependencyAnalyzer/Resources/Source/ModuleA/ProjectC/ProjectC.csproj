@@ -46,7 +46,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ProjectA\ProjectA.csproj">
       <Project>{b807f57f-c8df-4129-9f0a-01b7f7aa2ef0}</Project>
-      <Name>Project1</Name>
+      <Name>ProjectA</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

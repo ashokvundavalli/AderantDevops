@@ -30,8 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Project1">
-      <HintPath>..\..\Module1\Src\Project1\bin\Debug\Project1.dll</HintPath>
+    <Reference Include="ProjectA">
+      <HintPath>..\..\ModuleA\ProjectA\bin\Debug\ProjectA.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
