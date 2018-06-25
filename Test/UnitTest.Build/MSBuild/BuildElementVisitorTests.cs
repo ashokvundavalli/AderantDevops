@@ -26,24 +26,6 @@ namespace UnitTest.Build.MSBuild {
         }
 
         [TestMethod]
-        public void CompositeCannotContainComposite() {
-            Target parent = new Target("Foo");
-
-            Target child = new Target("Bar");
-            child.Add(new Message("Baz"));
-
-            parent.Add(child);
-
-            BuildElementVisitor visitor = new BuildElementVisitor();
-            parent.Accept(visitor);
-
-            XElement document = visitor.GetDocument();
-
-            Assert.AreEqual(4, document.Descendants().Count());
-            Assert.AreEqual(1, document.Descendants(BuildElementVisitor.Xmlns + "Target").First().Descendants().Count());
-        }
-
-        [TestMethod]
         public void DependsOnTargetWritesTarget() {
             Target parent = new Target("Foo");
             Target child = new Target("Bar");

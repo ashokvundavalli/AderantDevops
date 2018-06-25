@@ -68,7 +68,7 @@
   </Target>
 
 
-  <Target Name="CheckCodeSigningCertitifcate"
+  <Target Name="CheckCodeSigningCertificate"
           AfterTargets="PrepareBuildEnvironment"
           Condition="'$(CodeSigningEnabled)' == 'true' And '$(ValidSigningEnvironment)' == ''">
 

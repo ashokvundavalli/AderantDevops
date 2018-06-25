@@ -95,7 +95,9 @@
       ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
-      ProjectFile="$(BranchBuildProject)">
+      ProjectFile="$(BranchBuildProject)"
+      BeforeProjectFile="$(MSBuildThisFileDirectory)ModuleBuild.Initialize.targets"
+      AfterProjectFile="$(MSBuildThisFileDirectory)ModuleBuild.Completion.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
@@ -299,12 +301,6 @@
 
 
   <Target Name="Package" AfterTargets="BuildAndPackage">
-
-
-      <!--To test via desktop
-      msbuild TFSBuild.proj @TFSBuild.rsp /target:ZipProduct /p:LocalExpertBinariesDirectory=C:\Binaries\ /p:ZipFileDirectory=C:\Output\-->
-
-
     <OnError ExecuteTargets="OnBuildBreak" />
   </Target>
 
