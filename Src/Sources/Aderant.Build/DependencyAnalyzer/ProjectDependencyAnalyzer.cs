@@ -25,12 +25,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Instructs the analyzer to sort the dependency graph on each edge relationship that is added.
-        /// This makes it easier to pinpoint a circular dependency.
-        /// </summary>
-        public bool TraceCircularDependency { get; set; }
-
-        /// <summary>
         /// Add an exclusion pattern.
         /// </summary>
         /// <param name="pattern">The pattern to exclude</param>
@@ -585,22 +579,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 bool add = true;
 
-                VisualStudioProject studioProject = project as VisualStudioProject;
-
-                if (studioProject?.DependsOn != null) {
-                    foreach (var dependency in studioProject.DependsOn) {
-                        if (levels[i].Any(p => string.Equals(p.Name, dependency.Name, StringComparison.OrdinalIgnoreCase))) {
-                            add = false;
-                        }
-                    }
-                }
-
-                ExpertModule m = project as ExpertModule;
-                if (m != null) {
-                    foreach (var dependency in m.DependsOn) {
-                        if (levels[i].Any(p => string.Equals(p.Name, dependency.Name, StringComparison.OrdinalIgnoreCase))) {
-                            add = false;
-                        }
+                var levelSet = levels[i];
+                foreach (var item in levelSet) {
+                    if (project.DependsOn.Contains(item)) {
+                        add = false;
                     }
                 }
 

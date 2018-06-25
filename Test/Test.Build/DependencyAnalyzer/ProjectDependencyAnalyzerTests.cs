@@ -17,26 +17,22 @@ namespace IntegrationTest.Build.DependencyAnalyzer {
     [DeploymentItem("DependencyAnalyzer\\Resources\\", "Resources")]
     public class ProjectDependencyAnalyzerTests {
         private string rootDirectory;
+        private List<IDependencyRef> dependencyOrder;
+        private ProjectDependencyAnalyzer projectDependencyAnalyzer;
         public TestContext TestContext { get; set; }
 
         [TestInitialize]
         public void Initialize() {
-            this.rootDirectory = Path.Combine(TestContext.DeploymentDirectory, @"Resources\Source");
+            rootDirectory = Path.Combine(TestContext.DeploymentDirectory, @"Resources\Source");
             PhysicalFileSystem fileSystem = new PhysicalFileSystem(rootDirectory);
 
-            ProjectDependencyAnalyzer projectDependencyAnalyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
+            projectDependencyAnalyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
 
-            List<IDependencyRef> dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(rootDirectory));
+            dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(rootDirectory));
         }
 
         [TestMethod]
         public void GetDependencyOrderTest() {
-            string sourceDirectory = Path.Combine(TestContext.DeploymentDirectory, @"Resources\Source");
-            PhysicalFileSystem fileSystem = new PhysicalFileSystem(sourceDirectory);
-
-            ProjectDependencyAnalyzer projectDependencyAnalyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
-
-            List<IDependencyRef> dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(sourceDirectory));
             List<VisualStudioProject> dependencyRefs = dependencyOrder.OfType<VisualStudioProject>().ToList();
 
             var a_a = dependencyRefs[0];
@@ -67,14 +63,22 @@ namespace IntegrationTest.Build.DependencyAnalyzer {
         }
 
         [TestMethod]
+        public void Depending_grouping_test() {
+            List<List<IDependencyRef>> groups = projectDependencyAnalyzer.GetBuildGroups(dependencyOrder);
+            
+            Assert.AreEqual(6, groups.Count);
+            Assert.AreEqual(1, groups.Last().Count);
+        }
+
+        [TestMethod]
         public void Parallel() {
             var sequencer = new BuildSequencer(new FakeLogger(), new Context(), new SolutionFileParser(), new PhysicalFileSystem(rootDirectory));
             var project = sequencer.CreateProject(rootDirectory, "A", "B", new[] { "Z" }, null, ComboBuildType.All, ProjectRelationshipProcessing.None);
 
             XElement projectDocument = sequencer.CreateProjectDocument(project);
 
-            BuildSequencer.SaveBuildProject(Path.Combine(TestContext.DeploymentDirectory, "test.proj"), projectDocument);
-            Process.Start("notepad++", "\"" + Path.Combine(TestContext.DeploymentDirectory, "test.proj") + "\"");
+            BuildSequencer.SaveBuildProject(@"C:\temp\test.proj", projectDocument);
+            Process.Start("notepad++", "\"" + @"C:\temp\test.proj" + "\"");
         }
     }
 }
