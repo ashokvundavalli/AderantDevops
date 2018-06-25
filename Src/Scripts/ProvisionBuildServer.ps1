@@ -44,7 +44,7 @@ process {
 
         $credentials | Export-Clixml -Path $scriptsDirectory\credentials.xml
 
-        if (-not $skipDownload) {
+        if (-not $skipDownload.IsPresent) {
             Write-Host "Downloading build agent zip"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $currentProgressPreference = $ProgressPreference
@@ -67,7 +67,7 @@ process {
         return $scriptsDirectory
     }
         
-    $scriptsDirectory = Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload, $agentPool
+    $scriptsDirectory = Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload
 
     Write-Host "Generating Scheduled Tasks"
 
@@ -77,7 +77,14 @@ process {
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
+        param (
+            [string]$scriptsDirectory,
+            $credentials,
+            [string]$agentPool
+        )
+
         if (-not [string]::IsNullOrWhiteSpace($agentPool)) {
+            Write-Host "Setting agent pool: $agentPool"
             [Environment]::SetEnvironmentVariable('AgentPool', $agentPool, 'Machine')
         }
 
