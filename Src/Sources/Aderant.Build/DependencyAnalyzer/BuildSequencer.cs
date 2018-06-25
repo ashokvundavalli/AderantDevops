@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.DependencyAnalyzer.SolutionParser;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
-using Aderant.Build.Tasks.BuildTime;
+using Aderant.Build.Tasks;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -25,7 +26,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
+        public Project CreateProject(string modulesDirectory, string beforeProjectFile, string afterProjectFile, string[] projectFiles, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer(
@@ -91,7 +92,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 // Create the dynamic build project file.
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
-                return dynamicProject.GenerateProject(groups, buildFrom);
+                return dynamicProject.GenerateProject(groups, beforeProjectFile, afterProjectFile, buildFrom);
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;
@@ -202,7 +203,17 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         internal static void SaveBuildProject(string file, XElement projectDocument) {
-            File.WriteAllText(file, projectDocument.ToString(), Encoding.UTF8);
+            var settings = new XmlWriterSettings {
+                NewLineOnAttributes = true,
+                Indent = true,
+                IndentChars = "  ",
+                Encoding = Encoding.UTF8,
+                CloseOutput = true, 
+            };
+
+            using (var writer = XmlWriter.Create(file, settings)) {
+                projectDocument.WriteTo(writer);
+            }
         }
     }
 
