@@ -13,8 +13,6 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         [TestMethod]
         public void MarkDirtyTest() {
-
-
             HashSet<string> dirtyProjects = new HashSet<string> {"ASS1"};
 
             var p1 = new VisualStudioProject(null, Guid.Empty, "ASS1", null, null);
@@ -46,9 +44,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsTrue(m1.IsDirty);
             Assert.IsTrue(m2.IsDirty); // This is now marked dirty.
             Assert.IsFalse(m3.IsDirty);
-
         }
-
-        
     }
+
 }
