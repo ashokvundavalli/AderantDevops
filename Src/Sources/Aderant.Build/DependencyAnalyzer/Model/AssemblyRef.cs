@@ -1,24 +1,25 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
-    [DebuggerDisplay("AssemblyReference: {Name} ({dependencyType})")]
+    [DebuggerDisplay("AssemblyReference: {Name}")]
     internal class AssemblyRef : IDependencyRef {
 
-        private readonly DependencyType dependencyType;
-
-        public AssemblyRef(string reference)
-            : this(reference, DependencyType.Unknown) {
+        public AssemblyRef(string dependency, string referenceHintPath) {
+            Name = dependency;
+            ReferenceHintPath = referenceHintPath;
         }
 
-        public AssemblyRef(string dependency, DependencyType dependencyType) {
-            this.Name = dependency;
-            this.dependencyType = dependencyType;
+        public AssemblyRef(string dependency)
+            : this(dependency, null) {
         }
+
+        public string ReferenceHintPath { get; }
 
         public string Name { get; }
+
         public ICollection<IDependencyRef> DependsOn {
             get { return null; }
         }
@@ -48,7 +49,7 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
                 return true;
             }
 
-            if (obj.GetType() != this.GetType()) {
+            if (obj.GetType() != GetType()) {
                 return false;
             }
 

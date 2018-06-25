@@ -7,14 +7,14 @@ using Aderant.Build.DependencyAnalyzer.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class ProjectDependencyAnalyzer {
-        private readonly CSharpProjectLoader loader;
-        private readonly TextTemplateAnalyzer textTemplateAnalyzer;
-        private readonly IFileSystem2 fileSystem;
+        private const string BuildT4Task = "Build.T4Task";
         private readonly List<string> excludedPatterns = new List<string>();
-        private readonly ICollection<string> solutionFileFilters = new List<string>();
+        private readonly IFileSystem2 fileSystem;
+        private readonly CSharpProjectLoader loader;
         private readonly List<string> parseErrors = new List<string>();
         private readonly Dictionary<Guid, VisualStudioProject> projectByGuidCache = new Dictionary<Guid, VisualStudioProject>();
-        private const string BuildT4Task = "Build.T4Task";
+        private readonly ICollection<string> solutionFileFilters = new List<string>();
+        private readonly TextTemplateAnalyzer textTemplateAnalyzer;
 
         public ProjectDependencyAnalyzer(CSharpProjectLoader loader, TextTemplateAnalyzer textTemplateAnalyzer, IFileSystem2 fileSystem) {
             this.loader = loader;
@@ -23,6 +23,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             textTemplateAnalyzer.AddExclusionPattern("__");
         }
+
+        /// <summary>
+        /// Instructs the analyzer to sort the dependency graph on each edge relationship that is added.
+        /// This makes it easier to pinpoint a circular dependency.
+        /// </summary>
+        public bool TraceCircularDependency { get; set; }
 
         /// <summary>
         /// Add an exclusion pattern.
@@ -80,9 +86,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 List<IDependencyRef> dependencyReferences = module.DependsOn.Select(x => x).Where(y => moduleNames.Contains(y.Name)).ToList();
 
                 if (dependencyReferences.Any()) {
-                    dependencies.Add(new ExpertModule(module.Name) {
-                        DependsOn = dependencyReferences
-                    });
+                    dependencies.Add(
+                        new ExpertModule(module.Name) {
+                            DependsOn = dependencyReferences
+                        });
                 }
             }
 
@@ -144,7 +151,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             foreach (string directory in context.Directories) {
                 projectFiles.AddRange(fileSystem.GetFiles(directory, "*.csproj", true, true));
             }
-    
+
             var files = context.Files;
 
             foreach (string projectFile in projectFiles) {
@@ -162,6 +169,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                                     break;
                                 }
                             }
+
                             break;
                         }
 
@@ -179,7 +187,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Walk through all the project files, along with a possible changeset files list, to determine which projects are needed to be built, and their order.
+        /// Walk through all the project files, along with a possible changeset files list, to determine which projects are needed
+        /// to be built, and their order.
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -214,7 +223,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         this.projectByGuidCache[studioProject.ProjectGuid] = studioProject;
 
                     } else {
-                        
+
                     }
 
                     graph.Edge(studioProject);
@@ -252,7 +261,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return ProcessVisualStudioProject(studioProject, graph, graph.Vertices.OfType<VisualStudioProject>().ToList());
         }
 
-        private TopologicalSort<IDependencyRef> ProcessVisualStudioProject(VisualStudioProject studioProject, TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projectVertices) {
+        private TopologicalSort<IDependencyRef> ProcessVisualStudioProject(VisualStudioProject studioProject, TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projectsInBuild) {
             if (studioProject == null) {
                 throw new ArgumentNullException(nameof(studioProject));
             }
@@ -272,10 +281,27 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ExpertModule moduleTarget = moduleVertices.SingleOrDefault(x => x.Match(dependency.Name));
                     target = moduleTarget;
                 } else {
-                    target = projectVertices.SingleOrDefault(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase));
+                    bool isAmbiguous = false;
+
+                    try {
+                        target = projectsInBuild.SingleOrDefault(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase));
+                    } catch (InvalidOperationException) {
+                        isAmbiguous = true;
+                        target = null;
+                    }
 
                     if (target == null) {
-                        target = GetDependentProjectByGuid(dependency, projectVertices);
+                        target = GetDependentProjectByGuid(dependency, projectsInBuild);
+                    }
+
+                    if (target == null && isAmbiguous) {
+                        target = GetDependentProjectByHintPath(studioProject, dependency, projectsInBuild);
+
+                        if (target == null) {
+                            var items = projectsInBuild.Where(x => string.Equals(x.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase));
+                            string paths = string.Join(", ", items.Select(p => p.Path));
+                            throw new AmbiguousNameException($"The assembly name {dependency.Name} is ambiguous as the following projects specify the same name: " + paths);
+                        }
                     }
                 }
 
@@ -291,6 +317,28 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return graph;
+        }
+
+        private VisualStudioProject GetDependentProjectByHintPath(VisualStudioProject studioProject, IDependencyRef dependency, List<VisualStudioProject> projects) {
+            AssemblyRef assemblyRef = dependency as AssemblyRef;
+            if (assemblyRef != null) {
+                // Attempts to find a match based on the hint path of the reference
+                var directoryOfProject = Path.GetDirectoryName(studioProject.Path);
+
+                string directoryNameOfReference = Path.GetDirectoryName(assemblyRef.ReferenceHintPath);
+
+                foreach (var project in projects) {
+                    var makeRelative = PathUtility.MakeRelative(directoryOfProject, project.SolutionRoot);
+
+                    if (directoryNameOfReference != null && directoryNameOfReference.StartsWith(makeRelative)) {
+                        if (string.Equals(project.AssemblyName, dependency.Name, StringComparison.OrdinalIgnoreCase)) {
+                            return project;
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         internal TopologicalSort<IDependencyRef> ProcessExpertModule(ExpertModule expertModule, TopologicalSort<IDependencyRef> graph) {
@@ -315,7 +363,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private void AddInitializeAndCompletionNodes(TopologicalSort<IDependencyRef> graph, List<VisualStudioProject> projects) {
             IEnumerable<IGrouping<string, VisualStudioProject>> grouping = projects.GroupBy(g => g.SolutionRoot);
-            
+
             foreach (IGrouping<string, VisualStudioProject> level in grouping) {
                 IDependencyRef initializeNode;
                 string solutionDirectoryName = Path.GetFileName(level.Key);
@@ -329,11 +377,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 foreach (VisualStudioProject project in projects.Where(p => p.SolutionRoot == level.Key)) {
                     project.AddDependency(initializeNode);
-
                     graph.Edge(project, initializeNode);
 
                     completionNode.AddDependency(project);
-
                     graph.Edge(completionNode, project);
                 }
             }
@@ -377,12 +423,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        /// <summary>
-        /// Instructs the analyzer to sort the dependency graph on each edge relationship that is added.
-        /// This makes it easier to pinpoint a circular dependency.
-        /// </summary>
-        public bool TraceCircularDependency { get; set; }
-
         private static IDependencyRef GetDependentProjectByGuid(IDependencyRef dep, List<VisualStudioProject> projectVertices) {
             // Lots of mistakes everywhere! E.g. ProjectReference blocks that refer to the wrong assembly name.
             // For example here the name of the reference is "Rates" but the actual assembly name is "ExpertRates". 
@@ -421,7 +461,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     try {
                         manifest = DependencyManifest.LoadDirectlyFromModule(project.SolutionRoot);
                     } catch (InvalidOperationException) {
-                        
+
                         continue;
                     }
 
@@ -505,7 +545,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (project.ContainsFile(template.TemplateFile)) {
                         foreach (string dependencyAssemblyReference in template.AssemblyReferences) {
-                            project.DependsOn.Add(new AssemblyRef(dependencyAssemblyReference, DependencyType.TextTemplate));
+                            project.DependsOn.Add(new AssemblyRef(dependencyAssemblyReference));
                         }
                     }
                 }
@@ -519,7 +559,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     foreach (string reference in template.AssemblyReferences) {
-                        module.DependsOn.Add(new AssemblyRef(reference, DependencyType.TextTemplate));
+                        module.DependsOn.Add(new AssemblyRef(reference));
                     }
                 }
             }
@@ -557,8 +597,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 ExpertModule m = project as ExpertModule;
                 if (m != null) {
-                    foreach (var dependency in m.DependsOn)
-                    {
+                    foreach (var dependency in m.DependsOn) {
                         if (levels[i].Any(p => string.Equals(p.Name, dependency.Name, StringComparison.OrdinalIgnoreCase))) {
                             add = false;
                         }

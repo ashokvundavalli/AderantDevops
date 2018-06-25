@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -12,6 +12,11 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
 
         public ProjectRef(string reference) {
             this.Name = reference;
+        }
+
+        public ProjectRef(Guid reference, string name) {
+            ProjectGuid = reference;
+            Name = name;
         }
 
         public string Name { get; private set; }

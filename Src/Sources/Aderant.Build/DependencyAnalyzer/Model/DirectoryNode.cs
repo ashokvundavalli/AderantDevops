@@ -8,8 +8,8 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
     internal sealed class DirectoryNode : IDependencyRef {
         private ICollection<IDependencyRef> dependsOn;
         
-        public bool IsCompletion { get; set; }
-        public string ModuleName { get; set; }
+        public bool IsCompletion { get; }
+        public string ModuleName { get; }
 
         public DirectoryNode(string name, bool isCompletion) {
             ModuleName = name;
@@ -51,7 +51,7 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
             return (Name != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(Name) : 0);
         }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
         public ICollection<IDependencyRef> DependsOn {
             get { return dependsOn ?? (dependsOn = new HashSet<IDependencyRef>()); }

@@ -9,12 +9,6 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         ICollection<IDependencyRef> DependsOn { get; }
         
         void Accept(GraphVisitorBase visitor, StreamWriter outputFile);
-
-        //void Acccept(DependencyVisitor visitor);
     }
-
-    internal class DependencyVisitor {
-    }
-
 
 }

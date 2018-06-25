@@ -52,7 +52,9 @@ namespace UnitTest.Build.Ipc {
             var reader = new Thread(() => {
                 while (run[0]) {
                     byte[] read = block.Read();
-                    receivedData.Add(read);
+                    if (read != null) {
+                        receivedData.Add(read);
+                    }
                 }
             });
 

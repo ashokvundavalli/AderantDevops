@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(List<List<IDependencyRef>> projectGroups, string buildFrom) {
+        public Project GenerateProject(List<List<IDependencyRef>> projectGroups, string beforeProjectFile, string afterProjectFile, string buildFrom) {
             Project project = new Project();
 
             // Create a list of call targets for each build

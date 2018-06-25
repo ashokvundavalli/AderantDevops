@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Automation;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Microsoft.Build.BuildEngine;
@@ -21,19 +22,32 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// This class provides .csproj parsing capabilities
     /// </summary>
     internal class CSharpProjectLoader {
+
         /// <summary>
-        /// Parses the visual studio project and return the resulting
+        /// Parses the specified fragment as a <see cref="VisualStudioProject"/>
         /// </summary>
-        /// <returns>
-        /// An instance of the class <see cref="VisualStudioProject"/> representing the project
-        /// </returns>
-        public VisualStudioProject Parse(string visualStudioProjectPath) {
+        public VisualStudioProject Parse(string xml) {
+            XDocument project;
+            var xproject = GetProjectAsXDocument(xml, false, out project);
+
+            return CreateVisualStudioProject(null, xproject, project);
+        }
+
+        /// <summary>
+        /// Parses the visual studio project file
+        /// </summary>
+        public VisualStudioProject Load(string visualStudioProjectPath) {
             if (!string.IsNullOrEmpty(visualStudioProjectPath) && !visualStudioProjectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentException("The project path must be a CSharp project", nameof(visualStudioProjectPath));
             }
 
             XDocument project;
-            var xproject = GetProjectAsXDocument(visualStudioProjectPath, out project);
+            var xproject = GetProjectAsXDocument(visualStudioProjectPath, true, out project);
+
+            return CreateVisualStudioProject(visualStudioProjectPath, xproject, project);
+        }
+
+        private static VisualStudioProject CreateVisualStudioProject(string visualStudioProjectPath, XDocument xproject, XDocument project) {
 
             if (xproject != null && xproject.Root != null) {
                 var root = xproject.Root;
@@ -55,8 +69,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (projectInfo != null) {
                     var result = new VisualStudioProject(project, projectInfo.ProjectGuid, projectInfo.AssemblyName, projectInfo.RootNamespace, projectInfo.Path) { IsWebProject = IsWebBuild(xproject) };
 
-                    foreach (string reference in FindFileReferences(root)) {
-                        result.DependsOn.Add(new AssemblyRef(reference));
+                    foreach (var reference in FindFileReferences(root)) {
+                        result.DependsOn.Add(new AssemblyRef(reference.Name, reference.HintPath));
                     }
 
                     foreach (var reference in FindProjectReferences(root)) {
@@ -69,6 +83,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         if (!result.IsWebProject) {
                             result.IsWebProject = projectTypeGuids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids, StringComparer.OrdinalIgnoreCase).Any();
                         }
+
                         result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}") || result.DependsOn.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
                     }
 
@@ -101,11 +116,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         public bool TryParse(ICollection<string> ceilingDirectories, string visualStudioProjectPath, out VisualStudioProject result) {
             try {
-                result = Parse(visualStudioProjectPath);
+                result = Load(visualStudioProjectPath);
 
                 if (result == null) {
                     return false;
                 }
+
                 return true;
             } catch {
                 // Ignore the error and return false
@@ -116,13 +132,20 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Get the visual studio project as a <see cref="XDocument"/> instance, without xml namespaces
+        /// Get the visual studio project as a <see cref="XDocument" /> instance, without xml namespaces
         /// </summary>
         /// <returns>
-        /// The <see cref="XDocument"/> object
+        /// The <see cref="XDocument" /> object
         /// </returns>
-        private XDocument GetProjectAsXDocument(string visualStudioProjectPath, out XDocument rawDocument) {
-            XDocument xproject = XDocument.Load(visualStudioProjectPath);
+        private XDocument GetProjectAsXDocument(string visualStudioProjectPath, bool isFile, out XDocument rawDocument) {
+            XDocument xproject;
+
+            if (isFile) {
+                xproject = XDocument.Load(visualStudioProjectPath);
+            } else {
+                xproject = XDocument.Parse(visualStudioProjectPath);
+            }
+
             rawDocument = new XDocument(xproject);
 
             if (xproject.Root != null) {
@@ -134,7 +157,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         e.ReplaceAttributes(e.Attributes().Select(a => a.IsNamespaceDeclaration ? null : a.Name.Namespace != XNamespace.None ? new XAttribute(XNamespace.None.GetName(a.Name.LocalName), a.Value) : a));
                 }
             }
-          
+
             return xproject;
         }
 
@@ -142,7 +165,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Finds project references in the current project
         /// </summary>
         /// <param name="xproject">
-        /// The <see cref="XDocument"/> from which to extract information
+        /// The <see cref="XDocument" /> from which to extract information
         /// </param>
         /// <returns>
         /// The list of assembly names that are file references
@@ -173,21 +196,26 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Finds file references in the current project
         /// </summary>
         /// <param name="xproject">
-        /// The <see cref="XDocument"/> from which to extract information
+        /// The <see cref="XDocument" /> from which to extract information
         /// </param>
         /// <returns>
         /// The list of assembly names that are file references
         /// </returns>
-        private static IEnumerable<string> FindFileReferences(XContainer xproject) {
-            var references = xproject.Elements("ItemGroup").Elements("Reference").Select(item => item.Attribute("Include").Value.Split(',')[0]);
+        private static IEnumerable<ReferenceItem> FindFileReferences(XContainer xproject) {
+            var items = xproject.Elements("ItemGroup").Elements("Reference").Select(item => new ReferenceItem {
+                Name = item.Attribute("Include").Value.Split(',')[0],
+                HintPath = item.Element("HintPath")?.Value,
+            });
 
-            return references.ToList();
+            foreach (var item in items) {
+                yield return item;
+            }
         }
 
         /// <summary>
-        /// Check if the project contained in the <see cref="XDocument"/> is a web project
+        /// Check if the project contained in the <see cref="XDocument" /> is a web project
         /// </summary>
-        /// <param name="xproject">The <see cref="XDocument"/> loaded with the project file</param>
+        /// <param name="xproject">The <see cref="XDocument" /> loaded with the project file</param>
         /// <returns>
         /// <c>True</c> if the project is a web project, <c>false</c> otherwise
         /// </returns>
@@ -207,6 +235,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return isweb;
         }
+    }
+
+    internal struct ReferenceItem {
+        public string Name { get; set; }
+        public string HintPath { get; set; }
     }
 
 }
