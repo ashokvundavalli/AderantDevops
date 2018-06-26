@@ -1,3 +1,14 @@
+<#
+    .SYNOPSIS
+    Runs a build based on your current context
+
+    .DESCRIPTION
+
+    .PARAMETER remainingArgs
+    A catch all that lets you specify arbitrary parameters to the build engine.
+    Useful if you wish to override some property but that property is not exposed as a first class concept.
+
+#>
 function Global:Invoke-Build
 {
     [CmdletBinding(DefaultParameterSetName="Build")]
@@ -36,7 +47,11 @@ function Global:Invoke-Build
         [switch]$DisplayCodeCoverage,
                 
         [Parameter(ParameterSetName="Build", Mandatory=$false)]        
-        [string]$ModulePath = ""
+        [string]$ModulePath = "",
+
+        
+        [Parameter(ValueFromRemainingArguments)]
+        [string[]]$remainingArgs
     )
 
     begin {        
@@ -89,7 +104,12 @@ function Global:Invoke-Build
 
         $builder = $context.CreateArgumentBuilder("MSBuild")
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\Aderant.ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName"
+        $passThruArgs = ""
+        if ($remainingArgs) {
+            $passThruArgs = [string]::Join(" ", $remainingArgs)
+        }
+
+        Run-MSBuild "$($context.BuildScriptsDirectory)\Aderant.ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $passThruArgs"
     }
 
     end {
