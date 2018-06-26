@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -117,18 +117,22 @@ namespace Aderant.Build.Ipc {
             try {
                 byte[] bytes = file.Read();
 
-                if (bytes.Length == 0) {
-                    IncomingMessage = null;
-                    return false;
+                if (bytes != null) {
+                    if (bytes.Length == 0) {
+                        IncomingMessage = null;
+                        return false;
+                    }
+
+                    IncomingMessage = Read(bytes);
+
+                    if (IncomingMessage == null) {
+                        return false;
+                    }
+
+                    return true;
                 }
 
-                IncomingMessage = Read(bytes);
-
-                if (IncomingMessage == null) {
-                    return false;
-                }
-
-                return true;
+                return false;
             } catch (ObjectDisposedException) {
                 IncomingMessage = null;
                 return false;
