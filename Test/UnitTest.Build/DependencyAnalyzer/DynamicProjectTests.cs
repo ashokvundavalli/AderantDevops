@@ -4,6 +4,7 @@ using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.MSBuild;
+using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.DependencyAnalyzer {
@@ -23,7 +24,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 }
             };
 
-            Project generateProject = project.GenerateProject(items, "A", "B", null);
+            Project generateProject = project.GenerateProject(items, new BuildJobFiles { BeforeProjectFile = "A", AfterProjectFile = "B" }, null);
 
             var targets = generateProject.Elements.OfType<Target>().ToList();
             Assert.AreEqual("RunProjectsToBuild0", targets[0].Name);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +11,7 @@ using Aderant.Build.MSBuild;
 using Aderant.Build.Providers;
 using Microsoft.Build.Framework;
 
-namespace Aderant.Build.Tasks.BuildTime {
+namespace Aderant.Build.Tasks {
     public sealed class ParallelBuildProjectFactory : ContextTaskBase {
         public ITaskItem[] ModulesInBuild { get; set; }
 
@@ -28,8 +28,33 @@ namespace Aderant.Build.Tasks.BuildTime {
 
         public string ProductManifest { get; set; }
 
+        /// <summary>
+        /// Gets or sets the instance project file.
+        /// That is the file that represents the tasks to perform in this build.
+        /// </summary>
         [Required]
-        public string ProjectFile { get; set; }
+        public string JobFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the run file.
+        /// That is the file that represents the coordination tasks for a build instance.
+        /// </summary>
+        [Required]
+        public string JobRunFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the before project file.
+        /// That is the file that specifies prologue tasks to execute for each solution.
+        /// </summary>
+        [Required]
+        public string BeforeProjectFile { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the after project file.
+        /// That is the file that specifies epilogue tasks to execute for each solution.
+        /// </summary>
+        [Required]
+        public string AfterProjectFile { get; set; }
 
         [Output]
         public string[] ModulesInThisBuild { get; set; }
@@ -66,8 +91,7 @@ namespace Aderant.Build.Tasks.BuildTime {
 
                 modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 
-                Log.LogMessage("Creating dynamic project...");
-
+                Log.LogMessage("Creating build job file...");
 
                 ProjectRelationshipProcessing relationshipProcessing = ProjectRelationshipProcessing.None;
                 if (context.Switches.Downstream) {
@@ -80,10 +104,17 @@ namespace Aderant.Build.Tasks.BuildTime {
 
                 ComboBuildType buildType = ComboBuildType.All;
 
-                Project project = controller.CreateProject(ModulesDirectory, BuildFrom, buildType, relationshipProcessing);
+                var instance = new BuildJobFiles {
+                    BeforeProjectFile = BeforeProjectFile,
+                    AfterProjectFile = AfterProjectFile,
+                    JobRunFile = JobRunFile,
+                    JobFile = JobFile,
+                };
+
+                Project project = controller.CreateProject(ModulesDirectory, instance, BuildFrom, buildType, relationshipProcessing);
                 XElement projectDocument = controller.CreateProjectDocument(project);
 
-                BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, ProjectFile), projectDocument);
+                BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, JobFile), projectDocument);
 
                 modulesInBuild = AddAliases(manifest, modulesInBuild);
 
@@ -122,8 +153,16 @@ namespace Aderant.Build.Tasks.BuildTime {
 
                 modulesInBuild = modulesInBuild.Union(groupContainers);
             }
+
             return modulesInBuild;
         }
+    }
+
+    internal class BuildJobFiles {
+        public string BeforeProjectFile { get; set; }
+        public string AfterProjectFile { get; set; }
+        public string JobRunFile { get; set; }
+        public string JobFile { get; set; }
     }
 
     public enum ComboBuildType {

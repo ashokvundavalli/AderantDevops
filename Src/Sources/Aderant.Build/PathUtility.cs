@@ -10,26 +10,23 @@ namespace Aderant.Build {
             return path.Replace('\\', '/');
         }
 
-        public static string EnsureTrailingSlash(string path) {
-            return EnsureTrailingCharacter(path, Path.DirectorySeparatorChar);
+        /// <summary>
+        /// If the given path doesn't have a trailing slash then add one.
+        /// If the path is an empty string, does not modify it.
+        /// </summary>
+        /// <param name="fileSpec">The path to check.</param>
+        /// <returns>A path with a slash.</returns>
+        internal static string EnsureTrailingSlash(string fileSpec) {
+            fileSpec = FixFilePath(fileSpec);
+            if (fileSpec.Length > 0 && !EndsWithSlash(fileSpec)) {
+                fileSpec += Path.DirectorySeparatorChar;
+            }
+
+            return fileSpec;
         }
 
-        private static string EnsureTrailingCharacter(string path, char trailingCharacter) {
-            if (path == null) {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            // if the path is empty, we want to return the original string instead of a single trailing character.
-            if (path.Length == 0 || path[path.Length - 1] == trailingCharacter) {
-                return path;
-            }
-
-            // Optimization: Avoid boxing trailingCharacter
-            if (trailingCharacter == Path.DirectorySeparatorChar) {
-                return path + DirectorySeparatorChar;
-            } 
-
-            return path + trailingCharacter;
+        internal static string FixFilePath(string path) {
+            return string.IsNullOrEmpty(path) || Path.DirectorySeparatorChar == '\\' ? path : path.Replace('\\', '/');
         }
 
         public static string Quote(this string text) {
@@ -84,8 +81,15 @@ namespace Aderant.Build {
             return result;
         }
 
+        /// <summary>
+        /// Indicates if the given file-spec ends with a slash.
+        /// </summary>
+        /// <param name="fileSpec">The file spec.</param>
+        /// <returns>true, if file-spec has trailing slash</returns>
         internal static bool EndsWithSlash(string fileSpec) {
-            return fileSpec.Length > 0 && IsSlash(fileSpec[fileSpec.Length - 1]);
+            return (fileSpec.Length > 0)
+                ? IsSlash(fileSpec[fileSpec.Length - 1])
+                : false;
         }
 
         internal static bool IsSlash(char c) {

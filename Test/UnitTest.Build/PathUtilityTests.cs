@@ -19,5 +19,18 @@ namespace UnitTest.Build {
             Assert.AreEqual(@"\\host\d$\file", PathUtility.MakeRelative(@"c:\abc\def", @"\\host\d$\file"));
             Assert.AreEqual(@"..\fff\ggg.hh", PathUtility.MakeRelative(@"c:\foo\bar\..\abc\cde", @"c:\foo\bar\..\abc\fff\ggg.hh"));
         }
+
+        [TestMethod]
+        public void EnsureTrailingSlash() {
+            // Doesn't have a trailing slash to start with.
+            Assert.AreEqual(@"foo\bar\", PathUtility.EnsureTrailingSlash(@"foo\bar"));
+            Assert.AreEqual(@"foo/bar\", PathUtility.EnsureTrailingSlash(@"foo/bar"));
+
+            // Already has a slash to start with.
+            Assert.AreEqual(@"foo/bar/", PathUtility.EnsureTrailingSlash(@"foo/bar/"));
+            Assert.AreEqual(@"foo\bar\", PathUtility.EnsureTrailingSlash(@"foo\bar\"));
+            Assert.AreEqual(@"foo/bar\", PathUtility.EnsureTrailingSlash(@"foo/bar\"));
+            Assert.AreEqual(@"foo\bar/", PathUtility.EnsureTrailingSlash(@"foo\bar/"));
+        }
     }
 }
