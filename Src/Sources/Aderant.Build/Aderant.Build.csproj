@@ -127,6 +127,7 @@
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Services\FlexService.cs" />
     <Compile Include="DependencyAnalyzer\ProjectRelationshipProcessing.cs" />
+    <Compile Include="Tasks\BuildJobFiles.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
@@ -360,6 +361,7 @@
     <Content Include="Scripts\_readme.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Instance\" />
     <Folder Include="Sequencer\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

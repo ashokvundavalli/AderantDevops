@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Aderant.Build.Tasks.BuildTime;
+using Aderant.Build.Tasks;
 using LibGit2Sharp;
 
 namespace Aderant.Build.DependencyAnalyzer {

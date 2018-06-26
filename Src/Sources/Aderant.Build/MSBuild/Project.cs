@@ -72,14 +72,5 @@ namespace Aderant.Build.MSBuild {
         public void Add(MSBuildProjectElement element) {
             elements.Add(element);
         }
-
-        /// <summary>
-        /// Inserts the element into the document hierarchy.
-        /// </summary>
-        /// <param name="i">The i.</param>
-        /// <param name="element">The element.</param>
-        public void Insert(int i, MSBuildProjectElement element) {
-            elements.Insert(0, element);
-        }
     }
 }

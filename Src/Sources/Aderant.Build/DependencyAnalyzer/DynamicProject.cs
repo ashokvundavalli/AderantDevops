@@ -3,24 +3,24 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.MSBuild;
+using Aderant.Build.Tasks;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
     internal class DynamicProject {
+
+        private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
-        private const string InitializeTargets = @"Build\ModuleBuild.Initialize.targets";
-        private const string CompletionTargets = @"Build\ModuleBuild.Completion.targets";
 
         public DynamicProject(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(List<List<IDependencyRef>> projectGroups, string beforeProjectFile, string afterProjectFile, string buildFrom) {
+        public Project GenerateProject(List<List<IDependencyRef>> projectGroups, BuildJobFiles instance, string buildFrom) {
             Project project = new Project();
 
             // Create a list of call targets for each build
@@ -28,9 +28,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             bool buildFromHere = string.IsNullOrEmpty(buildFrom);
 
-            // Since we may resequence things we want the to start the numbering at 0
             int buildGroupCount = 0;
 
+            ItemGroup itemGroup = new ItemGroup("AllProjectsToBuild");
+            
             string sequenceFile = Path.Combine(fileSystem.Root, "BuildSequence.txt");
             using (StreamWriter outputFile = new StreamWriter(sequenceFile, false)) {
                 for (int i = 0; i < projectGroups.Count; i++) {
@@ -54,29 +55,26 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (!buildFromHere) {
                         continue;
                     }
+                    
+                    itemGroup = new ItemGroup(itemGroup.Name, itemGroup.Include.Concat(CreateItemGroupMember(instance.BeforeProjectFile, instance.AfterProjectFile, projectGroup, buildGroupCount, buildFrom)));
 
-                    ItemGroup itemGroup = new ItemGroup("Build", CreateItemGroupMember(projectGroup, buildGroupCount, buildFrom));
-
-                    // e.g. <Target Name="Build2">
-                    Target build = new Target("Build" + buildGroupCount.ToString(CultureInfo.InvariantCulture));
+                    // e.g. <Target Name="Foo">
+                    Target build = new Target("Run" + CreateGroupName(buildGroupCount));
                     if (buildGroupCount > 0) {
-                        var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == $"Build{buildGroupCount-1}");
+                        var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == CreateGroupName(buildGroupCount - 1));
                         if (target != null) {
                             build.DependsOnTargets.Add(target);
                         }
                     }
 
-                    project.Add(itemGroup);
-
                     build.Add(
                         new MSBuildTask {
-                            BuildInParallel = true,
+                            BuildInParallel = "$(BuildInParallel)",
                             StopOnFirstFailure = true,
-                            //Projects = $"@({itemGroup.Name})" // use @ so MSBuild will expand the list for us
-                            Projects = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets),
-                            Properties = $"DirectoryBuildFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount.ToString()};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
+                            Projects = instance.JobRunFile,
+                            Properties = $"InstanceProjectFile=$(MSBuildThisFileFullPath);BuildGroup={buildGroupCount.ToString()};TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups);BuildInParallel=$(BuildInParallel)",
                         });
-
+                  
                     project.Add(build);
 
                     // e.g <Target Name="AfterCompile" DependsOnTargets="Build0;...n">;
@@ -87,6 +85,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             project.Add(new PropertyGroup(new Dictionary<string, string> { { "TotalNumberOfBuildGroups", buildGroupCount.ToString(CultureInfo.InvariantCulture) } }));
+            project.Add(itemGroup);
             project.Add(afterCompile);
 
             // The target that MSBuild will call into to start the build
@@ -95,9 +94,15 @@ namespace Aderant.Build.DependencyAnalyzer {
             return project;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMember(List<IDependencyRef> projectGroup, int buildGroup, string buildFrom) {
+        private static string CreateGroupName(int buildGroupCount) {
+            return "ProjectsToBuild" + buildGroupCount.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private IEnumerable<ItemGroupItem> CreateItemGroupMember(string beforeProjectFile, string afterProjectFile, List<IDependencyRef> projectGroup, int buildGroup, string buildFrom) {
             return projectGroup.Select(
                 studioProject => {
+                    var propertyList = new PropertyList();
+
                     // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
                     // The difference can be confusing and very problematic if used incorrectly.
                     // The difference is that if you specify properties using the Properties metadata then any properties defined using the Properties attribute 
@@ -107,18 +112,18 @@ namespace Aderant.Build.DependencyAnalyzer {
                     VisualStudioProject visualStudioProject = studioProject as VisualStudioProject;
 
                     if (visualStudioProject != null) {
-                        if ( !visualStudioProject.IncludeInBuild ) {
+                        if (!visualStudioProject.IncludeInBuild) {
                             return null;
                         }
 
-                        string properties = AddBuildProperties(visualStudioProject, fileSystem, visualStudioProject.SolutionRoot);
+                        propertyList = AddSolutionConfigurationProperties(visualStudioProject, propertyList);
 
                         if (visualStudioProject.SolutionDirectoryName != buildFrom) {
-                            properties += ";RunCodeAnalysisOnThisProject=false";
+                            propertyList.Add("RunCodeAnalysisOnThisProject=false");
                         }
 
                         ItemGroupItem item = new ItemGroupItem(visualStudioProject.Path) {
-                            ["AdditionalProperties"] = properties,
+                            ["AdditionalProperties"] = propertyList.ToString(),
                             ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                             ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture),
@@ -130,11 +135,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     ExpertModule marker = studioProject as ExpertModule;
                     if (marker != null) {
-                    string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
-                        string properties = AddBuildProperties(null, fileSystem, solutionDirectoryPath);
+                        string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
+                        var properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
 
-                        ItemGroupItem item = new ItemGroupItem(Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), InitializeTargets)) {
-                            ["AdditionalProperties"] = properties,
+                        ItemGroupItem item = new ItemGroupItem(beforeProjectFile) {
+                            ["AdditionalProperties"] = properties.ToString(),
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
                         };
                         return item;
@@ -142,17 +147,16 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     DirectoryNode node = studioProject as DirectoryNode;
                     if (node != null) {
-                        if (node.IsCompletion) {
-                            string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == node.ModuleName ? fileSystem.Root : Path.Combine(fileSystem.Root, node.ModuleName);
-                            string properties = AddBuildProperties(null, fileSystem, solutionDirectoryPath);
+                        string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == node.ModuleName ? fileSystem.Root : Path.Combine(fileSystem.Root, node.ModuleName);
+                        var properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
+                        properties.Add("SolutionRoot=" + solutionDirectoryPath);
 
-                            ItemGroupItem item = new ItemGroupItem(
-                                Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)), CompletionTargets)) {
-                                ["AdditionalProperties"] = properties,
-                                ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
-                            };
-                            return item;
-                        }
+                        ItemGroupItem item = new ItemGroupItem(node.IsCompletion ? afterProjectFile : beforeProjectFile) {
+                            ["AdditionalProperties"] = properties.ToString(),
+                            ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture)
+                        };
+                        return item;
+
                     }
 
                     return null;
@@ -160,13 +164,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             );
         }
 
-        private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
-
-        private string AddBuildProperties(VisualStudioProject visualStudioProject, IFileSystem2 fileSystem, string solutionDirectoryPath) {
+        private PropertyList AddBuildProperties(PropertyList propertyList, IFileSystem2 fileSystem, string solutionDirectoryPath) {
             string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
-
-            List<string> propertiesList = new List<string>();
-
             if (fileSystem.FileExists(responseFile)) {
                 using (var reader = new StreamReader(fileSystem.OpenFile(responseFile))) {
                     var propertiesText = reader.ReadToEnd();
@@ -176,27 +175,30 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // We want to be able to specify the flavor globally in a build all so remove it from the property set
                     properties = RemoveFlavor(properties);
 
-                    propertiesList.Add(CreateSinglePropertyLine(properties));
-
-                    propertiesList.Add($"SolutionDirectoryPath={solutionDirectoryPath}");
-
-                    if (visualStudioProject != null) {
-                        propertiesList.Add($"SolutionRoot={visualStudioProject.SolutionRoot}");
-                        propertiesList.Add($"BuildProjectReferences={visualStudioProject.IsDirty.ToString()}");
-
-                        AddMetaProjectProperties(visualStudioProject, propertiesList);
-
-                        if (visualStudioProject.BuildConfiguration != null) {
-                            propertiesList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
-                            propertiesList.Add($"Platform={visualStudioProject.BuildConfiguration.PlatformName}");
-                        }
-                    }}
+                    propertyList.Add(CreateSinglePropertyLine(properties));
+                    propertyList.Add(PathUtility.EnsureTrailingSlash($"SolutionDirectoryPath={solutionDirectoryPath}"));
+                }
             }
 
-            return string.Join("; ", propertiesList);
+            return propertyList;
         }
 
-        private static void AddMetaProjectProperties(VisualStudioProject visualStudioProject, List<string> propertiesList) {
+        private static PropertyList AddSolutionConfigurationProperties(VisualStudioProject visualStudioProject, PropertyList propertyList) {
+                propertyList.Add($"SolutionRoot={visualStudioProject.SolutionRoot}");
+                propertyList.Add($"BuildProjectReferences={visualStudioProject.IsDirty.ToString()}");
+
+                AddMetaProjectProperties(visualStudioProject, propertyList);
+
+                if (visualStudioProject.BuildConfiguration != null) {
+                    propertyList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
+                    propertyList.Add($"Platform={visualStudioProject.BuildConfiguration.PlatformName}");
+                }
+            
+
+            return propertyList;
+        }
+
+        private static void AddMetaProjectProperties(VisualStudioProject visualStudioProject, PropertyList propertiesList) {
             // MSBuild metaproj compatibility items (from the generated solution.sln.metaproj)
             propertiesList.Add($"SolutionDir={visualStudioProject.SolutionRoot}");
             propertiesList.Add($"SolutionExt={Path.GetExtension(visualStudioProject.SolutionFile)}");

@@ -579,10 +579,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 bool add = true;
 
-                var levelSet = levels[i];
-                foreach (var item in levelSet) {
-                    if (project.DependsOn.Contains(item)) {
-                        add = false;
+                if (project.DependsOn != null) {
+                    var levelSet = levels[i];
+                    foreach (var item in levelSet) {
+                        if (project.DependsOn.Contains(item)) {
+                            add = false;
+                        }
                     }
                 }
 

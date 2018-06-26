@@ -1,11 +1,16 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Providers;
 using Aderant.Build.Tasks;
+using OpenSoftware.DgmlTools;
+using OpenSoftware.DgmlTools.Builders;
+using OpenSoftware.DgmlTools.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
     public interface IDependencyBuilder {
@@ -43,7 +48,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private const string dgmlRootNamespace = "http://schemas.microsoft.com/vs/2009/dgml";
 
         private readonly IModuleProvider moduleProvider;
-        private List<string> exclusions = new List<string>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DependencyBuilder"/> class.
@@ -90,10 +94,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             HashSet<ModuleDependency> dependencies = new HashSet<ModuleDependency>();
 
             foreach (var module in allModules) {
-                if (exclusions.Any(excl => string.Equals(excl, module.Name))) {
-                    continue;
-                }
-
                 DependencyManifest manifest;
                 if (!moduleProvider.TryGetDependencyManifest(module.Name, out manifest)) {
                     continue;
@@ -513,8 +513,54 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public void AddExclusion(string name) {
-            this.exclusions.Add(name);
+
+    }
+
+
+
+    internal static class ProjectVisualizer {
+
+        public static void Foo(params IEnumerable<object>[] elements) {
+            var builder = new DgmlBuilder {
+                NodeBuilders = new NodeBuilder[] {
+                    new NodeBuilder<VisualStudioProject>(
+                        x => new Node
+                        {
+                            Id = x.Id,
+                            Label = x.Name,
+                        })
+        },
+                //NodeBuilders = new NodeBuilder[]
+                //{
+                //    <your node builders>
+                //},
+                LinkBuilders = new LinkBuilder[]
+                {
+                  new LinksBuilder<VisualStudioProject>(Builder)
+        },
+                //CategoryBuilders = new CategoryBuilder[]
+                //{
+                //    <your category builders>
+                //},
+                //StyleBuilders = new StyleBuilder[]
+                //{
+                //    <your style builders>
+                //}
+
+        };
+
+            DirectedGraph graph = builder.Build(elements);
+            graph.WriteToFile(@"C:\temp\my-graph.dgml");
+        }
+
+        private static IEnumerable<Link> Builder(VisualStudioProject x) {
+            foreach (var item in x.DependsOn) {
+                if (item.Name.StartsWith("System")) { continue; }
+                yield return new Link {
+                    Source = x.AssemblyName,
+                    Target = item.Name,
+                };
+            }
         }
     }
 }

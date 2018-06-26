@@ -26,7 +26,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(string modulesDirectory, string beforeProjectFile, string afterProjectFile, string[] projectFiles, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
+        public Project CreateProject(string modulesDirectory, BuildJobFiles instance, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
             try {
                 var analyzer = new ProjectDependencyAnalyzer(
@@ -50,7 +50,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 analyzerContext.AddDirectory(modulesDirectory);
 
                 // Get all changed files list
-                if (buildType != ComboBuildType.All) {
+                if (buildType != ComboBuildType.Changed) {
                     List<string> files = new ChangesetResolver(this.context, modulesDirectory, buildType).ChangedFiles;
                     analyzerContext.SetFilesList(files);
                 }
@@ -88,11 +88,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 Validate(filteredProjects);
 
                 // Determine the build groups to get maximum speed.
-                List <List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
+                List<List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
 
                 // Create the dynamic build project file.
                 DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
-                return dynamicProject.GenerateProject(groups, beforeProjectFile, afterProjectFile, buildFrom);
+                return dynamicProject.GenerateProject(groups, instance, buildFrom);
             } catch (CircularDependencyException ex) {
                 logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
                 throw;
