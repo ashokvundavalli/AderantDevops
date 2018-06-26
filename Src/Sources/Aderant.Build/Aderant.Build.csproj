@@ -58,6 +58,9 @@
       <HintPath>..\..\Build\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="OpenSoftware.DgmlBuilder">
+      <HintPath>..\..\..\packages\OpenSoftware.DgmlBuilder\lib\net45\OpenSoftware.DgmlBuilder.dll</HintPath>
+    </Reference>
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
@@ -100,7 +103,9 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="ComboBuildArgBuilder.cs" />
+    <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
     <Compile Include="DependencyAnalyzer\DependencyType.cs" />
+    <Compile Include="MSBuild\PropertyList.cs" />
     <Compile Include="DependencyAnalyzer\SolutionParser\ISolutionFileParser.cs" />
     <Compile Include="DependencyAnalyzer\Model\AssemblyRef.cs" />
     <Compile Include="DependencyAnalyzer\Model\DirectoryNode.cs" />

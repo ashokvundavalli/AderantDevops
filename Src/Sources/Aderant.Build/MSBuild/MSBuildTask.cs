@@ -1,4 +1,4 @@
-namespace Aderant.Build.MSBuild {
+﻿namespace Aderant.Build.MSBuild {
     public class MSBuildTask : MSBuildProjectElement {
         /// <summary>
         /// Initializes a new instance of the <see cref="MSBuildTask"/> class.
@@ -14,7 +14,7 @@ namespace Aderant.Build.MSBuild {
         /// <value>
         ///   <c>true</c> if [build in parallel]; otherwise, <c>false</c>.
         /// </value>
-        public bool BuildInParallel { get; set; }
+        public string BuildInParallel { get; set; }
 
         /// <summary>
         /// Gets or sets the projects property string. Ensure that this string is formatted with the correct metadata selector.

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -92,6 +92,9 @@ namespace Aderant.Build.MSBuild {
         /// </summary>
         /// <param name="element">The project.</param>
         public void Add(MSBuildProjectElement element) {
+            if (element is Target) {
+                return;
+            }
             elements.Add(element);
         }
 

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,14 +7,20 @@ namespace Aderant.Build.MSBuild {
     /// Represents an MSBuild ItemGroup element.
     /// </summary>
     public class ItemGroup : MSBuildProjectElement, IEnumerable<ItemGroupItem> {
+        private readonly IEnumerable<ItemGroupItem> include;
+
         public ItemGroup(string name, IEnumerable<string> items) {
             Name = name;
-            Include = items.Select(s => new ItemGroupItem(s));
+            include = items.Select(s => new ItemGroupItem(s));
         }
 
         public ItemGroup(string name, IEnumerable<ItemGroupItem> items) {
             Name = name;
-            Include = items.Where(i => i != null);
+            include = items.Where(i => i != null);
+        }
+
+        public ItemGroup(string name) {
+            this.Name = name;
         }
 
         /// <summary>
@@ -25,7 +31,9 @@ namespace Aderant.Build.MSBuild {
         /// <summary>
         /// Gets the items to include.
         /// </summary>
-        public IEnumerable<ItemGroupItem> Include { get; private set; }
+        public IEnumerable<ItemGroupItem> Include {
+            get { return include ?? Enumerable.Empty<ItemGroupItem>(); }
+        }
 
         public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);

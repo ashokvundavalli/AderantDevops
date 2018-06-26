@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Aderant.Build.MSBuild {
     /// <summary>
@@ -6,7 +6,7 @@ namespace Aderant.Build.MSBuild {
     /// </summary>
     public class Project : MSBuildProjectElement {
 
-        private HashSet<MSBuildProjectElement> elements = new HashSet<MSBuildProjectElement>();
+        private List<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Project"/> class.
@@ -71,6 +71,15 @@ namespace Aderant.Build.MSBuild {
         /// <param name="element">The element.</param>
         public void Add(MSBuildProjectElement element) {
             elements.Add(element);
+        }
+
+        /// <summary>
+        /// Inserts the element into the document hierarchy.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="element">The element.</param>
+        public void Insert(int i, MSBuildProjectElement element) {
+            elements.Insert(0, element);
         }
     }
 }
