@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 // (c) Gregory Adam 2009
 
@@ -53,7 +52,7 @@ using System.Linq;
  *	else
  *		returns a queue with one cycle
  */
-namespace Aderant.Build.DependencyAnalyzer {
+namespace Aderant.Build.Utilities {
 
     public sealed class TopologicalSort<T> where T : class, IEquatable<T>{
         private Dictionary<T, NodeInfo> nodes = new Dictionary<T, NodeInfo>();
