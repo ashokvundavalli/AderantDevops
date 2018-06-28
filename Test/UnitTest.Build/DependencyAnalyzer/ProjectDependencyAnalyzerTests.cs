@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
-    public class ProjectDependencyAnalyzerTests
-    {
+    public class ProjectDependencyAnalyzerTests {
         public TestContext TestContext { get; set; }
 
         [TestMethod]
@@ -30,23 +31,19 @@ namespace UnitTest.Build.DependencyAnalyzer {
             moduleRefs[1].DependsOn.Add(moduleRefs[2]);
             moduleRefs[2].DependsOn.Add(moduleRefs[0]);
 
-            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
+            var graph = new List<IDependencyRef>();
 
-            graph.Edge(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test" }, new DependencyManifest("Test", new XDocument())));
+            graph.Add(new ExpertModule(TestContext.DeploymentDirectory, new[] { "Test" }, new DependencyManifest("Test", new XDocument())));
 
             foreach (ModuleRef moduleRef in moduleRefs) {
                 visualStudioProject.AddDependency(moduleRef);
-                graph.Edge(moduleRef);
             }
 
-            graph = analyzer.ProcessVisualStudioProject(visualStudioProject, graph);
-            graph.Edge(directoryNode);
-            graph.Edge(visualStudioProject);
+            graph = analyzer.ProcessVisualStudioProject(visualStudioProject, graph, graph.OfType<VisualStudioProject>().ToList());
+            graph.Add(directoryNode);
+            graph.Add(visualStudioProject);
 
-            Assert.AreEqual(6, graph.Vertices.Count);
-
-            Queue<IDependencyRef> queue;
-            graph.Sort(out queue);
+            IEnumerable<IDependencyRef> queue = TopologicalSort.Sort(graph, dep => dep.DependsOn);
 
             Assert.AreEqual(queue.ToArray()[5], visualStudioProject);
         }
@@ -63,24 +60,21 @@ namespace UnitTest.Build.DependencyAnalyzer {
             expertModules[1].DependsOn.Add(expertModules[0]);
             expertModules[1].DependsOn.Add(expertModules[2]);
             expertModules[2].DependsOn.Add(expertModules[0]);
-            TopologicalSort<IDependencyRef> graph = new TopologicalSort<IDependencyRef>();
 
+            var graph = new List<IDependencyRef>();
             foreach (ExpertModule module in expertModules) {
-                graph.Edge(module);
+                graph.Add(module);
             }
 
             foreach (ExpertModule module in expertModules) {
                 graph = analyzer.ProcessExpertModule(module, graph);
             }
 
-            Assert.AreEqual(3, graph.Vertices.Count);
+            var queue = TopologicalSort.Sort(graph, dep => dep.DependsOn).ToList();
 
-            Queue<IDependencyRef> queue;
-            graph.Sort(out queue);
-
-            Assert.AreEqual(queue.Dequeue(), expertModules[0]);
-            Assert.AreEqual(queue.Dequeue(), expertModules[2]);
-            Assert.AreEqual(queue.Dequeue(), expertModules[1]);
+            Assert.AreEqual(queue[0], expertModules[0]);
+            Assert.AreEqual(queue[2], expertModules[2]);
+            Assert.AreEqual(queue[1], expertModules[1]);
         }
     }
 

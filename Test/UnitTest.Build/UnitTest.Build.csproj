@@ -96,7 +96,7 @@
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
-    <Compile Include="DependencyAnalyzer\DynamicProjectTests.cs" />
+    <Compile Include="DependencyAnalyzer\BuildJobProjectTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="Ipc\MemoryMappedBufferTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
@@ -150,6 +150,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DependencyBuilderTests.cs" />
     <Compile Include="ContextTests.cs" />
+    <Compile Include="TopologicalSortTests.cs" />
     <Compile Include="VersionRequirementEqualityTest.cs" />
   </ItemGroup>
   <ItemGroup>
