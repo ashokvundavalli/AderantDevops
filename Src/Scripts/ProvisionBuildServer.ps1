@@ -8,7 +8,6 @@ param (
 
 begin {
     Set-StrictMode -Version Latest
-    $ErrorActionPreference = "Continue"
 }
 
 process {
@@ -36,13 +35,13 @@ process {
         Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue
         Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
 
-        $scriptsDirectory = "$env:SystemDrive\Scripts"
+        [string]$scriptsDirectory = "$env:SystemDrive\Scripts"
 
-        mkdir $scriptsDirectory -ErrorAction SilentlyContinue        
+        New-Item -Path $scriptsDirectory -ItemType Directory -ErrorAction SilentlyContinue
 
-        cd $scriptsDirectory
+        Push-Location $scriptsDirectory
 
-        $credentials | Export-Clixml -Path $scriptsDirectory\credentials.xml
+        $credentials | Export-Clixml -Path "$scriptsDirectory\credentials.xml"
 
         if (-not $skipDownload) {
             Write-Host "Downloading build agent zip"
@@ -66,8 +65,8 @@ process {
         # Return the machine specific script home
         return $scriptsDirectory
     }
-        
-    $scriptsDirectory = Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent
+
+    [string]$scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)[1]
 
     Write-Host "Generating Scheduled Tasks"
 
