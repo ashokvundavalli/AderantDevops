@@ -4,16 +4,14 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-
 namespace UnitTest.Build.DependencyAnalyzer {
 
     [TestClass]
     public class BuildSequencerTests {
-        public TestContext TestContext { get; set; }
 
         [TestMethod]
         public void MarkDirtyTest() {
-            HashSet<string> dirtyProjects = new HashSet<string> {"ASS1"};
+            HashSet<string> dirtyProjects = new HashSet<string> { "ASS1" };
 
             var p1 = new VisualStudioProject(null, Guid.Empty, "ASS1", null, null);
             p1.IsDirty = true;
@@ -29,7 +27,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var projectList = new List<IDependencyRef> { p1, p2, m1, m2, m3 };
 
-            var sequencer = new BuildSequencer(null, null, null, null);
+            var sequencer = new BuildSequencer(null, null, null, null, null);
 
             // Mark the projects to dirty directly depends on any project in the search list.
             sequencer.MarkDirty(projectList, dirtyProjects);
