@@ -17,7 +17,7 @@ namespace IntegrationTest.Build.Tasks.GitChangeset {
         public void GitChangesetExecuteTest() {
             var testContextDeploymentDirectory = TestContext.TestRunDirectory;
 
-            var changeset = new ChangesetResolver(null, @"C:\Git\Deployment");
+            var changeset = new ChangesetResolver(null, @"C:\Source\Deployment");
             if (changeset.FriendlyBranchName != "master") {
                 Assert.IsNotNull(changeset.ChangedFiles);
             }
