@@ -9,6 +9,5 @@ namespace IntegrationTest.Build {
         public static void AssemblyInitialize(TestContext context) {
             GlobalSettings.NativeLibraryPath = context.DeploymentDirectory;
         }
-
     }
 }
