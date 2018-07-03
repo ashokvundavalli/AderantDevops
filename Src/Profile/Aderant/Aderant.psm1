@@ -486,9 +486,10 @@ function Set-CurrentModule($name, [switch]$quiet) {
             $global:CurrentModuleName = ""
         }
 
+        Set-Location $global:CurrentModulePath
+
         if (IsGitRepository $global:CurrentModulePath) {
             SetRepository $global:CurrentModulePath
-            Set-Location $global:CurrentModulePath
             global:Enable-GitPrompt
             return
         } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($global:CurrentModulePath).Parent.FullName)) {
@@ -502,6 +503,9 @@ function Set-CurrentModule($name, [switch]$quiet) {
 
         Write-Debug "Current module [$global:CurrentModuleName]"
         $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
+
+        Set-Location $global:CurrentModulePath
+
         Enable-ExpertPrompt
     }
 
