@@ -1,18 +1,30 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace Aderant.Build.ProjectSystem.References {
-    [DebuggerDisplay("UnresolvedBuildDependencyProjectReference: {FullPath}")]
-    internal class UnresolvedBuildDependencyProjectReference :
-        UnresolvedReferenceBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference>,
-        IUnresolvedBuildDependencyProjectReference {
-        private UnresolvedP2PReferenceMoniker moniker;
+    [DebuggerDisplay("UnresolvedBuildDependencyProjectReference: {ProjectGuid} {IsResolved}")]
+    internal class UnresolvedBuildDependencyProjectReference : UnresolvedReferenceBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference, UnresolvedP2PReferenceMoniker>, IUnresolvedBuildDependencyProjectReference {        
 
-        public UnresolvedBuildDependencyProjectReference(BuildDependencyProjectReferencesService provider)
-            : base(provider) {
+        public UnresolvedBuildDependencyProjectReference(BuildDependencyProjectReferencesService service, UnresolvedP2PReferenceMoniker moniker)
+            : base(service, moniker) {
         }
 
-        public void Initialize(UnresolvedP2PReferenceMoniker moniker) {
-            this.moniker = moniker;
+        public UnresolvedBuildDependencyProjectReference(BuildDependencyProjectReferencesService service, ConfiguredProject project)
+            : base(service, project) {
+        }
+
+        public Guid ProjectGuid {
+            get {
+                if (moniker != null) {
+                    return moniker.ProjectGuid;
+                }
+
+                if (IsResolved) {
+                    return Project.ProjectGuid;
+                }
+
+                return Guid.Empty;
+            }
         }
     }
 }

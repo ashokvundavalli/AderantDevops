@@ -11,5 +11,7 @@ namespace Aderant.Build.ProjectSystem.References {
         where TResolvedReference : class {
 
         IReadOnlyCollection<TUnresolvedReference> GetUnresolvedReferences();
+
+        IReadOnlyCollection<TResolvedReference> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references);
     }
 }

@@ -1,24 +1,36 @@
 ﻿using System.Diagnostics;
 
 namespace Aderant.Build.ProjectSystem.References {
-    [DebuggerDisplay("UnresolvedAssemblyReference: {AssemblyName}")]
-    internal class UnresolvedAssemblyReference : UnresolvedReferenceBase<IUnresolvedAssemblyReference, IAssemblyReference>,
-        IUnresolvedAssemblyReference {
+    [DebuggerDisplay("UnresolvedAssemblyReference: {DebuggerAssemblyName} {IsResolved}")]
+    internal class UnresolvedAssemblyReference : UnresolvedReferenceBase<IUnresolvedAssemblyReference, IAssemblyReference, UnresolvedAssemblyReferenceMoniker>, IUnresolvedAssemblyReference {
 
-        private readonly AssemblyReferencesServiceBase provider;
-        private UnresolvedAssemblyReferenceMoniker moniker;
+        public UnresolvedAssemblyReference(AssemblyReferencesService service, UnresolvedAssemblyReferenceMoniker moniker)
+            : base(service, moniker) {
+        }
 
-        public UnresolvedAssemblyReference(AssemblyReferencesServiceBase provider)
-            : base(provider) {
-            this.provider = provider;
+        public UnresolvedAssemblyReference(AssemblyReferencesServiceBase service, ConfiguredProject configuredProject)
+            : base(service, configuredProject) {
+        }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerAssemblyName {
+            get { return GetAssemblyName(); }
         }
 
         public string GetHintPath() {
             return moniker.AssemblyPath;
         }
 
-        public void Initialize(UnresolvedAssemblyReferenceMoniker moniker) {
-            this.moniker = moniker;
+        public string GetAssemblyName() {
+            if (IsResolved) {
+                return Project.OutputAssembly;
+            }
+
+            if (moniker.AssemblyName != null) {
+                return moniker.AssemblyName.FullName;
+            }
+
+            return null;
         }
     }
 }

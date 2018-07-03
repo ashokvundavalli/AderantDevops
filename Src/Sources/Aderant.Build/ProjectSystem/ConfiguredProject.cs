@@ -14,28 +14,13 @@ namespace Aderant.Build.ProjectSystem {
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     internal class ConfiguredProject {
         private readonly IFileSystem fileSystem;
-        private readonly IProjectTree tree;
         private Lazy<Project> project;
         private Lazy<ProjectRootElement> projectXml;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
-            this.tree = tree;
+            this.Tree = tree;
             this.fileSystem = fileSystem;
-        }
-
-        public Guid ProjectGuid {
-            get {
-                foreach (var propertyElement in projectXml.Value.Properties) {
-                    if (propertyElement.Name == "ProjectGuid") {
-                        if (propertyElement.Value != null) {
-                            return Guid.Parse(propertyElement.Value);
-                        }
-                    }
-                }
-
-                return Guid.Empty;
-            }
         }
 
         [Import]
@@ -53,11 +38,40 @@ namespace Aderant.Build.ProjectSystem {
         /// <value>The solution file.</value>
         public string SolutionFile { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this project is included in build.
+        /// The project can be excluded as it does not have a platform or configuration for the current build.
+        /// </summary>
         public bool IncludeInBuild { get; set; }
 
-        public void InitializeAsync(Lazy<ProjectRootElement> projectXml, string fullPath) {
+        /// <summary>
+        /// Gets the tree this project belongs to.
+        /// </summary>
+        /// <value>The tree.</value>
+        public IProjectTree Tree { get; }
+
+        public string OutputAssembly {
+            get { return project.Value.GetPropertyValue("AssemblyName"); }
+        }
+
+        public string OutputType {
+            get { return project.Value.GetPropertyValue("OutputType"); }
+        }
+
+        public Guid ProjectGuid {
+            get {
+                var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
+                if (propertyElement != null) {
+                    return Guid.Parse(propertyElement);
+                }
+
+                return Guid.Empty;
+            }
+        }
+
+        public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
-            this.projectXml = projectXml;
+            projectXml = projectElement;
 
             project = new Lazy<Project>(() => new Project(this.projectXml.Value, null, null, new ProjectCollection()));
         }
@@ -67,7 +81,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void AssignProjectConfiguration(string buildConfiguration) {
-            var projectInSolution = tree.SolutionManager.GetSolutionForProject(FullPath, ProjectGuid);
+            var projectInSolution = Tree.SolutionManager.GetSolutionForProject(FullPath, ProjectGuid);
 
             SolutionFile = projectInSolution.SolutionFile;
 
@@ -76,13 +90,15 @@ namespace Aderant.Build.ProjectSystem {
                 IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
             }
 
-            tree.AddConfiguredProject(this);
+            if (IncludeInBuild) {
+                Tree.AddConfiguredProject(this);
+            }
         }
 
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.
         /// </summary>
-        public Task CollectBuildDependencies(BuildDependenciesCollector buildDependenciesCollector) {
+        public Task CollectBuildDependencies(BuildDependenciesCollector collector) {
             // Force MEF import
             var services = Services;
 
@@ -92,7 +108,7 @@ namespace Aderant.Build.ProjectSystem {
                     if (Services.TextTemplateReferences != null) {
                         IReadOnlyCollection<IUnresolvedReference> references = services.TextTemplateReferences.GetUnresolvedReferences();
                         if (references != null) {
-                            buildDependenciesCollector.AddUnresolvedReferences(references);
+                            collector.AddUnresolvedReferences(references);
                         }
                     }
                 });
@@ -102,7 +118,7 @@ namespace Aderant.Build.ProjectSystem {
                     if (Services.ProjectReferences != null) {
                         IReadOnlyCollection<IUnresolvedReference> references = services.ProjectReferences.GetUnresolvedReferences();
                         if (references != null) {
-                            buildDependenciesCollector.AddUnresolvedReferences(references);
+                            collector.AddUnresolvedReferences(references);
                         }
                     }
                 });
@@ -112,12 +128,37 @@ namespace Aderant.Build.ProjectSystem {
                     if (Services.AssemblyReferences != null) {
                         IReadOnlyCollection<IUnresolvedReference> references = services.AssemblyReferences.GetUnresolvedReferences();
                         if (references != null) {
-                            buildDependenciesCollector.AddUnresolvedReferences(references);
+                            collector.AddUnresolvedReferences(references);
                         }
                     }
                 });
 
             return Task.WhenAll(t1, t2, t3);
+        }
+
+        public void AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
+            // Force MEF import
+            var services = Services;
+
+            List<IReference> dependencies = new List<IReference>();
+
+            if (services.ProjectReferences != null) {
+                var references = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences);
+                if (references != null) {
+                    dependencies.AddRange(references);
+                }
+            }
+
+            if (services.AssemblyReferences != null) {
+                var references = services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences);
+                if (references != null) {
+                    dependencies.AddRange(references);
+                }
+            }
+
+            foreach (var dependency in dependencies) {
+                //AddDependency();
+            }
         }
     }
 }

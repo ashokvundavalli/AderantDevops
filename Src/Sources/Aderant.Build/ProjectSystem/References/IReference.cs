@@ -1,4 +1,4 @@
 ﻿namespace Aderant.Build.ProjectSystem.References {
-    internal interface IReference {
+    public interface IReference {
     }
 }

@@ -1,5 +1,7 @@
-﻿namespace Aderant.Build.ProjectSystem.References {
-    internal interface IUnresolvedAssemblyReference : IAssemblyReference, IReference, IUnresolvedReference {
+﻿using System;
+
+namespace Aderant.Build.ProjectSystem.References {
+    internal interface IUnresolvedAssemblyReference : IAssemblyReference, IUnresolvedReference {
         string GetHintPath();
     }
 }

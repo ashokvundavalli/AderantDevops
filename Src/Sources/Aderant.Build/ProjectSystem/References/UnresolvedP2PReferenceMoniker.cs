@@ -2,7 +2,7 @@
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
-    internal class UnresolvedP2PReferenceMoniker : UnresolvedReferenceMonikerBase<IUnresolvedBuildDependencyProjectReference, IBuildDependencyProjectReference> {
+    internal class UnresolvedP2PReferenceMoniker {
 
         internal UnresolvedP2PReferenceMoniker(string projectPath, Guid projectGuid) {
             ProjectPath = projectPath;

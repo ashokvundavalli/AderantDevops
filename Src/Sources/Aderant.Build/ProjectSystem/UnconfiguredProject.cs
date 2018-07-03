@@ -55,7 +55,7 @@ namespace Aderant.Build.ProjectSystem {
             var result = ConfiguredProjectFactory.CreateExport();
             var configuredProject = result.Value;
 
-            configuredProject.InitializeAsync(this.projectXml, FullPath);
+            configuredProject.Initialize(this.projectXml, FullPath);
 
             return configuredProject;
         }

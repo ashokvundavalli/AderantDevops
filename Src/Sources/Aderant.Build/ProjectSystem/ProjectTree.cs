@@ -52,7 +52,7 @@ namespace Aderant.Build.ProjectSystem {
                 files.Select(file => Task.Run(() => LoadAndParseProjectFile(file))).ToArray());
         }
 
-        public async Task CollectBuildDependencies(BuildDependenciesCollector buildDependenciesCollector) {
+        public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
             foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                 ConfiguredProject project = unconfiguredProject.LoadConfiguredProject("");
 
@@ -60,12 +60,19 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             foreach (var project in LoadedConfiguredProjects) {
-                await project.CollectBuildDependencies(buildDependenciesCollector);
+                await project.CollectBuildDependencies(collector);
+            }
+        }
+        public void AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
+            foreach (var project in LoadedConfiguredProjects) {
+                project.AnalyzeBuildDependencies(collector);
             }
         }
 
         public void AddConfiguredProject(ConfiguredProject configuredProject) {
-            loadedConfiguredProjects.Add(configuredProject);
+            if (configuredProject.IncludeInBuild) {
+                loadedConfiguredProjects.Add(configuredProject);
+            }
         }
 
         public SolutionProject GetSolutionForProject(string projectFilePath, Guid projectGuid) {
