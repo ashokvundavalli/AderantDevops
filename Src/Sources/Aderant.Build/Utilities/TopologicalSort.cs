@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 // (c) Gregory Adam 2009
 
@@ -54,12 +55,35 @@ using System.Collections.Generic;
  */
 namespace Aderant.Build.Utilities {
 
-    public sealed class TopologicalSort<T> where T : class, IEquatable<T>{
-        private Dictionary<T, NodeInfo> nodes = new Dictionary<T, NodeInfo>();
+    public class TopologicalSort {
 
-        public ICollection<T> Vertices {
-            get { return nodes.Keys; }
+        public static IEnumerable<T> Sort<T>(IEnumerable<T> items, Func<T, IEnumerable<T>> itemsBefore) where T : class, IEquatable<T> {
+            var sort = new TopologicalSort<T>();
+
+            foreach (T item in items) {
+                sort.Edge(item);
+
+                IEnumerable<T> predecessors = itemsBefore(item);
+
+                if (predecessors != null) {
+                    foreach (var predecessor in predecessors) {
+                        if (predecessor != null) {
+                            sort.Edge(item, predecessor);
+                        }
+                    }
+                }
+            }
+
+            Queue<T> queue;
+            sort.Sort(out queue);
+
+            return queue;
         }
+    }
+
+    public sealed class TopologicalSort<T> : TopologicalSort where T : class, IEquatable<T> {
+
+        private Dictionary<T, NodeInfo> nodes = new Dictionary<T, NodeInfo>();
 
         //-------------------------------------------------------------------------
         /// <summary>
