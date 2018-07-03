@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
-    [string]$repository
+    [string]$repository,
+    [switch]$replicate
 )
 
 begin {
@@ -63,7 +64,7 @@ process {
 
     Write-Host "Creating package(s)..."
 
-    $packResult = New-ExpertPackage $repository $version
+    $packResult = New-ExpertPackage -Repository $repository -Version $version -Replicate $replicate.IsPresent
 
     if ($packResult) {
         if (Test-Path $packResult.OutputPath) {

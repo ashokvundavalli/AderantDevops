@@ -48,8 +48,7 @@
     ##
     # Resolves the path to the binaries for the given module
     ##
-    Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath){
-
+    Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath) {
         $action = FindGetActionTag $module
         Switch ($action) {
           "local"  { LocalPathToModuleBinariesFor $module }
@@ -64,7 +63,41 @@
         }
     }
 
-	    function global:AcquireExpertClassicBinaries([string]$moduleName,  [string]$binariesDirectory, [string]$classicPath, [string]$target) {
+    function global:AcquireExpertClassicDocumentation {
+        param(
+            [Parameter(Mandatory=$true)][string]$moduleBinariesDirectory
+        )
+
+        begin {
+            [System.Object]$pdfBuild = $null
+        }
+
+        process {
+            [System.Object[]]$pdfBuilds = Get-ChildItem -Path $moduleBinariesDirectory -Directory
+
+            for ([int]$i = 1; $i -lt ($pdfBuilds.Count - 1); $i++) {
+                [System.Object]$pdfBuildCandidate = ($pdfBuilds | Select-Object -Last $i)[0]
+
+                if ((Measure-Object -InputObject (Get-ChildItem $pdfBuildCandidate.FullName)) -ne 0) {
+                    $pdfBuild = $pdfBuildCandidate
+                    break
+                }
+            }
+
+            if ($pdfBuild -eq $null) {
+                Write-Warning "Unable to acquire content for module: $($module.Name)"
+                return -1
+            } else {
+                Copy-Item -Path "$($pdfBuild.FullName)\Pdf" -Recurse -Filter "*.pdf" -Destination (Join-Path -Path $binariesDirectory -ChildPath $module.Target.Split('/')[1]) -Force
+            }
+        }
+
+        end {
+            return [System.Convert]::ToInt32($pdfBuild.Name)
+        }
+    }
+
+	function global:AcquireExpertClassicBinaries([string]$moduleName, [string]$binariesDirectory, [string]$classicPath, [string]$target) {
 		Push-Location
         $build = Get-ChildItem (Join-Path -Path $classicPath -ChildPath $buildDirectory.Name) -File -Filter "*.zip"
 
@@ -108,10 +141,9 @@
     # Resolves the path to the binaries for the given module
     ##
     Function global:GetLocalPathToBinaries([System.Xml.XmlNode]$module, [string]$localPath){
-
-        if((IsThirdParty $module) -or (IsHelp $module)){
+        if ((IsThirdParty $module) -or (IsHelp $module)) {
             return LocalPathToThirdpartyBinariesFor $module $localPath
-        }else{
+        } else {
             return LocalPathToModuleBinariesFor $module $localPath
         }
     }
@@ -205,7 +237,7 @@
     # Is this the help module?
     ###
     Function global:IsHelp([System.Xml.XmlNode]$module){
-        return ($module.Name.ToLower().Contains(".help") -and -not $module.Name.ToLower().Contains("admin"))
+        return (($module.Name.ToLower().Contains(".help") -or $module.Name.ToLower().EndsWith(".pdf")) -and -not $module.Name.ToLower().Contains("admin"))
     }
 
     ##
@@ -246,6 +278,10 @@
 
         if ($action.Equals("specific-path-external-module") -and ![string]::IsNullOrEmpty($module.Path)){
             $rootPath = $module.Path
+
+            if ($module.Name.ToLower().EndsWith(".pdf")) {
+                return (Join-Path -Path $rootPath -ChildPath $module.Name)
+            }
         }
 
         return (Join-Path $rootPath  ($module.Name+'\Bin'))
