@@ -27,4 +27,5 @@ namespace IntegrationTest.Build {
             Assert.IsNotNull(lastGoodCount);
         }
     }
+
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -6,6 +6,7 @@ namespace IntegrationTest.Build.Tasks.RunAnalyzer {
     [TestClass]
     [DeploymentItem("Aderant.Build.Analyzer.dll")]
     public class RunAnalyzerTests : BuildTaskTestBase {
+
         [ClassInitialize]
         public static void ClasInitialize(TestContext context) {
             var unused = typeof(CodeQualitySystemDiagnosticsRule).FullName;

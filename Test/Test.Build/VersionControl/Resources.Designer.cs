@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace UnitTest.Build.DependencyResolver {
+namespace IntegrationTest.Build.VersionControl {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace UnitTest.Build.DependencyResolver {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("UnitTest.Build.DependencyResolver.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.VersionControl.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,20 +61,16 @@ namespace UnitTest.Build.DependencyResolver {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;dependencyManifest version=&quot;2&quot; DefaultSource=&quot;\\dfs.aderant.com\expertsuite\dev\vnext&quot;&gt;
-        ///    &lt;dependencies&gt;
-        ///        &lt;dependency&gt;
-        ///            &lt;artifactId&gt;thirdparty.foo&lt;/artifactId&gt;
-        ///            &lt;type&gt;&lt;/type&gt;
-        ///            &lt;scope&gt;test&lt;/scope&gt;
-        ///        &lt;/dependency&gt;
-        ///    &lt;/dependencies&gt;
-        ///&lt;/dependencyManifest&gt;.
+        ///   Looks up a localized string similar to git init Repo
+        ///cd repo
+        ///echo &quot;Some text&quot; &gt; somefile.txt
+        ///git add .
+        ///git commit -m &quot;Added somefile&quot;
+        ///echo &quot;Some text more text&quot; &gt;&gt; somefile.txt.
         /// </summary>
-        internal static string DependencyManifest {
+        internal static string CreateRepo {
             get {
-                return ResourceManager.GetString("DependencyManifest", resourceCulture);
+                return ResourceManager.GetString("CreateRepo", resourceCulture);
             }
         }
     }

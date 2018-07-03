@@ -11,7 +11,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UnitTest.Build</RootNamespace>
     <AssemblyName>UnitTest.Build</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <SccProjectName>SAK</SccProjectName>
@@ -67,6 +67,7 @@
     <Reference Include="System">
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core">
       <Private>True</Private>
     </Reference>
@@ -98,6 +99,7 @@
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildJobProjectTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
+    <Compile Include="ErrorUtilitiesTests.cs" />
     <Compile Include="Ipc\MemoryMappedBufferTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
