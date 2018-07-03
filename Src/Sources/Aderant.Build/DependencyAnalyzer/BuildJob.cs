@@ -5,18 +5,17 @@ using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.MSBuild;
-using Aderant.Build.Tasks;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
-    internal class DynamicProject {
+    internal class BuildJob {
 
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
 
-        public DynamicProject(IFileSystem2 fileSystem) {
+        public BuildJob(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
@@ -32,15 +31,15 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             ItemGroup itemGroup = new ItemGroup("AllProjectsToBuild");
             
-            string sequenceFile = Path.Combine(fileSystem.Root, "BuildSequence.txt");
-            using (StreamWriter outputFile = new StreamWriter(sequenceFile, false)) {
+            //string sequenceFile = Path.Combine(fileSystem.Root, "BuildSequence.txt");
+     //       using (StreamWriter outputFile = new StreamWriter(sequenceFile, false)) {
                 for (int i = 0; i < projectGroups.Count; i++) {
                     List<IDependencyRef> projectGroup = projectGroups[i];
 
-                    outputFile.WriteLine($"Group ({i})");
+          //          outputFile.WriteLine($"Group ({i})");
                     foreach (var dependencyRef in projectGroup) {
                         var isDirty = (dependencyRef as VisualStudioProject)?.IsDirty == true;
-                        outputFile.WriteLine($"|   |---{dependencyRef.Name}" + (isDirty ? " *" : ""));
+          //              outputFile.WriteLine($"|   |---{dependencyRef.Name}" + (isDirty ? " *" : ""));
                     }
 
                     // If there are no projects in the item group, no point generating any Xml for this build node
@@ -82,7 +81,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     buildGroupCount++;
                 }
-            }
+     //       }
 
             project.Add(new PropertyGroup(new Dictionary<string, string> { { "TotalNumberOfBuildGroups", buildGroupCount.ToString(CultureInfo.InvariantCulture) } }));
             project.Add(itemGroup);
@@ -124,8 +123,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                         ItemGroupItem item = new ItemGroupItem(visualStudioProject.Path) {
                             ["AdditionalProperties"] = propertyList.ToString(),
-                            ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
-                            ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
+                            ["Configuration"] = visualStudioProject.ProjectBuildConfiguration.ConfigurationName,
+                            ["Platform"] = visualStudioProject.ProjectBuildConfiguration.PlatformName,
                             ["BuildGroup"] = buildGroup.ToString(CultureInfo.InvariantCulture),
                             ["IsWebProject"] = visualStudioProject.IsWebProject.ToString()
                         };
@@ -189,9 +188,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 AddMetaProjectProperties(visualStudioProject, propertyList);
 
-                if (visualStudioProject.BuildConfiguration != null) {
-                    propertyList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
-                    propertyList.Add($"Platform={visualStudioProject.BuildConfiguration.PlatformName}");
+                if (visualStudioProject.ProjectBuildConfiguration != null) {
+                    propertyList.Add($"Configuration={visualStudioProject.ProjectBuildConfiguration.ConfigurationName}");
+                    propertyList.Add($"Platform={visualStudioProject.ProjectBuildConfiguration.PlatformName}");
                 }
             
 

@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.DependencyAnalyzer {
     public class AnalyzerContext {
@@ -7,7 +8,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// To pass the needed files list.
         /// </summary>
-        public ICollection<string> Files { get; set; } = new List<string>();
+        public IEnumerable<IPendingChange> PendingChanges { get; set; } = new List<IPendingChange>();
 
         public IEnumerable<string> ProjectFiles { get; set; }
 
@@ -18,17 +19,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public AnalyzerContext AddDirectory(string directory) {
             Directories.Add(directory);
-
-            return this;
-        }
-
-        public AnalyzerContext AddFile(string file) {
-            Files.Add(file);
-
-            return this;
-        }
-        public AnalyzerContext SetFilesList(List<string> filesList) {
-            Files = filesList;
 
             return this;
         }

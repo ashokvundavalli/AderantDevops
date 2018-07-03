@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Management.Automation;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Microsoft.Build.BuildEngine;
@@ -24,7 +23,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class CSharpProjectLoader {
 
         /// <summary>
-        /// Parses the specified fragment as a <see cref="VisualStudioProject"/>
+        /// Parses the specified fragment as a <see cref="VisualStudioProject" />
         /// </summary>
         public VisualStudioProject Parse(string xml) {
             XDocument project;
@@ -70,11 +69,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     var result = new VisualStudioProject(project, projectInfo.ProjectGuid, projectInfo.AssemblyName, projectInfo.RootNamespace, projectInfo.Path) { IsWebProject = IsWebBuild(xproject) };
 
                     foreach (var reference in FindFileReferences(root)) {
-                        result.DependsOn.Add(new AssemblyRef(reference.Name, reference.HintPath));
+                        result.AddDependency(new AssemblyRef(reference.Name, reference.HintPath));
                     }
 
                     foreach (var reference in FindProjectReferences(root)) {
-                        result.DependsOn.Add(reference);
+                        result.AddDependency(reference);
                     }
 
                     if (!string.IsNullOrEmpty(projectInfo.ProjectTypeGuids)) {
@@ -202,10 +201,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// The list of assembly names that are file references
         /// </returns>
         private static IEnumerable<ReferenceItem> FindFileReferences(XContainer xproject) {
-            var items = xproject.Elements("ItemGroup").Elements("Reference").Select(item => new ReferenceItem {
-                Name = item.Attribute("Include").Value.Split(',')[0],
-                HintPath = item.Element("HintPath")?.Value,
-            });
+            var items = xproject.Elements("ItemGroup").Elements("Reference").Select(
+                item => new ReferenceItem {
+                    Name = item.Attribute("Include").Value.Split(',')[0],
+                    HintPath = item.Element("HintPath")?.Value,
+                });
 
             foreach (var item in items) {
                 yield return item;

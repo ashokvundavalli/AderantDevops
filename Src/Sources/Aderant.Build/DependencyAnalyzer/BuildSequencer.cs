@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
-using Aderant.Build.DependencyAnalyzer.SolutionParser;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
-using Aderant.Build.Tasks;
+using Aderant.Build.ProjectSystem.SolutionParser;
+using Aderant.Build.VersionControl;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -18,52 +17,104 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly Context context;
         private readonly ISolutionFileParser solutionParser;
         private readonly IFileSystem2 fileSystem;
+        private readonly IVersionControlService versionControlService;
 
-        public BuildSequencer(ILogger logger, Context context, ISolutionFileParser solutionParser, IFileSystem2 fileSystem) {
+        public BuildSequencer(ILogger logger, Context context, ISolutionFileParser solutionParser, IFileSystem2 fileSystem, IVersionControlService versionControlService) {
             this.logger = logger;
             this.context = context;
             this.solutionParser = solutionParser;
             this.fileSystem = fileSystem;
+            this.versionControlService = versionControlService;
+
+            SolutionExtensionPatternsToIgnore = new List<string> {
+                ".template.sln",
+                ".custom.sln",
+            };
         }
 
-        public Project CreateProject(string modulesDirectory, BuildJobFiles instance, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing) {
+        /// <summary>
+        /// Gets or sets the solution file names patterns to ignore.
+        /// </summary>
+        /// <value>The solution patterns to ignore.</value>
+        public IEnumerable<string> SolutionExtensionPatternsToIgnore {
+            get;
+            set;
+        }
+
+        public Project CreateProject(string directory, BuildJobFiles instance, string buildFrom, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing, string buildConfiguration) {
             // This could also fail with a circular reference exception. If it does we cannot solve the problem.
+            IEnumerable<IDependencyRef> filteredProjects;
             try {
-                var analyzer = new ProjectDependencyAnalyzer(
-                    new CSharpProjectLoader(), 
-                    new TextTemplateAnalyzer(fileSystem), 
-                    fileSystem);
+                var analyzer = AnalyzeDependencies(directory, buildType, dependencyProcessing, buildConfiguration, out filteredProjects);
 
-                analyzer.AddExclusionPattern("_BUILD_");
-                analyzer.AddExclusionPattern("__");
-                analyzer.AddExclusionPattern("Tests.Query");
-                analyzer.AddExclusionPattern("Applications.DocuDraftAddIn");
-                analyzer.AddExclusionPattern("UIAutomation");
-                analyzer.AddExclusionPattern("UITest");
-                analyzer.AddExclusionPattern("Applications.Marketing");                
-                analyzer.AddExclusionPattern("Workflow.Integration.Samples");
-                analyzer.AddExclusionPattern("Aderant.Installation");
-                analyzer.AddExclusionPattern("MomentumFileOpening");
-                analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
-                
-                AnalyzerContext analyzerContext = new AnalyzerContext();
-                analyzerContext.AddDirectory(modulesDirectory);
+                // Determine the build groups to get maximum speed.
+                List<List<IDependencyRef>> groups = null;//analyzer.GetBuildGroups(filteredProjects);
 
-                // Get all changed files list
-                if (buildType != ComboBuildType.Changed) {
-                    List<string> files = new ChangesetResolver(this.context, modulesDirectory, buildType).ChangedFiles;
-                    analyzerContext.SetFilesList(files);
-                }
+                // Create the dynamic build project file.
+                BuildJob buildJob = new BuildJob(fileSystem);
+                return buildJob.GenerateProject(groups, instance, buildFrom);
+            } catch (CircularDependencyException ex) {
+                logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
+                throw;
+            }
+        }
 
-                analyzerContext.ModulesDirectory = modulesDirectory;
-                List<IDependencyRef> visualStudioProjects = analyzer.GetDependencyOrder(analyzerContext);
+        private ProjectDependencyAnalyzer AnalyzeDependencies(string modulesDirectory, ComboBuildType buildType, ProjectRelationshipProcessing dependencyProcessing, string buildConfiguration, out IEnumerable<IDependencyRef> filteredProjects) {
+            var analyzer = new ProjectDependencyAnalyzer(
+                new CSharpProjectLoader(),
+                new TextTemplateAnalyzer(fileSystem),
+                fileSystem);
 
-                IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
+            analyzer.AddExclusionPattern("_BUILD_");
+            analyzer.AddExclusionPattern("__");
+            analyzer.AddExclusionPattern("Tests.Query");
+            analyzer.AddExclusionPattern("Applications.DocuDraftAddIn");
+            analyzer.AddExclusionPattern("UIAutomation");
+            analyzer.AddExclusionPattern("UITest");
+            analyzer.AddExclusionPattern("Applications.Marketing");
+            analyzer.AddExclusionPattern("Workflow.Integration.Samples");
+            analyzer.AddExclusionPattern("Aderant.Installation");
+            analyzer.AddExclusionPattern("MomentumFileOpening");
+            analyzer.AddSolutionFileNameFilter(@"Aderant.MatterCenterIntegration.Application\Package.sln");
 
-                foreach (IGrouping<string, VisualStudioProject> projects in studioProjects.GroupBy(g => g.SolutionRoot)) {
-                    string solutionRoot = projects.Key;
+            AnalyzerContext analyzerContext = new AnalyzerContext();
+            analyzerContext.AddDirectory(modulesDirectory);
 
-                    foreach (string file in fileSystem.GetFiles(solutionRoot, Path.GetFileName(projects.Key) + ".sln", false, true)) {
+            // Get all changed files
+            if (buildType == ComboBuildType.Changes) {
+                logger.Debug("Querying version control provider for pending changes...");
+
+                IEnumerable<IPendingChange> pendingChanges = versionControlService.GetPendingChanges(modulesDirectory);
+                analyzerContext.PendingChanges = pendingChanges.ToList();
+            }
+
+            analyzerContext.ModulesDirectory = modulesDirectory;
+            List<IDependencyRef> visualStudioProjects = null; //analyzer.GetDependencyGraph(analyzerContext);
+
+            IEnumerable<VisualStudioProject> studioProjects = visualStudioProjects.OfType<VisualStudioProject>();
+
+            AssignProjectConfiguration(buildConfiguration, studioProjects);
+
+            // According to options, find out which projects are selected to build.
+            filteredProjects = GetProjectsBuildList(visualStudioProjects, buildType, dependencyProcessing);
+
+            Validate(filteredProjects);
+            return analyzer;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="VisualStudioProject.IncludeInBuild"/> state
+        /// </summary>
+        private void AssignProjectConfiguration(string buildConfiguration, IEnumerable<VisualStudioProject> studioProjects) {
+            var projects = new List<VisualStudioProject>(studioProjects);
+
+            foreach (IGrouping<string, VisualStudioProject> grouping in studioProjects.GroupBy(g => g.SolutionRoot)) {
+                string solutionRoot = grouping.Key;
+
+                foreach (string file in fileSystem.GetFiles(solutionRoot, "*.sln", false)) {
+                    bool readSolution = SolutionExtensionPatternsToIgnore.All(pattern => !file.EndsWith(pattern, StringComparison.OrdinalIgnoreCase));
+
+                    if (readSolution) {
                         ParseResult result = solutionParser.Parse(file);
 
                         foreach (ProjectInSolution projectInSolution in result.ProjectsInOrder) {
@@ -73,29 +124,26 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                             ProjectConfigurationInSolution config;
 
-                            if (projectInSolution.ProjectConfigurations.TryGetValue("Debug|Any CPU", out config)) {
+                            if (projectInSolution.ProjectConfigurations.TryGetValue(buildConfiguration, out config)) {
                                 if (config.IncludeInBuild) {
-                                    IncludeInBuild(result, config, projectInSolution.AbsolutePath, studioProjects);
+                                    var foundProject = IncludeInBuild(result.SolutionFile, config, projectInSolution.AbsolutePath, projects);
+
+                                    if (foundProject != null) {
+                                        projects.Remove(foundProject);
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                // According to options, find out which projects are selected to build.
-                var filteredProjects = GetProjectsBuildList(visualStudioProjects, buildType, dependencyProcessing);
-
-                Validate(filteredProjects);
-
-                // Determine the build groups to get maximum speed.
-                List<List<IDependencyRef>> groups = analyzer.GetBuildGroups(filteredProjects);
-
-                // Create the dynamic build project file.
-                DynamicProject dynamicProject = new DynamicProject(new PhysicalFileSystem(modulesDirectory));
-                return dynamicProject.GenerateProject(groups, instance, buildFrom);
-            } catch (CircularDependencyException ex) {
-                logger.Error("Circular reference between projects: " + string.Join(", ", ex.Conflicts) + ". No solution is possible.");
-                throw;
+            // If we have any projects left, then they are orphaned as they belong to no solution
+            if (projects.Any()) {
+                logger.Warning("Orphaned projects: ");
+                foreach (var project in projects) {
+                    logger.Warning(project.Path);
+                }
             }
         }
 
@@ -183,16 +231,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             //}
         }
 
-        private void IncludeInBuild(ParseResult result, ProjectConfigurationInSolution configuration, string absolutePath, IEnumerable<VisualStudioProject> visualStudioProjects) {
+        private VisualStudioProject IncludeInBuild(string solutionFile, ProjectConfigurationInSolution configuration, string absolutePath, List<VisualStudioProject> visualStudioProjects) {
             foreach (VisualStudioProject project in visualStudioProjects) {
                 if (string.Equals(project.Path, absolutePath, StringComparison.OrdinalIgnoreCase)) {
                     project.IncludeInBuild = true;
-                    project.SolutionFile = result.SolutionFile;
-                    project.BuildConfiguration = new BuildConfiguration(/*Debug or Release*/configuration.ConfigurationName, /*x86 etc*/configuration.PlatformName );
-                    
-                    break;
+                    project.SolutionFile = solutionFile;
+                    project.ProjectBuildConfiguration = new ProjectBuildConfiguration(/*Debug or Release*/configuration.ConfigurationName, /*x86 etc*/configuration.PlatformName );
+
+                    return project;
                 }
             }
+
+            return null;
         }
 
         public XElement CreateProjectDocument(Project project) {
@@ -217,13 +267,4 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
     }
 
-    internal class BuildConfiguration {
-        public string ConfigurationName { get; }
-        public string PlatformName { get; }
-
-        public BuildConfiguration(string configurationName, string platformName) {
-            ConfigurationName = configurationName;
-            PlatformName = platformName;
-        }
-    }
 }

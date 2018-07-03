@@ -4,3 +4,8 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
+
+<#@ assembly name="$(ProjectDir)\..\..\Dependencies\Aderant.Query.Modeling.dll" #>
+<#@ assembly name="$(ProjectDir)\..\..\Dependencies\Aderant.Framework.SoftwareFactory.Common.dll" #>
+<#@ assembly name="$(ProjectDir)\..\..\Dependencies\Microsoft.VisualStudio.Modeling.Sdk.14.0.dll" #>
+<#@ assembly name="$(ProjectDir)\..\..\Dependencies\Microsoft.VisualStudio.Modeling.Sdk.dsldefinition.14.0.dll" #> 

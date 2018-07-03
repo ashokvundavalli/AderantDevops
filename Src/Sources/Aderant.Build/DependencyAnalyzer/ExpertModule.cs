@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -57,7 +57,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal ICollection<IDependencyRef> DependsOn {
+        internal IReadOnlyCollection<IDependencyRef> DependsOn {
             get {
                 if (dependsOn == null) {
                     if (Manifest != null) {
@@ -110,6 +110,14 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Name {
             get { return name; }
             set { name = Path.GetFileName(value); }
+        }
+
+        void IDependencyRef.AddDependency(IDependencyRef dependency) {
+            dependsOn.Add(dependency);
+        }
+
+        internal void AddDependency(IDependencyRef dependency) {
+            dependsOn.Add(dependency);
         }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
@@ -239,7 +247,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             get { return Name; }
         }
 
-        ICollection<IDependencyRef> IDependencyRef.DependsOn {
+        IReadOnlyCollection<IDependencyRef> IDependencyRef.DependsOn {
             get { return null; }
         }
 

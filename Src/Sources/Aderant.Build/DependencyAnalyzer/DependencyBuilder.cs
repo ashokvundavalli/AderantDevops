@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Providers;
 using Aderant.Build.Tasks;
+using Aderant.Build.Utilities;
 using OpenSoftware.DgmlTools;
 using OpenSoftware.DgmlTools.Builders;
 using OpenSoftware.DgmlTools.Model;
@@ -425,7 +426,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private static IEnumerable<Build> GetBuildGroups(Queue<ExpertModule> sortedQueue, IEnumerable<ModuleDependency> dependencies) {
             // Now find critical path...
             // What we do here is iterate the sorted list looking for elements with no dependencies. These are the zero level modules.
-            // Then we iterate again and check if the module dependends on any of the zero level modules but not on anything else. These are the
+            // Then we iterate again and check if the module depends on any of the zero level modules but not on anything else. These are the
             // level 1 elements. Then we iterate again and check if the module depends on any of the 0 or 1 level modules etc.
             // This places modules into levels which allows for maximum parallelism based on dependency.
             IDictionary<int, HashSet<ExpertModule>> levels = new Dictionary<int, HashSet<ExpertModule>>();

@@ -36,7 +36,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Branch { get; }
 
         public IEnumerable<ExpertModule> GetAll() {
-            var directories = fileSystem.GetDirectories(null, false, true);
+            var directories = fileSystem.GetDirectories(null, false);
 
             foreach (var dir in directories) {
                 string name = Path.GetFileName(dir);
@@ -71,7 +71,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (fileSystem.GetFiles(modulePath, DependencyManifest.DependencyManifestFileName, true).FirstOrDefault() != null) {
                     manifest = DependencyManifest.LoadFromModule(modulePath);
 
-                    var paketFile = fileSystem.GetFiles(modulePath, "paket.dependencies", false, true).FirstOrDefault();
+                    var paketFile = fileSystem.GetFiles(modulePath, "paket.dependencies", false).FirstOrDefault();
                     if (!string.IsNullOrEmpty(paketFile)) {
                         manifest = new PaketView(fileSystem, paketFile, manifest);
                     }
@@ -562,7 +562,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void SetupAliasTable() {
             //  foreach (ExpertModule module in getAll) {
 
-            IEnumerable<string> directories = fileSystem.GetDirectories(fileSystem.Root, false, true);
+            IEnumerable<string> directories = fileSystem.GetDirectories(fileSystem.Root, false);
 
             foreach (var dir in directories) {
 

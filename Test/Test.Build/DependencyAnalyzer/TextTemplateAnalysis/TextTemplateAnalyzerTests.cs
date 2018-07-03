@@ -8,14 +8,16 @@ namespace IntegrationTest.Build.DependencyAnalyzer.TextTemplateAnalysis {
     [TestClass]
     public class TextTemplateAnalyzerTests {
 
-        [TestMethod]
-        public void Extract_assembly_reference() {
+        public TestContext TestContext { get; set; }
 
+
+        [TestMethod]
+        public void Extract_assembly_references() {
             var analyzer = new TextTemplateAnalyzer();
 
-            TextTemplateAnalysisResult result = analyzer.Analyze(new StringReader(Resources.SimpleTextTemplate));
+            TextTemplateAnalysisResult result = analyzer.Analyze(new StringReader(Resources.SimpleTextTemplate), TestContext.DeploymentDirectory);
 
-            Assert.AreEqual(1, result.AssemblyReferences.Count);
+            Assert.AreEqual(5, result.AssemblyReferences.Count);
             Assert.AreEqual("System.Core", result.AssemblyReferences.First());
         }
     }

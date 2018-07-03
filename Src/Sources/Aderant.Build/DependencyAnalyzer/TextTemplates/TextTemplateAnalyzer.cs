@@ -1,17 +1,21 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Aderant.Build.DependencyAnalyzer.TextTemplates;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class TextTemplateAnalyzer {
-        private readonly IFileSystem2 fileSystem;
-        private readonly List<string> excludedPatterns = new List<string>();
         static readonly Regex nameMatch = new Regex(@"name=""([^""]*)\""", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly List<string> excludedPatterns = new List<string>();
+        private readonly IFileSystem2 fileSystem;
 
         public TextTemplateAnalyzer(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
+        }
+
+        public TextTemplateAnalyzer() {
         }
 
         /// <summary>
@@ -24,19 +28,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public List<TextTemplateAssemblyInfo> GetDependencies(string solutionRoot) {
-            IEnumerable<string> files = fileSystem.GetFiles(solutionRoot, "*.tt*", true, true);
+        public List<TextTemplateAnalysisResult> GetDependencies(string solutionRoot) {
+            IEnumerable<string> files = fileSystem.GetFiles(solutionRoot, "*.tt*", true);
 
             IEnumerable<string> templateList = files.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
-            List<TextTemplateAssemblyInfo> dependencies = new List<TextTemplateAssemblyInfo>();
+            List<TextTemplateAnalysisResult> dependencies = new List<TextTemplateAnalysisResult>();
 
             foreach (var file in templateList) {
                 try {
                     using (var fs = fileSystem.OpenFile(file)) {
                         var reader = new StreamReader(fs);
 
-                        var template = new TextTemplateAssemblyInfo(file);
+                        var template = new TextTemplateAnalysisResult(file);
 
                         string text;
                         while ((text = reader.ReadLine()) != null) {
@@ -81,14 +85,53 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return dependencies;
         }
+
+        public TextTemplateAnalysisResult Analyze(TextReader reader, string projectDirectory) {
+            var expander = new MacroExpander();
+            expander.ProjectDir = projectDirectory;
+
+            var template = new TextTemplateAnalysisResult();
+
+            string text;
+            while ((text = reader.ReadLine()) != null) {
+                var line = text.TrimStart();
+
+                line = expander.Expand(line);
+
+                if (line.StartsWith("<#@")) {
+                    if (line.IndexOf("ServiceDsl", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        template.IsServiceDslTemplate = true;
+                    }
+
+                    if (line.IndexOf("DomainModelDsl", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        template.IsDomainModelDslTemplate = true;
+                    }
+
+                    const string assemblyText = "assembly ";
+
+                    if (line.IndexOf(assemblyText, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        Match match = nameMatch.Match(line);
+
+                        Group matchGroup = match.Groups[1];
+                        string assemblyNameValue = matchGroup.Value;
+                        template.AssemblyReferences.Add(assemblyNameValue.Trim());
+                    }
+                }
+            }
+
+            return template;
+        }
     }
 
-    internal class TextTemplateAssemblyInfo {
+    internal class TextTemplateAnalysisResult {
+        public TextTemplateAnalysisResult() {
+        }
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="TextTemplateAssemblyInfo"/> class.
+        /// Initializes a new instance of the <see cref="TextTemplateAnalysisResult" /> class.
         /// </summary>
         /// <param name="templateFile">The template file.</param>
-        public TextTemplateAssemblyInfo(string templateFile) {
+        public TextTemplateAnalysisResult(string templateFile) {
             TemplateFile = templateFile;
         }
 

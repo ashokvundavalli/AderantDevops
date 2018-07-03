@@ -7,18 +7,19 @@ using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
-using Aderant.Build.DependencyAnalyzer.SolutionParser;
 using Aderant.Build.Logging;
-using Aderant.Build.Tasks;
+using Aderant.Build.ProjectSystem.SolutionParser;
+using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace IntegrationTest.Build.DependencyAnalyzer {
     [TestClass]
     [DeploymentItem("DependencyAnalyzer\\Resources\\", "Resources")]
     public class ProjectDependencyAnalyzerTests {
+        private DependencyGraph graph;
+
         private string rootDirectory;
-        private List<IDependencyRef> dependencyOrder;
-        private ProjectDependencyAnalyzer projectDependencyAnalyzer;
         public TestContext TestContext { get; set; }
 
         [TestInitialize]
@@ -26,14 +27,17 @@ namespace IntegrationTest.Build.DependencyAnalyzer {
             rootDirectory = Path.Combine(TestContext.DeploymentDirectory, @"Resources\Source");
             PhysicalFileSystem fileSystem = new PhysicalFileSystem(rootDirectory);
 
-            projectDependencyAnalyzer = new ProjectDependencyAnalyzer(new CSharpProjectLoader(), new TextTemplateAnalyzer(fileSystem), fileSystem);
+            var projectDependencyAnalyzer = new ProjectDependencyAnalyzer(
+                new CSharpProjectLoader(),
+                new TextTemplateAnalyzer(fileSystem),
+                fileSystem);
 
-            dependencyOrder = projectDependencyAnalyzer.GetDependencyOrder(new AnalyzerContext().AddDirectory(rootDirectory));
+            graph = projectDependencyAnalyzer.GetDependencyGraph(new AnalyzerContext().AddDirectory(rootDirectory));
         }
 
         [TestMethod]
         public void GetDependencyOrderTest() {
-            List<VisualStudioProject> dependencyRefs = dependencyOrder.OfType<VisualStudioProject>().ToList();
+            List<VisualStudioProject> dependencyRefs = graph.GetDependencyOrder().OfType<VisualStudioProject>().ToList();
 
             var a_a = dependencyRefs[0];
             Assert.AreEqual("ProjectA", a_a.Name);
@@ -64,16 +68,32 @@ namespace IntegrationTest.Build.DependencyAnalyzer {
 
         [TestMethod]
         public void Depending_grouping_test() {
-            List<List<IDependencyRef>> groups = projectDependencyAnalyzer.GetBuildGroups(dependencyOrder);
-            
+            List<List<IDependencyRef>> groups = graph.GetBuildGroups(graph.GetDependencyOrder());
+
             Assert.AreEqual(6, groups.Count);
             Assert.AreEqual(1, groups.Last().Count);
         }
 
         [TestMethod]
         public void Parallel() {
-            var sequencer = new BuildSequencer(new FakeLogger(), new Context(), new SolutionFileParser(), new PhysicalFileSystem(rootDirectory));
-            var project = sequencer.CreateProject(rootDirectory, "A", "B", new[] { "Z" }, null, ComboBuildType.All, ProjectRelationshipProcessing.None);
+            var sequencer = new BuildSequencer(
+                new FakeLogger(),
+                new Context(),
+                new SolutionFileParser(),
+                new PhysicalFileSystem(rootDirectory),
+                new Mock<IVersionControlService>().Object);
+
+            var project = sequencer.CreateProject(
+                rootDirectory,
+                new BuildJobFiles {
+                    BeforeProjectFile = "A",
+                    AfterProjectFile = "B",
+                    JobRunFile = "Z"
+                },
+                null,
+                ComboBuildType.All,
+                ProjectRelationshipProcessing.None,
+                ProjectBuildConfiguration.DebugAnyCpu);
 
             XElement projectDocument = sequencer.CreateProjectDocument(project);
 
@@ -81,4 +101,5 @@ namespace IntegrationTest.Build.DependencyAnalyzer {
             Process.Start("notepad++", "\"" + @"C:\temp\test.proj" + "\"");
         }
     }
+
 }

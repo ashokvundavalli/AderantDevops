@@ -43,7 +43,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(Context context, string workingDirectory, ComboBuildType buildType=ComboBuildType.Changed, bool discover = true) {
+        public ChangesetResolver(Context context, string workingDirectory, ComboBuildType buildType=ComboBuildType.Changes, bool discover = true) {
             this.context = context;
             InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
         }
@@ -52,16 +52,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
-                string discoveredDirectory = Repository.Discover(WorkingDirectory);
+                string gitDir = Repository.Discover(WorkingDirectory);
 
-                WorkingDirectory = discoveredDirectory;
+                WorkingDirectory = gitDir;
             }
 
             if (!Directory.Exists(WorkingDirectory)) {
                 throw new DirectoryNotFoundException($"Can not find path: {WorkingDirectory}");
             }
 
-            if (buildType != ComboBuildType.Changed || buildType != ComboBuildType.Staged) {
+            if (buildType != ComboBuildType.Changes || buildType != ComboBuildType.Staged) {
                 return;
             }
 
@@ -76,7 +76,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     };
 
                     Commits = repo.Commits.QueryBy(filter).ToList();
-                    int divergedDistance = Commits.Count();
+                    int divergedDistance = Commits.Count;
 
                     foreach (Branch repoBranch in repo.Branches) {
                         if (repoBranch.FriendlyName == FriendlyBranchName) {
@@ -99,7 +99,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         changedFiles.Add(treeChange.Path);
                     }
 
-                    if (buildType == ComboBuildType.Changed) {
+                    if (buildType == ComboBuildType.Changes) {
                         UpdateChangedFilesFromStatus(repo, changedFiles);
                     }
                     
@@ -137,4 +137,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             return string.Equals(branchName, "(no branch)");
         }
     }
+
 }
