@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{CFACAAE6-993C-4A84-BFCB-BB265C3670F1}</ProjectGuid>
+    <ProjectGuid>{B807F57F-C8DF-4129-9F0A-01B7F7AA2EF0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Project2</RootNamespace>
-    <AssemblyName>ProjectB</AssemblyName>
+    <RootNamespace>Project1</RootNamespace>
+    <AssemblyName>Foo</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <CommonBuildProject>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'dir.proj'))</CommonBuildProject>
@@ -43,16 +43,6 @@
   <ItemGroup>
     <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ProjectA\ProjectA.csproj">
-      <Project>{b807f57f-c8df-4129-9f0a-01b7f7aa2ef0}</Project>
-      <Name>ProjectA</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ProjectC\ProjectC.csproj">
-      <Project>{709972c2-4a20-4355-ba9e-f4116aaa8769}</Project>
-      <Name>ProjectC</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(CommonBuildProject)\dir.proj" Condition="$(CommonBuildProject) != ''" />
