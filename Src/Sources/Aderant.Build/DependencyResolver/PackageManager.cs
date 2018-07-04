@@ -96,13 +96,31 @@ namespace Aderant.Build.DependencyResolver {
             AddModules(context, requirements, file);
         }
 
+        // we have to do this to stop paket from throwing exceptions
+        private string AdjustVersionHack(string name, string version) {
+            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")){
+                return version;
+            }
+
+            var parts = version.Split(' ').ToArray();
+            // ">= 11.0 < 12.0 build" will become "< 12.0 build"
+            if (parts.Length >= 4 && parts[0] == ">=" && parts[2] == "<") {
+                var newVersion = string.Join(" ", parts.Skip(2));
+                Console.WriteLine($@"Version Adjusted {name}: {version} >>>>>>>>>>> {newVersion}");
+                return newVersion;
+            }
+
+            return version;
+        }
+
         private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
                 string version = string.Empty;
                 if (referencedModule.VersionRequirement != null) {
                     version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
                 }
-
+                version = AdjustVersionHack(referencedModule?.Name, version);
+                
                 var name = Domain.PackageName(referencedModule.Name);
 
                 if (referencedModule.ReplaceVersionConstraint) {
