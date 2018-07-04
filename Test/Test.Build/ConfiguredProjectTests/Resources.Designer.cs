@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace IntegrationTest.Build.DependencyAnalyzer.CSharpProjectLoaderTests {
+namespace IntegrationTest.Build.ConfiguredProjectTests {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace IntegrationTest.Build.DependencyAnalyzer.CSharpProjectLoaderTests {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.DependencyAnalyzer.CSharpProjectLoaderTests.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.ConfiguredProjectTests.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

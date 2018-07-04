@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace IntegrationTest.Build.DependencyAnalyzer.TextTemplateAnalysis {
+namespace IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace IntegrationTest.Build.DependencyAnalyzer.TextTemplateAnalysis {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.DependencyAnalyzer.TextTemplateAnalysis.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -66,7 +66,11 @@ namespace IntegrationTest.Build.DependencyAnalyzer.TextTemplateAnalysis {
         ///&lt;#@ import namespace=&quot;System.Linq&quot; #&gt;
         ///&lt;#@ import namespace=&quot;System.Text&quot; #&gt;
         ///&lt;#@ import namespace=&quot;System.Collections.Generic&quot; #&gt;
-        ///&lt;#@ output extension=&quot;.cs&quot; #&gt;.
+        ///&lt;#@ output extension=&quot;.cs&quot; #&gt;
+        ///
+        ///&lt;#@ assembly name=&quot;$(ProjectDir)\..\..\Dependencies\Aderant.Query.Modeling.dll&quot; #&gt;
+        ///&lt;#@ assembly name=&quot;$(ProjectDir)\..\..\Dependencies\Aderant.Framework.SoftwareFactory.Common.dll&quot; #&gt;
+        ///&lt;#@ assembly name=&quot;$(ProjectDir)\..\..\Dependencies\Microso [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SimpleTextTemplate {
             get {
