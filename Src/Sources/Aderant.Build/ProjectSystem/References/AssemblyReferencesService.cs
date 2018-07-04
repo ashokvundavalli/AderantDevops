@@ -9,7 +9,7 @@ namespace Aderant.Build.ProjectSystem.References {
     [ExportMetadata("Scope", nameof(ProjectSystem.ConfiguredProject))]
     internal class AssemblyReferencesService : AssemblyReferencesServiceBase {
 
-        private static readonly string[] outputTypeValues = new[] {
+        private static readonly string[] outputTypeValues = {
             "Library",
             "winexe",
             "exe",
@@ -19,11 +19,11 @@ namespace Aderant.Build.ProjectSystem.References {
             IReadOnlyCollection<ConfiguredProject> projects = ConfiguredProject.Tree.LoadedConfiguredProjects;
 
             foreach (var project in projects) {
-                IAssemblyReference reference = project.Services.AssemblyReferences.SynthesizeResolvedReferenceForProjectOutput();
+                var reference = project.Services.AssemblyReferences.SynthesizeResolvedReferenceForProjectOutput(unresolved);
 
                 if (reference != null) {
-                    if (unresolved.GetAssemblyName() == reference.GetAssemblyName()) {
-                        return reference;
+                    if (string.Equals(unresolved.GetAssemblyName(), reference.ResolvedReference.Id, StringComparison.OrdinalIgnoreCase)) {
+                        return (IAssemblyReference)reference.ResolvedReference;
                     }
                 }
             }
@@ -38,11 +38,11 @@ namespace Aderant.Build.ProjectSystem.References {
             return reference;
         }
 
-        public override IAssemblyReference SynthesizeResolvedReferenceForProjectOutput() {
+        public override ResolvedReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved) {
             var configuredProjectOutputType = ConfiguredProject.OutputType;
 
             if (outputTypeValues.Contains(configuredProjectOutputType, StringComparer.OrdinalIgnoreCase)) {
-                var resolved = new UnresolvedAssemblyReference(this, ConfiguredProject);
+                var resolved = new ResolvedReference(ConfiguredProject, unresolved, ConfiguredProject);
                 return resolved;
             }
 

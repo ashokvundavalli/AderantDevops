@@ -20,9 +20,12 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         }
 
 
-        public ICollection<IDependencyRef> DependsOn {
+        public IReadOnlyCollection<IDependencyRef> DependsOn {
             get { return module.DependsOn; }
-            set { module.DependsOn = value; }
+        }
+
+        public void AddDependency(IDependencyRef dependency) {
+            module.AddDependency(dependency);
         }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {

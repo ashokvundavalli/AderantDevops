@@ -5,7 +5,7 @@
             : base("Reference") {
         }
 
-        public abstract IAssemblyReference SynthesizeResolvedReferenceForProjectOutput();
+        public abstract ResolvedReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
     }
 
 }

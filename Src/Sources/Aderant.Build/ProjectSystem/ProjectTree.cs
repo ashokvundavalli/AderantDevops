@@ -7,11 +7,17 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml;
+using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
+
+    /// <summary>
+    /// A <see cref="ProjectTree"/> models the relationship between projects in a solution, and cross solution project references and their external dependencies.
+    /// </summary>
     [Export(typeof(IProjectTree))]
     internal class ProjectTree : IProjectTree, ISolutionManager {
         // Holds all projects that are applicable to the build tree
@@ -54,7 +60,7 @@ namespace Aderant.Build.ProjectSystem {
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
             foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
-                ConfiguredProject project = unconfiguredProject.LoadConfiguredProject("");
+                ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
 
                 project.AssignProjectConfiguration("Debug|Any CPU");
             }
@@ -63,10 +69,35 @@ namespace Aderant.Build.ProjectSystem {
                 await project.CollectBuildDependencies(collector);
             }
         }
-        public void AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
+        public DependencyGraph AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
             foreach (var project in LoadedConfiguredProjects) {
                 project.AnalyzeBuildDependencies(collector);
             }
+
+            var graph = BuildDependencyGraph();
+            return new DependencyGraph(graph);
+        }
+
+        private IEnumerable<IArtifact> BuildDependencyGraph() {
+            List<IArtifact> graph = new List<IArtifact>();
+
+            var comparer = DependencyEqualityComparer.Default;
+
+            HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
+            
+            foreach (var item in LoadedConfiguredProjects) {
+                item.ReplaceDependencies(allDependencies, comparer);
+
+                IReadOnlyCollection<IDependable> dependables = item.GetDependencies();
+
+                foreach (var dependency in dependables) {
+                    allDependencies.Add(dependency);
+                }
+
+                graph.Add(item);
+            }
+
+            return graph;
         }
 
         public void AddConfiguredProject(ConfiguredProject configuredProject) {

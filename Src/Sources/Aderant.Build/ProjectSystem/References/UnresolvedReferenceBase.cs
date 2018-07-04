@@ -1,10 +1,18 @@
-﻿namespace Aderant.Build.ProjectSystem.References {
-    internal abstract class UnresolvedReferenceBase<TUnresolvedReference, TResolvedReference, TMoniker>
+﻿using Aderant.Build.Model;
+
+namespace Aderant.Build.ProjectSystem.References {
+
+    /// <summary>
+    /// UnresolvedReference objects are used to represent dependencies between artifacts when the actual artifacts are not
+    /// known yet.
+    /// During the analysis process performed by the engine, UnresolvedReference objects are replaced by links to actual
+    /// artifact
+    /// objects.
+    /// </summary>
+    internal abstract class UnresolvedReferenceBase<TUnresolvedReference, TResolvedReference, TMoniker> : IDependable
         where TUnresolvedReference : class, IUnresolvedReference, TResolvedReference where TResolvedReference : class, IReference {
 
         protected readonly TMoniker moniker;
-
-        private ConfiguredProject project;
 
         private ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> service;
 
@@ -13,19 +21,9 @@
             this.moniker = moniker;
         }
 
-        protected UnresolvedReferenceBase(ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> service, ConfiguredProject configuredProject) {
-            this.service = service;
-            this.Project = configuredProject;
-        }
-
-        public bool IsResolved { get; set; }
-
-        protected ConfiguredProject Project {
-            get { return project; }
-            set {
-                project = value;
-                IsResolved = true;
-            }
-        }
+        /// <summary>
+        /// Gets the unique moniker that identifies this dependency within the build.
+        /// </summary>
+        public abstract string Id { get; }
     }
 }

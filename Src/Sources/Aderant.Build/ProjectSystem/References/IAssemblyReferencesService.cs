@@ -4,6 +4,7 @@
         /// <summary>
         /// Synthesizes the resolved reference that represents the output of the project
         /// </summary>
-        IAssemblyReference SynthesizeResolvedReferenceForProjectOutput();
+        /// <param name="unresolved"></param>
+        ResolvedReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
     }
 }

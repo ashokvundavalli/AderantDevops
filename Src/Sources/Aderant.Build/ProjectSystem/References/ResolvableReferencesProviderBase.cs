@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using Aderant.Build.Model;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
 
-    /// <summary>
-    /// An UnresolvedReference is a pair consisting of a symbolic artifact identifier and a version.
-    /// UnresolvedReference objects are used to represent dependencies between artifacts when the actual artifacts are not
-    /// known yet.
-    /// During the analysis process performed by engine, UnresolvedReference objects are replaced by links to actual artifact
-    /// objects.
-    /// </summary>
     internal abstract class ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> : IResolvableReferencesService<TUnresolvedReference, TResolvedReference>, IDisposable
         where TUnresolvedReference : class, IUnresolvedReference, TResolvedReference where TResolvedReference : class, IReference {
 
@@ -45,25 +39,22 @@ namespace Aderant.Build.ProjectSystem.References {
             return unresolvedReferences = references;
         }
 
-        public IReadOnlyCollection<TResolvedReference> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
-            var resolved = new List<TResolvedReference>();
-
-            List<TUnresolvedReference> nowResolvedReferences = new List<TUnresolvedReference>();
+        public IReadOnlyCollection<ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
+            var nowResolvedReferences = new List<ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>>();
 
             foreach (var unresolved in unresolvedReferences) {
                 TResolvedReference resolvedReference = CreateResolvedReference(references, unresolved);
 
                 if (resolvedReference != null) {
-                    nowResolvedReferences.Add(unresolved);
-                    resolved.Add(resolvedReference);
+                    nowResolvedReferences.Add(new ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>(unresolved, resolvedReference));
                 }
             }
 
-            foreach (TUnresolvedReference nowResolvedReference in nowResolvedReferences) {
-                unresolvedReferences.Remove(nowResolvedReference);
+            foreach (var nowResolvedReference in nowResolvedReferences) {
+                unresolvedReferences.Remove(nowResolvedReference.ExistingUnresolvedItem);
             }
-            
-            return resolved;
+
+            return nowResolvedReferences;
         }
 
         protected abstract TResolvedReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, TUnresolvedReference unresolved);

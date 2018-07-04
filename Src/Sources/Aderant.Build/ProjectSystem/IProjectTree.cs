@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -13,6 +14,12 @@ namespace Aderant.Build.ProjectSystem {
         ISolutionManager SolutionManager { get; }
 
         Task LoadProjectsAsync(string directory, bool recursive);
+   
+        /// <summary>
+        /// Adds a configured project to this tree.
+        /// </summary>
+        /// <param name="configuredProject">The configured project.</param>
+        void AddConfiguredProject(ConfiguredProject configuredProject);
 
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.
@@ -20,12 +27,16 @@ namespace Aderant.Build.ProjectSystem {
         Task CollectBuildDependencies(BuildDependenciesCollector collector);
 
         /// <summary>
-        /// Adds a configured project to this tree.
+        /// Analyzes the build dependencies to produce a high level representation of the build order.
         /// </summary>
-        /// <param name="configuredProject">The configured project.</param>
-        void AddConfiguredProject(ConfiguredProject configuredProject);
-
-        void AnalyzeBuildDependencies(BuildDependenciesCollector collector);
+        DependencyGraph AnalyzeBuildDependencies(BuildDependenciesCollector collector);
     }
 
+    //internal interface DescentBuilder {
+
+    //    void GenerateTargets(DependencyGraph graph);
+
+    //}
 }
+
+

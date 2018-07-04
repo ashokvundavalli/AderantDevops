@@ -51,7 +51,7 @@ namespace Aderant.Build.ProjectSystem {
             return projectCollection;
         }
 
-        public ConfiguredProject LoadConfiguredProject(string name) {
+        public ConfiguredProject LoadConfiguredProject() {
             var result = ConfiguredProjectFactory.CreateExport();
             var configuredProject = result.Value;
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -6,7 +6,7 @@ using System.IO;
 namespace Aderant.Build.DependencyAnalyzer.Model {
     [DebuggerDisplay("DirectoryNode: {Name}")]
     internal sealed class DirectoryNode : IDependencyRef {
-        private ICollection<IDependencyRef> dependsOn;
+        private HashSet<IDependencyRef> dependsOn;
         
         public bool IsCompletion { get; }
         public string ModuleName { get; }
@@ -53,9 +53,8 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
 
         public string Name { get; }
 
-        public ICollection<IDependencyRef> DependsOn {
+        public IReadOnlyCollection<IDependencyRef> DependsOn {
             get { return dependsOn ?? (dependsOn = new HashSet<IDependencyRef>()); }
-            set { dependsOn = value; }
         }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {

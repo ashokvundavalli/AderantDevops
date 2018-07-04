@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
+
     [DebuggerDisplay("AssemblyReference: {Name}")]
     internal class AssemblyRef : IDependencyRef {
 
@@ -20,8 +21,11 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
 
         public string Name { get; }
 
-        public ICollection<IDependencyRef> DependsOn {
+        public IReadOnlyCollection<IDependencyRef> DependsOn {
             get { return null; }
+        }
+
+        public void AddDependency(IDependencyRef dependency) {
         }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {

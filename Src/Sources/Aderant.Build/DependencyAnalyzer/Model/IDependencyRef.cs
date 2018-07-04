@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
-    internal interface IDependencyRef : IEquatable<IDependencyRef> {
+    internal interface IDependencyRef : /*IDependable*/ IEquatable<IDependencyRef> {
         string Name { get; }
-        
-        ICollection<IDependencyRef> DependsOn { get; }
-        
+
+        IReadOnlyCollection<IDependencyRef> DependsOn { get; }
+
+        void AddDependency(IDependencyRef dependency);
+
         void Accept(GraphVisitorBase visitor, StreamWriter outputFile);
     }
 

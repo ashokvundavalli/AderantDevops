@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
+using Aderant.Build.Model;
 
 namespace Aderant.Build.ProjectSystem.References {
     /// <summary>
-    /// A component that knows how to read, write, and resolve your references
+    /// A component that knows how to read, write, and resolve project references
     /// </summary>
-    /// <typeparam name="TUnresolvedReference">The type of the t unresolved reference.</typeparam>
-    /// <typeparam name="TResolvedReference">The type of the t resolved reference.</typeparam>
-    public interface IResolvableReferencesService<out TUnresolvedReference, TResolvedReference>
-        where TUnresolvedReference : TResolvedReference
-        where TResolvedReference : class {
-
+    public interface IResolvableReferencesService<TUnresolvedReference, TResolvedReference>
+        where TUnresolvedReference : class, TResolvedReference, IUnresolvedReference
+        where TResolvedReference : class, IReference {
         IReadOnlyCollection<TUnresolvedReference> GetUnresolvedReferences();
 
-        IReadOnlyCollection<TResolvedReference> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references);
+        IReadOnlyCollection<ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references);
     }
+
 }

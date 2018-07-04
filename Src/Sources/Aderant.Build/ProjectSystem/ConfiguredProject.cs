@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
+using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
@@ -12,10 +16,12 @@ namespace Aderant.Build.ProjectSystem {
     /// </summary>
     [Export(typeof(ConfiguredProject))]
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
-    internal class ConfiguredProject {
+    [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
+    internal class ConfiguredProject : IArtifact, IReference {
         private readonly IFileSystem fileSystem;
         private Lazy<Project> project;
         private Lazy<ProjectRootElement> projectXml;
+        private List<ResolvedReference> resolvedDependencies;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
@@ -31,6 +37,10 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public string FullPath { get; private set; }
+
+        public string Id {
+            get { return FullPath; }
+        }
 
         /// <summary>
         /// Gets or sets the solution file which contains this project.
@@ -72,6 +82,7 @@ namespace Aderant.Build.ProjectSystem {
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
             projectXml = projectElement;
+            resolvedDependencies = new List<ResolvedReference>();
 
             project = new Lazy<Project>(() => new Project(this.projectXml.Value, null, null, new ProjectCollection()));
         }
@@ -140,24 +151,49 @@ namespace Aderant.Build.ProjectSystem {
             // Force MEF import
             var services = Services;
 
-            List<IReference> dependencies = new List<IReference>();
-
             if (services.ProjectReferences != null) {
-                var references = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences);
-                if (references != null) {
-                    dependencies.AddRange(references);
+                var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences);
+                if (results != null) {
+                    foreach (var reference in results) {
+                        AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                    }
                 }
             }
 
             if (services.AssemblyReferences != null) {
-                var references = services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences);
-                if (references != null) {
-                    dependencies.AddRange(references);
+                var results = services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences);
+                if (results != null) {
+                    foreach (var reference in results) {
+                        AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                    }
                 }
             }
+        }
 
-            foreach (var dependency in dependencies) {
-                //AddDependency();
+        private void AddResolvedDependency(BuildDependenciesCollector collector, IUnresolvedReference existingUnresolvedItem, IReference dependency) {
+            collector.AddResolvedDependency(existingUnresolvedItem, dependency);
+
+            var dependencies = resolvedDependencies;
+
+            if (dependencies != null) {
+                resolvedDependencies.Add(new ResolvedReference(this, existingUnresolvedItem, dependency));
+            }
+        }
+
+        public IReadOnlyCollection<IDependable> GetDependencies() {
+            return resolvedDependencies.Select(s => s.ResolvedReference).ToList();
+        }
+
+        /// <summary>
+        /// Replaces resolved dependencies with an equivalent one from the provided set.
+        /// </summary>
+        public void ReplaceDependencies(IReadOnlyCollection<IDependable> dependables, IEqualityComparer<IDependable> comparer) {
+            foreach (var r in resolvedDependencies) {
+                foreach (var item in dependables) {
+                    if (comparer.Equals(r.ResolvedReference, item)) {
+                        r.ReplaceReference(item);
+                    }
+                }
             }
         }
     }

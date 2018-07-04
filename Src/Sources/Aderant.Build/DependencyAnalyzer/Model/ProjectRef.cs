@@ -9,6 +9,7 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
     internal class ProjectRef : IDependencyRef {
         
         private bool isResolved;
+        private HashSet<IDependencyRef> dependsOn;
 
         public ProjectRef(string reference) {
             this.Name = reference;
@@ -20,7 +21,18 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         }
 
         public string Name { get; private set; }
-        public ICollection<IDependencyRef> DependsOn { get; set; }
+
+        public IReadOnlyCollection<IDependencyRef> DependsOn {
+            get { return dependsOn; }
+        }
+
+        public void AddDependency(IDependencyRef dependency) {
+            if (dependsOn == null) {
+                dependsOn = new HashSet<IDependencyRef>();
+            }
+
+            dependsOn.Add(dependency);
+        }
 
         public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
             (visitor as GraphVisitor).Visit(this, outputFile);
