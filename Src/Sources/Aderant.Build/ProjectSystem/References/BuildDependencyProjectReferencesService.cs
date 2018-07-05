@@ -19,8 +19,7 @@ namespace Aderant.Build.ProjectSystem.References {
             ConfiguredProject dependency = projects.SingleOrDefault(project => project.ProjectGuid == unresolved.ProjectGuid);
 
             if (dependency != null) {
-                var resolved = new ResolvedProjectReferenceDependency(ConfiguredProject, unresolved, dependency);
-                return resolved;
+                return dependency;
             }
 
             return null;

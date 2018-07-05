@@ -20,7 +20,7 @@ namespace Aderant.Build.ProjectSystem {
     [Export(typeof(ConfiguredProject))]
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
-    internal class ConfiguredProject : AbstractArtifact, IReference {
+    internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference {
         private readonly IFileSystem fileSystem;
 
         private bool? isWebProject;
@@ -138,16 +138,8 @@ namespace Aderant.Build.ProjectSystem {
 
         public override IReadOnlyCollection<IDependable> GetDependencies() {
             return resolvedDependencies
-                .Select(
-                    s => {
-
-                        var r = s.ResolvedReference;
-                        //if (r is ResolvedDependency) {
-
-                        //}
-                        return r;
-                    })
-                //.Concat(base.GetDependencies())
+                .Select(s => s.ResolvedReference)
+                .Concat(base.GetDependencies())
                 .ToList();
         }
 
