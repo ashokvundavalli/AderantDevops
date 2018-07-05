@@ -20,7 +20,7 @@ namespace Aderant.Build.ProjectSystem {
     [Export(typeof(ConfiguredProject))]
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
-    internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference {
+    internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
         private readonly IFileSystem fileSystem;
 
         private bool? isWebProject;
@@ -70,17 +70,6 @@ namespace Aderant.Build.ProjectSystem {
             get { return project.Value.GetPropertyValue("OutputType"); }
         }
 
-        public Guid ProjectGuid {
-            get {
-                var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
-                if (propertyElement != null) {
-                    return Guid.Parse(propertyElement);
-                }
-
-                return Guid.Empty;
-            }
-        }
-
         internal IReadOnlyList<Guid> ProjectTypeGuids {
             get {
                 if (projectTypeGuids == null) {
@@ -125,6 +114,17 @@ namespace Aderant.Build.ProjectSystem {
                 return ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.TestProject);
                 //result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}")
                 //|| result.DependsOn.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
+            }
+        }
+
+        public Guid ProjectGuid {
+            get {
+                var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
+                if (propertyElement != null) {
+                    return Guid.Parse(propertyElement);
+                }
+
+                return Guid.Empty;
             }
         }
 
@@ -268,14 +268,7 @@ namespace Aderant.Build.ProjectSystem {
                 // we need to check if this has happened and unpack the result
                 if (results != null) {
                     foreach (var reference in results) {
-                        var assemblyReference = reference.ResolvedReference as UnresolvedAssemblyReference;
-
-                        if (assemblyReference != null && assemblyReference.IsResolved) {
-                            // Unpack the substituted reference
-                            AddResolvedDependency(collector, reference.ExistingUnresolvedItem, assemblyReference.ResolvedReference);
-                        } else {
-                            AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
-                        }
+                        AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
                     }
                 }
             }

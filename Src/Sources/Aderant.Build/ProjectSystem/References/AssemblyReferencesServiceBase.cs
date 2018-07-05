@@ -7,7 +7,7 @@ namespace Aderant.Build.ProjectSystem.References {
             : base("Reference") {
         }
 
-        public abstract IReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
+        public abstract IAssemblyReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
     }
 
 }

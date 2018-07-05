@@ -6,6 +6,6 @@ namespace Aderant.Build.ProjectSystem.References {
         /// <summary>
         /// Synthesizes the resolved reference that represents the output of the project
         /// </summary>
-        IReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
+        IAssemblyReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
     }
 }

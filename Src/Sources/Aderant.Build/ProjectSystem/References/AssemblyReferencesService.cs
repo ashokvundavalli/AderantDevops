@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
-using Aderant.Build.Model;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
@@ -23,7 +22,7 @@ namespace Aderant.Build.ProjectSystem.References {
                 var reference = project.Services.AssemblyReferences.SynthesizeResolvedReferenceForProjectOutput(unresolved);
                 
                 if (reference != null) {
-                    return new UnresolvedAssemblyReference(this, unresolved, reference);
+                    return reference;
                 }
             }
 
@@ -37,7 +36,7 @@ namespace Aderant.Build.ProjectSystem.References {
             return reference;
         }
 
-        public override IReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved) {
+        public override IAssemblyReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved) {
             var outputType = ConfiguredProject.OutputType;
 
             // Project outputs a supported .NET assembly
@@ -49,7 +48,6 @@ namespace Aderant.Build.ProjectSystem.References {
                 if (string.Equals(assemblyName, projectAssemblyName, StringComparison.OrdinalIgnoreCase)) {
                     return ConfiguredProject;
                 }
-
             }
 
             return null;
