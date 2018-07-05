@@ -38,7 +38,7 @@
 
         public string ProjectToolsVersion { get; set; }
 
-        public override void Accept(BuildElementVisitor visitor) {
+        public override void Accept(TargetXmlEmitter visitor) {
             visitor.Visit(this);
         }
     }

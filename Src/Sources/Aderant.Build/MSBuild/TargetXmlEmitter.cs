@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Xml.Linq;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.MSBuild {
-    public class BuildElementVisitor {
+    public class TargetXmlEmitter {
         /// <summary>
         /// The MSBuild Project namespace
         /// </summary>
@@ -17,9 +15,9 @@ namespace Aderant.Build.MSBuild {
         private XElement document;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BuildElementVisitor"/> class.
+        /// Initializes a new instance of the <see cref="TargetXmlEmitter"/> class.
         /// </summary>
-        public BuildElementVisitor() {
+        public TargetXmlEmitter() {
             document = CreateRoot(null);
         }
 
@@ -180,7 +178,7 @@ namespace Aderant.Build.MSBuild {
         /// Gets the MSBuild project document.
         /// </summary>
         /// <returns></returns>
-        public virtual XElement GetDocument() {
+        public virtual XElement GetXml() {
             return document;
         }
 

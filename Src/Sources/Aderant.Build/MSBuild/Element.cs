@@ -4,6 +4,6 @@ namespace Aderant.Build.MSBuild {
     /// </summary>
     public abstract class Element {
 
-        public abstract void Accept(BuildElementVisitor visitor);
+        public abstract void Accept(TargetXmlEmitter visitor);
     }
 }

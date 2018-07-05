@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.MSBuild {
     /// <summary>
@@ -6,17 +8,19 @@ namespace Aderant.Build.MSBuild {
     /// </summary>
     public class Project : MSBuildProjectElement {
 
+        private Target defaultTarget;
+
         private List<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Project"/> class.
+        /// Initializes a new instance of the <see cref="Project" /> class.
         /// </summary>
         public Project() {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Project"/> class.
+        /// Initializes a new instance of the <see cref="Project" /> class.
         /// </summary>
         /// <param name="projectElements">The project elements.</param>
         public Project(IEnumerable<MSBuildProjectElement> projectElements) {
@@ -27,12 +31,8 @@ namespace Aderant.Build.MSBuild {
         /// Gets the elements belonging to this project.
         /// </summary>
         public IEnumerable<MSBuildProjectElement> Elements {
-            get {
-                return elements;
-            }
+            get { return elements; }
         }
-
-        private Target defaultTarget;
 
         /// <summary>
         /// Gets or sets the default target for this project.
@@ -41,21 +41,19 @@ namespace Aderant.Build.MSBuild {
         /// The default target.
         /// </value>
         public Target DefaultTarget {
-            get {
-                return defaultTarget;
-            }
+            get { return defaultTarget; }
             set {
                 elements.Add(value);
                 defaultTarget = value;
             }
         }
 
-        public override void Accept(BuildElementVisitor visitor) {
+        public override void Accept(TargetXmlEmitter visitor) {
             visitor.Visit(this);
         }
 
         /// <summary>
-        /// Adds the specified elements to this project. 
+        /// Adds the specified elements to this project.
         /// The element position is not deterministic.
         /// </summary>
         /// <param name="elements">The elements.</param>
@@ -71,6 +69,13 @@ namespace Aderant.Build.MSBuild {
         /// <param name="element">The element.</param>
         public void Add(MSBuildProjectElement element) {
             elements.Add(element);
+        }
+
+        public XElement CreateTargetFile(Project project) {
+            TargetXmlEmitter visitor = new ParallelBuildVisitor();
+            project.Accept(visitor);
+
+            return visitor.GetXml();
         }
     }
 }
