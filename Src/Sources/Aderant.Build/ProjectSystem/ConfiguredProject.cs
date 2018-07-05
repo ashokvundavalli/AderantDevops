@@ -4,6 +4,9 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
@@ -17,9 +20,12 @@ namespace Aderant.Build.ProjectSystem {
     [Export(typeof(ConfiguredProject))]
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
-    internal class ConfiguredProject : IArtifact, IReference {
+    internal class ConfiguredProject : AbstractArtifact, IReference {
         private readonly IFileSystem fileSystem;
+
+        private bool? isWebProject;
         private Lazy<Project> project;
+        private IReadOnlyList<Guid> projectTypeGuids;
         private Lazy<ProjectRootElement> projectXml;
         private List<ResolvedReference> resolvedDependencies;
 
@@ -37,10 +43,6 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public string FullPath { get; private set; }
-
-        public string Id {
-            get { return FullPath; }
-        }
 
         /// <summary>
         /// Gets or sets the solution file which contains this project.
@@ -79,12 +81,119 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
+        internal IReadOnlyList<Guid> ProjectTypeGuids {
+            get {
+                if (projectTypeGuids == null) {
+                    var propertyElement = project.Value.GetPropertyValue("ProjectTypeGuids");
+
+                    if (!string.IsNullOrEmpty(propertyElement)) {
+                        var typeGuids = propertyElement.Split(';');
+
+                        var typeGuidsAsGuids = new List<Guid>();
+
+                        typeGuids.Aggregate(
+                            typeGuidsAsGuids,
+                            (list, s) => {
+                                Guid result;
+                                if (Guid.TryParse(s, out result)) {
+                                    list.Add(result);
+                                }
+
+                                return list;
+                            });
+
+                        projectTypeGuids = typeGuidsAsGuids;
+                    }
+                }
+
+                return projectTypeGuids;
+            }
+        }
+
+        public bool IsWebProject {
+            get {
+                if (!isWebProject.HasValue) {
+                    isWebProject = ProjectTypeGuids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                }
+
+                return isWebProject.GetValueOrDefault();
+            }
+        }
+
+        public bool IsTestProject {
+            get {
+                return ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.TestProject);
+                //result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}")
+                //|| result.DependsOn.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
+            }
+        }
+
+        public override string Id {
+            get { return GetAssemblyName(); }
+        }
+
+        public string GetAssemblyName() {
+            return OutputAssembly;
+        }
+
+        public override IReadOnlyCollection<IDependable> GetDependencies() {
+            return resolvedDependencies
+                .Select(
+                    s => {
+
+                        var r = s.ResolvedReference;
+                        //if (r is ResolvedDependency) {
+
+                        //}
+                        return r;
+                    })
+                //.Concat(base.GetDependencies())
+                .ToList();
+        }
+
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
             projectXml = projectElement;
             resolvedDependencies = new List<ResolvedReference>();
 
-            project = new Lazy<Project>(() => new Project(this.projectXml.Value, null, null, new ProjectCollection()));
+            project = new Lazy<Project>(
+                () => {
+                    IDictionary<string, string> globalProperties = new Dictionary<string, string> {
+                        { "WebDependencyVersion", "-1" }
+                    };
+
+                    if (!string.IsNullOrEmpty(fullPath)) {
+                        return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
+                    }
+
+                    return LoadNonDiskBackedProject(globalProperties);
+                });
+        }
+
+        private Project LoadNonDiskBackedProject(IDictionary<string, string> globalProperties) {
+            var node = XDocument.Parse(projectXml.Value.RawXml);
+
+            // The fact that the load used an XmlReader instead of using a file name,
+            // properties like $(MSBuildThisFileDirectory) used during project load don't work.
+            node.Root.Descendants()
+                .Where(s => s.NodeType == XmlNodeType.Element && !s.HasElements)
+                .Where(s => s.Value.IndexOf("[MSBuild]::") > 0)
+                .Remove();
+
+            var nonDiskBackedProject = new Project(
+                node.CreateReader(),
+                globalProperties,
+                null,
+                CreateProjectCollection(),
+                ProjectLoadSettings.IgnoreMissingImports);
+            return nonDiskBackedProject;
+        }
+
+        private static ProjectCollection CreateProjectCollection() {
+            return new ProjectCollection {
+                IsBuildEnabled = false,
+                DisableMarkDirty = true,
+            };
         }
 
         public ICollection<ProjectItem> GetItems(string itemType) {
@@ -162,9 +271,19 @@ namespace Aderant.Build.ProjectSystem {
 
             if (services.AssemblyReferences != null) {
                 var results = services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences);
+
+                // Because assembly references can be replaced by a dependency on another project
+                // we need to check if this has happened and unpack the result
                 if (results != null) {
                     foreach (var reference in results) {
-                        AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                        var assemblyReference = reference.ResolvedReference as UnresolvedAssemblyReference;
+
+                        if (assemblyReference != null && assemblyReference.IsResolved) {
+                            // Unpack the substituted reference
+                            AddResolvedDependency(collector, reference.ExistingUnresolvedItem, assemblyReference.ResolvedReference);
+                        } else {
+                            AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                        }
                     }
                 }
             }
@@ -180,21 +299,18 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        public IReadOnlyCollection<IDependable> GetDependencies() {
-            return resolvedDependencies.Select(s => s.ResolvedReference).ToList();
-        }
-
         /// <summary>
         /// Replaces resolved dependencies with an equivalent one from the provided set.
         /// </summary>
         public void ReplaceDependencies(IReadOnlyCollection<IDependable> dependables, IEqualityComparer<IDependable> comparer) {
             foreach (var r in resolvedDependencies) {
                 foreach (var item in dependables) {
-                    if (comparer.Equals(r.ResolvedReference, item)) {
+                    if (comparer.Equals(r.ResolvedReference, item) && !ReferenceEquals(r.ResolvedReference, item)) {
                         r.ReplaceReference(item);
                     }
                 }
             }
         }
     }
+
 }

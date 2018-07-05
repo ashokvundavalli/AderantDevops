@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
@@ -19,7 +20,7 @@ namespace Aderant.Build.ProjectSystem.References {
 
             return AssemblyName.FullName;
         }
-
+     
         public static UnresolvedAssemblyReferenceMoniker Create(ProjectItem unresolved) {
             string evaluatedInclude = unresolved.EvaluatedInclude;
 

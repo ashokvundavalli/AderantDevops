@@ -5,7 +5,7 @@ namespace Aderant.Build.ProjectSystem.References {
     public class ResolvedReference : ResolvedDependency<IUnresolvedReference, IReference> {
 
         public ResolvedReference(IArtifact artifact, IUnresolvedReference existingUnresolvedItem, IReference resolvedReference)
-            : base(artifact) {
+            : base(artifact, null, existingUnresolvedItem) {
             ExistingUnresolvedItem = existingUnresolvedItem;
             ResolvedReference = resolvedReference;
         }

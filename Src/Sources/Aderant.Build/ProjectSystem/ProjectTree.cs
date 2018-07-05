@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
@@ -16,7 +17,8 @@ using Microsoft.Build.Construction;
 namespace Aderant.Build.ProjectSystem {
 
     /// <summary>
-    /// A <see cref="ProjectTree"/> models the relationship between projects in a solution, and cross solution project references and their external dependencies.
+    /// A <see cref="ProjectTree" /> models the relationship between projects in a solution, and cross solution project
+    /// references and their external dependencies.
     /// </summary>
     [Export(typeof(IProjectTree))]
     internal class ProjectTree : IProjectTree, ISolutionManager {
@@ -47,15 +49,14 @@ namespace Aderant.Build.ProjectSystem {
             get { return this; }
         }
 
-        public Task LoadProjectsAsync(string directory, bool recursive) {
-            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
-
+        public Task LoadProjects(string directory, bool recursive) {
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
             }
 
-            return Task.WhenAll(
-                files.Select(file => Task.Run(() => LoadAndParseProjectFile(file))).ToArray());
+            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
+
+            return Task.WhenAll(files.Select(file => Task.Run(() => LoadAndParseProjectFile(file))).ToArray());
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
@@ -69,35 +70,14 @@ namespace Aderant.Build.ProjectSystem {
                 await project.CollectBuildDependencies(collector);
             }
         }
-        public DependencyGraph AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
+
+        public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
             foreach (var project in LoadedConfiguredProjects) {
                 project.AnalyzeBuildDependencies(collector);
             }
 
             var graph = BuildDependencyGraph();
             return new DependencyGraph(graph);
-        }
-
-        private IEnumerable<IArtifact> BuildDependencyGraph() {
-            List<IArtifact> graph = new List<IArtifact>();
-
-            var comparer = DependencyEqualityComparer.Default;
-
-            HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
-            
-            foreach (var item in LoadedConfiguredProjects) {
-                item.ReplaceDependencies(allDependencies, comparer);
-
-                IReadOnlyCollection<IDependable> dependables = item.GetDependencies();
-
-                foreach (var dependency in dependables) {
-                    allDependencies.Add(dependency);
-                }
-
-                graph.Add(item);
-            }
-
-            return graph;
         }
 
         public void AddConfiguredProject(ConfiguredProject configuredProject) {
@@ -117,7 +97,7 @@ namespace Aderant.Build.ProjectSystem {
 
             if (projectInSolution == null || solutionFile == null) {
                 string directoryName = Path.GetDirectoryName(projectFilePath);
-                var files = Services.FileSystem.GetDirectoryNameOfFilePatternAbove(directoryName, "*.sln", null);
+                var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryName, "*.sln", null);
 
                 foreach (var file in files) {
                     ParseResult parseResult = parser.Parse(file);
@@ -134,6 +114,60 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             return new SolutionProject(solutionFile, projectInSolution);
+        }
+
+        private IEnumerable<IArtifact> BuildDependencyGraph() {
+            List<IArtifact> graph = new List<IArtifact>();
+
+            var comparer = DependencyEqualityComparer.Default;
+
+            HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
+
+            ProcessProjects(allDependencies, comparer, graph);
+            AddInitializeAndCompletionNodes(graph);
+
+            return graph;
+        }
+
+        private void AddInitializeAndCompletionNodes(List<IArtifact> graph) {
+            var grouping = graph
+                .OfType<ConfiguredProject>()
+                .GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var level in grouping) {
+                IArtifact initializeNode;
+                string solutionDirectoryName = Path.GetFileName(level.Key);
+
+                // Create a new node that represents the start of a directory
+                graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, false));
+
+                // Create a new node that represents the completion of a directory
+                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, true);
+                graph.Add(completionNode);
+                completionNode.AddResolvedDependency(null, initializeNode);
+
+                foreach (var project in graph
+                    .OfType<ConfiguredProject>()
+                    .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
+
+                    project.AddResolvedDependency(null, initializeNode);
+                    completionNode.AddResolvedDependency(null, project);
+                }
+            }
+        }
+
+        private void ProcessProjects(HashSet<IDependable> allDependencies, IEqualityComparer<IDependable> comparer, List<IArtifact> graph) {
+            foreach (var project in LoadedConfiguredProjects) {
+                project.ReplaceDependencies(allDependencies, comparer);
+
+                IReadOnlyCollection<IDependable> dependables = project.GetDependencies();
+
+                foreach (var dependency in dependables) {
+                    allDependencies.Add(dependency);
+                }
+
+                graph.Add(project);
+            }
         }
 
         private SolutionFileParser InitializeSolutionParser() {

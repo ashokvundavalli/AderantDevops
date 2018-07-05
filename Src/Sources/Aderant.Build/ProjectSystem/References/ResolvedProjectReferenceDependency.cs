@@ -4,7 +4,7 @@ using Aderant.Build.Model;
 namespace Aderant.Build.ProjectSystem.References {
     internal class ResolvedProjectReferenceDependency : ResolvedDependency<IUnresolvedBuildDependencyProjectReference, ConfiguredProject>, IBuildDependencyProjectReference {
         public ResolvedProjectReferenceDependency(IArtifact configuredProject, IUnresolvedBuildDependencyProjectReference unresolved, ConfiguredProject dependency)
-            : base(configuredProject) {
+            : base(configuredProject, dependency, unresolved) {
             base.ExistingUnresolvedItem = unresolved;
             base.ResolvedReference = dependency;
         }
@@ -15,6 +15,10 @@ namespace Aderant.Build.ProjectSystem.References {
 
         public string Id {
             get { return ResolvedReference.Id; }
+        }
+
+        public string GetAssemblyName() {
+            return ResolvedReference.OutputAssembly;
         }
     }
 }

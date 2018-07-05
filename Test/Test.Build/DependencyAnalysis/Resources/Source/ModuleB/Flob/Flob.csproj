@@ -64,6 +64,12 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Gaz\Gaz.csproj">
+      <Project>{5f12f859-a37e-492f-974e-71fef3dd71cd}</Project>
+      <Name>Gaz</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(CommonBuildProject)\dir.proj" Condition="$(CommonBuildProject) != ''" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

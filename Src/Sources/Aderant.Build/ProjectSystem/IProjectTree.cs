@@ -13,7 +13,7 @@ namespace Aderant.Build.ProjectSystem {
 
         ISolutionManager SolutionManager { get; }
 
-        Task LoadProjectsAsync(string directory, bool recursive);
+        Task LoadProjects(string directory, bool recursive);
    
         /// <summary>
         /// Adds a configured project to this tree.
@@ -29,14 +29,18 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Analyzes the build dependencies to produce a high level representation of the build order.
         /// </summary>
-        DependencyGraph AnalyzeBuildDependencies(BuildDependenciesCollector collector);
+        DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector);
     }
 
-    //internal interface DescentBuilder {
+    internal class BuildPipeline {
 
-    //    void GenerateTargets(DependencyGraph graph);
+        public void GenerateTargets(DependencyGraph graph) {
 
-    //}
+            var dependencyOrder2 = graph.GetDependencyOrder2();
+
+        }
+
+    }
 }
 
 

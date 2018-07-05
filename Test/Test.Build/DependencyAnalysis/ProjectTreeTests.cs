@@ -42,7 +42,7 @@ namespace IntegrationTest.Build.DependencyAnalysis {
             var unresolvedAssemblyReferences = servicesAssemblyReferences.GetUnresolvedReferences();
 
             Assert.IsNotNull(unresolvedAssemblyReferences);
-            CollectionAssert.Contains(unresolvedAssemblyReferences.Select(s => s.GetHintPath()).ToArray(), @"..\..\ModuleA\ProjectA\bin\Debug\ProjectA.dll");
+            CollectionAssert.Contains(unresolvedAssemblyReferences.Select(s => s.GetHintPath()).ToArray(), @"..\..\ModuleA\Foo\bin\Debug\Foo.dll");
         }
 
         [TestMethod]
@@ -69,8 +69,12 @@ namespace IntegrationTest.Build.DependencyAnalysis {
 
             var projects = dependencyOrder2.OfType<ConfiguredProject>().ToList();
 
-            Assert.AreEqual(5, dependencyOrder2.OfType<ConfiguredProject>().Count());
+            Assert.AreEqual(5, projects.Count);
+
             Assert.AreEqual(Guid.Parse("{B807F57F-C8DF-4129-9F0A-01B7F7AA2EF0}"), projects[0].ProjectGuid);
+            Assert.IsTrue(Guid.Parse("{709972C2-4A20-4355-BA9E-F4116AAA8769}") == projects[1].ProjectGuid || Guid.Parse("{5F12F859-A37E-492F-974E-71FEF3DD71CD}") == projects[1].ProjectGuid);
+            Assert.AreEqual(Guid.Parse("{CFACAAE6-993C-4A84-BFCB-BB265C3670F1}"), projects[3].ProjectGuid);
+            Assert.AreEqual(Guid.Parse("{E0E257CE-8CD9-4D58-9C08-6CB6B9A87B92}"), projects[4].ProjectGuid);
         }
     }
 }

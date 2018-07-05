@@ -33,7 +33,7 @@ namespace Aderant.Build.ProjectSystem {
 
             lock (this) {
                 resolvedReferences.Add(dependency);
-                unresolvedReferences.Remove(existingUnresolvedItem);
+                //unresolvedReferences.Remove(existingUnresolvedItem);
             }
         }
     }

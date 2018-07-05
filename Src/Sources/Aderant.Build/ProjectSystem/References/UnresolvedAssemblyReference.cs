@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Aderant.Build.Model;
 
 namespace Aderant.Build.ProjectSystem.References {
     [DebuggerDisplay("UnresolvedAssemblyReference: {Id}")]
@@ -8,16 +9,20 @@ namespace Aderant.Build.ProjectSystem.References {
             : base(service, moniker) {
         }
 
+        public UnresolvedAssemblyReference(AssemblyReferencesService service, IUnresolvedAssemblyReference unresolved, IReference resolvedReference)
+            : base(service, unresolved, resolvedReference) {
+        }
+
         public string GetHintPath() {
             return moniker.AssemblyPath;
         }
 
         public string GetAssemblyName() {
-            if (moniker.AssemblyName != null) {
-                return moniker.AssemblyName.FullName;
+            if (IsResolved) {
+                return ResolvedReference.GetAssemblyName();
             }
 
-            return null;
+            return moniker.AssemblyName.FullName;
         }
 
         public override string Id {

@@ -30,7 +30,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         [Import]
-        private ExportFactory<ConfiguredProject> ConfiguredProjectFactory { get; set; }
+        internal ExportFactory<ConfiguredProject> ConfiguredProjectFactory { get; set; }
 
         public string FullPath { get; private set; }
 
@@ -40,10 +40,12 @@ namespace Aderant.Build.ProjectSystem {
             // Create a project collection for each project since the toolset might change depending on the type of project
             ProjectCollection projectCollection = CreateProjectCollection();
 
-            this.projectXml = new Lazy<ProjectRootElement>(
-                () =>
-                    ProjectRootElement.Open(projectLocation, projectCollection),
-                true);
+            projectXml = new Lazy<ProjectRootElement>(() => {
+                if (!string.IsNullOrEmpty(projectLocation)) {
+                    return ProjectRootElement.Open(projectLocation, projectCollection);
+                }
+                return ProjectRootElement.Create(reader, projectCollection);
+            }, true);
         }
 
         private ProjectCollection CreateProjectCollection() {
@@ -55,7 +57,7 @@ namespace Aderant.Build.ProjectSystem {
             var result = ConfiguredProjectFactory.CreateExport();
             var configuredProject = result.Value;
 
-            configuredProject.Initialize(this.projectXml, FullPath);
+            configuredProject.Initialize(projectXml, FullPath);
 
             return configuredProject;
         }

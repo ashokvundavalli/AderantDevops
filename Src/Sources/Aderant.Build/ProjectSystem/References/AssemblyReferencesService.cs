@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using Aderant.Build.Model;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
@@ -20,11 +21,9 @@ namespace Aderant.Build.ProjectSystem.References {
 
             foreach (var project in projects) {
                 var reference = project.Services.AssemblyReferences.SynthesizeResolvedReferenceForProjectOutput(unresolved);
-
+                
                 if (reference != null) {
-                    if (string.Equals(unresolved.GetAssemblyName(), reference.ResolvedReference.Id, StringComparison.OrdinalIgnoreCase)) {
-                        return (IAssemblyReference)reference.ResolvedReference;
-                    }
+                    return new UnresolvedAssemblyReference(this, unresolved, reference);
                 }
             }
 
@@ -38,12 +37,19 @@ namespace Aderant.Build.ProjectSystem.References {
             return reference;
         }
 
-        public override ResolvedReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved) {
-            var configuredProjectOutputType = ConfiguredProject.OutputType;
+        public override IReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved) {
+            var outputType = ConfiguredProject.OutputType;
 
-            if (outputTypeValues.Contains(configuredProjectOutputType, StringComparer.OrdinalIgnoreCase)) {
-                var resolved = new ResolvedReference(ConfiguredProject, unresolved, ConfiguredProject);
-                return resolved;
+            // Project outputs a supported .NET assembly
+            if (outputTypeValues.Contains(outputType, StringComparer.OrdinalIgnoreCase)) {
+                string assemblyName = unresolved.GetAssemblyName();
+                string projectAssemblyName = ConfiguredProject.GetAssemblyName();
+
+                // File extensions do not make up part of the assembly identity
+                if (string.Equals(assemblyName, projectAssemblyName, StringComparison.OrdinalIgnoreCase)) {
+                    return ConfiguredProject;
+                }
+
             }
 
             return null;

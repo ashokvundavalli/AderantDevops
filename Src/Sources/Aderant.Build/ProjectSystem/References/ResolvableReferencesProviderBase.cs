@@ -39,14 +39,13 @@ namespace Aderant.Build.ProjectSystem.References {
             return unresolvedReferences = references;
         }
 
-        public IReadOnlyCollection<ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
-            var nowResolvedReferences = new List<ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>>();
+        public IReadOnlyCollection<ResolvedDependency<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
+            var nowResolvedReferences = new List<ResolvedDependency<TUnresolvedReference, TResolvedReference>>();
 
             foreach (var unresolved in unresolvedReferences) {
                 TResolvedReference resolvedReference = CreateResolvedReference(references, unresolved);
-
                 if (resolvedReference != null) {
-                    nowResolvedReferences.Add(new ReferenceResolutionPair<TUnresolvedReference, TResolvedReference>(unresolved, resolvedReference));
+                    nowResolvedReferences.Add(new ResolvedDependency<TUnresolvedReference, TResolvedReference>(ConfiguredProject, resolvedReference, unresolved));
                 }
             }
 

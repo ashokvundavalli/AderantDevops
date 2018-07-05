@@ -1,11 +1,13 @@
-﻿namespace Aderant.Build.ProjectSystem.References {
+﻿using Aderant.Build.Model;
+
+namespace Aderant.Build.ProjectSystem.References {
 
     internal abstract class AssemblyReferencesServiceBase : ResolvableReferencesProviderBase<IUnresolvedAssemblyReference, IAssemblyReference>, IAssemblyReferencesService {
         protected AssemblyReferencesServiceBase()
             : base("Reference") {
         }
 
-        public abstract ResolvedReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
+        public abstract IReference SynthesizeResolvedReferenceForProjectOutput(IUnresolvedAssemblyReference unresolved);
     }
 
 }

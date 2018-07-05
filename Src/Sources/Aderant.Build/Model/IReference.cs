@@ -5,5 +5,6 @@
     /// </summary>
     /// <seealso cref="Aderant.Build.Model.IDependable" />
     public interface IReference : IDependable {
+        string GetAssemblyName();
     }
 }

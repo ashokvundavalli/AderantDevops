@@ -22,5 +22,9 @@ namespace Aderant.Build.ProjectSystem.References {
         public override string Id {
             get { return ProjectGuid.ToString(); }
         }
+
+        public string GetAssemblyName() {
+            return null;
+        }
     }
 }
