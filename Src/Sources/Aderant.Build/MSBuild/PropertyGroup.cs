@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Aderant.Build.MSBuild {
     /// <summary>
@@ -22,7 +22,7 @@ namespace Aderant.Build.MSBuild {
             private set;
         }
 
-        public override void Accept(TargetXmlEmitter visitor) {
+        public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
     }

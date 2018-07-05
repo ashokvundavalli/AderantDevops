@@ -4,18 +4,19 @@ using System.Xml.Linq;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.MSBuild {
-    public class TargetXmlEmitter {
+    public class TargetXmlEmitter : BuildElementVisitor {
         /// <summary>
         /// The MSBuild Project namespace
         /// </summary>
         public static readonly XNamespace Xmlns = "http://schemas.microsoft.com/developer/msbuild/2003";
 
-        private Stack<XElement> elementStack = new Stack<XElement>();
-        private List<string> visited = new List<string>();
         private XElement document;
 
+        private Stack<XElement> elementStack = new Stack<XElement>();
+        private List<string> visited = new List<string>();
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="TargetXmlEmitter"/> class.
+        /// Initializes a new instance of the <see cref="TargetXmlEmitter" /> class.
         /// </summary>
         public TargetXmlEmitter() {
             document = CreateRoot(null);
@@ -29,7 +30,7 @@ namespace Aderant.Build.MSBuild {
                 new XComment("Properties is a special element understood by the MS Build task and will associate the unique properties to each project"));
         }
 
-        public void Visit(Project project) {
+        public override void Visit(Project project) {
             document = CreateRoot(project);
 
             if (project != null) {
@@ -39,7 +40,7 @@ namespace Aderant.Build.MSBuild {
             }
         }
 
-        public virtual void Visit(ItemGroup itemGroup) {
+        public override void Visit(ItemGroup itemGroup) {
             XElement element = new XElement(Xmlns + "ItemGroup");
 
             foreach (var item in itemGroup.Include) {
@@ -62,7 +63,7 @@ namespace Aderant.Build.MSBuild {
             Add(element);
         }
 
-        public virtual void Visit(PropertyGroup propertyGroup) {
+        public override void Visit(PropertyGroup propertyGroup) {
             XElement element = new XElement(Xmlns + "PropertyGroup");
 
             foreach (KeyValuePair<string, string> item in propertyGroup.Properties) {
@@ -72,11 +73,11 @@ namespace Aderant.Build.MSBuild {
             Add(element);
         }
 
-        public virtual void Visit(Message message) {
+        public override void Visit(Message message) {
             Add(new XElement(Xmlns + "Message", new XAttribute("Text", message.Text)));
         }
 
-        public virtual void Visit(MSBuildTask msBuildTask) {
+        public override void Visit(MSBuildTask msBuildTask) {
             XElement element = new XElement(
                 Xmlns + "MSBuild",
                 new XAttribute("Projects", msBuildTask.Projects),
@@ -98,7 +99,7 @@ namespace Aderant.Build.MSBuild {
             Add(element);
         }
 
-        public virtual void Visit(BuildStep buildStep) {
+        public override void Visit(BuildStep buildStep) {
             if (buildStep.OutputBuildStepId) {
                 Add(
                     new XElement(
@@ -122,7 +123,7 @@ namespace Aderant.Build.MSBuild {
             }
         }
 
-        public virtual void Visit(Target target) {
+        public override void Visit(Target target) {
             if (visited.Contains(target.Name)) {
                 return;
             }
@@ -170,7 +171,7 @@ namespace Aderant.Build.MSBuild {
             visited.Add(target.Name);
         }
 
-        public virtual void Visit(CallTarget callTarget) {
+        public override void Visit(CallTarget callTarget) {
             Add(new XElement(Xmlns + "CallTarget", new XAttribute("Targets", string.Join(";", callTarget.Targets))));
         }
 
@@ -194,4 +195,5 @@ namespace Aderant.Build.MSBuild {
             }
         }
     }
+
 }

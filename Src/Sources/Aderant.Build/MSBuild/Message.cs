@@ -1,4 +1,4 @@
-namespace Aderant.Build.MSBuild {
+﻿namespace Aderant.Build.MSBuild {
     /// <summary>
     /// Represents an MSBuild MessageTask element.
     /// </summary>
@@ -20,7 +20,7 @@ namespace Aderant.Build.MSBuild {
             private set;
         }
 
-        public override void Accept(TargetXmlEmitter visitor) {
+        public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
     }

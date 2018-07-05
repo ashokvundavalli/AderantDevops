@@ -10,7 +10,7 @@ namespace Aderant.Build.MSBuild {
 
         public string[] Targets { get; set; }
 
-        public override void Accept(TargetXmlEmitter visitor) {
+        public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
     }
@@ -98,7 +98,7 @@ namespace Aderant.Build.MSBuild {
             elements.Add(element);
         }
 
-        public override void Accept(TargetXmlEmitter visitor) {
+        public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
     }

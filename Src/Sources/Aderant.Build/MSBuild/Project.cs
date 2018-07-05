@@ -16,7 +16,6 @@ namespace Aderant.Build.MSBuild {
         /// Initializes a new instance of the <see cref="Project" /> class.
         /// </summary>
         public Project() {
-
         }
 
         /// <summary>
@@ -48,7 +47,7 @@ namespace Aderant.Build.MSBuild {
             }
         }
 
-        public override void Accept(TargetXmlEmitter visitor) {
+        public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
 
