@@ -28,9 +28,14 @@ namespace Aderant.Build.Analyzer.Rules {
 
         internal const int DefaultCapacity = 25;
 
-        private const string generatedCodeTypeName = "System.CodeDom.Compiler.GeneratedCodeAttribute";
-        private const string suppressMessageTypeName = "System.Diagnostics.CodeAnalysis.SuppressMessage";
-        private const string testClassTypeName = "Microsoft.VisualStudio.TestTools.UnitTesting.TestClass";
+        private const string generatedCodeTypeName = "GeneratedCode";
+        private const string generatedCodeTypeFullyQualified = "System.CodeDom.Compiler." + generatedCodeTypeName;
+
+        private const string suppressMessageTypeName = "SuppressMessage";
+        private const string suppressMessageTypeFullyQualified = "System.Diagnostics.CodeAnalysis." + suppressMessageTypeName;
+
+        private const string testClassTypeName = "TestClass";
+        private const string testClassTypeFullyQualified = "Microsoft.VisualStudio.TestTools." + testClassTypeName;
 
         private const string startString = "[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage(\"Aderant.GeneratedSuppression\", \"";
         private const string targetString = "\", Target = \"";
@@ -77,14 +82,12 @@ namespace Aderant.Build.Analyzer.Rules {
             SyntaxNode node,
             SyntaxNode stopNode = null) where T : SyntaxNode {
             foreach (var childNode in node.ChildNodes()) {
-
                 // Stop nodes can exist inside assignment expressions
                 // checking both sides of the expression to make sure it doesn't exist within and ceasing navigation if it does.
                 var assignmentExpression = childNode as AssignmentExpressionSyntax;
-                if (assignmentExpression != null) {
-                    if (assignmentExpression.Left.Equals(stopNode) || assignmentExpression.Right.Contains(stopNode)) {
-                        return true;
-                    }
+                if (assignmentExpression != null &&
+                    (assignmentExpression.Left.Equals(stopNode) || assignmentExpression.Right.Contains(stopNode))) {
+                    return true;
                 }
 
                 // Syntax tree navigation will cease if this node is found.
@@ -188,18 +191,27 @@ namespace Aderant.Build.Analyzer.Rules {
                 foreach (AttributeSyntax attribute in attributeList.Attributes) {
                     string name = attribute.Name.ToString();
 
+                    // If the name is somehow invalid, continue.
+                    if (string.IsNullOrWhiteSpace(name)) {
+                        continue;
+                    }
+
                     // If the class is a test class, automatically suppress any diagnostics.
-                    if (!analyzeTests && testClassTypeName.EndsWith(name, StringComparison.Ordinal)) {
+                    if (!analyzeTests &&
+                        (name.Contains(testClassTypeFullyQualified) ||
+                         name.Contains(testClassTypeName))) {
                         return true;
                     }
 
                     // If the class is generated code, suppress any diagnostics.
-                    if (generatedCodeTypeName.EndsWith(name, StringComparison.Ordinal)) {
+                    if (name.Contains(generatedCodeTypeFullyQualified) ||
+                        name.Contains(generatedCodeTypeName)) {
                         return true;
                     }
 
                     // If the attribute is not a suppression message, continue.
-                    if (!suppressMessageTypeName.EndsWith(name, StringComparison.Ordinal)) {
+                    if (!name.Contains(suppressMessageTypeFullyQualified) &&
+                        !name.Contains(suppressMessageTypeName)) {
                         continue;
                     }
 
