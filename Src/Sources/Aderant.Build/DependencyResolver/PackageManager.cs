@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
@@ -96,17 +94,18 @@ namespace Aderant.Build.DependencyResolver {
             AddModules(context, requirements, file);
         }
 
-        // we have to do this to stop paket from throwing exceptions
-        private string AdjustVersionHack(string name, string version) {
+        // Paket is unable to write version ranges to file.
+        private string RemoveVersionRange(string name, string version) {
             if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")){
                 return version;
             }
 
-            var parts = version.Split(' ').ToArray();
+            string[] parts = version.Split(' ').ToArray();
             // ">= 11.0 < 12.0 build" will become "< 12.0 build"
             if (parts.Length >= 4 && parts[0] == ">=" && parts[2] == "<") {
-                var newVersion = string.Join(" ", parts.Skip(2));
-                Console.WriteLine($@"Version Adjusted {name}: {version} >>>>>>>>>>> {newVersion}");
+                string newVersion = string.Join(" ", parts.Skip(2));
+                logger.Info($"Version Adjusted {name}: '{version}' to: '{newVersion}'");
+
                 return newVersion;
             }
 
@@ -119,7 +118,6 @@ namespace Aderant.Build.DependencyResolver {
                 if (referencedModule.VersionRequirement != null) {
                     version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
                 }
-                version = AdjustVersionHack(referencedModule?.Name, version);
                 
                 var name = Domain.PackageName(referencedModule.Name);
 
@@ -131,6 +129,7 @@ namespace Aderant.Build.DependencyResolver {
                 }
 
                 if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(name))) {
+                    version = RemoveVersionRange(referencedModule.Name, version);
                     try {
                         file = file.Add(Domain.GroupName(BuildConstants.MainDependencyGroup), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                     } catch (Exception ex) {
