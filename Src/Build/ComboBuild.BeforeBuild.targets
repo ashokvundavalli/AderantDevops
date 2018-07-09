@@ -129,7 +129,7 @@
 
     <!--<DebugProjectProperties Projects="@(ProjectsInGroup)" />-->
 
-    <MSBuild Condition="'%(IsOrchestration)' == '.csproj'"
+    <MSBuild Condition="'%(FileName)' != '$(MSBuildThisFileName)'"
              Projects="@(Projects)"
              Targets="Build"
              BuildInParallel="true"
