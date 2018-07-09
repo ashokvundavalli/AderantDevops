@@ -1,31 +1,30 @@
 ﻿# Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
+$coreAssemblyName = "Aderant.Build.dll"
 
-function BuildProject($properties, [bool]$rebuild) {
-    # Load the build libraries as this has our shared compile function. This function is shared by the desktop and server bootstrap of Build.Infrastructure
-    $buildScripts = $properties.BuildScriptsDirectory
+function BuildProject($buildScriptsDirectory, [bool]$rebuild) {
+    Write-Debug "Build scripts: $buildScriptsDirectory"
 
-    if (-not (Test-Path $buildScripts)) {
-        throw "Cannot find directory: $buildScripts"
+    if (-not (Test-Path $buildScriptsDirectory)) {
+        throw "Cannot find directory: $buildScriptsDirectory"
         return
-    }
+    }    
 
-    Write-Debug "Build scripts: $buildScripts"
+    # Load the build libraries as this has our shared compile function.
+    # This function is shared by the desktop and server bootstrap of Build.Infrastructure       
+    . $buildScriptsDirectory\Build-Libraries.ps1   
 
-    pushd $buildScripts
-    Invoke-Expression ". .\Build-Libraries.ps1"
-    popd
-
-    CompileBuildLibraryAssembly $buildScripts $rebuild
+    CompileBuildLibraryAssembly $buildScriptsDirectory $rebuild
 }
 
-function LoadAssembly($properties, [string]$targetAssembly) {
-    Set-StrictMode -Version 'Latest'
+function LoadAssembly($buildScriptsDirectory, [string]$targetAssembly) {
+    Set-StrictMode -Version "Latest"
+    $ErrorActionPreference = "Stop"
 
     if ([System.IO.File]::Exists($targetAssembly)) {
-        Write-Host "Aderant.Build.dll found at $targetAssembly. Loading..."
+        [System.Reflection.Assembly]$assembly = $null
 
-        #Imports the specified modules without locking it on disk
+        #Loads the assembly without locking it on disk
         $assemblyBytes = [System.IO.File]::ReadAllBytes($targetAssembly)
         $pdb = [System.IO.Path]::ChangeExtension($targetAssembly, "pdb");
 
@@ -38,12 +37,21 @@ function LoadAssembly($properties, [string]$targetAssembly) {
 
         $directory = Split-Path -Parent $targetAssembly
 
-        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($properties.PackagingTool)) | Out-Null
-        
-        Get-Module -Name "Aderant" | Remove-Module -Force        
-        Get-Module -Name "dynamic_code_module_Aderant.Build, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" | Remove-Module -Force
+        #[System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($properties.PackagingTool)) | Out-Null
 
-        Import-Module $assembly -DisableNameChecking -Global -Force
+        # This load process was built after many days of head scratching trying to get -Global to work.
+        # The -Global switch appears to be bug ridden with compiled modules
+        # not backed by an on disk assembly (our use case).
+        # Even with the -Global flag the commands within the module are not imported into the global space.
+        # Creating a runtime module to wrap the import of the compiled module works around
+        # whatever PS bug prevents it from working.
+        $scriptBlock = {
+            param($assembly)      
+            Import-Module -Assembly $assembly -DisableNameChecking
+        }
+
+        # Create a new dynamic module that simply loads another module into it.
+        New-Module -ScriptBlock $scriptBlock -ArgumentList $assembly | Import-Module -Global
     } else {
         throw "Fatal error. Profile assembly not found"
     }
@@ -64,17 +72,8 @@ function UpdateSubmodules([string]$head) {
     }   
 }
 
-function UpdateOrBuildAssembly($properties) {    
-    Set-StrictMode -Version 'Latest'
-
-    $aderantBuildAssembly = [System.IO.Path]::Combine($properties.BuildToolsDirectory, "Aderant.Build.dll") 
-    
-    if (-not [System.IO.File]::Exists($aderantBuildAssembly)) {
-        Write-Host "No Aderant.Build.dll found at $aderantBuildAssembly. Creating..."
-        BuildProject $properties $true
-    }    
-
-    $outdatedAderantBuildFile = $false
+function UpdateOrBuildAssembly([string]$buildToolsDirectory, [string]$buildScriptsDirectory) {    
+    Set-StrictMode -Version 'Latest'    
 
     if (-not $Host.Name.Contains("ISE")) {    
         # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
@@ -99,18 +98,7 @@ function UpdateOrBuildAssembly($properties) {
 
     Write-Host "Version: $head"
 
-    $version = $Env:EXPERT_BUILD_VERSION
-
-    if ($version -ne $head) {
-        $outdatedAderantBuildFile = $true
-    }
-
-    if ($outdatedAderantBuildFile) {
-        BuildProject $properties $true        
-    }
-
-    $ShellContext.CurrentCommit = $head
-
-    # Now actually load Aderant.Build.dll
-    LoadAssembly $properties $aderantBuildAssembly
+    $assemblyPath = [System.IO.Path]::Combine($buildToolsDirectory, $coreAssemblyName)     
+    BuildProject $buildScriptsDirectory $true
+    LoadAssembly $buildScriptsDirectory $assemblyPath
 }
