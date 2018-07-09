@@ -64,7 +64,7 @@
   <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.BuildTime.ParallelBuildProjectFactory"               AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.ParallelBuildProjectFactory"                         AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!-- Adds SCC information into the pdb files for the symbol server -->
   <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" Condition="'$(IsCustomBuild)' != 'true'" />
@@ -94,7 +94,9 @@
   <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.DefaultContextProperties"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-
+  <UsingTask TaskName="Aderant.Build.Tasks.SetEnvironmentVariable"                              AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.DebugProjectProperties"                              AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  
   <PropertyGroup>
     <!-- Visual Studio Environment-->
     <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
@@ -313,7 +315,7 @@ doc.Save(File);
 
   <!-- 
     ===========================================================
-    Source Indexing properites 
+    Source Indexing properties 
     ===========================================================
   -->
   <PropertyGroup>
@@ -338,7 +340,7 @@ doc.Save(File);
     <Error Condition="'@(CompiledAssemblies)' == ''" Text="There are no outputs from the build" />
 
     <ItemGroup>
-      <!-- Tranform all compiled outputs into a matching pdb -->
+      <!-- Transform all compiled outputs into a matching pdb -->
       <Symbols Include="@(ModuleBuildOutput->'%(RootDir)%(Directory)%(Filename).pdb')"
         Condition="'%(ModuleBuildOutput.OutputType)' == 'Module'" />
 
