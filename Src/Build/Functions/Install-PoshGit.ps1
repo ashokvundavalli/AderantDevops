@@ -6,6 +6,10 @@ function Install-PoshGit()
         $Context = (Get-BuildContext)
     )
 
+    if (-not [System.Environment]::Is64BitProcess) {
+        return
+    }
+
     Set-StrictMode -Version 'Latest'
     Use-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState    
  
@@ -17,9 +21,7 @@ function Install-PoshGit()
     if (-not (CheckModuleVersion)) {
         Write-Debug "Install-PoshGit skipped - Buggy PackageManagement infrastructure present"
         return
-    }
-
-    Write-Debug "Installing PoshGit"
+    }   
 
     # We need Windows 10 or WMF 5 for Install-Module
     if ($host.Version.Major -ge 5) {
