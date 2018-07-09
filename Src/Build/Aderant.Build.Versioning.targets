@@ -22,7 +22,7 @@
   <Target Name="OnBeforeCompile" BeforeTargets="$(PrepareResourcesDependsOn);BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
 
 
-  <Target Name="GetAssemblyAttributes">
+  <Target Name="Get_AssemblyAttributes">
 
     <PropertyGroup>
       <!-- Path.Combine to try handle trailing/non-trailing slashes -->
@@ -46,40 +46,40 @@
     </GitVersion>
 
     <ItemGroup>
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
         <_Parameter1>Git.BranchName</_Parameter1>
         <_Parameter2>$(GitCanonicalBranchName)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_HasGitDir)' == 'true'">
         <_Parameter1>Git.Sha</_Parameter1>
         <_Parameter2>$(GitSha)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_BUILDID)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_BUILDID)' != ''">
         <_Parameter1>Build.Id</_Parameter1>
         <_Parameter2>$(BUILD_BUILDID)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_SOURCEVERSION)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_SOURCEVERSION)' != ''">
         <_Parameter1>Build.SourceVersion</_Parameter1>
         <_Parameter2>$(BUILD_SOURCEVERSION)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BUILD_REPOSITORY_URI)' != ''">
         <_Parameter1>Build.RepositoiryUri</_Parameter1>
         <_Parameter2>$(BUILD_REPOSITORY_URI)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(_PaketLockText)' != ''">
         <_Parameter1>Build.PaketLock</_Parameter1>
         <_Parameter2>$(_PaketLockText)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
 
-      <AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(BuildFlavor)' != ''">
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
-      </AssemblyAttributes>
+      </_AssemblyAttributes>
     </ItemGroup>
 
   </Target>
@@ -91,19 +91,19 @@
     assembly attribute values and MS Build will then execute CoreGenerateAssembly to generate a new file.
   -->
   <Target Name="CreateGeneratedAssemblyInfoInputsCacheFile"
-          DependsOnTargets="GetAssemblyAttributes">
+          DependsOnTargets="Get_AssemblyAttributes">
 
     <PropertyGroup>
       <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
       <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g$(DefaultLanguageSourceExtension)</GeneratedAssemblyInfoFile>
     </PropertyGroup>
 
-    <Hash ItemsToHash="@(AssemblyAttributes->'%(Identity)%(_Parameter2)')">
-      <Output TaskParameter="HashResult" PropertyName="_AssemblyAttributesHash" />
+    <Hash ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')">
+      <Output TaskParameter="HashResult" PropertyName="__AssemblyAttributesHash" />
     </Hash>
 
     <Aderant.Build.Tasks.WriteLinesToFile 
-      Lines="$(_AssemblyAttributesHash)" 
+      Lines="$(__AssemblyAttributesHash)" 
       File="$(GeneratedAssemblyInfoInputsCacheFile)" 
       Overwrite="true" 
       WriteOnlyWhenDifferent="true" />
@@ -132,10 +132,10 @@
           Inputs="$(GeneratedAssemblyInfoInputsCacheFile)"
           Outputs="$(GeneratedAssemblyInfoFile)">
           
-    <Error Condition="'@(AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
+    <Error Condition="'@(_AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
     <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''" Text="GeneratedAssemblyInfoFile is undefined" />
 
-    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttributes)" 
+    <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)" 
                        Language="$(Language)" 
                        OutputFile="$(GeneratedAssemblyInfoFile)">
     </WriteCodeFragment>
