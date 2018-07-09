@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
-    internal interface IDependencyRef : /*IDependable*/ IEquatable<IDependencyRef> {
+    internal interface IDependencyRef : IEquatable<IDependencyRef> {
         string Name { get; }
 
         IReadOnlyCollection<IDependencyRef> DependsOn { get; }
