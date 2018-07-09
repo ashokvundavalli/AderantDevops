@@ -97,8 +97,8 @@
       TfvcBranch="$(TfvcBranch)"
       JobFile="$(BranchBuildProject)"
       JobRunFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
-      BeforeProjectFile="$(MSBuildThisFileDirectory)ModuleBuild.Initialize.targets"
-      AfterProjectFile="$(MSBuildThisFileDirectory)ModuleBuild.Completion.targets">
+      BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets"
+      AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
