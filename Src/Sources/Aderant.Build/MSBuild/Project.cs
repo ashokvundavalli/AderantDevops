@@ -70,10 +70,9 @@ namespace Aderant.Build.MSBuild {
             elements.Add(element);
         }
 
-        public XElement CreateTargetFile(Project project) {
+        public XElement CreateXml() {
             TargetXmlEmitter visitor = new ParallelBuildVisitor();
-            project.Accept(visitor);
-
+            visitor.Visit(this);
             return visitor.GetXml();
         }
     }

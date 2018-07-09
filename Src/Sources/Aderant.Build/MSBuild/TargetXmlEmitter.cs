@@ -63,6 +63,10 @@ namespace Aderant.Build.MSBuild {
             Add(element);
         }
 
+        public override void Visit(Comment comment) {
+            Add(new XComment(comment.Text));
+        }
+
         public override void Visit(PropertyGroup propertyGroup) {
             XElement element = new XElement(Xmlns + "PropertyGroup");
 
@@ -183,15 +187,15 @@ namespace Aderant.Build.MSBuild {
             return document;
         }
 
-        private void Add(XElement element) {
+        private void Add(XNode node) {
             if (elementStack.Count == 0) {
-                document.Add(element);
+                document.Add(node);
                 return;
             }
 
             XElement parent = elementStack.Peek();
             if (parent != null) {
-                parent.Add(element);
+                parent.Add(node);
             }
         }
     }

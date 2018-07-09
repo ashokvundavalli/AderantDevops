@@ -1,4 +1,6 @@
-﻿namespace Aderant.Build.MSBuild {
+﻿using Aderant.Build.DependencyAnalyzer;
+
+namespace Aderant.Build.MSBuild {
     public abstract class BuildElementVisitor {
         public virtual void Visit(BuildStep buildStep) {
         }
@@ -22,6 +24,9 @@
         }
 
         public virtual void Visit(PropertyGroup buildStep) {
+        }
+
+        public virtual void Visit(Comment buildStep) {
         }
     }
 }
