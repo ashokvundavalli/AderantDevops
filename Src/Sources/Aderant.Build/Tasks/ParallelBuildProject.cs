@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.DependencyAnalyzer.SolutionParser;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
+using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Providers;
+using Aderant.Build.VersionControl;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -60,69 +64,107 @@ namespace Aderant.Build.Tasks {
         public string[] ModulesInThisBuild { get; set; }
 
         protected override bool ExecuteTask(Context context) {
-            Run(context);
+            ExecuteCore(context);
             return !Log.HasLoggedErrors;
         }
 
-        private void Run(Context context, [CallerFilePath] string sourceFilePath = "") {
-            try {
-                PhysicalFileSystem fileSystem = new PhysicalFileSystem(ModulesDirectory);
+        private void ExecuteCore(Context context) {
+            // TODO: keep this shim?
+            context.BuildRoot = new DirectoryInfo(ModulesDirectory);
 
-                BuildSequencer controller = new BuildSequencer(
-                    new BuildTaskLogger(this),
-                    context,
-                    new SolutionFileParser(),
-                    fileSystem);
+            var relationshipProcessing = GetRelationshipProcessingMode(context);
+            var buildType = GetBuildType(context);
 
-                IModuleProvider manifest = null;
-                if (!string.IsNullOrEmpty(ProductManifest)) {
-                    manifest = ExpertManifest.Load(ProductManifest);
-                    ((ExpertManifest)manifest).ModulesDirectory = ModulesDirectory;
-                } else {
-                    manifest = new ExpertManifest(fileSystem, new GlobalContext(TfvcBranch, TfvcChangeset));
-                }
+            IProjectTree projectTree = ProjectTree.CreateDefaultImplementation();
+       
+            var jobFiles = new BuildJobFiles {
+                BeforeProjectFile = BeforeProjectFile,
+                AfterProjectFile = AfterProjectFile,
+                JobRunFile = JobRunFile,
+                JobFile = JobFile,
+            };
 
-                IEnumerable<string> modulesInBuild;
-                if (ModulesInBuild != null) {
-                    modulesInBuild = ModulesInBuild.Select(m => Path.GetFileName(m.ItemSpec));
-                } else {
-                    modulesInBuild = manifest.GetAll().Select(s => s.Name);
-                }
+            Project project = projectTree.GenerateBuildJob(context, jobFiles).Result;
+            var element = project.CreateXml();
 
-                modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Encoding = Encoding.UTF8;
+            settings.CloseOutput = true;
+            settings.NewLineOnAttributes = true;
+            settings.IndentChars = "    ";
+            settings.Indent = true;
 
-                Log.LogMessage("Creating build job file...");
-
-                ProjectRelationshipProcessing relationshipProcessing = ProjectRelationshipProcessing.None;
-                if (context.Switches.Downstream) {
-                    relationshipProcessing = ProjectRelationshipProcessing.Direct;
-                }
-
-                if (context.Switches.Transitive) {
-                    relationshipProcessing = ProjectRelationshipProcessing.Transitive;
-                }
-
-                ComboBuildType buildType = ComboBuildType.All;
-
-                var instance = new BuildJobFiles {
-                    BeforeProjectFile = BeforeProjectFile,
-                    AfterProjectFile = AfterProjectFile,
-                    JobRunFile = JobRunFile,
-                    JobFile = JobFile,
-                };
-
-                Project project = controller.CreateProject(ModulesDirectory, instance, BuildFrom, buildType, relationshipProcessing);
-                XElement projectDocument = controller.CreateProjectDocument(project);
-
-                BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, JobFile), projectDocument);
-
-                modulesInBuild = AddAliases(manifest, modulesInBuild);
-
-                ModulesInThisBuild = Filter(modulesInBuild).ToArray();
-            } catch (Exception ex) {
-                Log.LogErrorFromException(ex, true, true, sourceFilePath);
-                throw;
+            using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, JobFile), settings)) {
+                element.WriteTo(writer);
             }
+
+            //try {
+            //    PhysicalFileSystem fileSystem = new PhysicalFileSystem(ModulesDirectory);
+
+            //    BuildSequencer controller = new BuildSequencer(
+            //        new BuildTaskLogger(this),
+            //        context,
+            //        new SolutionFileParser(),
+            //        fileSystem,
+            //        context.GetService<IVersionControlService>());
+
+            //    IModuleProvider manifest = null;
+            //    if (!string.IsNullOrEmpty(ProductManifest)) {
+            //        manifest = ExpertManifest.Load(ProductManifest);
+            //        ((ExpertManifest)manifest).ModulesDirectory = ModulesDirectory;
+            //    } else {
+            //        manifest = new ExpertManifest(fileSystem, new GlobalContext(TfvcBranch, TfvcChangeset));
+            //    }
+
+            //    IEnumerable<string> modulesInBuild;
+            //    if (ModulesInBuild != null) {
+            //        modulesInBuild = ModulesInBuild.Select(m => Path.GetFileName(m.ItemSpec));
+            //    } else {
+            //        modulesInBuild = manifest.GetAll().Select(s => s.Name);
+            //    }
+
+            //    modulesInBuild = modulesInBuild.Except(ExcludedModules ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+
+
+
+            //    Project project = controller.CreateProject(ModulesDirectory, instance, BuildFrom, buildType, relationshipProcessing, context.Flavor);
+            //    XElement projectDocument = controller.CreateProjectDocument(project);
+
+            //    BuildSequencer.SaveBuildProject(Path.Combine(ModulesDirectory, JobFile), projectDocument);
+
+            //    modulesInBuild = AddAliases(manifest, modulesInBuild);
+
+            //    ModulesInThisBuild = Filter(modulesInBuild).ToArray();
+            //} catch (Exception ex) {
+            //    Log.LogErrorFromException(ex, true, true, sourceFilePath);
+            //    throw;
+            //}
+        }
+
+        private static ProjectRelationshipProcessing GetRelationshipProcessingMode(Context context) {
+            ProjectRelationshipProcessing relationshipProcessing = ProjectRelationshipProcessing.None;
+            if (context.Switches.Downstream) {
+                relationshipProcessing = ProjectRelationshipProcessing.Direct;
+            }
+
+            if (context.Switches.Transitive) {
+                relationshipProcessing = ProjectRelationshipProcessing.Transitive;
+            }
+
+            return relationshipProcessing;
+        }
+
+        private static ComboBuildType GetBuildType(Context context) {
+            ComboBuildType buildType = ComboBuildType.All;
+            if (context.Switches.PendingChanges) {
+                buildType = ComboBuildType.Changes;
+            }
+
+            if (context.Switches.Everything) {
+                buildType = ComboBuildType.Branch;
+            }
+
+            return buildType;
         }
 
         private static IEnumerable<string> Filter(IEnumerable<string> modulesInBuild) {
@@ -156,13 +198,6 @@ namespace Aderant.Build.Tasks {
 
             return modulesInBuild;
         }
-    }
-
-    public enum ComboBuildType {
-        Changed,
-        Branch,
-        Staged,
-        All
     }
 
 }
