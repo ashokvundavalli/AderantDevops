@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.MSBuild;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -14,7 +15,7 @@ namespace Aderant.Build.ProjectSystem {
         ISolutionManager SolutionManager { get; }
 
         Task LoadProjects(string directory, bool recursive);
-   
+
         /// <summary>
         /// Adds a configured project to this tree.
         /// </summary>
@@ -30,17 +31,7 @@ namespace Aderant.Build.ProjectSystem {
         /// Analyzes the build dependencies to produce a high level representation of the build order.
         /// </summary>
         DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector);
-    }
 
-    internal class BuildPipeline {
-
-        public void GenerateTargets(DependencyGraph graph) {
-
-            var dependencyOrder2 = graph.GetDependencyOrder2();
-
-        }
-
+        Task<Project> GenerateBuildJob(Context context, BuildJobFiles instance);
     }
 }
-
-

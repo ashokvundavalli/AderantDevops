@@ -10,6 +10,7 @@ using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
+using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
 using Microsoft.Build.Construction;
@@ -21,7 +22,7 @@ namespace Aderant.Build.ProjectSystem {
     /// references and their external dependencies.
     /// </summary>
     [Export(typeof(IProjectTree))]
-    internal class ProjectTree : IProjectTree, ISolutionManager {
+    internal class ProjectTree : IProjectTree, IProjectTreeInternal, ISolutionManager {
         // Holds all projects that are applicable to the build tree
         private readonly ConcurrentBag<ConfiguredProject> loadedConfiguredProjects = new ConcurrentBag<ConfiguredProject>();
 
@@ -31,8 +32,14 @@ namespace Aderant.Build.ProjectSystem {
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
 
+        // Holds any projects which we cannot load a solution for
+        private ConcurrentBag<ConfiguredProject> orphanedProjects = new ConcurrentBag<ConfiguredProject>();
+
         [Import]
         private ExportFactory<UnconfiguredProject> UnconfiguredProjectFactory { get; set; }
+
+        [Import(AllowDefault = true)]
+        public ExportFactory<ISequencer> SequencerFactory { get; set; }
 
         public IReadOnlyCollection<UnconfiguredProject> LoadedUnconfiguredProjects {
             get { return loadedUnconfiguredProjects; }
@@ -63,7 +70,7 @@ namespace Aderant.Build.ProjectSystem {
             foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                 ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
 
-                project.AssignProjectConfiguration("Debug|Any CPU");
+                project.AssignProjectConfiguration(collector.ProjectConfiguration);
             }
 
             foreach (var project in LoadedConfiguredProjects) {
@@ -80,13 +87,29 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
+        public async Task<Project> GenerateBuildJob(Context context, BuildJobFiles instance) {
+            await LoadProjects(context.BuildRoot.FullName, true);
+
+            var collector = new BuildDependenciesCollector();
+            await CollectBuildDependencies(collector);
+
+            DependencyGraph graph = CreateBuildDependencyGraph(collector);
+
+            using (var exportLifetimeContext = this.SequencerFactory.CreateExport()) {
+                var sequencer = exportLifetimeContext.Value;
+
+                Project project = sequencer.CreateProject(context, instance, graph);
+                return project;
+            }
+        }
+
         public void AddConfiguredProject(ConfiguredProject configuredProject) {
             if (configuredProject.IncludeInBuild) {
                 loadedConfiguredProjects.Add(configuredProject);
             }
         }
 
-        public SolutionProject GetSolutionForProject(string projectFilePath, Guid projectGuid) {
+        public SolutionSearchResult GetSolutionForProject(string projectFilePath, Guid projectGuid) {
             var parser = InitializeSolutionParser();
 
             ProjectInSolution projectInSolution;
@@ -113,7 +136,11 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            return new SolutionProject(solutionFile, projectInSolution);
+            if (solutionFile == null) {
+                return new SolutionSearchResult { Found = false };
+            }
+
+            return new SolutionSearchResult(solutionFile, projectInSolution);
         }
 
         private IEnumerable<IArtifact> BuildDependencyGraph() {
@@ -139,10 +166,11 @@ namespace Aderant.Build.ProjectSystem {
                 string solutionDirectoryName = Path.GetFileName(level.Key);
 
                 // Create a new node that represents the start of a directory
-                graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, false));
+                graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, level.Key, false));
 
                 // Create a new node that represents the completion of a directory
-                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, true);
+                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
+                    
                 graph.Add(completionNode);
                 completionNode.AddResolvedDependency(null, initializeNode);
 
@@ -207,5 +235,14 @@ namespace Aderant.Build.ProjectSystem {
         public static IProjectTree CreateDefaultImplementation() {
             return CreateDefaultImplementation(new[] { typeof(ProjectTree).Assembly });
         }
+
+        public void OrphanProject(ConfiguredProject configuredProject) {
+            configuredProject.IncludeInBuild = false;
+            this.orphanedProjects.Add(configuredProject);
+        }
+    }
+
+    internal interface ISequencer {
+        Project CreateProject(Context context, BuildJobFiles files, DependencyGraph graph);
     }
 }

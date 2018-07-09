@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -23,11 +25,11 @@ namespace Aderant.Build.ProjectSystem {
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
         private readonly IFileSystem fileSystem;
 
+        private List<ResolvedReference> resolvedDependencies;
         private bool? isWebProject;
         private Lazy<Project> project;
-        private IReadOnlyList<Guid> projectTypeGuids;
         private Lazy<ProjectRootElement> projectXml;
-        private List<ResolvedReference> resolvedDependencies;
+        private Lazy<IReadOnlyList<Guid>> typeGuids;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
@@ -71,38 +73,16 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         internal IReadOnlyList<Guid> ProjectTypeGuids {
-            get {
-                if (projectTypeGuids == null) {
-                    var propertyElement = project.Value.GetPropertyValue("ProjectTypeGuids");
-
-                    if (!string.IsNullOrEmpty(propertyElement)) {
-                        var typeGuids = propertyElement.Split(';');
-
-                        var typeGuidsAsGuids = new List<Guid>();
-
-                        typeGuids.Aggregate(
-                            typeGuidsAsGuids,
-                            (list, s) => {
-                                Guid result;
-                                if (Guid.TryParse(s, out result)) {
-                                    list.Add(result);
-                                }
-
-                                return list;
-                            });
-
-                        projectTypeGuids = typeGuidsAsGuids;
-                    }
-                }
-
-                return projectTypeGuids;
-            }
+            get { return typeGuids.Value; }
         }
 
         public bool IsWebProject {
             get {
                 if (!isWebProject.HasValue) {
-                    isWebProject = ProjectTypeGuids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                    var typeGuids = ProjectTypeGuids;
+                    if (typeGuids != null) {
+                        isWebProject = ProjectTypeGuids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                    }
                 }
 
                 return isWebProject.GetValueOrDefault();
@@ -111,7 +91,12 @@ namespace Aderant.Build.ProjectSystem {
 
         public bool IsTestProject {
             get {
-                return ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.TestProject);
+                var typeGuids = ProjectTypeGuids;
+                if (typeGuids != null) {
+                    return ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.TestProject);
+                }
+
+                return false;
                 //result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}")
                 //|| result.DependsOn.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
             }
@@ -130,6 +115,16 @@ namespace Aderant.Build.ProjectSystem {
 
         public override string Id {
             get { return GetAssemblyName(); }
+        }
+
+        public string SolutionRoot {
+            get {
+                if (SolutionFile != null) {
+                    return Path.GetDirectoryName(SolutionFile);
+                }
+
+                return null;
+            }
         }
 
         public string GetAssemblyName() {
@@ -160,6 +155,32 @@ namespace Aderant.Build.ProjectSystem {
 
                     return LoadNonDiskBackedProject(globalProperties);
                 });
+
+            this.typeGuids = new Lazy<IReadOnlyList<Guid>>(ExtractTypeGuids, LazyThreadSafetyMode.PublicationOnly);
+        }
+
+        private IReadOnlyList<Guid> ExtractTypeGuids() {
+            var propertyElement = project.Value.GetPropertyValue("ProjectTypeGuids");
+
+            if (!string.IsNullOrEmpty(propertyElement)) {
+                var guids = propertyElement.Split(';');
+                var guidList = new List<Guid>();
+
+                guids.Aggregate(
+                    guidList,
+                    (list, s) => {
+                        Guid result;
+                        if (Guid.TryParse(s, out result)) {
+                            list.Add(result);
+                        }
+
+                        return list;
+                    });
+
+                return guidList;
+            }
+
+            return null;
         }
 
         private Project LoadNonDiskBackedProject(IDictionary<string, string> globalProperties) {
@@ -195,15 +216,20 @@ namespace Aderant.Build.ProjectSystem {
         public void AssignProjectConfiguration(string buildConfiguration) {
             var projectInSolution = Tree.SolutionManager.GetSolutionForProject(FullPath, ProjectGuid);
 
-            SolutionFile = projectInSolution.SolutionFile;
+            if (projectInSolution.Found) {
+                SolutionFile = projectInSolution.SolutionFile;
 
-            ProjectConfigurationInSolution projectConfigurationInSolution;
-            if (projectInSolution.Project.ProjectConfigurations.TryGetValue(buildConfiguration, out projectConfigurationInSolution)) {
-                IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
-            }
+                ProjectConfigurationInSolution projectConfigurationInSolution;
+                if (projectInSolution.Project.ProjectConfigurations.TryGetValue(buildConfiguration, out projectConfigurationInSolution)) {
+                    IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
+                }
 
-            if (IncludeInBuild) {
-                Tree.AddConfiguredProject(this);
+                if (IncludeInBuild) {
+                    Tree.AddConfiguredProject(this);
+                }
+            } else {
+                IProjectTreeInternal treeInternal = Tree as IProjectTreeInternal;
+                treeInternal.OrphanProject(this);
             }
         }
 
@@ -296,6 +322,10 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
         }
+    }
+
+    internal interface IProjectTreeInternal {
+        void OrphanProject(ConfiguredProject configuredProject);
     }
 
 }

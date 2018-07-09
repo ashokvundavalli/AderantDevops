@@ -1,11 +1,15 @@
 ﻿using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
-    internal struct SolutionProject {
+    /// <summary>
+    /// The results of a solution search.
+    /// </summary>
+    internal struct SolutionSearchResult {
 
-        public SolutionProject(string file, ProjectInSolution project) {
+        public SolutionSearchResult(string file, ProjectInSolution project) {
             SolutionFile = file;
             Project = project;
+            Found = true;
         }
 
         /// <summary>
@@ -19,5 +23,10 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         /// <value>The project.</value>
         public ProjectInSolution Project { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether a solution was found.
+        /// </summary>
+        public bool Found { get; internal set; }
     }
 }
