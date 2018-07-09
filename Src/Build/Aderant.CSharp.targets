@@ -65,7 +65,7 @@
           AfterTargets="OnBeforeCompile">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group 
-      is not reflected through out the in memory projecct
+      is not reflected through out the in memory project
     -->
 
     <Error Text="Cannot find path to build tools" Condition="'$(BuildToolsDirectory)' == ''" />
