@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
          ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
-         InitialTargets="DefaultContextProperties"
+         InitialTargets="DefaultContextProperties;"
          TreatAsLocalProperty="SolutionRoot;AssemblyVersion">
 
 
@@ -95,18 +95,14 @@
       ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
-      ProjectFile="$(BranchBuildProject)"
+      JobFile="$(BranchBuildProject)"
+      JobRunFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ModuleBuild.Initialize.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ModuleBuild.Completion.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
     <Error Condition="!Exists('$(BranchBuildProject)')" Text="$(BranchBuildProject) does not exist." />
-
-    <Error Condition=" '@(ModulesInBuild)' == ''" Text="No modules to build." />
-
-    <Message Text="Modules in this build:" />
-    <Message Text="%(ModulesInBuild.Identity)" />
   </Target>
 
 
@@ -154,7 +150,7 @@
         TFS: 122744
         We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
         aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the
-        producution of the message file(s) then the build can fail on some application module builds. By delete the msg file from 
+        production of the message file(s) then the build can fail on some application module builds. By delete the msg file from 
         dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
         as the test are generally written to assume no message file is available and so don't expect to find translated strings.
       -->
@@ -233,8 +229,63 @@
 
       -->
 
-  <Target Name="DefaultContextProperties">
-    <DefaultContextProperties>
+  <PropertyGroup>
+    <InitialTargetsDependsOn>
+      SetEnvironmentVariables
+    </InitialTargetsDependsOn>
+  </PropertyGroup>
+
+  <Target Name="SetEnvironmentVariables">
+    <!-- 
+      As part of our builds, quite a few projects copy files to the binaries directory or other locations.  
+      These can be anything from image files to test scripts.  To have our builds complete more quickly, we use the multi-process option (/maxcpucount) of msbuild to build projects in parallel.
+      This all sounds normal, so what's the problem?  In a large team, people will sometimes inadvertently add statements to different project files that copy files to the same destination.  
+      When those project files have no references to each other, directly or indirectly, msbuild may build them in parallel.  
+      If it does happen to run those projects in parallel on different nodes and the copies happen at the same time, the build breaks because one copy succeeds and one fails.  
+      Since the timing is not going to be the same on every build, the result is random build breaks. Build breaks suck. They drain the productivity of the team and are frustrating.
+      
+      There also appears to be a race condition inside MS Build that we come across from time to time where the same destination path is used in more than one copy.
+      
+      Consider this log snippet
+      
+   441>_CopyFilesMarkedCopyLocal:
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\packages\ThirdParty.NHibernate\lib\NHibernate.xml" to "..\..\Bin\Test\NHibernate.xml".
+       _CopyOutOfDateSourceItemsToOutputDirectory:
+         Creating directory "..\..\Bin\Test\Installation\CmsDbScripts".
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql".
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql".
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
+   440>_CopyOutOfDateSourceItemsToOutputDirectory:
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql".
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql".
+   441>CopyFilesToOutputDirectory:
+         Copying file from "obj\Release\UnitTest.Bill.Library.dll" to "..\..\Bin\Test\UnitTest.Bill.Library.dll".
+         UnitTest.Bill.Library -> e:\B\90\7659\src\Libraries.Entities.Bill\Bin\Test\UnitTest.Bill.Library.dll
+         Copying file from "obj\Release\UnitTest.Bill.Library.pdb" to "..\..\Bin\Test\UnitTest.Bill.Library.pdb".
+   440>C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(4106,5): error MSB3021: Unable to copy file "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql". Access to the path '..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql' is denied. [e:\B\90\7659\src\Libraries.Entities.Bill\Test\IntegrationTest.Bill.Library\IntegrationTest.Bill.Library.csproj]
+         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
+         
+      There are two nodes running, 440 and 441. 
+      For some reason both 441 and 440 schedule the copy of BillModel_InquiryMatterWipAging.sql to the output even though a node should only work on a single target at a time
+      and thus a single node should be processing the source items of a project at any given time.
+      -->
+
+    <ItemGroup>
+      <EnvironmentVariable Include="MSBUILDALWAYSRETRY">
+        <Value>1</Value>
+      </EnvironmentVariable>
+    </ItemGroup>
+
+    <SetEnvironmentVariable Variables="@(EnvVariable)" />
+
+  </Target>
+
+
+  <Target Name="DefaultContextProperties" DependsOnTargets="$(InitialTargetsDependsOn)">
+
+    <DefaultContextProperties
+        ContextFileName="$(ContextFileName)"
+        WaitForDebugger="$(WaitForDebugger)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
     </DefaultContextProperties>
   </Target>
