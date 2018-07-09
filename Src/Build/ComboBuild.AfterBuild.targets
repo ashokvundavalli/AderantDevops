@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="AfterModuleBuild"
+         DefaultTargets="Build"
          ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
@@ -13,8 +13,6 @@
   <Import Project="Mobile.targets" />
 
   <PropertyGroup>
-    <BinModuleDirectory>$(SolutionDirectoryPath)Bin\Module\</BinModuleDirectory>
-    <BinTestDirectory>$(SolutionDirectoryPath)Bin\Test\</BinTestDirectory>
     <CopyToDropV2>true</CopyToDropV2>
   </PropertyGroup>
 
@@ -30,9 +28,11 @@
   <PropertyGroup>
     <RunTestsDependsOn>
       $(RunTestsDependsOn);
-      BeforeRunTests;
+      CollectTestAssemblies;
     </RunTestsDependsOn>
-    <CompletionModuleBuildDependsOn>
+
+    <AfterBuildDependsOn>
+      ValidateRequiredProperties;
       RunTests;
       RunIntegrationTests;
       <!--RunAutomationTests;-->
@@ -42,16 +42,17 @@
       PostBuild;
       SignInstallers;
       CopyToDropV2;
-    </CompletionModuleBuildDependsOn>
+    </AfterBuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="BeforeRunTests">
+  <Target Name="CollectTestAssemblies">
 
     <ItemGroup>
-      <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
-          $(BinTestDirectory)*.Tests.ps1;"
+      <TestAssemblies
+        Include="$(BinTestDirectory)*UnitTest*.dll;
+                 $(BinTestDirectory)*.Tests.ps1;"
         Exclude="$(BinTestDirectory)*Helpers*.dll;
-          $(BinTestDirectory)Microsoft.*" />
+                 $(BinTestDirectory)Microsoft.*" />
       <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
     </ItemGroup>
 
@@ -115,16 +116,6 @@
       Target="$(BinModuleDirectory)" />
   </Target>
 
-
-  <Target Name="AfterModuleBuild">
-      <MSBuild Projects="@(ProjectsToBuild)"
-        Targets="Build"
-        BuildInParallel="true"
-        Properties="%(ProjectsToBuild.Properties)" />
-
-  </Target>
-
-
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
 
@@ -133,10 +124,16 @@
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
 
-  <Target Name="Build" DependsOnTargets="$(CompletionModuleBuildDependsOn)">
+  <Target Name="Build" DependsOnTargets="AfterBuild">
+  </Target>
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
 
+  <Target Name="AfterBuild" DependsOnTargets="$(AfterBuildDependsOn)">
+  </Target>
+
+  <Target Name="ValidateRequiredProperties">
+    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined" />
+    
   </Target>
 
 </Project>

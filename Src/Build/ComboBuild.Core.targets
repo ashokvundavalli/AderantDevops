@@ -7,13 +7,12 @@
   This project file exists to provide an appropriate seam for adding new properties to the group without having to 
   modify the project generator itself.
   -->
-  <Import Project="$(InstanceProjectFile)" /> 
+  <Target Name="DispatchToInnerBuild" DependsOnTargets="GetBuildGroupProjects">
 
-  <Target Name="DispatchToInnerBuild" DependsOnTargets="ComputeBuildGroupProjects">
-
-    <MSBuild Projects="ModuleBuild.Initialize.targets"
-             Targets="Build"
-             BuildInParallel="$(BuildInParallel)">
+    <MSBuild Projects="ComboBuild.BeforeBuild.targets"
+             Targets="GetBuildGroupProjects"
+             BuildInParallel="$(BuildInParallel)"
+             Properties="InstanceProjectFile=$(InstanceProjectFile);BuildGroup=$(BuildGroup)">
       <!--The compiled assemblies from projects-->
       <Output ItemName="CompiledAssemblies"
               TaskParameter="TargetOutputs" />
@@ -22,7 +21,7 @@
   </Target>
   
   
-  <Target Name="ComputeBuildGroupProjects" Returns="@(ProjectsInGroup)">
+  <Target Name="GetBuildGroupProjects" Returns="@(ProjectsInGroup)">
     <!-- From the generated project, find projects we should build in this group. -->
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" /> 

@@ -3,8 +3,8 @@
          DefaultTargets="RunBuildForGroup"
          ToolsVersion="14.0"
          TreatAsLocalProperty="SolutionDirectoryPath">
-
-  <Import Project="ComboBuild.Core.targets" />
+  
+  <Import Project="$(InstanceProjectFile)" />
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.TextTransform.targets" />
@@ -13,7 +13,7 @@
 
   <PropertyGroup>
     <RunBuildDependsOn>
-      ComputeBuildGroupProjects;
+      
       ValidateRequiredProperties;
       CleanBin;
       PrepareZipCustomSource;
@@ -44,18 +44,16 @@
     <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
   </PropertyGroup>
 
-  <!-- Stub target -->
+  <!-- Entry target -->
   <Target Name="Build" DependsOnTargets="RunBuildForGroup" />
 
   <Target Name="ValidateRequiredProperties">
+    <!--<Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined" />-->
     <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set" />
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set" />
   </Target>
 
   <Target Name="RunBuildForGroup" DependsOnTargets="$(RunBuildDependsOn)">
-    <CallTarget Targets="ComputeBuildGroupProjects" />
-
-
     <Message Importance="Low" Text="MSBuildNodeCount: $(MSBuildNodeCount)"/>
     <Message Importance="Low" Text="MSBuildExtensionsPath32: $(MSBuildExtensionsPath32)"/>
     <Message Importance="Low" Text="MSBuildProjectDirectoryNoRoot: $(MSBuildProjectDirectoryNoRoot)"/>
@@ -98,12 +96,23 @@
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ShouldUnsetParentConfigurationAndPlatform=true;
-        BuildProjectReferences=false;;
+        BuildProjectReferences=false;
         <!--$(AssemblyDebugOptions)-->
       </BuildProperties>
       
       <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
     </PropertyGroup>
+
+    <PropertyGroup>
+      <OrchestrationProperties>
+        SolutionDirectoryPath=$(SolutionDirectoryPath);
+        BinTestDirectory=$(BinTestDirectory);
+        BinModuleDirectory=$(BinModuleDirectory);
+        ModuleSourceDirectory=$(ModuleSourceDirectory);
+        ModuleTestDirectory=$(ModuleTestDirectory);
+        ModuleBuildDirectory=$(ModuleBuildDirectory)
+      </OrchestrationProperties>
+  </PropertyGroup>
 
     <!--
         ShouldUnsetParentConfigurationAndPlatform
@@ -117,19 +126,30 @@
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high"></Message>
 
+  <PropertyGroup>
+    <ProjectsToBuildItemGroup>ProjectsToBuild$(BuildGroup)</ProjectsToBuildItemGroup>
+  </PropertyGroup>
+
     <ItemGroup>
-      <Projects Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsWebProject)' == 'true'">
+      <!-- <Projects Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsOrchestrationParticipant)' == 'true'"> -->
+        <!-- <Properties>%(Projects.Properties);$(BuildProperties);$(OrchestrationProperties)</Properties> -->
+      <!-- </Projects> -->
+      
+      
+      <Projects Include="$(ProjectsToBuildItemGroup)"/>
+
+      <!--<Projects Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsWebProject)' == 'true'">
         <Properties>%(Projects.Properties);$(BuildProperties);PackageWeb=true</Properties>
       </Projects>
 
       <Projects Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsWebProject)' != 'true'">
         <Properties>%(Projects.Properties);$(BuildProperties)</Properties>
-      </Projects>
+      </Projects>-->
     </ItemGroup>
 
-    <!--<DebugProjectProperties Projects="@(ProjectsInGroup)" />-->
+    <InspectItemGroup ItemGroup="@(Projects)" />
 
-    <MSBuild Condition="'%(FileName)' != '$(MSBuildThisFileName)'"
+    <MSBuild Condition="'%(FileName)' != '$(MSBuildThisFileName)' And '%(Extension)' != '.csproj'"
              Projects="@(Projects)"
              Targets="Build"
              BuildInParallel="true"
