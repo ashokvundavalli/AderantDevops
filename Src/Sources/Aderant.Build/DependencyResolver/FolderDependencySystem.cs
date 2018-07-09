@@ -112,11 +112,11 @@ namespace Aderant.Build.DependencyResolver {
             }
 
             if (requirement.VersionRequirement != null && !String.IsNullOrEmpty(requirement.VersionRequirement.AssemblyVersion)) {
-                string[] entries = fileSystem.GetDirectories(requirementPath, notRelative: notRelative).ToArray();
+                string[] entries = fileSystem.GetDirectories(requirementPath).ToArray();
                 string[] orderedBuilds = OrderBuildsByBuildNumber(entries);
 
                 foreach (string build in orderedBuilds) {
-                    var files = fileSystem.GetFiles(build, null, false, notRelative);
+                    var files = fileSystem.GetFiles(build, null, false);
 
                     foreach (string file in files) {
                         if (file.IndexOf("build.failed", StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -169,7 +169,7 @@ namespace Aderant.Build.DependencyResolver {
                     binariesFolder = binaries;
                     return true;
                 }
-                if (fileSystem.GetDirectories(binaries, false, false).Any()) {
+                if (fileSystem.GetDirectories(binaries, false).Any()) {
                     binariesFolder = binaries;
                     return true;
                 }

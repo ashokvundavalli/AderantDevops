@@ -113,7 +113,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    foreach (string zipPath in fileSystem.GetFiles(dir, "Web.*.zip", true, true).Where(f => !f.EndsWith("dependencies.zip"))) {
+                    foreach (string zipPath in fileSystem.GetFiles(dir, "Web.*.zip", true).Where(f => !f.EndsWith("dependencies.zip"))) {
                         logger.Info("Extracting web package archive {0}", zipPath);
                         var fs = new WebArchiveFileSystem(fileSystem.GetFullPath(dir));
                         fs.ExtractArchive(fileSystem.GetFullPath(zipPath), fileSystem.GetFullPath(dir));
