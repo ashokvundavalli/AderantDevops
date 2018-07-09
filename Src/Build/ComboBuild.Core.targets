@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="DispatchToInnerBuild"
+         ToolsVersion="14.0">
+         
+  <!-- 
+  This project file exists to provide an appropriate seam for adding new properties to the group without having to 
+  modify the project generator itself.
+  -->
+  <Import Project="$(InstanceProjectFile)" /> 
+
+  <Target Name="DispatchToInnerBuild" DependsOnTargets="ComputeBuildGroupProjects">
+
+    <MSBuild Projects="ModuleBuild.Initialize.targets"
+             Targets="Build"
+             BuildInParallel="$(BuildInParallel)">
+      <!--The compiled assemblies from projects-->
+      <Output ItemName="CompiledAssemblies"
+              TaskParameter="TargetOutputs" />
+    </MSBuild>
+
+  </Target>
+  
+  
+  <Target Name="ComputeBuildGroupProjects" Returns="@(ProjectsInGroup)">
+    <!-- From the generated project, find projects we should build in this group. -->
+    <ItemGroup>
+      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" /> 
+    </ItemGroup>
+
+  </Target>
+
+</Project>

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-  DefaultTargets="AfterModuleBuild"
-  ToolsVersion="14.0">
+         DefaultTargets="AfterModuleBuild"
+         ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.CopyToDropV2.targets" />
@@ -35,7 +35,7 @@
     <CompletionModuleBuildDependsOn>
       RunTests;
       RunIntegrationTests;
-      RunAutomationTests;
+      <!--RunAutomationTests;-->
       PublishModule;
       IndexSourcesAndPublishSymbols;
       MobileBuild;
