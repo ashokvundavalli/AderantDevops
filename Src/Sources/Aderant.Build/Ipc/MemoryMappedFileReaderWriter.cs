@@ -8,15 +8,10 @@ namespace Aderant.Build.Ipc {
     /// Reads and writes arbitrary data from a memory mapped file.
     /// </summary>
     public sealed class MemoryMappedFileReaderWriter {
-        private readonly BinaryFormatter formatter = new BinaryFormatter();
         private readonly MemoryMappedFile file;
+        private readonly BinaryFormatter formatter = new BinaryFormatter();
         private bool bufferBroken;
         private object syncLock = new object();
-
-        /// <summary>
-        /// Gets the latest incoming message.
-        /// </summary>
-        public object IncomingMessage { get; private set; }
 
         internal MemoryMappedFileReaderWriter(MemoryMappedFile file) {
             this.file = file;
@@ -24,28 +19,29 @@ namespace Aderant.Build.Ipc {
             this.file.Disposing += OnDisposing;
         }
 
-        public static string WriteData(object data) {
+        /// <summary>
+        /// Gets the latest incoming message.
+        /// </summary>
+        public object IncomingMessage { get; private set; }
+
+        public static string WriteData(string fileName, object data) {
             if (!data.GetType().IsSerializable) {
                 throw new ArgumentException("Type is not serializable.", nameof(data));
             }
 
-            var name = Guid.NewGuid().ToString("D");
-
-            var buffer = new MemoryMappedFile(name, MemoryMappedFile.DefaultCapacity);
+            var buffer = new MemoryMappedFile(fileName, MemoryMappedFile.DefaultCapacity);
             var readerWriter = new MemoryMappedFileReaderWriter(buffer);
             readerWriter.Write(data);
-
-            return name;
+            return fileName;
         }
 
         public static object Read(string name) {
-            using (var buffer = new MemoryMappedFile(name, MemoryMappedFile.DefaultCapacity)) {
-                var readerWriter = new MemoryMappedFileReaderWriter(buffer);
+            var buffer = new MemoryMappedFile(name, MemoryMappedFile.DefaultCapacity);
+            var readerWriter = new MemoryMappedFileReaderWriter(buffer);
 
-                readerWriter.Read();
+            readerWriter.Read();
 
-                return readerWriter.IncomingMessage;
-            }
+            return readerWriter.IncomingMessage;
         }
 
         private void OnDisposing(object sender, EventArgs args) {
@@ -58,7 +54,7 @@ namespace Aderant.Build.Ipc {
         /// <summary>
         /// Writes the specified logging event to the underlying buffer.
         /// </summary>
-        public void Write(object data)  {
+        public void Write(object data) {
             if (data == null) {
                 return;
             }
@@ -71,7 +67,7 @@ namespace Aderant.Build.Ipc {
                 if (bufferBroken) {
                     return;
                 }
-               
+
                 using (var stream = new MemoryStream()) {
                     formatter.Serialize(stream, data);
 
@@ -85,7 +81,6 @@ namespace Aderant.Build.Ipc {
         }
 
         private object Read(byte[] data) {
-
             lock (syncLock) {
                 object rawEvent;
 
@@ -106,7 +101,7 @@ namespace Aderant.Build.Ipc {
 
         /// <summary>
         /// Reads the next available message from the underlying buffer.
-        /// The message is available in <see cref="IncomingMessage"/>
+        /// The message is available in <see cref="IncomingMessage" />
         /// </summary>
         public bool Read() {
             if (bufferBroken) {

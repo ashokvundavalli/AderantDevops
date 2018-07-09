@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
@@ -10,30 +11,46 @@ namespace Aderant.Build.Ipc {
     /// A thread safe IPC channel backed shared memory.
     /// </summary>
     internal class MemoryMappedFile : IDisposable {
+        private static List<object> gcKeepAlive = new List<object>();
+
         private System.IO.MemoryMappedFiles.MemoryMappedFile buffer;
-        private MemoryMappedViewAccessor view;
         private Semaphore bufferFreeForWriting;
 
         private object syncLock = new object();
-
-        public event EventHandler<EventArgs> Disposing;
+        private MemoryMappedViewAccessor view;
 
         public MemoryMappedFile(string bufferName, Int64 capacity) {
-            buffer = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateOrOpen(bufferName, capacity, MemoryMappedFileAccess.ReadWrite);
+            if (!TryOpenExisting(bufferName, out buffer)) {
+                buffer = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateOrOpen(bufferName, capacity, MemoryMappedFileAccess.ReadWrite);
+                gcKeepAlive.Add(buffer);
+            } else {
+                
+            }
+
             view = buffer.CreateViewAccessor(0, 0, MemoryMappedFileAccess.ReadWrite);
 
             string name = GetBufferNameWithoutSession(bufferName);
-            
-            // Concurrency control, all writers will block on this handle
-            bufferFreeForWriting = new Semaphore(1, 1, name + "_BUFFER_READY");
-        }
 
-        private string GetBufferNameWithoutSession(string bufferName) {
-            return Regex.Replace(bufferName, @"(Local\\|Global\\)", string.Empty);
+            // Concurrency control, all writers will block on this handle
+            bool createdNew;
+            bufferFreeForWriting = new Semaphore(1, 1, name + "_BUFFER_READY", out createdNew);
+
+           
         }
 
         internal static long DefaultCapacity {
             get { return 16000; }
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public event EventHandler<EventArgs> Disposing;
+
+        private string GetBufferNameWithoutSession(string bufferName) {
+            return Regex.Replace(bufferName, @"(Local\\|Global\\)", string.Empty);
         }
 
         public byte[] Read() {
@@ -94,11 +111,6 @@ namespace Aderant.Build.Ipc {
             Disposing?.Invoke(this, EventArgs.Empty);
         }
 
-        public void Dispose() {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         protected virtual void Dispose(bool disposing) {
             if (!disposing) {
                 return;
@@ -122,6 +134,21 @@ namespace Aderant.Build.Ipc {
 
                 }
             }
+        }
+
+        private static bool TryOpenExisting(string mapName, out System.IO.MemoryMappedFiles.MemoryMappedFile memoryMappedFile) {
+            bool result = false;
+            System.IO.MemoryMappedFiles.MemoryMappedFile mmf = null;
+            try {
+                mmf = System.IO.MemoryMappedFiles.MemoryMappedFile.OpenExisting(mapName);
+            } catch {
+                mmf = null;
+            } finally {
+                result = mmf != null;
+                memoryMappedFile = mmf;
+            }
+
+            return result;
         }
     }
 }
