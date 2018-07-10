@@ -71,6 +71,10 @@ public static class DteHelper {
 "@
 
 function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useConsole = $true, [System.Diagnostics.Process]$parentProcess) {
+  if (-not (Test-Path $command)) {
+    throw "Tool not found $command"
+  }
+
   $startInfo = New-Object System.Diagnostics.ProcessStartInfo
   $startInfo.FileName = $command
   $startInfo.Arguments = $commandArgs
