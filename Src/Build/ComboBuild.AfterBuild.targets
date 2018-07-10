@@ -7,9 +7,7 @@
   <Import Project="Aderant.Build.CopyToDropV2.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
-  <Import Project="Aderant.Build.OnTestFailure.targets" />
   <Import Project="Aderant.Build.Publish.targets" />
-  <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Mobile.targets" />
 
   <PropertyGroup>
@@ -119,7 +117,6 @@
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
 
-
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
@@ -127,13 +124,54 @@
   <Target Name="Build" DependsOnTargets="AfterBuild">
   </Target>
 
-
   <Target Name="AfterBuild" DependsOnTargets="$(AfterBuildDependsOn)">
   </Target>
 
   <Target Name="ValidateRequiredProperties">
     <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined" />
     
+  </Target>
+
+
+  <Target Name="OnTestFailure">
+    <CallTarget Targets="AfterRunTests;CopyTrxFile;MarkBuildStepAsFailed"/>
+  </Target>
+
+  <Target Name="AfterRunTests"
+    AfterTargets="RunTests">
+
+    <RemoveDir Directories="$(BinTestDirectory)Dependencies"
+      ContinueOnError="true"  />
+    <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
+      ContinueOnError="true" />
+    <RemoveDir Directories="$(BinTestDirectory)TestResults\packages"
+      ContinueOnError="true" />
+
+    <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
+      Files="@(TestAssemblyConfigFiles)"
+      TreatErrorsAsWarnings="true" />
+  </Target>
+
+
+  <Target Name="CopyTrxFile" AfterTargets="RunTests">
+    <!--<ItemGroup>
+      <TestResults Include="$(SolutionDirectoryPath)**\*.trx" />
+    </ItemGroup>
+
+    <Copy Condition="@(TestResults) != ''"
+          SourceFiles="@(TestResults)"
+          DestinationFiles="$(BinTestDirectory)TestResults.trx" />-->
+  </Target>
+
+  <!--
+    ==========================================================================================
+        MarkBuildStepAsFailed
+    ==========================================================================================
+  -->
+  <Target Name="MarkBuildStepAsFailed"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true'">
+    <Message Text="Marking build as failed" />
+
   </Target>
 
 </Project>
