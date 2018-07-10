@@ -6,9 +6,10 @@ using Aderant.Build.MSBuild;
 using Project = Microsoft.Build.Evaluation.Project;
 
 namespace Aderant.Build.DependencyAnalyzer {
-    internal sealed class ParallelBuildVisitor : BuildElementVisitor {
-        public override XElement GetDocument() {
-            XElement projectDocument = base.GetDocument();
+    internal sealed class ParallelBuildVisitor : TargetXmlEmitter {
+        public override XElement GetXml() {
+            XElement projectDocument = base.GetXml();
+
             XElement afterCompileElement =
                 projectDocument.Elements()
                                .FirstOrDefault(
@@ -22,19 +23,18 @@ namespace Aderant.Build.DependencyAnalyzer {
                         "This target defines the end point of the project, each build level will be called from 0 .. n before this executes"));
             }
 
-            var project = CreateProject(projectDocument);
+            var project = CreateRealProject(projectDocument);
 
-            using (StringWriter writer = new StringWriter()) {
+            using (var writer = new StringWriter()) {
                 project.Save(writer);
-                return XElement.Parse(writer.GetStringBuilder().ToString());
+                return XElement.Parse(writer.ToString());
             }
         }
 
-        private Project CreateProject(XElement projectDocument) {
-
+        private Project CreateRealProject(XElement projectDocument) {
+            // Pass the generated XML to MSBuild for validation
             using (XmlReader reader = projectDocument.CreateReader()) {
                 Project project = new Project(reader);
-
                 return project;
             }
         }
