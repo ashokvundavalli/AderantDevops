@@ -37,14 +37,14 @@ namespace Aderant.Build.Tasks {
         /// That is the file that represents the tasks to perform in this build.
         /// </summary>
         [Required]
-        public string JobFile { get; set; }
+        public string InstanceFile { get; set; }
 
         /// <summary>
-        /// Gets or sets the run file.
+        /// Gets or sets the targets file which performs the build orchestration
         /// That is the file that represents the coordination tasks for a build instance.
         /// </summary>
         [Required]
-        public string JobRunFile { get; set; }
+        public string GroupOrchestrationFile { get; set; }
 
         /// <summary>
         /// Gets or sets the before project file.
@@ -75,14 +75,21 @@ namespace Aderant.Build.Tasks {
             var relationshipProcessing = GetRelationshipProcessingMode(context);
             var buildType = GetBuildType(context);
 
+            if (context.Switches.Resume) {
+                if (File.Exists(InstanceFile)) {
+                    return;
+                }
+            }
+
             IProjectTree projectTree = ProjectTree.CreateDefaultImplementation();
-       
+
             var jobFiles = new BuildJobFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
-                JobRunFile = JobRunFile,
-                JobFile = JobFile,
+                GroupOrchestrationFile = GroupOrchestrationFile,
+                InstanceFile = InstanceFile,
             };
+
 
             Project project = projectTree.GenerateBuildJob(context, jobFiles).Result;
             var element = project.CreateXml();
@@ -94,7 +101,7 @@ namespace Aderant.Build.Tasks {
             settings.IndentChars = "    ";
             settings.Indent = true;
 
-            using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, JobFile), settings)) {
+            using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, InstanceFile), settings)) {
                 element.WriteTo(writer);
             }
 
