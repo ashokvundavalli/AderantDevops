@@ -48,41 +48,383 @@
     </ExcludePattern>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build.Tools\lib\win32\x64\git2-baa87df.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SystemUnderTest\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <Link>SystemUnderTest\x64\git2-baa87df.dll</Link>
     </Content>
-    <Content Include="DependencyAnalyzer\CSharpProjectLoaderTests\Web.Core.csproj">
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build.Tools\lib\win32\x64\git2-baa87df.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\x64\git2-baa87df.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build.Tools\lib\win32\x86\git2-baa87df.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\x86\git2-baa87df.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build.Tools\lib\win32\x86\git2-baa87df.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\x86\git2-baa87df.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.Clean.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.Clean.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.Common.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.Common.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.CopyToDropV2.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.CopyToDropV2.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.CustomSolutionPackaging.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.CustomSolutionPackaging.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.IntegrationTesting.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.IntegrationTesting.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.Publish.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.Publish.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.Testing.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.Testing.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.Build.Versioning.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.Build.Versioning.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.BuildAll.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.BuildAll.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.CodeAnalysis.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.CodeAnalysis.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.CodeSigning.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.CodeSigning.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.CSharp.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.CSharp.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.CustomAfterMicrosoftCommon.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.CustomAfterMicrosoftCommon.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.TextTransform.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.TextTransform.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.wpp.content.proj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.wpp.content.proj</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.wpp.content.v2.proj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.wpp.content.v2.proj</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Aderant.wpp.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Aderant.wpp.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Bootstrap.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Bootstrap.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Build-Libraries.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Build-Libraries.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\BuildModule.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\BuildModule.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\BuildProcess.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\BuildProcess.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\CleanSymlinks.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\CleanSymlinks.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\ComboBuild.AfterBuild.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\ComboBuild.AfterBuild.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\ComboBuild.Core.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\ComboBuild.Core.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\ComboBuild.PrepareForBuild.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\ComboBuild.PrepareForBuild.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\ComboBuild.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\ComboBuild.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\CopyToDrop.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\CopyToDrop.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\CopyToDropV2.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\CopyToDropV2.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\CopyToDropXAML.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\CopyToDropXAML.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\dir.proj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\dir.proj</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\DrawShield.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\DrawShield.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Caching.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Caching.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Change-Directory.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Change-Directory.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Get-AmbientBuildMetadata.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Get-AmbientBuildMetadata.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Get-BuildContext.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Get-BuildContext.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Initialize-Assembly.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Initialize-Assembly.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Initialize-Git.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Initialize-Git.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Install-PoshGit.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Install-PoshGit.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Invoke-Build.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Invoke-Build.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\New-BuildContext.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\New-BuildContext.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\New-PullRequest.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\New-PullRequest.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Open-Directory.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Open-Directory.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Publish-BuildContext.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Publish-BuildContext.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Run-MSBuild.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Run-MSBuild.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Functions\Use-CallerPreference.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Functions\Use-CallerPreference.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\GitVersion.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\GitVersion.exe</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\GitVersion.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\GitVersion.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Invoke-Build.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Invoke-Build.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\InvokeServerBuild.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\InvokeServerBuild.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\LibGit2Sharp.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\LibGit2Sharp.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\LibGit2Sharp.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\LibGit2Sharp.dll.config</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\LibGit2Sharp.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\LibGit2Sharp.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\lib\linux\x86_64\libgit2-baa87df.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\lib\linux\x86_64\libgit2-baa87df.so</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\lib\osx\libgit2-baa87df.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\lib\osx\libgit2-baa87df.dylib</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\lib\win32\x64\git2-baa87df.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\lib\win32\x64\git2-baa87df.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\lib\win32\x64\git2-baa87df.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\lib\win32\x64\git2-baa87df.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\lib\win32\x86\git2-baa87df.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\lib\win32\x86\git2-baa87df.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\lib\win32\x86\git2-baa87df.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\lib\win32\x86\git2-baa87df.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\LightUpDependencies.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\LightUpDependencies.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\LightUpManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\LightUpManifest.xml</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Load-LocalDependencies.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Load-LocalDependencies.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\LoadDependencies.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\LoadDependencies.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Mobile.Targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Mobile.Targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\ModuleBuild.proj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\ModuleBuild.proj</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\ModuleBuild2.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\ModuleBuild2.targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Package.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Package.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\paket.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\paket.exe</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\PostWarningShields.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\PostWarningShields.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\RM.TransformTemplates.Targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\RM.TransformTemplates.Targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.xml</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.xsd</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\RidoTasks.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\RidoTasks.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\RidoTasks.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\RidoTasks.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\VSTest.TeamCityLogger.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\VSTest.TeamCityLogger.dll</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Tasks\VSTest.TeamCityLogger.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Tasks\VSTest.TeamCityLogger.pdb</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\UnitTestAppConfig.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\UnitTestAppConfig.txt</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\Update-Analyzer.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\Update-Analyzer.ps1</Link>
+    </Content>
+    <Content Include="C:\Source\Build.Infrastructure\Test\Test.Build\..\..\src\Build\vsvars.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SystemUnderTest\vsvars.ps1</Link>
+    </Content>
+    <Content Include="ConfiguredProjectTests\Web.Core.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="ConfiguredProjectTests\Web.PrebillEditor.csproj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleA\Bar\Bar.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\CSharpProjectLoaderTests\Web.PrebillEditor.csproj">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleA\Baz\Baz.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleA\ModuleA.sln">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleA\Foo\Foo.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleA\ProjectA\ProjectA.csproj">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleA\ModuleA.sln">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleA\ProjectB\ProjectB.csproj">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleB\Flob\Flob.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleA\ProjectC\ProjectC.csproj">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleB\Flob\TextTemplate1.tt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleB\ModuleB.sln">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleB\Gaz\Gaz.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleB\ProjectA\ProjectA.csproj">
+    <Content Include="DependencyAnalysis\Resources\Source\ModuleB\ModuleB.sln">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleB\ProjectB\ProjectB.csproj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="DependencyAnalyzer\Resources\Source\ModuleB\ProjectB\TextTemplate1.tt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="DependencyAnalyzer\TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
+    <Content Include="DependencyAnalysis\TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
     <Content Include="Tasks\ReadAssemblyInfo\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -120,6 +462,7 @@
     <Reference Include="Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Build.Framework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.TeamFoundation.Build2.WebApi">
       <HintPath>..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.Build2.WebApi.dll</HintPath>
     </Reference>
@@ -139,6 +482,7 @@
       <HintPath>..\..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Net.Http.Formatting, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -170,18 +514,18 @@
     <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Compile Include="DependencyAnalyzer\ProjectTreeTests.cs" />
+    <Compile Include="DependencyAnalysis\ProjectTreeTests.cs" />
     <Compile Include="AssemblyInitializer.cs" />
-    <Compile Include="DependencyAnalyzer\TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
-    <Compile Include="DependencyAnalyzer\TextTemplateAnalysis\Resources.Designer.cs">
+    <Compile Include="DependencyAnalysis\TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
+    <Compile Include="DependencyAnalysis\TextTemplateAnalysis\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="VersionControl\ChangedFilesFinder.cs" />
-    <Compile Include="DependencyAnalyzer\CSharpProjectLoaderTests\CSharpProjectLoaderTests.cs" />
-    <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzerTests.cs" />
-    <Compile Include="DependencyAnalyzer\CSharpProjectLoaderTests\Resources.Designer.cs">
+    <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
+    <Compile Include="DependencyAnalysis\ProjectDependencyAnalyzerTests.cs" />
+    <Compile Include="ConfiguredProjectTests\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
@@ -228,11 +572,11 @@
     <None Include="VersionControl\Resources\CreateRepo.ps1" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="DependencyAnalyzer\CSharpProjectLoaderTests\Resources.resx">
+    <EmbeddedResource Include="ConfiguredProjectTests\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="DependencyAnalyzer\TextTemplateAnalysis\Resources.resx">
+    <EmbeddedResource Include="DependencyAnalysis\TextTemplateAnalysis\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
@@ -244,6 +588,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

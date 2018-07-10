@@ -99,23 +99,20 @@
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildJobProjectTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
+    <Compile Include="DependencyAnalyzer\ModuleRefTests.cs" />
     <Compile Include="ErrorUtilitiesTests.cs" />
     <Compile Include="Ipc\MemoryMappedBufferTests.cs" />
-    <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
-    <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzerTests.cs" />
     <Compile Include="DependencyResolver\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="FileUtilitiesTests.cs" />
     <Compile Include="DependencyResolver\DependencyManifestTests.cs" />
     <Compile Include="ExpertBuildConfigurationTests.cs" />
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
-    <Compile Include="MSBuildArgumentBuilderTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />
@@ -146,7 +143,7 @@
     <Compile Include="Tasks\ReplaceProjectReferencesTests.cs" />
     <Compile Include="TestModuleProviderBase.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage\UpdateSplashScreenImageTests.cs" />
-    <Compile Include="MSBuild\BuildElementVisitorTests.cs" />
+    <Compile Include="MSBuild\TargetXmlEmitterTests.cs" />
     <Compile Include="AutoCompletionParserTests.cs" />
     <Compile Include="ExpertModuleTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -63,9 +63,9 @@ namespace IntegrationTest.Build.DependencyAnalysis {
             await projectTree.CollectBuildDependencies(collector);
 
             DependencyGraph graph = projectTree.CreateBuildDependencyGraph(collector);
-            var dependencyOrder2 = graph.GetDependencyOrder();
+            var dependencies = graph.GetDependencyOrder();
 
-            var projects = dependencyOrder2.OfType<ConfiguredProject>().ToList();
+            var projects = dependencies.OfType<ConfiguredProject>().ToList();
 
             Assert.AreEqual(5, projects.Count);
 
@@ -90,7 +90,7 @@ namespace IntegrationTest.Build.DependencyAnalysis {
             AssertSequence(sequence, solution1, solution2);
         }
 
-        private void AssertSequence(string[] sequence, params IEnumerable<string>[] solutions) {
+        private static void AssertSequence(IEnumerable<string> sequence, params IEnumerable<string>[] solutions) {
             foreach (var solution in solutions) {
                 if (solution.SequenceEqual(sequence, StringComparer.OrdinalIgnoreCase)) {
                     return;
@@ -101,29 +101,4 @@ namespace IntegrationTest.Build.DependencyAnalysis {
         }
     }
 
-    [TestClass]
-    [DeploymentItem("DependencyAnalysis\\Resources", "Resources")]
-    public class BuildPipelineTests {
-        private IProjectTree projectTree;
-
-        public TestContext TestContext { get; set; }
-
-        [TestInitialize]
-        public void TestInitialize() {
-            this.projectTree = ProjectTree.CreateDefaultImplementation();
-        }
-
-        [TestMethod]
-        public async Task Pipeline() {
-            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true);
-
-            var collector = new BuildDependenciesCollector();
-            await projectTree.CollectBuildDependencies(collector);
-
-            DependencyGraph graph = projectTree.CreateBuildDependencyGraph(collector);
-
-            var pipeline = BuildPipeline.CreateDefaultImplementation();
-            pipeline.GenerateTargets(graph);
-        }
-    }
 }

@@ -2,7 +2,7 @@
 using System.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -18,8 +18,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var project = new BuildJob(mock.Object);
 
-            var items = new List<List<IDependencyRef>> {
-                new List<IDependencyRef> {
+            var items = new List<List<IDependable>> {
+                new List<IDependable> {
                     new FakeVisualStudioProject()
                 }
             };
@@ -29,7 +29,6 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var targets = generateProject.Elements.OfType<Target>().ToList();
             Assert.AreEqual("RunProjectsToBuild0", targets[0].Name);
             Assert.AreEqual("AfterCompile", targets[1].Name);
-
         }
     }
 }

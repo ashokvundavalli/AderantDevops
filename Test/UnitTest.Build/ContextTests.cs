@@ -1,5 +1,4 @@
 ﻿using Aderant.Build;
-using Aderant.Build.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -9,18 +8,9 @@ namespace UnitTest.Build {
         [TestMethod]
         public void Service_is_returned_from_GetService() {
             var ctx = new Context();
-            FileSystemService service1 = ctx.GetService<FileSystemService>();
+            PhysicalFileSystem service1 = ctx.GetService<PhysicalFileSystem>();
 
             Assert.IsNotNull(service1);
-        }
-
-        [TestMethod]
-        public void Default_ArgumentBuilder_is_MsBuild() {
-            var ctx = new Context();
-            var service1 = ctx.CreateArgumentBuilder(WellKnownProperties.MsBuild);
-
-            Assert.IsNotNull(service1);
-            Assert.IsInstanceOfType(service1, typeof(ComboBuildArgBuilder));
         }
 
         [TestMethod]
@@ -29,18 +19,17 @@ namespace UnitTest.Build {
             var service = ctx.GetService("Aderant.Build.Services.FileSystemService");
 
             Assert.IsNotNull(service);
-            Assert.IsInstanceOfType(service, typeof(FileSystemService));
+            Assert.IsInstanceOfType(service, typeof(PhysicalFileSystem));
         }
 
         [TestMethod]
         public void GetService_creates_service_from_conditional_export() {
             var ctx = new Context();
-            var service = ctx.GetService(typeof(IFileSystem).FullName);
+            var service = ctx.GetService(typeof(IFileSystem2).FullName);
 
             Assert.IsNotNull(service);
-            Assert.IsInstanceOfType(service, typeof(FileSystemService));
+            Assert.IsInstanceOfType(service, typeof(PhysicalFileSystem));
         }
-
 
         [TestMethod]
         public void BuildOptions_can_be_set() {

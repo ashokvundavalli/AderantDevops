@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -10,73 +9,77 @@ namespace UnitTest.Build {
 
         [TestMethod]
         public void TopologicalSort() {
-            CollectionAssert.IsSubsetOf(
-                MakeThingList("A"),
-                new[] { "A" });
 
-            CollectionAssert.IsSubsetOf(
-                MakeThingList(
-                    Create("A"),
-                    Create("B")),
-                new[] { "AB", "BA" });
+            AssertSort(new FooType[] { "A" }, "A");
 
-            CollectionAssert.IsSubsetOf(
-                MakeThingList(
-                    Create("C", "A", "B"),
-                    Create("B", "A"),
-                    Create("A")),
-                new[] { "ABC" });
+            AssertSort(
+                new FooType[] {
+                    "A",
+                    "B",
+                },
+                "AB",
+                "BA");
 
-            CollectionAssert.IsSubsetOf(
-                MakeThingList(
-                    Create("B", "A"),
-                    Create("A"),
-                    Create("C", "A"),
-                    Create("D", "C", "B")),
-                new[] { "ABCD", "ACBD" });
+            AssertSort(
+                new[] {
+                    ((FooType)"C")["A"]["B"],
+                    ((FooType)"B")["A"],
+                    "A"
+                },
+                "ABC");
+
+            AssertSort(
+                new[] {
+                    ((FooType)"B")["A"],
+                    ((FooType)"A"),
+                    ((FooType)"C")["A"],
+                    ((FooType)"D")["C"]["B"],
+
+                },
+                "ABCD",
+                "ACBD");
         }
 
-        private ICollection MakeThingList(params string[] expression) {
-            return new[] { Create(expression.First(), expression.Skip(1).ToArray()) };
-        }
+        private void AssertSort(FooType[] fooTypes, params string[] expectedSequence) {
+            var result = Aderant.Build.Utilities.TopologicalSort.Sort(fooTypes, sort => sort.GetDependencies(), sort => (string)sort);
 
-        public static ThingToSort Create(string entry, params string[] dependencies) {
-            return new ThingToSort(entry, dependencies);
-        }
+            var sequence = string.Join("", result);
 
-        public string[] MakeThingList(params ThingToSort[] expression) {
-            var result = Aderant.Build.Utilities.TopologicalSort.Sort(expression, sort => sort.Dependencies);
-            return new[] { string.Join("", result.Select(s => s.ToString()).ToArray()) };
-        }
-
-        public class ThingToSort : IEquatable<ThingToSort> {
-            public readonly ThingToSort[] Dependencies;
-
-            public readonly string Value;
-
-            public ThingToSort(string value, string[] dependencies) {
-                if (dependencies != null) {
-                    Dependencies = dependencies.Select(s => new ThingToSort(s, null)).ToArray();
+            foreach (var seq in expectedSequence) {
+                if (Enumerable.SequenceEqual(seq, seq)) {
+                    return;
                 }
-
-                Value = value;
             }
 
-            public bool Equals(ThingToSort other) {
-                return string.Equals(Value, other.Value);
-            }
+            Assert.Fail($"{sequence} is not an expected sequence");
+        }
+    }
 
-            public override string ToString() {
-                return Value;
-            }
+    public class FooType {
+        private readonly string str;
+        private List<string> dependences = new List<string>();
 
-            public override bool Equals(object obj) {
-                return Equals((ThingToSort)obj);
-            }
+        private FooType(string str) {
+            this.str = str;
+        }
 
-            public override int GetHashCode() {
-                return (Value != null ? Value.GetHashCode() : 0);
+        public FooType this[string s] {
+            get {
+                this.dependences.Add(s);
+                return this;
             }
+        }
+
+        public static implicit operator FooType(string str) {
+            return new FooType(str);
+        }
+
+        public static explicit operator string(FooType v) {
+            return v.str;
+        }
+
+        public IEnumerable<string> GetDependencies() {
+            return dependences;
         }
     }
 
