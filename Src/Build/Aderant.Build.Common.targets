@@ -95,8 +95,9 @@
   <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.DefaultContextProperties"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.SetEnvironmentVariable"                              AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.DebugProjectProperties"                              AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  
+  <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.ExtractPropertyFromPropertyList"                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+
   <PropertyGroup>
     <!-- Visual Studio Environment-->
     <VsCommonTools Condition="'$(VS100COMNTOOLS)' != ''">$(VS100COMNTOOLS)</VsCommonTools>
