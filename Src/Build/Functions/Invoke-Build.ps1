@@ -63,8 +63,11 @@ function Global:Invoke-Build2
     $ErrorActionPreference = "Stop"
                 
     [Aderant.Build.Context]$context = Get-BuildContext
-    $switches = $context.Switches 
+    if ($context -ne $null) {
+        $context = New-BuildContext
+    }
 
+    $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
     $switches.Everything = $Everything.IsPresent
     $switches.Downstream = $Downstream.IsPresent
