@@ -14,9 +14,8 @@ function Publish-BuildContext
 
     Set-StrictMode -Version 'Latest'
 
-    $fileName = [Aderant.Build.Ipc.MemoryMappedFileReaderWriter]::WriteData($Context)
-
-    [System.Environment]::SetEnvironmentVariable([Aderant.Build.WellKnownProperties]::ContextFileName, $fileName, [System.EnvironmentVariableTarget]::Process)
+    [string]$name = [System.Diagnostics.Process]::GetCurrentProcess().Id
+    $fileName = [Aderant.Build.Ipc.MemoryMappedFileReaderWriter]::WriteData($name, $Context)
 
     return $fileName
 }
