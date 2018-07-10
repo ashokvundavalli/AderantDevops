@@ -28,10 +28,6 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         public void AddDependency(IDependencyRef dependency) {
         }
 
-        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-            (visitor as GraphVisitor).Visit(this, outputFile);
-        }
-
         public bool Equals(IDependencyRef other) {
             if (ReferenceEquals(null, other)) {
                 return false;

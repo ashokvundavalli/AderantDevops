@@ -16,26 +16,29 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     [DebuggerDisplay("Module: {Name} ({DebuggerDisplayNames})")]
     public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
-        
-        private string name;
-        private readonly IList<XAttribute> customAttributes;
-        private ModuleType? type;
-        public string SolutionRoot;
-        public readonly string[] Names;
-        public DependencyManifest Manifest;
-        private HashSet<IDependencyRef> dependsOn;
 
-        internal string DebuggerDisplayNames {
-            get {
-                if (Names != null) {
-                    return string.Join(", ", Names);
-                }
-                return string.Empty;
-            }
-        }
+        private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
+            { "Libraries", ModuleType.Library },
+            { "Services", ModuleType.Service },
+            { "Applications", ModuleType.Application },
+            { "Workflow", ModuleType.Sample },
+            { "Internal", ModuleType.InternalTool },
+            { "Web", ModuleType.Web },
+            { "Mobile", ModuleType.Web },
+            { "Tests", ModuleType.Test },
+        };
+
+        private readonly IList<XAttribute> customAttributes;
+        public readonly string[] Names;
+        private HashSet<IDependencyRef> dependsOn;
+        public DependencyManifest Manifest;
+
+        private string name;
+        public string SolutionRoot;
+        private ModuleType? type;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExpertModule"/> class.
+        /// Initializes a new instance of the <see cref="ExpertModule" /> class.
         /// </summary>
         internal ExpertModule() {
         }
@@ -57,6 +60,25 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExpertModule" /> class from a Product Manifest element.
+        /// </summary>
+        /// <param name="element">The product manifest module element.</param>
+        internal ExpertModule(XElement element)
+            : this() {
+            ExpertModuleMapper.MapFrom(element, this, out customAttributes);
+        }
+
+        internal string DebuggerDisplayNames {
+            get {
+                if (Names != null) {
+                    return string.Join(", ", Names);
+                }
+
+                return string.Empty;
+            }
+        }
+
         internal IReadOnlyCollection<IDependencyRef> DependsOn {
             get {
                 if (dependsOn == null) {
@@ -66,41 +88,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                         dependsOn = new HashSet<IDependencyRef>();
                     }
                 }
+
                 return dependsOn;
             }
             set { dependsOn = new HashSet<IDependencyRef>(value); }
-        }
-
-        /// <summary>
-        /// Creates a Expert Module from the specified element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        public static ExpertModule Create(XElement element) {
-            var name = element.Attribute("Name");
-
-            if (string.IsNullOrEmpty(name?.Value)) {
-                throw new ArgumentNullException(nameof(element), "No name element specified");
-            }
-
-            ModuleType moduleType = GetModuleType(name.Value);
-
-            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
-                return new ThirdPartyModule(element);
-            }
-
-            if (moduleType == ModuleType.Web) {
-                return new WebModule(element);
-            }
-            return new ExpertModule(element);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
-        /// </summary>
-        /// <param name="element">The product manifest module element.</param>
-        internal ExpertModule(XElement element)
-            : this() {
-            ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
 
         /// <summary>
@@ -112,18 +103,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             set { name = Path.GetFileName(value); }
         }
 
-        void IDependencyRef.AddDependency(IDependencyRef dependency) {
-            dependsOn.Add(dependency);
-        }
-
-        internal void AddDependency(IDependencyRef dependency) {
-            dependsOn.Add(dependency);
-        }
-
-        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-            visitor.Visit(this, outputFile);
-        }
-
         /// <summary>
         /// Gets the type of the module.
         /// </summary>
@@ -133,57 +112,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (type == null) {
                     type = GetModuleType(Name);
                 }
+
                 return type.Value;
             }
-        }
-
-        /// <summary>
-        /// Indicates whether the current object is equal to another object of the same type.
-        /// </summary>
-        /// <returns>
-        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
-        /// </returns>
-        /// <param name="other">An object to compare with this object.</param>
-        public bool Equals(ExpertModule other) {
-            return other != null && String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
-            { "Libraries", ModuleType.Library },
-            { "Services", ModuleType.Service },
-            { "Applications", ModuleType.Application },
-            { "Workflow", ModuleType.Sample },
-            { "Internal", ModuleType.InternalTool },
-            { "Web", ModuleType.Web },
-            { "Mobile", ModuleType.Web },
-            { "Tests", ModuleType.Test },
-        };
-
-
-
-        public static ModuleType GetModuleType(string name) {
-            string firstPart = name.Split('.')[0];
-
-            ModuleType type;
-
-            if (typeMap.TryGetValue(firstPart, out type)) {
-                return type;
-            }
-
-            if (Enum.TryParse(firstPart, true, out type)) {
-                return type;
-            }
-
-            // Help builds to /bin just like a third party module
-            if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Help;
-            }
-
-            return ModuleType.Unknown;
-        }
-
-        public static bool IsNonProductModule(ModuleType type) {
-            return (type == ModuleType.Build || type == ModuleType.Performance || type == ModuleType.Test);
         }
 
         /// <summary>
@@ -223,6 +154,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (customAttributes == null) {
                     return (ICollection<XAttribute>)Enumerable.Empty<XAttribute>();
                 }
+
                 return new ReadOnlyCollection<XAttribute>(customAttributes);
             }
         }
@@ -237,47 +169,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (version != null) {
                     return new VersionRequirement { ConstraintExpression = version.Value };
                 }
+
                 return null;
             }
         }
 
         public RepositoryType RepositoryType { get; set; }
-
-        string IDependencyRef.Name {
-            get { return Name; }
-        }
-
-        IReadOnlyCollection<IDependencyRef> IDependencyRef.DependsOn {
-            get { return null; }
-        }
-
-        /// <summary>
-        /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
-        /// </summary>
-        /// <param name="obj">The <see cref="System.Object"/> to compare with this instance.</param>
-        /// <returns>
-        /// 	<c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
-        /// </returns>
-        public override bool Equals(object obj) {
-            if (!(obj is ExpertModule)) {
-                return false;
-            }
-            return Equals((ExpertModule)obj);
-        }
-
-        /// <summary>
-        /// Returns a hash code for this instance.
-        /// </summary>
-        /// <returns>
-        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
-        /// </returns>
-        public override int GetHashCode() {
-            if (name != null) {
-                return StringComparer.OrdinalIgnoreCase.GetHashCode(name);
-            }
-
-            return string.Empty.GetHashCode();
-        }
 
         public int CompareTo(ExpertModule other) {
             if (other == null) {
@@ -287,15 +184,121 @@ namespace Aderant.Build.DependencyAnalyzer {
             return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
 
+        string IDependencyRef.Name {
+            get { return Name; }
+        }
+
+        IReadOnlyCollection<IDependencyRef> IDependencyRef.DependsOn {
+            get { return null; }
+        }
+
+        bool IEquatable<IDependencyRef>.Equals(IDependencyRef other) {
+            ExpertModule expertModule = other as ExpertModule;
+            return expertModule != null && expertModule.Equals(this);
+        }
+
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <returns>
+        /// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
+        /// </returns>
+        /// <param name="other">An object to compare with this object.</param>
+        public bool Equals(ExpertModule other) {
+            return other != null && String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Creates a Expert Module from the specified element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        public static ExpertModule Create(XElement element) {
+            var name = element.Attribute("Name");
+
+            if (string.IsNullOrEmpty(name?.Value)) {
+                throw new ArgumentNullException(nameof(element), "No name element specified");
+            }
+
+            ModuleType moduleType = GetModuleType(name.Value);
+
+            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
+                return new ThirdPartyModule(element);
+            }
+
+            if (moduleType == ModuleType.Web) {
+                return new WebModule(element);
+            }
+
+            return new ExpertModule(element);
+        }
+
+        internal void AddDependency(IDependencyRef dependency) {
+            dependsOn.Add(dependency);
+        }
+
+        public static ModuleType GetModuleType(string name) {
+            string firstPart = name.Split('.')[0];
+
+            ModuleType type;
+
+            if (typeMap.TryGetValue(firstPart, out type)) {
+                return type;
+            }
+
+            if (Enum.TryParse(firstPart, true, out type)) {
+                return type;
+            }
+
+            // Help builds to /bin just like a third party module
+            if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
+                return ModuleType.Help;
+            }
+
+            return ModuleType.Unknown;
+        }
+
+        public static bool IsNonProductModule(ModuleType type) {
+            return (type == ModuleType.Build || type == ModuleType.Performance || type == ModuleType.Test);
+        }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="System.Object" /> is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+        /// <returns>
+        /// 	<c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+        /// </returns>
+        public override bool Equals(object obj) {
+            if (!(obj is ExpertModule)) {
+                return false;
+            }
+
+            return Equals((ExpertModule)obj);
+        }
+
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+        /// </returns>
+        public override int GetHashCode() {
+            if (name != null) {
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(name);
+            }
+
+            return string.Empty.GetHashCode();
+        }
+
         private string PadNumbers(string input) {
             return Regex.Replace(input, "[0-9]+", match => match.Value.PadLeft(10, '0'));
         }
 
         /// <summary>
-        /// Returns a <see cref="System.String"/> that represents this instance.
+        /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>
-        /// A <see cref="System.String"/> that represents this instance.
+        /// A <see cref="System.String" /> that represents this instance.
         /// </returns>
         public override string ToString() {
             return Name;
@@ -319,20 +322,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             return false;
         }
-
-        void IDependencyRef.Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-
-        }
-
-        bool IEquatable<IDependencyRef>.Equals(IDependencyRef other) {
-            ExpertModule expertModule = other as ExpertModule;
-            return expertModule != null && expertModule.Equals(this);
-        }
     }
 
     public abstract class GraphVisitorBase {
         public virtual void Visit(ExpertModule expertModule, StreamWriter outputFile) {
-            
+
         }
     }
 

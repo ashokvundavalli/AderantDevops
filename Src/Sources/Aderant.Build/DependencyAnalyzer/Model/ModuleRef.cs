@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
     /// <summary>
@@ -22,18 +21,6 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
 
         public IReadOnlyCollection<IDependencyRef> DependsOn {
             get { return module.DependsOn; }
-        }
-
-        public void AddDependency(IDependencyRef dependency) {
-            module.AddDependency(dependency);
-        }
-
-        public void Accept(GraphVisitorBase visitor, StreamWriter outputFile) {
-            (visitor as GraphVisitor).Visit(this, outputFile);
-
-            foreach (IDependencyRef dep in module.DependsOn) {
-                dep.Accept(visitor, outputFile);
-            }
         }
 
         public bool Equals(IDependencyRef dependency) {
