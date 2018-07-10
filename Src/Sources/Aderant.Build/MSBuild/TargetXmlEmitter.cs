@@ -158,6 +158,7 @@ namespace Aderant.Build.MSBuild {
                 new XElement(
                     Xmlns + "Target",
                     new XAttribute("Name", target.Name),
+                    target.Returns != null ? new XAttribute("Returns", string.Join(";", target.Returns.Select(name => $"@({name})"))) : null,
                     target.DependsOnTargets.Count > 0 ? new XAttribute("DependsOnTargets", string.Join(";", target.DependsOnTargets.Select(d => d.Name))) : null,
                     target.BeforeTargets.Count > 0 ? new XAttribute("BeforeTargets", string.Join(";", target.BeforeTargets.Select(d => d.Name))) : null,
                     target.AfterTargets.Count > 0 ? new XAttribute("AfterTargets", string.Join(";", target.AfterTargets.Select(d => d.Name))) : null));
