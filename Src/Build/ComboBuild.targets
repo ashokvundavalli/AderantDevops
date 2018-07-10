@@ -95,9 +95,9 @@
       ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
-      JobFile="$(BranchBuildProject)"
-      JobRunFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
-      BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets"
+      InstanceFile="$(BranchBuildProject)"
+      GroupOrchestrationFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
+      BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.PrepareForBuild.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>

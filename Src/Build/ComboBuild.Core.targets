@@ -2,31 +2,99 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="DispatchToInnerBuild"
          ToolsVersion="14.0">
-         
+
+  <Import Project="$(InstanceProjectFile)" />
+  <Import Project="Aderant.Build.Common.targets" />
+    
   <!-- 
   This project file exists to provide an appropriate seam for adding new properties to the group without having to 
   modify the project generator itself.
   -->
-  <Target Name="DispatchToInnerBuild" DependsOnTargets="GetBuildGroupProjects">
+  <Target Name="DispatchToInnerBuild" DependsOnTargets="AssignBuildProperties">
 
-    <MSBuild Projects="ComboBuild.BeforeBuild.targets"
-             Targets="GetBuildGroupProjects"
+    <Message Text="
+╔═════════════════════════════════════════════════════════════════════╗
+║                     Group $(BuildGroup.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(34)) ║
+╚═════════════════════════════════════════════════════════════════════╝
+" Importance="high" />
+    <InspectItemGroup ItemGroup="@(ProjectGroup)" />
+
+    <PropertyGroup>
+      <BuildAction>Build</BuildAction>
+    </PropertyGroup>
+
+    <MSBuild Projects="@(ProjectGroup)"
+             Targets="$(BuildAction)"
              BuildInParallel="$(BuildInParallel)"
-             Properties="InstanceProjectFile=$(InstanceProjectFile);BuildGroup=$(BuildGroup)">
-      <!--The compiled assemblies from projects-->
-      <Output ItemName="CompiledAssemblies"
-              TaskParameter="TargetOutputs" />
+             Properties="%(ProjectGroup.Properties)">
     </MSBuild>
 
+    <OnError ExecuteTargets="SetResumePoint" />
   </Target>
-  
-  
-  <Target Name="GetBuildGroupProjects" Returns="@(ProjectsInGroup)">
-    <!-- From the generated project, find projects we should build in this group. -->
+
+
+  <Target Name="AssignBuildProperties" Returns="@(ProjectGroup)">
     <ItemGroup>
-      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroup', '$(BuildGroup)'))" /> 
+      <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
+    </ItemGroup>
+
+    <ExtractPropertyFromPropertyList
+      Items="@(ProjectsInGroup)"
+      PropertyName="SolutionRoot">
+      <Output TaskParameter="Items" ItemName="ProjectGroup" />
+    </ExtractPropertyFromPropertyList>
+
+    <!-- Properties available to both projects files and orchestration participants -->
+    <PropertyGroup>
+      <BuildProperties>
+        BuildToolsDirectory=$(BuildToolsDirectory);
+        BuildScriptsDirectory=$(BuildScriptsDirectory);
+        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
+        AlternativeOutputDirectory=$(SharedDependencyDirectory);
+
+        <!--
+        ShouldUnsetParentConfigurationAndPlatform
+        Ensures that x86 projects with a P2P reference to an AnyCPU project don't push the x86 configuration/platform into the P2P reference and trigger
+        a missing configuration/platform error.
+        -->
+        ShouldUnsetParentConfigurationAndPlatform=true;
+        BuildProjectReferences=false;
+      </BuildProperties>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectGroup>
+        <Properties Condition="'%(ProjectGroup.IsProjectFile)' == 'false'">
+          %(Properties);
+          $(BuildProperties);
+          SolutionRoot=%(ProjectGroup.SolutionRoot);
+          BinModuleDirectory=%(ProjectGroup.SolutionRoot)\Bin\Module\;
+          BinTestDirectory=%(ProjectGroup.SolutionRoot)\Bin\Test\;
+          ModuleSourceDirectory=%(ProjectGroup.SolutionRoot)\Src\;
+          ModuleTestDirectory=%(ProjectGroup.SolutionRoot)\Test\;
+          ModuleBuildDirectory=%(ProjectGroup.SolutionRoot)\Build\
+        </Properties>
+
+        <Properties Condition="'%(ProjectGroup.IsProjectFile)' != 'false'">
+          %(Properties);
+          $(BuildProperties);
+        </Properties>
+      </ProjectGroup>
     </ItemGroup>
 
   </Target>
 
+
+  <Target Name="SetResumePoint">
+
+    <Message Text="Setting resume point to group $(BuildGroupId)" />
+
+    <XmlPoke XmlInputPath="$(InstanceProjectFile)"
+             Namespaces="&lt;Namespace Prefix='n' Uri='http://schemas.microsoft.com/developer/msbuild/2003' Name='_' /&gt;"
+             Query="/n:Project/n:PropertyGroup/n:ResumeGroupId"
+             Value="$(BuildGroupId)"/>
+
+    </Target>
+  
 </Project>

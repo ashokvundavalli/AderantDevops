@@ -63,9 +63,7 @@
     -->
   </Target>
     
-  <UsingTask
-    AssemblyFile="$(TransformTask)"
-    TaskName="Aderant.TextTransform.Tasks.Transform" />
+
 
   <!--
     *************************************************************************************************************
@@ -87,7 +85,9 @@
       rmT4AssemblyReferencePaths;
       rmT4DslDirectiveProcessors;
     </rmTransformTemplatesWorkerDependsOn>
-  </PropertyGroup>       
+  </PropertyGroup>
+
+  <UsingTask AssemblyFile="$(TransformTask)" TaskName="Aderant.TextTransform.Tasks.Transform" />
 
   <Target Name="rmTransformTemplates" 
           DependsOnTargets="$(rmTransformTemplatesDependsOn)"> 

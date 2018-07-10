@@ -8,6 +8,7 @@
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
   <Import Project="Aderant.Build.Publish.targets" />
+  <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Mobile.targets" />
 
   <PropertyGroup>
