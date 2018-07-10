@@ -17,13 +17,13 @@
         }
 
         try {
-          $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-          $toolsVersion = "14.0";
-          Write-Debug "Loaded MS Build 14.0"
+            $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+            $toolsVersion = "14.0";
+            Write-Debug "Loaded MS Build 14.0"
         } catch {
-          $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-          $toolsVersion = "12.0";
-          Write-Debug "Falling back to MS Build 12.0"
+            $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+            $toolsVersion = "12.0";
+            Write-Debug "Falling back to MS Build 12.0"
         }
 
         $MSBuildLocation = [Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools([Microsoft.Build.Utilities.ToolLocationHelper]::CurrentToolsVersion, [Microsoft.Build.Utilities.DotNetFrameworkArchitecture]::Bitness32)
