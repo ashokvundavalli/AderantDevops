@@ -10,11 +10,18 @@ function Get-BuildContext {
     process {
         Write-Debug "Retrieving current context"
 
-        $data = $MyInvocation.MyCommand.Module.PrivateData
+        if ($MyInvocation.MyCommand.Module -ne $null) {
+            try {                
+                $data = $MyInvocation.MyCommand.Module.PrivateData
 
-        Write-Debug ($data | Out-String)
-        Write-Debug ($data.Context | Out-String)
+                Write-Debug ($data | Out-String)
+                Write-Debug ($data.Context | Out-String)
 
-        return $data.Context
+                return $data.Context
+            } catch {
+                # Can be invoked from a non-moduule context such when invoked from CI
+                return $null
+            }
+        }
     }
 }
