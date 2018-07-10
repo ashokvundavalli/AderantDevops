@@ -163,9 +163,9 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     if ([System.Diagnostics.Debugger]::IsAttached -or $debugMode) {
         $buildArgs = $buildArgs.Replace("/m", "")
         $buildArgs = "$buildArgs /p:WaitForDebugger=true"
-        Exec-Console MSBuild.exe "$projectFilePath $buildArgs" #$process 
+        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" #$process 
     } else {
-        Exec-Console MSBuild.exe "$projectFilePath $buildArgs"   
+        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs"   
     }
 
     $process.Dispose()
