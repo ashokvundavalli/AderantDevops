@@ -29,5 +29,3 @@ function New-BuildContext
 
     return $context
 }
-
-Export-ModuleMember -Function New-BuildContext

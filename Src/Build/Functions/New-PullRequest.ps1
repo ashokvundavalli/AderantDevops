@@ -14,6 +14,3 @@ function New-PullRequest
         Write-Error "No remote branch present. Use git push -u origin $($currentBranch)"
     }
 }
-
-Export-ModuleMember -Function New-PullRequest
-Set-Alias -Name npr -Value New-PullRequest -Scope Global

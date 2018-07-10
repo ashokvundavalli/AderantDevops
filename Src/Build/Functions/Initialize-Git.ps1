@@ -64,5 +64,3 @@ function ConfigureGit([Aderant.Build.Context]$context)
         # & git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
     }
 }
-
-Export-ModuleMember -Function Initialize-Git

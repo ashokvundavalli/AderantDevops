@@ -19,5 +19,3 @@ function Publish-BuildContext
 
     return $fileName
 }
-
-Export-ModuleMember -Function Publish-BuildContext

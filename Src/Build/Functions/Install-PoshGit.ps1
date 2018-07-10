@@ -68,5 +68,3 @@ function CheckModuleVersion()
     }
     return $true
 }
-
-Export-ModuleMember -Function Install-PoshGit
