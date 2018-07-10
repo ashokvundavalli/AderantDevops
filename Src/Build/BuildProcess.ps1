@@ -204,7 +204,19 @@ param(
 ## package
 ##=================================================================================================
 task EndToEnd {
-    
+    $buildSystem = $Env:EXPERT_BUILD_DIRECTORY
+    . $buildSystem\Build\Build-Libraries.ps1
+
+    CompileBuildLibraryAssembly "$buildSystem\Build\"
+    LoadLibraryAssembly "$buildSystem\Build\"
+
+    # Import extensibility functions
+    Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
+
+
+
+
+
 }
 
 #task PostBuild -Jobs Init, Package, CopyToDrop, {
