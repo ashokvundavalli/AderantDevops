@@ -106,7 +106,11 @@ namespace Aderant.Build.ProjectSystem {
             get {
                 var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
                 if (propertyElement != null) {
-                    return Guid.Parse(propertyElement);
+                    try {
+                        return Guid.Parse(propertyElement);
+                    } catch (FormatException ex) {
+                        throw new FormatException(ex.Message + " " + propertyElement + " in " + FullPath, ex);
+                    }
                 }
 
                 return Guid.Empty;
