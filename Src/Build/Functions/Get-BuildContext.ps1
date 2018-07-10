@@ -1,7 +1,10 @@
 function Get-BuildContext {
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
-    param()
+    param(
+        [Parameter]
+        [switch]$CreateIfNeeded
+    )
 
     begin {
         Set-StrictMode -Version Latest
@@ -19,9 +22,16 @@ function Get-BuildContext {
 
                 return $data.Context
             } catch {
+                if ($CreateIfNeeded) {
+                    return New-BuildContext
+                }
                 # Can be invoked from a non-moduule context such when invoked from CI                
                 return $null
             }
+        }
+
+        if ($CreateIfNeeded) {
+            return New-BuildContext
         }
 
         Write-Debug "Current context is null"

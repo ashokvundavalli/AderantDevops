@@ -62,7 +62,7 @@ function Global:Invoke-Build2
     Set-StrictMode -Version Latest
     $ErrorActionPreference = "Stop"
                 
-    [Aderant.Build.Context]$context = Get-BuildContext
+    [Aderant.Build.Context]$context = Get-BuildContext -CreateIfNeeded
     if ($context -eq $null) {
         $context = New-BuildContext
     }

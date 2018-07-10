@@ -7,7 +7,6 @@ function New-BuildContext
     [CmdletBinding()]
     [OutputType([Aderant.Build.Context])]
     param(
-        [Parameter(Mandatory=$true)]
         [string]
         # The environment you're building in.
         $Environment,        
