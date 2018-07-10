@@ -63,7 +63,7 @@ function Global:Invoke-Build2
     $ErrorActionPreference = "Stop"
                 
     [Aderant.Build.Context]$context = Get-BuildContext
-    if ($context -ne $null) {
+    if ($context -eq $null) {
         $context = New-BuildContext
     }
 
