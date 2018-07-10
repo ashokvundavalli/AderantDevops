@@ -4,7 +4,7 @@ param(
     [string]$Platform = "AnyCPU",
     [bool]$Clean,
     [bool]$LimitBuildWarnings,
-    [string]$Flavor
+    [string]$Flavor,
     [switch]$SkipPackage
 )
 
