@@ -19,9 +19,12 @@ function Get-BuildContext {
 
                 return $data.Context
             } catch {
-                # Can be invoked from a non-moduule context such when invoked from CI
+                # Can be invoked from a non-moduule context such when invoked from CI                
                 return $null
             }
         }
+
+        Write-Debug "Current context is null"
+        return $null
     }
 }
