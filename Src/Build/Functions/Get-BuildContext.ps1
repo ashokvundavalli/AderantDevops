@@ -18,5 +18,3 @@ function Get-BuildContext {
         return $data.Context
     }
 }
-
-Export-ModuleMember -Function Get-BuildContext
