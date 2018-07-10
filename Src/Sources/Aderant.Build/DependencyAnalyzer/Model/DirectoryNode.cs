@@ -1,15 +1,9 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Aderant.Build.DependencyAnalyzer.Model {
 
     [DebuggerDisplay("DirectoryNode: {" + nameof(Id) + "}")]
     internal sealed class DirectoryNode : AbstractArtifact {
-
-        [Obsolete]
-        public DirectoryNode(string name, bool isCompletion) {
-
-        }
 
         public DirectoryNode(string id, string directory, bool isAfterTargets) {
             ModuleName = id;
@@ -25,8 +19,8 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         public string ModuleName { get; }
         public string Directory { get; set; }
 
-        public static string CreateName(string name, bool isCompletion) {
-            if (isCompletion) {
+        public static string CreateName(string name, bool isAfterTargets) {
+            if (isAfterTargets) {
                 name += ".AfterBuild";
             } else {
                 name += ".BeforeBuild";
