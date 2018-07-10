@@ -47,7 +47,7 @@ function Global:Invoke-Build2
         #[Parameter]
         #[switch]$automation,
 
-        [Parameter]
+        [Parameter()]
         [switch]$DisplayCodeCoverage,
                 
         [Parameter(ParameterSetName="Build", Mandatory=$false)]        
