@@ -46,6 +46,8 @@ namespace Aderant.Build {
 
         public DirectoryInfo BuildRoot { get; set; }
 
+        public string BuildSystemDirectory { get; set; }
+
         public bool IsDesktopBuild {
             get { return isDesktopBuild; }
             set { isDesktopBuild = value; }

@@ -13,6 +13,7 @@ using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
+using Aderant.Build.Tasks;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
@@ -28,12 +29,12 @@ namespace Aderant.Build.ProjectSystem {
 
         private ConcurrentBag<UnconfiguredProject> loadedUnconfiguredProjects;
 
+        // Holds any projects which we cannot load a solution for
+        private ConcurrentBag<ConfiguredProject> orphanedProjects = new ConcurrentBag<ConfiguredProject>();
+
         // First level cache for parsed solution information
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
-
-        // Holds any projects which we cannot load a solution for
-        private ConcurrentBag<ConfiguredProject> orphanedProjects = new ConcurrentBag<ConfiguredProject>();
 
         [Import]
         private ExportFactory<UnconfiguredProject> UnconfiguredProjectFactory { get; set; }
@@ -56,14 +57,34 @@ namespace Aderant.Build.ProjectSystem {
             get { return this; }
         }
 
-        public Task LoadProjects(string directory, bool recursive) {
+        public Task LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
             }
 
-            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
+            var files = GrovelForFiles(directory, excludeFilterPatterns);
 
             return Task.WhenAll(files.Select(file => Task.Run(() => LoadAndParseProjectFile(file))).ToArray());
+        }
+
+        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
+            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
+
+            foreach (var path in files) {
+                bool skip = false;
+                if (excludeFilterPatterns != null) {
+                    foreach (var pattern in excludeFilterPatterns) {
+                        if (path.Contains(pattern)) {
+                            skip = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!skip) {
+                    yield return path;
+                }
+            }
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
@@ -87,8 +108,8 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> GenerateBuildJob(Context context, BuildJobFiles instance) {
-            await LoadProjects(context.BuildRoot.FullName, true);
+        public async Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles instance) {
+            await LoadProjects(context.BuildRoot.FullName, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
             await CollectBuildDependencies(collector);
@@ -107,6 +128,11 @@ namespace Aderant.Build.ProjectSystem {
             if (configuredProject.IncludeInBuild) {
                 loadedConfiguredProjects.Add(configuredProject);
             }
+        }
+
+        public void OrphanProject(ConfiguredProject configuredProject) {
+            configuredProject.IncludeInBuild = false;
+            this.orphanedProjects.Add(configuredProject);
         }
 
         public SolutionSearchResult GetSolutionForProject(string projectFilePath, Guid projectGuid) {
@@ -170,7 +196,7 @@ namespace Aderant.Build.ProjectSystem {
 
                 // Create a new node that represents the completion of a directory
                 DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
-                    
+
                 graph.Add(completionNode);
                 completionNode.AddResolvedDependency(null, initializeNode);
 
@@ -234,11 +260,6 @@ namespace Aderant.Build.ProjectSystem {
         /// <returns>IProjectTree.</returns>
         public static IProjectTree CreateDefaultImplementation() {
             return CreateDefaultImplementation(new[] { typeof(ProjectTree).Assembly });
-        }
-
-        public void OrphanProject(ConfiguredProject configuredProject) {
-            configuredProject.IncludeInBuild = false;
-            this.orphanedProjects.Add(configuredProject);
         }
     }
 

@@ -121,10 +121,10 @@ namespace Aderant.Build {
             }
         }
 
-        public virtual IEnumerable<string> GetFiles(string path, string filter, bool recursive) {
+        public virtual IEnumerable<string> GetFiles(string path, string inclusiveFilter, bool recursive) {
             path = PathUtility.EnsureTrailingSlash(GetFullPath(path));
-            if (string.IsNullOrEmpty(filter)) {
-                filter = "*.*";
+            if (string.IsNullOrEmpty(inclusiveFilter)) {
+                inclusiveFilter = "*.*";
             }
 
             try {
@@ -132,7 +132,7 @@ namespace Aderant.Build {
                     return Enumerable.Empty<string>();
                 }
 
-                var files = Directory.EnumerateFiles(path, filter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                var files = Directory.EnumerateFiles(path, inclusiveFilter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
 
                 return files;
             } catch (UnauthorizedAccessException) {

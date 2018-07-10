@@ -12,7 +12,10 @@ namespace Aderant.Build {
     
         void DeleteDirectory(string path, bool recursive);
 
-        IEnumerable<string> GetFiles(string path, string filter, bool recursive);
+        /// <summary>
+        /// Returns the full path of files present in a directory that match the <see cref="inclusiveFilter"/>.
+        /// </summary>
+        IEnumerable<string> GetFiles(string path, string inclusiveFilter, bool recursive);
 
         IEnumerable<string> GetDirectories(string path, bool recursive = false);
 

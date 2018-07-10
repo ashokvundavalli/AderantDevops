@@ -15,10 +15,10 @@ namespace Aderant.Build.Tasks {
             get; set;
         }
 
-        protected override bool ExecuteTask(Context context) {
+        public override bool Execute()  {
             Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, ContextFileName, EnvironmentVariableTarget.Process);
 
-            IsDesktopBuild = context.IsDesktopBuild;
+            IsDesktopBuild = Context.IsDesktopBuild;
 
             return !Log.HasLoggedErrors;
         }

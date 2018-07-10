@@ -85,8 +85,10 @@
   </PropertyGroup>
 
   <Target Name="CreateParallelBuildProject">
-    
-    <Message Text="ComboBuildType: $(ComboBuildType)" />
+
+    <ItemGroup>
+      <ExcludePaths Include="$(BuildSystemDirectory)" />
+    </ItemGroup>
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
@@ -98,7 +100,8 @@
       InstanceFile="$(BranchBuildProject)"
       GroupOrchestrationFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.PrepareForBuild.targets"
-      AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets">
+      AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets"
+      ExcludePaths="@(ExcludePaths)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
@@ -287,7 +290,9 @@
         ContextFileName="$(ContextFileName)"
         WaitForDebugger="$(WaitForDebugger)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
+      <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
     </DefaultContextProperties>
+
   </Target>
   
 

@@ -12,12 +12,13 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public abstract class ContextTaskBase : Task {
 
-        public ContextTaskBase() {
-        }
-
         public virtual string ContextFileName { get; set; }
 
         public bool WaitForDebugger { get; set; }
+
+        protected Context Context {
+            get { return ObtainContext(); }
+        }
 
         public override bool Execute() {
             if (WaitForDebugger) {
@@ -44,7 +45,7 @@ namespace Aderant.Build.Tasks {
 
             Debug.Assert(context != null);
 
-            return ExecuteTask(context);
+            return !Log.HasLoggedErrors;
         }
 
         /// <summary>
@@ -83,10 +84,5 @@ namespace Aderant.Build.Tasks {
             context = (Context)contextObject;
             return context;
         }
-
-        /// <summary>
-        /// Implement this function to do your work.
-        /// </summary>
-        protected abstract bool ExecuteTask(Context context);
     }
 }

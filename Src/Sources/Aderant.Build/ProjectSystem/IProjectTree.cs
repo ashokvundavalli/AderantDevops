@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.MSBuild;
+using Aderant.Build.Tasks;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -14,7 +15,7 @@ namespace Aderant.Build.ProjectSystem {
 
         ISolutionManager SolutionManager { get; }
 
-        Task LoadProjects(string directory, bool recursive);
+        Task LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
 
         /// <summary>
         /// Adds a configured project to this tree.
@@ -32,6 +33,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector);
 
-        Task<Project> GenerateBuildJob(Context context, BuildJobFiles instance);
+        Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles instance);
     }
 }

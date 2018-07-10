@@ -63,8 +63,10 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string[] ModulesInThisBuild { get; set; }
 
-        protected override bool ExecuteTask(Context context) {
-            ExecuteCore(context);
+        public string[] ExcludePaths { get; set; }
+
+        public override bool Execute() {
+            ExecuteCore(Context);
             return !Log.HasLoggedErrors;
         }
 
@@ -90,8 +92,11 @@ namespace Aderant.Build.Tasks {
                 InstanceFile = InstanceFile,
             };
 
+            var analysisContext = new AnalysisContext {
+                ExcludePaths = ExcludePaths
+            };
 
-            Project project = projectTree.GenerateBuildJob(context, jobFiles).Result;
+            Project project = projectTree.GenerateBuildJob(context, analysisContext, jobFiles).Result;
             var element = project.CreateXml();
 
             XmlWriterSettings settings = new XmlWriterSettings();
@@ -205,6 +210,10 @@ namespace Aderant.Build.Tasks {
 
             return modulesInBuild;
         }
+    }
+
+    internal class AnalysisContext  {
+        public string[] ExcludePaths { get; set; }
     }
 
 }

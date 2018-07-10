@@ -62,10 +62,12 @@ function Global:Invoke-Build2
     Set-StrictMode -Version Latest
     $ErrorActionPreference = "Stop"
                 
-    [Aderant.Build.Context]$context = Get-BuildContext -CreateIfNeeded
+    [Aderant.Build.Context]$context = Get-BuildContext -CreateIfNeeded    
     if ($context -eq $null) {
         $context = New-BuildContext
     }
+
+    $context.BuildSystemRoot = "$PSScriptRoot\..\..\"
 
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
