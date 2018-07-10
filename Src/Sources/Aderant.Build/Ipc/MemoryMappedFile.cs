@@ -23,8 +23,6 @@ namespace Aderant.Build.Ipc {
             if (!TryOpenExisting(bufferName, out buffer)) {
                 buffer = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateOrOpen(bufferName, capacity, MemoryMappedFileAccess.ReadWrite);
                 gcKeepAlive.Add(buffer);
-            } else {
-                
             }
 
             view = buffer.CreateViewAccessor(0, 0, MemoryMappedFileAccess.ReadWrite);
@@ -34,8 +32,6 @@ namespace Aderant.Build.Ipc {
             // Concurrency control, all writers will block on this handle
             bool createdNew;
             bufferFreeForWriting = new Semaphore(1, 1, name + "_BUFFER_READY", out createdNew);
-
-           
         }
 
         internal static long DefaultCapacity {
