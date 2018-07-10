@@ -5,13 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Providers;
 using Aderant.Build.Tasks;
 using Aderant.Build.Utilities;
-using OpenSoftware.DgmlTools;
-using OpenSoftware.DgmlTools.Builders;
-using OpenSoftware.DgmlTools.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
     public interface IDependencyBuilder {
@@ -511,56 +507,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                         yield return dependency.Consumer;
                     }
                 }
-            }
-        }
-
-
-    }
-
-
-
-    internal static class ProjectVisualizer {
-
-        public static void Foo(params IEnumerable<object>[] elements) {
-            var builder = new DgmlBuilder {
-                NodeBuilders = new NodeBuilder[] {
-                    new NodeBuilder<VisualStudioProject>(
-                        x => new Node
-                        {
-                            Id = x.Id,
-                            Label = x.Name,
-                        })
-        },
-                //NodeBuilders = new NodeBuilder[]
-                //{
-                //    <your node builders>
-                //},
-                LinkBuilders = new LinkBuilder[]
-                {
-                  new LinksBuilder<VisualStudioProject>(Builder)
-        },
-                //CategoryBuilders = new CategoryBuilder[]
-                //{
-                //    <your category builders>
-                //},
-                //StyleBuilders = new StyleBuilder[]
-                //{
-                //    <your style builders>
-                //}
-
-        };
-
-            DirectedGraph graph = builder.Build(elements);
-            graph.WriteToFile(@"C:\temp\my-graph.dgml");
-        }
-
-        private static IEnumerable<Link> Builder(VisualStudioProject x) {
-            foreach (var item in x.DependsOn) {
-                if (item.Name.StartsWith("System")) { continue; }
-                yield return new Link {
-                    Source = x.AssemblyName,
-                    Target = item.Name,
-                };
             }
         }
     }
