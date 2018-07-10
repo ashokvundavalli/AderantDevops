@@ -2,8 +2,6 @@
 
 Set-StrictMode -Version Latest
 
-Enable-RunspaceDebug
-
 # Import extensibility functions
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 
@@ -11,10 +9,9 @@ $ShellContext = $null
 
 function InitializeModule {
     . $PSScriptRoot\ShellContext.ps1
-    
     $script:ShellContext = [ShellContext]::new()
 
-    UpdateOrBuildAssembly $ShellContext
+    UpdateOrBuildAssembly $ShellContext.BuildToolsDirectory $ShellContext.BuildScriptsDirectory
 
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
@@ -3637,6 +3634,9 @@ Export-ModuleMember -variable BranchBinariesDirectory
 Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
+
+Export-ModuleMember -function Get-DependenciesFrom1
+
 
 
 #TODO move
