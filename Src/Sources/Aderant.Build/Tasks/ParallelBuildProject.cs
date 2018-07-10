@@ -92,9 +92,7 @@ namespace Aderant.Build.Tasks {
                 InstanceFile = InstanceFile,
             };
 
-            var analysisContext = new AnalysisContext {
-                ExcludePaths = ExcludePaths
-            };
+            var analysisContext = SetupAnalysisContext();
 
             Project project = projectTree.GenerateBuildJob(context, analysisContext, jobFiles).Result;
             var element = project.CreateXml();
@@ -151,6 +149,16 @@ namespace Aderant.Build.Tasks {
             //    Log.LogErrorFromException(ex, true, true, sourceFilePath);
             //    throw;
             //}
+        }
+
+        private AnalysisContext SetupAnalysisContext() {
+            var paths = ExcludePaths.ToList();
+            paths.Add(Context.BuildSystemDirectory);
+
+            var analysisContext = new AnalysisContext {
+                ExcludePaths = paths
+            };
+            return analysisContext;
         }
 
         private static ProjectRelationshipProcessing GetRelationshipProcessingMode(Context context) {
@@ -213,7 +221,7 @@ namespace Aderant.Build.Tasks {
     }
 
     internal class AnalysisContext  {
-        public string[] ExcludePaths { get; set; }
+        public IReadOnlyCollection<string> ExcludePaths { get; set; }
     }
 
 }

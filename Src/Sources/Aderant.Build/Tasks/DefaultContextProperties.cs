@@ -10,6 +10,9 @@ namespace Aderant.Build.Tasks {
         [Output]
         public bool IsDesktopBuild { get; set; }
 
+        [Output]
+        public string BuildSystemDirectory { get; set; }
+
         [Required]
         public override string ContextFileName {
             get; set;
@@ -19,6 +22,7 @@ namespace Aderant.Build.Tasks {
             Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, ContextFileName, EnvironmentVariableTarget.Process);
 
             IsDesktopBuild = Context.IsDesktopBuild;
+            BuildSystemDirectory = Context.BuildSystemDirectory;
 
             return !Log.HasLoggedErrors;
         }
