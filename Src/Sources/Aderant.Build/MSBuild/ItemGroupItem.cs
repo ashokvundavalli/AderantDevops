@@ -23,6 +23,8 @@ namespace Aderant.Build.MSBuild {
             get { return metadata.Keys; }
         }
 
+        public string Condition { get; set; }
+
         public bool ContainsKey(string key) {
             return metadata.ContainsKey(key);
         }

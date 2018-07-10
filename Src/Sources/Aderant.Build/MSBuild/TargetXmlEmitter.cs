@@ -43,8 +43,18 @@ namespace Aderant.Build.MSBuild {
         public override void Visit(ItemGroup itemGroup) {
             XElement element = new XElement(Xmlns + "ItemGroup");
 
+            if (itemGroup.Condition != null) {
+                element.Add(new XAttribute("Condition", itemGroup.Condition));
+            }
+
             foreach (var item in itemGroup.Include) {
-                var itemElement = new XElement(Xmlns + itemGroup.Name, new XAttribute("Include", item.Expression));
+                var itemElement = new XElement(Xmlns + itemGroup.Name);
+
+                if (item.Condition != null) {
+                    itemElement.Add(new XAttribute("Condition", item.Condition));
+                }
+
+                itemElement.Add(new XAttribute("Include", item.Expression));
 
                 string value;
                 var keys = item.MetadataKeys;

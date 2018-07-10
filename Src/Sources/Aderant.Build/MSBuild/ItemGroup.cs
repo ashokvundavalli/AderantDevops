@@ -35,6 +35,8 @@ namespace Aderant.Build.MSBuild {
             get { return include ?? Enumerable.Empty<ItemGroupItem>(); }
         }
 
+        public string Condition { get; set; }
+
         public override void Accept(BuildElementVisitor visitor) {
             visitor.Visit(this);
         }
