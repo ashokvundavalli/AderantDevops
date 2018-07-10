@@ -9,33 +9,38 @@
     Useful if you wish to override some property but that property is not exposed as a first class concept.
 
 #>
+
 function Global:Invoke-Build
 {
+    [CmdletBinding(SupportsShouldProcess=$true)]
     [CmdletBinding(DefaultParameterSetName="Build")]
     param (
         [Parameter(ParameterSetName="Build")]
-        [switch]$changes,
+        [switch]$PendingChanges,
 
         [Parameter(ParameterSetName="Build")]
-        [switch]$branch,
+        [switch]$Branch,
 
         [Parameter()]
-        [switch]$everything,
+        [switch]$Everything,
 
         [Parameter()]
-        [switch]$downstream,
+        [switch]$Downstream,
 
         [Parameter()]
-        [switch]$transitive,
+        [switch]$Transitive,
         
         [Parameter()]
-        [switch]$clean,
+        [switch]$Clean,
 
         [Parameter()]
-        [switch]$release,
+        [switch]$Release,
 
         [Parameter()]
-        [switch]$package,
+        [switch]$Package,
+
+        [Parameter()]
+        [switch]$Resume,
 
         #[Parameter]
         #[switch]$integration,
@@ -51,7 +56,7 @@ function Global:Invoke-Build
 
         
         [Parameter(ValueFromRemainingArguments)]
-        [string[]]$remainingArgs
+        [string[]]$RemainingArgs
     )
 
     begin {        
@@ -61,17 +66,51 @@ function Global:Invoke-Build
         [Aderant.Build.Context]$context = Get-BuildContext
         $switches = $context.Switches 
 
-        $switches.Everything = $everything.IsPresent
-        $switches.Downstream = $downstream.IsPresent
-        $switches.Transitive = $transitive.IsPresent
-        $switches.Clean = $clean.IsPresent
-        $switches.Release = $release.IsPresent
-
+        $switches.PendingChanges = $PendingChanges.IsPresent
+        $switches.Everything = $Everything.IsPresent
+        $switches.Downstream = $Downstream.IsPresent
+        $switches.Transitive = $Transitive.IsPresent
+        $switches.Clean = $Clean.IsPresent
+        $switches.Release = $Release.IsPresent
+        $switches.Resume = $Resume.IsPresent
+        
         $context.Switches = $switches
+
+        function CreateArgumentStringForContext($context) {
+            $args = [System.Collections.Generic.HashSet[string]]::new()          
+
+            if ($context.BuildMetadata -ne $null) {
+                if ($context.BuildMetadata.DebugLoggingEnabled) {
+                    $args.Add("/v:diag") | Out-Null
+                }
+
+                if ($context.BuildMetadata.IsPullRequest) {
+                    $args.Add("/v:diag")| Out-Null
+                }
+            }
+        
+            # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
+            $args.Add("/nologo")| Out-Null
+            $args.Add("/nr:false")| Out-Null
+
+            # Multi-core build
+            $args.Add("/m")| Out-Null
+
+            if ($context.IsDesktopBuild) {
+                $args.Add("/p:IsDesktopBuild=true") | Out-Null
+            } else {
+                $args.Add("/p:IsDesktopBuild=false") | Out-Null
+                $args.Add("/clp:PerformanceSummary") | Out-Null
+            }
+
+            $args.Add("/p:VisualStudioVersion=14.0") | Out-Null
+
+            return [string]::Join(" ", $args)
+        }
     }
 
     process {
-        $service = $context.GetService("Aderant.Build.Services.IFileSystem")
+        #$service = $context.GetService("Aderant.Build.Services.IFileSystem")
 
         [string]$repositoryPath = $null
 
@@ -94,22 +133,23 @@ function Global:Invoke-Build
         #    return
         #}
 
-        if (-not [string]::IsNullOrEmpty($modulePath)) {
-            $repositoryPath = $modulePath
+        if (-not [string]::IsNullOrEmpty($ModulePath)) {
+            $repositoryPath = $ModulePath
         } else {
             $repositoryPath = $ShellContext.CurrentModulePath
         }
 
+        $context.StartedAt = [DateTime]::UtcNow
         $contextFileName = Publish-BuildContext $context
 
-        $builder = $context.CreateArgumentBuilder("MSBuild")
+        $args = CreateArgumentStringForContext $context
 
         $passThruArgs = ""
-        if ($remainingArgs) {
-            $passThruArgs = [string]::Join(" ", $remainingArgs)
+        if ($RemainingArgs) {
+            $passThruArgs = [string]::Join(" ", $RemainingArgs)
         }
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\Aderant.ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $passThruArgs"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args $passThruArgs"
     }
 
     end {
