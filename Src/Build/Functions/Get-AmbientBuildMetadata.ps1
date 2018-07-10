@@ -14,8 +14,8 @@ function Get-AmbientBuildMetadata {
         Set-StrictMode -Version Latest
 
         function Get-EnvironmentVariable {
-            param (
-                [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty][string]$Name
+            param (               
+                [string]$Name
             )
 
             Get-Item -Path ('env:{0}' -f $Name) -ErrorAction Ignore | Select-Object -ExpandProperty 'Value'
