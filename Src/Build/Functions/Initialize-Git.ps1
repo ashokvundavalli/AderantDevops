@@ -44,11 +44,11 @@ function ConfigureGit([Aderant.Build.Context]$context)
     if ($context.IsDesktopBuild) {
         Write-Debug "Applying desktop .gitconfig"
 
-        & git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
+        #& git config --global core.excludesfile "$buildScriptsDirectory\..\..\.gitignore"
 
         # Global Aliases - Insert nifty git commands here
 
-        # Prints a list of branches you've commited to sorted by date
+        # Prints a list of branches you've committed to sorted by date
         & git config --global alias.branchdates "for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
 
         # Deletes all untracked files without wiping out any SharedBin symlinks

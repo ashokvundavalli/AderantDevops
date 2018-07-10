@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Aderant.Build {
 
+    // TODO: Merge with NativeMethods
     internal static class NativeUtilities {
         [DllImport("kernel32.dll")]
         [return: MarshalAs(UnmanagedType.I1)]

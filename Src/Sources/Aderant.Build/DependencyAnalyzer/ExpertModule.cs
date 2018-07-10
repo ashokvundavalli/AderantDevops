@@ -232,10 +232,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new ExpertModule(element);
         }
 
-        internal void AddDependency(IDependencyRef dependency) {
-            dependsOn.Add(dependency);
-        }
-
         public static ModuleType GetModuleType(string name) {
             string firstPart = name.Split('.')[0];
 

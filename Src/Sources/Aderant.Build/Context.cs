@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Services;
 
 namespace Aderant.Build {
@@ -9,15 +10,17 @@ namespace Aderant.Build {
     [Serializable]
     public class Context {
         private BuildMetadata buildMetadata;
-        private BuildSwitches switches = default(BuildSwitches);
+
+        private string buildScriptsDirectory;
+        private string flavor;
+        private bool isDesktopBuild = true;
 
         [NonSerialized]
         private IContextualServiceProvider serviceProvider;
 
-        private string buildScriptsDirectory;
-        private bool isDesktopBuild = true;
+        private BuildSwitches switches = default(BuildSwitches);
 
-        public Context() : this(ServiceContainer.Default) { 
+        public Context() {
             Configuration = new Dictionary<object, object>();
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
@@ -27,15 +30,12 @@ namespace Aderant.Build {
             TaskName = "";
         }
 
-        private Context(IContextualServiceProvider serviceProvider) {
-            this.serviceProvider = serviceProvider;
-        }
-
         public string BuildScriptsDirectory {
             get {
                 if (string.IsNullOrWhiteSpace(buildScriptsDirectory)) {
                     throw new ArgumentNullException(nameof(buildScriptsDirectory));
                 }
+
                 return buildScriptsDirectory;
             }
             set {
@@ -48,9 +48,7 @@ namespace Aderant.Build {
 
         public bool IsDesktopBuild {
             get { return isDesktopBuild; }
-            set {
-                isDesktopBuild = value;
-            }
+            set { isDesktopBuild = value; }
         }
 
         public IDictionary Configuration { get; set; }
@@ -96,18 +94,47 @@ namespace Aderant.Build {
 
         public BuildSwitches Switches {
             get { return switches; }
-            set { switches = value; }
+            set {
+                switches = value;
+
+                if (value.Release) {
+                    Flavor = ProjectBuildConfiguration.ReleaseAnyCpu;
+                } else {
+                    Flavor = ProjectBuildConfiguration.DebugAnyCpu;
+                }
+            }
         }
-     
-        public IArgumentBuilder CreateArgumentBuilder(string engineType) {
-            return serviceProvider.GetService<IArgumentBuilder>(this, engineType);
+
+        public string Flavor {
+            get { return flavor; }
+            set {
+                if (value == null) {
+                    throw new ArgumentNullException();
+                }
+
+                if (value.IndexOf("|", StringComparison.Ordinal) == -1) {
+                    throw new InvalidOperationException("Flavor does not have a configuration and target separator");
+                }
+
+                flavor = value;
+            }
+        }
+
+        internal IContextualServiceProvider ServiceProvider {
+            get {
+                if (serviceProvider != null) {
+                    return serviceProvider;
+                }
+
+                return serviceProvider = ServiceContainer.Default;
+            }
         }
 
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>
-        public T GetService<T>() where T : class, IFlexService {
-            IFlexService svc = serviceProvider.GetService(typeof(T)) as IFlexService;
+        public T GetService<T>() where T : class {
+            IFlexService svc = ServiceProvider.GetService(typeof(T)) as IFlexService;
             if (svc != null) {
                 svc.Initialize(this);
             }
@@ -116,7 +143,7 @@ namespace Aderant.Build {
         }
 
         public object GetService(string contract) {
-            IFlexService svc = serviceProvider.GetService<object>(this, contract, null) as IFlexService;
+            IFlexService svc = ServiceProvider.GetService<object>(this, contract, null) as IFlexService;
             if (svc != null) {
                 svc.Initialize(this);
             }
@@ -125,14 +152,17 @@ namespace Aderant.Build {
         }
     }
 
-
     [Serializable]
     public struct BuildSwitches {
+
+        public bool PendingChanges { get; set; }
         public bool Downstream { get; set; }
         public bool Transitive { get; set; }
         public bool Everything { get; set; }
         public bool Clean { get; set; }
         public bool Release { get; set; }
+        public bool DryRun { get; set; }
+        public bool Resume { get; set; }
     }
 
 }

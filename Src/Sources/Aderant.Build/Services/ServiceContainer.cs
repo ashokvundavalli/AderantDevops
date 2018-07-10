@@ -10,12 +10,12 @@ namespace Aderant.Build.Services {
 
         public static ServiceContainer Default = new ServiceContainer(new[] { typeof(ServiceContainer).Assembly });
         private CompositionContainer container;
-        //private Context context;
         private MethodInfo svcMethod = typeof(ServiceContainer).GetMethod("GetService", new Type[] { typeof(Context), typeof(string), typeof(string) });
 
-
-        public ServiceContainer(Assembly[] catalogAssemblies) {
+        public ServiceContainer(IReadOnlyCollection<Assembly> catalogAssemblies) {
             List<Type> types = new List<Type>();
+
+            VisualStudioEnvironmentContext.SetupContext();
 
             foreach (var asm in catalogAssemblies) {
                 try {
@@ -23,11 +23,22 @@ namespace Aderant.Build.Services {
                 } catch (ReflectionTypeLoadException ex) {
                     types.AddRange(ex.Types.Where(t => t != null));
                 }
-
-                var catalog = new AggregateCatalog(new TypeCatalog(types));
-                container = new CompositionContainer(catalog);
             }
 
+            var catalog = new AggregateCatalog(new TypeCatalog(types));
+            //container = new CompositionContainer(catalog)
+
+            // TODO: rename
+            var appLevelCatalog = catalog.Filter(cpd => !cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope")));
+            var docLevelCatalog = catalog.Filter(cpd => cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope") && ed.Metadata["Scope"].ToString() == "ConfiguredProject"));
+
+            var scopeDefinition = new CompositionScopeDefinition(
+                appLevelCatalog,
+                new[] { new CompositionScopeDefinition(docLevelCatalog, null) });
+
+            container = new CompositionContainer(scopeDefinition);
+
+            VisualStudioEnvironmentContext.Shutdown();
         }
 
         public object GetService(Type serviceType) {
@@ -69,6 +80,23 @@ namespace Aderant.Build.Services {
             }
 
             return container.GetExportedValue<T>();
+        }
+
+        public T GetExportedValue<T>() {
+            return container.GetExportedValue<T>();
+        }
+
+
+        public static T CreateDefaultImplementation<T>(IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors = false) {
+            return GetExport<T>(CreateSelfHostContainer(assemblies, throwCompositionErrors));
+        }
+
+        private static T GetExport<T>(ServiceContainer createSelfHostContainer) {
+            return createSelfHostContainer.GetExportedValue<T>();
+        }
+
+        private static ServiceContainer CreateSelfHostContainer(IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors) {
+            return new ServiceContainer(assemblies);
         }
     }
 }

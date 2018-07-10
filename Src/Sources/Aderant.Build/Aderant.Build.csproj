@@ -58,6 +58,10 @@
       <HintPath>..\..\Build\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.TeamFoundation.SourceControl.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
+    </Reference>
     <Reference Include="OpenSoftware.DgmlBuilder">
       <HintPath>..\..\..\packages\OpenSoftware.DgmlBuilder\lib\net45\OpenSoftware.DgmlBuilder.dll</HintPath>
     </Reference>
@@ -74,6 +78,7 @@
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Collections.Concurrent" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core">
       <Private>False</Private>
@@ -102,17 +107,63 @@
   <ItemGroup>
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
-    <Compile Include="ComboBuildArgBuilder.cs" />
+    <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
+    <Compile Include="DependencyAnalyzer\Model\AbstractArtifact.cs" />
+    <Compile Include="MSBuild\Comment.cs" />
+    <Compile Include="Model\ResolvedDependency.cs" />
+    <Compile Include="Model\IArtifact.cs" />
+    <Compile Include="Model\IDependable.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\MacroExpander.cs" />
+    <Compile Include="MSBuild\BuildElementVisitor.cs" />
+    <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
+    <Compile Include="ErrorUtilities.cs" />
+    <Compile Include="DependencyEqualityComparer.cs" />
+    <Compile Include="ProjectSystem\IProjectTree.cs" />
+    <Compile Include="ProjectSystem\ISolutionManager.cs" />
+    <Compile Include="ProjectSystem\References\AssemblyReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\BuildDependencyProjectReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\IBuildDependencyProjectReference.cs" />
+    <Compile Include="ProjectSystem\References\IBuildDependencyProjectReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\ResolvedReference.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedAssemblyReferenceMoniker.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedBuildDependencyProjectReference.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedP2PReferenceMoniker.cs" />
+    <Compile Include="ProjectSystem\SolutionSearchResult.cs" />
+    <Compile Include="ProjectSystem\ProjectTree.cs" />
+    <Compile Include="ProjectSystem\UnconfiguredProject.cs" />
+    <Compile Include="ProjectSystem\IConfiguredProjectServices.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProject.cs" />
+    <Compile Include="ProjectSystem\References\ITextTemplateReferencesServices.cs" />
+    <Compile Include="ProjectSystem\References\TextTemplateReferencesServices.cs" />
+    <Compile Include="ProjectSystem\ConfiguredProjectServices.cs" />
+    <Compile Include="ProjectSystem\IProjectTreeServices.cs" />
+    <Compile Include="ProjectSystem\References\AssemblyReferencesServiceBase.cs" />
+    <Compile Include="ProjectSystem\References\IUnresolvedBuildDependencyProjectReference.cs" />
+    <Compile Include="ProjectSystem\References\IAssemblyReference.cs" />
+    <Compile Include="ProjectSystem\References\IAssemblyReferencesService.cs" />
+    <Compile Include="Model\IReference.cs" />
+    <Compile Include="ProjectSystem\References\IResolvableReferencesService.cs" />
+    <Compile Include="ProjectSystem\References\IUnresolvedAssemblyReference.cs" />
+    <Compile Include="ProjectSystem\References\IUnresolvedReference.cs" />
+    <Compile Include="ProjectSystem\References\ResolvableReferencesProviderBase.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedAssemblyReference.cs" />
+    <Compile Include="ProjectSystem\References\UnresolvedReferenceBase.cs" />
+    <Compile Include="Tasks\InspectItemGroup.cs" />
+    <Compile Include="Tasks\SetEnvironmentVariable.cs" />
+    <Compile Include="Utilities\TopologicalSort.cs" />
+    <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
+    <Compile Include="VersionControl\GitVersionControl.cs" />
     <Compile Include="DependencyAnalyzer\DependencyType.cs" />
+    <Compile Include="DependencyAnalyzer\Model\ProjectBuildConfiguration.cs" />
     <Compile Include="MSBuild\PropertyList.cs" />
-    <Compile Include="DependencyAnalyzer\SolutionParser\ISolutionFileParser.cs" />
+    <Compile Include="ProjectSystem\SolutionParser\ISolutionFileParser.cs" />
     <Compile Include="DependencyAnalyzer\Model\AssemblyRef.cs" />
     <Compile Include="DependencyAnalyzer\Model\DirectoryNode.cs" />
     <Compile Include="DependencyAnalyzer\Model\ProjectRef.cs" />
     <Compile Include="DependencyAnalyzer\Model\ModuleRef.cs" />
-    <Compile Include="DependencyAnalyzer\SolutionParser\ParseResult.cs" />
-    <Compile Include="DependencyAnalyzer\SolutionParser\SolutionFileParser.cs" />
+    <Compile Include="ProjectSystem\SolutionParser\ParseResult.cs" />
+    <Compile Include="ProjectSystem\SolutionParser\SolutionFileParser.cs" />
     <Compile Include="Services\IContextualServiceProvider.cs" />
     <Compile Include="Services\CompositionProperties.cs" />
     <Compile Include="Constants.cs" />
@@ -122,12 +173,11 @@
     <Compile Include="BuildMetadata.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
-    <Compile Include="IArgumentBuilder.cs" />
-    <Compile Include="Services\FileSystemService.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Services\FlexService.cs" />
     <Compile Include="DependencyAnalyzer\ProjectRelationshipProcessing.cs" />
-    <Compile Include="Tasks\BuildJobFiles.cs" />
+    <Compile Include="DependencyAnalyzer\BuildJobFiles.cs" />
+    <Compile Include="DependencyAnalyzer\ComboBuildType.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
@@ -167,17 +217,14 @@
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="DependencyAnalyzer\AnalyzerContext.cs" />
-    <Compile Include="DependencyAnalyzer\CSharpProjectLoader.cs" />
-    <Compile Include="DependencyAnalyzer\ProjectDependencyAnalyzer.cs" />
-    <Compile Include="DependencyAnalyzer\Model\VisualStudioProject.cs" />
+    <Compile Include="DependencyAnalyzer\WellKnownProjectTypeGuids.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
     <Compile Include="DependencyAnalyzer\ChangesetResolver.cs" />
-    <Compile Include="DependencyAnalyzer\DynamicProject.cs" />
+    <Compile Include="DependencyAnalyzer\BuildJob.cs" />
     <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
-    <Compile Include="DependencyAnalyzer\TextTemplateAnalyzer.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\TextTemplateAnalyzer.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
-    <Compile Include="FileUtilities.cs" />
     <Compile Include="SeedPackageValidation\Error.cs" />
     <Compile Include="Tasks\DefaultContextProperties.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
@@ -296,11 +343,10 @@
     <Compile Include="DependencyAnalyzer\ParameterHelper.cs" />
     <Compile Include="DependencyAnalyzer\ProductManifestUpdater.cs" />
     <Compile Include="DependencyAnalyzer\ShellInvocationHelper.cs" />
-    <Compile Include="DependencyAnalyzer\TopologicalSort.cs" />
     <Compile Include="FontInstaller.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\PowerShellLogger.cs" />
-    <Compile Include="MSBuild\BuildElementVisitor.cs" />
+    <Compile Include="MSBuild\TargetXmlEmitter.cs" />
     <Compile Include="MSBuild\BuildStep.cs" />
     <Compile Include="MSBuild\Element.cs" />
     <Compile Include="MSBuild\ItemGroup.cs" />
@@ -353,16 +399,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Nuspec.template" />
-    <None Include="Scripts\undo-buildpersistence.bat" />
-    <None Include="Scripts\persist-build.bat" />
-    <None Include="Scripts\persist-build.ps1" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\_readme.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Instance\" />
-    <Folder Include="Sequencer\" />
+    <Folder Include="Resources\Scripts\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

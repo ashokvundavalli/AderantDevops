@@ -1,16 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 
 namespace Aderant.Build {
-    public interface IFileSystem2 { 
-        string Root { get; }
 
+    public interface IFileSystem2 : IFileSystem {
+        string Root { get; }
+    }
+
+    public interface IFileSystem {
+    
         void DeleteDirectory(string path, bool recursive);
 
-        IEnumerable<string> GetFiles(string path, string filter, bool recursive, bool notRelative = false);
+        IEnumerable<string> GetFiles(string path, string filter, bool recursive);
 
-        IEnumerable<string> GetDirectories(string path, bool recursive = false, bool notRelative = false);
+        IEnumerable<string> GetDirectories(string path, bool recursive = false);
 
         string GetFullPath(string path);
 
@@ -22,9 +26,9 @@ namespace Aderant.Build {
 
         bool DirectoryExists(string path);
 
-        void AddFile(string path, Stream stream);
+        string AddFile(string path, Stream stream);
 
-        void AddFile(string path, Action<Stream> writeToStream);
+        string AddFile(string path, Action<Stream> writeToStream);
 
         void MakeFileWritable(string path);
 
@@ -45,5 +49,15 @@ namespace Aderant.Build {
         void CopyDirectory(string source, string destination);
 
         void MoveDirectory(string source, string destination);
+
+        /// <summary>
+        /// Searches upward for a directory containing the specified file, beginning in the specified directory.
+        /// </summary>
+        string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null);
+
+        /// <summary>
+        /// Searches upward for a directory containing the specified files included by the filter, beginning in the specified directory.
+        /// </summary>
+        IEnumerable<string> GetDirectoryNameOfFilesAbove(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories = null);
     }
 }
