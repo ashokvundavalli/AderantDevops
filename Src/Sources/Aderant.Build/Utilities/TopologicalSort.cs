@@ -83,6 +83,29 @@ namespace Aderant.Build.Utilities {
 
             return queue;
         }
+
+        public static IEnumerable<TElement> Sort<T, TElement>(IEnumerable<T> items, Func<T, IEnumerable<TElement>> itemsBefore, Func<T, TElement> convert) where T : class where TElement : class {
+            var sort = new TopologicalSort<TElement>();
+
+            foreach (T item in items) {
+                sort.Edge(convert(item));
+
+                IEnumerable<TElement> predecessors = itemsBefore(item);
+
+                if (predecessors != null) {
+                    foreach (var predecessor in predecessors) {
+                        if (predecessor != null) {
+                            sort.Edge(convert(item), predecessor);
+                        }
+                    }
+                }
+            }
+
+            Queue<TElement> queue;
+            sort.Sort(out queue);
+
+            return queue;
+        }
     }
 
     public sealed class TopologicalSort<T> : TopologicalSort where T : class {      
