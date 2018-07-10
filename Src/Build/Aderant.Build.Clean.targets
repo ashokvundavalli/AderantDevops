@@ -1,36 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
-
   <!--
     ==========================================================================================
         Clean
     ==========================================================================================
   -->
-  <Target Name="CleanBin">
+  <Target Name="CleanBin" DependsOnTargets="CleanAlways" Condition="'$(CleanBin)' == 'true'">
 
-    <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
-    <Delete Files="$(SolutionDirectoryPath)TestResults\**\*"
-      ContinueOnError="true" />
-    <Delete Files="$(ModuleBuildDirectory)TestResults\**\*"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(SolutionDirectoryPath)TestResults"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(ModuleBuildDirectory)TestResults"
-      ContinueOnError="true" />
-
-    <RemoveDir Condition="'$(CleanBin)' == 'true'"
-      Directories="$(SolutionDirectoryPath)Bin\Module"
-      ContinueOnError="true" />
-    <RemoveDir Condition="'$(CleanBin)' == 'true'"
-      Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin"
-      ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)Bin\Module" ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)Src\$(ModuleName)\bin" ContinueOnError="true" />
 
     <!-- These can be symlinks so delete them directly -->
-    <RemoveDir Directories="$(BinTestDirectory)Dependencies"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
-      ContinueOnError="true" />
+    <RemoveDir Directories="$(BinTestDirectory)Dependencies" ContinueOnError="true" />
+    <RemoveDir Directories="$(BinTestDirectory)ModuleBin" ContinueOnError="true" />
 
     <ItemGroup>
       <Folders Include="$(SolutionDirectoryPath)Bin\" />
@@ -51,29 +34,37 @@
     </ItemGroup>
 
     <ItemGroup>
-      <FilesToDelete Condition="$(CleanBin)" Include="@(Files)" />
-      <FoldersToDelete Condition="$(CleanBin)" Include="%(Files.RelativeDir)" />
+      <FilesToDelete Include="@(Files)" />
+      <FoldersToDelete Include="%(Files.RelativeDir)" />
     </ItemGroup>
 
-    <Message Condition="$(CleanBin) And @(FilesToDelete) != ''" Text="Files to clean: %(FilesToDelete.FullPath)" />
-    <Message Condition="$(CleanBin) And @(FoldersToDelete) != ''" Text="Folders to clean: %(FoldersToDelete.FullPath)" />
+    <Message Condition="@(FilesToDelete) != ''" Text="Files to clean: %(FilesToDelete.FullPath)" />
+    <Message Condition="@(FoldersToDelete) != ''" Text="Folders to clean: %(FoldersToDelete.FullPath)" />
 
     <MSBuild.Community.Tasks.Attrib
-      Condition="$(CleanBin)"
       ReadOnly="false"
       Files="@(FilesToDelete)" />
 
-    <Delete Condition="$(CleanBin)"
+    <Delete
       Files="@(FilesToDelete)"
       ContinueOnError="true" />
 
-    <RemoveDir Condition="$(CleanBin)"
+    <RemoveDir
       Directories="@(FoldersToDelete)"
       ContinueOnError="true" />
 
     <MakeDir Directories="$(BinModuleDirectory)" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+  </Target>
+
+
+  <Target Name="CleanAlways">
+    <!-- Always remove these files and folders as Visual Studio likes to produce these folders in abundance -->
+    <Delete Files="$(SolutionDirectoryPath)TestResults\**\*" ContinueOnError="true" />
+    <Delete Files="$(ModuleBuildDirectory)TestResults\**\*" ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDirectoryPath)TestResults" ContinueOnError="true" />
+    <RemoveDir Directories="$(ModuleBuildDirectory)TestResults" ContinueOnError="true" />
   </Target>
 
 </Project>
