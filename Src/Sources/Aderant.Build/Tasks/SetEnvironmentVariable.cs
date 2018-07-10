@@ -28,13 +28,4 @@ namespace Aderant.Build.Tasks {
         }
     }
 
-    public sealed class DebugProjectProperties : Task {
-
-        [Required]
-        public ITaskItem[] Projects { get; set; }
-
-        public override bool Execute() {
-            return !Log.HasLoggedErrors;
-        }
-    }
 }

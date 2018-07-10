@@ -54,7 +54,7 @@ namespace Aderant.Build.Tasks {
                   
                     string fullPath = item.GetMetadata("FullPath");
                     
-                    if (FileUtilities.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
+                    if (PathUtility.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
                         string hash;
                         using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
                             byte[] fileBytes = File.ReadAllBytes(fullPath);
