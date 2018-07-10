@@ -19,7 +19,7 @@ function New-BuildContext
 
     Set-StrictMode -Version 'Latest'
 
-    Write-Debug "Createing new context"
+    Write-Debug "Creating new context"
 
     [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
 
