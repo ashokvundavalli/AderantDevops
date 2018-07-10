@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aderant.Build.DependencyAnalyzer.Model;
 
 // (c) Gregory Adam 2009
 
@@ -55,9 +56,12 @@ using System.Linq;
  */
 namespace Aderant.Build.Utilities {
 
+    
     public class TopologicalSort {
 
-        public static IEnumerable<T> Sort<T>(IEnumerable<T> items, Func<T, IEnumerable<T>> itemsBefore) where T : class, IEquatable<T> {
+        public static IEnumerable<T> Sort<T>(IEnumerable<T> items, Func<T, IEnumerable<T>> itemsBefore) where T : class {
+            // TODO: I think we need to put back IEqualityComparer as a constraint but if we do that
+            // we have poor encapsulation of our dependency system (eg all types need to know how to compare to each other which is awkward)
             var sort = new TopologicalSort<T>();
 
             foreach (T item in items) {
@@ -81,7 +85,7 @@ namespace Aderant.Build.Utilities {
         }
     }
 
-    public sealed class TopologicalSort<T> : TopologicalSort where T : class, IEquatable<T> {
+    public sealed class TopologicalSort<T> : TopologicalSort where T : class {      
 
         private Dictionary<T, NodeInfo> nodes = new Dictionary<T, NodeInfo>();
 
