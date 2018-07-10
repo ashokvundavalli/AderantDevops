@@ -1,14 +1,9 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 
 namespace Aderant.Build {
     public static class PathUtility {
-
-        internal static string DirectorySeparatorChar = Path.DirectorySeparatorChar.ToString();
-
-        public static string GetPathWithForwardSlashes(string path) {
-            return path.Replace('\\', '/');
-        }
 
         /// <summary>
         /// If the given path doesn't have a trailing slash then add one.
@@ -23,6 +18,17 @@ namespace Aderant.Build {
             }
 
             return fileSpec;
+        }
+
+        internal static bool HasExtension(string fileName, string[] allowedExtensions) {
+            string extension = Path.GetExtension(fileName);
+            for (int i = 0; i < allowedExtensions.Length; i++) {
+                string strB = allowedExtensions[i];
+                if (string.Compare(extension, strB, true, CultureInfo.CurrentCulture) == 0) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal static string FixFilePath(string path) {

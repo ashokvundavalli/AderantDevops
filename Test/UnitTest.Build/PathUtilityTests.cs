@@ -32,5 +32,30 @@ namespace UnitTest.Build {
             Assert.AreEqual(@"foo/bar\", PathUtility.EnsureTrailingSlash(@"foo/bar\"));
             Assert.AreEqual(@"foo\bar/", PathUtility.EnsureTrailingSlash(@"foo\bar/"));
         }
+
+        /// <summary>
+        /// Exercises HasExtension
+        /// </summary>
+        [TestMethod]
+        public void HasExtension() {
+            Assert.AreEqual(true, PathUtility.HasExtension("foo.txt", new string[] { ".EXE", ".TXT" }));
+        }
+
+        /// <summary>
+        /// Exercises HasExtension
+        /// </summary>
+        [TestMethod]
+        public void DoesNotHaveExtension() {
+            Assert.AreEqual(false, PathUtility.HasExtension("foo.txt", new string[] { ".EXE", ".DLL" }));
+        }
+
+        [TestMethod]
+        public void GetParentDirectoryTest() {
+            IFileSystem2 fileSystem = new PhysicalFileSystem(@"C:\B\737\1\s\Framework\");
+
+            string parentDirectory = fileSystem.GetParent(fileSystem.Root);
+
+            Assert.AreEqual(@"C:\B\737\1\s", parentDirectory);
+        }
     }
 }
