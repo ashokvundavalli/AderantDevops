@@ -67,7 +67,7 @@ function Global:Invoke-Build2
         $context = New-BuildContext
     }
 
-    $context.BuildSystemRoot = "$PSScriptRoot\..\..\"
+    $context.BuildSystemDirectory = "$PSScriptRoot\..\..\"
 
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
