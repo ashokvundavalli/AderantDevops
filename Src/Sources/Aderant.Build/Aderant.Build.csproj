@@ -226,7 +226,7 @@
     <Compile Include="Tasks\CheckFreeSpace.cs" />
     <Compile Include="Tasks\CoberturaReportConverter.cs" />
     <Compile Include="SeedPackageValidation\Error.cs" />
-    <Compile Include="Tasks\DefaultContextProperties.cs" />
+    <Compile Include="Tasks\GetPropertiesFromContext.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
     <Compile Include="Ipc\MemoryMappedFile.cs" />

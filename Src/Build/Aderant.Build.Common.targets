@@ -93,7 +93,7 @@
   <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
-  <UsingTask TaskName="Aderant.Build.Tasks.DefaultContextProperties"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.GetPropertiesFromContext"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.SetEnvironmentVariable"                              AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.ExtractPropertyFromPropertyList"                     AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />

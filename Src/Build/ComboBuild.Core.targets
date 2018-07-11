@@ -34,18 +34,20 @@
 
 
   <Target Name="AssignBuildProperties" Returns="@(ProjectGroup)">
+    <Error Condition="'$(BuildFlavor)' == ''" Text="No build flavor specified." />
+
     <!-- 
     ==========================================================================================
         Build Configurations
     ==========================================================================================
     -->
     <ItemGroup>
-      <ConfigurationToBuild Condition="'$(BuildFlavor)'=='Release'"
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Release'"
         Include="Release|Any CPU">
         <FlavorToBuild>Release</FlavorToBuild>
         <PlatformToBuild>Any CPU</PlatformToBuild>
       </ConfigurationToBuild>
-      <ConfigurationToBuild Condition="'$(BuildFlavor)'=='Debug'"
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug'"
         Include="Debug|Any CPU">
         <FlavorToBuild>Debug</FlavorToBuild>
         <PlatformToBuild>Any CPU</PlatformToBuild>
@@ -84,7 +86,7 @@
     <ItemGroup>
       <ProjectGroup>
         <Properties Condition="'%(ProjectGroup.IsProjectFile)' == 'false'">
-          %(Properties);
+          %(ProjectGroup.Properties);
           $(BuildProperties);
           SolutionRoot=%(ProjectGroup.SolutionRoot);
           BinModuleDirectory=%(ProjectGroup.SolutionRoot)\Bin\Module\;
@@ -95,9 +97,9 @@
         </Properties>
 
         <Properties Condition="'%(ProjectGroup.IsProjectFile)' != 'false'">
-          %(Properties);
           Configuration=%(ConfigurationToBuild.FlavorToBuild);
           Platform=%(ConfigurationToBuild.PlatformToBuild);
+          %(ProjectGroup.Properties);
           $(BuildProperties);
         </Properties>
       </ProjectGroup>

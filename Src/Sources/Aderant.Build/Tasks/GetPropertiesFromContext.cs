@@ -5,7 +5,7 @@ namespace Aderant.Build.Tasks {
     /// <summary>
     /// Extracts key properties from the context and returns them to MSBuild
     /// </summary>
-    public sealed class DefaultContextProperties : ContextTaskBase {
+    public sealed class GetPropertiesFromContext : ContextTaskBase {
 
         [Output]
         public bool IsDesktopBuild { get; set; }

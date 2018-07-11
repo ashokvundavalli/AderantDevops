@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
          ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
-         InitialTargets="DefaultContextProperties;"
+         InitialTargets="SetPropertiesFromContext;"
          TreatAsLocalProperty="SolutionRoot;AssemblyVersion;BuildFlavor">
 
 
@@ -284,15 +284,15 @@
   </Target>
 
 
-  <Target Name="DefaultContextProperties" DependsOnTargets="$(InitialTargetsDependsOn)">
+  <Target Name="SetPropertiesFromContext" DependsOnTargets="$(InitialTargetsDependsOn)">
 
-    <DefaultContextProperties
+    <GetPropertiesFromContext
         ContextFileName="$(ContextFileName)"
         WaitForDebugger="$(WaitForDebugger)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
       <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
       <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />
-    </DefaultContextProperties>
+    </GetPropertiesFromContext>
 
   </Target>
   
