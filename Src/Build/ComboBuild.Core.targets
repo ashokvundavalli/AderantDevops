@@ -43,14 +43,14 @@
     -->
     <ItemGroup>
       <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Release'"
-        Include="Release|Any CPU">
+        Include="Release|AnyCPU">
         <FlavorToBuild>Release</FlavorToBuild>
-        <PlatformToBuild>Any CPU</PlatformToBuild>
+        <PlatformToBuild>AnyCPU</PlatformToBuild>
       </ConfigurationToBuild>
       <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug'"
-        Include="Debug|Any CPU">
+        Include="Debug|AnyCPU">
         <FlavorToBuild>Debug</FlavorToBuild>
-        <PlatformToBuild>Any CPU</PlatformToBuild>
+        <PlatformToBuild>AnyCPU</PlatformToBuild>
       </ConfigurationToBuild>
     </ItemGroup>
 
