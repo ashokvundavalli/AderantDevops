@@ -68,6 +68,8 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
+            excludeFilterPatterns = excludeFilterPatterns.Select(p => Path.GetFullPath(p)).ToArray();
+
             var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
 
             foreach (var path in files) {
