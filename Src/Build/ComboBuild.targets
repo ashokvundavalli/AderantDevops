@@ -43,7 +43,7 @@
     <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
 
     <!-- Enables the use of a shared dependency directory to speed up the build -->
-    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
+    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
 
     <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
