@@ -76,7 +76,7 @@ namespace Aderant.Build.ProjectSystem {
                 bool skip = false;
                 if (excludeFilterPatterns != null) {
                     foreach (var pattern in excludeFilterPatterns) {
-                        if (path.Contains(pattern)) {
+                        if (path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
                             skip = true;
                             break;
                         }
