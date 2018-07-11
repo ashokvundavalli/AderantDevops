@@ -73,9 +73,11 @@ namespace Aderant.Build.ProjectSystem {
             var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
 
             foreach (var path in files) {
+                Console.WriteLine("zz" + path);
                 bool skip = false;
                 if (excludeFilterPatterns != null) {
                     foreach (var pattern in excludeFilterPatterns) {
+                        Console.WriteLine("yy" + pattern);
                         if (path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
                             skip = true;
                             break;
