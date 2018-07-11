@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.Linq;
@@ -40,7 +40,7 @@ namespace Aderant.Build {
                     }
 
                     catalog = new AggregateCatalog(new TypeCatalog(types));
-                    container = new CompositionContainer(catalog);
+                    container = new CompositionContainer(catalog, CompositionOptions.IsThreadSafe);
 
                     VisualStudioEnvironmentContext.Shutdown();
                 }
