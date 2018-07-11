@@ -78,7 +78,7 @@
         Ensures that x86 projects with a P2P reference to an AnyCPU project don't push the x86 configuration/platform into the P2P reference and trigger
         a missing configuration/platform error.
         -->
-        ShouldUnsetParentConfigurationAndPlatform=true;
+        <!--ShouldUnsetParentConfigurationAndPlatform=true;-->
         BuildProjectReferences=false;
       </BuildProperties>
     </PropertyGroup>
