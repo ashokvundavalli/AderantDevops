@@ -28,7 +28,8 @@ function Get-AmbientBuildMetadata {
         if ((Test-Path -Path 'env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI')) {
             $buildInfo.BuildNumber = Get-EnvironmentVariable 'BUILD_BUILDNUMBER'
             $buildInfo.BuildId = Get-EnvironmentVariable 'BUILD_BUILDID'
-            $buildInfo.BuildUri = Get-EnvironmentVariable 'BUILD_BUILDURI'        
+            $buildInfo.BuildUri = Get-EnvironmentVariable 'BUILD_BUILDURI'
+            $buildInfo.Flavor = Get-EnvironmentVariable 'BUILD_FLAVOR'
         
             $buildInfo.ScmUri = Get-EnvironmentVariable 'BUILD_REPOSITORY_URI'
             $buildInfo.ScmCommitId = Get-EnvironmentVariable 'GIT_COMMIT'

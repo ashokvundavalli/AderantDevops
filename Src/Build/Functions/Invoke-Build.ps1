@@ -9,7 +9,6 @@
     Useful if you wish to override some property but that property is not exposed as a first class concept.
 
 #>
-
 function Global:Invoke-Build2
 {    
     [CmdletBinding(DefaultParameterSetName="Build")]
@@ -111,29 +110,8 @@ function Global:Invoke-Build2
 
         return [string]::Join(" ", $args)
     }
-
-        #$service = $context.GetService("Aderant.Build.Services.IFileSystem")
-
+    
     [string]$repositoryPath = $null
-
-        #if (-not [string]::IsNullOrEmpty($modulePath)){
-        #    $repositoryPath = $modulePath
-        #} elseif(-not [string]::IsNullOrEmpty($global:CurrentModulePath)) {
-        #    $repositoryPath = $global:CurrentModulePath
-
-        #    if (-not [string]::IsNullOrEmpty($moduleName)){
-        #        if (((Test-Path "$repositoryPath\.git") -eq $false) -and ((Test-Path "$repositoryPath\..\.git") -eq $true)) {
-        #            $repositoryPath = $(Resolve-Path "$repositoryPath\..\$moduleName")
-        #        }
-
-        #        if (Test-Path "$repositoryPath\$moduleName"){
-        #            $repositoryPath = $(Resolve-Path $moduleName)
-        #        }
-        #    }
-        #} else {
-        #    Write-Error 'No valid module path supplied.'
-        #    return
-        #}
 
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
         $repositoryPath = $ModulePath

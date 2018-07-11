@@ -3,7 +3,7 @@
          ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
          InitialTargets="DefaultContextProperties;"
-         TreatAsLocalProperty="SolutionRoot;AssemblyVersion">
+         TreatAsLocalProperty="SolutionRoot;AssemblyVersion;BuildFlavor">
 
 
   <!-- Server build property setup -->
@@ -291,6 +291,7 @@
         WaitForDebugger="$(WaitForDebugger)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
       <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
+      <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />
     </DefaultContextProperties>
 
   </Target>
@@ -319,7 +320,6 @@
     ==========================================================================================
   -->
   <Target Name="BuildModulesParallel">
-    
     <PropertyGroup>
       <CommonBuildProperties>
         BuildAll=true;

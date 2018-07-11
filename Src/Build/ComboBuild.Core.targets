@@ -34,6 +34,24 @@
 
 
   <Target Name="AssignBuildProperties" Returns="@(ProjectGroup)">
+    <!-- 
+    ==========================================================================================
+        Build Configurations
+    ==========================================================================================
+    -->
+    <ItemGroup>
+      <ConfigurationToBuild Condition="'$(BuildFlavor)'=='Release'"
+        Include="Release|Any CPU">
+        <FlavorToBuild>Release</FlavorToBuild>
+        <PlatformToBuild>Any CPU</PlatformToBuild>
+      </ConfigurationToBuild>
+      <ConfigurationToBuild Condition="'$(BuildFlavor)'=='Debug'"
+        Include="Debug|Any CPU">
+        <FlavorToBuild>Debug</FlavorToBuild>
+        <PlatformToBuild>Any CPU</PlatformToBuild>
+      </ConfigurationToBuild>
+    </ItemGroup>
+
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
     </ItemGroup>
@@ -78,6 +96,8 @@
 
         <Properties Condition="'%(ProjectGroup.IsProjectFile)' != 'false'">
           %(Properties);
+          Configuration=%(ConfigurationToBuild.FlavorToBuild);
+          Platform=%(ConfigurationToBuild.PlatformToBuild);
           $(BuildProperties);
         </Properties>
       </ProjectGroup>

@@ -12,7 +12,6 @@ namespace Aderant.Build {
         private BuildMetadata buildMetadata;
 
         private string buildScriptsDirectory;
-        private string flavor;
         private bool isDesktopBuild = true;
 
         [NonSerialized]
@@ -98,27 +97,6 @@ namespace Aderant.Build {
             get { return switches; }
             set {
                 switches = value;
-
-                if (value.Release) {
-                    Flavor = ProjectBuildConfiguration.ReleaseAnyCpu;
-                } else {
-                    Flavor = ProjectBuildConfiguration.DebugAnyCpu;
-                }
-            }
-        }
-
-        public string Flavor {
-            get { return flavor; }
-            set {
-                if (value == null) {
-                    throw new ArgumentNullException();
-                }
-
-                if (value.IndexOf("|", StringComparison.Ordinal) == -1) {
-                    throw new InvalidOperationException("Flavor does not have a configuration and target separator");
-                }
-
-                flavor = value;
             }
         }
 

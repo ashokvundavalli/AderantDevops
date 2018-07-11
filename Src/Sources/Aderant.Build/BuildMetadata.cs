@@ -10,6 +10,7 @@ namespace Aderant.Build {
             JobName = "";
             ScmBranch = "";
             ScmCommitId = "";
+            Flavor = "";
         }
 
         public int BuildNumber { get; set; }
@@ -33,6 +34,8 @@ namespace Aderant.Build {
         public bool IsPullRequest {
             get { return PullRequest != null; }
         }
+
+        public string Flavor { get; set; }
 
         /// <summary>
         /// Is the build system itself in debug mode. 
