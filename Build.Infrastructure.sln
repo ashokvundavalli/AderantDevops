@@ -31,7 +31,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\dir.proj = Src\Build\dir.proj
 		Src\Build\InvokeServerBuild.ps1 = Src\Build\InvokeServerBuild.ps1
 		Src\Build\LightUpDependencies.ps1 = Src\Build\LightUpDependencies.ps1
-		Src\Build\LightUpManifest.xml = Src\Build\LightUpManifest.xml
 		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
 		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
 		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1

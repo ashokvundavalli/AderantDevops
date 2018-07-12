@@ -17,7 +17,9 @@
     <ExpertEnvironmentUrl>http://localhost/Expert_$(ExpertEnvironmentName)</ExpertEnvironmentUrl>
     <DatabaseName>$([System.Guid]::NewGuid())</DatabaseName>
     <ServiceAccount Condition="'$(ServiceAccount)' == ''">ADERANT_AP\tfsbuildservice$</ServiceAccount>
-    <LightUpManifest>$(BuildScriptsDirectory)LightUpManifest.xml</LightUpManifest>
+    <LightUpManifest>$(SolutionDirectoryPath)\Build\LightUpManifest.xml</LightUpManifest>
+    <OriginBranch Condition="'$(OriginBranch)' == ''">master</OriginBranch>
+    <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
   </PropertyGroup>
 
 
@@ -76,13 +78,17 @@
       <PackageDependency Condition="'$(PackageDependency)' != ''" Include="$(PackageDependency.Split('#'))" />
     </ItemGroup>
 
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { Invoke-WebRequest -Uri 'http://tfs.ap.aderant.com:8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&amp;path=%2FBuild%2FLightUpManifest.xml&amp;version=GB$(OriginBranch)&amp;contentOnly=false&amp;__v=5' -OutFile $(LightUpManifest) -UseBasicParsing -UseDefaultCredentials }&quot;" />
+
     <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
       PackageDependency="%(PackageDependency.Identity)"
       LightUpManifest="$(LightUpManifest)" />
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildScriptsDirectory)LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(SolutionDirectoryPath)&apos; -moduleName &apos;$(ModuleName)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\dev\vnext&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(BuildScriptsDirectory)LightUpDependencies.ps1&apos; -modulesRootPath &apos;$(SolutionDirectoryPath)&apos; -moduleName &apos;$(ModuleName)&apos; -dropPath &apos;\\dfs.aderant.com\expertsuite\$(OriginTFVCBranch)&apos; -manifestFile &apos;$(LightUpManifest)&apos; } &quot;" />
 
     <ItemGroup>
       <FilesToMove Include="$(ImageWorkingDirectory)\ApplicationServerCommon.psm1;$(ImageWorkingDirectory)\SecuritySetup.ps1;$(ImageWorkingDirectory)\TeardownServerImage.ps1"/>
