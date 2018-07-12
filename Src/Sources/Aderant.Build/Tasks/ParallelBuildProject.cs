@@ -60,6 +60,8 @@ namespace Aderant.Build.Tasks {
         [Required]
         public string AfterProjectFile { get; set; }
 
+        public string ConfigurationToBuild { get; set; }
+
         [Output]
         public string[] ModulesInThisBuild { get; set; }
 
@@ -83,7 +85,7 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            IProjectTree projectTree = ProjectTree.CreateDefaultImplementation();
+            var projectTree = ProjectTree.CreateDefaultImplementation();
 
             var jobFiles = new BuildJobFiles {
                 BeforeProjectFile = BeforeProjectFile,
@@ -92,12 +94,13 @@ namespace Aderant.Build.Tasks {
                 InstanceFile = InstanceFile,
             };
 
-            var analysisContext = SetupAnalysisContext();
+            var analysisContext = CreateAnalysisContext();
+            context.ConfigurationToBuild = ConfigurationToBuild;
 
-            Project project = projectTree.GenerateBuildJob(context, analysisContext, jobFiles).Result;
+            var project = projectTree.GenerateBuildJob(context, analysisContext, jobFiles).Result;
             var element = project.CreateXml();
 
-            XmlWriterSettings settings = new XmlWriterSettings();
+            var settings = new XmlWriterSettings();
             settings.Encoding = Encoding.UTF8;
             settings.CloseOutput = true;
             settings.NewLineOnAttributes = true;
@@ -151,7 +154,7 @@ namespace Aderant.Build.Tasks {
             //}
         }
 
-        private AnalysisContext SetupAnalysisContext() {
+        private AnalysisContext CreateAnalysisContext() {
             var paths = ExcludePaths.ToList();
             paths.Add(Context.BuildSystemDirectory);
 

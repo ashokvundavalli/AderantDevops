@@ -110,6 +110,8 @@ namespace Aderant.Build {
             }
         }
 
+        public string ConfigurationToBuild { get; set; }
+
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>

@@ -9,8 +9,5 @@ namespace Aderant.Build.ProjectSystem.SolutionParser {
         public IReadOnlyList<ProjectInSolution> ProjectsInOrder { get; internal set; }
         public IReadOnlyList<SolutionConfigurationInSolution> SolutionConfigurations { get; internal set; }
 
-        public void AssociateTo(string projectFullPath) {
-            
-        }
     }
 }

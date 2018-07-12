@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -67,28 +68,6 @@ namespace Aderant.Build.ProjectSystem {
             return Task.WhenAll(files.Select(file => Task.Run(() => LoadAndParseProjectFile(file))).ToArray());
         }
 
-        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
-            excludeFilterPatterns = excludeFilterPatterns.Select(p => Path.GetFullPath(p)).ToArray();
-
-            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
-
-            foreach (var path in files) {
-                bool skip = false;
-                if (excludeFilterPatterns != null) {
-                    foreach (var pattern in excludeFilterPatterns) {
-                        if (path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
-                            skip = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!skip) {
-                    yield return path;
-                }
-            }
-        }
-
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
             foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                 ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
@@ -111,9 +90,13 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles instance) {
+            ErrorUtilities.IsNotNull(context.ConfigurationToBuild, nameof(context.ConfigurationToBuild));
+
             await LoadProjects(context.BuildRoot.FullName, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
+            
+            collector.ProjectConfiguration = context.ConfigurationToBuild;
             await CollectBuildDependencies(collector);
 
             DependencyGraph graph = CreateBuildDependencyGraph(collector);
@@ -151,7 +134,7 @@ namespace Aderant.Build.ProjectSystem {
                 var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryName, "*.sln", null);
 
                 foreach (var file in files) {
-                    ParseResult parseResult = parser.Parse(file);
+                   ParseResult parseResult = parser.Parse(file);
 
                     if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
 
@@ -169,6 +152,30 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             return new SolutionSearchResult(solutionFile, projectInSolution);
+        }
+
+        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
+            if (excludeFilterPatterns != null) {
+                excludeFilterPatterns = excludeFilterPatterns.Select(p => Path.GetFullPath(p)).ToArray();
+            }
+
+            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
+
+            foreach (var path in files) {
+                bool skip = false;
+                if (excludeFilterPatterns != null) {
+                    foreach (var pattern in excludeFilterPatterns) {
+                        if (path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
+                            skip = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!skip) {
+                    yield return path;
+                }
+            }
         }
 
         private IEnumerable<IArtifact> BuildDependencyGraph() {

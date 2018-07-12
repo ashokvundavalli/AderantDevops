@@ -14,7 +14,7 @@
 
     <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
-║                     Group $(BuildGroup.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(34)) ║
+║                     Group $(BuildGroupId.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(34)) ║
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high" />
     <InspectItemGroup ItemGroup="@(ProjectGroup)" />
@@ -36,23 +36,7 @@
   <Target Name="AssignBuildProperties" Returns="@(ProjectGroup)">
     <Error Condition="'$(BuildFlavor)' == ''" Text="No build flavor specified." />
 
-    <!-- 
-    ==========================================================================================
-        Build Configurations
-    ==========================================================================================
-    -->
-    <ItemGroup>
-      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Release'"
-        Include="Release|AnyCPU">
-        <FlavorToBuild>Release</FlavorToBuild>
-        <PlatformToBuild>AnyCPU</PlatformToBuild>
-      </ConfigurationToBuild>
-      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug'"
-        Include="Debug|AnyCPU">
-        <FlavorToBuild>Debug</FlavorToBuild>
-        <PlatformToBuild>AnyCPU</PlatformToBuild>
-      </ConfigurationToBuild>
-    </ItemGroup>
+
 
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
@@ -97,8 +81,6 @@
         </Properties>
 
         <Properties Condition="'%(ProjectGroup.IsProjectFile)' != 'false'">
-          Configuration=%(ConfigurationToBuild.FlavorToBuild);
-          Platform=%(ConfigurationToBuild.PlatformToBuild);
           %(ProjectGroup.Properties);
           $(BuildProperties);
         </Properties>

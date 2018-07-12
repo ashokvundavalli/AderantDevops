@@ -150,7 +150,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                     [PropertiesKey] = propertyList.ToString(),
                     [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture),
                     ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
-
+                    ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
+                    ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                     // Indicates this file is not part of the build system
                     ["IsProjectFile"] = bool.TrueString,
                 };
@@ -212,6 +213,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private PropertyList AddSolutionConfigurationProperties(ConfiguredProject visualStudioProject, PropertyList propertyList) {
             propertyList.Add($"SolutionRoot={visualStudioProject.SolutionRoot}");
+            propertyList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
+            propertyList.Add($"Platform={visualStudioProject.BuildConfiguration.PlatformName}");
 
             AddMetaProjectProperties(visualStudioProject, propertyList);
             return propertyList;

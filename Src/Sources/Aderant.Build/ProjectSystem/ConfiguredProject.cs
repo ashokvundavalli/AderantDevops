@@ -217,15 +217,22 @@ namespace Aderant.Build.ProjectSystem {
             return project.Value.GetItems(itemType);
         }
 
-        public void AssignProjectConfiguration(string buildConfiguration) {
+        public void AssignProjectConfiguration(string solutionBuildConfiguration) {
             var projectInSolution = Tree.SolutionManager.GetSolutionForProject(FullPath, ProjectGuid);
 
             if (projectInSolution.Found) {
                 SolutionFile = projectInSolution.SolutionFile;
 
                 ProjectConfigurationInSolution projectConfigurationInSolution;
-                if (projectInSolution.Project.ProjectConfigurations.TryGetValue(buildConfiguration, out projectConfigurationInSolution)) {
+                if (projectInSolution.Project.ProjectConfigurations.TryGetValue(solutionBuildConfiguration, out projectConfigurationInSolution)) {
                     IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
+
+                    // GC optimization
+                    this.BuildConfiguration = ProjectBuildConfiguration.GetConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
+
+                    if (BuildConfiguration == null) { 
+                        BuildConfiguration = new ProjectBuildConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
+                    }
                 }
 
                 if (IncludeInBuild) {
@@ -233,9 +240,17 @@ namespace Aderant.Build.ProjectSystem {
                 }
             } else {
                 IProjectTreeInternal treeInternal = Tree as IProjectTreeInternal;
-                treeInternal.OrphanProject(this);
+                if (treeInternal != null) {
+                    treeInternal.OrphanProject(this);
+                }
             }
         }
+
+        public ProjectBuildConfiguration BuildConfiguration { get; set; }
+
+        public string PlatformName { get; set; }
+
+        public string ConfigurationName { get; set; }
 
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.

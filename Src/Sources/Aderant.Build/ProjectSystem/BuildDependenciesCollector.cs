@@ -19,7 +19,7 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Gets or sets the project configuration to collect.
         /// </summary>
-        public string ProjectConfiguration { get; set; } = "Debug|Any CPU";
+        public string ProjectConfiguration { get; set; }
 
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));

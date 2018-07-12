@@ -5,6 +5,11 @@ using Aderant.Build.Annotations;
 namespace Aderant.Build {
     internal static class ErrorUtilities {
 
+        /// <summary>
+        /// Blows up if the reference is null.
+        /// </summary>
+        /// <param name="obj">The reference to check.</param>
+        /// <param name="name">The parameter which cannot be null.</param>
         [AssertionMethod]
         [DebuggerStepThrough]
         public static void IsNotNull<T>(

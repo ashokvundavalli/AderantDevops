@@ -5,6 +5,10 @@
     /// </summary>
     internal class ProjectBuildConfiguration {
 
+        public static ProjectBuildConfiguration DebugOnAnyCpu = new ProjectBuildConfiguration("Debug", "AnyCPU");
+
+        public static ProjectBuildConfiguration ReleaseOnAnyCpu = new ProjectBuildConfiguration("Release", "AnyCPU");
+
         public ProjectBuildConfiguration(string configurationName, string platformName) {
             ConfigurationName = configurationName;
             PlatformName = platformName;
@@ -13,14 +17,20 @@
         public string ConfigurationName { get; }
         public string PlatformName { get; }
 
-        /// <summary>
-        /// The release flavor
-        /// </summary>
-        public static string ReleaseAnyCpu = "Release|Any CPU";
+        public static ProjectBuildConfiguration GetConfiguration(string configurationName, string platformName) {
+            if (configurationName == DebugOnAnyCpu.ConfigurationName) {
+                if (platformName == DebugOnAnyCpu.PlatformName) {
+                    return DebugOnAnyCpu;
+                }
+            }
 
-        /// <summary>
-        /// The debug flavor
-        /// </summary>
-        public static string DebugAnyCpu = "Debug|Any CPU";
+            if (configurationName == ReleaseOnAnyCpu.ConfigurationName) {
+                if (platformName == ReleaseOnAnyCpu.PlatformName) {
+                    return ReleaseOnAnyCpu;
+                }
+            }
+
+            return null;
+        }
     }
 }

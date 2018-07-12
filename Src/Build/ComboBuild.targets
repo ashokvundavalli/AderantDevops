@@ -90,6 +90,24 @@
       <ExcludePaths Include="$(BuildSystemDirectory)" />
     </ItemGroup>
 
+    <!-- 
+    ==========================================================================================
+        Build Configurations
+    ==========================================================================================
+    -->
+    <ItemGroup>
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Release'"
+        Include="Release|Any CPU">
+        <FlavorToBuild>Release</FlavorToBuild>
+        <PlatformToBuild>Any CPU</PlatformToBuild>
+      </ConfigurationToBuild>
+      <ConfigurationToBuild Condition="'$(BuildFlavor)' == 'Debug'"
+        Include="Debug|Any CPU">
+        <FlavorToBuild>Debug</FlavorToBuild>
+        <PlatformToBuild>Any CPU</PlatformToBuild>
+      </ConfigurationToBuild>
+    </ItemGroup>
+
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
       ContextFileName="$(ContextFileName)"
@@ -101,7 +119,8 @@
       GroupOrchestrationFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.PrepareForBuild.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets"
-      ExcludePaths="@(ExcludePaths)">
+      ExcludePaths="@(ExcludePaths)"
+      ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
