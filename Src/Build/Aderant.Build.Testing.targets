@@ -22,8 +22,13 @@
       <IsolationSwitch>/InIsolation</IsolationSwitch>
       <RunUnitTestsInParallel>$([MSBuild]::ValueOrDefault(`$(RunUnitTestsInParallel)`, `true`))</RunUnitTestsInParallel>
       <ParallelSwitch Condition="'$(RunUnitTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
-      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
+        <!--TODO: restore-->
+      <!--<PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>-->
+        <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x86</PlatformSwitch>
+
+        
+
+        <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
     </PropertyGroup>
 
