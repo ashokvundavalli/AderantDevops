@@ -376,7 +376,7 @@
 
 
   <Target Name="Package" AfterTargets="BuildAndPackage">
-    <OnError ExecuteTargets="OnBuildBreak" />
+    <!--<OnError ExecuteTargets="OnBuildBreak" />-->
   </Target>
 
   <!--
@@ -395,16 +395,6 @@
       <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
       <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>
     </PropertyGroup>
-    
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Zipping build output"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
 
     <Message Text="Zipping product files"/>
 
