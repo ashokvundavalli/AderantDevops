@@ -38,8 +38,8 @@ function global:Enable-GitPrompt{
     }
 }
 
-Install-PoshGit
-Initialize-Git
+#Install-PoshGit
+#Initialize-Git
 
-Export-ModuleMember -Function Invoke-Build
-Set-Alias -Name bm -Value Invoke-Build -Scope Global
+Export-ModuleMember -Function Invoke-Build2
+Set-Alias -Name bm -Value Invoke-Build2 -Scope Global
