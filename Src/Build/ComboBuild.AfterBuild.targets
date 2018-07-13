@@ -35,15 +35,15 @@
 
     <AfterBuildDependsOn>
       ValidateRequiredProperties;
-      RunTests;
+      <!--RunTests;
       RunIntegrationTests;
-      <!--RunAutomationTests;-->
+      --><!--RunAutomationTests;--><!--
       PublishModule;
       IndexSourcesAndPublishSymbols;
       MobileBuild;
       PostBuild;
       SignInstallers;
-      CopyToDropV2;
+      CopyToDropV2;-->
     </AfterBuildDependsOn>
   </PropertyGroup>
 
