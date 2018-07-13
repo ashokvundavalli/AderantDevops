@@ -13,6 +13,9 @@
 
   <PropertyGroup>
     <CopyToDropV2>true</CopyToDropV2>
+
+    <!-- TODO: Enable...currently off for perf reasons-->
+    <CodeCoverage>false</CodeCoverage>
   </PropertyGroup>
 
   <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"
