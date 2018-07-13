@@ -34,7 +34,7 @@ function Get-AmbientBuildMetadata {
             $buildInfo.ScmUri = Get-EnvironmentVariable 'BUILD_REPOSITORY_URI'
             $buildInfo.ScmCommitId = Get-EnvironmentVariable 'GIT_COMMIT'
             $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
-            $buildInfo.DebugLoggingEnabled = if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { $true }
+            if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { $buildInfo.DebugLoggingEnabled = $true }
 
             $buildInfo.SetPullRequestInfo(
                 (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_PULLREQUESTID'),

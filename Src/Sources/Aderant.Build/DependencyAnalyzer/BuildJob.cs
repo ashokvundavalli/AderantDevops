@@ -149,9 +149,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ItemGroupItem item = new ItemGroupItem(visualStudioProject.FullPath) {
                     [PropertiesKey] = propertyList.ToString(),
                     [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture),
-                    ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                     ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                     ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
+                    ["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}",
+                    ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                     // Indicates this file is not part of the build system
                     ["IsProjectFile"] = bool.TrueString,
                 };
