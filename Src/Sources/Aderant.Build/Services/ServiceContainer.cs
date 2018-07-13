@@ -4,6 +4,7 @@ using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.Linq;
 using System.Reflection;
+using Aderant.Build.ProjectSystem;
 
 namespace Aderant.Build.Services {
     internal class ServiceContainer : IServiceProvider, IContextualServiceProvider {
@@ -26,17 +27,15 @@ namespace Aderant.Build.Services {
             }
 
             var catalog = new AggregateCatalog(new TypeCatalog(types));
-            //container = new CompositionContainer(catalog)
-
-            // TODO: rename
-            var appLevelCatalog = catalog.Filter(cpd => !cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope")));
-            var docLevelCatalog = catalog.Filter(cpd => cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope") && ed.Metadata["Scope"].ToString() == "ConfiguredProject"));
+            
+            var unfilteredCatalog = catalog.Filter(cpd => !cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope")));
+            var filteredCatalog = catalog.Filter(cpd => cpd.ExportDefinitions.Any(ed => ed.Metadata.ContainsKey("Scope") && ed.Metadata["Scope"].ToString() == nameof(ConfiguredProject)));
 
             var scopeDefinition = new CompositionScopeDefinition(
-                appLevelCatalog,
-                new[] { new CompositionScopeDefinition(docLevelCatalog, null) });
+                unfilteredCatalog,
+                new[] { new CompositionScopeDefinition(filteredCatalog, null) });
 
-            container = new CompositionContainer(scopeDefinition);
+            container = new CompositionContainer(scopeDefinition, CompositionOptions.IsThreadSafe);
 
             VisualStudioEnvironmentContext.Shutdown();
         }

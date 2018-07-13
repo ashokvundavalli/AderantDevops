@@ -25,8 +25,7 @@
 
     <MSBuild Projects="@(ProjectGroup)"
              Targets="$(BuildAction)"
-             BuildInParallel="$(BuildInParallel)"
-             Properties="%(ProjectGroup.Properties)">
+             BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
     <OnError ExecuteTargets="SetResumePoint" />
@@ -35,8 +34,6 @@
 
   <Target Name="AssignBuildProperties" Returns="@(ProjectGroup)">
     <Error Condition="'$(BuildFlavor)' == ''" Text="No build flavor specified." />
-
-
 
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
@@ -58,11 +55,12 @@
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
 
         <!--
-        ShouldUnsetParentConfigurationAndPlatform
-        Ensures that x86 projects with a P2P reference to an AnyCPU project don't push the x86 configuration/platform into the P2P reference and trigger
-        a missing configuration/platform error.
+        ShouldUnsetParentConfigurationAndPlatform        
+        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the 
+        child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
+        This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
         -->
-        <!--ShouldUnsetParentConfigurationAndPlatform=true;-->
+        ShouldUnsetParentConfigurationAndPlatform=true;
         BuildProjectReferences=false;
       </BuildProperties>
     </PropertyGroup>
@@ -85,6 +83,7 @@
           $(BuildProperties);
         </Properties>
       </ProjectGroup>
+      
     </ItemGroup>
 
   </Target>

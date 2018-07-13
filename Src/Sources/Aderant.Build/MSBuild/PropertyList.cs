@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Aderant.Build.MSBuild {
     internal class PropertyList : Collection<string> {
-        private static string joinString = ";" + Environment.NewLine;
+        private static string joinString = "; " + Environment.NewLine;
 
         public override string ToString() {
             return Join(Items);

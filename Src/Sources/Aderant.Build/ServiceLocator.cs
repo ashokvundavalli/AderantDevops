@@ -40,7 +40,7 @@ namespace Aderant.Build {
                     }
 
                     catalog = new AggregateCatalog(new TypeCatalog(types));
-                    container = new CompositionContainer(catalog, CompositionOptions.IsThreadSafe);
+                    container = new CompositionContainer(catalog, true);
 
                     VisualStudioEnvironmentContext.Shutdown();
                 }
