@@ -7,6 +7,44 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{31A06791-2
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Profile", "Profile", "{D6EF2A47-2169-41BB-82BE-538DFB8D7CC1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
+	ProjectSection(SolutionItems) = preProject
+		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
+		Src\Build\Aderant.Build.CopyToDropV2.targets = Src\Build\Aderant.Build.CopyToDropV2.targets
+		Src\Build\Aderant.Build.GitLink.targets = Src\Build\Aderant.Build.GitLink.targets
+		Src\Build\Aderant.Build.IntegrationTesting.targets = Src\Build\Aderant.Build.IntegrationTesting.targets
+		Src\Build\Aderant.Build.Testing.targets = Src\Build\Aderant.Build.Testing.targets
+		Src\Build\Aderant.BuildAll.targets = Src\Build\Aderant.BuildAll.targets
+		Src\Build\Aderant.CodeAnalysis.targets = Src\Build\Aderant.CodeAnalysis.targets
+		Src\Build\Aderant.CodeSigning.targets = Src\Build\Aderant.CodeSigning.targets
+		Src\Build\Aderant.CSharp.targets = Src\Build\Aderant.CSharp.targets
+		Src\Build\Aderant.CustomAfterMicrosoftCommon.targets = Src\Build\Aderant.CustomAfterMicrosoftCommon.targets
+		Src\Build\Aderant.wpp.content.proj = Src\Build\Aderant.wpp.content.proj
+		Src\Build\Aderant.wpp.targets = Src\Build\Aderant.wpp.targets
+		Src\Build\Bootstrap.ps1 = Src\Build\Bootstrap.ps1
+		Src\Build\Build-Libraries.ps1 = Src\Build\Build-Libraries.ps1
+		Src\Build\BuildModule.ps1 = Src\Build\BuildModule.ps1
+		Src\Build\BuildProcess.ps1 = Src\Build\BuildProcess.ps1
+		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
+		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
+		Src\Build\CopyToDropV2.ps1 = Src\Build\CopyToDropV2.ps1
+		Src\Build\dir.proj = Src\Build\dir.proj
+		Src\Build\InvokeServerBuild.ps1 = Src\Build\InvokeServerBuild.ps1
+		Src\Build\LightUpDependencies.ps1 = Src\Build\LightUpDependencies.ps1
+		Src\Build\Load-LocalDependencies.ps1 = Src\Build\Load-LocalDependencies.ps1
+		Src\Build\Load-UITestDependencies.ps1 = Src\Build\Load-UITestDependencies.ps1
+		Src\Build\LoadDependencies.ps1 = Src\Build\LoadDependencies.ps1
+		Src\Build\Mobile.Targets = Src\Build\Mobile.Targets
+		Src\Build\ModuleBuild.proj = Src\Build\ModuleBuild.proj
+		Src\Build\ModuleBuild.xaml.targets = Src\Build\ModuleBuild.xaml.targets
+		Src\Build\ModuleBuild2.targets = Src\Build\ModuleBuild2.targets
+		Src\Build\Package.ps1 = Src\Build\Package.ps1
+		Src\Build\paket.exe = Src\Build\paket.exe
+		Src\Build\PullServerImage.ps1 = Src\Build\PullServerImage.ps1
+		Src\Build\RM.TransformTemplates.Targets = Src\Build\RM.TransformTemplates.Targets
+		Src\Build\Update-Analyzer.ps1 = Src\Build\Update-Analyzer.ps1
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aderant", "Aderant", "{B4B175EF-44C3-4EE4-BCAE-3B796D6A986D}"
 	ProjectSection(SolutionItems) = preProject
 		Src\Profile\Aderant\Aderant.psd1 = Src\Profile\Aderant\Aderant.psd1

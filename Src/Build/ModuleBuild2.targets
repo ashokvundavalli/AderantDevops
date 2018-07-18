@@ -57,6 +57,8 @@
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
+  <Import Project="Aderant.Build.GitLink.targets" />
+  
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
 
@@ -234,6 +236,7 @@ doc.Save(File);
     <CallTarget Targets="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="PreBuild" />
     <CallTarget Targets="Build" />
+    <CallTarget Targets="ApplyGitLink" />
     <CallTarget Targets="ZipWorkflowTemplateSource" />
     <CallTarget Targets="RunTests" />
     <CallTarget Targets="RunIntegrationTests" />

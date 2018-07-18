@@ -10,7 +10,7 @@ param(
 )
 
 begin {
-    Set-StrictMode -Version 2.0
+    Set-StrictMode -Version Latest
 
     if ([string]::IsNullOrWhiteSpace($agentPool)) {
         if (-not [string]::IsNullOrWhiteSpace($Env:AgentPool)) {
@@ -58,6 +58,7 @@ process {
         "compassionate",
         "condescending",
         "cranky",
+        "daijoubu"
         "derelict"
         "desperate",
         "determined",

@@ -8,7 +8,7 @@ namespace Aderant.Build.Analyzer.Rules {
     internal class SqlInjectionErrorRule : SqlInjectionRuleBase {
         internal const string DiagnosticId = "Aderant_SqlInjectionError";
 
-        internal static Tuple<string, string>[] ValidSuppressionMessages = {
+        internal static readonly Tuple<string, string>[] ValidSuppressionMessages = {
             new Tuple<string, string>("\"SQL Injection\"", "\"Aderant_SqlInjectionError\""),
             new Tuple<string, string>("\"Microsoft.Security\"", "\"CA2100:")
         };

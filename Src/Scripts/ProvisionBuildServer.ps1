@@ -1,16 +1,17 @@
 ﻿[CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$server,
+    [Parameter(Mandatory=$false)][string]$agentPool,
     [switch]$skipAgentDownload,
     [switch]$restart
 )
 
 begin {
-    Set-StrictMode -Version 2.0
+    Set-StrictMode -Version Latest
 }
 
 process {
-    if (-not ($server.EndsWith(".ap.aderant.com", "CurrentCultureIgnoreCase"))){
+    if (-not ($server.EndsWith(".ap.aderant.com", "CurrentCultureIgnoreCase"))) {
         $server = "$server.$((gwmi WIN32_ComputerSystem).Domain)"
     }
 
@@ -34,21 +35,22 @@ process {
         Add-LocalGroupMember -Group docker-users -Member $credentials.UserName -ErrorAction SilentlyContinue
         Add-LocalGroupMember -Group Administrators -Member ADERANT_AP\SG_AP_Dev_Operations -ErrorAction SilentlyContinue
 
-        $scriptsDirectory = "$env:SystemDrive\Scripts"
+        [string]$scriptsDirectory = "$env:SystemDrive\Scripts"
 
-        mkdir $scriptsDirectory -ErrorAction SilentlyContinue        
+        New-Item -Path $scriptsDirectory -ItemType Directory -ErrorAction SilentlyContinue
 
-        cd $scriptsDirectory
+        Push-Location $scriptsDirectory
 
-        $credentials | Export-Clixml -Path $scriptsDirectory\credentials.xml
+        $credentials | Export-Clixml -Path "$scriptsDirectory\credentials.xml"
 
         if (-not $skipDownload) {
-            Write-Host "Downloading Agent Zip"
+            Write-Host "Downloading build agent zip"
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $currentProgressPreference = $ProgressPreference
+            $ProgressPreference = "SilentlyContinue"
 
             try {
-                $currentProgressPreference = $ProgressPreference
-                $ProgressPreference = "SilentlyContinue"
-                wget http://go.microsoft.com/fwlink/?LinkID=851123 -OutFile vsts.agent.zip -UseBasicParsing
+                Invoke-WebRequest -Uri http://go.microsoft.com/fwlink/?LinkID=851123 -OutFile "vsts.agent.zip" -UseBasicParsing
             } finally {
                 $ProgressPreference = $currentProgressPreference
             }
@@ -63,10 +65,10 @@ process {
         # Return the machine specific script home
         return $scriptsDirectory
     }
-        
-    $scriptsDirectory = Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload
 
-    Write-Host "Generating Scheduled Tasks"    
+    [string]$scriptsDirectory = (Invoke-Command -Session $session -ScriptBlock $setupScriptBlock -ArgumentList $credentials, $skipAgentDownload.IsPresent)[1]
+
+    Write-Host "Generating Scheduled Tasks"
 
     <# 
     ============================================================
@@ -74,6 +76,17 @@ process {
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
+        param (
+            [string]$scriptsDirectory,
+            $credentials,
+            [string]$agentPool
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($agentPool)) {
+            Write-Host "Setting agent pool: $agentPool"
+            [Environment]::SetEnvironmentVariable('AgentPool', $agentPool, 'Machine')
+        }
+
         $STTrigger = New-ScheduledTaskTrigger -AtStartup
         [string]$STName = "Setup Agent Host"
         
@@ -86,7 +99,7 @@ process {
 
         #Register the new scheduled task
         Register-ScheduledTask $STName -Action $STAction -Trigger $STTrigger -User $credentials.UserName -Password $credentials.GetNetworkCredential().Password -Settings $STSettings -RunLevel Highest -Force
-    } -ArgumentList $scriptsDirectory, $credentials
+    } -ArgumentList $scriptsDirectory, $credentials, $agentPool
 
 
     <# 
@@ -158,12 +171,12 @@ process {
     ============================================================
     #>
     Invoke-Command -Session $session -ScriptBlock {
-        [string]$docker = "C:\Program Files\Docker\Docker\Docker for Windows.exe"
+        [string]$docker = "$env:ProgramFiles\Docker\Docker\Docker for Windows.exe"
 
         if (Test-Path $docker) {
             if ((Get-WmiObject -Class Win32_Service -Filter "Name='docker'") -eq $null) {
                 Write-Host "Registering Docker service"
-                & "C:\Program Files\Docker\Docker\resources\dockerd.exe" --register-service
+                & "$env:ProgramFiles\Docker\Docker\resources\dockerd.exe" --register-service
             }
 
             $interval = New-TimeSpan -Minutes 1

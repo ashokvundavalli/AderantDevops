@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
-    [string]$repository
+    [string]$repository,
+    [switch]$replicate
 )
 
 begin {
@@ -63,7 +64,7 @@ process {
 
     Write-Host "Creating package(s)..."
 
-    $packResult = New-ExpertPackage $repository $version
+    $packResult = New-ExpertPackage -Repository $repository -Version $version -Replicate $replicate.IsPresent
 
     if ($packResult) {
         if (Test-Path $packResult.OutputPath) {
@@ -99,7 +100,7 @@ process {
 				}
 			}
 
-            if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/patch/81SP1") -and -not $global:IsDesktopBuild) {
+            if (($Env:BUILD_SOURCEBRANCHNAME -eq "master"  -or $Env:BUILD_SOURCEBRANCH -like "*releases/*" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/dev" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/patch/81SP1" -or $Env:BUILD_SOURCEBRANCH -like "refs/heads/update/82GA") -and -not $global:IsDesktopBuild) {
                 $packagingProcess = [Aderant.Build.Packaging.PackageProcessor]::new($Host.UI)
 
                 $buildNumber = ("{0} {1}" -f $Env:BUILD_REPOSITORY_NAME, $versionSem)

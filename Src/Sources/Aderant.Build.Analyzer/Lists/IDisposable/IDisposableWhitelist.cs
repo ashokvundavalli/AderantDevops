@@ -42,7 +42,10 @@ namespace Aderant.Build.Analyzer.Lists.IDisposable {
             new Tuple<string, string>("Aderant.Messaging.Http", "INotificationClientConnection"),
 
             // Object is a singleton.
-            new Tuple<string, string>("Aderant.Query", "IQueryServiceProxy")
+            new Tuple<string, string>("Aderant.Query", "IQueryServiceProxy"),
+
+            // Object utilises weak references in the majority of use cases, and does not need to be disposed.
+            new Tuple<string, string>("Aderant.PresentationFramework.Events", "SubscriptionToken")
         };
     }
 }

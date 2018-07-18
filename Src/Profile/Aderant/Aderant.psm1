@@ -461,9 +461,14 @@ function Set-CurrentModule($name) {
         Write-Debug "Setting repository: $name"
         Import-Module $PSScriptRoot\Git.psm1 -Global
 
-        if (IsGitRepository $ShellContext.CurrentModulePath) {
-            SetRepository $ShellContext.CurrentModulePath
-            Set-Location $ShellContext.CurrentModulePath
+        if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.*))){
+            $global:CurrentModuleName = ""
+        }
+
+        Set-Location $global:CurrentModulePath
+
+        if (IsGitRepository $global:CurrentModulePath) {
+            SetRepository $global:CurrentModulePath
             global:Enable-GitPrompt
             return
         } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName)) {
@@ -475,8 +480,11 @@ function Set-CurrentModule($name) {
     } else {
         $ShellContext.CurrentModuleName = $name
 
-        Write-Debug "Current module [$ShellContext.CurrentModuleName]"
-        $ShellContext.CurrentModulePath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
+        Write-Debug "Current module [$global:CurrentModuleName]"
+        $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
+
+        Set-Location $global:CurrentModulePath
+
         Enable-ExpertPrompt
     }
 

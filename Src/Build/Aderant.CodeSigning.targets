@@ -88,9 +88,9 @@
     <Message Text="Signing applications in $(IntermediateOutputPath) for $(MSBuildProjectFile)" />
 
     <ItemGroup>
-      <Applications Include="$(IntermediateOutputPath)**\*.exe;"
-                    Exclude="$(IntermediateOutputPath)**\*CO.exe;
-                             $(IntermediateOutputPath)**\Aderant.Development*.exe;
+      <Applications Include="$(IntermediateOutputPath)**\*.exe;
+                             $(IntermediateOutputPath)**\*CO.exe;"
+                    Exclude="$(IntermediateOutputPath)**\Aderant.Development*.exe;
                              $(IntermediateOutputPath)**\Aderant.MatterCenterIntegration*;
                              $(IntermediateOutputPath)**\ExpertService*;
                              $(IntermediateOutputPath)**\*Update*; 

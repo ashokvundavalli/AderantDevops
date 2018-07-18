@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Aderant.Build.Logging;
@@ -110,6 +109,24 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
+        // Paket is unable to write version ranges to file.
+        private string RemoveVersionRange(string name, string version) {
+            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")){
+                return version;
+            }
+
+            string[] parts = version.Split(' ').ToArray();
+            // ">= 11.0 < 12.0 build" will become "< 12.0 build"
+            if (parts.Length >= 4 && parts[0] == ">=" && parts[2] == "<") {
+                string newVersion = string.Join(" ", parts.Skip(2));
+                logger.Info($"Version Adjusted {name}: '{version}' to: '{newVersion}'");
+
+                return newVersion;
+            }
+
+            return version;
+        }
+
         private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
                 string version = string.Empty;
@@ -127,6 +144,7 @@ namespace Aderant.Build.DependencyResolver {
                 }
 
                 if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(name))) {
+                    version = RemoveVersionRange(referencedModule.Name, version);
                     try {
                         file = file.Add(Domain.GroupName(referencedModule.Group), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                     } catch (Exception ex) {

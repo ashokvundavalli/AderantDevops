@@ -20,7 +20,7 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
         }
 
-        public PackResult Pack(string version) {
+        public PackResult Pack(string version, bool replicate) {
             var files = fs.GetFiles(fs.Root, "paket.dependencies", false);
 
             string dependenciesFilePath = null;
@@ -51,7 +51,9 @@ namespace Aderant.Build.Packaging {
                 var mainGroup = lockFile.GetGroupedResolution().Where(g => string.Equals(g.Key.Item1, Domain.GroupName(Constants.MainDependencyGroup)));
                 var dependencyMap = mainGroup.ToDictionary(d => d.Key.Item2, d => d.Value.Version);
 
-                ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
+                if (replicate) {
+                    ReplicateDependenciesToTemplate(dependencyMap, () => fs.OpenFileForWrite(fs.GetFullPath(file)));
+                }
 
                 try {
                     logger.Info("Processing " + file);

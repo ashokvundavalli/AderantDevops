@@ -419,11 +419,10 @@ task EndToEnd {
 #    $script:CreatePackage = $true
 #}
 
-#task Package -If (-not $SkipPackage.IsPresent) -Jobs Init, PackageDesktop, PackageServer, {
+#task Package -Jobs Init, PackageDesktop, PackageServer, {
 #    if ($script:CreatePackage) {
 #        Write-Output "Entry point was: $($script:EntryPoint.Value)"
-
-#        . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -Repository $Repository
+#        . $Env:EXPERT_BUILD_DIRECTORY\Build\Package.ps1 -repository $Repository -replicate:($Env:ReplicateDependenciesToPaketTemplate -ne $null -and $Env:ReplicateDependenciesToPaketTemplate -eq $true)
 #    }
 #}
 
