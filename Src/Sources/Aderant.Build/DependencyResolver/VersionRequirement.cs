@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 
 namespace Aderant.Build.DependencyResolver {
@@ -26,7 +26,7 @@ namespace Aderant.Build.DependencyResolver {
         public string ConstraintExpression {
             get { return constraintExpression; }
             set {
-                constraintExpression = value;
+                constraintExpression = value.Trim();
 
                 if (!string.IsNullOrWhiteSpace(constraintExpression) && constraintExpression.IndexOfAny(DependencyResolver.ConstraintExpression.Operators) == -1) {
                     if (constraintExpression.Any(char.IsDigit)) {

@@ -33,9 +33,19 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        public void InvalidVersionRequirementTest() {
+        public void AppendConstraintTest() {
             VersionRequirement a = new VersionRequirement {
-                ConstraintExpression = ">= 1"
+                ConstraintExpression = " 1.5.3 ci "
+            };
+
+            Assert.AreEqual("= 1.5.3 ci", a.ConstraintExpression);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.InvalidOperationException))]
+        public void InvalidConstraintTest() {
+            VersionRequirement a = new VersionRequirement {
+                ConstraintExpression = "build ci rc unstable",
             };
         }
     }
