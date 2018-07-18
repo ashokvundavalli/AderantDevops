@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
     [TestClass]
-    public class VersionRequirementEqualityTest {
+    public class VersionRequirementTests {
         [TestMethod]
         public void When_versions_match_instances_are_equal() {
             var a = new VersionRequirement {
@@ -30,6 +30,13 @@ namespace UnitTest.Build {
             };
 
             Assert.AreNotEqual(a, b);
+        }
+
+        [TestMethod]
+        public void InvalidVersionRequirementTest() {
+            VersionRequirement a = new VersionRequirement {
+                ConstraintExpression = ">= 1"
+            };
         }
     }
 }

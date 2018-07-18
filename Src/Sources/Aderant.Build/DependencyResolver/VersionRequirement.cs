@@ -34,12 +34,12 @@ namespace Aderant.Build.DependencyResolver {
                         constraintExpression = DependencyResolver.ConstraintExpression.Parse(constraintExpression);
                     } else {
                         if (!string.IsNullOrEmpty(OriginatingFile)) {
-                            throw new InvalidOperationException("The file " + OriginatingFile + " contains an invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
+                            throw new InvalidOperationException($"The file: '{OriginatingFile}' contains an invalid expression '{constraintExpression}'. The expression must contain an operator.");
                         }
 
-                        throw new InvalidOperationException("Invalid expression \"" + constraintExpression + "\". The expression must contain an operator.");
+                        throw new InvalidOperationException($"Invalid expression '{constraintExpression}'. The expression must contain an operator.");
                     }
-                } 
+                }
             }
         }
 

@@ -150,7 +150,7 @@
     <Compile Include="DependencyBuilderTests.cs" />
     <Compile Include="ContextTests.cs" />
     <Compile Include="TopologicalSortTests.cs" />
-    <Compile Include="VersionRequirementEqualityTest.cs" />
+    <Compile Include="VersionRequirementTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\test-paket-template-without-dependencies" />
