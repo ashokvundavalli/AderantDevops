@@ -17,7 +17,7 @@
     <ExpertEnvironmentUrl>http://localhost/Expert_$(ExpertEnvironmentName)</ExpertEnvironmentUrl>
     <DatabaseName>$([System.Guid]::NewGuid())</DatabaseName>
     <ServiceAccount Condition="'$(ServiceAccount)' == ''">ADERANT_AP\tfsbuildservice$</ServiceAccount>
-    <LightUpManifest>$(SolutionDirectoryPath)\Build\LightUpManifest.xml</LightUpManifest>
+    <LightUpManifest>$(SolutionDirectoryPath)Build\LightUpManifest.xml</LightUpManifest>
     <OriginBranch Condition="'$(OriginBranch)' == ''">master</OriginBranch>
     <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
   </PropertyGroup>
@@ -76,6 +76,7 @@
 
     <ItemGroup>
       <PackageDependency Condition="'$(PackageDependency)' != ''" Include="$(PackageDependency.Split('#'))" />
+      <PackageFiles Include="$(SolutionDirectoryPath)Packages\**"></PackageFiles>
     </ItemGroup>
 
     <Exec ContinueOnError="false"
@@ -85,6 +86,10 @@
     <UpdateLightUpManifest Condition="'@(PackageDependency)' != ''"
       PackageDependency="%(PackageDependency.Identity)"
       LightUpManifest="$(LightUpManifest)" />
+
+    <!-- Backup original packages -->
+    <Move SourceFiles="@(PackageFiles)"
+      DestinationFiles="@(PackageFiles->'$(SolutionDirectoryPath)BackupPackages\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
@@ -318,14 +323,24 @@
 
   </Target>
 
+
   <Target Name="LightsOffWrap"
     DependsOnTargets="RunIntegrationTests;RunAutomationTests"
     AfterTargets="RunIntegrationTests;RunAutomationTests">
       <CallTarget Targets="LightsOff" />
   </Target>
+ 
 
   <Target Name="LightsOff"
     Condition="'$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+
+    <ItemGroup>
+      <BackupPackageFiles Include="$(SolutionDirectoryPath)BackupPackages\**"></BackupPackageFiles>
+    </ItemGroup>
+
+    <!-- Restore original packages -->
+    <Move SourceFiles="@(BackupPackageFiles)"
+      DestinationFiles="@(BackupPackageFiles->'$(SolutionDirectoryPath)Packages\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
 
