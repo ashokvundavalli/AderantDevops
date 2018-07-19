@@ -12,7 +12,7 @@
   <Import Project="Mobile.targets" />
 
   <PropertyGroup>
-    <CopyToDropV2>false</CopyToDropV2>
+    <CopyToDropV2 Condition="'$(CopyToDropV2)' == '' And '$(IsDesktopBuild)' == 'true'">false</CopyToDropV2>
 
     <!-- TODO: Enable...currently off for perf reasons-->
     <CodeCoverage>false</CodeCoverage>
@@ -42,8 +42,8 @@
       IndexSourcesAndPublishSymbols;
       MobileBuild;
       PostBuild;
-      SignInstallers;
-      CopyToDropV2;-->
+      SignInstallers;-->
+      CopyToDropV2;
     </AfterBuildDependsOn>
   </PropertyGroup>
 

@@ -5,7 +5,7 @@ Set-StrictMode -Version Latest
 # Import extensibility functions
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
 
-$ShellContext = $null
+$script:ShellContext = $null
 
 function InitializeModule {
     . $PSScriptRoot\ShellContext.ps1
@@ -219,6 +219,81 @@ function Check-Vsix() {
 Expert specific variables
 #>
 
+# gets a value from the global defaults storage, or creates a default
+function global:GetDefaultValue {
+    param (
+        [string]$propertyName,
+        [string]$defaultValue
+    )
+
+    Write-Debug "Asked for default for: $propertyName with default ($defaultValue)"
+
+    if ([Environment]::GetEnvironmentVariable("Expert$propertyName", "User") -ne $null) {
+        return [Environment]::GetEnvironmentVariable("Expert$propertyName", "User")
+    }
+
+    if ($propertyName -eq "DevBranchFolder") {
+        cls
+        return SetPathVariable "Where is your local path to the MAIN branch? e.g C:\tfs\ExpertSuite\Main" $propertyName
+    }
+
+    if ($propertyName -eq "DropRootUNCPath") {
+        return SetPathVariable "Where is the MAIN branch drop path? For e.g \\dfs.aderant.com\ExpertSuite\Main" $propertyName
+    }
+
+    if ($propertyName -eq "SystemMapConnectionString") {
+        $title = "SystemMapBuilder Setup"
+        $message = "Do you want to use the Expert ITE for SystemMap generation?"
+        $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
+        $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
+
+        $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+        $result = $host.UI.PromptForChoice($title, $message, $options, 0)
+
+        if ($result -eq 0) {
+            $connection = "/pdbs:svsql303\mssql10 /pdbd:VMAKLITEGG /pdbid:cmsdbo /pdbpw:cmsdbo"
+            SetDefaultValue $propertyName $connection
+            return $connection
+        } else {
+            $server = Read-Host "What is the database server?"
+            $database = Read-Host "What is the database to use?"
+            $login = Read-Host "What is the database login?"
+            $password = Read-Host "What is the login password?"
+
+            $connection = "/pdbs:$server /pdbd:$database /pdbid:$login /pdbpw:$password"
+            SetDefaultValue $propertyName $connection
+            return $connection
+        }
+    }
+
+    # Environment variable was not set, default it.
+    [Environment]::SetEnvironmentVariable("Expert$propertyName", $defaultValue, "User")
+    return $defaultValue
+}
+
+function IsDevBanch([string]$name) {
+    return $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function IsReleaseBanch([string]$name) {
+    return $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function IsMainBanch([string]$name) {
+    return $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function ResolveBranchName($branchPath) {
+    if (IsMainBanch $branchPath) {
+        $name = "MAIN"
+    } elseif (IsDevBanch $branchPath) {
+        $name = $branchPath.Substring($branchPath.LastIndexOf("dev\", [System.StringComparison]::OrdinalIgnoreCase))
+    } elseif (IsReleaseBanch $branchPath) {
+        $name = $branchPath.Substring($branchPath.LastIndexOf("releases\", [System.StringComparison]::OrdinalIgnoreCase))
+    }
+    return $name
+}
+
 <#
 Branch information
 #>
@@ -283,29 +358,6 @@ function Set-ScriptPaths {
 #>
 function Initialise-BuildLibraries {
     . ($ShellContext.BuildScriptsDirectory + "\Build-Libraries.ps1")
-}
-
-function ResolveBranchName($branchPath) {
-    if (IsMainBanch $branchPath) {
-        $name = "MAIN"
-    } elseif (IsDevBanch $branchPath) {
-        $name = $branchPath.Substring($branchPath.LastIndexOf("dev\", [System.StringComparison]::OrdinalIgnoreCase))
-    } elseif (IsReleaseBanch $branchPath) {
-        $name = $branchPath.Substring($branchPath.LastIndexOf("releases\", [System.StringComparison]::OrdinalIgnoreCase))
-    }
-    return $name
-}
-
-function IsDevBanch([string]$name) {
-    return $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
-}
-
-function IsReleaseBanch([string]$name) {
-    return $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase)
-}
-
-function IsMainBanch([string]$name) {
-    return $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase)
 }
 
 # Called from SwitchBranchTo
@@ -1668,6 +1720,8 @@ function Set-Environment() {
     process {
         if ($initialize) {
             Set-BranchPaths
+        } else {
+            Clear-Variable -Name "BranchLocalDirectory" -Scope "Global"
         }
 
         Set-ScriptPaths
@@ -1719,58 +1773,6 @@ function Set-VisualStudioVersion() {
     if (Test-Path $file) {
         & $file
     }
-}
-
-# gets a value from the global defaults storage, or creates a default
-function global:GetDefaultValue {
-    param (
-        [string]$propertyName,
-        [string]$defaultValue
-    )
-
-    Write-Debug "Asked for default for: $propertyName with default ($defaultValue)"
-
-    if ([Environment]::GetEnvironmentVariable("Expert$propertyName", "User") -ne $null) {
-        return [Environment]::GetEnvironmentVariable("Expert$propertyName", "User")
-    }
-
-    if ($propertyName -eq "DevBranchFolder") {
-        cls
-        return SetPathVariable "Where is your local path to the MAIN branch? e.g C:\tfs\ExpertSuite\Main" $propertyName
-    }
-
-    if ($propertyName -eq "DropRootUNCPath") {
-        return SetPathVariable "Where is the MAIN branch drop path? For e.g \\dfs.aderant.com\ExpertSuite\Main" $propertyName
-    }
-
-    if ($propertyName -eq "SystemMapConnectionString") {
-        $title = "SystemMapBuilder Setup"
-        $message = "Do you want to use the Expert ITE for SystemMap generation?"
-        $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
-        $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
-
-        $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-        $result = $host.UI.PromptForChoice($title, $message, $options, 0)
-
-        if ($result -eq 0) {
-            $connection = "/pdbs:svsql303\mssql10 /pdbd:VMAKLITEGG /pdbid:cmsdbo /pdbpw:cmsdbo"
-            SetDefaultValue $propertyName $connection
-            return $connection
-        } else {
-            $server = Read-Host "What is the database server?"
-            $database = Read-Host "What is the database to use?"
-            $login = Read-Host "What is the database login?"
-            $password = Read-Host "What is the login password?"
-
-            $connection = "/pdbs:$server /pdbd:$database /pdbid:$login /pdbpw:$password"
-            SetDefaultValue $propertyName $connection
-            return $connection
-        }
-    }
-
-    # Environment variable was not set, default it.
-    [Environment]::SetEnvironmentVariable("Expert$propertyName", $defaultValue, "User")
-    return $defaultValue
 }
 
 function SetPathVariable($question, $propertyName) {
@@ -3671,3 +3673,5 @@ Write-Host 'Type ' -NoNewLine
 Write-Host '"help"' -ForegroundColor Green -NoNewLine
 Write-Host " for a command list." -NoNewLine
 Write-Host ''
+
+[string]$global:BranchLocalDirectory = $script:ShellContext.BranchLocalDirectory
