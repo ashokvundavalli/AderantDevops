@@ -859,9 +859,9 @@
        ResolveAndCopyUniqueBinModuleContent -modulePath $modulePath -copyToDirectory $dropBinModulePath -suppressUniqueCheck:$suppressUniqueCheck
 
        if ($testBreak -or $buildBreak) {
-            New-Item -ItemType File -Path "$toModuleDropPath\build.failed" | Out-Null
+            New-Item -ItemType File -Path "$toModuleDropPath\build.failed" -Force | Out-Null
         } else {
-            New-Item -ItemType File -Path "$toModuleDropPath\build.succeeded" | Out-Null
+            New-Item -ItemType File -Path "$toModuleDropPath\build.succeeded" -Force | Out-Null
         }
 
        if (Test-Path $binTestPath) {
