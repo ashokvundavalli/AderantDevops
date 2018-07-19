@@ -170,12 +170,14 @@
       <!-- RoleFiles in future should be in the module build. Right now they were managed by Libraries.Roles so we need to load from the server image with all role files. -->
       <RoleFiles>$(BinModuleDirectory);$(BinTestDirectory);$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\Roles\;$(ModuleBuildTempDirectory)\Bin\Module\;$(ImageWorkingDirectory)\$(ImageName)\Roles\</RoleFiles>
       <ModuleBuild>$(ModuleBuildTempDirectory)\Bin\Module</ModuleBuild>
+      <ModuleFiles>$(ModuleBuild);$(BinModuleDirectory);$(BinTestDirectory);$(SolutionDirectoryPath)Packages</ModuleFiles>
+      <ModuleFiles Condition="'$(UpdateImageWithDependencies)' == 'true'">$(ModuleFiles);$(SolutionDirectoryPath)Dependencies</ModuleFiles>
     </PropertyGroup>
 
     <!--Update Server Image -->
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ImageName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleBuild);$(BinModuleDirectory);$(BinTestDirectory);$(SolutionDirectoryPath)\Packages&apos; }&quot;" />
+      Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { &amp; &apos;$(ImageWorkingDirectory)\DeploymentEngine.exe&apos; UpdateServerImage /image:&apos;$(ImagePath)&apos; /name:&apos;$(ImageName)&apos; /roles:&apos;$(RoleFiles)&apos; /modules:&apos;$(ModuleFiles)&apos; }&quot;" />
 
   </Target>
 
