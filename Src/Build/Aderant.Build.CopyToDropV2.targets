@@ -2,7 +2,53 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
 
-  <Target Name="CopyToDropV2" Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true' And '$(CopyToDropV2)' == 'true'">
+  <PropertyGroup>
+    <CopyToDropV2DependsOn>
+      GetVersion;
+    </CopyToDropV2DependsOn>
+  </PropertyGroup>
+
+  <Target Name="GetVersion">
+    <PropertyGroup>
+      <ParentGitDirectory>$([System.IO.Directory]::GetParent($(SolutionDirectoryPath).TrimEnd([System.IO.Path]::DirectorySeparatorChar)).FullName)\.git</ParentGitDirectory>
+      <GitDir>$(SolutionDirectoryPath).git</GitDir>
+      <IsTfvc Condition="!Exists('$(GitDir)') And !Exists('$(ParentGitDirectory)')">false</IsTfvc>
+      <IsGit Condition="'$(IsTfvc)' != 'true'">true</IsGit>
+    </PropertyGroup>
+
+    <GitVersion
+      Condition="'$(IsGit)' == 'true'"
+      WorkingDirectory="$(SolutionDirectoryPath)"
+      Discover="true">
+      <Output PropertyName="GitFriendlyBranchName" TaskParameter="FriendlyBranchName" />
+      <Output PropertyName="GitCanonicalBranchName" TaskParameter="CanonicalBranchName" />
+      <Output PropertyName="GitSha" TaskParameter="Sha" />
+      <Output PropertyName="GitCommit" TaskParameter="Commit" />
+    </GitVersion>
+
+    <PropertyGroup Condition="'$(IsTfvc)' == 'true'">
+      <RepositoryType>Tfvc</RepositoryType>
+      <GitOrTfvcBranch>$(TfvcBranch)</GitOrTfvcBranch>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsGit)' == 'true'">
+      <RepositoryType>Git</RepositoryType>
+      <GitOrTfvcBranch>$(GitCanonicalBranchName)</GitOrTfvcBranch>
+
+    </PropertyGroup>
+
+    <Error Condition="'$(IsGit)' == 'true' And '$(GitCanonicalBranchName)' == ''" Text="Git branch could not be determined" />
+    <Error Condition="'$(IsTfvc)' == 'true' And '$(TfvcBranch)' == ''" Text="TFVC branch could not be determined" />
+
+    <Message  Condition="'$(IsGit)' == 'true'" Text="Git sha: $(GitSha)" />
+    <Message  Condition="'$(IsGit)' == 'true'" Text="Git canonical branch name: $(GitCanonicalBranchName)" />
+    <Message  Condition="'$(IsGit)' == 'true'" Text="Git friendly branch name: $(GitFriendlyBranchName)" />
+  </Target>
+
+
+  <Target Name="CopyToDropV2"
+    DependsOnTargets="$(CopyToDropV2DependsOn)"
+    Condition="'$(IsDesktopBuild)' != 'true' And '$(IsCustomBuild)' != 'true' And '$(CopyToDropV2)' == 'true'">
 
     <PropertyGroup>
       <DropRoot Condition="'$(DropRoot)' == ''">\\dfs.aderant.com\packages\ExpertSuite</DropRoot>
