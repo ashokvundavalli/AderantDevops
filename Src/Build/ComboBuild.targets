@@ -379,7 +379,7 @@
     <!--<OnError ExecuteTargets="OnBuildBreak" />-->
   </Target>
 
-  <Target Name="RunCopyToDropV2" BeforeTargets="Package" Condition="Exists($(SolutionRoot)CopyToDrop.ps1)">
+  <Target Name="RunCopyToDropV2" BeforeTargets="Package" Condition="Exists('$(SolutionRoot)CopyToDrop.ps1')">
 
     <Message Text="Running: $(SolutionRoot)CopyToDrop.ps1"></Message>
 
