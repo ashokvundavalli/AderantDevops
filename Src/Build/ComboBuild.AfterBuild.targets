@@ -44,6 +44,7 @@
       PostBuild;
       SignInstallers;-->
       CopyToDropV2;
+      RunCopyToDropV2;
     </AfterBuildDependsOn>
   </PropertyGroup>
 
@@ -166,6 +167,18 @@
           SourceFiles="@(TestResults)"
           DestinationFiles="$(BinTestDirectory)TestResults.trx" />-->
   </Target>
+
+
+  <Target Name="RunCopyToDropV2" Condition="Exists('$(SolutionRoot)CopyToDrop.ps1')">
+
+    <Message Text="Running: $(SolutionRoot)CopyToDrop.ps1"></Message>
+
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(SolutionRoot)CopyToDrop.ps1"' />
+
+  </Target>
+
 
   <!--
     ==========================================================================================
