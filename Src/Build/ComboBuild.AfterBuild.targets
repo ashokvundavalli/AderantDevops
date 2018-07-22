@@ -169,13 +169,13 @@
   </Target>
 
 
-  <Target Name="RunCopyToDropV2" Condition="Exists('$(SolutionRoot)CopyToDrop.ps1')">
+  <Target Name="RunCopyToDropV2" Condition="Exists('$(SolutionDirectoryPath)CopyToDrop.ps1')">
 
-    <Message Text="Running: $(SolutionRoot)CopyToDrop.ps1"></Message>
+    <Message Text="Running: $(SolutionDirectoryPath)CopyToDrop.ps1"></Message>
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(SolutionRoot)CopyToDrop.ps1"' />
+      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(SolutionDirectoryPath)CopyToDrop.ps1"' />
 
   </Target>
 
