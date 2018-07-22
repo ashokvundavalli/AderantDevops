@@ -631,7 +631,7 @@
 		)
 
 		begin {
-			Set-StrictMode -Version 2.0
+			Set-StrictMode -Version Latest
 
 			[string]$commandName = $PSCmdlet.MyInvocation.InvocationName;
 			Write-Host "Executing $($commandName) with parameters:"
@@ -655,8 +655,12 @@
 			$dependenciesFiles | % { [void]$excludedFiles.Add($_) }
 			$packageFiles | % { [void]$excludedFiles.Add($_) }
 
+            if ($components -ne $null -and $components.Length -gt 0) {
+                [string]$component = $components[0]
+            }
+
 			# Generate drop location
-			[string]$dropLocation = GetArtifactDropLocation $moduleName $components $origin $version
+			[string]$dropLocation = GetArtifactDropLocation -ModuleName $moduleName -component $component -origin $origin -version $version
 			[string]$dropPath = [System.IO.Path]::Combine($dropRoot, $dropLocation)
 
 			Write-Host "Drop path: $($dropPath)"
@@ -695,10 +699,17 @@
 				#// This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
 				#// set the actual final folder as the name.
 
-				[string[]]$paths =  $dropPath.Split('\')
-				[int]$moduleIndex = $paths.IndexOf($moduleName)
-				[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
-				[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
+				#[string[]]$paths =  $dropPath.Split('\')
+				#[int]$moduleIndex = $paths.IndexOf($moduleName)
+				#[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
+				#[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
+
+                if ($components -eq $null) {
+                    $component = 'default'
+                }
+
+                [string]$artifactName = $dropPath.Substring(0, $dropPath.IndexOf('default') - 1)
+                [string]$artifactDropPath = $component
 
 				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]$($artifactDropPath)"
 			} finally {
@@ -725,9 +736,11 @@
 			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
         )
 
-		process {
-			Set-StrictMode -Version 2.0
+        begin {
+            Set-StrictMode -Version Latest
+        }
 
+		process {
 			$global:ToolsDirectory = Join-Path -Path $PSScriptRoot -ChildPath "\..\Build.Tools"
 
 			$assemblyBytes = [System.IO.File]::ReadAllBytes((Join-Path -Path "$PSScriptRoot\..\Build.Tools" -ChildPath "Aderant.Build.dll"))
