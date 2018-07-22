@@ -715,7 +715,7 @@
                 [string]$artifactName = $dropPath.Substring(0, $dropPath.IndexOf('default') - 1)
                 [string]$artifactDropPath = $component
 
-				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]$($artifactDropPath)"
+				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]\$($artifactDropPath)"
 			} finally {
 				[System.IO.File]::Delete($jobFile)
 
