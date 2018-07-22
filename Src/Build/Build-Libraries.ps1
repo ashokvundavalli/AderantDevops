@@ -704,18 +704,11 @@
 				#// set the actual final folder as the name.
 
 				[string[]]$paths =  $dropPath.Split('\')
-				[int]$moduleIndex = $paths.IndexOf('unstable')
-				[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
-				[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
+				[int]$index = $paths.IndexOf($version)
+				[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($index)])
+				[string]$artifactName = [System.String]::Join('\', $paths[$($index + 1)..$($paths.Length - 1)])
 
-                #if ($components -eq $null) {
-                #    $component = 'default'
-                #}
-
-                #[string]$artifactName = $dropPath.Substring(0, $dropPath.IndexOf('default') - 1)
-                #[string]$artifactDropPath = $component
-
-				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]\$($artifactDropPath)"
+				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]$($artifactDropPath)"
 			} finally {
 				[System.IO.File]::Delete($jobFile)
 

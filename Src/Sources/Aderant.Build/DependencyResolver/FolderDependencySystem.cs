@@ -48,7 +48,7 @@ namespace Aderant.Build.DependencyResolver {
             if (!string.IsNullOrWhiteSpace(component)) {
                 parts.Add(component.Trim());
             } else {
-                parts.Add("default");
+                parts.Add(moduleName);
             }
 
             return Path.Combine(parts.ToArray());
