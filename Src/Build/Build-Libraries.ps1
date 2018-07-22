@@ -703,17 +703,17 @@
 				#// This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
 				#// set the actual final folder as the name.
 
-				#[string[]]$paths =  $dropPath.Split('\')
-				#[int]$moduleIndex = $paths.IndexOf($moduleName)
-				#[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
-				#[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
+				[string[]]$paths =  $dropPath.Split('\')
+				[int]$moduleIndex = $paths.IndexOf('unstable')
+				[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
+				[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
 
-                if ($components -eq $null) {
-                    $component = 'default'
-                }
+                #if ($components -eq $null) {
+                #    $component = 'default'
+                #}
 
-                [string]$artifactName = $dropPath.Substring(0, $dropPath.IndexOf('default') - 1)
-                [string]$artifactDropPath = $component
+                #[string]$artifactName = $dropPath.Substring(0, $dropPath.IndexOf('default') - 1)
+                #[string]$artifactDropPath = $component
 
 				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]\$($artifactDropPath)"
 			} finally {
