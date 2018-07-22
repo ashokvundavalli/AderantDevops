@@ -655,8 +655,12 @@
 			$dependenciesFiles | % { [void]$excludedFiles.Add($_) }
 			$packageFiles | % { [void]$excludedFiles.Add($_) }
 
-            if ($components -ne $null -and $components.Length -gt 0) {
-                [string]$component = $components[0]
+            if ($components -ne $null) {
+                if ($components.Length -gt 0) {
+                    [string]$component = $components[0]
+                }
+            } else {
+                [string]$component = $null
             }
 
 			# Generate drop location
