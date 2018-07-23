@@ -15,12 +15,14 @@
     <Message Text="%(PDBFiles.FullPath)" />
     <Message Text="ModuleName=$(ModuleName)"/>
 
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
+    <!-- For empty dlls the tool will fail with exit code 1 and message: No source files were found in the PDB. If you're PDB is a native one you should use -a option.
+         Just ignore for convenience.
+         See bug 197745. -->
+    <Exec ContinueOnError="true"
+      IgnoreExitCode="true"
       Command="$(BuildToolsDirectory)GitLink\GitLink.exe %(PDBFiles.FullPath) -u $(url)"/>
     
-    
   </Target>
-
+  
 </Project>
 
