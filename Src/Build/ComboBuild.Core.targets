@@ -10,20 +10,20 @@
   This project file exists to provide an appropriate seam for adding new properties to the group without having to 
   modify the project generator itself.
   -->
-  <Target Name="DispatchToInnerBuild" DependsOnTargets="AssignBuildProperties">
+  <Target Name="DispatchToInnerBuild" DependsOnTargets="AssignProjectProperties">
 
     <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
 ║                     Group $(BuildGroupId.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(34)) ║
 ╚═════════════════════════════════════════════════════════════════════╝
 " Importance="high" />
-    <InspectItemGroup ItemGroup="@(ProjectGroup)" />
+    <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
 
     <PropertyGroup>
       <BuildAction>Build</BuildAction>
     </PropertyGroup>
 
-    <MSBuild Projects="@(ProjectGroup)"
+    <MSBuild Projects="@(ProjectsInGroup)"
              Targets="$(BuildAction)"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
@@ -32,18 +32,12 @@
   </Target>
 
 
-  <Target Name="AssignBuildProperties" Returns="@(ProjectGroup)">
+  <Target Name="CreateProjectGroup" Returns="@(ProjectsInGroup)">
     <Error Condition="'$(BuildFlavor)' == ''" Text="No build flavor specified." />
 
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
     </ItemGroup>
-
-    <ExtractPropertyFromPropertyList
-      Items="@(ProjectsInGroup)"
-      PropertyName="SolutionRoot">
-      <Output TaskParameter="Items" ItemName="ProjectGroup" />
-    </ExtractPropertyFromPropertyList>
 
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
@@ -65,26 +59,40 @@
       </BuildProperties>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectGroup>
-        <Properties Condition="'%(ProjectGroup.IsProjectFile)' == 'false'">
-          %(ProjectGroup.Properties);
-          $(BuildProperties);
-          SolutionRoot=%(ProjectGroup.SolutionRoot);
-          BinModuleDirectory=%(ProjectGroup.SolutionRoot)\Bin\Module\;
-          BinTestDirectory=%(ProjectGroup.SolutionRoot)\Bin\Test\;
-          ModuleSourceDirectory=%(ProjectGroup.SolutionRoot)\Src\;
-          ModuleTestDirectory=%(ProjectGroup.SolutionRoot)\Test\;
-          ModuleBuildDirectory=%(ProjectGroup.SolutionRoot)\Build\
-        </Properties>
+  </Target>
 
-        <Properties Condition="'%(ProjectGroup.IsProjectFile)' != 'false'">
-          %(ProjectGroup.Properties);
+
+
+
+  <Target Name="AssignProjectProperties" Inputs="@(ProjectsInGroup)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
+    <!-- Parse the scalar property list into an item group -->
+    <CreateItem Include="_ParsedPropertyList" AdditionalMetadata="%(ProjectsInGroup.Properties)">
+      <Output TaskParameter="Include" ItemName="_ParsedPropertyList" />
+    </CreateItem>
+
+    <PropertyGroup>
+      <_SolutionRoot>%(_ParsedPropertyList.SolutionRoot)</_SolutionRoot>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectsInGroup>
+        <Properties>
+          <!-- Include the original properties list -->
+          %(ProjectsInGroup.Properties);
+          <!-- Include global (non-project specific) properties -->
           $(BuildProperties);
+          <!-- Merge in build system properties that hang off SolutionRoot -->
+          SolutionRoot=$(_SolutionRoot);
+          BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
+          BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
+          ModuleSourceDirectory=$(_SolutionRoot)\Src\;
+          ModuleTestDirectory=$(_SolutionRoot)\Test\;
+          ModuleBuildDirectory=$(_SolutionRoot)\Build\;
         </Properties>
-      </ProjectGroup>
-      
+      </ProjectsInGroup>
     </ItemGroup>
+
+    
 
   </Target>
 
