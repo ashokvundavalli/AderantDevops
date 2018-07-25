@@ -69,7 +69,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsFalse(m2.IsDirty); // This should be unchanged yet.
             Assert.IsFalse(m3.IsDirty);
 
-            //// Walk further to all the downstream projects.
+            // Walk further to all the downstream projects.
             sequencer.MarkDirtyAll(projectList.OfType<IDependable>().ToList(), dirtyProjects);
 
             Assert.IsTrue(m1.IsDirty);
