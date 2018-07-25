@@ -250,6 +250,10 @@ namespace Aderant.Build.ProjectSystem {
 
         public ProjectBuildConfiguration BuildConfiguration { get; set; }
 
+        /// <summary>
+        /// Flag for if the project has been changed.
+        /// Used for reducing the build set.
+        /// </summary>
         public bool IsDirty { get; set; }
 
         /// <summary>
