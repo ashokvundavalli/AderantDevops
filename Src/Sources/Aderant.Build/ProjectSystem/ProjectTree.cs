@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,7 +51,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         [Import]
-        public IProjectServices Services { get; private set; }
+        public IProjectServices Services { get; internal set; }
 
         public ISolutionManager SolutionManager {
             get { return this; }
@@ -69,10 +68,13 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
-            foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
-                ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
+            // Null checked to allow unit testing where projects are inserted directly
+            if (LoadedUnconfiguredProjects != null) {
+                foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
+                    ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
 
-                project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                    project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                }
             }
 
             foreach (var project in LoadedConfiguredProjects) {
@@ -89,22 +91,22 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles instance) {
+        public async Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles jobFiles) {
             ErrorUtilities.IsNotNull(context.ConfigurationToBuild, nameof(context.ConfigurationToBuild));
 
             await LoadProjects(context.BuildRoot.FullName, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
-            
+
             collector.ProjectConfiguration = context.ConfigurationToBuild;
             await CollectBuildDependencies(collector);
 
             DependencyGraph graph = CreateBuildDependencyGraph(collector);
 
-            using (var exportLifetimeContext = this.SequencerFactory.CreateExport()) {
+            using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
 
-                Project project = sequencer.CreateProject(context, instance, graph);
+                Project project = sequencer.CreateProject(context, jobFiles, graph);
                 return project;
             }
         }
@@ -134,7 +136,7 @@ namespace Aderant.Build.ProjectSystem {
                 var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryName, "*.sln", null);
 
                 foreach (var file in files) {
-                   ParseResult parseResult = parser.Parse(file);
+                    ParseResult parseResult = parser.Parse(file);
 
                     if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
 

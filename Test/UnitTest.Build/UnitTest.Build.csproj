@@ -98,6 +98,7 @@
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildJobProjectTests.cs" />
+    <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="DependencyAnalyzer\ModuleRefTests.cs" />
     <Compile Include="ErrorUtilitiesTests.cs" />

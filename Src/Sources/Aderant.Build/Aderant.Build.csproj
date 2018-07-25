@@ -120,6 +120,7 @@
     <Compile Include="ErrorUtilities.cs" />
     <Compile Include="DependencyEqualityComparer.cs" />
     <Compile Include="ProjectSystem\IProjectTree.cs" />
+    <Compile Include="ProjectSystem\IProjectTreeInternal.cs" />
     <Compile Include="ProjectSystem\ISolutionManager.cs" />
     <Compile Include="ProjectSystem\References\AssemblyReferencesService.cs" />
     <Compile Include="ProjectSystem\References\BuildDependencyProjectReferencesService.cs" />
@@ -216,7 +217,6 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
-    <Compile Include="DependencyAnalyzer\AnalyzerContext.cs" />
     <Compile Include="DependencyAnalyzer\WellKnownProjectTypeGuids.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
     <Compile Include="DependencyAnalyzer\ChangesetResolver.cs" />

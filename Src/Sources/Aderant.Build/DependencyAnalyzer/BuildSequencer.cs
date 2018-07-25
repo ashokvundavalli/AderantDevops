@@ -2,26 +2,15 @@
 using System.ComponentModel.Composition;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
-using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
-using Aderant.Build.ProjectSystem.SolutionParser;
-using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
     [Export(typeof(ISequencer))]
     internal class BuildSequencer : ISequencer {
-        private readonly Context context;
         private readonly IFileSystem2 fileSystem;
-        private readonly ILogger logger;
-
-        public BuildSequencer(ILogger logger, Context context, ISolutionFileParser solutionParser, IFileSystem2 fileSystem, IVersionControlService versionControlService) {
-            this.logger = logger;
-            this.context = context;
-            this.fileSystem = fileSystem;
-        }
 
         [ImportingConstructor]
         public BuildSequencer(IFileSystem2 fileSystem) {
@@ -84,33 +73,30 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="allProjects">The full projects list.</param>
         /// <param name="projectsToFind">The project name hashset to search for.</param>
         /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
-        internal List<IDependencyRef> MarkDirty(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
-
-            //var p = allProjects.Where(x => (x as VisualStudioProject)?.DependsOn?.Select(y => y.Name).Intersect(projectsToFind).Any() == true).ToList();
-            //p.ForEach(
-            //    x => {
-            //        if (x is VisualStudioProject) {
-            //            ((VisualStudioProject)x).IsDirty = true;
-            //        }
-            //    });
-            //return p;
-            return null;
+        internal List<IDependable> MarkDirty(List<IDependable> allProjects, HashSet<string> projectsToFind) {
+            var p = allProjects.Where(x => (x as ConfiguredProject)?.GetDependencies().Select(y => y.Id).Intersect(projectsToFind).Any() == true).ToList();
+            p.ForEach(
+                x => {
+                    if (x is ConfiguredProject) {
+                        ((ConfiguredProject)x).IsDirty = true;
+                    }
+                });
+            return p;
         }
 
         /// <summary>
         /// Recursively mark all projects in allProjects where the project depends on any one in projectsToFind until no more
         /// parent project is found.
         /// </summary>
-        internal void MarkDirtyAll(List<IDependencyRef> allProjects, HashSet<string> projectsToFind) {
-
+        internal void MarkDirtyAll(List<IDependable> allProjects, HashSet<string> projectsToFind) {
             int newCount = -1;
 
-            List<IDependencyRef> p;
+            List<IDependable> p;
             while (newCount != 0) {
                 p = MarkDirty(allProjects, projectsToFind).ToList();
                 newCount = p.Count;
                 var newSearchList = new HashSet<string>();
-                newSearchList.UnionWith(p.Select(x => x.Name));
+                newSearchList.UnionWith(p.Select(x => x.Id));
                 projectsToFind = newSearchList;
             }
         }
@@ -127,6 +113,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             //    throw new Exception("There are projects with duplicate project GUIDs: " + string.Join(", ", query.Select(s => s.Element)));
             //}
         }
-
     }
 }

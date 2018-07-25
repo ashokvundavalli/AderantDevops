@@ -25,7 +25,7 @@ namespace Aderant.Build.ProjectSystem {
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
         private readonly IFileSystem fileSystem;
 
-        private List<ResolvedReference> resolvedDependencies;
+        //private List<ResolvedReference> resolvedDependencies;
         private bool? isWebProject;
         private Lazy<Project> project;
         private Lazy<ProjectRootElement> projectXml;
@@ -64,11 +64,13 @@ namespace Aderant.Build.ProjectSystem {
         /// <value>The tree.</value>
         public IProjectTree Tree { get; }
 
-        public string OutputAssembly {
-            get { return project.Value.GetPropertyValue("AssemblyName"); }
+        public virtual string OutputAssembly {
+            get {
+                return project.Value.GetPropertyValue("AssemblyName");
+            }
         }
 
-        public string OutputType {
+        public virtual string OutputType {
             get { return project.Value.GetPropertyValue("OutputType"); }
         }
 
@@ -135,17 +137,17 @@ namespace Aderant.Build.ProjectSystem {
             return OutputAssembly;
         }
 
-        public override IReadOnlyCollection<IDependable> GetDependencies() {
-            return resolvedDependencies
-                .Select(s => s.ResolvedReference)
-                .Concat(base.GetDependencies())
-                .ToList();
-        }
+        //public override IReadOnlyCollection<IDependable> GetDependencies() {
+        //    return resolvedDependencies
+        //        .Select(s => s.ResolvedReference)
+        //        .Concat(base.GetDependencies())
+        //        .ToList();
+        //}
 
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
             projectXml = projectElement;
-            resolvedDependencies = new List<ResolvedReference>();
+            //resolvedDependencies = new List<ResolvedReference>();
 
             project = new Lazy<Project>(
                 () => {
@@ -248,49 +250,53 @@ namespace Aderant.Build.ProjectSystem {
 
         public ProjectBuildConfiguration BuildConfiguration { get; set; }
 
-        public string PlatformName { get; set; }
-
-        public string ConfigurationName { get; set; }
+        public bool IsDirty { get; set; }
 
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.
         /// </summary>
         public Task CollectBuildDependencies(BuildDependenciesCollector collector) {
-            // Force MEF import
-            var services = Services;
+            
+            // Allows unit testing
+            if (ServicesImport != null) {
+                // Force MEF import
+                var services = Services;
 
-            // OK boots, start walking...
-            var t1 = Task.Run(
-                () => {
-                    if (Services.TextTemplateReferences != null) {
-                        IReadOnlyCollection<IUnresolvedReference> references = services.TextTemplateReferences.GetUnresolvedReferences();
-                        if (references != null) {
-                            collector.AddUnresolvedReferences(references);
+                // OK boots, start walking...
+                var t1 = Task.Run(
+                    () => {
+                        if (Services.TextTemplateReferences != null) {
+                            IReadOnlyCollection<IUnresolvedReference> references = services.TextTemplateReferences.GetUnresolvedReferences();
+                            if (references != null) {
+                                collector.AddUnresolvedReferences(references);
+                            }
                         }
-                    }
-                });
+                    });
 
-            var t2 = Task.Run(
-                () => {
-                    if (Services.ProjectReferences != null) {
-                        IReadOnlyCollection<IUnresolvedReference> references = services.ProjectReferences.GetUnresolvedReferences();
-                        if (references != null) {
-                            collector.AddUnresolvedReferences(references);
+                var t2 = Task.Run(
+                    () => {
+                        if (Services.ProjectReferences != null) {
+                            IReadOnlyCollection<IUnresolvedReference> references = services.ProjectReferences.GetUnresolvedReferences();
+                            if (references != null) {
+                                collector.AddUnresolvedReferences(references);
+                            }
                         }
-                    }
-                });
+                    });
 
-            var t3 = Task.Run(
-                () => {
-                    if (Services.AssemblyReferences != null) {
-                        IReadOnlyCollection<IUnresolvedReference> references = services.AssemblyReferences.GetUnresolvedReferences();
-                        if (references != null) {
-                            collector.AddUnresolvedReferences(references);
+                var t3 = Task.Run(
+                    () => {
+                        if (Services.AssemblyReferences != null) {
+                            IReadOnlyCollection<IUnresolvedReference> references = services.AssemblyReferences.GetUnresolvedReferences();
+                            if (references != null) {
+                                collector.AddUnresolvedReferences(references);
+                            }
                         }
-                    }
-                });
+                    });
 
-            return Task.WhenAll(t1, t2, t3);
+                return Task.WhenAll(t1, t2, t3);
+            }
+            
+            return Task.CompletedTask;
         }
 
         public void AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
@@ -301,7 +307,7 @@ namespace Aderant.Build.ProjectSystem {
                 var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences);
                 if (results != null) {
                     foreach (var reference in results) {
-                        AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                        AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
                     }
                 }
             }
@@ -313,38 +319,35 @@ namespace Aderant.Build.ProjectSystem {
                 // we need to check if this has happened and unpack the result
                 if (results != null) {
                     foreach (var reference in results) {
-                        AddResolvedDependency(collector, reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                        AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
                     }
                 }
             }
         }
 
-        private void AddResolvedDependency(BuildDependenciesCollector collector, IUnresolvedReference existingUnresolvedItem, IReference dependency) {
-            collector.AddResolvedDependency(existingUnresolvedItem, dependency);
+        //private void AddResolvedDependency(BuildDependenciesCollector collector, IUnresolvedReference existingUnresolvedItem, IReference dependency) {
+        //    collector.AddResolvedDependency(existingUnresolvedItem, dependency);
 
-            var dependencies = resolvedDependencies;
+        //    var dependencies = resolvedDependencies;
+        //    base.AddResolvedDependency();
 
-            if (dependencies != null) {
-                resolvedDependencies.Add(new ResolvedReference(this, existingUnresolvedItem, dependency));
-            }
-        }
+        //    if (dependencies != null) {
+        //        resolvedDependencies.Add(new ResolvedReference(this, existingUnresolvedItem, dependency));
+        //    }
+        //}
 
         /// <summary>
         /// Replaces resolved dependencies with an equivalent one from the provided set.
         /// </summary>
         public void ReplaceDependencies(IReadOnlyCollection<IDependable> dependables, IEqualityComparer<IDependable> comparer) {
-            foreach (var r in resolvedDependencies) {
-                foreach (var item in dependables) {
-                    if (comparer.Equals(r.ResolvedReference, item) && !ReferenceEquals(r.ResolvedReference, item)) {
-                        r.ReplaceReference(item);
-                    }
-                }
-            }
+            //foreach (var r in resolvedDependencies) {
+            //    foreach (var item in dependables) {
+            //        if (comparer.Equals(r.ResolvedReference, item) && !ReferenceEquals(r.ResolvedReference, item)) {
+            //            r.ReplaceReference(item);
+            //        }
+            //    }
+            //}
         }
-    }
-
-    internal interface IProjectTreeInternal {
-        void OrphanProject(ConfiguredProject configuredProject);
     }
 
 }
