@@ -1,8 +1,10 @@
 ﻿namespace Aderant.Build.Logging {
-    internal class FakeLogger : ILogger {
+    internal class NullLogger : ILogger {
 
-        internal FakeLogger() {
+        internal NullLogger() {
         }
+
+        public static ILogger Default { get; } = new NullLogger();
 
         /// <summary>
         /// Writes a debug message.
