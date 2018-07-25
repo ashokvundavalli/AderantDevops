@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0"> 
+ 
+  <PropertyGroup>
+    <IncludePattern>
+      <!-- 
+        As we want just the folder name in our item group link, we add a wild card to the end of the folders so we can use RecursiveDir to get the folder name 
+        If we don't do this RecursiveDir would return foo\bar\ rather than just bar\
+      -->
+            $(MSBuildProjectDirectory)\..\..\src\Build.Tools\lib\win32\**\*;
+            $(MSBuildProjectDirectory)\..\..\src\Build\**\*;
+        </IncludePattern>
+    <ExcludePattern></ExcludePattern>
+  </PropertyGroup> 
+
+  
+  <ItemGroup>
+      <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <Link>SystemUnderTest\%(RecursiveDir)%(Filename)%(Extension)</Link>
+          <Visible>true</Visible>
+      </Content>
+  </ItemGroup>
+    
+</Project>
+
