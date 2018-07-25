@@ -148,14 +148,14 @@ namespace Aderant.Build {
             return relationshipProcessing;
         }
 
-        public ComboBuildType GetBuildType() {
-            ComboBuildType buildType = ComboBuildType.All;
+        public ChangesToConsider GetChangeConsiderationMode() {
+            ChangesToConsider buildType = ChangesToConsider.None;
             if (Switches.PendingChanges) {
-                buildType = ComboBuildType.Changes;
+                buildType = ChangesToConsider.PendingChanges;
             }
 
             if (Switches.Everything) {
-                buildType = ComboBuildType.Branch;
+                buildType = ChangesToConsider.Branch;
             }
 
             return buildType;

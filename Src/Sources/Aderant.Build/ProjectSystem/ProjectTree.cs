@@ -114,7 +114,7 @@ namespace Aderant.Build.ProjectSystem {
             collector.ProjectConfiguration = context.ConfigurationToBuild;
             await CollectBuildDependencies(collector);
 
-            if (context.GetBuildType() != ComboBuildType.All) {
+            if (context.GetChangeConsiderationMode() == ChangesToConsider.PendingChanges) {
                 var changes = Services.VersionControl.GetPendingChanges(context.BuildRoot.FullName);
                 collector.PendingChanges = changes;
             }

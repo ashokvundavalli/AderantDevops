@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
-using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.DependencyAnalysis {
@@ -18,7 +18,7 @@ namespace IntegrationTest.Build.DependencyAnalysis {
 
         [TestInitialize]
         public void TestInitialize() {
-            this.projectTree = ProjectTree.CreateDefaultImplementation();
+            this.projectTree = ProjectTree.CreateDefaultImplementation(NullLogger.Default);
         }
 
         [TestMethod]

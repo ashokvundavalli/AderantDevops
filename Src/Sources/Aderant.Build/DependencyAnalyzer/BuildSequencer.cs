@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Text;
 using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
@@ -11,9 +13,11 @@ namespace Aderant.Build.DependencyAnalyzer {
     [Export(typeof(ISequencer))]
     internal class BuildSequencer : ISequencer {
         private readonly IFileSystem2 fileSystem;
+        private readonly ILogger logger;
 
         [ImportingConstructor]
-        public BuildSequencer(IFileSystem2 fileSystem) {
+        public BuildSequencer(ILogger logger, IFileSystem2 fileSystem) {
+            this.logger = logger;
             this.fileSystem = fileSystem;
         }
 
@@ -23,10 +27,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
                 projectsInDependencyOrder,
-                context.GetBuildType(),
+                context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
-            List<List<IDependable>> groups = graph.GetBuildGroups(projectsInDependencyOrder);
+            List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
             var job = new BuildJob(fileSystem);
             return job.GenerateProject(groups, files, null);
@@ -36,13 +40,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// According to options, find out which projects are selected to build.
         /// </summary>
         /// <param name="visualStudioProjects">All the projects list.</param>
-        /// <param name="comboBuildType">Build the current branch, the changed files since forking from master, or all?</param>
+        /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="dependencyProcessing">
         /// Build the directly affected downstream projects, or recursively search for all
         /// downstream projects, or none?
         /// </param>
         /// <returns></returns>
-        private IEnumerable<IDependable> GetProjectsBuildList(List<IDependable> visualStudioProjects, ComboBuildType comboBuildType, DependencyRelationshipProcessing dependencyProcessing) {
+        private List<IDependable> GetProjectsBuildList(List<IDependable> visualStudioProjects, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty == true).Select(x => x.Id).ToList();
             HashSet<string> h = new HashSet<string>();
@@ -59,15 +63,35 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
-            IEnumerable<IDependable> filteredProjects;
-            if (comboBuildType == ComboBuildType.All) {
+            List<IDependable> filteredProjects;
+            if (changesToConsider == ChangesToConsider.None) {
                 filteredProjects = visualStudioProjects;
             } else {
                 filteredProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty != false).ToList();
 
-                // logger.Info("Changed projects:");
+                StringBuilder sb = null;
+
                 foreach (var pp in filteredProjects) {
-                    //       logger.Info("* " + pp.Name);
+                    ConfiguredProject configuredProject = pp as ConfiguredProject;
+
+                    if (configuredProject != null) {
+                        if (sb == null) {
+                            sb = new StringBuilder();
+                            sb.AppendLine("Changed projects: ");
+                        }
+
+                        sb.AppendLine("* " + configuredProject.Id);
+
+                        if (configuredProject.DirtyFiles != null) {
+                            foreach (string dirtyFile in configuredProject.DirtyFiles) {
+                                sb.AppendLine("    " + dirtyFile);
+                            }
+                        }
+                    }
+                }
+
+                if (sb != null) {
+                    logger.Info(sb.ToString());
                 }
             }
 
@@ -81,13 +105,19 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="projectsToFind">The project name hashset to search for.</param>
         /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
         internal List<IDependable> MarkDirty(List<IDependable> allProjects, HashSet<string> projectsToFind) {
-            var p = allProjects.Where(x => (x as ConfiguredProject)?.GetDependencies().Select(y => y.Id).Intersect(projectsToFind).Any() == true).ToList();
-            p.ForEach(
-                x => {
-                    if (x is ConfiguredProject) {
-                        ((ConfiguredProject)x).IsDirty = true;
-                    }
-                });
+            var p = allProjects
+                .Where(
+                    x => (x as ConfiguredProject)?.GetDependencies()
+                         .Select(y => y.Id)
+                         .Intersect(projectsToFind).Any() == true).ToList();
+
+            foreach (var x in p) {
+                ConfiguredProject project = x as ConfiguredProject;
+                if (project != null) {
+                    project.IsDirty = true;
+                }
+            }
+
             return p;
         }
 

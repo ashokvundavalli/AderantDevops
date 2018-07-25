@@ -32,6 +32,7 @@ namespace Aderant.Build.ProjectSystem {
         private Lazy<Project> project;
         private Lazy<ProjectRootElement> projectXml;
         private Lazy<IReadOnlyList<Guid>> typeGuids;
+        private List<string> dirtyFiles;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
@@ -258,6 +259,10 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public bool IsDirty { get; set; }
 
+        public IReadOnlyList<string> DirtyFiles {
+            get { return dirtyFiles; }
+        }
+
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.
         /// </summary>
@@ -367,9 +372,15 @@ namespace Aderant.Build.ProjectSystem {
                 foreach (var file in changes) {
                     string value = item.GetMetadataValue("FullPath");
 
-                    if (string.Equals(value, file.Path, StringComparison.OrdinalIgnoreCase)) {
+                    if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
                         // found one
                         IsDirty = true;
+
+                        if (dirtyFiles == null) {
+                            dirtyFiles = new List<string>();
+                        }
+
+                        dirtyFiles.Add(file.Path);
                         return;
                     }
                 }

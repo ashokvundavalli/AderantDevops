@@ -44,12 +44,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(Context context, string workingDirectory, ComboBuildType buildType=ComboBuildType.Changes, bool discover = true) {
+        public ChangesetResolver(Context context, string workingDirectory, ChangesToConsider buildType=ChangesToConsider.PendingChanges, bool discover = true) {
             this.context = context;
             InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
         }
 
-        public void InitializeFromWorkingDirectory(string workingDirectory, ComboBuildType buildType, bool discover) {
+        public void InitializeFromWorkingDirectory(string workingDirectory, ChangesToConsider buildType, bool discover) {
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
@@ -62,9 +62,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                 throw new DirectoryNotFoundException($"Can not find path: {WorkingDirectory}");
             }
 
-            if (buildType != ComboBuildType.Changes || buildType != ComboBuildType.Staged) {
-                return;
-            }
+            //if (buildType != ChangesToConsider.PendingChanges || buildType != ChangesToConsider.Staged) {
+            //    return;
+            //}
 
             using (var repo = new Repository(WorkingDirectory)) {
                 FriendlyBranchName = repo.Head.FriendlyName;
@@ -100,7 +100,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         changedFiles.Add(treeChange.Path);
                     }
 
-                    if (buildType == ComboBuildType.Changes) {
+                    if (buildType == ChangesToConsider.PendingChanges) {
                         UpdateChangedFilesFromStatus(repo, changedFiles);
                     }
                     

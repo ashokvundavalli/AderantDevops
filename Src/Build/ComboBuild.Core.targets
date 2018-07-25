@@ -33,27 +33,24 @@
 
 
   <Target Name="CreateProjectGroup" Returns="@(ProjectsInGroup)">
-    <Error Condition="'$(BuildFlavor)' == ''" Text="No build flavor specified." />
-
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
     </ItemGroup>
 
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
+      <!--
+        ShouldUnsetParentConfigurationAndPlatform        
+        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the 
+        child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
+        This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
+        -->
       <BuildProperties>
         BuildToolsDirectory=$(BuildToolsDirectory);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
-
-        <!--
-        ShouldUnsetParentConfigurationAndPlatform        
-        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the 
-        child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
-        This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
-        -->
         ShouldUnsetParentConfigurationAndPlatform=true;
         BuildProjectReferences=false;
       </BuildProperties>
@@ -62,9 +59,8 @@
   </Target>
 
 
+  <Target Name="AssignProjectProperties" Inputs="%(ProjectsInGroup.Properties)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
 
-
-  <Target Name="AssignProjectProperties" Inputs="@(ProjectsInGroup)" Outputs="%(Identity)._" DependsOnTargets="CreateProjectGroup">
     <!-- Parse the scalar property list into an item group -->
     <CreateItem Include="_ParsedPropertyList" AdditionalMetadata="%(ProjectsInGroup.Properties)">
       <Output TaskParameter="Include" ItemName="_ParsedPropertyList" />
@@ -77,12 +73,9 @@
     <ItemGroup>
       <ProjectsInGroup>
         <Properties>
-          <!-- Include the original properties list -->
-          %(ProjectsInGroup.Properties);
-          <!-- Include global (non-project specific) properties -->
-          $(BuildProperties);
-          <!-- Merge in build system properties that hang off SolutionRoot -->
-          SolutionRoot=$(_SolutionRoot);
+          %(ProjectsInGroup.Properties);    <!-- Include the original properties list -->
+          $(BuildProperties);               <!-- Include global (non-project specific) properties -->
+          SolutionRoot=$(_SolutionRoot);    <!-- Merge in build system properties that hang off SolutionRoot -->
           BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
           BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
@@ -91,8 +84,6 @@
         </Properties>
       </ProjectsInGroup>
     </ItemGroup>
-
-    
 
   </Target>
 

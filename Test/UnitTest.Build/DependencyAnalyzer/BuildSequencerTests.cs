@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -60,7 +61,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var collector = new BuildDependenciesCollector();
             await tree2.CollectBuildDependencies(collector);
 
-            var sequencer = new BuildSequencer(null);
+            var sequencer = new BuildSequencer(NullLogger.Default, null);
 
             // Mark the projects to dirty directly depends on any project in the search list.
             sequencer.MarkDirty(projectList.OfType<IDependable>().ToList(), dirtyProjects);

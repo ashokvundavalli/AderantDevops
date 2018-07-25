@@ -179,7 +179,7 @@
     <Compile Include="Services\FlexService.cs" />
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
     <Compile Include="DependencyAnalyzer\BuildJobFiles.cs" />
-    <Compile Include="ProjectSystem\ComboBuildType.cs" />
+    <Compile Include="ProjectSystem\ChangesToConsider.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
