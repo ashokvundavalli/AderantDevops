@@ -12,6 +12,8 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
+using Aderant.Build.Tasks;
+using Aderant.Build.VersionControl;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 
@@ -219,14 +221,14 @@ namespace Aderant.Build.ProjectSystem {
             return project.Value.GetItems(itemType);
         }
 
-        public void AssignProjectConfiguration(string solutionBuildConfiguration) {
+        public void AssignProjectConfiguration(ConfigurationToBuild solutionBuildConfiguration) {
             var projectInSolution = Tree.SolutionManager.GetSolutionForProject(FullPath, ProjectGuid);
 
             if (projectInSolution.Found) {
                 SolutionFile = projectInSolution.SolutionFile;
 
                 ProjectConfigurationInSolution projectConfigurationInSolution;
-                if (projectInSolution.Project.ProjectConfigurations.TryGetValue(solutionBuildConfiguration, out projectConfigurationInSolution)) {
+                if (projectInSolution.Project.ProjectConfigurations.TryGetValue(solutionBuildConfiguration.FullName, out projectConfigurationInSolution)) {
                     IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
 
                     // GC optimization
@@ -352,6 +354,26 @@ namespace Aderant.Build.ProjectSystem {
             //    }
             //}
         }
-    }
 
+        public void CalculateDirtyStateFromChanges(IReadOnlyCollection<IPendingChange> changes) {
+            // check if this proj contains needed files
+            List<ProjectItem> items = new List<ProjectItem>();
+
+            items.AddRange(project.Value.GetItems("Compile"));
+            items.AddRange(project.Value.GetItems("Content"));
+            items.AddRange(project.Value.GetItems("None"));
+
+            foreach (var item in items) {
+                foreach (var file in changes) {
+                    string value = item.GetMetadataValue("FullPath");
+
+                    if (string.Equals(value, file.Path, StringComparison.OrdinalIgnoreCase)) {
+                        // found one
+                        IsDirty = true;
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }

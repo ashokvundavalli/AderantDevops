@@ -1,4 +1,4 @@
-﻿namespace Aderant.Build.DependencyAnalyzer {
+﻿namespace Aderant.Build.ProjectSystem {
     public enum ComboBuildType {
         Changes,
         Branch,

@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
+using Aderant.Build.Tasks;
 
 namespace Aderant.Build {
 
@@ -110,7 +112,7 @@ namespace Aderant.Build {
             }
         }
 
-        public string ConfigurationToBuild { get; set; }
+        public ConfigurationToBuild ConfigurationToBuild { get; set; }
 
         /// <summary>
         /// Creates a new instance of T.
@@ -131,6 +133,32 @@ namespace Aderant.Build {
             }
 
             return svc;
+        }
+
+        public DependencyRelationshipProcessing GetRelationshipProcessingMode() {
+            DependencyRelationshipProcessing relationshipProcessing = DependencyRelationshipProcessing.None;
+            if (Switches.Downstream) {
+                relationshipProcessing = DependencyRelationshipProcessing.Direct;
+            }
+
+            if (Switches.Transitive) {
+                relationshipProcessing = DependencyRelationshipProcessing.Transitive;
+            }
+
+            return relationshipProcessing;
+        }
+
+        public ComboBuildType GetBuildType() {
+            ComboBuildType buildType = ComboBuildType.All;
+            if (Switches.PendingChanges) {
+                buildType = ComboBuildType.Changes;
+            }
+
+            if (Switches.Everything) {
+                buildType = ComboBuildType.Branch;
+            }
+
+            return buildType;
         }
     }
 

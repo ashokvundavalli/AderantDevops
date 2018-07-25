@@ -11,7 +11,7 @@ namespace IntegrationTest.Build {
         [TestMethod]
         [Ignore]
         public void BuildAssociation() {
-            var buildAssociation = new BuildAssociation(new FakeLogger(), new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
+            var buildAssociation = new BuildAssociation(new NullLogger(), new VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
             buildAssociation.AssociateWorkItemsToBuildAsync("ExpertSuite", 641161).Wait();
         }
     }

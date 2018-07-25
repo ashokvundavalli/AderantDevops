@@ -1,9 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using Aderant.Build;
-using Aderant.Build.Services;
 using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FileStatus = Aderant.Build.VersionControl.FileStatus;

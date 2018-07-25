@@ -131,18 +131,18 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 }
 
 function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
-    $count=0
-    $sleepTimer=500 #in milliseconds
+    #$count=0
+    #$sleepTimer=500 #in milliseconds
     
-    while($count -le 100) {
-        if($host.UI.RawUI.KeyAvailable) {
-            $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-            if($key.Character -eq 'C' -or $key.Character -eq 'c') {                
-                Write-Host -ForegroundColor Yellow ("'c' is pressed! Stopping the script now.")
-                return
-            }
-        }
-    }
+    #while($count -le 100) {
+    #    if($host.UI.RawUI.KeyAvailable) {
+    #        $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
+    #        if($key.Character -eq 'C' -or $key.Character -eq 'c') {                
+    #            Write-Host -ForegroundColor Yellow ("'c' is pressed! Stopping the script now.")
+    #            return
+    #        }
+    #    }
+    #}
 
     Write-Output "Attaching debugger"
     Add-Type -ReferencedAssemblies "Microsoft.CSharp" -TypeDefinition $Source -Language CSharp 

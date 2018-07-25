@@ -27,9 +27,9 @@ namespace UnitTest.Build {
 
             var fs = Mock.Of<IFileSystem2>();
 
-            var resolver = new Resolver(new FakeLogger(), new IDependencyResolver[] { resolverImpl });
+            var resolver = new Resolver(new NullLogger(), new IDependencyResolver[] { resolverImpl });
 
-            var request = new ResolverRequest(new FakeLogger(), fs, ExpertModule.Create(XElement.Parse("<Module Name=\'MyModule\' AssemblyVersion=\'5.3.1.0\' GetAction=\'NuGet\' />")));
+            var request = new ResolverRequest(new NullLogger(), fs, ExpertModule.Create(XElement.Parse("<Module Name=\'MyModule\' AssemblyVersion=\'5.3.1.0\' GetAction=\'NuGet\' />")));
 
             resolver.ResolveDependencies(request);
 

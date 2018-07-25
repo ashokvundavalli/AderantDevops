@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.Tasks;
 using LibGit2Sharp;
 

@@ -4,16 +4,17 @@ using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.Linq;
 using System.Reflection;
+using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
 
 namespace Aderant.Build.Services {
     internal class ServiceContainer : IServiceProvider, IContextualServiceProvider {
 
-        public static ServiceContainer Default = new ServiceContainer(new[] { typeof(ServiceContainer).Assembly });
+        public static ServiceContainer Default = new ServiceContainer(null, new[] { typeof(ServiceContainer).Assembly });
         private CompositionContainer container;
         private MethodInfo svcMethod = typeof(ServiceContainer).GetMethod("GetService", new Type[] { typeof(Context), typeof(string), typeof(string) });
 
-        public ServiceContainer(IReadOnlyCollection<Assembly> catalogAssemblies) {
+        public ServiceContainer(ILogger logger, IReadOnlyCollection<Assembly> catalogAssemblies) {
             List<Type> types = new List<Type>();
 
             VisualStudioEnvironmentContext.SetupContext();
@@ -36,6 +37,9 @@ namespace Aderant.Build.Services {
                 new[] { new CompositionScopeDefinition(filteredCatalog, null) });
 
             container = new CompositionContainer(scopeDefinition, CompositionOptions.IsThreadSafe);
+            if (logger != null) {
+                container.ComposeExportedValue(logger);
+            }
 
             VisualStudioEnvironmentContext.Shutdown();
         }
@@ -83,19 +87,6 @@ namespace Aderant.Build.Services {
 
         public T GetExportedValue<T>() {
             return container.GetExportedValue<T>();
-        }
-
-
-        public static T CreateDefaultImplementation<T>(IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors = false) {
-            return GetExport<T>(CreateSelfHostContainer(assemblies, throwCompositionErrors));
-        }
-
-        private static T GetExport<T>(ServiceContainer createSelfHostContainer) {
-            return createSelfHostContainer.GetExportedValue<T>();
-        }
-
-        private static ServiceContainer CreateSelfHostContainer(IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors) {
-            return new ServiceContainer(assemblies);
         }
     }
 }

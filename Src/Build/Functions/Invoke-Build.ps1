@@ -11,7 +11,7 @@
 #>
 function Global:Invoke-Build2
 {    
-    [CmdletBinding(DefaultParameterSetName="Build")]
+    [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]    
     param (
         [Parameter(ParameterSetName="Build")]
         [switch]$PendingChanges,
@@ -93,8 +93,8 @@ function Global:Invoke-Build2
         }
         
         # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
-        $args.Add("/nologo")| Out-Null
-        $args.Add("/nr:false")| Out-Null
+        $args.Add("/nologo") | Out-Null
+        $args.Add("/nr:false") | Out-Null
 
         # Multi-core build
         $args.Add("/m")| Out-Null

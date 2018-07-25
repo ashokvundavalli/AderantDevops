@@ -15,6 +15,7 @@ function InitializeModule {
 
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
+    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $script:ShellContext
 }
 
 InitializeModule
@@ -513,14 +514,14 @@ function Set-CurrentModule($name) {
         Write-Debug "Setting repository: $name"
         Import-Module $PSScriptRoot\Git.psm1 -Global
 
-        if (-not (Test-Path (Join-Path -Path $global:CurrentModulePath -ChildPath \Build\TFSBuild.*))){
-            $global:CurrentModuleName = ""
+        if (-not (Test-Path (Join-Path -Path $ShellContext.CurrentModulePath -ChildPath \Build\TFSBuild.*))){
+            $ShellContext.CurrentModuleName = ""
         }
 
-        Set-Location $global:CurrentModulePath
+        Set-Location $ShellContext.CurrentModulePath
 
-        if (IsGitRepository $global:CurrentModulePath) {
-            SetRepository $global:CurrentModulePath
+        if (IsGitRepository $ShellContext.CurrentModulePath) {
+            SetRepository $ShellContext.CurrentModulePath
             global:Enable-GitPrompt
             return
         } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName)) {
@@ -532,23 +533,23 @@ function Set-CurrentModule($name) {
     } else {
         $ShellContext.CurrentModuleName = $name
 
-        Write-Debug "Current module [$global:CurrentModuleName]"
-        $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $global:CurrentModuleName
+        Write-Debug "Current module [$ShellContext:CurrentModuleName]"
+        $global:CurrentModulePath = Join-Path -Path $global:BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
 
-        Set-Location $global:CurrentModulePath
+        Set-Location $ShellContext.CurrentModulePath
 
         Enable-ExpertPrompt
     }
 
     if ((Test-Path $ShellContext.CurrentModulePath) -eq $false) {
-        Write-Warning "the module [$ShellContext.CurrentModuleName] does not exist, please check the spelling."
+        Write-Warning "the module [$($ShellContext.CurrentModuleName)] does not exist, please check the spelling."
         $ShellContext.CurrentModuleName = ""
         $ShellContext.CurrentModulePath = ""
         return
     }
 
-    Write-Debug "Current module path [$ShellContext.CurrentModulePath]"
-    $global:CurrentModuleBuildPath = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Build"
+    Write-Debug "Current module path [$($ShellContext.CurrentModulePath)]"
+    $ShellContext.CurrentModuleBuildPath = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Build"
 
     $ShellContext.IsGitRepository = $true
 }

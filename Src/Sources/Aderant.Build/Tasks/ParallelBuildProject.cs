@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
 
@@ -57,7 +60,7 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string[] ModulesInThisBuild { get; set; }
 
-        public string[] ExcludePaths { get; set; }
+        public string[] ExcludePaths { get; set; } = new string[0];
 
         public override bool Execute() {
             ExecuteCore(Context);
@@ -67,18 +70,15 @@ namespace Aderant.Build.Tasks {
         private void ExecuteCore(Context context) {
             // TODO: keep this shim?
             context.BuildRoot = new DirectoryInfo(ModulesDirectory);
-
-            var relationshipProcessing = GetRelationshipProcessingMode(context);
-            var buildType = GetBuildType(context);
-
+     
             if (context.Switches.Resume) {
                 if (File.Exists(InstanceFile)) {
                     return;
                 }
             }
 
-            var projectTree = ProjectTree.CreateDefaultImplementation();
-
+            var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
+            
             var jobFiles = new BuildJobFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
@@ -87,17 +87,18 @@ namespace Aderant.Build.Tasks {
             };
 
             var analysisContext = CreateAnalysisContext();
-            context.ConfigurationToBuild = ConfigurationToBuild;
+            context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
             
-            var project = projectTree.GenerateBuildJob(context, analysisContext, jobFiles).Result;
+            var project = projectTree.ComputeBuildSequence(context, analysisContext, jobFiles).Result;
             var element = project.CreateXml();
 
-            var settings = new XmlWriterSettings();
-            settings.Encoding = Encoding.UTF8;
-            settings.CloseOutput = true;
-            settings.NewLineOnAttributes = true;
-            settings.IndentChars = "    ";
-            settings.Indent = true;
+            var settings = new XmlWriterSettings {
+                Encoding = Encoding.UTF8,
+                CloseOutput = true,
+                NewLineOnAttributes = true,
+                IndentChars = "  ",
+                Indent = true
+            };
 
             using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, InstanceFile), settings)) {
                 element.WriteTo(writer);
@@ -107,39 +108,14 @@ namespace Aderant.Build.Tasks {
         private AnalysisContext CreateAnalysisContext() {
             var paths = ExcludePaths.ToList();
             paths.Add(Context.BuildSystemDirectory);
+            paths.Add(".git");
+            paths.Add("$");
 
             var analysisContext = new AnalysisContext {
                 ExcludePaths = paths
             };
             return analysisContext;
         }
-
-        private static ProjectRelationshipProcessing GetRelationshipProcessingMode(Context context) {
-            ProjectRelationshipProcessing relationshipProcessing = ProjectRelationshipProcessing.None;
-            if (context.Switches.Downstream) {
-                relationshipProcessing = ProjectRelationshipProcessing.Direct;
-            }
-
-            if (context.Switches.Transitive) {
-                relationshipProcessing = ProjectRelationshipProcessing.Transitive;
-            }
-
-            return relationshipProcessing;
-        }
-
-        private static ComboBuildType GetBuildType(Context context) {
-            ComboBuildType buildType = ComboBuildType.All;
-            if (context.Switches.PendingChanges) {
-                buildType = ComboBuildType.Changes;
-            }
-
-            if (context.Switches.Everything) {
-                buildType = ComboBuildType.Branch;
-            }
-
-            return buildType;
-        }
-
     }
 
     internal class AnalysisContext  {

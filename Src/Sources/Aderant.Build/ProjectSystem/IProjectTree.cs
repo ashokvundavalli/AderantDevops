@@ -33,6 +33,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector);
 
-        Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles jobFiles);
+        Task<Project> ComputeBuildSequence(Context context, AnalysisContext analysisContext, BuildJobFiles jobFiles);
     }
 }

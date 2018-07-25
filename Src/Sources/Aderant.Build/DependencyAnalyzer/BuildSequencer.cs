@@ -19,6 +19,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public Project CreateProject(Context context, BuildJobFiles files, DependencyGraph graph) {
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
+
+            // According to options, find out which projects are selected to build.
+            var filteredProjects = GetProjectsBuildList(
+                projectsInDependencyOrder,
+                context.GetBuildType(),
+                context.GetRelationshipProcessingMode());
+
             List<List<IDependable>> groups = graph.GetBuildGroups(projectsInDependencyOrder);
 
             var job = new BuildJob(fileSystem);
@@ -35,36 +42,36 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// downstream projects, or none?
         /// </param>
         /// <returns></returns>
-        private IEnumerable<IDependencyRef> GetProjectsBuildList(List<IDependencyRef> visualStudioProjects, ComboBuildType comboBuildType, ProjectRelationshipProcessing dependencyProcessing) {
-            //// Get all the dirty projects due to user's modification.
-            //var dirtyProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty == true).Select(x => x.Name).ToList();
-            //HashSet<string> h = new HashSet<string>();
-            //h.UnionWith(dirtyProjects);
-            //// According to DownStream option, either mark the direct affected or all the recursively affected downstream projects as dirty.
-            //switch (dependencyProcessing) {
-            //    case ProjectRelationshipProcessing.Direct:
-            //        MarkDirty(visualStudioProjects, h);
-            //        break;
-            //    case ProjectRelationshipProcessing.Transitive:
-            //        MarkDirtyAll(visualStudioProjects, h);
-            //        break;
-            //}
+        private IEnumerable<IDependable> GetProjectsBuildList(List<IDependable> visualStudioProjects, ComboBuildType comboBuildType, DependencyRelationshipProcessing dependencyProcessing) {
+            // Get all the dirty projects due to user's modification.
+            var dirtyProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty == true).Select(x => x.Id).ToList();
+            HashSet<string> h = new HashSet<string>();
+            h.UnionWith(dirtyProjects);
 
-            //// Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
-            //IEnumerable<IDependencyRef> filteredProjects;
-            //if (comboBuildType == ComboBuildType.All) {
-            //    filteredProjects = visualStudioProjects;
-            //} else {
-            //    filteredProjects = visualStudioProjects.Where(x => (x as VisualStudioProject)?.IsDirty != false).ToList();
+            // According to DownStream option, either mark the direct affected or all the recursively affected downstream projects as dirty.
+            switch (dependencyProcessing) {
+                case DependencyRelationshipProcessing.Direct:
+                    MarkDirty(visualStudioProjects, h);
+                    break;
+                case DependencyRelationshipProcessing.Transitive:
+                    MarkDirtyAll(visualStudioProjects, h);
+                    break;
+            }
 
-            //    logger.Info("Changed projects:");
-            //    foreach (var pp in filteredProjects) {
-            //        logger.Info("* " + pp.Name);
-            //    }
-            //}
+            // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
+            IEnumerable<IDependable> filteredProjects;
+            if (comboBuildType == ComboBuildType.All) {
+                filteredProjects = visualStudioProjects;
+            } else {
+                filteredProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty != false).ToList();
 
-            //return filteredProjects;
-            return null;
+                // logger.Info("Changed projects:");
+                foreach (var pp in filteredProjects) {
+                    //       logger.Info("* " + pp.Name);
+                }
+            }
+
+            return filteredProjects;
         }
 
         /// <summary>

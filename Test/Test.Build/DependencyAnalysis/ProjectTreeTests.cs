@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.DependencyAnalysis {
@@ -50,7 +51,9 @@ namespace IntegrationTest.Build.DependencyAnalysis {
         public async Task BuildDependencyModel_sets_IncludeInBuild() {
             await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
 
-            await projectTree.CollectBuildDependencies(new BuildDependenciesCollector());
+            var collector = new BuildDependenciesCollector();
+            collector.ProjectConfiguration = ConfigurationToBuild.Default;
+            await projectTree.CollectBuildDependencies(collector);
 
             Assert.IsTrue(projectTree.LoadedConfiguredProjects.All(s => s.IncludeInBuild));
         }
@@ -59,7 +62,9 @@ namespace IntegrationTest.Build.DependencyAnalysis {
         public async Task Dependency_sorting() {
             await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
 
-            var collector = new BuildDependenciesCollector();
+            var collector = new BuildDependenciesCollector {
+                ProjectConfiguration = ConfigurationToBuild.Default
+            };
             await projectTree.CollectBuildDependencies(collector);
 
             DependencyGraph graph = projectTree.CreateBuildDependencyGraph(collector);
@@ -90,7 +95,44 @@ namespace IntegrationTest.Build.DependencyAnalysis {
             AssertSequence(sequence, solution1, solution2);
         }
 
-        private static void AssertSequence(IEnumerable<string> sequence, params IEnumerable<string>[] solutions) {
+        [TestMethod]
+        public async Task Dependency_sorting2() {
+            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
+
+            var collector = new BuildDependenciesCollector {
+                ProjectConfiguration = ConfigurationToBuild.Default
+            };
+            await projectTree.CollectBuildDependencies(collector);
+
+            DependencyGraph graph = projectTree.CreateBuildDependencyGraph(collector);
+            var dependencies = graph.GetDependencyOrder();
+
+            var projects = dependencies.OfType<ConfiguredProject>().ToList();
+
+            Assert.AreEqual(5, projects.Count);
+
+            var solution1 = new[] {
+                "Foo",
+                "Baz",
+                "Gaz",
+                "Bar",
+                "Flob",
+            };
+
+            var solution2 = new[] {
+                "Foo",
+                "Gaz",
+                "Baz",
+                "Bar",
+                "Flob",
+            };
+
+            var sequence = projects.Select(s => Path.GetFileNameWithoutExtension(s.FullPath)).ToArray();
+
+            AssertSequence(sequence, solution1, solution2);
+        }
+
+        private static void AssertSequence(string[] sequence, params IEnumerable<string>[] solutions) {
             foreach (var solution in solutions) {
                 if (solution.SequenceEqual(sequence, StringComparer.OrdinalIgnoreCase)) {
                     return;

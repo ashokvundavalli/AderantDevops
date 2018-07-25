@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem.SolutionParser;
@@ -24,6 +25,8 @@ namespace Aderant.Build.ProjectSystem {
     /// </summary>
     [Export(typeof(IProjectTree))]
     internal class ProjectTree : IProjectTree, IProjectTreeInternal, ISolutionManager {
+        private readonly ILogger logger = NullLogger.Default;
+
         // Holds all projects that are applicable to the build tree
         private readonly ConcurrentBag<ConfiguredProject> loadedConfiguredProjects = new ConcurrentBag<ConfiguredProject>();
 
@@ -57,6 +60,15 @@ namespace Aderant.Build.ProjectSystem {
             get { return this; }
         }
 
+        public ProjectTree() {
+
+        }
+
+        [ImportingConstructor]
+        public ProjectTree(ILogger logger) {
+            this.logger = logger;
+        }
+
         public Task LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
@@ -85,21 +97,27 @@ namespace Aderant.Build.ProjectSystem {
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
             foreach (var project in LoadedConfiguredProjects) {
                 project.AnalyzeBuildDependencies(collector);
+
+                if (collector.PendingChanges != null) {
+                    project.CalculateDirtyStateFromChanges(collector.PendingChanges);
+                }
             }
 
             var graph = BuildDependencyGraph();
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> GenerateBuildJob(Context context, AnalysisContext analysisContext, BuildJobFiles jobFiles) {
-            ErrorUtilities.IsNotNull(context.ConfigurationToBuild, nameof(context.ConfigurationToBuild));
-
+        public async Task<Project> ComputeBuildSequence(Context context, AnalysisContext analysisContext, BuildJobFiles jobFiles) {
             await LoadProjects(context.BuildRoot.FullName, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
-
             collector.ProjectConfiguration = context.ConfigurationToBuild;
             await CollectBuildDependencies(collector);
+
+            if (context.GetBuildType() != ComboBuildType.All) {
+                var changes = Services.VersionControl.GetPendingChanges(context.BuildRoot.FullName);
+                collector.PendingChanges = changes;
+            }
 
             DependencyGraph graph = CreateBuildDependencyGraph(collector);
 
@@ -253,24 +271,23 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        public static IProjectTree CreateDefaultImplementation(IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors = false) {
-            return GetProjectService(CreateSelfHostContainer(assemblies, throwCompositionErrors));
+        public static IProjectTree CreateDefaultImplementation(ILogger logger, IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors = false) {
+            return GetProjectService(CreateSelfHostContainer(logger, assemblies, throwCompositionErrors));
         }
 
         private static IProjectTree GetProjectService(ServiceContainer createSelfHostContainer) {
             return createSelfHostContainer.GetExportedValue<IProjectTree>();
         }
 
-        private static ServiceContainer CreateSelfHostContainer(IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors) {
-            return new ServiceContainer(assemblies);
+        private static ServiceContainer CreateSelfHostContainer(ILogger logger, IReadOnlyCollection<Assembly> assemblies, bool throwCompositionErrors) {
+            return new ServiceContainer(logger, assemblies);
         }
 
         /// <summary>
         /// Creates the default project tree implementation.
         /// </summary>
-        /// <returns>IProjectTree.</returns>
-        public static IProjectTree CreateDefaultImplementation() {
-            return CreateDefaultImplementation(new[] { typeof(ProjectTree).Assembly });
+        public static IProjectTree CreateDefaultImplementation(ILogger logger) {
+            return CreateDefaultImplementation(logger, new[] { typeof(ProjectTree).Assembly });
         }
     }
 

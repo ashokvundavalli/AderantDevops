@@ -2,6 +2,8 @@
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
+using Aderant.Build.Tasks;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem {
     internal class BuildDependenciesCollector {
@@ -19,7 +21,9 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Gets or sets the project configuration to collect.
         /// </summary>
-        public string ProjectConfiguration { get; set; }
+        public ConfigurationToBuild ProjectConfiguration { get; set; }
+
+        public IReadOnlyCollection<IPendingChange> PendingChanges { get; set; }
 
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));

@@ -150,6 +150,7 @@
     <Compile Include="ProjectSystem\References\ResolvableReferencesProviderBase.cs" />
     <Compile Include="ProjectSystem\References\UnresolvedAssemblyReference.cs" />
     <Compile Include="ProjectSystem\References\UnresolvedReferenceBase.cs" />
+    <Compile Include="ProjectSystem\ConfigurationToBuild.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\SetEnvironmentVariable.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
@@ -176,9 +177,9 @@
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Services\FlexService.cs" />
-    <Compile Include="DependencyAnalyzer\ProjectRelationshipProcessing.cs" />
+    <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
     <Compile Include="DependencyAnalyzer\BuildJobFiles.cs" />
-    <Compile Include="DependencyAnalyzer\ComboBuildType.cs" />
+    <Compile Include="ProjectSystem\ComboBuildType.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
@@ -255,9 +256,8 @@
     <Compile Include="ExpertBuildConfiguration.cs" />
     <Compile Include="ExpertBuildDetail.cs" />
     <Compile Include="IFileSystem2.cs" />
-    <Compile Include="Logging\FakeLogger.cs" />
+    <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="AssemblyVersionInspector.cs" />
-    <Compile Include="Logging\ObservableLogReceiver.cs" />
     <Compile Include="Packaging\VersionAnalyzer.cs" />
     <Compile Include="Packaging\FileVersionDescriptor.cs" />
     <Compile Include="Packaging\IPackageContext.cs" />

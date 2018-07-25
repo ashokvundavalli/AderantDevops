@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0"> 
+ 
+  <PropertyGroup>
+    <_DependencyAnalysisIncludePattern>
+      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.cs;
+      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.csproj;
+      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.sln;
+      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.tt;
+    </_DependencyAnalysisIncludePattern>
+    <_DependencyAnalysisExcludePattern>
+      *\obj\**;
+      *\bin\**;
+      SystemUnderTest\**
+      </_DependencyAnalysisExcludePattern>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Content Include="$(_DependencyAnalysisIncludePattern)" Exclude="$(_DependencyAnalysisExcludePattern)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>      
+      <Visible>true</Visible>
+    </Content>
+  </ItemGroup>
+    
+</Project>
+

@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Aderant.Build.Services;
 using LibGit2Sharp;
@@ -16,28 +19,35 @@ namespace Aderant.Build.VersionControl {
         public void Initialize(Context context) {
         }
 
-        public IEnumerable<IPendingChange> GetPendingChanges(string workingDirectory) {
-            string gitDir = Repository.Discover(workingDirectory);
+        public IReadOnlyCollection<IPendingChange> GetPendingChanges(string repositoryPath) {
+            string gitDir = Repository.Discover(repositoryPath);
 
             using (var repo = new Repository(gitDir)) {
                 var status = repo.RetrieveStatus();
-
+                
                 if (!status.IsDirty) {
-                    return Enumerable.Empty<IPendingChange>();
+                    return new IPendingChange[0];
                 }
 
-                IEnumerable<PendingChange> changes =
-                    status.Added.Select(s => new PendingChange(s.FilePath, FileStatus.Added))
-                        .Concat(status.RenamedInWorkDir.Select(s => new PendingChange(s.FilePath, FileStatus.Renamed)))
-                        .Concat(status.Modified.Select(s => new PendingChange(s.FilePath, FileStatus.Modified)))
-                        .Concat(status.Removed.Select(s => new PendingChange(s.FilePath, FileStatus.Removed)))
-                        .Concat(status.Untracked.Select(s => new PendingChange(s.FilePath, FileStatus.Untracked)));
+                var workingDirectory = repo.Info.WorkingDirectory;
 
-                return changes;
+                var changes =
+                    status.Added.Select(s => new PendingChange(s.FilePath, FileStatus.Added))
+                        .Concat(status.RenamedInWorkDir.Select(s => new PendingChange(CleanPath(workingDirectory, s), FileStatus.Renamed)))
+                        .Concat(status.Modified.Select(s => new PendingChange(CleanPath(workingDirectory, s), FileStatus.Modified)))
+                        .Concat(status.Removed.Select(s => new PendingChange(CleanPath(workingDirectory, s), FileStatus.Removed)))
+                        .Concat(status.Untracked.Select(s => new PendingChange(CleanPath(workingDirectory, s), FileStatus.Untracked)));
+
+                return changes.ToList();
             }
+        }
+
+        private static string CleanPath(string workingDirectory, StatusEntry s) {
+            return Path.GetFullPath(Path.Combine(workingDirectory, s.FilePath));
         }
     }
 
+    [DebuggerDisplay("Path: {Path} Status: {Status}")]
     internal class PendingChange : IPendingChange {
         public PendingChange(string path, FileStatus status) {
             Path = path;
@@ -67,6 +77,6 @@ namespace Aderant.Build.VersionControl {
     /// </summary>
     public interface IVersionControlService : IFlexService {
 
-        IEnumerable<IPendingChange> GetPendingChanges(string workingDirectory);
+        IReadOnlyCollection<IPendingChange> GetPendingChanges(string repositoryPath);
     }
 }
