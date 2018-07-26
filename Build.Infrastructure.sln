@@ -116,6 +116,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Build", "Test\Test.Bui
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaketArtifactTool", "Src\Sources\PaketArtifactTool\PaketArtifactTool.csproj", "{72BB7EF7-8D07-428F-AF91-D5B22DE2B909}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtifactService", "src\Sources\ArtifactService\ArtifactService.csproj", "{9C6F057E-72E8-4584-9744-E3184ECB03E9}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Src\ContentProject\BuildSrc.projitems*{fdd10972-7785-4bf7-9381-225d2d35c098}*SharedItemsImports = 13
@@ -197,6 +199,10 @@ Global
 		{72BB7EF7-8D07-428F-AF91-D5B22DE2B909}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72BB7EF7-8D07-428F-AF91-D5B22DE2B909}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{72BB7EF7-8D07-428F-AF91-D5B22DE2B909}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C6F057E-72E8-4584-9744-E3184ECB03E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C6F057E-72E8-4584-9744-E3184ECB03E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C6F057E-72E8-4584-9744-E3184ECB03E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C6F057E-72E8-4584-9744-E3184ECB03E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
