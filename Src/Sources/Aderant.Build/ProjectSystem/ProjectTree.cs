@@ -107,7 +107,7 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> ComputeBuildSequence(Context context, AnalysisContext analysisContext, BuildJobFiles jobFiles) {
+        public async Task<Project> ComputeBuildSequence(Context context, AnalysisContext analysisContext, OrchestrationFiles jobFiles) {
             await LoadProjects(context.BuildRoot.FullName, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
@@ -292,6 +292,6 @@ namespace Aderant.Build.ProjectSystem {
     }
 
     internal interface ISequencer {
-        Project CreateProject(Context context, BuildJobFiles files, DependencyGraph graph);
+        Project CreateProject(Context context, OrchestrationFiles files, DependencyGraph graph);
     }
 }

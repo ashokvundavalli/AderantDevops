@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     /// <summary>
@@ -16,6 +18,9 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string BuildFlavor { get; set; }
 
+        //[Output]
+        //public ITaskItem[] PropertiesToCreate { get; set; }
+
         [Required]
         public override string ContextFileName {
             get; set;
@@ -31,7 +36,31 @@ namespace Aderant.Build.Tasks {
 
             SetFlavor();
 
+            //List<TaskItem> taskItems = new List<TaskItem>();
+
+            //CreateTaskItems(taskItems, Context);
+            //CreateTaskItems(taskItems, Context.Switches);
+
+            //PropertiesToCreate = taskItems.ToArray();
+
             return !Log.HasLoggedErrors;
+        }
+
+        private void CreateTaskItems(List<TaskItem> taskItems, object o) {
+            var clrProperties = o.GetType().GetProperties();
+            foreach (var clrProperty in clrProperties) {
+                var attributes = clrProperty.GetCustomAttributes(typeof(CreatePropertyAttribute), false);
+                if (attributes.Length > 0) {
+                    var value = clrProperty.GetValue(o);
+
+                    if (value != null) {
+                        var taskItem = new TaskItem(clrProperty.DeclaringType.Name + "_" + clrProperty.Name);
+                        taskItem.SetMetadata("Value", value.ToString());
+
+                        taskItems.Add(taskItem);
+                    }
+                }
+            }
         }
 
         private void SetFlavor() {

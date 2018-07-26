@@ -211,12 +211,7 @@ namespace Aderant.Build {
 
         public virtual Stream CreateFile(string path) {
             string fullPath = GetFullPath(path);
-
-            // before creating the file, ensure the parent directory exists first.
-            string directory = Path.GetDirectoryName(fullPath);
-            if (!Directory.Exists(directory)) {
-                Directory.CreateDirectory(directory);
-            }
+            EnsureDirectory(Path.GetDirectoryName(fullPath));
 
             return File.Create(fullPath);
         }
@@ -246,14 +241,19 @@ namespace Aderant.Build {
             }
 
             try {
-                string destinationDirectory = Path.GetDirectoryName(destFull);
-
-                EnsureDirectory(destinationDirectory);
+                EnsureDirectory(Path.GetDirectoryName(destFull));
 
                 File.Move(srcFull, destFull);
             } catch (IOException) {
                 File.Delete(srcFull);
             }
+        }
+
+        public void CopyFile(string source, string destination) {
+            // before creating the file, ensure the parent directory exists first.
+            EnsureDirectory(Path.GetDirectoryName(destination));
+
+            File.Copy(source, destination);
         }
 
         public virtual void CopyDirectory(string source, string destination) {
@@ -354,7 +354,11 @@ namespace Aderant.Build {
 
         protected virtual void EnsureDirectory(string path) {
             path = GetFullPath(path);
-            Directory.CreateDirectory(path);
+
+            // If the destination directory doesn't exist, create it.
+            if (!DirectoryExists(path)) {
+                Directory.CreateDirectory(path);
+            }
         }
 
         private void CopyDirectoryInternal(string source, string destination, bool recursive) {
@@ -366,10 +370,7 @@ namespace Aderant.Build {
             }
 
             DirectoryInfo[] dirs = dir.GetDirectories();
-            // If the destination directory doesn't exist, create it.
-            if (!DirectoryExists(destination)) {
-                EnsureDirectory(destination);
-            }
+            EnsureDirectory(destination);
 
             // Get the files in the directory and copy them to the new location.
             FileInfo[] files = dir.GetFiles();

@@ -62,9 +62,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
     </Reference>
-    <Reference Include="OpenSoftware.DgmlBuilder">
-      <HintPath>..\..\..\packages\OpenSoftware.DgmlBuilder\lib\net45\OpenSoftware.DgmlBuilder.dll</HintPath>
-    </Reference>
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
@@ -152,6 +149,7 @@
     <Compile Include="ProjectSystem\References\UnresolvedReferenceBase.cs" />
     <Compile Include="ProjectSystem\ConfigurationToBuild.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
+    <Compile Include="Tasks\PackageArtifacts.cs" />
     <Compile Include="Tasks\SetEnvironmentVariable.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
@@ -178,7 +176,7 @@
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Services\FlexService.cs" />
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
-    <Compile Include="DependencyAnalyzer\BuildJobFiles.cs" />
+    <Compile Include="DependencyAnalyzer\OrchestrationFiles.cs" />
     <Compile Include="ProjectSystem\ChangesToConsider.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
@@ -221,7 +219,7 @@
     <Compile Include="DependencyAnalyzer\WellKnownProjectTypeGuids.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
     <Compile Include="DependencyAnalyzer\ChangesetResolver.cs" />
-    <Compile Include="DependencyAnalyzer\BuildJob.cs" />
+    <Compile Include="DependencyAnalyzer\BuildPipeline.cs" />
     <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\TextTemplateAnalyzer.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />

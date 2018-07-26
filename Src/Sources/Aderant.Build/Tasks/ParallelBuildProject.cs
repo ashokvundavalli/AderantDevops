@@ -79,7 +79,7 @@ namespace Aderant.Build.Tasks {
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
             
-            var jobFiles = new BuildJobFiles {
+            var jobFiles = new OrchestrationFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
                 GroupOrchestrationFile = GroupOrchestrationFile,

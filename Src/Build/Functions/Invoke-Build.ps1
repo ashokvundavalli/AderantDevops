@@ -40,6 +40,9 @@ function Global:Invoke-Build2
         [Parameter()]
         [switch]$Resume,
 
+        [Parameter()]
+        [switch]$SkipCompile,
+
         #[Parameter]
         #[switch]$integration,
 
@@ -76,39 +79,44 @@ function Global:Invoke-Build2
     $switches.Clean = $Clean.IsPresent
     $switches.Release = $Release.IsPresent
     $switches.Resume = $Resume.IsPresent
+    $switches.SkipCompile = $SkipCompile.IsPresent
         
     $context.Switches = $switches
 
     function CreateArgumentStringForContext($context) {
-        $args = [System.Collections.Generic.HashSet[string]]::new()          
+         $set = [System.Collections.Generic.HashSet[string]]::new()          
 
         if ($context.BuildMetadata -ne $null) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
-                $args.Add("/v:diag") | Out-Null
+                $set.Add("/v:diag") | Out-Null
             }
 
             if ($context.BuildMetadata.IsPullRequest) {
-                $args.Add("/v:diag")| Out-Null
+                $set.Add("/v:diag")| Out-Null
             }
         }
         
         # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
-        $args.Add("/nologo") | Out-Null
-        $args.Add("/nr:false") | Out-Null
+        $set.Add("/nologo") | Out-Null
+        $set.Add("/nr:false") | Out-Null
 
         # Multi-core build
-        $args.Add("/m")| Out-Null
+        $set.Add("/m")| Out-Null
 
         if ($context.IsDesktopBuild) {
-            $args.Add("/p:IsDesktopBuild=true") | Out-Null
+            $set.Add("/p:IsDesktopBuild=true") | Out-Null
         } else {
-            $args.Add("/p:IsDesktopBuild=false") | Out-Null
-            $args.Add("/clp:PerformanceSummary") | Out-Null
+            $set.Add("/p:IsDesktopBuild=false") | Out-Null
+            $set.Add("/clp:PerformanceSummary") | Out-Null
         }
 
-        $args.Add("/p:VisualStudioVersion=14.0") | Out-Null
+        $set.Add("/p:VisualStudioVersion=14.0") | Out-Null
 
-        return [string]::Join(" ", $args)
+        if ($context.Switches.SkipCompile) {
+            $set.Add("/p:Switches_SkipCompile=true") | Out-Null
+        }
+
+        return [string]::Join(" ", $set)
     }
     
     [string]$repositoryPath = $null

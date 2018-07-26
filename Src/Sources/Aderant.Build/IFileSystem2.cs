@@ -37,6 +37,8 @@ namespace Aderant.Build {
 
         void MoveFile(string source, string destination);
 
+        void CopyFile(string source, string destination);
+        
         Stream CreateFile(string path);
 
         Stream OpenFile(string path);

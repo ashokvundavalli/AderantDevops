@@ -5,12 +5,18 @@
 
   <Import Project="$(InstanceProjectFile)" />
   <Import Project="Aderant.Build.Common.targets" />
+
+  <PropertyGroup>
+    <DispatchToInnerBuildDependsOn>
+      AssignProjectProperties
+    </DispatchToInnerBuildDependsOn>
+  </PropertyGroup>
     
   <!-- 
   This project file exists to provide an appropriate seam for adding new properties to the group without having to 
   modify the project generator itself.
   -->
-  <Target Name="DispatchToInnerBuild" DependsOnTargets="AssignProjectProperties">
+  <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
 
     <Message Text="
 ╔═════════════════════════════════════════════════════════════════════╗
@@ -23,7 +29,12 @@
       <BuildAction>Build</BuildAction>
     </PropertyGroup>
 
-    <MSBuild Projects="@(ProjectsInGroup)"
+    <ItemGroup>
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsAfterTargets)' == 'true' And '$(Switches_SkipCompile)' == 'true'" />
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
+    </ItemGroup>
+
+    <MSBuild Projects="@(_ProjectsInGroup)"
              Targets="$(BuildAction)"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>

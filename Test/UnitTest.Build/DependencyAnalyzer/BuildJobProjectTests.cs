@@ -16,7 +16,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var mock = new Mock<IFileSystem2>();
             mock.Setup(s => s.Root).Returns("");
 
-            var project = new BuildJob(mock.Object);
+            var project = new BuildPipeline(mock.Object);
 
             var items = new List<List<IDependable>> {
                 new List<IDependable> {
@@ -24,7 +24,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 }
             };
 
-            Project generateProject = project.GenerateProject(items, new BuildJobFiles { BeforeProjectFile = "A", AfterProjectFile = "B" }, null);
+            Project generateProject = project.GenerateProject(items, new OrchestrationFiles { BeforeProjectFile = "A", AfterProjectFile = "B" }, null);
 
             var targets = generateProject.Elements.OfType<Target>().ToList();
             Assert.AreEqual("RunProjectsToBuild0", targets[0].Name);

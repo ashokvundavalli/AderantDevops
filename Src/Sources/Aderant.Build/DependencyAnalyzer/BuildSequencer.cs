@@ -21,7 +21,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(Context context, BuildJobFiles files, DependencyGraph graph) {
+        public Project CreateProject(Context context, OrchestrationFiles files, DependencyGraph graph) {
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
             // According to options, find out which projects are selected to build.
@@ -32,7 +32,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
-            var job = new BuildJob(fileSystem);
+            var job = new BuildPipeline(fileSystem);
             return job.GenerateProject(groups, files, null);
         }
 

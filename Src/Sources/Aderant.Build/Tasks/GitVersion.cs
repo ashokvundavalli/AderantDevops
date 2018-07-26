@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
@@ -12,8 +12,6 @@ namespace Aderant.Build.Tasks {
         public string WorkingDirectory { get; set; }
 
         public bool Discover { get; set; }
-
-        public ITaskItem GitFolder { get; set; }
 
         public bool AllowTfsBuildVariableFallback { get; set; } = true;
 

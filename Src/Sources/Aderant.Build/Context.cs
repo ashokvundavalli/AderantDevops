@@ -2,10 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
-using Aderant.Build.Tasks;
 
 namespace Aderant.Build {
 
@@ -94,12 +92,10 @@ namespace Aderant.Build {
                 }
             }
         }
-
+        
         public BuildSwitches Switches {
             get { return switches; }
-            set {
-                switches = value;
-            }
+            set { switches = value; }
         }
 
         internal IContextualServiceProvider ServiceProvider {
@@ -113,6 +109,8 @@ namespace Aderant.Build {
         }
 
         public ConfigurationToBuild ConfigurationToBuild { get; set; }
+
+        public string PrimaryDropLocation { get; set; } = @"\\ap.aderant.com\akl\tempswap\☃";
 
         /// <summary>
         /// Creates a new instance of T.
@@ -173,6 +171,13 @@ namespace Aderant.Build {
         public bool Release { get; set; }
         public bool DryRun { get; set; }
         public bool Resume { get; set; }
+
+        [CreateProperty]
+        public bool SkipCompile { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    internal class CreatePropertyAttribute : Attribute {
     }
 
 }

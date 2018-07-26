@@ -20,32 +20,32 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             HashSet<string> dirtyProjects = new HashSet<string> { "ASS1" };
 
-            var p1 = new ConfiguredProject1(tree.Object, fs.Object) {
+            var p1 = new TestConfiguredProject(tree.Object, fs.Object) {
                 outputAssembly = "ASS1",
                 IsDirty = true,
                 IncludeInBuild = true
             };
 
-            var p2 = new ConfiguredProject1(tree.Object, fs.Object) {
+            var p2 = new TestConfiguredProject(tree.Object, fs.Object) {
                 outputAssembly = "ASS2",
                 IsDirty = false,
                 IncludeInBuild = true
             };
 
-            var m1 = new ConfiguredProject1(tree.Object, fs.Object) {
+            var m1 = new TestConfiguredProject(tree.Object, fs.Object) {
                 outputAssembly = "MOD1",
                 IncludeInBuild = true
             };
 
             m1.AddResolvedDependency(null, p1);
-            var m2 = new ConfiguredProject1(tree.Object, fs.Object) {
+            var m2 = new TestConfiguredProject(tree.Object, fs.Object) {
                 outputAssembly = "MOD2",
 
                 IncludeInBuild = true
             };
             m2.AddResolvedDependency(null, m1);
 
-            var m3 = new ConfiguredProject1(tree.Object, fs.Object) {
+            var m3 = new TestConfiguredProject(tree.Object, fs.Object) {
                 outputAssembly = "MOD3",
                 IncludeInBuild = true
             };

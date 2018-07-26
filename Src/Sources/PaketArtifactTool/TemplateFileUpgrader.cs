@@ -57,7 +57,7 @@ namespace PaketArtifactTool {
             logger.Info($"Writing section \"{Name}\" to \"{proj}\".");
 
             var xmlContents = fs.ReadAllText(proj);
-            XDocument document = XDocument.Parse(xmlContents);
+            XDocument document = XDocument.Parse(xmlContents, LoadOptions.PreserveWhitespace);
             
             if (document?.Root == null) {
                 logger.Error("Unable to parse document");
@@ -81,7 +81,7 @@ namespace PaketArtifactTool {
 
             XElement artifact = null;
             foreach (var currentArtifact in itemGroup.Descendants(ns + "PackageArtifact")) {
-                var name = currentArtifact.Elements(ns + "Name").FirstOrDefault()?.Value;
+                var name = currentArtifact.Elements(ns + "ArtifactId").FirstOrDefault()?.Value;
                 if (name == Name) {
                     artifact = currentArtifact;
                     break;
@@ -94,17 +94,24 @@ namespace PaketArtifactTool {
             } else {
                 logger.Info($"Adding new artifact for {Name}");
             }
-
+          
             artifact = new XElement(
                 ns + "PackageArtifact",
-                new XElement(ns + "Name", Name),
+                new XElement(ns + "ArtifactId", Name),
                 new XAttribute("Include", Convert(Files)));
 
             itemGroup.Add(artifact);
 
-            xmlContents = new XDeclaration("1.0", "utf-8", "no") + Environment.NewLine + document;
-            fs.WriteAllText(proj, xmlContents);
-           
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.OmitXmlDeclaration = true;
+            settings.NewLineHandling = NewLineHandling.Replace;
+            settings.Indent = true;
+            settings.IndentChars = "  ";
+            settings.DoNotEscapeUriAttributes = true;
+            
+            using (XmlWriter xw = XmlWriter.Create(proj, settings)) {
+                document.Save(xw);
+            }
         }
 
         private string Convert(List<string> files) {
@@ -118,7 +125,7 @@ namespace PaketArtifactTool {
 
                 string[] parts = file.Split(' ');
                 if (parts.Length > 0) {
-                    sb.Append(SanitizePath("$(SolutionRoot)/" + parts[0].Trim()));
+                    sb.AppendLine(SanitizePath("$(SolutionRoot)/" + parts[0].Trim()));
                 }
             }
 
@@ -129,4 +136,5 @@ namespace PaketArtifactTool {
             return path.Replace("/", "\\");
         }
     }
+
 }

@@ -12,17 +12,17 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
-    internal class BuildJob {
+    internal class BuildPipeline {
         private const string PropertiesKey = "Properties";
         private const string BuildGroupKey = "BuildGroupId";
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
 
-        public BuildJob(IFileSystem2 fileSystem) {
+        public BuildPipeline(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
-        public Project GenerateProject(List<List<IDependable>> projectGroups, BuildJobFiles instance, string buildFrom) {
+        public Project GenerateProject(List<List<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
             Project project = new Project();
 
             // Create a list of call targets for each build
@@ -56,8 +56,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ItemGroup itemGroup = new ItemGroup(
                     "ProjectsToBuild",
                     CreateItemGroupMembers(
-                        instance.BeforeProjectFile,
-                        instance.AfterProjectFile,
+                        orchestrationFiles.BeforeProjectFile,
+                        orchestrationFiles.AfterProjectFile,
                         projectGroup,
                         buildGroupCount,
                         buildFrom));
@@ -79,7 +79,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     new MSBuildTask {
                         BuildInParallel = "$(BuildInParallel)",
                         StopOnFirstFailure = true,
-                        Projects = instance.GroupOrchestrationFile,
+                        Projects = orchestrationFiles.GroupOrchestrationFile,
                         Properties = PropertyList.CreatePropertyString(
                             "InstanceProjectFile=$(MSBuildThisFileFullPath)",
                             $"{BuildGroupKey}={buildGroupCount}",
@@ -184,7 +184,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                     [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture),
 
                     // Indicates this file is part of the build system itself
-                    ["IsOrchestrationParticipant"] = bool.TrueString,
+                    ["IsAfterTargets"] = node.IsAfterTargets ? bool.TrueString : bool.FalseString,
+                    ["IsBeforeTargets"] = !node.IsAfterTargets ? bool.TrueString : bool.FalseString,
                     ["IsProjectFile"] = bool.FalseString,
                 };
                 return item;

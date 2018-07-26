@@ -43,10 +43,30 @@
       MobileBuild;
       PostBuild;
       SignInstallers;-->
+      PackageArtifactsCore;
       CopyToDropV2;
       RunCopyToDropV2;
     </AfterBuildDependsOn>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageArtifactsDependsOn>
+      $(PackageArtifactsDependsOn);
+      PackageArtifacts
+    </PackageArtifactsDependsOn>
+  </PropertyGroup>
+
+  <!--Stub.-->
+  <Target Name="PackageArtifacts" />
+
+  <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
+
+    <PublishArtifacts
+      SolutionRoot="$(SolutionRoot)"
+      RootingPaths="$(BinModuleDirectory);$(BinTestDirectory)"
+      Artifacts="@(PackageArtifact)" />
+
+  </Target>
 
   <Target Name="CollectTestAssemblies">
 

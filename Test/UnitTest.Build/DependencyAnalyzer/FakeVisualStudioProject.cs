@@ -14,10 +14,10 @@ namespace UnitTest.Build.DependencyAnalyzer {
         }
     }
 
-    internal class ConfiguredProject1 : ConfiguredProject {
+    internal class TestConfiguredProject : ConfiguredProject {
         internal string outputAssembly;
 
-        public ConfiguredProject1(IProjectTree tree, IFileSystem fileSystem)
+        public TestConfiguredProject(IProjectTree tree, IFileSystem fileSystem)
             : base(tree, fileSystem) {
         }
 

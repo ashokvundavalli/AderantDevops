@@ -19,7 +19,7 @@ namespace PaketArtifactTool.ViewModels {
         /// Initializes a new instance of the <see cref="MainViewModel"/> class.
         /// </summary>
         public MainViewModel() {
-            RootFolder = @"C:\Source\MonoTest";
+            RootFolder = @"C:\Source\ExpertSuite\Framework";
         }
 
         private string rootFolder;

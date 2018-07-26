@@ -6,6 +6,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
+
     public sealed class GetFileVersionInfo : Task {
         [Required]
         public ITaskItem[] Files { get; set; }
