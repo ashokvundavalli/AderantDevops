@@ -22,7 +22,7 @@
   <Target Name="OnBeforeCompile" BeforeTargets="$(PrepareResourcesDependsOn);BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
 
 
-  <Target Name="Get_AssemblyAttributes">
+  <Target Name="GenerateAssemblyAttributes">
 
     <PropertyGroup>
       <!-- Path.Combine to try handle trailing/non-trailing slashes -->
@@ -40,7 +40,7 @@
 
     <GitVersion
       Condition="'$(_HasGitDir)' == 'true'"
-      WorkingDirectory="$(SolutionDirectoryPath)">
+      WorkingDirectory="$(_GitDir)">
       <Output PropertyName="GitCanonicalBranchName" TaskParameter="CanonicalBranchName" />
       <Output PropertyName="GitSha" TaskParameter="Sha" />
     </GitVersion>
@@ -91,7 +91,7 @@
     assembly attribute values and MS Build will then execute CoreGenerateAssembly to generate a new file.
   -->
   <Target Name="CreateGeneratedAssemblyInfoInputsCacheFile"
-          DependsOnTargets="Get_AssemblyAttributes">
+          DependsOnTargets="GenerateAssemblyAttributes">
 
     <PropertyGroup>
       <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>

@@ -13,7 +13,7 @@
     <PropertyGroup>
       <GlobalContextProperties>@(_PropertiesToCreate->'%(Identity)=%(Value)')</GlobalContextProperties>
     </PropertyGroup>
-
+    
   </Target>
     
 </Project>

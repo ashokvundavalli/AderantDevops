@@ -116,6 +116,7 @@
   </PropertyGroup>
 
   <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" Condition="'$(NoMSBuildCommunityTasks)' != 'true'" />
+  <Import Project="Aderant.Build.Versioning.targets" />
 
   <!--
     ==========================================================================================
