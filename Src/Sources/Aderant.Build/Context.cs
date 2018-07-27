@@ -23,7 +23,7 @@ namespace Aderant.Build {
             Configuration = new Dictionary<object, object>();
             TaskDefaults = new Dictionary<string, IDictionary>();
             TaskIndex = -1;
-            Variables = new Dictionary<string, object>();
+            Variables = new Dictionary<string, string>();
             Environment = "";
             PipelineName = "";
             TaskName = "";
@@ -76,7 +76,7 @@ namespace Aderant.Build {
 
         public DirectoryInfo Temp { get; set; }
 
-        public IDictionary Variables { get; private set; }
+        public IDictionary<string, string> Variables { get; private set; }
 
         public BuildMetadata BuildMetadata {
             get { return buildMetadata; }
@@ -110,26 +110,18 @@ namespace Aderant.Build {
 
         public ConfigurationToBuild ConfigurationToBuild { get; set; }
 
-        public string PrimaryDropLocation { get; set; } = @"\\ap.aderant.com\akl\tempswap\☃";
+        public string PrimaryDropLocation { get; set; }
 
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>
         public T GetService<T>() where T : class {
-            IFlexService svc = ServiceProvider.GetService(typeof(T)) as IFlexService;
-            if (svc != null) {
-                svc.Initialize(this);
-            }
-
+            var svc = ServiceProvider.GetService(typeof(T));
             return (T)svc;
         }
 
         public object GetService(string contract) {
-            IFlexService svc = ServiceProvider.GetService<object>(this, contract, null) as IFlexService;
-            if (svc != null) {
-                svc.Initialize(this);
-            }
-
+            var svc = ServiceProvider.GetService<object>(this, contract, null);
             return svc;
         }
 

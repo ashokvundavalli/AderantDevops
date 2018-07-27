@@ -68,6 +68,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 // e.g. <Target Name="Foo">
                 Target build = new Target("Run" + CreateGroupName(buildGroupCount));
+                build.DependsOnTargets.Add(new Target("CreateGlobalProperties"));
                 if (buildGroupCount > 0) {
                     var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == CreateGroupName(buildGroupCount - 1));
                     if (target != null) {
@@ -79,12 +80,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                     new MSBuildTask {
                         BuildInParallel = "$(BuildInParallel)",
                         StopOnFirstFailure = true,
-                        Projects = orchestrationFiles.GroupOrchestrationFile,
+                        Projects = orchestrationFiles.GroupExecutionFile,
                         Properties = PropertyList.CreatePropertyString(
                             "InstanceProjectFile=$(MSBuildThisFileFullPath)",
                             $"{BuildGroupKey}={buildGroupCount}",
                             "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
-                            "BuildInParallel=$(BuildInParallel)")
+                            "BuildInParallel=$(BuildInParallel)",
+                            "GlobalContextProperties=$(GlobalContextProperties)")
                     });
 
                 project.Add(build);
@@ -103,6 +105,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }));
             project.Add(groups);
             project.Add(afterCompile);
+            project.Add(new ImportElement { Project = orchestrationFiles.GlobalPropertiesFile });
 
             // The target that MSBuild will call into to start the build
             project.DefaultTarget = afterCompile;
@@ -258,4 +261,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             return string.Join(";", lines);
         }
     }
+
 }

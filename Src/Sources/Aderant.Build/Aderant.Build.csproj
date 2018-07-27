@@ -106,6 +106,7 @@
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
+    <Compile Include="MSBuild\ImportElement.cs" />
     <Compile Include="DependencyAnalyzer\Model\AbstractArtifact.cs" />
     <Compile Include="MSBuild\Comment.cs" />
     <Compile Include="Model\ResolvedDependency.cs" />
@@ -174,7 +175,6 @@
     <Compile Include="Context.cs" />
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
-    <Compile Include="Services\FlexService.cs" />
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
     <Compile Include="DependencyAnalyzer\OrchestrationFiles.cs" />
     <Compile Include="ProjectSystem\ChangesToConsider.cs" />

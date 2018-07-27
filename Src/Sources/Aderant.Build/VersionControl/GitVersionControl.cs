@@ -2,7 +2,6 @@
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
-using Aderant.Build.Services;
 using LibGit2Sharp;
 
 namespace Aderant.Build.VersionControl {
@@ -78,7 +77,7 @@ namespace Aderant.Build.VersionControl {
     /// <summary>
     /// Represents a version control service, such as Git or Team Foundation.
     /// </summary>
-    public interface IVersionControlService : IFlexService {
+    public interface IVersionControlService {
 
         IReadOnlyCollection<IPendingChange> GetPendingChanges(string repositoryPath);
     }

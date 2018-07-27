@@ -11,7 +11,7 @@ namespace Aderant.Build {
     [Export]
     [Export(typeof(IFileSystem2))]
     [Export(typeof(IFileSystem))]
-    [Export("Aderant.Build.Services.FileSystemService")]
+    [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
         private ILogger logger;
 
@@ -20,7 +20,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Creates a new instance of a PhysicalFileSystem at the given root directory.
+        /// Creates a new instance a a PhysicalFileSystem at the given root directory.
         /// </summary>
         /// <param name="root">The root directory</param>
         public PhysicalFileSystem(string root)
@@ -53,7 +53,11 @@ namespace Aderant.Build {
             return SearchByPattern(startingDirectory, filter, ceilingDirectories);
         }
 
-        public string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null) {
+        public string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName) {
+            return GetDirectoryNameOfFileAbove(startingDirectory, fileName, null, false);
+        }
+
+        public string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null, bool considerDirectories = false) {
             if (startingDirectory == null) {
                 throw new ArgumentNullException(nameof(startingDirectory));
             }
@@ -62,7 +66,7 @@ namespace Aderant.Build {
                 throw new ArgumentNullException(nameof(fileName));
             }
 
-            return SearchForFile(startingDirectory, fileName);
+            return SearchForFile(startingDirectory, fileName, new SearchOptions { CeilingDirectories = ceilingDirectories, ConsiderDirectories = considerDirectories});
         }
 
         public virtual string GetFullPath(string path) {
@@ -307,7 +311,7 @@ namespace Aderant.Build {
             return Enumerable.Empty<string>();
         }
 
-        private string SearchForFile(string startingDirectory, string fileName) {
+        private string SearchForFile(string startingDirectory, string fileName, SearchOptions searchOptions) {
             // Canonicalize our starting location
             string lookInDirectory = Path.GetFullPath(startingDirectory);
 
@@ -318,7 +322,7 @@ namespace Aderant.Build {
                 // If we successfully locate the file in the directory that we're
                 // looking in, simply return that location. Otherwise we'll
                 // keep moving up the tree.
-                if (this.FileExists(possibleFileDirectory)) {
+                if (this.FileExists(possibleFileDirectory) || searchOptions.ConsiderDirectories && DirectoryExists(possibleFileDirectory)) {
                     // We've found the file, return the directory we found it in
                     return lookInDirectory;
                 } else {
@@ -399,5 +403,10 @@ namespace Aderant.Build {
                 }
             }
         }
+    }
+
+    internal struct SearchOptions {
+        public IEnumerable<string> CeilingDirectories { get; set; }
+        public bool ConsiderDirectories { get; set; }
     }
 }

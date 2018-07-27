@@ -116,9 +116,10 @@
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
       InstanceFile="$(BranchBuildProject)"
-      GroupOrchestrationFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
+      GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.PrepareForBuild.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets"
+      GlobalPropertiesFile="$(MSBuildThisFileDirectory)ComboBuild.GlobalProperties.proj"
       ExcludePaths="@(ExcludePaths)"
       ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>

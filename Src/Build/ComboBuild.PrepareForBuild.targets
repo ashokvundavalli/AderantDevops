@@ -146,18 +146,19 @@
     ==========================================================================================
   -->
   <Target Name="UpdateModuleFileVersion"
-      Condition="'$(BUILD_BUILDURI)' != ''">
+          Condition="'$(BUILD_BUILDURI)' != ''">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
     </PropertyGroup>
 
-    <FileUpdate Files="$(AssemblyInfoFile)"
-        IgnoreCase="true"
-        Multiline="true"
-        Singleline="false"
-        Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
-        ReplacementText="${section1}$(FileVersion)${section2}" />
+    <FileUpdate
+      Files="$(AssemblyInfoFile)"
+      IgnoreCase="true"
+      Multiline="true"
+      Singleline="false"
+      Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
+      ReplacementText="${section1}$(FileVersion)${section2}" />
 
   </Target>
 

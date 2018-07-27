@@ -133,7 +133,7 @@
           Outputs="$(GeneratedAssemblyInfoFile)">
           
     <Error Condition="'@(_AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
-    <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''" Text="GeneratedAssemblyInfoFile is undefined" />
+    <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''"  Text="GeneratedAssemblyInfoFile is undefined" />
 
     <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)" 
                        Language="$(Language)" 

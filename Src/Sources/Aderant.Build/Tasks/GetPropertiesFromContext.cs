@@ -18,8 +18,8 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string BuildFlavor { get; set; }
 
-        //[Output]
-        //public ITaskItem[] PropertiesToCreate { get; set; }
+        [Output]
+        public ITaskItem[] PropertiesToCreate { get; set; }
 
         [Required]
         public override string ContextFileName {
@@ -36,14 +36,26 @@ namespace Aderant.Build.Tasks {
 
             SetFlavor();
 
-            //List<TaskItem> taskItems = new List<TaskItem>();
-
-            //CreateTaskItems(taskItems, Context);
-            //CreateTaskItems(taskItems, Context.Switches);
-
-            //PropertiesToCreate = taskItems.ToArray();
+            CreatePropertyCollection();
 
             return !Log.HasLoggedErrors;
+        }
+
+        private void CreatePropertyCollection() {
+            List<TaskItem> taskItems = new List<TaskItem>();
+            CreateTaskItems(taskItems, Context);
+            CreateTaskItems(taskItems, Context.Switches);
+
+            if (Context.Variables != null) {
+                foreach (var kvp in Context.Variables) {
+                    var taskItem = new TaskItem(kvp.Key);
+                    taskItem.SetMetadata("Value", kvp.Value);
+
+                    taskItems.Add(taskItem);
+                }
+            }
+
+            PropertiesToCreate = taskItems.ToArray();
         }
 
         private void CreateTaskItems(List<TaskItem> taskItems, object o) {

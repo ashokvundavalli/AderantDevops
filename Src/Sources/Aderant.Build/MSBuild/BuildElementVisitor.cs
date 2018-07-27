@@ -28,5 +28,8 @@ namespace Aderant.Build.MSBuild {
 
         public virtual void Visit(Comment buildStep) {
         }
+
+        public virtual void Visit(ImportElement element) {
+        }
     }
 }

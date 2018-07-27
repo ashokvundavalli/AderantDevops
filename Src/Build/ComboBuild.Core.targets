@@ -92,6 +92,7 @@
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
           ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
+          _GitDir=$(_GitDir);
         </Properties>
       </ProjectsInGroup>
     </ItemGroup>

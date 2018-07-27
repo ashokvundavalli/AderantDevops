@@ -39,7 +39,7 @@ namespace Aderant.Build.Tasks {
         /// That is the file that represents the coordination tasks for a build instance.
         /// </summary>
         [Required]
-        public string GroupOrchestrationFile { get; set; }
+        public string GroupExecutionFile { get; set; }
 
         /// <summary>
         /// Gets or sets the before project file.
@@ -54,6 +54,11 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         [Required]
         public string AfterProjectFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the project which can define properties to inject into each build group execution.
+        /// </summary>
+        public string GlobalPropertiesFile { get; set; }
 
         public string ConfigurationToBuild { get; set; }
 
@@ -82,7 +87,8 @@ namespace Aderant.Build.Tasks {
             var jobFiles = new OrchestrationFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
-                GroupOrchestrationFile = GroupOrchestrationFile,
+                GroupExecutionFile = GroupExecutionFile,
+                GlobalPropertiesFile = GlobalPropertiesFile,
                 InstanceFile = InstanceFile,
             };
 

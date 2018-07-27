@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.MSBuild {
@@ -71,6 +72,11 @@ namespace Aderant.Build.MSBuild {
             }
 
             Add(element);
+        }
+
+
+        public override void Visit(ImportElement element) {
+            Add(new XElement(Xmlns + "Import", new XAttribute("Project", element.Project)));
         }
 
         public override void Visit(Comment comment) {

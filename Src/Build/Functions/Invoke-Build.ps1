@@ -1,4 +1,4 @@
-<#
+﻿<#
     .SYNOPSIS
     Runs a build based on your current context
 
@@ -63,27 +63,8 @@ function Global:Invoke-Build2
      
     Set-StrictMode -Version Latest
     $ErrorActionPreference = "Stop"
-                
-    [Aderant.Build.Context]$context = Get-BuildContext -CreateIfNeeded    
-    if ($context -eq $null) {
-        $context = New-BuildContext
-    }
 
-    $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
-
-    $switches = $context.Switches
-    $switches.PendingChanges = $PendingChanges.IsPresent
-    $switches.Everything = $Everything.IsPresent
-    $switches.Downstream = $Downstream.IsPresent
-    $switches.Transitive = $Transitive.IsPresent
-    $switches.Clean = $Clean.IsPresent
-    $switches.Release = $Release.IsPresent
-    $switches.Resume = $Resume.IsPresent
-    $switches.SkipCompile = $SkipCompile.IsPresent
-        
-    $context.Switches = $switches
-
-    function CreateArgumentStringForContext($context) {
+    function CreateToolArgumentString($context) {
          $set = [System.Collections.Generic.HashSet[string]]::new()          
 
         if ($context.BuildMetadata -ne $null) {
@@ -118,19 +99,62 @@ function Global:Invoke-Build2
 
         return [string]::Join(" ", $set)
     }
-    
-    [string]$repositoryPath = $null
 
+    function ApplyBranchConfig($context, $stringSearchDirectory) {        
+        $fs = $context.GetService("FileSystemService")
+        $configPath = $fs.GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
+
+        if (-not $configPath) {
+            #throw "Branch configuration file not found"
+            # TODO: shim
+            [xml]$config = "<BranchConfig>
+  <Artifacts>
+    <PrimaryDropLocation>\\ap.aderant.com\akl\tempswap\☃</PrimaryDropLocation>
+    <AlternativeDropLocation></AlternativeDropLocation>
+  </Artifacts>
+</BranchConfig>"
+        }
+
+        #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
+        $context.PrimaryDropLocation = $config.BranchConfig.Artifacts.PrimaryDropLocation
+    }
+
+    function FindGitDir($context, $stringSearchDirectory) {
+        $fs = $context.GetService("FileSystemService")
+        $path = $fs.GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
+        $context.Variables["_GitDir"] = "$path\.git"
+    }
+                
+    [Aderant.Build.Context]$context = Get-BuildContext -CreateIfNeeded
+
+    [string]$repositoryPath = $null
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
         $repositoryPath = $ModulePath
     } else {
         $repositoryPath = $ShellContext.CurrentModulePath
     }
 
+    $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
+
+    ApplyBranchConfig $context $repositoryPath
+
+    FindGitDir $context $repositoryPath
+
+    $switches = $context.Switches
+    $switches.PendingChanges = $PendingChanges.IsPresent
+    $switches.Everything = $Everything.IsPresent
+    $switches.Downstream = $Downstream.IsPresent
+    $switches.Transitive = $Transitive.IsPresent
+    $switches.Clean = $Clean.IsPresent
+    $switches.Release = $Release.IsPresent
+    $switches.Resume = $Resume.IsPresent
+    $switches.SkipCompile = $SkipCompile.IsPresent        
+    $context.Switches = $switches
+
     $context.StartedAt = [DateTime]::UtcNow
     $contextFileName = Publish-BuildContext $context
 
-    $args = CreateArgumentStringForContext $context
+    $args = CreateToolArgumentString $context
 
     $passThruArgs = ""
     if ($RemainingArgs) {
