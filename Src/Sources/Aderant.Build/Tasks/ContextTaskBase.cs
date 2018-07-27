@@ -81,6 +81,8 @@ namespace Aderant.Build.Tasks {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
 
+            ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
+
             Context ctx;
             object contextObject = MemoryMappedFileReaderWriter.Read(ContextFileName);
 

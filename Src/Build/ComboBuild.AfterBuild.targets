@@ -62,6 +62,7 @@
   <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <PublishArtifacts
+      ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
       RootingPaths="$(BinModuleDirectory);$(BinTestDirectory)"
       Artifacts="@(PackageArtifact)" />
