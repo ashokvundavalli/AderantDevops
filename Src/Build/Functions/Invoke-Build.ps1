@@ -109,7 +109,8 @@ function Global:Invoke-Build2
             # TODO: shim
             [xml]$config = "<BranchConfig>
   <Artifacts>
-    <PrimaryDropLocation>\\ap.aderant.com\akl\tempswap\☃</PrimaryDropLocation>
+  <!--\\ap.aderant.com\akl\tempswap\☃-->
+    <PrimaryDropLocation>\\dfs.aderant.com\ExpertSuite\_TEMP_</PrimaryDropLocation>
     <AlternativeDropLocation></AlternativeDropLocation>
   </Artifacts>
 </BranchConfig>"
