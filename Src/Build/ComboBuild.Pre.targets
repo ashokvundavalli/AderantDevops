@@ -28,6 +28,7 @@
       ZipWorkflowTemplateSource;
       GetDependencies;
       rmTransformTemplates;
+      UpdateVariableBag
     </RunBuildDependsOn>
   </PropertyGroup>
 
@@ -156,6 +157,22 @@
       Singleline="false"
       Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
       ReplacementText="${section1}$(FileVersion)${section2}" />
+
+  </Target>
+
+
+  <Target Name="UpdateVariableBag">
+
+    <PropertyGroup>
+      <FileVersion Condition="'$(FileVersion)' == ''">1.0.0.0</FileVersion>
+    </PropertyGroup>
+
+    <UpdateVariableBag
+      Id="$(VariableBagId)"
+      ContextFileName="$(ContextFileName)"
+      Output="false"
+      FileVersion="$(FileVersion)"
+      ModuleName="$(ModuleName)" />
 
   </Target>
 

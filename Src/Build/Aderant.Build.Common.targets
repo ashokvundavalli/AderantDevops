@@ -97,6 +97,7 @@
   <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.GetPropertiesFromContext"                            AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.UpdateVariableBag"                                   AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.SetEnvironmentVariable"                              AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.PublishArtifacts"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
@@ -295,18 +296,15 @@ doc.Save(File);
       <VersionRevision Condition="'$(VersionRevision)' == ''">0</VersionRevision>
     </PropertyGroup>
 
-    <Version BuildType="Automatic"
+    <Version
+      BuildType="Automatic"
       RevisionType="Automatic"
       Major="$(VersionMajor)"
       Minor="$(VersionMinor)" >
-      <Output TaskParameter="Major"
-        PropertyName="Major" />
-      <Output TaskParameter="Minor"
-        PropertyName="Minor" />
-      <Output TaskParameter="Build"
-        PropertyName="Build" />
-      <Output TaskParameter="Revision"
-        PropertyName="Revision" />
+      <Output TaskParameter="Major" PropertyName="Major" />
+      <Output TaskParameter="Minor" PropertyName="Minor" />
+      <Output TaskParameter="Build" PropertyName="Build" />
+      <Output TaskParameter="Revision" PropertyName="Revision" />
     </Version>
 
     <PropertyGroup>

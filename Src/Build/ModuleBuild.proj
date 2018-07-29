@@ -277,7 +277,6 @@ doc.Save(File);
     <CallTarget Targets="OnAfterBuild;PostBuild" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
     <CallTarget Targets="CopyToDrop" />
-    <CallTarget Targets="CopyToDropV2" />
     <CallTarget Targets="FinalizeBuild" />
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />

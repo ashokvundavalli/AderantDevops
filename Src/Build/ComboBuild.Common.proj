@@ -4,7 +4,7 @@
 
   <Import Project="Aderant.Build.Common.targets" />
 
-  <Target Name="CreateGlobalProperties">
+  <Target Name="CreateCommonProperties">
 
     <GetPropertiesFromContext ContextFileName="$(ContextFileName)">
       <Output TaskParameter="PropertiesToCreate" ItemName="_PropertiesToCreate" />

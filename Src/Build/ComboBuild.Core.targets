@@ -93,7 +93,8 @@
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
           ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
-          _GitDir=$(_GitDir)
+          _GitDir=$(_GitDir);
+          VariableBagId=$(_SolutionRoot)
         </Properties>
       </ProjectsInGroup>
     </ItemGroup>

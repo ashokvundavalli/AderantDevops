@@ -35,6 +35,7 @@
 
     <AfterBuildDependsOn>
       ValidateRequiredProperties;
+      OpenVariableBag;
       <!--RunTests;
       RunIntegrationTests;
       --><!--RunAutomationTests;--><!--
@@ -44,8 +45,6 @@
       PostBuild;
       SignInstallers;-->
       PackageArtifactsCore;
-      CopyToDropV2;
-      RunCopyToDropV2;
     </AfterBuildDependsOn>
   </PropertyGroup>
 
@@ -59,15 +58,33 @@
   <!--Stub.-->
   <Target Name="PackageArtifacts" />
 
+
+  <Target Name="OpenVariableBag">
+    <UpdateVariableBag
+      Id="$(VariableBagId)"
+      ContextFileName="$(ContextFileName)"
+      Output="true">
+      <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
+      <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
+    </UpdateVariableBag>
+
+  </Target>
+
+
   <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <PublishArtifacts
       ContextFileName="$(ContextFileName)"
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       SolutionRoot="$(SolutionRoot)"
-      RootingPaths="$(BinModuleDirectory);$(BinTestDirectory)"
-      Artifacts="@(PackageArtifact)" />
+      RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
+      Artifacts="@(PackageArtifact)"
+
+      ModuleName="$(ModuleName)"
+      FileVersion="$(FileVersion)" />
 
   </Target>
+
 
   <Target Name="CollectTestAssemblies">
 
@@ -150,18 +167,20 @@
   <Target Name="Build" DependsOnTargets="AfterBuild">
   </Target>
 
+
   <Target Name="AfterBuild" DependsOnTargets="$(AfterBuildDependsOn)">
   </Target>
 
+
   <Target Name="ValidateRequiredProperties">
     <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined" />
-    
   </Target>
 
 
   <Target Name="OnTestFailure">
     <CallTarget Targets="AfterRunTests;CopyTrxFile;MarkBuildStepAsFailed"/>
   </Target>
+
 
   <Target Name="AfterRunTests"
     AfterTargets="RunTests">
@@ -187,17 +206,6 @@
     <Copy Condition="@(TestResults) != ''"
           SourceFiles="@(TestResults)"
           DestinationFiles="$(BinTestDirectory)TestResults.trx" />-->
-  </Target>
-
-
-  <Target Name="RunCopyToDropV2" Condition="Exists('$(SolutionDirectoryPath)CopyToDrop.ps1')">
-
-    <Message Text="Running: $(SolutionDirectoryPath)CopyToDrop.ps1"></Message>
-
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command='"Powershell" -noprofile -ExecutionPolicy RemoteSigned "$(SolutionDirectoryPath)CopyToDrop.ps1"' />
-
   </Target>
 
 

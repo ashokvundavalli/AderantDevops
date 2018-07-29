@@ -15,7 +15,7 @@
   <!-- Desktop build property setup -->
   <PropertyGroup Condition="'$(BUILD_BUILDURI)' == ''">
     <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(MSBuildStartupDirectory)</SolutionRoot>
-    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_ArtifactStaging</ArtifactStagingDirectory>
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)\_ArtifactStaging</ArtifactStagingDirectory>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -117,9 +117,9 @@
       TfvcBranch="$(TfvcBranch)"
       InstanceFile="$(BranchBuildProject)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
-      BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.PrepareForBuild.targets"
-      AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.AfterBuild.targets"
-      GlobalPropertiesFile="$(MSBuildThisFileDirectory)ComboBuild.GlobalProperties.proj"
+      BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
+      AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"
+      CommonProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Common.proj"
       ExcludePaths="@(ExcludePaths)"
       ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
