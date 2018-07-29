@@ -101,5 +101,12 @@ namespace Aderant.Build {
         internal static bool IsSlash(char c) {
             return c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar;
         }
+
+        /// <summary>
+        /// Searches upward for a directory containing the specified file, beginning in the specified directory.
+        /// </summary>
+        public static string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName) {
+            return new PhysicalFileSystem().GetDirectoryNameOfFileAbove(startingDirectory, fileName);
+        }
     }
 }

@@ -22,16 +22,13 @@
       PrepareZipCustomSource;
       ZipCustomSource;
       DeployPerDirectoryFiles;
+      SetBuildNumbers;
+      UpdateCommonAssemblyInfo;
+      SeedPackagePacking;
+      ZipWorkflowTemplateSource;
       GetDependencies;
       rmTransformTemplates;
     </RunBuildDependsOn>
-
-    <InitializeModuleBuildDependsOn>
-      SetBuildNumbers;
-      UpdateModuleFileVersion;
-      SeedPackagePacking;
-      ZipWorkflowTemplateSource;
-    </InitializeModuleBuildDependsOn>
   </PropertyGroup>
 
 
@@ -145,7 +142,7 @@
         Versioning 
     ==========================================================================================
   -->
-  <Target Name="UpdateModuleFileVersion"
+  <Target Name="UpdateCommonAssemblyInfo"
           Condition="'$(BUILD_BUILDURI)' != ''">
 
     <PropertyGroup>

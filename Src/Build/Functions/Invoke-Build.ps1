@@ -100,9 +100,8 @@ function Global:Invoke-Build2
         return [string]::Join(" ", $set)
     }
 
-    function ApplyBranchConfig($context, $stringSearchDirectory) {        
-        $fs = $context.GetService("FileSystemService")
-        $configPath = $fs.GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
+    function ApplyBranchConfig($context, $stringSearchDirectory) {                
+        $configPath = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
 
         if (-not $configPath) {
             #throw "Branch configuration file not found"
@@ -120,9 +119,8 @@ function Global:Invoke-Build2
         $context.PrimaryDropLocation = $config.BranchConfig.Artifacts.PrimaryDropLocation
     }
 
-    function FindGitDir($context, $stringSearchDirectory) {
-        $fs = $context.GetService("FileSystemService")
-        $path = $fs.GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
+    function FindGitDir($context, $stringSearchDirectory) {        
+        $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
         $context.Variables["_GitDir"] = "$path\.git"
     }
                 
