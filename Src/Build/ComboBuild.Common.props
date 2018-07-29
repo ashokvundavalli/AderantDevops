@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
          ToolsVersion="14.0">
 
@@ -11,7 +11,8 @@
     </GetPropertiesFromContext>
 
     <PropertyGroup>
-      <GlobalContextProperties>@(_PropertiesToCreate->'%(Identity)=%(Value)')</GlobalContextProperties>
+      <PropertiesForBuildGroup>@(_PropertiesToCreate->'%(Identity)=%(Value)')</PropertiesForBuildGroup>
+      <PropertiesForBuildGroup>$(PropertiesForBuildGroup);ArtifactStagingDirectory=$(ArtifactStagingDirectory);</PropertiesForBuildGroup>
     </PropertyGroup>
     
   </Target>
