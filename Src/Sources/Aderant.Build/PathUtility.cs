@@ -108,5 +108,9 @@ namespace Aderant.Build {
         public static string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName) {
             return new PhysicalFileSystem().GetDirectoryNameOfFileAbove(startingDirectory, fileName);
         }
+
+        public static string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories, bool considerDirectories) {
+            return new PhysicalFileSystem().GetDirectoryNameOfFileAbove(startingDirectory, fileName, ceilingDirectories, considerDirectories);
+        }
     }
 }
