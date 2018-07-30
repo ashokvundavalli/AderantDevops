@@ -144,7 +144,7 @@
     ==========================================================================================
   -->
   <Target Name="UpdateCommonAssemblyInfo"
-          Condition="'$(BUILD_BUILDURI)' != ''" DependsOnTargets="SetBuildNumbers">
+          Condition="'$(IsDesktopBuild)' == 'false'" DependsOnTargets="SetBuildNumbers">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>

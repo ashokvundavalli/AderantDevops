@@ -23,6 +23,10 @@ namespace Aderant.Build.Tasks {
                 AssemblyVersion = Context.GetVariableFromBag(Id, nameof(AssemblyVersion));
                 ModuleName = Context.GetVariableFromBag(Id, nameof(ModuleName));
             } else {
+                Log.LogMessage("FileVersion: {0}", FileVersion);
+                Log.LogMessage("AssemblyVersion: {0}", AssemblyVersion);
+                Log.LogMessage("ModuleName: {0}", ModuleName);
+
                 Context.AddVariableToBag(Id, nameof(FileVersion), FileVersion);
                 Context.AddVariableToBag(Id, nameof(AssemblyVersion), AssemblyVersion);
                 Context.AddVariableToBag(Id, nameof(ModuleName), ModuleName);
