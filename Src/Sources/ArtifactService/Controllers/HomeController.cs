@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO.MemoryMappedFiles;
 using System.Web.Http;
+using Aderant.Build.Ipc;
 
 namespace ArtifactService.Controllers {
 
@@ -12,10 +14,11 @@ namespace ArtifactService.Controllers {
             return new string[] { "value1", "value2" };
         }
 
-        [Route("showlist")]
+        [Route("context")]
         [HttpGet]
         public IHttpActionResult ShowList(string id) {
-            return Ok(new string[] { "value1", "value2" });
+            object read = MemoryMappedFileReaderWriter.Read(id);
+            return Ok(read);
         }
     }
 }
