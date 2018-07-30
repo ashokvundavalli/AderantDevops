@@ -3,7 +3,7 @@
          ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
          InitialTargets="SetPropertiesFromContext;"
-         TreatAsLocalProperty="SolutionRoot;AssemblyVersion;BuildFlavor">
+         TreatAsLocalProperty="SolutionRoot;BuildFlavor">
 
 
   <!-- Server build property setup -->
@@ -350,8 +350,6 @@
         BuildToolsDirectory=$(BuildToolsDirectory);
         UseSharedDependencyDirectory=$(UseSharedDependencyDirectory);
         SharedDependencyDirectory=$(SharedDependencyDirectory);
-        FileVersion=$(FileVersion);
-        AssemblyVersion=$(AssemblyVersion);
         BuildFlavor=$(BuildFlavor);
         EXPERT_BUILD_DIRECTORY=$(MSBuildThisFileDirectory)..\;
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
