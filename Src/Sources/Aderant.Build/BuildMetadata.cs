@@ -31,6 +31,9 @@ namespace Aderant.Build {
 
         public PullRequestInfo PullRequest { get; set; }
 
+        /// <summary>
+        /// Indicates if this build is running within the context of a pull request
+        /// </summary>
         public bool IsPullRequest {
             get { return PullRequest != null; }
         }

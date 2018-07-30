@@ -149,8 +149,13 @@
     <Compile Include="ProjectSystem\References\UnresolvedAssemblyReference.cs" />
     <Compile Include="ProjectSystem\References\UnresolvedReferenceBase.cs" />
     <Compile Include="ProjectSystem\ConfigurationToBuild.cs" />
+    <Compile Include="Packaging\ArtifactPackage.cs" />
+    <Compile Include="Packaging\ArtifactService.cs" />
+    <Compile Include="Packaging\ArtifactStorageInfo.cs" />
+    <Compile Include="Packaging\BucketService.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\PackageArtifacts.cs" />
+    <Compile Include="Packaging\PathSpec.cs" />
     <Compile Include="Tasks\SetEnvironmentVariable.cs" />
     <Compile Include="Tasks\UpdateVariableBag.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
