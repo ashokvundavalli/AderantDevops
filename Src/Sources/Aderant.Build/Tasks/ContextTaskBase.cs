@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using Aderant.Build.Ipc;
+using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -12,6 +13,7 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public abstract class ContextTaskBase : Task {
         private Context context;
+        private BuildTaskLogger logger;
 
         public virtual string ContextFileName { get; set; }
 
@@ -20,6 +22,12 @@ namespace Aderant.Build.Tasks {
         protected Context Context {
             get {
                 return context ?? (context = ObtainContext());
+            }
+        }
+
+        protected Aderant.Build.Logging.ILogger Logger {
+            get {
+                return logger ?? (logger = new BuildTaskLogger(this.Log));
             }
         }
 
