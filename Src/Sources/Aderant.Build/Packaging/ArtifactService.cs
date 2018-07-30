@@ -81,12 +81,12 @@ namespace Aderant.Build.Packaging {
         }
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
-            var destination = Path.Combine(destinationRoot, pathSpec.Destination);
-
             if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
                 fileSystem.AddFile(destinationRoot, new MemoryStream());
                 return;
             }
+
+            var destination = Path.Combine(destinationRoot, pathSpec.Destination);
 
             if (fileSystem.FileExists(pathSpec.Location)) {
                 fileSystem.CopyFile(pathSpec.Location, destination);
