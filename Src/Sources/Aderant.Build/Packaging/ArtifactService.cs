@@ -64,6 +64,11 @@ namespace Aderant.Build.Packaging {
                 copyList.Add(Tuple.Create(destination, pathSpec));
             }
 
+            // Add marker file
+            if (destination.EndsWith("Bin\\Module", StringComparison.OrdinalIgnoreCase)) {
+                copyList.Add(Tuple.Create(Path.Combine(destination, @"\..") /* Assumes the destination is Bin\Module */, new PathSpec("build.succeeded", null)));
+            }
+
             return new ArtifactStorageInfo {
                 FullPath = destination,
                 Name = artifactName,
@@ -77,6 +82,11 @@ namespace Aderant.Build.Packaging {
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
             var destination = Path.Combine(destinationRoot, pathSpec.Destination);
+
+            if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
+                fileSystem.AddFile(destinationRoot, new MemoryStream());
+                return;
+            }
 
             if (fileSystem.FileExists(pathSpec.Location)) {
                 fileSystem.CopyFile(pathSpec.Location, destination);
