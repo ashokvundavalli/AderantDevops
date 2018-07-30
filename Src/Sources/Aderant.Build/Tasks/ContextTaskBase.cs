@@ -82,7 +82,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private void Register(Context ctx) {
-
+            BuildEngine4.UnregisterTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             BuildEngine4.RegisterTaskObject("BuildContext", ctx, RegisteredTaskObjectLifetime.Build, false);
         }
 
