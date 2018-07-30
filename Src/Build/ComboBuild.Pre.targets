@@ -171,7 +171,6 @@
     <UpdateVariableBag
       Id="$(VariableBagId)"
       ContextFileName="$(ContextFileName)"
-      Output="false"
       FileVersion="$(FileVersion)"
       AssemblyVersion="$(AssemblyVersion)"
       ModuleName="$(ModuleName)" />

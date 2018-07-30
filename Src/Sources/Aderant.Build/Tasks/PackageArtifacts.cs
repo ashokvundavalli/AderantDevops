@@ -17,6 +17,10 @@ namespace Aderant.Build.Tasks {
 
         public ITaskItem[] Artifacts { get; set; }
 
+        public string FileVersion { get; set; }
+
+        public string AssemblyVersion { get; set; }
+
         public override bool Execute() {
             if (Artifacts != null) {
                 var artifacts = CreateArtifactPackagesFromTaskItems();
@@ -30,14 +34,10 @@ namespace Aderant.Build.Tasks {
                     SolutionRoot,
                     null,
                     artifacts);
-        }
+            }
 
             return !Log.HasLoggedErrors;
         }
-
-        public string FileVersion { get; set; }
-
-        public string AssemblyVersion { get; set; }
 
         private List<ArtifactPackage> CreateArtifactPackagesFromTaskItems() {
             List<ArtifactPackage> artifacts = new List<ArtifactPackage>();
@@ -64,12 +64,6 @@ namespace Aderant.Build.Tasks {
 
             return artifacts;
         }
-    }
-
-    public class LegacyCopyParameters {
-        public string ArtifactId { get; set; }
-        public string AssemblyVersion { get; set; }
-        public string FileVersion { get; set; }
     }
 
     internal class ArtifactService {
@@ -117,8 +111,8 @@ namespace Aderant.Build.Tasks {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
-            ErrorUtilities.IsNotNull(AssemblyVersion, nameof(AssemblyVersion));
             ErrorUtilities.IsNotNull(FileVersion, nameof(FileVersion));
+            ErrorUtilities.IsNotNull(AssemblyVersion, nameof(AssemblyVersion));
 
             var destinationRoot = Path.Combine(context.PullRequestDropLocation, context.BuildMetadata.PullRequest.Id, artifactId, AssemblyVersion, FileVersion);
 
