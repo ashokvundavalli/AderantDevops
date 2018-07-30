@@ -95,7 +95,7 @@ namespace Aderant.Build.Tasks {
                     }
 
                     if (context.BuildMetadata.IsPullRequest) {
-                        PareFilesForPullRequestDrop(copyList, context, artifact.Id, artifact.GetFiles());
+                        PrepareFilesForPullRequestDrop(copyList, context, artifact.Id, artifact.GetFiles());
                     } else {
                         PrepareFilesForLegacyDrop(copyList, context, artifact.Id, artifact.GetFiles());
                     }
@@ -107,7 +107,7 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private void PareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
+        private void PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
