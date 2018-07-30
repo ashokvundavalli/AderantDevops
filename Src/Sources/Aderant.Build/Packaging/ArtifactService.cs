@@ -42,7 +42,9 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (var item in copyList) {
-                CopyToDestination(item.Item1, item.Item2);
+                
+                    CopyToDestination(item.Item1, item.Item2);
+              
             }
 
             return storageInfoList;
@@ -66,7 +68,7 @@ namespace Aderant.Build.Packaging {
 
             // Add marker file
             if (destination.EndsWith("Bin\\Module", StringComparison.OrdinalIgnoreCase)) {
-                copyList.Add(Tuple.Create(System.IO.Path.GetFullPath(Path.Combine(destination, @"..\")) /* Assumes the destination is Bin\Module */, new PathSpec("build.succeeded", null)));
+                copyList.Add(Tuple.Create(System.IO.Path.GetFullPath(Path.Combine(destination, @"..\", PathSpec.BuildSucceeded.Location)) /* Assumes the destination is Bin\Module */, PathSpec.BuildSucceeded));
             }
 
             return new ArtifactStorageInfo {
@@ -82,8 +84,13 @@ namespace Aderant.Build.Packaging {
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
             if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
-                fileSystem.AddFile(destinationRoot, new MemoryStream());
-                return;
+                try {
+                    fileSystem.AddFile(destinationRoot, new MemoryStream());
+                } catch (IOException) {
+                    throw new IOException("Failed to create new file at " + destinationRoot);
+                 }
+
+            return;
             }
 
             var destination = Path.Combine(destinationRoot, pathSpec.Destination);

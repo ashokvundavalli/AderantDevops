@@ -11,7 +11,7 @@ namespace Aderant.Build.Packaging {
         public string Destination { get; }
 
         public string Location { get; }
-        public static PathSpec BuildSucceeded { get; }= new PathSpec("build.succeeded", null);
+        public static PathSpec BuildSucceeded { get; } = new PathSpec("build.succeeded", null);
 
         public override bool Equals(object obj) {
             if (!(obj is PathSpec)) {
