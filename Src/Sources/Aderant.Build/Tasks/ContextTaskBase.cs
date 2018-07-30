@@ -70,8 +70,6 @@ namespace Aderant.Build.Tasks {
                 //return ctx;
             }
 
-            Log.LogMessage("Retrieving context from file");
-
             ctx = GetContextFromFile();
 
             if (ctx != null) {
@@ -90,6 +88,8 @@ namespace Aderant.Build.Tasks {
             if (string.IsNullOrEmpty(ContextFileName)) {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
+
+            Log.LogMessage("Retrieving context from file: {0}", ContextFileName);
 
             ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
 

@@ -64,9 +64,9 @@
       Id="$(VariableBagId)"
       ContextFileName="$(ContextFileName)"
       Output="true">
-      <Output TaskParameter="_FileVersion" PropertyName="FileVersion" />
-      <Output TaskParameter="_AssemblyVersion" PropertyName="AssemblyVersion" />
-      <Output TaskParameter="_ModuleName" PropertyName="ModuleName" />
+      <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
+      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
+      <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
     </UpdateVariableBag>
 
     <Error Text="$(FileVersion) is undefined" Condition="'$(FileVersion)' == ''" />

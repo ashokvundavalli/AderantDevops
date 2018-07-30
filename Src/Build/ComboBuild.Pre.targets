@@ -175,17 +175,6 @@
       AssemblyVersion="$(AssemblyVersion)"
       ModuleName="$(ModuleName)" />
 
-
-    <UpdateVariableBag
-      Id="$(VariableBagId)"
-      ContextFileName="$(ContextFileName)"
-      Output="true">
-      <Output TaskParameter="_FileVersion" PropertyName="FileVersion" />
-      <Output TaskParameter="_AssemblyVersion" PropertyName="AssemblyVersion" />
-      <Output TaskParameter="_ModuleName" PropertyName="ModuleName" />
-    </UpdateVariableBag>
-
-
   </Target>
 
 </Project>

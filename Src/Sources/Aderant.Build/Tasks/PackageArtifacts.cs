@@ -118,7 +118,7 @@ namespace Aderant.Build.Tasks {
 
             foreach (var pathSpec in getFiles) {
                 // TODO: Temporary shim to allow PR layering to work. This should be replaced by the artifact service
-                var spec = new PathSpec(pathSpec.FullPath, Path.Combine("Bin", "Module", pathSpec.Destination));
+                var spec = new PathSpec(pathSpec.Location, Path.Combine("Bin", "Module", pathSpec.Destination));
                 copyList.Add(Tuple.Create(destinationRoot, spec));
             }
         }
@@ -126,8 +126,8 @@ namespace Aderant.Build.Tasks {
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
             var destination = Path.Combine(destinationRoot, pathSpec.Destination);
 
-            if (fileSystem.FileExists(pathSpec.FullPath)) {
-                fileSystem.CopyFile(pathSpec.FullPath, destination);
+            if (fileSystem.FileExists(pathSpec.Location)) {
+                fileSystem.CopyFile(pathSpec.Location, destination);
             }
         }
 
@@ -135,7 +135,7 @@ namespace Aderant.Build.Tasks {
             var destinationRoot = Path.Combine(context.PrimaryDropLocation, artifactId, AssemblyVersion, FileVersion);
 
             foreach (var pathSpec in getFiles) {
-                var spec = new PathSpec(pathSpec.FullPath, Path.Combine("Bin", "Module", pathSpec.Destination));
+                var spec = new PathSpec(pathSpec.Location, Path.Combine("Bin", "Module", pathSpec.Destination));
                 copyList.Add(Tuple.Create(destinationRoot, spec));
             }
         }
@@ -207,14 +207,14 @@ namespace Aderant.Build.Tasks {
 
     internal struct PathSpec {
 
-        public PathSpec(string fullPath, string relativePath) {
-            this.FullPath = fullPath;
+        public PathSpec(string location, string relativePath) {
+            this.Location = location;
             this.Destination = relativePath;
         }
 
         public string Destination { get; }
 
-        public string FullPath { get; }
+        public string Location { get; }
 
         public override bool Equals(object obj) {
             if (!(obj is PathSpec)) {
@@ -222,12 +222,12 @@ namespace Aderant.Build.Tasks {
             }
 
             var spec = (PathSpec)obj;
-            return FullPath == spec.FullPath && Destination == spec.Destination;
+            return Location == spec.Location && Destination == spec.Destination;
         }
 
         public override int GetHashCode() {
             var hashCode = -79747215;
-            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(FullPath);
+            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(Location);
             hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(Destination);
             return hashCode;
         }
