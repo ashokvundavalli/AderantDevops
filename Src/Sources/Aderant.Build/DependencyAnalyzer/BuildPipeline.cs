@@ -68,7 +68,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 // e.g. <Target Name="Foo">
                 Target build = new Target("Run" + CreateGroupName(buildGroupCount));
-                build.DependsOnTargets.Add(new Target("CreateGlobalProperties"));
+                build.DependsOnTargets.Add(new Target("CreateCommonProperties"));
                 if (buildGroupCount > 0) {
                     var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == CreateGroupName(buildGroupCount - 1));
                     if (target != null) {
@@ -86,7 +86,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                             $"{BuildGroupKey}={buildGroupCount}",
                             "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                             "BuildInParallel=$(BuildInParallel)",
-                            "GlobalContextProperties=$(GlobalContextProperties)")
+                            "PropertiesForBuildGroup=$(PropertiesForBuildGroup)")
                     });
 
                 project.Add(build);
@@ -105,7 +105,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }));
             project.Add(groups);
             project.Add(afterCompile);
-            project.Add(new ImportElement { Project = orchestrationFiles.GlobalPropertiesFile });
+            project.Add(new ImportElement { Project = orchestrationFiles.CommonProjectFile });
 
             // The target that MSBuild will call into to start the build
             project.DefaultTarget = afterCompile;
@@ -182,13 +182,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 properties.Add("SolutionRoot=" + solutionDirectoryPath);
 
-                ItemGroupItem item = new ItemGroupItem(node.IsAfterTargets ? afterProjectFile : beforeProjectFile) {
+                ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
                     [PropertiesKey] = properties.ToString(),
                     [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture),
 
                     // Indicates this file is part of the build system itself
-                    ["IsAfterTargets"] = node.IsAfterTargets ? bool.TrueString : bool.FalseString,
-                    ["IsBeforeTargets"] = !node.IsAfterTargets ? bool.TrueString : bool.FalseString,
+                    ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,
+                    ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsProjectFile"] = bool.FalseString,
                 };
                 return item;

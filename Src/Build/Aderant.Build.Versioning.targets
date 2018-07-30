@@ -36,8 +36,6 @@
       <_PaketLockText Condition="Exists($(_PaketLockFile))">$([System.IO.File]::ReadAllText($(_PaketLockFile)))</_PaketLockText>
     </PropertyGroup>
 
-    <Message Text="Git directory: $(_GitDir)" Importance="high" Condition="'$(_HasGitDir)' == 'true'" />
-
     <GitVersion
       Condition="'$(_HasGitDir)' == 'true'"
       WorkingDirectory="$(_GitDir)">

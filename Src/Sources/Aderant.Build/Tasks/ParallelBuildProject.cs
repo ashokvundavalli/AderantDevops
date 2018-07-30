@@ -58,7 +58,7 @@ namespace Aderant.Build.Tasks {
         /// <summary>
         /// Gets or sets the project which can define properties to inject into each build group execution.
         /// </summary>
-        public string GlobalPropertiesFile { get; set; }
+        public string CommonProjectFile { get; set; }
 
         public string ConfigurationToBuild { get; set; }
 
@@ -88,7 +88,7 @@ namespace Aderant.Build.Tasks {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
                 GroupExecutionFile = GroupExecutionFile,
-                GlobalPropertiesFile = GlobalPropertiesFile,
+                CommonProjectFile = CommonProjectFile,
                 InstanceFile = InstanceFile,
             };
 

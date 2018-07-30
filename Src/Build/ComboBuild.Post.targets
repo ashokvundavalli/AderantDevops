@@ -65,6 +65,7 @@
       ContextFileName="$(ContextFileName)"
       Output="true">
       <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
+      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
       <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
     </UpdateVariableBag>
 
@@ -75,12 +76,10 @@
 
     <PublishArtifacts
       ContextFileName="$(ContextFileName)"
-      ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
       Artifacts="@(PackageArtifact)"
-
-      ModuleName="$(ModuleName)"
+      AssemblyVersion="$(AssemblyVersion)"
       FileVersion="$(FileVersion)" />
 
   </Target>
@@ -207,6 +206,71 @@
           SourceFiles="@(TestResults)"
           DestinationFiles="$(BinTestDirectory)TestResults.trx" />-->
   </Target>
+
+
+  <Target Name="CopyToDrop">
+
+    <!--Shim: Just blat the drop location with the staging directory-->
+    <PropertyGroup>
+      <DropLocation>$(ArtifactStagingDirectory)</DropLocation>
+    </PropertyGroup>
+
+    <!--We have differing ways of determining the drop location depending on the type of build. 
+        The simplest way was to have a condition on whether we are build all modules of a single module.-->
+    <PropertyGroup>
+      <!--<DropLocation>C:\Temp\</DropLocation>
+      <FileVersion>1.8.0.0</FileVersion>-->
+
+      <ModuleDropLocation Condition="'$(BuildAll)' == 'true'">$(DropLocation)\$(ModuleName)\$(AssemblyVersion)\</ModuleDropLocation>
+      <ModuleDropLocation Condition="'$(BuildAll)' != 'true'">$(DropLocation)\</ModuleDropLocation>
+    </PropertyGroup>
+
+    <WriteLinesToFile
+      Condition="'@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Module'"
+      Lines="@(ModuleBuildOutput)"
+      Overwrite="true"
+      File="$(ModuleBuildTempDirectory)ModuleBinOutput.txt" />
+
+    <WriteLinesToFile
+      Condition="'@(ModuleBuildOutput)' != '' And '%(ModuleBuildOutput.OutputType)' == 'Test'"
+      Lines="@(ModuleBuildOutput)"
+      Overwrite="true"
+      File="$(ModuleBuildTempDirectory)ModuleTestOutput.txt" />
+
+    <PropertyGroup>
+      <DropRootUncPathSwitch>-dropRootUNCPath $(ModuleDropLocation)</DropRootUncPathSwitch>
+      <AssemblyFileVersionSwitch>-assemblyFileVersion $(FileVersion)</AssemblyFileVersionSwitch>
+      <SuppressUniqueCheckSwitch Condition="'$(UseSharedDependencyDirectory)' == 'true'">-suppressUniqueCheck</SuppressUniqueCheckSwitch>
+      <TestFailedSwitch Condition="'$(TestBreak)' == 'true'">-testBreak</TestFailedSwitch>
+      <BuildBreakSwitch Condition="'$(BuildBreak)' == 'true'">-buildBreak</BuildBreakSwitch>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <YieldDuringCopy Condition="'$(BuildAll)' != 'true'">false</YieldDuringCopy>
+      <YieldDuringCopy Condition="'$(BuildAll)' == 'true'">true</YieldDuringCopy>
+    </PropertyGroup>
+
+    <Exec
+      ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command='"Powershell" -noprofile "$(BuildScriptsDirectory)CopyToDrop.ps1" -moduleName $(ModuleName) -moduleRootPath $(SolutionDirectoryPath) $(DropRootUncPathSwitch) $(AssemblyFileVersionSwitch) $(TestFailedSwitch) $(BuildBreakSwitch) $(SuppressUniqueCheckSwitch)'
+      YieldDuringToolExecution="$(YieldDuringCopy)" />
+
+    <!--At the moment we check for successful builds in the build logs where there are 0 Error(s). The BuildAll only has one build log
+        so if we get this far we can assume the build is successfull so we create a dummy BuildLog   
+    -->
+    <MakeDir Directories="$(ModuleDropLocation)$(FileVersion)"
+      Condition="('$(BuildAll)' == 'true' And !Exists('$(ModuleDropLocation)$(FileVersion)'))" />
+
+    <WriteLinesToFile
+      Condition="('$(BuildAll)'=='true')"
+      File="$(ModuleDropLocation)$(FileVersion)\BuildLog.txt"
+      Lines="Build succeeded via BuildAll - 0 Error(s)"/>
+
+    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
+
+  </Target>
+
 
 
   <!--

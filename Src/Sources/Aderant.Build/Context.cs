@@ -21,7 +21,7 @@ namespace Aderant.Build {
 
         public Context() {
             Configuration = new Dictionary<object, object>();
-            TaskDefaults = new Dictionary<string, IDictionary>();
+            VariableBags = new Dictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             TaskIndex = -1;
             Variables = new Dictionary<string, string>();
             Environment = "";
@@ -72,7 +72,7 @@ namespace Aderant.Build {
 
         public int TaskIndex { get; set; }
 
-        public IDictionary TaskDefaults { get; private set; }
+        public IDictionary<string, IDictionary<string, string>> VariableBags { get; private set; }
 
         public DirectoryInfo Temp { get; set; }
 
@@ -112,6 +112,8 @@ namespace Aderant.Build {
 
         public string PrimaryDropLocation { get; set; }
 
+        public string PullRequestDropLocation { get; set; }
+
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>
@@ -149,6 +151,35 @@ namespace Aderant.Build {
             }
 
             return buildType;
+        }
+
+        public void AddVariableToBag(string id, string key, string value) {
+            var bags = VariableBags;
+            
+            IDictionary<string, string> bag;
+            if (!bags.TryGetValue(id, out bag)) {
+                bag = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                bags[id] = bag;
+            }
+
+            bag[key] = value;
+        }
+
+        public string GetVariableFromBag(string id, string key) {
+            ErrorUtilities.IsNotNull(id, nameof(id));
+            ErrorUtilities.IsNotNull(key, nameof(key));
+
+            var bags = VariableBags;
+
+            IDictionary<string, string> bag;
+            if (bags.TryGetValue(id, out bag)) {
+                string value;
+                bag.TryGetValue(key, out value);
+
+                return value;
+            }
+
+            return null;
         }
     }
 

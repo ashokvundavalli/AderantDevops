@@ -23,6 +23,11 @@ namespace Aderant.Build.Tasks {
             }
         }
 
+        protected void ReplaceContext() {
+            Register(Context);
+            MemoryMappedFileReaderWriter.WriteData(ContextFileName, context);
+        }
+
         public override bool Execute() {
             if (WaitForDebugger) {
                 bool sleep = false;
@@ -70,10 +75,15 @@ namespace Aderant.Build.Tasks {
             ctx = GetContextFromFile();
 
             if (ctx != null) {
-                BuildEngine4.RegisterTaskObject("BuildContext", ctx, RegisteredTaskObjectLifetime.Build, false);
+                Register(ctx);
             }
 
             return ctx;
+        }
+
+        private void Register(Context ctx) {
+
+            BuildEngine4.RegisterTaskObject("BuildContext", ctx, RegisteredTaskObjectLifetime.Build, false);
         }
 
         private Context GetContextFromFile() {

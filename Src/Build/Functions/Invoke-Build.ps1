@@ -111,12 +111,14 @@ function Global:Invoke-Build2
   <!--\\ap.aderant.com\akl\tempswap\☃-->
     <PrimaryDropLocation>\\dfs.aderant.com\ExpertSuite\_TEMP_</PrimaryDropLocation>
     <AlternativeDropLocation></AlternativeDropLocation>
+    <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
   </Artifacts>
 </BranchConfig>"
         }
 
         #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
         $context.PrimaryDropLocation = $config.BranchConfig.Artifacts.PrimaryDropLocation
+        $context.PullRequestDropLocation = $config.BranchConfig.Artifacts.PullRequestDropLocation
     }
 
     function FindGitDir($context, $stringSearchDirectory) {        

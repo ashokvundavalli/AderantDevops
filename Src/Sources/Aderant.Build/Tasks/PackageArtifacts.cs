@@ -8,11 +8,12 @@ using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
+
     public sealed class PublishArtifacts : ContextTaskBase {
 
         public string SolutionRoot { get; set; }
 
-        public string[] RootingPaths { get; set; }
+        public string[] RelativeFrom { get; set; }
 
         public ITaskItem[] Artifacts { get; set; }
 
@@ -20,11 +21,23 @@ namespace Aderant.Build.Tasks {
             if (Artifacts != null) {
                 var artifacts = CreateArtifactPackagesFromTaskItems();
                 var artifactService = new ArtifactService(new PhysicalFileSystem(), new BucketService());
-                artifactService.PublishArtifacts(Context, SolutionRoot, null, artifacts);
-            }
+
+                artifactService.FileVersion = FileVersion;
+                artifactService.AssemblyVersion = AssemblyVersion;
+
+                artifactService.PublishArtifacts(
+                    Context,
+                    SolutionRoot,
+                    null,
+                    artifacts);
+        }
 
             return !Log.HasLoggedErrors;
         }
+
+        public string FileVersion { get; set; }
+
+        public string AssemblyVersion { get; set; }
 
         private List<ArtifactPackage> CreateArtifactPackagesFromTaskItems() {
             List<ArtifactPackage> artifacts = new List<ArtifactPackage>();
@@ -35,7 +48,7 @@ namespace Aderant.Build.Tasks {
                 foreach (var file in group) {
                     var pathSpec = ArtifactPackage.CreatePathSpecification(
                         SolutionRoot,
-                        RootingPaths,
+                        RelativeFrom,
                         file.GetMetadata("FullPath"),
                         file.GetMetadata("TargetPath") // The destination relative location
                     );
@@ -53,33 +66,77 @@ namespace Aderant.Build.Tasks {
         }
     }
 
+    public class LegacyCopyParameters {
+        public string ArtifactId { get; set; }
+        public string AssemblyVersion { get; set; }
+        public string FileVersion { get; set; }
+    }
+
     internal class ArtifactService {
-        private readonly IFileSystem fileSystem;
         private readonly BucketService bucketService;
+        private readonly IFileSystem fileSystem;
 
         public ArtifactService(IFileSystem fileSystem, BucketService bucketService) {
             this.fileSystem = fileSystem;
             this.bucketService = bucketService;
         }
 
+        public string FileVersion { get; set; }
+        public string AssemblyVersion { get; set; }
+
         internal void PublishArtifacts(Context context, string solutionRoot, object cacheKey, IReadOnlyCollection<ArtifactPackage> packages) {
             // TODO: Slow - optimize
+            // TODO: Test for duplicates in the artifact inputs
+
+            List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
+
             IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
             foreach (var group in grouping) {
                 string bucketId = bucketService.GetBucketId(solutionRoot);
                 // \\dfs\artifacts\<name>\<bucket>\<build_id>
                 foreach (var artifact in group) {
-
+                    var container = Path.Combine(context.PrimaryDropLocation, group.Key, bucketId, !string.IsNullOrEmpty(context.BuildMetadata.BuildId) ? context.BuildMetadata.BuildId : "-1");
                     foreach (var pathSpec in artifact.GetFiles()) {
-                        var container = Path.Combine(context.PrimaryDropLocation, group.Key, bucketId, !string.IsNullOrEmpty(context.BuildMetadata.BuildId) ? context.BuildMetadata.BuildId : "-1");
+                        //CopyToDestination(container, pathSpec);
+                    }
 
-                        var destination = Path.Combine(container, pathSpec.Destination);
-
-                        if (fileSystem.FileExists(pathSpec.FullPath)) {
-                            fileSystem.CopyFile(pathSpec.FullPath, destination);
-                        }
+                    if (context.BuildMetadata.IsPullRequest) {
+                        PareFilesForPullRequestDrop(copyList, context, artifact.Id, artifact.GetFiles());
+                    } else {
+                        PrepareFilesForLegacyDrop(copyList, context, artifact.Id, artifact.GetFiles());
                     }
                 }
+            }
+
+            foreach (var item in copyList) {
+                CopyToDestination(item.Item1, item.Item2);
+            }
+        }
+
+        private void PareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
+            var destinationRoot = Path.Combine(context.PullRequestDropLocation, context.BuildMetadata.PullRequest.Id, artifactId, AssemblyVersion, FileVersion);
+
+            foreach (var pathSpec in getFiles) {
+                // TODO: Temporary shim to allow PR layering to work. This should be replaced by the artifact service
+                var spec = new PathSpec(pathSpec.FullPath, Path.Combine("Bin", "Module", pathSpec.Destination));
+                copyList.Add(Tuple.Create(destinationRoot, spec));
+            }
+        }
+
+        private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
+            var destination = Path.Combine(destinationRoot, pathSpec.Destination);
+
+            if (fileSystem.FileExists(pathSpec.FullPath)) {
+                fileSystem.CopyFile(pathSpec.FullPath, destination);
+            }
+        }
+
+        private void PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
+            var destinationRoot = Path.Combine(context.PrimaryDropLocation, artifactId, AssemblyVersion, FileVersion);
+
+            foreach (var pathSpec in getFiles) {
+                var spec = new PathSpec(pathSpec.FullPath, Path.Combine("Bin", "Module", pathSpec.Destination));
+                copyList.Add(Tuple.Create(destinationRoot, spec));
             }
         }
     }
@@ -149,21 +206,15 @@ namespace Aderant.Build.Tasks {
     }
 
     internal struct PathSpec {
-        private readonly string fullPath;
-        private readonly string relativePath;
 
         public PathSpec(string fullPath, string relativePath) {
-            this.fullPath = fullPath;
-            this.relativePath = relativePath;
+            this.FullPath = fullPath;
+            this.Destination = relativePath;
         }
 
-        public string Destination {
-            get { return relativePath; }
-        }
+        public string Destination { get; }
 
-        public string FullPath {
-            get { return fullPath; }
-        }
+        public string FullPath { get; }
 
         public override bool Equals(object obj) {
             if (!(obj is PathSpec)) {
@@ -171,13 +222,13 @@ namespace Aderant.Build.Tasks {
             }
 
             var spec = (PathSpec)obj;
-            return fullPath == spec.fullPath && relativePath == spec.relativePath;
+            return FullPath == spec.FullPath && Destination == spec.Destination;
         }
 
         public override int GetHashCode() {
             var hashCode = -79747215;
-            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(fullPath);
-            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(relativePath);
+            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(FullPath);
+            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(Destination);
             return hashCode;
         }
     }

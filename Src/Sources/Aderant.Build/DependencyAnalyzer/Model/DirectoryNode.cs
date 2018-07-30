@@ -5,22 +5,22 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
     [DebuggerDisplay("DirectoryNode: {" + nameof(Id) + "}")]
     internal sealed class DirectoryNode : AbstractArtifact {
 
-        public DirectoryNode(string id, string directory, bool isAfterTargets) {
+        public DirectoryNode(string id, string directory, bool isPostTargets) {
             ModuleName = id;
-            IsAfterTargets = isAfterTargets;
+            IsPostTargets = isPostTargets;
             Directory = directory;
-            Id = CreateName(id, isAfterTargets);
+            Id = CreateName(id, isPostTargets);
         }
 
         public override string Id { get; }
 
-        public bool IsAfterTargets { get; }
+        public bool IsPostTargets { get; }
 
         public string ModuleName { get; }
         public string Directory { get; set; }
 
-        public static string CreateName(string name, bool isAfterTargets) {
-            if (isAfterTargets) {
+        public static string CreateName(string name, bool isPostTargets) {
+            if (isPostTargets) {
                 name += ".AfterBuild";
             } else {
                 name += ".BeforeBuild";

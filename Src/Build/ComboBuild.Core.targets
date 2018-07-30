@@ -30,7 +30,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsAfterTargets)' == 'true' And '$(Switches_SkipCompile)' == 'true'" />
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsProjectFile)' != 'true' And '$(Switches_SkipCompile)' == 'true'" />
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
     </ItemGroup>
 

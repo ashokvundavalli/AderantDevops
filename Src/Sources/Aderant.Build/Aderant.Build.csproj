@@ -152,6 +152,7 @@
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\PackageArtifacts.cs" />
     <Compile Include="Tasks\SetEnvironmentVariable.cs" />
+    <Compile Include="Tasks\UpdateVariableBag.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
     <Compile Include="VersionControl\GitVersionControl.cs" />

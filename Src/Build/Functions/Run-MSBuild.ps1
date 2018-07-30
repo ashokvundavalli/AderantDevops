@@ -109,7 +109,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 
     while (-not $process.WaitForExit(100)) {
       if ($parentProcess) {       
-        AttachDebuger $parentProcess $process.Id
+        #AttachDebuger $parentProcess $process.Id
         $parentProcess = $null
       }
       # Non-blocking loop done to allow ctr-c interrupts

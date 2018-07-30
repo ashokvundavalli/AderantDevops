@@ -10,7 +10,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.AreEqual("A.Initialize", node.Id);
             Assert.AreEqual("A", node.ModuleName);
-            Assert.IsFalse(node.IsAfterTargets);
+            Assert.IsFalse(node.IsPostTargets);
 
         }
 
@@ -20,7 +20,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.AreEqual("A.Completion", node.Id);
             Assert.AreEqual("A", node.ModuleName);
-            Assert.IsTrue(node.IsAfterTargets);
+            Assert.IsTrue(node.IsPostTargets);
         }
 
         [TestMethod]
