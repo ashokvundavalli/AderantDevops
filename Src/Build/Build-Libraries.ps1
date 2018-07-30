@@ -694,14 +694,7 @@
 				Write-Host "Job File:"
 				Write-Host (Get-Content $jobFile)
 
-				& Robocopy.exe "$($moduleRootPath)\Bin" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"
-
-				# Tell TFS about our drop path so it can be tracked
-				#// Damn build systems. So you would think that TFS would take the path verbatim and just store that away.
-				#// But no, it takes the UNC path you give it and then when the garbage collection occurs it appends the artifact name as a folder
-				#// to that original path as the final path to delete. 
-				#// This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
-				#// set the actual final folder as the name.
+				& Robocopy.exe "$($moduleRootPath)\Bin" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"			
 
 				[string[]]$paths =  $dropPath.Split('\')
 				[int]$index = $paths.IndexOf($version)
