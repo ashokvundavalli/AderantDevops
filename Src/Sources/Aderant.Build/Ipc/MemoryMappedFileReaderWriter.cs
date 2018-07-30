@@ -31,7 +31,7 @@ namespace Aderant.Build.Ipc {
             }
 
             bool createdNew;
-            using (var semaphore = new Semaphore(0, 1, fileName, out createdNew)) {
+            using (var semaphore = new Semaphore(0, 1, "S_" + fileName, out createdNew)) {
                 if (!createdNew) {
                     semaphore.WaitOne();
                 }
