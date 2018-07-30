@@ -4,7 +4,7 @@ namespace Aderant.Build.TeamFoundation {
     /// <summary>
     /// Provides optional data associated with a TF Build logging message.
     /// </summary>
-    internal sealed class TfBuildMessageData {
+    internal sealed class VsoBuildMessageData {
         /// <summary>
         /// Gets or sets the source file path the message should originate from.
         /// </summary>

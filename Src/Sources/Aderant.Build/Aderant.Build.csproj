@@ -240,7 +240,7 @@
     <Compile Include="Tasks\GetAssembliesWithTraits.cs" />
     <Compile Include="Tasks\GetFileVersionInfo.cs" />
     <Compile Include="Tasks\WriteLinesToFile.cs" />
-    <Compile Include="TeamFoundation\TfBuildArtifactType.cs" />
+    <Compile Include="TeamFoundation\VsoBuildArtifactType.cs" />
     <Compile Include="Packaging\VersionTracker.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -285,8 +285,8 @@
     <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
     <Compile Include="Packaging\NuGet\WellKnownTokens.cs" />
-    <Compile Include="TeamFoundation\TfBuildCommands.cs" />
-    <Compile Include="TeamFoundation\TfBuildMessageData.cs" />
+    <Compile Include="TeamFoundation\VsoBuildCommands.cs" />
+    <Compile Include="TeamFoundation\VsoBuildMessageData.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />
     <Compile Include="Versioning\FileVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer.cs" />

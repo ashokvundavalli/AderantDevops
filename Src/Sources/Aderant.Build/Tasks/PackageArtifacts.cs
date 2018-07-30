@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 using Aderant.Build.TeamFoundation;
@@ -37,10 +36,10 @@ namespace Aderant.Build.Tasks {
                     null,
                     artifacts);
 
-                var commands = new TfBuildCommands(Logger);
+                var commands = new VsoBuildCommands(Logger);
                 
                 foreach (var item in storageInfo) {
-                    commands.LinkArtifact(item.Name, TfBuildArtifactType.FilePath, item.FullPath);
+                    commands.LinkArtifact(item.Name, VsoBuildArtifactType.FilePath, item.FullPath);
                 }
             }
 
@@ -141,7 +140,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private string CreateDropLocationPath(string destinationRoot, string artifactId, out string artifactName) {
-            artifactName = Path.Combine(artifactId, AssemblyVersion, FileVersion, "Bin", "Module"); //TODO: Bin\Module is for compatibility only
+            artifactName = Path.Combine(artifactId, AssemblyVersion, FileVersion, "Bin", "Module"); //TODO: Bin\Module is for compatibility with FBDS 
             return Path.Combine(destinationRoot, artifactName);
         }
 
@@ -239,9 +238,9 @@ namespace Aderant.Build.Tasks {
 
     internal struct PathSpec {
 
-        public PathSpec(string location, string relativePath) {
+        public PathSpec(string location, string destinationRelativePath) {
             this.Location = location;
-            this.Destination = relativePath;
+            this.Destination = destinationRelativePath;
         }
 
         public string Destination { get; }

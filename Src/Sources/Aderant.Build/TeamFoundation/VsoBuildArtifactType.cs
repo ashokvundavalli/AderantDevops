@@ -2,7 +2,7 @@ namespace Aderant.Build.TeamFoundation {
     /// <summary>
     /// Provides the type of a TF Build artifact.
     /// </summary>
-    internal enum TfBuildArtifactType {
+    internal enum VsoBuildArtifactType {
         /// <summary>
         /// The container type.
         /// </summary>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -8,7 +8,7 @@ namespace Aderant.Build.TeamFoundation {
     /// <summary>
     /// Responsible for issuing TF Build agent commands (see <see href="https://github.com/Microsoft/vsts-tasks/blob/master/docs/authoring/commands.md"/>).
     /// </summary>
-    internal sealed class TfBuildCommands {
+    internal sealed class VsoBuildCommands {
         private ILogger logger;
 
         private const string MessagePrefix = "##vso[";
@@ -16,9 +16,9 @@ namespace Aderant.Build.TeamFoundation {
         private const string MessagePostfix = "]";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TfBuildCommands" /> class.
+        /// Initializes a new instance of the <see cref="VsoBuildCommands" /> class.
         /// </summary>
-        public TfBuildCommands(ILogger logger) {
+        public VsoBuildCommands(ILogger logger) {
             if (logger == null) {
                 throw new ArgumentNullException(nameof(logger));
             }
@@ -41,7 +41,7 @@ namespace Aderant.Build.TeamFoundation {
         /// </summary>
         /// <param name="message">The warning message.</param>
         /// <param name="data">The message data.</param>
-        public void WriteWarning(string message, TfBuildMessageData data) {
+        public void WriteWarning(string message, VsoBuildMessageData data) {
             var properties = data.GetProperties();
             properties.Add("type", "warning");
             WriteLoggingCommand("task.logissue", properties, message);
@@ -62,7 +62,7 @@ namespace Aderant.Build.TeamFoundation {
         /// </summary>
         /// <param name="message">The error message.</param>
         /// <param name="data">The message data.</param>
-        public void WriteError(string message, TfBuildMessageData data) {
+        public void WriteError(string message, VsoBuildMessageData data) {
             var properties = data.GetProperties();
             properties.Add("type", "error");
             WriteLoggingCommand("task.logissue", properties, message);
@@ -88,7 +88,7 @@ namespace Aderant.Build.TeamFoundation {
         /// <param name="name">The artifact name..</param>
         /// <param name="type">The artifact type.</param>
         /// <param name="location">The link path or value.</param>
-        public void LinkArtifact(string name, TfBuildArtifactType type, string location) {
+        public void LinkArtifact(string name, VsoBuildArtifactType type, string location) {
             WriteLoggingCommand("artifact.associate", new Dictionary<string, string> {
                 ["artifactname"] = name,
                 ["type"] = type.ToString()

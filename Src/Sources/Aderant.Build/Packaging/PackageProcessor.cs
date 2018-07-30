@@ -17,12 +17,12 @@ namespace Aderant.Build.Packaging {
         }
 
         public void UpdateBuildNumber(string buildNumber) {
-            TfBuildCommands commands = new TfBuildCommands(logger);
+            VsoBuildCommands commands = new VsoBuildCommands(logger);
             commands.UpdateBuildNumber(buildNumber);
         }
 
         public void AssociatePackagesToBuild(FileInfo[] packages) {
-            TfBuildCommands commands = new TfBuildCommands(logger);
+            VsoBuildCommands commands = new VsoBuildCommands(logger);
 
             foreach (var package in packages) {
                 using (ZipArchive archive = ZipFile.OpenRead(package.FullName)) {
@@ -39,7 +39,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        internal void AssociatePackageToBuild(string nuspecText, TfBuildCommands commands) {
+        internal void AssociatePackageToBuild(string nuspecText, VsoBuildCommands commands) {
             var nuspec = new NuGet.Nuspec(nuspecText);
 
             string name = nuspec.Id.Value;
@@ -60,9 +60,9 @@ namespace Aderant.Build.Packaging {
             // set the actual final folder as the name.
             // Aderant.Database.Backup
             if (name.Equals("Aderant.Database.Backup")) {
-                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, Constants.DatabasePackageUri);
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.DatabasePackageUri);
             } else {
-                commands.LinkArtifact($"{name}\\{nuspecVersion}", TfBuildArtifactType.FilePath, Constants.PackageRepositoryUri);
+                commands.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.PackageRepositoryUri);
             }
         }
     }
