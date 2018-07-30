@@ -68,7 +68,7 @@ namespace Aderant.Build.Packaging {
 
             // Add marker file
             if (destination.EndsWith("Bin\\Module", StringComparison.OrdinalIgnoreCase)) {
-                copyList.Add(Tuple.Create(System.IO.Path.GetFullPath(Path.Combine(destination, @"..\", PathSpec.BuildSucceeded.Location)) /* Assumes the destination is Bin\Module */, PathSpec.BuildSucceeded));
+                copyList.Add(Tuple.Create(Path.GetFullPath(Path.Combine(destination, @"..\", PathSpec.BuildSucceeded.Location)) /* Assumes the destination is Bin\Module */, PathSpec.BuildSucceeded));
             }
 
             return new ArtifactStorageInfo {
@@ -78,8 +78,8 @@ namespace Aderant.Build.Packaging {
         }
 
         private string CreateDropLocationPath(string destinationRoot, string artifactId, out string artifactName) {
-            artifactName = Path.Combine(artifactId, AssemblyVersion, FileVersion, "Bin", "Module"); //TODO: Bin\Module is for compatibility with FBDS 
-            return Path.Combine(destinationRoot, artifactName);
+            artifactName = Path.Combine(artifactId, AssemblyVersion, FileVersion); 
+            return Path.Combine(destinationRoot, Path.Combine(artifactName, "Bin", "Module")); //TODO: Bin\Module is for compatibility with FBDS 
         }
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
