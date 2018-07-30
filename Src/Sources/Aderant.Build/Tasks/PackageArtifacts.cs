@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
+using Aderant.Build.TeamFoundation;
 using LibGit2Sharp;
 using Microsoft.Build.Framework;
 
@@ -29,11 +31,17 @@ namespace Aderant.Build.Tasks {
                 artifactService.FileVersion = FileVersion;
                 artifactService.AssemblyVersion = AssemblyVersion;
 
-                artifactService.PublishArtifacts(
+                IEnumerable<string> destinations = artifactService.PublishArtifacts(
                     Context,
                     SolutionRoot,
                     null,
                     artifacts);
+
+                var commands = new TfBuildCommands(new BuildTaskLogger(this.Log));
+                
+                foreach (var item in destinations) {
+                    commands.LinkArtifact(item, TfBuildArtifactType.FilePath, item);
+                }
             }
 
             return !Log.HasLoggedErrors;
@@ -78,7 +86,7 @@ namespace Aderant.Build.Tasks {
         public string FileVersion { get; set; }
         public string AssemblyVersion { get; set; }
 
-        internal void PublishArtifacts(Context context, string solutionRoot, object cacheKey, IReadOnlyCollection<ArtifactPackage> packages) {
+        internal IEnumerable<string> PublishArtifacts(Context context, string solutionRoot, object cacheKey, IReadOnlyCollection<ArtifactPackage> packages) {
             // TODO: Slow - optimize
             // TODO: Test for duplicates in the artifact inputs
 
@@ -94,10 +102,11 @@ namespace Aderant.Build.Tasks {
                         //CopyToDestination(container, pathSpec);
                     }
 
+                    
                     if (context.BuildMetadata.IsPullRequest) {
                         PrepareFilesForPullRequestDrop(copyList, context, artifact.Id, artifact.GetFiles());
                     } else {
-                        PrepareFilesForLegacyDrop(copyList, context, artifact.Id, artifact.GetFiles());
+                       PrepareFilesForLegacyDrop(copyList, context, artifact.Id, artifact.GetFiles());
                     }
                 }
             }
@@ -105,22 +114,25 @@ namespace Aderant.Build.Tasks {
             foreach (var item in copyList) {
                 CopyToDestination(item.Item1, item.Item2);
             }
+
+            return copyList.Select(s => s.Item1);
         }
 
-        private void PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
+        private string PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
             ErrorUtilities.IsNotNull(AssemblyVersion, nameof(AssemblyVersion));
             ErrorUtilities.IsNotNull(FileVersion, nameof(FileVersion));
 
-            var destinationRoot = Path.Combine(context.PullRequestDropLocation, context.BuildMetadata.PullRequest.Id, artifactId, AssemblyVersion, FileVersion);
+            // TODO: Temporary shim to allow PR layering to work. This should be replaced by the artifact service
+            var destinationRoot = Path.Combine(context.PullRequestDropLocation, context.BuildMetadata.PullRequest.Id, artifactId, AssemblyVersion, FileVersion, "Bin", "Module");
 
             foreach (var pathSpec in getFiles) {
-                // TODO: Temporary shim to allow PR layering to work. This should be replaced by the artifact service
-                var spec = new PathSpec(pathSpec.Location, Path.Combine("Bin", "Module", pathSpec.Destination));
-                copyList.Add(Tuple.Create(destinationRoot, spec));
+                copyList.Add(Tuple.Create(destinationRoot, pathSpec));
             }
+
+            return destinationRoot;
         }
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
@@ -131,13 +143,14 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private void PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
-            var destinationRoot = Path.Combine(context.PrimaryDropLocation, artifactId, AssemblyVersion, FileVersion);
+        private string PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
+            var destinationRoot = Path.Combine(context.PrimaryDropLocation, artifactId, AssemblyVersion, FileVersion, "Bin", "Module");
 
             foreach (var pathSpec in getFiles) {
-                var spec = new PathSpec(pathSpec.Location, Path.Combine("Bin", "Module", pathSpec.Destination));
-                copyList.Add(Tuple.Create(destinationRoot, spec));
+                copyList.Add(Tuple.Create(destinationRoot, pathSpec));
             }
+
+            return destinationRoot;
         }
     }
 
