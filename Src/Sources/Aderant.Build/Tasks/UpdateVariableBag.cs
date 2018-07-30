@@ -31,6 +31,8 @@ namespace Aderant.Build.Tasks {
                 Context.AddVariableToBag(Id, nameof(AssemblyVersion), AssemblyVersion);
                 Context.AddVariableToBag(Id, nameof(ModuleName), ModuleName);
                 ReplaceContext();
+
+
             }
 
             return !Log.HasLoggedErrors;

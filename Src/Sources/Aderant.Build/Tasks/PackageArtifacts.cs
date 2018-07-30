@@ -111,8 +111,8 @@ namespace Aderant.Build.Tasks {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
-            ErrorUtilities.IsNotNull(FileVersion, nameof(FileVersion));
             ErrorUtilities.IsNotNull(AssemblyVersion, nameof(AssemblyVersion));
+            ErrorUtilities.IsNotNull(FileVersion, nameof(FileVersion));
 
             var destinationRoot = Path.Combine(context.PullRequestDropLocation, context.BuildMetadata.PullRequest.Id, artifactId, AssemblyVersion, FileVersion);
 
