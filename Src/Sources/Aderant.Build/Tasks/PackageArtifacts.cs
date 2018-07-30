@@ -114,6 +114,12 @@ namespace Aderant.Build.Tasks {
         }
 
         private void PareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> getFiles) {
+            ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
+            ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
+            ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
+            ErrorUtilities.IsNotNull(AssemblyVersion, nameof(AssemblyVersion));
+            ErrorUtilities.IsNotNull(FileVersion, nameof(FileVersion));
+
             var destinationRoot = Path.Combine(context.PullRequestDropLocation, context.BuildMetadata.PullRequest.Id, artifactId, AssemblyVersion, FileVersion);
 
             foreach (var pathSpec in getFiles) {

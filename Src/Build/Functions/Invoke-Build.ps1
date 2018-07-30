@@ -65,16 +65,17 @@ function Global:Invoke-Build2
     $ErrorActionPreference = "Stop"
 
     function CreateToolArgumentString($context) {
-         $set = [System.Collections.Generic.HashSet[string]]::new()          
+        # Out-Null stops the return value from Add being left on the pipeline
+        $set = [System.Collections.Generic.HashSet[string]]::new()          
 
         if ($context.BuildMetadata -ne $null) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
                 $set.Add("/v:diag") | Out-Null
             }
 
-            if ($context.BuildMetadata.IsPullRequest) {
-                $set.Add("/v:diag")| Out-Null
-            }
+            #if ($context.BuildMetadata.IsPullRequest) {
+            #    $set.Add("/v:diag") | Out-Null
+            #}
         }
         
         # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
