@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
 
 namespace Aderant.Build.Ipc {
     /// <summary>
@@ -29,10 +30,17 @@ namespace Aderant.Build.Ipc {
                 throw new ArgumentException("Type is not serializable.", nameof(data));
             }
 
-            var buffer = new MemoryMappedFile(fileName, MemoryMappedFile.DefaultCapacity);
-            var readerWriter = new MemoryMappedFileReaderWriter(buffer);
-            readerWriter.Write(data);
-            return fileName;
+            bool createdNew;
+            using (var semaphore = new Semaphore(0, 1, fileName, out createdNew)) {
+                if (!createdNew) {
+                    semaphore.WaitOne();
+                }
+
+                var buffer = new MemoryMappedFile(fileName, MemoryMappedFile.DefaultCapacity);
+                var readerWriter = new MemoryMappedFileReaderWriter(buffer);
+                readerWriter.Write(data);
+                return fileName;
+            }
         }
 
         public static object Read(string name) {

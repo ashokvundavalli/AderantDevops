@@ -66,8 +66,8 @@ namespace Aderant.Build.Tasks {
             var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             ctx = cachedContext as Context;
             if (ctx != null) {
-                Log.LogMessage("Retrieved context from registered task object storage");
-                return ctx;
+                //Log.LogMessage("Retrieved context from registered task object storage");
+                //return ctx;
             }
 
             Log.LogMessage("Retrieving context from file");
