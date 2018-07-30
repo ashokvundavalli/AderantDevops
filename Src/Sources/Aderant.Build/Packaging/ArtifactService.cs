@@ -66,7 +66,7 @@ namespace Aderant.Build.Packaging {
 
             // Add marker file
             if (destination.EndsWith("Bin\\Module", StringComparison.OrdinalIgnoreCase)) {
-                copyList.Add(Tuple.Create(Path.Combine(destination, @"\..") /* Assumes the destination is Bin\Module */, new PathSpec("build.succeeded", null)));
+                copyList.Add(Tuple.Create(System.IO.Path.GetFullPath(Path.Combine(destination, @"..\")) /* Assumes the destination is Bin\Module */, new PathSpec("build.succeeded", null)));
             }
 
             return new ArtifactStorageInfo {
