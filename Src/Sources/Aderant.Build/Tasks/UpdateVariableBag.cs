@@ -28,6 +28,7 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (Output) {
+                System.Diagnostics.Debugger.Launch();
                 _FileVersion = Context.GetVariableFromBag(Id, nameof(FileVersion));
                 _AssemblyVersion = Context.GetVariableFromBag(Id, nameof(AssemblyVersion));
                 _ModuleName = Context.GetVariableFromBag(Id, nameof(ModuleName));
@@ -40,8 +41,6 @@ namespace Aderant.Build.Tasks {
                 Context.AddVariableToBag(Id, nameof(AssemblyVersion), AssemblyVersion);
                 Context.AddVariableToBag(Id, nameof(ModuleName), ModuleName);
                 ReplaceContext();
-
-
             }
 
             return !Log.HasLoggedErrors;

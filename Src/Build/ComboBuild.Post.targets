@@ -69,6 +69,8 @@
       <Output TaskParameter="_ModuleName" PropertyName="ModuleName" />
     </UpdateVariableBag>
 
+    <Error Text="$(FileVersion) is undefined" Condition="'$(FileVersion)' == ''" />
+
   </Target>
 
 
