@@ -8,7 +8,7 @@ namespace Aderant.Build.Packaging {
 
         public string ComputeVsoPath() {
             var pos = FullPath.IndexOf(Name, StringComparison.OrdinalIgnoreCase);
-            return FullPath.Remove(pos, Name.Length)
+            return FullPath.Remove(pos)
                 .TrimEnd(Path.DirectorySeparatorChar)
                 .TrimEnd(Path.AltDirectorySeparatorChar);
         }

@@ -5,10 +5,10 @@ using System.Linq;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
-        private readonly BucketService bucketService;
+        private readonly IBucketService bucketService;
         private readonly IFileSystem fileSystem;
 
-        public ArtifactService(IFileSystem fileSystem, BucketService bucketService) {
+        public ArtifactService(IFileSystem fileSystem, IBucketService bucketService) {
             this.fileSystem = fileSystem;
             this.bucketService = bucketService;
         }
@@ -32,7 +32,7 @@ namespace Aderant.Build.Packaging {
                     foreach (var pathSpec in artifact.GetFiles()) {
                         //CopyToDestination(container, pathSpec);
                     }
-                    
+
                     if (context.BuildMetadata.IsPullRequest) {
                         storageInfoList.Add(PrepareFilesForPullRequestDrop(copyList, context, artifact.Id, artifact.GetFiles()));
                     } else {
@@ -42,9 +42,7 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (var item in copyList) {
-                
-                    CopyToDestination(item.Item1, item.Item2);
-              
+                CopyToDestination(item.Item1, item.Item2);
             }
 
             return storageInfoList;
@@ -68,9 +66,10 @@ namespace Aderant.Build.Packaging {
 
             // Add marker file
             if (destination.EndsWith("Bin\\Module", StringComparison.OrdinalIgnoreCase)) {
-                copyList.Add(Tuple.Create(Path.GetFullPath(
-                    Path.Combine(destination, @"..\..\",
-                    PathSpec.BuildSucceeded.Location)) /* Assumes the destination is Bin\Module */, PathSpec.BuildSucceeded));
+                copyList.Add(
+                    Tuple.Create(
+                        Path.GetFullPath(Path.Combine(destination, @"..\..\", PathSpec.BuildSucceeded.Location)) /* Assumes the destination is Bin\Module */,
+                        PathSpec.BuildSucceeded));
             }
 
             return new ArtifactStorageInfo {
@@ -80,8 +79,8 @@ namespace Aderant.Build.Packaging {
         }
 
         private string CreateDropLocationPath(string destinationRoot, string artifactId, out string artifactName) {
-            artifactName = Path.Combine(artifactId, AssemblyVersion, FileVersion); 
-            return Path.Combine(destinationRoot, Path.Combine(artifactName, "Bin", "Module")); //TODO: Bin\Module is for compatibility with FBDS 
+            artifactName = Path.Combine(artifactId, AssemblyVersion, FileVersion);
+            return Path.GetFullPath(Path.Combine(destinationRoot, artifactName, "Bin", "Module")); //TODO: Bin\Module is for compatibility with FBDS 
         }
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
@@ -90,12 +89,12 @@ namespace Aderant.Build.Packaging {
                     fileSystem.AddFile(destinationRoot, new MemoryStream());
                 } catch (IOException) {
                     throw new IOException("Failed to create new file at " + destinationRoot);
-                 }
+                }
 
-            return;
+                return;
             }
 
-            var destination = Path.Combine(destinationRoot, pathSpec.Destination);
+            var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
 
             if (fileSystem.FileExists(pathSpec.Location)) {
                 fileSystem.CopyFile(pathSpec.Location, destination);

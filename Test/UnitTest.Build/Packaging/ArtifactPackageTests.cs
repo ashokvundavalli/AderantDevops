@@ -1,5 +1,8 @@
-﻿using Aderant.Build.Packaging;
+﻿using System.Collections.Generic;
+using Aderant.Build;
+using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace UnitTest.Build.Packaging {
     [TestClass]
@@ -21,6 +24,40 @@ namespace UnitTest.Build.Packaging {
             string vsoPath = storageInfo.ComputeVsoPath();
 
             Assert.AreEqual(@"\\some\san\storage", vsoPath);
+        }
+
+        [TestMethod]
+        public void Vso_path_is_smallest_substring() {
+            ArtifactStorageInfo a = new ArtifactStorageInfo() {
+                FullPath = "\\\\mydrop\\bar\\9.9.9.9\\1.0.0.0\\Bin\\Module",
+                Name = "bar\\9.9.9.9\\1.0.0.0"
+            };
+
+            var computeVsoPath = a.ComputeVsoPath();
+
+            Assert.AreEqual("\\\\mydrop", computeVsoPath);
+        }
+
+        [TestMethod]
+        public void PublishArtifacts() {
+            var bucketMock = new Mock<IBucketService>();
+            bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
+
+            var artifactService = new ArtifactService(new Mock<IFileSystem>().Object, bucketMock.Object);
+            artifactService.FileVersion = "1.0.0.0";
+            artifactService.AssemblyVersion = "9.9.9.9";
+
+            IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", null) };
+
+            IReadOnlyCollection<ArtifactStorageInfo> results = artifactService.PublishArtifacts(
+                new Context {
+                    PrimaryDropLocation = @"\\mydrop\",
+                    BuildMetadata = new BuildMetadata()
+                },
+                "foo",
+                new[] { new ArtifactPackage("bar", specs) });
+
+            Assert.IsNotNull(results);
         }
     }
 }

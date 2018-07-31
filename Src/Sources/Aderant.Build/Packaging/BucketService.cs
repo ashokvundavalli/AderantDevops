@@ -4,8 +4,8 @@ using System.Linq;
 using LibGit2Sharp;
 
 namespace Aderant.Build.Packaging {
-    internal class BucketService {
-        public string GetBucketId(string path) {
+    internal class BucketService : IBucketService {
+        public virtual string GetBucketId(string path) {
             return GetCommitForSolutionRoot(path);
         }
 
@@ -27,5 +27,9 @@ namespace Aderant.Build.Packaging {
                 return string.Empty;
             }
         }
+    }
+
+    internal interface IBucketService {
+        string GetBucketId(string path);
     }
 }

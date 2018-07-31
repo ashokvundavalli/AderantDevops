@@ -36,26 +36,33 @@ namespace Aderant.Build.Packaging {
             string tfsBuildId,
             string tfsBuildNumber) {
 
-            IEnumerable<ExpertModule> resolvedModules = modules.Select(m => manifest.GetModule(m));
-
-            // the additional TFS info will only be passed in a CI build
-            if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
-                this.isLocalBuild = true;
+            IEnumerable<ExpertModule> resolvedModules;
+            if (modules != null) {
+                resolvedModules = modules.Select(m => manifest.GetModule(m));
             } else {
-                this.tfvcSourceGetVersion = tfvcSourceGetVersion;
-                this.teamProject = teamProject;
-                this.tfvcBranch = tfvcBranch;
-                this.tfsBuildId = tfsBuildId;
-                this.tfsBuildNumber = tfsBuildNumber;
+                resolvedModules = Enumerable.Empty<ExpertModule>();
             }
 
-            var operation = AssembleProduct(new ProductAssemblyContext {
-                Modules = resolvedModules,
-                BuildOutputs = buildOutputs,
-                ProductDirectory = productDirectory
-            });
+            // the additional TFS info will only be passed in a CI build
+                if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
+                    this.isLocalBuild = true;
+                } else {
+                    this.tfvcSourceGetVersion = tfvcSourceGetVersion;
+                    this.teamProject = teamProject;
+                    this.tfvcBranch = tfvcBranch;
+                    this.tfsBuildId = tfsBuildId;
+                    this.tfsBuildNumber = tfsBuildNumber;
+                }
 
-            return operation;
+                var operation = AssembleProduct(new ProductAssemblyContext {
+                    Modules = resolvedModules,
+                    BuildOutputs = buildOutputs,
+                    ProductDirectory = productDirectory
+                });
+
+                return operation;
+            
+
         }
 
         private IProductAssemblyResult AssembleProduct(ProductAssemblyContext context) {
@@ -81,6 +88,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
+
             var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
 
             using (var manager = new PaketPackageManager(fs, logger)) {
