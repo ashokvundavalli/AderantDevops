@@ -10,6 +10,16 @@
     <!-- If set the change set list will be taken from this Team Query -->
     <TeamQuery>Expert 8.0SP2 Patch 2371</TeamQuery>
     
+    <!-- Optional instructions for applying the patch, will be shown as a confirmation dialog before import-->
+    <Instructions></Instructions>
+    <!-- Example -->
+    <!-- 
+    <Instructions>If you have customizations, please ensure they are reapplied after importing this Patch.</Instructions>
+    -->
+
+    <Description></Description>
+    <!--<Description>Expert 8.1SP1 Patch 2683</Description>-->
+
     <!-- If set the change set list will be taken between these two VersionSpec -->
     <StartVersionSpec></StartVersionSpec>
     <EndVersionSpec></EndVersionSpec>  
