@@ -53,12 +53,12 @@
         Switch ($action) {
           "local"  { LocalPathToModuleBinariesFor $module }
           "local-external-module"  { LocalPathToThirdpartyBinariesFor $module }
-          "current-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action }
-          "other-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action }
-          "other-branch"  { ServerPathToModuleBinariesFor $module $dropPath $pullRequestId $action }
-          "current-branch"  { ServerPathToModuleBinariesFor $module $dropPath $pullRequestId $action }
-          "specific-path" { ServerPathToModuleBinariesFor $module $module.Path $pullRequestId $action }
-          "specific-path-external-module" { ThirdpartyBinariesPathFor $module $module.Path $pullRequestId $action }
+          "current-branch-external-module"  { ThirdpartyBinariesPathFor module $module -dropPath $dropPath -action $action }
+          "other-branch-external-module"  { ThirdpartyBinariesPathFor -module $module -dropPath $dropPath -action $action }
+          "other-branch"  { ServerPathToModuleBinariesFor -module $module -dropPath $dropPath -pullRequestId $pullRequestId -action $action }
+          "current-branch"  { ServerPathToModuleBinariesFor -module $module -dropPath $dropPath -pullRequestId $pullRequestId -action $action }
+          "specific-path" { ServerPathToModuleBinariesFor -module $module -dropPath $module.Path -pullRequestId $pullRequestId -action $action }
+          "specific-path-external-module" { ThirdpartyBinariesPathFor -module $module -dropPath $module.Path -action $action }
           Default { throw "invalid action [$action]" }
         }
     }
