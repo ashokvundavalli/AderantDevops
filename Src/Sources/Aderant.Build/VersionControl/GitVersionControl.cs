@@ -24,8 +24,7 @@ namespace Aderant.Build.VersionControl {
 
                 // Get committed changes different to master.
                 var currentTip = repo.Head.Tip.Tree;
-                var master = repo.Branches["origin/master"];
-                var masterTip = master.Tip.Tree;
+                var masterTip = repo.Branches["origin/master"].Tip.Tree;
                 var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
                 var committedChangs = diffs.Select(x=>new PendingChange(workingDirectory, x.Path, FileStatus.Renamed));
 
@@ -34,7 +33,7 @@ namespace Aderant.Build.VersionControl {
                     return new IPendingChange[0];
                 }
 
-
+                // Get the current git status.
                 var uncommittedChanges =
                     status.Added.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Added))
                         .Concat(status.RenamedInWorkDir.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Renamed)))

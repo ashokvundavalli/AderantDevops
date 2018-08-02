@@ -81,8 +81,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         public List<string> GetDiffToMaster(ChangesToConsider buildType = ChangesToConsider.PendingChanges) {
             using (var repo = new Repository(WorkingDirectory)) {
                 var currentTip = repo.Head.Tip.Tree;
-                var master = repo.Branches["origin/master"];
-                var masterTip = master.Tip.Tree;
+                var masterTip = repo.Branches["origin/master"].Tip.Tree;
                 var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
                 var committedChangs = diffs.Select(x => x.Path).Distinct().ToList();
                 return committedChangs;
