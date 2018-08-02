@@ -20,22 +20,30 @@ namespace Aderant.Build.VersionControl {
             string gitDir = Repository.Discover(repositoryPath);
 
             using (var repo = new Repository(gitDir)) {
-                var status = repo.RetrieveStatus();
+                var workingDirectory = repo.Info.WorkingDirectory;
 
+                // Get committed changes different to master.
+                var currentTip = repo.Head.Tip.Tree;
+                var master = repo.Branches["origin/master"];
+                var masterTip = master.Tip.Tree;
+                var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
+                var committedChangs = diffs.Select(x=>new PendingChange(workingDirectory, x.Path, FileStatus.Renamed));
+
+                var status = repo.RetrieveStatus();
                 if (!status.IsDirty) {
                     return new IPendingChange[0];
                 }
 
-                var workingDirectory = repo.Info.WorkingDirectory;
 
-                var changes =
+                var uncommittedChanges =
                     status.Added.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Added))
                         .Concat(status.RenamedInWorkDir.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
                         .Concat(status.Modified.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Modified)))
                         .Concat(status.Removed.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Removed)))
                         .Concat(status.Untracked.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
 
-                return changes.ToList();
+                var result = committedChangs.Concat(uncommittedChanges).ToList();
+                return result;
             }
         }
     }

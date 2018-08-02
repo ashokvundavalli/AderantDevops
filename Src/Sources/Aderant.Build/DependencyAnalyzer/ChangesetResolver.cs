@@ -79,21 +79,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         ///   Framework\...\ConstructorOverrideTest.cs
         /// </returns>
         public List<string> GetDiffToMaster(ChangesToConsider buildType = ChangesToConsider.PendingChanges) {
-            
             using (var repo = new Repository(WorkingDirectory)) {
                 var currentTip = repo.Head.Tip.Tree;
                 var master = repo.Branches["origin/master"];
-                var masterTip = master.Commits.FirstOrDefault().Tree;
-
+                var masterTip = master.Tip.Tree;
                 var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
-
-                var changedFiles = new List<string>();
-                foreach (var diff in diffs) {
-                    changedFiles.Add(diff.Path);
-                }
-
-                var result = changedFiles.Distinct().ToList();
-                return result;
+                var committedChangs = diffs.Select(x => x.Path).Distinct().ToList();
+                return committedChangs;
             }
         }
 
