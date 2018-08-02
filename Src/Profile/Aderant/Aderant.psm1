@@ -978,17 +978,26 @@ function Copy-BinariesFromCurrentModule() {
 .PARAMETER createBackup
     Switch to create a backup of the Binaries folder (named BinariesBackup in the same folder) after successfully retrieving the product.
     This is intended to be used by developers who call Copy-BinariesFromCurrentModules (cb) or Copy-BinToEnvironment and want to have a backup with the original files from the Get-Product call.
+.PARAMETER pullRquestId
+    Mixes the output of a pull request build into the product
 .EXAMPLE
     Get-Product -createBackup
 #>
-function Get-Product ([switch]$onlyUpdated, [switch]$createBackup) {
+function Get-Product {
+param (
+        [switch]$createBackup,
+
+        [switch]$onlyUpdated,
+
+        [alias("pr")]
+        [string]$pullRquestId
+    )
+
     $buildInfrastructure = $global:PackageScriptsDirectory.Replace("Package", "")
 
     & tf.exe vc "get" $global:ProductManifestPath
-
-    pushd $global:PackageScriptsDirectory
-    & .\GetProduct.ps1 -ProductManifestPath $global:ProductManifestPath -dropRoot $global:BranchServerDirectory -binariesDirectory $global:BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString) -onlyUpdated:$onlyUpdated.ToBool()
-    popd
+            
+    & "$global:PackageScriptsDirectory\GetProduct.ps1" -ProductManifestPath $global:ProductManifestPath -dropRoot $global:BranchServerDirectory -binariesDirectory $global:BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString) -onlyUpdated:$onlyUpdated.ToBool() -pullRequest $pullRquestId
 
     if ($createBackup) {
         Write-Host "Creating backup of Binaries folder."
@@ -998,6 +1007,26 @@ function Get-Product ([switch]$onlyUpdated, [switch]$createBackup) {
         }
         Invoke-Expression "robocopy.exe $global:BranchBinariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $global:BranchBinariesDirectory\ExpertSource\Customization" | out-null
         Write-Host "Backup complete."
+    }
+}
+
+#TODO: Front end with the http build service to cache the results for remote clients 
+Register-ArgumentCompleter -CommandName Get-Product -ParameterName "pullRquestId" -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)        
+
+    # TODO: Externalize
+    # TODO: Call build service for caching for people in the US
+    $stem = "http://tfs:8080/tfs/Aderant/ExpertSuite"
+    $results = Invoke-RestMethod -Uri "$stem/_apis/git/pullrequests" -ContentType "application/json" -UseDefaultCredentials
+
+    $ids = $results.value | Select-Object -Property pullRequestId, title
+
+    if (-not $wordToComplete.EndsWith("*")) {
+        $wordToComplete += "*"
+    }
+
+    $ids | Where-Object -FilterScript { $_.pullRequestId -like $wordToComplete -or $_.title -like $wordToComplete } | % {
+        [System.Management.Automation.CompletionResult]::new($_.pullRequestId, $_.title, [System.Management.Automation.CompletionResultType]::Text, $_.title)
     }
 }
 

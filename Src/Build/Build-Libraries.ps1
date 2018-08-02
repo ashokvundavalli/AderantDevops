@@ -48,17 +48,17 @@
     ##
     # Resolves the path to the binaries for the given module
     ##
-    Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath) {
+    Function global:GetPathToBinaries([System.Xml.XmlNode]$module, [string]$dropPath, [string]$pullRequestId) {
         $action = FindGetActionTag $module
         Switch ($action) {
           "local"  { LocalPathToModuleBinariesFor $module }
           "local-external-module"  { LocalPathToThirdpartyBinariesFor $module }
           "current-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action }
           "other-branch-external-module"  { ThirdpartyBinariesPathFor  $module $dropPath $action }
-          "other-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action }
-          "current-branch"  { ServerPathToModuleBinariesFor $module $dropPath $action }
-          "specific-path" { ServerPathToModuleBinariesFor $module $module.Path $action }
-          "specific-path-external-module" { ThirdpartyBinariesPathFor $module $module.Path $action }
+          "other-branch"  { ServerPathToModuleBinariesFor $module $dropPath $pullRequestId $action }
+          "current-branch"  { ServerPathToModuleBinariesFor $module $dropPath $pullRequestId $action }
+          "specific-path" { ServerPathToModuleBinariesFor $module $module.Path $pullRequestId $action }
+          "specific-path-external-module" { ThirdpartyBinariesPathFor $module $module.Path $pullRequestId $action }
           Default { throw "invalid action [$action]" }
         }
     }
@@ -97,45 +97,45 @@
         }
     }
 
-	function global:AcquireExpertClassicBinaries([string]$moduleName, [string]$binariesDirectory, [string]$classicPath, [string]$target) {
-		Push-Location
+    function global:AcquireExpertClassicBinaries([string]$moduleName, [string]$binariesDirectory, [string]$classicPath, [string]$target) {
+        Push-Location
         $build = Get-ChildItem (Join-Path -Path $classicPath -ChildPath $buildDirectory.Name) -File -Filter "*.zip"
 
-	    if ($build -ne $null) {
-		    [string]$zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
+            if ($build -ne $null) {
+                [string]$zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
 
-		    if (Test-Path $zipExe) {
-				[string]$filter
+                if (Test-Path $zipExe) {
+                    [string]$filter = ""
 
-				switch ($moduleName) {
-					"Expert.Classic.CS" {
-						$filter = "ApplicationServer\*"
-						break
-					}
-					default {
-						$filter = ""
-						break
-					}
-				}
+                    switch ($moduleName) {
+                        "Expert.Classic.CS" {
+                            $filter = "ApplicationServer\*"
+                            break
+                        }
+                        default {
+                            $filter = ""
+                            break
+                        }
+                    }
 
-				& $zipExe x $build.FullName "-o$(Join-Path -Path $binariesDirectory -ChildPath $target)" $filter -r -y
-				[string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
+                    & $zipExe x $build.FullName "-o$(Join-Path -Path $binariesDirectory -ChildPath $target)" $filter -r -y
+                    [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
 
-				if (-not (Test-Path $classicBuildNumbersFile)) {
-					New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
-				}
+                    if (-not (Test-Path $classicBuildNumbersFile)) {
+                        New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
+                    }
 
-				Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
-			    Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
-		    } else {
-			    Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
-		    }
-	    } else {
-			Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
-		}
+                    Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
+                    Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
+                } else {
+                    Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
+                }
+            } else {
+                Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
+            }
 
-		Pop-Location
-    }
+            Pop-Location
+        }
 
     ##
     # Resolves the path to the binaries for the given module
@@ -152,10 +152,9 @@
     # Find the get action for this module
     ##
     Function global:FindGetActionTag([System.Xml.XmlNode]$module) {
-
-        [bool]$getModuleLocally=$false
-        [bool]$getModuleFromAnotherBranch=$false
-        [bool]$getModuleFromSpecificPath=$false
+        [bool]$getModuleLocally = $false
+        [bool]$getModuleFromAnotherBranch = $false
+        [bool]$getModuleFromSpecificPath = $false
 
         if ($module.HasAttribute("GetAction")) {
             if ($module.GetAction.ToLower().Equals("branch")) {
@@ -172,12 +171,12 @@
                 return "other-branch-external-module"
             }
             return "other-branch"
-        } elseif ($getModuleLocally){
+        } elseif ($getModuleLocally) {
             if ((IsThirdparty $module) -or (IsHelp $module)) {
                 return "local-external-module"
             }
             return "local"
-        } elseif ($getModuleFromSpecificPath){
+        } elseif ($getModuleFromSpecificPath) {
             if ((IsThirdparty $module) -or (IsHelp $module)) {
                 return "specific-path-external-module"
             }
@@ -265,7 +264,7 @@
     ##
     # Thirdparty binaries path from the drop
     ##
-    Function global:ThirdpartyBinariesPathFor([System.Xml.XmlNode]$module, [string]$dropPath, [string]$action="current-branch-external-module"){
+    Function global:ThirdpartyBinariesPathFor([System.Xml.XmlNode]$module, [string]$dropPath, [string]$action = "current-branch-external-module") {
         if (!$dropPath) {
             $rootPath = (Get-DropRootPath)
         } else {
@@ -290,37 +289,54 @@
     ##
     # Versioned binaries path from the drop
     ##
-    Function global:ServerPathToModuleBinariesFor([System.Xml.XmlNode]$module, [string]$dropPath, [string]$action="current-branch"){
+    Function global:ServerPathToModuleBinariesFor([System.Xml.XmlNode]$module, [string]$dropPath, [string]$pullRequestId, [string]$action="current-branch") {
+        if ($module.Name.Contains("Expert.Classic")) {
+            $modulePath = PathToLatestSuccessfulBuild $module.Path -suppressThrow
+            return $modulePath
+        }
+
+        $locationsToProbe = @()
+        if ($pullRequestId) {
+            #TODO: Externalize the path
+            $locationsToProbe += "\\dfs.aderant.com\ExpertSuite\pulls\$pullRequestId"
+        }
+        
         if (!$dropPath) {
             $rootPath = (Get-DropRootPath)
         } else {
             $rootPath = $dropPath
-        }
-
+        }        
+    
         if ($action.Equals("other-branch") -and ![string]::IsNullOrEmpty($module.Path)) {
             $rootPath = ChangeBranch $rootPath $module.Path
         }
 
         if ($action.Equals("specific-path") -and ![string]::IsNullOrEmpty($module.Path)) {
             $rootPath = $module.Path
-        }
+        }        
 
-        if ($module.Name.Contains("Expert.Classic")) {
-            $modulePath = PathToLatestSuccessfulBuild $module.Path -suppressThrow
-            return $modulePath
-        }
+        $locationsToProbe += $rootPath
 
         [string]$binModule = "\Bin\Module"
+        foreach ($location in $locationsToProbe) {
+            [string]$pathToModuleAssemblyVersion = ""
+            if ($module.PSObject.Properties.Name -match "AssemblyVersion") {
+                $pathToModuleAssemblyVersion = Join-Path -Path (Join-Path $location $module.Name) -ChildPath $module.AssemblyVersion
+            } else {
+                $pathToModuleAssemblyVersion = Join-Path $location -ChildPath $module.Name
+            }            
 
-        $pathToModuleAssemblyVersion = Join-Path -Path (Join-Path $rootPath $module.Name) -ChildPath $module.AssemblyVersion
+            if ($module.HasAttribute("FileVersion")) {
+                $modulePath = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $module.FileVersion) -ChildPath $binModule         
+            } else {
+                $modulePath = PathToLatestSuccessfulBuild $pathToModuleAssemblyVersion -suppressThrow
+            }     
 
-        if ($module.HasAttribute("FileVersion")) {
-            $modulePath = Join-Path -Path( Join-Path -Path $pathToModuleAssemblyVersion  -ChildPath $module.FileVersion) -ChildPath $binModule
-        } else {
-            $modulePath = PathToLatestSuccessfulBuild $pathToModuleAssemblyVersion -suppressThrow
+            if ($modulePath -ne $null) {
+                Write-Debug $modulePath
+                return $modulePath
+            }
         }
-
-        return $modulePath
     }
 
     ##
@@ -357,28 +373,38 @@
     # Find the last successfully build in the drop location.
     ###
     Function global:PathToLatestSuccessfulBuild([string]$pathToModuleAssemblyVersion, [switch]$suppressThrow) {
-        $sortedFolders = SortedFolders $pathToModuleAssemblyVersion
+        $sortedFolders = SortedFolders $pathToModuleAssemblyVersion    
+
         [bool]$noBuildFound = $true
         [string]$pathToLatestSuccessfulBuild = $null
 
         foreach ($folderName in $sortedFolders) {
-            [string]$buildLog = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name) -ChildPath "\BuildLog.txt"
-            [string]$pathToLatestSuccessfulBuild = Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name
-            [string]$successfulBuildBinModule = Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "\Bin\Module"
+         
+           [string]$pathToLatestSuccessfulBuild = Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name
+           [string]$successfulBuildBinModule = Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "\Bin\Module"
 
-            if (Test-Path $successfulBuildBinModule) {
+           Write-Debug "Considering: $pathToLatestSuccessfulBuild"
+
+           $isSuccessfulBuild = $false
+           if (Test-Path (Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "build.succeeded")) {
+                $isSuccessfulBuild = $true
+           }
+
+           if (Test-Path $successfulBuildBinModule) {
                 $pathToLatestSuccessfulBuild = $successfulBuildBinModule
-            }
+           }
 
-			if (Test-Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath "build.succeeded")) {
+           if ($isSuccessfulBuild) {
+                Write-Debug "Returning: $pathToLatestSuccessfulBuild"
                 return $pathToLatestSuccessfulBuild
-			}
+           }              
 
-            if (Test-Path $buildLog) {
-				if (CheckBuild $buildLog) {
-					return $pathToLatestSuccessfulBuild
-				}
-            }
+           [string]$buildLog = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name) -ChildPath "\BuildLog.txt"
+           if (Test-Path $buildLog) {
+             if (CheckBuild $buildLog) {
+               return $pathToLatestSuccessfulBuild
+              }
+           }
         }
 
         if ($noBuildFound -and -not $suppressThrow) {
@@ -413,33 +439,33 @@
     ###
     Function global:PathToLatestSuccessfulPackage([string]$pathToPackages, [string]$packageZipName, [bool]$unstable){
 
-		# Pad the build index within the same day so the names can be sorted in alphabet order, e.g. 16 -> 0016, 1 -> 0001
-		$ToNatural= { [regex]::Replace($_, '\d+',{$args[0].Value.Padleft(4)})}
+        # Pad the build index within the same day so the names can be sorted in alphabet order, e.g. 16 -> 0016, 1 -> 0001
+        $ToNatural= { [regex]::Replace($_, '\d+',{$args[0].Value.Padleft(4)})}
 
-		$packagingFolders = (dir -Path $pathToPackages |
-				where {$_.PsIsContainer -and $_.name.Contains(".BuildAll")} |
-				sort $ToNatural -Descending)
+        $packagingFolders = (dir -Path $pathToPackages |
+                where {$_.PsIsContainer -and $_.name.Contains(".BuildAll")} |
+                sort $ToNatural -Descending)
         
         foreach ($folderName in $packagingFolders) {
             Write-Info "Testing $folderName"
             
             $buildLog = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\BuildLog.txt")
-			$stableBuild = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\StableBuild.txt")
+            $stableBuild = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\StableBuild.txt")
             [string]$pathToLatestSuccessfulPackage = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath $packageZipName)
 
             if (Test-Path $pathToLatestSuccessfulPackage) {
-				if ($unstable){
-					if (CheckBuild $buildLog) {               
-						return $pathToLatestSuccessfulPackage
-					} else {
-						Write-Warning "Rejected failed build: $folderName"
-					}        
-				}
-				if (CheckStableBuild $stableBuild){
-					return $pathToLatestSuccessfulPackage
-				}  else {
-					Write-Warning "Rejected unstable build: $folderName"
-				}        
+                if ($unstable){
+                    if (CheckBuild $buildLog) {               
+                        return $pathToLatestSuccessfulPackage
+                    } else {
+                        Write-Warning "Rejected failed build: $folderName"
+                    }        
+                }
+                if (CheckStableBuild $stableBuild){
+                    return $pathToLatestSuccessfulPackage
+                }  else {
+                    Write-Warning "Rejected unstable build: $folderName"
+                }        
             } else {
                 Write-Warning "Rejected $folderName as it doesn't contain a package."
             }
@@ -453,7 +479,7 @@
     # can be used because each section will now be of the same length.
     ###
     Function global:SortedFolders([string]$parentFolder) {
-		Function IsAllNumbers($container) {
+        Function IsAllNumbers($container) {
             $numbers = $container.Name.Replace(".", "")
 
             $rtn = $null
@@ -468,7 +494,7 @@
         if (test-path $parentFolder) {
             $sortedFolders =  (dir -Path $parentFolder |
                         where {$_.PsIsContainer} |
-						where { IsAllNumbers $_ } |
+                        where { IsAllNumbers $_ } |
                         Sort-Object {$_.name.Split(".")[0].PadLeft(4,"0")+"."+ $_.name.Split(".")[1].PadLeft(4,"0")+"."+$_.name.Split(".")[2].PadLeft(8,"0")+"."+$_.name.Split(".")[3].PadLeft(8,"0")+"." } -Descending  |
                         select name)
 
@@ -614,234 +640,130 @@
         }
     }
 
-	# Called by CopyToDropV2
-	function global:CopyFilesToDrop {
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleName,
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleRootPath,
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
-			[string[]]$components,
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$origin,
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
-		)
+    # Called by CopyToDropV2
+    function global:CopyFilesToDrop {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleName,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleRootPath,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
+            [string[]]$components,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$origin,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
+        )
 
-		begin {
-			Set-StrictMode -Version 2.0
+        begin {
+            Set-StrictMode -Version Latest
 
-			[string]$commandName = $PSCmdlet.MyInvocation.InvocationName;
-			Write-Host "Executing $($commandName) with parameters:"
-			$parameterList = (Get-Command -Name $commandName).Parameters
+            [string]$commandName = $PSCmdlet.MyInvocation.InvocationName;
+            Write-Host "Executing $($commandName) with parameters:"
+            $parameterList = (Get-Command -Name $commandName).Parameters
 
-			foreach ($parameter in $parameterList) {
-				Get-Variable -Name $parameter.Values.Name -ErrorAction SilentlyContinue
-			}
-		}
+            foreach ($parameter in $parameterList) {
+                Get-Variable -Name $parameter.Values.Name -ErrorAction SilentlyContinue
+            }
+        }
 
-		process {
-			[string]$moduleBinPath = Join-Path -Path $moduleRootPath -ChildPath "Bin"
+        process {
+            [string]$moduleBinPath = Join-Path -Path $moduleRootPath -ChildPath "Bin"
 
-			# Generate excluded file list
-			$dependenciesFiles = Get-ChildItem -Path (Join-Path -Path $moduleRootPath -ChildPath "Dependencies") -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
-			$packageFiles = Get-ChildItem -Path (Join-Path -Path $moduleRootPath -ChildPath "packages") -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
-			# Exclude all directories other than Modules and Test
-			[string[]]$excludedDirectories = Get-ChildItem -Path $moduleBinPath -Exclude "*Module", "*Test" -Directory
+            # Generate excluded file list
+            $dependenciesFiles = Get-ChildItem -Path (Join-Path -Path $moduleRootPath -ChildPath "Dependencies") -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
+            $packageFiles = Get-ChildItem -Path (Join-Path -Path $moduleRootPath -ChildPath "packages") -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
+            # Exclude all directories other than Modules and Test
+            [string[]]$excludedDirectories = Get-ChildItem -Path $moduleBinPath -Exclude "*Module", "*Test" -Directory
 
-			[System.Collections.Generic.HashSet[string]]$excludedFiles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-			$dependenciesFiles | % { [void]$excludedFiles.Add($_) }
-			$packageFiles | % { [void]$excludedFiles.Add($_) }
+            [System.Collections.Generic.HashSet[string]]$excludedFiles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            $dependenciesFiles | % { [void]$excludedFiles.Add($_) }
+            $packageFiles | % { [void]$excludedFiles.Add($_) }
 
-			# Generate drop location
-			[string]$dropLocation = GetArtifactDropLocation $moduleName $components $origin $version
-			[string]$dropPath = [System.IO.Path]::Combine($dropRoot, $dropLocation)
+            if ($components -ne $null) {
+                if ($components.Length -gt 0) {
+                    [string]$component = $components[0]
+                }
+            } else {
+                [string]$component = $null
+            }
 
-			Write-Host "Drop path: $($dropPath)"
+            # Generate drop location
+            [string]$dropLocation = GetArtifactDropLocation -ModuleName $moduleName -component $component -origin $origin -version $version
+            [string]$dropPath = [System.IO.Path]::Combine($dropRoot, $dropLocation)
 
-			try {
-				$jobFile = [System.IO.Path]::GetRandomFileName() + ".RCJ"
-				$jobFile = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath $jobFile
+            Write-Host "Drop path: $($dropPath)"
 
-				$sb = [System.Text.StringBuilder]::new()
-				[void]$sb.AppendLine("/XD")
+            try {
+                $jobFile = [System.IO.Path]::GetRandomFileName() + ".RCJ"
+                $jobFile = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath $jobFile
 
-				foreach ($directory in $excludedDirectories) {
-					[void]$sb.AppendLine($directory)
-				}
+                $sb = [System.Text.StringBuilder]::new()
+                [void]$sb.AppendLine("/XD")
 
-				[void]$sb.AppendLine("/XF")
+                foreach ($directory in $excludedDirectories) {
+                    [void]$sb.AppendLine($directory)
+                }
 
-				foreach ($file in $excludedFiles) {
-					[void]$sb.AppendLine($file)
-				}
+                [void]$sb.AppendLine("/XF")
 
-				[void]$sb.AppendLine("*.pfx")
-				[void]$sb.AppendLine("*.trx")
+                foreach ($file in $excludedFiles) {
+                    [void]$sb.AppendLine($file)
+                }
+
+                [void]$sb.AppendLine("*.pfx")
+                [void]$sb.AppendLine("*.trx")
             
-				[System.IO.File]::WriteAllText($jobFile, $sb.ToString(), [System.Text.Encoding]::ASCII)
+                [System.IO.File]::WriteAllText($jobFile, $sb.ToString(), [System.Text.Encoding]::ASCII)
 
-				Write-Host "Job File:"
-				Write-Host (Get-Content $jobFile)
+                Write-Host "Job File:"
+                Write-Host (Get-Content $jobFile)
 
-				& Robocopy.exe "$($moduleRootPath)\Bin" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"
+                & Robocopy.exe "$($moduleRootPath)\Bin" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"			
 
-				# Tell TFS about our drop path so it can be tracked
-				#// Damn build systems. So you would think that TFS would take the path verbatim and just store that away.
-				#// But no, it takes the UNC path you give it and then when the garbage collection occurs it appends the artifact name as a folder
-				#// to that original path as the final path to delete. 
-				#// This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
-				#// set the actual final folder as the name.
+                [string[]]$paths =  $dropPath.Split('\')
+                [int]$index = $paths.IndexOf($version)
+                [string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($index)])
+                [string]$artifactName = [System.String]::Join('\', $paths[$($index + 1)..$($paths.Length - 1)])
 
-				[string[]]$paths =  $dropPath.Split('\')
-				[int]$moduleIndex = $paths.IndexOf($moduleName)
-				[string]$artifactDropPath = [System.String]::Join('\', $paths[0..$($moduleIndex)])
-				[string]$artifactName = [System.String]::Join('\', $paths[$($moduleIndex + 1)..$($paths.Length - 1)])
+                Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]$($artifactDropPath)"
+            } finally {
+                [System.IO.File]::Delete($jobFile)
 
-				Write-Host "##vso[artifact.associate type=filepath;artifactname=$($artifactName)]$($artifactDropPath)"
-			} finally {
-				[System.IO.File]::Delete($jobFile)
-
-				# robocopy has non-standard exit values that are documented here: https://support.microsoft.com/en-us/kb/954404
-				# Exit codes 0-8 are considered success, while all other exit codes indicate at least one failure.
-				# Some build systems treat all non-0 return values as failures, so we massage the exit code into
-				# something that they can understand.            
-				if ($global:LASTEXITCODE -lt 8) {
-					$global:LASTEXITCODE = 0
-				} else {
-					throw "Robocopy failed with error $($global:LASTEXITCODE)"
-				}
-			}
-		}
-	}
+                # robocopy has non-standard exit values that are documented here: https://support.microsoft.com/en-us/kb/954404
+                # Exit codes 0-8 are considered success, while all other exit codes indicate at least one failure.
+                # Some build systems treat all non-0 return values as failures, so we massage the exit code into
+                # something that they can understand.            
+                if ($global:LASTEXITCODE -lt 8) {
+                    $global:LASTEXITCODE = 0
+                } else {
+                    throw "Robocopy failed with error $($global:LASTEXITCODE)"
+                }
+            }
+        }
+    }
 
     Function global:GetArtifactDropLocation {
         param(
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleName,
-			[string]$component,
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$origin,
-			[Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$moduleName,
+            [string]$component,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$origin,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$version
         )
 
-		process {
-			Set-StrictMode -Version 2.0
-
-			$global:ToolsDirectory = Join-Path -Path $PSScriptRoot -ChildPath "\..\Build.Tools"
-
-			$assemblyBytes = [System.IO.File]::ReadAllBytes((Join-Path -Path "$PSScriptRoot\..\Build.Tools" -ChildPath "Aderant.Build.dll"))
-			[void][System.Reflection.Assembly]::Load($assemblyBytes)
-
-			[string]$quality = [Aderant.Build.DependencyResolver.FolderDependencySystem]::GetQualityMoniker($origin)
-			[string]$fullDropPath = [Aderant.Build.DependencyResolver.FolderDependencySystem]::BuildDropPath($moduleName, $quality, $origin, $version, $component)
-
-			return $fullDropPath
-		}
-    }
-
-    Function global:CopyFilesToArtifactStagingDirectory {
-        param( 
-        [ValidateNotNullOrEmpty()]
-        [string]$stagingDirectory, 
-       
-        [ValidateNotNullOrEmpty()]
-        [string]$moduleName,
-
-        [ValidateNotNullOrEmpty()]
-        [string]$modulePath,        
-       
-        [ValidateNotNullOrEmpty()]
-        [string]$gitOrTfvcBranch,
-
-        [string]$version,
-
-        [switch]$isDesktopBuild,
-        [switch]$isMasterBuild,
-        [switch]$isPullRequestBuild,
-        [switch]$isComboBuild,
-        [switch]$isPrivateBuildAll        
-        )        
-
-        if (-not $isDesktopBuild.IsPresent)  {
-            $isDesktopBuild = $global:IsDesktopBuild
+        begin {
+            Set-StrictMode -Version Latest
         }
 
-        if (-not $isComboBuild.IsPresent)  {
-            $isComboBuild = $global:IsComboBuild
+        process {
+            $global:ToolsDirectory = Join-Path -Path $PSScriptRoot -ChildPath "\..\Build.Tools"
+
+            $assemblyBytes = [System.IO.File]::ReadAllBytes((Join-Path -Path "$PSScriptRoot\..\Build.Tools" -ChildPath "Aderant.Build.dll"))
+            [void][System.Reflection.Assembly]::Load($assemblyBytes)
+
+            [string]$quality = [Aderant.Build.DependencyResolver.FolderDependencySystem]::GetQualityMoniker($origin)
+            [string]$fullDropPath = [Aderant.Build.DependencyResolver.FolderDependencySystem]::BuildDropPath($moduleName, $quality, $origin, $version, $component)
+
+            return $fullDropPath
         }
-
-        Write-Debug "Entering CopyFilesToArtifactStagingDirectory"
-        Write-Debug "Staging directory: $stagingDirectory"
-        Write-Debug "Module name: $moduleName"
-        Write-Debug "GitOrTfvcBranch: $gitOrTfvcBranch"
-        Write-Debug "IsDesktopBuild: $isDesktopBuild"
-        Write-Debug "IsMasterBuild: $isMasterBuild"
-        Write-Debug "IsPullRequestBuild: $isPullRequestBuild"
-        Write-Debug "IsComboBuild: $isComboBuild"
-        Write-Debug "IsPrivateBuildAll: $isPrivateBuildAll"    
-         
-        $dependenciesFiles = Get-ChildItem -Path "$modulePath\Dependencies" -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
-        $packageFiles = Get-ChildItem -Path "$modulePath\packages" -Recurse -File | Select-Object -ExpandProperty Name | Get-Unique
-
-        $excludedFiles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-        $dependenciesFiles | % { [void]$excludedFiles.Add($_) }
-        $packageFiles | % { [void]$excludedFiles.Add($_) }
-
-        #[bool]$hasComponents = $true
-
-        #$source = "$modulePath\Bin\Components"
-
-        #Write-Debug "Testing for component directory: $source"
-
-        #if (-not (Test-Path $source)) {
-        #    $source = "$modulePath\Bin\Module"
-        #    $hasComponents = $false;
-        #}
-
-        #if (-not (Test-Path $source)) {
-        #    throw "Directory $source does not exist so cannot copy files from it."
-        #}
-
-        $dropLocation = GetArtifactDropLocation $moduleName $null $gitOrTfvcBranch $version $isDesktopBuild $isMasterBuild $isPullRequestBuild $isComboBuild $isPrivateBuildAll       
-
-        $dropPath = [System.IO.Path]::Combine($stagingDirectory, $dropLocation)
-
-        Write-Host "Drop path: " $dropPath
-
-        try {
-            $jobFile = [System.IO.Path]::GetRandomFileName() + ".RCJ"
-            $jobFile = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath $jobFile
-
-            $sb = [System.Text.StringBuilder]::new()
-            [void]$sb.AppendLine("/XF")
-            
-            foreach ($item in $excludedFiles) {
-                #[void]$sb.AppendLine($item)
-            }
-            
-            [void]$sb.AppendLine("*.pfx")
-            [void]$sb.AppendLine("*.trx")
-            
-            [System.IO.File]::WriteAllText($jobFile, $sb.ToString(), [System.Text.Encoding]::ASCII)
-
-            Write-Host "Job File:"
-            Write-Host (Get-Content $jobFile)
-
-            & Robocopy.exe "$source" "$dropPath" "/S" "/NJH" "/MT" "/NP" "/R:3" "/W:5" "/JOB:$jobFile"
-
-            # Tell TFS about our drop path so it can be tracked
-            #Write-Host "##vso[artifact.associate type=filepath;artifactname=]$dropPath"
-        } finally {
-            [System.IO.File]::Delete($jobFile)
-
-            # robocopy has non-standard exit values that are documented here: https://support.microsoft.com/en-us/kb/954404
-            # Exit codes 0-8 are considered success, while all other exit codes indicate at least one failure.
-            # Some build systems treat all non-0 return values as failures, so we massage the exit code into
-            # something that they can understand.            
-            if ($global:LASTEXITCODE -lt 8) {
-                $global:LASTEXITCODE = 0
-            } else {
-                throw "Robocopy failed with error $($global:LASTEXITCODE)"
-            }
-        }
-    }
+    }    
 
     <#
     Copy only files from the bin\module and bin\test that are built as part of this module for the drop
@@ -859,9 +781,9 @@
        ResolveAndCopyUniqueBinModuleContent -modulePath $modulePath -copyToDirectory $dropBinModulePath -suppressUniqueCheck:$suppressUniqueCheck
 
        if ($testBreak -or $buildBreak) {
-            New-Item -ItemType File -Path "$toModuleDropPath\build.failed" -Force | Out-Null
+            New-Item -ItemType File -Path "$toModuleDropPath\build.failed" | Out-Null
         } else {
-            New-Item -ItemType File -Path "$toModuleDropPath\build.succeeded" -Force | Out-Null
+            New-Item -ItemType File -Path "$toModuleDropPath\build.succeeded" | Out-Null
         }
 
        if (Test-Path $binTestPath) {
@@ -922,7 +844,7 @@
 
             Measure-Command {
                 Write-Host "Calculating hashes..."
-				# *.exe.config files can have exactly matching contents as they are generated automatically.
+                # *.exe.config files can have exactly matching contents as they are generated automatically.
                 $a = gci -Recurse -Path $binPath | Where-Object {$_.FullName -notlike "*.exe.config"} | Get-FileHash
                 $b = gci -Recurse -Path $dependenciesPath | Get-FileHash
 
@@ -947,10 +869,10 @@
        } else {
            Write-Host "No dependencies for $modulePath to be resolved, copying entire bin/module."
            robocopy $binPath $copyToDirectory /E /NP /NJS /NJH /MT /XF *.pfx *.trx /NS /NDL /A-:R
-		   if ($ShellContext -and ($modulePath.EndsWith("Deployment") -or (Test-Path (Join-Path $binPath -ChildPath DeploymentManager.msi)))) {
-			   Write-Output "Moving DeploymentManager.msi one folder up."
-			   Move-Item -Path (Join-Path $copyToDirectory -ChildPath DeploymentManager.msi) -Destination (Join-Path $copyToDirectory -ChildPath ..\\) -Force
-		   }
+           if ($ShellContext -and ($modulePath.EndsWith("Deployment") -or (Test-Path (Join-Path $binPath -ChildPath DeploymentManager.msi)))) {
+               Write-Output "Moving DeploymentManager.msi one folder up."
+               Move-Item -Path (Join-Path $copyToDirectory -ChildPath DeploymentManager.msi) -Destination (Join-Path $copyToDirectory -ChildPath ..\\) -Force
+           }
        }
     }
 
@@ -972,17 +894,17 @@
         }
     }
 
-	Function global:CheckStableBuild([string]$stableBuild){
-		if(-not ($stableBuild -like "*vnext*")){
-			return $true
-		}
+    Function global:CheckStableBuild([string]$stableBuild){
+        if(-not ($stableBuild -like "*vnext*")){
+            return $true
+        }
 
-		if(Test-Path $stableBuild) {
-			return $true
-		}
+        if(Test-Path $stableBuild) {
+            return $true
+        }
 
-		return $false
-	}
+        return $false
+    }
 
     <#
     We now need to move/copy the deployment manager files depending on the version we are working on.  There are three different scenarios:
@@ -1240,12 +1162,12 @@
                 return
             }
         }
-		
+        
         $file = GetBuildLibraryAssemblyPath $buildScriptDirectory
-		# Looks like the environment hasn't been configured yet, set it up now
-		if (-not (Test-Path $file)) {
-			CompileBuildLibraryAssembly $buildScriptDirectory
-		}
+        # Looks like the environment hasn't been configured yet, set it up now
+        if (-not (Test-Path $file)) {
+            CompileBuildLibraryAssembly $buildScriptDirectory
+        }
 
         # Load all DLLs to suck in the dependencies of our code
         $buildTools = [System.IO.Path]::GetDirectoryName($file)
