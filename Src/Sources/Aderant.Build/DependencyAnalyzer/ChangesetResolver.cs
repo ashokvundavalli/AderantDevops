@@ -7,6 +7,10 @@ using Aderant.Build.Tasks;
 using LibGit2Sharp;
 
 namespace Aderant.Build.DependencyAnalyzer {
+    /// <summary>
+    /// To detect changed file sets for the git repository.
+    /// Note: the library LibGit2Sharp.dll requires the lib folder next to it containing various versions of the native library to run such as "git2-baa87df.dll".
+    /// </summary>
     public class ChangesetResolver {
         private readonly Context context;
         private string canonicalBranchName;
@@ -17,8 +21,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         public bool Discover { get; set; }
 
         public List<Commit> Commits { get; set; }
-
-        public List<string> ChangedFiles { get; set; }
 
         public string FriendlyBranchName {
             get {
@@ -44,31 +46,72 @@ namespace Aderant.Build.DependencyAnalyzer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(Context context, string workingDirectory, ChangesToConsider buildType=ChangesToConsider.PendingChanges, bool discover = true) {
+        public ChangesetResolver(Context context, string workingDirectory, bool discover = true) {
             this.context = context;
-            InitializeFromWorkingDirectory(workingDirectory, buildType, discover);
+            FindGitRootDirectory(workingDirectory, discover);
         }
 
-        public void InitializeFromWorkingDirectory(string workingDirectory, ChangesToConsider buildType, bool discover) {
+        /// <summary>
+        /// Point WorkingDirectory to the right directory.
+        /// In case of monorepo, the root may be the up level of the current module.
+        /// </summary>
+        /// <param name="workingDirectory">The passed in working directory.</param>
+        /// <param name="discover">Execute a discovery or not.</param>
+        private void FindGitRootDirectory(string workingDirectory, bool discover) {
             WorkingDirectory = workingDirectory;
             Discover = discover;
             if (Discover) {
                 string gitDir = Repository.Discover(WorkingDirectory);
-
                 WorkingDirectory = gitDir;
             }
-
             if (!Directory.Exists(WorkingDirectory)) {
                 throw new DirectoryNotFoundException($"Can not find path: {WorkingDirectory}");
             }
+        }
+
+        /// <summary>
+        /// Get the changed files for a Pull Request. This is only used for the server build where the TFS creates a new branch to merge the PR into master. The current branch status is "detached" so it doesn't have a branch name.
+        /// It is equivlant to the command: git diff --name-status HEAD..origin/master
+        /// Ref: https://github.com/libgit2/libgit2sharp/wiki/Git-diff
+        /// </summary>
+        /// <returns>A list of strings containing the full path of the changed files. Example:
+        ///   Framework\...\ConditionalExecutionTests.cs
+        ///   Framework\...\ConstructorOverrideTest.cs
+        /// </returns>
+        public List<string> GetDiffToMaster(ChangesToConsider buildType = ChangesToConsider.PendingChanges) {
+            
+            using (var repo = new Repository(WorkingDirectory)) {
+                var currentTip = repo.Head.Tip.Tree;
+                var master = repo.Branches["origin/master"];
+                var masterTip = master.Commits.FirstOrDefault().Tree;
+
+                var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
+
+                var changedFiles = new List<string>();
+                foreach (var diff in diffs) {
+                    changedFiles.Add(diff.Path);
+                }
+
+                var result = changedFiles.Distinct().ToList();
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Get changed files from the forking point from the master, including unattached changes.
+        /// </summary>
+        /// <param name="buildType"></param>
+        /// <returns></returns>
+        public List<string> GetDiffAll(ChangesToConsider buildType = ChangesToConsider.PendingChanges) {
 
             //if (buildType != ChangesToConsider.PendingChanges || buildType != ChangesToConsider.Staged) {
             //    return;
             //}
 
             using (var repo = new Repository(WorkingDirectory)) {
-                FriendlyBranchName = repo.Head.FriendlyName;
-                CanonicalBranchName = repo.Head.CanonicalName;
+                var head = repo.Head;
+                FriendlyBranchName = head.FriendlyName;
+                CanonicalBranchName = head.CanonicalName;
 
                 try {
                     CommitFilter filter = new CommitFilter {
@@ -103,9 +146,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (buildType == ChangesToConsider.PendingChanges) {
                         UpdateChangedFilesFromStatus(repo, changedFiles);
                     }
-                    
-                    ChangedFiles = changedFiles.Distinct().ToList();
+
+                    var result = changedFiles.Distinct().ToList();
+                    return result;
                 } catch {
+                    return null;
                 }
             }
         }

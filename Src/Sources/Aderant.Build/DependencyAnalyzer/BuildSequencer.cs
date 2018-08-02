@@ -22,7 +22,17 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public Project CreateProject(Context context, OrchestrationFiles files, DependencyGraph graph) {
-            List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
+
+            System.Diagnostics.Debugger.Launch();
+			// Get all changed files list for the PR.
+			//if (buildType != ComboBuildType.All)
+			{
+                var changeResolver = new ChangesetResolver(context, context.BuildRoot.FullName);
+                List<string> changes = changeResolver.GetDiffToMaster();
+                // Calculate changed projects from here...
+            }
+
+			List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
