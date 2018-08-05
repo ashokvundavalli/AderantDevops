@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
-
   <PropertyGroup>
     <RunIntegrationTestsDependsOn>
+      GrovelForTestAssemblies;
       GetServerImage;
       ProvisionExpertDatabase;
       UpdateServerImage;
@@ -16,10 +16,15 @@
     <ExpertEnvironmentName>Local_$([System.DateTime]::Now.ToFileTimeUtc())</ExpertEnvironmentName>
     <ExpertEnvironmentUrl>http://localhost/Expert_$(ExpertEnvironmentName)</ExpertEnvironmentUrl>
     <DatabaseName>$([System.Guid]::NewGuid())</DatabaseName>
+
     <ServiceAccount Condition="'$(ServiceAccount)' == ''">ADERANT_AP\tfsbuildservice$</ServiceAccount>
+    
     <LightUpManifest>$(SolutionDirectoryPath)Build\LightUpManifest.xml</LightUpManifest>
     <OriginBranch Condition="'$(OriginBranch)' == ''">master</OriginBranch>
     <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
+    
+    <DeployEnvironment Condition="'$(DeployEnvironment)' == ''">false</DeployEnvironment>
+    <DeployEnvironment Condition="'$(IsDesktopBuild)' != 'true'">true</DeployEnvironment>
   </PropertyGroup>
 
 
@@ -70,7 +75,7 @@
 
 
   <Target Name="GetServerImage"
-    Condition="'$(IsDesktopBuild)' != 'true'">
+    Condition="'$(DeployEnvironment)' == 'true'">
 
     <Message Text="Acquiring Expert server image." />
 
@@ -106,7 +111,7 @@
 
 
   <Target Name="ProvisionExpertDatabase"
-    Condition="'$(IsDesktopBuild)' != 'true'">
+    Condition="'$(DeployEnvironment)' == 'true'">
 
     <Message Text="Provisioning Expert database: $(DatabaseName)" />
 
@@ -118,7 +123,7 @@
 
 
   <Target Name="UpdateServerImage"
-    Condition="'$(IsDesktopBuild)' != 'true'">
+    Condition="'$(DeployEnvironment)' == 'true'">
 
     <Message Text="Updating Expert server image: $(ExpertEnvironmentName)." />
 
@@ -139,7 +144,7 @@
 
 
   <Target Name="ExecuteQueryViewsScript"
-    Condition="'$(IsDesktopBuild)' != 'true'">
+    Condition="'$(DeployEnvironment)' == 'true'">
 
     <Message Text="Executing QueryViews Script: ExpertQuery.SqlViews.sql" />
 
@@ -153,7 +158,7 @@
 
 
   <Target Name="LightUpServerImage"
-    Condition="'$(IsDesktopBuild)' != 'true'">
+    Condition="'$(DeployEnvironment)' == 'true'">
 
     <Message Text="Lighting up Expert server image: Expert_$(ExpertEnvironmentName)." />
 
@@ -168,7 +173,7 @@
 
 
   <Target Name="PackageImport"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(ImportPackages)' == 'true'">
+    Condition="'$(DeployEnvironment)' == 'true' And '$(ImportPackages)' == 'true'">
 
     <PropertyGroup>
       <FactoryBin>$(ImageWorkingDirectory)\$(ExpertEnvironmentName)\SharedBin\Factory.bin</FactoryBin>
@@ -208,13 +213,22 @@
     <!-- Allows environment variables to override RSP parameters -->
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
   </PropertyGroup>
-
+  
+  <Target Name="GrovelForTestAssemblies" Returns="@(IntegrationTestAssemblies)">
+    <ItemGroup>
+      <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
+    </ItemGroup>
+  </Target>
+  
+  <Target Name="RunIntegrationTestsCore" DependsOnTargets="$(RunIntegrationTestsDependsOn)">
+  </Target>
 
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn)"
-    Condition="'@(IntegrationTestAssemblies)' != '' And (('$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopIntegrationTests)' == 'true'))">
+    DependsOnTargets="RunIntegrationTestsCore"
+    Condition="'$(_RunIntegrationTests)' == 'true'">
 
     <PropertyGroup>
       <IntegrationTestAssemblies>@(IntegrationTestAssemblies->'%(FullPath)',' ')</IntegrationTestAssemblies>
@@ -227,33 +241,34 @@
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
+      <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>     
     </PropertyGroup>
 
     <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
     <MakeDir Directories="$(VsTestWorkingDirectory)" />
-
+    
     <PropertyGroup>
       <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
       <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
     </PropertyGroup>
-
-    <!-- Run With VSTest - Server -->
-    <Exec Condition="'$(IntegrationTestAssemblies)' != '' And '$(IsDesktopBuild)' != 'true'"
+    
+    
+     <ItemGroup>
+      <EnvironmentVariables Include="SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory)" />
+      <EnvironmentVariables Condition="'$(DeployEnvironment)' == 'true'" Include="SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)" />
+    </ItemGroup>
+    
+    <PropertyGroup>
+      <EnvironmentVariables>@(EnvironmentVariables->' %(Identity) ', ' &amp; ' )</EnvironmentVariables>
+    </PropertyGroup>   
+    
+    <Exec Condition="'$(IntegrationTestAssemblies)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
       WorkingDirectory="$(VsTestWorkingDirectory)"
       Timeout="$(TestTimeoutMilliseconds)"
-      Command='SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)&amp; SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />
-
-    <!-- Run With VSTest - Desktop -->
-    <Exec Condition="'$(IntegrationTestAssemblies)' != '' And '$(IsDesktopBuild)' == 'true'"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      WorkingDirectory="$(VsTestWorkingDirectory)"
-      Timeout="$(TestTimeoutMilliseconds)"
-      Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />
+      Command='$(EnvironmentVariables) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch)' />   
 
     <PropertyGroup>
       <TestOutcome>Succeeded</TestOutcome>
@@ -324,15 +339,13 @@
   </Target>
 
 
-  <Target Name="LightsOffWrap"
-    DependsOnTargets="RunIntegrationTests;RunAutomationTests"
-    AfterTargets="RunIntegrationTests;RunAutomationTests">
+  <Target Name="LightsOffWrap" DependsOnTargets="RunIntegrationTests;RunAutomationTests" AfterTargets="RunIntegrationTests;RunAutomationTests">
       <CallTarget Targets="LightsOff" />
   </Target>
  
 
   <Target Name="LightsOff"
-    Condition="'$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+    Condition="'$(DeployEnvironment)' == 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
 
     <ItemGroup>
       <BackupPackageFiles Include="$(SolutionDirectoryPath)BackupPackages\**"></BackupPackageFiles>
