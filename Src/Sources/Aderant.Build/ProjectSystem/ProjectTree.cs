@@ -115,7 +115,9 @@ namespace Aderant.Build.ProjectSystem {
             await CollectBuildDependencies(collector);
 
             if (context.GetChangeConsiderationMode() == ChangesToConsider.PendingChanges) {
+                // Get committed and uncommited changes from the git library.
                 var changes = Services.VersionControl.GetPendingChanges(context.BuildRoot.FullName);
+                // Feed the file changes in so we can calculate the dirty projects.
                 collector.PendingChanges = changes;
             }
 

@@ -26,7 +26,7 @@ namespace Aderant.Build.VersionControl {
                 var currentTip = repo.Head.Tip.Tree;
                 var masterTip = repo.Branches["origin/master"].Tip.Tree;
                 var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
-                var committedChangs = diffs.Select(x=>new PendingChange(workingDirectory, x.Path, FileStatus.Renamed));
+                var committedChangs = diffs.Select(x=>new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
 
                 var status = repo.RetrieveStatus();
                 if (!status.IsDirty) {
@@ -38,13 +38,15 @@ namespace Aderant.Build.VersionControl {
                     status.Added.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Added))
                         .Concat(status.RenamedInWorkDir.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
                         .Concat(status.Modified.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Modified)))
-                        .Concat(status.Removed.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Removed)))
+                        .Concat(status.Removed.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Deleted)))
                         .Concat(status.Untracked.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
 
                 var result = committedChangs.Concat(uncommittedChanges).ToList();
                 return result;
             }
         }
+
+
     }
 
     [DebuggerDisplay("Path: {Path} Status: {Status}")]
@@ -72,13 +74,66 @@ namespace Aderant.Build.VersionControl {
         FileStatus Status { get; }
     }
 
+    /// <summary>
+    /// The kind of changes that a Diff can report.
+    /// Copied from libgit2sharp/LibGit2Sharp/ChangeKind.cs to isolate the library.
+    /// </summary>
     public enum FileStatus {
-        Added,
-        Removed,
-        Renamed,
-        Deleted,
-        Untracked,
-        Modified
+        /// <summary>
+        /// No changes detected.
+        /// </summary>
+        Unmodified = 0,
+
+        /// <summary>
+        /// The file was added.
+        /// </summary>
+        Added = 1,
+
+        /// <summary>
+        /// The file was deleted.
+        /// </summary>
+        Deleted = 2,
+
+        /// <summary>
+        /// The file content was modified.
+        /// </summary>
+        Modified = 3,
+
+        /// <summary>
+        /// The file was renamed.
+        /// </summary>
+        Renamed = 4,
+
+        /// <summary>
+        /// The file was copied.
+        /// </summary>
+        Copied = 5,
+
+        /// <summary>
+        /// The file is ignored in the workdir.
+        /// </summary>
+        Ignored = 6,
+
+        /// <summary>
+        /// The file is untracked in the workdir.
+        /// </summary>
+        Untracked = 7,
+
+        /// <summary>
+        /// The type (i.e. regular file, symlink, submodule, ...)
+        /// of the file was changed.
+        /// </summary>
+        TypeChanged = 8,
+
+        /// <summary>
+        /// Entry is unreadable.
+        /// </summary>
+        Unreadable = 9,
+
+        /// <summary>
+        /// Entry is currently in conflict.
+        /// </summary>
+        Conflicted = 10,
     }
 
     /// <summary>
