@@ -27,7 +27,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             AddInitializeAndCompletionNodes(graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
-            
+
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
                 projectsInDependencyOrder,
@@ -41,9 +41,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void AddInitializeAndCompletionNodes(DependencyGraph graph) {
-            var grouping = graph.Nodes
+            var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
-                .GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
+                .ToList();
+
+            var grouping = projects.GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
 
             foreach (var level in grouping) {
                 if (level.Any(g => g.IsDirty)) {
@@ -59,15 +61,21 @@ namespace Aderant.Build.DependencyAnalyzer {
                     graph.Add(completionNode);
                     completionNode.AddResolvedDependency(null, initializeNode);
 
-                    foreach (var project in graph.Nodes
-                        .OfType<ConfiguredProject>()
+                    foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
+
+                        TriggerP2PBuildShim(project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
                     }
                 }
             }
+        }
+
+        private static void TriggerP2PBuildShim(ConfiguredProject project) {
+            // TODO: Because we can't build *just* the projects that have changed, mark anything in this container as dirty to trigger a build for it
+            project.IsDirty = true;
         }
 
         /// <summary>
@@ -170,19 +178,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 newSearchList.UnionWith(p.Select(x => x.Id));
                 projectsToFind = newSearchList;
             }
-        }
-
-        private void Validate(IEnumerable<IDependencyRef> visualStudioProjects) {
-            //var validator = new ProjectGuidValidator();
-
-            //var query = visualStudioProjects.GroupBy(x => x.ProjectGuid)
-            //    .Where(g => g.Count() > 1)
-            //    .Select(y => new { Element = y.Key, Counter = y.Count() })
-            //    .ToList();
-
-            //if (query.Any()) {
-            //    throw new Exception("There are projects with duplicate project GUIDs: " + string.Join(", ", query.Select(s => s.Element)));
-            //}
         }
     }
 }

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
 
@@ -26,7 +26,7 @@ namespace UnitTest.Build {
             throw new System.NotImplementedException();
         }
 
-        public virtual bool IsAvailable(string moduleName) {
+        public virtual ModuleAvailability IsAvailable(string moduleName) {
             throw new System.NotImplementedException();
         }
 
