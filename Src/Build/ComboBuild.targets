@@ -49,13 +49,8 @@
     <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
     <DropLocation Condition="'$(DropLocationRoot)' == ''">$(DropLocation)</DropLocation>
 
-
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
-
-    <IsComboBuild>true</IsComboBuild>
-    <ComboBuildType Condition="'$(ComboBuildType)' != ''">$(ComboBuildType)</ComboBuildType>
-    <DownStreamType Condition="'$(DownStreamType)' != ''">$(DownStreamType)</DownStreamType>
   </PropertyGroup>
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
@@ -358,7 +353,6 @@
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CopyToDropEnabled=true;
         CompileBuildSystem=false;
-        IsComboBuild=$(IsComboBuild);
       </CommonBuildProperties>
     </PropertyGroup>
 
