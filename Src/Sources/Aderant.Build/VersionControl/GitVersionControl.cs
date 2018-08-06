@@ -14,8 +14,6 @@ namespace Aderant.Build.VersionControl {
         }
 
         public IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
-            System.Diagnostics.Debugger.Launch();
-
             string gitDir = Repository.Discover(repositoryPath);
 
             using (var repo = new Repository(gitDir)) {
@@ -26,9 +24,22 @@ namespace Aderant.Build.VersionControl {
                 if (buildMetadata != null) {
                     if (buildMetadata.IsPullRequest) {
                         var currentTip = repo.Head.Tip.Tree;
-                        var masterTip = repo.Branches[buildMetadata.PullRequest.SourceBranch].Tip.Tree;
-                        var patch = repo.Diff.Compare<Patch>(currentTip, masterTip);
-                        changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
+                        Tree tip = null;
+
+                        foreach (var branch in repo.Branches) {
+                            // UpstreamBranchCanonicalName appears to hold the name in the TFS format of /refs/heads/<foo>
+                            var upstreamBranchCanonicalName = branch.UpstreamBranchCanonicalName;
+                            if (string.Equals(upstreamBranchCanonicalName, buildMetadata.PullRequest.TargetBranch)) {
+                                tip = branch.Tip.Tree;
+                                break;
+                            }
+                        }
+
+                        if (tip != null) {
+                            var patch = repo.Diff.Compare<Patch>(currentTip, tip);
+                            changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
+                        }
+
                     }
                 }
 
