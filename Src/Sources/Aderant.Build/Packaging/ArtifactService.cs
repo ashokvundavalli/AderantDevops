@@ -28,9 +28,9 @@ namespace Aderant.Build.Packaging {
                 string bucketId = bucketService.GetBucketId(solutionRoot);
                 // \\dfs\artifacts\<name>\<bucket>\<build_id>
                 foreach (var artifact in group) {
-                    var container = Path.Combine(context.PrimaryDropLocation, group.Key, bucketId, !string.IsNullOrEmpty(context.BuildMetadata.BuildId) ? context.BuildMetadata.BuildId : "-1");
+                    var container = Path.Combine(context.PrimaryDropLocation, group.Key, bucketId, (context.BuildMetadata.BuildId > 0 ? context.BuildMetadata.BuildId : -1).ToString());
                     foreach (var pathSpec in artifact.GetFiles()) {
-                        //CopyToDestination(container, pathSpec);
+                        CopyToDestination(container, pathSpec);
                     }
 
                     if (context.BuildMetadata.IsPullRequest) {

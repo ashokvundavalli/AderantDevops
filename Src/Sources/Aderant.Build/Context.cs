@@ -84,7 +84,7 @@ namespace Aderant.Build {
                 buildMetadata = value;
 
                 if (value != null) {
-                    if (!string.IsNullOrWhiteSpace(value.BuildId)) {
+                    if (value.BuildId > 0) {
                         IsDesktopBuild = false;
                     } else {
                         IsDesktopBuild = true;

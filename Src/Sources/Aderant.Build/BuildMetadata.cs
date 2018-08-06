@@ -6,7 +6,7 @@ namespace Aderant.Build {
     public sealed class BuildMetadata {
    
         public BuildMetadata() {
-            BuildId = "";
+            BuildId = 0;
             JobName = "";
             ScmBranch = "";
             ScmCommitId = "";
