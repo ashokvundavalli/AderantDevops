@@ -103,7 +103,7 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
 
-            var graph = BuildDependencyGraph();
+            var graph = CreateBuildDependencyGraphInternal();
             return new DependencyGraph(graph);
         }
 
@@ -200,7 +200,7 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private IEnumerable<IArtifact> BuildDependencyGraph() {
+        private IEnumerable<IArtifact> CreateBuildDependencyGraphInternal() {
             List<IArtifact> graph = new List<IArtifact>();
 
             var comparer = DependencyEqualityComparer.Default;
@@ -208,37 +208,8 @@ namespace Aderant.Build.ProjectSystem {
             HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
 
             ProcessProjects(allDependencies, comparer, graph);
-            AddInitializeAndCompletionNodes(graph);
 
             return graph;
-        }
-
-        private void AddInitializeAndCompletionNodes(List<IArtifact> graph) {
-            var grouping = graph
-                .OfType<ConfiguredProject>()
-                .GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
-
-            foreach (var level in grouping) {
-                IArtifact initializeNode;
-                string solutionDirectoryName = Path.GetFileName(level.Key);
-
-                // Create a new node that represents the start of a directory
-                graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, level.Key, false));
-
-                // Create a new node that represents the completion of a directory
-                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
-
-                graph.Add(completionNode);
-                completionNode.AddResolvedDependency(null, initializeNode);
-
-                foreach (var project in graph
-                    .OfType<ConfiguredProject>()
-                    .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
-
-                    project.AddResolvedDependency(null, initializeNode);
-                    completionNode.AddResolvedDependency(null, project);
-                }
-            }
         }
 
         private void ProcessProjects(HashSet<IDependable> allDependencies, IEqualityComparer<IDependable> comparer, List<IArtifact> graph) {

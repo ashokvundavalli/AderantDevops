@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Aderant.Build.VersionControl {
                         foreach (var branch in repo.Branches) {
                             // UpstreamBranchCanonicalName appears to hold the name in the TFS format of /refs/heads/<foo>
                             var upstreamBranchCanonicalName = branch.UpstreamBranchCanonicalName;
-                            if (string.Equals(upstreamBranchCanonicalName, buildMetadata.PullRequest.TargetBranch)) {
+                            if (string.Equals(upstreamBranchCanonicalName, buildMetadata.PullRequest.TargetBranch, StringComparison.OrdinalIgnoreCase)) {
                                 tip = branch.Tip.Tree;
                                 break;
                             }

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Aderant.Build.DependencyAnalyzer.Model;
@@ -31,10 +33,40 @@ namespace Aderant.Build.DependencyAnalyzer {
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
+            AddInitializeAndCompletionNodes(filteredProjects);
+
             List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
             var job = new BuildPipeline(fileSystem);
             return job.GenerateProject(groups, files, null);
+        }
+
+        private void AddInitializeAndCompletionNodes(List<IDependable> graph) {
+            var grouping = graph
+                .OfType<ConfiguredProject>()
+                .GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var level in grouping) {
+                IArtifact initializeNode;
+                string solutionDirectoryName = Path.GetFileName(level.Key);
+
+                // Create a new node that represents the start of a directory
+                graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, level.Key, false));
+
+                // Create a new node that represents the completion of a directory
+                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
+
+                graph.Add(completionNode);
+                completionNode.AddResolvedDependency(null, initializeNode);
+
+                foreach (var project in graph
+                    .OfType<ConfiguredProject>()
+                    .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
+
+                    project.AddResolvedDependency(null, initializeNode);
+                    completionNode.AddResolvedDependency(null, project);
+                }
+            }
         }
 
         /// <summary>
