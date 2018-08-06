@@ -864,8 +864,7 @@ doc.Save(File);
       <TestAssemblies Include="$(BinTestDirectory)*UnitTest*.dll;
                                $(BinTestDirectory)*.Tests.ps1;"
         Exclude="$(BinTestDirectory)*Helpers*.dll;
-                               $(BinTestDirectory)Microsoft.*" />
-      <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
+                 $(BinTestDirectory)Microsoft.*" />
     </ItemGroup>
 
     <ItemGroup>
