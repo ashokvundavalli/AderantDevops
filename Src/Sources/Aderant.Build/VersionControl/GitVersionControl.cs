@@ -13,20 +13,23 @@ namespace Aderant.Build.VersionControl {
         public GitVersionControl() {
         }
 
-        public void Initialize(Context context) {
-        }
-
-        public IReadOnlyCollection<IPendingChange> GetPendingChanges(string repositoryPath) {
+        public IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
             string gitDir = Repository.Discover(repositoryPath);
 
             using (var repo = new Repository(gitDir)) {
                 var workingDirectory = repo.Info.WorkingDirectory;
 
-                // Get committed changes different to master.
-                var currentTip = repo.Head.Tip.Tree;
-                var masterTip = repo.Branches["origin/master"].Tip.Tree;
-                var diffs = repo.Diff.Compare<Patch>(currentTip, masterTip);
-                var committedChangs = diffs.Select(x=>new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
+                IEnumerable<PendingChange> changes = Enumerable.Empty<PendingChange>();
+
+                if (buildMetadata != null) {
+                    if (buildMetadata.IsPullRequest) {
+                        System.Diagnostics.Debugger.Launch();
+                        var currentTip = repo.Head.Tip.Tree;
+                        var masterTip = repo.Branches[buildMetadata.PullRequest.SourceBranch].Tip.Tree;
+                        var patch = repo.Diff.Compare<Patch>(currentTip, masterTip);
+                        changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
+                    }
+                }
 
                 var status = repo.RetrieveStatus();
                 if (!status.IsDirty) {
@@ -41,12 +44,10 @@ namespace Aderant.Build.VersionControl {
                         .Concat(status.Removed.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Deleted)))
                         .Concat(status.Untracked.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
 
-                var result = committedChangs.Concat(uncommittedChanges).ToList();
+                var result = changes.Concat(uncommittedChanges).ToList();
                 return result;
             }
         }
-
-
     }
 
     [DebuggerDisplay("Path: {Path} Status: {Status}")]
@@ -141,6 +142,6 @@ namespace Aderant.Build.VersionControl {
     /// </summary>
     public interface IVersionControlService {
 
-        IReadOnlyCollection<IPendingChange> GetPendingChanges(string repositoryPath);
+        IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath);
     }
 }
