@@ -259,7 +259,7 @@
     </ItemGroup>
 
     <PropertyGroup>
-      <VariableSwitch>@(EnvironmentVariables->' %(Identity) ', '&amp;')</VariableSwitch>
+      <EnvironmentVariables>@(EnvironmentVariables->' %(Identity) ', '&amp;')</EnvironmentVariables>
     </PropertyGroup>
 
     <Exec Condition="'$(IntegrationTestAssemblies)' != ''"
