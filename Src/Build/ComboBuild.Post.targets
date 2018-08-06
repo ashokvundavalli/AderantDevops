@@ -95,7 +95,6 @@
                  $(BinTestDirectory)*.Tests.ps1;"
         Exclude="$(BinTestDirectory)*Helpers*.dll;
                  $(BinTestDirectory)Microsoft.*" />
-      <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
     </ItemGroup>
 
     <ItemGroup>

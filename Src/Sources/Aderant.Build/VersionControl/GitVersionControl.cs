@@ -42,6 +42,10 @@ namespace Aderant.Build.VersionControl {
                         }
 
                     }
+
+                    if (buildMetadata.BuildId > 0) {
+                        // TODO: here we need to query the last successful build for the same branch/commit and mix in the changes
+                    }
                 }
 
                 var status = repo.RetrieveStatus();

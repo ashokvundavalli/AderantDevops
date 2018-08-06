@@ -13,9 +13,9 @@ namespace Aderant.Build {
             Flavor = "";
         }
 
-        public int BuildNumber { get; set; }
+        public string BuildNumber { get; set; }
 
-        public string BuildId { get; set; }
+        public int BuildId { get; set; }
 
         public Uri BuildUri { get; set; }
 

@@ -24,7 +24,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public Project CreateProject(Context context, OrchestrationFiles files, DependencyGraph graph) {
-            AddInitializeAndCompletionNodes(graph);
+            bool isPullRequest = context.BuildMetadata.IsPullRequest;
+            bool isDesktopBuild = context.IsDesktopBuild;
+
+            // TODO: here we need to query the last successful artifacts for the same branch/commit and mix them in
+            AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -40,7 +44,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return job.GenerateProject(groups, files, null);
         }
 
-        private void AddInitializeAndCompletionNodes(DependencyGraph graph) {
+        private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -49,7 +53,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var level in grouping) {
                 List<ConfiguredProject> dirtyProjects = level.Where(g => g.IsDirty).ToList();
-                if (dirtyProjects.Any()) {
+                if (Should(dirtyProjects, isPullRequest, isDesktopBuild)) {
                     string tag = string.Join(", ", dirtyProjects.Select(s => s.Id));
 
                     IArtifact initializeNode;
@@ -74,6 +78,22 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
             }
+        }
+
+        private bool Should(List<ConfiguredProject> dirtyProjects, bool isPullRequest, bool isDesktopBuild) {
+            if (dirtyProjects.Any()) {
+                return true;
+            }
+
+            if (!isPullRequest && !isDesktopBuild) {
+                return true;
+            }
+
+            if (isDesktopBuild) {
+                return true;
+            }
+
+            throw new NotSupportedException("Unknown build environment");
         }
 
         private static void ProjectToProjectShim(string tag, ConfiguredProject project) {
