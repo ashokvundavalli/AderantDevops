@@ -254,8 +254,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <EnvironmentVariables Include='"SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory)"' />
-      <EnvironmentVariables Condition="'$(DeployEnvironment)' == 'true'" Include='"SET EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)"' />
+      <EnvironmentVariables Include='SET "EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory)"' />
+      <EnvironmentVariables Condition="'$(DeployEnvironment)' == 'true'" Include='SET "EXPERT_ENVIRONMENT_URL=$(ExpertEnvironmentUrl)"' />
     </ItemGroup>
 
     <PropertyGroup>
