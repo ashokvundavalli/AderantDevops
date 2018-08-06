@@ -44,7 +44,7 @@ namespace UnitTest.Build {
         [TestMethod]
         [ExpectedException(typeof(System.InvalidOperationException))]
         public void InvalidConstraintTest() {
-            VersionRequirement a = new VersionRequirement {
+            new VersionRequirement {
                 ConstraintExpression = "build ci rc unstable",
             };
         }

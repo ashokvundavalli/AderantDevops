@@ -73,7 +73,7 @@ namespace UnitTest.Build {
                 DropLocation = @"\\na.aderant.com\ExpertSuite\"
             };
 
-            var definition = controller.CreateBuildDefinition(buildConfiguration);
+            controller.CreateBuildDefinition(buildConfiguration);
 
             ExpertBuildDetail detail = new ExpertBuildDetail("99.99.99.99", "1.0.0.0", buildConfiguration);
 
@@ -88,7 +88,6 @@ namespace UnitTest.Build {
         private IBuildServer buildServer;
         private IWorkspaceTemplate workspace;
         private IBuildDefinition definition;
-        private IRetentionPolicy policy;
         private List<IRetentionPolicy> policyList;
         private List<Tuple<string, string, WorkspaceMappingType>> workspaceItems;
 
@@ -107,7 +106,6 @@ namespace UnitTest.Build {
 
             var policyMock = new Mock<IRetentionPolicy>();
             policyMock.SetupAllProperties();
-            policy = policyMock.Object;
 
             policyList = new List<IRetentionPolicy>();
             //policyList.Add(policy);
@@ -181,7 +179,6 @@ namespace UnitTest.Build {
                 });
 
             buildServerMock.Setup(s => s.CreateBuildDefinition(It.IsAny<string>())).Returns(definition);
-            var t = definition.RetentionPolicyList;
 
             buildServer = buildServerMock.Object;
         }
