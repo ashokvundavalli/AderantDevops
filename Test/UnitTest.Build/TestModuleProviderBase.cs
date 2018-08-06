@@ -22,6 +22,10 @@ namespace UnitTest.Build {
             throw new System.NotImplementedException();
         }
 
+        public bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
+            throw new System.NotImplementedException();
+        }
+
         public virtual bool IsAvailable(string moduleName) {
             throw new System.NotImplementedException();
         }
