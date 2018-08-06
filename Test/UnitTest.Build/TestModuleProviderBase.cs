@@ -22,7 +22,7 @@ namespace UnitTest.Build {
             throw new System.NotImplementedException();
         }
 
-        public virtual ModuleAvailability IsAvailable(string moduleName) {
+        public virtual bool IsAvailable(string moduleName) {
             throw new System.NotImplementedException();
         }
 
@@ -31,16 +31,15 @@ namespace UnitTest.Build {
         }
 
         public virtual void Add(ExpertModule module) {
-
+         
         }
 
         public virtual void Remove(IEnumerable<ExpertModule> items) {
-
+           
         }
 
         public virtual string Save() {
             throw new System.NotImplementedException();
         }
-
     }
 }
