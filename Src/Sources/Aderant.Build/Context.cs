@@ -141,16 +141,24 @@ namespace Aderant.Build {
         }
 
         public ChangesToConsider GetChangeConsiderationMode() {
-            ChangesToConsider buildType = ChangesToConsider.None;
+            ChangesToConsider mode = ChangesToConsider.None;
             if (Switches.PendingChanges) {
-                buildType = ChangesToConsider.PendingChanges;
+                mode = ChangesToConsider.PendingChanges;
             }
 
             if (Switches.Everything) {
-                buildType = ChangesToConsider.Branch;
+                mode = ChangesToConsider.Branch;
             }
 
-            return buildType;
+
+            // TODO: Drive this from a PR comment?
+            if (buildMetadata != null) {
+                if (buildMetadata.IsPullRequest) {
+                    return ChangesToConsider.PendingChanges;
+                }
+            }
+
+            return mode;
         }
 
         public void AddVariableToBag(string id, string key, string value) {
