@@ -48,7 +48,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             var grouping = projects.GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
 
             foreach (var level in grouping) {
-                if (level.Any(g => g.IsDirty)) {
+                List<ConfiguredProject> dirtyProjects = level.Where(g => g.IsDirty).ToList();
+                if (dirtyProjects.Any()) {
+                    string tag = string.Join(", ", dirtyProjects.Select(s => s.Id));
+
                     IArtifact initializeNode;
                     string solutionDirectoryName = Path.GetFileName(level.Key);
 
@@ -64,7 +67,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        TriggerP2PBuildShim(project);
+                        TriggerP2PBuildShim(tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -73,9 +76,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static void TriggerP2PBuildShim(ConfiguredProject project) {
+        private static void TriggerP2PBuildShim(string tag, ConfiguredProject project) {
             // TODO: Because we can't build *just* the projects that have changed, mark anything in this container as dirty to trigger a build for it
             project.IsDirty = true;
+            project.InclusionDescriptor = new InclusionDescriptor {
+                Tag = tag,
+                Reason = InclusionReason.DirectlyAffectedByChange
+            };
         }
 
         /// <summary>
@@ -123,6 +130,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         sb.AppendLine("* " + configuredProject.Id);
+
+                        if (configuredProject.InclusionDescriptor != null) {
+                            sb.AppendLine("   " + "Required by: " + configuredProject.InclusionDescriptor.Tag);
+                        }
 
                         if (configuredProject.DirtyFiles != null) {
                             foreach (string dirtyFile in configuredProject.DirtyFiles) {
@@ -179,5 +190,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 projectsToFind = newSearchList;
             }
         }
+    }
+
+    internal enum InclusionReason {
+        Unknown,
+        DirectlyAffectedByChange,
+        AutomaticallyRequired,
     }
 }

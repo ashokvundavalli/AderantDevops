@@ -12,7 +12,6 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
@@ -26,13 +25,13 @@ namespace Aderant.Build.ProjectSystem {
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
         private readonly IFileSystem fileSystem;
+        private List<string> dirtyFiles;
 
         //private List<ResolvedReference> resolvedDependencies;
         private bool? isWebProject;
         private Lazy<Project> project;
         private Lazy<ProjectRootElement> projectXml;
         private Lazy<IReadOnlyList<Guid>> typeGuids;
-        private List<string> dirtyFiles;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
@@ -68,9 +67,7 @@ namespace Aderant.Build.ProjectSystem {
         public IProjectTree Tree { get; }
 
         public virtual string OutputAssembly {
-            get {
-                return project.Value.GetPropertyValue("AssemblyName");
-            }
+            get { return project.Value.GetPropertyValue("AssemblyName"); }
         }
 
         public virtual string OutputType {
@@ -107,6 +104,30 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
+        public string SolutionRoot {
+            get {
+                if (SolutionFile != null) {
+                    return Path.GetDirectoryName(SolutionFile);
+                }
+
+                return null;
+            }
+        }
+
+        public ProjectBuildConfiguration BuildConfiguration { get; set; }
+
+        /// <summary>
+        /// Flag for if the project has been changed.
+        /// Used for reducing the build set.
+        /// </summary>
+        public bool IsDirty { get; set; }
+
+        public IReadOnlyList<string> DirtyFiles {
+            get { return dirtyFiles; }
+        }
+
+        internal InclusionDescriptor InclusionDescriptor { get; set; }
+
         public Guid ProjectGuid {
             get {
                 var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
@@ -126,32 +147,14 @@ namespace Aderant.Build.ProjectSystem {
             get { return GetAssemblyName(); }
         }
 
-        public string SolutionRoot {
-            get {
-                if (SolutionFile != null) {
-                    return Path.GetDirectoryName(SolutionFile);
-                }
-
-                return null;
-            }
-        }
-
         public string GetAssemblyName() {
             return OutputAssembly;
         }
 
-        //public override IReadOnlyCollection<IDependable> GetDependencies() {
-        //    return resolvedDependencies
-        //        .Select(s => s.ResolvedReference)
-        //        .Concat(base.GetDependencies())
-        //        .ToList();
-        //}
-
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
             projectXml = projectElement;
-            //resolvedDependencies = new List<ResolvedReference>();
-
+            
             project = new Lazy<Project>(
                 () => {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
@@ -235,7 +238,7 @@ namespace Aderant.Build.ProjectSystem {
                     // GC optimization
                     this.BuildConfiguration = ProjectBuildConfiguration.GetConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
 
-                    if (BuildConfiguration == null) { 
+                    if (BuildConfiguration == null) {
                         BuildConfiguration = new ProjectBuildConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
                     }
                 }
@@ -251,23 +254,11 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        public ProjectBuildConfiguration BuildConfiguration { get; set; }
-
-        /// <summary>
-        /// Flag for if the project has been changed.
-        /// Used for reducing the build set.
-        /// </summary>
-        public bool IsDirty { get; set; }
-
-        public IReadOnlyList<string> DirtyFiles {
-            get { return dirtyFiles; }
-        }
-
         /// <summary>
         /// Collects the build dependencies required to build the artifacts in this result.
         /// </summary>
         public Task CollectBuildDependencies(BuildDependenciesCollector collector) {
-            
+
             // Allows unit testing
             if (ServicesImport != null) {
                 // Force MEF import
@@ -306,7 +297,7 @@ namespace Aderant.Build.ProjectSystem {
 
                 return Task.WhenAll(t1, t2, t3);
             }
-            
+
             return Task.CompletedTask;
         }
 
@@ -386,5 +377,10 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
         }
+    }
+
+    internal class InclusionDescriptor {
+        public string Tag { get; set; }
+        public InclusionReason Reason { get; set; }
     }
 }
