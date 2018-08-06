@@ -14,6 +14,8 @@ namespace Aderant.Build.VersionControl {
         }
 
         public IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
+            System.Diagnostics.Debugger.Launch();
+
             string gitDir = Repository.Discover(repositoryPath);
 
             using (var repo = new Repository(gitDir)) {
@@ -23,7 +25,6 @@ namespace Aderant.Build.VersionControl {
 
                 if (buildMetadata != null) {
                     if (buildMetadata.IsPullRequest) {
-                        System.Diagnostics.Debugger.Launch();
                         var currentTip = repo.Head.Tip.Tree;
                         var masterTip = repo.Branches[buildMetadata.PullRequest.SourceBranch].Tip.Tree;
                         var patch = repo.Diff.Compare<Patch>(currentTip, masterTip);
