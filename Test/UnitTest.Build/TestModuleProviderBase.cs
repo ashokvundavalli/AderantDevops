@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
 
@@ -19,10 +19,6 @@ namespace UnitTest.Build {
         }
 
         public virtual bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
-            throw new System.NotImplementedException();
-        }
-
-        public virtual bool TryGetDependencyManifestPath(string moduleName, out string manifestPath) {
             throw new System.NotImplementedException();
         }
 
