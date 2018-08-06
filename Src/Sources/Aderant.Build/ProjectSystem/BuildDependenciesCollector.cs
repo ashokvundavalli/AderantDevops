@@ -2,7 +2,6 @@
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem {

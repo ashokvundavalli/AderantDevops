@@ -24,16 +24,15 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public Project CreateProject(Context context, OrchestrationFiles files, DependencyGraph graph) {
+            AddInitializeAndCompletionNodes(graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
-
+            
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
                 projectsInDependencyOrder,
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
-
-            AddInitializeAndCompletionNodes(filteredProjects);
 
             List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
@@ -41,30 +40,32 @@ namespace Aderant.Build.DependencyAnalyzer {
             return job.GenerateProject(groups, files, null);
         }
 
-        private void AddInitializeAndCompletionNodes(List<IDependable> graph) {
-            var grouping = graph
+        private void AddInitializeAndCompletionNodes(DependencyGraph graph) {
+            var grouping = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
 
             foreach (var level in grouping) {
-                IArtifact initializeNode;
-                string solutionDirectoryName = Path.GetFileName(level.Key);
+                if (level.Any(g => g.IsDirty)) {
+                    IArtifact initializeNode;
+                    string solutionDirectoryName = Path.GetFileName(level.Key);
 
-                // Create a new node that represents the start of a directory
-                graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, level.Key, false));
+                    // Create a new node that represents the start of a directory
+                    graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, level.Key, false));
 
-                // Create a new node that represents the completion of a directory
-                DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
+                    // Create a new node that represents the completion of a directory
+                    DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
 
-                graph.Add(completionNode);
-                completionNode.AddResolvedDependency(null, initializeNode);
+                    graph.Add(completionNode);
+                    completionNode.AddResolvedDependency(null, initializeNode);
 
-                foreach (var project in graph
-                    .OfType<ConfiguredProject>()
-                    .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
+                    foreach (var project in graph.Nodes
+                        .OfType<ConfiguredProject>()
+                        .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                    project.AddResolvedDependency(null, initializeNode);
-                    completionNode.AddResolvedDependency(null, project);
+                        project.AddResolvedDependency(null, initializeNode);
+                        completionNode.AddResolvedDependency(null, project);
+                    }
                 }
             }
         }

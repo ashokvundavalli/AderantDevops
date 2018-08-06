@@ -6,11 +6,14 @@ using Aderant.Build.Utilities;
 namespace Aderant.Build.DependencyAnalyzer {
 
     internal class DependencyGraph {
-        private static IEnumerable<IDependable> emptyDependencies = Enumerable.Empty<IDependable>();
-        private readonly IEnumerable<IArtifact> graph;
+        private readonly List<IArtifact> artifacts;
 
-        public DependencyGraph(IEnumerable<IArtifact> graph) {
-            this.graph = graph;
+        public DependencyGraph(IEnumerable<IArtifact> artifacts) {
+            this.artifacts = artifacts.ToList();
+        }
+
+        public IReadOnlyCollection<IDependable> Nodes {
+            get { return artifacts; }
         }
 
         /// <summary>
@@ -18,7 +21,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public List<IDependable> GetDependencyOrder() {
             var queue = TopologicalSort.Sort<IDependable>(
-                graph,
+                artifacts,
                 dep => {
                     var artifact = dep as IArtifact;
                     if (artifact != null) {
@@ -27,7 +30,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         return dependencies;
                     }
 
-                    return emptyDependencies;
+                    return Enumerable.Empty<IDependable>();
                 });
 
             return queue.ToList();
@@ -83,6 +86,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return groups;
+        }
+
+        /// <summary>
+        /// Adds a new artifact to the container.
+        /// </summary>
+        public void Add(IArtifact artifact) {
+            artifacts.Add(artifact);
         }
     }
 }
