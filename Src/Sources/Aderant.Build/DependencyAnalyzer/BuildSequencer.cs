@@ -67,7 +67,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        TriggerP2PBuildShim(tag, project);
+                        ProjectToProjectShim(tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -76,12 +76,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static void TriggerP2PBuildShim(string tag, ConfiguredProject project) {
+        private static void ProjectToProjectShim(string tag, ConfiguredProject project) {
             // TODO: Because we can't build *just* the projects that have changed, mark anything in this container as dirty to trigger a build for it
             project.IsDirty = true;
             project.InclusionDescriptor = new InclusionDescriptor {
                 Tag = tag,
-                Reason = InclusionReason.DirectlyAffectedByChange
+                Reason = InclusionReason.ChangedFileDependency
             };
         }
 
@@ -132,7 +132,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         sb.AppendLine("* " + configuredProject.Id);
 
                         if (configuredProject.InclusionDescriptor != null) {
-                            sb.AppendLine("   " + "Required by: " + configuredProject.InclusionDescriptor.Tag);
+                            sb.AppendLine("   " + "Reason: " + configuredProject.InclusionDescriptor.Reason);
                         }
 
                         if (configuredProject.DirtyFiles != null) {
@@ -194,7 +194,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
     internal enum InclusionReason {
         Unknown,
-        DirectlyAffectedByChange,
-        AutomaticallyRequired,
+        ChangedFileDependency
     }
 }
