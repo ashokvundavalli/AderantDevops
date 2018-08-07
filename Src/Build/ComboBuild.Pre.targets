@@ -28,7 +28,7 @@
       ZipWorkflowTemplateSource;
       GetDependencies;
       rmTransformTemplates;
-      UpdateVariableBag
+      UpdateContext
     </RunBuildDependsOn>
   </PropertyGroup>
 
@@ -161,14 +161,14 @@
   </Target>
 
 
-  <Target Name="UpdateVariableBag">
+  <Target Name="UpdateContext">
 
     <PropertyGroup>
       <FileVersion Condition="'$(FileVersion)' == ''">1.0.0.0</FileVersion>
       <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">1.8.0.0</AssemblyVersion>
     </PropertyGroup>
 
-    <UpdateVariableBag
+    <GetOrPutContextVariable
       Id="$(VariableBagId)"
       ContextFileName="$(ContextFileName)"
       FileVersion="$(FileVersion)"
