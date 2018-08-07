@@ -35,7 +35,7 @@
 
     <AfterBuildDependsOn>
       ValidateRequiredProperties;
-      OpenVariableBag;
+      RefreshVersionVariables;
       <!--RunTests;
       RunIntegrationTests;
       --><!--RunAutomationTests;--><!--
@@ -59,15 +59,15 @@
   <Target Name="PackageArtifacts" />
 
 
-  <Target Name="OpenVariableBag">
-    <UpdateVariableBag
+  <Target Name="RefreshVersionVariables">
+    <GetOrPutContextVariable
       Id="$(VariableBagId)"
       ContextFileName="$(ContextFileName)"
       Output="true">
       <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
       <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
       <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
-    </UpdateVariableBag>
+    </GetOrPutContextVariable>
 
     <Error Text="$(FileVersion) is undefined" Condition="'$(FileVersion)' == ''" />
 

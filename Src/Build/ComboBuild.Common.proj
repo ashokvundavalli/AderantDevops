@@ -11,8 +11,17 @@
     </GetPropertiesFromContext>
 
     <PropertyGroup>
+      <Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
       <PropertiesForBuildGroup>@(_PropertiesToCreate->'%(Identity)=%(Value)')</PropertiesForBuildGroup>
-      <PropertiesForBuildGroup>$(PropertiesForBuildGroup);ArtifactStagingDirectory=$(ArtifactStagingDirectory);</PropertiesForBuildGroup>
+
+      <PropertiesForBuildGroup>
+        $(PropertiesForBuildGroup);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+
+        <!-- Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured -->
+        Deterministic=$(Deterministic)
+      </PropertiesForBuildGroup>
+
     </PropertyGroup>
     
   </Target>

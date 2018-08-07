@@ -2,7 +2,8 @@
 .SYNOPSIS
     Gets metadata about the current build.
 .DESCRIPTION
-    The `Get-AmbientBuildMetadata` function gets information about the current build. It is exists to hide what CI flavour the current build is running under. 
+    The `Get-AmbientBuildMetadata` function gets information about the current build.
+    It is exists to hide what CI flavour the current build is running under. 
 #>
 function Get-AmbientBuildMetadata {
     [CmdletBinding()]

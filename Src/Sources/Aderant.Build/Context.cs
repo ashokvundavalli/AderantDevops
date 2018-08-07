@@ -161,7 +161,7 @@ namespace Aderant.Build {
             return mode;
         }
 
-        public void AddVariableToBag(string id, string key, string value) {
+        public void PutVariable(string id, string key, string value) {
             var bags = VariableBags;
             
             IDictionary<string, string> bag;
@@ -173,7 +173,7 @@ namespace Aderant.Build {
             bag[key] = value;
         }
 
-        public string GetVariableFromBag(string id, string key) {
+        public string GetVariable(string id, string key) {
             ErrorUtilities.IsNotNull(id, nameof(id));
             ErrorUtilities.IsNotNull(key, nameof(key));
 

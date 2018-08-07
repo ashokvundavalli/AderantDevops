@@ -21,7 +21,10 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             if (Artifacts != null) {
                 var artifacts = MaterializeArtifactPackages();
+
+                var commands = new VsoBuildCommands(Logger);
                 var artifactService = new ArtifactService(new PhysicalFileSystem(), new BucketService());
+                artifactService.VsoCommands = commands;
 
                 artifactService.FileVersion = FileVersion;
                 artifactService.AssemblyVersion = AssemblyVersion;
@@ -31,11 +34,6 @@ namespace Aderant.Build.Tasks {
                     SolutionRoot,
                     artifacts);
 
-                var commands = new VsoBuildCommands(Logger);
-                
-                foreach (var item in storageInfo) {
-                    commands.LinkArtifact(item.Name, VsoBuildArtifactType.FilePath, item.ComputeVsoPath());
-                }
             }
 
             return !Log.HasLoggedErrors;

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    public sealed class UpdateVariableBag : ContextTaskBase {
+    public sealed class GetOrPutContextVariable : ContextTaskBase {
 
         [Required]
         public string Id { get; set; }
@@ -15,30 +15,21 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string ModuleName { get; set; }
 
-      [Output]
-        public string _FileVersion { get; set; }
-
-        [Output]
-        public string _AssemblyVersion { get; set; }
-
-        [Output]
-        public string _ModuleName { get; set; }
-
         public bool Output { get; set; }
 
         public override bool Execute() {
             if (Output) {
-                FileVersion = Context.GetVariableFromBag(Id, nameof(FileVersion));
-                AssemblyVersion = Context.GetVariableFromBag(Id, nameof(AssemblyVersion));
-                ModuleName = Context.GetVariableFromBag(Id, nameof(ModuleName));
+                FileVersion = Context.GetVariable(Id, nameof(FileVersion));
+                AssemblyVersion = Context.GetVariable(Id, nameof(AssemblyVersion));
+                ModuleName = Context.GetVariable(Id, nameof(ModuleName));
             } else {
                 Log.LogMessage("FileVersion: {0}", FileVersion);
                 Log.LogMessage("AssemblyVersion: {0}", AssemblyVersion);
                 Log.LogMessage("ModuleName: {0}", ModuleName);
 
-                Context.AddVariableToBag(Id, nameof(FileVersion), FileVersion);
-                Context.AddVariableToBag(Id, nameof(AssemblyVersion), AssemblyVersion);
-                Context.AddVariableToBag(Id, nameof(ModuleName), ModuleName);
+                Context.PutVariable(Id, nameof(FileVersion), FileVersion);
+                Context.PutVariable(Id, nameof(AssemblyVersion), AssemblyVersion);
+                Context.PutVariable(Id, nameof(ModuleName), ModuleName);
                 ReplaceContext();
             }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.TeamFoundation;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
@@ -15,8 +16,22 @@ namespace Aderant.Build.Packaging {
 
         public string FileVersion { get; set; }
         public string AssemblyVersion { get; set; }
+        public VsoBuildCommands VsoCommands { get; set; }
 
         internal IReadOnlyCollection<ArtifactStorageInfo> PublishArtifacts(Context context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
+            var results = Publish(context, solutionRoot, packages);
+
+            if (VsoCommands != null) {
+                foreach (var item in results) {
+                    VsoCommands.LinkArtifact(item.Name, VsoBuildArtifactType.FilePath, item.ComputeVsoPath());
+                }
+            }
+
+            return results;
+        }
+
+        private IReadOnlyCollection<ArtifactStorageInfo> Publish(Context context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
+
             // TODO: Slow - optimize
             // TODO: Test for duplicates in the artifact inputs
 
@@ -26,17 +41,19 @@ namespace Aderant.Build.Packaging {
             IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
             foreach (var group in grouping) {
                 string bucketId = bucketService.GetBucketId(solutionRoot);
-                // \\dfs\artifacts\<name>\<bucket>\<build_id>
+                
                 foreach (var artifact in group) {
+                    var files = artifact.GetFiles();
+
                     var container = Path.Combine(context.PrimaryDropLocation, group.Key, bucketId, (context.BuildMetadata.BuildId > 0 ? context.BuildMetadata.BuildId : -1).ToString());
-                    foreach (var pathSpec in artifact.GetFiles()) {
+                    foreach (var pathSpec in files) {
                         CopyToDestination(container, pathSpec);
                     }
 
                     if (context.BuildMetadata.IsPullRequest) {
-                        storageInfoList.Add(PrepareFilesForPullRequestDrop(copyList, context, artifact.Id, artifact.GetFiles()));
+                        storageInfoList.Add(PrepareFilesForPullRequestDrop(copyList, context, artifact.Id, files));
                     } else {
-                        storageInfoList.Add(PrepareFilesForLegacyDrop(copyList, context, artifact.Id, artifact.GetFiles()));
+                        storageInfoList.Add(PrepareFilesForLegacyDrop(copyList, context, artifact.Id, files));
                     }
                 }
             }
