@@ -15,6 +15,8 @@ namespace Aderant.Build.VersionControl {
         }
 
         public IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
+            ErrorUtilities.IsNotNull(repositoryPath, nameof(repositoryPath));
+
             string gitDir = Repository.Discover(repositoryPath);
 
             using (var repo = new Repository(gitDir)) {

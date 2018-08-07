@@ -27,7 +27,7 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void ListChangedFiles() {
             var vc = new GitVersionControl();
-            var pendingChanges = vc.GetPendingChanges(new BuildMetadata(), Path.Combine(TestContext.DeploymentDirectory, "Repo"));
+            var pendingChanges = vc.GetPendingChanges(null, @"\\ap.aderant.com\akl\usr\michael.baker\repo");
 
             Assert.AreEqual("somefile.txt", pendingChanges.First().Path);
             Assert.AreEqual(FileStatus.Modified, pendingChanges.First().Status);
