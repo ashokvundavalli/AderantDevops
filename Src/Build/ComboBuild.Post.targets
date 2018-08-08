@@ -55,9 +55,8 @@
     </PackageArtifactsDependsOn>
   </PropertyGroup>
 
-  <!--Stub.-->
+  <!--Stub-->
   <Target Name="PackageArtifacts" />
-
 
   <Target Name="RefreshVersionVariables">
     <GetOrPutContextVariable
@@ -69,7 +68,7 @@
       <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
     </GetOrPutContextVariable>
 
-    <Error Text="$(FileVersion) is undefined" Condition="'$(FileVersion)' == ''" />
+    <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == ''" />
 
   </Target>
 

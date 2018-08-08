@@ -81,7 +81,7 @@ namespace Aderant.Build.Tasks {
             ctx = cachedContext as BuildOperationContext;
             if (ctx != null) {
                 Log.LogMessage("Retrieved context from registered task object storage");
-                return ctx;
+                //return ctx;
             }
 
             ctx = GetContextFromFile();
