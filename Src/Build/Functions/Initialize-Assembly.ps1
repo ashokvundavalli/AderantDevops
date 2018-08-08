@@ -58,6 +58,10 @@ function LoadAssembly($buildScriptsDirectory, [string]$targetAssembly) {
 }
 
 function UpdateSubmodules([string]$head) {
+    if ($ShellContext -eq $null) {
+        return
+    }
+
     Set-StrictMode -Version 'Latest'
     # Inspect update time tracking data    
     $commit = $ShellContext.GetRegistryValue("", "LastSubmoduleCommit")   
