@@ -12,8 +12,7 @@ namespace IntegrationTest.Build.VersionControl {
     [DeploymentItem(@"SystemUnderTest\x86\", "x86")]
     [DeploymentItem(@"SystemUnderTest\x64\", "x64")]
     public class GitVersionControlTests {
-
-        public TestContext TestContext { get; set; }
+        private static string repo;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext context) {
@@ -22,15 +21,29 @@ namespace IntegrationTest.Build.VersionControl {
                 ps.AddScript(Resources.CreateRepo);
                 ps.Invoke();
             }
+
+            repo = Path.Combine(context.DeploymentDirectory, "Repo");
         }
 
         [TestMethod]
         public void ListChangedFiles() {
             var vc = new GitVersionControl();
-            var pendingChanges = vc.GetPendingChanges(null, @"\\ap.aderant.com\akl\usr\michael.baker\repo");
+            var pendingChanges = vc.GetPendingChanges(new BuildMetadata(), repo);
 
-            Assert.AreEqual("somefile.txt", pendingChanges.First().Path);
+            Assert.AreEqual("master.txt", pendingChanges.First().Path);
             Assert.AreEqual(FileStatus.Modified, pendingChanges.First().Status);
+        }
+
+        [TestMethod]
+        public void GetSourceTreeInfo_returns_without_exception() {
+            var vc = new GitVersionControl();
+            var result = vc.GetChangesBetween(repo, "master", "saturn");
+
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.Changes);
+            Assert.IsNotNull(result.BucketKeys);
+
+            Assert.AreEqual(2, result.Changes.Count);
         }
     }
 
