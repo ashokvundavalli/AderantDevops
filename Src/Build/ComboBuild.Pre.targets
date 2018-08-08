@@ -10,6 +10,8 @@
   <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />
   <Import Project="Aderant.Build.Clean.targets" />
 
+  <Target Name="PackageArtifacts" />"
+
   <!--
        Pull the entry targets into our context.
        This lets us call into it and lets people who want to customize the workflow change stuff in here
