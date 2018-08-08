@@ -1,4 +1,8 @@
-﻿using Aderant.Build;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using Aderant.Build;
+using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -6,11 +10,22 @@ namespace UnitTest.Build {
     public class ContextTests {
 
         [TestMethod]
-        public void Service_is_returned_from_GetService() {
+        public void Context_is_serializable() {
             var ctx = new BuildOperationContext();
-            PhysicalFileSystem service1 = ctx.GetService<PhysicalFileSystem>();
 
-            Assert.IsNotNull(service1);
+            var formatter = new BinaryFormatter();
+            formatter.Serialize(new MemoryStream(), ctx);
+        }
+
+        [TestMethod]
+        public void SourceTreeInfo_is_serializable() {
+            var ctx = new BuildOperationContext();
+            ctx.SourceTreeInfo = new SourceTreeInfo {
+                BucketKeys = new List<BucketId> { new BucketId("", "") }
+            };
+
+            var formatter = new BinaryFormatter();
+            formatter.Serialize(new MemoryStream(), ctx);
         }
 
         [TestMethod]

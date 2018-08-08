@@ -195,7 +195,6 @@ namespace Aderant.Build {
         public SourceTreeInfo SourceTreeInfo {
             get { return sourceTreeInfo; }
             set {
-                System.Diagnostics.Debugger.Launch();
                 sourceTreeInfo = value;
             }
         }

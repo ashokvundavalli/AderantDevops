@@ -185,6 +185,7 @@ namespace Aderant.Build.VersionControl {
     }
 
     [DebuggerDisplay("{Id} {Tag}")]
+    [Serializable]
     public class BucketId {
 
         public BucketId(string id) {
