@@ -78,7 +78,7 @@ function LoadLibGit2Sharp([string]$buildToolsDirectory) {
 
 }
 
-function UpdateOrBuildAssembly([string]$buildToolsDirectory, [string]$buildScriptsDirectory) {    
+function UpdateOrBuildAssembly([string]$buildScriptsDirectory) {    
     Set-StrictMode -Version 'Latest'    
 
     if (-not $Host.Name.Contains("ISE")) {    
@@ -104,8 +104,8 @@ function UpdateOrBuildAssembly([string]$buildToolsDirectory, [string]$buildScrip
 
     Write-Host "Version: $head"
 
-    $assemblyPath = [System.IO.Path]::Combine($buildToolsDirectory, $coreAssemblyName)     
+    $assemblyPath = [System.IO.Path]::Combine("$buildScriptsDirectory\..\Build.Tools", $coreAssemblyName)     
     BuildProject $buildScriptsDirectory $true
     LoadAssembly $buildScriptsDirectory $assemblyPath
-    LoadLibGit2Sharp $buildToolsDirectory
+    LoadLibGit2Sharp "$buildScriptsDirectory\..\Build.Tools"
 }
