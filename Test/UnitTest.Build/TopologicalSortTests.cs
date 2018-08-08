@@ -57,7 +57,7 @@ namespace UnitTest.Build {
 
     public class FooType {
         private readonly string str;
-        private List<string> dependences = new List<string>();
+        private List<string> dependencies = new List<string>();
 
         private FooType(string str) {
             this.str = str;
@@ -65,7 +65,7 @@ namespace UnitTest.Build {
 
         public FooType this[string s] {
             get {
-                this.dependences.Add(s);
+                this.dependencies.Add(s);
                 return this;
             }
         }
@@ -79,7 +79,7 @@ namespace UnitTest.Build {
         }
 
         public IEnumerable<string> GetDependencies() {
-            return dependences;
+            return dependencies;
         }
     }
 
