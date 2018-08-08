@@ -6,6 +6,10 @@ using System.Security.Principal;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
+    public class RetrieveArtifacts : BuildOperationContextTask {
+
+    }
+
     public class MakeSymlink : Microsoft.Build.Utilities.Task {
         [Required]
         public string Link { get; set; }
@@ -26,15 +30,15 @@ namespace Aderant.Build.Tasks {
                 return !Log.HasLoggedErrors;
             }
 
-            NativeUtilities.SymbolicLink link = NativeUtilities.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
+            NativeMethods.SymbolicLink link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
 
             if (!string.IsNullOrEmpty(Type)) {
                 switch (Char.ToLowerInvariant(Type[0])) {
                     case 'f':
-                        link = NativeUtilities.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE;
+                        link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE;
                         break;
                     case 'd':
-                        link = NativeUtilities.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
+                        link = NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_DIRECTORY;
                         break;
                 }
             }
@@ -60,7 +64,7 @@ namespace Aderant.Build.Tasks {
                     info.Delete(true);
                 }
 
-                if (!NativeUtilities.CreateSymbolicLink(Link, Target, (uint)link)) {
+                if (!NativeMethods.CreateSymbolicLink(Link, Target, (uint)link)) {
                     Log.LogError($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
                 }
             } catch (Exception ex) {
