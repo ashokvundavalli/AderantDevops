@@ -124,13 +124,13 @@
       ArtifactDirectory="$(SolutionRoot)\Dependencies"
       ArtifactDefinitions="@(PackageArtifact)" />
 
-    <!--<GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
+    <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       ModuleName="$(ModuleName)"
       BuildType="ContinuousIntegration"
       DependenciesDirectory="$(DependenciesDirectory)"
-      DropPath="$(TfvcDropLocation)" />-->
+      DropPath="$(TfvcDropLocation)" />
 
   </Target>
 
