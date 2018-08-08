@@ -35,7 +35,7 @@ namespace Aderant.Build.Ipc {
         }
 
         internal static long DefaultCapacity {
-            get { return 16000; }
+            get { return 4194304; }
         }
 
         public void Dispose() {
