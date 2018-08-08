@@ -203,6 +203,7 @@ namespace Aderant.Build.VersionControl {
     }
 
     [DebuggerDisplay("Path: {Path} Status: {Status}")]
+    [Serializable]
     public class PendingChange : IPendingChange {
 
         public PendingChange(string workingDirectory, string relativePath, FileStatus status) {

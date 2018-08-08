@@ -58,34 +58,19 @@ function LoadAssembly($buildScriptsDirectory, [string]$targetAssembly) {
 }
 
 function UpdateSubmodules([string]$head) {
-    if ($ShellContext -eq $null) {
-        return
-    }
-
-    Set-StrictMode -Version 'Latest'
-    # Inspect update time tracking data    
-    $commit = $ShellContext.GetRegistryValue("", "LastSubmoduleCommit")   
-    
-     if ($commit -ne $head) {
-        Write-Debug "Submodule update required"
-        & git -C $PSScriptRoot submodule update --init --recursive
-                 
-        $ShellContext.SetRegistryValue("", "LastSubmoduleCommit", $head) | Out-Null
-    } else {
-        Write-Debug "Submodule update not required"
-    }   
+    #TODO speed this up    
+    Set-StrictMode -Version 'Latest'  
+    & git -C $PSScriptRoot submodule update --init --recursive
 }
 
-function LoadLibGit2Sharp([string]$buildToolsDirectory) {
-    #[Environment]::SetEnvironmentVariable("LibGit2SharpLibraryPath", $buildToolsDirectory, [System.EnvironmentVariableTarget]::Process)
+function LoadLibGit2Sharp([string]$buildToolsDirectory) {    
     [System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
-
 }
 
 function UpdateOrBuildAssembly([string]$buildScriptsDirectory) {    
     Set-StrictMode -Version 'Latest'    
 
-    if (-not $Host.Name.Contains("ISE")) {    
+    if ($Host.Name.Contains("ISE")) {    
         # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
 
         [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
@@ -103,10 +88,8 @@ function UpdateOrBuildAssembly([string]$buildScriptsDirectory) {
 
         [string]$head = & git -C $PSScriptRoot rev-parse HEAD
         
-        #UpdateSubmodules $head
+        UpdateSubmodules $head
     }
-
-    Write-Host "Version: $head"
 
     $assemblyPath = [System.IO.Path]::Combine("$buildScriptsDirectory\..\Build.Tools", $coreAssemblyName)     
     BuildProject $buildScriptsDirectory $true
