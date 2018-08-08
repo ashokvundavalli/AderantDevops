@@ -103,7 +103,7 @@ function UpdateOrBuildAssembly([string]$buildScriptsDirectory) {
 
         [string]$head = & git -C $PSScriptRoot rev-parse HEAD
         
-        UpdateSubmodules $head
+        #UpdateSubmodules $head
     }
 
     Write-Host "Version: $head"
