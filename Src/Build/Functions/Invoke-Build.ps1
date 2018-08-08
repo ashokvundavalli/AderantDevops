@@ -74,8 +74,8 @@ function GetSourceTreeInfo($context, $repositoryPath) {
         $metadata = $context.BuildMetadata
 
         if ($metadata.IsPullRequest) {
-            $sourceBranch = $metadata.PullRequestInfo.SourceBranch
-            $targetBranch = $metadata.PullRequestInfo.TargetBranch
+            $sourceBranch = $metadata.PullRequest.SourceBranch
+            $targetBranch = $metadata.PullRequest.TargetBranch
         } else {
             $sourceBranch = $metadata.ScmBranch;
         }        
