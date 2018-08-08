@@ -12,7 +12,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Note: the library LibGit2Sharp.dll requires the lib folder next to it containing various versions of the native library to run such as "git2-baa87df.dll".
     /// </summary>
     public class ChangesetResolver {
-        private readonly Context context;
+        private readonly BuildOperationContext context;
         private string canonicalBranchName;
         private string friendlyBranchName;
 
@@ -46,7 +46,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             private set { canonicalBranchName = value; }
         }
 
-        public ChangesetResolver(Context context, string workingDirectory, bool discover = true) {
+        public ChangesetResolver(BuildOperationContext context, string workingDirectory, bool discover = true) {
             this.context = context;
             FindGitRootDirectory(workingDirectory, discover);
         }

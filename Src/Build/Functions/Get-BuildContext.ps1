@@ -1,6 +1,6 @@
 function Get-BuildContext {
     [CmdletBinding()]
-    [OutputType([Aderant.Build.Context])]
+    [OutputType([Aderant.Build.BuildOperationContext])]
     param(
         [Parameter()]
         [switch]$CreateIfNeeded

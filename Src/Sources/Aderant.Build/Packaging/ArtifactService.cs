@@ -18,7 +18,7 @@ namespace Aderant.Build.Packaging {
         public string AssemblyVersion { get; set; }
         public VsoBuildCommands VsoCommands { get; set; }
 
-        internal IReadOnlyCollection<ArtifactStorageInfo> PublishArtifacts(Context context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
+        internal IReadOnlyCollection<ArtifactStorageInfo> PublishArtifacts(BuildOperationContext context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
             var results = Publish(context, solutionRoot, packages);
 
             if (VsoCommands != null) {
@@ -30,7 +30,7 @@ namespace Aderant.Build.Packaging {
             return results;
         }
 
-        private IReadOnlyCollection<ArtifactStorageInfo> Publish(Context context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
+        private IReadOnlyCollection<ArtifactStorageInfo> Publish(BuildOperationContext context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
 
             // TODO: Slow - optimize
             // TODO: Test for duplicates in the artifact inputs
@@ -65,7 +65,7 @@ namespace Aderant.Build.Packaging {
             return storageInfoList;
         }
 
-        private ArtifactStorageInfo PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private ArtifactStorageInfo PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
@@ -118,7 +118,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private ArtifactStorageInfo PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, Context context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private ArtifactStorageInfo PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             string artifactName;
             var destination = CreateDropLocationPath(context.PrimaryDropLocation, artifactId, out artifactName);
 

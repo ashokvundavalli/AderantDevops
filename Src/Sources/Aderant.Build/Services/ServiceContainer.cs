@@ -12,7 +12,7 @@ namespace Aderant.Build.Services {
 
         public static ServiceContainer Default = new ServiceContainer(null, new[] { typeof(ServiceContainer).Assembly });
         private CompositionContainer container;
-        private MethodInfo svcMethod = typeof(ServiceContainer).GetMethod("GetService", new Type[] { typeof(Context), typeof(string), typeof(string) });
+        private MethodInfo svcMethod = typeof(ServiceContainer).GetMethod("GetService", new Type[] { typeof(BuildOperationContext), typeof(string), typeof(string) });
 
         public ServiceContainer(ILogger logger, IReadOnlyCollection<Assembly> catalogAssemblies) {
             List<Type> types = new List<Type>();
@@ -48,10 +48,10 @@ namespace Aderant.Build.Services {
             return svcMethod.MakeGenericMethod(serviceType).Invoke(this, new object[] { null, null, null });
         }
 
-        public T GetService<T>(Context context, string contractName = null, string scope = null) {
+        public T GetService<T>(BuildOperationContext context, string contractName = null, string scope = null) {
             var batch = new CompositionBatch();
 
-            var currentContext = container.GetExportedValueOrDefault<Context>();
+            var currentContext = container.GetExportedValueOrDefault<BuildOperationContext>();
             if (currentContext == null) {
                 AttributedModelServices.AddExportedValue(batch, context);
             }

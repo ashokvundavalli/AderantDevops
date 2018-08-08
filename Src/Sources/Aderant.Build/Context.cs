@@ -8,7 +8,7 @@ using Aderant.Build.Services;
 namespace Aderant.Build {
 
     [Serializable]
-    public class Context {
+    public class BuildOperationContext {
         private BuildMetadata buildMetadata;
 
         private string buildScriptsDirectory;
@@ -19,7 +19,7 @@ namespace Aderant.Build {
 
         private BuildSwitches switches = default(BuildSwitches);
 
-        public Context() {
+        public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
             VariableBags = new Dictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             TaskIndex = -1;

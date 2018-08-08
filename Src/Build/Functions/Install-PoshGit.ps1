@@ -2,7 +2,7 @@ function Install-PoshGit()
 {
     [CmdletBinding()]
     param(
-        [Aderant.Build.Context]       
+        [Aderant.Build.BuildOperationContext]       
         $Context = (Get-BuildContext)
     )
 

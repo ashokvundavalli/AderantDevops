@@ -12,14 +12,14 @@ namespace Aderant.Build.Tasks {
     /// Provides the ultimate base class for context aware tasks within the build engine
     /// </summary>
     public abstract class ContextTaskBase : Task {
-        private Context context;
+        private BuildOperationContext context;
         private BuildTaskLogger logger;
 
         public virtual string ContextFileName { get; set; }
 
         public bool WaitForDebugger { get; set; }
  
-        protected Context Context {
+        protected BuildOperationContext Context {
             get {
                 return context ?? (context = ObtainContext());
             }
@@ -68,11 +68,11 @@ namespace Aderant.Build.Tasks {
         /// Obtains the ambient context from the build host.
         /// </summary>
         /// <returns></returns>
-        protected virtual Context ObtainContext() {
-            Context ctx;
+        protected virtual BuildOperationContext ObtainContext() {
+            BuildOperationContext ctx;
 
             var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
-            ctx = cachedContext as Context;
+            ctx = cachedContext as BuildOperationContext;
             if (ctx != null) {
                 //Log.LogMessage("Retrieved context from registered task object storage");
                 //return ctx;
@@ -87,12 +87,12 @@ namespace Aderant.Build.Tasks {
             return ctx;
         }
 
-        private void Register(Context ctx) {
+        private void Register(BuildOperationContext ctx) {
             BuildEngine4.UnregisterTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             BuildEngine4.RegisterTaskObject("BuildContext", ctx, RegisteredTaskObjectLifetime.Build, false);
         }
 
-        private Context GetContextFromFile() {
+        private BuildOperationContext GetContextFromFile() {
             if (string.IsNullOrEmpty(ContextFileName)) {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
@@ -101,10 +101,10 @@ namespace Aderant.Build.Tasks {
 
             ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
 
-            Context ctx;
+            BuildOperationContext ctx;
             object contextObject = MemoryMappedFileReaderWriter.Read(ContextFileName);
 
-            ctx = (Context)contextObject;
+            ctx = (BuildOperationContext)contextObject;
             return ctx;
         }
     }

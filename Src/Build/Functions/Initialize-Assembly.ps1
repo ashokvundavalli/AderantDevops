@@ -40,8 +40,7 @@ function LoadAssembly($buildScriptsDirectory, [string]$targetAssembly) {
         #[System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($properties.PackagingTool)) | Out-Null
 
         # This load process was built after many days of head scratching trying to get -Global to work.
-        # The -Global switch appears to be bug ridden with compiled modules
-        # not backed by an on disk assembly (our use case).
+        # The -Global switch appears to be bug ridden with compiled modules not backed by an on disk assembly which is our use case.
         # Even with the -Global flag the commands within the module are not imported into the global space.
         # Creating a runtime module to wrap the import of the compiled module works around
         # whatever PS bug prevents it from working.

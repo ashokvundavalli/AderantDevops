@@ -23,7 +23,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
-        public Project CreateProject(Context context, OrchestrationFiles files, DependencyGraph graph) {
+        public Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
 

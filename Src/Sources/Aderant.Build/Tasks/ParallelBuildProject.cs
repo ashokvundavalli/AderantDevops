@@ -72,7 +72,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private void ExecuteCore(Context context) {
+        private void ExecuteCore(BuildOperationContext context) {
             // TODO: keep this shim?
             context.BuildRoot = new DirectoryInfo(ModulesDirectory);
      

@@ -6,7 +6,7 @@ function Initialize-Git
     #>
     [CmdletBinding()]
     param(
-        [Aderant.Build.Context]       
+        [Aderant.Build.BuildOperationContext]       
         $Context = (Get-BuildContext)
     )
 
@@ -16,7 +16,7 @@ function Initialize-Git
     ConfigureGit $Context
 }
 
-function ConfigureGit([Aderant.Build.Context]$context)
+function ConfigureGit([Aderant.Build.BuildOperationContext]$context)
 {
     Write-Debug "Configuring .gitconfig"
 

@@ -26,7 +26,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      GetDependencies;
+      QueryBuildCache;
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>
@@ -103,14 +103,24 @@
 
 
 
-  <Target Name="GetDependencies" Condition="'$(SolutionRoot)' != ''">
-    <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
+  <Target Name="QueryBuildCache" Condition="'$(SolutionRoot)' != ''">
+
+    <ItemGroup>
+      <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
+    </ItemGroup>
+
+    <RetrieveArtifacts
+      DependencyManifest="@(DependencyManifests)" />
+
+
+
+    <!--<GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       ModuleName="$(ModuleName)"
       BuildType="ContinuousIntegration"
       DependenciesDirectory="$(DependenciesDirectory)"
-      DropPath="$(TfvcDropLocation)" />
+      DropPath="$(TfvcDropLocation)" />-->
 
   </Target>
 

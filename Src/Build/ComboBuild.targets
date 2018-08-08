@@ -79,6 +79,7 @@
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
+
   <Target Name="CreateParallelBuildProject">
 
     <ItemGroup>

@@ -3605,11 +3605,13 @@ function Get-ExpertBuildAllVersion () {
     "$($version.Matches.Value)"
 }
 
-function Restart-FlexModule() {
+function Restart-DeveloperShell() {
     Remove-Module Git -ErrorAction SilentlyContinue
     Remove-Module "dynamic_code_module_Aderant.Build, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" -ErrorAction SilentlyContinue
+    Remove-Module "AderantTfs" -ErrorAction SilentlyContinue
+    Remove-Module "AderantWeb" -ErrorAction SilentlyContinue
     Get-Module
-    Import-Module $PSScriptRoot\Aderant.psd1 -Force -Global
+    Import-Module $PSScriptRoot\Aderant.psd1 -Force -Global    
 }
 
 # export functions and variables we want external to this script
@@ -3693,6 +3695,7 @@ Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
 
 Export-ModuleMember -function Get-DependenciesFrom1
+Export-ModuleMember -Function Restart-DeveloperShell
 
 
 

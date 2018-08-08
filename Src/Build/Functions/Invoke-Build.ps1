@@ -1,4 +1,72 @@
-﻿<#
+﻿function ApplyBranchConfig($context, $stringSearchDirectory) {
+    $configPath = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
+
+    if (-not $configPath) {
+        #throw "Branch configuration file not found"
+        # TODO: shim
+    [xml]$config = "<BranchConfig>
+  <Artifacts>
+    <!--\\ap.aderant.com\akl\tempswap\☃-->
+    <PrimaryDropLocation>\\dfs.aderant.com\ExpertSuite\_TEMP_</PrimaryDropLocation>
+    <AlternativeDropLocation></AlternativeDropLocation>
+    <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
+  </Artifacts>
+</BranchConfig>"
+        }
+
+    #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
+    $context.PrimaryDropLocation = $config.BranchConfig.Artifacts.PrimaryDropLocation
+    $context.PullRequestDropLocation = $config.BranchConfig.Artifacts.PullRequestDropLocation
+}
+
+function FindGitDir($context, $stringSearchDirectory) {        
+    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
+    $context.Variables["_GitDir"] = "$path\.git"
+}
+
+ function CreateToolArgumentString($context, $remainingArgs) {
+    # Out-Null stops the return value from Add being left on the pipeline
+    $set = [System.Collections.Generic.HashSet[string]]::new()          
+
+    if ($context.BuildMetadata -ne $null) {
+        if ($context.BuildMetadata.DebugLoggingEnabled) {
+            $set.Add("/v:diag") | Out-Null
+        }
+
+        #if ($context.BuildMetadata.IsPullRequest) {
+        #    $set.Add("/v:diag") | Out-Null
+        #}
+    }
+        
+    # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
+    $set.Add("/nologo") | Out-Null
+    $set.Add("/nr:false") | Out-Null
+
+    # Multi-core build
+    $set.Add("/m")| Out-Null
+
+    if ($context.IsDesktopBuild) {
+        $set.Add("/p:IsDesktopBuild=true") | Out-Null
+    } else {
+        $set.Add("/p:IsDesktopBuild=false") | Out-Null
+        $set.Add("/clp:PerformanceSummary") | Out-Null
+    }
+
+    $set.Add("/p:VisualStudioVersion=14.0") | Out-Null
+
+    if ($context.Switches.SkipCompile) {
+        $set.Add("/p:Switches_SkipCompile=true") | Out-Null
+    }
+
+    if ($remainingArgs) {
+        # Add pass-thru args
+        $set.Add([string]::Join(" ", $remainingArgs)) | Out-Null
+    }
+
+    return [string]::Join(" ", $set)
+}
+
+<#
     .SYNOPSIS
     Runs a build based on your current context
 
@@ -9,7 +77,7 @@
     Useful if you wish to override some property but that property is not exposed as a first class concept.
 
 #>
-function Global:Invoke-Build2
+function global:Invoke-Build2
 {    
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]    
     param (
@@ -54,80 +122,15 @@ function Global:Invoke-Build2
                 
         [Parameter(ParameterSetName="Build", Mandatory=$false)]        
         [string]$ModulePath = "",
-
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
     )
-
-     
+         
     Set-StrictMode -Version Latest
-    $ErrorActionPreference = "Stop"
-
-    function CreateToolArgumentString($context) {
-        # Out-Null stops the return value from Add being left on the pipeline
-        $set = [System.Collections.Generic.HashSet[string]]::new()          
-
-        if ($context.BuildMetadata -ne $null) {
-            if ($context.BuildMetadata.DebugLoggingEnabled) {
-                $set.Add("/v:diag") | Out-Null
-            }
-
-            #if ($context.BuildMetadata.IsPullRequest) {
-            #    $set.Add("/v:diag") | Out-Null
-            #}
-        }
-        
-        # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
-        $set.Add("/nologo") | Out-Null
-        $set.Add("/nr:false") | Out-Null
-
-        # Multi-core build
-        $set.Add("/m")| Out-Null
-
-        if ($context.IsDesktopBuild) {
-            $set.Add("/p:IsDesktopBuild=true") | Out-Null
-        } else {
-            $set.Add("/p:IsDesktopBuild=false") | Out-Null
-            $set.Add("/clp:PerformanceSummary") | Out-Null
-        }
-
-        $set.Add("/p:VisualStudioVersion=14.0") | Out-Null
-
-        if ($context.Switches.SkipCompile) {
-            $set.Add("/p:Switches_SkipCompile=true") | Out-Null
-        }
-
-        return [string]::Join(" ", $set)
-    }
-
-    function ApplyBranchConfig($context, $stringSearchDirectory) {                
-        $configPath = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
-
-        if (-not $configPath) {
-            #throw "Branch configuration file not found"
-            # TODO: shim
-            [xml]$config = "<BranchConfig>
-  <Artifacts>
-  <!--\\ap.aderant.com\akl\tempswap\☃-->
-    <PrimaryDropLocation>\\dfs.aderant.com\ExpertSuite\_TEMP_</PrimaryDropLocation>
-    <AlternativeDropLocation></AlternativeDropLocation>
-    <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
-  </Artifacts>
-</BranchConfig>"
-        }
-
-        #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
-        $context.PrimaryDropLocation = $config.BranchConfig.Artifacts.PrimaryDropLocation
-        $context.PullRequestDropLocation = $config.BranchConfig.Artifacts.PullRequestDropLocation
-    }
-
-    function FindGitDir($context, $stringSearchDirectory) {        
-        $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
-        $context.Variables["_GitDir"] = "$path\.git"
-    }
+    $ErrorActionPreference = "Stop" 
                 
-    [Aderant.Build.Context]$context = Get-BuildContext -CreateIfNeeded
+    [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
 
     [string]$repositoryPath = $null
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
@@ -154,16 +157,14 @@ function Global:Invoke-Build2
     $context.Switches = $switches
 
     $context.StartedAt = [DateTime]::UtcNow
+
     $contextFileName = Publish-BuildContext $context
 
-    $args = CreateToolArgumentString $context
+    $args = CreateToolArgumentString $context $RemainingArgs
 
-    $passThruArgs = ""
-    if ($RemainingArgs) {
-        $passThruArgs = [string]::Join(" ", $RemainingArgs)
-    }
+    Get-PendingChanges
 
-    Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args $passThruArgs"
+    Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args"
  
     if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
         [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"

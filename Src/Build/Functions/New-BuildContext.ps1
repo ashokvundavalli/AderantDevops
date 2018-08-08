@@ -5,7 +5,7 @@ function New-BuildContext
         Creates a context object to use when running builds.   
     #>
     [CmdletBinding()]
-    [OutputType([Aderant.Build.Context])]
+    [OutputType([Aderant.Build.BuildOperationContext])]
     param(
         [string]
         # The environment you're building in.
@@ -22,7 +22,7 @@ function New-BuildContext
 
     [Aderant.Build.BuildMetadata]$buildMetadata = Get-AmbientBuildMetadata
 
-    $context = [Aderant.Build.Context]::new()
+    $context = [Aderant.Build.BuildOperationContext]::new()
     $context.BuildMetadata = $buildMetadata
     $context.BuildScriptsDirectory = [System.IO.Path]::Combine($PSScriptRoot, "..\")
 

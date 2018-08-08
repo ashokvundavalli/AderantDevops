@@ -78,6 +78,12 @@
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
       </_AssemblyAttributes>
+
+      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(Deterministic)' != ''">
+        <_Parameter1>Build.IsDeterministic</_Parameter1>
+        <_Parameter2>$(Deterministic)</_Parameter2>
+      </_AssemblyAttributes>
+      
     </ItemGroup>
 
   </Target>

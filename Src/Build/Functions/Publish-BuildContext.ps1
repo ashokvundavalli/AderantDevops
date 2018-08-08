@@ -8,7 +8,7 @@ function Publish-BuildContext
     [OutputType([string])]
     param(
         [Parameter(Mandatory=$true)]
-        [Aderant.Build.Context]
+        [Aderant.Build.BuildOperationContext]
         $Context
     )
 
