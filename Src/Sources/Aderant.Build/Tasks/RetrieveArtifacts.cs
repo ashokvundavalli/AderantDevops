@@ -15,13 +15,15 @@ namespace Aderant.Build.Tasks {
         public ITaskItem[] ArtifactDefinitions { get; set; }
 
         public override bool Execute() {
-            var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, null, null);
+            if (ArtifactDefinitions != null) {
+                var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, null, null);
 
-            var document = XDocument.Load(DependencyManifestFile);
-            var manifest = DependencyManifest.Load(document);
+                var document = XDocument.Load(DependencyManifestFile);
+                var manifest = DependencyManifest.Load(document);
 
-            var service = new ArtifactService();
-            service.Resolve(Context, manifest, ArtifactDirectory, artifacts);
+                var service = new ArtifactService();
+                service.Resolve(Context, manifest, ArtifactDirectory, artifacts);
+            }
 
             return !Log.HasLoggedErrors;
         }
