@@ -71,8 +71,8 @@ namespace Aderant.Build.VersionControl {
         /// <summary>
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
-        public SourceTreeInfo GetChangesBetween(string repositoryPath, string fromBranch, string toBranch) {
-            var info = new SourceTreeInfo();
+        public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch) {
+            var info = new SourceTreeMetadata();
 
             List<BucketId> bucketKeys = new List<BucketId>();
 

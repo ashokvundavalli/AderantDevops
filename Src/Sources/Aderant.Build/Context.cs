@@ -20,7 +20,7 @@ namespace Aderant.Build {
         private IContextualServiceProvider serviceProvider;
 
         private BuildSwitches switches = default(BuildSwitches);
-        private SourceTreeInfo sourceTreeInfo;
+        private SourceTreeMetadata sourceTreeMetadata;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -193,16 +193,16 @@ namespace Aderant.Build {
             return null;
         }
 
-        public SourceTreeInfo SourceTreeInfo {
-            get { return sourceTreeInfo; }
+        public SourceTreeMetadata SourceTreeMetadata {
+            get { return sourceTreeMetadata; }
             set {
-                sourceTreeInfo = value;
+                sourceTreeMetadata = value;
             }
         }
     }
 
     [Serializable]
-    public sealed class SourceTreeInfo {
+    public sealed class SourceTreeMetadata {
         public IReadOnlyCollection<PendingChange> Changes { get; set; }
         public IReadOnlyCollection<BucketId> BucketKeys { get; set; }
         public string SelectedCommonAncestor { get; set; }

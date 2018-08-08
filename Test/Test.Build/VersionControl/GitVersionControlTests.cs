@@ -37,7 +37,7 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void GetSourceTreeInfo_returns_without_exception() {
             var vc = new GitVersionControl();
-            var result = vc.GetChangesBetween(repo, "master", "saturn");
+            var result = vc.GetMetadata(repo, "master", "saturn");
 
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.Changes);
@@ -49,7 +49,7 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void GetSourceTreeInfo_returns_most_likely_ancestor_when_asked_to_guess() {
             var vc = new GitVersionControl();
-            var result = vc.GetChangesBetween(repo, "", "");
+            var result = vc.GetMetadata(repo, "", "");
 
             Assert.IsNotNull(result);
             Assert.AreEqual("refs/heads/master", result.SelectedCommonAncestor);

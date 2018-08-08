@@ -2,9 +2,9 @@
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Commands {
-    [OutputType(typeof(SourceTreeInfo))]
-    [Cmdlet(VerbsCommon.Get, "SourceTreeInfo")]
-    public class GetSourceTreeInfoCommand : PSCmdlet {
+    [OutputType(typeof(SourceTreeMetadata))]
+    [Cmdlet(VerbsCommon.Get, "SourceTreeMetadata")]
+    public class GetSourceTreeMetadataCommand : PSCmdlet {
 
         [Parameter]
         public string SourceDirectory { get; set; }
@@ -15,9 +15,6 @@ namespace Aderant.Build.Commands {
         [Parameter]
         public string TargetBranch { get; set; }
 
-        [Parameter]
-        public bool IsPullRequest { get; set; }
-
         protected override void ProcessRecord() {
             if (SourceDirectory == null) {
                 SourceDirectory = this.SessionState.Path.CurrentFileSystemLocation.Path;
@@ -26,7 +23,7 @@ namespace Aderant.Build.Commands {
             WriteDebug(LibGit2Sharp.GlobalSettings.NativeLibraryPath);
 
             var gvc = new GitVersionControl();
-            var sourceInfo = gvc.GetChangesBetween(SourceDirectory, SourceBranch, TargetBranch);
+            var sourceInfo = gvc.GetMetadata(SourceDirectory, SourceBranch, TargetBranch);
 
             WriteObject(sourceInfo);
         }

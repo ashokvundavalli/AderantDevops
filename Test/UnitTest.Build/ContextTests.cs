@@ -20,7 +20,7 @@ namespace UnitTest.Build {
         [TestMethod]
         public void SourceTreeInfo_is_serializable() {
             var ctx = new BuildOperationContext();
-            ctx.SourceTreeInfo = new SourceTreeInfo {
+            ctx.SourceTreeMetadata = new SourceTreeMetadata {
                 BucketKeys = new List<BucketId> { new BucketId("", "") }
             };
 

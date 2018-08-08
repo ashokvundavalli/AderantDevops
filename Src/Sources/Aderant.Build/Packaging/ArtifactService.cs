@@ -66,7 +66,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private BuildArtifact PrepareFilesForDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
-            BucketId bucket = context.SourceTreeInfo.GetBucket(BucketId.Current);
+            BucketId bucket = context.SourceTreeMetadata.GetBucket(BucketId.Current);
             var container = Path.Combine(context.PrimaryDropLocation, bucket.Id, context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture), artifactId);
 
             foreach (var pathSpec in files) {

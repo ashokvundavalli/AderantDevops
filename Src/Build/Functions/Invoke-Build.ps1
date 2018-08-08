@@ -66,7 +66,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     return [string]::Join(" ", $set)
 }
 
-function GetSourceTreeInfo($context, $repositoryPath) {
+function GetSourceTreeMetadata($context, $repositoryPath) {
     $sourceBranch = ""
     $targetBranch = ""
 
@@ -81,7 +81,7 @@ function GetSourceTreeInfo($context, $repositoryPath) {
         }        
     }
 
-    $context.SourceTreeInfo = Get-SourceTreeInfo -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
+    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
 }
 
 <#SourceBranch
@@ -163,7 +163,7 @@ function global:Invoke-Build2
 
     FindGitDir $context $repositoryPath
 
-    GetSourceTreeInfo $context $repositoryPath
+    GetSourceTreeMetadata $context $repositoryPath
 
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent

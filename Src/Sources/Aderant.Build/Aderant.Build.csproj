@@ -105,7 +105,7 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
-    <Compile Include="Commands\GetSourceTreeInfoCommand.cs" />
+    <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\RetrieveArtifactsCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
     <Compile Include="MSBuild\ImportElement.cs" />
