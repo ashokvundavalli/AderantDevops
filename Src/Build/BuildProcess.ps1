@@ -208,37 +208,6 @@ task EndToEnd {
     # Get submodules
     & git submodule update --init --recursive
 
-
-
-
-     $pref = Get-MpPreference
-     $processes = [System.Collections.Generic.HashSet[string]]::new($pref.ExclusionProcess)
-
-    @("dbgen.exe",
-    "DeploymentEngine.exe",
-    "DeploymentManager.exe",
-    "PackageManagerConsole.exe",
-
-    "csc.exe",
-    "csi.exe",
-    "MSBuild.exe",
-    "signtool.exe",
-    "SqlPackage.exe",
-    "sqlservr.exe",
-    "TE.ProcessHost.Managed.exe",
-    "testhost.x86.exe",
-    "testhostw.exe",
-    "tf.exe",
-    "VBCSCompiler.exe",
-    "vstest.console.exe",
-    "vstest.discoveryengine.exe",
-    "vstest.discoveryengine.x86.exe",
-    "vstest.executionengine.exe",
-    "vstest.executionengine.x86.exe").ForEach({ $processes.Add($_) | Out-Null })
-
-    Set-MpPreference -ExclusionProcess $processes
-
-
     . $PSScriptRoot\Build-Libraries.ps1
 
     CompileBuildLibraryAssembly $PSScriptRoot

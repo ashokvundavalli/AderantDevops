@@ -74,8 +74,8 @@ function GetSourceTreeInfo($context, $repositoryPath) {
         $metadata = $context.BuildMetadata
 
         if ($metadata.IsPullRequest) {
-            $sourceBranch = $metadata.SourceBranch
-            $targetBranch = $metadata.TargetBranch
+            $sourceBranch = $metadata.PullRequestInfo.SourceBranch
+            $targetBranch = $metadata.PullRequestInfo.TargetBranch
         } else {
             $sourceBranch = $metadata.ScmBranch;
         }        
@@ -84,7 +84,7 @@ function GetSourceTreeInfo($context, $repositoryPath) {
     $context.SourceTreeInfo = Get-SourceTreeInfo -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
 }
 
-<#
+<#SourceBranch
     .SYNOPSIS
     Runs a build based on your current context
 
