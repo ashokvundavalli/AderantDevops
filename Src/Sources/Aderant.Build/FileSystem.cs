@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,13 +17,7 @@ namespace Aderant.Build {
         /// <returns></returns>
         internal delegate string FileDestinationSelector(FileInfo[] filesInDirectory, FileInfo fileToCopy);
 
-        /// <summary>
-        /// The default file system controller
-        /// </summary>
-        internal static FileSystem Default = new FileSystem();
-
         private static DirectoryOperations directory = new DirectoryOperations();
-        private static FileOperations file = new FileOperations();
 
         /// <summary>
         /// Gets or sets the directory operations.
@@ -34,21 +28,6 @@ namespace Aderant.Build {
         public virtual DirectoryOperations Directory {
             get { return directory; }
             protected internal set { directory = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the file operations.
-        /// </summary>
-        /// <value>
-        /// The file.
-        /// </value>
-        public virtual FileOperations File {
-            get { return file; }
-            protected internal set { file = value; }
-        }
-
-        internal static async Task DirectoryCopyAsync(string source, string destination, bool recursive, bool useHardLinks) {
-            await DirectoryCopyInternal(source, destination, null, recursive, useHardLinks);
         }
 
         internal static async Task DirectoryCopyAsync(string source, string destination, FileDestinationSelector selector, bool recursive, bool useHardLinks) {
@@ -158,45 +137,12 @@ namespace Aderant.Build {
         }
     }
 
-
-    public class FileOperations {
-        public virtual bool Exists(string file) {
-            return File.Exists(file);
-        }
-
-        public virtual string ReadAllText(string file) {
-            return File.ReadAllText(file);
-        }
-
-        public virtual void WriteAllText(string path, string contents) {
-            File.WriteAllText(path, contents, Encoding.UTF8);
-        }
-
-        public void Delete(string path) {
-            File.Delete(path);
-        }
-    }
-
     public class DirectoryOperations {
-        public virtual string[] GetDirectories(string path) {
-            return System.IO.Directory.GetDirectories(path);
-        }
-
-        public virtual string[] GetFileSystemEntries(string path) {
-            return System.IO.Directory.GetFileSystemEntries(path);
-        }
 
         public virtual string[] GetFileSystemEntries(string path, string searchPattern) {
             return System.IO.Directory.GetFileSystemEntries(path, searchPattern);
         }
 
-        public virtual string[] GetFileSystemEntries(string path, string searchPattern, SearchOption searchOption) {
-            return System.IO.Directory.GetFileSystemEntries(path, searchPattern, searchOption);
-        }
-
-        public virtual bool Exists(string path) {
-            return System.IO.Directory.Exists(path);
-        }
     }
 
     internal static class NativeMethods {
