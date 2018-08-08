@@ -50,7 +50,7 @@ namespace UnitTest.Build.Packaging {
             IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", null) };
 
             IReadOnlyCollection<ArtifactStorageInfo> results = artifactService.PublishArtifacts(
-                new Context {
+                new BuildOperationContext {
                     PrimaryDropLocation = @"\\mydrop\",
                     BuildMetadata = new BuildMetadata()
                 },

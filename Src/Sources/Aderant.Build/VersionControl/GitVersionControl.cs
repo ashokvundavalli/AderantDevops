@@ -67,10 +67,140 @@ namespace Aderant.Build.VersionControl {
                 return result;
             }
         }
+
+        public SourceTreeInfo GetChangesBetween(string repositoryPath, string fromBranch, string toBranch) {
+            var info = new SourceTreeInfo();
+
+            List<BucketId> bucketKeys = new List<BucketId>();
+
+            using (var repository = OpenRepository(repositoryPath)) {
+                var workingDirectory = repository.Info.WorkingDirectory;
+
+                Commit newTree;
+
+                if (string.IsNullOrWhiteSpace(toBranch)) {
+                    newTree = repository.Head.Tip;
+                } else {
+                    newTree = GetTip(toBranch, repository);
+                }
+
+                Commit oldTree;
+                if (string.IsNullOrWhiteSpace(fromBranch)) {
+                    string branchCanonicalName;
+                    oldTree = FindMostLikelyReusableBucket(repository, newTree, out branchCanonicalName);
+                    info.SelectedCommonAncestor = branchCanonicalName;
+                } else {
+                    oldTree = GetTip(fromBranch, repository);
+                }
+
+                if (newTree != null && oldTree != null) {
+                    
+                    var patch = repository.Diff.Compare<TreeChanges>(oldTree.Tree, newTree.Tree);
+                    info.Changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
+
+                    bucketKeys.Add(new BucketId(newTree.Sha, "Current"));
+
+                    Commit commit = newTree.Parents.FirstOrDefault();
+                    if (commit != null) {
+                        bucketKeys.Add(new BucketId(commit.Tree.Sha, "FirstParent"));
+                    }
+
+                    bucketKeys.Add(new BucketId(oldTree.Sha, "Previous"));
+
+                    info.BucketKeys = bucketKeys;
+
+                }
+            }
+
+            return info;
+        }
+
+        private Commit FindMostLikelyReusableBucket(Repository repository, Commit newTree, out string branchCanonicalName) {
+            Commit commit = newTree.Parents.FirstOrDefault();
+            Commit[] interestingCommit = { null };
+
+            while (commit != null) {
+                interestingCommit[0] = commit;
+
+                IEnumerable<Reference> headsContainingTheCommit = repository.Refs.ReachableFrom(repository.Refs, interestingCommit);
+                var list = headsContainingTheCommit.Select(s => s.CanonicalName).ToList();
+
+                foreach (var item in list) {
+                    branchCanonicalName = item;
+
+                    if (string.Equals("refs/heads/master", item, StringComparison.OrdinalIgnoreCase)) {
+                        return commit;
+                    }
+
+                    if (item.StartsWith("refs/heads/releases/", StringComparison.OrdinalIgnoreCase)) {
+                        return commit;
+                    }
+
+                    if (item.StartsWith("refs/heads/dev/", StringComparison.OrdinalIgnoreCase)) {
+                        return commit;
+                    }
+
+                    if (item.StartsWith("refs/heads/patch/", StringComparison.OrdinalIgnoreCase)) {
+                        return commit;
+                    }
+                }
+
+                commit = commit.Parents.FirstOrDefault();
+            }
+
+            branchCanonicalName = null;
+            return null;
+        }
+
+        private static Commit GetTip(string branchName, Repository repository) {
+            if (!branchName.StartsWith("refs/heads/")) {
+                branchName = "refs/heads/" + branchName;
+            }
+
+            foreach (var branch in repository.Branches) {
+                var isMatch = new[] {
+                    branch.FriendlyName,
+                    branch.UpstreamBranchCanonicalName,
+                    branch.CanonicalName,
+                }.Contains(branchName, StringComparer.OrdinalIgnoreCase);
+
+                if (isMatch) {
+                    return branch.Tip;
+                }
+            }
+
+            return null;
+        }
+
+        private static Repository OpenRepository(string repositoryPath) {
+            ErrorUtilities.IsNotNull(repositoryPath, nameof(repositoryPath));
+
+            string gitDir = Repository.Discover(repositoryPath);
+
+            return new Repository(gitDir);
+        }
+    }
+
+    [DebuggerDisplay("{Id} {Tag}")]
+    public class BucketId {
+
+        public BucketId(string id) {
+            this.Id = id;
+        }
+
+        public BucketId(string id, string tag) {
+            this.Id = id;
+            this.Tag = tag;
+
+        }
+
+        public string Id { get; }
+
+        public string Tag { get; }
     }
 
     [DebuggerDisplay("Path: {Path} Status: {Status}")]
-    internal class PendingChange : IPendingChange {
+    public class PendingChange : IPendingChange {
 
         public PendingChange(string workingDirectory, string relativePath, FileStatus status) {
             Path = relativePath;

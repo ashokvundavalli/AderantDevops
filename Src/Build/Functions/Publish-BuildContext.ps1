@@ -17,5 +17,7 @@ function Publish-BuildContext
     [string]$name = [System.Diagnostics.Process]::GetCurrentProcess().Id
     $fileName = [Aderant.Build.Ipc.MemoryMappedFileReaderWriter]::WriteData($name, $Context)
 
+    [System.Environment]::SetEnvironmentVariable([Aderant.Build.WellKnownProperties]::ContextFileName, $name, [System.EnvironmentVariableTarget]::Process)
+
     return $fileName
 }

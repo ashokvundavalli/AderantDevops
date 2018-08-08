@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Management.Automation.Internal;
 using System.Threading;
 using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
@@ -11,7 +12,7 @@ namespace Aderant.Build.Tasks {
     /// <summary>
     /// Provides the ultimate base class for context aware tasks within the build engine
     /// </summary>
-    public abstract class ContextTaskBase : Task {
+    public abstract class BuildOperationContextTask : Task {
         private BuildOperationContext context;
         private BuildTaskLogger logger;
 
@@ -21,6 +22,9 @@ namespace Aderant.Build.Tasks {
  
         protected BuildOperationContext Context {
             get {
+                if (InternalContext != null) {
+                    return InternalContext;
+                }
                 return context ?? (context = ObtainContext());
             }
         }
@@ -30,6 +34,8 @@ namespace Aderant.Build.Tasks {
                 return logger ?? (logger = new BuildTaskLogger(this.Log));
             }
         }
+
+        internal static BuildOperationContext InternalContext { get; set; }
 
         protected void ReplaceContext() {
             Register(Context);
@@ -74,8 +80,8 @@ namespace Aderant.Build.Tasks {
             var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
             ctx = cachedContext as BuildOperationContext;
             if (ctx != null) {
-                //Log.LogMessage("Retrieved context from registered task object storage");
-                //return ctx;
+                Log.LogMessage("Retrieved context from registered task object storage");
+                return ctx;
             }
 
             ctx = GetContextFromFile();
@@ -107,5 +113,10 @@ namespace Aderant.Build.Tasks {
             ctx = (BuildOperationContext)contextObject;
             return ctx;
         }
+    }
+
+    internal class InternalTestHost {
+
+        public BuildOperationContext Context { get; set; }
     }
 }

@@ -66,6 +66,24 @@ function FindGitDir($context, $stringSearchDirectory) {
     return [string]::Join(" ", $set)
 }
 
+function GetSourceTreeInfo($context, $repositoryPath) {
+    $sourceBranch = ""
+    $targetBranch = ""
+
+    if (-not $context.IsDesktopBuild) {
+        $metadata = $context.BuildMetadata
+
+        if ($metadata.IsPullRequest) {
+            $sourceBranch = $metadata.SourceBranch
+            $targetBranch = $metadata.TargetBranch
+        } else {
+            $sourceBranch = $metadata.ScmBranch;
+        }        
+    }
+
+    $context.SourceTreeInfo = Get-SourceTreeInfo -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
+}
+
 <#
     .SYNOPSIS
     Runs a build based on your current context
@@ -145,6 +163,8 @@ function global:Invoke-Build2
 
     FindGitDir $context $repositoryPath
 
+    GetSourceTreeInfo $context $repositoryPath
+
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
     $switches.Everything = $Everything.IsPresent
@@ -157,12 +177,9 @@ function global:Invoke-Build2
     $context.Switches = $switches
 
     $context.StartedAt = [DateTime]::UtcNow
-
     $contextFileName = Publish-BuildContext $context
 
-    $args = CreateToolArgumentString $context $RemainingArgs
-
-    Get-PendingChanges
+    $args = CreateToolArgumentString $context $RemainingArgs    
 
     Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args"
  

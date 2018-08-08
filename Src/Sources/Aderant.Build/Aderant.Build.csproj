@@ -159,6 +159,7 @@
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\PackageArtifacts.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
+    <Compile Include="Tasks\RetrieveArtifacts.cs" />
     <Compile Include="Tasks\SetEnvironmentVariable.cs" />
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />

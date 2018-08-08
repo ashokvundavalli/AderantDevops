@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.TeamFoundation;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
         private readonly IBucketService bucketService;
         private readonly IFileSystem fileSystem;
+
+        public ArtifactService() : this(new PhysicalFileSystem(), new BucketService()) {
+        }
 
         public ArtifactService(IFileSystem fileSystem, IBucketService bucketService) {
             this.fileSystem = fileSystem;
@@ -45,7 +50,7 @@ namespace Aderant.Build.Packaging {
                 foreach (var artifact in group) {
                     var files = artifact.GetFiles();
 
-                    var container = Path.Combine(context.PrimaryDropLocation, group.Key, bucketId, (context.BuildMetadata.BuildId > 0 ? context.BuildMetadata.BuildId : -1).ToString());
+                    var container = Path.Combine(context.PrimaryDropLocation, bucketId, group.Key, context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
                     foreach (var pathSpec in files) {
                         CopyToDestination(container, pathSpec);
                     }
@@ -130,6 +135,15 @@ namespace Aderant.Build.Packaging {
                 FullPath = destination,
                 Name = artifactName,
             };
+        }
+
+        public void Resolve(BuildOperationContext context, DependencyManifest manifest, string artifactDirectory, IReadOnlyCollection<ArtifactPackage> artifacts) {
+
+            foreach (var artifact in artifacts) {
+
+            }
+
+         
         }
     }
 }

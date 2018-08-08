@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Build.Evaluation;
+using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -20,7 +21,7 @@ namespace IntegrationTest.Build.Tasks {
         /// <summary>
         /// Runs a target in IntegrationTest.targets
         /// </summary>
-        protected InternalBuildLogger RunTarget(string targetName, IDictionary<string, string> properties = null) {
+        protected void RunTarget(string targetName, IDictionary<string, string> properties = null) {
             if (properties == null) {
                 properties = new Dictionary<string, string>();
             }
@@ -34,14 +35,19 @@ namespace IntegrationTest.Build.Tasks {
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {
                 collection.RegisterLogger(Logger = new InternalBuildLogger(TestContext)); // Must pass in a logger derived from Microsoft.Build.Framework.ILogger.
 
-                Project project = collection.LoadProject(Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"));
-                bool result = project.Build(targetName);
+                using (var manager = new BuildManager()) {
 
-                this.project = project;
+                    var result = manager.Build(
+                        new BuildParameters(collection) { Loggers = collection.Loggers, DetailedSummary = true },
+                        new BuildRequestData(
+                            Path.Combine(TestContext.DeploymentDirectory, "IntegrationTest.targets"),
+                            globalProperties,
+                            null,
+                            new[] { targetName },
+                            null));
 
-                Assert.IsFalse(Logger.HasRaisedErrors);
-
-                return Logger;
+                    Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
+                }
             }
         }
 

@@ -111,7 +111,8 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="VersionControl\ChangedFilesFinder.cs" />
+    <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
+    <Compile Include="VersionControl\GitVersionControlTests.cs" />
     <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
     <Compile Include="DependencyAnalysis\ProjectDependencyAnalyzerTests.cs" />
     <Compile Include="ConfiguredProjectTests\Resources.Designer.cs">
@@ -179,12 +180,18 @@
     <Content Include="Tasks\ReadAssemblyInfo\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Tasks\RetrieveArtifacts\DependencyManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Tasks\RunAnalyzer\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="DependencyAnalysis\Resources.proj">
       <SubType>Designer</SubType>
     </None>
+    <Content Include="Tasks\RetrieveArtifacts\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="VersionControl\Resources\CreateRepo.ps1" />
   </ItemGroup>
   <ItemGroup>

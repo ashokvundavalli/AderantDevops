@@ -9,10 +9,10 @@ namespace Aderant.Build.Commands {
         [Parameter]
         public string SourceDirectory { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter]
         public string SourceBranch { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter]
         public string TargetBranch { get; set; }
 
         [Parameter]

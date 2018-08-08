@@ -1,7 +1,7 @@
 ﻿using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    public sealed class GetOrPutContextVariable : ContextTaskBase {
+    public sealed class GetOrPutContextVariable : BuildOperationContextTask {
 
         [Required]
         public string Id { get; set; }

@@ -10,6 +10,12 @@
   <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />
   <Import Project="Aderant.Build.Clean.targets" />
 
+  <!--
+       Pull the entry targets into our context.
+       This lets us call into it and lets people who want to customize the workflow change stuff in here
+  -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+
   <!-- Entry target -->
   <Target Name="Build" DependsOnTargets="$(RunBuildDependsOn)">
   </Target>
@@ -26,6 +32,8 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
+      <!-- This target is usually defined in TFSBuild.proj -->
+      PackageArtifacts;
       QueryBuildCache;
       rmTransformTemplates;
       UpdateContext
@@ -110,9 +118,9 @@
     </ItemGroup>
 
     <RetrieveArtifacts
-      DependencyManifest="@(DependencyManifests)" />
-
-
+      DependencyManifestFile="%(DependencyManifests.FullPath)"
+      ArtifactDirectory="$(SolutionRoot)\Dependencies"
+      ArtifactDefinitions="@(PackageArtifact)" />
 
     <!--<GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"

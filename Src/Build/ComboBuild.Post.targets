@@ -80,7 +80,7 @@
       ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
-      Artifacts="@(PackageArtifact)"
+      ArtifactDefinitions="@(PackageArtifact)"
       AssemblyVersion="$(AssemblyVersion)"
       FileVersion="$(FileVersion)" />
 

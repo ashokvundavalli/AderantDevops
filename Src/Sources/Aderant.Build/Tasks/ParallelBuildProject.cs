@@ -11,7 +11,7 @@ using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    public sealed class ParallelBuildProjectFactory : ContextTaskBase {
+    public sealed class ParallelBuildProjectFactory : BuildOperationContextTask {
         public ITaskItem[] ModulesInBuild { get; set; }
 
         public string[] ExcludedModules { get; set; }

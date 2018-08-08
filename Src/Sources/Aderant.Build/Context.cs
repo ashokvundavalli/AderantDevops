@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build {
 
@@ -18,6 +19,7 @@ namespace Aderant.Build {
         private IContextualServiceProvider serviceProvider;
 
         private BuildSwitches switches = default(BuildSwitches);
+        private SourceTreeInfo sourceTreeInfo;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -189,6 +191,21 @@ namespace Aderant.Build {
 
             return null;
         }
+
+        public SourceTreeInfo SourceTreeInfo {
+            get { return sourceTreeInfo; }
+            set {
+                System.Diagnostics.Debugger.Launch();
+                sourceTreeInfo = value;
+            }
+        }
+    }
+
+    [Serializable]
+    public sealed class SourceTreeInfo {
+        public IReadOnlyCollection<PendingChange> Changes { get; set; }
+        public IReadOnlyCollection<BucketId> BucketKeys { get; set; }
+        public string SelectedCommonAncestor { get; set; }
     }
 
     [Serializable]

@@ -50,7 +50,8 @@ function LoadAssembly($buildScriptsDirectory, [string]$targetAssembly) {
         }
 
         # Create a new dynamic module that simply loads another module into it.
-        New-Module -ScriptBlock $scriptBlock -ArgumentList $assembly | Import-Module -Global
+        $module = New-Module -ScriptBlock $scriptBlock -ArgumentList $assembly
+        Import-Module $module -Global
     } else {
         throw "Fatal error. Profile assembly not found"
     }
@@ -69,6 +70,12 @@ function UpdateSubmodules([string]$head) {
     } else {
         Write-Debug "Submodule update not required"
     }   
+}
+
+function LoadLibGit2Sharp([string]$buildToolsDirectory) {
+    #[Environment]::SetEnvironmentVariable("LibGit2SharpLibraryPath", $buildToolsDirectory, [System.EnvironmentVariableTarget]::Process)
+    [System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
+
 }
 
 function UpdateOrBuildAssembly([string]$buildToolsDirectory, [string]$buildScriptsDirectory) {    
@@ -100,4 +107,5 @@ function UpdateOrBuildAssembly([string]$buildToolsDirectory, [string]$buildScrip
     $assemblyPath = [System.IO.Path]::Combine($buildToolsDirectory, $coreAssemblyName)     
     BuildProject $buildScriptsDirectory $true
     LoadAssembly $buildScriptsDirectory $assemblyPath
+    LoadLibGit2Sharp $buildToolsDirectory
 }

@@ -14,4 +14,5 @@ namespace Aderant.Build.Commands {
 
         }
     }
+
 }

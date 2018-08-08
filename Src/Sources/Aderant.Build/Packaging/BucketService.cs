@@ -12,7 +12,7 @@ namespace Aderant.Build.Packaging {
                 string tipSha = repo.Head.Tip.Sha;
 
                 return tipSha;
-            }
+            } 
         }
 
         private static string GetCommitForSolutionRoot(string solutionRoot) {

@@ -6,9 +6,6 @@ using System.Security.Principal;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    public class RetrieveArtifacts : BuildOperationContextTask {
-
-    }
 
     public class MakeSymlink : Microsoft.Build.Utilities.Task {
         [Required]

@@ -2,14 +2,7 @@
 
   <Import Project="Aderant.Build.Common.targets" />
 
-  <Import Project="Tasks\BuildTimeTests\test.targets" />
-  <Import Project="Tasks\CheckCertificate\test.targets" />
-  <Import Project="Tasks\GitVersion\test.targets" />
-  <Import Project="Tasks\GetFileVersionInfo\test.targets" />
-  <Import Project="Tasks\ReadAssemblyInfo\test.targets" />
-  <Import Project="Tasks\GetAssembliesWithTraits\test.targets" />
-  <Import Project="Tasks\CopyToDrop\test.targets" />
-  <Import Project="Tasks\RunAnalyzer\test.targets" />
+  <Import Project="Tasks\**\test.targets" />
 
   <ItemGroup>
     <Files Include="*.dll;" />

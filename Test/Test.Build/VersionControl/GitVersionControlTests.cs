@@ -45,6 +45,15 @@ namespace IntegrationTest.Build.VersionControl {
 
             Assert.AreEqual(2, result.Changes.Count);
         }
+
+        [TestMethod]
+        public void GetSourceTreeInfo_returns_most_likely_ancestor_when_asked_to_guess() {
+            var vc = new GitVersionControl();
+            var result = vc.GetChangesBetween(repo, "", "");
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("refs/heads/master", result.SelectedCommonAncestor);
+        }
     }
 
 }

@@ -200,17 +200,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             return manifest;
         }
 
-        /// <summary>
-        /// Saves this instance and returns the serialized string representation.
-        /// </summary>
-        /// <returns></returns>
-        public string Save() {
-            ExpertModuleMapper mapper = new ExpertModuleMapper();
-            return mapper.Save(this, manifest);
-        }
-
         internal void AddRequirement(IDependencyRequirement requirement) {
             dependencies.Add(requirement);
+        }
+
+        public static DependencyManifest Load(XDocument document) {
+            return new DependencyManifest("", document);
         }
     }
 }
