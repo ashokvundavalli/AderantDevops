@@ -53,7 +53,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             foreach (var level in grouping) {
                 List<ConfiguredProject> dirtyProjects = level.Where(g => g.IsDirty).ToList();
-                if (Should(dirtyProjects, isPullRequest, isDesktopBuild)) {
+
+                if (AddNodes(dirtyProjects, isPullRequest, isDesktopBuild)) {
                     string tag = string.Join(", ", dirtyProjects.Select(s => s.Id));
 
                     IArtifact initializeNode;
@@ -80,7 +81,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private bool Should(List<ConfiguredProject> dirtyProjects, bool isPullRequest, bool isDesktopBuild) {
+        private bool AddNodes(List<ConfiguredProject> dirtyProjects, bool isPullRequest, bool isDesktopBuild) {
+            // TODO: Not sure why we need this function?
             if (dirtyProjects.Any()) {
                 return true;
             }
@@ -93,7 +95,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return true;
             }
 
-            throw new NotSupportedException("Unknown build environment");
+            return true;
         }
 
         private static void ProjectToProjectShim(string tag, ConfiguredProject project) {
