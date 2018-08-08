@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
 using Aderant.Build.VersionControl;
@@ -205,6 +206,10 @@ namespace Aderant.Build {
         public IReadOnlyCollection<PendingChange> Changes { get; set; }
         public IReadOnlyCollection<BucketId> BucketKeys { get; set; }
         public string SelectedCommonAncestor { get; set; }
+
+        public BucketId GetBucket(string tag) {
+            return BucketKeys.FirstOrDefault(s => s.Tag == tag);
+        }
     }
 
     [Serializable]

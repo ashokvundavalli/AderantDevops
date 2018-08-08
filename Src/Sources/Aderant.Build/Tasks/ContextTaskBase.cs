@@ -114,9 +114,4 @@ namespace Aderant.Build.Tasks {
             return ctx;
         }
     }
-
-    internal class InternalTestHost {
-
-        public BuildOperationContext Context { get; set; }
-    }
 }

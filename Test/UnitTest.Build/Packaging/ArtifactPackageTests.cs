@@ -16,7 +16,7 @@ namespace UnitTest.Build.Packaging {
             // This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
             // set the actual final folder as the name.
 
-            ArtifactStorageInfo storageInfo = new ArtifactStorageInfo {
+            BuildArtifact storageInfo = new BuildArtifact {
                 FullPath = @"\\some\san\storage\1\foo\bin",
                 Name = @"1\foo\bin"
             };
@@ -28,7 +28,7 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Vso_path_is_smallest_substring() {
-            ArtifactStorageInfo a = new ArtifactStorageInfo() {
+            BuildArtifact a = new BuildArtifact() {
                 FullPath = "\\\\mydrop\\bar\\9.9.9.9\\1.0.0.0\\Bin\\Module",
                 Name = "bar\\9.9.9.9\\1.0.0.0"
             };
@@ -49,12 +49,11 @@ namespace UnitTest.Build.Packaging {
 
             IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", null) };
 
-            IReadOnlyCollection<ArtifactStorageInfo> results = artifactService.PublishArtifacts(
+            IReadOnlyCollection<BuildArtifact> results = artifactService.PublishArtifacts(
                 new BuildOperationContext {
                     PrimaryDropLocation = @"\\mydrop\",
                     BuildMetadata = new BuildMetadata()
                 },
-                "foo",
                 new[] { new ArtifactPackage("bar", specs) });
 
             Assert.IsNotNull(results);

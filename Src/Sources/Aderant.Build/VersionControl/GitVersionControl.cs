@@ -97,18 +97,18 @@ namespace Aderant.Build.VersionControl {
                 }
 
                 if (newTree != null && oldTree != null) {
-                    
+
                     var patch = repository.Diff.Compare<TreeChanges>(oldTree.Tree, newTree.Tree);
                     info.Changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
-                    bucketKeys.Add(new BucketId(newTree.Sha, "Current"));
+                    bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
 
                     Commit commit = newTree.Parents.FirstOrDefault();
                     if (commit != null) {
-                        bucketKeys.Add(new BucketId(commit.Tree.Sha, "FirstParent"));
+                        bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.FirstParent));
                     }
 
-                    bucketKeys.Add(new BucketId(oldTree.Sha, "Previous"));
+                    bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
 
                     info.BucketKeys = bucketKeys;
 
@@ -195,8 +195,11 @@ namespace Aderant.Build.VersionControl {
         public BucketId(string id, string tag) {
             this.Id = id;
             this.Tag = tag;
-
         }
+
+        public static string Current { get; } = nameof(Current);
+        public static string FirstParent { get; } = nameof(FirstParent);
+        public static string Previous { get; } = nameof(Previous);
 
         public string Id { get; }
 

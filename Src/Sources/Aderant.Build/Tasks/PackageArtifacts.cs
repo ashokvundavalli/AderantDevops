@@ -31,7 +31,6 @@ namespace Aderant.Build.Tasks {
 
                 var storageInfo = artifactService.PublishArtifacts(
                     Context,
-                    SolutionRoot,
                     artifacts);
 
             }

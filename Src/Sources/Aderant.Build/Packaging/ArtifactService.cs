@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.TeamFoundation;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
@@ -23,8 +24,8 @@ namespace Aderant.Build.Packaging {
         public string AssemblyVersion { get; set; }
         public VsoBuildCommands VsoCommands { get; set; }
 
-        internal IReadOnlyCollection<ArtifactStorageInfo> PublishArtifacts(BuildOperationContext context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
-            var results = Publish(context, solutionRoot, packages);
+        internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, IReadOnlyCollection<ArtifactPackage> packages) {
+            var results = PublishInternal(context, packages);
 
             if (VsoCommands != null) {
                 foreach (var item in results) {
@@ -35,42 +36,50 @@ namespace Aderant.Build.Packaging {
             return results;
         }
 
-        private IReadOnlyCollection<ArtifactStorageInfo> Publish(BuildOperationContext context, string solutionRoot, IReadOnlyCollection<ArtifactPackage> packages) {
-
+        private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, IReadOnlyCollection<ArtifactPackage> packages) {
             // TODO: Slow - optimize
             // TODO: Test for duplicates in the artifact inputs
 
-            List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
-            List<ArtifactStorageInfo> storageInfoList = new List<ArtifactStorageInfo>();
+            List<Tuple<string, PathSpec>> paths = new List<Tuple<string, PathSpec>>();
+            List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
             IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
             foreach (var group in grouping) {
-                string bucketId = bucketService.GetBucketId(solutionRoot);
-                
                 foreach (var artifact in group) {
                     var files = artifact.GetFiles();
 
-                    var container = Path.Combine(context.PrimaryDropLocation, bucketId, group.Key, context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
-                    foreach (var pathSpec in files) {
-                        CopyToDestination(container, pathSpec);
-                    }
+                    buildArtifacts.Add(PrepareFilesForDrop(paths, context, artifact.Id, files));
 
                     if (context.BuildMetadata.IsPullRequest) {
-                        storageInfoList.Add(PrepareFilesForPullRequestDrop(copyList, context, artifact.Id, files));
+                        buildArtifacts.Add(PrepareFilesForPullRequestDrop(paths, context, artifact.Id, files));
                     } else {
-                        storageInfoList.Add(PrepareFilesForLegacyDrop(copyList, context, artifact.Id, files));
+                        buildArtifacts.Add(PrepareFilesForLegacyDrop(paths, context, artifact.Id, files));
                     }
                 }
             }
 
-            foreach (var item in copyList) {
+            foreach (var item in paths) {
                 CopyToDestination(item.Item1, item.Item2);
             }
 
-            return storageInfoList;
+            return buildArtifacts;
         }
 
-        private ArtifactStorageInfo PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact PrepareFilesForDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+            BucketId bucket = context.SourceTreeInfo.GetBucket(BucketId.Current);
+            var container = Path.Combine(context.PrimaryDropLocation, bucket.Id, context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture), artifactId);
+
+            foreach (var pathSpec in files) {
+                copyList.Add(Tuple.Create(container, pathSpec));
+            }
+
+            return new BuildArtifact {
+                FullPath = container,
+                Name = artifactId,
+            };
+        }
+
+        private BuildArtifact PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
@@ -94,7 +103,7 @@ namespace Aderant.Build.Packaging {
                         PathSpec.BuildSucceeded));
             }
 
-            return new ArtifactStorageInfo {
+            return new BuildArtifact {
                 FullPath = destination,
                 Name = artifactName,
             };
@@ -123,7 +132,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private ArtifactStorageInfo PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             string artifactName;
             var destination = CreateDropLocationPath(context.PrimaryDropLocation, artifactId, out artifactName);
 
@@ -131,7 +140,7 @@ namespace Aderant.Build.Packaging {
                 copyList.Add(Tuple.Create(destination, pathSpec));
             }
 
-            return new ArtifactStorageInfo {
+            return new BuildArtifact {
                 FullPath = destination,
                 Name = artifactName,
             };

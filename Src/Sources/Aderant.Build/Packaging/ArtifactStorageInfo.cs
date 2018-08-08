@@ -2,7 +2,7 @@
 using System.IO;
 
 namespace Aderant.Build.Packaging {
-    internal class ArtifactStorageInfo {
+    internal class BuildArtifact {
         public string FullPath { get; set; }
         public string Name { get; set; }
 
