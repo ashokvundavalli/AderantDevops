@@ -46,13 +46,18 @@ namespace Aderant.Build.Tasks {
 
         public static string DefaultFileName { get; private set; } = "buildstate.metadata";
 
-        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, SourceTreeMetadata metadata, BuildMetadata buildmetadata, string path) {
+        /// <summary>
+        /// Serializes the build state file
+        /// </summary>
+        /// <param name="sourcesDirectory">The ultimate root directory of the source</param>
+        /// <param name="projectFiles">All project files in the build</param>
+        /// <param name="metadata">A description of the source tree</param>
+        /// <param name="buildMetadata">A description of the current build environment</param>
+        /// <param name="path">The path to write the file to</param>
+        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
-            projectFiles = projectFiles
-                .Where(s => !string.Equals(Path.GetExtension(s), ".targets", StringComparison.OrdinalIgnoreCase))
-                .Select(s => TrimSourcesDirectory(sourcesDirectory, s))
-                .OrderBy(s => s);
+            projectFiles = GenerateProjectFilesList(sourcesDirectory, projectFiles);
 
             string bucketId = null;
             if (metadata != null) {
@@ -65,16 +70,25 @@ namespace Aderant.Build.Tasks {
                 TreeSha = bucketId
             };
 
-            if (buildmetadata != null) {
-                if (buildmetadata.IsPullRequest) {
-                    stateFile.PullRequestInfo = buildmetadata.PullRequest;
+            if (buildMetadata != null) {
+                if (buildMetadata.IsPullRequest) {
+                    stateFile.PullRequestInfo = buildMetadata.PullRequest;
                 } else {
-                    stateFile.ScmBranch = buildmetadata.ScmBranch;
-                    stateFile.ScmCommitId = buildmetadata.ScmCommitId;
+                    stateFile.ScmBranch = buildMetadata.ScmBranch;
+                    stateFile.ScmCommitId = buildMetadata.ScmCommitId;
                 }
             }
 
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
+        }
+
+        private static IEnumerable<string> GenerateProjectFilesList(string sourcesDirectory, IEnumerable<string> projectFiles) {
+            // For deterministic hashing this needs to be sorted
+            projectFiles = projectFiles
+                .Where(s => !string.Equals(Path.GetExtension(s), ".targets", StringComparison.OrdinalIgnoreCase))
+                .Select(s => TrimSourcesDirectory(sourcesDirectory, s))
+                .OrderBy(s => s);
+            return projectFiles;
         }
 
         private static string TrimSourcesDirectory(string sourcesDirectory, string path) {
@@ -92,10 +106,10 @@ namespace Aderant.Build.Tasks {
     [DataContract]
     public sealed class BuildStateFile : StateFileBase {
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public string[] ProjectFiles { get; set; }
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public string TreeSha { get; set; }
 
         [IgnoreDataMember]

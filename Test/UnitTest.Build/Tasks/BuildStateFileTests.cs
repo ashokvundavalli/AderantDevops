@@ -15,6 +15,24 @@ namespace UnitTest.Build.Tasks {
         }
 
         [TestMethod]
+        public void BuildStateFile_serialization() {
+            var stateFile = new BuildStateFile();
+            stateFile.PullRequestInfo = new PullRequestInfo { Id = "1", SourceBranch = "2", TargetBranch = "3" };
+
+            using (var ms = new MemoryStream()) {
+                stateFile.Serialize(ms);
+
+                ms.Position = 0;
+
+                BuildStateFile file = stateFile.DeserializeCache<BuildStateFile>(ms);
+
+                Assert.AreEqual("1", file.PullRequestInfo.Id);
+                Assert.AreEqual("2", file.PullRequestInfo.SourceBranch);
+                Assert.AreEqual("3", file.PullRequestInfo.TargetBranch);
+            }
+        }
+
+        [TestMethod]
         public void Can_write_build_state_file_to_stream() {
             string text = null;
 

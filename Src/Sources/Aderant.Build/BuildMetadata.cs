@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace Aderant.Build {
 
     [Serializable]
     public sealed class BuildMetadata {
-   
+
         public BuildMetadata() {
             BuildId = 0;
             JobName = "";
@@ -41,7 +42,7 @@ namespace Aderant.Build {
         public string Flavor { get; set; }
 
         /// <summary>
-        /// Is the build system itself in debug mode. 
+        /// Is the build system itself in debug mode.
         /// </summary>
         public bool DebugLoggingEnabled { get; set; }
 
@@ -61,9 +62,16 @@ namespace Aderant.Build {
     }
 
     [Serializable]
+    [DataContract]
     public sealed class PullRequestInfo {
+
+        [DataMember(Name = "Id")]
         public string Id { get; set; }
+
+        [DataMember(Name = "TargetBranch")]
         public string TargetBranch { get; set; }
+
+        [DataMember(Name = "SourceBranch")]
         public string SourceBranch { get; set; }
     }
 }
