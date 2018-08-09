@@ -75,13 +75,13 @@
 
   <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
-    <!--<PublishArtifacts
+    <PublishArtifacts
       ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
       ArtifactDefinitions="@(PackageArtifact)"
       AssemblyVersion="$(AssemblyVersion)"
-      FileVersion="$(FileVersion)" />-->
+      FileVersion="$(FileVersion)" />
 
   </Target>
 
