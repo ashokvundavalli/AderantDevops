@@ -72,7 +72,7 @@ namespace Aderant.Build.VersionControl {
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch) {
-            System.Diagnostics.Debugger.Launch();
+            //System.Diagnostics.Debugger.Launch();
 
             var info = new SourceTreeMetadata();
 
@@ -109,9 +109,9 @@ namespace Aderant.Build.VersionControl {
                     bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
                     bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
 
-                    Commit commit = newTree.Parents.FirstOrDefault();
+                    Commit commit = oldTree.Parents.FirstOrDefault();
                     if (commit != null) {
-                        bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.FirstParent));
+                        bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.ParentsParent));
                     }
 
                     info.BucketIds = bucketKeys;
@@ -207,7 +207,7 @@ namespace Aderant.Build.VersionControl {
         }
 
         public static string Current { get; } = nameof(Current);
-        public static string FirstParent { get; } = nameof(FirstParent);
+        public static string ParentsParent { get; } = nameof(ParentsParent);
         public static string Previous { get; } = nameof(Previous);
 
         public string Id { get; }
