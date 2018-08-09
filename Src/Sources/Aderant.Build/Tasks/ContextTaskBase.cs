@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Management.Automation.Internal;
 using System.Threading;
 using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
@@ -37,7 +36,7 @@ namespace Aderant.Build.Tasks {
 
         internal static BuildOperationContext InternalContext { get; set; }
 
-        protected void ReplaceContext() {
+        protected void UpdateContext() {
             Register(Context);
             MemoryMappedFileReaderWriter.WriteData(ContextFileName, context);
         }

@@ -30,7 +30,7 @@ namespace Aderant.Build.Tasks {
                 Context.PutVariable(Id, nameof(FileVersion), FileVersion);
                 Context.PutVariable(Id, nameof(AssemblyVersion), AssemblyVersion);
                 Context.PutVariable(Id, nameof(ModuleName), ModuleName);
-                ReplaceContext();
+                UpdateContext();
             }
 
             return !Log.HasLoggedErrors;

@@ -69,6 +69,7 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             ExecuteCore(Context);
+            UpdateContext();
             return !Log.HasLoggedErrors;
         }
 
