@@ -79,32 +79,35 @@ namespace Aderant.Build.VersionControl {
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
 
-                Commit currentTree;
+                // The current tree - what you have
+                // It could be behind some branch you are diffing or it could be the
+                // result of a pull request merge making it the new tree to be committed 
+                Commit newTree;
 
-                //if (string.IsNullOrWhiteSpace(toBranch)) {
-                    currentTree = repository.Head.Tip;
-               // } else {
-               //     currentTree = GetTip(toBranch, repository);
-               // }
+                if (string.IsNullOrWhiteSpace(fromBranch)) {
+                    newTree = repository.Head.Tip;
+                } else {
+                    newTree = GetTip(fromBranch, repository);
+                }
 
                 Commit oldTree;
-              //  if (string.IsNullOrWhiteSpace(fromBranch)) {
+                if (string.IsNullOrWhiteSpace(toBranch)) {
                     string branchCanonicalName;
-                    oldTree = FindMostLikelyReusableBucket(repository, currentTree, out branchCanonicalName);
+                    oldTree = FindMostLikelyReusableBucket(repository, newTree, out branchCanonicalName);
                     info.CommonAncestor = branchCanonicalName;
-               // } else {
-                //    oldTree = GetTip(fromBranch, repository);
-               // }
+                } else {
+                    oldTree = GetTip(fromBranch, repository);
+                }
 
-                if (currentTree != null && oldTree != null) {
+                if (newTree != null && oldTree != null) {
 
-                    var treeChanges = repository.Diff.Compare<TreeChanges>(oldTree.Tree, currentTree.Tree);
+                    var treeChanges = repository.Diff.Compare<TreeChanges>(oldTree.Tree, newTree.Tree);
                     info.Changes = treeChanges.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
-                    bucketKeys.Add(new BucketId(currentTree.Sha, BucketId.Current));
+                    bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
                     bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
 
-                    Commit commit = currentTree.Parents.FirstOrDefault();
+                    Commit commit = newTree.Parents.FirstOrDefault();
                     if (commit != null) {
                         bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.FirstParent));
                     }
