@@ -14,10 +14,13 @@ namespace IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis {
         public void Extract_assembly_references() {
             var analyzer = new TextTemplateAnalyzer();
 
-            TextTemplateAnalysisResult result = analyzer.Analyze(new StringReader(Resources.SimpleTextTemplate), TestContext.DeploymentDirectory);
+            using (var reader = new StringReader(Resources.SimpleTextTemplate)) {
+                TextTemplateAnalysisResult result = analyzer.Analyze(reader, TestContext.DeploymentDirectory);
 
-            Assert.AreEqual(5, result.AssemblyReferences.Count);
-            Assert.AreEqual("System.Core", result.AssemblyReferences.First());
+                Assert.AreEqual(5, result.AssemblyReferences.Count);
+                Assert.AreEqual("System.Core", result.AssemblyReferences.First());
+            }
+
         }
     }
 }
