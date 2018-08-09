@@ -115,29 +115,9 @@
       <ProjectToPeek>$(SolutionDirectoryPath)Build\TFSBuild.proj</ProjectToPeek>
     </PropertyGroup>
 
-    <XmlPeek Namespaces="&lt;Namespace Prefix='msb' Uri='http://schemas.microsoft.com/developer/msbuild/2003'/&gt;"
-      XmlInputPath="$(ProjectToPeek)"
-      Query="/msb:Project/msb:Target[@Name='PackageArtifacts']">
-      <Output TaskParameter="Result" ItemName="Peeked" />
-    </XmlPeek>
-
-    <PropertyGroup>
-      <!--
-        This is used to force the ItemGroup that defines an artifact to return something
-        Since we are don't an analysis phase here the expressions to create files won't expand to anything and no ItemGroups will
-        get returned to us
-      -->
-      <NonExistentFile>__NonExistentSubDir__\__NonExistentFile__;</NonExistentFile>
-    </PropertyGroup>
-
-    <MSBuild Condition="'@(Peeked)' != ''"
-             Projects="$(ProjectToPeek)"
-             Targets="PackageArtifacts"
-             SkipNonexistentProjects="true"
-             ContinueOnError="true" 
-             Properties="SolutionRoot=$(NonExistentFile)">
-      <Output TaskParameter="TargetOutputs" ItemName="PackageArtifact" />
-    </MSBuild>
+    <PackageArtifactReader ProjectFile="$(ProjectToPeek)">
+      <Outputs TaskParameter="ArtifactIds" ItemName="ArtifactIds"></Outputs>
+    </PackageArtifactReader>
 
     <ItemGroup>
       <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
@@ -146,7 +126,7 @@
     <RetrieveArtifacts
       DependencyManifestFile="%(DependencyManifests.FullPath)"
       ArtifactDirectory="$(SolutionRoot)\Dependencies"
-      ArtifactDefinitions="@(PackageArtifact)" />
+      ArtifactIds="@(ArtifactIds)" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"

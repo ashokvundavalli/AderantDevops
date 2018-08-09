@@ -143,19 +143,15 @@ namespace Aderant.Build.Tasks {
         [Required]
         public string ArtifactDirectory { get; set; }
 
-        public ITaskItem[] ArtifactDefinitions { get; set; }
+        public ITaskItem[] ArtifactIds { get; set; }
 
         public override bool Execute() {
-            if (ArtifactDefinitions != null) {
-                System.Diagnostics.Debugger.Launch();
-
-                var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, null, null);
-
+            if (ArtifactIds != null) {
                 var document = XDocument.Load(DependencyManifestFile);
                 var manifest = DependencyManifest.Load(document);
 
                 var service = new ArtifactService();
-                service.Resolve(Context, manifest, ArtifactDirectory, artifacts);
+                service.Resolve(Context, manifest, ArtifactDirectory, ArtifactIds.Select(s => s.ItemSpec));
             }
 
             return !Log.HasLoggedErrors;
