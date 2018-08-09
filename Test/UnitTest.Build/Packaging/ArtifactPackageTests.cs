@@ -43,7 +43,7 @@ namespace UnitTest.Build.Packaging {
             var bucketMock = new Mock<IBucketService>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
-            var artifactService = new ArtifactService(new Mock<IFileSystem>().Object, bucketMock.Object);
+            var artifactService = new ArtifactService(new Mock<IFileSystem>().Object);
             artifactService.FileVersion = "1.0.0.0";
             artifactService.AssemblyVersion = "9.9.9.9";
 

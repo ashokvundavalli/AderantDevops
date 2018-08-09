@@ -85,6 +85,8 @@ namespace Aderant.Build.MSBuild {
         /// </value>
         public ICollection<Target> AfterTargets { get; set; }
 
+        public string Condition { get; set; }
+
         /// <summary>
         /// Adds the specified element to this target.
         /// </summary>

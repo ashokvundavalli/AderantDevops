@@ -41,7 +41,7 @@ namespace IntegrationTest.Build.VersionControl {
 
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.Changes);
-            Assert.IsNotNull(result.BucketKeys);
+            Assert.IsNotNull(result.BucketIds);
 
             Assert.AreEqual(2, result.Changes.Count);
         }
@@ -52,7 +52,7 @@ namespace IntegrationTest.Build.VersionControl {
             var result = vc.GetMetadata(repo, "", "");
 
             Assert.IsNotNull(result);
-            Assert.AreEqual("refs/heads/master", result.SelectedCommonAncestor);
+            Assert.AreEqual("refs/heads/master", result.CommonAncestor);
         }
     }
 

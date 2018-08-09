@@ -1,4 +1,7 @@
-﻿using LibGit2Sharp;
+﻿using System.Globalization;
+using System.IO;
+using Aderant.Build.VersionControl;
+using LibGit2Sharp;
 
 namespace Aderant.Build.Packaging {
     internal class BucketService : IBucketService {
@@ -9,9 +12,13 @@ namespace Aderant.Build.Packaging {
                 string tipSha = repo.Head.Tip.Sha;
 
                 return tipSha;
-            } 
+            }
         }
 
+        public static string BuildDropLocation(BuildOperationContext buildOperationContext) {
+            BucketId bucket = buildOperationContext.SourceTreeMetadata.GetBucket(BucketId.Current);
+            return Path.Combine(buildOperationContext.PrimaryDropLocation, bucket.Id, buildOperationContext.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
+        }
     }
 
     internal interface IBucketService {

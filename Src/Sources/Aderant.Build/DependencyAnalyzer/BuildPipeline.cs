@@ -14,7 +14,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// </summary>
     internal class BuildPipeline {
         private const string PropertiesKey = "Properties";
-        private const string BuildGroupKey = "BuildGroupId";
+        private const string BuildGroupId = "BuildGroupId";
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
 
@@ -68,7 +68,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 // e.g. <Target Name="Foo">
                 Target build = new Target("Run" + CreateGroupName(buildGroupCount));
+                build.Condition = "'$(BuildEnabled)' == 'true'";
                 build.DependsOnTargets.Add(new Target("CreateCommonProperties"));
+
                 if (buildGroupCount > 0) {
                     var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == CreateGroupName(buildGroupCount - 1));
                     if (target != null) {
@@ -83,7 +85,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         Projects = orchestrationFiles.GroupExecutionFile,
                         Properties = PropertyList.CreatePropertyString(
                             "InstanceProjectFile=$(MSBuildThisFileFullPath)",
-                            $"{BuildGroupKey}={buildGroupCount}",
+                            $"{BuildGroupId}={buildGroupCount}",
                             "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                             "BuildInParallel=$(BuildInParallel)",
                             "PropertiesForBuildGroup=$(PropertiesForBuildGroup)")
@@ -151,7 +153,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 ItemGroupItem item = new ItemGroupItem(visualStudioProject.FullPath) {
                     [PropertiesKey] = propertyList.ToString(),
-                    [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture),
+                    [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
                     ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                     ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                     ["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}",
@@ -162,18 +164,19 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return item;
             }
 
-            ExpertModule marker = studioProject as ExpertModule;
-            if (marker != null) {
-                string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
-                var properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
+            // TODO: Do we need this?
+            //ExpertModule marker = studioProject as ExpertModule;
+            //if (marker != null) {
+            //    string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
+            //    var properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
 
-                ItemGroupItem item = new ItemGroupItem(beforeProjectFile) {
-                    [PropertiesKey] = properties.ToString(),
-                    [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture)
-                };
+            //    ItemGroupItem item = new ItemGroupItem(beforeProjectFile) {
+            //        [PropertiesKey] = properties.ToString(),
+            //        [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture)
+            //    };
 
-                return item;
-            }
+            //    return item;
+            //}
 
             DirectoryNode node = studioProject as DirectoryNode;
             if (node != null) {
@@ -184,7 +187,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
                     [PropertiesKey] = properties.ToString(),
-                    [BuildGroupKey] = buildGroup.ToString(CultureInfo.InvariantCulture),
+                    [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
 
                     // Indicates this file is part of the build system itself
                     ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,

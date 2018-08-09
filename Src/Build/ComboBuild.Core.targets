@@ -30,9 +30,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'%(ProjectsInGroup.IsProjectFile)' != 'true' And '$(Switches_SkipCompile)' == 'true'" />
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
     </ItemGroup>
+
+    <Warning Text="Skipping compile!" Condition="'$(Switches_SkipCompile)' == 'true'" />
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"

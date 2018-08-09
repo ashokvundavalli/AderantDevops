@@ -9,6 +9,8 @@ using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.Tasks;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
@@ -27,8 +29,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
 
-            // TODO: here we need to query the last successful artifacts for the same branch/commit and mix them in
-            AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, graph);
+            BuildStateFile file = GetBuildStateFile(context);
+
+            AddInitializeAndCompletionNodes(file, isPullRequest, isDesktopBuild, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -40,11 +43,25 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
-            var job = new BuildPipeline(fileSystem);
-            return job.GenerateProject(groups, files, null);
+            var pipeline = new BuildPipeline(fileSystem);
+            return pipeline.GenerateProject(groups, files, null);
         }
 
-        private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
+        private static BuildStateFile GetBuildStateFile(BuildOperationContext context) {
+            // TODO: here we need to query the last successful artifacts for the same branch/commit and mix them in
+            var buildStateMetadata = context.BuildStateMetadata;
+            foreach (var bucketId in context.SourceTreeMetadata.BucketIds) {
+                BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.TreeSha, bucketId.Id));
+
+                if (stateFile != null) {
+                    return stateFile;
+                }
+            }
+
+            return null;
+        }
+
+        private void AddInitializeAndCompletionNodes(BuildStateFile stateFile, bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -72,7 +89,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        ProjectToProjectShim(tag, project);
+                        ProjectToProjectShim(stateFile, tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -98,7 +115,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             return true;
         }
 
-        private static void ProjectToProjectShim(string tag, ConfiguredProject project) {
+        private static void ProjectToProjectShim(BuildStateFile stateFile, string tag, ConfiguredProject project) {
+            // See if we can skip this project because we can re-use the previous outputs
+            if (stateFile != null) {
+                string projectFullPath = project.FullPath;
+
+                foreach (var fileInTree in stateFile.ProjectFiles) {
+                    if (projectFullPath.IndexOf(fileInTree, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        // The selected build cache contained this project so we don't need to mark it dirty
+                        return;
+                    }
+                }
+            }
+
             // TODO: Because we can't build *just* the projects that have changed, mark anything in this container as dirty to trigger a build for it
             project.IsDirty = true;
             project.InclusionDescriptor = new InclusionDescriptor {
@@ -116,7 +145,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Build the directly affected downstream projects, or recursively search for all
         /// downstream projects, or none?
         /// </param>
-        /// <returns></returns>
         private List<IDependable> GetProjectsBuildList(List<IDependable> visualStudioProjects, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty == true).Select(x => x.Id).ToList();

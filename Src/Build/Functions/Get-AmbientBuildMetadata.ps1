@@ -35,6 +35,8 @@ function Get-AmbientBuildMetadata {
             $buildInfo.ScmUri = Get-EnvironmentVariable 'BUILD_REPOSITORY_URI'
             $buildInfo.ScmCommitId = Get-EnvironmentVariable 'GIT_COMMIT'
             $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
+            $buildInfo.BuildSourcesDirectory = Get-EnvironmentVariable 'BUILD_SOURCESDIRECTORY'
+
             if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { $buildInfo.DebugLoggingEnabled = $true }
 
             $buildInfo.SetPullRequestInfo(
@@ -42,7 +44,7 @@ function Get-AmbientBuildMetadata {
                 (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
                 (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
         } else {        
-            
+            $buildInfo.BuildSourcesDirectory = "C:\Source\ExpertSuite"
         }
 
         return $buildInfo

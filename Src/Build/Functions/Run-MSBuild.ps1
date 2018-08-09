@@ -70,7 +70,7 @@ public static class DteHelper {
 }
 "@
 
-function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useConsole = $true, [System.Diagnostics.Process]$parentProcess) {
+function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useConsole = $true, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
   if (-not (Test-Path $command)) {
     throw "Tool not found $command"
   }
@@ -81,7 +81,8 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 
   $startInfo.UseShellExecute = $false
   $startInfo.WorkingDirectory = Get-Location
-  #$startInfo.Verb = "runas"
+
+  $variables.GetEnumerator().ForEach({ $startInfo.Environment[$_.Key] = $_.Value })
 
   if (-not $useConsole) {
     $startInfo.RedirectStandardOutput = $true
@@ -131,19 +132,6 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 }
 
 function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
-    #$count=0
-    #$sleepTimer=500 #in milliseconds
-    
-    #while($count -le 100) {
-    #    if($host.UI.RawUI.KeyAvailable) {
-    #        $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-    #        if($key.Character -eq 'C' -or $key.Character -eq 'c') {                
-    #            Write-Host -ForegroundColor Yellow ("'c' is pressed! Stopping the script now.")
-    #            return
-    #        }
-    #    }
-    #}
-
     Write-Output "Attaching debugger"
     Add-Type -ReferencedAssemblies "Microsoft.CSharp" -TypeDefinition $Source -Language CSharp 
 
@@ -159,9 +147,9 @@ function AttachDebuger([System.Diagnostics.Process]$parentProcess, [int]$id) {
 
 # Lets the process re-use the current console. 
 # This means items like colored output will function correctly.
-function Exec-Console([string]$command, [string]$commandArgs, [System.Diagnostics.Process]$parentProcess) {
+function Exec-Console([string]$command, [string]$commandArgs, [HashTable]$variables, [System.Diagnostics.Process]$parentProcess) {
     Set-StrictMode -Version 'Latest'
-    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true $parentProcess
+    Exec-CommandCore -command $command -commandArgs $commandArgs -useConsole:$true -variables:$variables -parentProcess:$parentProcess
 }
 
 function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]$logFileName = "", [switch]$parallel = $true, [switch]$summary = $true) {
@@ -175,15 +163,49 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     # PowerShell was started from Visual Studio so assume the user wishes to debug
     if ($process.ProcessName -eq "devenv") {
         $debugMode = $true
-    }   
+    }
+     
+    #     As part of our builds, quite a few projects copy files to the binaries directory or other locations.  
+    #     These can be anything from image files to test scripts.  To have our builds complete more quickly, we use the multi-process option (/maxcpucount) of msbuild to build projects in parallel.
+    #     This all sounds normal, so what's the problem?  In a large team, people will sometimes inadvertently add statements to different project files that copy files to the same destination.  
+    #     When those project files have no references to each other, directly or indirectly, msbuild may build them in parallel.  
+    #     If it does happen to run those projects in parallel on different nodes and the copies happen at the same time, the build breaks because one copy succeeds and one fails.  
+    #     Since the timing is not going to be the same on every build, the result is random build breaks. Build breaks suck. They drain the productivity of the team and are frustrating.
+    #     
+    #     There also appears to be a race condition inside MS Build that we come across from time to time where the same destination path is used in more than one copy.
+    #     
+    #     Consider this log snippet
+    #     
+    #  441>_CopyFilesMarkedCopyLocal:
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\packages\ThirdParty.NHibernate\lib\NHibernate.xml" to "..\..\Bin\Test\NHibernate.xml".
+    #      _CopyOutOfDateSourceItemsToOutputDirectory:
+    #        Creating directory "..\..\Bin\Test\Installation\CmsDbScripts".
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql".
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql".
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
+    #  440>_CopyOutOfDateSourceItemsToOutputDirectory:
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql".
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql".
+    #  441>CopyFilesToOutputDirectory:
+    #        Copying file from "obj\Release\UnitTest.Bill.Library.dll" to "..\..\Bin\Test\UnitTest.Bill.Library.dll".
+    #        UnitTest.Bill.Library -> e:\B\90\7659\src\Libraries.Entities.Bill\Bin\Test\UnitTest.Bill.Library.dll
+    #        Copying file from "obj\Release\UnitTest.Bill.Library.pdb" to "..\..\Bin\Test\UnitTest.Bill.Library.pdb".
+    #  440>C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(4106,5): error MSB3021: Unable to copy file "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql". Access to the path '..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql' is denied. [e:\B\90\7659\src\Libraries.Entities.Bill\Test\IntegrationTest.Bill.Library\IntegrationTest.Bill.Library.csproj]
+    #        Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
+    #        
+    #     There are two nodes running, 440 and 441. 
+    #     For some reason both 441 and 440 schedule the copy of BillModel_InquiryMatterWipAging.sql to the output even though a node should only work on a single target at a time
+    #     and thus a single node should be processing the source items of a project at any given time.      
+
+    $environmentBlock = @{"MSBUILDALWAYSRETRY" = "1" }
 
     # TODO: Fix hard code
     if ([System.Diagnostics.Debugger]::IsAttached -or $debugMode) {
         $buildArgs = $buildArgs.Replace("/m", "")
         $buildArgs = "$buildArgs /p:WaitForDebugger=true"
-        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $process 
+        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock $process 
     } else {
-        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs"   
+        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock  
     }
 
     $process.Dispose()

@@ -55,12 +55,7 @@
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
 
-  <!-- Contains the branch build configuration -->
-  <!--<Import Project="$(ModuleList)" />-->
 
-  <!--<ItemGroup>
-    <ModulesInBuild Include="@(Modules)" />
-  </ItemGroup>-->
 
   <Target Name="RunBuild">
 
@@ -70,17 +65,15 @@
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
-      <!--InitializeBuildVariables;-->
-      CreateParallelBuildProject;
-      GetAllModuleDependencies;
-      <!--BuildModules;
-      GetProduct;
-      ZipProduct;-->
+      CreatePipeline;
+      <!--GetAllModuleDependencies;-->
+      ExecutePipeline;
+      WriteStateFiles;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
 
-  <Target Name="CreateParallelBuildProject">
+  <Target Name="CreatePipeline">
 
     <ItemGroup>
       <ExcludePaths Include="$(BuildSystemDirectory)" />
@@ -122,6 +115,17 @@
     </ParallelBuildProjectFactory>
 
     <Error Condition="!Exists('$(BranchBuildProject)')" Text="$(BranchBuildProject) does not exist." />
+  </Target>
+
+
+  <Target Name="WriteStateFiles">
+    <MSBuild Projects="$(BranchBuildProject)"
+             Targets="ReturnProjectsToBuild"
+             Properties="BuildEnabled=false">
+      <Output TaskParameter="TargetOutputs" ItemName="ProjectsToBuild" />
+    </MSBuild>
+
+    <WriteBuildStateFile ProjectsInBuild="@(ProjectsToBuild)" />
   </Target>
 
 
@@ -249,56 +253,8 @@
       -->
 
   <PropertyGroup>
-    <InitialTargetsDependsOn>
-      SetEnvironmentVariables
-    </InitialTargetsDependsOn>
+    <InitialTargetsDependsOn />
   </PropertyGroup>
-
-  <Target Name="SetEnvironmentVariables">
-    <!-- 
-      As part of our builds, quite a few projects copy files to the binaries directory or other locations.  
-      These can be anything from image files to test scripts.  To have our builds complete more quickly, we use the multi-process option (/maxcpucount) of msbuild to build projects in parallel.
-      This all sounds normal, so what's the problem?  In a large team, people will sometimes inadvertently add statements to different project files that copy files to the same destination.  
-      When those project files have no references to each other, directly or indirectly, msbuild may build them in parallel.  
-      If it does happen to run those projects in parallel on different nodes and the copies happen at the same time, the build breaks because one copy succeeds and one fails.  
-      Since the timing is not going to be the same on every build, the result is random build breaks. Build breaks suck. They drain the productivity of the team and are frustrating.
-      
-      There also appears to be a race condition inside MS Build that we come across from time to time where the same destination path is used in more than one copy.
-      
-      Consider this log snippet
-      
-   441>_CopyFilesMarkedCopyLocal:
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\packages\ThirdParty.NHibernate\lib\NHibernate.xml" to "..\..\Bin\Test\NHibernate.xml".
-       _CopyOutOfDateSourceItemsToOutputDirectory:
-         Creating directory "..\..\Bin\Test\Installation\CmsDbScripts".
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql".
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql".
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
-   440>_CopyOutOfDateSourceItemsToOutputDirectory:
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryGetMatterAgingColumnLabels.sql".
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql".
-   441>CopyFilesToOutputDirectory:
-         Copying file from "obj\Release\UnitTest.Bill.Library.dll" to "..\..\Bin\Test\UnitTest.Bill.Library.dll".
-         UnitTest.Bill.Library -> e:\B\90\7659\src\Libraries.Entities.Bill\Bin\Test\UnitTest.Bill.Library.dll
-         Copying file from "obj\Release\UnitTest.Bill.Library.pdb" to "..\..\Bin\Test\UnitTest.Bill.Library.pdb".
-   440>C:\Program Files (x86)\MSBuild\14.0\bin\Microsoft.Common.CurrentVersion.targets(4106,5): error MSB3021: Unable to copy file "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql". Access to the path '..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterArAging.sql' is denied. [e:\B\90\7659\src\Libraries.Entities.Bill\Test\IntegrationTest.Bill.Library\IntegrationTest.Bill.Library.csproj]
-         Copying file from "e:\B\90\7659\src\Libraries.Entities.Bill\Src\Aderant.Bill.Library\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql" to "..\..\Bin\Test\Installation\CmsDbScripts\BillModel_InquiryMatterWipAging.sql".
-         
-      There are two nodes running, 440 and 441. 
-      For some reason both 441 and 440 schedule the copy of BillModel_InquiryMatterWipAging.sql to the output even though a node should only work on a single target at a time
-      and thus a single node should be processing the source items of a project at any given time.
-      -->
-
-    <ItemGroup>
-      <EnvironmentVariable Include="MSBUILDALWAYSRETRY">
-        <Value>1</Value>
-      </EnvironmentVariable>
-    </ItemGroup>
-
-    <SetEnvironmentVariable Variables="@(EnvVariable)" />
-
-  </Target>
-
 
   <Target Name="SetPropertiesFromContext" DependsOnTargets="$(InitialTargetsDependsOn)">
 
@@ -323,19 +279,15 @@
     <Message Text="Build queue..."                             Importance="High" />
     <Message Text="%(ModulesInBuild.FullPath)"                 Importance="High" />
     <Message Text="==========================================" Importance="High" />
-
-    <CallTarget Targets="BuildModulesParallel" />
   </Target>
 
 
   <!--
     ==========================================================================================
-    This target will build the modules in the branch in parallel where possible.
-    For parallel builds to work reliably it is important that project references are used so MS Build can calculate the
-    build order of projects within the module correctly.
+    This target will build the projects in the pipeline in parallel where possible.    
     ==========================================================================================
   -->
-  <Target Name="BuildModulesParallel">
+  <Target Name="ExecutePipeline">
     <PropertyGroup>
       <CommonBuildProperties>
         BuildAll=true;
@@ -362,7 +314,7 @@
     <Error Condition="!Exists('$(BranchBuildProject)')" Text="Did not find BranchBuild.proj "/>
 
     <MSBuild Projects="$(BranchBuildProject)"
-             Properties="$(CommonBuildProperties)"
+             Properties="$(CommonBuildProperties);BuildEnabled=true"
              StopOnFirstFailure="true"
              BuildInParallel="$(BuildInParallel)" />
 

@@ -87,6 +87,7 @@
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xaml">
       <Private>False</Private>
@@ -106,7 +107,7 @@
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
-    <Compile Include="Commands\RetrieveArtifactsCommand.cs" />
+    <Compile Include="Commands\GetBuildTreeMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
     <Compile Include="MSBuild\ImportElement.cs" />
     <Compile Include="DependencyAnalyzer\Model\AbstractArtifact.cs" />

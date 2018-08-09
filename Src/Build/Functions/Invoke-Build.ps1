@@ -84,13 +84,21 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
 }
 
-<#SourceBranch
-    .SYNOPSIS
+function GetBuildStateMetadata($context) {
+    $stm = $context.SourceTreeMetadata
+    $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.PrimaryDropLocation
+
+    $context.BuildStateMetadata = $buildState
+}
+
+<#
+.SYNOPSIS
     Runs a build based on your current context
 
-    .DESCRIPTION
+.DESCRIPTION
 
-    .PARAMETER remainingArgs
+.PARAMETER remainingArgs
     A catch all that lets you specify arbitrary parameters to the build engine.
     Useful if you wish to override some property but that property is not exposed as a first class concept.
 
@@ -147,7 +155,7 @@ function global:Invoke-Build2
          
     Set-StrictMode -Version Latest
     $ErrorActionPreference = "Stop" 
-                
+        
     [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
 
     [string]$repositoryPath = $null
@@ -164,6 +172,7 @@ function global:Invoke-Build2
     FindGitDir $context $repositoryPath
 
     GetSourceTreeMetadata $context $repositoryPath
+    GetBuildStateMetadata $context
 
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
@@ -179,7 +188,7 @@ function global:Invoke-Build2
     $context.StartedAt = [DateTime]::UtcNow
     $contextFileName = Publish-BuildContext $context
 
-    $args = CreateToolArgumentString $context $RemainingArgs    
+    $args = CreateToolArgumentString $context $RemainingArgs
 
     Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args"
  

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
 using Aderant.Build.VersionControl;
@@ -19,8 +20,12 @@ namespace Aderant.Build {
         [NonSerialized]
         private IContextualServiceProvider serviceProvider;
 
-        private BuildSwitches switches = default(BuildSwitches);
         private SourceTreeMetadata sourceTreeMetadata;
+
+        private BuildSwitches switches = default(BuildSwitches);
+        private BuildStateMetadata buildStateMetadata;
+        private string pullRequestDropLocation;
+        private string primaryDropLocation;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -95,7 +100,7 @@ namespace Aderant.Build {
                 }
             }
         }
-        
+
         public BuildSwitches Switches {
             get { return switches; }
             set { switches = value; }
@@ -113,9 +118,25 @@ namespace Aderant.Build {
 
         public ConfigurationToBuild ConfigurationToBuild { get; set; }
 
-        public string PrimaryDropLocation { get; set; }
+        public string PrimaryDropLocation {
+            get { return primaryDropLocation; }
+            set { primaryDropLocation = value; }
+        }
 
-        public string PullRequestDropLocation { get; set; }
+        public string PullRequestDropLocation {
+            get { return pullRequestDropLocation; }
+            set { pullRequestDropLocation = value; }
+        }
+
+        public SourceTreeMetadata SourceTreeMetadata {
+            get { return sourceTreeMetadata; }
+            set { sourceTreeMetadata = value; }
+        }
+
+        public BuildStateMetadata BuildStateMetadata {
+            get { return buildStateMetadata; }
+            set { buildStateMetadata = value; }
+        }
 
         /// <summary>
         /// Creates a new instance of T.
@@ -153,7 +174,6 @@ namespace Aderant.Build {
                 mode = ChangesToConsider.Branch;
             }
 
-
             // TODO: Drive this from a PR comment?
             if (buildMetadata != null) {
                 if (buildMetadata.IsPullRequest) {
@@ -166,7 +186,7 @@ namespace Aderant.Build {
 
         public void PutVariable(string id, string key, string value) {
             var bags = VariableBags;
-            
+
             IDictionary<string, string> bag;
             if (!bags.TryGetValue(id, out bag)) {
                 bag = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -193,22 +213,19 @@ namespace Aderant.Build {
             return null;
         }
 
-        public SourceTreeMetadata SourceTreeMetadata {
-            get { return sourceTreeMetadata; }
-            set {
-                sourceTreeMetadata = value;
-            }
+        public string GetDropLocation() {
+            return BucketService.BuildDropLocation(this);
         }
     }
 
     [Serializable]
     public sealed class SourceTreeMetadata {
         public IReadOnlyCollection<PendingChange> Changes { get; set; }
-        public IReadOnlyCollection<BucketId> BucketKeys { get; set; }
-        public string SelectedCommonAncestor { get; set; }
+        public IReadOnlyCollection<BucketId> BucketIds { get; set; }
+        public string CommonAncestor { get; set; }
 
         public BucketId GetBucket(string tag) {
-            return BucketKeys.FirstOrDefault(s => s.Tag == tag);
+            return BucketIds.FirstOrDefault(s => s.Tag == tag);
         }
     }
 

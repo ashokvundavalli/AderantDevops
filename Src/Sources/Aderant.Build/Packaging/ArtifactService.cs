@@ -4,20 +4,19 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Tasks;
 using Aderant.Build.TeamFoundation;
-using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
-        private readonly IBucketService bucketService;
         private readonly IFileSystem fileSystem;
 
-        public ArtifactService() : this(new PhysicalFileSystem(), new BucketService()) {
+        public ArtifactService()
+            : this(new PhysicalFileSystem()) {
         }
 
-        public ArtifactService(IFileSystem fileSystem, IBucketService bucketService) {
+        public ArtifactService(IFileSystem fileSystem) {
             this.fileSystem = fileSystem;
-            this.bucketService = bucketService;
         }
 
         public string FileVersion { get; set; }
@@ -66,8 +65,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private BuildArtifact PrepareFilesForDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
-            BucketId bucket = context.SourceTreeMetadata.GetBucket(BucketId.Current);
-            var container = Path.Combine(context.PrimaryDropLocation, bucket.Id, context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture), artifactId);
+            var container = Path.Combine(context.GetDropLocation(), artifactId);
 
             foreach (var pathSpec in files) {
                 copyList.Add(Tuple.Create(container, pathSpec));
@@ -151,8 +149,55 @@ namespace Aderant.Build.Packaging {
             foreach (var artifact in artifacts) {
 
             }
-
-         
         }
+
+        public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
+            var metadata = new BuildStateMetadata();
+            var files = new List<BuildStateFile>();
+            metadata.BuildStateFiles = files;
+
+            foreach (var bucketId in bucketIds) {
+                string bucketPath = Path.Combine(dropLocation, bucketId);
+
+                if (fileSystem.DirectoryExists(bucketPath)) {
+                    IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
+
+                    string[] orderBuildsByBuildNumber = OrderBuildsByBuildNumber(directories.ToArray());
+
+                    foreach (var folder in orderBuildsByBuildNumber) {
+                        var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
+                        if (fileSystem.FileExists(stateFile)) {
+
+                            using (Stream stream = fileSystem.OpenFile(stateFile)) {
+                                BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(stream);
+
+                                files.Add(file);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return metadata;
+        }
+
+        internal static string[] OrderBuildsByBuildNumber(string[] entries) {
+            List<KeyValuePair<int, string>> numbers = new List<KeyValuePair<int, string>>(entries.Length);
+
+            foreach (var entry in entries) {
+                string directoryName = Path.GetFileName(entry);
+                int version;
+                if (Int32.TryParse(directoryName,  NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
+                    numbers.Add(new KeyValuePair<int, string>(version, entry));
+                }
+            }
+
+            return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
+        }
+    }
+
+    [Serializable]
+    public class BuildStateMetadata {
+        public IReadOnlyCollection<BuildStateFile> BuildStateFiles { get; set; }
     }
 }

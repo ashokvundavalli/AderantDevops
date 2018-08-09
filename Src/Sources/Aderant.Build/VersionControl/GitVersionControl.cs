@@ -91,7 +91,7 @@ namespace Aderant.Build.VersionControl {
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
                     string branchCanonicalName;
                     oldTree = FindMostLikelyReusableBucket(repository, newTree, out branchCanonicalName);
-                    info.SelectedCommonAncestor = branchCanonicalName;
+                    info.CommonAncestor = branchCanonicalName;
                 } else {
                     oldTree = GetTip(fromBranch, repository);
                 }
@@ -102,15 +102,14 @@ namespace Aderant.Build.VersionControl {
                     info.Changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
                     bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
+                    bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
 
                     Commit commit = newTree.Parents.FirstOrDefault();
                     if (commit != null) {
                         bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.FirstParent));
                     }
 
-                    bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
-
-                    info.BucketKeys = bucketKeys;
+                    info.BucketIds = bucketKeys;
 
                 }
             }
@@ -125,8 +124,8 @@ namespace Aderant.Build.VersionControl {
             while (commit != null) {
                 interestingCommit[0] = commit;
 
-                IEnumerable<Reference> headsContainingTheCommit = repository.Refs.ReachableFrom(repository.Refs, interestingCommit);
-                var list = headsContainingTheCommit.Select(s => s.CanonicalName).ToList();
+                IEnumerable<Reference> reachableFrom = repository.Refs.ReachableFrom(repository.Refs, interestingCommit);
+                var list = reachableFrom.Select(s => s.CanonicalName).ToList();
 
                 foreach (var item in list) {
                     branchCanonicalName = item;

@@ -45,6 +45,8 @@ namespace Aderant.Build {
         /// </summary>
         public bool DebugLoggingEnabled { get; set; }
 
+        public string BuildSourcesDirectory { get; set; }
+
         public void SetPullRequestInfo(string id, string sourceBranch, string targetBranch) {
             if (id == null) {
                 return;

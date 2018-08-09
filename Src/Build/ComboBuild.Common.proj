@@ -12,6 +12,7 @@
 
     <PropertyGroup>
       <Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
+
       <PropertiesForBuildGroup>@(_PropertiesToCreate->'%(Identity)=%(Value)')</PropertiesForBuildGroup>
 
       <PropertiesForBuildGroup>
@@ -19,11 +20,16 @@
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
 
         <!-- Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured -->
-        Deterministic=$(Deterministic)
+        Deterministic=$(Deterministic);
       </PropertiesForBuildGroup>
 
     </PropertyGroup>
     
+  </Target>
+
+
+  <!-- Called by WriteStateFiles to return the projects in the pipeline -->
+  <Target Name="ReturnProjectsToBuild" Returns="@(ProjectsToBuild)">
   </Target>
     
 </Project>

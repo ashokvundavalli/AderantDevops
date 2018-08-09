@@ -4,6 +4,7 @@ using Aderant.Build.DependencyResolver;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.Tasks {
+
     [TestClass]
     public class FolderDependencySystemTests {
 

@@ -68,20 +68,20 @@
       <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
     </GetOrPutContextVariable>
 
-    <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == ''" />
+    <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
 
   </Target>
 
 
   <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
-    <PublishArtifacts
+    <!--<PublishArtifacts
       ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
       ArtifactDefinitions="@(PackageArtifact)"
       AssemblyVersion="$(AssemblyVersion)"
-      FileVersion="$(FileVersion)" />
+      FileVersion="$(FileVersion)" />-->
 
   </Target>
 

@@ -21,7 +21,7 @@ namespace UnitTest.Build {
         public void SourceTreeInfo_is_serializable() {
             var ctx = new BuildOperationContext();
             ctx.SourceTreeMetadata = new SourceTreeMetadata {
-                BucketKeys = new List<BucketId> { new BucketId("", "") }
+                BucketIds = new List<BucketId> { new BucketId("", "") }
             };
 
             var formatter = new BinaryFormatter();

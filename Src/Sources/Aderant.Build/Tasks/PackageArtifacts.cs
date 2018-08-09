@@ -23,7 +23,7 @@ namespace Aderant.Build.Tasks {
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
 
                 var commands = new VsoBuildCommands(Logger);
-                var artifactService = new ArtifactService(new PhysicalFileSystem(), new BucketService());
+                var artifactService = new ArtifactService(new PhysicalFileSystem());
                 artifactService.VsoCommands = commands;
 
                 artifactService.FileVersion = FileVersion;
