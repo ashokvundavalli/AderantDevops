@@ -176,10 +176,9 @@
       <_AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
       <PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
-
+    
     <ItemGroup>
-      <_ArtifactStagingDirectoryFiles Include="$(ArtifactStagingDirectory)\**\*.dll"/>
-      <_ArtifactStagingDirectories Include="@(_ArtifactStagingDirectoryFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+      <_ExplicitReference Include="$(ArtifactStagingDirectory)\**\*.dll"/>
     </ItemGroup>
 
     <PropertyGroup>
