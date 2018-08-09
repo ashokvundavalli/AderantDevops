@@ -42,24 +42,28 @@ namespace Aderant.Build.Tasks {
         }
 
         public override bool Execute() {
-            if (WaitForDebugger) {
-                bool sleep = false;
-                SpinWait.SpinUntil(() => {
-                    if (sleep) {
-                        Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                    }
+            if (Environment.UserInteractive) {
+                if (WaitForDebugger) {
+                    bool sleep = false;
+                    SpinWait.SpinUntil(
+                        () => {
+                            if (sleep) {
+                                Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                            }
 
-                    Log.LogMessage("Waiting for debugger... [C] to cancel waiting");
-                    if (Console.KeyAvailable) {
-                        var consoleKeyInfo = Console.ReadKey(true);
-                        if (consoleKeyInfo.Key == ConsoleKey.C) {
-                            return true;
-                        }
-                    }
+                            Log.LogMessage("Waiting for debugger... [C] to cancel waiting");
+                            if (Console.KeyAvailable) {
+                                var consoleKeyInfo = Console.ReadKey(true);
+                                if (consoleKeyInfo.Key == ConsoleKey.C) {
+                                    return true;
+                                }
+                            }
 
-                   sleep = true;
-                    return Debugger.IsAttached;
-                }, TimeSpan.FromMinutes(1));
+                            sleep = true;
+                            return Debugger.IsAttached;
+                        },
+                        TimeSpan.FromMinutes(1));
+                }
             }
 
             context = ObtainContext();
