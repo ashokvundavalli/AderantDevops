@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Tasks;
 using Aderant.Build.TeamFoundation;
+using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
@@ -144,16 +146,27 @@ namespace Aderant.Build.Packaging {
             };
         }
 
-        public void Resolve(BuildOperationContext context, DependencyManifest manifest, string artifactDirectory, IEnumerable<string> artifactsIds) {
+        public ArtifactResolveResult Resolve(BuildOperationContext context, DependencyManifest manifest, IEnumerable<string> artifactsIds) {
+            var result = new ArtifactResolveResult();
+            List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
+            result.Paths = paths;
+
             if (context.StateFile != null) {
                 foreach (var artifactId in artifactsIds) {
                     string artifactFolder = Path.Combine(context.StateFile.DropLocation, artifactId);
 
                     if (fileSystem.DirectoryExists(artifactFolder)) {
-                        fileSystem.CopyDirectory(artifactFolder, Path.Combine(artifactDirectory, artifactId));
+                        var spec = new ArtifactPathSpec {
+                            ArtifactId = artifactId,
+                            Source = artifactFolder
+                        };
+
+                        paths.Add(spec);
                     }
                 }
             }
+
+            return result;
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
@@ -200,6 +213,29 @@ namespace Aderant.Build.Packaging {
 
             return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
         }
+
+        
+        public void Retrieve(ArtifactResolveResult result, string artifactDirectory, bool flatten) {
+            foreach (var spec in result.Paths) {
+                string destination;
+                if (!flatten) {
+                    destination = Path.Combine(artifactDirectory, spec.ArtifactId);
+                } else {
+                    destination = artifactDirectory;
+                }
+
+                fileSystem.CopyDirectory(spec.Source, destination);
+            }
+        }
+    }
+
+    internal class ArtifactPathSpec {
+        public string ArtifactId { get; set; }
+        public string Source { get; set; }
+    }
+
+    internal class ArtifactResolveResult {
+        public List<ArtifactPathSpec> Paths { get; set; }
     }
 
     [Serializable]

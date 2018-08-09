@@ -145,13 +145,16 @@ namespace Aderant.Build.Tasks {
 
         public ITaskItem[] ArtifactIds { get; set; }
 
+        public bool Flatten { get; set; }
+
         public override bool Execute() {
             if (ArtifactIds != null) {
                 var document = XDocument.Load(DependencyManifestFile);
                 var manifest = DependencyManifest.Load(document);
 
                 var service = new ArtifactService();
-                service.Resolve(Context, manifest, ArtifactDirectory, ArtifactIds.Select(s => s.ItemSpec));
+                var result = service.Resolve(Context, manifest, ArtifactIds.Select(s => s.ItemSpec));
+                service.Retrieve(result, ArtifactDirectory, Flatten);
             }
 
             return !Log.HasLoggedErrors;

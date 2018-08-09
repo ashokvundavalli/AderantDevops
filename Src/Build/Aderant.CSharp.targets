@@ -167,6 +167,8 @@
       <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
 
+      <ResolveAssemblyReferencesSilent>false</ResolveAssemblyReferencesSilent>
+
       <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
       <!-- <_FindDependencies>false</_FindDependencies>  -->
     </PropertyGroup>
@@ -174,20 +176,16 @@
     <ItemGroup>
       <!-- TODO: Optimize and cache this data -->
       <_AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
-      <PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
-    </ItemGroup>
-    
-    <ItemGroup>
-      <_ExplicitReference Include="$(ArtifactStagingDirectory)\**\*.dll"/>
+      <_PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
     </ItemGroup>
 
     <PropertyGroup>
       <!--This path order places out search paths first-->
       <AssemblySearchPaths>
-        $(ArtifactStagingDirectory);
+        <!--$(ArtifactStagingDirectory);-->
         @(_ArtifactStagingDirectories);
         $(RootFolder)\Dependencies\;
-        @(PackageDirectories);
+        @(_PackageDirectories);
         $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>

@@ -125,7 +125,8 @@
 
     <RetrieveArtifacts
       DependencyManifestFile="%(DependencyManifests.FullPath)"
-      ArtifactDirectory="$(ArtifactStagingDirectory)"
+      ArtifactDirectory="$(BinModuleDirectory)"
+      Flatten="true"
       ArtifactIds="@(ArtifactIds)" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
