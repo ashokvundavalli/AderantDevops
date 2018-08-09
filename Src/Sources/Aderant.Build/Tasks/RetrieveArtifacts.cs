@@ -147,6 +147,7 @@ namespace Aderant.Build.Tasks {
 
         public override bool Execute() {
             if (ArtifactDefinitions != null) {
+                System.Diagnostics.Debugger.Launch();
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, null, null);
 
                 var document = XDocument.Load(DependencyManifestFile);
