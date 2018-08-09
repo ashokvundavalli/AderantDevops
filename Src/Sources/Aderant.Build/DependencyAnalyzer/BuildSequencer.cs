@@ -26,6 +26,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
+            System.Diagnostics.Debugger.Launch();
+
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
 
@@ -116,7 +118,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static void ProjectToProjectShim(BuildStateFile stateFile, string tag, ConfiguredProject project) {
-            System.Diagnostics.Debugger.Launch();
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
