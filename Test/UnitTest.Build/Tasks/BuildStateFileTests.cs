@@ -39,7 +39,9 @@ namespace UnitTest.Build.Tasks {
                     "A\\A.csproj",
                     "A\\B.csproj"
                 },
-                null, "foo");
+                null,
+                null,
+                "foo");
 
             Assert.IsNotNull(text);
         }

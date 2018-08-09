@@ -25,6 +25,7 @@ namespace Aderant.Build.Tasks {
                     sourcesDirectory,
                     ProjectsInBuild.Select(s => s.GetMetadata("FullPath")),
                     Context.SourceTreeMetadata,
+                    Context.BuildMetadata,
                     Path.Combine(Context.GetDropLocation(), BuildStateWriter.DefaultFileName));
             }
 
@@ -45,7 +46,7 @@ namespace Aderant.Build.Tasks {
 
         public static string DefaultFileName { get; private set; } = "buildstate.metadata";
 
-        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, SourceTreeMetadata metadata, string path) {
+        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, SourceTreeMetadata metadata, BuildMetadata buildmetadata, string path) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
             projectFiles = projectFiles
@@ -63,6 +64,15 @@ namespace Aderant.Build.Tasks {
                 ProjectFiles = projectFiles.ToArray(),
                 TreeSha = bucketId
             };
+
+            if (buildmetadata != null) {
+                if (buildmetadata.IsPullRequest) {
+                    stateFile.PullRequestInfo = buildmetadata.PullRequest;
+                } else {
+                    stateFile.ScmBranch = buildmetadata.ScmBranch;
+                    stateFile.ScmCommitId = buildmetadata.ScmCommitId;
+                }
+            }
 
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
         }
@@ -90,6 +100,15 @@ namespace Aderant.Build.Tasks {
 
         [IgnoreDataMember]
         internal string DropLocation { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public PullRequestInfo PullRequestInfo { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public string ScmBranch { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public string ScmCommitId { get; set; }
     }
 
     [Serializable]
@@ -104,7 +123,7 @@ namespace Aderant.Build.Tasks {
 
         internal T DeserializeCache<T>(Stream stream) where T : StateFileBase {
             DataContractJsonSerializer ser = new DataContractJsonSerializer(
-               typeof(T),
+                typeof(T),
                 new DataContractJsonSerializerSettings {
                     UseSimpleDictionaryFormat = true
                 });

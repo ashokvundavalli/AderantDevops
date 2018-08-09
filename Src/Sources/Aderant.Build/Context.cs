@@ -16,18 +16,18 @@ namespace Aderant.Build {
         private BuildMetadata buildMetadata;
 
         private string buildScriptsDirectory;
+        private BuildStateMetadata buildStateMetadata;
         private bool isDesktopBuild = true;
+        private string primaryDropLocation;
+        private string pullRequestDropLocation;
 
         [NonSerialized]
         private IContextualServiceProvider serviceProvider;
 
         private SourceTreeMetadata sourceTreeMetadata;
+        private BuildStateFile stateFile;
 
         private BuildSwitches switches = default(BuildSwitches);
-        private BuildStateMetadata buildStateMetadata;
-        private string pullRequestDropLocation;
-        private string primaryDropLocation;
-        private BuildStateFile stateFile;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -141,7 +141,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// The state file this build is using. 
+        /// The state file this build is using.
         /// </summary>
         public BuildStateFile StateFile {
             get { return stateFile; }
@@ -230,9 +230,9 @@ namespace Aderant.Build {
 
     [Serializable]
     public sealed class SourceTreeMetadata {
-        public IReadOnlyCollection<PendingChange> Changes { get; set; }
-        public IReadOnlyCollection<BucketId> BucketIds { get; set; }
         public string CommonAncestor { get; set; }
+        public IReadOnlyCollection<BucketId> BucketIds { get; set; }
+        public IReadOnlyCollection<PendingChange> Changes { get; set; }
 
         public BucketId GetBucket(string tag) {
             return BucketIds.FirstOrDefault(s => s.Tag == tag);

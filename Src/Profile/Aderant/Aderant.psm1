@@ -4,6 +4,7 @@ Set-StrictMode -Version Latest
 
 # Import extensibility functions
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
+Update-FormatData -PrependPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\SourceTreeMetadata.format.ps1xml')
 
 $script:ShellContext = $null
 

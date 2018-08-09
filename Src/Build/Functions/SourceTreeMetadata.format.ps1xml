@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+  <ViewDefinitions>
+    <View>
+      <Name>Aderant.Build.SourceTreeMetadata</Name>
+      <ViewSelectedBy>
+        <TypeName>Aderant.Build.SourceTreeMetadata</TypeName>    
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Width>40</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Width>40</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Width>16</Width>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>CommonAncestor</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>BucketIds</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>Changes</PropertyName>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>
