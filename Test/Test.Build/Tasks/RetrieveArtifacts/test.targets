@@ -16,7 +16,7 @@
     <RetrieveArtifacts
       DependencyManifestFile="$(MSBuildThisFileDirectory)\DependencyManifest.xml"
       ArtifactDirectory="$(MSBuildThisFileDirectory\Foo"
-      ArtifactDefinitions="@(PackageArtifact)" />
+      ArtifactDefinitions="@(PackageArtifact)" /> 
 
   </Target>
 

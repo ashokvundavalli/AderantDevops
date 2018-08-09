@@ -10,8 +10,6 @@
   <Import Project="Aderant.Build.CustomSolutionPackaging.targets" />
   <Import Project="Aderant.Build.Clean.targets" />
 
-  <Target Name="PackageArtifacts" />
-
   <!--
        Pull the entry targets into our context.
        This lets us call into it and lets people who want to customize the workflow change stuff in here
@@ -34,9 +32,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      <!-- This target is usually defined in TFSBuild.proj -->
-      PackageArtifacts;
-      QueryBuildCache;
+      RetrieveArtifactsFromBuildCache;
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>
@@ -113,8 +109,26 @@
   </Target>
 
 
+  <Target Name="RetrieveArtifactsFromBuildCache" Condition="'$(SolutionRoot)' != ''">
 
-  <Target Name="QueryBuildCache" Condition="'$(SolutionRoot)' != ''">
+    <PropertyGroup>
+      <ProjectToPeek>$(SolutionDirectoryPath)Build\TFSBuild.proj</ProjectToPeek>
+    </PropertyGroup>
+
+    <XmlPeek Namespaces="&lt;Namespace Prefix='msb' Uri='http://schemas.microsoft.com/developer/msbuild/2003'/&gt;"
+      XmlInputPath="$(ProjectToPeek)"
+      Query="/msb:Project/msb:Target[@Name='PackageArtifacts']">
+      <Output TaskParameter="Result" ItemName="Peeked" />
+    </XmlPeek>
+
+    <MSBuild Condition="'@(Peeked)' != ''"
+             Projects="$(ProjectToPeek)"
+             Targets="PackageArtifacts"
+             SkipNonexistentProjects="true"
+             ContinueOnError="true" 
+             Properties="SolutionRoot=$(SolutionRoot)">
+      <Output TaskParameter="TargetOutputs" ItemName="PackageArtifact" />
+    </MSBuild>
 
     <ItemGroup>
       <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
