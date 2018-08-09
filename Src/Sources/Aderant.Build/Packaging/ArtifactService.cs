@@ -145,6 +145,8 @@ namespace Aderant.Build.Packaging {
         }
 
         public void Resolve(BuildOperationContext context, DependencyManifest manifest, string artifactDirectory, IReadOnlyCollection<ArtifactPackage> artifacts) {
+            System.Diagnostics.Debugger.Launch();
+
             if (context.StateFile != null) {
                 foreach (var artifact in artifacts) {
 

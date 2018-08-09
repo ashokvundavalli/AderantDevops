@@ -49,8 +49,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static void FindStateFile(BuildOperationContext context) {
-            System.Diagnostics.Debugger.Launch();
-
             BuildStateFile file = GetBuildStateFile(context);
             if (file != null) {
                 context.StateFile = file;
