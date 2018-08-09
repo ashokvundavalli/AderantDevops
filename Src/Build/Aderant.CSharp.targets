@@ -193,6 +193,8 @@
       </AssemblySearchPaths>
     </PropertyGroup>
 
+    <Message Text="zzz $(AssemblySearchPaths)" MessageImportance="High" />
+
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
       <AssemblySearchPaths Condition="'$(ExpertSourceDirectory)' != ''">$(AlternativeOutputDirectory);$(ExpertSourceDirectory);$(ExpertSourceDirectory)StoredProcedures;$(AssemblySearchPaths);</AssemblySearchPaths>
