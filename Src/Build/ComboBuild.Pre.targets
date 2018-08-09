@@ -105,6 +105,7 @@
 
   </Target>
 
+
   <Target Name="ValidateRequiredProperties">
     <Error Condition="'$(SolutionRoot)' == ''" Text="SolutionRoot is undefined." />
     <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set." />

@@ -33,7 +33,7 @@
       CollectTestAssemblies;
     </RunTestsDependsOn>
 
-    <AfterBuildDependsOn>
+    <BuildCoreDependsOn>
       ValidateRequiredProperties;
       RefreshVersionVariables;
       <!--RunTests;
@@ -45,7 +45,7 @@
       PostBuild;
       SignInstallers;-->
       PackageArtifactsCore;
-    </AfterBuildDependsOn>
+    </BuildCoreDependsOn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -59,6 +59,7 @@
   <Target Name="PackageArtifacts" />
 
   <Target Name="RefreshVersionVariables">
+
     <GetOrPutContextVariable
       Id="$(VariableBagId)"
       ContextFileName="$(ContextFileName)"
@@ -159,15 +160,11 @@
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
 
-  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
-  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
-
-
-  <Target Name="Build" DependsOnTargets="AfterBuild">
+  <Target Name="Build" DependsOnTargets="BuildCore">
   </Target>
 
 
-  <Target Name="AfterBuild" DependsOnTargets="$(AfterBuildDependsOn)">
+  <Target Name="BuildCore" DependsOnTargets="$(BuildCoreDependsOn)">
   </Target>
 
 
@@ -218,5 +215,8 @@
     <Message Text="Marking build as failed" />
 
   </Target>
+
+  <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
+  <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
 
 </Project>
