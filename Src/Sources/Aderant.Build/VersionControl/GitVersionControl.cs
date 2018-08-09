@@ -81,20 +81,20 @@ namespace Aderant.Build.VersionControl {
 
                 Commit currentTree;
 
-                if (string.IsNullOrWhiteSpace(toBranch)) {
+                //if (string.IsNullOrWhiteSpace(toBranch)) {
                     currentTree = repository.Head.Tip;
-                } else {
-                    currentTree = GetTip(toBranch, repository);
-                }
+               // } else {
+               //     currentTree = GetTip(toBranch, repository);
+               // }
 
                 Commit oldTree;
-                if (string.IsNullOrWhiteSpace(fromBranch)) {
+              //  if (string.IsNullOrWhiteSpace(fromBranch)) {
                     string branchCanonicalName;
                     oldTree = FindMostLikelyReusableBucket(repository, currentTree, out branchCanonicalName);
                     info.CommonAncestor = branchCanonicalName;
-                } else {
-                    oldTree = GetTip(fromBranch, repository);
-                }
+               // } else {
+                //    oldTree = GetTip(fromBranch, repository);
+               // }
 
                 if (currentTree != null && oldTree != null) {
 
