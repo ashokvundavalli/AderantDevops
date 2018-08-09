@@ -116,7 +116,7 @@
     </PropertyGroup>
 
     <PackageArtifactReader ProjectFile="$(ProjectToPeek)">
-      <Outputs TaskParameter="ArtifactIds" ItemName="ArtifactIds"></Outputs>
+      <Output TaskParameter="ArtifactIds" ItemName="ArtifactIds" />
     </PackageArtifactReader>
 
     <ItemGroup>
