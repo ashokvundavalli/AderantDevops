@@ -115,6 +115,8 @@
     </ParallelBuildProjectFactory>
 
     <Error Condition="!Exists('$(BranchBuildProject)')" Text="$(BranchBuildProject) does not exist." />
+
+    <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(BranchBuildProject)" />
   </Target>
 
 
