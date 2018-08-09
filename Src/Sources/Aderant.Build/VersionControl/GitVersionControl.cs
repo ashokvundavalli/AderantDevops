@@ -94,9 +94,9 @@ namespace Aderant.Build.VersionControl {
 
                 Commit oldTree;
                 if (string.IsNullOrWhiteSpace(toBranch)) {
-                    string branchCanonicalName;
-                    oldTree = FindMostLikelyReusableBucket(repository, newTree, out branchCanonicalName);
-                    info.CommonAncestor = branchCanonicalName;
+                    string commonAncestor;
+                    oldTree = FindMostLikelyReusableBucket(repository, newTree, out commonAncestor);
+                    info.CommonAncestor = commonAncestor;
                 } else {
                     oldTree = GetTip(toBranch, repository);
                 }
@@ -115,7 +115,6 @@ namespace Aderant.Build.VersionControl {
                     }
 
                     info.BucketIds = bucketKeys;
-
                 }
             }
 
@@ -125,6 +124,18 @@ namespace Aderant.Build.VersionControl {
         private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string branchCanonicalName) {
             Commit commit = currentTree.Parents.FirstOrDefault();
             Commit[] interestingCommit = { null };
+
+            var search = new string[] {
+                "refs/heads/master",
+                //"refs/heads/releases/",
+                //"refs/heads/dev/",
+                //"refs/heads/patch/",
+
+                "refs/remotes/origin/master",
+                //"refs/remotes/origin/releases/",
+                //"refs/remotes/origin/dev/",
+                //"refs/remotes/origin/patch/",
+            };
 
             while (commit != null) {
                 interestingCommit[0] = commit;
@@ -139,16 +150,10 @@ namespace Aderant.Build.VersionControl {
                         return commit;
                     }
 
-                    if (item.StartsWith("refs/heads/releases/", StringComparison.OrdinalIgnoreCase)) {
-                        return commit;
-                    }
-
-                    if (item.StartsWith("refs/heads/dev/", StringComparison.OrdinalIgnoreCase)) {
-                        return commit;
-                    }
-
-                    if (item.StartsWith("refs/heads/patch/", StringComparison.OrdinalIgnoreCase)) {
-                        return commit;
+                    foreach (var name in search) {
+                        if (item.StartsWith(name, StringComparison.OrdinalIgnoreCase)) {
+                            return commit;
+                        }
                     }
                 }
 
