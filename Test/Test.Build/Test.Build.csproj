@@ -140,6 +140,7 @@
     <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\BuildTimeTests\IntegrationTestingTests.cs" />
     <Compile Include="LightUpManifestTests.cs" />
+    <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>

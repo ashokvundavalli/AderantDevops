@@ -11,22 +11,22 @@ namespace IntegrationTest.Build.VersionControl {
     [TestClass]
     [DeploymentItem(@"SystemUnderTest\x86\", "x86")]
     [DeploymentItem(@"SystemUnderTest\x64\", "x64")]
-    public class GitVersionControlTests {
-        private static string repo;
+    public class GitVersionTestBase {
         private static Collection<PSObject> results;
 
         public TestContext TestContext { get; set; }
 
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext context) {
+        protected static string Repo { get; set; }
+
+        protected static void Initialize(TestContext context, string resources) {
             using (var ps = PowerShell.Create()) {
                 ps.AddScript("cd " + context.DeploymentDirectory.Quote());
-                ps.AddScript(Resources.CreateRepo);
+                ps.AddScript(resources);
                 results = ps.Invoke();
 
             }
 
-            repo = Path.Combine(context.DeploymentDirectory, "Repo");
+            Repo = Path.Combine(context.DeploymentDirectory, "Repo");
         }
 
         [TestInitialize]
@@ -35,11 +35,20 @@ namespace IntegrationTest.Build.VersionControl {
                 TestContext.WriteLine(psObject.ToString());
             }
         }
+    }
+
+    [TestClass]
+    public class GitVersionControlTests : GitVersionTestBase {
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context) {
+            Initialize(context, Resources.CreateRepo);
+        }
 
         [TestMethod]
         public void ListChangedFiles() {
             var vc = new GitVersionControl();
-            var pendingChanges = vc.GetPendingChanges(null, repo);
+            var pendingChanges = vc.GetPendingChanges(null, Repo);
 
             Assert.AreEqual("master.txt", pendingChanges.First().Path);
             Assert.AreEqual(FileStatus.Modified, pendingChanges.First().Status);
@@ -48,7 +57,7 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void GetSourceTreeInfo_returns_without_exception() {
             var vc = new GitVersionControl();
-            var result = vc.GetMetadata(repo, "master", "saturn");
+            var result = vc.GetMetadata(Repo, "master", "saturn");
 
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.Changes);
@@ -60,11 +69,33 @@ namespace IntegrationTest.Build.VersionControl {
         [TestMethod]
         public void GetSourceTreeInfo_returns_most_likely_ancestor_when_asked_to_guess() {
             var vc = new GitVersionControl();
-            var result = vc.GetMetadata(repo, "", "");
+            var result = vc.GetMetadata(Repo, "", "");
 
             Assert.IsNotNull(result);
             Assert.AreEqual("refs/heads/master", result.CommonAncestor);
         }
     }
 
+    /// <summary>
+    /// These tests are intended to cover the discovery of reusable build trees
+    /// </summary>
+    [TestClass]
+    public class TreeReuseTests : GitVersionTestBase {
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context) {
+            Initialize(context, Resources.CommitGraphWalking);
+        }
+
+        [TestMethod]
+        public void Old_tree_parent_tree_sha_is_stable() {
+            var vc = new GitVersionControl();
+            var result = vc.GetMetadata(Repo, "", "");
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("refs/heads/master", result.CommonAncestor);
+
+            Assert.AreEqual("c5d3a09a01a42ee7f4b04ab421e529fe02bc9b0f", result.GetBucket(BucketId.ParentsParent).Id);
+        }
+    }
 }

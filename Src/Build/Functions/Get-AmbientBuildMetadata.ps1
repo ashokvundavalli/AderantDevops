@@ -33,7 +33,7 @@ function Get-AmbientBuildMetadata {
             $buildInfo.Flavor = Get-EnvironmentVariable 'BUILD_FLAVOR'
         
             $buildInfo.ScmUri = Get-EnvironmentVariable 'BUILD_REPOSITORY_URI'
-            $buildInfo.ScmCommitId = Get-EnvironmentVariable 'GIT_COMMIT'
+            $buildInfo.ScmCommitId = Get-EnvironmentVariable 'BUILD_SOURCEVERSION'
             $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
             $buildInfo.BuildSourcesDirectory = Get-EnvironmentVariable 'BUILD_SOURCESDIRECTORY'
 

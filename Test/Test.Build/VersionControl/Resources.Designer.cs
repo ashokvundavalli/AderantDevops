@@ -61,12 +61,47 @@ namespace IntegrationTest.Build.VersionControl {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to git init Repo
+        ///   Looks up a localized string similar to $int = 1
+        ///
+        ///&amp; git init Repo
         ///cd repo
-        ///echo &quot;Some text&quot; &gt; somefile.txt
-        ///git add .
-        ///git commit -m &quot;Added somefile&quot;
-        ///echo &quot;Some text more text&quot; &gt;&gt; somefile.txt.
+        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some text&quot;
+        ///&amp; git add &quot;master.txt&quot;
+        ///&amp; git commit -m &quot;$(++$i) Added master.txt&quot;
+        ///
+        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some more&quot;
+        ///&amp; git add &quot;master.txt&quot;
+        ///&amp; git commit -m &quot;$(++$i) Modified master.txt&quot;
+        ///
+        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some more!&quot;
+        ///&amp; git add &quot;master.txt&quot;
+        ///&amp; git commit -m &quot;$(++$i) Modified master.txt&quot;
+        ///
+        ///# Create saturn branch
+        ///&amp; git checkout -b &quot;saturn&quot;
+        ///Add-Content -Path &quot;saturn.txt&quot; -Value  &quot;Some text [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string CommitGraphWalking {
+            get {
+                return ResourceManager.GetString("CommitGraphWalking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &amp; git init Repo
+        ///cd repo
+        ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some text&quot;
+        ///&amp; git add &quot;master.txt&quot;
+        ///&amp; git commit -m &quot;Added master.txt&quot;
+        ///
+        ///# Create saturn branch
+        ///&amp; git checkout -b &quot;saturn&quot;
+        ///Add-Content -Path &quot;saturn.txt&quot; -Value  &quot;Some text&quot;
+        ///&amp; git add &quot;saturn.txt&quot;
+        ///&amp; git commit -m &quot;Added saturn.txt&quot;
+        ///
+        ///Add-Content -Path &quot;saturn.txt&quot; -Value &quot;Some text more text&quot;
+        ///Add-Content -Path &quot;master.txt&quot; -Value &quot;Some text more text&quot;.
         /// </summary>
         internal static string CreateRepo {
             get {
