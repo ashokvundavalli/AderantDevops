@@ -16,8 +16,6 @@ namespace Aderant.Build.Commands {
         public string TargetBranch { get; set; }
 
         protected override void ProcessRecord() {
-            System.Diagnostics.Debugger.Launch();
-
             if (SourceDirectory == null) {
                 SourceDirectory = this.SessionState.Path.CurrentFileSystemLocation.Path;
             }

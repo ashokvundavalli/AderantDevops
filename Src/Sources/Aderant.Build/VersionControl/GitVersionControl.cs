@@ -96,7 +96,7 @@ namespace Aderant.Build.VersionControl {
                     oldTree = FindMostLikelyReusableBucket(repository, newTree, out branchCanonicalName);
                     info.CommonAncestor = branchCanonicalName;
                 } else {
-                    oldTree = GetTip(fromBranch, repository);
+                    oldTree = GetTip(toBranch, repository);
                 }
 
                 if (newTree != null && oldTree != null) {
