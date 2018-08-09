@@ -145,9 +145,16 @@ namespace Aderant.Build.Packaging {
         }
 
         public void Resolve(BuildOperationContext context, DependencyManifest manifest, string artifactDirectory, IReadOnlyCollection<ArtifactPackage> artifacts) {
+            if (context.StateFile != null) {
+                foreach (var artifact in artifacts) {
 
-            foreach (var artifact in artifacts) {
+                    string artifactId = artifact.Id;
+                    string artifactFolder = Path.Combine(context.StateFile.DropLocation, artifactId);
 
+                    if (fileSystem.DirectoryExists(artifactFolder)) {
+                        fileSystem.CopyDirectory(artifactFolder, Path.Combine(artifactDirectory, artifactId));
+                    }
+                }
             }
         }
 
@@ -166,10 +173,11 @@ namespace Aderant.Build.Packaging {
 
                     foreach (var folder in orderBuildsByBuildNumber) {
                         var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
-                        if (fileSystem.FileExists(stateFile)) {
 
+                        if (fileSystem.FileExists(stateFile)) {
                             using (Stream stream = fileSystem.OpenFile(stateFile)) {
                                 BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(stream);
+                                file.DropLocation = folder;
 
                                 files.Add(file);
                             }

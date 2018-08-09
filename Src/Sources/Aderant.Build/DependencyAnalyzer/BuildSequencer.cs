@@ -10,7 +10,6 @@ using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Tasks;
-using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
@@ -26,14 +25,14 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
-            System.Diagnostics.Debugger.Launch();
-
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
 
-            BuildStateFile file = GetBuildStateFile(context);
+            if (context.StateFile == null) {
+                FindStateFile(context);
+            }
 
-            AddInitializeAndCompletionNodes(file, isPullRequest, isDesktopBuild, graph);
+            AddInitializeAndCompletionNodes(context.StateFile, isPullRequest, isDesktopBuild, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -49,9 +48,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             return pipeline.GenerateProject(groups, files, null);
         }
 
+        private static void FindStateFile(BuildOperationContext context) {
+            BuildStateFile file = GetBuildStateFile(context);
+            if (file != null) {
+                context.StateFile = file;
+            }
+        }
+
         private static BuildStateFile GetBuildStateFile(BuildOperationContext context) {
-            // TODO: here we need to query the last successful artifacts for the same branch/commit and mix them in
+            // Here we select an appropriate tree to reuse
+            // TODO: This needs way more validation
             var buildStateMetadata = context.BuildStateMetadata;
+
             foreach (var bucketId in context.SourceTreeMetadata.BucketIds) {
                 BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.TreeSha, bucketId.Id));
 
@@ -91,7 +99,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        ProjectToProjectShim(stateFile, tag, project);
+                        TryReuseBuild(stateFile, tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -117,7 +125,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return true;
         }
 
-        private static void ProjectToProjectShim(BuildStateFile stateFile, string tag, ConfiguredProject project) {
+        private static void TryReuseBuild(BuildStateFile stateFile, string tag, ConfiguredProject project) {
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;

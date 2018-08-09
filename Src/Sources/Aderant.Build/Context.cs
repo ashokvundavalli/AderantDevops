@@ -6,6 +6,7 @@ using System.Linq;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
+using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build {
@@ -137,6 +138,11 @@ namespace Aderant.Build {
             get { return buildStateMetadata; }
             set { buildStateMetadata = value; }
         }
+
+        /// <summary>
+        /// The state file this build is using. 
+        /// </summary>
+        public BuildStateFile StateFile { get; set; }
 
         /// <summary>
         /// Creates a new instance of T.

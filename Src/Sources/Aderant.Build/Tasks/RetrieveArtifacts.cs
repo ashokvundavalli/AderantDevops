@@ -64,7 +64,7 @@ namespace Aderant.Build.Tasks {
                 TreeSha = bucketId
             };
 
-            fileSystem.AddFile(path, stream => stateFile.SerializeCache(stream));
+            fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
         }
 
         private static string TrimSourcesDirectory(string sourcesDirectory, string path) {
@@ -87,6 +87,9 @@ namespace Aderant.Build.Tasks {
 
         [DataMember]
         public string TreeSha { get; set; }
+
+        [IgnoreDataMember]
+        internal string DropLocation { get; set; }
     }
 
     [Serializable]
@@ -121,7 +124,7 @@ namespace Aderant.Build.Tasks {
         /// Writes the contents of this object out.
         /// </summary>
         /// <param name="stream"></param>
-        internal virtual void SerializeCache(Stream stream) {
+        internal virtual void Serialize(Stream stream) {
             DataContractJsonSerializer ser = new DataContractJsonSerializer(
                 GetType(),
                 new DataContractJsonSerializerSettings {
