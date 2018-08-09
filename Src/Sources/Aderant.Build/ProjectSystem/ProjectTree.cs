@@ -98,8 +98,8 @@ namespace Aderant.Build.ProjectSystem {
             foreach (var project in LoadedConfiguredProjects) {
                 project.AnalyzeBuildDependencies(collector);
 
-                if (collector.PendingChanges != null) {
-                    project.CalculateDirtyStateFromChanges(collector.PendingChanges);
+                if (collector.SourceChanges != null) {
+                    project.CalculateDirtyStateFromChanges(collector.SourceChanges);
                 }
             }
 
@@ -112,13 +112,14 @@ namespace Aderant.Build.ProjectSystem {
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;
+
             await CollectBuildDependencies(collector);
 
-            if (context.GetChangeConsiderationMode() == ChangesToConsider.PendingChanges) {
-                // Get committed and uncommitted changes from the git library.
-                var changes = Services.VersionControl.GetPendingChanges(context.BuildMetadata, context.BuildRoot.FullName);
-                // Feed the file changes in so we can calculate the dirty projects.
-                collector.PendingChanges = changes;
+            if (context.SourceTreeMetadata != null) {
+                if (context.SourceTreeMetadata.Changes != null) {
+                    // Feed the file changes in so we can calculate the dirty projects.
+                    collector.SourceChanges = context.SourceTreeMetadata.Changes;
+                }
             }
 
             DependencyGraph graph = CreateBuildDependencyGraph(collector);

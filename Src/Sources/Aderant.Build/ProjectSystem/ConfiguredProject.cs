@@ -351,7 +351,7 @@ namespace Aderant.Build.ProjectSystem {
             //}
         }
 
-        public void CalculateDirtyStateFromChanges(IReadOnlyCollection<IPendingChange> changes) {
+        public void CalculateDirtyStateFromChanges(IReadOnlyCollection<ISourceChange> changes) {
             // check if this proj contains needed files
             List<ProjectItem> items = new List<ProjectItem>();
 

@@ -191,6 +191,10 @@ namespace Aderant.Build {
                 }
             }
 
+            if (StateFile != null) {
+                return ChangesToConsider.PendingChanges;
+            }
+
             return mode;
         }
 
@@ -232,7 +236,7 @@ namespace Aderant.Build {
     public sealed class SourceTreeMetadata {
         public string CommonAncestor { get; set; }
         public IReadOnlyCollection<BucketId> BucketIds { get; set; }
-        public IReadOnlyCollection<PendingChange> Changes { get; set; }
+        public IReadOnlyCollection<SourceChange> Changes { get; set; }
 
         public BucketId GetBucket(string tag) {
             return BucketIds.FirstOrDefault(s => s.Tag == tag);

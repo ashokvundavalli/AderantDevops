@@ -14,7 +14,7 @@ namespace Aderant.Build.VersionControl {
         public GitVersionControl() {
         }
 
-        public IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
+        public IReadOnlyCollection<ISourceChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
             ErrorUtilities.IsNotNull(repositoryPath, nameof(repositoryPath));
 
             string gitDir = Repository.Discover(repositoryPath);
@@ -22,7 +22,7 @@ namespace Aderant.Build.VersionControl {
             using (var repo = new Repository(gitDir)) {
                 var workingDirectory = repo.Info.WorkingDirectory;
 
-                IEnumerable<PendingChange> changes = Enumerable.Empty<PendingChange>();
+                IEnumerable<SourceChange> changes = Enumerable.Empty<SourceChange>();
 
                 if (buildMetadata != null) {
                     if (buildMetadata.IsPullRequest) {
@@ -40,7 +40,7 @@ namespace Aderant.Build.VersionControl {
 
                         if (tip != null) {
                             var patch = repo.Diff.Compare<Patch>(currentTip, tip);
-                            changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
+                            changes = patch.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
                         }
 
                     }
@@ -52,16 +52,16 @@ namespace Aderant.Build.VersionControl {
 
                 var status = repo.RetrieveStatus();
                 if (!status.IsDirty) {
-                    return new IPendingChange[0];
+                    return new ISourceChange[0];
                 }
 
                 // Get the current git status.
                 var uncommittedChanges =
-                    status.Added.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Added))
-                        .Concat(status.RenamedInWorkDir.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
-                        .Concat(status.Modified.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Modified)))
-                        .Concat(status.Removed.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Deleted)))
-                        .Concat(status.Untracked.Select(s => new PendingChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
+                    status.Added.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Added))
+                        .Concat(status.RenamedInWorkDir.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
+                        .Concat(status.Modified.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Modified)))
+                        .Concat(status.Removed.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Deleted)))
+                        .Concat(status.Untracked.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
 
                 var result = changes.Concat(uncommittedChanges).ToList();
                 return result;
@@ -104,7 +104,7 @@ namespace Aderant.Build.VersionControl {
                 if (newTree != null && oldTree != null) {
 
                     var treeChanges = repository.Diff.Compare<TreeChanges>(oldTree.Tree, newTree.Tree);
-                    info.Changes = treeChanges.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
+                    info.Changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
                     bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
                     bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
@@ -217,9 +217,9 @@ namespace Aderant.Build.VersionControl {
 
     [DebuggerDisplay("Path: {Path} Status: {Status}")]
     [Serializable]
-    public class PendingChange : IPendingChange {
+    public class SourceChange : ISourceChange {
 
-        public PendingChange(string workingDirectory, string relativePath, FileStatus status) {
+        public SourceChange(string workingDirectory, string relativePath, FileStatus status) {
             Path = relativePath;
             FullPath = CleanPath(workingDirectory, relativePath);
             Status = status;
@@ -235,7 +235,7 @@ namespace Aderant.Build.VersionControl {
         }
     }
 
-    public interface IPendingChange {
+    public interface ISourceChange {
         string Path { get; }
         string FullPath { get; }
         FileStatus Status { get; }
@@ -308,6 +308,6 @@ namespace Aderant.Build.VersionControl {
     /// </summary>
     public interface IVersionControlService {
 
-        IReadOnlyCollection<IPendingChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath);
+        IReadOnlyCollection<ISourceChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath);
     }
 }
