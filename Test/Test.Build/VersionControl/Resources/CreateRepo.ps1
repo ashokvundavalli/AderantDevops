@@ -1,12 +1,14 @@
-﻿git init Repo
+﻿& git init Repo
 cd repo
-echo "Some text" > master.txt
-git add .
-git commit -m "Added master.txt"
-echo "Some text more text" >> master.txt
+Add-Content -Path "master.txt" -Value  "Some text"
+& git add "master.txt"
+& git commit -m "Added master.txt"
 
 # Create saturn branch
-git checkout -b "saturn"
-echo "Some text" > saturn.txt
-git add .
-git commit -m "Added saturn.txt"
+& git checkout -b "saturn"
+Add-Content -Path "saturn.txt" -Value  "Some text"
+& git add "saturn.txt"
+& git commit -m "Added saturn.txt"
+
+Add-Content -Path "saturn.txt" -Value "Some text more text"
+Add-Content -Path "master.txt" -Value "Some text more text"

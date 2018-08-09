@@ -100,6 +100,9 @@
     <Content Include="ConfiguredProjectTests\Web.PrebillEditor.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="DependencyAnalysis\TextTemplateAnalysis\Resources\SimpleTextTemplate.tt">
+      <LastGenOutput>SimpleTextTemplate.cs</LastGenOutput>
+    </Content>
     <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -132,7 +135,6 @@
     <Compile Include="Tasks\GetAssembliesWithTraits\GetAssembliesWithTraitsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\GetFileVersionInfo\GetFileVersionInfoTests.cs" />
-    <Compile Include="Tasks\GitChangeset\GitChangesetTests.cs" />
     <Compile Include="Tasks\GitVersion\GitVersionTests.cs" />
     <Compile Include="Tasks\CopyToDrop\CopyToDropV2Tests.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
@@ -213,6 +215,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
+    <Folder Include="Tasks\GitChangeset\" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

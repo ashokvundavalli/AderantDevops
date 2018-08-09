@@ -79,32 +79,32 @@ namespace Aderant.Build.VersionControl {
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
 
-                Commit newTree;
+                Commit currentTree;
 
                 if (string.IsNullOrWhiteSpace(toBranch)) {
-                    newTree = repository.Head.Tip;
+                    currentTree = repository.Head.Tip;
                 } else {
-                    newTree = GetTip(toBranch, repository);
+                    currentTree = GetTip(toBranch, repository);
                 }
 
                 Commit oldTree;
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
                     string branchCanonicalName;
-                    oldTree = FindMostLikelyReusableBucket(repository, newTree, out branchCanonicalName);
+                    oldTree = FindMostLikelyReusableBucket(repository, currentTree, out branchCanonicalName);
                     info.CommonAncestor = branchCanonicalName;
                 } else {
                     oldTree = GetTip(fromBranch, repository);
                 }
 
-                if (newTree != null && oldTree != null) {
+                if (currentTree != null && oldTree != null) {
 
-                    var patch = repository.Diff.Compare<TreeChanges>(oldTree.Tree, newTree.Tree);
-                    info.Changes = patch.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
+                    var treeChanges = repository.Diff.Compare<TreeChanges>(oldTree.Tree, currentTree.Tree);
+                    info.Changes = treeChanges.Select(x => new PendingChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
-                    bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
+                    bucketKeys.Add(new BucketId(currentTree.Sha, BucketId.Current));
                     bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
 
-                    Commit commit = newTree.Parents.FirstOrDefault();
+                    Commit commit = currentTree.Parents.FirstOrDefault();
                     if (commit != null) {
                         bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.FirstParent));
                     }
@@ -117,8 +117,8 @@ namespace Aderant.Build.VersionControl {
             return info;
         }
 
-        private Commit FindMostLikelyReusableBucket(Repository repository, Commit newTree, out string branchCanonicalName) {
-            Commit commit = newTree.Parents.FirstOrDefault();
+        private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string branchCanonicalName) {
+            Commit commit = currentTree.Parents.FirstOrDefault();
             Commit[] interestingCommit = { null };
 
             while (commit != null) {

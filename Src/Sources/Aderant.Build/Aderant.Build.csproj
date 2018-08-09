@@ -229,7 +229,6 @@
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="DependencyAnalyzer\WellKnownProjectTypeGuids.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
-    <Compile Include="DependencyAnalyzer\ChangesetResolver.cs" />
     <Compile Include="DependencyAnalyzer\BuildPipeline.cs" />
     <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\TextTemplateAnalyzer.cs" />
