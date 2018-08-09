@@ -193,7 +193,7 @@
       </AssemblySearchPaths>
     </PropertyGroup>
 
-    <Message Text="zzz $(AssemblySearchPaths)" MessageImportance="High" />
+    <Message Text="zzz $(AssemblySearchPaths)" Importance="High" />
 
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
