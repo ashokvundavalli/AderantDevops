@@ -72,7 +72,7 @@ namespace Aderant.Build.VersionControl {
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch) {
-            //System.Diagnostics.Debugger.Launch();
+            System.Diagnostics.Debugger.Launch();
 
             var info = new SourceTreeMetadata();
 

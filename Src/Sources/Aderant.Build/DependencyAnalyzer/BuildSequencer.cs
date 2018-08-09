@@ -56,6 +56,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static BuildStateFile GetBuildStateFile(BuildOperationContext context) {
+            System.Diagnostics.Debugger.Launch();
+
             // Here we select an appropriate tree to reuse
             // TODO: This needs way more validation
             var buildStateMetadata = context.BuildStateMetadata;
