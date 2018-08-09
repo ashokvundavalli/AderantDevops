@@ -145,8 +145,6 @@ namespace Aderant.Build.Packaging {
         }
 
         public void Resolve(BuildOperationContext context, DependencyManifest manifest, string artifactDirectory, IEnumerable<string> artifactsIds) {
-            System.Diagnostics.Debugger.Launch();
-
             if (context.StateFile != null) {
                 foreach (var artifactId in artifactsIds) {
                     string artifactFolder = Path.Combine(context.StateFile.DropLocation, artifactId);

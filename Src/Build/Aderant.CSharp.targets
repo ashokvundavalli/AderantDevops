@@ -172,14 +172,21 @@
     </PropertyGroup>
     
     <ItemGroup>
-      <AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
-      <PackageDirectories Include="@(AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
-    </ItemGroup>    
+      <!-- TODO: Optimize and cache this data -->
+      <_AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
+      <PackageDirectories Include="@(_AllFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ArtifactStagingDirectoryFiles Include="$(ArtifactStagingDirectory)\**\*.dll"/>
+      <_ArtifactStagingDirectories Include="@(_ArtifactStagingDirectoryFiles->'%(RootDir)%(Directory)'->Distinct())"/>
+    </ItemGroup>
 
     <PropertyGroup>
       <!--This path order places out search paths first-->
       <AssemblySearchPaths>
         $(ArtifactStagingDirectory);
+        @(_ArtifactStagingDirectories);
         $(RootFolder)\Dependencies\;
         @(PackageDirectories);
         $(AssemblySearchPaths);
