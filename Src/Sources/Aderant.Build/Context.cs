@@ -27,6 +27,7 @@ namespace Aderant.Build {
         private BuildStateMetadata buildStateMetadata;
         private string pullRequestDropLocation;
         private string primaryDropLocation;
+        private BuildStateFile stateFile;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -142,7 +143,10 @@ namespace Aderant.Build {
         /// <summary>
         /// The state file this build is using. 
         /// </summary>
-        public BuildStateFile StateFile { get; set; }
+        public BuildStateFile StateFile {
+            get { return stateFile; }
+            set { stateFile = value; }
+        }
 
         /// <summary>
         /// Creates a new instance of T.
