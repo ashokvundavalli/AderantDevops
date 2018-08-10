@@ -24,7 +24,7 @@ namespace Aderant.Build.Tasks {
                 if (InternalContext != null) {
                     return InternalContext;
                 }
-                return context ?? (context = ObtainContext());
+                return context ?? (context = ObtainContext(true));
             }
         }
 
@@ -37,8 +37,16 @@ namespace Aderant.Build.Tasks {
         internal static BuildOperationContext InternalContext { get; set; }
 
         protected void UpdateContext() {
-            Register(Context);
-            MemoryMappedFileReaderWriter.WriteData(ContextFileName, context, true);
+            if (context != null) {
+                var latestContext = ObtainContext(false);
+
+                if (latestContext.Version != context.Version) {
+                    throw new InvalidOperationException("Context corruption");
+                }
+
+                Register(Context);
+                MemoryMappedFileReaderWriter.WriteData(ContextFileName, context, true);
+            }
         }
 
         public override bool Execute() {
@@ -66,7 +74,7 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            context = ObtainContext();
+            context = ObtainContext(true);
 
             Debug.Assert(context != null);
 
@@ -76,8 +84,9 @@ namespace Aderant.Build.Tasks {
         /// <summary>
         /// Obtains the ambient context from the build host.
         /// </summary>
+        /// <param name="b"></param>
         /// <returns></returns>
-        protected virtual BuildOperationContext ObtainContext() {
+        protected virtual BuildOperationContext ObtainContext(bool setVersion) {
             BuildOperationContext ctx;
 
             var cachedContext = BuildEngine4.GetRegisteredTaskObject("BuildContext", RegisteredTaskObjectLifetime.Build);
@@ -90,6 +99,10 @@ namespace Aderant.Build.Tasks {
             ctx = GetContextFromFile();
 
             if (ctx != null) {
+                if (setVersion) {
+                    ctx.Version = Guid.NewGuid();
+                }
+
                 Register(ctx);
             }
 

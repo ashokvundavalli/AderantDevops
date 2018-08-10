@@ -19,6 +19,7 @@ namespace Aderant.Build {
         private string buildScriptsDirectory;
         private BuildStateMetadata buildStateMetadata;
         private bool isDesktopBuild = true;
+        private SortedDictionary<string, ProjectOutputs> outputs;
         private string primaryDropLocation;
         private string pullRequestDropLocation;
 
@@ -29,7 +30,6 @@ namespace Aderant.Build {
         private BuildStateFile stateFile;
 
         private BuildSwitches switches = default(BuildSwitches);
-        private Dictionary<string, ProjectOutputs> outputs;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -150,6 +150,8 @@ namespace Aderant.Build {
             set { stateFile = value; }
         }
 
+        internal Guid Version { get; set; } = Guid.NewGuid();
+
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>
@@ -236,12 +238,12 @@ namespace Aderant.Build {
         public void RecordProjectOutputs(string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {
             string sourcesDirectory = buildMetadata?.BuildSourcesDirectory;
 
-            if (projectFile.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
+            if (sourcesDirectory != null && projectFile.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
                 projectFile = projectFile.Substring(sourcesDirectory.Length);
             }
 
             if (outputs == null) {
-                outputs = new Dictionary<string, ProjectOutputs>();
+                outputs = new SortedDictionary<string, ProjectOutputs>(StringComparer.OrdinalIgnoreCase);
             }
 
             if (!outputs.ContainsKey(projectFile)) {
@@ -263,8 +265,14 @@ namespace Aderant.Build {
     [DataContract]
     [Serializable]
     internal class ProjectOutputs {
+
+        [DataMember(Name = "FilesWritten")]
         public string[] FilesWritten { get; set; }
+
+        [DataMember(Name = "OutputPath")]
         public string OutputPath { get; set; }
+
+        [DataMember(Name = "IntermediateDirectory")]
         public string IntermediateDirectory { get; set; }
     }
 
