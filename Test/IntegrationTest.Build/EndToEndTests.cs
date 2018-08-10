@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.DependencyAnalysis {
+namespace IntegrationTest.Build {
     [TestClass]
-    [DeploymentItem("DependencyAnalysis\\Resources", "Resources")]
+    [DeploymentItem("EndToEnd\\Resources", "Resources")]
     public class EndToEndTests {
     }
 }

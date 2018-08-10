@@ -31,6 +31,8 @@ namespace Aderant.Build.Tasks {
                 artifactService.AssemblyVersion = AssemblyVersion;
                 
                 var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
+
+                UpdateContext();
             }
 
             return !Log.HasLoggedErrors;

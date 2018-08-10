@@ -3,10 +3,10 @@
  
   <PropertyGroup>
     <_DependencyAnalysisIncludePattern>
-      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.cs;
-      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.csproj;
-      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.sln;
-      $(MSBuildProjectDirectory)\DependencyAnalysis\Resources\**\*.tt;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.cs;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.csproj;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.sln;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.tt;
     </_DependencyAnalysisIncludePattern>
     <_DependencyAnalysisExcludePattern>
       *\obj\**;
