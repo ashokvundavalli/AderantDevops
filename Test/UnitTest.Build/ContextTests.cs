@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using Aderant.Build;
@@ -7,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
     [TestClass]
-    public class ContextTests {
+    public class BuildOperationContextTests {
 
         [TestMethod]
         public void Context_is_serializable() {
@@ -56,6 +57,30 @@ namespace UnitTest.Build {
             ctx.Switches = switches;
 
             Assert.AreEqual(true, ctx.Switches.Downstream);
+        }
+
+        [TestMethod]
+        public void RecordOutputs_removes_obj_files() {
+            var context = new BuildOperationContext();
+
+            context.RecordProjectOutputs("Foo", new [] {@"obj/baz.dll"}, @"..\..\bin", "obj");
+
+            IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
+
+            ProjectOutputs projectOutputs = outputs["Foo"];
+            Assert.AreEqual(0, projectOutputs.FilesWritten.Length);
+        }
+
+        [TestMethod]
+        public void RecordOutputs_keeps_output() {
+            var context = new BuildOperationContext();
+
+            context.RecordProjectOutputs("Foo", new[] { @"obj/baz.dll", @"baz.dll" }, @"..\..\bin", "obj");
+
+            IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
+
+            ProjectOutputs projectOutputs = outputs["Foo"];
+            Assert.AreEqual(1, projectOutputs.FilesWritten.Length);
         }
     }
 }

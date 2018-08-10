@@ -91,7 +91,12 @@ function GetBuildStateMetadata($context) {
 
     $context.BuildStateMetadata = $buildState
 
+    Write-Host "Build Tree Reuse Info"
     Write-Host ("BucketIds: " + [string]::Join(", ", $ids))
+
+    foreach ($file in $buildState.BuildStateFiles) {
+        Write-Host ("Tree sha: " + $file.TreeSha)        
+    }    
 }
 
 <#

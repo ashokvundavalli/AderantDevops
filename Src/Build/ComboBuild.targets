@@ -121,13 +121,7 @@
 
 
   <Target Name="WriteStateFiles">
-    <MSBuild Projects="$(BranchBuildProject)"
-             Targets="ReturnProjectsToBuild"
-             Properties="BuildEnabled=false">
-      <Output TaskParameter="TargetOutputs" ItemName="ProjectsToBuild" />
-    </MSBuild>
-
-    <WriteBuildStateFile ProjectsInBuild="@(ProjectsToBuild)" />
+    <WriteBuildStateFile />
   </Target>
 
 

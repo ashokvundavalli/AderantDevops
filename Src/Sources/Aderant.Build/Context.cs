@@ -19,6 +19,8 @@ namespace Aderant.Build {
         private string buildScriptsDirectory;
         private BuildStateMetadata buildStateMetadata;
         private bool isDesktopBuild = true;
+
+        // For deterministic hashing it is better if this is sorted
         private SortedDictionary<string, ProjectOutputs> outputs;
         private string primaryDropLocation;
         private string pullRequestDropLocation;
@@ -33,7 +35,7 @@ namespace Aderant.Build {
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
-            VariableBags = new Dictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            VariableBags = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             TaskIndex = -1;
             Variables = new Dictionary<string, string>();
             Environment = "";
@@ -239,7 +241,9 @@ namespace Aderant.Build {
             string sourcesDirectory = buildMetadata?.BuildSourcesDirectory;
 
             if (sourcesDirectory != null && projectFile.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
-                projectFile = projectFile.Substring(sourcesDirectory.Length);
+                projectFile = projectFile.Substring(sourcesDirectory.Length)
+                    .TrimStart(Path.DirectorySeparatorChar)
+                    .TrimStart(Path.AltDirectorySeparatorChar);
             }
 
             if (outputs == null) {
@@ -248,13 +252,17 @@ namespace Aderant.Build {
 
             if (!outputs.ContainsKey(projectFile)) {
                 outputs[projectFile] = new ProjectOutputs {
-                    FilesWritten = projectOutputs,
+                    FilesWritten = RemoveIntermediateObjects(projectOutputs, intermediateDirectory),
                     OutputPath = outputPath,
                     IntermediateDirectory = intermediateDirectory,
                 };
             } else {
                 throw new InvalidOperationException("Possible double write detected");
             }
+        }
+
+        private string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
+            return projectOutputs.Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1).ToArray();
         }
 
         internal IDictionary<string, ProjectOutputs> GetProjectOutputs() {
@@ -271,9 +279,6 @@ namespace Aderant.Build {
 
         [DataMember(Name = "OutputPath")]
         public string OutputPath { get; set; }
-
-        [DataMember(Name = "IntermediateDirectory")]
-        public string IntermediateDirectory { get; set; }
     }
 
     [Serializable]

@@ -26,10 +26,5 @@
     </PropertyGroup>
     
   </Target>
-
-
-  <!-- Called by WriteStateFiles to return the projects in the pipeline -->
-  <Target Name="ReturnProjectsToBuild" Returns="@(ProjectsToBuild)">
-  </Target>
     
 </Project>

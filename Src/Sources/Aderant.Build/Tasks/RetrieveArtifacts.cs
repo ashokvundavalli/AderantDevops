@@ -14,9 +14,6 @@ namespace Aderant.Build.Tasks {
 
     public class WriteBuildStateFile : BuildOperationContextTask {
 
-        [Required]
-        public ITaskItem[] ProjectsInBuild { get; set; }
-
         public override bool Execute() {
             if (Context.BuildMetadata?.BuildSourcesDirectory != null) {
                 string sourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory;
@@ -24,7 +21,6 @@ namespace Aderant.Build.Tasks {
                 var writer = new BuildStateWriter();
                 writer.WriteStateFile(
                     sourcesDirectory,
-                    ProjectsInBuild.Select(s => s.GetMetadata("FullPath")),
                     Context.GetProjectOutputs(),
                     Context.SourceTreeMetadata,
                     Context.BuildMetadata,
@@ -52,16 +48,13 @@ namespace Aderant.Build.Tasks {
         /// Serializes the build state file
         /// </summary>
         /// <param name="sourcesDirectory">The ultimate root directory of the source</param>
-        /// <param name="projectFiles">All project files in the build</param>
-        /// <param name="getProjectOutputs"></param>
+        /// <param name="outputs">The outputs the build produced</param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
-        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, IDictionary<string, ProjectOutputs> outputs, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
+        public void WriteStateFile(string sourcesDirectory, IDictionary<string, ProjectOutputs> outputs, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
-
-            projectFiles = GenerateProjectFilesList(sourcesDirectory, projectFiles);
-
+            
             string bucketId = null;
             if (metadata != null) {
                 var treeSha = metadata.GetBucket(BucketId.Current);
@@ -69,7 +62,6 @@ namespace Aderant.Build.Tasks {
             }
 
             var stateFile = new BuildStateFile {
-                ProjectFiles = projectFiles.ToArray(),
                 TreeSha = bucketId
             };
 
@@ -89,15 +81,6 @@ namespace Aderant.Build.Tasks {
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
         }
 
-        private static IEnumerable<string> GenerateProjectFilesList(string sourcesDirectory, IEnumerable<string> projectFiles) {
-            // For deterministic hashing this needs to be sorted
-            projectFiles = projectFiles
-                .Where(s => !string.Equals(Path.GetExtension(s), ".targets", StringComparison.OrdinalIgnoreCase))
-                .Select(s => TrimSourcesDirectory(sourcesDirectory, s))
-                .OrderBy(s => s);
-            return projectFiles;
-        }
-
         private static string TrimSourcesDirectory(string sourcesDirectory, string path) {
             if (path.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
                 return path.Remove(0, sourcesDirectory.Length)
@@ -112,9 +95,6 @@ namespace Aderant.Build.Tasks {
     [Serializable]
     [DataContract]
     public sealed class BuildStateFile : StateFileBase {
-
-        [DataMember(EmitDefaultValue = false)]
-        public string[] ProjectFiles { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public string TreeSha { get; set; }
@@ -178,7 +158,7 @@ namespace Aderant.Build.Tasks {
         }
     }
 
-    public class RetrieveArtifacts : BuildOperationContextTask {
+    public sealed class RetrieveArtifacts : BuildOperationContextTask {
 
         [Required]
         public string DependencyManifestFile { get; set; }

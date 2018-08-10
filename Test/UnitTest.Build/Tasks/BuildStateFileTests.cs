@@ -53,10 +53,6 @@ namespace UnitTest.Build.Tasks {
 
             writer.WriteStateFile(
                 string.Empty,
-                new[] {
-                    "A\\A.csproj",
-                    "A\\B.csproj"
-                },
                 null,
                 null,
                 null,

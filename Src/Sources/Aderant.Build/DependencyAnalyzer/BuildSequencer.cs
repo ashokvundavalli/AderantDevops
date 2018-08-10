@@ -130,8 +130,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
 
-                foreach (var fileInTree in stateFile.ProjectFiles) {
-                    if (projectFullPath.IndexOf(fileInTree, StringComparison.OrdinalIgnoreCase) >= 0) {
+                foreach (var fileInTree in stateFile.Outputs) {
+                    if (projectFullPath.IndexOf(fileInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
                         // The selected build cache contained this project so we don't need to mark it dirty
                         return;
                     }
