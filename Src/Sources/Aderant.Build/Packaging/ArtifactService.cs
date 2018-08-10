@@ -71,6 +71,7 @@ namespace Aderant.Build.Packaging {
                 CopyToDestination(item.Item1, item.Item2);
             }
 
+            System.Diagnostics.Debugger.Launch();
             if (!string.IsNullOrWhiteSpace(publisherName)) {
                 context.RecordArtifacts(publisherName, packages.Select(s => s.Id));
             }
