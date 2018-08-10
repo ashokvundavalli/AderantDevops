@@ -266,7 +266,10 @@ namespace Aderant.Build {
         }
 
         private static string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
-            return projectOutputs.Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1).ToArray();
+            return projectOutputs
+                .Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1)
+                .OrderBy(filePath => filePath)
+                .ToArray();
         }
 
         /// <summary>
@@ -291,7 +294,7 @@ namespace Aderant.Build {
             }
 
             if (!artifacts.ContainsKey(publisherName)) {
-                artifacts[publisherName] = ids.ToArray();
+                artifacts[publisherName] = ids.OrderBy(s => s).ToArray();
             } else {
                 ThrowDoubleWrite();
             }

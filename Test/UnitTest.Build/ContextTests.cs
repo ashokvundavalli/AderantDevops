@@ -75,12 +75,29 @@ namespace UnitTest.Build {
         public void RecordOutputs_keeps_output() {
             var context = new BuildOperationContext();
 
-            context.RecordProjectOutputs("Foo", new[] { @"obj/baz.dll", @"baz.dll" }, @"..\..\bin", "obj");
+            context.RecordProjectOutputs("Foo", new[] { "obj/baz.dll", "baz.dll" }, @"..\..\bin", "obj");
 
             IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
 
             ProjectOutputs projectOutputs = outputs["Foo"];
             Assert.AreEqual(1, projectOutputs.FilesWritten.Length);
+        }
+
+        [TestMethod]
+        public void RecordOutputs_is_deterministic() {
+            var context = new BuildOperationContext();
+
+            context.RecordProjectOutputs("Foo", new[] { "B", "10000", "A", "001", "Z", "1" }, @"..\..\bin", "obj");
+
+            IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
+
+            ProjectOutputs projectOutputs = outputs["Foo"];
+            Assert.AreEqual("001", projectOutputs.FilesWritten[0]);
+            Assert.AreEqual("1", projectOutputs.FilesWritten[1]);
+            Assert.AreEqual("10000", projectOutputs.FilesWritten[2]);
+            Assert.AreEqual("A", projectOutputs.FilesWritten[3]);
+            Assert.AreEqual("B", projectOutputs.FilesWritten[4]);
+            Assert.AreEqual("Z", projectOutputs.FilesWritten[5]);
         }
     }
 }

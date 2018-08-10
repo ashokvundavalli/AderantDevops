@@ -106,6 +106,7 @@
     <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Compile Include="DependencyAnalysis\EndToEndTests.cs" />
     <Compile Include="DependencyAnalysis\ProjectTreeTests.cs" />
     <Compile Include="AssemblyInitializer.cs" />
     <Compile Include="DependencyAnalysis\TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
@@ -117,7 +118,6 @@
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
     <Compile Include="ConfiguredProjectTests\ConfiguredProjectTests.cs" />
-    <Compile Include="DependencyAnalysis\ProjectDependencyAnalyzerTests.cs" />
     <Compile Include="ConfiguredProjectTests\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

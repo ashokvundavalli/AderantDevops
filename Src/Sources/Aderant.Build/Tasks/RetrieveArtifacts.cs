@@ -19,6 +19,8 @@ namespace Aderant.Build.Tasks {
             if (Context.BuildMetadata?.BuildSourcesDirectory != null) {
                 string sourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory;
 
+                System.Diagnostics.Debugger.Launch();
+
                 var writer = new BuildStateWriter();
                 writer.WriteStateFile(
                     sourcesDirectory,
