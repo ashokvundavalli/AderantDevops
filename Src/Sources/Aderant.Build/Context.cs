@@ -254,7 +254,6 @@ namespace Aderant.Build {
                 outputs[projectFile] = new ProjectOutputs {
                     FilesWritten = RemoveIntermediateObjects(projectOutputs, intermediateDirectory),
                     OutputPath = outputPath,
-                    IntermediateDirectory = intermediateDirectory,
                 };
             } else {
                 throw new InvalidOperationException("Possible double write detected");
