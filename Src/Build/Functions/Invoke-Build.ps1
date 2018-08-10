@@ -90,6 +90,8 @@ function GetBuildStateMetadata($context) {
     $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.PrimaryDropLocation
 
     $context.BuildStateMetadata = $buildState
+
+    Write-Host ("BucketIds: " + [string]::Join(", ", $ids))
 }
 
 <#
