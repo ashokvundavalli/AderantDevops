@@ -4,7 +4,7 @@
          ToolsVersion="14.0">
 
   <Import Project="$(InstanceProjectFile)" />
-  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
 
   <PropertyGroup>
     <DispatchToInnerBuildDependsOn>

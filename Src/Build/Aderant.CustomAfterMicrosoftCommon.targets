@@ -10,14 +10,5 @@
 
   <!-- Import the Aderant Code Analysis targets. This will add in our desired Code Analysis behaviour  -->
   <Import Project="$(AderantCodeAnalysisTargets)" Condition="Exists('$(AderantCodeAnalysisTargets)')" />
-  
-  <Target Name="CopyToStagingDirectory" AfterTargets="CopyFilesToOutputDirectory">
-    
-    <Copy SourceFiles="@(IntermediateAssembly)"
-      DestinationFolder="$(ArtifactStagingDirectory)"
-      SkipUnchangedFiles="true"
-      UseHardlinksIfPossible="true" />
-  
-  </Target>
 
 </Project>

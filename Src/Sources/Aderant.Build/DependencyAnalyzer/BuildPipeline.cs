@@ -88,7 +88,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                             $"{BuildGroupId}={buildGroupCount}",
                             "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                             "BuildInParallel=$(BuildInParallel)",
-                            "PropertiesForBuildGroup=$(PropertiesForBuildGroup)")
+                            "$(AdditionalGroupProperties)")
                     });
 
                 project.Add(build);

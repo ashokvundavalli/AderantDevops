@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
          ToolsVersion="14.0">
 
-  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
 
   <Target Name="CreateCommonProperties">
 
@@ -13,15 +13,15 @@
     <PropertyGroup>
       <Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
 
-      <PropertiesForBuildGroup>@(_PropertiesToCreate->'%(Identity)=%(Value)')</PropertiesForBuildGroup>
+      <AdditionalGroupProperties>@(_PropertiesToCreate->'%(Identity)=%(Value)')</AdditionalGroupProperties>
 
-      <PropertiesForBuildGroup>
-        $(PropertiesForBuildGroup);
+      <AdditionalGroupProperties>
+        $(AdditionalGroupProperties);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
 
         <!-- Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured -->
         Deterministic=$(Deterministic);
-      </PropertiesForBuildGroup>
+      </AdditionalGroupProperties>
 
     </PropertyGroup>
     

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
@@ -28,6 +29,7 @@ namespace Aderant.Build {
         private BuildStateFile stateFile;
 
         private BuildSwitches switches = default(BuildSwitches);
+        private Dictionary<string, ProjectOutputs> outputs;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -230,6 +232,40 @@ namespace Aderant.Build {
         public string GetDropLocation() {
             return BucketService.BuildDropLocation(this);
         }
+
+        public void RecordProjectOutputs(string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {
+            string sourcesDirectory = buildMetadata?.BuildSourcesDirectory;
+
+            if (projectFile.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
+                projectFile = projectFile.Substring(sourcesDirectory.Length);
+            }
+
+            if (outputs == null) {
+                outputs = new Dictionary<string, ProjectOutputs>();
+            }
+
+            if (!outputs.ContainsKey(projectFile)) {
+                outputs[projectFile] = new ProjectOutputs {
+                    FilesWritten = projectOutputs,
+                    OutputPath = outputPath,
+                    IntermediateDirectory = intermediateDirectory,
+                };
+            } else {
+                throw new InvalidOperationException("Possible double write detected");
+            }
+        }
+
+        internal IDictionary<string, ProjectOutputs> GetProjectOutputs() {
+            return outputs;
+        }
+    }
+
+    [DataContract]
+    [Serializable]
+    internal class ProjectOutputs {
+        public string[] FilesWritten { get; set; }
+        public string OutputPath { get; set; }
+        public string IntermediateDirectory { get; set; }
     }
 
     [Serializable]

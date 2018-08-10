@@ -6,7 +6,6 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
     internal sealed class DirectoryNode : AbstractArtifact {
 
         public DirectoryNode(string id, string directory, bool isPostTargets) {
-            ModuleName = id;
             IsPostTargets = isPostTargets;
             Directory = directory;
             Id = CreateName(id, isPostTargets);
@@ -16,14 +15,16 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
 
         public bool IsPostTargets { get; }
 
-        public string ModuleName { get; }
-        public string Directory { get; set; }
+        /// <summary>
+        /// The directory this node points to.
+        /// </summary>
+        public string Directory { get; private set; }
 
         public static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {
-                name += ".AfterBuild";
+                name += ".Post";
             } else {
-                name += ".BeforeBuild";
+                name += ".Pre";
             }
 
             return name;

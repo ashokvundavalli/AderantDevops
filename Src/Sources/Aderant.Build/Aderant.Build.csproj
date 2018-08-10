@@ -163,6 +163,7 @@
     <Compile Include="Packaging\PathSpec.cs" />
     <Compile Include="Tasks\RetrieveArtifacts.cs" />
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
+    <Compile Include="Tasks\TrackProjectOutputs.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
     <Compile Include="VersionControl\GitVersionControl.cs" />

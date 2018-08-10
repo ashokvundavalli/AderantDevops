@@ -137,7 +137,10 @@
 
   
   <PropertyGroup>
-  	<GetReferenceAssemblyPathsDependsOn>$(GetReferenceAssemblyPathsDependsOn);SetupAssemblySearchPaths</GetReferenceAssemblyPathsDependsOn>
+  	<GetReferenceAssemblyPathsDependsOn>
+      $(GetReferenceAssemblyPathsDependsOn);
+	    AddAssemblySearchPaths
+    </GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
   
   <!-- Code to handle project references in Customization build. Aderant.Build.dll is packed into BuildScripts.zip in Framework build. -->
@@ -145,7 +148,7 @@
              AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
   
-  <Target Name="SetupAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
+  <Target Name="AddAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
 
     <!--
         This changes the search path of the ResolveReferences task to look in the dependencies/packages folder. The normal probe sequence is
@@ -189,8 +192,6 @@
         $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>
-
-    <Message Text="zzz $(AssemblySearchPaths)" Importance="High" />
 
     <!--Adding additional dependencies searching locations. -->
     <PropertyGroup>
@@ -257,7 +258,7 @@
        mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
   <Target Name="CommonBuildDisableCopyLocal"
           BeforeTargets="BeforeResolveReferences"
-          AfterTargets="SetupAssemblySearchPaths"
+          AfterTargets="AddAssemblySearchPaths"
           Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
     
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
@@ -336,12 +337,28 @@
    
   </Target>
   
-  <Target Name="CopyOutputs" AfterTargets="Build" Condition="'$(IsCustomBuild)' == 'true'">
+  <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory">
     <ItemGroup>
       <SourceFiles Include="$(OutDir)\*" />
     </ItemGroup>
-    
-    <Copy SourceFiles="@(SourceFiles)" DestinationFolder="$(AlternativeOutputDirectory)" />
+
+    <!--<Copy
+      SourceFiles="@(SourceFiles)"
+      DestinationFolder="$(AlternativeOutputDirectory)"
+      UseHardlinksIfPossible="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>-->
+
+    <!-- Write new list of current files back to disk. -->
+    <!--<WriteLinesToFile File="$(ArtifactStagingDirectory)\$(MSBuildProjectFile).FileList.txt"
+                      Lines="$(MSBuildProjectFullPath);@(FileWrites)" Overwrite="true" />-->
+
+    <TrackProjectOutputs
+      ProjectFile="$(MSBuildProjectFullPath)"
+      IntermediateDirectory="$(IntermediateOutputPath)"
+      OutputPath="$(OutDir)"
+      ProjectOutputs="@(FileWrites)" />
+   
   </Target>
   
 </Project>

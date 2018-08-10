@@ -38,7 +38,7 @@ namespace Aderant.Build.Tasks {
 
         protected void UpdateContext() {
             Register(Context);
-            MemoryMappedFileReaderWriter.WriteData(ContextFileName, context);
+            MemoryMappedFileReaderWriter.WriteData(ContextFileName, context, true);
         }
 
         public override bool Execute() {

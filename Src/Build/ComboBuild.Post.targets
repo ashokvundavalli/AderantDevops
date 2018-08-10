@@ -36,6 +36,7 @@
     <BuildCoreDependsOn>
       ValidateRequiredProperties;
       RefreshVersionVariables;
+      TrackOutputs;
       <!--RunTests;
       RunIntegrationTests;
       --><!--RunAutomationTests;--><!--
@@ -70,6 +71,17 @@
     </GetOrPutContextVariable>
 
     <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
+
+  </Target>
+
+
+  <Target Name="TrackOutputs">
+
+    <ItemGroup>
+      <ProjectOutputLists Include="$(ArtifactStagingDirectory)\*.FileList.txt"></ProjectOutputLists>
+    </ItemGroup>
+
+    <!--<TrackProjectOutputs ProjectOutputs="@(ProjectOutputLists)"></TrackProjectOutputs>-->
 
   </Target>
 
@@ -159,6 +171,7 @@
 
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />
+
 
   <Target Name="Build" DependsOnTargets="BuildCore">
   </Target>

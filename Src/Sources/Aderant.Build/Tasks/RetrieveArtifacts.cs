@@ -11,6 +11,7 @@ using Aderant.Build.VersionControl;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
+
     public class WriteBuildStateFile : BuildOperationContextTask {
 
         [Required]
@@ -24,6 +25,7 @@ namespace Aderant.Build.Tasks {
                 writer.WriteStateFile(
                     sourcesDirectory,
                     ProjectsInBuild.Select(s => s.GetMetadata("FullPath")),
+                    Context.GetProjectOutputs(),
                     Context.SourceTreeMetadata,
                     Context.BuildMetadata,
                     Path.Combine(Context.GetDropLocation(), BuildStateWriter.DefaultFileName));
@@ -51,10 +53,11 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         /// <param name="sourcesDirectory">The ultimate root directory of the source</param>
         /// <param name="projectFiles">All project files in the build</param>
+        /// <param name="getProjectOutputs"></param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
-        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
+        public void WriteStateFile(string sourcesDirectory, IEnumerable<string> projectFiles, IDictionary<string, ProjectOutputs> outputs, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
             projectFiles = GenerateProjectFilesList(sourcesDirectory, projectFiles);
@@ -69,6 +72,10 @@ namespace Aderant.Build.Tasks {
                 ProjectFiles = projectFiles.ToArray(),
                 TreeSha = bucketId
             };
+
+            if (outputs != null) {
+                stateFile.Outputs = outputs;
+            }
 
             if (buildMetadata != null) {
                 if (buildMetadata.IsPullRequest) {
@@ -123,6 +130,9 @@ namespace Aderant.Build.Tasks {
 
         [DataMember(EmitDefaultValue = false)]
         public string ScmCommitId { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        internal IDictionary<string, ProjectOutputs> Outputs { get; set; }
     }
 
     [Serializable]

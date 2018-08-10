@@ -25,7 +25,7 @@ namespace Aderant.Build.Ipc {
         /// </summary>
         public object IncomingMessage { get; private set; }
 
-        public static string WriteData(string fileName, object data) {
+        public static string WriteData(string fileName, object data, bool throwOnStale = false) {
             if (!data.GetType().IsSerializable) {
                 throw new ArgumentException("Type is not serializable.", nameof(data));
             }
@@ -33,6 +33,9 @@ namespace Aderant.Build.Ipc {
             bool createdNew;
             using (var semaphore = new Semaphore(0, 1, "S_" + fileName, out createdNew)) {
                 if (!createdNew) {
+                    if (throwOnStale) {
+                        throw new InvalidOperationException("Thread data is stale");
+                    }
                     semaphore.WaitOne();
                 }
 

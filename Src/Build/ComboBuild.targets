@@ -301,7 +301,6 @@
         UseSharedDependencyDirectory=$(UseSharedDependencyDirectory);
         SharedDependencyDirectory=$(SharedDependencyDirectory);
         BuildFlavor=$(BuildFlavor);
-        EXPERT_BUILD_DIRECTORY=$(MSBuildThisFileDirectory)..\;
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         AdditionalAssemblySearchPaths=$(DependencySearchPaths);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
