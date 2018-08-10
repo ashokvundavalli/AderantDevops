@@ -65,13 +65,13 @@ namespace Aderant.Build {
     [DataContract]
     public sealed class PullRequestInfo {
 
-        [DataMember(Name = "Id")]
+        [DataMember(Name = nameof(Id))]
         public string Id { get; set; }
 
-        [DataMember(Name = "TargetBranch")]
+        [DataMember(Name = nameof(TargetBranch))]
         public string TargetBranch { get; set; }
 
-        [DataMember(Name = "SourceBranch")]
+        [DataMember(Name = nameof(SourceBranch))]
         public string SourceBranch { get; set; }
     }
 }

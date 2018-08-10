@@ -36,7 +36,6 @@
     <BuildCoreDependsOn>
       ValidateRequiredProperties;
       RefreshVersionVariables;
-      TrackOutputs;
       <!--RunTests;
       RunIntegrationTests;
       --><!--RunAutomationTests;--><!--
@@ -71,17 +70,6 @@
     </GetOrPutContextVariable>
 
     <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
-
-  </Target>
-
-
-  <Target Name="TrackOutputs">
-
-    <ItemGroup>
-      <ProjectOutputLists Include="$(ArtifactStagingDirectory)\*.FileList.txt"></ProjectOutputLists>
-    </ItemGroup>
-
-    <!--<TrackProjectOutputs ProjectOutputs="@(ProjectOutputLists)"></TrackProjectOutputs>-->
 
   </Target>
 

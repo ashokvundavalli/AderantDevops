@@ -16,8 +16,12 @@ namespace Aderant.Build.Packaging {
         }
 
         public static string BuildDropLocation(BuildOperationContext buildOperationContext) {
-            BucketId bucket = buildOperationContext.SourceTreeMetadata.GetBucket(BucketId.Current);
-            return Path.Combine(buildOperationContext.PrimaryDropLocation, bucket.Id, buildOperationContext.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
+            if (buildOperationContext.SourceTreeMetadata != null) {
+                BucketId bucket = buildOperationContext.SourceTreeMetadata.GetBucket(BucketId.Current);
+                return Path.Combine(buildOperationContext.PrimaryDropLocation, bucket.Id, buildOperationContext.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
+            }
+
+            return null;
         }
     }
 

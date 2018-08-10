@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Tasks;
 using Aderant.Build.TeamFoundation;
-using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
@@ -25,10 +23,17 @@ namespace Aderant.Build.Packaging {
         public string AssemblyVersion { get; set; }
         public VsoBuildCommands VsoCommands { get; set; }
 
-        internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, IReadOnlyCollection<ArtifactPackage> packages) {
-            var results = PublishInternal(context, packages);
+        /// <summary>
+        /// Publishes build artifacts to some kind of repository.
+        /// </summary>
+        /// <param name="context">The build context.</param>
+        /// <param name="publisherName">Optional. Used to identify the publisher</param>
+        /// <param name="packages">The artifacts to publish</param>
+        internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
+            var results = PublishInternal(context, publisherName, packages);
 
             if (VsoCommands != null) {
+                // Tell TFS about these artifacts
                 foreach (var item in results) {
                     VsoCommands.LinkArtifact(item.Name, VsoBuildArtifactType.FilePath, item.ComputeVsoPath());
                 }
@@ -37,7 +42,7 @@ namespace Aderant.Build.Packaging {
             return results;
         }
 
-        private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, IReadOnlyCollection<ArtifactPackage> packages) {
+        private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
             // TODO: Slow - optimize
             // TODO: Test for duplicates in the artifact inputs
 
@@ -49,7 +54,10 @@ namespace Aderant.Build.Packaging {
                 foreach (var artifact in group) {
                     var files = artifact.GetFiles();
 
-                    buildArtifacts.Add(PrepareFilesForDrop(paths, context, artifact.Id, files));
+                    var filesForDrop = PrepareFilesForDrop(paths, context, artifact.Id, files);
+                    if (filesForDrop != null) {
+                        buildArtifacts.Add(filesForDrop);
+                    }
 
                     if (context.BuildMetadata.IsPullRequest) {
                         buildArtifacts.Add(PrepareFilesForPullRequestDrop(paths, context, artifact.Id, files));
@@ -63,20 +71,28 @@ namespace Aderant.Build.Packaging {
                 CopyToDestination(item.Item1, item.Item2);
             }
 
+            if (!string.IsNullOrWhiteSpace(publisherName)) {
+                context.RecordArtifacts(publisherName, packages.Select(s => s.Id));
+            }
+
             return buildArtifacts;
         }
 
         private BuildArtifact PrepareFilesForDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
-            var container = Path.Combine(context.GetDropLocation(), artifactId);
+            var dl = context.GetDropLocation();
+            if (dl != null) {
+                var container = Path.Combine(dl, artifactId);
 
-            foreach (var pathSpec in files) {
-                copyList.Add(Tuple.Create(container, pathSpec));
+                foreach (var pathSpec in files) {
+                    copyList.Add(Tuple.Create(container, pathSpec));
+                }
+                return new BuildArtifact {
+                    FullPath = container,
+                    Name = artifactId,
+                };
             }
 
-            return new BuildArtifact {
-                FullPath = container,
-                Name = artifactId,
-            };
+            return null;
         }
 
         private BuildArtifact PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {

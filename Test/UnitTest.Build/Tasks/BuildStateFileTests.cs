@@ -56,6 +56,7 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
+                null,
                 "foo");
 
             Assert.IsNotNull(text);

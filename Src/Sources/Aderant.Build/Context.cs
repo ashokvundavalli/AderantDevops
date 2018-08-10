@@ -14,6 +14,7 @@ namespace Aderant.Build {
 
     [Serializable]
     public class BuildOperationContext {
+        private SortedDictionary<string, string[]> artifacts;
         private BuildMetadata buildMetadata;
 
         private string buildScriptsDirectory;
@@ -22,6 +23,7 @@ namespace Aderant.Build {
 
         // For deterministic hashing it is better if this is sorted
         private SortedDictionary<string, ProjectOutputs> outputs;
+
         private string primaryDropLocation;
         private string pullRequestDropLocation;
 
@@ -145,14 +147,13 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// The state file this build is using.
+        /// The state file this build is using (if any).
+        /// This indicates if we are reusing an existing build.
         /// </summary>
         public BuildStateFile StateFile {
             get { return stateFile; }
             set { stateFile = value; }
         }
-
-        internal Guid Version { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// Creates a new instance of T.
@@ -256,16 +257,44 @@ namespace Aderant.Build {
                     OutputPath = outputPath,
                 };
             } else {
-                throw new InvalidOperationException("Possible double write detected");
+                ThrowDoubleWrite();
             }
         }
 
-        private string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
+        private static void ThrowDoubleWrite() {
+            throw new InvalidOperationException("Possible double write detected");
+        }
+
+        private static string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
             return projectOutputs.Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1).ToArray();
         }
 
+        /// <summary>
+        /// Returns the outputs for all projects seen by the build.
+        /// Keyed by project file.
+        /// </summary>
         internal IDictionary<string, ProjectOutputs> GetProjectOutputs() {
             return outputs;
+        }
+
+        /// <summary>
+        /// Returns the artifacts for a given publisher.
+        /// Keyed by publisher.
+        /// </summary>
+        internal IDictionary<string, string[]> GetArtifacts() {
+            return artifacts;
+        }
+
+        public void RecordArtifacts(string publisherName, IEnumerable<string> ids) {
+            if (artifacts == null) {
+                artifacts = new SortedDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            if (!artifacts.ContainsKey(publisherName)) {
+                artifacts[publisherName] = ids.ToArray();
+            } else {
+                ThrowDoubleWrite();
+            }
         }
     }
 
@@ -273,10 +302,10 @@ namespace Aderant.Build {
     [Serializable]
     internal class ProjectOutputs {
 
-        [DataMember(Name = "FilesWritten")]
+        [DataMember(Name = nameof(FilesWritten))]
         public string[] FilesWritten { get; set; }
 
-        [DataMember(Name = "OutputPath")]
+        [DataMember(Name = nameof(OutputPath))]
         public string OutputPath { get; set; }
     }
 

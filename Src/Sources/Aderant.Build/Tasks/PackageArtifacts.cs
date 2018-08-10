@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aderant.Build.Packaging;
 using Aderant.Build.TeamFoundation;
@@ -28,11 +29,8 @@ namespace Aderant.Build.Tasks {
 
                 artifactService.FileVersion = FileVersion;
                 artifactService.AssemblyVersion = AssemblyVersion;
-
-                var storageInfo = artifactService.PublishArtifacts(
-                    Context,
-                    artifacts);
-
+                
+                var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
             }
 
             return !Log.HasLoggedErrors;
@@ -69,5 +67,4 @@ namespace Aderant.Build.Tasks {
             return artifacts;
         }
     }
-
 }

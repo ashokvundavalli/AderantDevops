@@ -54,6 +54,7 @@ namespace UnitTest.Build.Packaging {
                     PrimaryDropLocation = @"\\mydrop\",
                     BuildMetadata = new BuildMetadata()
                 },
+                null,
                 new[] { new ArtifactPackage("bar", specs) });
 
             Assert.IsNotNull(results);
