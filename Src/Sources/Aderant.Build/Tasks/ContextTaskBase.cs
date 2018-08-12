@@ -8,16 +8,48 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
 
+    public class WaitForDebugger : Task {
+
+        public bool Wait { get; set; }
+
+        public override bool Execute() {
+            if (Environment.UserInteractive) {
+                if (Wait) {
+                    bool sleep = false;
+                    SpinWait.SpinUntil(
+                        () => {
+                            if (sleep) {
+                                Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                            }
+
+                            Log.LogMessage("Waiting for debugger... [C] to cancel waiting");
+                            if (Console.KeyAvailable) {
+                                var consoleKeyInfo = Console.ReadKey(true);
+                                if (consoleKeyInfo.Key == ConsoleKey.C) {
+                                    return true;
+                                }
+                            }
+
+                            sleep = true;
+                            return Debugger.IsAttached;
+                        },
+                        TimeSpan.FromSeconds(10));
+                }
+            }
+
+            return !Log.HasLoggedErrors;
+        }
+    }
+
     /// <summary>
     /// Provides the ultimate base class for context aware tasks within the build engine
     /// </summary>
     public abstract class BuildOperationContextTask : Task {
         private BuildOperationContext context;
         private BuildTaskLogger logger;
+        private bool executingTask;
 
         public virtual string ContextFileName { get; set; }
-
-        public bool WaitForDebugger { get; set; }
  
         protected BuildOperationContext Context {
             get {
@@ -43,37 +75,27 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        public override bool Execute() {
-            if (Environment.UserInteractive) {
-                if (WaitForDebugger) {
-                    bool sleep = false;
-                    SpinWait.SpinUntil(
-                        () => {
-                            if (sleep) {
-                                Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                            }
-
-                            Log.LogMessage("Waiting for debugger... [C] to cancel waiting");
-                            if (Console.KeyAvailable) {
-                                var consoleKeyInfo = Console.ReadKey(true);
-                                if (consoleKeyInfo.Key == ConsoleKey.C) {
-                                    return true;
-                                }
-                            }
-
-                            sleep = true;
-                            return Debugger.IsAttached;
-                        },
-                        TimeSpan.FromMinutes(1));
-                }
+        public sealed override bool Execute() {
+            if (executingTask) {
+                return false;
             }
 
-            context = ObtainContext();
+            executingTask = true;
 
-            Debug.Assert(context != null);
+            try {
+                return ExecuteTask();
+            } finally {
+                executingTask = false;
 
-            return !Log.HasLoggedErrors;
+                if (UpdateContextOnCompletion) {
+                    UpdateContext();
+                }
+            }
         }
+
+        protected abstract bool UpdateContextOnCompletion { get; set; }
+
+        public abstract bool ExecuteTask();
 
         /// <summary>
         /// Obtains the ambient context from the build host.

@@ -254,9 +254,10 @@
 
   <Target Name="SetPropertiesFromContext" DependsOnTargets="$(InitialTargetsDependsOn)">
 
+    <WaitForDebugger Wait="$(WaitForDebugger)" />
+
     <GetPropertiesFromContext
-        ContextFileName="$(ContextFileName)"
-        WaitForDebugger="$(WaitForDebugger)">
+        ContextFileName="$(ContextFileName)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
       <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
       <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />

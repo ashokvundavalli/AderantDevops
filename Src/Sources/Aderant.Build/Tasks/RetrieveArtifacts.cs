@@ -15,11 +15,11 @@ namespace Aderant.Build.Tasks {
 
     public class WriteBuildStateFile : BuildOperationContextTask {
 
-        public override bool Execute() {
+        protected override bool UpdateContextOnCompletion { get; set; } = false;
+
+        public override bool ExecuteTask() {
             if (Context.BuildMetadata?.BuildSourcesDirectory != null) {
                 string sourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory;
-
-                System.Diagnostics.Debugger.Launch();
 
                 var writer = new BuildStateWriter();
                 writer.WriteStateFile(
@@ -91,23 +91,13 @@ namespace Aderant.Build.Tasks {
 
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
         }
-
-        private static string TrimSourcesDirectory(string sourcesDirectory, string path) {
-            if (path.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
-                return path.Remove(0, sourcesDirectory.Length)
-                    .TrimStart(Path.DirectorySeparatorChar)
-                    .TrimStart(Path.AltDirectorySeparatorChar);
-            }
-
-            return path;
-        }
     }
 
     [Serializable]
     [DataContract]
     public sealed class BuildStateFile : StateFileBase {
 
-        [DataMember(Name = nameof(BuildId), EmitDefaultValue = false)]
+        [DataMember(EmitDefaultValue = false)]
         public string BuildId { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
@@ -125,10 +115,10 @@ namespace Aderant.Build.Tasks {
         [DataMember(EmitDefaultValue = false)]
         public string ScmCommitId { get; set; }
 
-        [DataMember(EmitDefaultValue = false, Name = nameof(Outputs))]
+        [DataMember(EmitDefaultValue = false)]
         internal IDictionary<string, ProjectOutputs> Outputs { get; set; }
 
-        [DataMember(EmitDefaultValue = false, Name = nameof(Artifacts))]
+        [DataMember(EmitDefaultValue = false)]
         internal IDictionary<string, string[]> Artifacts { get; set; }
     }
 
@@ -187,7 +177,9 @@ namespace Aderant.Build.Tasks {
 
         public bool Flatten { get; set; }
 
-        public override bool Execute() {
+        protected override bool UpdateContextOnCompletion { get; set; } = false;
+
+        public override bool ExecuteTask() {
             if (ArtifactIds != null) {
                 var document = XDocument.Load(DependencyManifestFile);
                 var manifest = DependencyManifest.Load(document);
@@ -200,4 +192,5 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
     }
+
 }

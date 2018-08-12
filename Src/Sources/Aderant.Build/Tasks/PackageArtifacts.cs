@@ -19,8 +19,12 @@ namespace Aderant.Build.Tasks {
 
         public string AssemblyVersion { get; set; }
 
-        public override bool Execute() {
+        protected override bool UpdateContextOnCompletion { get; set; }
+
+        public override bool ExecuteTask() {
             if (ArtifactDefinitions != null) {
+                UpdateContextOnCompletion = true;
+
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
 
                 var commands = new VsoBuildCommands(Logger);
@@ -31,8 +35,6 @@ namespace Aderant.Build.Tasks {
                 artifactService.AssemblyVersion = AssemblyVersion;
                 
                 var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
-
-                UpdateContext();
             }
 
             return !Log.HasLoggedErrors;

@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -19,14 +20,20 @@ namespace IntegrationTest.Build.VersionControl {
         protected static string Repo { get; set; }
 
         protected static void Initialize(TestContext context, string resources) {
+            var fileTimeUtc = DateTime.UtcNow.ToFileTimeUtc();
+
+            var testDirectory = Path.Combine(context.DeploymentDirectory, fileTimeUtc.ToString());
+
+            Directory.CreateDirectory(testDirectory);
+
             using (var ps = PowerShell.Create()) {
-                ps.AddScript("cd " + context.DeploymentDirectory.Quote());
+                ps.AddScript($"cd {testDirectory.Quote()}");
                 ps.AddScript(resources);
                 results = ps.Invoke();
 
             }
 
-            Repo = Path.Combine(context.DeploymentDirectory, "Repo");
+            Repo = $"{testDirectory}\\Repo";
         }
 
         [TestInitialize]
@@ -88,13 +95,15 @@ namespace IntegrationTest.Build.VersionControl {
         }
 
         [TestMethod]
-        public void Old_tree_parent_tree_sha_is_stable() {
+        public void Tree_sha_is_stable() {
             var vc = new GitVersionControl();
             var result = vc.GetMetadata(Repo, "", "");
 
             Assert.IsNotNull(result);
             Assert.AreEqual("refs/heads/master", result.CommonAncestor);
 
+            Assert.AreEqual("885048a4c6ce8fc35723b5fbe4ea99ab5948122b", result.GetBucket(BucketId.Current).Id);
+            Assert.AreEqual("1e6931e5a4e7e03f8afe2035ac19e90f56a425f5", result.GetBucket(BucketId.Previous).Id);
             Assert.AreEqual("c5d3a09a01a42ee7f4b04ab421e529fe02bc9b0f", result.GetBucket(BucketId.ParentsParent).Id);
         }
     }

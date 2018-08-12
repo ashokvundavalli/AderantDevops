@@ -305,10 +305,10 @@ namespace Aderant.Build {
     [Serializable]
     internal class ProjectOutputs {
 
-        [DataMember(Name = nameof(FilesWritten))]
+        [DataMember]
         public string[] FilesWritten { get; set; }
 
-        [DataMember(Name = nameof(OutputPath))]
+        [DataMember]
         public string OutputPath { get; set; }
     }
 

@@ -67,9 +67,10 @@ namespace Aderant.Build.Tasks {
 
         public string[] ExcludePaths { get; set; } = new string[0];
 
-        public override bool Execute() {
+        protected override bool UpdateContextOnCompletion { get; set; } = true;
+
+        public override bool ExecuteTask() {
             ExecuteCore(Context);
-            UpdateContext();
             return !Log.HasLoggedErrors;
         }
 

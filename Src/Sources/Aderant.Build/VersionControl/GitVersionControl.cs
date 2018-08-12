@@ -82,32 +82,31 @@ namespace Aderant.Build.VersionControl {
                 // The current tree - what you have
                 // It could be behind some branch you are diffing or it could be the
                 // result of a pull request merge making it the new tree to be committed 
-                Commit newTree;
+                Commit newCommit;
 
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
-                    newTree = repository.Head.Tip;
+                    newCommit = repository.Head.Tip;
                 } else {
-                    newTree = GetTip(fromBranch, repository);
+                    newCommit = GetTip(fromBranch, repository);
                 }
 
-                Commit oldTree;
+                Commit oldCommit;
                 if (string.IsNullOrWhiteSpace(toBranch)) {
                     string commonAncestor;
-                    oldTree = FindMostLikelyReusableBucket(repository, newTree, out commonAncestor);
+                    oldCommit = FindMostLikelyReusableBucket(repository, newCommit, out commonAncestor);
                     info.CommonAncestor = commonAncestor;
                 } else {
-                    oldTree = GetTip(toBranch, repository);
+                    oldCommit = GetTip(toBranch, repository);
                 }
 
-                if (newTree != null && oldTree != null) {
-
-                    var treeChanges = repository.Diff.Compare<TreeChanges>(oldTree.Tree, newTree.Tree);
+                if (newCommit != null && oldCommit != null) {
+                    var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
                     info.Changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
-                    bucketKeys.Add(new BucketId(newTree.Sha, BucketId.Current));
-                    bucketKeys.Add(new BucketId(oldTree.Sha, BucketId.Previous));
+                    bucketKeys.Add(new BucketId(newCommit.Tree.Sha, BucketId.Current));
+                    bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
 
-                    Commit commit = oldTree.Parents.FirstOrDefault();
+                    Commit commit = oldCommit.Parents.FirstOrDefault();
                     if (commit != null) {
                         bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.ParentsParent));
                     }

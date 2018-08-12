@@ -26,7 +26,9 @@ namespace Aderant.Build.Tasks {
             get; set;
         }
 
-        public override bool Execute() {
+        protected override bool UpdateContextOnCompletion { get; set; } = false;
+
+        public override bool ExecuteTask() {
             base.Execute();
 
             Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, ContextFileName, EnvironmentVariableTarget.Process);

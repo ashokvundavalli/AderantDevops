@@ -16,11 +16,10 @@ namespace Aderant.Build.Tasks {
 
         public string[] ProjectOutputs { get; set; }
 
-        public override bool Execute() {
+        protected override bool UpdateContextOnCompletion { get; set; } = true;
+
+        public override bool ExecuteTask() {
             Context.RecordProjectOutputs(ProjectFile, ProjectOutputs, OutputPath, IntermediateDirectory);
-
-            UpdateContext();
-
             return !Log.HasLoggedErrors;
         }
     }
