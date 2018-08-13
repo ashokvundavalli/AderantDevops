@@ -146,7 +146,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                         if (artifactsExist) {
                             return;
                         }
-
                         MarkDirty(tag, project, InclusionReason.ArtifactsNotFound);
                         return;
                     }
@@ -198,28 +197,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 filteredProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty != false).ToList();
 
                 StringBuilder sb = null;
-
-                foreach (var pp in filteredProjects) {
-                    ConfiguredProject configuredProject = pp as ConfiguredProject;
-
-                    if (configuredProject != null) {
-                        if (sb == null) {
-                            sb = new StringBuilder();
-                            sb.AppendLine("Changed projects: ");
-                        }
-
-                        sb.AppendLine("* " + configuredProject.FullPath);
-
-                        if (configuredProject.InclusionDescriptor != null) {
-                            sb.AppendLine("  " + "Reason: " + configuredProject.InclusionDescriptor.Reason);
-                        }
-
-                        if (configuredProject.DirtyFiles != null) {
-                            foreach (string dirtyFile in configuredProject.DirtyFiles) {
-                                sb.AppendLine("    " + dirtyFile);
-                            }
-                        }
-                    }
+                foreach (var dependable in filteredProjects) {
+                    sb = DescribeChanges(dependable, sb);
                 }
 
                 if (sb != null) {
@@ -228,6 +207,31 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return filteredProjects;
+        }
+
+        private static StringBuilder DescribeChanges(IDependable pp, StringBuilder sb) {
+            ConfiguredProject configuredProject = pp as ConfiguredProject;
+
+            if (configuredProject != null) {
+                if (sb == null) {
+                    sb = new StringBuilder();
+                    sb.AppendLine("Changed projects: ");
+                }
+
+                sb.AppendLine("* " + configuredProject.FullPath);
+
+                if (configuredProject.InclusionDescriptor != null) {
+                    sb.AppendLine("    " + "Reason: " + configuredProject.InclusionDescriptor.Reason);
+                }
+
+                if (configuredProject.DirtyFiles != null) {
+                    foreach (string dirtyFile in configuredProject.DirtyFiles) {
+                        sb.AppendLine("    " + dirtyFile);
+                    }
+                }
+            }
+
+            return sb;
         }
 
         /// <summary>

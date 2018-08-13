@@ -15,9 +15,9 @@ namespace Aderant.Build.Tasks {
         protected override bool UpdateContextOnCompletion { get; set; } = true;
 
         public override bool ExecuteTask() {
-
             var writer = new BuildStateWriter();
             var path = writer.WriteStateFile(
+                Context.StateFile,
                 Context.GetProjectOutputs(),
                 Context.GetArtifacts(),
                 Context.SourceTreeMetadata,
@@ -46,12 +46,13 @@ namespace Aderant.Build.Tasks {
         /// <summary>
         /// Serializes the build state file
         /// </summary>
+        /// <param name="selectedStateFile">The state file selected to build with.</param>
         /// <param name="outputs">The outputs the build produced</param>
         /// <param name="artifacts">The artifacts this build produced</param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
-        public string WriteStateFile(IDictionary<string, ProjectOutputs> outputs, IDictionary<string, string[]> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
+        public string WriteStateFile(BuildStateFile selectedStateFile, IDictionary<string, ProjectOutputs> outputs, IDictionary<string, string[]> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
             string bucketId = null;
             if (metadata != null) {
                 var treeSha = metadata.GetBucket(BucketId.Current);
@@ -59,8 +60,14 @@ namespace Aderant.Build.Tasks {
             }
 
             var stateFile = new BuildStateFile {
-                TreeSha = bucketId
+                TreeSha = bucketId,
             };
+
+            if (selectedStateFile != null) {
+                stateFile.ParentId = selectedStateFile.Id;
+                stateFile.ParentBuildId = selectedStateFile.BuildId;
+                stateFile.ParentTreeSha = selectedStateFile.TreeSha;
+            }
 
             if (outputs != null) {
                 stateFile.Outputs = outputs;
@@ -90,6 +97,8 @@ namespace Aderant.Build.Tasks {
     [Serializable]
     [DataContract]
     public sealed class BuildStateFile : StateFileBase {
+        [DataMember(EmitDefaultValue = false)]
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [DataMember(EmitDefaultValue = false)]
         public string BuildId { get; set; }
@@ -114,6 +123,15 @@ namespace Aderant.Build.Tasks {
 
         [DataMember(EmitDefaultValue = false)]
         internal IDictionary<string, string[]> Artifacts { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public string ParentBuildId { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public string ParentTreeSha { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public Guid ParentId { get; set; }
     }
 
     [Serializable]
