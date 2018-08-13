@@ -45,11 +45,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProjectA\Foo.csproj">
+    <ProjectReference Include="..\Foo\Foo.csproj">
       <Project>{b807f57f-c8df-4129-9f0a-01b7f7aa2ef0}</Project>
       <Name>Foo</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ProjectC\Baz.csproj">
+    <ProjectReference Include="..\Baz\Baz.csproj">
       <Project>{709972c2-4a20-4355-ba9e-f4116aaa8769}</Project>
       <Name>Baz</Name>
     </ProjectReference>
