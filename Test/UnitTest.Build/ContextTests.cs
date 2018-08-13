@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using Aderant.Build;
@@ -63,7 +62,7 @@ namespace UnitTest.Build {
         public void RecordOutputs_removes_obj_files() {
             var context = new BuildOperationContext();
 
-            context.RecordProjectOutputs("Foo", new [] {@"obj/baz.dll"}, @"..\..\bin", "obj");
+            context.RecordProjectOutputs("Foo", new[] { @"obj/baz.dll" }, @"..\..\bin", "obj");
 
             IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
 
@@ -100,4 +99,5 @@ namespace UnitTest.Build {
             Assert.AreEqual("Z", projectOutputs.FilesWritten[5]);
         }
     }
+
 }

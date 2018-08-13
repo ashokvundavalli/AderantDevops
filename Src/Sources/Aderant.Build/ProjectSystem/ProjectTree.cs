@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Management.Automation;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
-using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
@@ -25,10 +25,10 @@ namespace Aderant.Build.ProjectSystem {
     /// </summary>
     [Export(typeof(IProjectTree))]
     internal class ProjectTree : IProjectTree, IProjectTreeInternal, ISolutionManager {
-        private readonly ILogger logger = NullLogger.Default;
 
         // Holds all projects that are applicable to the build tree
         private readonly ConcurrentBag<ConfiguredProject> loadedConfiguredProjects = new ConcurrentBag<ConfiguredProject>();
+        private readonly ILogger logger = NullLogger.Default;
 
         private ConcurrentBag<UnconfiguredProject> loadedUnconfiguredProjects;
 
@@ -38,6 +38,15 @@ namespace Aderant.Build.ProjectSystem {
         // First level cache for parsed solution information
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
+
+        public ProjectTree() {
+
+        }
+
+        [ImportingConstructor]
+        public ProjectTree(ILogger logger) {
+            this.logger = logger;
+        }
 
         [Import]
         private ExportFactory<UnconfiguredProject> UnconfiguredProjectFactory { get; set; }
@@ -58,15 +67,6 @@ namespace Aderant.Build.ProjectSystem {
 
         public ISolutionManager SolutionManager {
             get { return this; }
-        }
-
-        public ProjectTree() {
-
-        }
-
-        [ImportingConstructor]
-        public ProjectTree(ILogger logger) {
-            this.logger = logger;
         }
 
         public Task LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
@@ -177,17 +177,23 @@ namespace Aderant.Build.ProjectSystem {
             return new SolutionSearchResult(solutionFile, projectInSolution);
         }
 
-        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
-            if (excludeFilterPatterns != null) {
-                excludeFilterPatterns = excludeFilterPatterns.Select(p => Path.GetFullPath(p)).ToArray();
-            }
-
+        internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
             var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
 
             foreach (var path in files) {
                 bool skip = false;
+
                 if (excludeFilterPatterns != null) {
                     foreach (var pattern in excludeFilterPatterns) {
+                        if (WildcardPattern.ContainsWildcardCharacters(pattern)) {
+                            WildcardPattern wildcardPattern = WildcardPattern.Get(pattern, WildcardOptions.IgnoreCase);
+
+                            if (wildcardPattern.IsMatch(path)) {
+                                skip = true;
+                                break;
+                            }
+                        }
+
                         if (path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
                             skip = true;
                             break;
