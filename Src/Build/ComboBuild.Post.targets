@@ -4,7 +4,6 @@
          ToolsVersion="14.0">
 
   <Import Project="Aderant.Build.Common.targets" />
-  <Import Project="Aderant.Build.CopyToDropV2.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.IntegrationTesting.targets" />
   <Import Project="Aderant.Build.Publish.targets" />

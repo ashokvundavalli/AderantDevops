@@ -10,7 +10,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81-AC51-4885-A846-83C45FC98F1E}"
 	ProjectSection(SolutionItems) = preProject
 		Src\Build\Aderant.Build.Common.targets = Src\Build\Aderant.Build.Common.targets
-		Src\Build\Aderant.Build.CopyToDropV2.targets = Src\Build\Aderant.Build.CopyToDropV2.targets
 		Src\Build\Aderant.Build.GitLink.targets = Src\Build\Aderant.Build.GitLink.targets
 		Src\Build\Aderant.Build.IntegrationTesting.targets = Src\Build\Aderant.Build.IntegrationTesting.targets
 		Src\Build\Aderant.Build.Testing.targets = Src\Build\Aderant.Build.Testing.targets
@@ -27,7 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{A35EFF81
 		Src\Build\BuildProcess.ps1 = Src\Build\BuildProcess.ps1
 		Src\Build\Check-ForWrongReferences.ps1 = Src\Build\Check-ForWrongReferences.ps1
 		Src\Build\CopyToDrop.ps1 = Src\Build\CopyToDrop.ps1
-		Src\Build\CopyToDropV2.ps1 = Src\Build\CopyToDropV2.ps1
 		Src\Build\dir.proj = Src\Build\dir.proj
 		Src\Build\InvokeServerBuild.ps1 = Src\Build\InvokeServerBuild.ps1
 		Src\Build\LightUpDependencies.ps1 = Src\Build\LightUpDependencies.ps1

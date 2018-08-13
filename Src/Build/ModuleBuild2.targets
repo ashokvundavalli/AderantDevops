@@ -247,7 +247,6 @@ doc.Save(File);
     <CallTarget Targets="PostBuild" />
     <CallTarget Targets="SignInstallers" Condition="'$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'" />
     <CallTarget Targets="ReplicateOutputToSharedDependenciesDirectory" />
-    <CallTarget Targets="CopyToDropV2" />
     <CallTarget Targets="FinalizeBuild" />
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
