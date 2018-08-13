@@ -14,7 +14,7 @@ namespace IntegrationTest.Build.EndToEnd {
     public class EndToEndTests : MSBuildIntegrationTestBase {
 
         [TestMethod]
-        public void FullTest() {
+        public void Builds_reuse_cached_outputs() {
             base.DetailedSummary = false;
             base.LoggerVerbosity = LoggerVerbosity.Normal;
 
@@ -43,7 +43,7 @@ namespace IntegrationTest.Build.EndToEnd {
             context = CreateContext(properties);
             context.BuildMetadata.BuildId = 1;
 
-            var buildStateMetadata = new ArtifactService().GetBuildStateMetadata(new[] { context.SourceTreeMetadata.GetBucket(BucketId.Current).Id }, context.PrimaryDropLocation);
+            var buildStateMetadata = new ArtifactService(Aderant.Build.Logging.NullLogger.Default).GetBuildStateMetadata(new[] { context.SourceTreeMetadata.GetBucket(BucketId.Current).Id }, context.PrimaryDropLocation);
             context.BuildStateMetadata = buildStateMetadata;
             context.Publish(properties[WellKnownProperties.ContextFileName]);
 

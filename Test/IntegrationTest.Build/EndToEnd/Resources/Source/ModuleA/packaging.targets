@@ -4,13 +4,13 @@
   <Target Name="PackageArtifacts" Returns="@(PackageArtifact)">
      
    <ItemGroup>
-     <PackageArtifact Include="$(SolutionRoot)\**\bin\**\Bar.dll;">
+     <PackageArtifact Include="$(SolutionRoot)\Bar\bin\**\Bar.dll;">
        <ArtifactId>ModuleA</ArtifactId>
      </PackageArtifact>
-     <PackageArtifact Include="$(SolutionRoot)\**\bin\**\Baz.dll;">
+     <PackageArtifact Include="$(SolutionRoot)\Baz\bin\**\Baz.dll;">
        <ArtifactId>ModuleA</ArtifactId>
      </PackageArtifact>
-     <PackageArtifact Include="$(SolutionRoot)\**\bin\**\Foo.dll;">
+     <PackageArtifact Include="$(SolutionRoot)\Foo\bin\**\Foo.dll;">
        <ArtifactId>ModuleA</ArtifactId>
      </PackageArtifact>
    </ItemGroup>

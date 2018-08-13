@@ -70,13 +70,13 @@ namespace IntegrationTest.Build {
         }
 
         protected void WriteLogFile(string path, List<string> logFile) {
-            using (FileStream f = new FileStream(path, FileMode.Create)) {
-                var writer = new StreamWriter(f);
+            using (FileStream file = new FileStream(path, FileMode.Create)) {
+                var writer = new StreamWriter(file);
 
                 foreach (var text in logFile) {
                     writer.Write(text);
                 }
-                f.Flush(true);
+                file.Flush(true);
             }
         }
 

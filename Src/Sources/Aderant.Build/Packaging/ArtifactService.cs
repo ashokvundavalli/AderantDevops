@@ -3,19 +3,22 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
+using System.Text;
+using Aderant.Build.Logging;
 using Aderant.Build.Tasks;
 using Aderant.Build.TeamFoundation;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
         private readonly IFileSystem fileSystem;
+        private readonly ILogger logger;
 
-        public ArtifactService()
-            : this(new PhysicalFileSystem()) {
+        public ArtifactService(ILogger logger)
+            : this(logger, new PhysicalFileSystem()) {
         }
 
-        public ArtifactService(IFileSystem fileSystem) {
+        public ArtifactService(ILogger logger, IFileSystem fileSystem) {
+            this.logger = logger;
             this.fileSystem = fileSystem;
         }
 
@@ -44,8 +47,6 @@ namespace Aderant.Build.Packaging {
 
         private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
             // TODO: Slow - optimize
-            // TODO: Test for duplicates in the artifact inputs
-
             List<Tuple<string, PathSpec>> paths = new List<Tuple<string, PathSpec>>();
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
@@ -54,16 +55,18 @@ namespace Aderant.Build.Packaging {
                 foreach (var artifact in group) {
                     var files = artifact.GetFiles();
 
-                    var filesForDrop = PrepareFilesForDrop(paths, context, artifact.Id, files);
-                    if (filesForDrop != null) {
-                        buildArtifacts.Add(filesForDrop);
+                    CheckForDuplicates(artifact.Id, files);
+
+                    var copyOperations = CalculateFileCopyOperations(paths, context, artifact.Id, files);
+                    if (copyOperations != null) {
+                        buildArtifacts.Add(copyOperations);
                     }
 
                     if (context.BuildMetadata.IsPullRequest) {
-                        buildArtifacts.Add(PrepareFilesForPullRequestDrop(paths, context, artifact.Id, files));
+                        buildArtifacts.Add(CaulcateOperationsForPullRequestDrop(paths, context, artifact.Id, files));
                     } else {
                         if (!context.IsDesktopBuild) {
-                            buildArtifacts.Add(PrepareFilesForLegacyDrop(paths, context, artifact.Id, files));
+                            buildArtifacts.Add(CalculateFileOperationsForLegacyDrop(paths, context, artifact.Id, files));
                         }
                     }
                 }
@@ -80,14 +83,44 @@ namespace Aderant.Build.Packaging {
             return buildArtifacts;
         }
 
-        private BuildArtifact PrepareFilesForDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        internal void CheckForDuplicates(string artifactId, IReadOnlyCollection<PathSpec> files) {
+            var duplicates = files
+                .GroupBy(i => i.Destination, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1);
+
+            StringBuilder sb = null;
+
+            foreach (var group in duplicates) {
+                foreach (var g in group) {
+
+                    if (sb == null) {
+                        sb = new StringBuilder();
+                        sb.AppendLine($"Files with the same destination path within artifact {artifactId} exist. Refine the globbing expression or place the files into separate directories.");
+                    }
+
+                    sb.AppendLine($"Source: {g.Location} -> Destination: {g.Destination}");
+                }
+            }
+
+            if (sb != null) {
+                string errorText = sb.ToString();
+
+                // TODO: MSBuild logs exceptions with lots of detail - do we need to log before hand?
+                //logger.Error(errorText);
+
+                throw new InvalidOperationException(errorText);
+            }
+        }
+
+        private BuildArtifact CalculateFileCopyOperations(List<Tuple<string, PathSpec>> fileOps, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             var dl = context.GetDropLocation();
             if (dl != null) {
                 var container = Path.Combine(dl, artifactId);
 
                 foreach (var pathSpec in files) {
-                    copyList.Add(Tuple.Create(container, pathSpec));
+                    fileOps.Add(Tuple.Create(container, pathSpec));
                 }
+
                 return new BuildArtifact {
                     FullPath = container,
                     Name = artifactId,
@@ -97,7 +130,7 @@ namespace Aderant.Build.Packaging {
             return null;
         }
 
-        private BuildArtifact PrepareFilesForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact CaulcateOperationsForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
@@ -150,7 +183,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private BuildArtifact PrepareFilesForLegacyDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact CalculateFileOperationsForLegacyDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             string artifactName;
             var destination = CreateDropLocationPath(context.PrimaryDropLocation, artifactId, out artifactName);
 
@@ -164,20 +197,31 @@ namespace Aderant.Build.Packaging {
             };
         }
 
-        public ArtifactResolveResult Resolve(BuildOperationContext context, DependencyManifest manifest, IEnumerable<string> artifactsIds) {
+        public ArtifactResolveResult Resolve(BuildOperationContext context, string publisherName) {
             var result = new ArtifactResolveResult();
             List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
             result.Paths = paths;
 
             if (context.StateFile != null) {
-                foreach (var artifactId in artifactsIds) {
-                    string artifactFolder = Path.Combine(context.StateFile.DropLocation, artifactId);
+                BuildStateFile stateFile = context.StateFile;
 
-                    if (fileSystem.DirectoryExists(artifactFolder)) {
+                string[] artifactsIds;
+                if (stateFile.Artifacts.TryGetValue(publisherName, out artifactsIds)) {
+                    foreach (var artifactId in artifactsIds) {
+                        string artifactFolder = Path.Combine(stateFile.DropLocation, artifactId);
+
+                        bool exists = fileSystem.DirectoryExists(artifactFolder);
+
                         var spec = new ArtifactPathSpec {
                             ArtifactId = artifactId,
                             Source = artifactFolder
                         };
+
+                        if (exists) {
+                            spec.State = ArtifactState.Valid;
+                        } else {
+                            spec.State = ArtifactState.Missing;
+                        }
 
                         paths.Add(spec);
                     }
@@ -224,7 +268,7 @@ namespace Aderant.Build.Packaging {
             foreach (var entry in entries) {
                 string directoryName = Path.GetFileName(entry);
                 int version;
-                if (Int32.TryParse(directoryName,  NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
+                if (Int32.TryParse(directoryName, NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
                     numbers.Add(new KeyValuePair<int, string>(version, entry));
                 }
             }
@@ -232,7 +276,6 @@ namespace Aderant.Build.Packaging {
             return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
         }
 
-        
         public void Retrieve(ArtifactResolveResult result, string artifactDirectory, bool flatten) {
             foreach (var spec in result.Paths) {
                 string destination;
@@ -247,9 +290,17 @@ namespace Aderant.Build.Packaging {
         }
     }
 
+    internal enum ArtifactState {
+
+        Unknown,
+        Valid,
+        Missing,
+    }
+
     internal class ArtifactPathSpec {
         public string ArtifactId { get; set; }
         public string Source { get; set; }
+        public ArtifactState State { get; set; }
     }
 
     internal class ArtifactResolveResult {

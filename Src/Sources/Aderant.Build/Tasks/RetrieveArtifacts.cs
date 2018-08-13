@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
-using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Packaging;
 using Aderant.Build.VersionControl;
 using Microsoft.Build.Framework;
@@ -165,26 +162,24 @@ namespace Aderant.Build.Tasks {
     public sealed class RetrieveArtifacts : BuildOperationContextTask {
 
         [Required]
-        public string DependencyManifestFile { get; set; }
-
-        [Required]
         public string ArtifactDirectory { get; set; }
 
-        public ITaskItem[] ArtifactIds { get; set; }
-
         public bool Flatten { get; set; }
+
+        public string PublisherName { get; set; }
 
         protected override bool UpdateContextOnCompletion { get; set; } = false;
 
         public override bool ExecuteTask() {
-            if (ArtifactIds != null) {
-                var document = XDocument.Load(DependencyManifestFile);
-                var manifest = DependencyManifest.Load(document);
+            var service = new ArtifactService(Logger);
 
-                var service = new ArtifactService();
-                var result = service.Resolve(Context, manifest, ArtifactIds.Select(s => s.ItemSpec));
-                service.Retrieve(result, ArtifactDirectory, Flatten);
+            var result = service.Resolve(Context, PublisherName);
+
+            foreach (ArtifactPathSpec spec in result.Paths) {
+                Log.LogMessage("Retrieving existing artifact: " + spec.Source);
             }
+
+            service.Retrieve(result, ArtifactDirectory, Flatten);
 
             return !Log.HasLoggedErrors;
         }

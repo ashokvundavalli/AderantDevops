@@ -125,10 +125,10 @@
     </ItemGroup>
 
     <RetrieveArtifacts
-      DependencyManifestFile="%(DependencyManifests.FullPath)"
+      ContextFileName="$(ContextFileName)"
+      PublisherName="$(ModuleName)"
       ArtifactDirectory="$(BinModuleDirectory)"
-      Flatten="true"
-      ArtifactIds="@(ArtifactIds)" />
+      Flatten="true" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"

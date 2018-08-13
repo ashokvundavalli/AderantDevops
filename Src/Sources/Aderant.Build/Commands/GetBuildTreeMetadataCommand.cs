@@ -14,7 +14,7 @@ namespace Aderant.Build.Commands {
         public string DropLocation { get; set; }
 
         protected override void ProcessRecord() {
-            var service = new ArtifactService();
+            var service = new ArtifactService(Aderant.Build.Logging.NullLogger.Default);
             var metadata = service.GetBuildStateMetadata(BucketIds, DropLocation);
 
             WriteObject(metadata);

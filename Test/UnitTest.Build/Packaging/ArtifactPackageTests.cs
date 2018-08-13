@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Aderant.Build;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -43,7 +45,7 @@ namespace UnitTest.Build.Packaging {
             var bucketMock = new Mock<IBucketService>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
-            var artifactService = new ArtifactService(new Mock<IFileSystem>().Object);
+            var artifactService = new ArtifactService(NullLogger.Default, new Mock<IFileSystem>().Object);
             artifactService.FileVersion = "1.0.0.0";
             artifactService.AssemblyVersion = "9.9.9.9";
 
@@ -58,6 +60,18 @@ namespace UnitTest.Build.Packaging {
                 new[] { new ArtifactPackage("bar", specs) });
 
             Assert.IsNotNull(results);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void Double_writes_in_artifacts_are_detected() {
+            var artifactService = new ArtifactService(NullLogger.Default);
+            artifactService.CheckForDuplicates(
+                "Foo",
+                new[] {
+                    new PathSpec(@"ABC\Z.dll", "Z.dll"),
+                    new PathSpec(@"DEF\Z.dll", "Z.dll"),
+                });
         }
 
         [TestMethod]
