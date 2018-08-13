@@ -14,8 +14,6 @@ namespace Aderant.Build.Tasks {
     public sealed class ParallelBuildProjectFactory : BuildOperationContextTask {
         public ITaskItem[] ModulesInBuild { get; set; }
 
-        public string[] ExcludedModules { get; set; }
-
         public string TfvcChangeset { get; set; }
 
         public string TfvcBranch { get; set; }

@@ -10,6 +10,7 @@
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.proj;
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.rsp;
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.xml;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.ps1;
     </_DependencyAnalysisIncludePattern>
     <_DependencyAnalysisExcludePattern>
       *\obj\**;

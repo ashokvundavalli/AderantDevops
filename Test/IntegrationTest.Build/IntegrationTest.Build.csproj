@@ -108,6 +108,11 @@
     </Content>
     <Compile Include="AssemblyInitializer.cs" />
     <Compile Include="EndToEnd\EndToEndTests.cs" />
+    <Compile Include="EndToEnd\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
@@ -193,6 +198,10 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ConfiguredProjectTests\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EndToEnd\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>

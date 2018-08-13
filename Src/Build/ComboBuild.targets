@@ -72,6 +72,8 @@
 
     <ItemGroup>
       <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
+      <ExcludePaths Include="Collections" />
+      <ExcludePaths Include="GeneralLedger" />
     </ItemGroup>
 
     <!-- 
@@ -96,7 +98,6 @@
     <ParallelBuildProjectFactory
       ContextFileName="$(ContextFileName)"
       ModulesDirectory="$(SolutionRoot)"
-      ExcludedModules="Workflow.Integration.Samples;Workflow.Samples;Workflow.TeamManager;Dependencies;Packages;Applications.Marketing;Applications.DocuDraftAddIn;Web.Foundation;Web.Presentation;Web.OTG;SDK.Database;Build.Infrastructure"
       TfvcChangeset="$(TfvcChangeset)"
       TfvcBranch="$(TfvcBranch)"
       InstanceFile="$(BranchBuildProject)"
