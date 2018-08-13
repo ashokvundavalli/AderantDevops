@@ -42,7 +42,7 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void PublishArtifacts() {
-            var bucketMock = new Mock<IBucketService>();
+            var bucketMock = new Mock<IBucketPathBuilder>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
             var artifactService = new ArtifactService(NullLogger.Default, new Mock<IFileSystem>().Object);
@@ -75,13 +75,13 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
-        public void Destiniation_is_filename_by_default() {
+        public void Destination_is_filename_by_default() {
             PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", null);
             Assert.AreEqual("Baz.dll", spec.Destination);
         }
 
         [TestMethod]
-        public void Destiniation_is_respected_when_directory() {
+        public void Destination_is_respected_when_directory() {
             PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", "Foo");
             Assert.AreEqual(@"Foo\Baz.dll", spec.Destination);
         }

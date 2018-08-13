@@ -4,7 +4,7 @@ using Aderant.Build.VersionControl;
 using LibGit2Sharp;
 
 namespace Aderant.Build.Packaging {
-    internal class BucketService : IBucketService {
+    internal class BucketPathBuilder : IBucketPathBuilder {
         public virtual string GetBucketId(string path) {
             string discover = Repository.Discover(path);
 
@@ -29,7 +29,7 @@ namespace Aderant.Build.Packaging {
         }
     }
 
-    internal interface IBucketService {
+    internal interface IBucketPathBuilder {
         string GetBucketId(string path);
     }
 }

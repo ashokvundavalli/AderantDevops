@@ -237,7 +237,7 @@ namespace Aderant.Build {
         }
 
         public string GetDropLocation() {
-            return BucketService.BuildDropLocation(this);
+            return BucketPathBuilder.BuildDropLocation(this);
         }
 
         public void RecordProjectOutputs(string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {

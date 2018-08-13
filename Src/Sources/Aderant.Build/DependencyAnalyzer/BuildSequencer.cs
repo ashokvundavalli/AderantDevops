@@ -100,7 +100,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        TryReuseExistingBuild(group.Key, stateFile, tag, project);
+                        TryReuseExistingBuild(solutionDirectoryName, stateFile, tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -140,13 +140,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                             return;
                         }
 
-                        MarkDirty(tag, project, InclusionReason.NoPreviousArtifacts);
+                        MarkDirty(tag, project, InclusionReason.ArtifactsNotFound);
                         return;
                     }
                 }
             }
 
-            MarkDirty(tag, project, InclusionReason.NoExistingBuild | InclusionReason.ChangedFileDependency);
+            MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.ChangedFileDependency);
         }
 
         private static void MarkDirty(string tag, ConfiguredProject project, InclusionReason reason) {
@@ -268,8 +268,8 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal enum InclusionReason {
         None = 1,
         ChangedFileDependency = 2,
-        NoExistingBuild = 4,
-        NoPreviousArtifacts = 8
+        BuildTreeNotFound = 4,
+        ArtifactsNotFound = 8
         // 16, 32, 64
     }
 }
