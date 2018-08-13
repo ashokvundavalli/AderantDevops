@@ -291,7 +291,6 @@ namespace Aderant.Build.Packaging {
     }
 
     internal enum ArtifactState {
-
         Unknown,
         Valid,
         Missing,

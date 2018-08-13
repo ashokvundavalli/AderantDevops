@@ -257,6 +257,7 @@ namespace Aderant.Build {
                 outputs[projectFile] = new ProjectOutputs {
                     FilesWritten = RemoveIntermediateObjects(projectOutputs, intermediateDirectory),
                     OutputPath = outputPath,
+                    Origin = "ThisBuild"
                 };
             } else {
                 ThrowDoubleWrite();
@@ -312,6 +313,9 @@ namespace Aderant.Build {
 
         [DataMember]
         public string OutputPath { get; set; }
+
+        [DataMember]
+        public string Origin { get; set; }
     }
 
     [Serializable]

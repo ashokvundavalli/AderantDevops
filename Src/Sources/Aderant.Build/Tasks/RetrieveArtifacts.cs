@@ -70,6 +70,10 @@ namespace Aderant.Build.Tasks {
             }
 
             if (outputs != null) {
+                if (selectedStateFile != null) {
+                    MergeExistingOutputs(selectedStateFile.BuildId, selectedStateFile.Outputs, outputs);
+                }
+
                 stateFile.Outputs = outputs;
             }
 
@@ -91,6 +95,19 @@ namespace Aderant.Build.Tasks {
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
 
             return path;
+        }
+
+        private void MergeExistingOutputs(string buildId, IDictionary<string, ProjectOutputs> oldOutput, IDictionary<string, ProjectOutputs> newOutput) {
+            // TODO: We don't want to keep re-adding deleted stuff... how to handle?
+            foreach (var projectOutputs in oldOutput) {
+                if (!newOutput.ContainsKey(projectOutputs.Key)) {
+                    var outputs = projectOutputs.Value;
+                    outputs.Origin = buildId;
+
+                    newOutput[projectOutputs.Key] = outputs;
+                    
+                }
+            }
         }
     }
 

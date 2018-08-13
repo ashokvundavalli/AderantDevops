@@ -150,6 +150,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                         return;
                     }
                 }
+
+                MarkDirty(tag, project, InclusionReason.ProjectNotFound);
+                return;
             }
 
             MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.ChangedFileDependency);
@@ -280,7 +283,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         None = 1,
         ChangedFileDependency = 2,
         BuildTreeNotFound = 4,
-        ArtifactsNotFound = 8
-        // 16, 32, 64
+        ArtifactsNotFound = 8,
+        ProjectNotFound = 16
     }
 }
