@@ -79,28 +79,28 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var grouping = projects.GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
 
-            foreach (var level in grouping) {
-                List<ConfiguredProject> dirtyProjects = level.Where(g => g.IsDirty).ToList();
+            foreach (var group in grouping) {
+                List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
 
                 if (AddNodes(dirtyProjects, isPullRequest, isDesktopBuild)) {
                     string tag = string.Join(", ", dirtyProjects.Select(s => s.Id));
 
                     IArtifact initializeNode;
-                    string solutionDirectoryName = Path.GetFileName(level.Key);
+                    string solutionDirectoryName = Path.GetFileName(group.Key);
 
                     // Create a new node that represents the start of a directory
-                    graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, level.Key, false));
+                    graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, group.Key, false));
 
                     // Create a new node that represents the completion of a directory
-                    DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, level.Key, true);
+                    DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, group.Key, true);
 
                     graph.Add(completionNode);
                     completionNode.AddResolvedDependency(null, initializeNode);
 
                     foreach (var project in projects
-                        .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), level.Key, StringComparison.OrdinalIgnoreCase))) {
+                        .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        TryReuseBuild(stateFile, tag, project);
+                        TryReuseExistingBuild(group.Key, stateFile, tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -126,24 +126,35 @@ namespace Aderant.Build.DependencyAnalyzer {
             return true;
         }
 
-        private static void TryReuseBuild(BuildStateFile stateFile, string tag, ConfiguredProject project) {
+        private static void TryReuseExistingBuild(string artifactPublisher, BuildStateFile stateFile, string tag, ConfiguredProject project) {
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
 
                 foreach (var fileInTree in stateFile.Outputs) {
+                    // The selected build cache contained this project, next check the inputs/outputs
                     if (projectFullPath.IndexOf(fileInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        // The selected build cache contained this project so we don't need to mark it dirty
+
+                        string[] artifacts;
+                        if (stateFile.Artifacts.TryGetValue(artifactPublisher, out artifacts)) {
+                            return;
+                        }
+
+                        MarkDirty(tag, project, InclusionReason.NoPreviousArtifacts);
                         return;
                     }
                 }
             }
 
+            MarkDirty(tag, project, InclusionReason.NoExistingBuild | InclusionReason.ChangedFileDependency);
+        }
+
+        private static void MarkDirty(string tag, ConfiguredProject project, InclusionReason reason) {
             // TODO: Because we can't build *just* the projects that have changed, mark anything in this container as dirty to trigger a build for it
             project.IsDirty = true;
             project.InclusionDescriptor = new InclusionDescriptor {
                 Tag = tag,
-                Reason = InclusionReason.ChangedFileDependency
+                Reason = reason
             };
         }
 
@@ -253,8 +264,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
     }
 
+    [Flags]
     internal enum InclusionReason {
-        Unknown,
-        ChangedFileDependency
+        None = 1,
+        ChangedFileDependency = 2,
+        NoExistingBuild = 4,
+        NoPreviousArtifacts = 8
+        // 16, 32, 64
     }
 }
