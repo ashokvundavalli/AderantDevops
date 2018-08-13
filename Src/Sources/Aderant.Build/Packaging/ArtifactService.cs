@@ -63,7 +63,7 @@ namespace Aderant.Build.Packaging {
                     }
 
                     if (context.BuildMetadata.IsPullRequest) {
-                        buildArtifacts.Add(CaulcateOperationsForPullRequestDrop(paths, context, artifact.Id, files));
+                        buildArtifacts.Add(CalculateOperationsForPullRequestDrop(paths, context, artifact.Id, files));
                     } else {
                         if (!context.IsDesktopBuild) {
                             buildArtifacts.Add(CalculateFileOperationsForLegacyDrop(paths, context, artifact.Id, files));
@@ -130,7 +130,7 @@ namespace Aderant.Build.Packaging {
             return null;
         }
 
-        private BuildArtifact CaulcateOperationsForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact CalculateOperationsForPullRequestDrop(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             ErrorUtilities.IsNotNull(context.PullRequestDropLocation, nameof(context.PullRequestDropLocation));
             ErrorUtilities.IsNotNull(context.BuildMetadata.PullRequest.Id, nameof(context.BuildMetadata.PullRequest.Id));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
