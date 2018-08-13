@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -123,6 +124,8 @@ namespace Aderant.Build.Tasks {
 
             var analysisContext = new AnalysisContext {
                 ExcludePaths = paths
+                    .Select(PathUtility.GetFullPath)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToList()
             };
 
             Log.LogMessage("Excluding paths: " + string.Join("|", paths));

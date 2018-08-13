@@ -112,5 +112,16 @@ namespace Aderant.Build {
         public static string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories, bool considerDirectories) {
             return new PhysicalFileSystem().GetDirectoryNameOfFileAbove(startingDirectory, fileName, ceilingDirectories, considerDirectories);
         }
+
+        /// <summary>
+        /// Gets the resolved path if the input is rooted
+        /// </summary>
+        public static string GetFullPath(string path) {
+            ErrorUtilities.IsNotNull(path, nameof(path));
+            if (Path.IsPathRooted(path)) {
+                return Path.GetFullPath(path);
+            }
+            return path;
+        }
     }
 }
