@@ -99,16 +99,21 @@ namespace Aderant.Build.VersionControl {
                     oldCommit = GetTip(toBranch, repository);
                 }
 
-                if (newCommit != null && oldCommit != null) {
-                    var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
-                    info.Changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
+
+                if (newCommit != null) {
                     bucketKeys.Add(new BucketId(newCommit.Tree.Sha, BucketId.Current));
-                    bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
 
-                    Commit commit = oldCommit.Parents.FirstOrDefault();
-                    if (commit != null) {
-                        bucketKeys.Add(new BucketId(commit.Tree.Sha, BucketId.ParentsParent));
+                    if (oldCommit != null) {
+                        var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
+                        info.Changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
+
+                        bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
+
+                        Commit parentsParent = oldCommit.Parents.FirstOrDefault();
+                        if (parentsParent != null) {
+                            bucketKeys.Add(new BucketId(parentsParent.Tree.Sha, BucketId.ParentsParent));
+                        }
                     }
 
                     info.BucketIds = bucketKeys;

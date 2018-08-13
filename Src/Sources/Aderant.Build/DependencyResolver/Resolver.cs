@@ -63,6 +63,12 @@ namespace Aderant.Build.DependencyResolver {
                 return;
             }
 
+            using (var process = System.Diagnostics.Process.GetCurrentProcess()) {
+                if (string.Equals(process.ProcessName, "testhost.x86")) {
+                    return;
+                }
+            }
+
             ExpertModule module = null;
 
             if (resolverRequest.ModuleFactory != null) {

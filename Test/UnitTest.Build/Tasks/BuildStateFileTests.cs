@@ -52,7 +52,6 @@ namespace UnitTest.Build.Tasks {
             var writer = new BuildStateWriter(fs.Object);
 
             writer.WriteStateFile(
-                string.Empty,
                 null,
                 null,
                 null,

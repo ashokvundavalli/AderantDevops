@@ -137,7 +137,6 @@
       DropPath="$(TfvcDropLocation)"
       ModulesInBuild="@(ModulesInBuild)" />
     
-    
     <Message Text="Finished GetDependencies" />
 
     <ItemGroup>

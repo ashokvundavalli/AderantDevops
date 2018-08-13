@@ -62,7 +62,9 @@ namespace Aderant.Build.Packaging {
                     if (context.BuildMetadata.IsPullRequest) {
                         buildArtifacts.Add(PrepareFilesForPullRequestDrop(paths, context, artifact.Id, files));
                     } else {
-                        buildArtifacts.Add(PrepareFilesForLegacyDrop(paths, context, artifact.Id, files));
+                        if (!context.IsDesktopBuild) {
+                            buildArtifacts.Add(PrepareFilesForLegacyDrop(paths, context, artifact.Id, files));
+                        }
                     }
                 }
             }

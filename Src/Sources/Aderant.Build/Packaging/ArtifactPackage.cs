@@ -30,18 +30,21 @@ namespace Aderant.Build.Packaging {
         public static PathSpec CreatePathSpecification(string solutionRoot, string[] trimPaths, string fullPath, string targetPath) {
             string outputRelativePath = null;
 
-            foreach (var path in trimPaths) {
-                if (fullPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)) {
-                    outputRelativePath = fullPath.Remove(0, path.Length);
-                    break;
+            if (trimPaths != null) {
+                foreach (var path in trimPaths) {
+                    if (fullPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)) {
+                        outputRelativePath = fullPath.Remove(0, path.Length);
+                        break;
+                    }
                 }
             }
 
             if (outputRelativePath == null) {
-                throw new InvalidOperationException(string.Format("Unable to construct an output relative path from {0} to {1}", solutionRoot, fullPath));
+                // TODO: Complain?
+                //throw new InvalidOperationException(string.Format("Unable to construct an output relative path from {0} to {1}", solutionRoot, fullPath));
             }
 
-            return new PathSpec(fullPath, Path.Combine(targetPath ?? string.Empty, outputRelativePath));
+            return new PathSpec(fullPath, Path.Combine(targetPath ?? string.Empty, outputRelativePath ?? Path.GetFileName(fullPath)));
         }
     }
 }

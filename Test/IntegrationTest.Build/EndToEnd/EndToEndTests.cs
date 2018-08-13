@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
 using Aderant.Build;
-using Aderant.Build.Ipc;
+using Aderant.Build.Packaging;
 using Aderant.Build.VersionControl;
+using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
@@ -15,30 +15,57 @@ namespace IntegrationTest.Build.EndToEnd {
 
         [TestMethod]
         public void FullTest() {
-            AddFilesToNewGitRepo(DeploymentItemsDirectory);
-            
+            base.DetailedSummary = false;
+            base.LoggerVerbosity = LoggerVerbosity.Normal;
 
-            var context = new BuildOperationContext();
-            context.BuildMetadata = new BuildMetadata();
-            context.SourceTreeMetadata = GetSourceTreeMetadata();
+            AddFilesToNewGitRepository(DeploymentItemsDirectory);
 
             var properties = new Dictionary<string, string> {
                 { "BuildSystemInTestMode", bool.TrueString },
                 { "BuildScriptsDirectory", TestContext.DeploymentDirectory + "\\" },
                 { "CompileBuildSystem", bool.FalseString },
-                { "ProductManifestPath", Path.Combine(DeploymentItemsDirectory, "Expertmanifest.xml") },
-                { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) }
+                { "ProductManifestPath", Path.Combine(DeploymentItemsDirectory, "ExpertManifest.xml") },
+                { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) },
+                { WellKnownProperties.ContextFileName, TestContext.TestName },
             };
+
+            var context = CreateContext(properties);
+            var contextFile = context.Publish(properties[WellKnownProperties.ContextFileName]);
+
+            // Simulate first build
+            RunTarget("EndToEnd", properties);
+
+            var logFile = base.LogFile;
+
+            context = contextFile.GetBuildOperationContext();
+
+            // Simulate first build
+            context = CreateContext(properties);
+            context.BuildMetadata.BuildId = 1;
+
+            var buildStateMetadata = new ArtifactService().GetBuildStateMetadata(new[] { context.SourceTreeMetadata.GetBucket(BucketId.Current).Id }, context.PrimaryDropLocation);
+            context.BuildStateMetadata = buildStateMetadata;
+            context.Publish(properties[WellKnownProperties.ContextFileName]);
+
+            // Run second build
+            RunTarget("EndToEnd", properties);
+            var logFile1 = base.LogFile;
+
+            WriteLogFile(@"C:\Temp\lf.log", logFile);
+            WriteLogFile(@"C:\Temp\lf1.log", logFile1);
+        }
+
+        private BuildOperationContext CreateContext(Dictionary<string, string> properties) {
+            var context = new BuildOperationContext();
+            context.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, "_drop");
+            context.BuildMetadata = new BuildMetadata();
+            context.SourceTreeMetadata = GetSourceTreeMetadata();
+
 
             context.BuildScriptsDirectory = properties["BuildScriptsDirectory"];
             context.BuildSystemDirectory = Path.Combine(TestContext.DeploymentDirectory, @"..\..\");
 
-            using (var process = Process.GetCurrentProcess()) {
-                var name = MemoryMappedFileReaderWriter.WriteData("TestContext" + process.Id, context);
-                properties[WellKnownProperties.ContextFileName] = name;
-            }
-
-            RunTarget("EndToEnd", properties);
+            return context;
         }
 
         private SourceTreeMetadata GetSourceTreeMetadata() {
@@ -46,7 +73,7 @@ namespace IntegrationTest.Build.EndToEnd {
             return versionControl.GetMetadata(DeploymentItemsDirectory, "", "");
         }
 
-        private void AddFilesToNewGitRepo(string testContextDeploymentDirectory) {
+        private void AddFilesToNewGitRepository(string testContextDeploymentDirectory) {
             using (var ps = PowerShell.Create()) {
                 ps.AddScript($"cd {testContextDeploymentDirectory.Quote()}");
                 ps.AddScript(Resources.CreateRepo);

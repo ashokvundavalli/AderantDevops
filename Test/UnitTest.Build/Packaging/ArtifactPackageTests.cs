@@ -59,5 +59,17 @@ namespace UnitTest.Build.Packaging {
 
             Assert.IsNotNull(results);
         }
+
+        [TestMethod]
+        public void Destiniation_is_filename_by_default() {
+            PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", null);
+            Assert.AreEqual("Baz.dll", spec.Destination);
+        }
+
+        [TestMethod]
+        public void Destiniation_is_respected_when_directory() {
+            PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", "Foo");
+            Assert.AreEqual(@"Foo\Baz.dll", spec.Destination);
+        }
     }
 }

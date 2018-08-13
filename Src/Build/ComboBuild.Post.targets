@@ -219,5 +219,6 @@
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />
+  <Import Project="$(SolutionDirectoryPath)packaging.targets" Condition="Exists('$(SolutionDirectoryPath)packaging.targets')" />
 
 </Project>

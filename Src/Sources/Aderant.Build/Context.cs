@@ -155,6 +155,8 @@ namespace Aderant.Build {
             set { stateFile = value; }
         }
 
+        public string ThisBuildStateFilePath { get; set; }
+
         /// <summary>
         /// Creates a new instance of T.
         /// </summary>

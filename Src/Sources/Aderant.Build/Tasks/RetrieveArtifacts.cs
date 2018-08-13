@@ -15,21 +15,19 @@ namespace Aderant.Build.Tasks {
 
     public class WriteBuildStateFile : BuildOperationContextTask {
 
-        protected override bool UpdateContextOnCompletion { get; set; } = false;
+        protected override bool UpdateContextOnCompletion { get; set; } = true;
 
         public override bool ExecuteTask() {
-            if (Context.BuildMetadata?.BuildSourcesDirectory != null) {
-                string sourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory;
 
-                var writer = new BuildStateWriter();
-                writer.WriteStateFile(
-                    sourcesDirectory,
-                    Context.GetProjectOutputs(),
-                    Context.GetArtifacts(),
-                    Context.SourceTreeMetadata,
-                    Context.BuildMetadata,
-                    Path.Combine(Context.GetDropLocation(), BuildStateWriter.DefaultFileName));
-            }
+            var writer = new BuildStateWriter();
+            var path = writer.WriteStateFile(
+                Context.GetProjectOutputs(),
+                Context.GetArtifacts(),
+                Context.SourceTreeMetadata,
+                Context.BuildMetadata,
+                Path.Combine(Context.GetDropLocation(), BuildStateWriter.DefaultFileName));
+
+            Context.ThisBuildStateFilePath = path;
 
             return !Log.HasLoggedErrors;
         }
@@ -51,15 +49,12 @@ namespace Aderant.Build.Tasks {
         /// <summary>
         /// Serializes the build state file
         /// </summary>
-        /// <param name="sourcesDirectory">The ultimate root directory of the source</param>
         /// <param name="outputs">The outputs the build produced</param>
         /// <param name="artifacts">The artifacts this build produced</param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
-        public void WriteStateFile(string sourcesDirectory, IDictionary<string, ProjectOutputs> outputs, IDictionary<string, string[]> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
-            ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
-
+        public string WriteStateFile(IDictionary<string, ProjectOutputs> outputs, IDictionary<string, string[]> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
             string bucketId = null;
             if (metadata != null) {
                 var treeSha = metadata.GetBucket(BucketId.Current);
@@ -90,6 +85,8 @@ namespace Aderant.Build.Tasks {
             }
 
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
+
+            return path;
         }
     }
 
