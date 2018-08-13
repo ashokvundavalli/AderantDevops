@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks.BuildTimeTests {
     [TestClass]
-    public class IntegrationTestingTests : BuildTaskTestBase {
+    public class IntegrationTestingTests : MSBuildIntegrationTestBase {
         private string moduleBuildTempDirectory;
         private static readonly string time = "2018";
         private readonly string databaseName = string.Concat("Expert_", time);

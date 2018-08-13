@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build.Tasks.RunAnalyzer {
     [TestClass]
     [DeploymentItem("Aderant.Build.Analyzer.dll")]
-    public class RunAnalyzerTests : BuildTaskTestBase {
+    public class RunAnalyzerTests : MSBuildIntegrationTestBase {
 
         [ClassInitialize]
         public static void ClasInitialize(TestContext context) {

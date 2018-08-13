@@ -113,6 +113,7 @@
 
     <PropertyGroup>
       <ProjectToPeek>$(SolutionDirectoryPath)Build\TFSBuild.proj</ProjectToPeek>
+      <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
     </PropertyGroup>
 
     <PackageArtifactReader ProjectFile="$(ProjectToPeek)">

@@ -114,8 +114,14 @@ namespace Aderant.Build.Tasks {
         }
 
         private AnalysisContext CreateAnalysisContext() {
+            ErrorUtilities.IsNotNull(Context.BuildSystemDirectory, nameof(Context.BuildSystemDirectory));
+
             var paths = ExcludePaths.ToList();
-            paths.Add(Context.BuildSystemDirectory);
+
+            if (!Context.BuildSystemDirectory.Contains("TestResults")) {
+                paths.Add(Context.BuildSystemDirectory);
+            }
+            
             paths.Add(".git");
             paths.Add("$");
 

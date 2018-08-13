@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks.RetrieveArtifacts {
     [TestClass]
-    public class RetrieveArtifactsTests : BuildTaskTestBase {
+    public class RetrieveArtifactsTests : MSBuildIntegrationTestBase {
         [TestMethod]
         public void RetrieveArtifactsTest() {
             BuildOperationContextTask.InternalContext = new BuildOperationContext();

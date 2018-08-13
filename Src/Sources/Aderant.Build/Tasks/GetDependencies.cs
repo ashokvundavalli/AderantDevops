@@ -6,9 +6,10 @@ using Aderant.Build.DependencyResolver;
 using Aderant.Build.DependencyResolver.Resolvers;
 using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public class GetDependencies : Microsoft.Build.Utilities.Task, ICancelableTask {
+    public class GetDependencies : Task, ICancelableTask {
         private CancellationTokenSource cancellationToken = new CancellationTokenSource();
 
         [Required]
@@ -55,48 +56,36 @@ namespace Aderant.Build.Tasks {
 
             LogParameters();
 
-            Stopwatch sw = Stopwatch.StartNew();
+            var logger = new BuildTaskLogger(this);
 
-            //TODO: ??? temporary disabled as this conceals error
-            //try {
-                var logger = new BuildTaskLogger(this);
+            ResolverRequest request = new ResolverRequest(logger, ModulesRootPath);
 
-                ResolverRequest request = new ResolverRequest(logger, ModulesRootPath);
-              
+            if (ProductManifest != null) {
                 ExpertManifest productManifest = ExpertManifest.Load(ProductManifest);
                 productManifest.ModulesDirectory = ModulesRootPath;
                 request.ModuleFactory = productManifest;
+            }
 
-                request.SetDependenciesDirectory(DependenciesDirectory);
-                request.DirectoryContext = BuildType;
+            request.SetDependenciesDirectory(DependenciesDirectory);
+            request.DirectoryContext = BuildType;
 
-                if (!string.IsNullOrEmpty(ModuleName)) {
-                    request.AddModule(ModuleName);
+            if (!string.IsNullOrEmpty(ModuleName)) {
+                request.AddModule(ModuleName);
+            }
+
+            if (ModulesInBuild != null) {
+                foreach (ITaskItem module in ModulesInBuild) {
+                    request.AddModule(module.ItemSpec, true);
                 }
+            }
 
-                if (ModulesInBuild != null) {
-                    foreach (ITaskItem module in ModulesInBuild) {
-                        request.AddModule(module.ItemSpec, true);
-                    }
-                }
+            ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath));
+            moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
-                ExpertModuleResolver moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath));
-                moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
+            Resolver resolver = new Resolver(logger, moduleResolver, new NupkgResolver());
+            resolver.ResolveDependencies(request, cancellationToken.Token);
 
-                Resolver resolver = new Resolver(logger, moduleResolver, new NupkgResolver());
-                resolver.ResolveDependencies(request, cancellationToken.Token);
-
-                return !Log.HasLoggedErrors;
-            //} finally {
-            //    sw.Stop();
-            //    Log.LogMessage("Get dependencies completed in " + sw.Elapsed.ToString("mm\\:ss\\.ff"), null);
-            //}
-        }
-
-        private void LogParameters() {
-            Log.LogMessage(MessageImportance.Normal, "ModulesRootPath: " + ModulesRootPath, null);
-            Log.LogMessage(MessageImportance.Normal, "DropPath: " + DropPath, null);
-            Log.LogMessage(MessageImportance.Normal, "ProductManifest: " + ProductManifest, null);
+            return !Log.HasLoggedErrors;
         }
 
         /// <summary>
@@ -107,6 +96,12 @@ namespace Aderant.Build.Tasks {
                 // Signal the cancellation token that we want to abort the async task
                 cancellationToken.Cancel();
             }
+        }
+
+        private void LogParameters() {
+            Log.LogMessage(MessageImportance.Normal, "ModulesRootPath: " + ModulesRootPath, null);
+            Log.LogMessage(MessageImportance.Normal, "DropPath: " + DropPath, null);
+            Log.LogMessage(MessageImportance.Normal, "ProductManifest: " + ProductManifest, null);
         }
     }
 }

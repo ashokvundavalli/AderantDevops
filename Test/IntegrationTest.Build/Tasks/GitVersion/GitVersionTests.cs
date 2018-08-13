@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks.GitVersion {
     [TestClass]
-    public class GitVersionTests : BuildTaskTestBase {
+    public class GitVersionTests : MSBuildIntegrationTestBase {
         [TestInitialize]
         public void NativeLibraryAvailable() {
             var foo = typeof(Aderant.Build.Tasks.GitVersion);

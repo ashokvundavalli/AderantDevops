@@ -6,20 +6,20 @@ using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks {
+namespace IntegrationTest.Build {
     [TestClass]
     [DeploymentItem("IntegrationTest.targets")]
-    [DeploymentItem("SystemUnderTest\\")]
+    [DeploymentItem("TestDeployment\\")]
     [DeploymentItem("Tasks\\", "Tasks\\")]
-    public abstract class BuildTaskTestBase {
-        private Project project;
+    [DeploymentItem("EndToEnd\\", "EndToEnd\\")]
+    public abstract class MSBuildIntegrationTestBase {
 
         public TestContext TestContext { get; set; }
 
         public InternalBuildLogger Logger { get; set; }
 
         /// <summary>
-        /// Runs a target in IntegrationTest.targets
+        /// Runs a target in your targets
         /// </summary>
         protected void RunTarget(string targetName, IDictionary<string, string> properties = null) {
             if (properties == null) {
@@ -29,7 +29,8 @@ namespace IntegrationTest.Build.Tasks {
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
                 { "NoMSBuildCommunityTasks", "true" },
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
-                { "BuildInfrastructureDirectory", Path.Combine(TestContext.DeploymentDirectory, @"..\..\") /*TODO: Remove the need for this*/ }
+                //{ "BuildInfrastructureDirectory", Path.Combine(TestContext.DeploymentDirectory, @"..\..\") /*TODO: Remove the need for this*/ }
+                { "TestContextDeploymentDirectory", Path.Combine(TestContext.DeploymentDirectory) }
             };
 
             using (ProjectCollection collection = new ProjectCollection(globalProperties)) {

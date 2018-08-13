@@ -17,7 +17,7 @@
   <ItemGroup>
       <Content Include="$(IncludePattern)" Exclude="$(ExcludePattern)">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-          <Link>SystemUnderTest\%(RecursiveDir)%(Filename)%(Extension)</Link>
+          <Link>TestDeployment\%(RecursiveDir)%(Filename)%(Extension)</Link>
           <Visible>true</Visible>
       </Content>
   </ItemGroup>

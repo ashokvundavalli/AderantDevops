@@ -10,8 +10,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace IntegrationTest.Build.VersionControl {
 
     [TestClass]
-    [DeploymentItem(@"SystemUnderTest\x86\", "x86")]
-    [DeploymentItem(@"SystemUnderTest\x64\", "x64")]
+    [DeploymentItem(@"TestDeployment\x86\", "x86")]
+    [DeploymentItem(@"TestDeployment\x64\", "x64")]
     public class GitVersionTestBase {
         private static Collection<PSObject> results;
 

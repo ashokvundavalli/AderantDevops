@@ -7,12 +7,15 @@
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.csproj;
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.sln;
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.tt;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.proj;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.rsp;
+      $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.xml;
     </_DependencyAnalysisIncludePattern>
     <_DependencyAnalysisExcludePattern>
       *\obj\**;
       *\bin\**;
-      SystemUnderTest\**
-      </_DependencyAnalysisExcludePattern>
+      TestDeployment\**
+    </_DependencyAnalysisExcludePattern>
   </PropertyGroup>
   
   <ItemGroup>

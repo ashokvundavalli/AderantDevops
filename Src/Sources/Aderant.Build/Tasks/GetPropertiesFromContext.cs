@@ -78,16 +78,18 @@ namespace Aderant.Build.Tasks {
         }
 
         private void SetFlavor() {
-            if (!string.IsNullOrEmpty(Context.BuildMetadata.Flavor)) {
-                BuildFlavor = Context.BuildMetadata.Flavor;
-            } else {
-                if (Context.Switches.Release) {
-                    BuildFlavor = "Release";
+            if (Context.BuildMetadata != null) {
+                if (!string.IsNullOrEmpty(Context.BuildMetadata.Flavor)) {
+                    BuildFlavor = Context.BuildMetadata.Flavor;
                 } else {
-                    BuildFlavor = "Debug";
-                }
+                    if (Context.Switches.Release) {
+                        BuildFlavor = "Release";
+                    } else {
+                        BuildFlavor = "Debug";
+                    }
 
-                Context.BuildMetadata.Flavor = BuildFlavor;
+                    Context.BuildMetadata.Flavor = BuildFlavor;
+                }
             }
         }
     }

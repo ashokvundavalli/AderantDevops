@@ -354,6 +354,7 @@
                       Lines="$(MSBuildProjectFullPath);@(FileWrites)" Overwrite="true" />-->
 
     <TrackProjectOutputs
+      ContextFileName="$(ContextFileName)"
       ProjectFile="$(MSBuildProjectFullPath)"
       IntermediateDirectory="$(IntermediateOutputPath)"
       OutputPath="$(OutDir)"

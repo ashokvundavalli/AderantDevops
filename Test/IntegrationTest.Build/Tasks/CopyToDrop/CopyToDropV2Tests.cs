@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.Tasks.CopyToDrop {
     [TestClass]
-    public class CopyToDropV2Tests : BuildTaskTestBase {
+    public class CopyToDropV2Tests : MSBuildIntegrationTestBase {
         [TestInitialize]
         public void TestInitialize() {
             tempDropRoot = Path.Combine(TestContext.DeploymentDirectory, MethodBase.GetCurrentMethod().DeclaringType.Name);

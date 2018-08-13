@@ -60,13 +60,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             // TODO: This needs way more validation
             var buildStateMetadata = context.BuildStateMetadata;
 
-            foreach (var bucketId in context.SourceTreeMetadata.BucketIds) {
-                BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.TreeSha, bucketId.Id));
+            if (context.SourceTreeMetadata != null)
+                foreach (var bucketId in context.SourceTreeMetadata.BucketIds) {
+                    BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.TreeSha, bucketId.Id));
 
-                if (stateFile != null) {
-                    return stateFile;
+                    if (stateFile != null) {
+                        return stateFile;
+                    }
                 }
-            }
 
             return null;
         }
