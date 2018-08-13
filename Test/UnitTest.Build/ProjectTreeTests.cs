@@ -70,7 +70,7 @@ namespace UnitTest.Build {
             var results = tree.GrovelForFiles(
                 "",
                 new[] {
-                    @"C:\Foo\Bar\..\"
+                    @"C:\Foo\Bar\..\..\"
                 }).ToList();
 
             Assert.AreEqual(0, results.Count);

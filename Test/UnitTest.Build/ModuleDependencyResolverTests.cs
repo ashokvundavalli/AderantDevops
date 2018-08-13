@@ -138,27 +138,6 @@ namespace UnitTest.Build {
             Assert.AreEqual("Module1", items[1].Name);
             Assert.AreEqual("Module2", items[2].Name);
         }
-
-        [TestMethod]
-        public void Build_path_with_refspec() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "refs/heads/master", "0001", null);
-
-            Assert.AreEqual(@"Foo\stable\master\0001\default", path);
-        }
-
-        [TestMethod]
-        public void Build_path_with_refspec_leading_slash() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "/refs/heads/master", "0001", null);
-
-            Assert.AreEqual(@"Foo\stable\master\0001\default", path);
-        }
-
-        [TestMethod]
-        public void Build_path_with_tfvc_refspec() {
-            var path = FolderDependencySystem.BuildDropPath("Foo", "stable", "$/ExpertSuite/dev/vnext", "0001", null);
-
-            Assert.AreEqual(@"Foo\stable\dev.vnext\0001\default", path);
-        }
     }
 
     internal class TestExpertManifest : ExpertManifest {

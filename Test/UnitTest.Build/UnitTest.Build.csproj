@@ -141,7 +141,6 @@
     <Compile Include="Tasks\PackageArtifactReaderTests.cs" />
     <Compile Include="Tasks\SeedPackagePackingTest.cs" />
     <Compile Include="Tasks\CoberturaReportConverterTests.cs" />
-    <Compile Include="Tasks\FolderDependencySystemTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />
     <Compile Include="Tasks\ProjectConformityCheckTests.cs" />
     <Compile Include="Tasks\ReplaceProjectReferencesTests.cs" />
