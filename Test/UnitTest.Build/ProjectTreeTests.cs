@@ -30,5 +30,28 @@ namespace UnitTest.Build {
 
             Assert.AreEqual(1, results.Count);
         }
+
+        [TestMethod]
+        public void GrovelForFiles_wildcard() {
+            var fsMock = new Mock<IFileSystem2>();
+            fsMock.Setup(s => s.GetFiles(It.IsAny<string>(), "*.csproj", true)).Returns(
+                new[] {
+                    @"Foo\Bar\Baz.csproj",
+                    @"Baz\Daz\Maz.csproj",
+                });
+
+            var services = new ProjectServices { FileSystem = fsMock.Object };
+
+            var tree = new ProjectTree();
+            tree.Services = services;
+
+            var results = tree.GrovelForFiles(
+                "",
+                new[] {
+                    "*d*"
+                }).ToList();
+
+            Assert.AreEqual(1, results.Count);
+        }
     }
 }

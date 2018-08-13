@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -45,7 +43,7 @@ namespace Aderant.Build.Tasks {
         /// </summary>
         [Required]
         public string BeforeProjectFile { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the after project file.
         /// That is the file that specifies epilogue tasks to execute for each solution.
@@ -75,7 +73,7 @@ namespace Aderant.Build.Tasks {
         private void ExecuteCore(BuildOperationContext context) {
             // TODO: keep this shim?
             context.BuildRoot = new DirectoryInfo(ModulesDirectory);
-     
+
             if (context.Switches.Resume) {
                 if (File.Exists(InstanceFile)) {
                     return;
@@ -83,7 +81,7 @@ namespace Aderant.Build.Tasks {
             }
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
-            
+
             var jobFiles = new OrchestrationFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
@@ -94,7 +92,7 @@ namespace Aderant.Build.Tasks {
 
             var analysisContext = CreateAnalysisContext();
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
-            
+
             var project = projectTree.ComputeBuildSequence(context, analysisContext, jobFiles).Result;
             var element = project.CreateXml();
 
@@ -119,18 +117,21 @@ namespace Aderant.Build.Tasks {
             if (!Context.BuildSystemDirectory.Contains("TestResults")) {
                 paths.Add(Context.BuildSystemDirectory);
             }
-            
+
             paths.Add(".git");
             paths.Add("$");
 
             var analysisContext = new AnalysisContext {
                 ExcludePaths = paths
             };
+
+            Log.LogMessage("Excluding paths: " + string.Join("|", paths));
+
             return analysisContext;
         }
     }
 
-    internal class AnalysisContext  {
+    internal class AnalysisContext {
         public IReadOnlyCollection<string> ExcludePaths { get; set; }
     }
 
