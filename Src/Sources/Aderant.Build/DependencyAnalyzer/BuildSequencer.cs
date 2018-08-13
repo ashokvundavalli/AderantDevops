@@ -134,8 +134,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var fileInTree in stateFile.Outputs) {
                     // The selected build cache contained this project, next check the inputs/outputs
                     if (projectFullPath.IndexOf(fileInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        System.Diagnostics.Debugger.Launch();
-
+                        
                         string[] artifacts;
                         if (stateFile.Artifacts.TryGetValue(artifactPublisher, out artifacts)) {
                             return;
@@ -202,10 +201,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                             sb.AppendLine("Changed projects: ");
                         }
 
-                        sb.AppendLine("* " + configuredProject.Id);
+                        sb.AppendLine("* " + configuredProject.FullPath);
 
                         if (configuredProject.InclusionDescriptor != null) {
-                            sb.AppendLine("   " + "Reason: " + configuredProject.InclusionDescriptor.Reason);
+                            sb.AppendLine("  " + "Reason: " + configuredProject.InclusionDescriptor.Reason);
                         }
 
                         if (configuredProject.DirtyFiles != null) {

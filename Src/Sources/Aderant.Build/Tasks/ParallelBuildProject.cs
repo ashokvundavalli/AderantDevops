@@ -128,7 +128,7 @@ namespace Aderant.Build.Tasks {
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToList()
             };
 
-            Log.LogMessage("Excluding paths: " + string.Join("|", paths));
+            Log.LogMessage("Excluding paths: " + string.Join("|", analysisContext.ExcludePaths));
 
             return analysisContext;
         }
