@@ -131,12 +131,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
 
+                bool artifactsExist = false;
+
+                string[] artifacts;
+                if (stateFile.Artifacts.TryGetValue(artifactPublisher, out artifacts)) {
+                    if (artifacts != null && artifacts.Length > 0) {
+                        artifactsExist = true;
+                    }
+                }
+
                 foreach (var fileInTree in stateFile.Outputs) {
                     // The selected build cache contained this project, next check the inputs/outputs
                     if (projectFullPath.IndexOf(fileInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        
-                        string[] artifacts;
-                        if (stateFile.Artifacts.TryGetValue(artifactPublisher, out artifacts)) {
+                        if (artifactsExist) {
                             return;
                         }
 
