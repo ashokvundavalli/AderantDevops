@@ -134,6 +134,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var fileInTree in stateFile.Outputs) {
                     // The selected build cache contained this project, next check the inputs/outputs
                     if (projectFullPath.IndexOf(fileInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        System.Diagnostics.Debugger.Launch();
 
                         string[] artifacts;
                         if (stateFile.Artifacts.TryGetValue(artifactPublisher, out artifacts)) {
