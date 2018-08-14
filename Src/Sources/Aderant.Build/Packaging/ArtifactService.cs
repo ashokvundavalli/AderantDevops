@@ -256,7 +256,6 @@ namespace Aderant.Build.Packaging {
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
-            System.Diagnostics.Debugger.Launch();
             FetchArtifacts(artifactPaths);
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
@@ -330,6 +329,8 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
+            var destinationPaths= new HashSet<string>();
+
             foreach (var project in projectOutputs) {
                 string projectFile = project.Key;
 
@@ -366,7 +367,11 @@ namespace Aderant.Build.Packaging {
 
                             var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
 
-                            copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+                            if (destinationPaths.Add(destination)) {
+                                copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+                            } else {
+                                logger.Warning("Double write for file: " + destination);
+                            }
 
                             // TODO: We need to consider that files can be placed into multiple directories so doing this might remove "Foo.ini" for the bin folder
                             // when we actually needed to remove it from the test folder candidates
