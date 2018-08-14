@@ -264,67 +264,66 @@ namespace Aderant.Build.Packaging {
             List<PathSpec> copyOperations = new List<PathSpec>();
 
             // TODO: Optimize
-            foreach (var spec in artifacts) {
-                // The reason we do it artifact by artifact is for double write detection.
-                // We however need to batch this for efficiency eventually
-                var localArtifactFiles = fileSystem.GetFiles(spec.Destination, "*", true)
+            var localArtifactFiles =
+                artifacts.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true))
                     .Select(
                         path => new {
                             FileName = Path.GetFileName(path),
                             FullPath = path,
                         }).ToList();
 
-                string key = publisherName + "\\";
+            string key = publisherName + "\\";
 
-                var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
+            var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-                var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                foreach (var project in projectOutputs) {
-                    string projectFile = project.Key;
+            foreach (var project in projectOutputs) {
+                string projectFile = project.Key;
 
-                    int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
-                    if (position >= 0) {
-                        // Adjust the source relative path to a solution relative path
-                        string solutionRootRelativeFile = projectFile.Substring(position + 1);
-                        string localProjectFile = Path.Combine(solutionRoot, solutionRootRelativeFile);
+                int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
+                if (position >= 0) {
+                    // Adjust the source relative path to a solution relative path
+                    string solutionRootRelativeFile = projectFile.Substring(position + 1);
+                    string localProjectFile = Path.Combine(solutionRoot, solutionRootRelativeFile);
 
-                        var directoryOfProject = Path.GetDirectoryName(localProjectFile);
+                    var directoryOfProject = Path.GetDirectoryName(localProjectFile);
 
-                        if (directoryOfProject == null) {
-                            throw new InvalidOperationException("Could not determine directory of file: " + localProjectFile);
-                        }
+                    if (directoryOfProject == null) {
+                        throw new InvalidOperationException("Could not determine directory of file: " + localProjectFile);
+                    }
 
-                        if (fileSystem.FileExists(localProjectFile)) {
-                            foreach (var outputItem in project.Value.FilesWritten) {
-                                string fileName = Path.GetFileName(outputItem);
-                                var localSourceFile = localArtifactFiles.SingleOrDefault(s => string.Equals(s.FileName, fileName));
+                    if (fileSystem.FileExists(localProjectFile)) {
+                        foreach (var outputItem in project.Value.FilesWritten) {
+                            string fileName = Path.GetFileName(outputItem);
+                            var localSourceFile = localArtifactFiles.SingleOrDefault(s => string.Equals(s.FileName, fileName));
 
-                                if (localSourceFile == null) {
-                                    if (IsCritical(fileName)) {
-                                        throw new FileNotFoundException("Could not locate critical file: in artifact directory" + fileName);
-                                    }
-                                    continue;
+                            if (localSourceFile == null) {
+                                if (IsCritical(fileName)) {
+                                    throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
                                 }
 
-                                var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
-
-                                if (!destinations.Add(destination)) {
-                                    
-                                }
-
-                                copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
-
-                                if (!localArtifactFiles.Remove(localSourceFile)) {
-                                    throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
-                                }
+                                continue;
                             }
-                        } else {
-                            throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
+
+                            var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
+
+                            if (!destinations.Add(destination)) {
+
+                            }
+
+                            copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+
+                            if (!localArtifactFiles.Remove(localSourceFile)) {
+                                throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
+                            }
                         }
                     } else {
-                        throw new InvalidOperationException($"The path {projectFile} was expected to contain {Path.DirectorySeparatorChar}");
+                        throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
                     }
+                } else {
+                    throw new InvalidOperationException($"The path {projectFile} was expected to contain {Path.DirectorySeparatorChar}");
+
                 }
             }
 
