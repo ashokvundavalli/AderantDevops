@@ -105,6 +105,7 @@
 
 
   <Target Name="RetrieveArtifactsFromBuildCache" Condition="'$(SolutionRoot)' != ''">
+    <Message Text="$(ModuleName) restoring artifacts" />
 
     <PropertyGroup>
       <ProjectToPeek>$(SolutionDirectoryPath)Build\TFSBuild.proj</ProjectToPeek>
