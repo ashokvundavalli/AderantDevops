@@ -276,8 +276,6 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
             foreach (var project in projectOutputs) {
                 string projectFile = project.Key;
 
@@ -300,6 +298,7 @@ namespace Aderant.Build.Packaging {
 
                             if (localSourceFile == null) {
                                 if (IsCritical(fileName)) {
+                                    System.Diagnostics.Debugger.Launch();
                                     throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
                                 }
 
@@ -307,10 +306,6 @@ namespace Aderant.Build.Packaging {
                             }
 
                             var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
-
-                            if (!destinations.Add(destination)) {
-
-                            }
 
                             copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
 
@@ -336,7 +331,7 @@ namespace Aderant.Build.Packaging {
             if (string.Equals(extension, ".pdb", StringComparison.OrdinalIgnoreCase)) {
                 return false;
             }
-
+            
             return true;
         }
 
