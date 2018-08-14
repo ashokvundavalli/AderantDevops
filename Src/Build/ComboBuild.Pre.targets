@@ -32,7 +32,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      $(ModuleName)-RetrieveArtifactsFromBuildCache;
+      RetrieveArtifactsFromBuildCache;
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>
@@ -104,7 +104,7 @@
   </Target>
 
 
-  <Target Name="$(ModuleName)-RetrieveArtifactsFromBuildCache" Condition="'$(SolutionRoot)' != ''">
+  <Target Name="RetrieveArtifactsFromBuildCache" Condition="'$(SolutionRoot)' != ''">
 
     <PropertyGroup>
       <ProjectToPeek>$(SolutionDirectoryPath)Build\TFSBuild.proj</ProjectToPeek>
