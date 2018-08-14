@@ -3,9 +3,9 @@
 namespace Aderant.Build.Packaging {
     internal struct PathSpec {
 
-        public PathSpec(string location, string destinationRelativePath) {
+        public PathSpec(string location, string destination) {
             this.Location = location;
-            this.Destination = destinationRelativePath;
+            this.Destination = destination;
         }
 
         public string Destination { get; }

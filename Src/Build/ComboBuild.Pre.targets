@@ -93,12 +93,7 @@
   </Target>
 
   <Target Name="_BeforeBuild">
-    <Message Text="
-╔═════════════════════════════════════════════════════════════════════╗
-║                     $(ModuleName.PadRight(26))                      ║
-╚═════════════════════════════════════════════════════════════════════╝
-" Importance="high" />
-
+    <PrintBanner Text="$(ModuleName)" />
   </Target>
 
 
@@ -124,8 +119,11 @@
       <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
     </ItemGroup>
 
+    <!-- TODO: Need to restore to both BinModuleDirectory/BinTestDirectory --> 
     <RetrieveArtifacts
       ContextFileName="$(ContextFileName)"
+      SolutionRoot="$(SolutionRoot)"
+      WorkingDirectory="$(ModuleBuildTempDirectory)"
       PublisherName="$(ModuleName)"
       ArtifactDirectory="$(BinModuleDirectory)"
       Flatten="true" />

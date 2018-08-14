@@ -5,11 +5,7 @@
             DependsOnTargets="$(RunTestsDependsOn)"
             Condition="('$(RunTest)' != 'false') And ('$(IsCustomBuild)' != 'true')">
 
-      <Message Text="
-╔═════════════════════════════════════════════════════════════════════╗
-║                 Unit Testing:    $(ModuleName.PadRight(26))         ║
-╚═════════════════════════════════════════════════════════════════════╝
-" Importance="high" />
+      <PrintBanner Text="Unit Testing:$(ModuleName) " />
 
       <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)',' ')</UnitTestAssemblies>

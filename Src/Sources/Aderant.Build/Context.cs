@@ -240,8 +240,8 @@ namespace Aderant.Build {
             return BucketPathBuilder.BuildDropLocation(this);
         }
 
-        public void RecordProjectOutputs(string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {
-            string sourcesDirectory = buildMetadata?.BuildSourcesDirectory;
+        public void RecordProjectOutputs(string sourcesDirectory, string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {
+            ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
             if (sourcesDirectory != null && projectFile.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
                 projectFile = projectFile.Substring(sourcesDirectory.Length)

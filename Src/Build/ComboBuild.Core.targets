@@ -18,11 +18,8 @@
   -->
   <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
 
-    <Message Text="
-╔═════════════════════════════════════════════════════════════════════╗
-║                     Group $(BuildGroupId.PadRight(4)) / $(TotalNumberOfBuildGroups.PadRight(34)) ║
-╚═════════════════════════════════════════════════════════════════════╝
-" Importance="high" />
+    <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
+
     <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
 
     <PropertyGroup>

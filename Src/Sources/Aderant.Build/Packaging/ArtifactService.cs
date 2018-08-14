@@ -197,8 +197,28 @@ namespace Aderant.Build.Packaging {
             };
         }
 
-        public ArtifactResolveResult Resolve(BuildOperationContext context, string publisherName) {
-            var result = new ArtifactResolveResult();
+        public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {
+            var paths = BuildArtifactResolveOperation(context, publisherName, workingDirectory);
+            RunResolveOperation(context, solutionRoot, publisherName, paths);
+        }
+
+        private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> operations) {
+            FetchArtifacts(operations);
+            var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, operations);
+            CopyFiles(filesToRestore);
+        }
+
+        private void CopyFiles(List<PathSpec> filesToRestore) {
+            //fileSystem.CopyFiles(paths);
+            // TODO: Replace with ActionBlock for performance
+            foreach (var item in filesToRestore) {
+                fileSystem.CopyFile(item.Location, item.Destination);
+            }
+        }
+
+        private List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string publisherName, string workingDirectory) {
+            var result = new ArtifactResolveOperation();
+
             List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
             result.Paths = paths;
 
@@ -214,7 +234,8 @@ namespace Aderant.Build.Packaging {
 
                         var spec = new ArtifactPathSpec {
                             ArtifactId = artifactId,
-                            Source = artifactFolder
+                            Source = artifactFolder,
+                            Destination = Path.Combine(workingDirectory, artifactId),
                         };
 
                         if (exists) {
@@ -228,7 +249,100 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            return result;
+            return paths;
+        }
+
+        private void FetchArtifacts(List<ArtifactPathSpec> paths) {
+            //fileSystem.CopyFiles(paths);
+            // TODO: Replace with ActionBlock for performance
+            foreach (var item in paths) {
+                fileSystem.CopyDirectory(item.Source, item.Destination);
+            }
+        }
+
+        private List<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifacts) {
+            List<PathSpec> copyOperations = new List<PathSpec>();
+
+            // TODO: Optimize
+            foreach (var spec in artifacts) {
+                // The reason we do it artifact by artifact is for double write detection.
+                // We however need to batch this for efficiency eventually
+                var localArtifactFiles = fileSystem.GetFiles(spec.Destination, "*", true)
+                    .Select(
+                        path => new {
+                            FileName = Path.GetFileName(path),
+                            FullPath = path,
+                        }).ToList();
+
+                string key = publisherName + "\\";
+
+                var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
+
+                var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var project in projectOutputs) {
+                    string projectFile = project.Key;
+
+                    int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
+                    if (position >= 0) {
+                        // Adjust the source relative path to a solution relative path
+                        string solutionRootRelativeFile = projectFile.Substring(position + 1);
+                        string localProjectFile = Path.Combine(solutionRoot, solutionRootRelativeFile);
+
+                        var directoryOfProject = Path.GetDirectoryName(localProjectFile);
+
+                        if (directoryOfProject == null) {
+                            throw new InvalidOperationException("Could not determine directory of file: " + localProjectFile);
+                        }
+
+                        if (fileSystem.FileExists(localProjectFile)) {
+                            foreach (var outputItem in project.Value.FilesWritten) {
+                                string fileName = Path.GetFileName(outputItem);
+                                var localSourceFile = localArtifactFiles.SingleOrDefault(s => string.Equals(s.FileName, fileName));
+
+                                if (localSourceFile == null) {
+                                    if (IsCritical(fileName)) {
+                                        throw new FileNotFoundException("Could not locate critical file: in artifact directory" + fileName);
+                                    }
+                                    continue;
+                                }
+
+                                var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
+
+                                if (!destinations.Add(destination)) {
+                                    
+                                }
+
+                                copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+
+                                if (!localArtifactFiles.Remove(localSourceFile)) {
+                                    throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
+                                }
+                            }
+                        } else {
+                            throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
+                        }
+                    } else {
+                        throw new InvalidOperationException($"The path {projectFile} was expected to contain {Path.DirectorySeparatorChar}");
+                    }
+                }
+            }
+
+            return copyOperations;
+        }
+
+        private static bool IsCritical(string fileName) {
+            string extension = Path.GetExtension(fileName);
+
+            if (string.Equals(extension, ".pdb", StringComparison.OrdinalIgnoreCase)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        private Queue<T> ToQueue<T>(IEnumerable<T> enumerable) {
+            return new Queue<T>(enumerable);
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
@@ -275,19 +389,6 @@ namespace Aderant.Build.Packaging {
 
             return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
         }
-
-        public void Retrieve(ArtifactResolveResult result, string artifactDirectory, bool flatten) {
-            foreach (var spec in result.Paths) {
-                string destination;
-                if (!flatten) {
-                    destination = Path.Combine(artifactDirectory, spec.ArtifactId);
-                } else {
-                    destination = artifactDirectory;
-                }
-
-                fileSystem.CopyDirectory(spec.Source, destination);
-            }
-        }
     }
 
     internal enum ArtifactState {
@@ -298,11 +399,12 @@ namespace Aderant.Build.Packaging {
 
     internal class ArtifactPathSpec {
         public string ArtifactId { get; set; }
-        public string Source { get; set; }
         public ArtifactState State { get; set; }
+        public string Source { get; set; }
+        public string Destination { get; set; }
     }
 
-    internal class ArtifactResolveResult {
+    internal class ArtifactResolveOperation {
         public List<ArtifactPathSpec> Paths { get; set; }
     }
 

@@ -47,6 +47,8 @@ namespace IntegrationTest.Build.EndToEnd {
             context.BuildStateMetadata = buildStateMetadata;
             context.Publish(properties[WellKnownProperties.ContextFileName]);
 
+            CleanWorkingDirectory();
+
             // Run second build
             RunTarget("EndToEnd", properties);
             var logFile1 = base.LogFile;
@@ -55,13 +57,24 @@ namespace IntegrationTest.Build.EndToEnd {
             WriteLogFile(@"C:\Temp\lf1.log", logFile1);
         }
 
+        private void CleanWorkingDirectory() {
+            using (var ps = PowerShell.Create()) {
+                ps.AddScript($"cd {DeploymentItemsDirectory.Quote()}");
+                ps.AddScript("& git clean -fdx");
+                var results = ps.Invoke();
+
+                foreach (var item in results) {
+                    TestContext.WriteLine(item.ToString());
+                }
+            }
+        }
+
         private BuildOperationContext CreateContext(Dictionary<string, string> properties) {
             var context = new BuildOperationContext();
             context.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, "_drop");
             context.BuildMetadata = new BuildMetadata();
+            context.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
             context.SourceTreeMetadata = GetSourceTreeMetadata();
-
-
             context.BuildScriptsDirectory = properties["BuildScriptsDirectory"];
             context.BuildSystemDirectory = Path.Combine(TestContext.DeploymentDirectory, @"..\..\");
 

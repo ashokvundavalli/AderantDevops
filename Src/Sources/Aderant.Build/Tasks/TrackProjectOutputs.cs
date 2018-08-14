@@ -19,7 +19,7 @@ namespace Aderant.Build.Tasks {
         protected override bool UpdateContextOnCompletion { get; set; } = true;
 
         public override bool ExecuteTask() {
-            Context.RecordProjectOutputs(ProjectFile, ProjectOutputs, OutputPath, IntermediateDirectory);
+            Context.RecordProjectOutputs(Context.BuildMetadata.BuildSourcesDirectory, ProjectFile, ProjectOutputs, OutputPath, IntermediateDirectory);
             return !Log.HasLoggedErrors;
         }
     }

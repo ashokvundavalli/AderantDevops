@@ -62,7 +62,7 @@ namespace UnitTest.Build {
         public void RecordOutputs_removes_obj_files() {
             var context = new BuildOperationContext();
 
-            context.RecordProjectOutputs("Foo", new[] { @"obj/baz.dll" }, @"..\..\bin", "obj");
+            context.RecordProjectOutputs("", "Foo", new[] { @"obj/baz.dll" }, @"..\..\bin", "obj");
 
             IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
 
@@ -74,7 +74,7 @@ namespace UnitTest.Build {
         public void RecordOutputs_keeps_output() {
             var context = new BuildOperationContext();
 
-            context.RecordProjectOutputs("Foo", new[] { "obj/baz.dll", "baz.dll" }, @"..\..\bin", "obj");
+            context.RecordProjectOutputs("", "Foo", new[] { "obj/baz.dll", "baz.dll" }, @"..\..\bin", "obj");
 
             IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
 
@@ -86,7 +86,7 @@ namespace UnitTest.Build {
         public void RecordOutputs_is_deterministic() {
             var context = new BuildOperationContext();
 
-            context.RecordProjectOutputs("Foo", new[] { "B", "10000", "A", "001", "Z", "1" }, @"..\..\bin", "obj");
+            context.RecordProjectOutputs("", "Foo", new[] { "B", "10000", "A", "001", "Z", "1" }, @"..\..\bin", "obj");
 
             IDictionary<string, ProjectOutputs> outputs = context.GetProjectOutputs();
 
