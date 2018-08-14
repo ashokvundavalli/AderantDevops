@@ -207,9 +207,11 @@ namespace Aderant.Build.Packaging {
             RunResolveOperation(context, solutionRoot, publisherName, paths);
         }
 
-        private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> operations) {
-            FetchArtifacts(operations);
-            var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, operations);
+        private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
+            FetchArtifacts(artifactPaths);
+            var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
+
+            var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, localArtifactFiles);
             CopyFiles(filesToRestore);
         }
 
@@ -265,17 +267,15 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private List<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifacts) {
+        internal List<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string publisherName, IEnumerable<string> artifacts) {
             List<PathSpec> copyOperations = new List<PathSpec>();
 
             // TODO: Optimize
-            var localArtifactFiles =
-                artifacts.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true))
-                    .Select(
-                        path => new {
-                            FileName = Path.GetFileName(path),
-                            FullPath = path,
-                        }).ToList();
+            var localArtifactFiles = artifacts.Select(
+                path => new {
+                    FileName = Path.GetFileName(path),
+                    FullPath = path,
+                }).ToList();
 
             string key = publisherName + "\\";
 
@@ -319,9 +319,11 @@ namespace Aderant.Build.Packaging {
 
                             copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
 
-                            if (!localArtifactFiles.Remove(localSourceFile)) {
-                                throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
-                            }
+                            // TODO: We need to consider that files can be placed into multiple directories so doing this might remove "Foo.ini" for the bin folder
+                            // when we actually needed to remove it from the test folder candidates
+                            //if (!localArtifactFiles.Remove(localSourceFile)) {
+                            //    throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
+                            //}
                         }
                     } else {
                         throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
@@ -340,7 +342,6 @@ namespace Aderant.Build.Packaging {
             if (fileName.IndexOf(@"bin\samples\", StringComparison.OrdinalIgnoreCase) >= 0) {
                 return false;
             }
-
 
             // We need the role file here to be able to really tell...
             string extension = Path.GetExtension(fileName);
@@ -361,8 +362,6 @@ namespace Aderant.Build.Packaging {
             if (string.Equals(extension, ".xsx", StringComparison.OrdinalIgnoreCase)) {
                 return false;
             }
-
-            
 
             return true;
         }
