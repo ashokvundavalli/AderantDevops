@@ -247,11 +247,6 @@ namespace Aderant.Build.Packaging {
 
         public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {
             var paths = BuildArtifactResolveOperation(context, publisherName, workingDirectory);
-
-            if (!paths.Any()) {
-                return;
-            }
-
             RunResolveOperation(context, solutionRoot, publisherName, paths);
         }
 
@@ -334,6 +329,15 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
+            bool strictMode = true;
+            string[] packages;
+            if (stateFile.Artifacts.TryGetValue(publisherName, out packages)) {
+                var allPackagesAreTestPackages = packages.All(p => p.StartsWith("Tests.", StringComparison.OrdinalIgnoreCase));
+                if (allPackagesAreTestPackages) {
+                    strictMode = false;
+                }
+            }
+
             var destinationPaths= new HashSet<string>();
 
             foreach (var project in projectOutputs) {
@@ -359,7 +363,7 @@ namespace Aderant.Build.Packaging {
                             var localSourceFile = localSourceFiles.FirstOrDefault();
 
                             if (localSourceFile == null) {
-                                if (IsCritical(outputItem)) {
+                                if (IsCritical(strictMode, outputItem)) {
                                     throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
                                 }
 
@@ -396,7 +400,7 @@ namespace Aderant.Build.Packaging {
             return copyOperations;
         }
 
-        private static bool IsCritical(string fileName) {
+        private static bool IsCritical(bool strictMode, string fileName) {
             // Samples are considered "local" and so are not critical
             if (fileName.IndexOf(@"bin\samples\", StringComparison.OrdinalIgnoreCase) >= 0) {
                 return false;
@@ -422,9 +426,11 @@ namespace Aderant.Build.Packaging {
                 return false;
             }
 
-            System.Diagnostics.Debugger.Launch();
+            if (strictMode) {
+                return true;
+            }
 
-            return true;
+            return false;
         }
 
         private Queue<T> ToQueue<T>(IEnumerable<T> enumerable) {
