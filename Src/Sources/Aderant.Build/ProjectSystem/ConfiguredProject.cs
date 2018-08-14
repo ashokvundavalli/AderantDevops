@@ -154,7 +154,7 @@ namespace Aderant.Build.ProjectSystem {
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
             projectXml = projectElement;
-            
+
             project = new Lazy<Project>(
                 () => {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
@@ -376,6 +376,22 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 }
             }
+        }
+
+        public string GetOutputAssemblyWithExtension() {
+            if (string.Equals(OutputType, "Library", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".dll";
+            }
+
+            if (string.Equals(OutputType, "winexe", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".exe";
+            }
+
+            if (string.Equals(OutputType, "exe", StringComparison.OrdinalIgnoreCase)) {
+                return OutputAssembly + ".exe";
+            }
+
+            throw new NotSupportedException("Unable to determine output extension from type:" + OutputType);
         }
     }
 

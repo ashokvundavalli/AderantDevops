@@ -144,7 +144,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // The selected build cache contained this project, next check the inputs/outputs
                     if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
                         if (artifactsExist) {
-                            bool artifactContainsProject = artifacts.SelectMany(s => s.Files).Any(f => string.Equals(f.File, project.OutputAssembly, StringComparison.OrdinalIgnoreCase));
+                            bool artifactContainsProject = artifacts.SelectMany(s => s.Files).Any(f => string.Equals(f.File, project.GetOutputAssemblyWithExtension(), StringComparison.OrdinalIgnoreCase));
                             if (artifactContainsProject) {
                                 return;
                             }
