@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -72,6 +74,27 @@ namespace UnitTest.Build.Packaging {
                     new PathSpec(@"ABC\Z.dll", "Z.dll"),
                     new PathSpec(@"DEF\Z.dll", "Z.dll"),
                 });
+        }
+
+        [TestMethod]
+        public void CalculateFilesToRestore_returns_full_path() {
+            var state = new BuildStateFile();
+            state.Outputs = new Dictionary<string, ProjectOutputs>();
+            state.Outputs["Foo\\Bar.cspoj"] = new ProjectOutputs() {
+                FilesWritten = new string[] {
+                    @"..\..\bin\foo.dll"
+                }
+            };
+
+            var fsMock = new Mock<IFileSystem>();
+            fsMock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
+
+            var artifactService = new ArtifactService(NullLogger.Default, fsMock.Object);
+            var result = artifactService.CalculateFilesToRestore(state, "Foo", "Foo", new[] { "Foo.dll", "Foo.pdb" });
+
+            Assert.AreEqual(1, result.Count);
+            Assert.IsTrue(result[0].Destination.EndsWith(@"bin\foo.dll"));
+            Assert.IsTrue(Path.IsPathRooted(result[0].Destination));
         }
 
         [TestMethod]
