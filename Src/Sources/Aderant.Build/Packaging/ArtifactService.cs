@@ -300,25 +300,27 @@ namespace Aderant.Build.Packaging {
                         foreach (var outputItem in project.Value.FilesWritten) {
                             string fileName = Path.GetFileName(outputItem);
 
-                            try {
-                                var localSourceFile = localArtifactFiles.SingleOrDefault(s => string.Equals(s.FileName, fileName, StringComparison.OrdinalIgnoreCase));
+                            var localSourceFiles = localArtifactFiles.Where(s => string.Equals(s.FileName, fileName, StringComparison.OrdinalIgnoreCase)).ToList();
+                            var localSourceFile = localSourceFiles.FirstOrDefault();
 
-                                if (localSourceFile == null) {
-                                    if (IsCritical(fileName)) {
-                                        throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
-                                    }
-                                    continue;
+                            if (localSourceFile == null) {
+                                if (IsCritical(fileName)) {
+                                    throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
                                 }
 
-                                var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
+                                continue;
+                            }
 
-                                copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+                            if (localSourceFiles.Count > 1) {
+                                logger.Warning($"File found in more than one artifact: {fileName}. Choosing {localSourceFile.FullPath} arbitrarily. Provide an artifact restore table to resolve this warning.");
+                            }
 
-                                if (!localArtifactFiles.Remove(localSourceFile)) {
-                                    throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
-                                }
-                            } catch (InvalidOperationException) {
-                                throw new InvalidOperationException("Duplicate local artifact found: " + fileName);
+                            var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
+
+                            copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+
+                            if (!localArtifactFiles.Remove(localSourceFile)) {
+                                throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
                             }
 
                         }
