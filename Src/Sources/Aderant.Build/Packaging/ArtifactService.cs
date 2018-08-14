@@ -329,8 +329,6 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            var strictMode = RequireAllArtifacts(stateFile, publisherName);
-
             var destinationPaths = new HashSet<string>();
 
             foreach (var project in projectOutputs) {
@@ -356,10 +354,9 @@ namespace Aderant.Build.Packaging {
                             var localSourceFile = localSourceFiles.FirstOrDefault();
 
                             if (localSourceFile == null) {
-                                if (IsCritical(strictMode, outputItem)) {
-                                    throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
-                                }
-
+                                //if (IsCritical(strictMode, outputItem)) {
+                                //    throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
+                                //}
                                 continue;
                             }
 

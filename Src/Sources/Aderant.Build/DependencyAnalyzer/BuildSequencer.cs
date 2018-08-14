@@ -128,7 +128,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private static void TryReuseExistingBuild(string artifactPublisher, BuildStateFile stateFile, string tag, ConfiguredProject project) {
             if (String.Equals(project.GetOutputAssemblyWithExtension(), "UnitTest.Deployment.Client.dll", StringComparison.OrdinalIgnoreCase)) {
-                System.Diagnostics.Debugger.Launch();
+                //System.Diagnostics.Debugger.Launch();
             }
 
             // See if we can skip this project because we can re-use the previous outputs
