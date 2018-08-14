@@ -15,6 +15,7 @@ namespace Aderant.Build.Packaging {
         }
 
         public string Id { get; }
+        public bool IsAutomaticallyGenerated { get; set; }
 
         public IReadOnlyCollection<IDependable> GetDependencies() {
             return null;

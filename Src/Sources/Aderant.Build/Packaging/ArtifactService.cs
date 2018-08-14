@@ -55,6 +55,8 @@ namespace Aderant.Build.Packaging {
                 foreach (var artifact in group) {
                     var files = artifact.GetFiles();
 
+                    files = FilterGeneratedPackage(context.GetProjectOutputs(), publisherName, files, artifact);
+
                     CheckForDuplicates(artifact.Id, files);
 
                     var copyOperations = CalculateFileCopyOperations(paths, context, artifact.Id, files);
@@ -81,6 +83,52 @@ namespace Aderant.Build.Packaging {
             }
 
             return buildArtifacts;
+        }
+
+        private static string GetProjectKey(string publisherName) {
+            return publisherName + "\\";
+        }
+
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IDictionary<string, ProjectOutputs> outputs, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
+            if (outputs == null) {
+                return files;
+            }
+
+            if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith("Tests.")) {
+                List<string> outputList = new List<string>();
+                var keys = outputs.Keys.Where(key => key.StartsWith(GetProjectKey(publisherName)));
+
+                foreach (var key in keys) {
+                    // TODO: drive this from project guid
+                    if (key.Contains("Test")) {
+                        foreach (var s in outputs[key].FilesWritten) {
+                            var name = Path.GetFileName(s);
+                            if (!outputList.Contains(name)) {
+                                outputList.Add(name);
+                            }
+                        }
+                    }
+                }
+
+                var newPathSpecs = new List<PathSpec>();
+                foreach (var file in files) {
+                    if (newPathSpecs.Any(p => p.Destination == file.Destination)) {
+                        continue;
+                    }
+
+                    var fileName = Path.GetFileName(file.Location);
+
+                    foreach (var output in outputList) {
+                        if (string.Equals(fileName, output, StringComparison.OrdinalIgnoreCase)) {
+                            newPathSpecs.Add(file);
+                        }
+                    }
+                }
+
+                return newPathSpecs;
+            }
+
+            return files;
         }
 
         internal void CheckForDuplicates(string artifactId, IReadOnlyCollection<PathSpec> files) {
@@ -277,7 +325,7 @@ namespace Aderant.Build.Packaging {
                     FullPath = path,
                 }).ToList();
 
-            string key = publisherName + "\\";
+            string key = GetProjectKey(publisherName);
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 

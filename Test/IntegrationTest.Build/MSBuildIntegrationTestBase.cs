@@ -89,7 +89,7 @@ namespace IntegrationTest.Build {
 
                 WriteHandler = message => {
                     LogFile.Add(message);
-                    context.WriteLine(message.TrimEnd(newLine));
+                    context.WriteLine(message.Replace("{", "{{").Replace("}", "}}").TrimEnd(newLine));
                 };
             }
 

@@ -11,11 +11,12 @@
   <Import Project="Mobile.targets" />
 
   <PropertyGroup>
-    <CopyToDropV2 Condition="'$(CopyToDropV2)' == '' And '$(IsDesktopBuild)' == 'true'">false</CopyToDropV2>
+    <AutomaticallyPackageTests Condition="'$(AutomaticallyPackageTests)' == ''">true</AutomaticallyPackageTests>
 
     <!-- TODO: Enable...currently off for perf reasons-->
     <CodeCoverage>false</CodeCoverage>
   </PropertyGroup>
+  
 
   <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"
     AssemblyFile="$(BuildAssembly)"
@@ -50,6 +51,7 @@
   <PropertyGroup>
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
+      GatherTestArtifacts;
       PackageArtifacts
     </PackageArtifactsDependsOn>
   </PropertyGroup>
@@ -70,6 +72,16 @@
 
     <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
 
+  </Target>
+
+
+  <Target Name="GatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'">
+    <ItemGroup>
+      <PackageArtifact Include="$(BinTestDirectory)\**\*;">
+        <ArtifactId>Tests.$(ModuleName)</ArtifactId>
+        <Generated>true</Generated>
+      </PackageArtifact>
+    </ItemGroup>
   </Target>
 
 

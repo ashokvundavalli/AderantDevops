@@ -32,7 +32,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      RetrieveArtifactsFromBuildCache;
+      <!--RetrieveArtifactsFromBuildCache;-->
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>

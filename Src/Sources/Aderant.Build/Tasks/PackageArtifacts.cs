@@ -49,8 +49,15 @@ namespace Aderant.Build.Tasks {
             foreach (var group in grouping) {
                 List<PathSpec> pathSpecs = new List<PathSpec>();
 
+                bool isAutomaticallyGenerated = false;
+
                 if (solutionRoot != null) {
                     foreach (var file in group) {
+                        string metadata = file.GetMetadata("Generated");
+                        if (!string.IsNullOrWhiteSpace(metadata)) {
+                            isAutomaticallyGenerated = bool.Parse(metadata);
+                        }
+
                         var pathSpec = ArtifactPackage.CreatePathSpecification(
                             solutionRoot,
                             relativeFrom,
@@ -64,7 +71,10 @@ namespace Aderant.Build.Tasks {
                     }
                 }
 
-                var artifact = new ArtifactPackage(group.Key, pathSpecs);
+                var artifact = new ArtifactPackage(group.Key, pathSpecs) {
+                    IsAutomaticallyGenerated = isAutomaticallyGenerated
+                };
+
                 artifacts.Add(artifact);
             }
 
