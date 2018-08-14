@@ -318,10 +318,10 @@ namespace Aderant.Build {
     [DataContract]
     internal class ArtifactManifest {
 
-        [DataMember]
+        [DataMember(Order = 0)]
         public string Id { get; set; }
 
-        [DataMember]
+        [DataMember(Order = 1)]
         public ICollection<ArtifactItem> Files { get; set; }
     }
 

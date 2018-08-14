@@ -112,10 +112,6 @@
       <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
     </PropertyGroup>
 
-    <PackageArtifactReader ProjectFile="$(ProjectToPeek)">
-      <Output TaskParameter="ArtifactIds" ItemName="ArtifactIds" />
-    </PackageArtifactReader>
-
     <ItemGroup>
       <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
     </ItemGroup>
@@ -125,9 +121,7 @@
       ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
-      PublisherName="$(ModuleName)"
-      ArtifactDirectory="$(BinModuleDirectory)"
-      Flatten="true" />
+      PublisherName="$(ModuleName)" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"

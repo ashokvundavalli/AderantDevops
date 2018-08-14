@@ -199,11 +199,6 @@ namespace Aderant.Build.Tasks {
     public sealed class RetrieveArtifacts : BuildOperationContextTask {
 
         [Required]
-        public string ArtifactDirectory { get; set; }
-
-        public bool Flatten { get; set; }
-
-        [Required]
         public string SolutionRoot { get; set; }
 
         public string PublisherName { get; set; }
