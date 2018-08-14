@@ -75,12 +75,12 @@
   </Target>
 
 
-  <Target Name="GatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'">
+  <Target Name="GatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'" Returns="@(_PackageArtifact)">
     <ItemGroup>
-      <PackageArtifact Include="$(BinTestDirectory)\**\*;">
+      <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>Tests.$(ModuleName)</ArtifactId>
         <Generated>true</Generated>
-      </PackageArtifact>
+      </_PackageArtifact>
     </ItemGroup>
   </Target>
 
@@ -91,7 +91,7 @@
       ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
-      ArtifactDefinitions="@(PackageArtifact)"
+      ArtifactDefinitions="@(PackageArtifact);@(_PackageArtifact)"
       AssemblyVersion="$(AssemblyVersion)"
       FileVersion="$(FileVersion)" />
 

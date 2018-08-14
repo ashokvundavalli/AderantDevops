@@ -256,6 +256,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
+            System.Diagnostics.Debugger.Launch();
             FetchArtifacts(artifactPaths);
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
