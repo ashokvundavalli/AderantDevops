@@ -54,7 +54,7 @@ namespace Aderant.Build.Tasks {
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
-        public string WriteStateFile(BuildStateFile selectedStateFile, IDictionary<string, ProjectOutputs> outputs, IDictionary<string, string[]> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
+        public string WriteStateFile(BuildStateFile selectedStateFile, IDictionary<string, ProjectOutputs> outputs, IDictionary<string, ICollection<ArtifactManifest>> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
             string bucketId = null;
             if (metadata != null) {
                 var treeSha = metadata.GetBucket(BucketId.Current);
@@ -141,7 +141,7 @@ namespace Aderant.Build.Tasks {
         internal IDictionary<string, ProjectOutputs> Outputs { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
-        internal IDictionary<string, string[]> Artifacts { get; set; }
+        internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public string ParentBuildId { get; set; }
@@ -157,7 +157,7 @@ namespace Aderant.Build.Tasks {
     [DataContract]
     public class StateFileBase {
 
-        private const byte CurrentSerializationVersion = 1;
+        private const byte CurrentSerializationVersion = 2;
 
         // Version this instance is serialized with.
         [DataMember]

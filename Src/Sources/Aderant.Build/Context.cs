@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -14,7 +15,7 @@ namespace Aderant.Build {
 
     [Serializable]
     public class BuildOperationContext {
-        private SortedDictionary<string, string[]> artifacts;
+        private SortedDictionary<string, List<ArtifactManifest>> artifacts;
         private BuildMetadata buildMetadata;
 
         private string buildScriptsDirectory;
@@ -287,21 +288,49 @@ namespace Aderant.Build {
         /// Returns the artifacts for a given publisher.
         /// Keyed by publisher.
         /// </summary>
-        internal IDictionary<string, string[]> GetArtifacts() {
-            return artifacts;
+        internal Dictionary<string, ICollection<ArtifactManifest>> GetArtifacts() {
+            return artifacts.ToDictionary(s => s.Key, p => (ICollection<ArtifactManifest>)p.Value.AsReadOnly());
         }
 
-        public void RecordArtifacts(string publisherName, IEnumerable<string> ids) {
+        internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
             if (artifacts == null) {
-                artifacts = new SortedDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+                artifacts = new SortedDictionary<string, List<ArtifactManifest>>(StringComparer.OrdinalIgnoreCase);
             }
 
-            if (!artifacts.ContainsKey(publisherName)) {
-                artifacts[publisherName] = ids.OrderBy(s => s).ToArray();
-            } else {
-                ThrowDoubleWrite();
+            List<ArtifactManifest> manifests;
+
+            if (!artifacts.TryGetValue(publisherName, out manifests)) {
+                manifests = new List<ArtifactManifest>();
+                artifacts[publisherName] = manifests;
             }
+
+            manifests.Add(
+                new ArtifactManifest {
+                    Id = artifactId,
+                    Files = files,
+                });
+
+            manifests.Sort((x, y) => string.Compare(x.Id, y.Id, StringComparison.OrdinalIgnoreCase));
         }
+    }
+
+    [Serializable]
+    [DataContract]
+    internal class ArtifactManifest {
+
+        [DataMember]
+        public string Id { get; set; }
+
+        [DataMember]
+        public ICollection<ArtifactItem> Files { get; set; }
+    }
+
+    [Serializable]
+    [DataContract]
+    internal class ArtifactItem {
+
+        [DataMember]
+        public string File { get; set; }
     }
 
     [DataContract]

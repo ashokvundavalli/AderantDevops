@@ -71,15 +71,15 @@ namespace Aderant.Build.Packaging {
                             buildArtifacts.Add(CalculateFileOperationsForLegacyDrop(paths, context, artifact.Id, files));
                         }
                     }
+
+                    context.RecordArtifact(publisherName, artifact.Id, files.Select(s => new ArtifactItem {
+                        File = s.Destination
+                    }).ToList());
                 }
             }
 
             foreach (var item in paths) {
                 CopyToDestination(item.Item1, item.Item2);
-            }
-
-            if (!string.IsNullOrWhiteSpace(publisherName)) {
-                context.RecordArtifacts(publisherName, packages.Select(s => s.Id));
             }
 
             return buildArtifacts;
@@ -276,17 +276,17 @@ namespace Aderant.Build.Packaging {
             if (context.StateFile != null) {
                 BuildStateFile stateFile = context.StateFile;
 
-                string[] artifactsIds;
-                if (stateFile.Artifacts.TryGetValue(publisherName, out artifactsIds)) {
-                    foreach (var artifactId in artifactsIds) {
-                        string artifactFolder = Path.Combine(stateFile.DropLocation, artifactId);
+                ICollection<ArtifactManifest> artifactManifests;
+                if (stateFile.Artifacts.TryGetValue(publisherName, out artifactManifests)) {
+                    foreach (var artifactManifest in artifactManifests) {
+                        string artifactFolder = Path.Combine(stateFile.DropLocation, artifactManifest.Id);
 
                         bool exists = fileSystem.DirectoryExists(artifactFolder);
 
                         var spec = new ArtifactPathSpec {
-                            ArtifactId = artifactId,
+                            ArtifactId = artifactManifest.Id,
                             Source = artifactFolder,
-                            Destination = Path.Combine(workingDirectory, artifactId),
+                            Destination = Path.Combine(workingDirectory, artifactManifest.Id),
                         };
 
                         if (exists) {
@@ -322,23 +322,16 @@ namespace Aderant.Build.Packaging {
                 }).ToList();
 
             if (localArtifactFiles.Count == 0) {
-                return new List<PathSpec>();
+                return copyOperations;
             }
 
             string key = GetProjectKey(publisherName);
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            bool strictMode = true;
-            string[] packages;
-            if (stateFile.Artifacts.TryGetValue(publisherName, out packages)) {
-                var allPackagesAreTestPackages = packages.All(p => p.StartsWith("Tests.", StringComparison.OrdinalIgnoreCase));
-                if (allPackagesAreTestPackages) {
-                    strictMode = false;
-                }
-            }
+            var strictMode = RequireAllArtifacts(stateFile, publisherName);
 
-            var destinationPaths= new HashSet<string>();
+            var destinationPaths = new HashSet<string>();
 
             foreach (var project in projectOutputs) {
                 string projectFile = project.Key;
@@ -398,6 +391,21 @@ namespace Aderant.Build.Packaging {
             }
 
             return copyOperations;
+        }
+
+        private static bool RequireAllArtifacts(BuildStateFile stateFile, string publisherName) {
+            // If we only have test input packages then we don't mandate that that system successfully restores everything
+            // This logic should actually check if all projects are test projects but we don't have that information
+            bool strictMode = true;
+            ICollection<ArtifactManifest> packages;
+            if (stateFile.Artifacts.TryGetValue(publisherName, out packages)) {
+                var allPackagesAreTestPackages = packages.All(p => p.Id.StartsWith("Tests.", StringComparison.OrdinalIgnoreCase));
+                if (allPackagesAreTestPackages) {
+                    strictMode = false;
+                }
+            }
+
+            return strictMode;
         }
 
         private static bool IsCritical(bool strictMode, string fileName) {
