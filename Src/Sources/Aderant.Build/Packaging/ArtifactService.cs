@@ -322,7 +322,6 @@ namespace Aderant.Build.Packaging {
                             if (!localArtifactFiles.Remove(localSourceFile)) {
                                 throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
                             }
-
                         }
                     } else {
                         throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
@@ -337,6 +336,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private static bool IsCritical(string fileName) {
+            // We need the role file here to be able to tell...
             string extension = Path.GetExtension(fileName);
 
             if (string.Equals(extension, ".pdb", StringComparison.OrdinalIgnoreCase)) {
@@ -344,6 +344,11 @@ namespace Aderant.Build.Packaging {
             }
 
             if (string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase)) {
+                // TODO: Bug where the state file lists XML doco files twice
+                return false;
+            }
+
+            if (string.Equals(extension, ".xsd", StringComparison.OrdinalIgnoreCase)) {
                 // TODO: Bug where the state file lists XML doco files twice
                 return false;
             }
