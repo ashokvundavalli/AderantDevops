@@ -9,11 +9,13 @@
     </ItemGroup>
     
     <PropertyGroup>
-        <url>http://tfs/aderant/ExpertSuite/_apis/git/repositories/$(ModuleName)/{revision}/{filename}</url> <!-- to be rewritten to http://tfs:8080/aderant/ExpertSuite/_apis/git/repositories/Deployment/items?path={filename}&versionType=commit&version={revision} -->
+        <url>http://tfs/aderant/ExpertSuite/_apis/git/repositories/$(BUILD_REPOSITORY_NAME)/{revision}/{filename}</url> <!-- to be rewritten to http://tfs:8080/aderant/ExpertSuite/_apis/git/repositories/Deployment/items?path={filename}&versionType=commit&version={revision} -->
     </PropertyGroup>
-    
+
+    <Message Text="Found PDB files:"/>
     <Message Text="%(PDBFiles.FullPath)" />
     <Message Text="ModuleName=$(ModuleName)"/>
+    <Message Text="BUILD_REPOSITORY_NAME=$(BUILD_REPOSITORY_NAME)"/>
 
     <!-- For empty dlls the tool will fail with exit code 1 and message: No source files were found in the PDB. If you're PDB is a native one you should use -a option.
          Just ignore for convenience.
