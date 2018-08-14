@@ -258,15 +258,13 @@ namespace Aderant.Build.Packaging {
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
             FetchArtifacts(artifactPaths);
 
-            var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true)).ToList();
-
-            if (localArtifactFiles.Count > 0) {
-                var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, localArtifactFiles);
-                CopyFiles(filesToRestore);
-            }
+            var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
+            var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, localArtifactFiles);
+            CopyFiles(filesToRestore);
+            
         }
 
-        private void CopyFiles(List<PathSpec> filesToRestore) {
+        private void CopyFiles(IList<PathSpec> filesToRestore) {
             //fileSystem.CopyFiles(paths);
             // TODO: Replace with ActionBlock for performance
             foreach (var item in filesToRestore) {
@@ -318,7 +316,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        internal List<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string publisherName, IEnumerable<string> artifacts) {
+        internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string publisherName, IEnumerable<string> artifacts) {
             List<PathSpec> copyOperations = new List<PathSpec>();
 
             // TODO: Optimize
@@ -327,6 +325,10 @@ namespace Aderant.Build.Packaging {
                     FileName = Path.GetFileName(path),
                     FullPath = path,
                 }).ToList();
+
+            if (localArtifactFiles.Count == 0) {
+                return new List<PathSpec>();
+            }
 
             string key = GetProjectKey(publisherName);
 
