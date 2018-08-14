@@ -257,10 +257,13 @@ namespace Aderant.Build.Packaging {
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
             FetchArtifacts(artifactPaths);
-            var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
-            var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, localArtifactFiles);
-            CopyFiles(filesToRestore);
+            var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true)).ToList();
+
+            if (localArtifactFiles.Count > 0) {
+                var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, localArtifactFiles);
+                CopyFiles(filesToRestore);
+            }
         }
 
         private void CopyFiles(List<PathSpec> filesToRestore) {
