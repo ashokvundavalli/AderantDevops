@@ -422,6 +422,8 @@ namespace Aderant.Build.Packaging {
                 return false;
             }
 
+            System.Diagnostics.Debugger.Launch();
+
             return true;
         }
 
