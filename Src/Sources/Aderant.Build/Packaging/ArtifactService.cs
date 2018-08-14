@@ -349,9 +349,14 @@ namespace Aderant.Build.Packaging {
             }
 
             if (string.Equals(extension, ".xsd", StringComparison.OrdinalIgnoreCase)) {
-                // TODO: Bug where the state file lists XML doco files twice
                 return false;
             }
+
+            if (string.Equals(extension, ".xsx", StringComparison.OrdinalIgnoreCase)) {
+                return false;
+            }
+
+            
 
             return true;
         }
