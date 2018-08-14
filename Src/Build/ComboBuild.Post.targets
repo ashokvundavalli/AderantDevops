@@ -76,12 +76,12 @@
 
 
   <Target Name="GatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'" Returns="@(_PackageArtifact)">
-    <ItemGroup>
+    <!--<ItemGroup>
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>Tests.$(ModuleName)</ArtifactId>
         <Generated>true</Generated>
       </_PackageArtifact>
-    </ItemGroup>
+    </ItemGroup>-->
   </Target>
 
 
