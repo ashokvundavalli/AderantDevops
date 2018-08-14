@@ -304,7 +304,7 @@ namespace Aderant.Build.Packaging {
                             var localSourceFile = localSourceFiles.FirstOrDefault();
 
                             if (localSourceFile == null) {
-                                if (IsCritical(fileName)) {
+                                if (IsCritical(outputItem)) {
                                     throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
                                 }
 
@@ -336,7 +336,13 @@ namespace Aderant.Build.Packaging {
         }
 
         private static bool IsCritical(string fileName) {
-            // We need the role file here to be able to tell...
+            // Samples are considered "local" and so are not critical
+            if (fileName.IndexOf(@"bin\samples\", StringComparison.OrdinalIgnoreCase) >= 0) {
+                return false;
+            }
+
+
+            // We need the role file here to be able to really tell...
             string extension = Path.GetExtension(fileName);
 
             if (string.Equals(extension, ".pdb", StringComparison.OrdinalIgnoreCase)) {
