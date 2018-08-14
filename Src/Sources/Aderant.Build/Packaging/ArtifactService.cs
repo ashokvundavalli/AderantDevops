@@ -199,6 +199,11 @@ namespace Aderant.Build.Packaging {
 
         public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {
             var paths = BuildArtifactResolveOperation(context, publisherName, workingDirectory);
+
+            if (!paths.Any()) {
+                return;
+            }
+
             RunResolveOperation(context, solutionRoot, publisherName, paths);
         }
 
@@ -294,11 +299,10 @@ namespace Aderant.Build.Packaging {
                     if (fileSystem.FileExists(localProjectFile)) {
                         foreach (var outputItem in project.Value.FilesWritten) {
                             string fileName = Path.GetFileName(outputItem);
-                            var localSourceFile = localArtifactFiles.SingleOrDefault(s => string.Equals(s.FileName, fileName));
+                            var localSourceFile = localArtifactFiles.SingleOrDefault(s => string.Equals(s.FileName, fileName, StringComparison.OrdinalIgnoreCase));
 
                             if (localSourceFile == null) {
                                 if (IsCritical(fileName)) {
-                                    System.Diagnostics.Debugger.Launch();
                                     throw new FileNotFoundException($"Could not locate critical file {fileName} in artifact directory");
                                 }
 
@@ -331,7 +335,12 @@ namespace Aderant.Build.Packaging {
             if (string.Equals(extension, ".pdb", StringComparison.OrdinalIgnoreCase)) {
                 return false;
             }
-            
+
+            if (string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase)) {
+                // TODO: Bug where the state file lists XML doco files twice
+                return false;
+            }
+
             return true;
         }
 
