@@ -3,7 +3,7 @@ using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis {
+namespace IntegrationTest.Build.TextTemplateAnalysis {
 
     [TestClass]
     public class TextTemplateAnalyzerTests {

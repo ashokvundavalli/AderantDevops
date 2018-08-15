@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis {
+namespace IntegrationTest.Build.TextTemplateAnalysis {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.DependencyAnalysis.TextTemplateAnalysis.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.TextTemplateAnalysis.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
