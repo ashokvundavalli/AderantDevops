@@ -103,7 +103,6 @@
     <Content Include="EndToEnd\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
     <Content Include="Tasks\ReadAssemblyInfo\Resources\AssemblyInfo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -114,12 +113,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="TextTemplateAnalysis\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
@@ -209,10 +202,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="EndToEnd\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="TextTemplateAnalysis\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
