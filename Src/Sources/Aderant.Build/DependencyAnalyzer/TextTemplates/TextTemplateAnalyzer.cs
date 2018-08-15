@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyAnalyzer.TextTemplates;
 
@@ -16,74 +15,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public TextTemplateAnalyzer() {
-        }
-
-        /// <summary>
-        /// Add an exclusion pattern.
-        /// </summary>
-        /// <param name="pattern">The pattern to exclude</param>
-        public void AddExclusionPattern(string pattern) {
-            if (!excludedPatterns.Contains(pattern)) {
-                excludedPatterns.Add(pattern);
-            }
-        }
-
-        public List<TextTemplateAnalysisResult> GetDependencies(string solutionRoot) {
-            IEnumerable<string> files = fileSystem.GetFiles(solutionRoot, "*.tt*", true);
-
-            IEnumerable<string> templateList = files.Where(f => !excludedPatterns.Any(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
-
-            List<TextTemplateAnalysisResult> dependencies = new List<TextTemplateAnalysisResult>();
-
-            foreach (var file in templateList) {
-                try {
-                    using (var fs = fileSystem.OpenFile(file)) {
-                        var reader = new StreamReader(fs);
-
-                        var template = new TextTemplateAnalysisResult(file);
-
-                        string text;
-                        while ((text = reader.ReadLine()) != null) {
-                            var line = text.TrimStart();
-
-                            if (line.StartsWith("<#@")) {
-                                if (line.IndexOf("ServiceDsl", StringComparison.OrdinalIgnoreCase) >= 0) {
-                                    template.IsServiceDslTemplate = true;
-                                }
-
-                                if (line.IndexOf("DomainModelDsl", StringComparison.OrdinalIgnoreCase) >= 0) {
-                                    template.IsDomainModelDslTemplate = true;
-                                }
-
-                                const string assemblyText = "assembly ";
-
-                                if (line.IndexOf(assemblyText, StringComparison.OrdinalIgnoreCase) >= 0) {
-                                    Match match = nameMatch.Match(line);
-
-                                    Group matchGroup = match.Groups[1];
-                                    string assemblyNameValue = matchGroup.Value;
-
-                                    var shortName = assemblyNameValue.Split(',')[0];
-
-                                    if (shortName.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) || shortName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
-                                        shortName = Path.GetFileNameWithoutExtension(assemblyNameValue.Trim());
-                                    } else {
-                                        shortName = Path.GetFileName(shortName.Trim());
-                                    }
-
-                                    template.AssemblyReferences.Add(shortName);
-                                }
-                            }
-                        }
-
-                        dependencies.Add(template);
-                    }
-                } catch {
-                    continue;
-                }
-            }
-
-            return dependencies;
         }
 
         public TextTemplateAnalysisResult Analyze(TextReader reader, string projectDirectory) {

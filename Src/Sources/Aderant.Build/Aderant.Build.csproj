@@ -175,9 +175,7 @@
     <Compile Include="DependencyAnalyzer\Model\ProjectBuildConfiguration.cs" />
     <Compile Include="MSBuild\PropertyList.cs" />
     <Compile Include="ProjectSystem\SolutionParser\ISolutionFileParser.cs" />
-    <Compile Include="DependencyAnalyzer\Model\AssemblyRef.cs" />
     <Compile Include="DependencyAnalyzer\Model\DirectoryNode.cs" />
-    <Compile Include="DependencyAnalyzer\Model\ProjectRef.cs" />
     <Compile Include="DependencyAnalyzer\Model\ModuleRef.cs" />
     <Compile Include="ProjectSystem\SolutionParser\ParseResult.cs" />
     <Compile Include="ProjectSystem\SolutionParser\SolutionFileParser.cs" />
