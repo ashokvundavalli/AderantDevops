@@ -139,7 +139,7 @@ namespace Aderant.Build.VersionControl {
                 //"refs/heads/dev/",
                 //"refs/heads/patch/",
 
-                "refs/remotes/origin/master",
+                //"refs/remotes/origin/master",
                 //"refs/remotes/origin/releases/",
                 //"refs/remotes/origin/dev/",
                 //"refs/remotes/origin/patch/",
@@ -155,12 +155,12 @@ namespace Aderant.Build.VersionControl {
                     branchCanonicalName = item;
 
                     if (string.Equals("refs/heads/master", item, StringComparison.OrdinalIgnoreCase)) {
-                        return commit;
+                        return GetTip(item, repository);
                     }
 
                     foreach (var name in search) {
                         if (item.StartsWith(name, StringComparison.OrdinalIgnoreCase)) {
-                            return commit;
+                            return GetTip(item, repository);
                         }
                     }
                 }
