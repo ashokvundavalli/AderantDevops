@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization;
 using LibGit2Sharp;
 
 namespace Aderant.Build.VersionControl {
@@ -99,10 +100,15 @@ namespace Aderant.Build.VersionControl {
                     oldCommit = GetTip(toBranch, repository);
                 }
 
-
-
                 if (newCommit != null) {
                     bucketKeys.Add(new BucketId(newCommit.Tree.Sha, BucketId.Current));
+
+                    foreach (var e in newCommit.Tree) {
+                        if (e.Mode == Mode.Directory) {
+                            var targetSha = e.Target.Sha;
+                            bucketKeys.Add(new BucketId(targetSha, e.Name));
+                        }
+                    }
 
                     if (oldCommit != null) {
                         var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
@@ -197,24 +203,48 @@ namespace Aderant.Build.VersionControl {
 
     [DebuggerDisplay("{Id} {Tag}")]
     [Serializable]
+    [DataContract]
     public class BucketId {
-
-        public BucketId(string id) {
-            this.Id = id;
-        }
+        [DataMember]
+        private readonly string id;
+        [DataMember]
+        private readonly string tag;
 
         public BucketId(string id, string tag) {
-            this.Id = id;
-            this.Tag = tag;
+            this.id = id;
+            this.tag = tag;
         }
 
         public static string Current { get; } = nameof(Current);
         public static string ParentsParent { get; } = nameof(ParentsParent);
         public static string Previous { get; } = nameof(Previous);
 
-        public string Id { get; }
+    
+        public string Id {
+            get { return id; }
+        }
+    
+        public string Tag {
+            get { return tag; }
+        }
 
-        public string Tag { get; }
+        internal bool IsRoot {
+            get {
+                if (this.Tag == Current) {
+                    return true;
+                }
+
+                if (this.Tag == Previous) {
+                    return true;
+                }
+
+                if (this.Tag == ParentsParent) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
     }
 
     [DebuggerDisplay("Path: {Path} Status: {Status}")]

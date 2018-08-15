@@ -15,13 +15,13 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        public static string BuildDropLocation(BuildOperationContext buildOperationContext) {
+        public static string BuildDropLocation(string name, BuildOperationContext buildOperationContext) {
             if (buildOperationContext.SourceTreeMetadata != null) {
-                BucketId bucket = buildOperationContext.SourceTreeMetadata.GetBucket(BucketId.Current);
+                BucketId bucket = buildOperationContext.SourceTreeMetadata.GetBucket(name);
 
                 return Path.Combine(
                     buildOperationContext.PrimaryDropLocation,
-                    bucket.Id,
+                    bucket != null ? bucket.Id ?? string.Empty : string.Empty,
                     buildOperationContext.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
             }
 

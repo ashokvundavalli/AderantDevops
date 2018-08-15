@@ -166,6 +166,7 @@
     <None Include="Resources\test-paket-template-without-dependencies-UNIX" />
     <None Include="Resources\Test.nuspec" />
     <None Include="Resources\test-paket-template-with-mixed-whitespace" />
+    <None Include="Tasks\buildstate.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\BadBuildLog.txt">

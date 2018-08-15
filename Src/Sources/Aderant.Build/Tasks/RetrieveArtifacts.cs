@@ -18,15 +18,15 @@ namespace Aderant.Build.Tasks {
 
         public override bool ExecuteTask() {
             var writer = new BuildStateWriter();
-            var path = writer.WriteStateFile(
-                Context.StateFile,
-                Context.GetProjectOutputs(),
-                Context.GetArtifacts(),
-                Context.SourceTreeMetadata,
-                Context.BuildMetadata,
-                Path.Combine(Context.GetDropLocation(), BuildStateWriter.DefaultFileName));
+            writer.WriteStateFiles(Context);
 
-            Context.ThisBuildStateFilePath = path;
+            //var path = writer.WriteStateFile(
+            //    Context.StateFile,
+            //    Context.GetProjectOutputs(),
+            //    Context.GetArtifacts(),
+            //    Context.SourceTreeMetadata,
+            //    Context.BuildMetadata,
+            //    Path.Combine(Context.GetDropLocation(null), BuildStateWriter.DefaultFileName));
 
             return !Log.HasLoggedErrors;
         }
@@ -49,20 +49,30 @@ namespace Aderant.Build.Tasks {
         /// Serializes the build state file
         /// </summary>
         /// <param name="selectedStateFile">The state file selected to build with.</param>
+        /// <param name="directorySha">The SHA of the directory for which the outputs are associated</param>
         /// <param name="outputs">The outputs the build produced</param>
         /// <param name="artifacts">The artifacts this build produced</param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
-        public string WriteStateFile(BuildStateFile selectedStateFile, IDictionary<string, ProjectOutputs> outputs, IDictionary<string, ICollection<ArtifactManifest>> artifacts, SourceTreeMetadata metadata, BuildMetadata buildMetadata, string path) {
-            string bucketId = null;
+        public string WriteStateFile(
+            BuildStateFile selectedStateFile,
+            BucketId directorySha,
+            ProjectOutputCollection outputs,
+            IDictionary<string, ICollection<ArtifactManifest>> artifacts,
+            SourceTreeMetadata metadata,
+            BuildMetadata buildMetadata,
+            string path) {
+
+            string treeShaValue = null;
             if (metadata != null) {
                 var treeSha = metadata.GetBucket(BucketId.Current);
-                bucketId = treeSha.Id;
+                treeShaValue = treeSha.Id;
             }
 
             var stateFile = new BuildStateFile {
-                TreeSha = bucketId,
+                TreeSha = treeShaValue,
+                BucketId = directorySha
             };
 
             if (selectedStateFile != null) {
@@ -107,15 +117,41 @@ namespace Aderant.Build.Tasks {
                     outputs.Origin = buildId;
 
                     newOutput[projectOutputs.Key] = outputs;
-
                 }
+            }
+        }
+
+        public void WriteStateFiles(BuildOperationContext context) {
+            IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
+
+            foreach (var bucket in buckets) {
+                var tag = bucket.Tag;
+
+                var outputs = context.GetProjectOutputs();
+                var projectOutputCollection = outputs.GetProjectsForTag(tag);
+
+                var artifacts = context.GetArtifacts();
+                var artifactCollection = artifacts.GetArtifactsForTag(tag);
+
+                var dropLocation = Path.Combine(context.GetDropLocation(tag), DefaultFileName);
+                WriteStateFile(null, bucket, projectOutputCollection, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
             }
         }
     }
 
     [Serializable]
     [DataContract]
+    internal class ProjectKey {
+        public string Path { get; set; }
+    }
+
+    [Serializable]
+    [DataContract]
     public sealed class BuildStateFile : StateFileBase {
+
+        [DataMember(EmitDefaultValue = false)]
+        public BucketId BucketId { get; set; }
+
         [DataMember(EmitDefaultValue = false)]
         public Guid Id { get; set; } = Guid.NewGuid();
 

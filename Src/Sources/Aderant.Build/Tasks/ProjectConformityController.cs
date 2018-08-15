@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Xml.Linq;
 using Microsoft.Build.Construction;
@@ -41,6 +42,9 @@ namespace Aderant.Build.Tasks {
         }
 
         public void Unload() {
+            if (Debugger.IsAttached) {
+                return;
+            }
             try {
                 project.ProjectCollection.UnloadProject(project);
             } catch (NullReferenceException) {

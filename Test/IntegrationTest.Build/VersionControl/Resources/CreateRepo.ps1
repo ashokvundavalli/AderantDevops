@@ -1,5 +1,4 @@
-﻿& git init Repo
-cd repo
+﻿& git init
 Add-Content -Path "master.txt" -Value  "Some text"
 & git add "master.txt"
 & git commit -m "Added master.txt"

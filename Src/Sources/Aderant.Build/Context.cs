@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -15,7 +14,7 @@ namespace Aderant.Build {
 
     [Serializable]
     public class BuildOperationContext {
-        private SortedDictionary<string, List<ArtifactManifest>> artifacts;
+        private ArtifactCollection artifacts;
         private BuildMetadata buildMetadata;
 
         private string buildScriptsDirectory;
@@ -23,7 +22,7 @@ namespace Aderant.Build {
         private bool isDesktopBuild = true;
 
         // For deterministic hashing it is better if this is sorted
-        private SortedDictionary<string, ProjectOutputs> outputs;
+        private ProjectOutputCollection outputs;
 
         private string primaryDropLocation;
         private string pullRequestDropLocation;
@@ -32,7 +31,7 @@ namespace Aderant.Build {
         private IContextualServiceProvider serviceProvider;
 
         private SourceTreeMetadata sourceTreeMetadata;
-        private BuildStateFile stateFile;
+        private List<BuildStateFile> stateFile;
 
         private BuildSwitches switches = default(BuildSwitches);
 
@@ -151,12 +150,10 @@ namespace Aderant.Build {
         /// The state file this build is using (if any).
         /// This indicates if we are reusing an existing build.
         /// </summary>
-        public BuildStateFile StateFile {
+        public List<BuildStateFile> StateFile {
             get { return stateFile; }
             set { stateFile = value; }
         }
-
-        public string ThisBuildStateFilePath { get; set; }
 
         /// <summary>
         /// Creates a new instance of T.
@@ -237,8 +234,8 @@ namespace Aderant.Build {
             return null;
         }
 
-        public string GetDropLocation() {
-            return BucketPathBuilder.BuildDropLocation(this);
+        public string GetDropLocation(string publisherName) {
+            return BucketPathBuilder.BuildDropLocation(publisherName, this);
         }
 
         public void RecordProjectOutputs(string sourcesDirectory, string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {
@@ -251,14 +248,15 @@ namespace Aderant.Build {
             }
 
             if (outputs == null) {
-                outputs = new SortedDictionary<string, ProjectOutputs>(StringComparer.OrdinalIgnoreCase);
+                outputs = new ProjectOutputCollection();
             }
 
             if (!outputs.ContainsKey(projectFile)) {
                 outputs[projectFile] = new ProjectOutputs {
                     FilesWritten = RemoveIntermediateObjects(projectOutputs, intermediateDirectory),
                     OutputPath = outputPath,
-                    Origin = "ThisBuild"
+                    Origin = "ThisBuild",
+                    Directory = ProjectOutputs.GetDirectory(projectFile)
                 };
             } else {
                 ThrowDoubleWrite();
@@ -280,7 +278,7 @@ namespace Aderant.Build {
         /// Returns the outputs for all projects seen by the build.
         /// Keyed by project file.
         /// </summary>
-        internal IDictionary<string, ProjectOutputs> GetProjectOutputs() {
+        internal ProjectOutputCollection GetProjectOutputs() {
             return outputs;
         }
 
@@ -288,16 +286,16 @@ namespace Aderant.Build {
         /// Returns the artifacts for a given publisher.
         /// Keyed by publisher.
         /// </summary>
-        internal Dictionary<string, ICollection<ArtifactManifest>> GetArtifacts() {
-            return artifacts.ToDictionary(s => s.Key, p => (ICollection<ArtifactManifest>)p.Value.AsReadOnly());
+        internal ArtifactCollection GetArtifacts() {
+            return artifacts;
         }
 
         internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
             if (artifacts == null) {
-                artifacts = new SortedDictionary<string, List<ArtifactManifest>>(StringComparer.OrdinalIgnoreCase);
+                artifacts = new ArtifactCollection();
             }
 
-            List<ArtifactManifest> manifests;
+            ICollection<ArtifactManifest> manifests;
 
             if (!artifacts.TryGetValue(publisherName, out manifests)) {
                 manifests = new List<ArtifactManifest>();
@@ -310,7 +308,57 @@ namespace Aderant.Build {
                     Files = files,
                 });
 
-            manifests.Sort((x, y) => string.Compare(x.Id, y.Id, StringComparison.OrdinalIgnoreCase));
+            //manifests.Sort((x, y) => string.Compare(x.Id, y.Id, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public BuildStateFile GetStateFile(string key) {
+            foreach (var file in StateFile) {
+                if (string.Equals(file.BucketId.Tag, key, StringComparison.OrdinalIgnoreCase)) {
+                    return file;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    [Serializable]
+    [DataContract]
+    internal class ArtifactCollection : SortedDictionary<string, ICollection<ArtifactManifest>> {
+
+        public ArtifactCollection()
+            : base(StringComparer.OrdinalIgnoreCase) {
+        }
+
+        public ArtifactCollection GetArtifactsForTag(string tag) {
+            var items = this.Where(m => string.Equals(m.Key, tag, StringComparison.OrdinalIgnoreCase));
+
+            var collection = new ArtifactCollection();
+            foreach (var item in items) {
+                collection.Add(item.Key, item.Value);
+            }
+
+            return collection;
+        }
+    }
+
+    [Serializable]
+    [DataContract]
+    internal class ProjectOutputCollection : SortedDictionary<string, ProjectOutputs> {
+
+        public ProjectOutputCollection()
+            : base(StringComparer.OrdinalIgnoreCase) {
+        }
+        
+        public ProjectOutputCollection GetProjectsForTag(string tag) {
+            var items = this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase));
+
+            var collection = new ProjectOutputCollection();
+            foreach (var item in items) {
+                collection.Add(item.Key, item.Value);
+            }
+
+            return collection;
         }
     }
 
@@ -345,16 +393,34 @@ namespace Aderant.Build {
 
         [DataMember]
         public string Origin { get; set; }
+
+        [DataMember]
+        public string Directory { get; set; }
+
+        public static string GetDirectory(string projectFile) {
+            return projectFile.Split(Path.DirectorySeparatorChar)[0];
+        }
     }
 
     [Serializable]
     public sealed class SourceTreeMetadata {
+
         public string CommonAncestor { get; set; }
         public IReadOnlyCollection<BucketId> BucketIds { get; set; }
         public IReadOnlyCollection<SourceChange> Changes { get; set; }
 
         public BucketId GetBucket(string tag) {
-            return BucketIds.FirstOrDefault(s => s.Tag == tag);
+            foreach (var bucket in BucketIds) {
+                if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
+                    return bucket;
+                }
+            }
+
+            return null;
+        }
+
+        public IReadOnlyCollection<BucketId> GetBuckets() {
+            return BucketIds.Where(b => !b.IsRoot).ToList();
         }
     }
 

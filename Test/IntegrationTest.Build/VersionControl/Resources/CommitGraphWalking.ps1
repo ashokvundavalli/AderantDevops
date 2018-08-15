@@ -1,8 +1,7 @@
 ﻿Set-StrictMode -Version "Latest"
 [int]$i = 1
 
-& git init Repo
-cd repo
+& git init
 Add-Content -Path "master.txt" -Value  "Some text"
 & git add "master.txt"
 & git commit -m "$($i++;$i) Added master.txt"

@@ -61,6 +61,15 @@ namespace UnitTest.Build {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {&quot;serializedVersion&quot;:2,&quot;Artifacts&quot;:{&quot;ModuleA&quot;:[{&quot;Id&quot;:&quot;ModuleA&quot;,&quot;Files&quot;:[{&quot;File&quot;:&quot;Bar.dll&quot;},{&quot;File&quot;:&quot;Baz.dll&quot;},{&quot;File&quot;:&quot;Foo.dll&quot;}]}]},&quot;BucketId&quot;:{&quot;id&quot;:&quot;496d79f90104b02eb2c082d834fd4f40a68d939a&quot;,&quot;tag&quot;:&quot;ModuleA&quot;},&quot;BuildId&quot;:&quot;0&quot;,&quot;Id&quot;:&quot;ff4c861b-1955-492a-ae42-694317375071&quot;,&quot;Outputs&quot;:{&quot;_set&quot;:[{&quot;key&quot;:&quot;ModuleA\\Bar\\Bar.csproj&quot;,&quot;value&quot;:{&quot;Directory&quot;:&quot;ModuleA&quot;,&quot;FilesWritten&quot;:[&quot;bin\\Debug\\Bar.dll&quot;,&quot;bin\\Debug\\Bar.pdb&quot;],&quot;Origin&quot;:&quot;ThisBuild&quot;,&quot;OutputPath&quot;:&quot;bin\\Debug\\&quot;}},{&quot;key&quot;:&quot;ModuleA\\Baz\\Baz.csproj&quot;,&quot;value&quot;:{&quot;Dire [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string buildstate {
+            get {
+                return ResourceManager.GetString("buildstate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;Project ToolsVersion=&quot;12.0&quot; DefaultTargets=&quot;Build&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///  &lt;Import Project=&quot;$(MSBuildToolsPath)\Microsoft.CSharp.targets&quot; /&gt;

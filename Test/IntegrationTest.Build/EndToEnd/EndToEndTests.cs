@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using Aderant.Build;
 using Aderant.Build.Logging;
@@ -48,9 +49,9 @@ namespace IntegrationTest.Build.EndToEnd {
 
             var logFile = base.LogFile;
 
-            PrepareForAnotherRun(BucketId.Current);
+            PrepareForAnotherRun();
 
-            // Run second build - 
+            // Run second build
             RunTarget("EndToEnd", properties);
             var logFile1 = base.LogFile;
 
@@ -59,13 +60,13 @@ namespace IntegrationTest.Build.EndToEnd {
         }
 
         [TestMethod]
-        public void Project_is_deleted() {
+        public void When_project_is_deleted_build_still_completes() {
             RunTarget("EndToEnd", properties);
 
             Directory.Delete(Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob"), true);
             CleanWorkingDirectory();
             CommitChanges();
-            PrepareForAnotherRun(BucketId.Previous); // Grab the previous tree state as the basis
+            PrepareForAnotherRun();
 
             Assert.IsNotNull(context.BuildStateMetadata);
             Assert.AreNotEqual(0, context.BuildStateMetadata.BuildStateFiles.Count);
@@ -73,15 +74,15 @@ namespace IntegrationTest.Build.EndToEnd {
             RunTarget("EndToEnd", properties);
         }
 
-        private void PrepareForAnotherRun(string bucket) {
+        private void PrepareForAnotherRun() {
             context = contextFile.GetBuildOperationContext();
             context = CreateContext(properties);
             context.BuildMetadata.BuildId += 1;
 
-            var buildStateMetadata = new ArtifactService(NullLogger.Default).GetBuildStateMetadata(
-                new[] {
-                    context.SourceTreeMetadata.GetBucket(bucket).Id
-                }, context.PrimaryDropLocation);
+            var buildStateMetadata = new ArtifactService(NullLogger.Default)
+                .GetBuildStateMetadata(
+                    context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
+                    context.PrimaryDropLocation);
 
             context.BuildStateMetadata = buildStateMetadata;
             context.Publish(properties[WellKnownProperties.ContextFileName]);

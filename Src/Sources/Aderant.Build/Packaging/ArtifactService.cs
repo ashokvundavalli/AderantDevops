@@ -47,7 +47,7 @@ namespace Aderant.Build.Packaging {
 
         private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
             // TODO: Slow - optimize
-            List<Tuple<string, PathSpec>> paths = new List<Tuple<string, PathSpec>>();
+            List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
             IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
@@ -59,16 +59,16 @@ namespace Aderant.Build.Packaging {
 
                     CheckForDuplicates(artifact.Id, files);
 
-                    var copyOperations = CalculateFileCopyOperations(paths, context, artifact.Id, files);
+                    var copyOperations = CalculateFileCopyOperations(publisherName, copyList, context, artifact.Id, files);
                     if (copyOperations != null) {
                         buildArtifacts.Add(copyOperations);
                     }
 
                     if (context.BuildMetadata.IsPullRequest) {
-                        buildArtifacts.Add(CalculateOperationsForPullRequestDrop(paths, context, artifact.Id, files));
+                        buildArtifacts.Add(CalculateOperationsForPullRequestDrop(copyList, context, artifact.Id, files));
                     } else {
                         if (!context.IsDesktopBuild) {
-                            buildArtifacts.Add(CalculateFileOperationsForLegacyDrop(paths, context, artifact.Id, files));
+                            buildArtifacts.Add(CalculateFileOperationsForLegacyDrop(copyList, context, artifact.Id, files));
                         }
                     }
 
@@ -78,13 +78,12 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            foreach (var item in paths) {
+            foreach (var item in copyList) {
                 CopyToDestination(item.Item1, item.Item2);
             }
 
             return buildArtifacts;
         }
-
         private static string GetProjectKey(string publisherName) {
             return publisherName + "\\";
         }
@@ -101,8 +100,8 @@ namespace Aderant.Build.Packaging {
                 foreach (var key in keys) {
                     // TODO: drive this from project guid
                     if (key.Contains("Test")) {
-                        foreach (var s in outputs[key].FilesWritten) {
-                            var name = Path.GetFileName(s);
+                        foreach (var path in outputs[key].FilesWritten) {
+                            var name = Path.GetFileName(path);
                             if (!outputList.Contains(name)) {
                                 outputList.Add(name);
                             }
@@ -160,13 +159,14 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private BuildArtifact CalculateFileCopyOperations(List<Tuple<string, PathSpec>> fileOps, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
-            var dl = context.GetDropLocation();
+        private BuildArtifact CalculateFileCopyOperations(string publisherName, List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+            var dl = context.GetDropLocation(publisherName);
+
             if (dl != null) {
                 var container = Path.Combine(dl, artifactId);
 
                 foreach (var pathSpec in files) {
-                    fileOps.Add(Tuple.Create(container, pathSpec));
+                    copyList.Add(Tuple.Create(container, pathSpec));
                 }
 
                 return new BuildArtifact {
@@ -253,8 +253,10 @@ namespace Aderant.Build.Packaging {
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
             FetchArtifacts(artifactPaths);
 
+            BuildStateFile stateFile = context.GetStateFile(publisherName);
+
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
-            var filesToRestore = CalculateFilesToRestore(context.StateFile, solutionRoot, publisherName, localArtifactFiles);
+            var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, publisherName, localArtifactFiles);
             CopyFiles(filesToRestore);
             
         }
@@ -274,10 +276,10 @@ namespace Aderant.Build.Packaging {
             result.Paths = paths;
 
             if (context.StateFile != null) {
-                BuildStateFile stateFile = context.StateFile;
+                BuildStateFile stateFile = context.GetStateFile(publisherName);
 
                 ICollection<ArtifactManifest> artifactManifests;
-                if (stateFile.Artifacts.TryGetValue(publisherName, out artifactManifests)) {
+                if (stateFile != null && stateFile.Artifacts.TryGetValue(publisherName, out artifactManifests)) {
                     foreach (var artifactManifest in artifactManifests) {
                         string artifactFolder = Path.Combine(stateFile.DropLocation, artifactManifest.Id);
 
@@ -436,10 +438,6 @@ namespace Aderant.Build.Packaging {
             }
 
             return false;
-        }
-
-        private Queue<T> ToQueue<T>(IEnumerable<T> enumerable) {
-            return new Queue<T>(enumerable);
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {

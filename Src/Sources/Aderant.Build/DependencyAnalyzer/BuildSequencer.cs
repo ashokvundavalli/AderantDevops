@@ -18,7 +18,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class BuildSequencer : ISequencer {
         private readonly IFileSystem2 fileSystem;
         private readonly ILogger logger;
-        private BuildStateFile stateFile;
+        private List<BuildStateFile> stateFile;
 
         [ImportingConstructor]
         public BuildSequencer(ILogger logger, IFileSystem2 fileSystem) {
@@ -31,14 +31,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             bool isDesktopBuild = context.IsDesktopBuild;
 
             if (context.StateFile == null) {
-                FindStateFile(context);
+                FindStateFiles(context);
 
                 if (stateFile != null) {
                     EvictDeletedProjects(context);
                 }
             }
 
-            AddInitializeAndCompletionNodes(context.StateFile, isPullRequest, isDesktopBuild, graph);
+            AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -57,41 +57,49 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void EvictDeletedProjects(BuildOperationContext context) {
             // here we evict deleted projects from the previous builds metadata
             // This is so we do not consider the outputs of this project in the artifact restore phase
-            IEnumerable<SourceChange> deletes = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
-            foreach (var delete in deletes) {
-                if (delete.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
-                    if (stateFile.Outputs.ContainsKey(delete.Path)) {
-                        stateFile.Outputs.Remove(delete.Path);
+            if (context.SourceTreeMetadata.Changes != null) {
+                IEnumerable<SourceChange> deletes = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
+                foreach (var delete in deletes) {
+
+                    foreach (var file in stateFile) {
+                        if (delete.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+                            if (file.Outputs.ContainsKey(delete.Path)) {
+                                file.Outputs.Remove(delete.Path);
+                            }
+                        }
                     }
                 }
             }
+
         }
 
-        private void FindStateFile(BuildOperationContext context) {
-            BuildStateFile file = GetBuildStateFile(context);
-            if (file != null) {
-                this.stateFile = context.StateFile = file;
+        private void FindStateFiles(BuildOperationContext context) {
+            var files = GetBuildStateFile(context);
+            if (files != null) {
+                this.stateFile = context.StateFile = files;
             }
         }
 
-        private static BuildStateFile GetBuildStateFile(BuildOperationContext context) {
+        private static List<BuildStateFile> GetBuildStateFile(BuildOperationContext context) {
+            List<BuildStateFile> stateFiles = new List<BuildStateFile>();
+
             // Here we select an appropriate tree to reuse
             // TODO: This needs way more validation
             var buildStateMetadata = context.BuildStateMetadata;
 
             if (buildStateMetadata != null && context.SourceTreeMetadata != null)
-                foreach (var bucketId in context.SourceTreeMetadata.BucketIds) {
-                    BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.TreeSha, bucketId.Id));
-
+                foreach (var bucketId in context.SourceTreeMetadata.GetBuckets()) {
+                    BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.BucketId.Id, bucketId.Id));
+                    
                     if (stateFile != null) {
-                        return stateFile;
+                        stateFiles.Add(stateFile);
                     }
                 }
 
-            return null;
+            return stateFiles;
         }
 
-        private void AddInitializeAndCompletionNodes(BuildStateFile stateFile, bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
+        private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -116,10 +124,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                     graph.Add(completionNode);
                     completionNode.AddResolvedDependency(null, initializeNode);
 
+                    var stateFile = SelectStateFile(solutionDirectoryName);
+
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        TryReuseExistingBuild(solutionDirectoryName, tag, project);
+                        ApplyStateFile(stateFile, solutionDirectoryName, tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -145,11 +155,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return true;
         }
 
-        private void TryReuseExistingBuild(string artifactPublisher, string tag, ConfiguredProject project) {
-            if (String.Equals(project.GetOutputAssemblyWithExtension(), "UnitTest.Deployment.Client.dll", StringComparison.OrdinalIgnoreCase)) {
-                //System.Diagnostics.Debugger.Launch();
-            }
-
+        private void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string tag, ConfiguredProject project) {
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
@@ -157,7 +163,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 bool artifactsExist = false;
 
                 ICollection<ArtifactManifest> artifacts;
-                if (stateFile.Artifacts.TryGetValue(artifactPublisher, out artifacts)) {
+                if (stateFile.Artifacts.TryGetValue(stateFileKey, out artifacts)) {
                     if (artifacts != null) {
                         artifactsExist = true;
                     }
@@ -182,6 +188,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.ChangedFileDependency);
+        }
+
+        private BuildStateFile SelectStateFile(string stateFileKey) {
+            return stateFile.FirstOrDefault(s => string.Equals(s.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase));
         }
 
         private static void MarkDirty(string tag, ConfiguredProject project, InclusionReason reason) {

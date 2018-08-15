@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Aderant.Build;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -17,7 +18,11 @@ namespace UnitTest.Build.Tasks {
         [TestMethod]
         public void BuildStateFile_serialization() {
             var stateFile = new BuildStateFile();
-            stateFile.PullRequestInfo = new PullRequestInfo { Id = "1", SourceBranch = "2", TargetBranch = "3" };
+            stateFile.Outputs = new ProjectOutputCollection { { "Foo", new ProjectOutputs() } };
+            stateFile.Artifacts = new ArtifactCollection();
+            stateFile.PullRequestInfo = new PullRequestInfo {
+                Id = "1", SourceBranch = "2", TargetBranch = "3"
+            };
 
             using (var ms = new MemoryStream()) {
                 stateFile.Serialize(ms);
@@ -33,14 +38,22 @@ namespace UnitTest.Build.Tasks {
         }
 
         [TestMethod]
+        public void Deserialize_throws_no_exceptions() {
+            using (var ms = new MemoryStream(Encoding.Default.GetBytes(Resources.buildstate))) {
+                ms.Position = 0;
+                BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(ms);
+            }
+        }
+
+        [TestMethod]
         public void Can_write_build_state_file_to_stream() {
             string text = null;
 
             var fs = new Mock<IFileSystem>();
             fs.Setup(s => s.AddFile(It.IsAny<string>(), It.IsAny<Action<Stream>>())).Callback<string, Action<Stream>>(
-                (s, s1) => {
+                (_, action) => {
                     using (var ms = new MemoryStream()) {
-                        s1(ms);
+                        action(ms);
 
                         ms.Position = 0;
                         using (var reader = new StreamReader(ms)) {
@@ -52,6 +65,7 @@ namespace UnitTest.Build.Tasks {
             var writer = new BuildStateWriter(fs.Object);
 
             writer.WriteStateFile(
+                null,
                 null,
                 null,
                 null,
