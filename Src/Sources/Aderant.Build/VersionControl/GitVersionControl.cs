@@ -181,7 +181,6 @@ namespace Aderant.Build.VersionControl {
             foreach (var branch in repository.Branches) {
                 var isMatch = new[] {
                     branch.FriendlyName,
-                    branch.UpstreamBranchCanonicalName,
                     branch.CanonicalName,
                 }.Contains(branchName, StringComparer.OrdinalIgnoreCase);
 
