@@ -273,10 +273,6 @@ task Build {
         $commonArgs = "$commonArgs /p:RunDatabaseDeployPipeline=true /p:DropOnFailure=false"
     }
 
-    if ($Integration.IsPresent) {
-        $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
-    }
-
     if ($Automation.IsPresent) {
         $commonArgs = "$commonArgs /p:RunDesktopAutomationTests=true"
     }
@@ -294,6 +290,8 @@ task Build {
             } else {
                 $commonArgs = "$commonArgs /p:CodeCoverage=false"
             }
+            
+            $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
 
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
