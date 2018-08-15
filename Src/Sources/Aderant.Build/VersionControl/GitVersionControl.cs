@@ -78,6 +78,7 @@ namespace Aderant.Build.VersionControl {
 
             List<BucketId> bucketKeys = new List<BucketId>();
 
+            
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
 
@@ -180,26 +181,23 @@ namespace Aderant.Build.VersionControl {
         }
 
         private static Commit GetTip(string branchName, Repository repository) {
-            Reference repositoryRef = repository.Refs[branchName];
-            
-            foreach (var branch in repository.Branches) {
-                string upstreamBranchCanonicalName = string.Empty;
-                if (branch.TrackedBranch != null) {
-                    try {
-                        upstreamBranchCanonicalName = branch.UpstreamBranchCanonicalName;
-                    } catch {
-                    }
-                }
+            const string pattern = "refs/heads";
 
-                var isMatch = new[] {
-                    branch.FriendlyName,
-                    branch.CanonicalName,
-                    upstreamBranchCanonicalName
-                }.Contains(branchName, StringComparer.OrdinalIgnoreCase);
+            var branch = repository.Branches[branchName];
+            if (branch == null) {
+                // VSTS workspaces may not have any refs/heads due to the way it clones sources
+                // We instead need to check origin/<branch> or refs/remotes/origin/<branch>
+                if (branchName.StartsWith(pattern)) {
+                    var name = branchName.Substring(pattern.Length + 1);
 
-                if (isMatch) {
-                    return branch.Tip;
+                    branchName = "origin/" + name;
+
+                    branch = repository.Branches[branchName];
                 }
+            }
+
+            if (branch != null) {
+                return branch.Tip;
             }
 
             return null;
