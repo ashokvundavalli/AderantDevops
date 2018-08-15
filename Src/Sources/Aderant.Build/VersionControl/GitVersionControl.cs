@@ -84,12 +84,15 @@ namespace Aderant.Build.VersionControl {
                 // The current tree - what you have
                 // It could be behind some branch you are diffing or it could be the
                 // result of a pull request merge making it the new tree to be committed 
-                Commit newCommit;
+                Commit newCommit = null;
 
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
                     newCommit = repository.Head.Tip;
-                } else {
-                    newCommit = GetTip(fromBranch, repository);
+                }
+
+                if (newCommit == null) {
+                    // Could not find the branch - get our current tip as a reasonable default
+                    newCommit = repository.Head.Tip;
                 }
 
                 Commit oldCommit;
@@ -121,6 +124,9 @@ namespace Aderant.Build.VersionControl {
                         if (parentsParent != null) {
                             bucketKeys.Add(new BucketId(parentsParent.Tree.Sha, BucketId.ParentsParent));
                         }
+
+                        info.NewCommitDisplay = $"{newCommit.Id.Sha}: {newCommit.MessageShort}";
+                        info.OldCommitDisplay = $"{oldCommit.Id.Sha}: {oldCommit.MessageShort}";
                     }
 
                     info.BucketIds = bucketKeys;
@@ -140,7 +146,7 @@ namespace Aderant.Build.VersionControl {
                 //"refs/heads/dev/",
                 //"refs/heads/patch/",
 
-                //"refs/remotes/origin/master",
+                "refs/remotes/origin/master",
                 //"refs/remotes/origin/releases/",
                 //"refs/remotes/origin/dev/",
                 //"refs/remotes/origin/patch/",
@@ -174,14 +180,19 @@ namespace Aderant.Build.VersionControl {
         }
 
         private static Commit GetTip(string branchName, Repository repository) {
-            if (!branchName.StartsWith("refs/heads/")) {
-                branchName = "refs/heads/" + branchName;
-            }
-
             foreach (var branch in repository.Branches) {
+                string upstreamBranchCanonicalName = string.Empty;
+                if (branch.TrackedBranch != null) {
+                    try {
+                        upstreamBranchCanonicalName = branch.UpstreamBranchCanonicalName;
+                    } catch {
+                    }
+                }
+
                 var isMatch = new[] {
                     branch.FriendlyName,
                     branch.CanonicalName,
+                    upstreamBranchCanonicalName
                 }.Contains(branchName, StringComparer.OrdinalIgnoreCase);
 
                 if (isMatch) {
@@ -207,6 +218,7 @@ namespace Aderant.Build.VersionControl {
     public class BucketId {
         [DataMember]
         private readonly string id;
+
         [DataMember]
         private readonly string tag;
 
@@ -219,11 +231,10 @@ namespace Aderant.Build.VersionControl {
         public static string ParentsParent { get; } = nameof(ParentsParent);
         public static string Previous { get; } = nameof(Previous);
 
-    
         public string Id {
             get { return id; }
         }
-    
+
         public string Tag {
             get { return tag; }
         }
