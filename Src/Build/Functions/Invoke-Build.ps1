@@ -72,16 +72,22 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 
     if (-not $context.IsDesktopBuild) {
         $metadata = $context.BuildMetadata
+        $sourceBranch = $metadata.ScmBranch;
 
-        if ($metadata.IsPullRequest) {
-            $sourceBranch = $metadata.PullRequest.SourceBranch
+        if ($metadata.IsPullRequest) {            
             $targetBranch = $metadata.PullRequest.TargetBranch
-        } else {
-            $sourceBranch = $metadata.ScmBranch;
-        }        
-    }
+
+            Write-Host "Calculating changes between $sourceBranch and $targetBranch"
+        }
+    }    
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
+
+    if ($context.SourceTreeMetadata.Changes -ne $null) {
+        foreach ($change in $context.SourceTreeMetadata.Changes) {
+            Write-Host $change.Path
+        }
+    }
 }
 
 function GetBuildStateMetadata($context) {
@@ -95,7 +101,7 @@ function GetBuildStateMetadata($context) {
     Write-Host ("BucketIds: " + [string]::Join(", ", $ids))
 
     foreach ($file in $buildState.BuildStateFiles) {
-        Write-Host ("Tree sha: " + $file.TreeSha)        
+        Write-Host ("Tree sha: " + $file.TreeSha + " Build Id: " + $file.BuildId)
     }    
 }
 
