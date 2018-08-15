@@ -14,8 +14,8 @@
       $(MSBuildProjectDirectory)\EndToEnd\Resources\**\*.targets;
     </_DependencyAnalysisIncludePattern>
     <_DependencyAnalysisExcludePattern>
-      *\obj\**;
-      *\bin\**;
+      **\obj\**;
+      **\bin\**;
       TestDeployment\**
     </_DependencyAnalysisExcludePattern>
   </PropertyGroup>

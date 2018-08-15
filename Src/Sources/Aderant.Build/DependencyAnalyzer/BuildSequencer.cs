@@ -10,6 +10,7 @@ using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Tasks;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.DependencyAnalyzer {
 
@@ -17,6 +18,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class BuildSequencer : ISequencer {
         private readonly IFileSystem2 fileSystem;
         private readonly ILogger logger;
+        private BuildStateFile stateFile;
 
         [ImportingConstructor]
         public BuildSequencer(ILogger logger, IFileSystem2 fileSystem) {
@@ -30,6 +32,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (context.StateFile == null) {
                 FindStateFile(context);
+
+                if (stateFile != null) {
+                    EvictDeletedProjects(context);
+                }
             }
 
             AddInitializeAndCompletionNodes(context.StateFile, isPullRequest, isDesktopBuild, graph);
@@ -48,10 +54,23 @@ namespace Aderant.Build.DependencyAnalyzer {
             return pipeline.GenerateProject(groups, files, null);
         }
 
-        private static void FindStateFile(BuildOperationContext context) {
+        private void EvictDeletedProjects(BuildOperationContext context) {
+            // here we evict deleted projects from the previous builds metadata
+            // This is so we do not consider the outputs of this project in the artifact restore phase
+            IEnumerable<SourceChange> deletes = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
+            foreach (var delete in deletes) {
+                if (delete.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+                    if (stateFile.Outputs.ContainsKey(delete.Path)) {
+                        stateFile.Outputs.Remove(delete.Path);
+                    }
+                }
+            }
+        }
+
+        private void FindStateFile(BuildOperationContext context) {
             BuildStateFile file = GetBuildStateFile(context);
             if (file != null) {
-                context.StateFile = file;
+                this.stateFile = context.StateFile = file;
             }
         }
 
@@ -100,7 +119,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        TryReuseExistingBuild(solutionDirectoryName, stateFile, tag, project);
+                        TryReuseExistingBuild(solutionDirectoryName, tag, project);
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -126,7 +145,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return true;
         }
 
-        private static void TryReuseExistingBuild(string artifactPublisher, BuildStateFile stateFile, string tag, ConfiguredProject project) {
+        private void TryReuseExistingBuild(string artifactPublisher, string tag, ConfiguredProject project) {
             if (String.Equals(project.GetOutputAssemblyWithExtension(), "UnitTest.Deployment.Client.dll", StringComparison.OrdinalIgnoreCase)) {
                 //System.Diagnostics.Debugger.Launch();
             }

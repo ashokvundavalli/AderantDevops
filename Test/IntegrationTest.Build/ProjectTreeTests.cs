@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -96,7 +97,7 @@ namespace IntegrationTest.Build {
         }
 
         [TestMethod]
-        public async Task Dependency_sorting2() {
+        public async Task Project_dependencies_are_discovered() {
             await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
 
             var collector = new BuildDependenciesCollector {
@@ -111,25 +112,35 @@ namespace IntegrationTest.Build {
 
             Assert.AreEqual(5, projects.Count);
 
-            var solution1 = new[] {
+            Assert.AreEqual(0, projects[0].GetDependencies().Count);
+            Assert.AreEqual(1, projects[1].GetDependencies().Count);
+            Assert.AreEqual(1, projects[2].GetDependencies().Count);
+            Assert.AreEqual(2, projects[3].GetDependencies().Count);
+            Assert.AreEqual(3, projects[4].GetDependencies().Count);
+
+            AssertSequence(
+                projects[1].GetDependencies(),
+                "Foo");
+
+            AssertSequence(
+                projects[2].GetDependencies(),
+                "Foo");
+
+            AssertSequence(
+                projects[3].GetDependencies(),
                 "Foo",
-                "Baz",
+                "Baz");
+
+            AssertSequence(
+                projects[4].GetDependencies(),
                 "Gaz",
                 "Bar",
-                "Flob",
-            };
+                "Foo"
+            );
+        }
 
-            var solution2 = new[] {
-                "Foo",
-                "Gaz",
-                "Baz",
-                "Bar",
-                "Flob",
-            };
-
-            var sequence = projects.Select(s => Path.GetFileNameWithoutExtension(s.FullPath)).ToArray();
-
-            AssertSequence(sequence, solution1, solution2);
+        private static void AssertSequence(IEnumerable<IDependable> sequence, params string[] solutions) {
+            AssertSequence(sequence.Select(s => s.Id).ToArray(), solutions);
         }
 
         private static void AssertSequence(string[] sequence, params IEnumerable<string>[] solutions) {

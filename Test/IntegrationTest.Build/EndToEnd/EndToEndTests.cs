@@ -2,9 +2,9 @@
 using System.IO;
 using System.Management.Automation;
 using Aderant.Build;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.VersionControl;
-using Microsoft.Build.Framework;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.EndToEnd {
@@ -12,15 +12,19 @@ namespace IntegrationTest.Build.EndToEnd {
     [TestClass]
     [DeploymentItem("EndToEnd\\Resources", "Resources")]
     public class EndToEndTests : MSBuildIntegrationTestBase {
+        private BuildOperationContext context;
+        private string contextFile;
+        private Dictionary<string, string> properties;
 
-        [TestMethod]
-        public void Builds_reuse_cached_outputs() {
-            base.DetailedSummary = false;
-            base.LoggerVerbosity = LoggerVerbosity.Normal;
+        public string DeploymentItemsDirectory {
+            get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source"); }
+        }
 
-            AddFilesToNewGitRepository(DeploymentItemsDirectory);
+        [TestInitialize]
+        public void TestInitialize() {
+            AddFilesToNewGitRepository();
 
-            var properties = new Dictionary<string, string> {
+            this.properties = new Dictionary<string, string> {
                 { "BuildSystemInTestMode", bool.TrueString },
                 { "BuildScriptsDirectory", TestContext.DeploymentDirectory + "\\" },
                 { "CompileBuildSystem", bool.FalseString },
@@ -29,27 +33,24 @@ namespace IntegrationTest.Build.EndToEnd {
                 { WellKnownProperties.ContextFileName, TestContext.TestName },
             };
 
-            var context = CreateContext(properties);
-            var contextFile = context.Publish(properties[WellKnownProperties.ContextFileName]);
+            this.context = CreateContext(properties);
+            this.contextFile = context.Publish(properties[WellKnownProperties.ContextFileName]);
+        }
+
+        [TestMethod]
+        [Description("The basic scenario. No changes - the build should reuse existing artifacts")]
+        public void Build_tree_reuse_scenario() {
+            //base.DetailedSummary = false;
+            //base.LoggerVerbosity = LoggerVerbosity.Normal;
 
             // Simulate first build
             RunTarget("EndToEnd", properties);
 
             var logFile = base.LogFile;
 
-            context = contextFile.GetBuildOperationContext();
+            PrepareForAnotherRun(BucketId.Current);
 
-            // Simulate first build
-            context = CreateContext(properties);
-            context.BuildMetadata.BuildId = 1;
-
-            var buildStateMetadata = new ArtifactService(Aderant.Build.Logging.NullLogger.Default).GetBuildStateMetadata(new[] { context.SourceTreeMetadata.GetBucket(BucketId.Current).Id }, context.PrimaryDropLocation);
-            context.BuildStateMetadata = buildStateMetadata;
-            context.Publish(properties[WellKnownProperties.ContextFileName]);
-
-            CleanWorkingDirectory();
-
-            // Run second build
+            // Run second build - 
             RunTarget("EndToEnd", properties);
             var logFile1 = base.LogFile;
 
@@ -57,28 +58,56 @@ namespace IntegrationTest.Build.EndToEnd {
             WriteLogFile(@"C:\Temp\lf1.log", logFile1);
         }
 
-        private void CleanWorkingDirectory() {
-            using (var ps = PowerShell.Create()) {
-                ps.AddScript($"cd {DeploymentItemsDirectory.Quote()}");
-                ps.AddScript("& git clean -fdx");
-                var results = ps.Invoke();
+        [TestMethod]
+        public void Project_is_deleted() {
+            RunTarget("EndToEnd", properties);
 
-                foreach (var item in results) {
-                    TestContext.WriteLine(item.ToString());
-                }
-            }
+            Directory.Delete(Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob"), true);
+            CleanWorkingDirectory();
+            CommitChanges();
+            PrepareForAnotherRun(BucketId.Previous); // Grab the previous tree state as the basis
+
+            Assert.IsNotNull(context.BuildStateMetadata);
+            Assert.AreNotEqual(0, context.BuildStateMetadata.BuildStateFiles.Count);
+
+            RunTarget("EndToEnd", properties);
         }
 
-        private BuildOperationContext CreateContext(Dictionary<string, string> properties) {
-            var context = new BuildOperationContext();
-            context.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, "_drop");
-            context.BuildMetadata = new BuildMetadata();
-            context.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
-            context.SourceTreeMetadata = GetSourceTreeMetadata();
-            context.BuildScriptsDirectory = properties["BuildScriptsDirectory"];
-            context.BuildSystemDirectory = Path.Combine(TestContext.DeploymentDirectory, @"..\..\");
+        private void PrepareForAnotherRun(string bucket) {
+            context = contextFile.GetBuildOperationContext();
+            context = CreateContext(properties);
+            context.BuildMetadata.BuildId += 1;
 
-            return context;
+            var buildStateMetadata = new ArtifactService(NullLogger.Default).GetBuildStateMetadata(
+                new[] {
+                    context.SourceTreeMetadata.GetBucket(bucket).Id
+                }, context.PrimaryDropLocation);
+
+            context.BuildStateMetadata = buildStateMetadata;
+            context.Publish(properties[WellKnownProperties.ContextFileName]);
+
+            CleanWorkingDirectory();
+        }
+
+        private void CleanWorkingDirectory() {
+            RunCommand("& git clean -fdx");
+        }
+
+        private void CommitChanges() {
+            RunCommand("& git add .");
+            RunCommand("& git commit -m \"Add\"");
+        }
+
+        private BuildOperationContext CreateContext(Dictionary<string, string> props) {
+            var ctx = new BuildOperationContext();
+            ctx.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, "_drop");
+            ctx.BuildMetadata = new BuildMetadata();
+            ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
+            ctx.SourceTreeMetadata = GetSourceTreeMetadata();
+            ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
+            ctx.BuildSystemDirectory = Path.Combine(TestContext.DeploymentDirectory, @"..\..\");
+
+            return ctx;
         }
 
         private SourceTreeMetadata GetSourceTreeMetadata() {
@@ -86,21 +115,19 @@ namespace IntegrationTest.Build.EndToEnd {
             return versionControl.GetMetadata(DeploymentItemsDirectory, "", "");
         }
 
-        private void AddFilesToNewGitRepository(string testContextDeploymentDirectory) {
+        private void AddFilesToNewGitRepository() {
+            RunCommand(Resources.CreateRepo);
+        }
+
+        private void RunCommand(string command) {
             using (var ps = PowerShell.Create()) {
-                ps.AddScript($"cd {testContextDeploymentDirectory.Quote()}");
-                ps.AddScript(Resources.CreateRepo);
+                ps.AddScript($"cd {DeploymentItemsDirectory.Quote()}");
+                ps.AddScript(command);
                 var results = ps.Invoke();
 
                 foreach (var item in results) {
                     TestContext.WriteLine(item.ToString());
                 }
-            }
-        }
-
-        public string DeploymentItemsDirectory {
-            get {
-                return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source");
             }
         }
     }
