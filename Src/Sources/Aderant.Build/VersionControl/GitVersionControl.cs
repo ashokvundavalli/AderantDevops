@@ -73,7 +73,6 @@ namespace Aderant.Build.VersionControl {
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch) {
-            System.Diagnostics.Debugger.Launch();
             var info = new SourceTreeMetadata();
 
             List<BucketId> bucketKeys = new List<BucketId>();
@@ -180,6 +179,8 @@ namespace Aderant.Build.VersionControl {
         }
 
         private static Commit GetTip(string branchName, Repository repository) {
+            Reference repositoryRef = repository.Refs[branchName];
+            
             foreach (var branch in repository.Branches) {
                 string upstreamBranchCanonicalName = string.Empty;
                 if (branch.TrackedBranch != null) {
