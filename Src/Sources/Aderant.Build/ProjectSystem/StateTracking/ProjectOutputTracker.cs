@@ -32,7 +32,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             bool isTestProject = IsTestProject();
 
             if (!outputs.ContainsKey(projectFile)) {
-                outputs[ProjectFile] = new ProjectOutputs {
+                outputs[projectFile] = new ProjectOutputs {
                     FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
                     OutputPath = OutputPath,
                     Origin = "ThisBuild",
@@ -53,10 +53,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         private static string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
-            return projectOutputs
-                .Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1)
-                .OrderBy(filePath => filePath)
-                .ToArray();
+            if (projectOutputs != null)
+                return projectOutputs
+                    .Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1)
+                    .OrderBy(filePath => filePath)
+                    .ToArray();
+
+            return new string[] { };
         }
 
         private bool IsTestProject() {
