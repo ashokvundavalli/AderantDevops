@@ -205,7 +205,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
 
-                logger.Debug($"Looked for {outputFile} but it was not found in: {s.Id} -> {s.InstanceId}");
+                logger.Info($"Looked for {outputFile} but it was not found in: {s.Id} -> {s.InstanceId}");
             }
             
             return false;
