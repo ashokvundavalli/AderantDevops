@@ -3,6 +3,7 @@ using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 using Aderant.Build.VersionControl;
+using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.ProjectSystem {
     internal class BuildDependenciesCollector {

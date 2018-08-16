@@ -9,6 +9,7 @@ using Aderant.Build.ProjectSystem;
 using Aderant.Build.Services;
 using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
+using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build {
 

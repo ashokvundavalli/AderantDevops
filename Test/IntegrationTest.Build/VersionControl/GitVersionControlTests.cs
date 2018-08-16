@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Aderant.Build.VersionControl;
+using Aderant.Build.VersionControl.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build.VersionControl {

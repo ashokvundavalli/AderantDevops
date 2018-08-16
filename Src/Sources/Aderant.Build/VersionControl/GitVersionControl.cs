@@ -4,7 +4,9 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
+using Aderant.Build.VersionControl.Model;
 using LibGit2Sharp;
+using FileStatus = Aderant.Build.VersionControl.Model.FileStatus;
 
 namespace Aderant.Build.VersionControl {
 
@@ -73,11 +75,9 @@ namespace Aderant.Build.VersionControl {
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch) {
-            System.Diagnostics.Debugger.Launch();
             var info = new SourceTreeMetadata();
 
             List<BucketId> bucketKeys = new List<BucketId>();
-
             
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
@@ -180,22 +180,19 @@ namespace Aderant.Build.VersionControl {
             return null;
         }
 
-        private static Commit GetTip(string branchName, Repository repository) {
-            const string pattern = "refs/heads";
-
-            var branch = repository.Branches[branchName];
+        private static Commit GetTip(string refName, Repository repository) {
+            var branch = repository.Branches[refName];
             if (branch == null) {
                 // VSTS workspaces may not have any refs/heads due to the way it clones sources
                 // We instead need to check origin/<branch> or refs/remotes/origin/<branch>
-                if (branchName.StartsWith(pattern)) {
-                    var name = branchName.Substring(pattern.Length + 1);
+                Model.BranchName branchName = Model.BranchName.CreateFromRef(refName);
+                var networkRemote = repository.Network.Remotes["origin"];
 
-                    branchName = "origin/" + name;
-
-                    branch = repository.Branches[branchName];
+                if (networkRemote != null) {
+                    branch = repository.Branches[networkRemote.Name + "/" + branchName.Name];
                 }
             }
-
+            
             if (branch != null) {
                 return branch.Tip;
             }
@@ -258,94 +255,6 @@ namespace Aderant.Build.VersionControl {
         }
     }
 
-    [DebuggerDisplay("Path: {Path} Status: {Status}")]
-    [Serializable]
-    public class SourceChange : ISourceChange {
-
-        public SourceChange(string workingDirectory, string relativePath, FileStatus status) {
-            Path = relativePath;
-            FullPath = CleanPath(workingDirectory, relativePath);
-            Status = status;
-        }
-
-        public string FullPath { get; }
-
-        public string Path { get; }
-        public FileStatus Status { get; }
-
-        private static string CleanPath(string workingDirectory, string relativePath) {
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(workingDirectory, relativePath));
-        }
-    }
-
-    public interface ISourceChange {
-        string Path { get; }
-        string FullPath { get; }
-        FileStatus Status { get; }
-    }
-
-    /// <summary>
-    /// The kind of changes that a Diff can report.
-    /// Copied from libgit2sharp/LibGit2Sharp/ChangeKind.cs to isolate the library.
-    /// </summary>
-    public enum FileStatus {
-        /// <summary>
-        /// No changes detected.
-        /// </summary>
-        Unmodified = 0,
-
-        /// <summary>
-        /// The file was added.
-        /// </summary>
-        Added = 1,
-
-        /// <summary>
-        /// The file was deleted.
-        /// </summary>
-        Deleted = 2,
-
-        /// <summary>
-        /// The file content was modified.
-        /// </summary>
-        Modified = 3,
-
-        /// <summary>
-        /// The file was renamed.
-        /// </summary>
-        Renamed = 4,
-
-        /// <summary>
-        /// The file was copied.
-        /// </summary>
-        Copied = 5,
-
-        /// <summary>
-        /// The file is ignored in the workdir.
-        /// </summary>
-        Ignored = 6,
-
-        /// <summary>
-        /// The file is untracked in the workdir.
-        /// </summary>
-        Untracked = 7,
-
-        /// <summary>
-        /// The type (i.e. regular file, symlink, submodule, ...)
-        /// of the file was changed.
-        /// </summary>
-        TypeChanged = 8,
-
-        /// <summary>
-        /// Entry is unreadable.
-        /// </summary>
-        Unreadable = 9,
-
-        /// <summary>
-        /// Entry is currently in conflict.
-        /// </summary>
-        Conflicted = 10,
-    }
-
     /// <summary>
     /// Represents a version control service, such as Git or Team Foundation.
     /// </summary>
@@ -353,4 +262,5 @@ namespace Aderant.Build.VersionControl {
 
         IReadOnlyCollection<ISourceChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath);
     }
+
 }

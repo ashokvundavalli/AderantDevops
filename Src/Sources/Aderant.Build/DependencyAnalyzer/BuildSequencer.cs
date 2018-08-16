@@ -11,6 +11,7 @@ using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
+using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
 

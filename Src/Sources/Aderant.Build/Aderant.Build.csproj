@@ -170,6 +170,8 @@
     <Compile Include="Tasks\TrackProjectOutputs.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
+    <Compile Include="VersionControl\Model\BranchName.cs" />
+    <Compile Include="VersionControl\Model\FileStatus.cs" />
     <Compile Include="VersionControl\GitVersionControl.cs" />
     <Compile Include="DependencyAnalyzer\DependencyType.cs" />
     <Compile Include="DependencyAnalyzer\Model\ProjectBuildConfiguration.cs" />
@@ -299,6 +301,8 @@
     <Compile Include="Packaging\NuGet\WellKnownTokens.cs" />
     <Compile Include="TeamFoundation\VsoBuildCommands.cs" />
     <Compile Include="TeamFoundation\VsoBuildMessageData.cs" />
+    <Compile Include="VersionControl\Model\ISourceChange.cs" />
+    <Compile Include="VersionControl\Model\SourceChange.cs" />
     <Compile Include="Versioning\DotNetAnalyzer.cs" />
     <Compile Include="Versioning\FileVersionAnalyzer.cs" />
     <Compile Include="Versioning\IVersionAnalyzer.cs" />
