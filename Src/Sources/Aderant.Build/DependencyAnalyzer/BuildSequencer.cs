@@ -160,6 +160,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
 
+                if (projectFullPath.Contains("Aderant.Framework.Customization.Processor")) {
+                    System.Diagnostics.Debugger.Launch();
+                }
+
                 bool artifactsExist = false;
 
                 ICollection<ArtifactManifest> artifacts;
