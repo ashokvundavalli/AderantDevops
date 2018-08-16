@@ -195,15 +195,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.ChangedFileDependency);
         }
 
-        private static bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
+        private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
+            var outputFile = project.GetOutputAssemblyWithExtension();
+
             foreach (ArtifactManifest s in artifacts) {
                 foreach (ArtifactItem file in s.Files) {
-                    if (string.Equals(file.File, project.GetOutputAssemblyWithExtension(), StringComparison.OrdinalIgnoreCase)) {
+                    if (string.Equals(file.File, outputFile, StringComparison.OrdinalIgnoreCase)) {
                         return true;
                     }
                 }
-            }
 
+                logger.Debug($"Looked for {outputFile} but it was not found in: {s.Id} -> {s.InstanceId}");
+            }
+            
             return false;
         }
 

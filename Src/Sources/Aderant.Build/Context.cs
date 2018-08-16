@@ -304,6 +304,7 @@ namespace Aderant.Build {
             manifests.Add(
                 new ArtifactManifest {
                     Id = artifactId,
+                    InstanceId = Guid.NewGuid(),
                     Files = files,
                 });
 
@@ -365,10 +366,13 @@ namespace Aderant.Build {
     [DataContract]
     internal class ArtifactManifest {
 
-        [DataMember(Order = 0)]
+        [DataMember]
         public string Id { get; set; }
 
-        [DataMember(Order = 1)]
+        [DataMember(EmitDefaultValue = false)]
+        public Guid InstanceId { get; set; }
+
+        [DataMember]
         public ICollection<ArtifactItem> Files { get; set; }
     }
 
