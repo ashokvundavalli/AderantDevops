@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using Aderant.Build;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;

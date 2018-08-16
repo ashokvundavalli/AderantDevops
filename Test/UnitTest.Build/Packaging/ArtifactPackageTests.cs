@@ -4,6 +4,7 @@ using System.IO;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;

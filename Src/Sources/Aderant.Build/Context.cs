@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
 using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;

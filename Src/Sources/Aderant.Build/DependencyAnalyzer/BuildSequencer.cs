@@ -9,6 +9,7 @@ using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;

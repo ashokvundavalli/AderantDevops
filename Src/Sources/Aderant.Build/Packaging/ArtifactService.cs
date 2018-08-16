@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Aderant.Build.Logging;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Tasks;
 using Aderant.Build.TeamFoundation;
 
