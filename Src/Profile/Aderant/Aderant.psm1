@@ -657,7 +657,7 @@ Register-ArgumentCompleter -CommandName Get-Product -ParameterName "pullRquestId
         $wordToComplete += "*"
     }
 
-    $ids | Where-Object -FilterScript { $_.pullRequestId -like $wordToComplete -or $_.title -like $wordToComplete } | % {
+    $ids | Where-Object -FilterScript { $_.pullRequestId -like $wordToComplete -or $_.title -like $wordToComplete } | ForEach-Object {
         [System.Management.Automation.CompletionResult]::new($_.pullRequestId, $_.title, [System.Management.Automation.CompletionResultType]::Text, $_.title)
     }
 }
@@ -856,7 +856,7 @@ function Open-ModuleSolution() {
                 Invoke-Expression "& '$devenv' $moduleSolutionPath"
             }
         } else {
-            [System.IO.FileSystemInfo[]]$candidates = (gci -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
+            [System.IO.FileSystemInfo[]]$candidates = (Get-ChildItem -Filter *.sln -file  | Where-Object {$_.Name -NotMatch ".custom.sln"})
             if ($candidates.Count -gt 0) {
                 $moduleSolutionPath = Join-Path $rootPath $candidates[0]
 
