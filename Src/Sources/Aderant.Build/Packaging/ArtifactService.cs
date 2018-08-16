@@ -275,7 +275,7 @@ namespace Aderant.Build.Packaging {
             List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
             result.Paths = paths;
 
-            if (context.StateFile != null) {
+            if (context.StateFiles != null) {
                 BuildStateFile stateFile = context.GetStateFile(publisherName);
 
                 ICollection<ArtifactManifest> artifactManifests;

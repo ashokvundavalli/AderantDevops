@@ -90,15 +90,18 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
     }
 }
 
-function GetBuildStateMetadata($context) {
+function GetBuildStateMetadata($context) {    
     $stm = $context.SourceTreeMetadata
+
+    Write-Host "Build Tree Reuse Info"
+    foreach ($id in $stm.BucketIds) {
+        Write-Host ("BucketId: $($id.Id) -> $($id.Tag)")
+    }   
+
     $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
     $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.PrimaryDropLocation
 
-    $context.BuildStateMetadata = $buildState
-
-    Write-Host "Build Tree Reuse Info"
-    Write-Host ("BucketIds: " + [string]::Join(", ", $ids))
+    $context.BuildStateMetadata = $buildState     
 
     foreach ($file in $buildState.BuildStateFiles) {
         Write-Host ("Tree sha: " + $file.TreeSha + " Build Id: " + $file.BuildId)

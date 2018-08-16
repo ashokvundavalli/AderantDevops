@@ -32,7 +32,7 @@ namespace Aderant.Build {
         private IContextualServiceProvider serviceProvider;
 
         private SourceTreeMetadata sourceTreeMetadata;
-        private List<BuildStateFile> stateFile;
+        private List<BuildStateFile> stateFiles;
 
         private BuildSwitches switches = default(BuildSwitches);
 
@@ -151,9 +151,9 @@ namespace Aderant.Build {
         /// The state file this build is using (if any).
         /// This indicates if we are reusing an existing build.
         /// </summary>
-        public List<BuildStateFile> StateFile {
-            get { return stateFile; }
-            set { stateFile = value; }
+        public List<BuildStateFile> StateFiles {
+            get { return stateFiles; }
+            set { stateFiles = value; }
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace Aderant.Build {
                 }
             }
 
-            if (StateFile != null) {
+            if (StateFiles != null) {
                 return ChangesToConsider.PendingChanges;
             }
 
@@ -313,7 +313,7 @@ namespace Aderant.Build {
         }
 
         public BuildStateFile GetStateFile(string key) {
-            foreach (var file in StateFile) {
+            foreach (var file in StateFiles) {
                 if (string.Equals(file.BucketId.Tag, key, StringComparison.OrdinalIgnoreCase)) {
                     return file;
                 }

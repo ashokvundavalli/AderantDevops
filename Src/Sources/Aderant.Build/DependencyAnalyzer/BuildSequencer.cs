@@ -31,7 +31,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
 
-            if (context.StateFile == null) {
+            if (context.StateFiles == null) {
                 FindStateFiles(context);
 
                 if (stateFile != null) {
@@ -77,7 +77,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void FindStateFiles(BuildOperationContext context) {
             var files = GetBuildStateFile(context);
             if (files != null) {
-                this.stateFile = context.StateFile = files;
+                this.stateFile = context.StateFiles = files;
             }
         }
 
