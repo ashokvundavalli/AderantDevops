@@ -48,16 +48,16 @@ namespace Aderant.Build.Tasks {
         /// <summary>
         /// Serializes the build state file
         /// </summary>
-        /// <param name="selectedStateFile">The state file selected to build with.</param>
-        /// <param name="directorySha">The SHA of the directory for which the outputs are associated</param>
+        /// <param name="baseStateFile">The state file selected to build with.</param>
+        /// <param name="bucket">The SHA of the directory for which the outputs are associated</param>
         /// <param name="outputs">The outputs the build produced</param>
         /// <param name="artifacts">The artifacts this build produced</param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
         public string WriteStateFile(
-            BuildStateFile selectedStateFile,
-            BucketId directorySha,
+            BuildStateFile baseStateFile,
+            BucketId bucket,
             ProjectOutputCollection outputs,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata metadata,
@@ -72,18 +72,19 @@ namespace Aderant.Build.Tasks {
 
             var stateFile = new BuildStateFile {
                 TreeSha = treeShaValue,
-                BucketId = directorySha
+                BucketId = bucket
             };
 
-            if (selectedStateFile != null) {
-                stateFile.ParentId = selectedStateFile.Id;
-                stateFile.ParentBuildId = selectedStateFile.BuildId;
-                stateFile.ParentTreeSha = selectedStateFile.TreeSha;
+            if (baseStateFile != null) {
+                stateFile.ParentId = baseStateFile.Id;
+                stateFile.ParentBuildId = baseStateFile.BuildId;
+                stateFile.ParentTreeSha = baseStateFile.TreeSha;
             }
 
             if (outputs != null) {
-                if (selectedStateFile != null) {
-                    MergeExistingOutputs(selectedStateFile.BuildId, selectedStateFile.Outputs, outputs);
+                if (baseStateFile != null) {
+                    System.Diagnostics.Debugger.Launch();
+                    MergeExistingOutputs(baseStateFile.BuildId, baseStateFile.Outputs, outputs);
                 }
 
                 stateFile.Outputs = outputs;
