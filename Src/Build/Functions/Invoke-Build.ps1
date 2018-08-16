@@ -83,9 +83,14 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
 
-    if ($context.SourceTreeMetadata.Changes -ne $null) {
+    Write-Host "New commit: $($context.SourceTreeMetadata.NewCommitDisplay)"
+    Write-Host "New commit: $($context.SourceTreeMetadata.OldCommitDisplay)"
+    Write-Host "CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"    
+   
+    if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) { Write-Host "CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
+        Write-Host "Changes..."    
         foreach ($change in $context.SourceTreeMetadata.Changes) {
-            Write-Host $change.Path
+            Write-Host "$($change.Path) $($change.Status)"
         }
     }
 }
