@@ -3395,17 +3395,28 @@ function Invoke-Git {
 
 <#
 .Synopsis
+    Creates a merge bug for a specific work item.
+.Description   
+    Takes two inputs: the work item ID for the bug that needs to be merged, and the target Git branch name.
+    It will then create a new work item for the merge.
+#>
+function Create-Merge-Bug {
+	Git-Merge -createMergeBugOnly:$true
+}
+
+<#
+.Synopsis
     Starts a merge workflow for all Pull Requests linked to a specific work item.
 .Description   
     Takes the bug work item ID that needs to be merged, the merge work item ID that the merge PR should be attached with and the target Git branch name as input.
-    It then tries to cherry pick each linked Pull Request of the bug work item ID to a new feature branch off the given target branch, commit it and create a PR.
+	It then tries to cherry pick each linked Pull Request of the bug work item ID to a new feature branch off the given target branch, commit it and create a PR.
     If a merge conflict occurs, Visual Studio (Experimental Instance, for performance reasons) opens up automatically for manual conflict resolving.
     After successfully resolving the merge conflict, just close Visual Studio and run this command again. It will remember your last inputs for convenience.
     Once a Pull Request for the merge operation is created, Internet Explorer will open up automatically and show the created PR which is set to auto-complete. 
     Additionally, it will automatically do a squash merge and delete the feature branch.
     The CRTDev group will be associated automatically as an optional reviewer which can be changed manually.
 #>
-function Git-Merge {
+function Git-Merge([switch]$createMergeBugOnly) {
 
     # setup logging
     $ErrorActionPreference = "SilentlyContinue"
@@ -3417,7 +3428,7 @@ function Git-Merge {
     if (!(Test-Path $tempFolderPath)) {
         New-Item -ItemType Directory -Path $tempFolderPath
     }
-
+	Write-Host ""
     $logFilePath = Join-Path $tempFolderPath git-merge_log.txt
     Start-Transcript -path $logFilePath -append
 
@@ -3427,6 +3438,7 @@ function Git-Merge {
     $bugId = $null
     $mergeBugId = $null
     $targetBranch = $null
+	$targetRelease = ""
     $tempFolderPath = "C:\temp\gitMerge"
     $gitError = ""
     $needInput = $true
@@ -3454,9 +3466,9 @@ function Git-Merge {
 
     $autoCreateMergeBug = $false
 
-    # grab previous input automatically on request
+    # grab previous input automatically on request (unless we're only creating the bug).
     $appInfo = Get-Content $appInfoFilePath
-    if ($appInfo) {
+    if ($appInfo -and !$createMergeBugOnly) {
         $inputs = $appInfo.Split(',')
         Write-Host "The previous inputs were"
         Write-Host " * Bug ID:        $($inputs[0])"
@@ -3478,39 +3490,65 @@ function Git-Merge {
         }
     }
 
+	if ($createMergeBugOnly) { 
+		$autoCreateMergeBug = $true
+		$mergeBugId = 'c'
+	}
+
     # grab input manually
-    if ($needInput) {
+	if ($needInput) {
         while (!$bugId -or $bugId.Length -le 5) {
             if ($bugId -and $bugId.Length -le 5) {
                 Write-Host "$bugId is not a valid work item ID" -ForegroundColor Red
             }
-            $bugId = Read-Host -Prompt "`nWhich bug ID to you want to merge"
+            $bugId = Read-Host -Prompt "`nWhich bug ID do you want to merge?"
         }
-    
-        while (!$mergeBugId -or $mergeBugId.Length -le 5 -or $mergeBugId -eq $bugId) {
-            $mergeBugId = Read-Host -Prompt "`nWhich merge bug ID to you want the merge operation to be associated with (enter 'c' to automatically create one)"
-            if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
-                $autoCreateMergeBug = $true
-                break
-            }
-            if ($mergeBugId -and $mergeBugId.Length -le 5) {
-                Write-Host "$mergeBugId is not a valid work item ID" -ForegroundColor Red
-            }
-            if ($mergeBugId -eq $bugId) {
-                Write-Host "You cannot use the original work item to be associated with the merge operation" -ForegroundColor Red
-            }
-        }
-
-        while (!$targetBranch -or $targetBranch.Length -le 1) {
-            $targetBranch = Read-Host -Prompt "`nWhich Git branch to you want to merge to (e.g. master, patch/81SP1 etc. - CASE SENSTITIVE)"
-        }
+		# don't bother reading the merge bug id if they're only creating the bug on its own. it'll always be created automatically.
+		if (!$createMergeBugOnly) {
+			while (!$mergeBugId -or $mergeBugId.Length -le 5 -or $mergeBugId -eq $bugId) {
+				$mergeBugId = Read-Host -Prompt "`nWhich merge bug ID do you want the merge operation to be associated with (enter 'c' to automatically create one)"
+				if ($mergeBugId -eq 'c' -or $mergeBugId -eq "'c'") {
+					$autoCreateMergeBug = $true
+					break
+				}
+				if ($mergeBugId -and $mergeBugId.Length -le 5) {
+					Write-Host "$mergeBugId is not a valid work item ID" -ForegroundColor Red
+				}
+				if ($mergeBugId -eq $bugId) {
+					Write-Host "You cannot use the original work item to be associated with the merge operation" -ForegroundColor Red
+				}
+			}
+		}
+		# if doing a merge here, the dev can enter the target branch for that. otherwise, be a bit more QA-friendly and just get the user to enter the target release themself.
+		if (!$createMergeBugOnly) {
+			while (!$targetBranch -or $targetBranch.Length -le 1) {
+				$targetBranch = Read-Host -Prompt "`nWhich Git branch do you want to merge to (e.g. dev, master, patch/81SP1 etc. - CASE SENSITIVE)"
+			}
+		} else { 
+			while (!$targetRelease -or $targetRelease.Length -le 1) {
+				[ValidateSet("8033.EX4001","8035.EX4001","8110.EX4001","8110.EX4001.01","8110.EX4001.02","8110.EX4001.03","8110.EX4002","8110.EX4003","8110.EX4004",
+				"8200","8200.EX0001","8200.EX0002","8200.EX003","8210","8300")]
+				$targetRelease = Read-Host -Prompt "`nWhat is the target release for the merge? (e.g. 8300, 8210, 8110.EX4004 - CASE SENSITIVE)"
+			}
+			if ($targetRelease.StartsWith("8110")) { 
+				$targetBranch += "patch/81SP1"
+			} elseif ($targetRelease.StartsWith("8200.")) { 
+				$targetBranch += "update/82GA"
+			} elseif ($targetRelease.StartsWith("8210")) { 
+				$targetBranch += "master"
+			} elseif ($targetRelease.StartsWith("8300")) { 
+				$targetBranch += "dev"
+			}
+		}
 
         Set-Content $appInfoFilePath "$([System.String]::Join(",", @($bugId, $mergeBugId, $targetBranch)))" -Force
     }
 
     # get the bug work item from TFS
     $getWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($bugId)?`$expand=all&api-version=1.0"
-    Write-Host "Invoke-RestMethod -Uri $getWorkItemUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+	if (!$createMergeBugOnly) {
+		Write-Host "Invoke-RestMethod -Uri $getWorkItemUri -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
+	}
     $workItem = Invoke-RestMethod -Uri $getWorkItemUri -ContentType "application/json" -UseDefaultCredentials
 
     # create new IE browser object to show merge PRs (optionally the newly created merge bug)
@@ -3518,19 +3556,22 @@ function Git-Merge {
 
     #retrieve or auto-create the merge work item
     if ($autoCreateMergeBug -eq $true) {
-
-        $assumedIterationPath = "ExpertSuite"
-        switch ($targetBranch) {
-            'master' {
-                $assumedIterationPath += "\\8.2.0.0"
-            }
-            'patch/81SP1' {
-                $assumedIterationPath += "\\8.1.0.2 (HF)"
-            }
-            'releases/10.8102' {
-                $assumedIterationPath += "\\8.1.1 (SP)"
-            }    
-        }
+		if (!$createMergeBugOnly) {
+			# the user didn't enter the target release, so we need to try and figure it out from the target branch that they entered instead.
+			$assumedTargetRelease = ""
+			switch ($targetBranch) {
+				'master' {
+					$assumedTargetRelease += "8210"
+				}
+				'patch/81SP1' {
+					$assumedTargetRelease += "8110.EX4002"
+				}
+				'dev' {
+					$assumedTargetRelease += "8300"
+				}
+			}
+			$targetRelease = $assumedTargetRelease
+		}
 
         # automatically create the merge work item in TFS
         $createWorkItemUri = "$($tfsUrlWithProject)/_apis/wit/workItems/`$Bug?api-version=1.0"
@@ -3539,17 +3580,17 @@ function Git-Merge {
   {
     "op": "add",
     "path": "/fields/System.Title",
-    "value": "MERGE: $($workItem.fields.'System.Title'.Replace('"', '\"'))"
+    "value": "MERGE to $($targetRelease): $($workItem.fields.'System.Title'.Replace('"', '\"'))"
   },
   {
     "op": "add",
     "path": "/fields/Microsoft.VSTS.TCM.ReproSteps",
-    "value": "Merge work item $($workItem.id) into $targetBranch (and the respective TFS branch, if applicable)."
+    "value": "<p>Merge work item $($workItem.id) into $targetBranch (and the respective TFS branch, if applicable).<br><br></p><p>Click <a href= '$($tfsUrlWithProject)/_workitems?id=$($workItem.Id)'>here</a> for the repro steps from the original work item.</p>"
   },
   {
     "op": "add",
     "path": "/fields/System.History",
-    "value": "Automatically created via Git-Merge."
+    "value": "Automatically created via Git-Merge. Copied from <a href='$($tfsUrlWithProject)/_workitems?id=$($workItem.Id)'>Bug $($workItem.Id)</a>."
   },
   {
     "op": "add",
@@ -3559,7 +3600,12 @@ function Git-Merge {
   {
     "op": "add",
     "path": "/fields/System.IterationPath",
-    "value": "$assumedIterationPath"
+    "value": "$($workitem.fields.'System.IterationPath'.Replace('\', '\\'))"
+  },
+  {
+    "op": "add",
+    "path": "/fields/Aderant.TargetRelease",
+    "value": "$($targetRelease)"
   },
   {
     "op": "add",
@@ -3574,35 +3620,60 @@ function Git-Merge {
   }
 ]
 "@
-        Write-Host "Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+        if (!$createMergeBugOnly) {
+			Write-Host "Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+		}
         $createdMergeWorkItem = Invoke-RestMethod -Uri $createWorkItemUri -Body $createWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
         $mergeBugId = $createdMergeWorkItem.id
 
-        # assign the merge work item to the creator and set it to Active
+        # if actually doing the merge, assign the merge work item to the creator and set it to Active. otherwise, assign it to nobody and set it to New.
         $updateWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($createdMergeWorkItem.id)?api-version=1.0"
+		$state = ""
+		if ($createMergeBugOnly) { 
+			$state = "New"
+		} else { 
+			$state = "Active"
+		}
+		$assignedTo = ""
+		if ($createMergeBugOnly) { 
+			$assignedTo = ""
+		} else { 
+			$assignedTo = "$($createdMergeWorkItem.fields.'System.CreatedBy'.Replace('\', '\\'))"
+		}
         $updateWorkItemBody = @"
 [
   {
     "op": "add",
     "path": "/fields/System.AssignedTo",
-    "value": "$($createdMergeWorkItem.fields.'System.CreatedBy'.Replace('\', '\\'))"
+    "value": "$($assignedTo)"
   },
   {
     "op": "replace",
     "path": "/fields/System.State",
-    "value": "Active"
+    "value": "$($state)"
   }
 ]
 "@
-        Write-Host "Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+        if (!$createMergeBugOnly) {
+			Write-Host "Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials -Method Patch" -ForegroundColor Blue
+		}
         $updatedMergeWorkItem = Invoke-RestMethod -Uri $updateWorkItemUri -Body $updateWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
 
-        Write-Host "`nAutomatically created merge work item $mergeBugId. Please verify assignee, area & iteration path.`n" -ForegroundColor Yellow
+		if ($createMergeBugOnly) {
+			Write-Host "`nCreated merge work item $mergeBugId! It is currently unassigned.`n" -ForegroundColor Green
+		} else { 
+			Write-Host "`nAutomatically created merge work item $mergeBugId. Please verify assignee, area & target release.`n" -ForegroundColor Yellow
+		}
         Read-Host -Prompt "A new IE browser window will now open to load the work item for editing. Press any key to continue"
         $workItemUrl = "$($tfsUrlWithProject)/_workitems?id=$mergeBugId"
         $browser.navigate($workItemUrl)
         $browser.visible = $true
     }
+
+	# if only creating a merge bug, then return here. everything below involves PRs and actually merging code.
+	if ($createMergeBugOnly) { 
+		return
+	}
 
     # get existing merge work item from TFS
     $getMergeWorkItemUri = "$($tfsUrl)/_apis/wit/workItems/$($mergeBugId)?`$expand=all&api-version=1.0"
@@ -3703,6 +3774,12 @@ function Git-Merge {
 
             $assumedIterationPath = "ExpertSuite"
             switch ($parentBranch) {
+				'Dev/83GA' {
+                    $assumedIterationPath += "\\8.3.0.0"
+                }
+				'Dev/VNext' {
+                    $assumedIterationPath += "\\8.2.1 (SP)"
+                }
                 'Releases/811x' {
                     $assumedIterationPath += "\\8.1.1 (SP)"
                 }
@@ -3727,17 +3804,17 @@ function Git-Merge {
   {
     "op": "add",
     "path": "/fields/System.Title",
-    "value": "MERGE: $($workItem.fields.'System.Title'.Replace('"', '\"'))"
+    "value": "MERGE to $($targetRelease): $($workItem.fields.'System.Title'.Replace('"', '\"'))"
   },
   {
     "op": "add",
     "path": "/fields/Microsoft.VSTS.TCM.ReproSteps",
-    "value": "Merge work item $($workItem.id) into TFVC branch $parentBranch."
+    "value": "<p>Merge work item $($workItem.id) into TFVC branch $parentBranch.<br><br></p><p>Click <a href= '$($tfsUrlWithProject)/_workitems?id=$($workItem.Id)'>here</a> for the repro steps from the original work item.</p>"
   },
   {
     "op": "add",
     "path": "/fields/System.History",
-    "value": "Automatically created via Git-Merge."
+    "value": "Automatically created via Git-Merge.<br><br>Copied from <a href='$($tfsUrlWithProject)/_workitems?id=$($workItem.Id)'>Bug $($workItem.Id)</a>."
   },
   {
     "op": "add",
@@ -3747,7 +3824,12 @@ function Git-Merge {
   {
     "op": "add",
     "path": "/fields/System.IterationPath",
-    "value": "$assumedIterationPath"
+    "value": "$($workitem.fields.'System.IterationPath'.Replace('\', '\\'))"
+  },
+   {
+    "op": "add",
+    "path": "/fields/Aderant.TargetRelease",
+    "value": "$($targetRelease)"
   },
   {
     "op": "add",
@@ -4033,6 +4115,7 @@ $functionsToExport = @(
     [pscustomobject]@{ function='Change-ExpertOwner';},
     [pscustomobject]@{ function='Clear-ExpertCache';                          alias='ccache'},
     [pscustomobject]@{ function='Copy-BinariesFromCurrentModule';             alias='cb'},
+	[pscustomobject]@{ function='Create-Merge-Bug';},
     [pscustomobject]@{ function='Disable-ExpertPrompt';                       advanced=$true},
     [pscustomobject]@{ function='Enable-ExpertPrompt';                        advanced=$true},
     [pscustomobject]@{ function='Generate-SystemMap'},
