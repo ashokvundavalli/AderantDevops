@@ -123,6 +123,7 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\MacroExpander.cs" />
     <Compile Include="MSBuild\BuildElementVisitor.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="ProjectSystem\StateTracking\ProjectOutputTracker.cs" />
     <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
     <Compile Include="ErrorUtilities.cs" />
     <Compile Include="DependencyEqualityComparer.cs" />

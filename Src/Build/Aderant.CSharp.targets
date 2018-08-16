@@ -355,6 +355,8 @@
 
     <TrackProjectOutputs
       ContextFileName="$(ContextFileName)"
+      ProjectTypeGuids="$(ProjectTypeGuids)"
+      TestProjectType="$(TestProjectType)"
       ProjectFile="$(MSBuildProjectFullPath)"
       IntermediateDirectory="$(IntermediateOutputPath)"
       OutputPath="$(OutDir)"

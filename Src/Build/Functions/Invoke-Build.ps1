@@ -1,4 +1,7 @@
-﻿function ApplyBranchConfig($context, $stringSearchDirectory) {
+﻿$indent1 = "  "
+$indent2 = "        "
+
+function ApplyBranchConfig($context, $stringSearchDirectory) {
     $configPath = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
 
     if (-not $configPath) {
@@ -83,14 +86,15 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
 
-    Write-Host "New commit: $($context.SourceTreeMetadata.NewCommitDisplay)"
-    Write-Host "Old commit: $($context.SourceTreeMetadata.OldCommitDisplay)"
-    Write-Host "CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"    
+    Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDisplay)"
+    Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDisplay)"
+    Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"    
    
-    if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) { Write-Host "CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
-        Write-Host "Changes..."    
+    if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
+        Write-Host ""
+        Write-Host "$indent1 Changes..."    
         foreach ($change in $context.SourceTreeMetadata.Changes) {
-            Write-Host "$($change.Path) $($change.Status)"
+            Write-Host "$indent2 $($change.Path):$($change.Status)"
         }
     }
 }
@@ -98,9 +102,10 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 function GetBuildStateMetadata($context) {    
     $stm = $context.SourceTreeMetadata
 
-    Write-Host "Build Tree Reuse Info"
+    Write-Host ""
+    Write-Host "$indent1 Build Tree Reuse Info"
     foreach ($id in $stm.BucketIds) {
-        Write-Host ("BucketId: $($id.Tag) -> $($id.Id)")
+        Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
     }   
 
     $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
@@ -109,7 +114,7 @@ function GetBuildStateMetadata($context) {
     $context.BuildStateMetadata = $buildState     
 
     foreach ($file in $buildState.BuildStateFiles) {
-        Write-Host ("Tree sha: $($file.TreeSha) -> Build: $($file.BuildId)")
+        Write-Host ("$indent2 Tree sha: $($file.TreeSha) -> Build: $($file.BuildId)")
     }    
 }
 

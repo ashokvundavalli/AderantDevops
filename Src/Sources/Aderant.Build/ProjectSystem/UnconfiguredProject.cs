@@ -7,12 +7,10 @@ using Microsoft.Build.Evaluation;
 namespace Aderant.Build.ProjectSystem {
     [Export(typeof(UnconfiguredProject))]
     internal class UnconfiguredProject {
-        private readonly IProjectTree tree;
         private Lazy<ProjectRootElement> projectXml;
 
         [ImportingConstructor]
-        public UnconfiguredProject(IProjectTree tree) {
-            this.tree = tree;
+        public UnconfiguredProject() {
         }
 
         public Guid ProjectGuid {
@@ -40,12 +38,15 @@ namespace Aderant.Build.ProjectSystem {
             // Create a project collection for each project since the toolset might change depending on the type of project
             ProjectCollection projectCollection = CreateProjectCollection();
 
-            projectXml = new Lazy<ProjectRootElement>(() => {
-                if (!string.IsNullOrEmpty(projectLocation)) {
-                    return ProjectRootElement.Open(projectLocation, projectCollection);
-                }
-                return ProjectRootElement.Create(reader, projectCollection);
-            }, true);
+            projectXml = new Lazy<ProjectRootElement>(
+                () => {
+                    if (!string.IsNullOrEmpty(projectLocation)) {
+                        return ProjectRootElement.Open(projectLocation, projectCollection);
+                    }
+
+                    return ProjectRootElement.Create(reader, projectCollection);
+                },
+                true);
         }
 
         private ProjectCollection CreateProjectCollection() {

@@ -14,8 +14,10 @@ namespace Aderant.Build.Packaging {
             this.pathSpecs = pathSpecs.ToList();
         }
 
-        public string Id { get; }
         public bool IsAutomaticallyGenerated { get; set; }
+        public static string TestPackagePrefix { get; } = "Tests.";
+
+        public string Id { get; }
 
         public IReadOnlyCollection<IDependable> GetDependencies() {
             return null;

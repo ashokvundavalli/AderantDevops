@@ -10,8 +10,6 @@ using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.Tasks;
-using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -20,7 +18,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class BuildSequencer : ISequencer {
         private readonly IFileSystem2 fileSystem;
         private readonly ILogger logger;
-        private List<BuildStateFile> stateFile;
+        private List<BuildStateFile> stateFiles;
 
         [ImportingConstructor]
         public BuildSequencer(ILogger logger, IFileSystem2 fileSystem) {
@@ -35,7 +33,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (context.StateFiles == null) {
                 FindStateFiles(context);
 
-                if (stateFile != null) {
+                if (stateFiles != null) {
                     EvictDeletedProjects(context);
                 }
             }
@@ -63,7 +61,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 IEnumerable<SourceChange> deletes = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
                 foreach (var delete in deletes) {
 
-                    foreach (var file in stateFile) {
+                    foreach (var file in stateFiles) {
                         if (delete.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
                             if (file.Outputs.ContainsKey(delete.Path)) {
                                 file.Outputs.Remove(delete.Path);
@@ -78,7 +76,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void FindStateFiles(BuildOperationContext context) {
             var files = GetBuildStateFile(context);
             if (files != null) {
-                this.stateFile = context.StateFiles = files;
+                this.stateFiles = context.StateFiles = files;
             }
         }
 
@@ -92,7 +90,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (buildStateMetadata != null && context.SourceTreeMetadata != null)
                 foreach (var bucketId in context.SourceTreeMetadata.GetBuckets()) {
                     BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.BucketId.Id, bucketId.Id));
-                    
+
                     if (stateFile != null) {
                         stateFiles.Add(stateFile);
                     }
@@ -175,25 +173,44 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // The selected build cache contained this project, next check the inputs/outputs
                     if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
                         if (artifactsExist) {
-                            bool artifactContainsProject = artifacts.SelectMany(s => s.Files).Any(f => string.Equals(f.File, project.GetOutputAssemblyWithExtension(), StringComparison.OrdinalIgnoreCase));
+                            bool artifactContainsProject = DoesArtifactContainProjectItem(project, artifacts);
                             if (artifactContainsProject) {
                                 return;
                             }
                         }
+
                         MarkDirty(tag, project, InclusionReason.ArtifactsNotFound);
                         return;
                     }
                 }
 
-                MarkDirty(tag, project, InclusionReason.ProjectNotFound);
+                MarkDirty(tag, project, InclusionReason.ProjectOutputNotFound);
                 return;
             }
 
             MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.ChangedFileDependency);
         }
 
+        private static bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
+            foreach (ArtifactManifest s in artifacts) {
+                foreach (ArtifactItem file in s.Files) {
+                    if (string.Equals(file.File, project.GetOutputAssemblyWithExtension(), StringComparison.OrdinalIgnoreCase)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private BuildStateFile SelectStateFile(string stateFileKey) {
-            return stateFile.FirstOrDefault(s => string.Equals(s.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase));
+            foreach (var file in stateFiles) {
+                if (string.Equals(file.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase)) {
+                    return file;
+                }
+            }
+
+            return null;
         }
 
         private static void MarkDirty(string tag, ConfiguredProject project, InclusionReason reason) {
@@ -322,6 +339,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         ChangedFileDependency = 2,
         BuildTreeNotFound = 4,
         ArtifactsNotFound = 8,
-        ProjectNotFound = 16
+        ProjectOutputNotFound = 16
     }
 }

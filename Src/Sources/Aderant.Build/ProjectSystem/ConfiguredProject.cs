@@ -12,7 +12,6 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;

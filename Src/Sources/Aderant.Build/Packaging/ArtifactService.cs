@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.Tasks;
 using Aderant.Build.TeamFoundation;
 
 namespace Aderant.Build.Packaging {
@@ -73,9 +72,13 @@ namespace Aderant.Build.Packaging {
                         }
                     }
 
-                    context.RecordArtifact(publisherName, artifact.Id, files.Select(s => new ArtifactItem {
-                        File = s.Destination
-                    }).ToList());
+                    context.RecordArtifact(
+                        publisherName,
+                        artifact.Id,
+                        files.Select(
+                            s => new ArtifactItem {
+                                File = s.Destination
+                            }).ToList());
                 }
             }
 
@@ -85,47 +88,19 @@ namespace Aderant.Build.Packaging {
 
             return buildArtifacts;
         }
+
         private static string GetProjectKey(string publisherName) {
             return publisherName + "\\";
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IDictionary<string, ProjectOutputs> outputs, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(ProjectOutputCollection outputs, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
             if (outputs == null) {
                 return files;
             }
 
-            if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith("Tests.")) {
-                List<string> outputList = new List<string>();
-                var keys = outputs.Keys.Where(key => key.StartsWith(GetProjectKey(publisherName)));
-
-                foreach (var key in keys) {
-                    // TODO: drive this from project guid
-                    if (key.Contains("Test")) {
-                        foreach (var path in outputs[key].FilesWritten) {
-                            var name = Path.GetFileName(path);
-                            if (!outputList.Contains(name)) {
-                                outputList.Add(name);
-                            }
-                        }
-                    }
-                }
-
-                var newPathSpecs = new List<PathSpec>();
-                foreach (var file in files) {
-                    if (newPathSpecs.Any(p => p.Destination == file.Destination)) {
-                        continue;
-                    }
-
-                    var fileName = Path.GetFileName(file.Location);
-
-                    foreach (var output in outputList) {
-                        if (string.Equals(fileName, output, StringComparison.OrdinalIgnoreCase)) {
-                            newPathSpecs.Add(file);
-                        }
-                    }
-                }
-
-                return newPathSpecs;
+            if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackage.TestPackagePrefix)) {
+                var builder = new TestPackageBuilder();
+                return builder.BuildArtifact(files, outputs, publisherName);
             }
 
             return files;
@@ -259,7 +234,7 @@ namespace Aderant.Build.Packaging {
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, publisherName, localArtifactFiles);
             CopyFiles(filesToRestore);
-            
+
         }
 
         private void CopyFiles(IList<PathSpec> filesToRestore) {
@@ -364,7 +339,8 @@ namespace Aderant.Build.Packaging {
                             }
 
                             if (localSourceFiles.Count > 1) {
-                                logger.Warning($"File found in more than one artifact: {fileName}. Choosing {localSourceFile.FullPath} arbitrarily. Provide an artifact restore table to resolve this warning.");
+                                var duplicates = string.Join(Environment.NewLine, localSourceFiles);
+                                logger.Warning($"File {fileName} exists in more than one artifact. Choosing {localSourceFile.FullPath} arbitrarily." + Environment.NewLine + duplicates);
                             }
 
                             var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
@@ -391,21 +367,6 @@ namespace Aderant.Build.Packaging {
             }
 
             return copyOperations;
-        }
-
-        private static bool RequireAllArtifacts(BuildStateFile stateFile, string publisherName) {
-            // If we only have test input packages then we don't mandate that that system successfully restores everything
-            // This logic should actually check if all projects are test projects but we don't have that information
-            bool strictMode = true;
-            ICollection<ArtifactManifest> packages;
-            if (stateFile.Artifacts.TryGetValue(publisherName, out packages)) {
-                var allPackagesAreTestPackages = packages.All(p => p.Id.StartsWith("Tests.", StringComparison.OrdinalIgnoreCase));
-                if (allPackagesAreTestPackages) {
-                    strictMode = false;
-                }
-            }
-
-            return strictMode;
         }
 
         private static bool IsCritical(bool strictMode, string fileName) {
@@ -484,6 +445,41 @@ namespace Aderant.Build.Packaging {
             }
 
             return numbers.OrderByDescending(d => d.Key).Select(s => s.Value).ToArray();
+        }
+    }
+
+    internal class TestPackageBuilder {
+        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> files, ProjectOutputCollection outputs, string publisherName) {
+            var set = outputs.GetProjectsForTag(publisherName);
+
+            List<string> outputList = new List<string>();
+
+            foreach (var project in set.Values) {
+                if (project.IsTestProject) {
+                    foreach (var path in project.FilesWritten) {
+
+                        var name = Path.GetFileName(path);
+
+                        if (!outputList.Contains(name)) {
+                            outputList.Add(name);
+                        }
+                    }
+                }
+            }
+
+            var artifactItems = new List<PathSpec>();
+
+            foreach (var file in files) {
+                var fileName = Path.GetFileName(file.Location);
+
+                foreach (var output in outputList) {
+                    if (string.Equals(fileName, output, StringComparison.OrdinalIgnoreCase)) {
+                        artifactItems.Add(file);
+                    }
+                }
+            }
+
+            return artifactItems;
         }
     }
 

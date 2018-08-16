@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
-using Aderant.Build.Tasks;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
@@ -36,6 +36,8 @@ namespace Aderant.Build {
         private List<BuildStateFile> stateFiles;
 
         private BuildSwitches switches = default(BuildSwitches);
+        private int trackedProjectCount;
+        private int recordArtifactCount;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -240,40 +242,33 @@ namespace Aderant.Build {
             return BucketPathBuilder.BuildDropLocation(publisherName, this);
         }
 
-        public void RecordProjectOutputs(string sourcesDirectory, string projectFile, string[] projectOutputs, string outputPath, string intermediateDirectory) {
+        public void RecordProjectOutputs(
+            string sourcesDirectory,
+            string projectFile,
+            string[] projectOutputs,
+            string outputPath,
+            string intermediateDirectory,
+            IReadOnlyCollection<string> projectTypeGuids = null,
+            string testProjectType = null) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
-            if (sourcesDirectory != null && projectFile.StartsWith(sourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
-                projectFile = projectFile.Substring(sourcesDirectory.Length)
-                    .TrimStart(Path.DirectorySeparatorChar)
-                    .TrimStart(Path.AltDirectorySeparatorChar);
-            }
+            Interlocked.Increment(ref trackedProjectCount);
 
             if (outputs == null) {
                 outputs = new ProjectOutputCollection();
             }
 
-            if (!outputs.ContainsKey(projectFile)) {
-                outputs[projectFile] = new ProjectOutputs {
-                    FilesWritten = RemoveIntermediateObjects(projectOutputs, intermediateDirectory),
-                    OutputPath = outputPath,
-                    Origin = "ThisBuild",
-                    Directory = ProjectOutputs.GetDirectory(projectFile)
-                };
-            } else {
-                ThrowDoubleWrite();
-            }
-        }
+            var tracker = new ProjectOutputTracker(outputs) {
+                SourcesDirectory = sourcesDirectory,
+                ProjectFile = projectFile,
+                ProjectOutputs = projectOutputs,
+                OutputPath = outputPath,
+                IntermediateDirectory = intermediateDirectory,
+                ProjectTypeGuids = projectTypeGuids,
+                TestProjectType = testProjectType
+            };
 
-        private static void ThrowDoubleWrite() {
-            throw new InvalidOperationException("Possible double write detected");
-        }
-
-        private static string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
-            return projectOutputs
-                .Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1)
-                .OrderBy(filePath => filePath)
-                .ToArray();
+            tracker.Track();
         }
 
         /// <summary>
@@ -296,6 +291,8 @@ namespace Aderant.Build {
             if (artifacts == null) {
                 artifacts = new ArtifactCollection();
             }
+
+            Interlocked.Increment(ref recordArtifactCount);
 
             ICollection<ArtifactManifest> manifests;
 
@@ -351,7 +348,7 @@ namespace Aderant.Build {
         public ProjectOutputCollection()
             : base(StringComparer.OrdinalIgnoreCase) {
         }
-        
+
         public ProjectOutputCollection GetProjectsForTag(string tag) {
             var items = this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase));
 
@@ -399,9 +396,8 @@ namespace Aderant.Build {
         [DataMember]
         public string Directory { get; set; }
 
-        public static string GetDirectory(string projectFile) {
-            return projectFile.Split(Path.DirectorySeparatorChar)[0];
-        }
+        [IgnoreDataMember]
+        public bool IsTestProject { get; set; }
     }
 
     [Serializable]

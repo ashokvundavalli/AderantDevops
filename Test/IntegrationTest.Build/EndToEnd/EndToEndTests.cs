@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -25,32 +26,34 @@ namespace IntegrationTest.Build.EndToEnd {
         public void TestInitialize() {
             AddFilesToNewGitRepository();
 
+            contextFile = TestContext.TestName + "_" + Guid.NewGuid();
+
             this.properties = new Dictionary<string, string> {
                 { "BuildSystemInTestMode", bool.TrueString },
                 { "BuildScriptsDirectory", TestContext.DeploymentDirectory + "\\" },
                 { "CompileBuildSystem", bool.FalseString },
                 { "ProductManifestPath", Path.Combine(DeploymentItemsDirectory, "ExpertManifest.xml") },
                 { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) },
-                { WellKnownProperties.ContextFileName, TestContext.TestName },
+                { WellKnownProperties.ContextFileName, contextFile },
             };
 
-            this.context = CreateContext(properties);
-            this.contextFile = context.Publish(properties[WellKnownProperties.ContextFileName]);
+            context = CreateContext(properties);
+            context.Publish(contextFile);
         }
 
         [TestMethod]
         [Description("The basic scenario. No changes - the build should reuse existing artifacts")]
         public void Build_tree_reuse_scenario() {
-            //base.DetailedSummary = false;
-            //base.LoggerVerbosity = LoggerVerbosity.Normal;
-
             // Simulate first build
             RunTarget("EndToEnd", properties);
+
+            var context = contextFile.GetBuildOperationContext();
+            Assert.AreEqual(2, Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories).Length);
 
             var logFile = base.LogFile;
 
             PrepareForAnotherRun();
-
+            
             // Run second build
             RunTarget("EndToEnd", properties);
             var logFile1 = base.LogFile;

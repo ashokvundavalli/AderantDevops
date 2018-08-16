@@ -15,7 +15,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
 
         [TestMethod]
         public void Load_project_v12_toolset() {
-            var project = new UnconfiguredProject(new ProjectTree());
+            var project = new UnconfiguredProject();
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree(), new PhysicalFileSystem()), () => { }));
             project.Initialize(XmlReader.Create(new StringReader(Resources.Web_Core)), "");
 
@@ -25,7 +25,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
 
         [TestMethod]
         public void Load_project_v14_toolset() {
-            var project = new UnconfiguredProject(new ProjectTree());
+            var project = new UnconfiguredProject();
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree(), new PhysicalFileSystem()), () => { }));
             project.Initialize(XmlReader.Create(new StringReader(Resources.Web_PrebillEditor)), "");
 
@@ -36,7 +36,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
         [TestMethod]
         [DeploymentItem("ConfiguredProjectTests\\Web.PrebillEditor.csproj")]
         public void Load_project_from_disk() {
-            var project = new UnconfiguredProject(new ProjectTree());
+            var project = new UnconfiguredProject();
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree(), new PhysicalFileSystem()), () => { }));
             project.Initialize(LoadProjectXml(), Path.Combine(TestContext.DeploymentDirectory, "Web.PrebillEditor.csproj"));
 
@@ -47,7 +47,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
         [TestMethod]
         [DeploymentItem("ConfiguredProjectTests\\Web.PrebillEditor.csproj")]
         public void GetOutputAssemblyWithExtension() {
-            var project = new UnconfiguredProject(new ProjectTree());
+            var project = new UnconfiguredProject();
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree(), new PhysicalFileSystem()), () => { }));
             project.Initialize(LoadProjectXml(), Path.Combine(TestContext.DeploymentDirectory, "Web.PrebillEditor.csproj"));
 

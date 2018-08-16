@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
@@ -56,9 +54,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             if (currentOutputs != null) {
-                var copy = currentOutputs.ToDictionary(d => d.Key, d => d.Value);
                 if (baseStateFile != null) {
-                    System.Diagnostics.Debugger.Launch();
                     MergeExistingOutputs(baseStateFile.BuildId, baseStateFile.Outputs, currentOutputs);
                 }
 
@@ -102,14 +98,19 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             foreach (var bucket in buckets) {
                 var tag = bucket.Tag;
 
+                ProjectOutputCollection projectOutputCollection = null;
                 var outputs = context.GetProjectOutputs();
-                var projectOutputCollection = outputs.GetProjectsForTag(tag);
+                if (outputs != null) {
+                    projectOutputCollection = outputs.GetProjectsForTag(tag);
+                }
 
+                ArtifactCollection artifactCollection = null;
                 var artifacts = context.GetArtifacts();
-                var artifactCollection = artifacts.GetArtifactsForTag(tag);
+                if (artifacts != null) {
+                    artifactCollection = artifacts.GetArtifactsForTag(tag);
+                }
 
                 BuildStateFile file = context.GetStateFile(tag);
-
                 var dropLocation = Path.Combine(context.GetDropLocation(tag), DefaultFileName);
                 WriteStateFile(file, bucket, projectOutputCollection, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
             }
