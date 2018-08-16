@@ -420,8 +420,14 @@ namespace Aderant.Build.Packaging {
 
                         if (fileSystem.FileExists(stateFile)) {
                             using (Stream stream = fileSystem.OpenFile(stateFile)) {
+
                                 BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(stream);
                                 file.DropLocation = folder;
+
+                                if (file.Outputs.Keys.Any(key => Path.IsPathRooted(key))) {
+                                    // File is corrupt and should not be used
+                                    continue;
+                                }
 
                                 files.Add(file);
                             }
