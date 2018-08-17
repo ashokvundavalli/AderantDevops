@@ -111,10 +111,10 @@ function GetBuildStateMetadata($context) {
     $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
     $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.PrimaryDropLocation
 
-    $context.BuildStateMetadata = $buildState     
+    $context.BuildStateMetadata = $buildState
 
     foreach ($file in $buildState.BuildStateFiles) {
-        Write-Host ("$indent2 Tree sha: $($file.BucketId.Id) -> Build: $($file.BuildId)")
+        Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)")
     }    
 }
 
