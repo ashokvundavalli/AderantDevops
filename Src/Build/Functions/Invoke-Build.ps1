@@ -103,7 +103,7 @@ function GetBuildStateMetadata($context) {
     $stm = $context.SourceTreeMetadata
 
     Write-Host ""
-    Write-Host "$indent1 Build Tree Reuse Info"
+    Write-Host "$indent1 Build Tree"
     foreach ($id in $stm.BucketIds) {
         Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
     }   
@@ -114,7 +114,7 @@ function GetBuildStateMetadata($context) {
     $context.BuildStateMetadata = $buildState     
 
     foreach ($file in $buildState.BuildStateFiles) {
-        Write-Host ("$indent2 Tree sha: $($file.TreeSha) -> Build: $($file.BuildId)")
+        Write-Host ("$indent2 Tree sha: $($file.BucketId.Id) -> Build: $($file.BuildId)")
     }    
 }
 
