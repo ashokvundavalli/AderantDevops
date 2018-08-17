@@ -451,7 +451,7 @@ function SetRepository([string]$path) {
     [string]$currentModuleBuildDirectory = "$path\Build"
 
     if (Test-Path $currentModuleBuildDirectory) {
-        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | Where-Object { $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select -ExpandProperty FullName
+        [string]$featureModule = Get-ChildItem -Path $currentModuleBuildDirectory -Recurse | Where-Object { $_.extension -eq ".psm1" -and $_.Name -match "Feature.*" } | Select-Object -First 1 | Select-Object -ExpandProperty FullName
         if ($featureModule) {
             ImportFeatureModule $featureModule
         }
@@ -627,9 +627,9 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
 
 Function Output-VSIXLog {
     $errorsOccurred = $false
-    $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort LastWriteTime | Select -last 1
+    $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort-Object LastWriteTime | Select-Object -last 1
 
-    if ($lastLogFile -ne $null) {
+    if ($null -ne $lastLogFile) {
         $logFileContent = Get-Content $lastLogFile.FullName
         foreach ($line in $logFileContent) {
             if ($line.Contains("Exception")) {
@@ -786,7 +786,7 @@ function global:SetDefaultValue {
 #>
 function Open-ModuleSolution() {
     param (
-        [Parameter(Mandatory=$false)][string]$ModuleName,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty][string]$ModuleName,
         [switch]$getDependencies,
         [switch]$getLatest,
         [switch]$code,
@@ -818,7 +818,7 @@ function Open-ModuleSolution() {
             Set-CurrentModule $moduleName
         }
 
-        [string]$rootPath = ''
+        [string]$rootPath = ""
 
         if (-not [string]::IsNullOrWhiteSpace($ModuleName)) {
             $rootPath = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
@@ -827,8 +827,8 @@ function Open-ModuleSolution() {
             $rootPath = $ShellContext.CurrentModulePath
         }
 
-        if (-not ($ModuleName) -or $ModuleName -eq $null -or $ModuleName -eq "") {
-            Write-Warning 'No module specified.'
+        if ([string]::IsNullOrWhiteSpace($moduleName)) {
+            Write-Warning "No module specified."
             return
         }
 
@@ -874,14 +874,14 @@ function Open-ModuleSolution() {
             }
         }
 
-        if (($prevModule -ne $null) -and (Get-CurrentModule -ne $prevModule)) {
+        if (($null -ne $prevModule) -and (Get-CurrentModule -ne $prevModule)) {
             Set-CurrentModule $prevModule
         }
     }
 }
 
 function TabExpansion([string] $line, [string] $lastword) {
-    if (!$lastword.Contains(";")) {
+    if (-not $lastword.Contains(";")) {
         $aliases = Get-Alias
         $parser = New-Object Aderant.Build.AutoCompletionParser $line, $lastword, $aliases
 
@@ -917,15 +917,11 @@ $global:expertTabBranchExpansions = @()
     Add-ModuleExpansionParameter -CommandName Build-ExpertModules -ParameterName ModuleNames -IsDefault
     Will add tab expansion of module names on the Build-ExpertModules command where the current parameter is the ModuleNames parameter
 #>
-function Add-ModuleExpansionParameter([string] $CommandName, [string] $ParameterName) {
-    if (!($CommandName)) {
-        write "No command name specified."
-        return
-    }
-    if (!($ParameterName)) {
-        write "No parameter name specified."
-        return
-    }    
+function Add-ModuleExpansionParameter {
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty][string]$CommandName,
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty][string]$ParameterName
+    )
        
     Register-ArgumentCompleter -CommandName $CommandName -ParameterName $ParameterName -ScriptBlock {
         param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)
@@ -943,12 +939,12 @@ function Add-ModuleExpansionParameter([string] $CommandName, [string] $Parameter
             }
             
             # Probe for known Git repositories
-            gci -Path "HKCU:\SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories" | % { Get-ItemProperty $_.pspath } |           
+            Get-ChildItem -Path "HKCU:\SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories" | ForEach-Object { Get-ItemProperty $_.pspath } |           
                 Where-Object { $_.Name -like "$wordToComplete*" -and (Test-Path $_.Path) } | ForEach-Object { 
                 [System.Management.Automation.CompletionResult]::new($_.Path) 
             }        
         } catch {
-            [System.Exception]           
+            [System.Exception]
             Write-Host $_.Exception.ToString()
         }
     }
@@ -1027,12 +1023,9 @@ Add-ModuleExpansionParameter –CommandName "Start-Redeployment" –ParameterNam
 Add-ModuleExpansionParameter -CommandName "Copy-BinToEnvironment" -ParameterName "ModuleNames"
 Add-ModuleExpansionParameter -CommandName "Open-Directory" -ParameterName "ModuleName"
 Add-ModuleExpansionParameter -CommandName "New-ExpertBuildDefinition" -ParameterName "ModuleName"
-
 Add-ModuleExpansionParameter -CommandName "Clean" -ParameterName "moduleNames"
 Add-ModuleExpansionParameter -CommandName "CleanupIISCache" -ParameterName "moduleNames"
-
 Add-ModuleExpansionParameter -CommandName "Scorch" -ParameterName "moduleNames"
-
 Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterName "ModuleName"
 
 <#
@@ -1110,9 +1103,9 @@ function Help ($searchText) {
         # we bail out if the caller is the _Profile.ps1 file
         return
     }
-    
+
     $theHelpList = @()
-    
+
     foreach ($toExport in $functionsToExport) {
         if (-not $toExport.advanced) {
             $ast = (Get-Command $toExport.function).ScriptBlock.Ast
