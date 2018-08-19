@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Management.Automation;
-using System.Runtime.ExceptionServices;
 using Aderant.Build.Logging;
-using Microsoft.Build.Framework;
-using Microsoft.TeamFoundation.Build.Client;
 
 namespace Aderant.Build.Packaging {
     [Cmdlet("Package", "ExpertRelease")]
