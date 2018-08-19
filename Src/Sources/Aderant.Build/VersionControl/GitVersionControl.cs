@@ -121,11 +121,6 @@ namespace Aderant.Build.VersionControl {
 
                         bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
 
-                        Commit parentsParent = oldCommit.Parents.FirstOrDefault();
-                        if (parentsParent != null) {
-                            bucketKeys.Add(new BucketId(parentsParent.Tree.Sha, BucketId.ParentsParent));
-                        }
-
                         info.NewCommitDisplay = $"{newCommit.Id.Sha}: {newCommit.MessageShort}";
                         info.OldCommitDisplay = $"{oldCommit.Id.Sha}: {oldCommit.MessageShort}";
                     }

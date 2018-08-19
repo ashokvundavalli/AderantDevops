@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Aderant.Build.Logging;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.TeamFoundation;
 
@@ -454,41 +455,6 @@ namespace Aderant.Build.Packaging {
         }
     }
 
-    internal class TestPackageBuilder {
-        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> files, ProjectOutputCollection outputs, string publisherName) {
-            var set = outputs.GetProjectsForTag(publisherName);
-
-            List<string> outputList = new List<string>();
-
-            foreach (var project in set.Values) {
-                if (project.IsTestProject) {
-                    foreach (var path in project.FilesWritten) {
-
-                        var name = Path.GetFileName(path);
-
-                        if (!outputList.Contains(name)) {
-                            outputList.Add(name);
-                        }
-                    }
-                }
-            }
-
-            var artifactItems = new List<PathSpec>();
-
-            foreach (var file in files) {
-                var fileName = Path.GetFileName(file.Location);
-
-                foreach (var output in outputList) {
-                    if (string.Equals(fileName, output, StringComparison.OrdinalIgnoreCase)) {
-                        artifactItems.Add(file);
-                    }
-                }
-            }
-
-            return artifactItems;
-        }
-    }
-
     internal enum ArtifactState {
         Unknown,
         Valid,
@@ -504,10 +470,5 @@ namespace Aderant.Build.Packaging {
 
     internal class ArtifactResolveOperation {
         public List<ArtifactPathSpec> Paths { get; set; }
-    }
-
-    [Serializable]
-    public class BuildStateMetadata {
-        public IReadOnlyCollection<BuildStateFile> BuildStateFiles { get; set; }
     }
 }

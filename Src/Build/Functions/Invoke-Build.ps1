@@ -200,6 +200,8 @@ function global:Invoke-Build2
     GetSourceTreeMetadata $context $repositoryPath
     GetBuildStateMetadata $context
 
+    return
+
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
     $switches.Everything = $Everything.IsPresent

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -72,6 +72,7 @@ namespace Aderant.Build {
                 if (value != null) {
                     value = value.TrimEnd(Path.DirectorySeparatorChar);
                 }
+
                 dropLocation = value;
             }
         }
@@ -86,7 +87,7 @@ namespace Aderant.Build {
             if (string.IsNullOrEmpty(DropLocation)) {
                 throw new ArgumentNullException("No DropLocation specified");
             }
-            
+
             List<string> parts = new List<string>();
             parts.Add(DropLocation);
 
@@ -103,7 +104,7 @@ namespace Aderant.Build {
             } else {
                 throw new InvalidOperationException("Cannot set the ModuleName component of the DropLocation");
             }
-        
+
             return string.Join("\\", parts);
         }
 
@@ -126,29 +127,30 @@ namespace Aderant.Build {
             BuildServerPathToFolder(ref sourceControlPathToModule, ModuleName);
             BuildServerPathToFolder(ref buildInfrastructurePath, Constants.BuildInfrastructureDirectory);
         }
-    }
 
-    internal struct BranchName {
-        private string branchName;
-        private string[] branchNameParts;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BranchName"/> struct.
-        /// </summary>
-        /// <param name="branchName">Name of the branch.</param>
-        public BranchName(string branchName) {
-            this.branchNameParts = branchName.Split(new char[] { '.', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+        internal struct BranchName {
+            private string branchName;
+            private string[] branchNameParts;
 
-            this.branchName = branchName.TrimEnd(new char[] { '\\' });
-            this.branchName = branchName.Replace("\\", ".");
-        }
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BranchName"/> struct.
+            /// </summary>
+            /// <param name="branchName">Name of the branch.</param>
+            public BranchName(string branchName) {
+                this.branchNameParts = branchName.Split(new char[] { '.', '\\' }, StringSplitOptions.RemoveEmptyEntries);
 
-        public string Name {
-            get { return branchName; }
-        }
+                this.branchName = branchName.TrimEnd(new char[] { '\\' });
+                this.branchName = branchName.Replace("\\", ".");
+            }
 
-        public string[] NameParts {
-            get { return branchNameParts.ToArray(); }
+            public string Name {
+                get { return branchName; }
+            }
+
+            public string[] NameParts {
+                get { return branchNameParts.ToArray(); }
+            }
         }
     }
 }

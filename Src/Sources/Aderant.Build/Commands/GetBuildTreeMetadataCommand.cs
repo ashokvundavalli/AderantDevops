@@ -1,5 +1,6 @@
 ﻿using System.Management.Automation;
 using Aderant.Build.Packaging;
+using Aderant.Build.ProjectSystem;
 
 namespace Aderant.Build.Commands {
 
