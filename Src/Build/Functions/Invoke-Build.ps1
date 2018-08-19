@@ -198,9 +198,7 @@ function global:Invoke-Build2
     FindGitDir $context $repositoryPath
 
     GetSourceTreeMetadata $context $repositoryPath
-    GetBuildStateMetadata $context
-
-    return
+    GetBuildStateMetadata $context    
 
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent

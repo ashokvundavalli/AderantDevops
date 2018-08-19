@@ -120,7 +120,9 @@ namespace Aderant.Build.VersionControl {
                         var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
                         info.Changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
 
-                        bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
+                        if (!string.Equals(newCommit.Tree.Sha, oldCommit.Tree.Sha)) {
+                            bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
+                        }
 
                         info.NewCommitDescription = $"{newCommit.Id.Sha}: {newCommit.MessageShort}";
                         info.OldCommitDescription = $"{oldCommit.Id.Sha}: {oldCommit.MessageShort}";
