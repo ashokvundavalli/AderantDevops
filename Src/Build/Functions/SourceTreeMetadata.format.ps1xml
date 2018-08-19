@@ -31,10 +31,10 @@
                                 <PropertyName>CommonAncestor</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>NewCommitDisplay</PropertyName>
+                                <PropertyName>NewCommitDescription</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>OldCommitDisplay</PropertyName>
+                                <PropertyName>OldCommitDescription</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>BucketIds</PropertyName>

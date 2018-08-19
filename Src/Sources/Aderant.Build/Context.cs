@@ -410,8 +410,8 @@ namespace Aderant.Build {
         public string CommonAncestor { get; set; }
         public IReadOnlyCollection<BucketId> BucketIds { get; set; }
         public IReadOnlyCollection<SourceChange> Changes { get; set; }
-        public string NewCommitDisplay { get; set; }
-        public string OldCommitDisplay { get; set; }
+        public string NewCommitDescription { get; set; }
+        public string OldCommitDescription { get; set; }
 
         public BucketId GetBucket(string tag) {
             foreach (var bucket in BucketIds) {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
+using System.Management.Automation.Language;
 using System.Runtime.Serialization;
 using Aderant.Build.VersionControl.Model;
 using LibGit2Sharp;
@@ -99,7 +100,7 @@ namespace Aderant.Build.VersionControl {
                 Commit oldCommit;
                 if (string.IsNullOrWhiteSpace(toBranch)) {
                     string commonAncestor;
-                    oldCommit = FindMostLikelyReusableBucket(repository, newCommit, out commonAncestor);
+                    oldCommit = FindMostLikelyReusableBucket(fromBranch, repository, newCommit, out commonAncestor);
                     info.CommonAncestor = commonAncestor;
                 } else {
                     oldCommit = GetTip(toBranch, repository);
@@ -121,8 +122,8 @@ namespace Aderant.Build.VersionControl {
 
                         bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
 
-                        info.NewCommitDisplay = $"{newCommit.Id.Sha}: {newCommit.MessageShort}";
-                        info.OldCommitDisplay = $"{oldCommit.Id.Sha}: {oldCommit.MessageShort}";
+                        info.NewCommitDescription = $"{newCommit.Id.Sha}: {newCommit.MessageShort}";
+                        info.OldCommitDescription = $"{oldCommit.Id.Sha}: {oldCommit.MessageShort}";
                     }
 
                     info.BucketIds = bucketKeys;
@@ -132,20 +133,16 @@ namespace Aderant.Build.VersionControl {
             return info;
         }
 
-        private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string branchCanonicalName) {
+        private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string branchCanonicalName) {
             Commit commit = currentTree.Parents.FirstOrDefault();
             Commit[] interestingCommit = { null };
+            
+            var branch = CreateBranchFromRef(fromBranch, repository);
 
-            var search = new string[] {
-                "refs/heads/master",
-                //"refs/heads/releases/",
-                //"refs/heads/dev/",
-                //"refs/heads/patch/",
-
+            var search = new[] {
+                branch.CanonicalName,
                 "refs/remotes/origin/master",
-                //"refs/remotes/origin/releases/",
-                //"refs/remotes/origin/dev/",
-                //"refs/remotes/origin/patch/",
+                "refs/heads/master",
             };
 
             while (commit != null) {
@@ -178,18 +175,24 @@ namespace Aderant.Build.VersionControl {
         private static Commit GetTip(string refName, Repository repository) {
             var branch = repository.Branches[refName];
             if (branch == null) {
-                // VSTS workspaces may not have any refs/heads due to the way it clones sources
-                // We instead need to check origin/<branch> or refs/remotes/origin/<branch>
-                Model.BranchName branchName = Model.BranchName.CreateFromRef(refName);
-                var networkRemote = repository.Network.Remotes["origin"];
-
-                if (networkRemote != null) {
-                    branch = repository.Branches[networkRemote.Name + "/" + branchName.Name];
-                }
+                branch = CreateBranchFromRef(refName, repository);
             }
             
             if (branch != null) {
                 return branch.Tip;
+            }
+
+            throw new InvalidOperationException("Unable to get branch from ref:" + refName);
+        }
+
+        private static Branch CreateBranchFromRef(string refName, Repository repository) {
+            // VSTS workspaces may not have any refs/heads due to the way it clones sources
+            // We instead need to check origin/<branch> or refs/remotes/origin/<branch>
+            var branchName = BranchName.CreateFromRef(refName);
+            var networkRemote = repository.Network.Remotes["origin"];
+
+            if (networkRemote != null) {
+                return repository.Branches[networkRemote.Name + "/" + branchName.Name];
             }
 
             return null;
