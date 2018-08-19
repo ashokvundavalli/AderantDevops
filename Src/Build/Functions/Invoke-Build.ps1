@@ -114,7 +114,7 @@ function GetBuildStateMetadata($context) {
     $context.BuildStateMetadata = $buildState
 
     foreach ($file in $buildState.BuildStateFiles) {
-        Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)")
+        Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)/$($file.BucketId.Tag)")
     }    
 }
 
