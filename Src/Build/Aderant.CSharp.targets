@@ -358,6 +358,7 @@
       ProjectGuid="$(ProjectGuid)"
       ProjectTypeGuids="$(ProjectTypeGuids)"
       TestProjectType="$(TestProjectType)"
+      References="@(Reference)"
       ProjectFile="$(MSBuildProjectFullPath)"
       IntermediateDirectory="$(IntermediateOutputPath)"
       OutputPath="$(OutDir)"

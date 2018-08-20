@@ -194,16 +194,27 @@ namespace Aderant.Build.DependencyAnalyzer {
         private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
             var outputFile = project.GetOutputAssemblyWithExtension();
 
+            List<ArtifactManifest> misses = null;
+
             foreach (ArtifactManifest s in artifacts) {
                 foreach (ArtifactItem file in s.Files) {
                     if (string.Equals(file.File, outputFile, StringComparison.OrdinalIgnoreCase)) {
                         return true;
                     }
-                }
 
-                logger.Info($"Looked for {outputFile} but it was not found in: {s.Id} -> {s.InstanceId}");
+                    if (misses == null) {
+                        misses = new List<ArtifactManifest>();
+                    }
+                    misses.Add(s);
+                }
             }
-            
+
+            if (misses != null && misses.Count > 0) {
+                var error = string.Join(",", misses.Select(s => string.Format("{0} ({1})", s.Id, s.InstanceId)));
+                logger.Info($"Looked for {outputFile} but it was not found in packages: {error}");
+            }
+
+
             return false;
         }
 

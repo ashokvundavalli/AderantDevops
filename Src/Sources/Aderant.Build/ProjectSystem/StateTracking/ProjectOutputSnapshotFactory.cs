@@ -23,6 +23,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string IntermediateDirectory { get; set; }
         public IReadOnlyCollection<string> ProjectTypeGuids { get; set; }
         public string TestProjectType { get; set; }
+        public string[] References { get; set; }
 
         public void TakeSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
@@ -69,6 +70,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         private bool IsTestProject() {
+            // Here we handle csproj files that do not advertise themselves properly but checking many facets
             bool isTestProject = string.Equals(TestProjectType, "UnitTest", StringComparison.OrdinalIgnoreCase);
 
             if (ProjectTypeGuids != null && !isTestProject) {
@@ -78,6 +80,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                         if (guid == WellKnownProjectTypeGuids.TestProject) {
                             return true;
                         }
+                    }
+                }
+            }
+
+            if (References != null) {
+                var references = References;
+                foreach (string reference in references) {
+                    if (reference.StartsWith("Microsoft.VisualStudio.QualityTools.UnitTestFramework")) {
+                        return true;
                     }
                 }
             }

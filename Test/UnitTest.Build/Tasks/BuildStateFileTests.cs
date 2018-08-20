@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using Aderant.Build;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -68,7 +67,7 @@ namespace UnitTest.Build.Tasks {
             writer.WriteStateFile(
                 null,
                 null,
-                null,
+                new ProjectOutputSnapshot { { "Foo", new OutputFilesSnapshot() } },
                 null,
                 null,
                 null,

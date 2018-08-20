@@ -22,6 +22,8 @@ namespace Aderant.Build.Tasks {
 
         public string TestProjectType { get; set; }
 
+        public string[] References { get; set; }
+
         protected override bool UpdateContextOnCompletion { get; set; } = true;
 
         public override bool ExecuteTask() {
@@ -33,7 +35,8 @@ namespace Aderant.Build.Tasks {
                 OutputPath,
                 IntermediateDirectory,
                 ProjectTypeGuids,
-                TestProjectType);
+                TestProjectType,
+                References);
             return !Log.HasLoggedErrors;
         }
     }

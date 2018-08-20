@@ -250,7 +250,8 @@ namespace Aderant.Build {
             string outputPath,
             string intermediateDirectory,
             IReadOnlyCollection<string> projectTypeGuids = null,
-            string testProjectType = null) {
+            string testProjectType = null,
+            string[] references = null) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
             Interlocked.Increment(ref trackedProjectCount);
@@ -266,7 +267,8 @@ namespace Aderant.Build {
                 OutputPath = outputPath,
                 IntermediateDirectory = intermediateDirectory,
                 ProjectTypeGuids = projectTypeGuids,
-                TestProjectType = testProjectType
+                TestProjectType = testProjectType,
+                References = references,
             };
 
             tracker.TakeSnapshot(projectGuid);
