@@ -197,13 +197,13 @@
     <Exec Condition="'@(CommonPackages)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /EnvironmentUrl:$(ExpertEnvironmentUrl) /File:%(CommonPackages.FullPath) /SourcePath:$(ImageWorkingDirectory)" />
 
     <!-- Package Import -->
     <Exec Condition="'@(Packages)' != ''"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(BinModuleDirectory) /AdditionalPluginDirectories:$(BinModuleDirectory)" />
+      Command="$(ImageWorkingDirectory)\PackageManagerConsole.exe /Import /EnvironmentUrl:$(ExpertEnvironmentUrl) /File:%(Packages.FullPath) /SourcePath:$(ImageWorkingDirectory) /AssemblySearchPaths:$(BinModuleDirectory) /AdditionalPluginDirectories:$(BinModuleDirectory)" />
 
     <OnError ExecuteTargets="LightsOff" />
 
