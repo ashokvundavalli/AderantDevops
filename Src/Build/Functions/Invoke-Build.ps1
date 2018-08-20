@@ -88,7 +88,9 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 
     Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
     Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
-    Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"    
+    if ($context.SourceTreeMetadata.CommonAncestor) {
+        Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
+    }
    
     if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
         Write-Host ""
