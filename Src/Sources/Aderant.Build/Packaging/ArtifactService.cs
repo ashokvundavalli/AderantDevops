@@ -54,9 +54,9 @@ namespace Aderant.Build.Packaging {
             IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
             foreach (var group in grouping) {
                 foreach (var artifact in group) {
-                    if (artifact.Id == "Tests.Framework") {
-                        System.Diagnostics.Debugger.Launch();
-                    }
+                    //if (artifact.Id == "Tests.Framework") {
+                    //    System.Diagnostics.Debugger.Launch();
+                    //}
 
                     var files = artifact.GetFiles();
 
@@ -103,7 +103,9 @@ namespace Aderant.Build.Packaging {
 
             if (snapshot == null) {
                 return files;
-            }
+             }
+
+            MergeExistingOutputs(context, publisherName, snapshot);
 
             if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackage.TestPackagePrefix)) {
                 var builder = new TestPackageBuilder();
@@ -111,6 +113,20 @@ namespace Aderant.Build.Packaging {
             }
 
             return files;
+        }
+
+        private static void MergeExistingOutputs(BuildOperationContext context, string publisherName, ProjectOutputSnapshot snapshot) {
+            var previousBuild = context.GetStateFile(publisherName);
+            if (previousBuild != null) {
+                var previousSnapshot = new ProjectOutputSnapshot(previousBuild.Outputs);
+                ProjectOutputSnapshot previousProjects = previousSnapshot.GetProjectsForTag(publisherName);
+
+                foreach (var previous in previousProjects) {
+                    if (!snapshot.ContainsKey(previous.Key)) {
+                        snapshot[previous.Key] = previous.Value;
+                    }
+                }
+            }
         }
 
         internal void CheckForDuplicates(string artifactId, IReadOnlyCollection<PathSpec> files) {

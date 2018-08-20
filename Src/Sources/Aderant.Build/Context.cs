@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -324,9 +323,9 @@ namespace Aderant.Build {
             //manifests.Sort((x, y) => string.Compare(x.Id, y.Id, StringComparison.OrdinalIgnoreCase));
         }
 
-        public BuildStateFile GetStateFile(string key) {
+        public BuildStateFile GetStateFile(string bucketTag) {
             foreach (var file in StateFiles) {
-                if (string.Equals(file.BucketId.Tag, key, StringComparison.OrdinalIgnoreCase)) {
+                if (string.Equals(file.BucketId.Tag, bucketTag, StringComparison.OrdinalIgnoreCase)) {
                     return file;
                 }
             }
@@ -363,6 +362,10 @@ namespace Aderant.Build {
             : base(StringComparer.OrdinalIgnoreCase) {
         }
 
+        public ProjectOutputSnapshot(IDictionary<string, OutputFilesSnapshot> dictionary)
+            : base(dictionary, StringComparer.OrdinalIgnoreCase) {
+        }
+        
         public ProjectOutputSnapshot GetProjectsForTag(string tag) {
             var items = this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase));
 
