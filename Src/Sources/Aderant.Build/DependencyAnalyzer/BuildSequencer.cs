@@ -156,16 +156,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string tag, ConfiguredProject project) {
-            if (project.FullPath.IndexOf("UnitTest.Deployment.Client.csproj", StringComparison.OrdinalIgnoreCase) >= 0) {
-                System.Diagnostics.Debugger.Launch();
-            }
             // See if we can skip this project because we can re-use the previous outputs
             if (stateFile != null) {
                 string projectFullPath = project.FullPath;
-
-                if (projectFullPath.Contains("Aderant.Framework.Customization.Processor")) {
-                    //System.Diagnostics.Debugger.Launch();
-                }
 
                 bool artifactsExist = false;
 
