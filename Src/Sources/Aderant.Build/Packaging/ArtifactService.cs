@@ -54,6 +54,10 @@ namespace Aderant.Build.Packaging {
             IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
             foreach (var group in grouping) {
                 foreach (var artifact in group) {
+                    if (artifact.Id == "Tests.Framework") {
+                        System.Diagnostics.Debugger.Launch();
+                    }
+
                     var files = artifact.GetFiles();
 
                     files = FilterGeneratedPackage(context, publisherName, files, artifact);

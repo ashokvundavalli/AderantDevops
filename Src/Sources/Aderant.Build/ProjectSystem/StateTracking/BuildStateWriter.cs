@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using Aderant.Build.VersionControl;
@@ -53,13 +54,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 stateFile.ParentTreeSha = previousBuild.TreeSha;
             }
 
-            if (previousBuild != null) {
-                if (currentOutputs == null) {
-                    currentOutputs = new ProjectOutputSnapshot();
-                }
+            if (currentOutputs == null) {
+                currentOutputs = new ProjectOutputSnapshot();
+            }
 
+            if (previousBuild != null) {
                 MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
+
+            Debug.Assert(currentOutputs.Keys.Count > 0);
 
             stateFile.Outputs = currentOutputs;
 
