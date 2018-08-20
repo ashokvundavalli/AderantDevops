@@ -69,7 +69,7 @@ Initialize-Module
     "Dailing Roper Hotline"
 )
 
-$Host.UI.RawUI.WindowTitle = Get-Random $titles
+$Host.UI.RawUI.WindowTitle = Get-Random -InputObject $titles
 
 <#
 Expert specific variables
@@ -160,7 +160,7 @@ function IsMainBanch([string]$name) {
     return $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("dev", [System.StringComparison]::OrdinalIgnoreCase) -and $name.LastIndexOf("main", [System.StringComparison]::OrdinalIgnoreCase) -gt $name.LastIndexOf("releases", [System.StringComparison]::OrdinalIgnoreCase)
 }
 
-function ResolveBranchName($branchPath) {
+function ResolveBranchName([string]$branchPath) {
     if (IsMainBanch $branchPath) {
         $name = "MAIN"
     } elseif (IsDevBanch $branchPath) {
@@ -215,16 +215,26 @@ function Set-ExpertSourcePath {
 }
 
 function Set-ScriptPaths {
+    $DebugPreference = "Continue"
+
+    Write-Debug -Message "BranchModulesDirectory: $($ShellContext.BranchModulesDirectory)"
+
     if ([System.IO.File]::Exists($ShellContext.BranchModulesDirectory + "\ExpertManifest.xml")) {
-        $root = Resolve-Path "$PSScriptRoot\..\..\..\"
+        [string]$root = Resolve-Path "$PSScriptRoot\..\..\..\"
 
         $ShellContext.BuildScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Build"
+        Write-Debug -Message "BuildScriptsDirectory: $($ShellContext.BuildScriptsDirectory)"
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $root -ChildPath "Src\Package"
+        Write-Debug -Message "PackageScriptsDirectory: $($ShellContext.PackageScriptsDirectory)"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "ExpertManifest.xml"
+        Write-Debug -Message "ProductManifestPath: $($ShellContext.ProductManifestPath)"
     } else {
         $ShellContext.BuildScriptsDirectory = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build.Infrastructure\Src\Build"
+        Write-Debug -Message "BuildScriptsDirectory: $($ShellContext.BuildScriptsDirectory)"
         $ShellContext.PackageScriptsDirectory = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath "\Build.Infrastructure\Src\Package"
+        Write-Debug -Message "PackageScriptsDirectory: $($ShellContext.PackageScriptsDirectory)"
         $ShellContext.ProductManifestPath = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath "\ExpertManifest.xml"
+        Write-Debug -Message "ProductManifestPath: $($ShellContext.ProductManifestPath)"
     }
 }
 
@@ -750,7 +760,7 @@ function Set-ExpertBranchInfo([string] $devBranchFolder, [string] $dropUncPath) 
 
     SetDefaultValue DevBranchFolder $devBranchFolder
     SetDefaultValue DropRootUNCPath $dropUncPath
-    Set-Environment -initialize
+    Set-Environment
     Write-Host ""
     Write-Host "The environment has been configured"
     Write-Host "You should not have to run this command again on this machine"
@@ -918,15 +928,15 @@ $global:expertTabBranchExpansions = @()
     Will add tab expansion of module names on the Build-ExpertModules command where the current parameter is the ModuleNames parameter
 #>
 function Add-ModuleExpansionParameter {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty][string]$CommandName,
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty][string]$ParameterName
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$CommandName,
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$ParameterName
     )
        
     Register-ArgumentCompleter -CommandName $CommandName -ParameterName $ParameterName -ScriptBlock {
         param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)
 
-        $aliases = Get-Alias
         $parser = [Aderant.Build.AutoCompletionParser]::new($commandName, $parameterName, $commandAst)
                 
         # Evaluate Modules
@@ -1240,14 +1250,12 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-WorkerProcessIds'; alias = 'wpid'}
 )
 
-$helpList = @()
-
 # Exporting the functions and aliases
 foreach ($toExport in $functionsToExport) {
     Export-ModuleMember -function $toExport.function
 
     if ($toExport.alias) {
-        Set-Alias $toExport.alias  $toExport.function
+        Set-Alias $toExport.alias $toExport.function
         Export-ModuleMember -Alias $toExport.alias
     }
 }
@@ -1262,7 +1270,7 @@ Export-ModuleMember -variable BranchName
 Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
 
-Export-ModuleMember -function Get-DependenciesFrom
+Export-ModuleMember -Function Get-DependenciesFrom
 Export-ModuleMember -Function Reset-DeveloperShell
 
 #TODO move
@@ -1282,7 +1290,7 @@ Export-ModuleMember -Function Reset-DeveloperShell
 
 #$ShellContext.SetRegistryValue("", "LastVsixCheckCommit", $ShellContext.CurrentCommit) | Out-Null
 
-Set-Environment
+Set-Environment -initialize
 
 Write-Host ""
 Write-Host "Type " -NoNewLine
