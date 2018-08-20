@@ -3410,7 +3410,7 @@ function Create-Merge-Bug {
 .Description   
     Takes the bug work item ID that needs to be merged, the merge work item ID that the merge PR should be attached with and the target Git branch name as input.
 	It then tries to cherry pick each linked Pull Request of the bug work item ID to a new feature branch off the given target branch, commit it and create a PR.
-    If a merge conflict occurs, Visual Studio (Experimental Instance, for performance reasons) opens up automatically for manual conflict resolving.
+    If a merge conflict occurs, Visual Studio (Experimental Instance, for performance reasons) opens up automatically for manual conflict resolution.
     After successfully resolving the merge conflict, just close Visual Studio and run this command again. It will remember your last inputs for convenience.
     Once a Pull Request for the merge operation is created, Internet Explorer will open up automatically and show the created PR which is set to auto-complete. 
     Additionally, it will automatically do a squash merge and delete the feature branch.
@@ -3430,7 +3430,9 @@ function Git-Merge([switch]$createMergeBugOnly) {
     }
 	Write-Host ""
     $logFilePath = Join-Path $tempFolderPath git-merge_log.txt
-    Start-Transcript -path $logFilePath -append
+    if (!$createMergeBugOnly) {
+		Start-Transcript -path $logFilePath -append
+	}
 
     # variables
     $tfsUrl = "http://tfs:8080/tfs/aderant"
@@ -3565,6 +3567,9 @@ function Git-Merge([switch]$createMergeBugOnly) {
 				}
 				'patch/81SP1' {
 					$assumedTargetRelease += "8110.EX4002"
+				}
+				'update/82GA' {
+					$assumedTargetRelease += "8200.EX0003"
 				}
 				'dev' {
 					$assumedTargetRelease += "8300"
@@ -3961,10 +3966,20 @@ function Git-Merge([switch]$createMergeBugOnly) {
                             Add-Content $conflictInfoFilePath "$($pullRequest.pullRequestId)" | Out-Null
                         }
                         $solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
-                        Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolving. Press any key to continue"
-                        Write-Host "Opening $solutionFilePath for manual conflict resolving" -ForegroundColor Gray
-                        Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
-                        throw "Please resolve the merge conflict and run this command again."
+						if ($currentRepositoryName -eq "ExpertSuite") {
+							Write-Host "There are merge conflicts in the ExpertSuite mono-repo." -ForegroundColor Yellow
+							Write-Host "You'll need to browse to the appropriate folder and open the .sln file in order to resolve these." -ForegroundColor Yellow
+							Write-Host "For example, if you made a change to Framework, open the Framework folder and open Framework.sln. The conflicts will show up in the Changes tab." -ForegroundColor Yellow
+							Read-Host -Prompt "Use the following pop-up to navigate to the folder for your solution. Press any key to continue"
+							Write-Host "Opening $currentRepositoryPath for manual conflict resolution" -ForegroundColor Gray
+							Start-Process explorer $currentRepositoryPath
+						} else { 
+							Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolution. Press any key to continue"
+							Write-Host "Opening $solutionFilePath for manual conflict resolution" -ForegroundColor Gray
+							Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
+						}
+                        Write-Host "Please resolve the merge conflicts, push them, then run git-merge again." -ForegroundColor Yellow
+						return
                     }
 
                     Write-Host "git commit -m ""Cherry picked commit of PR $($pullRequest.pullRequestId)"" --allow-empty" -ForegroundColor Blue
@@ -3973,10 +3988,20 @@ function Git-Merge([switch]$createMergeBugOnly) {
                     if ($gitError) {
                         Write-Host $gitError
                         $solutionFilePath = Join-Path $currentRepositoryPath "$currentRepositoryName.sln"
-                        Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolving. Press any key to continue"
-                        Write-Host "Opening $solutionFilePath for manual conflict resolving" -ForegroundColor Gray
-                        Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
-                        throw "Please resolve the merge conflict and run this command again."
+						if ($currentRepositoryName -eq "ExpertSuite") {
+							Write-Host "There are merge conflicts in the ExpertSuite mono-repo." -ForegroundColor Yellow
+							Write-Host "You'll need to browse to the appropriate folder and open the .sln file in order to resolve these." -ForegroundColor Yellow
+							Write-Host "For example, if you made a change to Framework, open the Framework folder and open Framework.sln. The conflicts will show up in the Changes tab." -ForegroundColor Yellow
+							Read-Host -Prompt "Use the following pop-up to navigate to the folder for your solution. Press any key to continue"
+							Write-Host "Opening $currentRepositoryPath for manual conflict resolution" -ForegroundColor Gray
+							Start-Process explorer $currentRepositoryPath
+						} else { 
+							Read-Host -Prompt "A new instance of Visual Studio will now open for manual conflict resolution. Press any key to continue"
+							Write-Host "Opening $solutionFilePath for manual conflict resolution" -ForegroundColor Gray
+							Start-Process devenv -ArgumentList "$solutionFilePath /RootSuffix Exp"
+						}
+                        Write-Host "Please resolve the merge conflicts, push them, then run git-merge again." -ForegroundColor Yellow
+						return
                     }
 
                     Add-Content $processedInfoFilePath "$($pullRequest.pullRequestId)" | Out-Null
@@ -4026,8 +4051,8 @@ function Git-Merge([switch]$createMergeBugOnly) {
 }
 "@
 
-                #update the pull request (setting auto-complete etc.)
-                Write-Host "Setting auto-complete for pull request $($createdPullRequest.pullRequestId)" -ForegroundColor Gray
+                #update the pull request (setting completion options)
+                Write-Host "Setting completion options for pull request $($createdPullRequest.pullRequestId)" -ForegroundColor Gray
                 Write-Host "Invoke-RestMethod -Uri $modifyPullRequestUri -Body $modifyPullRequestBody -ContentType ""application/json"" -UseDefaultCredentials" -ForegroundColor Blue
                 $updatedPullRequest = Invoke-RestMethod -Uri $modifyPullRequestUri -Body $modifyPullRequestBody -ContentType "application/json" -UseDefaultCredentials -Method Patch
 
@@ -4049,7 +4074,7 @@ function Git-Merge([switch]$createMergeBugOnly) {
 "@
 
                 #update the merge bug id by linking the newly created PR to it
-                Write-Host "Linking for pull request $($createdPullRequest.pullRequestId) to work item $mergeBugId" -ForegroundColor Gray
+                Write-Host "Linking pull request $($createdPullRequest.pullRequestId) to work item $mergeBugId" -ForegroundColor Gray
                 Write-Host "Invoke-RestMethod -Uri $linkWorkItemUri -Body $linkWorkItemBody -ContentType ""application/json-patch+json"" -UseDefaultCredentials" -ForegroundColor Blue
                 $updatedWorkItem = Invoke-RestMethod -Uri $linkWorkItemUri -Body $linkWorkItemBody -ContentType "application/json-patch+json" -UseDefaultCredentials -Method Patch
 
@@ -4065,7 +4090,7 @@ function Git-Merge([switch]$createMergeBugOnly) {
     } finally {
     }
 
-    Write-Host "`nSuccessfully merged all Pull Requests linked to work item $bugId."
+    Write-Host "`nSuccessfully merged all Pull Requests linked to work item $bugId." -ForegroundColor Green
     if ($changeSetInfos.Length -gt 0) {
         Write-Host "`nPlease remember to manually merge the following linked TFVC changesets:" -ForegroundColor Yellow
         Write-Host $changeSetInfos
@@ -4088,7 +4113,9 @@ function Git-Merge([switch]$createMergeBugOnly) {
     Read-Host -Prompt "Press any key to end this script"
 
     Write-Host "`n`nDONE" -ForegroundColor Yellow
-    Stop-Transcript
+	if (!$createMergeBugOnly) {
+		Stop-Transcript
+	}
 }
 
 function Get-ExpertBuildAllVersion () {
