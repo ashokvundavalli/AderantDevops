@@ -62,6 +62,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 return projectOutputs
                     .Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1)
                     .OrderBy(filePath => filePath)
+                    .Distinct(StringComparer.OrdinalIgnoreCase /* Inputs may contain duplicates */)
                     .ToArray();
 
             return new string[] { };
@@ -70,14 +71,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         private bool IsTestProject() {
             bool isTestProject = string.Equals(TestProjectType, "UnitTest", StringComparison.OrdinalIgnoreCase);
 
-            if (!isTestProject) {
-                if (ProjectTypeGuids != null) {
-                    foreach (var item in ProjectTypeGuids) {
-                        Guid guid;
-                        if (Guid.TryParse(item, out guid)) {
-                            if (guid == WellKnownProjectTypeGuids.TestProject) {
-                                return true;
-                            }
+            if (ProjectTypeGuids != null && !isTestProject) {
+                foreach (var item in ProjectTypeGuids) {
+                    Guid guid;
+                    if (Guid.TryParse(item, out guid)) {
+                        if (guid == WellKnownProjectTypeGuids.TestProject) {
+                            return true;
                         }
                     }
                 }

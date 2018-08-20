@@ -37,6 +37,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             var dashes = new string('—', 20);
 
             for (int i = 0; i < projectGroups.Count; i++) {
+                buildGroupCount++;
 
                 List<IDependable> projectGroup = projectGroups[i];
 
@@ -59,8 +60,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         orchestrationFiles.BeforeProjectFile,
                         orchestrationFiles.AfterProjectFile,
                         projectGroup,
-                        buildGroupCount,
-                        buildFrom));
+                        buildGroupCount));
 
                 groups.Add(new Comment($" {dashes} BEGIN: {itemGroup.Name} {dashes} "));
                 groups.Add(itemGroup);
@@ -95,8 +95,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 // e.g <Target Name="AfterCompile" DependsOnTargets="Build0;...n">;
                 afterCompile.DependsOnTargets.Add(new Target(build.Name));
-
-                buildGroupCount++;
             }
 
             project.Add(
@@ -119,7 +117,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return "ProjectsToBuild" + buildGroupCount;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, List<IDependable> projectGroup, int buildGroup, string buildFrom) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, List<IDependable> projectGroup, int buildGroup) {
             return projectGroup.Select(
                 studioProject => {
                     var item = GenerateItem(beforeProjectFile, afterProjectFile, buildGroup, studioProject);

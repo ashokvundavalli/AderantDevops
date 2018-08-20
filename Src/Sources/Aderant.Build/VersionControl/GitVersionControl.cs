@@ -147,7 +147,9 @@ namespace Aderant.Build.VersionControl {
         
             if (!string.IsNullOrWhiteSpace(fromBranch)) {
                 var branch = CreateBranchFromRef(fromBranch, repository);
-                search.Insert(0, branch.CanonicalName);
+                if (branch != null) {
+                    search.Insert(0, branch.CanonicalName);
+                }
             }
 
             while (commit != null) {

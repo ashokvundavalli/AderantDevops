@@ -13,6 +13,11 @@
      <PackageArtifact Include="$(SolutionRoot)\Foo\bin\**\Foo.dll;">
        <ArtifactId>ModuleA</ArtifactId>
      </PackageArtifact>
+
+     <PackageArtifact Include="$(SolutionRoot)\Baz\bin\**\Baz.dll;">
+       <ArtifactId>Tests.ModuleA</ArtifactId>
+       <Generated>true</Generated>
+     </PackageArtifact>
    </ItemGroup>
  
   </Target>

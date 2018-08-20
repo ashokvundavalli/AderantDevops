@@ -282,6 +282,17 @@ namespace Aderant.Build {
         }
 
         /// <summary>
+        /// Returns the outputs for a specific publisher.
+        /// </summary>
+        internal ProjectOutputSnapshot GetProjectOutputs(string publisherName) {
+            if (outputs != null) {
+                return outputs.GetProjectsForTag(publisherName);
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Returns the artifacts for a given publisher.
         /// Keyed by publisher.
         /// </summary>
@@ -290,10 +301,6 @@ namespace Aderant.Build {
         }
 
         internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
-            if (artifactId == "Tests.Framework") {
-                Debugger.Launch();
-            }
-
             if (artifacts == null) {
                 artifacts = new ArtifactCollection();
             }

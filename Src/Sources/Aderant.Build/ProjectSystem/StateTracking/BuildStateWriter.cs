@@ -20,7 +20,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// <summary>
         /// Serializes the build state file
         /// </summary>
-        /// <param name="baseStateFile">The state file selected to build with.</param>
+        /// <param name="previousBuild">The state file selected to build with.</param>
         /// <param name="bucket">The SHA of the directory for which the outputs are associated</param>
         /// <param name="currentOutputs">The outputs the build produced</param>
         /// <param name="artifacts">The artifacts this build produced</param>
@@ -28,7 +28,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// <param name="buildMetadata">A description of the current build environment</param>
         /// <param name="path">The path to write the file to</param>
         public string WriteStateFile(
-            BuildStateFile baseStateFile,
+            BuildStateFile previousBuild,
             BucketId bucket,
             ProjectOutputSnapshot currentOutputs,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
@@ -47,19 +47,21 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 BucketId = bucket
             };
 
-            if (baseStateFile != null) {
-                stateFile.ParentId = baseStateFile.Id;
-                stateFile.ParentBuildId = baseStateFile.BuildId;
-                stateFile.ParentTreeSha = baseStateFile.TreeSha;
+            if (previousBuild != null) {
+                stateFile.ParentId = previousBuild.Id;
+                stateFile.ParentBuildId = previousBuild.BuildId;
+                stateFile.ParentTreeSha = previousBuild.TreeSha;
             }
 
-            if (currentOutputs != null) {
-                if (baseStateFile != null) {
-                    MergeExistingOutputs(baseStateFile.BuildId, baseStateFile.Outputs, currentOutputs);
+            if (previousBuild != null) {
+                if (currentOutputs == null) {
+                    currentOutputs = new ProjectOutputSnapshot();
                 }
 
-                stateFile.Outputs = currentOutputs;
+                MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
+
+            stateFile.Outputs = currentOutputs;
 
             if (artifacts != null) {
                 stateFile.Artifacts = artifacts;
@@ -110,9 +112,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     artifactCollection = artifacts.GetArtifactsForTag(tag);
                 }
 
-                BuildStateFile file = context.GetStateFile(tag);
+                BuildStateFile previousBuild = context.GetStateFile(tag);
                 var dropLocation = Path.Combine(context.GetDropLocation(tag), DefaultFileName);
-                WriteStateFile(file, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
+                WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
             }
         }
     }

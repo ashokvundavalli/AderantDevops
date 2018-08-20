@@ -19,12 +19,10 @@ namespace Aderant.Build.Tasks {
 
         public string AssemblyVersion { get; set; }
 
-        protected override bool UpdateContextOnCompletion { get; set; }
+        protected override bool UpdateContextOnCompletion { get; set; } = true;
 
         public override bool ExecuteTask() {
             if (ArtifactDefinitions != null) {
-                UpdateContextOnCompletion = true;
-
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
 
                 var commands = new VsoBuildCommands(Logger);

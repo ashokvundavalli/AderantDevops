@@ -16,11 +16,6 @@
     <!-- TODO: Enable...currently off for perf reasons-->
     <CodeCoverage>false</CodeCoverage>
   </PropertyGroup>
-  
-
-  <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"
-    AssemblyFile="$(BuildAssembly)"
-    Condition="'$(IsCustomBuild)' != 'true'" />
 
   <!--
     ==========================================================================================
@@ -51,7 +46,7 @@
   <PropertyGroup>
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
-      GatherTestArtifacts;
+      AutoGatherTestArtifacts;
       PackageArtifacts
     </PackageArtifactsDependsOn>
   </PropertyGroup>
@@ -75,7 +70,7 @@
   </Target>
 
 
-  <Target Name="GatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'" Returns="@(_PackageArtifact)">
+  <Target Name="AutoGatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'" Returns="@(_PackageArtifact)">
     <ItemGroup>
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>Tests.$(ModuleName)</ArtifactId>

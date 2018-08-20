@@ -6,6 +6,7 @@ using System.Management.Automation;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -53,9 +54,27 @@ namespace IntegrationTest.Build.EndToEnd {
             var logFile = base.LogFile;
 
             PrepareForAnotherRun();
-            
+
             // Run second build
             RunTarget("EndToEnd", properties);
+            foreach (string entry in Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories)) {
+                if (entry.EndsWith(@"1\buildstate.metadata")) {
+                    var stateFile = new BuildStateFile().DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
+
+                    if (stateFile.BucketId.Tag == "ModuleB") {
+                        Assert.AreEqual(1, stateFile.Artifacts.Keys.Count);
+                    } else {
+                        Assert.IsTrue(stateFile.Artifacts.ContainsKey("ModuleA"));
+
+                        var manifest = stateFile.Artifacts["ModuleA"];
+                        Assert.IsTrue(manifest.Any(m => m.Id == "ModuleA"));
+                        Assert.IsTrue(manifest.Any(m => m.Id == "Tests.ModuleA"));
+
+                        Assert.IsNotNull(stateFile.Outputs);
+                    }
+                }
+            }
+
             var logFile1 = base.LogFile;
 
             WriteLogFile(@"C:\Temp\lf.log", logFile);
@@ -88,7 +107,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     context.PrimaryDropLocation);
 
             context.BuildStateMetadata = buildStateMetadata;
-            context.Publish(properties[WellKnownProperties.ContextFileName]);
+            context.Publish(contextFile);
 
             CleanWorkingDirectory();
         }

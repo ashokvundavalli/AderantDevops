@@ -56,7 +56,7 @@ namespace Aderant.Build.Packaging {
                 foreach (var artifact in group) {
                     var files = artifact.GetFiles();
 
-                    files = FilterGeneratedPackage(context.GetProjectOutputs(), publisherName, files, artifact);
+                    files = FilterGeneratedPackage(context, publisherName, files, artifact);
 
                     CheckForDuplicates(artifact.Id, files);
 
@@ -94,14 +94,16 @@ namespace Aderant.Build.Packaging {
             return publisherName + "\\";
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(ProjectOutputSnapshot outputs, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
-            if (outputs == null) {
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
+            ProjectOutputSnapshot snapshot = context.GetProjectOutputs(publisherName);
+
+            if (snapshot == null) {
                 return files;
             }
 
             if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackage.TestPackagePrefix)) {
                 var builder = new TestPackageBuilder();
-                return builder.BuildArtifact(files, outputs, publisherName);
+                return builder.BuildArtifact(files, snapshot, publisherName);
             }
 
             return files;
@@ -425,8 +427,7 @@ namespace Aderant.Build.Packaging {
                                 BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(stream);
                                 file.DropLocation = folder;
 
-                                if (file.Outputs.Keys.Any(key => Path.IsPathRooted(key))) {
-                                    // File is corrupt and should not be used
+                                if (CheckForRootedPaths(file)) {
                                     continue;
                                 }
 
@@ -438,6 +439,19 @@ namespace Aderant.Build.Packaging {
             }
 
             return metadata;
+        }
+
+        private static bool CheckForRootedPaths(BuildStateFile file) {
+            if (file.Outputs != null) {
+                foreach (var key in file.Outputs.Keys) {
+                    if (Path.IsPathRooted(key)) {
+                        // File is corrupt and should not be used
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         internal static string[] OrderBuildsByBuildNumber(string[] entries) {

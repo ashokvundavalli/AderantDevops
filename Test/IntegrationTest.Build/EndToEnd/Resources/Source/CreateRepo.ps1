@@ -8,4 +8,6 @@ Add-Content -Path ".gitignore" -value @"
 "@
 
 & git add .
+& git add ModuleA/Build/TFSBuild.rsp -f
+& git add ModuleB/Build/TFSBuild.rsp -f
 & git commit -m "Added all files"
