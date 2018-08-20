@@ -12,7 +12,7 @@ namespace Aderant.Build.VersionControl.Model {
 
         public static BranchName CreateFromRef(string gitRef) {
             if (!gitRef.StartsWith(RefsHeads)) {
-                throw new ArgumentException("Wrong gitRef format");
+                throw new ArgumentException("Wrong gitRef format: " + gitRef);
             }
 
             return new BranchName(gitRef.Substring(RefsHeads.Length));

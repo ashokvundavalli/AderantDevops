@@ -288,6 +288,10 @@ namespace Aderant.Build {
         }
 
         internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
+            if (artifactId == "Tests.Framework") {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             if (artifacts == null) {
                 artifacts = new ArtifactCollection();
             }

@@ -90,6 +90,7 @@ namespace Aderant.Build.VersionControl {
 
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
                     newCommit = repository.Head.Tip;
+                    fromBranch = repository.Head.CanonicalName;
                 }
 
                 if (newCommit == null) {
@@ -138,14 +139,16 @@ namespace Aderant.Build.VersionControl {
         private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string branchCanonicalName) {
             Commit commit = currentTree.Parents.FirstOrDefault();
             Commit[] interestingCommit = { null };
-            
-            var branch = CreateBranchFromRef(fromBranch, repository);
 
-            var search = new[] {
-                branch.CanonicalName,
+            List<string> search = new List<string> {
                 "refs/remotes/origin/master",
                 "refs/heads/master",
             };
+        
+            if (!string.IsNullOrWhiteSpace(fromBranch)) {
+                var branch = CreateBranchFromRef(fromBranch, repository);
+                search.Insert(0, branch.CanonicalName);
+            }
 
             while (commit != null) {
                 interestingCommit[0] = commit;
@@ -166,7 +169,6 @@ namespace Aderant.Build.VersionControl {
                         }
                     }
                 }
-
                 commit = commit.Parents.FirstOrDefault();
             }
 
