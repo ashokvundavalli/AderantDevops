@@ -23,7 +23,6 @@ namespace IntegrationTest.Build.VersionControl {
 
             Assert.AreEqual("885048a4c6ce8fc35723b5fbe4ea99ab5948122b", result.GetBucket(BucketId.Current).Id);
             Assert.AreEqual("1e6931e5a4e7e03f8afe2035ac19e90f56a425f5", result.GetBucket(BucketId.Previous).Id);
-            Assert.AreEqual("c5d3a09a01a42ee7f4b04ab421e529fe02bc9b0f", result.GetBucket(BucketId.ParentsParent).Id);
         }
 
         [TestMethod]

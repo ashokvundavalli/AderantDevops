@@ -11,15 +11,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTest.Build {
     [TestClass]
-    [DeploymentItem("EndToEnd\\Resources", "Resources")]
+    [DeploymentItem("EndToEnd\\", "284D931E-64FE-40CA-B562-E44339E3AA85\\")]
     public class ProjectTreeTests {
         private IProjectTree projectTree;
+        private string deploymentDirectory;
 
         public TestContext TestContext { get; set; }
 
         [TestInitialize]
         public void TestInitialize() {
             this.projectTree = ProjectTree.CreateDefaultImplementation(NullLogger.Default);
+            this.deploymentDirectory = Path.Combine(TestContext.DeploymentDirectory, "284D931E-64FE-40CA-B562-E44339E3AA85");
         }
 
         [TestMethod]
@@ -29,14 +31,14 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task LoadProjectsAsync_sets_LoadedUnconfiguredProjects() {
-            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
+            await projectTree.LoadProjects(deploymentDirectory, true, null);
 
             Assert.AreEqual(5, projectTree.LoadedUnconfiguredProjects.Count);
         }
 
         [TestMethod]
         public async Task AssemblyReference_captures_hint_path() {
-            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
+            await projectTree.LoadProjects(deploymentDirectory, true, null);
 
             ConfiguredProject configuredProject = projectTree.LoadedUnconfiguredProjects.First(p => p.ProjectGuid == new Guid("{E0E257CE-8CD9-4D58-9C08-6CB6B9A87B92}"))
                 .LoadConfiguredProject();
@@ -50,7 +52,7 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task BuildDependencyModel_sets_IncludeInBuild() {
-            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
+            await projectTree.LoadProjects(deploymentDirectory, true, null);
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = ConfigurationToBuild.Default;
@@ -61,7 +63,7 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task Dependency_sorting() {
-            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
+            await projectTree.LoadProjects(deploymentDirectory, true, null);
 
             var collector = new BuildDependenciesCollector {
                 ProjectConfiguration = ConfigurationToBuild.Default
@@ -98,7 +100,7 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task Project_dependencies_are_discovered() {
-            await projectTree.LoadProjects(TestContext.DeploymentDirectory, true, null);
+            await projectTree.LoadProjects(deploymentDirectory, true, null);
 
             var collector = new BuildDependenciesCollector {
                 ProjectConfiguration = ConfigurationToBuild.Default
