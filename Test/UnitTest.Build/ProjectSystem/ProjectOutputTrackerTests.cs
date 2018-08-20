@@ -1,5 +1,6 @@
 ﻿using System;
 using Aderant.Build;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -21,6 +22,28 @@ namespace UnitTest.Build.ProjectSystem {
 
             Assert.AreEqual(1, collection.Keys.Count);
             Assert.IsTrue(collection.ContainsKey(@"d\foo.csproj"));
+        }
+
+        [TestMethod]
+        public void TestProjectType_sets_IsTestProject() {
+            var collection = new ProjectOutputSnapshot();
+            ProjectOutputSnapshotFactory snapshotFactory = new ProjectOutputSnapshotFactory(collection);
+            snapshotFactory.ProjectFile = "foo.csproj";
+            snapshotFactory.TestProjectType = "UnitTest";
+
+            var snapshot = snapshotFactory.TakeSnapshot(Guid.NewGuid());
+            Assert.IsTrue(snapshot.IsTestProject);
+        }
+
+        [TestMethod]
+        public void ProjectTypeGuids_sets_IsTestProject() {
+            var collection = new ProjectOutputSnapshot();
+            ProjectOutputSnapshotFactory snapshotFactory = new ProjectOutputSnapshotFactory(collection);
+            snapshotFactory.ProjectFile = "foo.csproj";
+            snapshotFactory.ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject.ToString() };
+
+            var snapshot = snapshotFactory.TakeSnapshot(Guid.NewGuid());
+            Assert.IsTrue(snapshot.IsTestProject);
         }
     }
 }

@@ -22,10 +22,18 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string OutputPath { get; set; }
         public string IntermediateDirectory { get; set; }
         public IReadOnlyCollection<string> ProjectTypeGuids { get; set; }
+
+        /// <summary>
+        /// The test type project property group value - if any.
+        /// </summary>
         public string TestProjectType { get; set; }
+
+        /// <summary>
+        /// The project references item group identities
+        /// </summary>
         public string[] References { get; set; }
 
-        public void TakeSnapshot(Guid projectGuid) {
+        public OutputFilesSnapshot TakeSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
             if (SourcesDirectory != null && projectFile.StartsWith(SourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
@@ -37,7 +45,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             bool isTestProject = IsTestProject();
 
             if (!outputs.ContainsKey(projectFile)) {
-                outputs[projectFile] = new OutputFilesSnapshot {
+                var snapshot = outputs[projectFile] = new OutputFilesSnapshot {
                     ProjectGuid = projectGuid,
                     FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
                     OutputPath = OutputPath,
@@ -45,9 +53,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     Directory = GetDirectory(projectFile),
                     IsTestProject = isTestProject,
                 };
+
+                return snapshot;
             } else {
                 ThrowDoubleWrite();
             }
+
+            return null;
         }
 
         private static string GetDirectory(string projectFile) {

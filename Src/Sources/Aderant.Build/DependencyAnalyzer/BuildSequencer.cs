@@ -201,12 +201,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (string.Equals(file.File, outputFile, StringComparison.OrdinalIgnoreCase)) {
                         return true;
                     }
-
-                    if (misses == null) {
-                        misses = new List<ArtifactManifest>();
-                    }
-                    misses.Add(s);
                 }
+
+                if (misses == null) {
+                    misses = new List<ArtifactManifest>();
+                }
+                misses.Add(s);
             }
 
             if (misses != null && misses.Count > 0) {
