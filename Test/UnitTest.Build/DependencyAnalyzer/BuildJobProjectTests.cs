@@ -27,7 +27,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Project generateProject = project.GenerateProject(items, new OrchestrationFiles { BeforeProjectFile = "A", AfterProjectFile = "B" }, null);
 
             var targets = generateProject.Elements.OfType<Target>().ToList();
-            Assert.AreEqual("RunProjectsToBuild0", targets[0].Name);
+            Assert.AreEqual("RunProjectsToBuild1", targets[0].Name);
             Assert.AreEqual("AfterCompile", targets[1].Name);
         }
     }

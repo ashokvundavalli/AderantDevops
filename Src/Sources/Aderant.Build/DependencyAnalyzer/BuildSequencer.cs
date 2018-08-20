@@ -210,8 +210,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             if (misses != null && misses.Count > 0) {
-                var error = string.Join(",", misses.Select(s => string.Format("{0} ({1})", s.Id, s.InstanceId)));
-                logger.Info($"Looked for {outputFile} but it was not found in packages: {error}");
+                var error = string.Join("|", misses.Select(s => string.Format("{0} ({1})", s.Id, s.InstanceId)));
+                logger.Info($"Looked for {outputFile} but it was not found in packages: [{error}]");
             }
 
 

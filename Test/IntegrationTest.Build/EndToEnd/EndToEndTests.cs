@@ -48,7 +48,7 @@ namespace IntegrationTest.Build.EndToEnd {
             // Simulate first build
             RunTarget("EndToEnd", properties);
 
-            var context = contextFile.GetBuildOperationContext();
+            context = contextFile.GetBuildOperationContext();
             Assert.AreEqual(2, Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories).Length);
 
             var logFile = base.LogFile;
@@ -123,7 +123,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private BuildOperationContext CreateContext(Dictionary<string, string> props) {
             var ctx = new BuildOperationContext();
-            ctx.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, "_drop");
+            ctx.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
             ctx.BuildMetadata = new BuildMetadata();
             ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();
