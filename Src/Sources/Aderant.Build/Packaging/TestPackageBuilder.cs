@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Aderant.Build.Packaging {
     internal class TestPackageBuilder {
-        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> files, ProjectOutputCollection outputs, string publisherName) {
+        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> files, ProjectOutputSnapshot outputs, string publisherName) {
             var set = outputs.GetProjectsForTag(publisherName);
 
             List<string> outputList = new List<string>();

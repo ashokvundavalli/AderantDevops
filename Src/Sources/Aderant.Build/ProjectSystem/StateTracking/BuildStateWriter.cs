@@ -30,7 +30,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string WriteStateFile(
             BuildStateFile baseStateFile,
             BucketId bucket,
-            ProjectOutputCollection currentOutputs,
+            ProjectOutputSnapshot currentOutputs,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata metadata,
             BuildMetadata buildMetadata,
@@ -81,7 +81,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return path;
         }
 
-        private static void MergeExistingOutputs(string buildId, IDictionary<string, ProjectOutputs> oldOutput, IDictionary<string, ProjectOutputs> newOutput) {
+        private static void MergeExistingOutputs(string buildId, IDictionary<string, OutputFilesSnapshot> oldOutput, IDictionary<string, OutputFilesSnapshot> newOutput) {
             foreach (var projectOutputs in oldOutput) {
                 if (!newOutput.ContainsKey(projectOutputs.Key)) {
                     var outputs = projectOutputs.Value;
@@ -98,10 +98,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             foreach (var bucket in buckets) {
                 var tag = bucket.Tag;
 
-                ProjectOutputCollection projectOutputCollection = null;
+                ProjectOutputSnapshot projectOutputSnapshot = null;
                 var outputs = context.GetProjectOutputs();
                 if (outputs != null) {
-                    projectOutputCollection = outputs.GetProjectsForTag(tag);
+                    projectOutputSnapshot = outputs.GetProjectsForTag(tag);
                 }
 
                 ArtifactCollection artifactCollection = null;
@@ -112,7 +112,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 BuildStateFile file = context.GetStateFile(tag);
                 var dropLocation = Path.Combine(context.GetDropLocation(tag), DefaultFileName);
-                WriteStateFile(file, bucket, projectOutputCollection, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
+                WriteStateFile(file, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
             }
         }
     }

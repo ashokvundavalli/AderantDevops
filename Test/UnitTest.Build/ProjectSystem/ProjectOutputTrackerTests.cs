@@ -1,4 +1,5 @@
-﻿using Aderant.Build;
+﻿using System;
+using Aderant.Build;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,14 +10,14 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void Project_key_is_source_relative_path() {
-            var collection = new ProjectOutputCollection();
+            var collection = new ProjectOutputSnapshot();
 
-            ProjectOutputTracker tracker = new ProjectOutputTracker(collection);
+            ProjectOutputSnapshotFactory snapshotFactory = new ProjectOutputSnapshotFactory(collection);
 
-            tracker.SourcesDirectory = @"C:\a\b\c";
-            tracker.ProjectFile = @"C:\a\b\c\d\foo.csproj";
+            snapshotFactory.SourcesDirectory = @"C:\a\b\c";
+            snapshotFactory.ProjectFile = @"C:\a\b\c\d\foo.csproj";
 
-            tracker.Track();
+            snapshotFactory.TakeSnapshot(Guid.NewGuid());
 
             Assert.AreEqual(1, collection.Keys.Count);
             Assert.IsTrue(collection.ContainsKey(@"d\foo.csproj"));

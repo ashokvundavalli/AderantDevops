@@ -19,7 +19,7 @@ namespace UnitTest.Build.Tasks {
         [TestMethod]
         public void BuildStateFile_serialization() {
             var stateFile = new BuildStateFile();
-            stateFile.Outputs = new ProjectOutputCollection { { "Foo", new ProjectOutputs() } };
+            stateFile.Outputs = new ProjectOutputSnapshot { { "Foo", new OutputFilesSnapshot() } };
             stateFile.Artifacts = new ArtifactCollection();
             stateFile.PullRequestInfo = new PullRequestInfo {
                 Id = "1", SourceBranch = "2", TargetBranch = "3"

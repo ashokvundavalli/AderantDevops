@@ -5,10 +5,14 @@ using System.Linq;
 using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
-    internal class ProjectOutputTracker {
-        private readonly ProjectOutputCollection outputs;
 
-        public ProjectOutputTracker(ProjectOutputCollection outputs) {
+    /// <summary>
+    /// Takes a snapshot of the output files of a project.
+    /// </summary>
+    internal class ProjectOutputSnapshotFactory {
+        private readonly ProjectOutputSnapshot outputs;
+
+        public ProjectOutputSnapshotFactory(ProjectOutputSnapshot outputs) {
             this.outputs = outputs;
         }
 
@@ -20,7 +24,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public IReadOnlyCollection<string> ProjectTypeGuids { get; set; }
         public string TestProjectType { get; set; }
 
-        public void Track() {
+        public void TakeSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
             if (SourcesDirectory != null && projectFile.StartsWith(SourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
@@ -32,12 +36,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             bool isTestProject = IsTestProject();
 
             if (!outputs.ContainsKey(projectFile)) {
-                outputs[projectFile] = new ProjectOutputs {
+                outputs[projectFile] = new OutputFilesSnapshot {
+                    ProjectGuid = projectGuid,
                     FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
                     OutputPath = OutputPath,
                     Origin = "ThisBuild",
                     Directory = GetDirectory(projectFile),
-                    IsTestProject = isTestProject
+                    IsTestProject = isTestProject,
                 };
             } else {
                 ThrowDoubleWrite();

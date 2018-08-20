@@ -33,7 +33,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string ScmCommitId { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
-        internal IDictionary<string, ProjectOutputs> Outputs { get; set; }
+        internal IDictionary<string, OutputFilesSnapshot> Outputs { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts { get; set; }

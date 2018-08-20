@@ -94,7 +94,7 @@ namespace Aderant.Build.Packaging {
             return publisherName + "\\";
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(ProjectOutputCollection outputs, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(ProjectOutputSnapshot outputs, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
             if (outputs == null) {
                 return files;
             }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -24,10 +25,11 @@ namespace Aderant.Build {
         private bool isDesktopBuild = true;
 
         // For deterministic hashing it is better if this is sorted
-        private ProjectOutputCollection outputs;
+        private ProjectOutputSnapshot outputs;
 
         private string primaryDropLocation;
         private string pullRequestDropLocation;
+        private int recordArtifactCount;
 
         [NonSerialized]
         private IContextualServiceProvider serviceProvider;
@@ -37,7 +39,6 @@ namespace Aderant.Build {
 
         private BuildSwitches switches = default(BuildSwitches);
         private int trackedProjectCount;
-        private int recordArtifactCount;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -243,6 +244,7 @@ namespace Aderant.Build {
         }
 
         public void RecordProjectOutputs(
+            Guid projectGuid,
             string sourcesDirectory,
             string projectFile,
             string[] projectOutputs,
@@ -255,10 +257,10 @@ namespace Aderant.Build {
             Interlocked.Increment(ref trackedProjectCount);
 
             if (outputs == null) {
-                outputs = new ProjectOutputCollection();
+                outputs = new ProjectOutputSnapshot();
             }
 
-            var tracker = new ProjectOutputTracker(outputs) {
+            var tracker = new ProjectOutputSnapshotFactory(outputs) {
                 SourcesDirectory = sourcesDirectory,
                 ProjectFile = projectFile,
                 ProjectOutputs = projectOutputs,
@@ -268,14 +270,14 @@ namespace Aderant.Build {
                 TestProjectType = testProjectType
             };
 
-            tracker.Track();
+            tracker.TakeSnapshot(projectGuid);
         }
 
         /// <summary>
         /// Returns the outputs for all projects seen by the build.
         /// Keyed by project file.
         /// </summary>
-        internal ProjectOutputCollection GetProjectOutputs() {
+        internal ProjectOutputSnapshot GetProjectOutputs() {
             return outputs;
         }
 
@@ -289,7 +291,7 @@ namespace Aderant.Build {
 
         internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
             if (artifactId == "Tests.Framework") {
-                System.Diagnostics.Debugger.Launch();
+                Debugger.Launch();
             }
 
             if (artifacts == null) {
@@ -348,16 +350,16 @@ namespace Aderant.Build {
 
     [Serializable]
     [DataContract]
-    internal class ProjectOutputCollection : SortedDictionary<string, ProjectOutputs> {
+    internal class ProjectOutputSnapshot : SortedDictionary<string, OutputFilesSnapshot> {
 
-        public ProjectOutputCollection()
+        public ProjectOutputSnapshot()
             : base(StringComparer.OrdinalIgnoreCase) {
         }
 
-        public ProjectOutputCollection GetProjectsForTag(string tag) {
+        public ProjectOutputSnapshot GetProjectsForTag(string tag) {
             var items = this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase));
 
-            var collection = new ProjectOutputCollection();
+            var collection = new ProjectOutputSnapshot();
             foreach (var item in items) {
                 collection.Add(item.Key, item.Value);
             }
@@ -390,7 +392,7 @@ namespace Aderant.Build {
 
     [DataContract]
     [Serializable]
-    internal class ProjectOutputs {
+    internal class OutputFilesSnapshot {
 
         [DataMember]
         public string[] FilesWritten { get; set; }
@@ -404,8 +406,11 @@ namespace Aderant.Build {
         [DataMember]
         public string Directory { get; set; }
 
-        [IgnoreDataMember]
+        [DataMember]
         public bool IsTestProject { get; set; }
+
+        [DataMember]
+        public Guid ProjectGuid { get; set; }
     }
 
     [Serializable]
