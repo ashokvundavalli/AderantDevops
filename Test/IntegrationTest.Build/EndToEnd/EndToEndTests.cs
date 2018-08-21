@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using Aderant.Build;
+using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -18,6 +19,8 @@ namespace IntegrationTest.Build.EndToEnd {
         private BuildOperationContext context;
         private string contextFile;
         private Dictionary<string, string> properties;
+        private BuildContextService service;
+        private IBuildCommunicatorContract proxy;
 
         public string DeploymentItemsDirectory {
             get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source"); }
@@ -35,11 +38,16 @@ namespace IntegrationTest.Build.EndToEnd {
                 { "CompileBuildSystem", bool.FalseString },
                 { "ProductManifestPath", Path.Combine(DeploymentItemsDirectory, "ExpertManifest.xml") },
                 { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) },
+                { "PackageArtifacts", bool.TrueString },
                 { WellKnownProperties.ContextFileName, contextFile },
             };
 
             context = CreateContext(properties);
-            context.Publish(contextFile);
+
+            service = new BuildContextService();
+            service.StartListener(contextFile);
+            this.proxy = BuildContextService.CreateProxy(contextFile);
+            service.Publish(context);
         }
 
         [TestMethod]
@@ -48,7 +56,7 @@ namespace IntegrationTest.Build.EndToEnd {
             // Simulate first build
             RunTarget("EndToEnd", properties);
 
-            context = contextFile.GetBuildOperationContext();
+            context = proxy.GetContext();
             Assert.AreEqual(2, Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories).Length);
 
             var logFile = base.LogFile;
@@ -97,7 +105,7 @@ namespace IntegrationTest.Build.EndToEnd {
         }
 
         private void PrepareForAnotherRun() {
-            context = contextFile.GetBuildOperationContext();
+            context = proxy.GetContext();
             context = CreateContext(properties);
             context.BuildMetadata.BuildId += 1;
 
@@ -107,7 +115,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     context.PrimaryDropLocation);
 
             context.BuildStateMetadata = buildStateMetadata;
-            context.Publish(contextFile);
+            service.Publish(context);
 
             CleanWorkingDirectory();
         }

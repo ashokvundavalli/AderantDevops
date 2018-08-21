@@ -101,7 +101,6 @@
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="DependencyAnalyzer\ModuleRefTests.cs" />
     <Compile Include="ErrorUtilitiesTests.cs" />
-    <Compile Include="Ipc\MemoryMappedBufferTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
     <Compile Include="DependencyResolver\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -230,6 +229,9 @@
       <Project>{66E50D39-8E73-4D16-944B-43F18C308FE0}</Project>
       <Name>Aderant.Build</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Ipc\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />

@@ -64,8 +64,6 @@ namespace Aderant.Build.Tasks {
 
         public string[] ExcludePaths { get; set; } = new string[0];
 
-        protected override bool UpdateContextOnCompletion { get; set; } = true;
-
         public override bool ExecuteTask() {
             ExecuteCore(Context);
             return !Log.HasLoggedErrors;
@@ -108,6 +106,8 @@ namespace Aderant.Build.Tasks {
             using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, InstanceFile), settings)) {
                 element.WriteTo(writer);
             }
+
+            ContextService.Publish(context);
         }
 
         private AnalysisContext CreateAnalysisContext() {

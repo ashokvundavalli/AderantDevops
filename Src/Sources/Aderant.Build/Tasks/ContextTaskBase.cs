@@ -5,6 +5,7 @@ using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+using ILogger = Aderant.Build.Logging.ILogger;
 
 namespace Aderant.Build.Tasks {
 
@@ -46,34 +47,27 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public abstract class BuildOperationContextTask : Task {
         private BuildOperationContext context;
-        private BuildTaskLogger logger;
         private bool executingTask;
+        private BuildTaskLogger logger;
 
         public virtual string ContextFileName { get; set; }
- 
+
         protected BuildOperationContext Context {
             get {
                 if (InternalContext != null) {
                     return InternalContext;
                 }
+
                 return context ?? (context = ObtainContext());
             }
         }
 
-        protected Aderant.Build.Logging.ILogger Logger {
-            get {
-                return logger ?? (logger = new BuildTaskLogger(this.Log));
-            }
+        protected ILogger Logger {
+            get { return logger ?? (logger = new BuildTaskLogger(this.Log)); }
         }
 
         internal static BuildOperationContext InternalContext { get; set; }
-
-        protected void UpdateContext() {
-            if (context != null) {
-                Register(Context);
-                MemoryMappedFileReaderWriter.WriteData(ContextFileName, context, true);
-            }
-        }
+        internal IBuildCommunicator ContextService { get; set; }
 
         public sealed override bool Execute() {
             if (executingTask) {
@@ -86,14 +80,8 @@ namespace Aderant.Build.Tasks {
                 return ExecuteTask();
             } finally {
                 executingTask = false;
-
-                if (UpdateContextOnCompletion) {
-                    UpdateContext();
-                }
             }
         }
-
-        protected abstract bool UpdateContextOnCompletion { get; set; }
 
         public abstract bool ExecuteTask();
 
@@ -129,15 +117,17 @@ namespace Aderant.Build.Tasks {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
 
-            Log.LogMessage("Retrieving context from file: {0}", ContextFileName);
+            //Log.LogMessage("Retrieving context from file: {0}", ContextFileName);
 
-            ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
+            //ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
 
-            BuildOperationContext ctx;
-            object contextObject = MemoryMappedFileReaderWriter.Read(ContextFileName);
+            //BuildOperationContext ctx;
+            //object contextObject = MemoryMappedFileReaderWriter.Read(ContextFileName);
 
-            ctx = (BuildOperationContext)contextObject;
-            return ctx;
+            //ctx = (BuildOperationContext)contextObject;
+            //return ctx;
+            ContextService = BuildContextService.CreateProxy(ContextFileName);
+            return ContextService.GetContext();
         }
     }
 }

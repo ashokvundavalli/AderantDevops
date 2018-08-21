@@ -24,10 +24,9 @@ namespace Aderant.Build.Tasks {
 
         public string[] References { get; set; }
 
-        protected override bool UpdateContextOnCompletion { get; set; } = true;
-
         public override bool ExecuteTask() {
-            Context.RecordProjectOutputs(
+
+            var snapshot = Context.RecordProjectOutputs(
                 Guid.Parse(ProjectGuid),
                 Context.BuildMetadata.BuildSourcesDirectory,
                 ProjectFile,
@@ -37,6 +36,9 @@ namespace Aderant.Build.Tasks {
                 ProjectTypeGuids,
                 TestProjectType,
                 References);
+
+            base.ContextService.RecordProjectOutputs(snapshot);
+
             return !Log.HasLoggedErrors;
         }
     }

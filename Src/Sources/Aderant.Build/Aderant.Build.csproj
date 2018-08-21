@@ -88,6 +88,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\System.Threading.Tasks.Dataflow\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Threading.Tasks.Dataflow.dll</HintPath>
@@ -110,10 +111,14 @@
     <Compile Include="AutoCompletionParser.cs" />
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
-    <Compile Include="BuildOperationContextExtensions.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildTreeMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
+    <Compile Include="Ipc\BuildCommunicator.cs" />
+    <Compile Include="Ipc\BuildCommunicatorProxy.cs" />
+    <Compile Include="Ipc\BuildContextService.cs" />
+    <Compile Include="Ipc\IBuildCommunicator.cs" />
+    <Compile Include="Ipc\IBuildCommunicatorContract.cs" />
     <Compile Include="MSBuild\ImportElement.cs" />
     <Compile Include="DependencyAnalyzer\Model\AbstractArtifact.cs" />
     <Compile Include="MSBuild\Comment.cs" />
@@ -170,10 +175,12 @@
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\PackageArtifacts.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
+    <Compile Include="Tasks\PrintBanner.cs" />
     <Compile Include="Tasks\RetrieveArtifacts.cs" />
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileBase.cs" />
     <Compile Include="Tasks\TrackProjectOutputs.cs" />
+    <Compile Include="Tasks\WriteBuildStateFile.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
     <Compile Include="VersionControl\Model\BranchName.cs" />
@@ -249,8 +256,6 @@
     <Compile Include="Tasks\GetPropertiesFromContext.cs" />
     <Compile Include="Tasks\FilterItemGroup.cs" />
     <Compile Include="SeedPackageValidation\FirmRuleVersionError.cs" />
-    <Compile Include="Ipc\MemoryMappedFile.cs" />
-    <Compile Include="Ipc\MemoryMappedFileReaderWriter.cs" />
     <Compile Include="Tasks\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\GitVersion.cs" />
     <Compile Include="Tasks\Hash.cs" />

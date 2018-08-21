@@ -21,13 +21,6 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem[] PropertiesToCreate { get; set; }
 
-        [Required]
-        public override string ContextFileName {
-            get; set;
-        }
-
-        protected override bool UpdateContextOnCompletion { get; set; } = false;
-
         public override bool ExecuteTask() {
             base.Execute();
 

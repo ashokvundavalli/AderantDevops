@@ -17,8 +17,6 @@ namespace Aderant.Build.Tasks {
 
         public bool Output { get; set; }
 
-        protected override bool UpdateContextOnCompletion { get; set; } = true;
-
         public override bool ExecuteTask() {
             if (Output) {
                 FileVersion = Context.GetVariable(Id, nameof(FileVersion));
@@ -33,7 +31,8 @@ namespace Aderant.Build.Tasks {
                 Context.PutVariable(Id, nameof(AssemblyVersion), AssemblyVersion);
                 Context.PutVariable(Id, nameof(ModuleName), ModuleName);
 
-                UpdateContextOnCompletion = true;
+                //TODO
+              //  UpdateContextOnCompletion = true;
             }
 
             return !Log.HasLoggedErrors;

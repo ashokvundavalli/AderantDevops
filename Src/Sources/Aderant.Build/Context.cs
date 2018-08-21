@@ -15,28 +15,50 @@ using Aderant.Build.VersionControl.Model;
 namespace Aderant.Build {
 
     [Serializable]
+    [DataContract]
     public class BuildOperationContext {
+        [DataMember]
         private ArtifactCollection artifacts;
+
+        [DataMember]
         private BuildMetadata buildMetadata;
 
+        [DataMember]
         private string buildScriptsDirectory;
+
+        [DataMember]
         private BuildStateMetadata buildStateMetadata;
+
+        [DataMember]
         private bool isDesktopBuild = true;
 
+        [DataMember]
         // For deterministic hashing it is better if this is sorted
         private ProjectOutputSnapshot outputs;
 
+        [DataMember]
         private string primaryDropLocation;
+
+        [DataMember]
         private string pullRequestDropLocation;
+
+        [IgnoreDataMember]
         private int recordArtifactCount;
 
         [NonSerialized]
+        [IgnoreDataMember]
         private IContextualServiceProvider serviceProvider;
 
+        [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
+
+        [DataMember]
         private List<BuildStateFile> stateFiles;
 
+        [DataMember]
         private BuildSwitches switches = default(BuildSwitches);
+
+        [IgnoreDataMember]
         private int trackedProjectCount;
 
         public BuildOperationContext() {
@@ -63,8 +85,15 @@ namespace Aderant.Build {
             }
         }
 
+        [DataMember]
         public DirectoryInfo BuildRoot { get; set; }
 
+        internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
+            InitArtifacts();
+            artifacts[key] = manifests;
+        }
+
+        [DataMember]
         public string BuildSystemDirectory { get; set; }
 
         public bool IsDesktopBuild {
@@ -72,30 +101,43 @@ namespace Aderant.Build {
             set { isDesktopBuild = value; }
         }
 
+        [DataMember]
         public IDictionary Configuration { get; set; }
 
+        [DataMember]
         public FileInfo ConfigurationPath { get; set; }
 
+        [DataMember]
         public DirectoryInfo DownloadRoot { get; set; }
 
+        [DataMember]
         public string Environment { get; set; }
 
+        [DataMember]
         public DirectoryInfo OutputDirectory { get; set; }
 
+        [DataMember]
         public string PipelineName { get; set; }
 
+        [DataMember]
         public bool Publish { get; set; }
 
+        [DataMember]
         public DateTime StartedAt { get; set; }
 
+        [DataMember]
         public string TaskName { get; set; }
 
+        [DataMember]
         public int TaskIndex { get; set; }
 
+        [DataMember]
         public IDictionary<string, IDictionary<string, string>> VariableBags { get; private set; }
 
+        [DataMember]
         public DirectoryInfo Temp { get; set; }
 
+        [DataMember]
         public IDictionary<string, string> Variables { get; private set; }
 
         public BuildMetadata BuildMetadata {
@@ -128,6 +170,7 @@ namespace Aderant.Build {
             }
         }
 
+        [DataMember]
         public ConfigurationToBuild ConfigurationToBuild { get; set; }
 
         public string PrimaryDropLocation {
@@ -172,7 +215,7 @@ namespace Aderant.Build {
             return svc;
         }
 
-        public DependencyRelationshipProcessing GetRelationshipProcessingMode() {
+        internal DependencyRelationshipProcessing GetRelationshipProcessingMode() {
             DependencyRelationshipProcessing relationshipProcessing = DependencyRelationshipProcessing.None;
             if (Switches.Downstream) {
                 relationshipProcessing = DependencyRelationshipProcessing.Direct;
@@ -242,7 +285,7 @@ namespace Aderant.Build {
             return BucketPathBuilder.BuildDropLocation(publisherName, this);
         }
 
-        public void RecordProjectOutputs(
+        internal OutputFilesSnapshot RecordProjectOutputs(
             Guid projectGuid,
             string sourcesDirectory,
             string projectFile,
@@ -254,11 +297,7 @@ namespace Aderant.Build {
             string[] references = null) {
             ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
 
-            Interlocked.Increment(ref trackedProjectCount);
-
-            if (outputs == null) {
-                outputs = new ProjectOutputSnapshot();
-            }
+            InitOutputs();
 
             var tracker = new ProjectOutputSnapshotFactory(outputs) {
                 SourcesDirectory = sourcesDirectory,
@@ -271,7 +310,15 @@ namespace Aderant.Build {
                 References = references,
             };
 
-            tracker.TakeSnapshot(projectGuid);
+            return tracker.TakeSnapshot(projectGuid);
+        }
+
+        private void InitOutputs() {
+            Interlocked.Increment(ref trackedProjectCount);
+
+            if (outputs == null) {
+                outputs = new ProjectOutputSnapshot();
+            }
         }
 
         /// <summary>
@@ -302,11 +349,7 @@ namespace Aderant.Build {
         }
 
         internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
-            if (artifacts == null) {
-                artifacts = new ArtifactCollection();
-            }
-
-            Interlocked.Increment(ref recordArtifactCount);
+            InitArtifacts();
 
             ICollection<ArtifactManifest> manifests;
 
@@ -321,8 +364,14 @@ namespace Aderant.Build {
                     InstanceId = Guid.NewGuid(),
                     Files = files,
                 });
+        }
 
-            //manifests.Sort((x, y) => string.Compare(x.Id, y.Id, StringComparison.OrdinalIgnoreCase));
+        private void InitArtifacts() {
+            if (artifacts == null) {
+                artifacts = new ArtifactCollection();
+            }
+
+            Interlocked.Increment(ref recordArtifactCount);
         }
 
         public BuildStateFile GetStateFile(string bucketTag) {
@@ -334,10 +383,16 @@ namespace Aderant.Build {
 
             return null;
         }
+
+        internal void RecordProjectOutputs(OutputFilesSnapshot snapshot) {
+            InitOutputs();
+
+            outputs[snapshot.ProjectFile] = snapshot;
+        }
     }
 
     [Serializable]
-    [DataContract]
+    [CollectionDataContract]
     internal class ArtifactCollection : SortedDictionary<string, ICollection<ArtifactManifest>> {
 
         public ArtifactCollection()
@@ -357,7 +412,7 @@ namespace Aderant.Build {
     }
 
     [Serializable]
-    [DataContract]
+    [CollectionDataContract]
     internal class ProjectOutputSnapshot : SortedDictionary<string, OutputFilesSnapshot> {
 
         public ProjectOutputSnapshot()
@@ -367,7 +422,7 @@ namespace Aderant.Build {
         public ProjectOutputSnapshot(IDictionary<string, OutputFilesSnapshot> dictionary)
             : base(dictionary, StringComparer.OrdinalIgnoreCase) {
         }
-        
+
         public ProjectOutputSnapshot GetProjectsForTag(string tag) {
             var items = this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase));
 
@@ -407,6 +462,9 @@ namespace Aderant.Build {
     internal class OutputFilesSnapshot {
 
         [DataMember]
+        public string ProjectFile { get; set; }
+
+        [DataMember]
         public string[] FilesWritten { get; set; }
 
         [DataMember]
@@ -426,12 +484,22 @@ namespace Aderant.Build {
     }
 
     [Serializable]
+    [DataContract]
     public sealed class SourceTreeMetadata {
 
+        [DataMember]
         public string CommonAncestor { get; set; }
+
+        [DataMember]
         public IReadOnlyCollection<BucketId> BucketIds { get; set; }
+
+        [DataMember]
         public IReadOnlyCollection<SourceChange> Changes { get; set; }
+
+        [DataMember]
         public string NewCommitDescription { get; set; }
+
+        [DataMember]
         public string OldCommitDescription { get; set; }
 
         public BucketId GetBucket(string tag) {
@@ -450,15 +518,31 @@ namespace Aderant.Build {
     }
 
     [Serializable]
+    [DataContract]
     public struct BuildSwitches {
 
+        [DataMember]
         public bool PendingChanges { get; set; }
+
+        [DataMember]
         public bool Downstream { get; set; }
+
+        [DataMember]
         public bool Transitive { get; set; }
+
+        [DataMember]
         public bool Everything { get; set; }
+
+        [DataMember]
         public bool Clean { get; set; }
+
+        [DataMember]
         public bool Release { get; set; }
+
+        [DataMember]
         public bool DryRun { get; set; }
+
+        [DataMember]
         public bool Resume { get; set; }
 
         [CreateProperty]

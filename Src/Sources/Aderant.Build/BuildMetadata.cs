@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 namespace Aderant.Build {
 
     [Serializable]
+    [DataContract]
     public sealed class BuildMetadata {
 
         public BuildMetadata() {
@@ -14,22 +15,31 @@ namespace Aderant.Build {
             Flavor = "";
         }
 
+        [DataMember]
         public string BuildNumber { get; set; }
 
+        [DataMember]
         public int BuildId { get; set; }
 
+        [DataMember]
         public Uri BuildUri { get; set; }
 
+        [DataMember]
         public string JobName { get; set; }
 
+        [DataMember]
         public Uri JobUri { get; set; }
 
+        [DataMember]
         public string ScmBranch { get; set; }
 
+        [DataMember]
         public string ScmCommitId { get; set; }
 
+        [DataMember]
         public Uri ScmUri { get; set; }
 
+        [DataMember]
         public PullRequestInfo PullRequest { get; set; }
 
         /// <summary>
@@ -38,14 +48,17 @@ namespace Aderant.Build {
         public bool IsPullRequest {
             get { return PullRequest != null; }
         }
+        [DataMember]
 
         public string Flavor { get; set; }
 
         /// <summary>
         /// Is the build system itself in debug mode.
         /// </summary>
+        [DataMember]
         public bool DebugLoggingEnabled { get; set; }
 
+        [DataMember]
         public string BuildSourcesDirectory { get; set; }
 
         public void SetPullRequestInfo(string id, string sourceBranch, string targetBranch) {

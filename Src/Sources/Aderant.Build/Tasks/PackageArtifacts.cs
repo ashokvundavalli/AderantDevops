@@ -19,8 +19,6 @@ namespace Aderant.Build.Tasks {
 
         public string AssemblyVersion { get; set; }
 
-        protected override bool UpdateContextOnCompletion { get; set; } = true;
-
         public override bool ExecuteTask() {
             if (ArtifactDefinitions != null) {
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
@@ -33,6 +31,10 @@ namespace Aderant.Build.Tasks {
                 artifactService.AssemblyVersion = AssemblyVersion;
                 
                 var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
+
+                foreach (KeyValuePair<string, ICollection<ArtifactManifest>> pair in Context.GetArtifacts()) {
+                    base.ContextService.RecordArtifacts(pair.Key, pair.Value);
+                }
             }
 
             return !Log.HasLoggedErrors;
