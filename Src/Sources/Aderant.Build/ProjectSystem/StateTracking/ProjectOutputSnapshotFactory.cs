@@ -46,6 +46,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             if (!outputs.ContainsKey(projectFile)) {
                 var snapshot = outputs[projectFile] = new OutputFilesSnapshot {
+                    ProjectFile = projectFile,
                     ProjectGuid = projectGuid,
                     FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
                     OutputPath = OutputPath,

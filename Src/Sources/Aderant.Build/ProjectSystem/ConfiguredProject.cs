@@ -366,6 +366,11 @@ namespace Aderant.Build.ProjectSystem {
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
                         // found one
                         IsDirty = true;
+                        if (InclusionDescriptor == null) {
+                            InclusionDescriptor = new InclusionDescriptor();
+                        }
+
+                        InclusionDescriptor.Reason |= InclusionReason.ProjectFileChanged;
 
                         if (dirtyFiles == null) {
                             dirtyFiles = new List<string>();

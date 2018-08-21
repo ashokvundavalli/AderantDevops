@@ -1,5 +1,5 @@
 ﻿namespace Aderant.Build.ProjectSystem {
-    public enum DependencyRelationshipProcessing {
+    internal enum DependencyRelationshipProcessing {
         None,
         Direct,
         Transitive,

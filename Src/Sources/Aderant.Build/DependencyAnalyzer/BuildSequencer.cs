@@ -50,6 +50,18 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
+            StringBuilder sb = null;
+
+            foreach (var group in groups) {
+                foreach (var item in group) {
+                    sb = DescribeChanges(item, sb);
+                }
+            }
+
+            if (sb != null) {
+                logger.Info(sb.ToString());
+            }
+
             var pipeline = new BuildPipeline(fileSystem);
             return pipeline.GenerateProject(groups, files, null);
         }
@@ -162,33 +174,36 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 bool artifactsExist = false;
 
-                ICollection<ArtifactManifest> artifacts;
-                if (stateFile.Artifacts.TryGetValue(stateFileKey, out artifacts)) {
-                    if (artifacts != null) {
-                        artifactsExist = true;
+                ICollection<ArtifactManifest> artifacts = null;
+                if (stateFile.Artifacts != null) {
+
+                    if (stateFile.Artifacts.TryGetValue(stateFileKey, out artifacts)) {
+                        if (artifacts != null) {
+                            artifactsExist = true;
+                        }
                     }
                 }
 
-                foreach (var projectInTree in stateFile.Outputs) {
-                    // The selected build cache contained this project, next check the inputs/outputs
-                    if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        if (artifactsExist) {
+                if (stateFile.Outputs != null && artifactsExist)
+                    foreach (var projectInTree in stateFile.Outputs) {
+                        // The selected build cache contained this project, next check the inputs/outputs
+                        if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
+
                             bool artifactContainsProject = DoesArtifactContainProjectItem(project, artifacts);
                             if (artifactContainsProject) {
                                 return;
                             }
-                        }
 
-                        MarkDirty(tag, project, InclusionReason.ArtifactsNotFound);
-                        return;
+                            MarkDirty(tag, project, InclusionReason.ArtifactsNotFound);
+                            return;
+                        }
                     }
-                }
 
                 MarkDirty(tag, project, InclusionReason.ProjectOutputNotFound);
                 return;
             }
 
-            MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.ChangedFileDependency);
+            MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.None);
         }
 
         private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
@@ -206,6 +221,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (misses == null) {
                     misses = new List<ArtifactManifest>();
                 }
+
                 misses.Add(s);
             }
 
@@ -213,7 +229,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var error = string.Join("|", misses.Select(s => string.Format("{0} ({1})", s.Id, s.InstanceId)));
                 logger.Info($"Looked for {outputFile} but it was not found in packages: [{error}]");
             }
-
 
             return false;
         }
@@ -229,12 +244,14 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static void MarkDirty(string tag, ConfiguredProject project, InclusionReason reason) {
-            // TODO: Because we can't build *just* the projects that have changed, mark anything in this container as dirty to trigger a build for it
             project.IsDirty = true;
-            project.InclusionDescriptor = new InclusionDescriptor {
-                Tag = tag,
-                Reason = reason
-            };
+
+            if (project.InclusionDescriptor == null) {
+                project.InclusionDescriptor = new InclusionDescriptor();
+            }
+
+            project.InclusionDescriptor.Tag = tag;
+            project.InclusionDescriptor.Reason |= reason;
         }
 
         /// <summary>
@@ -268,15 +285,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 filteredProjects = visualStudioProjects;
             } else {
                 filteredProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty != false).ToList();
-
-                StringBuilder sb = null;
-                foreach (var dependable in filteredProjects) {
-                    sb = DescribeChanges(dependable, sb);
-                }
-
-                if (sb != null) {
-                    logger.Info(sb.ToString());
-                }
             }
 
             return filteredProjects;
@@ -324,6 +332,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ConfiguredProject project = x as ConfiguredProject;
                 if (project != null) {
                     project.IsDirty = true;
+                    if (project.InclusionDescriptor == null) {
+                        project.InclusionDescriptor = new InclusionDescriptor();
+                    }
+
+                    project.InclusionDescriptor.Reason |= InclusionReason.DependencyChanged;
                 }
             }
 
@@ -351,9 +364,10 @@ namespace Aderant.Build.DependencyAnalyzer {
     [Flags]
     internal enum InclusionReason {
         None = 1,
-        ChangedFileDependency = 2,
+        ProjectFileChanged = 2,
         BuildTreeNotFound = 4,
         ArtifactsNotFound = 8,
-        ProjectOutputNotFound = 16
+        ProjectOutputNotFound = 16,
+        DependencyChanged = 32,
     }
 }
