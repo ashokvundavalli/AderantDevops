@@ -254,10 +254,14 @@ namespace Aderant.Build {
         }
 
         public void CopyFile(string source, string destination) {
+           CopyFile(source, destination, false);
+        }
+
+        public void CopyFile(string source, string destination, bool overwrite) {
             // before creating the file, ensure the parent directory exists first.
             EnsureDirectory(Path.GetDirectoryName(destination));
 
-            File.Copy(source, destination);
+            File.Copy(source, destination, overwrite);
         }
 
         public virtual void CopyDirectory(string source, string destination) {
