@@ -84,7 +84,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         }
     }    
 
-    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch
+    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$PendingChanges.IsPresent
 
     Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
     Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
@@ -118,6 +118,35 @@ function GetBuildStateMetadata($context) {
     foreach ($file in $buildState.BuildStateFiles) {
         Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)/$($file.BucketId.Tag)")
     }    
+}
+
+function PrepareEnvironment {
+  # Setup environment for JavaScript tests
+
+  Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" -Name "iexplore.exe" -Type "DWORD" -Value 0
+
+  $lockDownPath = "HKCU:\Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOW"
+
+  if ((Test-Path "$lockDownPath") -eq 0)
+  {
+    New-Item -Path "$lockDownPath\Settings" -Type Directory -Force
+    New-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
+  }
+  elseif ((Test-Path "$lockDownPath") -eq 1)
+  {
+    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
+  }  
+
+  # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
+  $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+  $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+  if (Test-Path $wcfPath32) {  
+    Remove-Item -Path $wcfPath32 -Recurse
+  }
+
+  if (Test-Path $wcfPath64) {  
+    Remove-Item -Path $wcfPath64 -Recurse
+  }
 }
 
 <#
@@ -200,7 +229,8 @@ function global:Invoke-Build2
     FindGitDir $context $repositoryPath
 
     GetSourceTreeMetadata $context $repositoryPath
-    GetBuildStateMetadata $context    
+    GetBuildStateMetadata $context
+    PrepareEnvironment
 
     $switches = $context.Switches
     $switches.PendingChanges = $PendingChanges.IsPresent
@@ -214,20 +244,27 @@ function global:Invoke-Build2
     $context.Switches = $switches
 
     $context.StartedAt = [DateTime]::UtcNow
-    $contextFileName = Publish-BuildContext $context
 
-    $args = CreateToolArgumentString $context $RemainingArgs
+    $contextService = [Aderant.Build.Ipc.BuildContextService]::new()
+    $contextService.StartListener($contextFileName)
+    $contextService.Publish($context)
 
-    Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args"
+    try {
+        $args = CreateToolArgumentString $context $RemainingArgs
+
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args"
  
-    if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
-        [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+        if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
+            [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
 
-        if (Test-Path ($codeCoverageReport)) {
-            Write-Host "Displaying dotCover code coverage report."
-            Start-Process $codeCoverageReport
-        } else {
-            Write-Warning "Unable to locate dotCover code coverage report."
+            if (Test-Path ($codeCoverageReport)) {
+                Write-Host "Displaying dotCover code coverage report."
+                Start-Process $codeCoverageReport
+            } else {
+                Write-Warning "Unable to locate dotCover code coverage report."
+            }
         }
-    }    
+    } finally {
+        $contextService.Dispose()
+    }
 }
