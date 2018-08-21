@@ -65,7 +65,7 @@ namespace Aderant.Build {
             Configuration = new Dictionary<object, object>();
             VariableBags = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             TaskIndex = -1;
-            Variables = new Dictionary<string, string>();
+            Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Environment = "";
             PipelineName = "";
             TaskName = "";

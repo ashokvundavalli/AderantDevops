@@ -180,6 +180,7 @@
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileBase.cs" />
     <Compile Include="Tasks\TrackProjectOutputs.cs" />
+    <Compile Include="Tasks\WaitForDebugger.cs" />
     <Compile Include="Tasks\WriteBuildStateFile.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
@@ -201,7 +202,7 @@
     <Compile Include="BuildInfrastructureHelper.cs" />
     <Compile Include="BuildSummary.cs" />
     <Compile Include="BuildMetadata.cs" />
-    <Compile Include="Context.cs" />
+    <Compile Include="BuildOperationContext.cs" />
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />

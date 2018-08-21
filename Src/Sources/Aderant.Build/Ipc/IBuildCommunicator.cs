@@ -13,7 +13,7 @@ namespace Aderant.Build.Ipc {
     [ServiceKnownType(typeof(List<BucketId>))]
     [ServiceKnownType(typeof(SourceChange))]
     [ServiceKnownType(typeof(List<SourceChange>))]
-    internal interface IBuildCommunicator {
+    internal interface IContextService {
         [OperationContract]
         void Publish(BuildOperationContext context);
 

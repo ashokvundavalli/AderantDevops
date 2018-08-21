@@ -20,7 +20,7 @@ namespace IntegrationTest.Build.EndToEnd {
         private string contextFile;
         private Dictionary<string, string> properties;
         private BuildContextService service;
-        private IBuildCommunicatorContract proxy;
+        private IContextServiceContract proxy;
 
         public string DeploymentItemsDirectory {
             get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source"); }

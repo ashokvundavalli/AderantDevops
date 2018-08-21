@@ -23,9 +23,7 @@ namespace Aderant.Build.Tasks {
 
         public override bool ExecuteTask() {
             base.Execute();
-
-            Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, ContextFileName, EnvironmentVariableTarget.Process);
-
+            
             IsDesktopBuild = Context.IsDesktopBuild;
             BuildSystemDirectory = Context.BuildSystemDirectory;
 

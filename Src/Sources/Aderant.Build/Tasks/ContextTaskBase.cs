@@ -1,51 +1,16 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
 using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
 
-    public class WaitForDebugger : Task {
-
-        public bool Wait { get; set; }
-
-        public override bool Execute() {
-            if (Environment.UserInteractive) {
-                if (Wait) {
-                    bool sleep = false;
-                    SpinWait.SpinUntil(
-                        () => {
-                            if (sleep) {
-                                Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                            }
-
-                            Log.LogMessage("Waiting for debugger... [C] to cancel waiting");
-                            if (Console.KeyAvailable) {
-                                var consoleKeyInfo = Console.ReadKey(true);
-                                if (consoleKeyInfo.Key == ConsoleKey.C) {
-                                    return true;
-                                }
-                            }
-
-                            sleep = true;
-                            return Debugger.IsAttached;
-                        },
-                        TimeSpan.FromSeconds(10));
-                }
-            }
-
-            return !Log.HasLoggedErrors;
-        }
-    }
-
     /// <summary>
     /// Provides the ultimate base class for context aware tasks within the build engine
     /// </summary>
     public abstract class BuildOperationContextTask : Task {
         private BuildOperationContext context;
-        private IBuildCommunicatorContract contextService;
+        private IContextServiceContract contextService;
         private bool executingTask;
         private BuildTaskLogger logger;
 
@@ -67,7 +32,7 @@ namespace Aderant.Build.Tasks {
 
         internal static BuildOperationContext InternalContext { get; set; }
 
-        internal IBuildCommunicatorContract ContextService {
+        internal IContextServiceContract ContextService {
             get { return contextService ?? (contextService = ObtainContextService()); }
         }
 
@@ -103,10 +68,12 @@ namespace Aderant.Build.Tasks {
             return ContextService.GetContext();
         }
 
-        private IBuildCommunicatorContract ObtainContextService() {
+        private IContextServiceContract ObtainContextService() {
             if (string.IsNullOrEmpty(ContextFileName)) {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
+
+            ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
 
             return BuildContextService.CreateProxy(ContextFileName);
         }

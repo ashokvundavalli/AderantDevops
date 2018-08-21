@@ -6,8 +6,8 @@ namespace Aderant.Build.Ipc {
     /// <summary>
     /// Proxy for Communicator class.
     /// </summary>
-    internal class BuildCommunicatorProxy : ClientBase<IBuildCommunicator>, IBuildCommunicator, IBuildCommunicatorContract {
-        public BuildCommunicatorProxy(Binding binding, EndpointAddress remoteAddress)
+    internal class ContextServiceProxy : ClientBase<IContextService>, IContextService, IContextServiceContract {
+        public ContextServiceProxy(Binding binding, EndpointAddress remoteAddress)
             : base(binding, remoteAddress) {
         }
 

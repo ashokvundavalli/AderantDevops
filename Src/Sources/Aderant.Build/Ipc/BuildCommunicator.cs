@@ -5,8 +5,11 @@ namespace Aderant.Build.Ipc {
     /// <summary>
     /// Contract implementation.
     /// </summary>
-    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, IncludeExceptionDetailInFaults = true)]
-    internal class BuildCommunicator : IBuildCommunicator {
+    [ServiceBehavior(
+        InstanceContextMode = InstanceContextMode.Single,
+        IncludeExceptionDetailInFaults = true,
+        ConcurrencyMode = ConcurrencyMode.Single)]
+    internal class ContextService : IContextService {
         private BuildOperationContext ctx;
 
         public void Publish(BuildOperationContext context) {

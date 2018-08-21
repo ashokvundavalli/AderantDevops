@@ -13,10 +13,10 @@ namespace Aderant.Build.Ipc {
 
         public void StartListener(string pipeId) {
             id = pipeId;
-            host = new ServiceHost(typeof(BuildCommunicator));
+            host = new ServiceHost(typeof(ContextService));
             var namedPipeBinding = CreateBinding();
 
-            host.AddServiceEndpoint(typeof(IBuildCommunicator), namedPipeBinding, $"net.pipe://localhost/_{pipeId}");
+            host.AddServiceEndpoint(typeof(IContextService), namedPipeBinding, $"net.pipe://localhost/_{pipeId}");
             host.Open();
         }
 
@@ -40,11 +40,11 @@ namespace Aderant.Build.Ipc {
             }
         }
 
-        internal static IBuildCommunicatorContract CreateProxy(string id) {
+        internal static IContextServiceContract CreateProxy(string id) {
             EndpointAddress endpointAddress = new EndpointAddress($"net.pipe://localhost/_{id}");
             var namedPipeBinding = CreateBinding();
 
-            return new BuildCommunicatorProxy(namedPipeBinding, endpointAddress);
+            return new ContextServiceProxy(namedPipeBinding, endpointAddress);
         }
     }
 }
