@@ -15,6 +15,9 @@ namespace Aderant.Build.Commands {
         [Parameter]
         public string TargetBranch { get; set; }
 
+        [Parameter(HelpMessage = "Indicates if uncommitted changes should be considered")]
+        public SwitchParameter IncludeLocalChanges { get; set; }
+
         protected override void ProcessRecord() {
             if (SourceDirectory == null) {
                 SourceDirectory = this.SessionState.Path.CurrentFileSystemLocation.Path;
@@ -23,7 +26,7 @@ namespace Aderant.Build.Commands {
             WriteDebug(LibGit2Sharp.GlobalSettings.NativeLibraryPath);
 
             var gvc = new GitVersionControl();
-            var sourceInfo = gvc.GetMetadata(SourceDirectory, SourceBranch, TargetBranch);
+            var sourceInfo = gvc.GetMetadata(SourceDirectory, SourceBranch, TargetBranch, IncludeLocalChanges);
 
             WriteObject(sourceInfo);
         }
