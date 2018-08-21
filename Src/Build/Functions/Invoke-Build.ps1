@@ -122,11 +122,9 @@ function GetBuildStateMetadata($context) {
 
 function PrepareEnvironment {
   # Setup environment for JavaScript tests
-
   Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" -Name "iexplore.exe" -Type "DWORD" -Value 0
 
-  $lockDownPath = "HKCU:\Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOW"
-
+  $lockDownPath = "HKCU:\Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
   if ((Test-Path "$lockDownPath") -eq 0)
   {
     New-Item -Path "$lockDownPath\Settings" -Type Directory -Force
@@ -245,8 +243,9 @@ function global:Invoke-Build2
 
     $context.StartedAt = [DateTime]::UtcNow
 
+    $contextFileName = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
     $contextService = [Aderant.Build.Ipc.BuildContextService]::new()
-    $contextService.StartListener([DateTime]::UtcNow.ToFileTimeUtc().ToString())
+    $contextService.StartListener($contextFileName)
     $contextService.Publish($context)
 
     try {
