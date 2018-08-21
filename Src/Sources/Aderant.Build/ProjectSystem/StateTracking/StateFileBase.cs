@@ -14,14 +14,14 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember]
         internal byte serializedVersion = CurrentSerializationVersion;
 
-        internal T DeserializeCache<T>(Stream stream) where T : StateFileBase {
+        internal static T DeserializeCache<T>(Stream stream) where T : StateFileBase {
             var serializer = CreateSerializer(typeof(T));
 
             object readObject = serializer.ReadObject(stream);
 
             T stateFile = readObject as T;
 
-            if (stateFile != null && stateFile.serializedVersion != serializedVersion) {
+            if (stateFile != null && stateFile.serializedVersion != CurrentSerializationVersion) {
                 return null;
             }
 

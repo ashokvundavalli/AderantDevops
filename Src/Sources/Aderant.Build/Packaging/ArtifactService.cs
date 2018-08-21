@@ -444,7 +444,7 @@ namespace Aderant.Build.Packaging {
                         if (fileSystem.FileExists(stateFile)) {
                             using (Stream stream = fileSystem.OpenFile(stateFile)) {
 
-                                BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(stream);
+                                BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
                                 file.DropLocation = folder;
 
                                 if (CheckForRootedPaths(file)) {

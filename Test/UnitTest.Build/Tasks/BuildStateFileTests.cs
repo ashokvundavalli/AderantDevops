@@ -29,7 +29,7 @@ namespace UnitTest.Build.Tasks {
 
                 ms.Position = 0;
 
-                BuildStateFile file = stateFile.DeserializeCache<BuildStateFile>(ms);
+                BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(ms);
 
                 Assert.AreEqual("1", file.PullRequestInfo.Id);
                 Assert.AreEqual("2", file.PullRequestInfo.SourceBranch);
@@ -41,7 +41,7 @@ namespace UnitTest.Build.Tasks {
         public void Deserialize_throws_no_exceptions() {
             using (var ms = new MemoryStream(Encoding.Default.GetBytes(Resources.buildstate))) {
                 ms.Position = 0;
-                BuildStateFile file = new BuildStateFile().DeserializeCache<BuildStateFile>(ms);
+                BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(ms);
             }
         }
 

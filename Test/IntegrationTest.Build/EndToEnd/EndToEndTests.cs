@@ -59,7 +59,7 @@ namespace IntegrationTest.Build.EndToEnd {
             RunTarget("EndToEnd", properties);
             foreach (string entry in Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories)) {
                 if (entry.EndsWith(@"1\buildstate.metadata")) {
-                    var stateFile = new BuildStateFile().DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
+                    var stateFile = StateFileBase.DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
 
                     if (stateFile.BucketId.Tag == "ModuleB") {
                         Assert.AreEqual(1, stateFile.Artifacts.Keys.Count);

@@ -91,6 +91,11 @@ namespace Aderant.Build.VersionControl {
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
                     newCommit = repository.Head.Tip;
                     fromBranch = repository.Head.CanonicalName;
+                } else {
+                    var branch = repository.Branches[fromBranch];
+                    if (branch != null) {
+                        newCommit = branch.Tip;
+                    }
                 }
 
                 if (newCommit == null) {
