@@ -25,6 +25,11 @@ namespace Aderant.Build.Ipc {
 
         [OperationContract]
         void RecordArtifacts(string key, ICollection<ArtifactManifest> manifests);
-    }
 
+        [OperationContract]
+        void PutVariable(string id, string key, string value);
+
+        [OperationContract]
+        string GetVariable(string id, string key);
+    }
 }

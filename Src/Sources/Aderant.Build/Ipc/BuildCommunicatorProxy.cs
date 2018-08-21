@@ -26,5 +26,13 @@ namespace Aderant.Build.Ipc {
         public void RecordArtifacts(string key, ICollection<ArtifactManifest> manifests) {
             Channel.RecordArtifacts(key, manifests);
         }
+
+        public void PutVariable(string id, string key, string value) {
+            Channel.PutVariable(id, key, value);
+        }
+
+        public string GetVariable(string id, string key) {
+            return Channel.GetVariable(key, key);
+        }
     }
 }
