@@ -175,6 +175,7 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
     </PropertyGroup>
 
     <Exec Command="$(RegCommand)"
+      IgnoreExitCode="true"
       YieldDuringToolExecution="true" />
 
     <Exec Condition="'$(IsDesktopBuild)' != 'true'" Command='cd "$(MSBuildThisFileDirectory)..\..\" &amp; git submodule update --init --recursive' YieldDuringToolExecution="true" />
