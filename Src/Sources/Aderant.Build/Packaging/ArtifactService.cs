@@ -256,15 +256,15 @@ namespace Aderant.Build.Packaging {
 
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, publisherName, localArtifactFiles);
-            CopyFiles(filesToRestore);
+            CopyFiles(filesToRestore, context.IsDesktopBuild);
 
         }
 
-        private void CopyFiles(IList<PathSpec> filesToRestore) {
+        private void CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {
             //fileSystem.CopyFiles(paths);
             // TODO: Replace with ActionBlock for performance
             foreach (var item in filesToRestore) {
-                fileSystem.CopyFile(item.Location, item.Destination);
+                fileSystem.CopyFile(item.Location, item.Destination, isDesktopBuild);
             }
         }
 
