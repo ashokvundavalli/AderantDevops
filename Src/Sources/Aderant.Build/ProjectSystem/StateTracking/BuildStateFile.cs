@@ -20,9 +20,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         public string TreeSha { get; set; }
 
-        [IgnoreDataMember]
-        internal string DropLocation { get; set; }
-
         [DataMember(EmitDefaultValue = false)]
         public PullRequestInfo PullRequestInfo { get; set; }
 
@@ -46,5 +43,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         [DataMember(EmitDefaultValue = false)]
         public Guid ParentId { get; set; }
+
+        /// <summary>
+        /// Specifies the origin of this file.
+        /// This property should not be written to the storage media and should only be set when the object is live. 
+        /// </summary>
+        [DataMember(EmitDefaultValue = false)]
+        internal string DropLocation { get; set; }
     }
 }

@@ -62,8 +62,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
 
-            Debug.Assert(currentOutputs.Keys.Count > 0);
-
             stateFile.Outputs = currentOutputs;
 
             if (artifacts != null) {
@@ -80,6 +78,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     stateFile.ScmCommitId = buildMetadata.ScmCommitId;
                 }
             }
+
+            stateFile.DropLocation = null;
 
             fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
 
