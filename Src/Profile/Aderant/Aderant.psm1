@@ -215,8 +215,6 @@ function Set-ExpertSourcePath {
 }
 
 function Set-ScriptPaths {
-    $DebugPreference = "Continue"
-
     Write-Debug -Message "BranchModulesDirectory: $($ShellContext.BranchModulesDirectory)"
 
     if ([System.IO.File]::Exists($ShellContext.BranchModulesDirectory + "\ExpertManifest.xml")) {
@@ -1297,5 +1295,3 @@ Write-Host "Type " -NoNewLine
 Write-Host '"help"' -ForegroundColor Green -NoNewLine
 Write-Host " for a command list." -NoNewLine
 Write-Host ""
-
-[string]$global:BranchLocalDirectory = $script:ShellContext.BranchLocalDirectory
