@@ -75,7 +75,7 @@ namespace Aderant.Build.VersionControl {
         /// <summary>
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
-        public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch) {
+        public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch, bool includeLocalChanges = false) {
             var info = new SourceTreeMetadata();
 
             List<BucketId> bucketKeys = new List<BucketId>();
@@ -123,8 +123,7 @@ namespace Aderant.Build.VersionControl {
                     }
 
                     if (oldCommit != null) {
-                        var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
-                        info.Changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
+                        GetChanges(includeLocalChanges, repository, oldCommit, newCommit, workingDirectory, info);
 
                         if (!string.Equals(newCommit.Tree.Sha, oldCommit.Tree.Sha)) {
                             bucketKeys.Add(new BucketId(oldCommit.Tree.Sha, BucketId.Previous));
@@ -141,6 +140,30 @@ namespace Aderant.Build.VersionControl {
             return info;
         }
 
+        private void GetChanges(bool includeLocalChanges, Repository repository, Commit oldCommit, Commit newCommit, string workingDirectory, SourceTreeMetadata info) {
+            var treeChanges = repository.Diff.Compare<TreeChanges>(oldCommit.Tree, newCommit.Tree);
+            var changes = treeChanges.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)).ToList();
+
+            if (includeLocalChanges) {
+                var status = repository.RetrieveStatus();
+                if (status.IsDirty) {
+                    AddLocalChanges(workingDirectory, changes, status);
+                }
+            }
+
+            info.Changes = changes;
+        }
+
+        private void AddLocalChanges(string workingDirectory, List<SourceChange> changes, RepositoryStatus status) {
+            var localChanges = status.Added.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Added))
+                .Concat(status.RenamedInWorkDir.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
+                .Concat(status.Modified.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Modified)))
+                .Concat(status.Removed.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Deleted)))
+                .Concat(status.Untracked.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
+
+            changes.AddRange(localChanges);
+        }
+
         private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string branchCanonicalName) {
             Commit commit = currentTree.Parents.FirstOrDefault();
             Commit[] interestingCommit = { null };
@@ -151,6 +174,10 @@ namespace Aderant.Build.VersionControl {
             };
         
             if (!string.IsNullOrWhiteSpace(fromBranch)) {
+                if (!fromBranch.StartsWith(BranchName.RefsHeads)) {
+                    fromBranch = BranchName.RefsHeads + fromBranch;
+                }
+
                 var branch = CreateBranchFromRef(fromBranch, repository);
                 if (branch != null) {
                     search.Insert(0, branch.CanonicalName);
