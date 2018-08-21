@@ -46,7 +46,7 @@
 
     <!-- Enables the use of a shared dependency directory to speed up the build -->
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
-    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)Dependencies\</SharedDependencyDirectory>
+    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)_as\</SharedDependencyDirectory>
 
     <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
     <DropLocation Condition="'$(DropLocationRoot)' == ''">$(DropLocation)</DropLocation>
@@ -174,21 +174,6 @@
 
     <Delete Files="@(MessageFiles)" />
 
-
-    <!--
-    Build the global search path list. We pass this list to ResolveAssemblyReferences to augment the standard search paths
-    This is done here, once for performance rather than in the module targets where we would end up scanning the shared directory far too often
-    -->
-    <ItemGroup>
-      <AllAssemblyFiles Include="$(SharedDependencyDirectory)\**\*.dll;$(SharedDependencyDirectory)\**\*.exe" />
-      <DependencySearchPaths Include="@(AllAssemblyFiles->'%(RootDir)%(Directory)'->Distinct())" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <!-- Convert the array to a scalar property so it can be passed downstream -->
-      <DependencySearchPaths>@(DependencySearchPaths)</DependencySearchPaths>
-    </PropertyGroup>
-
     <Message Text="End of GetAllModuleDependencies"/>
   </Target>
 
@@ -282,6 +267,7 @@
   <Target Name="ExecutePipeline">
     <PropertyGroup>
       <CommonBuildProperties>
+        BuildInParallel=true;
         BuildAll=true;
         BuildNumber=$(BuildNumber);
         TfsBuildNumber=$(BuildNumber);
@@ -292,7 +278,6 @@
         SharedDependencyDirectory=$(SharedDependencyDirectory);
         BuildFlavor=$(BuildFlavor);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-        AdditionalAssemblySearchPaths=$(DependencySearchPaths);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
         CopyToDropEnabled=true;
