@@ -19,6 +19,8 @@
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
+
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
 
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
@@ -72,11 +74,11 @@
 
     <!-- Find Expert_SplashScreen_ in the "Resource" Items. Remove it from "Resource" Items because we will use a modified version instead. -->
     <ItemGroup>
-      <OriginalSplashScreen Include="@(Resource)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen', RegexOptions.IgnoreCase)) And %(Extension) == '.png'">
+      <OriginalSplashScreen Include="@(Resource)" Condition="%(Extension) == '.png' And $([System.String]::Copy(%(Filename)).StartsWith('Expert_SplashScreen', StringComparison.OrdinalIgnoreCase))">
         <IsResource>true</IsResource>
       </OriginalSplashScreen>
 
-      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And $([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', 'Expert_SplashScreen', RegexOptions.IgnoreCase)) And %(Extension) == '.png'" >
+      <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And %(Extension) == '.png' And $([System.String]::Copy(%(Filename)).StartsWith('Expert_SplashScreen', StringComparison.OrdinalIgnoreCase))">
         <IsSplashScreen>true</IsSplashScreen>
       </OriginalSplashScreen>
       
