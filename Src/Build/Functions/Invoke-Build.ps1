@@ -246,7 +246,7 @@ function global:Invoke-Build2
     $context.StartedAt = [DateTime]::UtcNow
 
     $contextService = [Aderant.Build.Ipc.BuildContextService]::new()
-    $contextService.StartListener($contextFileName)
+    $contextService.StartListener([DateTime]::UtcNow.ToFileTimeUtc().ToString())
     $contextService.Publish($context)
 
     try {
