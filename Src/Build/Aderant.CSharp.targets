@@ -139,9 +139,9 @@
 
   
   <PropertyGroup>
-  	<GetReferenceAssemblyPathsDependsOn>
+    <GetReferenceAssemblyPathsDependsOn>
       $(GetReferenceAssemblyPathsDependsOn);
-	    AddAssemblySearchPaths
+      SetAssemblySearchPaths
     </GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
   
@@ -150,7 +150,7 @@
              AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
   
-  <Target Name="AddAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
+  <Target Name="SetAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
 
     <!--
         This changes the search path of the ResolveReferences task to look in the dependencies/packages folder. The normal probe sequence is
@@ -187,8 +187,7 @@
     <PropertyGroup>
       <!--This path order places out search paths first-->
       <AssemblySearchPaths>
-        <!--$(ArtifactStagingDirectory);-->
-        @(_ArtifactStagingDirectories);
+        $(AlternativeOutputDirectory);
         $(RootFolder)\Dependencies\;
         @(_PackageDirectories);
         $(AssemblySearchPaths);
@@ -251,7 +250,7 @@
           Condition="'$(IsCustomBuild)' != 'true'"
           BeforeTargets="CoreCompile;ResolveAssemblyReferences">
 
-    <Aderant.Build.Tasks.ProjectConformityCheck Project="$(MSBuildProjectFullPath)" IsDesktopBuild="$(IsDesktopBuild)" />
+    <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" IsDesktopBuild="$(IsDesktopBuild)" />
   </Target>
   
 
@@ -260,7 +259,7 @@
        mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
   <Target Name="CommonBuildDisableCopyLocal"
           BeforeTargets="BeforeResolveReferences"
-          AfterTargets="AddAssemblySearchPaths"
+          AfterTargets="SetAssemblySearchPaths"
           Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
     
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
@@ -315,8 +314,6 @@
     <ItemGroup>
       <Dependencies Include="..\..\Dependencies\*.dll" />
     </ItemGroup>
-    
-    
 
     <!--FileWritesShareable comes from the Microsoft CopyLocal target -->
     <GetCopyLocalItemsToRemove
@@ -340,20 +337,18 @@
   </Target>
   
   <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory">
-    <ItemGroup>
-      <SourceFiles Include="$(OutDir)\*" />
-    </ItemGroup>
 
-    <!--<Copy
-      SourceFiles="@(SourceFiles)"
+    <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')" />
+
+    <Copy
+      SourceFiles="@(IntermediateAssembly)"
       DestinationFolder="$(AlternativeOutputDirectory)"
-      UseHardlinksIfPossible="true">
+      UseHardlinksIfPossible="true"
+      OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+      Retries="$(CopyRetryCount)"
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
-    </Copy>-->
-
-    <!-- Write new list of current files back to disk. -->
-    <!--<WriteLinesToFile File="$(ArtifactStagingDirectory)\$(MSBuildProjectFile).FileList.txt"
-                      Lines="$(MSBuildProjectFullPath);@(FileWrites)" Overwrite="true" />-->
+    </Copy>
 
     <TrackProjectOutputs
       ContextFileName="$(ContextFileName)"
