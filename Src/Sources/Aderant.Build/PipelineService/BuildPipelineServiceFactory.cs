@@ -1,8 +1,8 @@
 ﻿using System;
 using System.ServiceModel;
 
-namespace Aderant.Build.Ipc {
-    public class BuildContextService : IDisposable {
+namespace Aderant.Build.PipelineService {
+    public class BuildPipelineServiceFactory : IDisposable {
         ServiceHost host;
         private string id;
 
@@ -13,10 +13,10 @@ namespace Aderant.Build.Ipc {
 
         public void StartListener(string pipeId) {
             id = pipeId;
-            host = new ServiceHost(typeof(ContextService));
+            host = new ServiceHost(typeof(BuildPipelineServiceImpl));
             var namedPipeBinding = CreateBinding();
 
-            host.AddServiceEndpoint(typeof(IContextService), namedPipeBinding, CreateAddress(pipeId));
+            host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, CreateAddress(pipeId));
             host.Open();
 
             Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, pipeId, EnvironmentVariableTarget.Process);
@@ -46,11 +46,11 @@ namespace Aderant.Build.Ipc {
             }
         }
 
-        internal static IContextServiceContract CreateProxy(string pipeId) {
+        internal static IBuildPipelineServiceContract CreateProxy(string pipeId) {
             EndpointAddress endpointAddress = new EndpointAddress(CreateAddress(pipeId));
             var namedPipeBinding = CreateBinding();
 
-            return new ContextServiceProxy(namedPipeBinding, endpointAddress);
+            return new BuildPipelineServiceProxy(namedPipeBinding, endpointAddress);
         }
     }
 }

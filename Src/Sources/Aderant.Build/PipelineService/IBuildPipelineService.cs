@@ -4,7 +4,7 @@ using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
-namespace Aderant.Build.Ipc {
+namespace Aderant.Build.PipelineService {
 
     [ServiceContract(SessionMode = SessionMode.Allowed)]
     [ServiceKnownType(typeof(BuildStateFile))]
@@ -13,7 +13,7 @@ namespace Aderant.Build.Ipc {
     [ServiceKnownType(typeof(List<BucketId>))]
     [ServiceKnownType(typeof(SourceChange))]
     [ServiceKnownType(typeof(List<SourceChange>))]
-    internal interface IContextService {
+    internal interface IBuildPipelineService {
         [OperationContract]
         void Publish(BuildOperationContext context);
 

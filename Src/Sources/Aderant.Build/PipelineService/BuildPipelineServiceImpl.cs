@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ServiceModel;
 
-namespace Aderant.Build.Ipc {
+namespace Aderant.Build.PipelineService {
     /// <summary>
     /// Contract implementation.
     /// </summary>
@@ -11,7 +11,7 @@ namespace Aderant.Build.Ipc {
         IncludeExceptionDetailInFaults = true,
         ConcurrencyMode = ConcurrencyMode.Single,
         MaxItemsInObjectGraph = Int32.MaxValue)]
-    internal class ContextService : IContextService {
+    internal class BuildPipelineServiceImpl : IBuildPipelineService {
         private BuildOperationContext ctx;
 
         public void Publish(BuildOperationContext context) {

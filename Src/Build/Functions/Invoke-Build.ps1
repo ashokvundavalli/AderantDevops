@@ -223,7 +223,7 @@ function global:Invoke-Build2
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
     ApplyBranchConfig $context $repositoryPath
-
+     
     FindGitDir $context $repositoryPath
 
     GetSourceTreeMetadata $context $repositoryPath
@@ -244,7 +244,7 @@ function global:Invoke-Build2
     $context.StartedAt = [DateTime]::UtcNow
 
     $contextFileName = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
-    $contextService = [Aderant.Build.Ipc.BuildContextService]::new()
+    $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceFactory]::new()
     $contextService.StartListener($contextFileName)
     $contextService.Publish($context)
 

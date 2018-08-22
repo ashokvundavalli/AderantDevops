@@ -2,12 +2,12 @@
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 
-namespace Aderant.Build.Ipc {
+namespace Aderant.Build.PipelineService {
     /// <summary>
-    /// Proxy for Communicator class.
+    /// Proxy for <see cref="IBuildPipelineService"/>.
     /// </summary>
-    internal class ContextServiceProxy : ClientBase<IContextService>, IContextService, IContextServiceContract {
-        public ContextServiceProxy(Binding binding, EndpointAddress remoteAddress)
+    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService, IBuildPipelineServiceContract {
+        public BuildPipelineServiceProxy(Binding binding, EndpointAddress remoteAddress)
             : base(binding, remoteAddress) {
         }
 

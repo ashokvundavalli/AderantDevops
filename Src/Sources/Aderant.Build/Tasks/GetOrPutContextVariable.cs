@@ -19,17 +19,17 @@ namespace Aderant.Build.Tasks {
 
         public override bool ExecuteTask() {
             if (Output) {
-                FileVersion = ContextService.GetVariable(Id, nameof(FileVersion));
-                AssemblyVersion = ContextService.GetVariable(Id, nameof(AssemblyVersion));
-                ModuleName = ContextService.GetVariable(Id, nameof(ModuleName));
+                FileVersion = PipelineService.GetVariable(Id, nameof(FileVersion));
+                AssemblyVersion = PipelineService.GetVariable(Id, nameof(AssemblyVersion));
+                ModuleName = PipelineService.GetVariable(Id, nameof(ModuleName));
             } else {
                 Log.LogMessage("FileVersion: {0}", FileVersion);
                 Log.LogMessage("AssemblyVersion: {0}", AssemblyVersion);
                 Log.LogMessage("ModuleName: {0}", ModuleName);
 
-                ContextService.PutVariable(Id, nameof(FileVersion), FileVersion);
-                ContextService.PutVariable(Id, nameof(AssemblyVersion), AssemblyVersion);
-                ContextService.PutVariable(Id, nameof(ModuleName), ModuleName);
+                PipelineService.PutVariable(Id, nameof(FileVersion), FileVersion);
+                PipelineService.PutVariable(Id, nameof(AssemblyVersion), AssemblyVersion);
+                PipelineService.PutVariable(Id, nameof(ModuleName), ModuleName);
             }
 
             return !Log.HasLoggedErrors;

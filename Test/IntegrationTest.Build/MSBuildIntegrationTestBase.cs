@@ -34,7 +34,7 @@ namespace IntegrationTest.Build {
             }
 
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
-                { "NoMSBuildCommunityTasks", "true" },
+              //  { "NoMSBuildCommunityTasks", "true" },
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
                 //{ "BuildInfrastructureDirectory", Path.Combine(TestContext.DeploymentDirectory, @"..\..\") /*TODO: Remove the need for this*/ }
                 { "TestContextDeploymentDirectory", Path.Combine(TestContext.DeploymentDirectory) }

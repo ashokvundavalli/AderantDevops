@@ -37,7 +37,7 @@ namespace Aderant.Build.Tasks {
                 TestProjectType,
                 References);
 
-            base.ContextService.RecordProjectOutputs(snapshot);
+            base.PipelineService.RecordProjectOutputs(snapshot);
 
             return !Log.HasLoggedErrors;
         }

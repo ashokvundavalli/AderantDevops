@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using Aderant.Build;
-using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -19,8 +19,8 @@ namespace IntegrationTest.Build.EndToEnd {
         private BuildOperationContext context;
         private string contextFile;
         private Dictionary<string, string> properties;
-        private BuildContextService service;
-        private IContextServiceContract proxy;
+        private BuildPipelineServiceFactory service;
+        private IBuildPipelineServiceContract proxy;
 
         public string DeploymentItemsDirectory {
             get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source"); }
@@ -44,9 +44,9 @@ namespace IntegrationTest.Build.EndToEnd {
 
             context = CreateContext(properties);
 
-            service = new BuildContextService();
+            service = new BuildPipelineServiceFactory();
             service.StartListener(contextFile);
-            this.proxy = BuildContextService.CreateProxy(contextFile);
+            this.proxy = BuildPipelineServiceFactory.CreateProxy(contextFile);
             service.Publish(context);
         }
 

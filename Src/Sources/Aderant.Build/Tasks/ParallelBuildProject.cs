@@ -107,7 +107,7 @@ namespace Aderant.Build.Tasks {
                 element.WriteTo(writer);
             }
 
-            ContextService.Publish(context);
+            PipelineService.Publish(context);
         }
 
         private AnalysisContext CreateAnalysisContext() {

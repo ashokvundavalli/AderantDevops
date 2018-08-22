@@ -1,6 +1,6 @@
 ﻿using System;
-using Aderant.Build.Ipc;
 using Aderant.Build.Logging;
+using Aderant.Build.PipelineService;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -10,7 +10,7 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public abstract class BuildOperationContextTask : Task {
         private BuildOperationContext context;
-        private IContextServiceContract contextService;
+        private IBuildPipelineServiceContract pipelineService;
         private bool executingTask;
         private BuildTaskLogger logger;
 
@@ -32,8 +32,8 @@ namespace Aderant.Build.Tasks {
 
         internal static BuildOperationContext InternalContext { get; set; }
 
-        internal IContextServiceContract ContextService {
-            get { return contextService ?? (contextService = ObtainContextService()); }
+        internal IBuildPipelineServiceContract PipelineService {
+            get { return pipelineService ?? (pipelineService = ObtainService()); }
         }
 
         public sealed override bool Execute() {
@@ -48,8 +48,8 @@ namespace Aderant.Build.Tasks {
             } finally {
                 executingTask = false;
 
-                if (contextService != null) {
-                    contextService.Dispose();
+                if (pipelineService != null) {
+                    pipelineService.Dispose();
                 }
             }
         }
@@ -65,17 +65,17 @@ namespace Aderant.Build.Tasks {
         }
 
         private BuildOperationContext GetContextFromFile() {
-            return ContextService.GetContext();
+            return PipelineService.GetContext();
         }
 
-        private IContextServiceContract ObtainContextService() {
+        private IBuildPipelineServiceContract ObtainService() {
             if (string.IsNullOrEmpty(ContextFileName)) {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
 
             ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
 
-            return BuildContextService.CreateProxy(ContextFileName);
+            return BuildPipelineServiceFactory.CreateProxy(ContextFileName);
         }
     }
 }
