@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Aderant.Build.VersionControl;
+﻿using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -13,15 +12,6 @@ namespace IntegrationTest.Build.VersionControl {
         [ClassInitialize]
         public static void ClassInitialize(TestContext context) {
             Initialize(context, Resources.CreateRepo, true);
-        }
-
-        [TestMethod]
-        public void ListChangedFiles() {
-            var vc = new GitVersionControl();
-            var pendingChanges = vc.GetPendingChanges(null, RepositoryPath);
-
-            Assert.AreEqual("master.txt", pendingChanges.First().Path);
-            Assert.AreEqual(FileStatus.Modified, pendingChanges.First().Status);
         }
 
         [TestMethod]

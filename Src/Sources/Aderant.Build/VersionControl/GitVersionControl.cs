@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
-using System.Management.Automation.Language;
 using System.Runtime.Serialization;
 using Aderant.Build.VersionControl.Model;
 using LibGit2Sharp;
@@ -16,60 +15,6 @@ namespace Aderant.Build.VersionControl {
     internal class GitVersionControl : IVersionControlService {
 
         public GitVersionControl() {
-        }
-
-        public IReadOnlyCollection<ISourceChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath) {
-            ErrorUtilities.IsNotNull(repositoryPath, nameof(repositoryPath));
-
-            string gitDir = Repository.Discover(repositoryPath);
-
-            using (var repo = new Repository(gitDir)) {
-                var workingDirectory = repo.Info.WorkingDirectory;
-
-                IEnumerable<SourceChange> changes = Enumerable.Empty<SourceChange>();
-
-                if (buildMetadata != null) {
-                    if (buildMetadata.IsPullRequest) {
-                        var currentTip = repo.Head.Tip.Tree;
-                        Tree tip = null;
-
-                        foreach (var branch in repo.Branches) {
-                            // UpstreamBranchCanonicalName appears to hold the name in the TFS format of /refs/heads/<foo>
-                            var upstreamBranchCanonicalName = branch.UpstreamBranchCanonicalName;
-                            if (string.Equals(upstreamBranchCanonicalName, buildMetadata.PullRequest.TargetBranch, StringComparison.OrdinalIgnoreCase)) {
-                                tip = branch.Tip.Tree;
-                                break;
-                            }
-                        }
-
-                        if (tip != null) {
-                            var patch = repo.Diff.Compare<Patch>(currentTip, tip);
-                            changes = patch.Select(x => new SourceChange(workingDirectory, x.Path, (FileStatus)x.Status)); // Mapped LibGit2Sharp.ChangeKind to our FileStatus which is in the same order.
-                        }
-
-                    }
-
-                    if (buildMetadata.BuildId > 0) {
-                        // TODO: here we need to query the last successful build for the same branch/commit and mix in the changes
-                    }
-                }
-
-                var status = repo.RetrieveStatus();
-                if (!status.IsDirty) {
-                    return new ISourceChange[0];
-                }
-
-                // Get the current git status.
-                var uncommittedChanges =
-                    status.Added.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Added))
-                        .Concat(status.RenamedInWorkDir.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Renamed)))
-                        .Concat(status.Modified.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Modified)))
-                        .Concat(status.Removed.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Deleted)))
-                        .Concat(status.Untracked.Select(s => new SourceChange(workingDirectory, s.FilePath, FileStatus.Untracked)));
-
-                var result = changes.Concat(uncommittedChanges).ToList();
-                return result;
-            }
         }
 
         /// <summary>
@@ -305,7 +250,6 @@ namespace Aderant.Build.VersionControl {
     /// </summary>
     public interface IVersionControlService {
 
-        IReadOnlyCollection<ISourceChange> GetPendingChanges(BuildMetadata buildMetadata, string repositoryPath);
     }
 
 }
