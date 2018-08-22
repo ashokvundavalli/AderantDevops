@@ -2,6 +2,12 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
 
   <PropertyGroup>
+    <!-- Allows environment variables to override RSP parameters -->
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
+
     <RunIntegrationTestsDependsOn>
       GrovelForTestAssemblies;
       GetServerImage;
@@ -24,7 +30,7 @@
     <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
     
     <DeployEnvironment Condition="'$(DeployEnvironment)' == ''">false</DeployEnvironment>
-    <DeployEnvironment Condition="'$(IsDesktopBuild)' != 'true'">true</DeployEnvironment>
+    <DeployEnvironment Condition="'$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true'">true</DeployEnvironment>
   </PropertyGroup>
 
 
@@ -208,14 +214,6 @@
     <OnError ExecuteTargets="LightsOff" />
 
   </Target>
-
-  <PropertyGroup>
-    <!-- Allows environment variables to override RSP parameters -->
-    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
-    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
-    <_RunIntegrationTests Condition="'$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
-    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
-  </PropertyGroup>
   
   <Target Name="GrovelForTestAssemblies" Returns="@(IntegrationTestAssemblies)">
     <ItemGroup>
@@ -223,11 +221,11 @@
     </ItemGroup>
   </Target>
   
-  <Target Name="RunIntegrationTestsCore" DependsOnTargets="$(RunIntegrationTestsDependsOn)">
+  <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">  
   </Target>
 
   <Target Name="RunIntegrationTests"
-    DependsOnTargets="RunIntegrationTestsCore"
+    DependsOnTargets="RunIntegrationTestsCore;$(RunIntegrationTestsDependsOn)"
     Condition="'$(_RunIntegrationTests)' == 'true'">
 
     <PropertyGroup>
@@ -285,7 +283,7 @@
   </PropertyGroup>
 
   <Target Name="RunAutomationTests"
-    Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunAutomationTests)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
+    Condition="('$(IsDesktopBuild)' != 'true' And '$(_RunAutomationTests)' == 'true' And '$(DeployEnvironment)' == 'true' And '$(IsCustomBuild)' != 'true') Or ('$(IsDesktopBuild)' == 'true' And '$(RunDesktopAutomationTests)' == 'true')"
     DependsOnTargets="$(RunTestsDependsOn);$(RunIntegrationTestsDependsOn);RunIntegrationTests">
     <ItemGroup>
       <PrepCategories Include="$(CustomAutomationTestFilters)" />
@@ -310,9 +308,6 @@
       <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
       <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
     </PropertyGroup>
-    
-
-
 
     <!-- Run With VSTest -->
     <Exec Condition="'$(AutomationTestAssemblies)' != '' And '$(IsDesktopBuild)' != 'true'"
