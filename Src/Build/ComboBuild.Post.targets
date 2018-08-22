@@ -16,6 +16,7 @@
     <!-- TODO: Enable...currently off for perf reasons-->
     <CodeCoverage>false</CodeCoverage>
     <PackageArtifacts Condition="'$(IsDesktopBuild)' == 'true'">false</PackageArtifacts>
+    <PackageArtifacts Condition="'$(IsDesktopBuild)' == 'false'">true</PackageArtifacts>
   </PropertyGroup>
 
   <!--
