@@ -39,12 +39,6 @@ namespace Aderant.Build {
         // For deterministic hashing it is better if this is sorted
         private ProjectOutputSnapshot outputs;
 
-        [DataMember]
-        private string primaryDropLocation;
-
-        [DataMember]
-        private string pullRequestDropLocation;
-
         [IgnoreDataMember]
         private int recordArtifactCount;
 
@@ -69,7 +63,7 @@ namespace Aderant.Build {
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
-            VariableBags = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            ScopedVariables = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             TaskIndex = -1;
             Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Environment = "";
@@ -133,7 +127,7 @@ namespace Aderant.Build {
         public int TaskIndex { get; set; }
 
         [DataMember]
-        public IDictionary<string, IDictionary<string, string>> VariableBags { get; private set; }
+        public IDictionary<string, IDictionary<string, string>> ScopedVariables { get; private set; }
 
         [DataMember]
         public DirectoryInfo Temp { get; set; }
@@ -174,15 +168,15 @@ namespace Aderant.Build {
         [DataMember]
         public ConfigurationToBuild ConfigurationToBuild { get; set; }
 
-        public string PrimaryDropLocation {
-            get { return primaryDropLocation; }
-            set { primaryDropLocation = value; }
-        }
+        //public string PrimaryDropLocation {
+        //    get { return primaryDropLocation; }
+        //    set { primaryDropLocation = value; }
+        //}
 
-        public string PullRequestDropLocation {
-            get { return pullRequestDropLocation; }
-            set { pullRequestDropLocation = value; }
-        }
+        //public string PullRequestDropLocation {
+        //    get { return pullRequestDropLocation; }
+        //    set { pullRequestDropLocation = value; }
+        //}
 
         public SourceTreeMetadata SourceTreeMetadata {
             get { return sourceTreeMetadata; }
@@ -268,7 +262,7 @@ namespace Aderant.Build {
         }
 
         public void PutVariable(string scope, string variableName, string value) {
-            var bags = VariableBags;
+            var bags = ScopedVariables;
 
             IDictionary<string, string> bag;
             if (!bags.TryGetValue(scope, out bag)) {
@@ -283,7 +277,7 @@ namespace Aderant.Build {
             ErrorUtilities.IsNotNull(scope, nameof(scope));
             ErrorUtilities.IsNotNull(variableName, nameof(variableName));
 
-            var bags = VariableBags;
+            var bags = ScopedVariables;
 
             IDictionary<string, string> bag;
             if (bags.TryGetValue(scope, out bag)) {
@@ -364,6 +358,9 @@ namespace Aderant.Build {
         }
 
         internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
+            ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
+            ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
+
             InitArtifacts();
 
             ICollection<ArtifactManifest> manifests;
@@ -531,6 +528,11 @@ namespace Aderant.Build {
         [DataMember]
         public string OldCommitDescription { get; set; }
 
+        /// <summary>
+        /// Gets a bucket for a friendly name.
+        /// </summary>
+        /// <param name="tag"></param>
+        /// <returns></returns>
         public BucketId GetBucket(string tag) {
             foreach (var bucket in BucketIds) {
                 if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {

@@ -59,7 +59,7 @@
   <Target Name="RefreshVersionVariables">
 
     <GetOrPutContextVariable
-      Id="$(VariableBagId)"
+      Scope="$(VariableScopeId)"
       ContextFileName="$(ContextFileName)"
       Output="true">
       <Output TaskParameter="FileVersion" PropertyName="FileVersion" />

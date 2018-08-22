@@ -167,12 +167,14 @@
     <Compile Include="Tasks\PackageArtifacts.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
     <Compile Include="Tasks\PrintBanner.cs" />
+    <Compile Include="Packaging\Handlers\PullRequestHandler.cs" />
     <Compile Include="Tasks\RetrieveArtifacts.cs" />
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileBase.cs" />
     <Compile Include="Tasks\TrackProjectOutputs.cs" />
     <Compile Include="Tasks\WaitForDebugger.cs" />
     <Compile Include="Tasks\WriteBuildStateFile.cs" />
+    <Compile Include="Packaging\Handlers\XamlDropHandler.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
     <Compile Include="VersionControl\Model\BranchName.cs" />
@@ -420,5 +422,5 @@
   <ItemGroup>
     <Folder Include="Resources\Scripts\" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />  
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

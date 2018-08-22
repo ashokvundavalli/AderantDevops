@@ -57,7 +57,7 @@ namespace IntegrationTest.Build.EndToEnd {
             RunTarget("EndToEnd", properties);
 
             context = proxy.GetContext();
-            Assert.AreEqual(2, Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories).Length);
+            Assert.AreEqual(2, Directory.GetFileSystemEntries(context.Drops.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories).Length);
 
             var logFile = base.LogFile;
 
@@ -65,7 +65,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
             // Run second build
             RunTarget("EndToEnd", properties);
-            foreach (string entry in Directory.GetFileSystemEntries(context.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories)) {
+            foreach (string entry in Directory.GetFileSystemEntries(context.Drops.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories)) {
                 if (entry.EndsWith(@"1\buildstate.metadata")) {
                     var stateFile = StateFileBase.DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
 
@@ -112,7 +112,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var buildStateMetadata = new ArtifactService(NullLogger.Default)
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
-                    context.PrimaryDropLocation);
+                    context.Drops.PrimaryDropLocation);
 
             context.BuildStateMetadata = buildStateMetadata;
             service.Publish(context);
@@ -131,7 +131,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private BuildOperationContext CreateContext(Dictionary<string, string> props) {
             var ctx = new BuildOperationContext();
-            ctx.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
+            ctx.Drops.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
             ctx.BuildMetadata = new BuildMetadata();
             ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();

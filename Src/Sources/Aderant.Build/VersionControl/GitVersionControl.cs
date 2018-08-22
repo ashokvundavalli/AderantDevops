@@ -245,6 +245,9 @@ namespace Aderant.Build.VersionControl {
         }
     }
 
+    /// <summary>
+    /// Represents the components to identify an object within the build cache
+    /// </summary>
     [DebuggerDisplay("{Id} {Tag}")]
     [Serializable]
     [DataContract]
@@ -264,10 +267,16 @@ namespace Aderant.Build.VersionControl {
         public static string ParentsParent { get; } = nameof(ParentsParent);
         public static string Previous { get; } = nameof(Previous);
 
+        /// <summary>
+        /// The object key - usually some kind of hash.
+        /// </summary>
         public string Id {
             get { return id; }
         }
 
+        /// <summary>
+        /// The friendly name of the object.
+        /// </summary>
         public string Tag {
             get { return tag; }
         }

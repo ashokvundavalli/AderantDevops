@@ -8,16 +8,17 @@
   <!-- Server build property setup -->
   <PropertyGroup Condition="'$(BUILD_BUILDURI)' != ''">
     <SolutionRoot Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">$(BUILD_SOURCESDIRECTORY)</SolutionRoot>
-    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(Build_ArtifactStagingDirectory)</ArtifactStagingDirectory>
   </PropertyGroup>
 
   <!-- Desktop build property setup -->
   <PropertyGroup Condition="'$(BUILD_BUILDURI)' == ''">
     <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(MSBuildStartupDirectory)</SolutionRoot>
-    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)\_as</ArtifactStagingDirectory>
   </PropertyGroup>
 
   <PropertyGroup>
+    <!--Ensure root path is consistent-->
+    <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
+
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
     
     <!--Test configuration-->
@@ -32,20 +33,19 @@
     <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
     <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath( '$(LocalExpertBinariesDirectory)' ))</LocalExpertBinariesDirectory>
 -->
+
+    <!-- Location to drop outputs to share within the build -->
+    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
+    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)_out\</SharedDependencyDirectory>
+
+    <!-- Location to drop artifacts (packaged outputputs) -->
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)\_as</ArtifactStagingDirectory>
+
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))))</BuildInfrastructureDirectory>
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-    
-    <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
-
-    <!-- Enables the use of a shared dependency directory to speed up the build -->
-    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
-    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)_as\</SharedDependencyDirectory>
-
-    <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
-    <DropLocation Condition="'$(DropLocationRoot)' == ''">$(DropLocation)</DropLocation>
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
@@ -95,8 +95,6 @@
     <ParallelBuildProjectFactory
       ContextFileName="$(ContextFileName)"
       ModulesDirectory="$(SolutionRoot)"
-      TfvcChangeset="$(TfvcChangeset)"
-      TfvcBranch="$(TfvcBranch)"
       InstanceFile="$(BranchBuildProject)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
@@ -174,18 +172,6 @@
     <Message Text="End of GetAllModuleDependencies"/>
   </Target>
 
-
-  <Target Name="BeforeGetAllModuleDependencies" BeforeTargets="CreateParallelBuildProject">
-    <Exec Command="rmdir /q /s $(SharedDependencyDirectory)" />
-
-    <!--<RunPowerShell
-      Command="$(BuildScriptsDirectory)\CleanSymlinks.ps1 &quot;$(SolutionRoot)&quot;">
-    </RunPowerShell>-->
-
-    <!--<MakeDir Directories="$(SharedDependencyDirectory)" />-->
-  </Target>
-
-
   <!--<Target Name="ValidateBranchConfiguration" BeforeTargets="GetAllModuleDependencies">
 
     <ItemGroup>
@@ -251,10 +237,6 @@
   
 
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
-    <Message Text="==========================================" Importance="High" />
-    <Message Text="Build queue..."                             Importance="High" />
-    <Message Text="%(ModulesInBuild.FullPath)"                 Importance="High" />
-    <Message Text="==========================================" Importance="High" />
   </Target>
 
 

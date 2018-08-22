@@ -20,7 +20,7 @@ namespace Aderant.Build.Packaging {
                 BucketId bucket = buildOperationContext.SourceTreeMetadata.GetBucket(name);
 
                 return Path.Combine(
-                    buildOperationContext.PrimaryDropLocation,
+                    buildOperationContext.Drops.PrimaryDropLocation,
                     bucket != null ? bucket.Id ?? string.Empty : string.Empty,
                     buildOperationContext.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
             }

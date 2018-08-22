@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Aderant.Build.Packaging;
+using Aderant.Build.Packaging.Handlers;
 using Aderant.Build.TeamFoundation;
 using Microsoft.Build.Framework;
 
@@ -25,10 +26,9 @@ namespace Aderant.Build.Tasks {
 
                 var commands = new VsoBuildCommands(Logger);
                 var artifactService = new ArtifactService(Logger, new PhysicalFileSystem());
+                artifactService.RegisterHandler(new PullRequestHandler());
+                artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
                 artifactService.VsoCommands = commands;
-
-                artifactService.FileVersion = FileVersion;
-                artifactService.AssemblyVersion = AssemblyVersion;
                 
                 var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
 

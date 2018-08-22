@@ -4,6 +4,7 @@ using System.IO;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.Packaging.Handlers;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -33,7 +34,7 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Vso_path_is_smallest_substring() {
-            BuildArtifact a = new BuildArtifact() {
+            BuildArtifact a = new BuildArtifact {
                 FullPath = "\\\\mydrop\\bar\\9.9.9.9\\1.0.0.0\\Bin\\Module",
                 Name = "bar\\9.9.9.9\\1.0.0.0"
             };
@@ -49,17 +50,16 @@ namespace UnitTest.Build.Packaging {
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
             var artifactService = new ArtifactService(NullLogger.Default, new Mock<IFileSystem>().Object);
-            artifactService.FileVersion = "1.0.0.0";
-            artifactService.AssemblyVersion = "9.9.9.9";
+            artifactService.RegisterHandler(new XamlDropHandler("1.0.0.0", "9.9.9.9"));
 
             IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", null) };
 
             IReadOnlyCollection<BuildArtifact> results = artifactService.PublishArtifacts(
                 new BuildOperationContext {
-                    PrimaryDropLocation = @"\\mydrop\",
+                    Drops = { PrimaryDropLocation = @"\\mydrop\" },
                     BuildMetadata = new BuildMetadata()
                 },
-                null,
+                "Foo",
                 new[] { new ArtifactPackage("bar", specs) });
 
             Assert.IsNotNull(results);
@@ -81,7 +81,7 @@ namespace UnitTest.Build.Packaging {
         public void CalculateFilesToRestore_returns_full_path() {
             var state = new BuildStateFile();
             state.Outputs = new ProjectOutputSnapshot();
-            state.Outputs["Foo\\Bar.cspoj"] = new OutputFilesSnapshot() {
+            state.Outputs["Foo\\Bar.cspoj"] = new OutputFilesSnapshot {
                 FilesWritten = new string[] {
                     @"..\..\bin\foo.dll"
                 }

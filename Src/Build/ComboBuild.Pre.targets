@@ -188,7 +188,7 @@
     </PropertyGroup>
 
     <GetOrPutContextVariable
-      Id="$(VariableBagId)"
+      Scope="$(VariableScopeId)"
       ContextFileName="$(ContextFileName)"
       FileVersion="$(FileVersion)"
       AssemblyVersion="$(AssemblyVersion)"
