@@ -240,15 +240,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         private BuildStateFile SelectStateFile(string stateFileKey) {
             foreach (var file in stateFiles) {
                 if (string.Equals(file.BucketId.Tag, stateFileKey, StringComparison.OrdinalIgnoreCase)) {
-                    // Reject files that provide no value
-                    if (file.Outputs == null || file.Outputs.Count == 0) {
-                        continue;
-                    }
-
-                    if (file.Artifacts == null || file.Artifacts.Count == 0) {
-                        continue;
-                    }
-
                     return file;
                 }
             }

@@ -436,9 +436,9 @@ namespace Aderant.Build.Packaging {
                 if (fileSystem.DirectoryExists(bucketPath)) {
                     IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
 
-                    string[] orderBuildsByBuildNumber = OrderBuildsByBuildNumber(directories.ToArray());
+                    string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
 
-                    foreach (var folder in orderBuildsByBuildNumber) {
+                    foreach (var folder in folders) {
                         var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
 
                         if (fileSystem.FileExists(stateFile)) {
@@ -451,6 +451,10 @@ namespace Aderant.Build.Packaging {
                                     continue;
                                 }
 
+                                if (IsUselessFile(file)) {
+                                    continue;
+                                }
+
                                 files.Add(file);
                             }
                         }
@@ -459,6 +463,19 @@ namespace Aderant.Build.Packaging {
             }
 
             return metadata;
+        }
+
+        private static bool IsUselessFile(BuildStateFile file) {
+            // Reject files that provide no value
+            if (file.Outputs == null || file.Outputs.Count == 0) {
+                return true;
+            }
+
+            if (file.Artifacts == null || file.Artifacts.Count == 0) {
+                return true;
+            }
+
+            return false;
         }
 
         private static bool CheckForRootedPaths(BuildStateFile file) {
