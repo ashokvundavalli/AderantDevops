@@ -169,7 +169,7 @@
       <RegCommand>
         <![CDATA[
 reg import $(BuildScriptsDirectory)Registry\FEATURE_LOCALMACHINE_LOCKDOWN.reg
-reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies" /va /f
+reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies" /va /f > nul 2>&1
 ]]>
       </RegCommand>
     </PropertyGroup>
