@@ -38,14 +38,6 @@
 
     <PrepareBuildEnvironmentTargetImported>true</PrepareBuildEnvironmentTargetImported>
     <AderantCommonTargetsImported>true</AderantCommonTargetsImported>
-
-    <!-- After each build succeeds, copy all output to the staging place. After all builds succeed, they will be copied to ExpertSource by CustomizationBuilder. The value should be normally passed in from /p:AlternativeOutputDirectory. -->
-    <AlternativeOutputDirectory Condition="'$(AlternativeOutputDirectory)' == ''">$(SolutionDir)..\ArtifactStaging</AlternativeOutputDirectory>
-
-    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">\\dfs.aderant.com\Packages\Expert\</ArtifactStagingDirectory>
-
-    <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' == ''">false</CopyToDropEnabled>
-    <CopyToDropEnabled Condition="'$(CopyToDropEnabled)' != 'true' And '$(BUILD_BUILDURI)' != ''">true</CopyToDropEnabled>
   </PropertyGroup>
 
 

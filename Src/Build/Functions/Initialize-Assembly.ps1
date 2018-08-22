@@ -1,59 +1,67 @@
 ﻿# Without this git will look on H:\ for .gitconfig
 $Env:HOME = $Env:USERPROFILE
-$coreAssemblyName = "Aderant.Build.dll"
 
-function BuildProject($buildScriptsDirectory, [bool]$rebuild) {
-    Write-Debug "Build scripts: $buildScriptsDirectory"
-
-    if (-not (Test-Path $buildScriptsDirectory)) {
-        throw "Cannot find directory: $buildScriptsDirectory"
-        return
-    }    
-
-    # Load the build libraries as this has our shared compile function.
-    # This function is shared by the desktop and server bootstrap of Build.Infrastructure       
-    . $buildScriptsDirectory\Build-Libraries.ps1   
-
-    CompileBuildLibraryAssembly $buildScriptsDirectory $rebuild
+function GetBuildLibraryAssemblyPath([string]$buildScriptDirectory) {
+    $file = [System.IO.Path]::Combine($buildScriptDirectory, "..\Build.Tools\Aderant.Build.dll")
+    return [System.IO.Path]::GetFullPath($file)
 }
 
-function LoadAssembly($buildScriptsDirectory, [string]$targetAssembly) {
+function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {	
+    $aderantBuildAssembly = GetBuildLibraryAssemblyPath $buildScriptDirectory
+
+    if ([System.IO.File]::Exists($aderantBuildAssembly) -and $forceCompile -eq $false) {
+        return
+    }
+  
+    $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+    $toolsVersion = "14.0";
+    Write-Debug "Loaded MS Build 14.0"   
+
+    $MSBuildLocation = [Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools([Microsoft.Build.Utilities.ToolLocationHelper]::CurrentToolsVersion, [Microsoft.Build.Utilities.DotNetFrameworkArchitecture]::Bitness32)
+
+    Write-Debug ("Resolved MS Build {0}" -f $MSBuildLocation)
+
+    $global:MSBuildLocation = [System.IO.Path]::Combine($MSBuildLocation, "MSBuild.exe")
+    $projectPath = [System.IO.Path]::Combine($buildScriptDirectory, "Aderant.Build.Common.targets")
+    & $global:MSBuildLocation $projectPath "/p:BuildScriptsDirectory=$buildScriptDirectory" "/nologo" "/m" "/nr:false"
+}
+
+function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$loadAsModule) {
     Set-StrictMode -Version "Latest"
     $ErrorActionPreference = "Stop"
 
-    if ([System.IO.File]::Exists($targetAssembly)) {
+    if ([System.IO.File]::Exists($assemblyPath)) {
         [System.Reflection.Assembly]$assembly = $null
 
         #Loads the assembly without locking it on disk
-        $assemblyBytes = [System.IO.File]::ReadAllBytes($targetAssembly)
-        $pdb = [System.IO.Path]::ChangeExtension($targetAssembly, "pdb");
+        $assemblyBytes = [System.IO.File]::ReadAllBytes($assemblyPath)
+        $pdb = [System.IO.Path]::ChangeExtension($assemblyPath, "pdb");
 
         if (Test-Path $pdb) {
-            Write-Debug "Importing assembly with symbols"
+            Write-Debug "Importing assembly $assemblyPath with symbols"
             $assembly = [System.Reflection.Assembly]::Load($assemblyBytes, [System.IO.File]::ReadAllBytes($pdb))
         } else {
+            Write-Debug "Importing assembly $assemblyPath without symbols"
             $assembly = [System.Reflection.Assembly]::Load($assemblyBytes)
         }
 
-        $directory = Split-Path -Parent $targetAssembly
+        if ($loadAsModule) {
+            # This load process was built after many days of head scratching trying to get -Global to work.
+            # The -Global switch appears to be bug ridden with compiled modules not backed by an on disk assembly which is our use case.
+            # Even with the -Global flag the commands within the module are not imported into the global space.
+            # Creating a runtime module to wrap the import of the compiled module works around
+            # whatever PS bug prevents it from working.
+            $scriptBlock = {
+                param($assembly)      
+                Import-Module -Assembly $assembly -DisableNameChecking
+            }
 
-        #[System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($properties.PackagingTool)) | Out-Null
-
-        # This load process was built after many days of head scratching trying to get -Global to work.
-        # The -Global switch appears to be bug ridden with compiled modules not backed by an on disk assembly which is our use case.
-        # Even with the -Global flag the commands within the module are not imported into the global space.
-        # Creating a runtime module to wrap the import of the compiled module works around
-        # whatever PS bug prevents it from working.
-        $scriptBlock = {
-            param($assembly)      
-            Import-Module -Assembly $assembly -DisableNameChecking
+            # Create a new dynamic module that simply loads another module into it.
+            $module = New-Module -ScriptBlock $scriptBlock -ArgumentList $assembly
+            Import-Module $module -Global
         }
-
-        # Create a new dynamic module that simply loads another module into it.
-        $module = New-Module -ScriptBlock $scriptBlock -ArgumentList $assembly
-        Import-Module $module -Global
     } else {
-        throw "Fatal error. Profile assembly not found"
+        throw "Fatal error. Assembly $loadAsModule not found"
     }
 }
 
@@ -64,35 +72,58 @@ function UpdateSubmodules([string]$head) {
 }
 
 function LoadLibGit2Sharp([string]$buildToolsDirectory) {    
-    [System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
+    [void][System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
 }
 
-function UpdateOrBuildAssembly([string]$buildScriptsDirectory) {    
-    Set-StrictMode -Version 'Latest'    
+function global:UpdateOrBuildAssembly {
+  Param(
+        [Parameter(Mandatory=$true)]        
+        [string]
+        $BuildScriptsDirectory,
 
-    if ($Host.Name.Contains("ISE")) {    
-        # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
+        [Parameter(Mandatory=$true)]        
+        [bool]
+        $Update
+    )
 
-        [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
+    Set-StrictMode -Version 'Latest'
 
-        Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
-
-        if ($branch -eq "master") {
-            Write-Host $branch -ForegroundColor Green -NoNewline
-            Write-Host "]`r`n"
-            & git -C $PSScriptRoot pull --ff-only
-        } else {
-            Write-Host $branch -ForegroundColor Yellow -NoNewline
-            Write-Host "]`r`n"
-        }
-
-        [string]$head = & git -C $PSScriptRoot rev-parse HEAD
-        
-        UpdateSubmodules $head
+    try {
+        [void][Aderant.Build.BuildOperationContext]
+        return
+    } catch {
+        # Type not found - we need to bootstrap
     }
 
-    $assemblyPath = [System.IO.Path]::Combine("$buildScriptsDirectory\..\Build.Tools", $coreAssemblyName)     
-    BuildProject $buildScriptsDirectory $true
-    LoadAssembly $buildScriptsDirectory $assemblyPath
-    LoadLibGit2Sharp "$buildScriptsDirectory\..\Build.Tools"
+    if ($Update) {
+        if ($Host.Name.Contains("ISE")) {    
+            # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
+
+            [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
+
+            Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
+
+            if ($branch -eq "master") {
+                Write-Host $branch -ForegroundColor Green -NoNewline
+                Write-Host "]`r`n"
+                & git -C $PSScriptRoot pull --ff-only
+            } else {
+                Write-Host $branch -ForegroundColor Yellow -NoNewline
+                Write-Host "]`r`n"
+            }
+
+            [string]$head = & git -C $PSScriptRoot rev-parse HEAD
+        
+            UpdateSubmodules $head
+        }
+    }
+
+    $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
+
+    BuildProjects $BuildScriptsDirectory $true
+
+    LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\Aderant.Build.dll" $true
+    LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\paket.exe" $false
+
+    LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
 }

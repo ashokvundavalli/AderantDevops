@@ -11,10 +11,6 @@
     <AssemblyName>Aderant.Build</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -43,13 +39,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartProgram>C:\Windows\System32\windowspowerShell\v1.0\powershell.exe</StartProgram>
-    <StartArguments>-command &amp;{ cm Services.Query%3b gd }</StartArguments>
-  </PropertyGroup>
-  <PropertyGroup>
     <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">$(MSBuildToolsPath)</PathToMSBuild>
-    <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">C:\Program Files (x86)\MSBuild\12.0\Bin</PathToMSBuild>
+    <PathToMSBuild Condition="'$(PathToMSBuild)' == ''">C:\Program Files (x86)\MSBuild\14.0\Bin</PathToMSBuild>
   </PropertyGroup>
   <Import Project="..\References.v$(MSBuildToolsVersion).props" />
   <ItemGroup>
@@ -429,13 +420,5 @@
   <ItemGroup>
     <Folder Include="Resources\Scripts\" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />  
 </Project>

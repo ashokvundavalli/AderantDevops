@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,16 +13,18 @@ using Paket;
 namespace Aderant.Build.DependencyResolver {
     internal class PaketPackageManager : IDisposable {
         private readonly FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
+        private readonly string root;
         private readonly ILogger logger;
-        public IFileSystem2 FileSystem { get; }
+        public IFileSystem FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
 
         private Dependencies dependencies;
 
-        public PaketPackageManager(IFileSystem2 fileSystem, ILogger logger) {
+        public PaketPackageManager(string root, IFileSystem2 fileSystem, ILogger logger) {
+            this.root = root;
             this.logger = logger;
             this.FileSystem = fileSystem;
-            dependencies = Initialize();
+            dependencies = Initialize(root);
 
             this.logMessageDelegate = OnTraceEvent;
 
@@ -47,19 +49,19 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private Dependencies Initialize() {
+        private Dependencies Initialize(string Root) {
             try {
-                var file = FileSystem.GetFiles(FileSystem.Root, DependenciesFile, true).FirstOrDefault();
+                var file = FileSystem.GetFiles(Root, DependenciesFile, true).FirstOrDefault();
                 if (file != null) {
-                    dependencies = Dependencies.Locate(FileSystem.Root);
+                    dependencies = Dependencies.Locate(Root);
                 }
             } catch (Exception) {
             } finally {
                 if (dependencies == null) {
                     // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems 
                     // as it will no doubt locate something it shouldn't use (eg one from another product)
-                    Dependencies.Init(FileSystem.Root);
-                    dependencies = Dependencies.Locate(FileSystem.Root);
+                    Dependencies.Init(Root);
+                    dependencies = Dependencies.Locate(Root);
                 }
             }
 
@@ -68,7 +70,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public List<string> FindGroups() {
             List<string> groups = new List<string> { Constants.MainDependencyGroup };
-            string dependenciesFile = $@"{FileSystem.Root}\{DependenciesFile}";
+            string dependenciesFile = $@"{root}\{DependenciesFile}";
 
             using (StreamReader streamReader = new StreamReader(dependenciesFile)) {
                 string line;
@@ -194,7 +196,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IDictionary<string, VersionRequirement> GetDependencies(Domain.GroupName groupName) {
-            Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
+            Dependencies dependenciesFile = Dependencies.Locate(root);
             var file = dependenciesFile.GetDependenciesFile();
 
             try {

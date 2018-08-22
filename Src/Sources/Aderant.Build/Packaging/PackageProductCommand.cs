@@ -46,15 +46,11 @@ namespace Aderant.Build.Packaging {
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
+           
+            var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
+            var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
 
-            try {
-                var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
-                var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
-
-                WriteObject(result);
-            } catch (AggregateException ex) {
-                throw ex.Flatten().InnerException;
-            }
+            WriteObject(result);
         }
     }
 }

@@ -30,6 +30,9 @@ namespace Aderant.Build {
         private BuildStateMetadata buildStateMetadata;
 
         [DataMember]
+        private DropPaths drops;
+
+        [DataMember]
         private bool isDesktopBuild = true;
 
         [DataMember]
@@ -61,6 +64,9 @@ namespace Aderant.Build {
         [IgnoreDataMember]
         private int trackedProjectCount;
 
+        [DataMember]
+        private string productManifestPath;
+
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
             VariableBags = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -87,11 +93,6 @@ namespace Aderant.Build {
 
         [DataMember]
         public DirectoryInfo BuildRoot { get; set; }
-
-        internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
-            InitArtifacts();
-            artifacts[key] = manifests;
-        }
 
         [DataMember]
         public string BuildSystemDirectory { get; set; }
@@ -193,6 +194,11 @@ namespace Aderant.Build {
             set { buildStateMetadata = value; }
         }
 
+        public string ProductManifestPath {
+            get { return productManifestPath; }
+            set { productManifestPath = value; }
+        }
+
         /// <summary>
         /// The state file this build is using (if any).
         /// This indicates if we are reusing an existing build.
@@ -200,6 +206,15 @@ namespace Aderant.Build {
         public List<BuildStateFile> StateFiles {
             get { return stateFiles; }
             set { stateFiles = value; }
+        }
+
+        public DropPaths Drops {
+            get { return drops ?? (drops = new DropPaths()); }
+        }
+
+        internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
+            InitArtifacts();
+            artifacts[key] = manifests;
         }
 
         /// <summary>
@@ -389,6 +404,20 @@ namespace Aderant.Build {
 
             outputs[snapshot.ProjectFile] = snapshot;
         }
+    }
+
+    [Serializable]
+    [DataContract]
+    public class DropPaths {
+
+        [DataMember]
+        public string PrimaryDropLocation { get; set; }
+
+        [DataMember]
+        public string PullRequestDropLocation { get; set; }
+
+        [DataMember]
+        public string XamlBuildDropLocation { get; set; }
     }
 
     [Serializable]

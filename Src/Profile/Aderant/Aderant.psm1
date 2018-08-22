@@ -12,7 +12,7 @@ function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
     $script:ShellContext = [ShellContext]::new()
 
-    UpdateOrBuildAssembly $ShellContext.BuildScriptsDirectory
+    UpdateOrBuildAssembly $ShellContext.BuildScriptsDirectory $true
 
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context

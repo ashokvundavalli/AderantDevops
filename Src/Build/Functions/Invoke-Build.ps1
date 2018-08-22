@@ -8,18 +8,26 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
         #throw "Branch configuration file not found"
         # TODO: shim
     [xml]$config = "<BranchConfig>
-  <Artifacts>
+  <DropPaths>
     <!--\\ap.aderant.com\akl\tempswap\☃-->
     <PrimaryDropLocation>\\dfs.aderant.com\ExpertSuite\_TEMP_</PrimaryDropLocation>
-    <AlternativeDropLocation></AlternativeDropLocation>
+    <AlternativeDropLocation></AlternativeDropLocation>    
     <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
-  </Artifacts>
+    <XamlBuildDropLocation>\\dfs.aderant.com\ExpertSuite\dev\vnext</XamlBuildDropLocation>
+  </DropPaths>
 </BranchConfig>"
         }
 
     #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
-    $context.PrimaryDropLocation = $config.BranchConfig.Artifacts.PrimaryDropLocation
-    $context.PullRequestDropLocation = $config.BranchConfig.Artifacts.PullRequestDropLocation
+
+    $context.Drops.PrimaryDropLocation = $config.BranchConfig.DropPaths.PrimaryDropLocation
+    $context.Drops.PullRequestDropLocation = $config.BranchConfig.DropPaths.PullRequestDropLocation
+    $context.Drops.XamlBuildDropLocation = $config.BranchConfig.DropPaths.XamlBuildDropLocation
+}
+
+function FindProductManifest($context, $stringSearchDirectory) {        
+    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "ExpertManifest.xml")
+    $context.ProductManifestPath = "$path\ExpertManifest.xml"
 }
 
 function FindGitDir($context, $stringSearchDirectory) {        
@@ -33,7 +41,7 @@ function FindGitDir($context, $stringSearchDirectory) {
 
     if ($context.BuildMetadata -ne $null) {
         if ($context.BuildMetadata.DebugLoggingEnabled) {
-            $set.Add("/v:diag") | Out-Null
+            [void]$set.Add("/v:diag")
         }
 
         #if ($context.BuildMetadata.IsPullRequest) {
@@ -42,29 +50,35 @@ function FindGitDir($context, $stringSearchDirectory) {
     }
         
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
-    $set.Add("/nologo") | Out-Null
-    $set.Add("/nr:false") | Out-Null
+    [void]$set.Add("/nologo")
+    [void]$set.Add("/nr:false")
 
     # Multi-core build
-    $set.Add("/m")| Out-Null
+    [void]$set.Add("/m")
 
     if ($context.IsDesktopBuild) {
-        $set.Add("/p:IsDesktopBuild=true") | Out-Null
+        [void]$set.Add("/p:IsDesktopBuild=true")
     } else {
-        $set.Add("/p:IsDesktopBuild=false") | Out-Null
-        $set.Add("/clp:PerformanceSummary") | Out-Null
+        [void]$set.Add("/p:IsDesktopBuild=false")
+        [void]$set.Add("/clp:PerformanceSummary")
     }
 
-    $set.Add("/p:VisualStudioVersion=14.0") | Out-Null
+    [void]$set.Add("/p:VisualStudioVersion=14.0")
 
     if ($context.Switches.SkipCompile) {
-        $set.Add("/p:Switches_SkipCompile=true") | Out-Null
+        [void]$set.Add("/p:Switches_SkipCompile=true")
     }
 
     if ($remainingArgs) {
         # Add pass-thru args
-        $set.Add([string]::Join(" ", $remainingArgs)) | Out-Null
+        [void]$set.Add([string]::Join(" ", $remainingArgs))
     }
+
+    [void]$set.Add("/p:PrimaryDropLocation=$($context.Drops.PrimaryDropLocation)")
+    [void]$set.Add("/p:PullRequestDropLocation=$($context.Drops.PullRequestDropLocation)")
+    [void]$set.Add("/p:XamlBuildDropLocation=$($context.Drops.XamlBuildDropLocation)")
+
+    [void]$set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 
     return [string]::Join(" ", $set)
 }
@@ -111,7 +125,7 @@ function GetBuildStateMetadata($context) {
     }   
 
     $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.PrimaryDropLocation
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.Drops.PrimaryDropLocation
 
     $context.BuildStateMetadata = $buildState
 
@@ -196,13 +210,13 @@ function global:Invoke-Build2
         #[switch]$integration,
 
         #[Parameter]
-        #[switch]$automation,
+        #[switch]$automation,        
 
         [Parameter()]
         [switch]$DisplayCodeCoverage,
                 
         [Parameter(ParameterSetName="Build", Mandatory=$false)]        
-        [string]$ModulePath = "",
+        [string]$ModulePath = "",  
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -222,10 +236,9 @@ function global:Invoke-Build2
 
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
+    FindGitDir $context $repositoryPath    
     ApplyBranchConfig $context $repositoryPath
-     
-    FindGitDir $context $repositoryPath
-
+    FindProductManifest $context $repositoryPath
     GetSourceTreeMetadata $context $repositoryPath
     GetBuildStateMetadata $context
     PrepareEnvironment

@@ -65,7 +65,7 @@ namespace Aderant.Build {
         /// <summary>
         /// Searches upward for a directory containing the specified file, beginning in the specified directory.
         /// </summary>
-        string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null, bool considerDirectories = false);
+        string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null, bool treatDirectoryAsFile = false);
 
         /// <summary>
         /// Searches upward for a directory containing the specified files included by the filter, beginning in the specified directory.

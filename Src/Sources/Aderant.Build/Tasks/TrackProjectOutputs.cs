@@ -2,6 +2,11 @@
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
+
+    /// <summary>
+    /// Records outputs from an MSBuild project.
+    /// Used to drive the the build cache resolution algorithm
+    /// </summary>
     public class TrackProjectOutputs : BuildOperationContextTask {
 
         [Required]
@@ -37,7 +42,7 @@ namespace Aderant.Build.Tasks {
                 TestProjectType,
                 References);
 
-            base.PipelineService.RecordProjectOutputs(snapshot);
+            PipelineService.RecordProjectOutputs(snapshot);
 
             return !Log.HasLoggedErrors;
         }

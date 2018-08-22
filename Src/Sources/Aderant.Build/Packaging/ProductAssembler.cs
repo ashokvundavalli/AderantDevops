@@ -71,14 +71,14 @@ namespace Aderant.Build.Packaging {
             RetrieveBuildOutputs(context);
 
             IEnumerable<string> licenseText = RetrievePackages(context);
-
+        
             return new ProductAssemblyResult {
-                ThirdPartyLicenses = licenseText
+                ThirdPartyLicenses = licenseText.ToList()
             };
         }
 
         private void RetrieveBuildOutputs(ProductAssemblyContext context) {
-            var fs = new PhysicalFileSystem(context.ProductDirectory);
+            var fs = new PhysicalFileSystem();
 
             foreach (var folder in context.BuildOutputs) {
                 logger.Info("Copying {0} ==> {1}", folder, context.ProductDirectory);
@@ -88,22 +88,23 @@ namespace Aderant.Build.Packaging {
         }
 
         private IEnumerable<string> RetrievePackages(ProductAssemblyContext context) {
+            var workingDirectory = Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName());
 
-            var fs = new RetryingPhysicalFileSystem(Path.Combine(context.ProductDirectory, "package." + Path.GetRandomFileName()));
+            var fs = new RetryingPhysicalFileSystem();
 
-            using (var manager = new PaketPackageManager(fs, logger)) {
+            using (var manager = new PaketPackageManager(workingDirectory, fs, logger)) {
                 manager.Add(context, context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }
 
-            var packages = fs.GetDirectories("packages").ToArray();
+            var packages = fs.GetDirectories(Path.Combine(workingDirectory, "packages")).ToArray();
 
             // hack
             packages = packages.Where(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) == -1).ToArray();
 
             var licenseText = CopyPackageContentToProductDirectory(context, fs, packages);
 
-            fs.DeleteDirectory(fs.Root, true);
+            fs.DeleteDirectory(workingDirectory, true);
 
             return licenseText;
         }
@@ -159,7 +160,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem2 fs, string[] packages) {
+        private IEnumerable<string> CopyPackageContentToProductDirectory(ProductAssemblyContext context, IFileSystem fs, string[] packages) {
             ConcurrentBag<string> licenseText = new ConcurrentBag<string>();
 
             SourceCodeInfo sourceCodeInfo = null;
@@ -190,21 +191,19 @@ namespace Aderant.Build.Packaging {
                 foreach (var packageDir in nupkgEntries) {
                     string nupkgDir = Path.Combine(packageDirectory, packageDir);
 
-                    PhysicalFileSystem packageRelativeFs = new PhysicalFileSystem(fs.GetFullPath(nupkgDir));
-
                     if (fs.DirectoryExists(nupkgDir)) {
-                        var packageName = Path.GetDirectoryName(packageDirectory);
+                        var packageName = Path.GetFileName(packageDirectory);
 
                         if (module != null) {
                             if (context.RequiresContentProcessing(module)) {
-                                RootItemHandler processor = new RootItemHandler(packageRelativeFs) {
+                                RootItemHandler processor = new RootItemHandler(fs) {
                                     Module = module,
                                 };
 
-                                processor.MoveContent(context, fs.GetFullPath(nupkgDir));
+                                processor.MoveContent(context, nupkgDir);
 
                                 versionTracker.FileSystem = fs;
-                                versionTracker.RecordVersion(module, fs.GetFullPath(packageDirectory));
+                                versionTracker.RecordVersion(module, packageDirectory);
                                 continue;
                             }
                         }
@@ -257,7 +256,7 @@ namespace Aderant.Build.Packaging {
                         }
 
                         logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
-                        packageRelativeFs.MoveDirectory(fs.GetFullPath(nupkgDir), relativeDirectory);
+                        fs.CopyDirectory(nupkgDir, relativeDirectory);
                     }
                 }
             }
@@ -274,7 +273,7 @@ namespace Aderant.Build.Packaging {
             return licenseText;
         }
 
-        private static void ReadLicenseText(IFileSystem2 fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
+        private static void ReadLicenseText(IFileSystem fs, string lib, string packageName, ConcurrentBag<string> licenseText) {
             IEnumerable<string> licenses = fs.GetFiles(lib, "*license*txt", true);
             foreach (var licenseFile in licenses) {
                 using (Stream stream = fs.OpenFile(licenseFile)) {

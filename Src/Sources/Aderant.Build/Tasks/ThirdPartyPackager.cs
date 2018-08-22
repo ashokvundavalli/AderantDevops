@@ -24,7 +24,7 @@ namespace Aderant.Build.Tasks {
         public bool VersionByTimestamp { get; set; }
 
         public override bool Execute() {
-            fileSystem = new PhysicalFileSystem(Folder);
+            fileSystem = new PhysicalFileSystem();
 
             if (!fileSystem.DirectoryExists(Folder)) {
                 return !Log.HasLoggedErrors;
@@ -67,7 +67,7 @@ namespace Aderant.Build.Tasks {
         private bool DownloadPackage(string packageName) {
             // Download the existing package
             try {
-                using (PaketPackageManager packageManager = new PaketPackageManager(fileSystem, logger)) {
+                using (PaketPackageManager packageManager = new PaketPackageManager(Folder, fileSystem, logger)) {
                     packageManager.Add(new DependencyFetchContext(false), new[] { DependencyRequirement.Create(packageName, Constants.MainDependencyGroup) });
                     packageManager.Restore();
                 }

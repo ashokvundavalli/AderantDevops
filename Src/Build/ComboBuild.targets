@@ -5,9 +5,6 @@
          InitialTargets="SetPropertiesFromContext;"
          TreatAsLocalProperty="SolutionRoot;BuildFlavor">
 
-
-
-
   <!-- Server build property setup -->
   <PropertyGroup Condition="'$(BUILD_BUILDURI)' != ''">
     <SolutionRoot Condition="'$(BUILD_SOURCESDIRECTORY)' != ''">$(BUILD_SOURCESDIRECTORY)</SolutionRoot>
@@ -17,7 +14,7 @@
   <!-- Desktop build property setup -->
   <PropertyGroup Condition="'$(BUILD_BUILDURI)' == ''">
     <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(MSBuildStartupDirectory)</SolutionRoot>
-    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)\_ArtifactStaging</ArtifactStagingDirectory>
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)\_as</ArtifactStagingDirectory>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -40,7 +37,6 @@
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
     <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-    <ProductManifestPath>$(BuildInfrastructureDirectory)\ExpertManifest.xml</ProductManifestPath>
     
     <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
 
@@ -63,6 +59,7 @@
       CreatePipeline;
       <!--GetAllModuleDependencies;-->
       ExecutePipeline;
+      PackageProduct;
       WriteStateFiles;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
@@ -229,8 +226,15 @@
       -->
 
   <PropertyGroup>
-    <InitialTargetsDependsOn />
+    <InitialTargetsDependsOn>ValidateRequiredProperties</InitialTargetsDependsOn>
   </PropertyGroup>
+
+
+  <Target Name="ValidateRequiredProperties">
+    <Error Condition="'$(XamlBuildDropLocation)' == ''" Text="XamlBuildDropLocation is undefined" />
+    <Error Condition="'$(ProductManifestPath)' == ''" Text="ProductManifestPath is undefined" />
+  </Target>
+
 
   <Target Name="SetPropertiesFromContext" DependsOnTargets="$(InitialTargetsDependsOn)">
 
@@ -247,11 +251,6 @@
   
 
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
-    <!-- 
-      To invoke this target on the desktop 
-      msbuild TFSBuild.proj @TFSBuild.rsp /p:DropLocation=\\na.aderant.com\expertsuite\<branch> /nr:false
-    -->
-
     <Message Text="==========================================" Importance="High" />
     <Message Text="Build queue..."                             Importance="High" />
     <Message Text="%(ModulesInBuild.FullPath)"                 Importance="High" />
@@ -280,7 +279,6 @@
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
         CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
-        CopyToDropEnabled=true;
         CompileBuildSystem=false;
       </CommonBuildProperties>
     </PropertyGroup>
@@ -296,11 +294,25 @@
 
   </Target>
 
+  <Target Name="PackageProduct">
+    <PropertyGroup>
+      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)\_product</LocalExpertBinariesDirectory>
+    </PropertyGroup>
 
-  <Target Name="Package" AfterTargets="BuildAndPackage">
-    <!--<OnError ExecuteTargets="OnBuildBreak" />-->
+    <MakeDir Directories="$(LocalExpertBinariesDirectory)"
+             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
+
+    <Exec ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
+          WorkingDirectory="$(PackageScriptsDirectory)" />
+
+    <OnError ExecuteTargets="PackageProductFailed" />
   </Target>
 
+  <Target Name="PackageProductFailed">
+    <Message Text="GetProduct has failed" Importance="high" />
+  </Target>
 
   <!--
     ==========================================================================================
@@ -391,12 +403,15 @@
       WorkingDirectory="$(LocalExpertBinariesDirectory)"
       ParallelCompression="false" />
 
-    <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. --><!--
+    <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. -->
+    <!--
     <Copy
       SourceFiles="@(EliteOverrideFiles)"
       DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
 
-    --><!-- Essentially rename Elite.Help to Expert.Help --><!--
+    -->
+    <!-- Essentially rename Elite.Help to Expert.Help -->
+    <!--
     <Copy
       SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx"
       DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.sfx" />
@@ -404,7 +419,9 @@
     <Delete
       Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx" />
 
-    --><!-- Move the Elite specific docs into the Documents folder--><!--
+    -->
+    <!-- Move the Elite specific docs into the Documents folder-->
+    <!--
     <Delete
       Files="@(Documents)" />
 
@@ -412,28 +429,36 @@
       SourceFiles="@(EliteDocuments)"
       DestinationFiles="@(EliteDocuments->'$(LocalExpertBinariesDirectory)\Documentation\%(RecursiveDir)%(Filename)%(Extension)')" />
 
-    --><!-- This item group must go after the copy so that any moved files are included --><!--
+    -->
+    <!-- This item group must go after the copy so that any moved files are included -->
+    <!--
     <ItemGroup>
       <ZipEliteEnterpriseSourceFiles
         Include="$(LocalExpertBinariesDirectory)\**\*.*"
         Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments)" />
     </ItemGroup>
 
-    --><!-- Create ZIP for Elite Enterprise ExpertSource --><!--
+    -->
+    <!-- Create ZIP for Elite Enterprise ExpertSource -->
+    <!--
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipEliteEnterpriseSourceFiles)"
       ZipFileName="$(EliteEnterpriseZipFile)"
       WorkingDirectory="$(LocalExpertBinariesDirectory)"
       ParallelCompression="false" />
 
-    --><!-- Create ZIP for LicenseGenerator --><!--
+    -->
+    <!-- Create ZIP for LicenseGenerator -->
+    <!--
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipLicenseGeneratorFiles)"
       ZipFileName="$(LicenseZipFile)"
       WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator"
       ParallelCompression="false" />
 
-    --><!-- Create ZIP for RegistrationService --><!--
+    -->
+    <!-- Create ZIP for RegistrationService -->
+    <!--
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipRegistrationServiceFiles)"
       ZipFileName="$(RegistrationZipFile)"

@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PaketPackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
+                using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
                     List<string> groupList = pm.FindGroups();
                     foreach (string groupName in groupList) {
                         var requirements = pm.GetDependencies(Domain.GroupName(groupName));
@@ -51,9 +51,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string directory = resolverRequest.GetDependenciesDirectory(requirements.First());
 
             if (directory.IndexOf("Dependencies", StringComparison.OrdinalIgnoreCase) >= 0) {
-                var fs = new PhysicalFileSystem(Path.GetDirectoryName(directory));
+                var fs = new PhysicalFileSystem();
 
-                PackageRestore(resolverRequest, fs, requirements, cancellationToken);
+                PackageRestore(resolverRequest, Path.GetDirectoryName(directory), fs, requirements, cancellationToken);
             }
         }
 
@@ -63,12 +63,12 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             foreach (var group in grouping) {
                 logger.Info("Resolving packages for path: " + group.Key);
 
-                PackageRestore(resolverRequest, new PhysicalFileSystem(group.Key), group.ToList(), cancellationToken);
+                PackageRestore(resolverRequest, group.Key, new PhysicalFileSystem(), group.ToList(), cancellationToken);
             }
         }
 
-        private void PackageRestore(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
-            using (var manager = new PaketPackageManager(fileSystem, logger)) {
+        private void PackageRestore(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
+            using (var manager = new PaketPackageManager(directory, fileSystem, logger)) {
                 manager.Add(new DependencyFetchContext(), requirements);
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);

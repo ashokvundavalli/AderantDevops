@@ -1,4 +1,5 @@
-﻿. $PSScriptRoot\Bootstrap.ps1
+﻿. "$PSScriptRoot\Functions\Initialize-Assembly.ps1"
+UpdateOrBuildAssembly $PSScriptRoot $false
 
 <#
 .Synopsis
@@ -991,119 +992,7 @@
         } else {
             Write-Host $module.Path -ForegroundColor Green
         }
-    }
-
-    Function global:GetBuildLibraryAssemblyPath([string]$buildScriptDirectory) {
-        $file = [System.IO.Path]::Combine($buildScriptDirectory, "..\Build.Tools\Aderant.Build.dll")
-        return [System.IO.Path]::GetFullPath($file)
-    }
-
-    Function global:GetBuildAnalyzerLibraryAssemblyPath([string]$buildScriptDirectory) {
-        $file = [System.IO.Path]::Combine($buildScriptDirectory, "..\Build.Tools\Aderant.Build.Analyzer.dll")
-        return [System.IO.Path]::GetFullPath($file)
-    }
-
-    Function global:CompileBuildLibraryAssembly($buildScriptDirectory, [bool]$forceCompile) {	
-        $aderantBuildAssembly = GetBuildLibraryAssemblyPath $buildScriptDirectory
-        $aderantBuildAnalyzerAssembly = GetBuildAnalyzerLibraryAssemblyPath $buildScriptDirectory
-
-        if ([System.IO.File]::Exists($aderantBuildAssembly) -and [System.IO.File]::Exists($aderantBuildAnalyzerAssembly) -and $forceCompile -eq $false) {
-            return
-        }
-
-        try {
-          $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-          $toolsVersion = "14.0";
-          Write-Debug "Loaded MS Build 14.0"
-        } catch {
-          $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-          $toolsVersion = "12.0";
-          Write-Debug "Falling back to MS Build 12.0"
-        }
-
-        $MSBuildLocation = [Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools([Microsoft.Build.Utilities.ToolLocationHelper]::CurrentToolsVersion, [Microsoft.Build.Utilities.DotNetFrameworkArchitecture]::Bitness32)
-
-        Write-Debug ("Resolved MS Build {0}" -f $MSBuildLocation)
-
-        $buildTool = [System.IO.Path]::Combine($MSBuildLocation, "MSBuild.exe")
-        $projectPath = [System.IO.Path]::Combine($buildScriptDirectory, "Aderant.Build.Common.targets")
-        & $buildTool $projectPath "/p:BuildScriptsDirectory=$buildScriptDirectory" "/nologo" "/m" "/nr:false"
-    }
-
-    Function global:LoadLibraryAssembly([string]$buildScriptDirectory) {
-        $modules = Get-Module
-        foreach ($module in $modules) {
-            if ($module.Name.Contains("Aderant.Build")) {
-                Write-Debug "Aderant PowerShell C# module already loaded"
-                return
-            }
-        }
-        
-        $file = GetBuildLibraryAssemblyPath $buildScriptDirectory
-        # Looks like the environment hasn't been configured yet, set it up now
-        if (-not (Test-Path $file)) {
-            CompileBuildLibraryAssembly $buildScriptDirectory
-        }
-
-        # Load all DLLs to suck in the dependencies of our code
-        $buildTools = [System.IO.Path]::GetDirectoryName($file)
-        Write-Debug "Loading dependencies from $buildTools"
-
-        $files = @(Get-ChildItem -Path "$buildTools\*" -Filter "*Aderant.Build*.dll")
-        $files += ([System.IO.FileInfo]"$buildScriptDirectory\paket.exe")
-
-        foreach ($item in $files) {
-            $pdbFile = [System.IO.Path]::ChangeExtension($item.Name, ".pdb")
-            $pdb = gci -Path $buildTools -Filter $pdbFile -File
-
-            $assembly = $null
-
-            if ($pdb) {
-                Write-Debug "Loading $item with symbols"
-                $assembly = [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($item.FullName), [System.IO.File]::ReadAllBytes($pdb.FullName))
-            } else {
-                $assembly = [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($item.FullName))
-            }
-
-            if ($item.Name -eq "Aderant.Build.dll") {
-                Import-Module $assembly -DisableNameChecking -Global
-            }
-        }
-    }
-
-    Function global:Compare-Checksums {
-        param(
-            [string] $localFolder,
-            [string] $serverFolder
-        )
-
-        $localChildren = Get-ChildItem $localFolder -Recurse
-        $serverChildren = Get-ChildItem $serverFolder -Recurse
-
-        if ($localChildren.Count -ne $serverChildren.Count) {
-            Write-Host "The number of items in directories" $localFolder "and" $serverFolder "differ"
-            return $true
-        }
-
-        for ($i=0; $i -le $localChildren.Count; $i++) {
-            if ($localChildren[$i].Name -ne $serverChildren[$i].Name) {
-                Write-Host "The content of directories" $localFolder "and" $serverFolder "differ"
-                return $true
-            }
-            if (-not $localChildren[$i].PSIsContainer -and $localChildren[$i].Name -ne $null -and -not $localChildren[$i].Name.EndsWith(".lic")) {
-                if ((Get-FileHash -Path $localChildren[$i].FullName).Hash -ne (Get-FileHash -Path $serverChildren[$i].FullName).Hash) {
-                    Write-Host $localChildren[$i].FullName
-                    Write-Host "Hash:"(Get-FileHash -Path $localChildren[$i].FullName).Hash
-                    Write-Host " is different from"
-                    Write-Host $serverChildren[$i].FullName
-                    Write-Host "Hash:"(Get-FileHash -Path $serverChildren[$i].FullName).Hash
-                    return $true
-                }
-            }
-        }
-
-        return $false
-    }
+    }    
 
 
 <#
@@ -1227,29 +1116,6 @@ function global:Write-Success {
 }
 
 Set-Alias robocopy InvokeRobocopy -Scope Global
-
-
-<#
-.SYNPOSIS
-Gets the name of the module from the RSP file
-Build agents may deploy code to a random folder name, and we cannot rely on the repository name to the name of the module as there
-may be more than one module within a repository
-#>
-function global:GetModuleNameFromRsp {
-    param([string]$repository)
-
-    $rsp = [System.IO.Path]::Combine($repository, "Build", "TFSBuild.rsp")
-    if (Test-Path $rsp) {
-        $rspContent = Get-Content -Raw -Path $rsp
-
-        # Match module name up to closing quote
-        if ($rspContent -match "(?m)ModuleName=(`".*?`"$|.*$)") {
-            return $Matches[1].Trim("`"")
-        }
-    } else {
-        throw "No RSP file at $rsp"
-    }
-}
 
 
 if (-not (Get-Command task -ErrorAction SilentlyContinue)) {

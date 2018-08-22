@@ -3,9 +3,9 @@ using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Packaging {
     internal class RootItemHandler {
-        private readonly IFileSystem2 fs;
+        private readonly IFileSystem fs;
 
-        public RootItemHandler(IFileSystem2 fs) {
+        public RootItemHandler(IFileSystem fs) {
             this.fs = fs;
         }
 
