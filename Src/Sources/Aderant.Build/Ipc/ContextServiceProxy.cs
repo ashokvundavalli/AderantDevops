@@ -27,12 +27,14 @@ namespace Aderant.Build.Ipc {
             Channel.RecordArtifacts(key, manifests);
         }
 
-        public void PutVariable(string id, string key, string value) {
-            Channel.PutVariable(id, key, value);
+        public void PutVariable(string scope, string variableName, string value) {
+            ErrorUtilities.IsNotNull(scope, nameof(scope));
+            Channel.PutVariable(scope, variableName, value);
         }
 
-        public string GetVariable(string id, string key) {
-            return Channel.GetVariable(key, key);
+        public string GetVariable(string scope, string variableName) {
+            ErrorUtilities.IsNotNull(scope, nameof(scope));
+            return Channel.GetVariable(scope, variableName);
         }
     }
 }

@@ -252,28 +252,28 @@ namespace Aderant.Build {
             return mode;
         }
 
-        public void PutVariable(string id, string key, string value) {
+        public void PutVariable(string scope, string variableName, string value) {
             var bags = VariableBags;
 
             IDictionary<string, string> bag;
-            if (!bags.TryGetValue(id, out bag)) {
+            if (!bags.TryGetValue(scope, out bag)) {
                 bag = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                bags[id] = bag;
+                bags[scope] = bag;
             }
 
-            bag[key] = value;
+            bag[variableName] = value;
         }
 
-        public string GetVariable(string id, string key) {
-            ErrorUtilities.IsNotNull(id, nameof(id));
-            ErrorUtilities.IsNotNull(key, nameof(key));
+        public string GetVariable(string scope, string variableName) {
+            ErrorUtilities.IsNotNull(scope, nameof(scope));
+            ErrorUtilities.IsNotNull(variableName, nameof(variableName));
 
             var bags = VariableBags;
 
             IDictionary<string, string> bag;
-            if (bags.TryGetValue(id, out bag)) {
+            if (bags.TryGetValue(scope, out bag)) {
                 string value;
-                bag.TryGetValue(key, out value);
+                bag.TryGetValue(variableName, out value);
 
                 return value;
             }

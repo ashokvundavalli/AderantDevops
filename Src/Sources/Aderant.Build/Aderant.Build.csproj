@@ -114,11 +114,11 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildTreeMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
-    <Compile Include="Ipc\BuildCommunicator.cs" />
-    <Compile Include="Ipc\BuildCommunicatorProxy.cs" />
+    <Compile Include="Ipc\ContextService.cs" />
+    <Compile Include="Ipc\ContextServiceProxy.cs" />
     <Compile Include="Ipc\BuildContextService.cs" />
-    <Compile Include="Ipc\IBuildCommunicator.cs" />
-    <Compile Include="Ipc\IBuildCommunicatorContract.cs" />
+    <Compile Include="Ipc\IContextService.cs" />
+    <Compile Include="Ipc\IContextServiceContract.cs" />
     <Compile Include="MSBuild\ImportElement.cs" />
     <Compile Include="DependencyAnalyzer\Model\AbstractArtifact.cs" />
     <Compile Include="MSBuild\Comment.cs" />

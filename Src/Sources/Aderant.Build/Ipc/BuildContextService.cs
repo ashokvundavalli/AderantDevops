@@ -16,8 +16,14 @@ namespace Aderant.Build.Ipc {
             host = new ServiceHost(typeof(ContextService));
             var namedPipeBinding = CreateBinding();
 
-            host.AddServiceEndpoint(typeof(IContextService), namedPipeBinding, $"net.pipe://localhost/_{pipeId}");
+            host.AddServiceEndpoint(typeof(IContextService), namedPipeBinding, CreateAddress(pipeId));
             host.Open();
+
+            Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, pipeId, EnvironmentVariableTarget.Process);
+        }
+
+        private static string CreateAddress(string pipeId) {
+            return $"net.pipe://localhost/_{pipeId}";
         }
 
         private static NetNamedPipeBinding CreateBinding() {
@@ -40,8 +46,8 @@ namespace Aderant.Build.Ipc {
             }
         }
 
-        internal static IContextServiceContract CreateProxy(string id) {
-            EndpointAddress endpointAddress = new EndpointAddress($"net.pipe://localhost/_{id}");
+        internal static IContextServiceContract CreateProxy(string pipeId) {
+            EndpointAddress endpointAddress = new EndpointAddress(CreateAddress(pipeId));
             var namedPipeBinding = CreateBinding();
 
             return new ContextServiceProxy(namedPipeBinding, endpointAddress);

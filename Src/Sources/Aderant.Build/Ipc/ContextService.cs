@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ServiceModel;
 
 namespace Aderant.Build.Ipc {
@@ -8,7 +9,8 @@ namespace Aderant.Build.Ipc {
     [ServiceBehavior(
         InstanceContextMode = InstanceContextMode.Single,
         IncludeExceptionDetailInFaults = true,
-        ConcurrencyMode = ConcurrencyMode.Single)]
+        ConcurrencyMode = ConcurrencyMode.Single,
+        MaxItemsInObjectGraph = Int32.MaxValue)]
     internal class ContextService : IContextService {
         private BuildOperationContext ctx;
 
@@ -28,12 +30,12 @@ namespace Aderant.Build.Ipc {
             ctx.RecordArtifact(key, manifests);
         }
 
-        public void PutVariable(string id, string key, string value) {
-            ctx.PutVariable(id, key, value);
+        public void PutVariable(string scope, string variableName, string value) {
+            ctx.PutVariable(scope, variableName, value);
         }
 
-        public string GetVariable(string id, string key) {
-            return ctx.GetVariable(id, key);
+        public string GetVariable(string scope, string variableName) {
+            return ctx.GetVariable(scope, variableName);
         }
     }
 }
