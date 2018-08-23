@@ -124,6 +124,7 @@ function global:UpdateOrBuildAssembly {
 
     LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\Aderant.Build.dll" $true
     LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\paket.exe" $false
+    LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\protobuf-net.dll" $false    
 
     LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
 }
