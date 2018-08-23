@@ -108,7 +108,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles jobFiles) {
-            await LoadProjects(context.BuildRoot.FullName, true, analysisContext.ExcludePaths);
+            await LoadProjects(context.BuildRoot, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;

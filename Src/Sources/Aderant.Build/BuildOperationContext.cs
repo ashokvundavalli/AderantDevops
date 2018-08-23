@@ -17,7 +17,7 @@ using ProtoBuf.Meta;
 namespace Aderant.Build {
 
     [DataContract]
-    [ProtoContract]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     public class BuildOperationContext {
 
         [DataMember]
@@ -54,6 +54,7 @@ namespace Aderant.Build {
         private int recordArtifactCount;
 
         [IgnoreDataMember]
+        [ProtoIgnore]
         private IContextualServiceProvider serviceProvider;
 
         [DataMember]
@@ -68,44 +69,8 @@ namespace Aderant.Build {
         [IgnoreDataMember]
         private int trackedProjectCount;
 
+        [DataMember]
         private ICollection<string> writtenStateFiles;
-
-        static BuildOperationContext() {
-            var metaType = RuntimeTypeModel.Default[typeof(BuildOperationContext)];
-            if (metaType == null || metaType.GetFields().Length == 0) {
-                RuntimeTypeModel.Default.Add(typeof(BuildOperationContext), false)
-                    .Add(
-                        nameof(artifacts),
-                        nameof(artifactStagingDirectory),
-                        //
-                        nameof(buildScriptsDirectory),
-                        nameof(buildMetadata),
-                        nameof(buildStateMetadata),
-                        nameof(buildSystemDirectory),
-                        //
-                        nameof(ConfigurationToBuild),
-                        //
-                        nameof(drops),
-                        nameof(DownloadRoot),
-                        //
-                        nameof(Environment),
-                        //
-                        nameof(isDesktopBuild),
-                        //
-                        nameof(outputs),
-                        //
-                        nameof(productManifestPath),
-                        nameof(PipelineName),
-                        //
-                        nameof(sourceTreeMetadata),
-                        nameof(stateFiles),
-                        nameof(switches),
-                        nameof(ScopedVariables),
-
-                        nameof(writtenStateFiles)
-                    );
-            }
-        }
 
         public BuildOperationContext() {
             ScopedVariables = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -129,7 +94,7 @@ namespace Aderant.Build {
         }
 
         [DataMember]
-        public DirectoryInfo BuildRoot { get; set; }
+        public string BuildRoot { get; set; }
 
         public string BuildSystemDirectory {
             get { return buildSystemDirectory; }

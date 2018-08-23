@@ -71,7 +71,7 @@ namespace Aderant.Build.Tasks {
 
         private void ExecuteCore(BuildOperationContext context) {
             // TODO: keep this shim?
-            context.BuildRoot = new DirectoryInfo(ModulesDirectory);
+            context.BuildRoot = ModulesDirectory;
 
             if (context.Switches.Resume) {
                 if (File.Exists(InstanceFile)) {

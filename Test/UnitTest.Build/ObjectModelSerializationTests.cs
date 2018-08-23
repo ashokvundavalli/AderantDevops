@@ -35,6 +35,17 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        public void BuildOperationContextSerialization() {
+            var metadata = new BuildOperationContext();
+            metadata.WrittenStateFiles = new List<string> { "1"  };
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual(1, instance.WrittenStateFiles.Count);
+        }
+
+        [TestMethod]
         public void BuildStateFileSerialization() {
             var metadata = new BuildStateFile();
 
