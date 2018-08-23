@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -8,6 +8,8 @@ namespace Aderant.Build.Tasks {
     /// Extracts key properties from the context and returns them to MSBuild
     /// </summary>
     public sealed class GetPropertiesFromContext : BuildOperationContextTask {
+        // TODO: This class also sets...what name to give it?
+        public string ArtifactStagingDirectory { get; set; }
 
         [Output]
         public bool IsDesktopBuild { get; set; }
@@ -23,13 +25,21 @@ namespace Aderant.Build.Tasks {
 
         public override bool ExecuteTask() {
             base.Execute();
-            
-            IsDesktopBuild = Context.IsDesktopBuild;
-            BuildSystemDirectory = Context.BuildSystemDirectory;
 
-            SetFlavor();
+            var context = Context;
+
+            IsDesktopBuild = context.IsDesktopBuild;
+            BuildSystemDirectory = context.BuildSystemDirectory;
+
+            SetFlavor(context);
+
+            if (!string.IsNullOrWhiteSpace(ArtifactStagingDirectory)) {
+                context.ArtifactStagingDirectory = ArtifactStagingDirectory;
+            }
 
             CreatePropertyCollection();
+
+            PipelineService.Publish(context);
 
             return !Log.HasLoggedErrors;
         }
@@ -68,10 +78,10 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private void SetFlavor() {
-            if (Context.BuildMetadata != null) {
-                if (!string.IsNullOrEmpty(Context.BuildMetadata.Flavor)) {
-                    BuildFlavor = Context.BuildMetadata.Flavor;
+        private void SetFlavor(BuildOperationContext context) {
+            if (context.BuildMetadata != null) {
+                if (!string.IsNullOrEmpty(context.BuildMetadata.Flavor)) {
+                    BuildFlavor = context.BuildMetadata.Flavor;
                 } else {
                     if (Context.Switches.Release) {
                         BuildFlavor = "Release";
@@ -79,7 +89,7 @@ namespace Aderant.Build.Tasks {
                         BuildFlavor = "Debug";
                     }
 
-                    Context.BuildMetadata.Flavor = BuildFlavor;
+                    context.BuildMetadata.Flavor = BuildFlavor;
                 }
             }
         }

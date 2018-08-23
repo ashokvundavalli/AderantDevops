@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using Aderant.Build.VersionControl;
@@ -27,7 +26,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// <param name="artifacts">The artifacts this build produced</param>
         /// <param name="metadata">A description of the source tree</param>
         /// <param name="buildMetadata">A description of the current build environment</param>
-        /// <param name="path">The path to write the file to</param>
+        /// <param name="destinationPath">The path to write the file to</param>
         public string WriteStateFile(
             BuildStateFile previousBuild,
             BucketId bucket,
@@ -35,7 +34,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata metadata,
             BuildMetadata buildMetadata,
-            string path) {
+            string destinationPath) {
 
             string treeShaValue = null;
             if (metadata != null) {
@@ -81,9 +80,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFile.DropLocation = null;
 
-            fileSystem.AddFile(path, stream => stateFile.Serialize(stream));
+            fileSystem.AddFile(destinationPath, stream => stateFile.Serialize(stream));
 
-            return path;
+            return destinationPath;
         }
 
         private static void MergeExistingOutputs(string buildId, IDictionary<string, OutputFilesSnapshot> oldOutput, IDictionary<string, OutputFilesSnapshot> newOutput) {
@@ -116,9 +115,17 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 }
 
                 BuildStateFile previousBuild = context.GetStateFile(tag);
-                var dropLocation = Path.Combine(context.GetDropLocation(tag), DefaultFileName);
-                WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, dropLocation);
+
+                WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context);
             }
+        }
+
+        private void WriteStateFile(BuildStateFile previousBuild, BucketId bucket, ProjectOutputSnapshot projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
+            var pathBuilder = new ArtifactStagingPathBuilder(context);
+            var file = pathBuilder.BuildPath(bucket.Tag);
+            file = Path.Combine(file, DefaultFileName);
+
+            WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, file);
         }
     }
 }

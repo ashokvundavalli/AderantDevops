@@ -6,7 +6,6 @@ using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.Handlers;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -59,7 +58,7 @@ namespace UnitTest.Build.Packaging {
                     Drops = { PrimaryDropLocation = @"\\mydrop\" },
                     BuildMetadata = new BuildMetadata()
                 },
-                "Foo",
+                "Bar",
                 new[] { new ArtifactPackage("bar", specs) });
 
             Assert.IsNotNull(results);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -58,8 +59,11 @@ namespace Aderant.Build {
         [IgnoreDataMember]
         private int trackedProjectCount;
 
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
+
+        [DataMember(EmitDefaultValue = false)]
+        private string artifactStagingDirectory;
 
         public BuildOperationContext() {
             Configuration = new Dictionary<object, object>();
@@ -168,16 +172,6 @@ namespace Aderant.Build {
         [DataMember]
         public ConfigurationToBuild ConfigurationToBuild { get; set; }
 
-        //public string PrimaryDropLocation {
-        //    get { return primaryDropLocation; }
-        //    set { primaryDropLocation = value; }
-        //}
-
-        //public string PullRequestDropLocation {
-        //    get { return pullRequestDropLocation; }
-        //    set { pullRequestDropLocation = value; }
-        //}
-
         public SourceTreeMetadata SourceTreeMetadata {
             get { return sourceTreeMetadata; }
             set { sourceTreeMetadata = value; }
@@ -204,6 +198,16 @@ namespace Aderant.Build {
 
         public DropPaths Drops {
             get { return drops ?? (drops = new DropPaths()); }
+        }
+
+        public string ArtifactStagingDirectory {
+            get { return artifactStagingDirectory; }
+            set {
+                if (value != null) {
+                    value = value.TrimEnd(Path.DirectorySeparatorChar);
+                }
+                artifactStagingDirectory = value;
+            }
         }
 
         internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
@@ -288,10 +292,6 @@ namespace Aderant.Build {
             }
 
             return null;
-        }
-
-        public string GetDropLocation(string publisherName) {
-            return BucketPathBuilder.BuildDropLocation(publisherName, this);
         }
 
         internal OutputFilesSnapshot RecordProjectOutputs(
@@ -400,6 +400,28 @@ namespace Aderant.Build {
             InitOutputs();
 
             outputs[snapshot.ProjectFile] = snapshot;
+        }
+    }
+
+    internal class ArtifactStagingPathBuilder {
+        private readonly BuildOperationContext context;
+        private string stagingDirectory;
+
+        public ArtifactStagingPathBuilder(BuildOperationContext context) {
+            ErrorUtilities.IsNotNull(context, nameof(context));
+
+            this.context = context;
+            this.stagingDirectory = Path.Combine(context.ArtifactStagingDirectory, "_artifacts");
+        }
+
+        public string BuildPath(string name) {
+            BucketId bucket = context.SourceTreeMetadata.GetBucket(name);
+
+            return Path.Combine(
+                stagingDirectory,
+                bucket != null ? bucket.Id ?? string.Empty : string.Empty,
+                context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
+
         }
     }
 

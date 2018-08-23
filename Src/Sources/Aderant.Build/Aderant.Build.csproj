@@ -44,8 +44,7 @@
   </PropertyGroup>
   <Import Project="..\References.v$(MSBuildToolsVersion).props" />
   <ItemGroup>
-    <Reference Include="LibGit2Sharp">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
       <HintPath>..\..\Build\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
@@ -417,6 +416,7 @@
     <EmbeddedResource Include="Commands\Assets\OpenTypeStd\FuturaStd-Medium.otf" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="debug.ps1" />
     <None Include="Resources\Nuspec.template" />
   </ItemGroup>
   <ItemGroup>

@@ -38,7 +38,6 @@
       <HintPath>..\..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
     <Reference Include="LibGit2Sharp, Version=0.23.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Src\Build\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />

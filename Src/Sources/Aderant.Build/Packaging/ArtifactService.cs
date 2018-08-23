@@ -8,12 +8,14 @@ using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.TeamFoundation;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private List<IArtifactHandler> handlers = new List<IArtifactHandler>();
+        private ArtifactStagingPathBuilder pathBuilder;
 
         public ArtifactService(ILogger logger)
             : this(logger, new PhysicalFileSystem()) {
@@ -23,7 +25,7 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
             this.fileSystem = fileSystem;
         }
-        
+
         public VsoBuildCommands VsoCommands { get; set; }
 
         /// <summary>
@@ -34,6 +36,8 @@ namespace Aderant.Build.Packaging {
         /// <param name="packages">The artifacts to publish</param>
         internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
             ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
+
+            this.pathBuilder = new ArtifactStagingPathBuilder(context);
 
             var results = PublishInternal(context, publisherName, packages);
 
@@ -61,7 +65,7 @@ namespace Aderant.Build.Packaging {
 
                     CheckForDuplicates(artifact.Id, files);
 
-                    var copyOperations = CalculateFileCopyOperations(publisherName, copyList, context, artifact.Id, files);
+                    var copyOperations = CalculateFileCopyOperations(publisherName, copyList, artifact.Id, files);
                     if (copyOperations != null) {
                         buildArtifacts.Add(copyOperations);
                     }
@@ -99,7 +103,7 @@ namespace Aderant.Build.Packaging {
 
             if (snapshot == null) {
                 return files;
-             }
+            }
 
             MergeExistingOutputs(context, publisherName, snapshot);
 
@@ -151,43 +155,38 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private BuildArtifact CalculateFileCopyOperations(string publisherName, List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
-            var dl = context.GetDropLocation(publisherName);
+        private BuildArtifact CalculateFileCopyOperations(string publisher, List<Tuple<string, PathSpec>> copyList, string artifactId, IReadOnlyCollection<PathSpec> files) {
+            var container = pathBuilder.BuildPath(publisher);
 
-            if (dl != null) {
-                var container = Path.Combine(dl, artifactId);
+            container = Path.Combine(container, artifactId);
 
-                foreach (var pathSpec in files) {
-                    copyList.Add(Tuple.Create(container, pathSpec));
-                }
-
-                return new BuildArtifact {
-                    FullPath = container,
-                    Name = artifactId,
-                };
+            foreach (var pathSpec in files) {
+                copyList.Add(Tuple.Create(container, pathSpec));
             }
 
-            return null;
+            return new BuildArtifact {
+                FullPath = container,
+                Name = artifactId,
+            };
         }
 
-      
-
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
-            if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
-                try {
-                    fileSystem.AddFile(destinationRoot, new MemoryStream());
-                } catch (IOException) {
-                    throw new IOException("Failed to create new file at " + destinationRoot);
+       
+                if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
+                    try {
+                        fileSystem.AddFile(destinationRoot, new MemoryStream());
+                    } catch (IOException) {
+                        throw new IOException("Failed to create new file at " + destinationRoot);
+                    }
+
+                    return;
                 }
 
-                return;
-            }
+                var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
 
-            var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
-
-            if (fileSystem.FileExists(pathSpec.Location)) {
-                fileSystem.CopyFile(pathSpec.Location, destination);
-            }
+                if (fileSystem.FileExists(pathSpec.Location)) {
+                    fileSystem.CopyFile(pathSpec.Location, destination);
+                }
         }
 
         public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {
@@ -203,7 +202,6 @@ namespace Aderant.Build.Packaging {
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, publisherName, localArtifactFiles);
             CopyFiles(filesToRestore, context.IsDesktopBuild);
-
         }
 
         private void CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {

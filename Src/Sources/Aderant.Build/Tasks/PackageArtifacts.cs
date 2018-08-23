@@ -10,6 +10,7 @@ namespace Aderant.Build.Tasks {
 
     public sealed class PublishArtifacts : BuildOperationContextTask {
 
+        [Required]
         public string SolutionRoot { get; set; }
 
         public string[] RelativeFrom { get; set; }
@@ -25,11 +26,16 @@ namespace Aderant.Build.Tasks {
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
 
                 var commands = new VsoBuildCommands(Logger);
+
                 var artifactService = new ArtifactService(Logger, new PhysicalFileSystem());
                 artifactService.RegisterHandler(new PullRequestHandler());
-                artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
+
+                if (!Context.IsDesktopBuild) {
+                    artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
+                }
+
                 artifactService.VsoCommands = commands;
-                
+
                 var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
 
                 foreach (KeyValuePair<string, ICollection<ArtifactManifest>> pair in Context.GetArtifacts()) {

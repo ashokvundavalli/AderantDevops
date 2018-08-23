@@ -39,6 +39,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 { "ProductManifestPath", Path.Combine(DeploymentItemsDirectory, "ExpertManifest.xml") },
                 { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) },
                 { "PackageArtifacts", bool.TrueString },
+                { "XamlBuildDropLocation", "A" },
                 { WellKnownProperties.ContextFileName, contextFile },
             };
 
