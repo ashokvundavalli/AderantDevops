@@ -63,6 +63,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Src\Build\paket.exe</HintPath>
     </Reference>
+    <Reference Include="protobuf-net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Src\Build.Tools\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="System">
       <Private>True</Private>
     </Reference>
@@ -114,6 +118,7 @@
     <Compile Include="IndendedFileParserTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\ArtifactPackageTests.cs" />
+    <Compile Include="ObjectModelSerializationTests.cs" />
     <Compile Include="ProjectSystem\ProjectOutputTrackerTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />

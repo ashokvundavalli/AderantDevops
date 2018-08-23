@@ -4,6 +4,7 @@ using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
+using Aderant.Build.ProjectSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 

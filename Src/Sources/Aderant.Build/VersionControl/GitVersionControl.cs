@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Aderant.Build.VersionControl.Model;
 using LibGit2Sharp;
+using ProtoBuf;
 using FileStatus = Aderant.Build.VersionControl.Model.FileStatus;
 
 namespace Aderant.Build.VersionControl {
@@ -194,9 +195,14 @@ namespace Aderant.Build.VersionControl {
     /// Represents the components to identify an object within the build cache
     /// </summary>
     [DebuggerDisplay("{Id} {Tag}")]
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     [DataContract]
     public class BucketId {
+
+        internal BucketId() {
+
+        }
+
         [DataMember]
         private readonly string id;
 

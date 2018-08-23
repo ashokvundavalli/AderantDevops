@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using ProtoBuf;
 
 namespace Aderant.Build {
 
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
     public sealed class BuildMetadata {
 
@@ -22,13 +23,13 @@ namespace Aderant.Build {
         public int BuildId { get; set; }
 
         [DataMember]
-        public Uri BuildUri { get; set; }
+        public string BuildUri { get; set; }
 
         [DataMember]
         public string JobName { get; set; }
 
         [DataMember]
-        public Uri JobUri { get; set; }
+        public string JobUri { get; set; }
 
         [DataMember]
         public string ScmBranch { get; set; }
@@ -37,7 +38,7 @@ namespace Aderant.Build {
         public string ScmCommitId { get; set; }
 
         [DataMember]
-        public Uri ScmUri { get; set; }
+        public string ScmUri { get; set; }
 
         [DataMember]
         public PullRequestInfo PullRequest { get; set; }
@@ -45,11 +46,12 @@ namespace Aderant.Build {
         /// <summary>
         /// Indicates if this build is running within the context of a pull request
         /// </summary>
+        [ProtoIgnore]
         public bool IsPullRequest {
             get { return PullRequest != null; }
         }
-        [DataMember]
 
+        [DataMember]
         public string Flavor { get; set; }
 
         /// <summary>
@@ -74,7 +76,7 @@ namespace Aderant.Build {
         }
     }
 
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
     public sealed class PullRequestInfo {
 

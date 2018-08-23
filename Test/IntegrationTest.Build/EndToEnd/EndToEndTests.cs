@@ -49,6 +49,8 @@ namespace IntegrationTest.Build.EndToEnd {
             service.StartListener(contextFile);
             this.proxy = BuildPipelineServiceFactory.CreateProxy(contextFile);
             service.Publish(context);
+
+            properties["PrimaryDropLocation"] = context.Drops.PrimaryDropLocation;
         }
 
         [TestMethod]
@@ -58,7 +60,7 @@ namespace IntegrationTest.Build.EndToEnd {
             RunTarget("EndToEnd", properties);
 
             context = proxy.GetContext();
-            Assert.AreEqual(2, Directory.GetFileSystemEntries(context.Drops.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories).Length);
+            Assert.AreEqual(2, context.WrittenStateFiles.Count);
 
             var logFile = base.LogFile;
 

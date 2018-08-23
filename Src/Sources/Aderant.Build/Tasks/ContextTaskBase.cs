@@ -27,13 +27,13 @@ namespace Aderant.Build.Tasks {
         }
 
         protected ILogger Logger {
-            get { return logger ?? (logger = new BuildTaskLogger(this.Log)); }
+            get { return logger ?? (logger = new BuildTaskLogger(Log)); }
         }
 
         internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineServiceContract PipelineService {
-            get { return pipelineService ?? (pipelineService = ObtainService()); }
+            get { return pipelineService ?? (pipelineService = GetService<IBuildPipelineServiceContract>()); }
         }
 
         public sealed override bool Execute() {
@@ -68,14 +68,14 @@ namespace Aderant.Build.Tasks {
             return PipelineService.GetContext();
         }
 
-        private IBuildPipelineServiceContract ObtainService() {
+        protected T GetService<T>() where T : class {
             if (string.IsNullOrEmpty(ContextFileName)) {
                 ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
             }
 
             ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
 
-            return BuildPipelineServiceFactory.CreateProxy(ContextFileName);
+            return (T)BuildPipelineServiceFactory.CreateProxy(ContextFileName);
         }
     }
 }

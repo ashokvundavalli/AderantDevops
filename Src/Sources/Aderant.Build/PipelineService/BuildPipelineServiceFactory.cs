@@ -16,7 +16,9 @@ namespace Aderant.Build.PipelineService {
             host = new ServiceHost(typeof(BuildPipelineServiceImpl));
             var namedPipeBinding = CreateBinding();
 
-            host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, CreateAddress(pipeId));
+            var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, CreateAddress(pipeId));
+            endpoint.Behaviors.Add(new ProtoBuf.ServiceModel.ProtoEndpointBehavior());
+
             host.Open();
 
             Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, pipeId, EnvironmentVariableTarget.Process);
@@ -49,6 +51,7 @@ namespace Aderant.Build.PipelineService {
         internal static IBuildPipelineServiceContract CreateProxy(string pipeId) {
             EndpointAddress endpointAddress = new EndpointAddress(CreateAddress(pipeId));
             var namedPipeBinding = CreateBinding();
+            
 
             return new BuildPipelineServiceProxy(namedPipeBinding, endpointAddress);
         }

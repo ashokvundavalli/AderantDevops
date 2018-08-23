@@ -1,14 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using Aderant.Build.Packaging;
+using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
     /// Proxy for <see cref="IBuildPipelineService"/>.
     /// </summary>
     internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService, IBuildPipelineServiceContract {
+
+        static BuildPipelineServiceProxy() {
+            ClientBase<IBuildPipelineService>.CacheSetting = CacheSetting.AlwaysOn;
+        }
+
         public BuildPipelineServiceProxy(Binding binding, EndpointAddress remoteAddress)
             : base(binding, remoteAddress) {
+            Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
         }
 
         public void Publish(BuildOperationContext context) {
@@ -23,7 +31,8 @@ namespace Aderant.Build.PipelineService {
             Channel.RecordProjectOutputs(snapshot);
         }
 
-        public void RecordArtifacts(string key, ICollection<ArtifactManifest> manifests) {
+        public void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests) {
+            ErrorUtilities.IsNotNull(key, nameof(key));
             Channel.RecordArtifacts(key, manifests);
         }
 
@@ -35,6 +44,15 @@ namespace Aderant.Build.PipelineService {
         public string GetVariable(string scope, string variableName) {
             ErrorUtilities.IsNotNull(scope, nameof(scope));
             return Channel.GetVariable(scope, variableName);
+        }
+
+        public void AssociateArtifact(IEnumerable<BuildArtifact> artifacts) {
+            ErrorUtilities.IsNotNull(artifacts, nameof(artifacts));
+            Channel.AssociateArtifact(artifacts);
+        }
+
+        public BuildArtifact[] GetAssociatedArtifacts() {
+            return Channel.GetAssociatedArtifacts();
         }
     }
 }

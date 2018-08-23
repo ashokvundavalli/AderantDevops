@@ -62,6 +62,10 @@
     <Reference Include="PresentationFramework">
       <Private>False</Private>
     </Reference>
+    <Reference Include="protobuf-net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Build.Tools\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
@@ -158,10 +162,11 @@
     <Compile Include="ProjectSystem\ConfigurationToBuild.cs" />
     <Compile Include="Packaging\ArtifactPackage.cs" />
     <Compile Include="Packaging\ArtifactService.cs" />
-    <Compile Include="Packaging\ArtifactStorageInfo.cs" />
+    <Compile Include="Packaging\BuildArtifact.cs" />
     <Compile Include="Packaging\BucketService.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildStateFile.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildStateWriter.cs" />
+    <Compile Include="Tasks\ExecutePendingVsoCommands.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
     <Compile Include="Tasks\PackageArtifacts.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
@@ -198,7 +203,7 @@
     <Compile Include="DependencyResolver\Parser\DependencyManifestParser.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
-    <Compile Include="DependencyAnalyzer\OrchestrationFiles.cs" />
+    <Compile Include="ProjectSystem\OrchestrationFiles.cs" />
     <Compile Include="ProjectSystem\ChangesToConsider.cs" />
     <Compile Include="Tasks\ContextTaskBase.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
@@ -238,7 +243,7 @@
     <Compile Include="Packaging\RootItemHandler.cs" />
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
-    <Compile Include="DependencyAnalyzer\WellKnownProjectTypeGuids.cs" />
+    <Compile Include="ProjectSystem\WellKnownProjectTypeGuids.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
     <Compile Include="DependencyAnalyzer\BuildPipeline.cs" />
     <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
@@ -347,7 +352,6 @@
     <Compile Include="Commands\GetExpertModule.cs" />
     <Compile Include="Commands\GetExpertModules.cs" />
     <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
-    <Compile Include="Commands\ModuleHelpInitializerCommand.cs" />
     <Compile Include="Commands\NewExpertBuildDefinition.cs" />
     <Compile Include="Commands\SortModulesByBuildOrder.cs" />
     <Compile Include="Commands\UpdateBuildAllProject.cs" />
@@ -392,11 +396,6 @@
     <Compile Include="Commands\WebPackageExtract.cs" />
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
     <Compile Include="VisualStudioEnvironmentContext.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletDescriptionAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\CmdletGroupAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\ExampleAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\Attributes\RelatedCmdletsAttribute.cs" />
-    <Compile Include="ThirdParty\Lapointe\CmdletHelpGenerator.cs" />
     <Compile Include="UpgradeTemplateBuildProcess.cs" />
     <Compile Include="WebArchiveFileSystem.cs" />
   </ItemGroup>

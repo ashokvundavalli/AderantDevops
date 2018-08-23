@@ -25,16 +25,14 @@ namespace Aderant.Build.Tasks {
             if (ArtifactDefinitions != null) {
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
 
-                var commands = new VsoBuildCommands(Logger);
+                var commands = new VsoBuildCommandBuilder(Logger);
 
-                var artifactService = new ArtifactService(Logger, new PhysicalFileSystem());
+                var artifactService = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
                 artifactService.RegisterHandler(new PullRequestHandler());
 
                 if (!Context.IsDesktopBuild) {
                     artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
                 }
-
-                artifactService.VsoCommands = commands;
 
                 var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
 

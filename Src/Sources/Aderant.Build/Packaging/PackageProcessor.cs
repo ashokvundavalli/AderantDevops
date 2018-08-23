@@ -17,12 +17,12 @@ namespace Aderant.Build.Packaging {
         }
 
         public void UpdateBuildNumber(string buildNumber) {
-            VsoBuildCommands commands = new VsoBuildCommands(logger);
-            commands.UpdateBuildNumber(buildNumber);
+            VsoBuildCommandBuilder commandsBuilder = new VsoBuildCommandBuilder(logger);
+            commandsBuilder.UpdateBuildNumber(buildNumber);
         }
 
         public void AssociatePackagesToBuild(FileInfo[] packages) {
-            VsoBuildCommands commands = new VsoBuildCommands(logger);
+            VsoBuildCommandBuilder commandsBuilder = new VsoBuildCommandBuilder(logger);
 
             foreach (var package in packages) {
                 using (ZipArchive archive = ZipFile.OpenRead(package.FullName)) {
@@ -31,7 +31,7 @@ namespace Aderant.Build.Packaging {
                     if (entry != null) {
                         using (Stream stream = entry.Open()) {
                             using (StreamReader reader = new StreamReader(stream)) {
-                                AssociatePackageToBuild(reader.ReadToEnd(), commands);
+                                AssociatePackageToBuild(reader.ReadToEnd(), commandsBuilder);
                             }
                         }
                     }
@@ -39,7 +39,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        internal void AssociatePackageToBuild(string nuspecText, VsoBuildCommands commands) {
+        internal void AssociatePackageToBuild(string nuspecText, VsoBuildCommandBuilder commandsBuilder) {
             var nuspec = new NuGet.Nuspec(nuspecText);
 
             string name = nuspec.Id.Value;
@@ -60,9 +60,9 @@ namespace Aderant.Build.Packaging {
             // set the actual final folder as the name.
             // Aderant.Database.Backup
             if (name.Equals("Aderant.Database.Backup")) {
-                commands.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.DatabasePackageUri);
+                commandsBuilder.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.DatabasePackageUri);
             } else {
-                commands.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.PackageRepositoryUri);
+                commandsBuilder.LinkArtifact($"{name}\\{nuspecVersion}", VsoBuildArtifactType.FilePath, Constants.PackageRepositoryUri);
             }
         }
     }

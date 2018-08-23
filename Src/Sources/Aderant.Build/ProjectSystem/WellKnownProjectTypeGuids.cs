@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Aderant.Build.DependencyAnalyzer {
+namespace Aderant.Build.ProjectSystem {
     internal static class WellKnownProjectTypeGuids {
         public static Guid[] WebProjectGuids = new[] {
             new Guid("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}"),

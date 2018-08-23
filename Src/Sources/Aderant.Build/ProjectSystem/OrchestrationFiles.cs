@@ -1,4 +1,4 @@
-﻿namespace Aderant.Build.DependencyAnalyzer {
+﻿namespace Aderant.Build.ProjectSystem {
     internal class OrchestrationFiles {
         public string BeforeProjectFile { get; set; }
         public string AfterProjectFile { get; set; }

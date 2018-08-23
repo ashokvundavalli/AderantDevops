@@ -125,7 +125,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var file = pathBuilder.BuildPath(bucket.Tag);
             file = Path.Combine(file, DefaultFileName);
 
-            WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, file);
+            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, file);
+
+            context.WrittenStateFiles.Add(stateFile);
         }
     }
 }

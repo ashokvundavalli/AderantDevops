@@ -6,6 +6,9 @@ namespace Aderant.Build.Tasks {
         public override bool ExecuteTask() {
             var writer = new BuildStateWriter();
             writer.WriteStateFiles(Context);
+
+            PipelineService.Publish(Context);
+
             return !Log.HasLoggedErrors;
         }
     }

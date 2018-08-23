@@ -6,14 +6,14 @@ using System.Management.Automation.Host;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Providers;
-using Lapointe.PowerShell.MamlGenerator.Attributes;
-using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace Aderant.Build.Commands {
-    [CmdletDescription(@"Branches the TFS source from TFS into the relevant path in the target branch location.
-Updates the ExpertManifest to get the branched module from this branch
-Checking back in to TFS must be done manually.")]
+    /// <summary>
+    /// Branches the TFS source from TFS into the relevant path in the target branch location.
+    /// Updates the ExpertManifest to get the branched module from this branch
+    /// Checking back in to TFS must be done manually.
+    /// </summary>
     [Cmdlet("Branch", "Module")]
     public class BranchModule : PSCmdlet {
         private VersionControlServer versionControl;
@@ -72,7 +72,6 @@ Checking back in to TFS must be done manually.")]
             Host.UI.WriteLine(new string('=', 40));
         }
 
-
         private void ExecuteBranchModule() {
             Branch();
 
@@ -85,7 +84,8 @@ Checking back in to TFS must be done manually.")]
 
         private void GetBuildInfrastructure(string combine) {
             ItemSet files = versionControl.GetItems(
-                new ItemSpec(combine,
+                new ItemSpec(
+                    combine,
                     RecursionType.Full),
                 VersionSpec.Latest,
                 DeletedState.NonDeleted,
@@ -109,7 +109,7 @@ Checking back in to TFS must be done manually.")]
             string serverPathToManifest = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), "ExpertManifest.xml");
 
             Host.UI.WriteLine("Getting latest: " + serverPathToManifest);
-            workspace.Get(new string[] {serverPathToManifest}, VersionSpec.Latest, RecursionType.None, GetOptions.None);
+            workspace.Get(new string[] { serverPathToManifest }, VersionSpec.Latest, RecursionType.None, GetOptions.None);
 
             Host.UI.WriteLine("Checking out: " + serverPathToManifest);
             workspace.PendEdit(serverPathToManifest);
@@ -120,7 +120,8 @@ Checking back in to TFS must be done manually.")]
 
             // Grab the latest core dependency files so the Expert Manifest builder can construct a new manifest for the branch
             ItemSet folders = versionControl.GetItems(
-                new ItemSpec(root,
+                new ItemSpec(
+                    root,
                     RecursionType.OneLevel),
                 VersionSpec.Latest,
                 DeletedState.NonDeleted,
@@ -129,20 +130,22 @@ Checking back in to TFS must be done manually.")]
 
             foreach (Item folder in folders.Items) {
                 ItemSet itemSet = versionControl.GetItems(
-                    new ItemSpec(folder.ServerItem + "/Build",
+                    new ItemSpec(
+                        folder.ServerItem + "/Build",
                         RecursionType.Full),
                     VersionSpec.Latest,
                     DeletedState.NonDeleted,
-                    ItemType.Any, false);
+                    ItemType.Any,
+                    false);
 
                 foreach (var item in itemSet.Items) {
                     Host.UI.WriteLine("Getting: " + item.ServerItem);
 
                     if (item.ItemType == ItemType.Folder) {
-                        workspace.Get(new string[] {item.ServerItem}, VersionSpec.Latest, RecursionType.Full, GetOptions.None);
+                        workspace.Get(new string[] { item.ServerItem }, VersionSpec.Latest, RecursionType.Full, GetOptions.None);
                     }
 
-                    workspace.Get(new string[] {item.ServerItem + "/*"}, VersionSpec.Latest, RecursionType.Full, GetOptions.None);
+                    workspace.Get(new string[] { item.ServerItem + "/*" }, VersionSpec.Latest, RecursionType.Full, GetOptions.None);
                 }
             }
 
@@ -158,7 +161,7 @@ Checking back in to TFS must be done manually.")]
         private void UpdateBuildAll() {
             string serverPathToBuildProject = Path.Combine(PathHelper.GetServerPathToModuleDirectory(TargetBranch), PathHelper.PathToBuildOrderProject);
 
-            workspace.Get(new string[] {serverPathToBuildProject}, VersionSpec.Latest, RecursionType.None, GetOptions.None);
+            workspace.Get(new string[] { serverPathToBuildProject }, VersionSpec.Latest, RecursionType.None, GetOptions.None);
 
             string localProject = workspace.TryGetLocalItemForServerItem(serverPathToBuildProject);
 

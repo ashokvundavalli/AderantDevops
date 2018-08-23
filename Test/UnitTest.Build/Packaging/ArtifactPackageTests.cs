@@ -48,7 +48,7 @@ namespace UnitTest.Build.Packaging {
             var bucketMock = new Mock<IBucketPathBuilder>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
-            var artifactService = new ArtifactService(NullLogger.Default, new Mock<IFileSystem>().Object);
+            var artifactService = new ArtifactService(null, new Mock<IFileSystem>().Object, NullLogger.Default);
             artifactService.RegisterHandler(new XamlDropHandler("1.0.0.0", "9.9.9.9"));
 
             IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", null) };
@@ -89,7 +89,7 @@ namespace UnitTest.Build.Packaging {
             var fsMock = new Mock<IFileSystem>();
             fsMock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
 
-            var artifactService = new ArtifactService(NullLogger.Default, fsMock.Object);
+            var artifactService = new ArtifactService(null, fsMock.Object, NullLogger.Default);
             var result = artifactService.CalculateFilesToRestore(state, "Foo", "Foo", new[] { "Foo.dll", "Foo.pdb" });
 
             Assert.AreEqual(1, result.Count);

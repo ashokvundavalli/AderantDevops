@@ -36,7 +36,7 @@
 
 
     <!-- Location to drop artifacts (packaged outputputs) -->
-    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)\_as\</ArtifactStagingDirectory>
+    <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
 
     <!-- Location to drop outputs to share within the build -->
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
@@ -59,10 +59,10 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CreatePipeline;
-      <!--GetAllModuleDependencies;-->
       ExecutePipeline;
       WriteStateFiles;
-      PackageProduct;
+      <!--PackageProduct;-->
+      CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
@@ -291,12 +291,28 @@
           IgnoreExitCode="false"
           Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
           WorkingDirectory="$(PackageScriptsDirectory)" />
-
-    <OnError ExecuteTargets="PackageProductFailed" />
   </Target>
 
-  <Target Name="PackageProductFailed">
-    <Message Text="GetProduct has failed" Importance="high" />
+
+  <Target Name="CopyToDrop" Condition="'$(PrimaryDropLocation)' != ''">
+
+    <ExecutePendingVsoCommands
+      SourcePath="$(ArtifactStagingDirectory)"
+      DestinationPath="$(PrimaryDropLocation)" />
+
+    <!-- We ignore exit codes less than 4 as these codes indicate success -->
+    <PropertyGroup>
+      <CopyToDropCommand>
+<![CDATA[
+robocopy.exe "$(ArtifactStagingDirectory)_artifacts" "$(PrimaryDropLocation)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
+IF %ERRORLEVEL% LEQ 4 EXIT /B 0
+]]>
+      </CopyToDropCommand>
+    </PropertyGroup>
+
+    <Exec Command="$(CopyToDropCommand)"
+          WorkingDirectory="$(ArtifactStagingDirectory)" />
+
   </Target>
 
   <!--

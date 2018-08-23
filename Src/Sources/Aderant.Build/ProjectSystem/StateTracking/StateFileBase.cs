@@ -2,9 +2,11 @@
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
+using ProtoBuf;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
+    [ProtoInclude(100, typeof(BuildStateFile))]
     [DataContract]
     public class StateFileBase {
 

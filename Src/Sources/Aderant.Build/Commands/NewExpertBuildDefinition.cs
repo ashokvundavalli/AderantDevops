@@ -4,12 +4,10 @@ using System.Linq;
 using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Providers;
-using Lapointe.PowerShell.MamlGenerator.Attributes;
 using Microsoft.TeamFoundation.Build.Client;
 
 namespace Aderant.Build.Commands {
     [Cmdlet(VerbsCommon.New, "ExpertBuildDefinition")]
-    [CmdletDescription("Creates a new build definition in TFS for the current module.")]
     public sealed class NewExpertBuildDefinition : PSCmdlet {
 
         [Parameter(HelpMessage = "The module name to create a build definition for.")]

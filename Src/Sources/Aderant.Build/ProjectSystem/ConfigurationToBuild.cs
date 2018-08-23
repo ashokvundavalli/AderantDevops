@@ -1,59 +1,48 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using Aderant.Build.DependencyAnalyzer.Model;
+using ProtoBuf;
 
 namespace Aderant.Build.ProjectSystem {
     /// <summary>
-    /// Similar in concept to <see cref="ProjectBuildConfiguration"/> but represents the configuration of a solution to build.
-    /// The main difference is the solution configuration usually has a space between "Any" and "CPU" where as the project configuration does not. 
+    /// Similar in concept to <see cref="ProjectBuildConfiguration" /> but represents the configuration of a solution to build.
+    /// The main difference is the solution configuration usually has a space between "Any" and "CPU" where as the project
+    /// configuration does not.
     /// </summary>
     [Serializable]
+    [DataContract]
+    [ProtoContract]
     public struct ConfigurationToBuild {
-        private readonly string configurationName;
-        private readonly string platformName;
-        private readonly string fullName;
-        
+
         public ConfigurationToBuild(string configurationToBuild) {
             var parts = configurationToBuild.Split('|');
 
-            configurationName = parts[0];
-            platformName = parts[1];
-            
-            fullName = ComputeFullName(configurationName, platformName);
+            ConfigurationName = parts[0];
+            PlatformName = parts[1];
+
+            FullName = ComputeFullName(ConfigurationName, PlatformName);
         }
 
         public ConfigurationToBuild(string configurationName, string platformName) {
-            this.configurationName = configurationName;
-            this.platformName = platformName;
+            this.ConfigurationName = configurationName;
+            this.PlatformName = platformName;
 
-            fullName = ComputeFullName(this.configurationName, this.platformName);
+            FullName = ComputeFullName(this.ConfigurationName, this.PlatformName);
         }
 
+        public string ConfigurationName { get; }
 
-        public string ConfigurationName {
-            get {
-                return configurationName;
-            }
-        }
+        public string PlatformName { get; }
 
-        public string PlatformName {
-            get {
-                return platformName;
-            }
-        }
-
-        public string FullName {
-            get {
-                return fullName;
-            }
-        }
+        public string FullName { get; }
 
         internal static string ComputeFullName(string configurationName, string platformName) {
             if (!string.IsNullOrEmpty(platformName)) {
                 return string.Concat(configurationName, "|", platformName);
             }
+
             return configurationName;
         }
-   
 
         public static string Debug = "Debug";
 

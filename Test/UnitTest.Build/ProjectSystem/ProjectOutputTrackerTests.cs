@@ -1,6 +1,6 @@
 ﻿using System;
 using Aderant.Build;
-using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -46,4 +46,5 @@ namespace UnitTest.Build.ProjectSystem {
             Assert.IsTrue(snapshot.IsTestProject);
         }
     }
+
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -12,14 +11,20 @@ using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
+using ProtoBuf;
+using ProtoBuf.Meta;
 
 namespace Aderant.Build {
 
-    [Serializable]
     [DataContract]
+    [ProtoContract]
     public class BuildOperationContext {
+
         [DataMember]
         private ArtifactCollection artifacts;
+
+        [DataMember(EmitDefaultValue = false)]
+        private string artifactStagingDirectory;
 
         [DataMember]
         private BuildMetadata buildMetadata;
@@ -31,19 +36,23 @@ namespace Aderant.Build {
         private BuildStateMetadata buildStateMetadata;
 
         [DataMember]
+        private string buildSystemDirectory;
+
+        [DataMember]
         private DropPaths drops;
 
         [DataMember]
         private bool isDesktopBuild = true;
 
         [DataMember]
-        // For deterministic hashing it is better if this is sorted
         private ProjectOutputSnapshot outputs;
+
+        [DataMember(EmitDefaultValue = false)]
+        private string productManifestPath;
 
         [IgnoreDataMember]
         private int recordArtifactCount;
 
-        [NonSerialized]
         [IgnoreDataMember]
         private IContextualServiceProvider serviceProvider;
 
@@ -59,20 +68,50 @@ namespace Aderant.Build {
         [IgnoreDataMember]
         private int trackedProjectCount;
 
-        [DataMember(EmitDefaultValue = false)]
-        private string productManifestPath;
+        private ICollection<string> writtenStateFiles;
 
-        [DataMember(EmitDefaultValue = false)]
-        private string artifactStagingDirectory;
+        static BuildOperationContext() {
+            RuntimeTypeModel.Default.Add(typeof(BuildOperationContext), false)
+                .Add(
+                    nameof(artifacts),
+                    nameof(artifactStagingDirectory),
+                    //
+                    nameof(buildScriptsDirectory),
+                    nameof(buildMetadata),
+                    nameof(buildStateMetadata),
+                    nameof(buildSystemDirectory),
+                    //
+                    nameof(ConfigurationToBuild),
+                    //
+                    nameof(drops),
+                    nameof(DownloadRoot),
+                    //
+                    nameof(Environment),
+                    //
+                    nameof(isDesktopBuild),
+                    //
+                    nameof(outputs),
+                    //
+                    nameof(productManifestPath),
+                    nameof(PipelineName),
+                    //
+                    nameof(sourceTreeMetadata),
+                    nameof(stateFiles),
+                    nameof(switches),
+                    nameof(ScopedVariables),
+
+                    nameof(writtenStateFiles)
+                );
+
+            var schema = RuntimeTypeModel.Default.GetSchema(typeof(BuildOperationContext));
+            var a = RuntimeTypeModel.Default.GetSchema(typeof(BuildArtifact));
+        }
 
         public BuildOperationContext() {
-            Configuration = new Dictionary<object, object>();
             ScopedVariables = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-            TaskIndex = -1;
             Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Environment = "";
             PipelineName = "";
-            TaskName = "";
         }
 
         public string BuildScriptsDirectory {
@@ -92,8 +131,10 @@ namespace Aderant.Build {
         [DataMember]
         public DirectoryInfo BuildRoot { get; set; }
 
-        [DataMember]
-        public string BuildSystemDirectory { get; set; }
+        public string BuildSystemDirectory {
+            get { return buildSystemDirectory; }
+            set { buildSystemDirectory = value; }
+        }
 
         public bool IsDesktopBuild {
             get { return isDesktopBuild; }
@@ -101,40 +142,19 @@ namespace Aderant.Build {
         }
 
         [DataMember]
-        public IDictionary Configuration { get; set; }
-
-        [DataMember]
-        public FileInfo ConfigurationPath { get; set; }
-
-        [DataMember]
-        public DirectoryInfo DownloadRoot { get; set; }
+        public string DownloadRoot { get; set; }
 
         [DataMember]
         public string Environment { get; set; }
 
         [DataMember]
-        public DirectoryInfo OutputDirectory { get; set; }
-
-        [DataMember]
         public string PipelineName { get; set; }
-
-        [DataMember]
-        public bool Publish { get; set; }
 
         [DataMember]
         public DateTime StartedAt { get; set; }
 
         [DataMember]
-        public string TaskName { get; set; }
-
-        [DataMember]
-        public int TaskIndex { get; set; }
-
-        [DataMember]
         public IDictionary<string, IDictionary<string, string>> ScopedVariables { get; private set; }
-
-        [DataMember]
-        public DirectoryInfo Temp { get; set; }
 
         [DataMember]
         public IDictionary<string, string> Variables { get; private set; }
@@ -204,10 +224,17 @@ namespace Aderant.Build {
             get { return artifactStagingDirectory; }
             set {
                 if (value != null) {
+                    value = Path.GetFullPath(value);
                     value = value.TrimEnd(Path.DirectorySeparatorChar);
                 }
+
                 artifactStagingDirectory = value;
             }
+        }
+
+        public ICollection<string> WrittenStateFiles {
+            get { return writtenStateFiles ?? (writtenStateFiles = new List<string>()); }
+            set { writtenStateFiles = value; }
         }
 
         internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
@@ -387,11 +414,13 @@ namespace Aderant.Build {
         }
 
         public BuildStateFile GetStateFile(string bucketTag) {
-            foreach (var file in StateFiles) {
-                if (string.Equals(file.BucketId.Tag, bucketTag, StringComparison.OrdinalIgnoreCase)) {
-                    return file;
+            var files = StateFiles;
+            if (files != null)
+                foreach (var file in files) {
+                    if (string.Equals(file.BucketId.Tag, bucketTag, StringComparison.OrdinalIgnoreCase)) {
+                        return file;
+                    }
                 }
-            }
 
             return null;
         }
@@ -425,7 +454,7 @@ namespace Aderant.Build {
         }
     }
 
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
     public class DropPaths {
 
@@ -439,8 +468,8 @@ namespace Aderant.Build {
         public string XamlBuildDropLocation { get; set; }
     }
 
-    [Serializable]
     [CollectionDataContract]
+    [ProtoContract]
     internal class ArtifactCollection : SortedDictionary<string, ICollection<ArtifactManifest>> {
 
         public ArtifactCollection()
@@ -459,8 +488,8 @@ namespace Aderant.Build {
         }
     }
 
-    [Serializable]
     [CollectionDataContract]
+    [ProtoContract]
     internal class ProjectOutputSnapshot : SortedDictionary<string, OutputFilesSnapshot> {
 
         public ProjectOutputSnapshot()
@@ -483,8 +512,8 @@ namespace Aderant.Build {
         }
     }
 
-    [Serializable]
     [DataContract]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class ArtifactManifest {
 
         [DataMember]
@@ -497,8 +526,8 @@ namespace Aderant.Build {
         public ICollection<ArtifactItem> Files { get; set; }
     }
 
-    [Serializable]
     [DataContract]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class ArtifactItem {
 
         [DataMember]
@@ -506,7 +535,7 @@ namespace Aderant.Build {
     }
 
     [DataContract]
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class OutputFilesSnapshot {
 
         [DataMember]
@@ -531,7 +560,7 @@ namespace Aderant.Build {
         public Guid ProjectGuid { get; set; }
     }
 
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
     public sealed class SourceTreeMetadata {
 

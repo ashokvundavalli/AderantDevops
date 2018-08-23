@@ -5,28 +5,28 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Aderant.Build.Logging;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.TeamFoundation;
-using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
+        private readonly IBuildPipelineServiceContract pipelineService;
         private List<IArtifactHandler> handlers = new List<IArtifactHandler>();
         private ArtifactStagingPathBuilder pathBuilder;
 
         public ArtifactService(ILogger logger)
-            : this(logger, new PhysicalFileSystem()) {
+            : this(null, new PhysicalFileSystem(), logger) {
         }
 
-        public ArtifactService(ILogger logger, IFileSystem fileSystem) {
+        public ArtifactService(IBuildPipelineServiceContract pipelineService, IFileSystem fileSystem, ILogger logger) {
+            this.pipelineService = pipelineService;
             this.logger = logger;
             this.fileSystem = fileSystem;
         }
-
-        public VsoBuildCommands VsoCommands { get; set; }
 
         /// <summary>
         /// Publishes build artifacts to some kind of repository.
@@ -39,16 +39,14 @@ namespace Aderant.Build.Packaging {
 
             this.pathBuilder = new ArtifactStagingPathBuilder(context);
 
-            var results = PublishInternal(context, publisherName, packages);
+            var buildArtifacts = PublishInternal(context, publisherName, packages);
 
-            if (VsoCommands != null) {
+            if (pipelineService != null) {
                 // Tell TFS about these artifacts
-                foreach (var item in results) {
-                    VsoCommands.LinkArtifact(item.Name, VsoBuildArtifactType.FilePath, item.ComputeVsoPath());
-                }
+                pipelineService.AssociateArtifact(buildArtifacts);
             }
 
-            return results;
+            return buildArtifacts;
         }
 
         private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
@@ -156,9 +154,9 @@ namespace Aderant.Build.Packaging {
         }
 
         private BuildArtifact CalculateFileCopyOperations(string publisher, List<Tuple<string, PathSpec>> copyList, string artifactId, IReadOnlyCollection<PathSpec> files) {
-            var container = pathBuilder.BuildPath(publisher);
+            var basePath = pathBuilder.BuildPath(publisher);
 
-            container = Path.Combine(container, artifactId);
+            string container = Path.Combine(basePath, artifactId);
 
             foreach (var pathSpec in files) {
                 copyList.Add(Tuple.Create(container, pathSpec));
@@ -167,26 +165,26 @@ namespace Aderant.Build.Packaging {
             return new BuildArtifact {
                 FullPath = container,
                 Name = artifactId,
+                Type = VsoBuildArtifactType.FilePath
             };
         }
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
-       
-                if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
-                    try {
-                        fileSystem.AddFile(destinationRoot, new MemoryStream());
-                    } catch (IOException) {
-                        throw new IOException("Failed to create new file at " + destinationRoot);
-                    }
-
-                    return;
+            if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
+                try {
+                    fileSystem.AddFile(destinationRoot, new MemoryStream());
+                } catch (IOException) {
+                    throw new IOException("Failed to create new file at " + destinationRoot);
                 }
 
-                var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
+                return;
+            }
 
-                if (fileSystem.FileExists(pathSpec.Location)) {
-                    fileSystem.CopyFile(pathSpec.Location, destination);
-                }
+            var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
+
+            if (fileSystem.FileExists(pathSpec.Location)) {
+                fileSystem.CopyFile(pathSpec.Location, destination);
+            }
         }
 
         public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {

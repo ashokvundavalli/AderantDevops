@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Aderant.Build.VersionControl;
+using ProtoBuf;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
-    [Serializable]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     [DataContract]
     public sealed class BuildStateFile : StateFileBase {
 
@@ -32,7 +33,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         internal IDictionary<string, OutputFilesSnapshot> Outputs { get; set; }
 
-        [DataMember(EmitDefaultValue = false)]
+        [DataMember(EmitDefaultValue = false)]        
         internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts { get; set; }
 
         [DataMember(EmitDefaultValue = false)]

@@ -55,7 +55,7 @@ namespace UnitTest.Build {
         public void Nuspec_gets_package_name() {
             var processor = new PackageProcessor(null);
 
-            processor.AssociatePackageToBuild(nuspec, new VsoBuildCommands(new NullLogger()));
+            processor.AssociatePackageToBuild(nuspec, new VsoBuildCommandBuilder(new NullLogger()));
         }
     }
 }

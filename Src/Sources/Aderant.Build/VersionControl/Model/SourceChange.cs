@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.Serialization;
+using ProtoBuf;
 
 namespace Aderant.Build.VersionControl.Model {
     [DebuggerDisplay("Path: {Path} Status: {Status}")]
-    [Serializable]
+    [DataContract]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class SourceChange : ISourceChange {
 
         public SourceChange(string workingDirectory, string relativePath, FileStatus status) {
@@ -12,9 +15,13 @@ namespace Aderant.Build.VersionControl.Model {
             Status = status;
         }
 
+        [DataMember]
         public string FullPath { get; }
 
+        [DataMember]
         public string Path { get; }
+
+        [DataMember]
         public FileStatus Status { get; }
 
         private static string CleanPath(string workingDirectory, string relativePath) {
