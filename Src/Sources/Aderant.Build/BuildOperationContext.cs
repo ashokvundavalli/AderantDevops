@@ -102,9 +102,6 @@ namespace Aderant.Build {
 
                     nameof(writtenStateFiles)
                 );
-
-            var schema = RuntimeTypeModel.Default.GetSchema(typeof(BuildOperationContext));
-            var a = RuntimeTypeModel.Default.GetSchema(typeof(BuildArtifact));
         }
 
         public BuildOperationContext() {

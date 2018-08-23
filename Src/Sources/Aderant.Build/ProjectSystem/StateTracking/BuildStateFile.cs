@@ -30,10 +30,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         public string ScmCommitId { get; set; }
 
-        [DataMember(EmitDefaultValue = false)]
+        [DataMember(EmitDefaultValue = false, Name = nameof(Outputs))]
         internal IDictionary<string, OutputFilesSnapshot> Outputs { get; set; }
 
-        [DataMember(EmitDefaultValue = false)]        
+        [DataMember(EmitDefaultValue = false, Name = nameof(Artifacts))]        
         internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
