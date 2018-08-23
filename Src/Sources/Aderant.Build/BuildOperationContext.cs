@@ -71,37 +71,40 @@ namespace Aderant.Build {
         private ICollection<string> writtenStateFiles;
 
         static BuildOperationContext() {
-            RuntimeTypeModel.Default.Add(typeof(BuildOperationContext), false)
-                .Add(
-                    nameof(artifacts),
-                    nameof(artifactStagingDirectory),
-                    //
-                    nameof(buildScriptsDirectory),
-                    nameof(buildMetadata),
-                    nameof(buildStateMetadata),
-                    nameof(buildSystemDirectory),
-                    //
-                    nameof(ConfigurationToBuild),
-                    //
-                    nameof(drops),
-                    nameof(DownloadRoot),
-                    //
-                    nameof(Environment),
-                    //
-                    nameof(isDesktopBuild),
-                    //
-                    nameof(outputs),
-                    //
-                    nameof(productManifestPath),
-                    nameof(PipelineName),
-                    //
-                    nameof(sourceTreeMetadata),
-                    nameof(stateFiles),
-                    nameof(switches),
-                    nameof(ScopedVariables),
+            var metaType = RuntimeTypeModel.Default[typeof(BuildOperationContext)];
+            if (metaType == null || metaType.GetFields().Length == 0) {
+                RuntimeTypeModel.Default.Add(typeof(BuildOperationContext), false)
+                    .Add(
+                        nameof(artifacts),
+                        nameof(artifactStagingDirectory),
+                        //
+                        nameof(buildScriptsDirectory),
+                        nameof(buildMetadata),
+                        nameof(buildStateMetadata),
+                        nameof(buildSystemDirectory),
+                        //
+                        nameof(ConfigurationToBuild),
+                        //
+                        nameof(drops),
+                        nameof(DownloadRoot),
+                        //
+                        nameof(Environment),
+                        //
+                        nameof(isDesktopBuild),
+                        //
+                        nameof(outputs),
+                        //
+                        nameof(productManifestPath),
+                        nameof(PipelineName),
+                        //
+                        nameof(sourceTreeMetadata),
+                        nameof(stateFiles),
+                        nameof(switches),
+                        nameof(ScopedVariables),
 
-                    nameof(writtenStateFiles)
-                );
+                        nameof(writtenStateFiles)
+                    );
+            }
         }
 
         public BuildOperationContext() {
