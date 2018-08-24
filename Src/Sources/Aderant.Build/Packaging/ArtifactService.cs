@@ -360,8 +360,6 @@ namespace Aderant.Build.Packaging {
 
                                     if (IsFileTrustworthy(file)) {
                                         files.Add(file);
-                                    } else {
-                                        logger.Info($"{stateFile} is untrustworthy. It will be ignored.");
                                     }
                                 }
                             }

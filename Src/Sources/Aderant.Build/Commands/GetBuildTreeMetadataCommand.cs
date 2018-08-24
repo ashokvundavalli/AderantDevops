@@ -16,6 +16,8 @@ namespace Aderant.Build.Commands {
         public string DropLocation { get; set; }
 
         protected override void ProcessRecord() {
+            System.Diagnostics.Debugger.Launch();
+
             var service = new ArtifactService(new PowerShellLogger(Host));
             var metadata = service.GetBuildStateMetadata(BucketIds, DropLocation);
 
