@@ -9,12 +9,19 @@ namespace Aderant.Build.Tasks {
         public string DestinationPath { get; set; }
 
         public override bool ExecuteTask() {
-            var commandBuilder = new VsoBuildCommandBuilder();
+             var commandBuilder = new VsoBuildCommandBuilder();
 
             var service = GetService<IVsoCommandService>();
 
             foreach (var artifact in service.GetAssociatedArtifacts()) {
-                artifact.FullPath = artifact.FullPath.Replace(SourcePath, DestinationPath);
+                string fullPath = artifact.FullPath;
+
+                artifact.ReplacePath(SourcePath, DestinationPath);
+
+                if (!string.Equals(artifact.FullPath, fullPath)) {
+                    Log.LogMessage(MessageImportance.High, $"Updated artifact location: {fullPath} --> {artifact.FullPath}");
+                }
+
                 var linkCommand = commandBuilder.LinkArtifact(artifact.Name, artifact.Type, artifact.ComputeVsoPath());
 
                 Log.LogMessage(MessageImportance.High, linkCommand);
