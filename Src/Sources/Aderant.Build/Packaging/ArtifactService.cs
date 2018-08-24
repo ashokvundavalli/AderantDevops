@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -330,44 +331,47 @@ namespace Aderant.Build.Packaging {
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
-            var metadata = new BuildStateMetadata();
-            var files = new List<BuildStateFile>();
-            metadata.BuildStateFiles = files;
+            using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed: " + duration))) {
 
-            foreach (var bucketId in bucketIds) {
-                string bucketPath = Path.Combine(dropLocation, bucketId);
+                var metadata = new BuildStateMetadata();
+                var files = new List<BuildStateFile>();
+                metadata.BuildStateFiles = files;
 
-                if (fileSystem.DirectoryExists(bucketPath)) {
-                    IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
+                foreach (var bucketId in bucketIds) {
+                    string bucketPath = Path.Combine(dropLocation, bucketId);
 
-                    string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
+                    if (fileSystem.DirectoryExists(bucketPath)) {
+                        IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
 
-                    foreach (var folder in folders) {
-                        var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
+                        string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
 
-                        if (fileSystem.FileExists(stateFile)) {
-                            using (Stream stream = fileSystem.OpenFile(stateFile)) {
+                        foreach (var folder in folders) {
+                            var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
 
-                                BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
-                                file.DropLocation = folder;
+                            if (fileSystem.FileExists(stateFile)) {
+                                using (Stream stream = fileSystem.OpenFile(stateFile)) {
 
-                                if (CheckForRootedPaths(file)) {
-                                    continue;
-                                }
+                                    BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
+                                    file.DropLocation = folder;
 
-                                if (IsFileTrustworthy(file)) {
-                                    files.Add(file);
-                                } else {
-                                    logger.Info($"{file} is untrustworthy. It will be ignored.");
+                                    if (CheckForRootedPaths(file)) {
+                                        continue;
+                                    }
+
+                                    if (IsFileTrustworthy(file)) {
+                                        files.Add(file);
+                                    } else {
+                                        logger.Info($"{file} is untrustworthy. It will be ignored.");
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            logger.Info($"Found {metadata.BuildStateFiles.Count} state files");
-            return metadata;
+                logger.Info($"Found {metadata.BuildStateFiles.Count} state files");
+                return metadata;
+            }
         }
 
         private static bool IsFileTrustworthy(BuildStateFile file) {
@@ -434,5 +438,31 @@ namespace Aderant.Build.Packaging {
 
     internal class ArtifactResolveOperation {
         public List<ArtifactPathSpec> Paths { get; set; }
+    }
+
+    internal struct PerformanceTimer : IDisposable {
+        private readonly Stopwatch stopwatch;
+        private readonly Action<long> callback;
+
+        public PerformanceTimer(Action<long> callback)
+            : this() {
+            stopwatch = new Stopwatch();
+            this.callback = callback;
+        }
+
+        public static PerformanceTimer Start(Action<long> callback) {
+            return new PerformanceTimer(callback);
+        }
+
+        public void Dispose() {
+            stopwatch.Stop();
+            if (callback != null) {
+                callback(Duration);
+            }
+        }
+
+        public long Duration {
+            get { return this.stopwatch.ElapsedMilliseconds; }
+        }
     }
 }
