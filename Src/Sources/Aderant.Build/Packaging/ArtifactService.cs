@@ -361,14 +361,14 @@ namespace Aderant.Build.Packaging {
                                     if (IsFileTrustworthy(file)) {
                                         files.Add(file);
                                     } else {
-                                        logger.Info($"{file} is untrustworthy. It will be ignored.");
+                                        logger.Info($"{stateFile} is untrustworthy. It will be ignored.");
                                     }
                                 }
                             }
                         }
                     }
                 }
-          
+
                 return metadata;
             }
         }
@@ -445,8 +445,9 @@ namespace Aderant.Build.Packaging {
 
         public PerformanceTimer(Action<long> callback)
             : this() {
-            stopwatch = new Stopwatch();
             this.callback = callback;
+
+            stopwatch = Stopwatch.StartNew();
         }
 
         public static PerformanceTimer Start(Action<long> callback) {
@@ -455,8 +456,11 @@ namespace Aderant.Build.Packaging {
 
         public void Dispose() {
             stopwatch.Stop();
-            if (callback != null) {
-                callback(Duration);
+
+            if (Duration > 0) {
+                if (callback != null) {
+                    callback(Duration);
+                }
             }
         }
 
