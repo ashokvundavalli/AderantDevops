@@ -11,13 +11,13 @@ namespace Aderant.Build.Packaging {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class BuildArtifact {
 
-        [DataMember(Order = 1)]
+        [DataMember]
         public string FullPath { get; set; }
 
-        [DataMember(Order = 2)]
+        [DataMember]
         public string Name { get; set; }
 
-        [DataMember(Order = 3)]
+        [DataMember]
         public VsoBuildArtifactType Type { get; set; }
 
         public string ComputeVsoPath() {

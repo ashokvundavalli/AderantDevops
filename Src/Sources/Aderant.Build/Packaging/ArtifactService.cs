@@ -165,7 +165,7 @@ namespace Aderant.Build.Packaging {
             return new BuildArtifact {
                 FullPath = container,
                 Name = artifactId,
-                Type = VsoBuildArtifactType.FilePath
+                Type = VsoBuildArtifactType.FilePath,
             };
         }
 
