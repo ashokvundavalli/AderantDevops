@@ -368,8 +368,7 @@ namespace Aderant.Build.Packaging {
                         }
                     }
                 }
-
-                logger.Info($"Found {metadata.BuildStateFiles.Count} state files");
+          
                 return metadata;
             }
         }

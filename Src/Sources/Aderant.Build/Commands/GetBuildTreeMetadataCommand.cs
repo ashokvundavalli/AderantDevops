@@ -1,4 +1,5 @@
 ﻿using System.Management.Automation;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 
@@ -15,8 +16,12 @@ namespace Aderant.Build.Commands {
         public string DropLocation { get; set; }
 
         protected override void ProcessRecord() {
-            var service = new ArtifactService(Aderant.Build.Logging.NullLogger.Default);
+            var service = new ArtifactService(new PowerShellLogger(Host));
             var metadata = service.GetBuildStateMetadata(BucketIds, DropLocation);
+
+            if (metadata.BuildStateFiles != null) {
+                WriteInformation("Found " + metadata.BuildStateFiles.Count + " state files", null);
+            }
 
             WriteObject(metadata);
         }
