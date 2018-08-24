@@ -41,6 +41,7 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void Publish(BuildOperationContext context) {
+            System.Diagnostics.Debugger.Launch();
             ErrorUtilities.IsNotNull(id, nameof(id));
 
             using (var proxy = CreateProxy(id)) {
