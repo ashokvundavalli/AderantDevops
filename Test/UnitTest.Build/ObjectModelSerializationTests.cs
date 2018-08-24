@@ -5,6 +5,7 @@ using Aderant.Build;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.VersionControl.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtoBuf;
 
@@ -43,6 +44,15 @@ namespace UnitTest.Build {
 
             Assert.IsNotNull(instance);
             Assert.AreEqual(1, instance.WrittenStateFiles.Count);
+        }
+
+        [TestMethod]
+        public void SourceChangeSerialization() {
+            var change = new SourceChange("A", "B", FileStatus.Added);
+            var instance = RoundTrip(change);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual("B", instance.Path);
         }
 
         [TestMethod]

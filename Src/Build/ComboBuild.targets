@@ -37,7 +37,7 @@
 
     <!-- Location to drop artifacts (packaged outputputs) -->
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
-
+    
     <!-- Location to drop outputs to share within the build -->
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)_as\_out\</SharedDependencyDirectory>
@@ -297,7 +297,6 @@
   <Target Name="CopyToDrop" Condition="'$(PrimaryDropLocation)' != ''">
 
     <ExecutePendingVsoCommands
-      SourcePath="$(ArtifactStagingDirectory)"
       DestinationPath="$(PrimaryDropLocation)" />
 
     <!-- We ignore exit codes less than 4 as these codes indicate success -->

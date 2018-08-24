@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.Serialization;
 using ProtoBuf;
 
@@ -8,6 +7,8 @@ namespace Aderant.Build.VersionControl.Model {
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class SourceChange : ISourceChange {
+        private SourceChange() {
+        }
 
         public SourceChange(string workingDirectory, string relativePath, FileStatus status) {
             Path = relativePath;
