@@ -357,6 +357,8 @@ namespace Aderant.Build.Packaging {
 
                                 if (IsFileTrustworthy(file)) {
                                     files.Add(file);
+                                } else {
+                                    logger.Info($"{file} is untrustworthy. It will be ignored.");
                                 }
                             }
                         }
@@ -364,6 +366,7 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
+            logger.Info($"Found {metadata.BuildStateFiles.Count} state files");
             return metadata;
         }
 
