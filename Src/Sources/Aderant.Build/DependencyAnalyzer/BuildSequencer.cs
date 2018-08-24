@@ -103,14 +103,25 @@ namespace Aderant.Build.DependencyAnalyzer {
             // TODO: This needs way more validation
             var buildStateMetadata = context.BuildStateMetadata;
 
-            if (buildStateMetadata != null && context.SourceTreeMetadata != null)
-                foreach (var bucketId in context.SourceTreeMetadata.GetBuckets()) {
-                    BuildStateFile stateFile = buildStateMetadata.BuildStateFiles.FirstOrDefault(s => string.Equals(s.BucketId.Id, bucketId.Id));
+            if (buildStateMetadata != null && context.SourceTreeMetadata != null) {
+                if (buildStateMetadata.BuildStateFiles != null) {
+                    foreach (var bucketId in context.SourceTreeMetadata.GetBuckets()) {
 
-                    if (stateFile != null) {
-                        stateFiles.Add(stateFile);
+                        BuildStateFile stateFile = null;
+
+                        foreach (var file in buildStateMetadata.BuildStateFiles) {
+                            if (string.Equals(file.BucketId.Id, bucketId.Id)) {
+                                stateFile = file;
+                                break;
+                            }
+                        }
+
+                        if (stateFile != null) {
+                            stateFiles.Add(stateFile);
+                        }
                     }
                 }
+            }
 
             return stateFiles;
         }
