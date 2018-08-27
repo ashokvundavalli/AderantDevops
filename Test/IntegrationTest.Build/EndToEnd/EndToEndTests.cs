@@ -61,14 +61,17 @@ namespace IntegrationTest.Build.EndToEnd {
 
             context = proxy.GetContext();
             Assert.AreEqual(2, context.WrittenStateFiles.Count);
+            Assert.IsTrue(context.WrittenStateFiles.All(File.Exists));
 
-            var logFile = base.LogFile;
+            var log1 = base.LogFile;
 
             PrepareForAnotherRun();
 
             // Run second build
             RunTarget("EndToEnd", properties);
-            foreach (string entry in Directory.GetFileSystemEntries(context.Drops.PrimaryDropLocation, "buildstate.metadata", SearchOption.AllDirectories)) {
+
+            context = proxy.GetContext();
+            foreach (string entry in context.WrittenStateFiles) {
                 if (entry.EndsWith(@"1\buildstate.metadata")) {
                     var stateFile = StateFileBase.DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
 
@@ -86,10 +89,10 @@ namespace IntegrationTest.Build.EndToEnd {
                 }
             }
 
-            var logFile1 = base.LogFile;
+            var log2 = LogFile;
 
-            WriteLogFile(@"C:\Temp\lf.log", logFile);
-            WriteLogFile(@"C:\Temp\lf1.log", logFile1);
+            WriteLogFile(Path.Combine(TestContext.DeploymentDirectory, "log1.log"), log1);
+            WriteLogFile(Path.Combine(TestContext.DeploymentDirectory, "log2.log"), log2);
         }
 
         [TestMethod]

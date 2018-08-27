@@ -10,7 +10,7 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
     [xml]$config = "<BranchConfig>
   <DropPaths>
     <!--\\ap.aderant.com\akl\tempswap\☃-->
-    <PrimaryDropLocation>\\dfs.aderant.com\ExpertSuite\_TEMP_</PrimaryDropLocation>
+    <PrimaryDropLocation>\\dfs.aderant.com\packages\_build_cache\v1</PrimaryDropLocation>
     <AlternativeDropLocation></AlternativeDropLocation>    
     <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
     <XamlBuildDropLocation>\\dfs.aderant.com\ExpertSuite\dev\vnext</XamlBuildDropLocation>
@@ -158,7 +158,7 @@ function PrepareEnvironment {
 
   if (Test-Path $wcfPath64) {  
     Remove-Item -Path $wcfPath64 -Recurse
-  }
+  }  
 }
 
 <#

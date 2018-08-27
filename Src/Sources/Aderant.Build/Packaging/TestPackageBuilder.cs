@@ -4,12 +4,13 @@ using System.IO;
 
 namespace Aderant.Build.Packaging {
     internal class TestPackageBuilder {
-        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> files, ProjectOutputSnapshot outputs, string publisherName) {
+        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, ProjectOutputSnapshot outputs, string publisherName) {
             var set = outputs.GetProjectsForTag(publisherName);
 
             List<string> outputList = new List<string>();
 
             foreach (var project in set.Values) {
+
                 if (project.IsTestProject) {
                     foreach (var path in project.FilesWritten) {
 
@@ -24,7 +25,7 @@ namespace Aderant.Build.Packaging {
 
             var artifactItems = new List<PathSpec>();
 
-            foreach (var file in files) {
+            foreach (var file in filesToPackage) {
                 var fileName = Path.GetFileName(file.Location);
 
                 foreach (var output in outputList) {

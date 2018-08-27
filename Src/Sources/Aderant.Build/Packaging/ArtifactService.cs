@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -97,21 +96,21 @@ namespace Aderant.Build.Packaging {
             return publisherName + "\\";
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> files, ArtifactPackage artifact) {
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> filesToPackage, ArtifactPackage artifact) {
             ProjectOutputSnapshot snapshot = context.GetProjectOutputs(publisherName);
 
             if (snapshot == null) {
-                return files;
+                return filesToPackage;
             }
 
             MergeExistingOutputs(context, publisherName, snapshot);
 
             if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackage.TestPackagePrefix)) {
                 var builder = new TestPackageBuilder();
-                return builder.BuildArtifact(files, snapshot, publisherName);
+                return builder.BuildArtifact(filesToPackage, snapshot, publisherName);
             }
 
-            return files;
+            return filesToPackage;
         }
 
         private static void MergeExistingOutputs(BuildOperationContext context, string publisherName, ProjectOutputSnapshot snapshot) {
@@ -437,33 +436,4 @@ namespace Aderant.Build.Packaging {
         public List<ArtifactPathSpec> Paths { get; set; }
     }
 
-    internal struct PerformanceTimer : IDisposable {
-        private readonly Stopwatch stopwatch;
-        private readonly Action<long> callback;
-
-        public PerformanceTimer(Action<long> callback)
-            : this() {
-            this.callback = callback;
-
-            stopwatch = Stopwatch.StartNew();
-        }
-
-        public static PerformanceTimer Start(Action<long> callback) {
-            return new PerformanceTimer(callback);
-        }
-
-        public void Dispose() {
-            stopwatch.Stop();
-
-            if (Duration > 0) {
-                if (callback != null) {
-                    callback(Duration);
-                }
-            }
-        }
-
-        public long Duration {
-            get { return this.stopwatch.ElapsedMilliseconds; }
-        }
-    }
 }

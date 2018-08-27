@@ -108,5 +108,30 @@ namespace UnitTest.Build.Packaging {
             PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", "Foo");
             Assert.AreEqual(@"Foo\Baz.dll", spec.Destination);
         }
+
+        
+    }
+
+    [TestClass]
+    public class TestPackageBuilderTest {
+
+        [TestMethod]
+        public void Foo() {
+            var builder = new TestPackageBuilder();
+
+            var filesToPackage = new PathSpec[] {
+                new PathSpec("Foo.dll", @"Foo\Bar.dll"),
+            };
+
+            var snapshot = new ProjectOutputSnapshot();
+            snapshot[""] = new OutputFilesSnapshot();
+            snapshot[""].IsTestProject = true;
+            snapshot[""].FilesWritten = new[] { "Foo.dll" };
+            snapshot[""].Directory = "";
+
+            var files = builder.BuildArtifact(filesToPackage, snapshot, "");
+
+            Assert.AreEqual(1, files.Count);
+        }
     }
 }

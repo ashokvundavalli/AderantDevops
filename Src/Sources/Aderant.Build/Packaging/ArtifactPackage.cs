@@ -15,6 +15,10 @@ namespace Aderant.Build.Packaging {
         }
 
         public bool IsAutomaticallyGenerated { get; set; }
+
+        /// <summary>
+        /// The test artifact package prefix
+        /// </summary>
         public static string TestPackagePrefix { get; } = "Tests.";
 
         public string Id { get; }
@@ -25,7 +29,10 @@ namespace Aderant.Build.Packaging {
 
         public void AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
         }
-
+        
+        /// <summary>
+        /// Gets the file paths contained within the artifact.
+        /// </summary>
         public IReadOnlyCollection<PathSpec> GetFiles() {
             return pathSpecs;
         }
@@ -40,11 +47,6 @@ namespace Aderant.Build.Packaging {
                         break;
                     }
                 }
-            }
-
-            if (outputRelativePath == null) {
-                // TODO: Complain?
-                //throw new InvalidOperationException(string.Format("Unable to construct an output relative path from {0} to {1}", solutionRoot, fullPath));
             }
 
             return new PathSpec(fullPath, Path.Combine(targetPath ?? string.Empty, outputRelativePath ?? Path.GetFileName(fullPath)));
