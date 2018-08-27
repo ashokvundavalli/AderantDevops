@@ -10,7 +10,7 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
     [xml]$config = "<BranchConfig>
   <DropPaths>
     <!--\\ap.aderant.com\akl\tempswap\☃-->
-    <PrimaryDropLocation>\\dfs.aderant.com\packages\_build_cache\v1</PrimaryDropLocation>
+    <PrimaryDropLocation>\\dfs.aderant.com\packages\buildcache\v1</PrimaryDropLocation>
     <AlternativeDropLocation></AlternativeDropLocation>    
     <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
     <XamlBuildDropLocation>\\dfs.aderant.com\ExpertSuite\dev\vnext</XamlBuildDropLocation>
