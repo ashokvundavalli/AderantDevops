@@ -227,7 +227,7 @@ process {
             foreach ($directory in $directories) {        
                 cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
 
-                Remove-Item -Path $directory.FullName -Force -Recurse -ErrorAction SilentlyContinue
+                Remove-Item -Path $directory.FullName -Force -Recurse -Verbose -ErrorAction SilentlyContinue
             }    
         }        
 
@@ -237,7 +237,11 @@ process {
         
         # Clear build agent working directory
         [string]$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B")
-        Remove-Item -Path "$workingDirectory\*" -Force -Recurse -ErrorAction SilentlyContinue
+
+        # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
+        gci $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
+        
+        Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
         
         & $PSScriptRoot\iis-cleanup.ps1
         
