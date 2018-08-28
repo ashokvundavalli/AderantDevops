@@ -73,16 +73,7 @@
         }
 
         process {
-            [System.Object[]]$pdfBuilds = Get-ChildItem -Path $moduleBinariesDirectory -Directory
-
-            for ([int]$i = 1; $i -lt ($pdfBuilds.Count - 1); $i++) {
-                [System.Object]$pdfBuildCandidate = ($pdfBuilds | Select-Object -Last $i)[0]
-
-                if ((Measure-Object -InputObject (Get-ChildItem $pdfBuildCandidate.FullName)) -ne 0) {
-                    $pdfBuild = $pdfBuildCandidate
-                    break
-                }
-            }
+            $pdfBuild = Get-ChildItem -Path $moduleBinariesDirectory -Directory | Sort-Object -Property Name | Select-Object -First 1         
 
             if ($pdfBuild -eq $null) {
                 Write-Warning "Unable to acquire content for module: $($module.Name)"
