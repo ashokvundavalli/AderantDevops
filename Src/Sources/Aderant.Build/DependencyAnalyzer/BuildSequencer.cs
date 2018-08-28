@@ -209,22 +209,22 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 return;
                             }
 
-                            MarkDirty(tag, project, InclusionReason.ArtifactsNotFound);
+                            MarkDirty(tag, project, BuildReason.ArtifactsNotFound);
                             return;
                         }
                     }
 
-                MarkDirty(tag, project, InclusionReason.ProjectOutputNotFound);
+                MarkDirty(tag, project, BuildReason.ProjectOutputNotFound);
                 return;
             }
 
-            MarkDirty(tag, project, InclusionReason.BuildTreeNotFound | InclusionReason.None);
+            MarkDirty(tag, project, BuildReason.BuildTreeNotFound | BuildReason.None);
         }
 
         private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
             var outputFile = project.GetOutputAssemblyWithExtension();
 
-            List<ArtifactManifest> misses = null;
+            List<ArtifactManifest> checkedArtifacts = null;
 
             foreach (ArtifactManifest s in artifacts) {
                 foreach (ArtifactItem file in s.Files) {
@@ -233,16 +233,18 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
 
-                if (misses == null) {
-                    misses = new List<ArtifactManifest>();
+                if (checkedArtifacts == null) {
+                    checkedArtifacts = new List<ArtifactManifest>();
                 }
 
-                misses.Add(s);
+                checkedArtifacts.Add(s);
             }
 
-            if (misses != null && misses.Count > 0) {
-                var error = string.Join("|", misses.Select(s => string.Format("{0} ({1})", s.Id, s.InstanceId)));
-                logger.Info($"Looked for {outputFile} but it was not found in packages: [{error}]");
+            if (checkedArtifacts != null && checkedArtifacts.Count > 0) {
+                logger.Info($"Looked for {outputFile} but it was not found in packages:");
+                foreach (var checkedArtifact in checkedArtifacts) {
+                    logger.Info(string.Format("    {0} ({1})", checkedArtifact.Id, checkedArtifact.InstanceId));
+                }
             }
 
             return false;
@@ -258,15 +260,15 @@ namespace Aderant.Build.DependencyAnalyzer {
             return null;
         }
 
-        private static void MarkDirty(string tag, ConfiguredProject project, InclusionReason reason) {
+        private static void MarkDirty(string tag, ConfiguredProject project, BuildReason reason) {
             project.IsDirty = true;
 
-            if (project.InclusionDescriptor == null) {
-                project.InclusionDescriptor = new InclusionDescriptor();
+            if (project.BuildReason == null) {
+                project.BuildReason = new ProjectSystem.BuildReason();
             }
 
-            project.InclusionDescriptor.Tag = tag;
-            project.InclusionDescriptor.Reason |= reason;
+            project.BuildReason.Tag = tag;
+            project.BuildReason.Flags |= reason;
         }
 
         /// <summary>
@@ -316,8 +318,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 sb.AppendLine("* " + configuredProject.FullPath);
 
-                if (configuredProject.InclusionDescriptor != null) {
-                    sb.AppendLine("    " + "Reason: " + configuredProject.InclusionDescriptor.Reason);
+                if (configuredProject.BuildReason != null) {
+                    sb.AppendLine("    " + "Flags: " + configuredProject.BuildReason.Flags);
                 }
 
                 if (configuredProject.DirtyFiles != null) {
@@ -347,11 +349,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ConfiguredProject project = x as ConfiguredProject;
                 if (project != null) {
                     project.IsDirty = true;
-                    if (project.InclusionDescriptor == null) {
-                        project.InclusionDescriptor = new InclusionDescriptor();
+                    if (project.BuildReason == null) {
+                        project.BuildReason = new ProjectSystem.BuildReason();
                     }
-
-                    project.InclusionDescriptor.Reason |= InclusionReason.DependencyChanged;
+                    
+                    project.BuildReason.Flags |= BuildReason.DependencyChanged;
                 }
             }
 
@@ -377,7 +379,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     }
 
     [Flags]
-    internal enum InclusionReason {
+    internal enum BuildReason {
         None = 1,
         ProjectFileChanged = 2,
         BuildTreeNotFound = 4,

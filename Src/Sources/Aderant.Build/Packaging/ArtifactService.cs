@@ -34,7 +34,7 @@ namespace Aderant.Build.Packaging {
         /// <param name="context">The build context.</param>
         /// <param name="publisherName">Optional. Used to identify the publisher</param>
         /// <param name="packages">The artifacts to publish</param>
-        internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
+        internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
 
             this.pathBuilder = new ArtifactStagingPathBuilder(context);
@@ -43,33 +43,33 @@ namespace Aderant.Build.Packaging {
 
             if (pipelineService != null) {
                 // Tell TFS about these artifacts
-                pipelineService.AssociateArtifact(buildArtifacts);
+                pipelineService.AssociateArtifacts(buildArtifacts);
             }
 
             return buildArtifacts;
         }
 
-        private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackage> packages) {
+        private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             // TODO: Slow - optimize
             List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
-            IEnumerable<IGrouping<string, ArtifactPackage>> grouping = packages.GroupBy(g => g.Id);
+            IEnumerable<IGrouping<string, ArtifactPackageDefinition>> grouping = packages.GroupBy(g => g.Id);
             foreach (var group in grouping) {
-                foreach (var artifact in group) {
-                    var files = artifact.GetFiles();
+                foreach (var definition in group) {
+                    var files = definition.GetFiles();
 
-                    files = FilterGeneratedPackage(context, publisherName, files, artifact);
+                    files = FilterGeneratedPackage(context, publisherName, files, definition);
 
-                    CheckForDuplicates(artifact.Id, files);
+                    CheckForDuplicates(definition.Id, files);
 
-                    var copyOperations = CalculateFileCopyOperations(publisherName, copyList, artifact.Id, files);
-                    if (copyOperations != null) {
-                        buildArtifacts.Add(copyOperations);
+                    var artifact = CreateArtifact(publisherName, copyList, definition, files);
+                    if (artifact != null) {
+                        buildArtifacts.Add(artifact);
                     }
 
                     foreach (var handler in handlers) {
-                        var result = handler.ProcessFiles(copyList, context, artifact.Id, files);
+                        var result = handler.ProcessFiles(copyList, context, definition.Id, files);
                         if (result != null) {
                             buildArtifacts.Add(result);
                         }
@@ -77,7 +77,7 @@ namespace Aderant.Build.Packaging {
 
                     context.RecordArtifact(
                         publisherName,
-                        artifact.Id,
+                        definition.Id,
                         files.Select(
                             s => new ArtifactItem {
                                 File = s.Destination
@@ -86,7 +86,7 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (var item in copyList) {
-                CopyToDestination(item.Item1, item.Item2);
+                CopyToDestination(item.Item1, item.Item2, context.IsDesktopBuild);
             }
 
             return buildArtifacts;
@@ -96,7 +96,7 @@ namespace Aderant.Build.Packaging {
             return publisherName + "\\";
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> filesToPackage, ArtifactPackage artifact) {
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> filesToPackage, ArtifactPackageDefinition artifact) {
             ProjectOutputSnapshot snapshot = context.GetProjectOutputs(publisherName);
 
             if (snapshot == null) {
@@ -105,7 +105,7 @@ namespace Aderant.Build.Packaging {
 
             MergeExistingOutputs(context, publisherName, snapshot);
 
-            if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackage.TestPackagePrefix)) {
+            if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackageDefinition.TestPackagePrefix)) {
                 var builder = new TestPackageBuilder();
                 return builder.BuildArtifact(filesToPackage, snapshot, publisherName);
             }
@@ -153,10 +153,10 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private BuildArtifact CalculateFileCopyOperations(string publisher, List<Tuple<string, PathSpec>> copyList, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact CreateArtifact(string publisher, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
             var basePath = pathBuilder.BuildPath(publisher);
 
-            string container = Path.Combine(basePath, artifactId);
+            string container = Path.Combine(basePath, definition.Id);
 
             foreach (var pathSpec in files) {
                 copyList.Add(Tuple.Create(container, pathSpec));
@@ -164,12 +164,14 @@ namespace Aderant.Build.Packaging {
 
             return new BuildArtifact {
                 FullPath = container,
-                Name = artifactId,
+                Name = definition.Id,
                 Type = VsoBuildArtifactType.FilePath,
+                IsAutomaticallyGenerated = definition.IsAutomaticallyGenerated,
+                IsInternalDevelopmentPackage = definition.IsInternalDevelopmentPackage,
             };
         }
 
-        private void CopyToDestination(string destinationRoot, PathSpec pathSpec) {
+        private void CopyToDestination(string destinationRoot, PathSpec pathSpec, bool allowOverwrite) {
             if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
                 try {
                     fileSystem.AddFile(destinationRoot, new MemoryStream());
@@ -183,7 +185,7 @@ namespace Aderant.Build.Packaging {
             var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
 
             if (fileSystem.FileExists(pathSpec.Location)) {
-                fileSystem.CopyFile(pathSpec.Location, destination);
+                fileSystem.CopyFile(pathSpec.Location, destination, allowOverwrite);
             }
         }
 
@@ -348,19 +350,27 @@ namespace Aderant.Build.Packaging {
                             var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
 
                             if (fileSystem.FileExists(stateFile)) {
+                                BuildStateFile file;
                                 using (Stream stream = fileSystem.OpenFile(stateFile)) {
-
-                                    BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
-                                    file.DropLocation = folder;
-
-                                    if (CheckForRootedPaths(file)) {
-                                        continue;
-                                    }
-
-                                    if (IsFileTrustworthy(file)) {
-                                        files.Add(file);
-                                    }
+                                    file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
                                 }
+
+                                file.DropLocation = folder;
+
+                                if (CheckForRootedPaths(file)) {
+                                    continue;
+                                }
+
+                                if (!fileSystem.GetDirectories(folder, false).Any()) {
+                                    // If there are no directories then the state file possibly represents
+                                    // a garbage collected build in which case we should ignore it.
+                                    continue;
+                                }
+
+                                if (IsFileTrustworthy(file)) {
+                                    files.Add(file);
+                                }
+
                             }
                         }
                     }
@@ -371,6 +381,10 @@ namespace Aderant.Build.Packaging {
         }
 
         private static bool IsFileTrustworthy(BuildStateFile file) {
+            if (string.Equals(file.BuildId, "0")) {
+                return false;
+            }
+
             // Reject files that provide no value
             if (file.Outputs == null || file.Outputs.Count == 0) {
                 return false;

@@ -16,7 +16,7 @@ namespace Aderant.Build.PipelineService {
     internal class BuildPipelineServiceImpl : IBuildPipelineService {
         private BuildOperationContext ctx;
 
-        private List<BuildArtifact> vsoArtifacts = new List<BuildArtifact>();
+        private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
 
         public void Publish(BuildOperationContext context) {
             ctx = context;
@@ -42,14 +42,14 @@ namespace Aderant.Build.PipelineService {
             return ctx.GetVariable(scope, variableName);
         }
 
-        public void AssociateArtifact(IEnumerable<BuildArtifact> artifacts) {
+        public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
             if (artifacts != null) {
-                vsoArtifacts.AddRange(artifacts);
+                associatedArtifacts.AddRange(artifacts);
             }
         }
 
         public BuildArtifact[] GetAssociatedArtifacts() {
-            return vsoArtifacts.ToArray();
+            return associatedArtifacts.ToArray();
         }
     }
 }

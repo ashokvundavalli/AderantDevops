@@ -46,9 +46,9 @@ namespace Aderant.Build.PipelineService {
             return Channel.GetVariable(scope, variableName);
         }
 
-        public void AssociateArtifact(IEnumerable<BuildArtifact> artifacts) {
+        public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
             ErrorUtilities.IsNotNull(artifacts, nameof(artifacts));
-            Channel.AssociateArtifact(artifacts);
+            Channel.AssociateArtifacts(artifacts);
         }
 
         public BuildArtifact[] GetAssociatedArtifacts() {

@@ -59,7 +59,7 @@ namespace UnitTest.Build.Packaging {
                     BuildMetadata = new BuildMetadata()
                 },
                 "Bar",
-                new[] { new ArtifactPackage("bar", specs) });
+                new[] { new ArtifactPackageDefinition("bar", specs) });
 
             Assert.IsNotNull(results);
         }
@@ -99,13 +99,13 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Destination_is_filename_by_default() {
-            PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", null);
+            PathSpec spec = ArtifactPackageDefinition.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", null);
             Assert.AreEqual("Baz.dll", spec.Destination);
         }
 
         [TestMethod]
         public void Destination_is_respected_when_directory() {
-            PathSpec spec = ArtifactPackage.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", "Foo");
+            PathSpec spec = ArtifactPackageDefinition.CreatePathSpecification(null, null, @"Foo\Bar\Baz.dll", "Foo");
             Assert.AreEqual(@"Foo\Baz.dll", spec.Destination);
         }
 

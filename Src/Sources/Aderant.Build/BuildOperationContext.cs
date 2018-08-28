@@ -234,11 +234,11 @@ namespace Aderant.Build {
 
         public ChangesToConsider GetChangeConsiderationMode() {
             ChangesToConsider mode = ChangesToConsider.None;
-            if (Switches.PendingChanges) {
+            if (IsDesktopBuild) {
                 mode = ChangesToConsider.PendingChanges;
             }
 
-            if (Switches.Everything) {
+            if (Switches.Branch) {
                 mode = ChangesToConsider.Branch;
             }
 
@@ -341,7 +341,7 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Returns the artifacts for a given publisher.
+        /// Returns the artifacts created during the build.
         /// Keyed by publisher.
         /// </summary>
         internal ArtifactCollection GetArtifacts() {
@@ -541,12 +541,10 @@ namespace Aderant.Build {
         }
     }
 
-    [Serializable]
+    
     [DataContract]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public struct BuildSwitches {
-
-        [DataMember]
-        public bool PendingChanges { get; set; }
 
         [DataMember]
         public bool Downstream { get; set; }
@@ -555,7 +553,7 @@ namespace Aderant.Build {
         public bool Transitive { get; set; }
 
         [DataMember]
-        public bool Everything { get; set; }
+        public bool Branch { get; set; }
 
         [DataMember]
         public bool Clean { get; set; }

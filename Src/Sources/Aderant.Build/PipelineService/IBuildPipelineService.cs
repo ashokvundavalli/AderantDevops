@@ -33,7 +33,7 @@ namespace Aderant.Build.PipelineService {
     internal interface IVsoCommandService {
 
         [OperationContract]
-        void AssociateArtifact(IEnumerable<BuildArtifact> artifacts);
+        void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts);
 
         [OperationContract]
         BuildArtifact[] GetAssociatedArtifacts();

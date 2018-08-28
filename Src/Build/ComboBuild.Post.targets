@@ -48,7 +48,7 @@
   <PropertyGroup>
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
-      AutoGatherTestArtifacts;
+      CreateDefaultTestsArtifact;
       PackageArtifacts
     </PackageArtifactsDependsOn>
   </PropertyGroup>
@@ -72,7 +72,7 @@
   </Target>
 
 
-  <Target Name="AutoGatherTestArtifacts" Condition="'$(AutomaticallyPackageTests)' == 'true'" Returns="@(_PackageArtifact)">
+  <Target Name="CreateDefaultTestsArtifact" Condition="'$(AutomaticallyPackageTests)' == 'true'" Returns="@(DefaultTestArtifact)">
     <ItemGroup>
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>Tests.$(ModuleName)</ArtifactId>

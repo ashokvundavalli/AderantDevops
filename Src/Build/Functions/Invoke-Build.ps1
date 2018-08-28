@@ -98,7 +98,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         }
     }    
 
-    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$PendingChanges.IsPresent
+    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$Context.IsDesktopBuild
 
     Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
     Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
@@ -176,14 +176,8 @@ function global:Invoke-Build2
 {    
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]    
     param (
-        [Parameter(ParameterSetName="Build")]
-        [switch]$PendingChanges,
-
-        [Parameter(ParameterSetName="Build")]
-        [switch]$Branch,
-
         [Parameter()]
-        [switch]$Everything,
+        [switch]$Branch,
 
         [Parameter()]
         [switch]$Downstream,
@@ -243,9 +237,8 @@ function global:Invoke-Build2
     GetBuildStateMetadata $context
     PrepareEnvironment
 
-    $switches = $context.Switches
-    $switches.PendingChanges = $PendingChanges.IsPresent
-    $switches.Everything = $Everything.IsPresent
+    $switches = $context.Switches    
+    $switches.Branch = $Branch.IsPresent
     $switches.Downstream = $Downstream.IsPresent
     $switches.Transitive = $Transitive.IsPresent
     $switches.Clean = $Clean.IsPresent
@@ -257,6 +250,7 @@ function global:Invoke-Build2
     $context.StartedAt = [DateTime]::UtcNow
 
     $contextFileName = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
+
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceFactory]::new()
     $contextService.StartListener($contextFileName)
     $contextService.Publish($context)
@@ -264,7 +258,7 @@ function global:Invoke-Build2
     try {
         $args = CreateToolArgumentString $context $RemainingArgs
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /p:ContextFileName=$contextFileName $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextFileName=$contextFileName $args"
  
         if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
@@ -277,6 +271,8 @@ function global:Invoke-Build2
             }
         }
     } finally {
-        $contextService.Dispose()
+        if ($contextService -ne $null) {
+            $contextService.Dispose()
+        }
     }
 }

@@ -126,7 +126,7 @@ namespace Aderant.Build.ProjectSystem {
             get { return dirtyFiles; }
         }
 
-        internal InclusionDescriptor InclusionDescriptor { get; set; }
+        internal BuildReason BuildReason { get; set; }
 
         public Guid ProjectGuid {
             get {
@@ -366,11 +366,11 @@ namespace Aderant.Build.ProjectSystem {
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
                         // found one
                         IsDirty = true;
-                        if (InclusionDescriptor == null) {
-                            InclusionDescriptor = new InclusionDescriptor();
+                        if (BuildReason == null) {
+                            BuildReason = new BuildReason();
                         }
 
-                        InclusionDescriptor.Reason |= InclusionReason.ProjectFileChanged;
+                        BuildReason.Flags |= DependencyAnalyzer.BuildReason.ProjectFileChanged;
 
                         if (dirtyFiles == null) {
                             dirtyFiles = new List<string>();
@@ -400,8 +400,8 @@ namespace Aderant.Build.ProjectSystem {
         }
     }
 
-    internal class InclusionDescriptor {
+    internal class BuildReason {
         public string Tag { get; set; }
-        public InclusionReason Reason { get; set; }
+        public DependencyAnalyzer.BuildReason Flags { get; set; }
     }
 }

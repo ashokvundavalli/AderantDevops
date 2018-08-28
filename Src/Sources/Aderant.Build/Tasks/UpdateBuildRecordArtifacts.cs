@@ -3,7 +3,7 @@ using Aderant.Build.TeamFoundation;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    public sealed class ExecutePendingVsoCommands : BuildOperationContextTask {
+    public sealed class UpdateBuildRecordArtifacts : BuildOperationContextTask {
 
         public string DestinationPath { get; set; }
 
@@ -22,7 +22,7 @@ namespace Aderant.Build.Tasks {
                 }
 
                 if (!string.Equals(artifact.FullPath, fullPath)) {
-                    Log.LogMessage(MessageImportance.High, $"Updated artifact location: {fullPath} --> {artifact.FullPath}");
+                    Log.LogMessage(MessageImportance.High, $"Pending artifact location: {fullPath} --> {artifact.FullPath}");
                 }
 
                 var linkCommand = commandBuilder.LinkArtifact(artifact.Name, artifact.Type, artifact.ComputeVsoPath());

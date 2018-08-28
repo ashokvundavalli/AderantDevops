@@ -36,9 +36,19 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
+        public void BuildSwitchesSerialization() {
+            var metadata = new BuildSwitches();
+            metadata.Clean = true;
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsTrue(instance.Clean);
+        }
+
+        [TestMethod]
         public void BuildOperationContextSerialization() {
             var metadata = new BuildOperationContext();
-            metadata.WrittenStateFiles = new List<string> { "1"  };
+            metadata.WrittenStateFiles = new List<string> { "1" };
 
             var instance = RoundTrip(metadata);
 
@@ -75,17 +85,17 @@ namespace UnitTest.Build {
             Assert.AreEqual("Gaz", instance.Outputs["Baz"].Directory);
         }
 
-        private static T RoundTrip<T>(T artifact) where T : class {
+        private static T RoundTrip<T>(T artifact) {
             return ProtoDeserialize<T>(ProtoSerialize(artifact));
         }
 
-        public static T ProtoDeserialize<T>(byte[] data) where T : class {
+        public static T ProtoDeserialize<T>(byte[] data) {
             using (var stream = new MemoryStream(data)) {
                 return Serializer.Deserialize<T>(stream);
             }
         }
 
-        public static byte[] ProtoSerialize<T>(T graph) where T : class {
+        public static byte[] ProtoSerialize<T>(T graph) {
             using (var stream = new MemoryStream()) {
                 Serializer.Serialize(stream, graph);
                 stream.Position = 0;

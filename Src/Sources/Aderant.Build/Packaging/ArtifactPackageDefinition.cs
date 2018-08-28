@@ -6,10 +6,10 @@ using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 
 namespace Aderant.Build.Packaging {
-    internal class ArtifactPackage : IArtifact {
+    internal class ArtifactPackageDefinition : IArtifact {
         private List<PathSpec> pathSpecs;
 
-        public ArtifactPackage(string id, IEnumerable<PathSpec> pathSpecs) {
+        public ArtifactPackageDefinition(string id, IEnumerable<PathSpec> pathSpecs) {
             Id = id;
             this.pathSpecs = pathSpecs.ToList();
         }
@@ -21,6 +21,8 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public static string TestPackagePrefix { get; } = "Tests.";
 
+        public bool IsInternalDevelopmentPackage { get; set; }
+
         public string Id { get; }
 
         public IReadOnlyCollection<IDependable> GetDependencies() {
@@ -29,7 +31,7 @@ namespace Aderant.Build.Packaging {
 
         public void AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
         }
-        
+
         /// <summary>
         /// Gets the file paths contained within the artifact.
         /// </summary>

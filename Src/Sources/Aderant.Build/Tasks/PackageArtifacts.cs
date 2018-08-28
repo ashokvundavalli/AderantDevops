@@ -25,8 +25,6 @@ namespace Aderant.Build.Tasks {
             if (ArtifactDefinitions != null) {
                 var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, SolutionRoot, RelativeFrom);
 
-                var commands = new VsoBuildCommandBuilder(Logger);
-
                 var artifactService = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
                 artifactService.RegisterHandler(new PullRequestHandler());
 
@@ -46,23 +44,22 @@ namespace Aderant.Build.Tasks {
     }
 
     internal static class ArtifactPackageHelper {
-        internal static List<ArtifactPackage> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string solutionRoot, string[] relativeFrom) {
-            List<ArtifactPackage> artifacts = new List<ArtifactPackage>();
+        internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string solutionRoot, string[] relativeFrom) {
+            List<ArtifactPackageDefinition> artifacts = new List<ArtifactPackageDefinition>();
             var grouping = artifactDefinitions.GroupBy(g => g.GetMetadata("ArtifactId"));
 
             foreach (var group in grouping) {
                 List<PathSpec> pathSpecs = new List<PathSpec>();
 
                 bool isAutomaticallyGenerated = false;
+                bool isInternalDevelopmentPackage = false;
 
                 if (solutionRoot != null) {
                     foreach (var file in group) {
-                        string metadata = file.GetMetadata("Generated");
-                        if (!string.IsNullOrWhiteSpace(metadata)) {
-                            isAutomaticallyGenerated = bool.Parse(metadata);
-                        }
+                        ParseMetadata(file, "Generated", ref isAutomaticallyGenerated);
+                        ParseMetadata(file, "IsInternalDevelopmentPackage", ref isInternalDevelopmentPackage);
 
-                        var pathSpec = ArtifactPackage.CreatePathSpecification(
+                        var pathSpec = ArtifactPackageDefinition.CreatePathSpecification(
                             solutionRoot,
                             relativeFrom,
                             file.GetMetadata("FullPath"),
@@ -75,14 +72,22 @@ namespace Aderant.Build.Tasks {
                     }
                 }
 
-                var artifact = new ArtifactPackage(group.Key, pathSpecs) {
-                    IsAutomaticallyGenerated = isAutomaticallyGenerated
+                var artifact = new ArtifactPackageDefinition(group.Key, pathSpecs) {
+                    IsAutomaticallyGenerated = isAutomaticallyGenerated,
+                    IsInternalDevelopmentPackage = isInternalDevelopmentPackage,
                 };
 
                 artifacts.Add(artifact);
             }
 
             return artifacts;
+        }
+
+        private static void ParseMetadata(ITaskItem file, string metadataName, ref bool value) {
+            string metadata = file.GetMetadata(metadataName);
+            if (!string.IsNullOrWhiteSpace(metadata)) {
+                value = bool.Parse(metadata);
+            }
         }
     }
 }

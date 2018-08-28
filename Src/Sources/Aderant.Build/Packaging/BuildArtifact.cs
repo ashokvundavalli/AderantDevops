@@ -7,6 +7,9 @@ using ProtoBuf;
 
 namespace Aderant.Build.Packaging {
 
+    /// <summary>
+    /// Represents outputs that are tracked by TFS
+    /// </summary>
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class BuildArtifact {
@@ -19,6 +22,12 @@ namespace Aderant.Build.Packaging {
 
         [DataMember]
         public VsoBuildArtifactType Type { get; set; }
+
+        [DataMember]
+        public bool IsAutomaticallyGenerated { get; set; }
+
+        [DataMember]
+        public bool IsInternalDevelopmentPackage { get; set; }
 
         public string ComputeVsoPath() {
             var pos = FullPath.IndexOf(Name, StringComparison.OrdinalIgnoreCase);

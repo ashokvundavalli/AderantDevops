@@ -47,7 +47,7 @@
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
-    <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
+    
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
@@ -61,7 +61,7 @@
       CreatePipeline;
       ExecutePipeline;
       WriteStateFiles;
-      <!--PackageProduct;-->
+      PackageProduct;
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
@@ -281,22 +281,73 @@
 
   <Target Name="PackageProduct">
     <PropertyGroup>
-      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)\_product</LocalExpertBinariesDirectory>
+      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)_product\</LocalExpertBinariesDirectory>
+      <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
-    <Exec ContinueOnError="false"
+    <!--<Exec ContinueOnError="false"
           IgnoreExitCode="false"
           Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
-          WorkingDirectory="$(PackageScriptsDirectory)" />
+          WorkingDirectory="$(PackageScriptsDirectory)" />-->
+
+    <GetArtifactPaths
+      IncludeGeneratedArtifacts="false">
+      <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
+      <Output TaskParameter="DevelopmentPackagePaths" ItemName="LocalDevelopmentPackagePaths" />
+      <Output TaskParameter="TestPackagePaths" ItemName="LocalTestPackagePaths" />
+    </GetArtifactPaths>
+
+    <Message Text="Local Local artifact path: %(LocalArtifactPaths.FullPath)" />
+    
+    <!--
+        Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
+        to force msbuild to expand all the wildcard characters so to get real file paths
+    -->
+    <CreateItem Include="@(LocalPackagePaths -> '%(FullPath)\**\**')">
+      <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(LocalDevelopmentPackagePaths -> '%(FullPath)\**\**')">
+      <Output ItemName="LocalDevelopmentPackageFiles" TaskParameter="Include"/>
+    </CreateItem>
+
+    <CreateItem Include="@(LocalTestPackagePaths -> '%(FullPath)\**\**')">
+      <Output ItemName="LocalTestPackageFiles" TaskParameter="Include"/>
+    </CreateItem>
+
+    <ItemGroup>
+      <AllLocalFiles Include="@(LocalPackageFiles)">
+        <DestinationRelativePath></DestinationRelativePath>
+      </AllLocalFiles>
+
+      <AllLocalFiles Include="@(LocalDevelopmentPackageFiles)">
+        <DestinationRelativePath>Development</DestinationRelativePath>
+      </AllLocalFiles>
+
+      <AllLocalFiles Include="@(LocalTestPackageFiles)">
+        <DestinationRelativePath>Test</DestinationRelativePath>
+      </AllLocalFiles>
+    </ItemGroup>
+
+    <!-- TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire -->
+    <Copy SourceFiles="@(AllLocalFiles)"
+          DestinationFiles="@(AllLocalFiles -> '$(ExpertSourceDirectory)\%(DestinationRelativePath)\%(RecursiveDir)%(Filename)%(Extension)')"
+          UseHardlinksIfPossible="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+    </Copy>
+
+    <CheckForDoubleWrites FileList="@(FileWrites)" />
+
   </Target>
 
 
   <Target Name="CopyToDrop" Condition="'$(PrimaryDropLocation)' != ''">
 
-    <ExecutePendingVsoCommands
+    <!-- Tell TFS about the new artifacts so it can manage them -->
+    <UpdateBuildRecordArtifacts
       DestinationPath="$(PrimaryDropLocation)" />
 
     <!-- We ignore exit codes less than 4 as these codes indicate success -->

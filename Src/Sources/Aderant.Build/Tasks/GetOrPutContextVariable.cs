@@ -35,4 +35,5 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
     }
+
 }
