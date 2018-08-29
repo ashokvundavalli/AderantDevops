@@ -80,7 +80,7 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         public void CalculateFilesToRestore_returns_full_path() {
             var state = new BuildStateFile();
-            state.Outputs = new ProjectOutputSnapshot();
+            state.Outputs = new ProjectTreeOutputSnapshot();
             state.Outputs["Foo\\Bar.cspoj"] = new OutputFilesSnapshot {
                 FilesWritten = new string[] {
                     @"..\..\bin\foo.dll"

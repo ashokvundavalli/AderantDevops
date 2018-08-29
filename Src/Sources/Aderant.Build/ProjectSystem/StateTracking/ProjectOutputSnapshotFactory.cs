@@ -10,9 +10,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
     /// Takes a snapshot of the output files of a project.
     /// </summary>
     internal class ProjectOutputSnapshotFactory {
-        private readonly ProjectOutputSnapshot outputs;
+        private readonly ProjectTreeOutputSnapshot outputs;
 
-        public ProjectOutputSnapshotFactory(ProjectOutputSnapshot outputs) {
+        public ProjectOutputSnapshotFactory(ProjectTreeOutputSnapshot outputs) {
             this.outputs = outputs;
         }
 

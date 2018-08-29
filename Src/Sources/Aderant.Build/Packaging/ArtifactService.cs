@@ -18,7 +18,7 @@ namespace Aderant.Build.Packaging {
         private List<ArtifactPackageDefinition> autoPackages;
         private List<IArtifactHandler> handlers = new List<IArtifactHandler>();
         private ArtifactStagingPathBuilder pathBuilder;
-        
+
         public ArtifactService(ILogger logger)
             : this(null, new PhysicalFileSystem(), logger) {
         }
@@ -56,7 +56,9 @@ namespace Aderant.Build.Packaging {
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
             this.autoPackages = new List<ArtifactPackageDefinition>();
-            
+
+            Merge(context, publisherName);
+
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
             // to only unique content is packaged
@@ -90,8 +92,6 @@ namespace Aderant.Build.Packaging {
                 if (files.Any()) {
                     CheckForDuplicates(definition.Id, files);
 
-                    Merge(context, publisherName, files);
-
                     var artifact = CreateArtifact(publisherName, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
@@ -115,35 +115,27 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private static IReadOnlyCollection<PathSpec> Merge(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> filesToPackage) {
-            ProjectOutputSnapshot snapshot = context.GetProjectOutputs(publisherName);
+        private static void Merge(BuildOperationContext context, string publisherName) {
+            var snapshots = context.GetProjectOutputs(publisherName).ToList();
 
-            if (snapshot == null) {
-                return filesToPackage;
+            MergeExistingOutputs(context, publisherName, snapshots);
+
+            foreach (var snapshot in snapshots) {
+                context.RecordProjectOutputs(snapshot);
             }
-
-            MergeWithExistingOutputs(context, publisherName, snapshot);
-
-            return filesToPackage;
         }
 
         private static string GetProjectKey(string publisherName) {
             return publisherName + "\\";
         }
 
-        private static void MergeWithExistingOutputs(BuildOperationContext context, string publisherName, ProjectOutputSnapshot snapshot) {
+        private static void MergeExistingOutputs(BuildOperationContext context, string publisherName, List<OutputFilesSnapshot> snapshots) {
             // Takes the existing (cached build) state and applies to the current state
             var previousBuild = context.GetStateFile(publisherName);
 
             if (previousBuild != null) {
-                var previousSnapshot = new ProjectOutputSnapshot(previousBuild.Outputs);
-                ProjectOutputSnapshot previousProjects = previousSnapshot.GetProjectsForTag(publisherName);
-
-                foreach (var previous in previousProjects) {
-                    if (!snapshot.ContainsKey(previous.Key)) {
-                        snapshot[previous.Key] = previous.Value;
-                    }
-                }
+                var merger = new OutputMerger();
+                merger.Merge(publisherName, previousBuild, snapshots);
             }
         }
 
@@ -445,6 +437,28 @@ namespace Aderant.Build.Packaging {
 
         public void RegisterHandler(IArtifactHandler handler) {
             this.handlers.Add(handler);
+        }
+    }
+
+    internal class OutputMerger {
+        public void Merge(string publisherName, BuildStateFile previousBuild, List<OutputFilesSnapshot> snapshots) {
+            var previousSnapshot = new ProjectTreeOutputSnapshot(previousBuild.Outputs);
+            var previousProjects = previousSnapshot.GetProjectsForTag(publisherName);
+
+            foreach (var previous in previousProjects) {
+                bool add = true;
+                foreach (var snapshot in snapshots) {
+                    if (snapshot.ProjectFile == previous.ProjectFile) {
+                        add = false;
+                        break;
+                    }
+                }
+
+                if (add) {
+                    previous.Origin = previousBuild.Id.ToString();
+                    snapshots.Add(previous);
+                }
+            }
         }
     }
 

@@ -11,7 +11,7 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void Project_key_is_source_relative_path() {
-            var collection = new ProjectOutputSnapshot();
+            var collection = new ProjectTreeOutputSnapshot();
 
             ProjectOutputSnapshotFactory snapshotFactory = new ProjectOutputSnapshotFactory(collection);
 
@@ -26,7 +26,7 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void TestProjectType_sets_IsTestProject() {
-            var collection = new ProjectOutputSnapshot();
+            var collection = new ProjectTreeOutputSnapshot();
             ProjectOutputSnapshotFactory snapshotFactory = new ProjectOutputSnapshotFactory(collection);
             snapshotFactory.ProjectFile = "foo.csproj";
             snapshotFactory.TestProjectType = "UnitTest";
@@ -37,7 +37,7 @@ namespace UnitTest.Build.ProjectSystem {
 
         [TestMethod]
         public void ProjectTypeGuids_sets_IsTestProject() {
-            var collection = new ProjectOutputSnapshot();
+            var collection = new ProjectTreeOutputSnapshot();
             ProjectOutputSnapshotFactory snapshotFactory = new ProjectOutputSnapshotFactory(collection);
             snapshotFactory.ProjectFile = "foo.csproj";
             snapshotFactory.ProjectTypeGuids = new[] { WellKnownProjectTypeGuids.TestProject.ToString() };

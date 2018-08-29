@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
 namespace Aderant.Build.Packaging {
     internal class AutoPackager {
-        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, ProjectOutputSnapshot outputs, string publisherName) {
-            var set = outputs.GetProjectsForTag(publisherName);
-
+        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<OutputFilesSnapshot> outputs, string publisherName) {
             List<string> outputList = new List<string>();
 
-            foreach (var project in set.Values) {
+            foreach (var project in outputs) {
 
                 if (project.IsTestProject) {
                     foreach (var path in project.FilesWritten) {
@@ -39,7 +38,7 @@ namespace Aderant.Build.Packaging {
             return artifactItems;
         }
 
-        public IEnumerable<ArtifactPackageDefinition> CreatePackages(ProjectOutputSnapshot snapshot, string publisherName, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
+        public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<OutputFilesSnapshot> snapshots, string publisherName, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
             foreach (var artifactPackageDefinition in autoPackages) {
                 if (packages.Any(s => s.Id == artifactPackageDefinition.Id)) {
                     throw new InvalidOperationException("A generated package cannot have the same name as a custom package. The package name is: " + artifactPackageDefinition.Id);
@@ -47,22 +46,32 @@ namespace Aderant.Build.Packaging {
             }
 
             var allFiles = packages.SelectMany(s => s.GetFiles()).ToList();
-            
+
             foreach (var autoPackage in autoPackages.OrderBy(d => d.Id, StringComparer.OrdinalIgnoreCase)) {
-                var packageContent = FilterGeneratedPackage(snapshot, publisherName, autoPackage, allFiles);
-                
+                var packageContent = FilterGeneratedPackage(snapshots, publisherName, autoPackage, allFiles);
+
                 allFiles.AddRange(packageContent);
 
-                yield return new ArtifactPackageDefinition(autoPackage.Id, packageContent);
+                if (packageContent.Count > 0) {
+                    yield return new ArtifactPackageDefinition(autoPackage.Id, packageContent) { IsAutomaticallyGenerated = true };
+                }
             }
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(ProjectOutputSnapshot snapshot, string publisherName, ArtifactPackageDefinition filesToPackage, List<PathSpec> artifact) {
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IEnumerable<OutputFilesSnapshot> snapshot, string publisherName, ArtifactPackageDefinition filesToPackage, List<PathSpec> artifact) {
             var files = filesToPackage.GetFiles().ToList();
 
             var uniqueContent = new List<PathSpec>();
 
             foreach (var path in files) {
+                //if (path.Location != null && path.Location.Contains("log4net.xml")) {
+                //    Debugger.Launch();
+                //}
+
+                //if (path.Destination != null && path.Destination.Contains("log4net.xml")) {
+                //    Debugger.Launch();
+                //}
+
                 bool add = true;
                 foreach (PathSpec spec in artifact) {
                     if (path == spec) {

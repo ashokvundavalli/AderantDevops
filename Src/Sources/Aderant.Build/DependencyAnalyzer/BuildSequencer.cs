@@ -15,13 +15,13 @@ using Aderant.Build.VersionControl.Model;
 namespace Aderant.Build.DependencyAnalyzer {
 
     [Export(typeof(ISequencer))]
-    internal class BuildSequencer : ISequencer {
+    internal class ProjectSequencer : ISequencer {
         private readonly IFileSystem2 fileSystem;
         private readonly ILogger logger;
         private List<BuildStateFile> stateFiles;
 
         [ImportingConstructor]
-        public BuildSequencer(ILogger logger, IFileSystem2 fileSystem) {
+        public ProjectSequencer(ILogger logger, IFileSystem2 fileSystem) {
             this.logger = logger;
             this.fileSystem = fileSystem;
         }
@@ -70,13 +70,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             // here we evict deleted projects from the previous builds metadata
             // This is so we do not consider the outputs of this project in the artifact restore phase
             if (context.SourceTreeMetadata.Changes != null) {
-                IEnumerable<SourceChange> deletes = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
-                foreach (var delete in deletes) {
+                IEnumerable<SourceChange> deletedFiles = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
+                foreach (var deletedFile in deletedFiles) {
 
                     foreach (var file in stateFiles) {
-                        if (delete.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
-                            if (file.Outputs.ContainsKey(delete.Path)) {
-                                file.Outputs.Remove(delete.Path);
+                        if (deletedFile.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+                            if (file.Outputs.ContainsKey(deletedFile.Path)) {
+                                file.Outputs.Remove(deletedFile.Path);
                             }
                         }
                     }

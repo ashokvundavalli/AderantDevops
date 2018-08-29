@@ -61,7 +61,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var collector = new BuildDependenciesCollector();
             await tree2.CollectBuildDependencies(collector);
 
-            var sequencer = new BuildSequencer(NullLogger.Default, null);
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
 
             // Mark the projects to dirty directly depends on any project in the search list.
             sequencer.MarkDirty(projectList.OfType<IDependable>().ToList(), dirtyProjects);

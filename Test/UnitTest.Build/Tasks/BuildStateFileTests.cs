@@ -18,7 +18,7 @@ namespace UnitTest.Build.Tasks {
         [TestMethod]
         public void BuildStateFile_serialization() {
             var stateFile = new BuildStateFile();
-            stateFile.Outputs = new ProjectOutputSnapshot { { "Foo", new OutputFilesSnapshot() } };
+            stateFile.Outputs = new ProjectTreeOutputSnapshot { { "Foo", new OutputFilesSnapshot() } };
             stateFile.Artifacts = new ArtifactCollection();
             stateFile.PullRequestInfo = new PullRequestInfo {
                 Id = "1", SourceBranch = "2", TargetBranch = "3"
@@ -67,7 +67,7 @@ namespace UnitTest.Build.Tasks {
             writer.WriteStateFile(
                 null,
                 null,
-                new ProjectOutputSnapshot { { "Foo", new OutputFilesSnapshot() } },
+                new[] { new OutputFilesSnapshot() },
                 null,
                 null,
                 null,

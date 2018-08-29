@@ -44,7 +44,7 @@ namespace Aderant.Build {
         private bool isDesktopBuild = true;
 
         [DataMember]
-        private ProjectOutputSnapshot outputs;
+        private ProjectTreeOutputSnapshot outputs;
 
         [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
@@ -317,7 +317,7 @@ namespace Aderant.Build {
             Interlocked.Increment(ref trackedProjectCount);
 
             if (outputs == null) {
-                outputs = new ProjectOutputSnapshot();
+                outputs = new ProjectTreeOutputSnapshot();
             }
         }
 
@@ -325,14 +325,14 @@ namespace Aderant.Build {
         /// Returns the outputs for all projects seen by the build.
         /// Keyed by project file.
         /// </summary>
-        internal ProjectOutputSnapshot GetProjectOutputs() {
+        internal ProjectTreeOutputSnapshot GetProjectOutputs() {
             return outputs;
         }
 
         /// <summary>
         /// Returns the outputs for a specific publisher.
         /// </summary>
-        internal ProjectOutputSnapshot GetProjectOutputs(string publisherName) {
+        internal IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName) {
             if (outputs != null) {
                 return outputs.GetProjectsForTag(publisherName);
             }
@@ -412,7 +412,7 @@ namespace Aderant.Build {
 
     [CollectionDataContract]
     [ProtoContract]
-    internal class ArtifactCollection : SortedDictionary<string, ICollection<ArtifactManifest>> {
+    internal class ArtifactCollection : SortedList<string, ICollection<ArtifactManifest>> {
 
         public ArtifactCollection()
             : base(StringComparer.OrdinalIgnoreCase) {
@@ -432,25 +432,18 @@ namespace Aderant.Build {
 
     [CollectionDataContract]
     [ProtoContract]
-    internal class ProjectOutputSnapshot : SortedDictionary<string, OutputFilesSnapshot> {
+    internal class ProjectTreeOutputSnapshot : SortedList<string, OutputFilesSnapshot> {
 
-        public ProjectOutputSnapshot()
+        public ProjectTreeOutputSnapshot()
             : base(StringComparer.OrdinalIgnoreCase) {
         }
 
-        public ProjectOutputSnapshot(IDictionary<string, OutputFilesSnapshot> dictionary)
+        public ProjectTreeOutputSnapshot(IDictionary<string, OutputFilesSnapshot> dictionary)
             : base(dictionary, StringComparer.OrdinalIgnoreCase) {
         }
 
-        public ProjectOutputSnapshot GetProjectsForTag(string tag) {
-            var items = this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase));
-
-            var collection = new ProjectOutputSnapshot();
-            foreach (var item in items) {
-                collection.Add(item.Key, item.Value);
-            }
-
-            return collection;
+        public IEnumerable<OutputFilesSnapshot> GetProjectsForTag(string tag) {
+            return this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase)).Select(s => s.Value);
         }
     }
 

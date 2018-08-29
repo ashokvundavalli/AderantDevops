@@ -12,9 +12,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         public BucketId BucketId { get; set; }
 
+        /// <summary>
+        /// A unique identifier for this state file instance
+        /// </summary>
         [DataMember(EmitDefaultValue = false)]
         public Guid Id { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// The build id that produced this state file.
+        /// </summary>
         [DataMember(EmitDefaultValue = false)]
         public string BuildId { get; set; }
 

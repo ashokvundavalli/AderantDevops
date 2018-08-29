@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using Aderant.Build.Packaging;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
@@ -30,7 +32,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string WriteStateFile(
             BuildStateFile previousBuild,
             BucketId bucket,
-            ProjectOutputSnapshot currentOutputs,
+            IEnumerable<OutputFilesSnapshot> currentOutputs,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata metadata,
             BuildMetadata buildMetadata,
@@ -54,14 +56,14 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             if (currentOutputs == null) {
-                currentOutputs = new ProjectOutputSnapshot();
+                currentOutputs = Enumerable.Empty<OutputFilesSnapshot>();
             }
 
             if (previousBuild != null) {
                 MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
 
-            stateFile.Outputs = currentOutputs;
+            stateFile.Outputs = currentOutputs.ToDictionary(key => key.ProjectFile, value => value);
 
             if (artifacts != null) {
                 stateFile.Artifacts = artifacts;
@@ -85,15 +87,16 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return destinationPath;
         }
 
-        private static void MergeExistingOutputs(string buildId, IDictionary<string, OutputFilesSnapshot> oldOutput, IDictionary<string, OutputFilesSnapshot> newOutput) {
-            foreach (var projectOutputs in oldOutput) {
-                if (!newOutput.ContainsKey(projectOutputs.Key)) {
-                    var outputs = projectOutputs.Value;
-                    outputs.Origin = buildId;
+        private static void MergeExistingOutputs(string buildId, IDictionary<string, OutputFilesSnapshot> oldOutput, IEnumerable<OutputFilesSnapshot> newOutput) {
+            var merger = new OutputMerger();
+            //foreach (var projectOutputs in oldOutput) {
+            //    if (!newOutput.ContainsKey(projectOutputs.Key)) {
+            //        var outputs = projectOutputs.Value;
+            //        outputs.Origin = buildId;
 
-                    newOutput[projectOutputs.Key] = outputs;
-                }
-            }
+            //        newOutput[projectOutputs.Key] = outputs;
+            //    }
+            //}
         }
 
         public void WriteStateFiles(BuildOperationContext context) {
@@ -102,7 +105,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             foreach (var bucket in buckets) {
                 var tag = bucket.Tag;
 
-                ProjectOutputSnapshot projectOutputSnapshot = null;
+                IEnumerable<OutputFilesSnapshot> projectOutputSnapshot = null;
                 var outputs = context.GetProjectOutputs();
                 if (outputs != null) {
                     projectOutputSnapshot = outputs.GetProjectsForTag(tag);
@@ -120,7 +123,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
         }
 
-        private void WriteStateFile(BuildStateFile previousBuild, BucketId bucket, ProjectOutputSnapshot projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
+        private void WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<OutputFilesSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
             var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
             var file = pathBuilder.BuildPath(bucket.Tag);
             file = Path.Combine(file, DefaultFileName);
