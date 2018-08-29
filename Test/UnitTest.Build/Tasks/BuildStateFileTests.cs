@@ -67,7 +67,7 @@ namespace UnitTest.Build.Tasks {
             writer.WriteStateFile(
                 null,
                 null,
-                new[] { new OutputFilesSnapshot() },
+                new[] { new OutputFilesSnapshot { ProjectFile = "p1" } },
                 null,
                 null,
                 null,

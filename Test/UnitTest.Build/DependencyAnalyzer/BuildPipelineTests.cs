@@ -34,14 +34,11 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
         [TestMethod]
         public void SetUseCommonOutputDirectory_groups_by_solution_root() {
-            var mock = new Mock<IFileSystem2>();
-            mock.Setup(s => s.Root).Returns("");
-
             var projects = new ConfiguredProject[] {
-                new TestConfiguredProject(null, mock.Object) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
-                new TestConfiguredProject(null, mock.Object) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
-                new TestConfiguredProject(null, mock.Object) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar2" },
-                new TestConfiguredProject(null, mock.Object) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
+                new TestConfiguredProject(null, null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
+                new TestConfiguredProject(null, null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
+                new TestConfiguredProject(null, null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar2" },
+                new TestConfiguredProject(null, null) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
             };
 
             BuildPipeline.SetUseCommonOutputDirectory(projects);

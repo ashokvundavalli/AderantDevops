@@ -260,7 +260,6 @@
     <PropertyGroup>
       <CommonBuildProperties>
         BuildInParallel=true;
-        BuildAll=true;
         BuildNumber=$(BuildNumber);
         TfsBuildNumber=$(BuildNumber);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
