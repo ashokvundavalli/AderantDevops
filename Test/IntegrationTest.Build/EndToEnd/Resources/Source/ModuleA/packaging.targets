@@ -7,9 +7,6 @@
      <PackageArtifact Include="$(SolutionRoot)\Bar\bin\**\Bar.dll;">
        <ArtifactId>ModuleA</ArtifactId>
      </PackageArtifact>
-     <PackageArtifact Include="$(SolutionRoot)\Baz\bin\**\Baz.dll;">
-       <ArtifactId>ModuleA</ArtifactId>
-     </PackageArtifact>
      <PackageArtifact Include="$(SolutionRoot)\Foo\bin\**\Foo.dll;">
        <ArtifactId>ModuleA</ArtifactId>
      </PackageArtifact>

@@ -12,7 +12,7 @@ namespace Aderant.Build.Tasks {
 
             var service = GetService<IVsoCommandService>();
 
-            var builder = new ArtifactStagingPathBuilder(Context);
+            var builder = new ArtifactStagingPathBuilder(Context.ArtifactStagingDirectory, Context.BuildMetadata.BuildId, Context.SourceTreeMetadata);
 
             foreach (var artifact in service.GetAssociatedArtifacts()) {
                 string fullPath = artifact.FullPath;

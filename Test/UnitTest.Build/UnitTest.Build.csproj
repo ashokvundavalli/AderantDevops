@@ -119,6 +119,8 @@
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\ArtifactPackageTests.cs" />
     <Compile Include="ObjectModelSerializationTests.cs" />
+    <Compile Include="Packaging\PathSpecTests.cs" />
+    <Compile Include="Packaging\AutoPackagerTests.cs" />
     <Compile Include="ProjectSystem\ProjectOutputTrackerTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />

@@ -4,27 +4,28 @@ using Aderant.Build.VersionControl;
 
 namespace Aderant.Build {
     internal class ArtifactStagingPathBuilder {
-        private readonly BuildOperationContext context;
-        private string stagingDirectory;
+        private readonly int buildId;
+        private readonly SourceTreeMetadata metadata;
 
-        public ArtifactStagingPathBuilder(BuildOperationContext context) {
-            ErrorUtilities.IsNotNull(context, nameof(context));
+        public ArtifactStagingPathBuilder(string artifactStagingDirectory, int buildId, SourceTreeMetadata metadata) {
+            this.buildId = buildId;
+            this.metadata = metadata;
 
-            this.context = context;
-            this.stagingDirectory = Path.Combine(context.ArtifactStagingDirectory, "_artifacts");
+            ErrorUtilities.IsNotNull(artifactStagingDirectory, nameof(artifactStagingDirectory));
+            ErrorUtilities.IsNotNull(metadata, nameof(metadata));
+
+            this.StagingDirectory = Path.Combine(artifactStagingDirectory, "_artifacts");
         }
 
-        public string StagingDirectory {
-            get { return stagingDirectory; }
-        }
+        public string StagingDirectory { get; }
 
         public string BuildPath(string name) {
-            BucketId bucket = context.SourceTreeMetadata.GetBucket(name);
+            BucketId bucket = metadata.GetBucket(name);
 
             return Path.Combine(
                 StagingDirectory,
                 bucket != null ? bucket.Id ?? string.Empty : string.Empty,
-                context.BuildMetadata.BuildId.ToString(CultureInfo.InvariantCulture));
+                buildId.ToString(CultureInfo.InvariantCulture));
 
         }
     }

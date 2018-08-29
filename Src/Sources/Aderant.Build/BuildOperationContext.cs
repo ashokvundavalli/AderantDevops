@@ -527,9 +527,11 @@ namespace Aderant.Build {
         /// <param name="tag"></param>
         /// <returns></returns>
         public BucketId GetBucket(string tag) {
-            foreach (var bucket in BucketIds) {
-                if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
-                    return bucket;
+            if (BucketIds != null) {
+                foreach (var bucket in BucketIds) {
+                    if (string.Equals(bucket.Tag, tag, StringComparison.OrdinalIgnoreCase)) {
+                        return bucket;
+                    }
                 }
             }
 

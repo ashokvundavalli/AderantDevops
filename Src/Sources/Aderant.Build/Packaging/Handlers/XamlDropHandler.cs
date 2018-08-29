@@ -14,7 +14,7 @@ namespace Aderant.Build.Packaging.Handlers {
 
         public BuildArtifact ProcessFiles(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             string artifactName;
-            var destination = CreateDropLocationPath(context.Drops.PrimaryDropLocation, artifactId, out artifactName);
+            var destination = CreateDropLocationPath(context.ArtifactStagingDirectory, artifactId, out artifactName);
 
             foreach (var pathSpec in files) {
                 copyList.Add(Tuple.Create(destination, pathSpec));

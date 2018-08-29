@@ -7,11 +7,15 @@ using Aderant.Build.ProjectSystem.References;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactPackageDefinition : IArtifact {
-        private List<PathSpec> pathSpecs;
+        private IReadOnlyCollection<PathSpec> pathSpecs;
 
-        public ArtifactPackageDefinition(string id, IEnumerable<PathSpec> pathSpecs) {
+        public ArtifactPackageDefinition(string id, IEnumerable<PathSpec> pathSpecs)
+            : this(id, pathSpecs.ToList()) {
+        }
+
+        public ArtifactPackageDefinition(string id, IReadOnlyCollection<PathSpec> pathSpecs) {
             Id = id;
-            this.pathSpecs = pathSpecs.ToList();
+            this.pathSpecs = pathSpecs;
         }
 
         public bool IsAutomaticallyGenerated { get; set; }
@@ -52,6 +56,31 @@ namespace Aderant.Build.Packaging {
             }
 
             return new PathSpec(fullPath, Path.Combine(targetPath ?? string.Empty, outputRelativePath ?? Path.GetFileName(fullPath)));
+        }
+
+        public static ArtifactPackageDefinition Create(string name, Action<ArtifactPackageDefinitionBuilder> builder) {
+            return new ArtifactPackageDefinitionBuilder(name, builder).Build();
+        }
+    }
+
+    internal class ArtifactPackageDefinitionBuilder {
+        private ArtifactPackageDefinition artifact;
+        private List<PathSpec> files;
+
+        public ArtifactPackageDefinitionBuilder(string name, Action<ArtifactPackageDefinitionBuilder> builder) {
+            files = new List<PathSpec>();
+            artifact = new ArtifactPackageDefinition(name, files);
+
+            builder(this);
+        }
+
+        public ArtifactPackageDefinitionBuilder AddFile(string location, string destination) {
+            files.Add(new PathSpec(location, destination));
+            return this;
+        }
+
+        public ArtifactPackageDefinition Build() {
+            return artifact;
         }
     }
 }

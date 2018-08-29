@@ -15,9 +15,10 @@ namespace Aderant.Build.Packaging {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private readonly IBuildPipelineServiceContract pipelineService;
+        private List<ArtifactPackageDefinition> autoPackages;
         private List<IArtifactHandler> handlers = new List<IArtifactHandler>();
         private ArtifactStagingPathBuilder pathBuilder;
-
+        
         public ArtifactService(ILogger logger)
             : this(null, new PhysicalFileSystem(), logger) {
         }
@@ -37,9 +38,9 @@ namespace Aderant.Build.Packaging {
         internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
 
-            this.pathBuilder = new ArtifactStagingPathBuilder(context);
+            this.pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
-            var buildArtifacts = PublishInternal(context, publisherName, packages);
+            var buildArtifacts = ProcessDefinitions(context, publisherName, packages);
 
             if (pipelineService != null) {
                 // Tell TFS about these artifacts
@@ -49,19 +50,47 @@ namespace Aderant.Build.Packaging {
             return buildArtifacts;
         }
 
-        private IReadOnlyCollection<BuildArtifact> PublishInternal(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
+        private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             // TODO: Slow - optimize
             List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
-            IEnumerable<IGrouping<string, ArtifactPackageDefinition>> grouping = packages.GroupBy(g => g.Id);
-            foreach (var group in grouping) {
-                foreach (var definition in group) {
-                    var files = definition.GetFiles();
+            this.autoPackages = new List<ArtifactPackageDefinition>();
+            
+            // Process custom packages first
+            // Then create auto-packages taking into consideration any items from custom packages
+            // to only unique content is packaged
+            ProcessDefinitionFiles(true, context, publisherName, packages, copyList, buildArtifacts);
 
-                    files = FilterGeneratedPackage(context, publisherName, files, definition);
+            var builder = new AutoPackager();
+            var snapshot = context.GetProjectOutputs(publisherName);
+            IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, publisherName, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
+            ProcessDefinitionFiles(false, context, publisherName, definitions, copyList, buildArtifacts);
+
+            foreach (var item in copyList) {
+                CopyToDestination(item.Item1, item.Item2, context.IsDesktopBuild);
+            }
+
+            return buildArtifacts;
+        }
+
+        private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string publisherName, IEnumerable<ArtifactPackageDefinition> packages, List<Tuple<string, PathSpec>> copyList, List<BuildArtifact> buildArtifacts) {
+
+            foreach (var definition in packages) {
+                if (ignoreAutoPackages) {
+                    if (definition.IsAutomaticallyGenerated) {
+                        autoPackages.Add(definition);
+                        continue;
+                    }
+                }
+
+                var files = definition.GetFiles();
+
+                if (files.Any()) {
                     CheckForDuplicates(definition.Id, files);
+
+                    Merge(context, publisherName, files);
 
                     var artifact = CreateArtifact(publisherName, copyList, definition, files);
                     if (artifact != null) {
@@ -84,38 +113,28 @@ namespace Aderant.Build.Packaging {
                             }).ToList());
                 }
             }
-
-            foreach (var item in copyList) {
-                CopyToDestination(item.Item1, item.Item2, context.IsDesktopBuild);
-            }
-
-            return buildArtifacts;
         }
 
-        private static string GetProjectKey(string publisherName) {
-            return publisherName + "\\";
-        }
-
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> filesToPackage, ArtifactPackageDefinition artifact) {
+        private static IReadOnlyCollection<PathSpec> Merge(BuildOperationContext context, string publisherName, IReadOnlyCollection<PathSpec> filesToPackage) {
             ProjectOutputSnapshot snapshot = context.GetProjectOutputs(publisherName);
 
             if (snapshot == null) {
                 return filesToPackage;
             }
 
-            MergeExistingOutputs(context, publisherName, snapshot);
-
-            if (artifact.IsAutomaticallyGenerated && artifact.Id.StartsWith(ArtifactPackageDefinition.TestPackagePrefix)) {
-                var builder = new TestPackageBuilder();
-                return builder.BuildArtifact(filesToPackage, snapshot, publisherName);
-            }
+            MergeWithExistingOutputs(context, publisherName, snapshot);
 
             return filesToPackage;
         }
 
-        private static void MergeExistingOutputs(BuildOperationContext context, string publisherName, ProjectOutputSnapshot snapshot) {
+        private static string GetProjectKey(string publisherName) {
+            return publisherName + "\\";
+        }
+
+        private static void MergeWithExistingOutputs(BuildOperationContext context, string publisherName, ProjectOutputSnapshot snapshot) {
             // Takes the existing (cached build) state and applies to the current state
             var previousBuild = context.GetStateFile(publisherName);
+
             if (previousBuild != null) {
                 var previousSnapshot = new ProjectOutputSnapshot(previousBuild.Outputs);
                 ProjectOutputSnapshot previousProjects = previousSnapshot.GetProjectsForTag(publisherName);

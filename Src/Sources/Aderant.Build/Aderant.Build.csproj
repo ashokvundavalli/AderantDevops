@@ -52,6 +52,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
     </Reference>
+    <Reference Include="MSBuild.Community.Tasks">
+      <HintPath>..\..\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
+    </Reference>
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>

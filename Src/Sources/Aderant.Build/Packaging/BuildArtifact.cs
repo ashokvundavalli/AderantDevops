@@ -29,6 +29,22 @@ namespace Aderant.Build.Packaging {
         [DataMember]
         public bool IsInternalDevelopmentPackage { get; set; }
 
+        [IgnoreDataMember]
+        [ProtoIgnore]
+        public bool IsTestPackage {
+            get {
+                if (Name.IndexOf("IntegrationTest", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    return true;
+                }
+
+                if (Name.StartsWith(ArtifactPackageDefinition.TestPackagePrefix)) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
         public string ComputeVsoPath() {
             var pos = FullPath.IndexOf(Name, StringComparison.OrdinalIgnoreCase);
             return FullPath.Remove(pos)

@@ -121,7 +121,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         private void WriteStateFile(BuildStateFile previousBuild, BucketId bucket, ProjectOutputSnapshot projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
-            var pathBuilder = new ArtifactStagingPathBuilder(context);
+            var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
             var file = pathBuilder.BuildPath(bucket.Tag);
             file = Path.Combine(file, DefaultFileName);
 

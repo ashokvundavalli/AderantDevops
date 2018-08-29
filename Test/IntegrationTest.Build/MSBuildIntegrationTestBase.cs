@@ -50,7 +50,6 @@ namespace IntegrationTest.Build {
                 using (var manager = new BuildManager()) {
                     var result = manager.Build(
                         new BuildParameters(collection) {
-
                             Loggers = collection.Loggers,
                             DetailedSummary = DetailedSummary,
                             EnableNodeReuse = false,
@@ -61,6 +60,10 @@ namespace IntegrationTest.Build {
                             null,
                             new[] { targetName },
                             null));
+
+                    if (result.OverallResult == BuildResultCode.Failure) {
+                        WriteLogFile(@"C:\temp\" + TestContext.TestName + ".log", logger.LogFile);
+                    }
 
                     Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
 

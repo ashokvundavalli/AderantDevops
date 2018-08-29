@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Packaging;
 using Microsoft.Build.Framework;
@@ -41,14 +42,14 @@ namespace Aderant.Build.Tasks {
                     continue;
                 }
 
-                if (artifact.Name.StartsWith(ArtifactPackageDefinition.TestPackagePrefix)) {
+                if (artifact.IsTestPackage) {
                     Log.LogMessage(MessageImportance.Normal, "Test package: " + artifact.Name);
                     testPackages.Add(artifact);
                     continue;
                 }
 
                 if (IncludeGeneratedArtifacts) {
-                    Log.LogMessage(MessageImportance.Normal, "Including generated package: " + artifact.Name);
+                    Log.LogMessage(MessageImportance.Normal, "Generated package: " + artifact.Name);
                     packagePaths.Add(artifact);
                 } else {
                     if (!artifact.IsAutomaticallyGenerated) {
