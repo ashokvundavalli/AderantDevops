@@ -4,14 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading;
-using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.Services;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 using ProtoBuf;
-using ProtoBuf.Meta;
 
 namespace Aderant.Build {
 
@@ -346,27 +344,6 @@ namespace Aderant.Build {
         /// </summary>
         internal ArtifactCollection GetArtifacts() {
             return artifacts;
-        }
-
-        internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
-            ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
-            ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
-
-            InitArtifacts();
-
-            ICollection<ArtifactManifest> manifests;
-
-            if (!artifacts.TryGetValue(publisherName, out manifests)) {
-                manifests = new List<ArtifactManifest>();
-                artifacts[publisherName] = manifests;
-            }
-
-            manifests.Add(
-                new ArtifactManifest {
-                    Id = artifactId,
-                    InstanceId = Guid.NewGuid(),
-                    Files = files,
-                });
         }
 
         private void InitArtifacts() {

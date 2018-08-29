@@ -32,11 +32,7 @@ namespace Aderant.Build.Tasks {
                     artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
                 }
 
-                var storageInfo = artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
-
-                foreach (KeyValuePair<string, ICollection<ArtifactManifest>> pair in Context.GetArtifacts()) {
-                    base.PipelineService.RecordArtifacts(pair.Key, pair.Value);
-                }
+                artifactService.PublishArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
             }
 
             return !Log.HasLoggedErrors;

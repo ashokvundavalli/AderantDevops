@@ -57,7 +57,7 @@ namespace Aderant.Build.Packaging {
 
             this.autoPackages = new List<ArtifactPackageDefinition>();
 
-            Merge(context, publisherName);
+            List<OutputFilesSnapshot> snapshots = Merge(context, publisherName);
 
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
@@ -70,11 +70,21 @@ namespace Aderant.Build.Packaging {
 
             ProcessDefinitionFiles(false, context, publisherName, definitions, copyList, buildArtifacts);
 
+            TrackSnapshots(snapshots);
+
             foreach (var item in copyList) {
                 CopyToDestination(item.Item1, item.Item2, context.IsDesktopBuild);
             }
 
             return buildArtifacts;
+        }
+
+        private void TrackSnapshots(List<OutputFilesSnapshot> snapshots) {
+            if (pipelineService != null) {
+                foreach (var filesSnapshot in snapshots) {
+                    pipelineService.RecordProjectOutputs(filesSnapshot);
+                }
+            }
         }
 
         private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string publisherName, IEnumerable<ArtifactPackageDefinition> packages, List<Tuple<string, PathSpec>> copyList, List<BuildArtifact> buildArtifacts) {
@@ -104,7 +114,7 @@ namespace Aderant.Build.Packaging {
                         }
                     }
 
-                    context.RecordArtifact(
+                    RecordArtifact(
                         publisherName,
                         definition.Id,
                         files.Select(
@@ -115,14 +125,28 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private static void Merge(BuildOperationContext context, string publisherName) {
+        internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
+            ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
+            ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
+
+            ICollection<ArtifactManifest> manifests = new List<ArtifactManifest>();
+
+            manifests.Add(
+                new ArtifactManifest {
+                    Id = artifactId,
+                    InstanceId = Guid.NewGuid(),
+                    Files = files,
+                });
+
+            pipelineService.RecordArtifacts(publisherName, manifests);
+        }
+
+        private List<OutputFilesSnapshot> Merge(BuildOperationContext context, string publisherName) {
             var snapshots = context.GetProjectOutputs(publisherName).ToList();
 
             MergeExistingOutputs(context, publisherName, snapshots);
 
-            foreach (var snapshot in snapshots) {
-                context.RecordProjectOutputs(snapshot);
-            }
+            return snapshots;
         }
 
         private static string GetProjectKey(string publisherName) {
