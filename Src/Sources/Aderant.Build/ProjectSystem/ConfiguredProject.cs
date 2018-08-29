@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
@@ -81,9 +80,9 @@ namespace Aderant.Build.ProjectSystem {
         public bool IsWebProject {
             get {
                 if (!isWebProject.HasValue) {
-                    var typeGuids = ProjectTypeGuids;
-                    if (typeGuids != null) {
-                        isWebProject = ProjectTypeGuids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                    var guids = ProjectTypeGuids;
+                    if (guids != null) {
+                        isWebProject = guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
                     }
                 }
 
@@ -93,17 +92,19 @@ namespace Aderant.Build.ProjectSystem {
 
         public bool IsTestProject {
             get {
-                var typeGuids = ProjectTypeGuids;
-                if (typeGuids != null) {
-                    return ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.TestProject);
+                var guids = ProjectTypeGuids;
+                if (guids != null) {
+                    return guids.Contains(WellKnownProjectTypeGuids.TestProject);
                 }
 
                 return false;
-                //result.IsTestProject = projectInfo.ProjectTypeGuids.Contains("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}")
-                //|| result.DependsOn.Any(r => r.Name == "Microsoft.VisualStudio.QualityTools.UnitTestFramework");
             }
         }
 
+        /// <summary>
+        /// Gets the directory that roots this project.
+        /// Driven from the path of <see cref="SolutionFile"/>
+        /// </summary>
         public string SolutionRoot {
             get {
                 if (SolutionFile != null) {
@@ -128,6 +129,11 @@ namespace Aderant.Build.ProjectSystem {
 
         internal BuildReason BuildReason { get; set; }
 
+        /// <summary>
+        /// Gets the evaluated output path
+        /// </summary>
+        public string OutputPath { get; internal set; }
+
         public Guid ProjectGuid {
             get {
                 var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
@@ -146,6 +152,12 @@ namespace Aderant.Build.ProjectSystem {
         public override string Id {
             get { return GetAssemblyName(); }
         }
+
+        /// <summary>
+        /// Indicates that a common output directory is used.
+        /// Prevents GetCopyToOutputDirectoryItems in Microsoft.Common.CurrentVersion.targets from including too much transitive baggage
+        /// </summary>
+        public bool UseCommonOutputDirectory { get; set; }
 
         public string GetAssemblyName() {
             return OutputAssembly;
@@ -245,6 +257,8 @@ namespace Aderant.Build.ProjectSystem {
 
                 if (IncludeInBuild) {
                     Tree.AddConfiguredProject(this);
+
+                    SetOutputPath();
                 }
             } else {
                 IProjectTreeInternal treeInternal = Tree as IProjectTreeInternal;
@@ -252,6 +266,16 @@ namespace Aderant.Build.ProjectSystem {
                     treeInternal.OrphanProject(this);
                 }
             }
+        }
+
+        private void SetOutputPath() {
+            var projectValue = project.Value;
+
+            projectValue.SetProperty("Configuration", BuildConfiguration.ConfigurationName);
+            projectValue.SetProperty("Platform", BuildConfiguration.PlatformName);
+            projectValue.ReevaluateIfNecessary();
+
+            OutputPath = projectValue.GetPropertyValue("OutputPath");
         }
 
         /// <summary>

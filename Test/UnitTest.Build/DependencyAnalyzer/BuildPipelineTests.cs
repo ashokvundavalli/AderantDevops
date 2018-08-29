@@ -10,7 +10,7 @@ using Moq;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
-    public class BuildJobProjectTests {
+    public class BuildPipelineTests {
 
         [TestMethod]
         public void A_single_project_generates_one_build_group() {
@@ -30,6 +30,27 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var targets = generateProject.Elements.OfType<Target>().ToList();
             Assert.AreEqual("RunProjectsToBuild1", targets[0].Name);
             Assert.AreEqual("AfterCompile", targets[1].Name);
+        }
+
+        [TestMethod]
+        public void SetUseCommonOutputDirectory_groups_by_solution_root() {
+            var mock = new Mock<IFileSystem2>();
+            mock.Setup(s => s.Root).Returns("");
+
+            var projects = new ConfiguredProject[] {
+                new TestConfiguredProject(null, mock.Object) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
+                new TestConfiguredProject(null, mock.Object) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
+                new TestConfiguredProject(null, mock.Object) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar2" },
+                new TestConfiguredProject(null, mock.Object) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
+            };
+
+            BuildPipeline.SetUseCommonOutputDirectory(projects);
+
+            Assert.IsTrue(projects[0].UseCommonOutputDirectory);
+            Assert.IsTrue(projects[1].UseCommonOutputDirectory);
+
+            Assert.IsFalse(projects[2].UseCommonOutputDirectory);
+            Assert.IsFalse(projects[3].UseCommonOutputDirectory);
         }
     }
 }

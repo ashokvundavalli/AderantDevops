@@ -140,6 +140,7 @@ namespace Aderant.Build.ProjectSystem {
 
         public void OrphanProject(ConfiguredProject configuredProject) {
             configuredProject.IncludeInBuild = false;
+            // TODO: LOG AND COMPLAIN
             this.orphanedProjects.Add(configuredProject);
         }
 

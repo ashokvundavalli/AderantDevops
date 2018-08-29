@@ -58,6 +58,7 @@
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
+      ArchiveStagingDirectory;
       CreatePipeline;
       ExecutePipeline;
       WriteStateFiles;
@@ -65,6 +66,13 @@
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
+
+
+  <Target Name="ArchiveStagingDirectory">
+    <PowerShellScript
+      Condition="Exists($(ArtifactStagingDirectory))"
+      ScriptBlock='Move-Item -LiteralPath "$(ArtifactStagingDirectory)" -Destination ("$(SolutionRoot)\_as" + [DateTime]::UtcNow.ToFileTime()) -Verbose' />
+  </Target>
 
 
   <Target Name="CreatePipeline">

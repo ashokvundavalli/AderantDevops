@@ -100,6 +100,7 @@
   <UsingTask TaskName="Aderant.Build.Tasks.UpdateBuildRecordArtifacts"                          AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.GetArtifactPaths"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   <UsingTask TaskName="Aderant.Build.Tasks.CheckForDoubleWrites"                                AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
+  <UsingTask TaskName="Aderant.Build.Tasks.PowerShellScript"                                    AssemblyFile="$(BuildAssembly)" Condition="'$(IsCustomBuild)' != 'true'" />
   
 
   <!-- Debugging task -->

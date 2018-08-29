@@ -103,6 +103,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         { "TotalNumberOfBuildGroups", buildGroupCount.ToString(CultureInfo.InvariantCulture) },
                         { "ResumeGroupId", "" }
                     }));
+
             project.Add(groups);
             project.Add(afterCompile);
             project.Add(new ImportElement { Project = orchestrationFiles.CommonProjectFile });
@@ -120,7 +121,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, List<IDependable> projectGroup, int buildGroup) {
             return projectGroup.Select(
                 studioProject => {
+                    SetUseCommonOutputDirectory(projectGroup.OfType<ConfiguredProject>());
+
                     var item = GenerateItem(beforeProjectFile, afterProjectFile, buildGroup, studioProject);
+
                     if (item != null) {
                         item.Condition = $"('$(ResumeGroupId)' == '') Or ('{buildGroup}' >= '$(ResumeGroupId)')";
                         return item;
@@ -129,6 +133,26 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return null;
                 }
             );
+        }
+
+        internal static void SetUseCommonOutputDirectory(IEnumerable<ConfiguredProject> projects) {
+            var solutionGroups = projects
+                .GroupBy(project => project.SolutionRoot, StringComparer.OrdinalIgnoreCase)
+                .Select(dirGrouping => dirGrouping.Key);
+
+            foreach (var keys in solutionGroups) {
+                var enumerable = projects.Where(p => string.Equals(p.SolutionRoot, keys, StringComparison.OrdinalIgnoreCase));
+
+                var projectsByOutputPath = enumerable.GroupBy(g => g.OutputPath);
+                
+                foreach (var configuredProjects in projectsByOutputPath) {
+                    if (configuredProjects.Count() > 1) {
+                        foreach (var configuredProject in configuredProjects) {
+                            configuredProject.UseCommonOutputDirectory = true;
+                        }
+                    }
+                }
+            }
         }
 
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
@@ -159,6 +183,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // Indicates this file is not part of the build system
                     ["IsProjectFile"] = bool.TrueString,
                 };
+
                 return item;
             }
 
@@ -223,6 +248,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertyList.Add($"Platform={visualStudioProject.BuildConfiguration.PlatformName}");
 
             AddMetaProjectProperties(visualStudioProject, propertyList);
+
+            if (visualStudioProject.UseCommonOutputDirectory) {
+                propertyList.Add("UseCommonOutputDirectory=true");
+            }
             return propertyList;
         }
 
