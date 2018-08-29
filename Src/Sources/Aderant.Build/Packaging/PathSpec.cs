@@ -26,8 +26,9 @@ namespace Aderant.Build.Packaging {
             return EqualsInternal(spec);
         }
 
-        private bool EqualsInternal(PathSpec spec) {
-            return Location == spec.Location && Destination == spec.Destination;
+        private bool EqualsInternal(PathSpec other) {
+            return string.Equals(Location, other.Location, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(Destination, other.Destination, StringComparison.OrdinalIgnoreCase);
         }
 
         public override int GetHashCode() {

@@ -70,6 +70,14 @@ namespace Aderant.Build.Packaging {
                         // Another package already defines this path combination
                         break;
                     }
+
+                    // If two files are going to identical destinations then this is a double write
+                    // and cannot be allowed to ensure deterministic behaviour
+                    if (string.Equals(path.Destination, spec.Destination, StringComparison.OrdinalIgnoreCase)) {
+                        add = false;
+                        // Another package already defines this path combination
+                        break;
+                    }
                 }
 
                 if (add) {

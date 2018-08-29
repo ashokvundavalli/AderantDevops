@@ -128,7 +128,7 @@
     <Compile Include="MSBuild\BuildElementVisitor.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
-    <Compile Include="Packaging\TestPackageBuilder.cs" />
+    <Compile Include="Packaging\AutoPackager.cs" />
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
     <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
     <Compile Include="ErrorUtilities.cs" />
