@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Aderant.Build;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,7 +10,7 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void Can_add_file_to_package() {
-            var builder = new AutoPackager();
+            var builder = new AutoPackager(NullLogger.Default);
 
             var filesToPackage = new PathSpec[] {
                 new PathSpec("Foo.dll", @"Foo\Bar.dll"),
@@ -23,7 +24,7 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void File_content_of_auto_packages_is_unique() {
-            var builder = new AutoPackager();
+            var builder = new AutoPackager(NullLogger.Default);
             var snapshot = new OutputFilesSnapshot { IsTestProject = true, Directory = "", FilesWritten = new[] { "Foo1", "Foo2", "Foo3" } };
 
             var definitions = builder.CreatePackages(

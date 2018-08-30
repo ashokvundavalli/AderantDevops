@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Logging;
 
 namespace Aderant.Build.Packaging {
     internal class AutoPackager {
+        private readonly ILogger logger;
+
+        public AutoPackager(ILogger logger) {
+            this.logger = logger;
+        }
+
         public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<OutputFilesSnapshot> outputs, string publisherName) {
             List<string> outputList = new List<string>();
 
             foreach (var project in outputs) {
-
                 if (project.IsTestProject) {
-                    foreach (var path in project.FilesWritten) {
+                    foreach (var file in project.FilesWritten) {
+                        string outputRelativePath = file.Replace(project.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
-                        var name = Path.GetFileName(path);
-
-                        if (!outputList.Contains(name)) {
-                            outputList.Add(name);
+                        if (!Path.IsPathRooted(outputRelativePath)) {
+                            if (!outputList.Contains(outputRelativePath)) {
+                                outputList.Add(outputRelativePath);
+                            }
                         }
                     }
                 }
@@ -26,11 +32,13 @@ namespace Aderant.Build.Packaging {
             var artifactItems = new List<PathSpec>();
 
             foreach (var file in filesToPackage) {
-                var fileName = Path.GetFileName(file.Location);
-
                 foreach (var output in outputList) {
-                    if (string.Equals(fileName, output, StringComparison.OrdinalIgnoreCase)) {
-                        artifactItems.Add(file);
+                    if (string.Equals(file.Destination, output, StringComparison.OrdinalIgnoreCase)) {
+
+                        if (!artifactItems.Contains(file)) {
+                            logger.Info(file.Location);
+                            artifactItems.Add(file);
+                        }
                     }
                 }
             }
@@ -58,20 +66,12 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IEnumerable<OutputFilesSnapshot> snapshot, string publisherName, ArtifactPackageDefinition filesToPackage, List<PathSpec> artifact) {
-            var files = filesToPackage.GetFiles().ToList();
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IEnumerable<OutputFilesSnapshot> snapshot, string publisherName, ArtifactPackageDefinition definition, List<PathSpec> artifact) {
+            var files = definition.GetFiles().ToList();
 
             var uniqueContent = new List<PathSpec>();
 
             foreach (var path in files) {
-                //if (path.Location != null && path.Location.Contains("log4net.xml")) {
-                //    Debugger.Launch();
-                //}
-
-                //if (path.Destination != null && path.Destination.Contains("log4net.xml")) {
-                //    Debugger.Launch();
-                //}
-
                 bool add = true;
                 foreach (PathSpec spec in artifact) {
                     if (path == spec) {
@@ -94,6 +94,7 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
+            logger.Info("Building package: " + definition.Id);
             return BuildArtifact(uniqueContent, snapshot, publisherName);
         }
     }

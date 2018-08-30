@@ -64,7 +64,7 @@ namespace Aderant.Build.Packaging {
             // to only unique content is packaged
             ProcessDefinitionFiles(true, context, publisherName, packages, copyList, buildArtifacts);
 
-            var builder = new AutoPackager();
+            var builder = new AutoPackager(logger);
             var snapshot = context.GetProjectOutputs(publisherName);
             IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, publisherName, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
