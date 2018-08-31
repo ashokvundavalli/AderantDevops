@@ -2,6 +2,10 @@
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
+
+    /// <summary>
+    /// Fails if any double writes are detected.
+    /// </summary>
     public class CheckForDoubleWrites : Task {
 
         [Required]

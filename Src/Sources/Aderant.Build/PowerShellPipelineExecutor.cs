@@ -1,9 +1,22 @@
 ﻿using System;
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Threading.Tasks;
 
 namespace Aderant.Build {
     internal class PowerShellPipelineExecutor {
+        public string ProgressPreference { get; set; }
+
+        /// <summary>
+        /// Indicates you want the script invoked with Measure-Command
+        /// </summary>
+        public bool MeasureCommand { get; set; }
+
+        /// <summary>
+        /// The scalar script result.
+        /// </summary>
+        public string Result { get; set; }
 
         public event EventHandler<string> Error;
 
@@ -15,7 +28,7 @@ namespace Aderant.Build {
 
         public event EventHandler<string> Output;
 
-        public async System.Threading.Tasks.Task RunScript(string script) {
+        public async Task RunScript(string script) {
 
             // create a new runspace to isolate the scripts
             using (var runspace = RunspaceFactory.CreateRunspace()) {
@@ -31,8 +44,15 @@ namespace Aderant.Build {
                         .AddParameter("Force")
                         .Invoke();
 
-                    // add script command to invoke
-                    shell.Commands.AddScript(script);
+                    if (!string.IsNullOrWhiteSpace(ProgressPreference)) {
+                        shell.AddScript($"$ProgressPreference = '{ProgressPreference}'");
+                    }
+
+                    if (MeasureCommand) {
+                        shell.Commands.AddScript("Measure-Command {" + script + "}");
+                    } else {
+                        shell.Commands.AddScript(script);
+                    }
 
                     // capture errors
                     shell.Streams.Error.DataAdded += (sender, args) => {
@@ -55,11 +75,13 @@ namespace Aderant.Build {
                         }
                     };
 
-                    await System.Threading.Tasks.Task.Run(
+                    await Task.Run(
                         () => {
                             try {
                                 var async = shell.BeginInvoke<PSObject, PSObject>(null, outputData);
-                                shell.EndInvoke(async);
+                                PSDataCollection<PSObject> results = shell.EndInvoke(async);
+
+                                Result = outputData.FirstOrDefault()?.ToString();
                             } catch (ParseException ex) {
                                 // this should only happen in case of script syntax errors, otherwise
                                 // errors would be output via the invoke's error stream 

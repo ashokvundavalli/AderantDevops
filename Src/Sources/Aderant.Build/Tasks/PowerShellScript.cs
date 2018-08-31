@@ -7,9 +7,19 @@ namespace Aderant.Build.Tasks {
         [Required]
         public string ScriptBlock { get; private set; }
 
+        public string ProgressPreference { get; set; }
+
+        public bool MeasureCommand { get; set; }
+
+        [Output]
+        public string Result { get; set; }
+
         public override bool Execute() {
-        
+
             var pipelineExecutor = new PowerShellPipelineExecutor();
+            pipelineExecutor.ProgressPreference = ProgressPreference;
+            pipelineExecutor.MeasureCommand = MeasureCommand;
+
             pipelineExecutor.Debug += (sender, message) => { Log.LogMessage(MessageImportance.Normal, message); };
             pipelineExecutor.Verbose += (sender, message) => { Log.LogMessage(MessageImportance.Normal, message); };
             pipelineExecutor.Warning += (sender, message) => { Log.LogWarning(message); };

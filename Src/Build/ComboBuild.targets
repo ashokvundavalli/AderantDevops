@@ -40,7 +40,7 @@
     
     <!-- Location to drop outputs to share within the build -->
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
-    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(SolutionRoot)_as\_out\</SharedDependencyDirectory>
+    <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
 
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))))</BuildInfrastructureDirectory>
@@ -58,7 +58,7 @@
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
-      ArchiveStagingDirectory;
+      <!--ArchiveStagingDirectory;-->
       CreatePipeline;
       ExecutePipeline;
       WriteStateFiles;
@@ -288,70 +288,67 @@
 
   <Target Name="PackageProduct">
     <PropertyGroup>
-      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)_product\</LocalExpertBinariesDirectory>
+      <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
+      <ProductContainerFile>$(ArtifactStagingDirectory)Binaries.zip</ProductContainerFile>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
-    <!--<Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
-          WorkingDirectory="$(PackageScriptsDirectory)" />-->
-
     <GetArtifactPaths
       IncludeGeneratedArtifacts="false">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
-      <Output TaskParameter="DevelopmentPackagePaths" ItemName="LocalDevelopmentPackagePaths" />
-      <Output TaskParameter="TestPackagePaths" ItemName="LocalTestPackagePaths" />
     </GetArtifactPaths>
-
-    <Message Text="Local Local artifact path: %(LocalArtifactPaths.FullPath)" />
-    
     <!--
-        Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
-        to force msbuild to expand all the wildcard characters so to get real file paths
+      Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
+      to force msbuild to expand all the wildcard characters so to get real file paths
     -->
-    <CreateItem Include="@(LocalPackagePaths -> '%(FullPath)\**\**')">
+    <CreateItem Include="@(LocalPackagePaths->'%(FullPath)\**\**')" PreserveExistingMetadata="true">
       <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
     </CreateItem>
 
-    <CreateItem Include="@(LocalDevelopmentPackagePaths -> '%(FullPath)\**\**')">
-      <Output ItemName="LocalDevelopmentPackageFiles" TaskParameter="Include"/>
-    </CreateItem>
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
+      WorkingDirectory="$(PackageScriptsDirectory)" />
 
-    <CreateItem Include="@(LocalTestPackagePaths -> '%(FullPath)\**\**')">
-      <Output ItemName="LocalTestPackageFiles" TaskParameter="Include"/>
-    </CreateItem>
-
-    <ItemGroup>
-      <AllLocalFiles Include="@(LocalPackageFiles)">
-        <DestinationRelativePath></DestinationRelativePath>
-      </AllLocalFiles>
-
-      <AllLocalFiles Include="@(LocalDevelopmentPackageFiles)">
-        <DestinationRelativePath>Development</DestinationRelativePath>
-      </AllLocalFiles>
-
-      <AllLocalFiles Include="@(LocalTestPackageFiles)">
-        <DestinationRelativePath>Test</DestinationRelativePath>
-      </AllLocalFiles>
-    </ItemGroup>
-
-    <!-- TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire -->
-    <Copy SourceFiles="@(AllLocalFiles)"
-          DestinationFiles="@(AllLocalFiles -> '$(ExpertSourceDirectory)\%(DestinationRelativePath)\%(RecursiveDir)%(Filename)%(Extension)')"
-          UseHardlinksIfPossible="true">
+    <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire--> 
+    <Copy SourceFiles="@(LocalPackageFiles)"
+      DestinationFiles="@(LocalPackageFiles->'$(ExpertSourceDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+      UseHardlinksIfPossible="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
 
     <CheckForDoubleWrites FileList="@(FileWrites)" />
 
+    <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
+    <!-- -bb1 for file logging -->
+    <Exec Command="$(BuildToolsDirectory)7z.exe a $(ProductContainerFile) $(LocalExpertBinariesDirectory)*" />
+
+    <PropertyGroup>
+      <CreateContainerHashScript>
+        $hash = Get-FileHash -LiteralPath "$(ProductContainerFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
+        $hash = $hash.ToLower()
+        $fn = [System.IO.Path]::GetFileName("$(ProductContainerFile)")
+        Set-Content -LiteralPath "$(ProductContainerFile).sha1" -Value "$hash  $fn"
+        Add-Content -LiteralPath "$(ProductContainerFile)" -Value "$hash" -Stream "sha1"
+      </CreateContainerHashScript>
+
+    </PropertyGroup>
+
+    <PowerShellScript ScriptBlock="$(CreateContainerHashScript)" />     
+    
   </Target>
 
 
   <Target Name="CopyToDrop" Condition="'$(PrimaryDropLocation)' != ''">
+
+    <!--<GetBuildMetadata>
+      <Output TaskParameter="BuildId" PropertyName="_BuildId" />
+      <Output TaskParameter="BranchName" PropertyName="_BranchName" />
+      <Output TaskParameter="IsPullRequest" PropertyName="_IsPullRequest" />
+    </GetBuildMetadata>-->
 
     <!-- Tell TFS about the new artifacts so it can manage them -->
     <UpdateBuildRecordArtifacts

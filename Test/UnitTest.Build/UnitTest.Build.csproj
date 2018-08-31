@@ -104,6 +104,7 @@
     <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="DependencyAnalyzer\ModuleRefTests.cs" />
+    <Compile Include="PowerShellPipelineExecutorTests.cs" />
     <Compile Include="ErrorUtilitiesTests.cs" />
     <Compile Include="DependencyAnalyzer\DirectoryNodeTests.cs" />
     <Compile Include="DependencyResolver\Resources.Designer.cs">
