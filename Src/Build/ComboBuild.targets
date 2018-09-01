@@ -51,19 +51,23 @@
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
+
+    <CopyToDropEnabled>true</CopyToDropEnabled>
+    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
+    <RunPackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</RunPackageProduct>
   </PropertyGroup>
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
-      PrepareBuildEnvironment;
-      <!--ArchiveStagingDirectory;-->
+      <!--PrepareBuildEnvironment;
+      --><!--ArchiveStagingDirectory;--><!--
       CreatePipeline;
       ExecutePipeline;
       WriteStateFiles;
       PackageProduct;
-      CopyToDrop;
+      CopyToDrop;-->
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
@@ -248,6 +252,8 @@
   
 
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
+    <Message Text="##vso[artifact.associate type=filepath;artifactname=MyFileShareDrop]\\MyShare\MyDropLocation" />
+    <Message Text="##vso[artifact.associate type=filepath;artifactname=MyFileShareDrop1]\\MyShare\MyDropLocation\Myzip.zip" />
   </Target>
 
 
@@ -261,7 +267,6 @@
       <CommonBuildProperties>
         BuildInParallel=true;
         BuildNumber=$(BuildNumber);
-        TfsBuildNumber=$(BuildNumber);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
         ProductManifestPath=$(ProductManifestPath);
         BuildToolsDirectory=$(BuildToolsDirectory);
@@ -286,11 +291,11 @@
 
   </Target>
 
-  <Target Name="PackageProduct">
+  <Target Name="PackageProduct" >
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-      <ProductContainerFile>$(ArtifactStagingDirectory)Binaries.zip</ProductContainerFile>
+      <ProductArchiveFile>$(ArtifactStagingDirectory)Binaries.zip</ProductArchiveFile>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
@@ -300,6 +305,7 @@
       IncludeGeneratedArtifacts="false">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
+
     <!--
       Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
       to force msbuild to expand all the wildcard characters so to get real file paths
@@ -324,37 +330,49 @@
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
-    <Exec Command="$(BuildToolsDirectory)7z.exe a $(ProductContainerFile) $(LocalExpertBinariesDirectory)*" />
+    <Exec Command="$(BuildToolsDirectory)7z.exe a $(ProductArchiveFile) $(LocalExpertBinariesDirectory)*" />
 
     <PropertyGroup>
-      <CreateContainerHashScript>
-        $hash = Get-FileHash -LiteralPath "$(ProductContainerFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
+      <CreateArchiveHashScript>
+        $hash = Get-FileHash -LiteralPath "$(ProductArchiveFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
         $hash = $hash.ToLower()
-        $fn = [System.IO.Path]::GetFileName("$(ProductContainerFile)")
-        Set-Content -LiteralPath "$(ProductContainerFile).sha1" -Value "$hash  $fn"
-        Add-Content -LiteralPath "$(ProductContainerFile)" -Value "$hash" -Stream "sha1"
-      </CreateContainerHashScript>
+        $fn = [System.IO.Path]::GetFileName("$(ProductArchiveFile)")
+        Set-Content -LiteralPath "$(ProductArchiveFile).sha1" -Value "$hash  $fn"
+        Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
+      </CreateArchiveHashScript>
 
     </PropertyGroup>
 
-    <PowerShellScript ScriptBlock="$(CreateContainerHashScript)" />     
+    <PowerShellScript ScriptBlock="$(CreateArchiveHashScript)" />     
     
   </Target>
 
 
-  <Target Name="CopyToDrop" Condition="'$(PrimaryDropLocation)' != ''">
+  <Target Name="CopyToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
 
-    <!--<GetBuildMetadata>
-      <Output TaskParameter="BuildId" PropertyName="_BuildId" />
-      <Output TaskParameter="BranchName" PropertyName="_BranchName" />
-      <Output TaskParameter="IsPullRequest" PropertyName="_IsPullRequest" />
-    </GetBuildMetadata>-->
+    <ItemGroup>
+      <ArtifactPackage Include="$(ProductArchiveFile)">
+        <ArtifactId>TheProduct</ArtifactId>
+      </ArtifactPackage>
+    </ItemGroup>
 
-    <!-- Tell TFS about the new artifacts so it can manage them -->
+    <PublishArtifacts
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
+      AdditionalArtifacts="@(ArtifactPackage)"
+      DestinationRootPath="$(PrimaryDropLocation)" />
+
+    <!--<PowerShellScript ScriptBlock='
+$buildId = $Context.BuildMetadata.BuildId
+$isPullRequest = $Context.BuildMetadata.IsPullRequest
+$branchName = $Context.BuildMetadata.ScmBranch
+
+. $(BuildScriptsDirectory)PublishArtifacts.ps1 -ArtifactStagingDirectory "$(ArtifactStagingDirectory)_artifacts" -PrimaryDropLocation "$(PrimaryDropLocation)" -BuildId $buildId -BranchName $branchName -IsPullRequest $isPullRequest' />-->
+
+    <!-- Tell TFS about the new artifacts so it can manage them --><!--
     <UpdateBuildRecordArtifacts
       DestinationPath="$(PrimaryDropLocation)" />
 
-    <!-- We ignore exit codes less than 4 as these codes indicate success -->
+    --><!-- We ignore exit codes less than 4 as these codes indicate success --><!--
     <PropertyGroup>
       <CopyToDropCommand>
 <![CDATA[
@@ -365,7 +383,7 @@ IF %ERRORLEVEL% LEQ 4 EXIT /B 0
     </PropertyGroup>
 
     <Exec Command="$(CopyToDropCommand)"
-          WorkingDirectory="$(ArtifactStagingDirectory)" />
+          WorkingDirectory="$(ArtifactStagingDirectory)" />-->
 
   </Target>
 
