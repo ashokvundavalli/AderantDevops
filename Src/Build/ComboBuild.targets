@@ -58,10 +58,10 @@
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
-      !--ArchiveStagingDirectory;-->
-      CreatePipeline;
+      <!--ArchiveStagingDirectory;-->
+      <!--CreatePipeline;
       ExecutePipeline;
-      WriteStateFiles;
+      WriteStateFiles;-->
       PackageProduct;
       CopyToDrop;
     </BuildAndPackageDependsOn>
@@ -182,44 +182,6 @@
     <Message Text="End of GetAllModuleDependencies"/>
   </Target>
 
-  <!--<Target Name="ValidateBranchConfiguration" BeforeTargets="GetAllModuleDependencies">
-
-    <ItemGroup>
-      <ThirdPartyFiles Include="$(SolutionRoot)ThirdParty\**\bin\*.dll" />
-    </ItemGroup>
-
-    -->
-  <!-- 
-      Validates that we have no duplicated third party assemblies
-      The build and packaging system does not support multiple versions of the same assembly with the same file name.
-    --><!--
-    <Message Text="Validating dependencies for build." />
-    
-    <DependencyChecker
-      Files="@(ThirdPartyFiles)" />
-
-    --><!--
-      Validates that we have no misconfigured build configurations in this branch
-    --><!--
-    <Message Text="Validating build project files." />
-    <BuildConfigurationCheck
-      ProjectFiles="@(ModulesInBuild->'%(FullPath)\Build\TFSBuild.proj')" />
-    
-  </Target>
-
-
-
-  <Target Name="Version" AfterTargets="GetAllModuleDependencies">
-    <CallTarget Targets="SetBuildNumbers" />
-  </Target>
-
-  --><!-- Override the the Team Build hook -->
-  <!--
-  <Target Name="AfterDropBuild">
-    <Message Text="After drop build" />
-  </Target>
-
-      -->
 
   <PropertyGroup>
     <InitialTargetsDependsOn>ValidateRequiredProperties</InitialTargetsDependsOn>
@@ -346,7 +308,7 @@
 
     <ItemGroup>
       <ArtifactPackage Include="$(ProductArchiveFile)">
-        <ArtifactId>TheProduct</ArtifactId>
+        <ArtifactId>Product</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </ArtifactPackage>
     </ItemGroup>
