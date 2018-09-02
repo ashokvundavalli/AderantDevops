@@ -237,7 +237,6 @@ task GetDependencies {
 }
 
 task Build {
-
     # Get submodules
     & git submodule update --init --recursive
 
@@ -285,13 +284,9 @@ task Build {
         Push-Location $Repository
 
         if ($IsDesktopBuild) {
-            if ($CodeCoverage) {
-                $commonArgs = "$commonArgs /p:CodeCoverage=true"
-            } else {
-                $commonArgs = "$commonArgs /p:CodeCoverage=false"
-            }
-            
-            $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=true"
+            $commonArgs = "$commonArgs /p:CodeCoverage=$CodeCoverage"
+
+            $commonArgs = "$commonArgs /p:RunDesktopIntegrationTests=$($Integration.IsPresent)"
 
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
