@@ -53,9 +53,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         /// <summary>
         /// Specifies the origin of this file.
-        /// This property should not be written to the storage media and should only be set when the object is live. 
+        /// This property should not be serialized and should only be set when the object is being used. 
         /// </summary>
         [DataMember(EmitDefaultValue = false)]
-        internal string DropLocation { get; set; }
+        internal string Location { get; set; }
     }
 }

@@ -1,15 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.ServiceModel;
 using Aderant.Build.Packaging;
-using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.VersionControl;
-using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.PipelineService {
 
     [ServiceContract(SessionMode = SessionMode.Allowed)]
-    //[KnownAssembly(typeof(BuildOperationContext))]
-    internal interface IBuildPipelineService : IVsoCommandService {
+    internal interface IBuildPipelineService : IArtifactService {
         [OperationContract]
         void Publish(BuildOperationContext context);
 
@@ -30,14 +26,21 @@ namespace Aderant.Build.PipelineService {
     }
 
     [ServiceContract]
-    internal interface IVsoCommandService {
+    internal interface IArtifactService {
 
+        /// <summary>
+        /// Makes an artifact known to the build.
+        /// </summary>
+        /// <param name="artifacts"></param>
         [OperationContract]
         void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts);
 
+        /// <summary>
+        /// Gets the artifacts known to the current build
+        /// </summary>
+        /// <returns></returns>
         [OperationContract]
         BuildArtifact[] GetAssociatedArtifacts();
     }
 
 }
-

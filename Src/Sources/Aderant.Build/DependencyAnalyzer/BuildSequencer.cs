@@ -91,7 +91,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 this.stateFiles = context.StateFiles = files;
 
                 foreach (var file in stateFiles) {
-                    logger.Info($"Selected state file: {file.Id}:{file.DropLocation}");
+                    logger.Info($"Selected state file: {file.Id}:{file.Location}");
                 }
             }
         }

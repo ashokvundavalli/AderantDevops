@@ -47,10 +47,11 @@ namespace IntegrationTest.Build.EndToEnd {
 
             service = new BuildPipelineServiceFactory();
             service.StartListener(contextFile);
-            this.proxy = BuildPipelineServiceFactory.CreateProxy(contextFile);
+            this.proxy = BuildPipelineServiceFactory.Instance.GetProxy(contextFile);
             service.Publish(context);
 
-            properties["PrimaryDropLocation"] = context.Drops.PrimaryDropLocation;
+            properties["PrimaryDropLocation"] = context.DropLocations.PrimaryDropLocation;
+            properties["BuildCacheLocation"] = context.DropLocations.PrimaryDropLocation;
         }
 
         [TestMethod]
@@ -71,6 +72,7 @@ namespace IntegrationTest.Build.EndToEnd {
             RunTarget("EndToEnd", properties);
 
             context = proxy.GetContext();
+
             foreach (string entry in context.WrittenStateFiles) {
                 if (entry.EndsWith(@"1\buildstate.metadata")) {
                     var stateFile = StateFileBase.DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
@@ -104,7 +106,10 @@ namespace IntegrationTest.Build.EndToEnd {
             CommitChanges();
             PrepareForAnotherRun();
 
+            context = proxy.GetContext();
+
             Assert.IsNotNull(context.BuildStateMetadata);
+            Assert.IsNotNull(context.WrittenStateFiles);
             Assert.AreNotEqual(0, context.BuildStateMetadata.BuildStateFiles.Count);
 
             RunTarget("EndToEnd", properties);
@@ -118,7 +123,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var buildStateMetadata = new ArtifactService(NullLogger.Default)
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
-                    context.Drops.PrimaryDropLocation);
+                    context.DropLocations.PrimaryDropLocation);
 
             context.BuildStateMetadata = buildStateMetadata;
             service.Publish(context);
@@ -137,7 +142,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private BuildOperationContext CreateContext(Dictionary<string, string> props) {
             var ctx = new BuildOperationContext();
-            ctx.Drops.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
+            ctx.DropLocations.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
             ctx.BuildMetadata = new BuildMetadata();
             ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();

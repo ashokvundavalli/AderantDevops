@@ -1,5 +1,4 @@
-﻿using System;
-using Aderant.Build.Logging;
+﻿using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Microsoft.Build.Utilities;
 
@@ -10,9 +9,9 @@ namespace Aderant.Build.Tasks {
     /// </summary>
     public abstract class BuildOperationContextTask : Task {
         private BuildOperationContext context;
-        private IBuildPipelineServiceContract pipelineService;
         private bool executingTask;
         private BuildTaskLogger logger;
+        private IBuildPipelineServiceContract pipelineService;
 
         public virtual string ContextFileName { get; set; }
 
@@ -33,7 +32,7 @@ namespace Aderant.Build.Tasks {
         internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineServiceContract PipelineService {
-            get { return pipelineService ?? (pipelineService = GetService<IBuildPipelineServiceContract>()); }
+            get { return pipelineService ?? (pipelineService = BuildPipelineServiceFactory.Instance.GetProxy(ContextFileName)); }
         }
 
         public sealed override bool Execute() {
@@ -66,16 +65,6 @@ namespace Aderant.Build.Tasks {
 
         private BuildOperationContext GetContextFromFile() {
             return PipelineService.GetContext();
-        }
-
-        protected T GetService<T>() where T : class {
-            if (string.IsNullOrEmpty(ContextFileName)) {
-                ContextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
-            }
-
-            ErrorUtilities.IsNotNull(ContextFileName, nameof(ContextFileName));
-
-            return (T)BuildPipelineServiceFactory.CreateProxy(ContextFileName);
         }
     }
 }

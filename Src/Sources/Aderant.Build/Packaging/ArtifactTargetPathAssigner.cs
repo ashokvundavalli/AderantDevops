@@ -1,36 +1,13 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Shapes;
-using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
-using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-namespace Aderant.Build.Tasks {
-    //public sealed class GetBuildMetadata : BuildOperationContextTask {
-
-    //}
-
-    public sealed class GetArtifactPaths : BuildOperationContextTask {
-
-        public bool IncludeGeneratedArtifacts { get; set; }
-
-        [Output]
-        public ITaskItem[] ArtifactPaths { get; private set; }
-
-        public override bool ExecuteTask() {
-            var processor = new ProductContentProcessor(PipelineService);
-            ArtifactPaths = processor.CreateTaskItemsWithTargetPaths(IncludeGeneratedArtifacts).ToArray();
-
-            return !Log.HasLoggedErrors;
-        }
-    }
-
-    internal class ProductContentProcessor {
+namespace Aderant.Build.Packaging {
+    internal class ArtifactTargetPathAssigner {
 
         private readonly IBuildPipelineService pipelineService;
 
-        public ProductContentProcessor(IBuildPipelineService pipelineService) {
+        public ArtifactTargetPathAssigner(IBuildPipelineService pipelineService) {
             this.pipelineService = pipelineService;
         }
 
@@ -41,13 +18,11 @@ namespace Aderant.Build.Tasks {
 
             foreach (BuildArtifact artifact in associatedArtifacts) {
                 if (artifact.IsInternalDevelopmentPackage) {
-
                     AddArtifact(pathMap, "Development", artifact);
                     continue;
                 }
 
                 if (artifact.IsTestPackage) {
-
                     AddArtifact(pathMap, "Test", artifact);
                     continue;
                 }
@@ -79,7 +54,7 @@ namespace Aderant.Build.Tasks {
 
             foreach (var item in map) {
                 foreach (var path in item.Value) {
-                    var taskItem = new TaskItem(path.FullPath);
+                    var taskItem = new TaskItem(path.SourcePath);
                     taskItem.SetMetadata("DestinationSubDirectory", PathUtility.EnsureTrailingSlash(item.Key));
 
                     yield return taskItem;

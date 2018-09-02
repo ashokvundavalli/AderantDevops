@@ -12,7 +12,6 @@ namespace Aderant.Build {
             this.metadata = metadata;
 
             ErrorUtilities.IsNotNull(artifactStagingDirectory, nameof(artifactStagingDirectory));
-            ErrorUtilities.IsNotNull(metadata, nameof(metadata));
 
             this.StagingDirectory = Path.Combine(artifactStagingDirectory, "_artifacts");
         }

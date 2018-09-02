@@ -36,7 +36,7 @@ namespace Aderant.Build {
         private string buildSystemDirectory;
 
         [DataMember]
-        private DropPaths drops;
+        private DropLocations drops;
 
         [DataMember]
         private bool isDesktopBuild = true;
@@ -178,8 +178,8 @@ namespace Aderant.Build {
             set { stateFiles = value; }
         }
 
-        public DropPaths Drops {
-            get { return drops ?? (drops = new DropPaths()); }
+        public DropLocations DropLocations {
+            get { return drops ?? (drops = new DropLocations()); }
         }
 
         public string ArtifactStagingDirectory {
@@ -199,9 +199,17 @@ namespace Aderant.Build {
             set { writtenStateFiles = value; }
         }
 
-        internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
+        internal void RecordArtifact(string key, ICollection<ArtifactManifest> collection) {
             InitArtifacts();
-            artifacts[key] = manifests;
+
+            ICollection<ArtifactManifest> existing;
+            if (artifacts.TryGetValue(key, out existing)) {
+                foreach (var artifactManifest in collection) {
+                    existing.Add(artifactManifest);
+                }
+            } else {
+                artifacts[key] = collection;
+            }
         }
 
         /// <summary>
@@ -375,10 +383,13 @@ namespace Aderant.Build {
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
-    public class DropPaths {
+    public class DropLocations {
 
         [DataMember]
         public string PrimaryDropLocation { get; set; }
+
+        [DataMember]
+        public string BuildCacheLocation { get; set; }
 
         [DataMember]
         public string PullRequestDropLocation { get; set; }
@@ -513,7 +524,6 @@ namespace Aderant.Build {
         }
     }
 
-    
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public struct BuildSwitches {

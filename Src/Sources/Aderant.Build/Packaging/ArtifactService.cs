@@ -34,13 +34,13 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         /// <param name="context">The build context.</param>
         /// <param name="publisherName">Optional. Used to identify the publisher</param>
-        /// <param name="packages">The artifacts to publish</param>
-        internal IReadOnlyCollection<BuildArtifact> PublishArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
+        /// <param name="definitions">The artifacts to publish</param>
+        internal IReadOnlyCollection<BuildArtifact> CreateArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> definitions) {
             ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
 
             this.pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
-            var buildArtifacts = ProcessDefinitions(context, publisherName, packages);
+            var buildArtifacts = ProcessDefinitions(context, publisherName, definitions);
 
             if (pipelineService != null) {
                 // Tell TFS about these artifacts
@@ -102,7 +102,7 @@ namespace Aderant.Build.Packaging {
                 if (files.Any()) {
                     CheckForDuplicates(definition.Id, files);
 
-                    var artifact = CreateArtifact(publisherName, copyList, definition, files);
+                    var artifact = CreateBuildCacheArtifact(publisherName, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
                     }
@@ -188,7 +188,10 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private BuildArtifact CreateArtifact(string publisher, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
+        /// <summary>
+        /// Creates an artifact that will be stored into the build cache
+        /// </summary>
+        private BuildArtifact CreateBuildCacheArtifact(string publisher, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
             var basePath = pathBuilder.BuildPath(publisher);
 
             string container = Path.Combine(basePath, definition.Id);
@@ -197,9 +200,13 @@ namespace Aderant.Build.Packaging {
                 copyList.Add(Tuple.Create(container, pathSpec));
             }
 
+            return CreateArtifact(definition, container);
+        }
+
+        private static BuildArtifact CreateArtifact(ArtifactPackageDefinition definition, string artifactPath) {
             return new BuildArtifact {
-                FullPath = container,
                 Name = definition.Id,
+                SourcePath = artifactPath,
                 Type = VsoBuildArtifactType.FilePath,
                 IsAutomaticallyGenerated = definition.IsAutomaticallyGenerated,
                 IsInternalDevelopmentPackage = definition.IsInternalDevelopmentPackage,
@@ -207,16 +214,6 @@ namespace Aderant.Build.Packaging {
         }
 
         private void CopyToDestination(string destinationRoot, PathSpec pathSpec, bool allowOverwrite) {
-            if (pathSpec.Location == PathSpec.BuildSucceeded.Location) {
-                try {
-                    fileSystem.AddFile(destinationRoot, new MemoryStream());
-                } catch (IOException) {
-                    throw new IOException("Failed to create new file at " + destinationRoot);
-                }
-
-                return;
-            }
-
             var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
 
             if (fileSystem.FileExists(pathSpec.Location)) {
@@ -258,7 +255,7 @@ namespace Aderant.Build.Packaging {
                 ICollection<ArtifactManifest> artifactManifests;
                 if (stateFile != null && stateFile.Artifacts.TryGetValue(publisherName, out artifactManifests)) {
                     foreach (var artifactManifest in artifactManifests) {
-                        string artifactFolder = Path.Combine(stateFile.DropLocation, artifactManifest.Id);
+                        string artifactFolder = Path.Combine(stateFile.Location, artifactManifest.Id);
 
                         bool exists = fileSystem.DirectoryExists(artifactFolder);
 
@@ -390,7 +387,7 @@ namespace Aderant.Build.Packaging {
                                     file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
                                 }
 
-                                file.DropLocation = folder;
+                                file.Location = folder;
 
                                 if (CheckForRootedPaths(file)) {
                                     continue;
@@ -446,10 +443,11 @@ namespace Aderant.Build.Packaging {
         }
 
         internal static string[] OrderBuildsByBuildNumber(string[] entries) {
-            List<KeyValuePair<int, string>> numbers = new List<KeyValuePair<int, string>>(entries.Length);
+            var numbers = new List<KeyValuePair<int, string>>(entries.Length);
 
             foreach (var entry in entries) {
                 string directoryName = Path.GetFileName(entry);
+
                 int version;
                 if (Int32.TryParse(directoryName, NumberStyles.Any, CultureInfo.InvariantCulture, out version)) {
                     numbers.Add(new KeyValuePair<int, string>(version, entry));
@@ -461,6 +459,86 @@ namespace Aderant.Build.Packaging {
 
         public void RegisterHandler(IArtifactHandler handler) {
             this.handlers.Add(handler);
+        }
+
+        public LinkInstructions CreateLinkCommands(string artifactStagingDirectory, string destinationRootPath, List<ArtifactPackageDefinition> additionalArtifacts) {
+            var context = pipelineService.GetContext();
+
+            var buildId = context.BuildMetadata.BuildId;
+
+            // Phase 1 - assumes everything is a cache artifact
+            var artifacts = pipelineService.GetAssociatedArtifacts();
+            ComputeDropPaths(artifactStagingDirectory, destinationRootPath, artifacts, buildId);
+
+            List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
+            artifactsWithStoragePaths.AddRange(artifacts);
+
+            // Phase 2 - non-cache artifacts
+            var builder = new DropPathBuilder {
+                PrimaryDropLocation = context.DropLocations.PrimaryDropLocation,
+                PullRequestDropLocation = context.DropLocations.PullRequestDropLocation
+            };
+
+            foreach (var artifact in additionalArtifacts) {
+                BuildArtifact buildArtifact = CreateArtifact(artifact, artifact.GetRootDirectory());
+
+                if (artifact.ArtifactType == ArtifactType.Branch) {
+                    buildArtifact.StoragePath = builder.CreateDropPath(
+                        artifact.Id,
+                        context.BuildMetadata);
+                }
+
+                artifactsWithStoragePaths.Add(buildArtifact);
+            }
+
+            var commandBuilder = new VsoBuildCommandBuilder();
+
+            var instructions = new LinkInstructions {
+                ArtifactPaths = artifactsWithStoragePaths.Select(s => new PathSpec(s.SourcePath, s.StoragePath)),
+                AssociationCommands = artifactsWithStoragePaths.Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.StoragePath))
+            };
+
+            return instructions;
+        }
+
+        internal void ComputeDropPaths(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
+            var builder = new ArtifactStagingPathBuilder(artifactStagingDirectory, buildId, null);
+
+            foreach (var artifact in artifacts) {
+                string fullPath = artifact.SourcePath;
+
+                if (fullPath.StartsWith("\\")) {
+                    throw new InvalidOperationException($"Invalid path: {fullPath}. Only local paths are supported.");
+                }
+
+                artifact.StoragePath = artifact.CreateStoragePath(builder.StagingDirectory, destinationRootPath);
+            }
+        }
+    }
+
+    internal class LinkInstructions {
+        public IEnumerable<PathSpec> ArtifactPaths { get; set; }
+        public IEnumerable<string> AssociationCommands { get; set; }
+    }
+
+    internal class DropPathBuilder {
+
+        public string PrimaryDropLocation { get; set; }
+        public string PullRequestDropLocation { get; set; }
+
+        public string CreateDropPath(string artifactId, BuildMetadata buildMetadata) {
+            if (buildMetadata.IsPullRequest) {
+                return Path.Combine(
+                    PullRequestDropLocation,
+                    buildMetadata.PullRequest.Id,
+                    artifactId);
+            }
+
+            return Path.Combine(
+                PrimaryDropLocation,
+                buildMetadata.ScmBranch,
+                buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture),
+                artifactId);
         }
     }
 

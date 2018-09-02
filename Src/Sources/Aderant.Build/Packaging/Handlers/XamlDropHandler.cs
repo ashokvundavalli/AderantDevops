@@ -21,7 +21,7 @@ namespace Aderant.Build.Packaging.Handlers {
             }
 
             return new BuildArtifact {
-                FullPath = destination,
+                SourcePath = destination,
                 Name = artifactName,
             };
         }

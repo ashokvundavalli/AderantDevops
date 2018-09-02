@@ -80,7 +80,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 }
             }
 
-            stateFile.DropLocation = null;
+            stateFile.Location = null;
 
             fileSystem.AddFile(destinationPath, stream => stateFile.Serialize(stream));
 

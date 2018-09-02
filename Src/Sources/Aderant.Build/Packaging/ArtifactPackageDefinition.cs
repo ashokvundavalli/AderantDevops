@@ -26,6 +26,7 @@ namespace Aderant.Build.Packaging {
         public static string TestPackagePrefix { get; } = "Tests.";
 
         public bool IsInternalDevelopmentPackage { get; set; }
+        public ArtifactType ArtifactType { get; set; }
 
         public string Id { get; }
 
@@ -43,7 +44,7 @@ namespace Aderant.Build.Packaging {
             return pathSpecs;
         }
 
-        public static PathSpec CreatePathSpecification(string solutionRoot, string[] trimPaths, string fullPath, string targetPath) {
+        public static PathSpec CreatePathSpecification(string[] trimPaths, string fullPath, string targetPath) {
             string outputRelativePath = null;
 
             if (trimPaths != null) {
@@ -60,6 +61,10 @@ namespace Aderant.Build.Packaging {
 
         public static ArtifactPackageDefinition Create(string name, Action<ArtifactPackageDefinitionBuilder> builder) {
             return new ArtifactPackageDefinitionBuilder(name, builder).Build();
+        }
+
+        public string GetRootDirectory() {
+            return GetFiles().FirstOrDefault().Location;
         }
     }
 

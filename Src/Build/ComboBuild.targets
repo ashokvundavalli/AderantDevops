@@ -52,7 +52,7 @@
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
 
-    <CopyToDropEnabled>true</CopyToDropEnabled>
+    <CopyToDropEnabled>false</CopyToDropEnabled>
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
     <RunPackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</RunPackageProduct>
   </PropertyGroup>
@@ -61,13 +61,13 @@
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
-      <!--PrepareBuildEnvironment;
-      --><!--ArchiveStagingDirectory;--><!--
+      PrepareBuildEnvironment;
+      <!--ArchiveStagingDirectory;-->
       CreatePipeline;
       ExecutePipeline;
       WriteStateFiles;
       PackageProduct;
-      CopyToDrop;-->
+      CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
@@ -252,8 +252,6 @@
   
 
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
-    <Message Text="##vso[artifact.associate type=filepath;artifactname=MyFileShareDrop]\\MyShare\MyDropLocation" />
-    <Message Text="##vso[artifact.associate type=filepath;artifactname=MyFileShareDrop1]\\MyShare\MyDropLocation\Myzip.zip" />
   </Target>
 
 
@@ -291,11 +289,11 @@
 
   </Target>
 
-  <Target Name="PackageProduct" >
+  <Target Name="PackageProduct" Condition="'$(RunPackageProduct)' == 'true'">
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-      <ProductArchiveFile>$(ArtifactStagingDirectory)Binaries.zip</ProductArchiveFile>
+      <ProductArchiveFile>$(ArtifactStagingDirectory)package\Binaries.zip</ProductArchiveFile>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
@@ -317,7 +315,7 @@
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
       Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
-      WorkingDirectory="$(PackageScriptsDirectory)" />
+      WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire--> 
     <Copy SourceFiles="@(LocalPackageFiles)"
@@ -353,13 +351,20 @@
     <ItemGroup>
       <ArtifactPackage Include="$(ProductArchiveFile)">
         <ArtifactId>TheProduct</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
       </ArtifactPackage>
     </ItemGroup>
 
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       AdditionalArtifacts="@(ArtifactPackage)"
-      DestinationRootPath="$(PrimaryDropLocation)" />
+      DestinationRootPath="$(PrimaryDropLocation)">
+      <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
+      <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
+    </PublishArtifacts>
+
+    <Message Text="zz %(LinkCommands.Identity)" />
+    <Message Text="zz %(ArtifactPaths.Identity) --> %(ArtifactPaths.TargetPath)" />
 
     <!--<PowerShellScript ScriptBlock='
 $buildId = $Context.BuildMetadata.BuildId

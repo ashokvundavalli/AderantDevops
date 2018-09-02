@@ -16,11 +16,11 @@ namespace UnitTest.Build {
         [TestMethod]
         public void BuildArtifactSerialization() {
             var artifact = new BuildArtifact();
-            artifact.FullPath = "Abc";
+            artifact.SourcePath = "Abc";
 
             var instance = RoundTrip(artifact);
 
-            Assert.AreEqual("Abc", instance.FullPath);
+            Assert.AreEqual("Abc", instance.SourcePath);
         }
 
         [TestMethod]

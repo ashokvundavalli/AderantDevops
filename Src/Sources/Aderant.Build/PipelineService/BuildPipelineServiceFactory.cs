@@ -1,10 +1,19 @@
 ﻿using System;
 using System.ServiceModel;
+using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
     public class BuildPipelineServiceFactory : IDisposable {
+        private static Lazy<IProxyAccessor> proxyForThisProcess = new Lazy<IProxyAccessor>(() => new ProxyAccessor(CreateAddress));
+
         ServiceHost host;
         private string id;
+
+        internal static IProxyAccessor Instance {
+            get {
+                return proxyForThisProcess.Value;
+            }
+        }
 
         public void Dispose() {
             StopListener();
@@ -17,7 +26,7 @@ namespace Aderant.Build.PipelineService {
             var namedPipeBinding = CreateBinding();
 
             var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, CreateAddress(pipeId));
-            endpoint.Behaviors.Add(new ProtoBuf.ServiceModel.ProtoEndpointBehavior());
+            endpoint.Behaviors.Add(new ProtoEndpointBehavior());
 
             host.Open();
 
@@ -28,7 +37,7 @@ namespace Aderant.Build.PipelineService {
             return $"net.pipe://localhost/_{pipeId}";
         }
 
-        private static NetNamedPipeBinding CreateBinding() {
+        internal static NetNamedPipeBinding CreateBinding() {
             NetNamedPipeBinding namedPipeBinding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None);
             namedPipeBinding.MaxReceivedMessageSize = Int32.MaxValue;
             return namedPipeBinding;
@@ -43,17 +52,39 @@ namespace Aderant.Build.PipelineService {
         public void Publish(BuildOperationContext context) {
             ErrorUtilities.IsNotNull(id, nameof(id));
 
-            using (var proxy = CreateProxy(id)) {
+            using (var proxy = Instance.GetProxy(id)) {
                 proxy.Publish(context);
             }
         }
+    }
 
-        internal static IBuildPipelineServiceContract CreateProxy(string pipeId) {
-            EndpointAddress endpointAddress = new EndpointAddress(CreateAddress(pipeId));
-            var namedPipeBinding = CreateBinding();
-            
+    internal class ProxyAccessor : IProxyAccessor {
+
+        private readonly Func<string, string> createAddress;
+
+        public ProxyAccessor(Func<string, string> createAddress) {
+            this.createAddress = createAddress;
+        }
+
+        public IBuildPipelineServiceContract GetProxy(string contextFileName) {
+            if (string.IsNullOrEmpty(contextFileName)) {
+                contextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
+            }
+
+            ErrorUtilities.IsNotNull(contextFileName, nameof(contextFileName));
+
+            return GetProxyInternal(contextFileName);
+        }
+
+        internal IBuildPipelineServiceContract GetProxyInternal(string pipeId) {
+            EndpointAddress endpointAddress = new EndpointAddress(createAddress(pipeId));
+            var namedPipeBinding = BuildPipelineServiceFactory.CreateBinding();
 
             return new BuildPipelineServiceProxy(namedPipeBinding, endpointAddress);
         }
+    }
+
+    internal interface IProxyAccessor {
+        IBuildPipelineServiceContract GetProxy(string id);
     }
 }

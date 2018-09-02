@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <!-- NOTE: Using the fully qualified class name in a <UsingTask> tag is faster than using a partially qualified name. -->
+
+    <!-- Gets the platform of an assembly (e.g. x86, x64 or AnyCPU) -->
+    <UsingTask TaskName="Aderant.Build.Tasks.GetAssemblyPlatform"                                 AssemblyFile="$(BuildAssembly)" />
+
+    <!-- Gets the dependencies for a given module -->
+    <UsingTask TaskName="Aderant.Build.Tasks.GetDependencies"                                     AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.MakeSymlink"                                         AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.DependencyChecker"                                   AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.BuildConfigurationCheck"                             AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.FilterModules"                                       AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ExtractWebModule"                                    AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ParallelBuildProjectFactory"                         AssemblyFile="$(BuildAssembly)" />
+
+    <!-- Adds SCC information into the pdb files for the symbol server -->
+    <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" />
+
+    <!-- Publishes pdb files to the symbol server -->
+    <UsingTask TaskName="Aderant.Build.Tasks.PublishSymbols"                                      AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" />
+
+    <!-- Creates "fakes" builds in TFS -->
+    <UsingTask TaskName="Aderant.Build.Tasks.PublishBuild"                                        AssemblyFile="$(BuildAssembly)" />
+
+    <!-- Closes and finalizes a build -->
+    <UsingTask TaskName="Aderant.Build.Tasks.FinalizeBuild"                                       AssemblyFile="$(BuildAssembly)" />
+
+    <!-- Converts dotCover XML report to Cobertura XML format -->
+    <UsingTask TaskName="Aderant.Build.Tasks.CoberturaReportConverter"                            AssemblyFile="$(BuildAssembly)" />
+
+    <!-- Adds solution build details into TFS so the build can track warnings etc -->
+    <UsingTask TaskName="Aderant.Build.Tasks.AddBuildProjectNode"                                 AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.CheckCertificate"                                    AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ThirdPartyPackager"                                  AssemblyFile="$(BuildAssembly)" />
+
+    <!-- For zip seed packages. -->
+    <UsingTask TaskName="Aderant.Build.Tasks.SeedPackagePacking"                                  AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GetAssembliesWithTraits"                             AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.CheckFreeSpace"                                      AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.FilterItemGroup"                                     AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GitVersion"                                          AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.Hash"                                                AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.WriteLinesToFile"                                    AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ReadAssemblyInfo"                                    AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.PrintBanner"                                         AssemblyFile="$(BuildAssembly)" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.PowerShellScript"                                    AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.CheckForDoubleWrites"                                AssemblyFile="$(BuildAssembly)" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.WaitForDebugger"                                     AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GetPropertiesFromContext"                            AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GetOrPutContextVariable"                             AssemblyFile="$(BuildAssembly)" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.ArtifactHandling.CreateArtifacts"                    AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ArtifactHandling.PublishArtifacts"                   AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ArtifactHandling.RetrieveArtifacts"                  AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.ArtifactHandling.GetArtifactPaths"                   AssemblyFile="$(BuildAssembly)" />
+
+    <UsingTask TaskName="Aderant.Build.Tasks.WriteBuildStateFile"                                 AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.TrackProjectOutputs"                                 AssemblyFile="$(BuildAssembly)" />
+    
+
+    <!-- Debugging task -->
+    <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />
+
+</Project>

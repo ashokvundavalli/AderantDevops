@@ -1,7 +1,7 @@
 ﻿using Aderant.Build.Packaging;
 using Microsoft.Build.Framework;
 
-namespace Aderant.Build.Tasks {
+namespace Aderant.Build.Tasks.ArtifactHandling {
 
     public sealed class RetrieveArtifacts : BuildOperationContextTask {
 
@@ -16,7 +16,7 @@ namespace Aderant.Build.Tasks {
             var service = new ArtifactService(Logger);
             service.Resolve(Context, PublisherName, SolutionRoot, WorkingDirectory);
 
-            return !Log.HasLoggedErrors;
+            return !Log.HasLoggedErrors; 
         }
     }
 
