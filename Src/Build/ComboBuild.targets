@@ -322,32 +322,23 @@
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
     </PublishArtifacts>
 
-    <Message Text="zz %(LinkCommands.Identity)" />
-    <Message Text="zz %(ArtifactPaths.Identity) --> %(ArtifactPaths.TargetPath)" />
+    <!--Tell TFS about the new artifacts so it can manage them -->
+    <Message Text="%(LinkCommands.Identity)" />
 
-    <!--<PowerShellScript ScriptBlock='
-$buildId = $Context.BuildMetadata.BuildId
-$isPullRequest = $Context.BuildMetadata.IsPullRequest
-$branchName = $Context.BuildMetadata.ScmBranch
+    <Message Text="%(ArtifactPaths.Identity) --> %(ArtifactPaths.TargetPath)" />
 
-. $(BuildScriptsDirectory)PublishArtifacts.ps1 -ArtifactStagingDirectory "$(ArtifactStagingDirectory)_artifacts" -PrimaryDropLocation "$(PrimaryDropLocation)" -BuildId $buildId -BranchName $branchName -IsPullRequest $isPullRequest' />-->
-
-    <!-- Tell TFS about the new artifacts so it can manage them --><!--
-    <UpdateBuildRecordArtifacts
-      DestinationPath="$(PrimaryDropLocation)" />
-
-    --><!-- We ignore exit codes less than 4 as these codes indicate success --><!--
+    <!-- We ignore exit codes less than 4 as these codes indicate success -->
     <PropertyGroup>
       <CopyToDropCommand>
 <![CDATA[
-robocopy.exe "$(ArtifactStagingDirectory)_artifacts" "$(PrimaryDropLocation)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
+robocopy.exe "%(ArtifactPaths.Identity)" "%(ArtifactPaths.TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
 ]]>
       </CopyToDropCommand>
     </PropertyGroup>
 
     <Exec Command="$(CopyToDropCommand)"
-          WorkingDirectory="$(ArtifactStagingDirectory)" />-->
+          WorkingDirectory="$(ArtifactStagingDirectory)" />
 
   </Target>
 
@@ -511,92 +502,6 @@ IF %ERRORLEVEL% LEQ 4 EXIT /B 0
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
   </Target>
-
   
-  <!--
-  ==========================================================================================
-  Package the built modules and place in this builds output folder on the drop.
-  ==========================================================================================
-  --><!--
-  <Target Name="GetProduct" BeforeTargets="ZipProduct">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Package Product"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
-    <MakeDir Directories="$(LocalExpertBinariesDirectory)"
-             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
-
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true"
-          WorkingDirectory="$(PackageScriptsDirectory)" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-  </Target>
- 
-
-  <UsingTask
-    TaskName="MergeParameters"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <Source ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <Target ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" Output="true" />
-      <MergeResult ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core" />
-      <Reference Include="System.Xml" />
-      <Reference Include="System.Xml.Linq "/>
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Collections.Generic" />
-      <Using Namespace="System.Linq" />
-      <Using Namespace="System.Xml.Linq" />
-      <Using Namespace="System.Text.RegularExpressions" />
-      <Code>
-        <![CDATA[
-  List<ITaskItem> items = new List<ITaskItem>(Target);
-  
-  foreach (var sourceItem in Source) {
-      var sourceKey = sourceItem.ItemSpec.Split('=')[0];
-    
-      bool add = true;
-    
-      foreach (var item in Target) {
-          var itemKey = item.ItemSpec.Split('=')[0];
-      
-          if (itemKey == sourceKey) {
-            Log.LogMessage("ItemGroup already contains key: " + itemKey, null);
-            add = false;
-            break;
-          }
-      }
-    
-      if (add) {
-          items.Add(sourceItem);
-      }    
-  } 
-  
-  MergeResult = items.ToArray(); 
-]]>
-      </Code>
-    </Task>
-  </UsingTask>-->
   
 </Project>

@@ -16,9 +16,16 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         [Required]
         public ITaskItem[] AdditionalArtifacts { get; set; }
 
+        /// <summary>
+        /// The VSTS artifact association commands
+        /// https://github.com/Microsoft/vsts-tasks/blob/master/docs/authoring/commands.md
+        /// </summary>
         [Output]
         public string[] LinkCommands { get; private set; }
 
+        /// <summary>
+        /// The mapping between source artifacts and storage location
+        /// </summary>
         [Output]
         public TaskItem[] ArtifactPaths { get; private set; }
 
