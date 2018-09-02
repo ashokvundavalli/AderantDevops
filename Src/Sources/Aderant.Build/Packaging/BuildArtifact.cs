@@ -54,15 +54,18 @@ namespace Aderant.Build.Packaging {
         /// Creates a path to the artifact which TFS can use
         /// </summary>
         public string ComputeVsoPath() {
-            var pos = SourcePath.IndexOf(Name, StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(StoragePath)) {
+                throw new InvalidOperationException("Storage path not computed for artifact:" + Name);
+            }
 
+            var pos = StoragePath.LastIndexOf(Name, StringComparison.OrdinalIgnoreCase);
             if (pos >= 0) {
-                return SourcePath.Remove(pos)
+                return StoragePath.Remove(pos)
                     .TrimEnd(Path.DirectorySeparatorChar)
                     .TrimEnd(Path.AltDirectorySeparatorChar);
             }
 
-            return Path.GetDirectoryName(SourcePath);
+            return StoragePath;
         }
 
         public string CreateStoragePath(string sourcePath, string destinationPath) {

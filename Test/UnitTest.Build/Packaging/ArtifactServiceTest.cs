@@ -101,6 +101,36 @@ namespace UnitTest.Build.Packaging {
             PathSpec spec2 = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff");
             Assert.AreEqual(@"\\baz\cache\SomeOtherArtifactOnDisk\Stuff", spec2.Destination);
         }
+
+        [TestMethod]
+        [Description("Confirms that we do not append the artifact name to the link path. This is critical to the proper functioning of the TFS garbage collector which appends the name when running a prune operation")]
+        public void Artifact_association_command_does_not_end_with_artifact_name() {
+            var mock = new Mock<IBuildPipelineServiceContract>();
+            mock.Setup(s => s.GetAssociatedArtifacts()).Returns(new[] { new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff" } });
+
+            var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
+
+            var linkCommands = artifactService.CreateLinkCommands(
+                @"C:\Foo",
+                new DropLocationInfo {
+                    PrimaryDropLocation = @"\\foo\bar",
+                    BuildCacheLocation = @"\\baz\cache"
+                },
+                new BuildMetadata {
+                    ScmBranch = "refs/heads/master"
+                },
+                new[] {
+                    new ArtifactPackageDefinition("TheProduct", new[] { new PathSpec(@"C:\Foo\MyProduct.zip", "") }) {
+                        ArtifactType = ArtifactType.Branch
+
+                    }
+                });
+
+            Assert.IsNotNull(linkCommands);
+
+            Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=TheProduct;type=FilePath;]\\foo\bar\refs\heads\master\0"));
+            Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=SomeOtherArtifact;type=FilePath;]\\baz\cache"));
+        }
     }
 
 }
