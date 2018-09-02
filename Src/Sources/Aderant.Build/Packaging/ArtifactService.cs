@@ -464,12 +464,12 @@ namespace Aderant.Build.Packaging {
             this.handlers.Add(handler);
         }
 
-        public LinkCommands CreateLinkCommands(string artifactStagingDirectory, string destinationRootPath, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
+        public LinkCommands CreateLinkCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
             var buildId = metadata.BuildId;
 
             // Phase 1 - assumes everything is a prebuilt/cache artifact
             var artifacts = pipelineService.GetAssociatedArtifacts();
-            AssignDropLocation(artifactStagingDirectory, destinationRootPath, artifacts, buildId);
+            AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
 
             List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
             artifactsWithStoragePaths.AddRange(artifacts);

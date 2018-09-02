@@ -132,7 +132,7 @@ function GetBuildStateMetadata($context) {
     }   
 
     $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocations.BuildCacheLocation
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
     $context.BuildStateMetadata = $buildState
 

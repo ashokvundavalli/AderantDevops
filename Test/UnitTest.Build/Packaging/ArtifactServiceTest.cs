@@ -79,9 +79,9 @@ namespace UnitTest.Build.Packaging {
 
             var linkCommands = artifactService.CreateLinkCommands(
                 @"C:\Foo",
-                @"\\some\location\",
                 new DropLocationInfo {
-                    PrimaryDropLocation = @"\\foo\bar"
+                    PrimaryDropLocation = @"\\foo\bar",
+                    BuildCacheLocation = @"\\baz\cache"
                 },
                 new BuildMetadata {
                     ScmBranch = "refs/heads/master"
@@ -95,8 +95,11 @@ namespace UnitTest.Build.Packaging {
 
             Assert.IsNotNull(linkCommands);
 
-            PathSpec spec = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\MyProduct.zip");
-            Assert.AreEqual(@"\\foo\bar\refs\heads\master\0\TheProduct", spec.Destination);
+            PathSpec spec1 = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\MyProduct.zip");
+            Assert.AreEqual(@"\\foo\bar\refs\heads\master\0\TheProduct", spec1.Destination);
+
+            PathSpec spec2 = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff");
+            Assert.AreEqual(@"\\baz\cache\SomeOtherArtifactOnDisk\Stuff", spec2.Destination);
         }
     }
 
