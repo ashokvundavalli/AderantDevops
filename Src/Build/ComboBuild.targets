@@ -327,11 +327,15 @@
 
     <Message Text="%(ArtifactPaths.Identity) --> %(ArtifactPaths.TargetPath)" />
 
+    <ItemGroup>
+      <DirectoriesToCopy Directories="@(ArtifactPaths->DirectoryName()->Distinct())" />
+    </ItemGroup>
+
     <!-- We ignore exit codes less than 4 as these codes indicate success -->
     <PropertyGroup>
       <CopyToDropCommand>
 <![CDATA[
-robocopy.exe "%(ArtifactPaths.Identity)" "%(ArtifactPaths.TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
+robocopy.exe "%(DirectoriesToCopy.FullPath)" "%(DirectoriesToCopy.TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
 ]]>
       </CopyToDropCommand>
