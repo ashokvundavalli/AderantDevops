@@ -21,10 +21,10 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
 
     #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
 
-    $context.DropLocations.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
-    $context.DropLocations.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
-    $context.DropLocations.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
-    $context.DropLocations.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
+    $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
+    $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
+    $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
+    $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
 function FindProductManifest($context, $stringSearchDirectory) {        
@@ -76,10 +76,10 @@ function FindGitDir($context, $stringSearchDirectory) {
         [void]$set.Add([string]::Join(" ", $remainingArgs))
     }
 
-    [void]$set.Add("/p:PrimaryDropLocation=$($context.DropLocations.PrimaryDropLocation)")
-    [void]$set.Add("/p:BuildCacheLocation=$($context.DropLocations.BuildCacheLocation)")
-    [void]$set.Add("/p:PullRequestDropLocation=$($context.DropLocations.PullRequestDropLocation)")
-    [void]$set.Add("/p:XamlBuildDropLocation=$($context.DropLocations.XamlBuildDropLocation)")
+    [void]$set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
+    [void]$set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
+    [void]$set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
+    [void]$set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
 
     [void]$set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 

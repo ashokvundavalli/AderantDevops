@@ -26,7 +26,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
             var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(AdditionalArtifacts, null);
 
             var service = new ArtifactService(PipelineService, null, Logger);
-            var commands = service.CreateLinkCommands(ArtifactStagingDirectory, DestinationRootPath, additionalArtifacts);
+            var commands = service.CreateLinkCommands(ArtifactStagingDirectory, DestinationRootPath, Context.DropLocationInfo, Context.BuildMetadata, additionalArtifacts);
 
             LinkCommands = commands.AssociationCommands.ToArray();
             ArtifactPaths = commands.ArtifactPaths.Select(s => new TaskItem(s.Location, new Hashtable { { "TargetPath", s.Destination } })).ToArray();

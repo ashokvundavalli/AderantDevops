@@ -50,8 +50,8 @@ namespace IntegrationTest.Build.EndToEnd {
             this.proxy = BuildPipelineServiceFactory.Instance.GetProxy(contextFile);
             service.Publish(context);
 
-            properties["PrimaryDropLocation"] = context.DropLocations.PrimaryDropLocation;
-            properties["BuildCacheLocation"] = context.DropLocations.PrimaryDropLocation;
+            properties["PrimaryDropLocation"] = context.DropLocationInfo.PrimaryDropLocation;
+            properties["BuildCacheLocation"] = context.DropLocationInfo.PrimaryDropLocation;
         }
 
         [TestMethod]
@@ -123,7 +123,7 @@ namespace IntegrationTest.Build.EndToEnd {
             var buildStateMetadata = new ArtifactService(NullLogger.Default)
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
-                    context.DropLocations.PrimaryDropLocation);
+                    context.DropLocationInfo.PrimaryDropLocation);
 
             context.BuildStateMetadata = buildStateMetadata;
             service.Publish(context);
@@ -142,7 +142,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private BuildOperationContext CreateContext(Dictionary<string, string> props) {
             var ctx = new BuildOperationContext();
-            ctx.DropLocations.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
+            ctx.DropLocationInfo.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
             ctx.BuildMetadata = new BuildMetadata();
             ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();

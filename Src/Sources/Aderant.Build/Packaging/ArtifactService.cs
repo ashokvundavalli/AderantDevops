@@ -464,10 +464,8 @@ namespace Aderant.Build.Packaging {
             this.handlers.Add(handler);
         }
 
-        public LinkInstructions CreateLinkCommands(string artifactStagingDirectory, string destinationRootPath, List<ArtifactPackageDefinition> additionalArtifacts) {
-            var context = pipelineService.GetContext();
-
-            var buildId = context.BuildMetadata.BuildId;
+        public LinkCommands CreateLinkCommands(string artifactStagingDirectory, string destinationRootPath, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
+            var buildId = metadata.BuildId;
 
             // Phase 1 - assumes everything is a prebuilt/cache artifact
             var artifacts = pipelineService.GetAssociatedArtifacts();
@@ -477,18 +475,18 @@ namespace Aderant.Build.Packaging {
             artifactsWithStoragePaths.AddRange(artifacts);
 
             // Phase 2 - non-cache artifacts
-            var builder = new DropPathBuilder {
-                PrimaryDropLocation = context.DropLocations.PrimaryDropLocation,
-                PullRequestDropLocation = context.DropLocations.PullRequestDropLocation
+            var builder = new ArtifactDropPathBuilder {
+                PrimaryDropLocation = dropLocationInfo.PrimaryDropLocation,
+                PullRequestDropLocation = dropLocationInfo.PullRequestDropLocation
             };
 
             foreach (var artifact in additionalArtifacts) {
                 BuildArtifact buildArtifact = CreateArtifact(artifact, artifact.GetRootDirectory());
 
                 if (artifact.ArtifactType == ArtifactType.Branch) {
-                    buildArtifact.StoragePath = builder.CreateDropPath(
+                    buildArtifact.StoragePath = builder.CreatePath(
                         artifact.Id,
-                        context.BuildMetadata);
+                        metadata);
                 }
 
                 artifactsWithStoragePaths.Add(buildArtifact);
@@ -496,7 +494,7 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoBuildCommandBuilder();
 
-            var instructions = new LinkInstructions {
+            var instructions = new LinkCommands {
                 ArtifactPaths = artifactsWithStoragePaths.Select(s => new PathSpec(s.SourcePath, s.StoragePath)),
                 AssociationCommands = artifactsWithStoragePaths.Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.StoragePath))
             };
@@ -519,29 +517,40 @@ namespace Aderant.Build.Packaging {
         }
     }
 
-    internal class LinkInstructions {
+    internal class LinkCommands {
         public IEnumerable<PathSpec> ArtifactPaths { get; set; }
         public IEnumerable<string> AssociationCommands { get; set; }
     }
 
-    internal class DropPathBuilder {
+    internal class ArtifactDropPathBuilder {
 
         public string PrimaryDropLocation { get; set; }
         public string PullRequestDropLocation { get; set; }
 
-        public string CreateDropPath(string artifactId, BuildMetadata buildMetadata) {
+      
+        public string CreatePath(string artifactId, BuildMetadata buildMetadata) {
+            string[] parts;
+
             if (buildMetadata.IsPullRequest) {
-                return Path.Combine(
+                parts = new[] {
                     PullRequestDropLocation,
                     buildMetadata.PullRequest.Id,
-                    artifactId);
+                    artifactId
+                };
+            } else {
+                if (string.IsNullOrWhiteSpace(buildMetadata.ScmBranch)) {
+                    throw new InvalidOperationException("When constructing a drop path ScmBranch cannot be null or empty");
+                }
+
+                parts = new[] {
+                    PrimaryDropLocation,
+                    buildMetadata.ScmBranch.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar /*UNIX/git paths fix up to make them Windows paths*/),
+                    buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture),
+                    artifactId
+                };
             }
 
-            return Path.Combine(
-                PrimaryDropLocation,
-                buildMetadata.ScmBranch,
-                buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture),
-                artifactId);
+            return Path.Combine(parts);
         }
     }
 

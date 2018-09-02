@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aderant.Build;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.Handlers;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -70,17 +72,31 @@ namespace UnitTest.Build.Packaging {
 
         [TestMethod]
         public void CreateLinkCommands() {
-            var artifactService = new ArtifactService(null, new Mock<IFileSystem>().Object, NullLogger.Default);
+            var mock = new Mock<IBuildPipelineServiceContract>();
+            mock.Setup(s => s.GetAssociatedArtifacts()).Returns(new[] { new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff" } });
 
-            //artifactService.CreateLinkCommands(
-            //    @"C:\Foo",
-            //    @"\\some\location\",
-            //    new BuildArtifact[] {
-            //        new BuildArtifact {
-            //            Name = "TheProduct",
-            //            FullPath = @"C:\SomeLocation\OnDisk.zip"
-            //        }
-            //    }, 123);
+            var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
+
+            var linkCommands = artifactService.CreateLinkCommands(
+                @"C:\Foo",
+                @"\\some\location\",
+                new DropLocationInfo {
+                    PrimaryDropLocation = @"\\foo\bar"
+                },
+                new BuildMetadata {
+                    ScmBranch = "refs/heads/master"
+                },
+                new[] {
+                    new ArtifactPackageDefinition("TheProduct", new[] { new PathSpec(@"C:\Foo\MyProduct.zip", "") }) {
+                        ArtifactType = ArtifactType.Branch
+
+                    }
+                });
+
+            Assert.IsNotNull(linkCommands);
+
+            PathSpec spec = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\MyProduct.zip");
+            Assert.AreEqual(@"\\foo\bar\refs\heads\master\0\TheProduct", spec.Destination);
         }
     }
 

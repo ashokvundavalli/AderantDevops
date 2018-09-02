@@ -36,7 +36,7 @@ namespace Aderant.Build {
         private string buildSystemDirectory;
 
         [DataMember]
-        private DropLocations drops;
+        private DropLocationInfo drops;
 
         [DataMember]
         private bool isDesktopBuild = true;
@@ -178,8 +178,8 @@ namespace Aderant.Build {
             set { stateFiles = value; }
         }
 
-        public DropLocations DropLocations {
-            get { return drops ?? (drops = new DropLocations()); }
+        public DropLocationInfo DropLocationInfo {
+            get { return drops ?? (drops = new DropLocationInfo()); }
         }
 
         public string ArtifactStagingDirectory {
@@ -383,7 +383,7 @@ namespace Aderant.Build {
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
-    public class DropLocations {
+    public class DropLocationInfo {
 
         [DataMember]
         public string PrimaryDropLocation { get; set; }

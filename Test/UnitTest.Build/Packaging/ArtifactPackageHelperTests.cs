@@ -23,4 +23,5 @@ namespace UnitTest.Build.Packaging {
             Assert.AreEqual(ArtifactType.None, type);
         }
     }
+
 }
