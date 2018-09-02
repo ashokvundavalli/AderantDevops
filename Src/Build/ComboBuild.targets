@@ -325,13 +325,12 @@
     <!--Tell TFS about the new artifacts so it can manage them -->
     <Message Text="%(LinkCommands.Identity)" />
 
-    <Message Text="%(ArtifactPaths.Identity) --> %(ArtifactPaths.TargetPath)" />
-
     <ItemGroup>
       <DirectoriesToCopy Include="@(ArtifactPaths->DirectoryName()->Distinct())" />
     </ItemGroup>
 
-    <!-- We ignore exit codes less than 4 as these codes indicate success -->
+    <Message Text="Copy command: %(DirectoriesToCopy.FullPath) -> %(DirectoriesToCopy.TargetPath)" />
+
     <PropertyGroup>
       <CopyToDropCommand>
 <![CDATA[
