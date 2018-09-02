@@ -7,7 +7,7 @@ namespace Aderant.Build.Packaging {
     internal static class ArtifactPackageHelper {
         internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string[] relativeFrom) {
             List<ArtifactPackageDefinition> artifacts = new List<ArtifactPackageDefinition>();
-            var grouping = artifactDefinitions.GroupBy(g => g.GetMetadata("ArtifactId"));
+            var grouping = artifactDefinitions.GroupBy(g => g.GetMetadata("ArtifactId"), StringComparer.OrdinalIgnoreCase);
 
             foreach (var group in grouping) {
                 List<PathSpec> pathSpecs = new List<PathSpec>();
@@ -69,7 +69,7 @@ namespace Aderant.Build.Packaging {
     [Flags]
     internal enum ArtifactType {
         None = 0,
-        BuildCache = 2,
+        Prebuilt = 2,
         Branch = 4,
     }
 }

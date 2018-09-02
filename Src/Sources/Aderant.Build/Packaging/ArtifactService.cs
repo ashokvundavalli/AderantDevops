@@ -221,6 +221,9 @@ namespace Aderant.Build.Packaging {
             }
         }
 
+        /// <summary>
+        /// Fetches prebuilt objects
+        /// </summary>
         public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {
             var paths = BuildArtifactResolveOperation(context, publisherName, workingDirectory);
             RunResolveOperation(context, solutionRoot, publisherName, paths);
@@ -466,9 +469,9 @@ namespace Aderant.Build.Packaging {
 
             var buildId = context.BuildMetadata.BuildId;
 
-            // Phase 1 - assumes everything is a cache artifact
+            // Phase 1 - assumes everything is a prebuilt/cache artifact
             var artifacts = pipelineService.GetAssociatedArtifacts();
-            ComputeDropPaths(artifactStagingDirectory, destinationRootPath, artifacts, buildId);
+            AssignDropLocation(artifactStagingDirectory, destinationRootPath, artifacts, buildId);
 
             List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
             artifactsWithStoragePaths.AddRange(artifacts);
@@ -501,7 +504,7 @@ namespace Aderant.Build.Packaging {
             return instructions;
         }
 
-        internal void ComputeDropPaths(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
+        internal void AssignDropLocation(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
             var builder = new ArtifactStagingPathBuilder(artifactStagingDirectory, buildId, null);
 
             foreach (var artifact in artifacts) {

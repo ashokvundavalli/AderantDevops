@@ -2,8 +2,7 @@
 # Used as a debugging aid as the number of args to pass to sucessfully boot up the build system can
 # be quite overwhelming
 cd C:\Source\ExpertSuite\; cm .
-cd Framework
-bm /p:VisualStudioVersion=14.0
+bm -downstream -transitive /p:VisualStudioVersion=14.0 /p:PackageArtifacts=true
 
 
 #C:\Source\Build.Infrastructure\Src\Package\GetProduct.ps1 -productManifestPath C:\Source\ExpertSuite\ExpertManifest.xml -dropRoot \\dfs.aderant.com\ExpertSuite\dev\vnext -binariesDirectory C:\Source\ExpertSuite\_as\_product -getDebugFiles:1

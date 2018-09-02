@@ -77,7 +77,7 @@
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
         <ArtifactId>Tests.$(ModuleName)</ArtifactId>
         <Generated>true</Generated>
-        <ArtifactType>BuildCache</ArtifactType>
+        <ArtifactType>Prebuilt</ArtifactType>
       </_PackageArtifact>
     </ItemGroup>
   </Target>

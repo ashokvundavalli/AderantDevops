@@ -57,5 +57,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         [DataMember(EmitDefaultValue = false)]
         internal string Location { get; set; }
+
+        internal void PrepareForSerialization() {
+            Location = null;
+        }
     }
 }

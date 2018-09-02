@@ -32,7 +32,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      RetrieveArtifactsFromBuildCache;
+      RetrievePrebuildArtifacts;
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>
@@ -103,7 +103,7 @@
   </Target>
 
 
-  <Target Name="RetrieveArtifactsFromBuildCache" Condition="'$(SolutionRoot)' != ''">
+  <Target Name="RetrievePrebuildArtifacts" Condition="'$(SolutionRoot)' != ''">
     <Message Text="$(ModuleName): restoring artifacts" />
 
     <PropertyGroup>

@@ -12,7 +12,7 @@ namespace UnitTest.Build.Packaging {
             ArtifactType type = ArtifactType.None;
             ArtifactPackageHelper.ParseMetadata(new TaskItem("", new Hashtable { { "ArtifactType", "Branch|BuildCache" } }), "ArtifactType", ref type);
 
-            Assert.AreEqual(ArtifactType.Branch | ArtifactType.BuildCache, type);
+            Assert.AreEqual(ArtifactType.Branch | ArtifactType.Prebuilt, type);
         }
 
         [TestMethod]

@@ -59,9 +59,9 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       <!--ArchiveStagingDirectory;-->
-      <!--CreatePipeline;
+      CreatePipeline;
       ExecutePipeline;
-      WriteStateFiles;-->
+      WriteStateFiles;
       PackageProduct;
       CopyToDrop;
     </BuildAndPackageDependsOn>
@@ -81,6 +81,7 @@
       <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
       <ExcludePaths Include="Collections" />
       <ExcludePaths Include="GeneralLedger" />
+      <ExcludePaths Include="Customization" />
     </ItemGroup>
 
     <!-- 
