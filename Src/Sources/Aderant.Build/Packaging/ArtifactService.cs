@@ -465,6 +465,7 @@ namespace Aderant.Build.Packaging {
         }
 
         public LinkCommands CreateLinkCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
+            System.Diagnostics.Debugger.Launch();
             var buildId = metadata.BuildId;
 
             // Phase 1 - assumes everything is a prebuilt/cache artifact
