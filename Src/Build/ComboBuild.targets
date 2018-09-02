@@ -328,7 +328,7 @@
     <Message Text="%(ArtifactPaths.Identity) --> %(ArtifactPaths.TargetPath)" />
 
     <ItemGroup>
-      <DirectoriesToCopy Directories="@(ArtifactPaths->DirectoryName()->Distinct())" />
+      <DirectoriesToCopy Include="@(ArtifactPaths->DirectoryName()->Distinct())" />
     </ItemGroup>
 
     <!-- We ignore exit codes less than 4 as these codes indicate success -->
