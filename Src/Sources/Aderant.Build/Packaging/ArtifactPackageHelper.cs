@@ -6,8 +6,6 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Packaging {
     internal static class ArtifactPackageHelper {
         internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string[] relativeFrom) {
-            System.Diagnostics.Debugger.Launch();
-
             List<ArtifactPackageDefinition> artifacts = new List<ArtifactPackageDefinition>();
             var grouping = artifactDefinitions.GroupBy(g => g.GetMetadata("ArtifactId"));
 

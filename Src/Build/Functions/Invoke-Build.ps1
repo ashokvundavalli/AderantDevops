@@ -83,7 +83,9 @@ function FindGitDir($context, $stringSearchDirectory) {
 
     [void]$set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 
-    [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
+    if ($PackageProduct.IsPresent) {
+        [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
+    }
 
     return [string]::Join(" ", $set)
 }

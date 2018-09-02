@@ -13,6 +13,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public string ArtifactStagingDirectory { get; set; }
 
+        [Required]
         public ITaskItem[] AdditionalArtifacts { get; set; }
 
         [Output]
