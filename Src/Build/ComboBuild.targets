@@ -258,7 +258,7 @@
 
       <ProductBinariesPackage Include="@(StateFiles)">
         <ArtifactId>StateFiles</ArtifactId>
-        <ArtifactType>Branch</ArtifactType>
+        <ArtifactType>Prebuilt</ArtifactType>
       </ProductBinariesPackage>
     </ItemGroup>
 
