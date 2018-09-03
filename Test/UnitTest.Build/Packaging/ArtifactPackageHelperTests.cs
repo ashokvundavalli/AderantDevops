@@ -10,7 +10,7 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         public void ParseMetadata_creates_flags_enum() {
             ArtifactType type = ArtifactType.None;
-            ArtifactPackageHelper.ParseMetadata(new TaskItem("", new Hashtable { { "ArtifactType", "Branch|BuildCache" } }), "ArtifactType", ref type);
+            ArtifactPackageHelper.ParseMetadata(new TaskItem("", new Hashtable { { "ArtifactType", "Branch|Prebuilt" } }), "ArtifactType", ref type);
 
             Assert.AreEqual(ArtifactType.Branch | ArtifactType.Prebuilt, type);
         }

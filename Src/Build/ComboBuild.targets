@@ -282,7 +282,7 @@
   <Target Name="CopyFilesToDrop" Outputs="%(ArtifactPaths.TargetPath)">
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log"
+robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>

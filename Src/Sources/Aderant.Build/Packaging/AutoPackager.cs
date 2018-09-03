@@ -18,9 +18,16 @@ namespace Aderant.Build.Packaging {
             foreach (var project in outputs) {
                 if (project.IsTestProject) {
                     foreach (var file in project.FilesWritten) {
-                        string outputRelativePath = file.Replace(project.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
-                        if (!Path.IsPathRooted(outputRelativePath)) {
+                        string outputRelativePath = null;
+                     
+                            var pos = file.IndexOf(project.OutputPath, StringComparison.OrdinalIgnoreCase);
+                            if (pos >= 0) {
+                                outputRelativePath = file.Remove(pos, project.OutputPath.Length);
+                            }
+                        
+
+                        if (outputRelativePath != null && !Path.IsPathRooted(outputRelativePath)) {
                             if (!outputList.Contains(outputRelativePath)) {
                                 outputList.Add(outputRelativePath);
                             }

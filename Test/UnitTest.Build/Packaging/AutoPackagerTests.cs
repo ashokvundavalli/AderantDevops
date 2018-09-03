@@ -13,10 +13,36 @@ namespace UnitTest.Build.Packaging {
             var builder = new AutoPackager(NullLogger.Default);
 
             var filesToPackage = new PathSpec[] {
-                new PathSpec("Foo.dll", @"Foo\Bar.dll"),
+                new PathSpec("Foo.dll", "Foo.dll"),
             };
 
-            var snapshot = new OutputFilesSnapshot { IsTestProject = true, FilesWritten = new[] { "Foo.dll" }, Directory = "" };
+            var snapshot = new OutputFilesSnapshot {
+                IsTestProject = true,
+                Directory = "",
+                OutputPath = "",
+                FilesWritten = new[] { "Foo.dll" },
+            };
+
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot }, "");
+
+            Assert.AreEqual(1, files.Count);
+        }
+
+        [TestMethod]
+        public void Can_add_file_in_sub_directory_to_package() {
+            var builder = new AutoPackager(NullLogger.Default);
+
+            var filesToPackage = new PathSpec[] {
+                new PathSpec(@"Test\Foo.dll", @"Test\Foo.dll"),
+            };
+
+            var snapshot = new OutputFilesSnapshot {
+                IsTestProject = true,
+                Directory = "",
+                OutputPath = "",
+                FilesWritten = new[] { @"Test\Foo.dll" },
+            };
+
             var files = builder.BuildArtifact(filesToPackage, new[] { snapshot }, "");
 
             Assert.AreEqual(1, files.Count);
@@ -25,7 +51,13 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         public void File_content_of_auto_packages_is_unique() {
             var builder = new AutoPackager(NullLogger.Default);
-            var snapshot = new OutputFilesSnapshot { IsTestProject = true, Directory = "", FilesWritten = new[] { "Foo1", "Foo2", "Foo3" } };
+
+            var snapshot = new OutputFilesSnapshot {
+                IsTestProject = true,
+                Directory = "",
+                OutputPath = "",
+                FilesWritten = new[] { "Foo1", "Foo2", "Foo3" },
+            };
 
             var definitions = builder.CreatePackages(
                 new[] { snapshot },
