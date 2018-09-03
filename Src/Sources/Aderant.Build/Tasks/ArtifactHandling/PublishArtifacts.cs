@@ -30,6 +30,8 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         public TaskItem[] ArtifactPaths { get; private set; }
 
         public override bool ExecuteTask() {
+            System.Diagnostics.Debugger.Launch();
+
             var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(AdditionalArtifacts, null);
 
             var service = new ArtifactService(PipelineService, null, Logger);

@@ -40,6 +40,9 @@ namespace IntegrationTest.Build.EndToEnd {
                 { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) },
                 { "PackageArtifacts", bool.TrueString },
                 { "XamlBuildDropLocation", "A" },
+                { "CopyToDropEnabled", bool.TrueString },
+                { "GetProduct", bool.FalseString},
+                { "PackageProduct", bool.FalseString },
                 { WellKnownProperties.ContextFileName, contextFile },
             };
 
@@ -143,8 +146,10 @@ namespace IntegrationTest.Build.EndToEnd {
         private BuildOperationContext CreateContext(Dictionary<string, string> props) {
             var ctx = new BuildOperationContext();
             ctx.DropLocationInfo.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
-            ctx.BuildMetadata = new BuildMetadata();
-            ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
+            ctx.DropLocationInfo.BuildCacheLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_cache");
+
+            ctx.BuildMetadata = new BuildMetadata { BuildSourcesDirectory = DeploymentItemsDirectory };
+
             ctx.SourceTreeMetadata = GetSourceTreeMetadata();
             ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
             ctx.BuildSystemDirectory = Path.Combine(TestContext.DeploymentDirectory, @"..\..\");

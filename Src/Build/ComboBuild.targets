@@ -47,7 +47,7 @@
 
     <CopyToDropEnabled>false</CopyToDropEnabled>
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
-    <RunPackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</RunPackageProduct>
+    <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
@@ -188,7 +188,7 @@
 
   </Target>
 
-  <Target Name="PackageProduct" Condition="'$(RunPackageProduct)' == 'true'">
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'">
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
@@ -211,7 +211,8 @@
       <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
     </CreateItem>
 
-    <Exec ContinueOnError="false"
+    <Exec Condition="'$(GetProduct)' != 'false'"
+      ContinueOnError="false"
       IgnoreExitCode="false"
       Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
       WorkingDirectory="$(LocalExpertBinariesDirectory)" />
@@ -227,7 +228,7 @@
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
-    <Exec Command="$(BuildToolsDirectory)7z.exe a $(ProductArchiveFile) $(LocalExpertBinariesDirectory)*" />
+    <Exec Command='$(BuildToolsDirectory)7z.exe a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
 
     <PropertyGroup>
       <CreateArchiveHashScript>

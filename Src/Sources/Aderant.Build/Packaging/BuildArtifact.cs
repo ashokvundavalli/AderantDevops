@@ -55,7 +55,7 @@ namespace Aderant.Build.Packaging {
         /// </summary>
         public string ComputeVsoPath() {
             if (string.IsNullOrWhiteSpace(StoragePath)) {
-                throw new InvalidOperationException("Storage path not computed for artifact:" + Name);
+                throw new InvalidOperationException("Storage path not set for artifact:" + Name);
             }
 
             var pos = StoragePath.LastIndexOf(Name, StringComparison.OrdinalIgnoreCase);

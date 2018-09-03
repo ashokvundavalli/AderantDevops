@@ -371,7 +371,7 @@ namespace Aderant.Build.Packaging {
 
             logger.Info($"Querying prebuilt artifacts from: {dropLocation} -> ({resolvedLocation})");
 
-            using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed: " + duration))) {
+            using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration} ms"))) {
 
                 var metadata = new BuildStateMetadata();
                 var files = new List<BuildStateFile>();
@@ -415,7 +415,7 @@ namespace Aderant.Build.Packaging {
                             }
                         }
                     } else {
-                        logger.Info("No prebuilt artifacts at : " + bucketPath);
+                        logger.Info("No prebuilt artifacts at: " + bucketPath);
                     }
                 }
 
@@ -512,6 +512,9 @@ namespace Aderant.Build.Packaging {
         }
 
         internal void AssignDropLocation(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
+            ErrorUtilities.IsNotNull(artifactStagingDirectory, nameof(artifactStagingDirectory));
+            ErrorUtilities.IsNotNull(destinationRootPath, nameof(destinationRootPath));
+
             var builder = new ArtifactStagingPathBuilder(artifactStagingDirectory, buildId, null);
 
             foreach (var artifact in artifacts) {

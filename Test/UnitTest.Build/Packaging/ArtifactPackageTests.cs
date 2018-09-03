@@ -15,6 +15,7 @@ namespace UnitTest.Build.Packaging {
 
             BuildArtifact storageInfo = new BuildArtifact {
                 SourcePath = @"\\some\san\storage\1\foo\bin",
+                StoragePath = @"\\some\san\storage\1\foo\bin",
                 Name = @"1\foo\bin"
             };
 
@@ -27,6 +28,7 @@ namespace UnitTest.Build.Packaging {
         public void Vso_path_is_smallest_substring() {
             BuildArtifact a = new BuildArtifact {
                 SourcePath = "\\\\mydrop\\bar\\9.9.9.9\\1.0.0.0\\Bin\\Module",
+                StoragePath = "\\\\mydrop\\bar\\9.9.9.9\\1.0.0.0\\Bin\\Module",
                 Name = "bar\\9.9.9.9\\1.0.0.0"
             };
 
