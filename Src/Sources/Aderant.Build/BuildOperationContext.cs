@@ -194,6 +194,9 @@ namespace Aderant.Build {
             }
         }
 
+        /// <summary>
+        /// The paths to state files produced during a build.
+        /// </summary>
         public ICollection<string> WrittenStateFiles {
             get { return writtenStateFiles ?? (writtenStateFiles = new List<string>()); }
             set { writtenStateFiles = value; }

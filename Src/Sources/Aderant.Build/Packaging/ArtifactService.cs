@@ -500,6 +500,8 @@ namespace Aderant.Build.Packaging {
                     buildArtifact.StoragePath = builder.CreatePath(
                         artifact.Id,
                         metadata);
+                } else if (artifact.ArtifactType == ArtifactType.Prebuilt) {
+                    AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, new[] { buildArtifact }, buildId);
                 }
 
                 artifactsWithStoragePaths.Add(buildArtifact);

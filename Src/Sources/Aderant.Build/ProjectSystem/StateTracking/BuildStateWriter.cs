@@ -15,9 +15,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         internal BuildStateWriter(IFileSystem fileSystem) {
             this.fileSystem = fileSystem;
+            this.WrittenStateFiles = new List<string>();
         }
 
         public static string DefaultFileName { get; private set; } = "buildstate.metadata";
+
+        public ICollection<string> WrittenStateFiles { get; set; }
 
         /// <summary>
         /// Serializes the build state file
@@ -130,6 +133,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, file);
 
+            WrittenStateFiles.Add(stateFile);
             context.WrittenStateFiles.Add(stateFile);
         }
     }

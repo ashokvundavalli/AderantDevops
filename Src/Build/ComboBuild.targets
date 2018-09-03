@@ -120,7 +120,9 @@
 
 
   <Target Name="WriteStateFiles">
-    <WriteBuildStateFile />
+    <WriteBuildStateFile>
+      <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
+    </WriteBuildStateFile>
   </Target>
 
 
@@ -249,15 +251,20 @@
   <Target Name="ComputeFilesForDrop">
 
     <ItemGroup>
-      <ArtifactPackage Include="$(ProductArchiveFile)">
+      <ProductBinariesPackage Include="$(ProductArchiveFile)">
         <ArtifactId>Product</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
-      </ArtifactPackage>
+      </ProductBinariesPackage>
+
+      <ProductBinariesPackage Include="@(StateFiles)">
+        <ArtifactId>StateFiles</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </ProductBinariesPackage>
     </ItemGroup>
 
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
-      AdditionalArtifacts="@(ArtifactPackage)"
+      AdditionalArtifacts="@(ProductBinariesPackage)"
       DestinationRootPath="$(PrimaryDropLocation)">
       <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
@@ -277,7 +284,7 @@
   <Target Name="CopyFilesToDrop" Outputs="%(ArtifactPaths.TargetPath)">
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log"
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>
