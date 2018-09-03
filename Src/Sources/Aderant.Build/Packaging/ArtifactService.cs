@@ -367,6 +367,8 @@ namespace Aderant.Build.Packaging {
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
+            logger.Info("Querying prebuilt artifacts from: " + dropLocation);
+
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed: " + duration))) {
 
                 var metadata = new BuildStateMetadata();
@@ -408,6 +410,8 @@ namespace Aderant.Build.Packaging {
 
                             }
                         }
+                    } else {
+                        logger.Info("No prebuilt artifact at : " + bucketPath);
                     }
                 }
 

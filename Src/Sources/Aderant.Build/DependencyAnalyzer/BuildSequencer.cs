@@ -214,7 +214,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
                     }
                 } else {
-                    logger.Info($"No Artifacts exist for: {stateFileKey} or there are no project outputs.");
+                    logger.Info($"No artifacts exist for: {stateFileKey} or there are no project outputs.");
                 }
 
                 MarkDirty(tag, project, BuildReason.ProjectOutputNotFound);
@@ -261,6 +261,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
+            logger.Info("No state files available: Build will not be able to use prebuilt objects.");
             return null;
         }
 

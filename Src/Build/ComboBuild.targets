@@ -124,63 +124,6 @@
   </Target>
 
 
-  <Target Name="GetAllModuleDependencies"
-          Condition="'$(UseSharedDependencyDirectory)' == 'true'">
-   
-    <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
-    <Message Text="Getting dependencies for build." />
-
-    <Delete Files="$(SolutionRoot)\paket.dependencies" ContinueOnError="true" />
-    <Delete Files="$(SolutionRoot)\paket.lock" ContinueOnError="true" />
-
-    <GetDependencies
-      ProductManifest="$(ProductManifestPath)"
-      ModulesRootPath="$(SolutionRoot)"
-      DependenciesDirectory="$(SharedDependencyDirectory)"
-      DropPath="$(TfvcDropLocation)"
-      ModulesInBuild="@(ModulesInBuild)" />
-    
-    <Message Text="Finished GetDependencies" />
-
-    <ItemGroup>
-      <Files Include="$(SharedDependencyDirectory)**\*" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ModuleDirectories Include="@(ModulesInBuild->'$(SolutionRoot)%(Identity)')"
-                         Exclude="$(SolutionRoot).git" />
-    </ItemGroup>
-
-    <MakeSymlink
-      Link="%(ModuleDirectories.FullPath)\Dependencies"
-      Target="$(SharedDependencyDirectory)"
-      Type="D" 
-      FailIfLinkIsDirectoryWithContent="true" />
-
-    <MakeSymlink
-      Link="%(ModuleDirectories.FullPath)\packages"
-      Target="$(SharedDependencyDirectory)\packages"
-      Type="D"
-      FailIfLinkIsDirectoryWithContent="true" />
-
-    <!-- 
-        TFS: 122744
-        We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
-        aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the
-        production of the message file(s) then the build can fail on some application module builds. By delete the msg file from 
-        dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
-        as the test are generally written to assume no message file is available and so don't expect to find translated strings.
-      -->
-    <ItemGroup>
-      <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
-    </ItemGroup>
-
-    <Delete Files="@(MessageFiles)" />
-
-    <Message Text="End of GetAllModuleDependencies"/>
-  </Target>
-
-
   <PropertyGroup>
     <InitialTargetsDependsOn>ValidateRequiredProperties</InitialTargetsDependsOn>
   </PropertyGroup>

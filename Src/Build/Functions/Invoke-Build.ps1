@@ -11,8 +11,7 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
   <DropLocations>
     <!--\\ap.aderant.com\akl\tempswap\☃-->
     <PrimaryDropLocation>\\dfs.aderant.com\expertsuite\product</PrimaryDropLocation>
-    <BuildCacheLocation>\\dfs.aderant.com\expertsuite\buildcache\v1</BuildCacheLocation>
-    <AlternativeDropLocation></AlternativeDropLocation>    
+    <BuildCacheLocation>\\dfs.aderant.com\expertsuite\buildcache\v1</BuildCacheLocation>    
     <PullRequestDropLocation>\\dfs.aderant.com\expertsuite\pulls</PullRequestDropLocation>
     <XamlBuildDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</XamlBuildDropLocation>
   </DropLocations>
