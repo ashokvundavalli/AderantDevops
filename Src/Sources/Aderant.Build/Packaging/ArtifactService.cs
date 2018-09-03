@@ -389,6 +389,14 @@ namespace Aderant.Build.Packaging {
                             var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
 
                             if (fileSystem.FileExists(stateFile)) {
+                                if (!fileSystem.GetDirectories(folder, false).Any()) {
+                                    // If there are no directories then the state file could be
+                                    // a garbage collected build in which case we should ignore it.
+                                    continue;
+                                }
+
+                                logger.Info("Examining state file: " + stateFile);
+
                                 BuildStateFile file;
                                 using (Stream stream = fileSystem.OpenFile(stateFile)) {
                                     file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
@@ -399,13 +407,7 @@ namespace Aderant.Build.Packaging {
                                 if (CheckForRootedPaths(file)) {
                                     continue;
                                 }
-
-                                if (!fileSystem.GetDirectories(folder, false).Any()) {
-                                    // If there are no directories then the state file possibly represents
-                                    // a garbage collected build in which case we should ignore it.
-                                    continue;
-                                }
-
+                                
                                 if (IsFileTrustworthy(file)) {
                                     files.Add(file);
                                 }
