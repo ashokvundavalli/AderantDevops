@@ -270,7 +270,7 @@
       <DirectoriesToCopy Include="@(ArtifactPaths->DirectoryName()->Distinct())" />
     </ItemGroup>
 
-    <Message Text="Copy command: %(DirectoriesToCopy.FullPath) -> %(DirectoriesToCopy.TargetPath)" />
+    <Message Text="Copy command: %(DirectoriesToCopy.FullPath) -> %(TargetPath)" />
 
   </Target>
 
@@ -282,7 +282,7 @@
   <Target Name="CopyFilesToDrop" Inputs="@(DirectoriesToCopy)" Outputs="%(FullPath).dummy">
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(DirectoriesToCopy.FullPath)" "%(DirectoriesToCopy.TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:$(ArtifactStagingDirectory)CopyToDrop.log
+robocopy.exe "%(DirectoriesToCopy.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:$(ArtifactStagingDirectory)CopyToDrop.log
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>
