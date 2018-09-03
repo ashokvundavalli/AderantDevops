@@ -228,6 +228,7 @@ namespace Aderant.Build.Packaging {
             var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
 
             if (fileSystem.FileExists(pathSpec.Location)) {
+                logger.Debug($"Copying {pathSpec.Location} -> {destination}");
                 fileSystem.CopyFile(pathSpec.Location, destination, allowOverwrite);
             }
         }
