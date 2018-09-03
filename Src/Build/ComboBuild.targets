@@ -25,14 +25,11 @@
     <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
     <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">false</RunIntegrationTests>
     <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
+
+    <!-- TOOD: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
 
-    <!-- Local for factory generation -->
-    <!--
-    <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
-    <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath( '$(LocalExpertBinariesDirectory)' ))</LocalExpertBinariesDirectory>
--->
     <!-- Location to drop artifacts (packaged outputputs) -->
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
     
@@ -48,7 +45,7 @@
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
 
-    <CopyToDropEnabled>true</CopyToDropEnabled>
+    <CopyToDropEnabled>false</CopyToDropEnabled>
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
     <RunPackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</RunPackageProduct>
   </PropertyGroup>

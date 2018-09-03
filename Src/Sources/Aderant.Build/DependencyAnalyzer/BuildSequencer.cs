@@ -191,15 +191,15 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 ICollection<ArtifactManifest> artifacts = null;
                 if (stateFile.Artifacts != null) {
-
                     if (stateFile.Artifacts.TryGetValue(stateFileKey, out artifacts)) {
                         if (artifacts != null) {
                             artifactsExist = true;
+                            logger.Info("Artifacts exist for: " + stateFileKey);
                         }
                     }
                 }
 
-                if (stateFile.Outputs != null && artifactsExist)
+                if (artifactsExist && stateFile.Outputs != null) {
                     foreach (var projectInTree in stateFile.Outputs) {
                         // The selected build cache contained this project, next check the inputs/outputs
                         if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -213,6 +213,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                             return;
                         }
                     }
+                } else {
+                    logger.Info($"No Artifacts exist for: {stateFileKey} or there are no project outputs.");
+                }
 
                 MarkDirty(tag, project, BuildReason.ProjectOutputNotFound);
                 return;
@@ -242,6 +245,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (checkedArtifacts != null && checkedArtifacts.Count > 0) {
                 logger.Info($"Looked for {outputFile} but it was not found in packages:");
+
                 foreach (var checkedArtifact in checkedArtifacts) {
                     logger.Info(string.Format("    {0} ({1})", checkedArtifact.Id, checkedArtifact.InstanceId));
                 }
