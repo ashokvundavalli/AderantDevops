@@ -119,14 +119,15 @@ namespace IntegrationTest.Build.EndToEnd {
         }
 
         private void PrepareForAnotherRun() {
-            context = proxy.GetContext();
             context = CreateContext(properties);
             context.BuildMetadata.BuildId += 1;
 
             var buildStateMetadata = new ArtifactService(NullLogger.Default)
                 .GetBuildStateMetadata(
                     context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
-                    context.DropLocationInfo.PrimaryDropLocation);
+                    context.DropLocationInfo.BuildCacheLocation);
+
+            Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);
 
             context.BuildStateMetadata = buildStateMetadata;
             service.Publish(context);

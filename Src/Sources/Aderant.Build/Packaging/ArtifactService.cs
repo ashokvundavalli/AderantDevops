@@ -65,7 +65,10 @@ namespace Aderant.Build.Packaging {
             ProcessDefinitionFiles(true, context, publisherName, packages, copyList, buildArtifacts);
 
             var builder = new AutoPackager(logger);
+
+            snapshots.ForEach(context.RecordProjectOutputs);
             var snapshot = context.GetProjectOutputs(publisherName);
+
             IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, publisherName, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
             ProcessDefinitionFiles(false, context, publisherName, definitions, copyList, buildArtifacts);
@@ -144,11 +147,15 @@ namespace Aderant.Build.Packaging {
         private List<OutputFilesSnapshot> Merge(BuildOperationContext context, string publisherName) {
             var snapshots = context.GetProjectOutputs(publisherName);
 
+            List<OutputFilesSnapshot> snapshotList;
             if (snapshots == null) {
-                throw new InvalidOperationException("There are no project outputs for: " + publisherName);
+                // in 100% reuse scenarios there maybe no outputs
+                snapshotList = new List<OutputFilesSnapshot>();
+            } else {
+                snapshotList = snapshots.ToList();
             }
-
-            return MergeExistingOutputs(context, publisherName, snapshots.ToList());
+           
+            return MergeExistingOutputs(context, publisherName, snapshotList);
         }
 
         private static string GetProjectKey(string publisherName) {
@@ -390,7 +397,7 @@ namespace Aderant.Build.Packaging {
                         string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
 
                         foreach (var folder in folders) {
-                            var stateFile = Path.Combine(folder, BuildStateWriter.DefaultFileName);
+                            var stateFile = Path.Combine(folder, "StateFile", BuildStateWriter.DefaultFileName);
 
                             if (fileSystem.FileExists(stateFile)) {
                                 if (!fileSystem.GetDirectories(folder, false).Any()) {
@@ -428,10 +435,6 @@ namespace Aderant.Build.Packaging {
         }
 
         private static bool IsFileTrustworthy(BuildStateFile file) {
-            if (string.Equals(file.BuildId, "0")) {
-                return false;
-            }
-
             // Reject files that provide no value
             if (file.Outputs == null || file.Outputs.Count == 0) {
                 return false;

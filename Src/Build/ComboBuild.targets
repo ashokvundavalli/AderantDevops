@@ -277,6 +277,8 @@
 
 
   <Target Name="CopyFilesToDrop" Outputs="%(ArtifactPaths.TargetPath)">
+    <Error Condition="!Exists('%(ArtifactPaths.FullPath)')" Text="The path %(ArtifactPaths.FullPath) does not exist. This indicates a failure in artifact tracking." />
+
     <PropertyGroup>
       <CopyToDropCommand>
 robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
