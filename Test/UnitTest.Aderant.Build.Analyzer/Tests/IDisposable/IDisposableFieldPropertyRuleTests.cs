@@ -14,6 +14,53 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
         #region Tests: Field
 
         [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_ThisKeywordDispose_NoConditional_Diagnostic() {
+            const string code = @"
+namespace Test {
+    public class Test : System.IDisposable {
+        private readonly System.IDisposable item;
+
+        public void Dispose() {
+            this.item.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_ThisKeywordDispose_Conditional_NoDiagnostic() {
+            const string code = @"
+namespace Test {
+    public class Test : System.IDisposable {
+        private readonly System.IDisposable item;
+
+        public void Dispose() {
+            this.item?.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Field_Static_NoDiagnostic() {
+            const string code = @"
+namespace Test {
+    public class Test {
+        private static readonly System.IDisposable item;
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
         public void IDisposableFieldPropertyRule_Field_Queue_Diagnostic() {
             const string code = @"
 using System;
@@ -1037,6 +1084,53 @@ namespace Test {
         #endregion Tests: Field
 
         #region Tests: Property
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_ThisKeywordDispose_NoConditional_Diagnostic() {
+            const string code = @"
+namespace Test {
+    public class Test : System.IDisposable {
+        private System.IDisposable Item { get; set; }
+
+        public void Dispose() {
+            this.Item.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_ThisKeywordDispose_Conditional_NoDiagnostic() {
+            const string code = @"
+namespace Test {
+    public class Test : System.IDisposable {
+        private System.IDisposable Item { get; set; }
+
+        public void Dispose() {
+            this.Item?.Dispose();
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_Static_NoDiagnostic() {
+            const string code = @"
+namespace Test {
+    public class Test {
+        private static System.IDisposable item { get; set; }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
 
         [TestMethod]
         public void IDisposableFieldPropertyRule_Property_NotDisposed() {

@@ -11,6 +11,53 @@ namespace UnitTest.Aderant.Build.Analyzer.Tests.IDisposable {
 
         #endregion Properties
 
+        #region Tests: Constructors
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_ThisConstructor() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+
+namespace Test {
+    public class Test : IDisposable {
+        private readonly IDisposable item;
+
+        public Test()
+            : this(Factory.CreateDisposable()) {
+            // Empty.
+        }
+
+        internal Test(IDisposable item) {
+            this.item = item;
+        }
+
+        public void Dispose() {
+            item?.Dispose();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable CreateDisposable() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Tests: Constructors
+
         #region Tests: Factory
 
         [TestMethod]
@@ -642,6 +689,233 @@ namespace System.Activites {
         }
 
         #endregion Tests: Workflow Dependency
+
+        #region Tests: IDisposable Collection
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_Collection_Invocation_Add() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class Test {
+        private void Method() {
+            var items = new List<IDisposable>();
+            items.Add(Factory.CreateDisposable());
+            items.DisposeItems();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable CreateDisposable() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_Collection_Invocation_AddRange() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class Test {
+        private void Method() {
+            var items = new List<IDisposable>();
+            items.AddRange(Factory.CreateDisposables());
+            items.DisposeItems();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable[] CreateDisposables() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_Collection_Indirect_Add() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class Test {
+        private void Method() {
+            var items = new List<IDisposable>();
+
+            var disposable = Factory.CreateDisposable();
+
+            items.Add(disposable);
+            items.DisposeItems();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable CreateDisposable() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_Factory_Collection_Indirect_AddRange() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class Test {
+        private void Method() {
+            var items = new List<IDisposable>();
+
+            var disposables = Factory.CreateDisposables();
+
+            items.AddRange(disposables);
+            items.DisposeItems();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable[] CreateDisposables() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_Factory_Collection_InitializerSyntax() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class Test {
+        private void Method() {
+            var disposables = Factory.CreateDisposables();
+
+            var items = new List<IDisposable> {
+                disposables[0],
+                disposables[1]
+            };
+
+            items.DisposeItems();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable[] CreateDisposables() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableMethodInvocationRule_Factory_Collection_ParameterSyntax() {
+            const string code = @"
+using System;
+using System.Collections.Generic;
+using Aderant.Framework.Extensions;
+
+namespace Test {
+    public class Test {
+        private void Method() {
+            var disposables = Factory.CreateDisposables();
+
+            var items = new List<IDisposable>(disposables);
+
+            items.DisposeItems();
+        }
+    }
+
+    public static class Factory {
+        public static IDisposable[] CreateDisposables() {
+            return null;
+        }
+    }
+}
+
+namespace Aderant.Framework.Extensions {
+    public static class IDisposableExtensions {
+        public static void DisposeItems(this IEnumerable<IDisposable> items) {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        #endregion Tests: IDisposable Collection
 
         #region Tests: Base Class
 

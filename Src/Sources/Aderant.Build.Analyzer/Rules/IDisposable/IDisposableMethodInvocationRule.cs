@@ -284,36 +284,70 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         private static bool ProcessAncestorNodes(
             IReadOnlyCollection<SyntaxNode> ancestors,
             SemanticModel semanticModel) {
-            // Iterate through the node's ancestors.
-            foreach (var ancestorNode in ancestors) {
-                // If the ancestor is a method invocation expression,
-                // wrapping a valid member access expression...
-                var expression = (ancestorNode as InvocationExpressionSyntax)?.Expression as MemberAccessExpressionSyntax;
-
-                if (expression == null) {
-                    continue;
-                }
-
-                // ...and the method invoked is whitelisted...
-                if (GetIsWhitelisted(expression, semanticModel)) {
-                    // ...return without error.
-                    return true;
-                }
+            // Iterate through the node's ancestors,
+            // and determine if any of the ancestors are whitelisted methods.
+            if (ancestors
+                .Select(ancestorNode => (ancestorNode as InvocationExpressionSyntax)?.Expression)
+                .OfType<MemberAccessExpressionSyntax>()
+                .Any(expression => GetIsWhitelisted(expression, semanticModel))) {
+                return true;
             }
 
             // Iterate through the node's ancestors.
             foreach (var ancestorNode in ancestors) {
-                // If the node is a method argument...
-                if (ancestorNode is ArgumentSyntax) {
-                    // ...break early and error.
-                    break;
-                }
-
-                // If the node is a return statement, or assignment expression...
+                // If the node is a return statement,
+                // or assignment expression,
+                // or a 'this' constructor invocation.
                 if (ancestorNode is ReturnStatementSyntax ||
                     ancestorNode is EqualsValueClauseSyntax ||
-                    ancestorNode is AssignmentExpressionSyntax) {
+                    ancestorNode is AssignmentExpressionSyntax ||
+                    ancestorNode is ConstructorInitializerSyntax &&
+                    ancestorNode.Kind() == SyntaxKind.ThisConstructorInitializer) {
                     // ...return without error, as this is handled by the local and field rules.
+                    return true;
+                }
+
+                // Evaluate the ancestor as an argument list.
+                var argumentList = ancestorNode as ArgumentListSyntax;
+
+                // Get the expression for the parent method invocation,
+                // then get the 'inner' member access expression of the method invocation.
+                var memberAccessExpression =
+                    (argumentList?.Parent as InvocationExpressionSyntax)?.Expression as MemberAccessExpressionSyntax;
+
+                // If the resulting member access expression is null,
+                // the use case is unhandled.
+                if (memberAccessExpression == null) {
+                    continue;
+                }
+
+                // Get the name of the method being invoked.
+                var methodName = memberAccessExpression.Name?.Identifier.Text;
+
+                // If the name is 'Add' or 'AddRange',
+                // the current object is probably being added to a collection.
+                if (!string.Equals("Add", methodName, StringComparison.Ordinal) &&
+                    !string.Equals("AddRange", methodName, StringComparison.Ordinal)) {
+                    continue;
+                }
+
+                // Get the identifier of the object being 'added' to.
+                // Example: items.Add(foo.GetBar());
+                // Result: items
+                var identifier = memberAccessExpression.Expression as IdentifierNameSyntax;
+
+                // Invoke the semantic model to get the underlying type of the identifier object,
+                // then retrieve all of the interfaces implemented by that type.
+                var interfaces = semanticModel.GetTypeInfo(identifier).Type?.AllInterfaces;
+
+                // If the type implements 'IEnumerable' then it is a collection and the
+                // invocation's returned object is assigned into a collection and is valid.
+                if (interfaces.HasValue &&
+                    interfaces.Value.Any(
+                        symbol => string.Equals(
+                            "System.Collections.IEnumerable",
+                            symbol.ToDisplayString(),
+                            StringComparison.Ordinal))) {
                     return true;
                 }
             }
