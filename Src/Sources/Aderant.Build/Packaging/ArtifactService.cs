@@ -367,7 +367,9 @@ namespace Aderant.Build.Packaging {
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
-            logger.Info("Querying prebuilt artifacts from: " + dropLocation);
+            string resolvedLocation = Dfs.ResolveDfsPath(dropLocation);
+
+            logger.Info($"Querying prebuilt artifacts from: {dropLocation} -> ({resolvedLocation})");
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed: " + duration))) {
 
@@ -411,7 +413,7 @@ namespace Aderant.Build.Packaging {
                             }
                         }
                     } else {
-                        logger.Info("No prebuilt artifact at : " + bucketPath);
+                        logger.Info("No prebuilt artifacts at : " + bucketPath);
                     }
                 }
 
@@ -607,3 +609,4 @@ namespace Aderant.Build.Packaging {
     }
 
 }
+

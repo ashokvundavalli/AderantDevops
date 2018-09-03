@@ -116,6 +116,7 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildTreeMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
+    <Compile Include="Dfs.cs" />
     <Compile Include="PerformanceTimer.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceImpl.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceProxy.cs" />
