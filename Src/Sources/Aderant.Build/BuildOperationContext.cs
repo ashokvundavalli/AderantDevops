@@ -212,19 +212,6 @@ namespace Aderant.Build {
             }
         }
 
-        /// <summary>
-        /// Creates a new instance of T.
-        /// </summary>
-        public T GetService<T>() where T : class {
-            var svc = ServiceProvider.GetService(typeof(T));
-            return (T)svc;
-        }
-
-        public object GetService(string contract) {
-            var svc = ServiceProvider.GetService<object>(this, contract, null);
-            return svc;
-        }
-
         internal DependencyRelationshipProcessing GetRelationshipProcessingMode() {
             DependencyRelationshipProcessing relationshipProcessing = DependencyRelationshipProcessing.None;
             if (Switches.Downstream) {

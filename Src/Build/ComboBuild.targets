@@ -265,11 +265,6 @@
 
     <!--Tell TFS about the new artifacts so it can manage them -->
     <Message Text="%(LinkCommands.Identity)" />
-
-    <!--<ItemGroup>
-      <DirectoriesToCopy Include="@(ArtifactPaths->DirectoryName()->Distinct())" />
-    </ItemGroup>-->
-
     <Message Text="Copy command: %(ArtifactPaths.FullPath) -> %(TargetPath)" />
 
   </Target>

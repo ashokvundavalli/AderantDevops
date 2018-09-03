@@ -508,7 +508,7 @@ namespace Aderant.Build.Packaging {
             var commandBuilder = new VsoBuildCommandBuilder();
 
             var instructions = new PublishCommands {
-                ArtifactPaths = artifactsWithStoragePaths.Select(s => new PathSpec(s.SourcePath, s.StoragePath)),
+                ArtifactPaths = artifactsWithStoragePaths.Select(s => PathSpec.Create(s.SourcePath, s.StoragePath)),
                 AssociationCommands = artifactsWithStoragePaths.Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
             };
 
