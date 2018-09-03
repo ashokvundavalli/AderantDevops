@@ -28,8 +28,6 @@ namespace Aderant.Build {
         }
 
         public static string ResolveDfsPath(string share) {
-            System.Diagnostics.Debugger.Launch();
-
             string path = null;
 
             if (!string.IsNullOrWhiteSpace(share)) {
