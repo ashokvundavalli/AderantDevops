@@ -77,7 +77,7 @@ namespace UnitTest.Build.Packaging {
 
             var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
 
-            var linkCommands = artifactService.CreateLinkCommands(
+            var linkCommands = artifactService.GetPublishCommands(
                 @"C:\Foo",
                 new DropLocationInfo {
                     PrimaryDropLocation = @"\\foo\bar",
@@ -110,7 +110,7 @@ namespace UnitTest.Build.Packaging {
 
             var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
 
-            var linkCommands = artifactService.CreateLinkCommands(
+            var linkCommands = artifactService.GetPublishCommands(
                 @"C:\Foo",
                 new DropLocationInfo {
                     PrimaryDropLocation = @"\\foo\bar",

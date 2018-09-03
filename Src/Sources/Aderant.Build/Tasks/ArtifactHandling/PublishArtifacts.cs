@@ -30,10 +30,10 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         public TaskItem[] ArtifactPaths { get; private set; }
 
         public override bool ExecuteTask() {
-            var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(AdditionalArtifacts, null);
+            var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(AdditionalArtifacts, null, true);
 
             var service = new ArtifactService(PipelineService, null, Logger);
-            var commands = service.CreateLinkCommands(ArtifactStagingDirectory, Context.DropLocationInfo, Context.BuildMetadata, additionalArtifacts);
+            var commands = service.GetPublishCommands(ArtifactStagingDirectory, Context.DropLocationInfo, Context.BuildMetadata, additionalArtifacts);
 
             LinkCommands = commands.AssociationCommands.ToArray();
             ArtifactPaths = commands.ArtifactPaths.Select(s => new TaskItem(s.Location, new Hashtable { { "TargetPath", s.Destination } })).ToArray();

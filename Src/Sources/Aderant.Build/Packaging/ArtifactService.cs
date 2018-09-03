@@ -142,18 +142,20 @@ namespace Aderant.Build.Packaging {
         }
 
         private List<OutputFilesSnapshot> Merge(BuildOperationContext context, string publisherName) {
-            var snapshots = context.GetProjectOutputs(publisherName).ToList();
+            var snapshots = context.GetProjectOutputs(publisherName);
 
-            MergeExistingOutputs(context, publisherName, snapshots);
+            if (snapshots == null) {
+                throw new InvalidOperationException("There are no project outputs for: " + publisherName);
+            }
 
-            return snapshots;
+            return MergeExistingOutputs(context, publisherName, snapshots.ToList());
         }
 
         private static string GetProjectKey(string publisherName) {
             return publisherName + "\\";
         }
 
-        private static void MergeExistingOutputs(BuildOperationContext context, string publisherName, List<OutputFilesSnapshot> snapshots) {
+        private static List<OutputFilesSnapshot> MergeExistingOutputs(BuildOperationContext context, string publisherName, List<OutputFilesSnapshot> snapshots) {
             // Takes the existing (cached build) state and applies to the current state
             var previousBuild = context.GetStateFile(publisherName);
 
@@ -161,6 +163,8 @@ namespace Aderant.Build.Packaging {
                 var merger = new OutputMerger();
                 merger.Merge(publisherName, previousBuild, snapshots);
             }
+
+            return snapshots;
         }
 
         internal void CheckForDuplicates(string artifactId, IReadOnlyCollection<PathSpec> files) {
@@ -407,7 +411,7 @@ namespace Aderant.Build.Packaging {
                                 if (CheckForRootedPaths(file)) {
                                     continue;
                                 }
-                                
+
                                 if (IsFileTrustworthy(file)) {
                                     files.Add(file);
                                 }
@@ -472,7 +476,7 @@ namespace Aderant.Build.Packaging {
             this.handlers.Add(handler);
         }
 
-        public LinkCommands CreateLinkCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
+        public PublishCommands GetPublishCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
             var buildId = metadata.BuildId;
 
             // Phase 1 - assumes everything is a prebuilt/cache artifact
@@ -503,7 +507,7 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoBuildCommandBuilder();
 
-            var instructions = new LinkCommands {
+            var instructions = new PublishCommands {
                 ArtifactPaths = artifactsWithStoragePaths.Select(s => new PathSpec(s.SourcePath, s.StoragePath)),
                 AssociationCommands = artifactsWithStoragePaths.Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
             };
@@ -529,47 +533,6 @@ namespace Aderant.Build.Packaging {
         }
     }
 
-    internal class LinkCommands {
-        public IEnumerable<PathSpec> ArtifactPaths { get; set; }
-        public IEnumerable<string> AssociationCommands { get; set; }
-    }
-
-    internal class ArtifactDropPathBuilder {
-
-        public string PrimaryDropLocation { get; set; }
-        public string PullRequestDropLocation { get; set; }
-        public string StagingDirectory { get; internal set; }
-
-        public string CreatePath(string artifactId, BuildMetadata buildMetadata) {
-            if (buildMetadata.BuildId == 0) {
-                return Path.Combine(StagingDirectory, artifactId);
-            }
-
-            string[] parts;
-
-            if (buildMetadata.IsPullRequest) {
-                parts = new[] {
-                    PullRequestDropLocation,
-                    buildMetadata.PullRequest.Id,
-                    artifactId
-                };
-            } else {
-                if (string.IsNullOrWhiteSpace(buildMetadata.ScmBranch)) {
-                    throw new InvalidOperationException("When constructing a drop path ScmBranch cannot be null or empty");
-                }
-
-                parts = new[] {
-                    PrimaryDropLocation,
-                    buildMetadata.ScmBranch.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar /*UNIX/git paths fix up to make them Windows paths*/),
-                    buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture),
-                    artifactId
-                };
-            }
-
-            return Path.Combine(parts);
-        }
-    }
-
     internal class OutputMerger {
         public void Merge(string publisherName, BuildStateFile previousBuild, List<OutputFilesSnapshot> snapshots) {
             var previousSnapshot = new ProjectTreeOutputSnapshot(previousBuild.Outputs);
@@ -592,10 +555,6 @@ namespace Aderant.Build.Packaging {
         }
     }
 
-    internal interface IArtifactHandler {
-        BuildArtifact ProcessFiles(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files);
-    }
-
     internal enum ArtifactState {
         Unknown,
         Valid,
@@ -614,4 +573,3 @@ namespace Aderant.Build.Packaging {
     }
 
 }
-

@@ -5,7 +5,10 @@ using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Packaging {
     internal static class ArtifactPackageHelper {
-        internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string[] relativeFrom) {
+        /// <summary>
+        /// Creates a definition from a bag of task items.
+        /// </summary>
+        internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string[] relativeFrom, bool includeDirectoryPathsOnly) {
             List<ArtifactPackageDefinition> artifacts = new List<ArtifactPackageDefinition>();
             var grouping = artifactDefinitions.GroupBy(g => g.GetMetadata("ArtifactId"), StringComparer.OrdinalIgnoreCase);
 
@@ -21,11 +24,20 @@ namespace Aderant.Build.Packaging {
                     ParseMetadata(file, "IsInternalDevelopmentPackage", ref isInternalDevelopmentPackage);
                     ParseMetadata(file, "ArtifactType", ref artifactType);
 
-                    var pathSpec = ArtifactPackageDefinition.CreatePathSpecification(
-                        relativeFrom,
-                        file.GetMetadata("FullPath"),
-                        file.GetMetadata("TargetPath") // The destination location (assumed to be relative to "RelativeFrom")
-                    );
+                    PathSpec pathSpec;
+                    if (!includeDirectoryPathsOnly) {
+                        pathSpec = ArtifactPackageDefinition.CreatePathSpecification(
+                            relativeFrom,
+                            file.GetMetadata("FullPath"),
+                            file.GetMetadata("TargetPath") // The destination location (assumed to be relative to "RelativeFrom")
+                        );
+                    } else {
+                        pathSpec = ArtifactPackageDefinition.CreatePathSpecification(
+                            relativeFrom,
+                            file.GetMetadata("RootDir") + file.GetMetadata("Directory"),
+                            file.GetMetadata("TargetPath")
+                        );
+                    }
 
                     if (!pathSpecs.Contains(pathSpec)) {
                         pathSpecs.Add(pathSpec);

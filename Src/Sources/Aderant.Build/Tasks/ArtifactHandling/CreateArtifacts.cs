@@ -19,7 +19,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         public override bool ExecuteTask() {
             if (ArtifactDefinitions != null) {
-                var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, RelativeFrom);
+                var artifacts = ArtifactPackageHelper.MaterializeArtifactPackages(ArtifactDefinitions, RelativeFrom, false);
 
                 var artifactService = new ArtifactService(PipelineService, new PhysicalFileSystem(), Logger);
                 artifactService.RegisterHandler(new PullRequestHandler());
