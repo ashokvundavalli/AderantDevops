@@ -96,8 +96,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static List<BuildStateFile> GetBuildStateFile(BuildOperationContext context) {
-            List<BuildStateFile> stateFiles = new List<BuildStateFile>();
+        private List<BuildStateFile> GetBuildStateFile(BuildOperationContext context) {
+            List<BuildStateFile> files = new List<BuildStateFile>();
 
             // Here we select an appropriate tree to reuse
             // TODO: This needs way more validation
@@ -117,13 +117,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         if (stateFile != null) {
-                            stateFiles.Add(stateFile);
+                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}.");
+                            files.Add(stateFile);
                         }
                     }
                 }
             }
 
-            return stateFiles;
+            logger.Info($"Found {files.Count} state files.");
+            return files;
         }
 
         private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
@@ -261,7 +263,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            logger.Info("No state files available: Build will not be able to use prebuilt objects.");
+            logger.Info($"No state files available for {stateFileKey}. Build will not be able to use prebuilt objects.");
             return null;
         }
 
