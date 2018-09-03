@@ -46,7 +46,7 @@ namespace Aderant.Build {
 
             IntPtr b = IntPtr.Zero;
             try {
-                int result = NetDfsGetInfo(share, null, null, NetDfsInfoLevel.DfsInfo3, out b);
+                int result = NetDfsGetInfo(path, null, null, NetDfsInfoLevel.DfsInfo3, out b);
 
                 if (result != 0) {
                     // return passed string if not DFS
