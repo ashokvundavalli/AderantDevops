@@ -2,19 +2,23 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
     internal class BuildStateWriter {
         private readonly IFileSystem fileSystem;
+        private readonly ILogger logger;
 
-        public BuildStateWriter()
-            : this(new PhysicalFileSystem()) {
+        public BuildStateWriter(ILogger logger)
+            : this(new PhysicalFileSystem(), logger) {
+
         }
 
-        internal BuildStateWriter(IFileSystem fileSystem) {
+        internal BuildStateWriter(IFileSystem fileSystem, ILogger logger) {
             this.fileSystem = fileSystem;
+            this.logger = logger;
             this.WrittenStateFiles = new List<string>();
         }
 
@@ -85,6 +89,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFile.PrepareForSerialization();
 
+            logger.Info("Writing state file to: " + destinationPath);
             fileSystem.AddFile(destinationPath, stream => stateFile.Serialize(stream));
 
             return destinationPath;

@@ -12,7 +12,7 @@ namespace Aderant.Build.Tasks {
         public string[] WrittenStateFiles { get; private set; }
 
         public override bool ExecuteTask() {
-            var writer = new BuildStateWriter();
+            var writer = new BuildStateWriter(Logger);
             writer.WriteStateFiles(Context);
             PipelineService.Publish(Context);
 

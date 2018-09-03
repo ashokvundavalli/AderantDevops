@@ -123,6 +123,8 @@
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
+
+    <Message Text="State files: %(StateFiles.FullPath)" />
   </Target>
 
 
@@ -251,20 +253,20 @@
   <Target Name="ComputeFilesForDrop">
 
     <ItemGroup>
-      <ProductBinariesPackage Include="$(ProductArchiveFile)">
+      <AdditionalArtifacts Include="$(ProductArchiveFile)">
         <ArtifactId>Product</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
-      </ProductBinariesPackage>
+      </AdditionalArtifacts>
 
-      <ProductBinariesPackage Include="@(StateFiles)">
-        <ArtifactId>StateFiles</ArtifactId>
+      <AdditionalArtifacts Include="@(StateFiles)">
+        <ArtifactId>StateFile</ArtifactId>
         <ArtifactType>Prebuilt</ArtifactType>
-      </ProductBinariesPackage>
+      </AdditionalArtifacts>
     </ItemGroup>
 
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
-      AdditionalArtifacts="@(ProductBinariesPackage)"
+      AdditionalArtifacts="@(AdditionalArtifacts)"
       DestinationRootPath="$(PrimaryDropLocation)">
       <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
