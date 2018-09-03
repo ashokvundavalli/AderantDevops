@@ -465,7 +465,6 @@ namespace Aderant.Build.Packaging {
         }
 
         public LinkCommands CreateLinkCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
-            System.Diagnostics.Debugger.Launch();
             var buildId = metadata.BuildId;
 
             // Phase 1 - assumes everything is a prebuilt/cache artifact
@@ -478,6 +477,7 @@ namespace Aderant.Build.Packaging {
             // Phase 2 - non-cache artifacts
             var builder = new ArtifactDropPathBuilder {
                 PrimaryDropLocation = dropLocationInfo.PrimaryDropLocation,
+                StagingDirectory = artifactStagingDirectory,
                 PullRequestDropLocation = dropLocationInfo.PullRequestDropLocation
             };
 
@@ -527,9 +527,13 @@ namespace Aderant.Build.Packaging {
 
         public string PrimaryDropLocation { get; set; }
         public string PullRequestDropLocation { get; set; }
+        public string StagingDirectory { get; internal set; }
 
-      
         public string CreatePath(string artifactId, BuildMetadata buildMetadata) {
+            if (buildMetadata.BuildId == 0) {
+                return Path.Combine(StagingDirectory, artifactId);
+            }
+
             string[] parts;
 
             if (buildMetadata.IsPullRequest) {

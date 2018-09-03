@@ -273,7 +273,7 @@
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
+      Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
       WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire--> 
@@ -305,7 +305,7 @@
   </Target>
 
 
-  <Target Name="CopyToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
+  <Target Name="ComputeFilesForDrop">
 
     <ItemGroup>
       <ArtifactPackage Include="$(ProductArchiveFile)">
@@ -331,17 +331,25 @@
 
     <Message Text="Copy command: %(DirectoriesToCopy.FullPath) -> %(DirectoriesToCopy.TargetPath)" />
 
+  </Target>
+
+
+  <Target Name="CopyToDrop" DependsOnTargets="ComputeFilesForDrop;CopyFilesToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
+  </Target>
+
+
+  <Target Name="CopyFilesToDrop" Inputs="@(DirectoriesToCopy)" Outputs="%(FullPath).dummy">
     <PropertyGroup>
       <CopyToDropCommand>
-<![CDATA[
-robocopy.exe "%(DirectoriesToCopy.FullPath)" "%(DirectoriesToCopy.TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
+robocopy.exe "%(DirectoriesToCopy.FullPath)" "%(DirectoriesToCopy.TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:$(ArtifactStagingDirectory)CopyToDrop.log
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
-]]>
       </CopyToDropCommand>
     </PropertyGroup>
 
     <Exec Command="$(CopyToDropCommand)"
           WorkingDirectory="$(ArtifactStagingDirectory)" />
+
+    <PowerShellScript ScriptBlock="Get-Content -LiteralPath $(ArtifactStagingDirectory)CopyToDrop.log | Write-Output " />
 
   </Target>
 
