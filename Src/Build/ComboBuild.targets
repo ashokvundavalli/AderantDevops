@@ -123,8 +123,6 @@
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
-
-    <Message Text="State files: %(StateFiles.FullPath)" />
   </Target>
 
 
@@ -257,11 +255,6 @@
         <ArtifactId>Product</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
-
-      <AdditionalArtifacts Include="@(StateFiles)">
-        <ArtifactId>StateFile</ArtifactId>
-        <ArtifactType>Prebuilt</ArtifactType>
-      </AdditionalArtifacts>
     </ItemGroup>
 
     <PublishArtifacts
@@ -286,7 +279,7 @@
   <Target Name="CopyFilesToDrop" Outputs="%(ArtifactPaths.TargetPath)">
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log"
+robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>

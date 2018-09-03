@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using Aderant.Build;
+using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -62,7 +63,7 @@ namespace UnitTest.Build.Tasks {
                     }
                 });
 
-            var writer = new BuildStateWriter(fs.Object);
+            var writer = new BuildStateWriter(fs.Object, NullLogger.Default);
 
             writer.WriteStateFile(
                 null,

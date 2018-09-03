@@ -196,7 +196,7 @@ namespace Aderant.Build.Packaging {
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
         private BuildArtifact CreateBuildCacheArtifact(string publisher, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
-            var basePath = pathBuilder.BuildPath(publisher);
+            var basePath = pathBuilder.GetBucketInstancePath(publisher);
 
             string container = Path.Combine(basePath, definition.Id);
 

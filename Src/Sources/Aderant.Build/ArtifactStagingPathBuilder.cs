@@ -18,7 +18,11 @@ namespace Aderant.Build {
 
         public string StagingDirectory { get; }
 
-        public string BuildPath(string name) {
+
+        /// <summary>
+        /// Gets a versioned path
+        /// </summary>
+        public string GetBucketInstancePath(string name) {
             BucketId bucket = metadata.GetBucket(name);
 
             return Path.Combine(
