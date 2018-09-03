@@ -14,11 +14,11 @@ namespace Aderant.Build {
 
         [DllImport("Netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern int NetDfsGetInfo(
-            [MarshalAs(UnmanagedType.LPWStr)] string dfsEntryPath, // DFS entry path for the volume
-            [MarshalAs(UnmanagedType.LPWStr)] string serverName, // This parameter is currently ignored and should be NULL
-            [MarshalAs(UnmanagedType.LPWStr)] string shareName, // This parameter is currently ignored and should be NULL.
-            NetDfsInfoLevel level, // Level of information requested
-            out IntPtr buffer // API allocates and returns buffer with requested info
+            [MarshalAs(UnmanagedType.LPWStr)] string dfsEntryPath, /* DFS entry path for the volume */
+            [MarshalAs(UnmanagedType.LPWStr)] string serverName, /* This parameter is currently ignored and should be NULL */
+            [MarshalAs(UnmanagedType.LPWStr)] string shareName, /* This parameter is currently ignored and should be NULL. */
+            NetDfsInfoLevel level, /* Level of information requested */
+            out IntPtr buffer /* API allocates and returns buffer with requested info */
         );
 
         private static T GetStruct<T>(IntPtr buffer, int offset = 0) where T : struct {
@@ -28,6 +28,8 @@ namespace Aderant.Build {
         }
 
         public static string ResolveDfsPath(string share) {
+            System.Diagnostics.Debugger.Launch();
+
             string path = null;
 
             if (!string.IsNullOrWhiteSpace(share)) {
