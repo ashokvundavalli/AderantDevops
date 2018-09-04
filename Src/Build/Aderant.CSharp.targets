@@ -351,7 +351,7 @@
     </Copy>
 
     <TrackProjectOutputs
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       ProjectGuid="$(ProjectGuid)"
       ProjectTypeGuids="$(ProjectTypeGuids)"
       TestProjectType="$(TestProjectType)"

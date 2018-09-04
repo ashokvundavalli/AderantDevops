@@ -19,8 +19,10 @@ namespace Aderant.Build.PipelineService {
 
         public void Dispose() {
             StopListener();
+
             try {
                 ((IDisposable)host)?.Dispose();
+                host = null;
             } catch {
 
             }
@@ -29,15 +31,18 @@ namespace Aderant.Build.PipelineService {
         public void StartListener(string pipeId) {
             if (host == null) {
                 id = pipeId;
-                host = new ServiceHost(new BuildPipelineServiceImpl());
+
+                var address = CreateAddress(pipeId);
+
+                host = new ServiceHost(new BuildPipelineServiceImpl(), new Uri(address));
                 var namedPipeBinding = CreateBinding();
 
-                var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, CreateAddress(pipeId));
+                var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, address);
                 endpoint.Behaviors.Add(new ProtoEndpointBehavior());
 
                 host.Open();
 
-                Environment.SetEnvironmentVariable(WellKnownProperties.ContextFileName, pipeId, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, pipeId, EnvironmentVariableTarget.Process);
             }
         }
 
@@ -48,7 +53,7 @@ namespace Aderant.Build.PipelineService {
         internal static NetNamedPipeBinding CreateBinding() {
             NetNamedPipeBinding namedPipeBinding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None);
             namedPipeBinding.MaxReceivedMessageSize = Int32.MaxValue;
-            namedPipeBinding.TransferMode = TransferMode.Streamed;
+            //namedPipeBinding.TransferMode = TransferMode.Streamed;
             return namedPipeBinding;
         }
 

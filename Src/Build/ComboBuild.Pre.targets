@@ -116,7 +116,7 @@
     </ItemGroup>
 
     <RetrieveArtifacts
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
       PublisherName="$(ModuleName)" />
@@ -187,7 +187,7 @@
 
     <GetOrPutContextVariable
       Scope="$(VariableScopeId)"
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       FileVersion="$(FileVersion)"
       AssemblyVersion="$(AssemblyVersion)"
       ModuleName="$(ModuleName)" />

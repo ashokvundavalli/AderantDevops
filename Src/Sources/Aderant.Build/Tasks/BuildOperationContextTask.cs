@@ -14,7 +14,7 @@ namespace Aderant.Build.Tasks {
         private BuildTaskLogger logger;
         private IBuildPipelineServiceContract pipelineService;
 
-        public virtual string ContextFileName { get; set; }
+        public virtual string ContextEndpoint { get; set; }
 
         protected BuildOperationContext Context {
             get {
@@ -33,7 +33,7 @@ namespace Aderant.Build.Tasks {
         internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineServiceContract PipelineService {
-            get { return pipelineService ?? (pipelineService = BuildPipelineServiceHost.Instance.GetProxy(ContextFileName)); }
+            get { return pipelineService ?? (pipelineService = BuildPipelineServiceHost.Instance.GetProxy(ContextEndpoint)); }
         }
 
         public sealed override bool Execute() {
@@ -63,12 +63,8 @@ namespace Aderant.Build.Tasks {
         /// Obtains the ambient context from the build host.
         /// </summary>
         protected virtual BuildOperationContext ObtainContext() {
-            var ctx = GetContextFromFile();
+            var ctx = PipelineService.GetContext();
             return ctx;
-        }
-
-        private BuildOperationContext GetContextFromFile() {
-            return PipelineService.GetContext();
         }
     }
 }

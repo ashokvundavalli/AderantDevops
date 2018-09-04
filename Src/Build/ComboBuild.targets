@@ -101,7 +101,7 @@
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       ModulesDirectory="$(SolutionRoot)"
       InstanceFile="$(BranchBuildProject)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
@@ -142,8 +142,8 @@
     <WaitForDebugger Wait="$(WaitForDebugger)" />
 
     <GetPropertiesFromContext
-        ContextFileName="$(ContextFileName)"
-        ArtifactStagingDirectory="$(ArtifactStagingDirectory)">
+      ContextEndpoint="$(ContextEndpoint)"
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
       <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
       <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />

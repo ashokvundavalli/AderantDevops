@@ -60,7 +60,7 @@
 
     <GetOrPutContextVariable
       Scope="$(VariableScopeId)"
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       Output="true">
       <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
       <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
@@ -86,7 +86,7 @@
   <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)" Condition="'$(PackageArtifacts)' == 'true'">
 
     <CreateArtifacts
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       RelativeFrom="$(BinModuleDirectory);$(BinTestDirectory)"
       ArtifactDefinitions="@(PackageArtifact);@(_PackageArtifact)"

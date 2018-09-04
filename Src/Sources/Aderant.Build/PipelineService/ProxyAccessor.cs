@@ -10,14 +10,14 @@ namespace Aderant.Build.PipelineService {
             this.createAddress = createAddress;
         }
 
-        public IBuildPipelineServiceContract GetProxy(string contextFileName) {
-            if (string.IsNullOrEmpty(contextFileName)) {
-                contextFileName = Environment.GetEnvironmentVariable(WellKnownProperties.ContextFileName);
+        public IBuildPipelineServiceContract GetProxy(string contextEndpoint) {
+            if (string.IsNullOrEmpty(contextEndpoint)) {
+                contextEndpoint = Environment.GetEnvironmentVariable(WellKnownProperties.ContextEndpoint);
             }
 
-            ErrorUtilities.IsNotNull(contextFileName, nameof(contextFileName));
+            ErrorUtilities.IsNotNull(contextEndpoint, nameof(contextEndpoint));
 
-            return GetProxyInternal(contextFileName);
+            return GetProxyInternal(contextEndpoint);
         }
 
         internal IBuildPipelineServiceContract GetProxyInternal(string pipeId) {

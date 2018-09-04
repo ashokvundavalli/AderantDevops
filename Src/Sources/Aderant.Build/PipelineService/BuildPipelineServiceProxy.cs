@@ -17,7 +17,6 @@ namespace Aderant.Build.PipelineService {
         public BuildPipelineServiceProxy(Binding binding, EndpointAddress remoteAddress)
             : base(binding, remoteAddress) {
             Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
-            
         }
 
         public void Publish(BuildOperationContext context) {
