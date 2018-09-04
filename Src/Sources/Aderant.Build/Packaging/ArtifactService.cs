@@ -154,7 +154,7 @@ namespace Aderant.Build.Packaging {
             } else {
                 snapshotList = snapshots.ToList();
             }
-           
+
             return MergeExistingOutputs(context, publisherName, snapshotList);
         }
 
@@ -400,7 +400,7 @@ namespace Aderant.Build.Packaging {
                         foreach (var folder in folders) {
                             // We have to nest the state file directory as TFS won't allow duplicate artifact names
                             // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
-                            var stateFile = Path.Combine(folder, bucketId, BuildStateWriter.DefaultFileName);
+                            var stateFile = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
 
                             if (fileSystem.FileExists(stateFile)) {
                                 if (!fileSystem.GetDirectories(folder, false).Any()) {
@@ -516,8 +516,13 @@ namespace Aderant.Build.Packaging {
             var commandBuilder = new VsoBuildCommandBuilder();
 
             var instructions = new PublishCommands {
-                ArtifactPaths = artifactsWithStoragePaths.Select(s => PathSpec.Create(s.SourcePath, s.StoragePath)),
-                AssociationCommands = artifactsWithStoragePaths.Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
+                ArtifactPaths = artifactsWithStoragePaths
+                    .Select(s => PathSpec.Create(s.SourcePath, s.StoragePath))
+                    .OrderBy(s => s.Location, StringComparer.OrdinalIgnoreCase),
+
+                AssociationCommands = artifactsWithStoragePaths
+                    .Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
+                    .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
             };
 
             return instructions;
