@@ -515,15 +515,16 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoBuildCommandBuilder();
 
+            // Ordering is an attempt to make sure we upload files first then the state files
             var instructions = new PublishCommands {
                 ArtifactPaths = artifactsWithStoragePaths
                     .Select(s => PathSpec.Create(s.SourcePath, s.StoragePath))
-                    .OrderBy(s => s.Location, StringComparer.OrdinalIgnoreCase),
+                    .OrderBy(s => s.Location, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(s => s.Location[0]),
 
                 AssociationCommands = artifactsWithStoragePaths
                     .Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
                     .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(s => s[0])
             };
 
             return instructions;
@@ -546,8 +547,6 @@ namespace Aderant.Build.Packaging {
             }
         }
     }
-
- 
 
     internal class OutputMerger {
         public void Merge(string publisherName, BuildStateFile previousBuild, List<OutputFilesSnapshot> snapshots) {
