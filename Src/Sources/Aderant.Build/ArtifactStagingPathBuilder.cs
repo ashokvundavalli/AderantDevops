@@ -18,7 +18,6 @@ namespace Aderant.Build {
 
         public string StagingDirectory { get; }
 
-
         /// <summary>
         /// Gets a versioned path
         /// </summary>
@@ -27,9 +26,8 @@ namespace Aderant.Build {
 
             return Path.Combine(
                 StagingDirectory,
-                bucket != null ? bucket.Id ?? string.Empty : string.Empty,
+                bucket != null ? bucket.DirectorySegment ?? string.Empty : string.Empty,
                 buildId.ToString(CultureInfo.InvariantCulture));
-
         }
     }
 }

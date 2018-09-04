@@ -25,7 +25,7 @@ namespace Aderant.Build.VersionControl {
             var info = new SourceTreeMetadata();
 
             List<BucketId> bucketKeys = new List<BucketId>();
-            
+
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
 
@@ -114,25 +114,28 @@ namespace Aderant.Build.VersionControl {
         }
 
         /// <summary>
-        /// Recursively look for the parent of the current commit until reaching to a point that the commit is also reachable from another interested branch,
+        /// Recursively look for the parent of the current commit until reaching to a point that the commit is also reachable from
+        /// another interested branch,
         /// which means probably we have the cached build of that already.
         /// </summary>
         /// <param name="fromBranch"></param>
         /// <param name="repository"></param>
         /// <param name="currentTree"></param>
         /// <param name="branchCanonicalName"></param>
-        /// <returns>The joint point where the commit is also reachable from somewhere else. The first branch name is returned in the out parameter branchCanonicalName.</returns>
+        /// <returns>
+        /// The joint point where the commit is also reachable from somewhere else. The first branch name is returned in
+        /// the out parameter branchCanonicalName.
+        /// </returns>
         private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string branchCanonicalName) {
             Commit commit = currentTree.Parents.FirstOrDefault();
 
-            
             Commit[] interestingCommit = { null };
 
             List<string> search = new List<string> {
                 "refs/remotes/origin/master",
                 "refs/heads/master",
             };
-        
+
             if (!string.IsNullOrWhiteSpace(fromBranch)) {
                 if (!fromBranch.StartsWith(BranchName.RefsHeads)) {
                     fromBranch = BranchName.RefsHeads + fromBranch;
@@ -155,11 +158,12 @@ namespace Aderant.Build.VersionControl {
 
                 // Check if there is joint item in the two lists.
                 var commonJoint = list.Intersect(search).FirstOrDefault();
-                if (commonJoint!=null) {
+                if (commonJoint != null) {
                     // If found, we can return from this point.
                     branchCanonicalName = commonJoint;
                     return commit;
                 }
+
                 // Else, go to its parent.
                 commit = commit.Parents.FirstOrDefault();
             }
@@ -173,7 +177,7 @@ namespace Aderant.Build.VersionControl {
             if (branch == null) {
                 branch = CreateBranchFromRef(refName, repository);
             }
-            
+
             if (branch != null) {
                 return branch.Tip;
             }
@@ -211,15 +215,14 @@ namespace Aderant.Build.VersionControl {
     [DataContract]
     public class BucketId {
 
-        internal BucketId() {
-
-        }
-
         [DataMember]
         private readonly string id;
 
         [DataMember]
         private readonly string tag;
+
+        internal BucketId() {
+        }
 
         public BucketId(string id, string tag) {
             this.id = id;
@@ -235,6 +238,15 @@ namespace Aderant.Build.VersionControl {
         /// </summary>
         public string Id {
             get { return id; }
+        }
+
+        /// <summary>
+        /// Gives you the Id as a path segment for use on file systems.
+        /// This is the first 2 characters of the SHA-1, separator and the remaining 38 characters.
+        /// </summary>
+        [IgnoreDataMember]
+        public string DirectorySegment {
+            get { return CreateDirectorySegment(Id); }
         }
 
         /// <summary>
@@ -261,13 +273,20 @@ namespace Aderant.Build.VersionControl {
                 return false;
             }
         }
+
+        /// <summary>
+        /// Gives you the Id as a path segment for use on file systems.
+        /// This is the first 2 characters of the SHA-1, separator and the remaining 38 characters.
+        /// </summary>
+        public static string CreateDirectorySegment(string bucketId) {
+            return bucketId.Insert(2, @"\");
+        }
     }
 
     /// <summary>
     /// Represents a version control service, such as Git or Team Foundation.
     /// </summary>
     public interface IVersionControlService {
-
     }
 
 }

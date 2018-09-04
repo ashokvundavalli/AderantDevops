@@ -9,6 +9,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.TeamFoundation;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
@@ -389,7 +390,7 @@ namespace Aderant.Build.Packaging {
                 metadata.BuildStateFiles = files;
 
                 foreach (var bucketId in bucketIds) {
-                    string bucketPath = Path.Combine(dropLocation, bucketId);
+                    string bucketPath = Path.Combine(dropLocation, BucketId.CreateDirectorySegment(bucketId));
 
                     if (fileSystem.DirectoryExists(bucketPath)) {
                         IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
