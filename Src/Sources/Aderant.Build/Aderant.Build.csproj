@@ -184,7 +184,7 @@
     <Compile Include="Packaging\ArtifactTargetPathAssigner.cs" />
     <Compile Include="Packaging\ArtifactPackageHelper.cs" />
     <Compile Include="Tasks\CheckForDoubleWrites.cs" />
-    <Compile Include="DuplicateFileCheck.cs" />
+    <Compile Include="DoubleWriteCheck.cs" />
     <Compile Include="Tasks\ArtifactHandling\CreateArtifacts.cs" />
     <Compile Include="Tasks\ArtifactHandling\GetArtifactPaths.cs" />
     <Compile Include="PowerShellPipelineExecutor.cs" />

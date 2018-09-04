@@ -4,7 +4,11 @@ using System.Linq;
 using System.Text;
 
 namespace Aderant.Build {
-    internal static class DuplicateFileCheck {
+    /// <summary>
+    /// Fails if any double writes are detected.
+    /// Confirms that two or more files do not write to the same destination. This ensures deterministic behavior.
+    /// </summary>
+    internal static class DoubleWriteCheck {
 
         public static void CheckForDoubleWrites(IEnumerable<string> filePathList) {
             IEnumerable<IGrouping<string, string>> duplicates = filePathList
@@ -30,6 +34,7 @@ namespace Aderant.Build {
                 }
 
                 string errorText = sb.ToString();
+
                 throw new InvalidOperationException(errorText);
             }
         }

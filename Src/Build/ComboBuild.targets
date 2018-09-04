@@ -240,7 +240,7 @@
       UseHardlinksIfPossible="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
-
+  
     <CheckForDoubleWrites FileList="@(FileWrites)" />
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->

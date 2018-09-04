@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Aderant.Build.PipelineService;
 using Microsoft.Build.Utilities;
 
@@ -14,7 +15,8 @@ namespace Aderant.Build.Packaging {
         public IDictionary<string, List<BuildArtifact>> Process(bool includeGeneratedArtifacts) {
             BuildArtifact[] associatedArtifacts = pipelineService.GetAssociatedArtifacts();
 
-            var pathMap = new Dictionary<string, List<BuildArtifact>>();
+            // Sorted for determinism
+            var pathMap = new SortedDictionary<string, List<BuildArtifact>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (BuildArtifact artifact in associatedArtifacts) {
                 if (artifact.IsInternalDevelopmentPackage) {
@@ -39,7 +41,7 @@ namespace Aderant.Build.Packaging {
             return pathMap;
         }
 
-        private static void AddArtifact(Dictionary<string, List<BuildArtifact>> pathMap, string destinationSubDirectory, BuildArtifact artifact) {
+        private static void AddArtifact(IDictionary<string, List<BuildArtifact>> pathMap, string destinationSubDirectory, BuildArtifact artifact) {
             List<BuildArtifact> list;
             if (!pathMap.TryGetValue(destinationSubDirectory, out list)) {
                 list = new List<BuildArtifact>();
