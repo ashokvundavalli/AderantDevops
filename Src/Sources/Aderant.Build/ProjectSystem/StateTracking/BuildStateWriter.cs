@@ -137,7 +137,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
             var stateFileRoot = pathBuilder.GetBucketInstancePath(bucket.Tag);
-            stateFileRoot = Path.Combine(stateFileRoot, "StateFile");
+            stateFileRoot = Path.Combine(stateFileRoot, bucket.Id);
 
             var bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
 
@@ -148,7 +148,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             return new BuildArtifact {
                 SourcePath = stateFileRoot,
-                Name = "StateFile",
+                Name = bucket.Id,
                 Type = VsoBuildArtifactType.FilePath
             };
         }

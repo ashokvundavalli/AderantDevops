@@ -397,7 +397,9 @@ namespace Aderant.Build.Packaging {
                         string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
 
                         foreach (var folder in folders) {
-                            var stateFile = Path.Combine(folder, "StateFile", BuildStateWriter.DefaultFileName);
+                            // We have to nest the state file directory as TFS won't allow duplicate artifact names
+                            // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
+                            var stateFile = Path.Combine(folder, bucketId, BuildStateWriter.DefaultFileName);
 
                             if (fileSystem.FileExists(stateFile)) {
                                 if (!fileSystem.GetDirectories(folder, false).Any()) {
