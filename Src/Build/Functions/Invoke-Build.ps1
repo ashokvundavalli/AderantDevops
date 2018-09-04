@@ -262,7 +262,7 @@ Should not be used as it prevents incremental builds which increases build times
     $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
-    $contextService.StartListener($endpoint)
+    $contextService.StartListener($contextEndpoint)
     $contextService.Publish($context)
 
     try {
