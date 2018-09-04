@@ -21,6 +21,9 @@
                         <Width>40</Width>
                     </TableColumnHeader>
                     <TableColumnHeader>
+                        <Width>40</Width>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
                         <Width>16</Width>
                     </TableColumnHeader>
                 </TableHeaders>
@@ -29,6 +32,9 @@
                         <TableColumnItems>
                             <TableColumnItem>
                                 <PropertyName>CommonAncestor</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>CommonCommit</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>NewCommitDescription</PropertyName>

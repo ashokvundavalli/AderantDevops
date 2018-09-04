@@ -492,6 +492,9 @@ namespace Aderant.Build {
         [DataMember]
         public string OldCommitDescription { get; set; }
 
+        [DataMember]
+        public string CommonCommit { get; set; }
+
         /// <summary>
         /// Gets a bucket for a friendly name.
         /// </summary>

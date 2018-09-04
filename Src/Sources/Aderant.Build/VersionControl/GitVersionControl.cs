@@ -24,7 +24,7 @@ namespace Aderant.Build.VersionControl {
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch, bool includeLocalChanges = false) {
             var info = new SourceTreeMetadata();
 
-            List<BucketId> bucketKeys = new List<BucketId>();
+            HashSet<BucketId> bucketKeys = new HashSet<BucketId>();
 
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
@@ -56,6 +56,7 @@ namespace Aderant.Build.VersionControl {
                     string commonAncestor;
                     oldCommit = FindMostLikelyReusableBucket(fromBranch, repository, newCommit, out commonAncestor);
                     info.CommonAncestor = commonAncestor;
+                    info.CommonCommit = oldCommit.Id.Sha;
                 } else {
                     oldCommit = GetTip(toBranch, repository);
                 }
@@ -115,18 +116,13 @@ namespace Aderant.Build.VersionControl {
 
         /// <summary>
         /// Recursively look for the parent of the current commit until reaching to a point that the commit is also reachable from
-        /// another interested branch,
-        /// which means probably we have the cached build of that already.
+        /// another interested branch, which means probably we have the cached build of that already.
         /// </summary>
-        /// <param name="fromBranch"></param>
-        /// <param name="repository"></param>
-        /// <param name="currentTree"></param>
-        /// <param name="branchCanonicalName"></param>
         /// <returns>
         /// The joint point where the commit is also reachable from somewhere else. The first branch name is returned in
         /// the out parameter branchCanonicalName.
         /// </returns>
-        private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string branchCanonicalName) {
+        private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string commonBranch) {
             Commit commit = currentTree.Parents.FirstOrDefault();
 
             Commit[] interestingCommit = { null };
@@ -160,7 +156,7 @@ namespace Aderant.Build.VersionControl {
                 var commonJoint = list.Intersect(search).FirstOrDefault();
                 if (commonJoint != null) {
                     // If found, we can return from this point.
-                    branchCanonicalName = commonJoint;
+                    commonBranch = commonJoint;
                     return commit;
                 }
 
@@ -168,7 +164,7 @@ namespace Aderant.Build.VersionControl {
                 commit = commit.Parents.FirstOrDefault();
             }
 
-            branchCanonicalName = null;
+            commonBranch = null;
             return null;
         }
 
@@ -213,7 +209,7 @@ namespace Aderant.Build.VersionControl {
     [DebuggerDisplay("{Id} {Tag}")]
     [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     [DataContract]
-    public class BucketId {
+    public class BucketId : IEquatable<BucketId> {
 
         [DataMember]
         private readonly string id;
@@ -274,12 +270,46 @@ namespace Aderant.Build.VersionControl {
             }
         }
 
+        public bool Equals(BucketId other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return string.Equals(id, other.id, StringComparison.OrdinalIgnoreCase) && string.Equals(tag, other.tag, StringComparison.OrdinalIgnoreCase);
+        }
+
         /// <summary>
         /// Gives you the Id as a path segment for use on file systems.
         /// This is the first 2 characters of the SHA-1, separator and the remaining 38 characters.
         /// </summary>
         public static string CreateDirectorySegment(string bucketId) {
             return bucketId.Insert(2, @"\");
+        }
+
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((BucketId)obj);
+        }
+
+        public override int GetHashCode() {
+            unchecked {
+                return (StringComparer.OrdinalIgnoreCase.GetHashCode(id) * 397) ^ StringComparer.OrdinalIgnoreCase.GetHashCode(tag);
+            }
         }
     }
 

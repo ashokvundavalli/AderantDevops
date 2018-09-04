@@ -15,6 +15,7 @@ namespace Aderant.Build.Packaging {
             if (buildMetadata.IsPullRequest) {
                 parts = new[] {
                     PullRequestDropLocation,
+                    "pulls",
                     buildMetadata.PullRequest.Id,
                     artifactId
                 };
