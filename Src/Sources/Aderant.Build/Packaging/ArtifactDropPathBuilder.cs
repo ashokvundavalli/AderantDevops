@@ -20,7 +20,8 @@ namespace Aderant.Build.Packaging {
                 };
             } else {
                 if (string.IsNullOrWhiteSpace(buildMetadata.ScmBranch)) {
-                    throw new InvalidOperationException("When constructing a drop path ScmBranch cannot be null or empty");
+                    var invalidOperation = new InvalidOperationException("When constructing a drop path ScmBranch cannot be null or empty.");
+                    throw invalidOperation;
                 }
 
                 parts = new[] {

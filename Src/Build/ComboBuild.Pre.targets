@@ -43,7 +43,7 @@
     <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
 
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
-    <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
+    <rmBCItemTransformTemplatesEnabled Condition="$(T4TransformEnabled) == 'true'">true</rmBCItemTransformTemplatesEnabled>
     <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
   </PropertyGroup>
 

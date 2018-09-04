@@ -47,7 +47,7 @@ namespace Aderant.Build.Tasks {
                 return ExecuteTask();
             } catch (Exception ex) {
                 Log.LogErrorFromException(ex);
-                throw;
+                return false;
             } finally {
                 executingTask = false;
 
