@@ -91,13 +91,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                 this.stateFiles = context.StateFiles = files;
 
                 foreach (var file in stateFiles) {
-                    logger.Info($"Selected state file: {file.Id}:{file.DropLocation}");
+                    logger.Info($"Selected state file: {file.Id}:{file.Location}");
                 }
             }
         }
 
-        private static List<BuildStateFile> GetBuildStateFile(BuildOperationContext context) {
-            List<BuildStateFile> stateFiles = new List<BuildStateFile>();
+        private List<BuildStateFile> GetBuildStateFile(BuildOperationContext context) {
+            List<BuildStateFile> files = new List<BuildStateFile>();
 
             // Here we select an appropriate tree to reuse
             // TODO: This needs way more validation
@@ -117,13 +117,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         if (stateFile != null) {
-                            stateFiles.Add(stateFile);
+                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}.");
+                            files.Add(stateFile);
                         }
                     }
                 }
             }
 
-            return stateFiles;
+            logger.Info($"Found {files.Count} state files.");
+            return files;
         }
 
         private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
@@ -191,15 +193,15 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 ICollection<ArtifactManifest> artifacts = null;
                 if (stateFile.Artifacts != null) {
-
                     if (stateFile.Artifacts.TryGetValue(stateFileKey, out artifacts)) {
                         if (artifacts != null) {
                             artifactsExist = true;
+                            logger.Info("Artifacts exist for: " + stateFileKey);
                         }
                     }
                 }
 
-                if (stateFile.Outputs != null && artifactsExist)
+                if (artifactsExist && stateFile.Outputs != null) {
                     foreach (var projectInTree in stateFile.Outputs) {
                         // The selected build cache contained this project, next check the inputs/outputs
                         if (projectFullPath.IndexOf(projectInTree.Key, StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -213,6 +215,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                             return;
                         }
                     }
+                } else {
+                    logger.Info($"No artifacts exist for: {stateFileKey} or there are no project outputs.");
+                }
 
                 MarkDirty(tag, project, BuildReason.ProjectOutputNotFound);
                 return;
@@ -242,6 +247,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (checkedArtifacts != null && checkedArtifacts.Count > 0) {
                 logger.Info($"Looked for {outputFile} but it was not found in packages:");
+
                 foreach (var checkedArtifact in checkedArtifacts) {
                     logger.Info(string.Format("    {0} ({1})", checkedArtifact.Id, checkedArtifact.InstanceId));
                 }
@@ -257,6 +263,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
+            logger.Info($"No state files available for {stateFileKey}. Build will not be able to use prebuilt objects.");
             return null;
         }
 

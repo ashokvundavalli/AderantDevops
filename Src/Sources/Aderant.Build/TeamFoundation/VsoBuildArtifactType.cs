@@ -9,13 +9,13 @@ namespace Aderant.Build.TeamFoundation {
     [ProtoContract]
     public enum VsoBuildArtifactType {
         /// <summary>
-        /// The container type.
+        /// Visual Studio Team Services/TFS
         /// </summary>
         [EnumMember]
         Container,
 
         /// <summary>
-        /// The file path type.
+        /// A file share
         /// </summary>
         [EnumMember]
         FilePath,

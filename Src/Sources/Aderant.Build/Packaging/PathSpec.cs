@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 
 namespace Aderant.Build.Packaging {
 
@@ -15,7 +16,7 @@ namespace Aderant.Build.Packaging {
 
         public string Location { get; }
 
-        public static PathSpec BuildSucceeded { get; } = new PathSpec("build.succeeded", null);
+        // public static PathSpec BuildSucceeded { get; } = new PathSpec("build.succeeded", null);
 
         public override bool Equals(object obj) {
             if (!(obj is PathSpec)) {
@@ -44,6 +45,16 @@ namespace Aderant.Build.Packaging {
 
         public static bool operator !=(PathSpec a, PathSpec b) {
             return !(a == b);
+        }
+
+        /// <summary>
+        /// Creates a new path spec, taking into account Robocopy trailing slash bugs.
+        /// </summary>
+        public static PathSpec Create(string source, string destination) {
+            return new PathSpec(
+                source.TrimEnd(Path.DirectorySeparatorChar),
+                destination.TrimEnd(Path.DirectorySeparatorChar));
+
         }
     }
 }

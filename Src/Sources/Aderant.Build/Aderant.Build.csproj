@@ -52,6 +52,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\Microsoft.TeamFoundationServer.Client\lib\net45\Microsoft.TeamFoundation.SourceControl.WebApi.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.TeamFoundation.VersionControl.Common.Integration, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.VersionControl.Common.Integration.dll</HintPath>
+    </Reference>
     <Reference Include="MSBuild.Community.Tasks">
       <HintPath>..\..\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
     </Reference>
@@ -112,10 +116,14 @@
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildTreeMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
+    <Compile Include="Dfs.cs" />
+    <Compile Include="Packaging\ArtifactDropPathBuilder.cs" />
+    <Compile Include="Packaging\IArtifactProcessContributor.cs" />
+    <Compile Include="Packaging\LinkCommands.cs" />
     <Compile Include="PerformanceTimer.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceImpl.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceProxy.cs" />
-    <Compile Include="PipelineService\BuildPipelineServiceFactory.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceHost.cs" />
     <Compile Include="PipelineService\IBuildPipelineService.cs" />
     <Compile Include="PipelineService\IBuildPipelineServiceContract.cs" />
     <Compile Include="MSBuild\ImportElement.cs" />
@@ -127,6 +135,8 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\MacroExpander.cs" />
     <Compile Include="MSBuild\BuildElementVisitor.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="PipelineService\IProxyAccessor.cs" />
+    <Compile Include="PipelineService\ProxyAccessor.cs" />
     <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
     <Compile Include="Packaging\AutoPackager.cs" />
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
@@ -171,18 +181,20 @@
     <Compile Include="Packaging\BucketService.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildStateFile.cs" />
     <Compile Include="ProjectSystem\StateTracking\BuildStateWriter.cs" />
+    <Compile Include="Packaging\ArtifactTargetPathAssigner.cs" />
+    <Compile Include="Packaging\ArtifactPackageHelper.cs" />
     <Compile Include="Tasks\CheckForDoubleWrites.cs" />
     <Compile Include="DuplicateFileCheck.cs" />
-    <Compile Include="Tasks\GetArtifactPaths.cs" />
+    <Compile Include="Tasks\ArtifactHandling\CreateArtifacts.cs" />
+    <Compile Include="Tasks\ArtifactHandling\GetArtifactPaths.cs" />
     <Compile Include="PowerShellPipelineExecutor.cs" />
     <Compile Include="Tasks\PowerShellScript.cs" />
-    <Compile Include="Tasks\UpdateBuildRecordArtifacts.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
-    <Compile Include="Tasks\PackageArtifacts.cs" />
+    <Compile Include="Tasks\ArtifactHandling\PublishArtifacts.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
     <Compile Include="Tasks\PrintBanner.cs" />
     <Compile Include="Packaging\Handlers\PullRequestHandler.cs" />
-    <Compile Include="Tasks\RetrieveArtifacts.cs" />
+    <Compile Include="Tasks\ArtifactHandling\RetrieveArtifacts.cs" />
     <Compile Include="Tasks\GetOrPutContextVariable.cs" />
     <Compile Include="ProjectSystem\StateTracking\StateFileBase.cs" />
     <Compile Include="Tasks\TrackProjectOutputs.cs" />
@@ -215,7 +227,7 @@
     <Compile Include="ProjectSystem\DependencyRelationshipProcessing.cs" />
     <Compile Include="ProjectSystem\OrchestrationFiles.cs" />
     <Compile Include="ProjectSystem\ChangesToConsider.cs" />
-    <Compile Include="Tasks\ContextTaskBase.cs" />
+    <Compile Include="Tasks\BuildOperationContextTask.cs" />
     <Compile Include="Tasks\ParallelBuildProject.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />

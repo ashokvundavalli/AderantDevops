@@ -141,9 +141,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                 .Select(dirGrouping => dirGrouping.Key);
 
             foreach (var keys in solutionGroups) {
-                var enumerable = projects.Where(p => string.Equals(p.SolutionRoot, keys, StringComparison.OrdinalIgnoreCase));
+                var projectsForSolution = projects.Where(p => string.Equals(p.SolutionRoot, keys, StringComparison.OrdinalIgnoreCase));
 
-                var projectsByOutputPath = enumerable.GroupBy(g => g.OutputPath);
+                var projectsByOutputPath = projectsForSolution.GroupBy(g => g.OutputPath, StringComparer.OrdinalIgnoreCase);
                 
                 foreach (var configuredProjects in projectsByOutputPath) {
                     if (configuredProjects.Count() > 1) {

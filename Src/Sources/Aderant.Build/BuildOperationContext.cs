@@ -36,7 +36,7 @@ namespace Aderant.Build {
         private string buildSystemDirectory;
 
         [DataMember]
-        private DropPaths drops;
+        private DropLocationInfo drops;
 
         [DataMember]
         private bool isDesktopBuild = true;
@@ -178,8 +178,8 @@ namespace Aderant.Build {
             set { stateFiles = value; }
         }
 
-        public DropPaths Drops {
-            get { return drops ?? (drops = new DropPaths()); }
+        public DropLocationInfo DropLocationInfo {
+            get { return drops ?? (drops = new DropLocationInfo()); }
         }
 
         public string ArtifactStagingDirectory {
@@ -194,27 +194,25 @@ namespace Aderant.Build {
             }
         }
 
+        /// <summary>
+        /// The paths to state files produced during a build.
+        /// </summary>
         public ICollection<string> WrittenStateFiles {
             get { return writtenStateFiles ?? (writtenStateFiles = new List<string>()); }
             set { writtenStateFiles = value; }
         }
 
-        internal void RecordArtifact(string key, ICollection<ArtifactManifest> manifests) {
+        internal void RecordArtifact(string key, ICollection<ArtifactManifest> collection) {
             InitArtifacts();
-            artifacts[key] = manifests;
-        }
 
-        /// <summary>
-        /// Creates a new instance of T.
-        /// </summary>
-        public T GetService<T>() where T : class {
-            var svc = ServiceProvider.GetService(typeof(T));
-            return (T)svc;
-        }
-
-        public object GetService(string contract) {
-            var svc = ServiceProvider.GetService<object>(this, contract, null);
-            return svc;
+            ICollection<ArtifactManifest> existing;
+            if (artifacts.TryGetValue(key, out existing)) {
+                foreach (var artifactManifest in collection) {
+                    existing.Add(artifactManifest);
+                }
+            } else {
+                artifacts[key] = collection;
+            }
         }
 
         internal DependencyRelationshipProcessing GetRelationshipProcessingMode() {
@@ -375,10 +373,13 @@ namespace Aderant.Build {
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
-    public class DropPaths {
+    public class DropLocationInfo {
 
         [DataMember]
         public string PrimaryDropLocation { get; set; }
+
+        [DataMember]
+        public string BuildCacheLocation { get; set; }
 
         [DataMember]
         public string PullRequestDropLocation { get; set; }
@@ -513,7 +514,6 @@ namespace Aderant.Build {
         }
     }
 
-    
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public struct BuildSwitches {

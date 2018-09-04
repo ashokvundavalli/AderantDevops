@@ -16,114 +16,80 @@ namespace IntegrationTest.Build.EndToEnd {
     [TestClass]
     [DeploymentItem("EndToEnd\\Resources", "Resources")]
     public class EndToEndTests : MSBuildIntegrationTestBase {
-        private BuildOperationContext context;
-        private string contextFile;
-        private Dictionary<string, string> properties;
-        private BuildPipelineServiceFactory service;
-        private IBuildPipelineServiceContract proxy;
 
         public string DeploymentItemsDirectory {
             get { return Path.Combine(TestContext.DeploymentDirectory, "Resources", "Source"); }
         }
 
         [TestInitialize]
-        public void TestInitialize() {
+        public void TestInit() {
             AddFilesToNewGitRepository();
-
-            contextFile = TestContext.TestName + "_" + Guid.NewGuid();
-
-            this.properties = new Dictionary<string, string> {
-                { "BuildSystemInTestMode", bool.TrueString },
-                { "BuildScriptsDirectory", TestContext.DeploymentDirectory + "\\" },
-                { "CompileBuildSystem", bool.FalseString },
-                { "ProductManifestPath", Path.Combine(DeploymentItemsDirectory, "ExpertManifest.xml") },
-                { "SolutionRoot", Path.Combine(DeploymentItemsDirectory) },
-                { "PackageArtifacts", bool.TrueString },
-                { "XamlBuildDropLocation", "A" },
-                { WellKnownProperties.ContextFileName, contextFile },
-            };
-
-            context = CreateContext(properties);
-
-            service = new BuildPipelineServiceFactory();
-            service.StartListener(contextFile);
-            this.proxy = BuildPipelineServiceFactory.CreateProxy(contextFile);
-            service.Publish(context);
-
-            properties["PrimaryDropLocation"] = context.Drops.PrimaryDropLocation;
         }
 
         [TestMethod]
         [Description("The basic scenario. No changes - the build should reuse existing artifacts")]
         public void Build_tree_reuse_scenario() {
-            // Simulate first build
-            RunTarget("EndToEnd", properties);
+            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+                // Simulate first build
+                RunTarget("EndToEnd", buildService.Properties);
 
-            context = proxy.GetContext();
-            Assert.AreEqual(2, context.WrittenStateFiles.Count);
-            Assert.IsTrue(context.WrittenStateFiles.All(File.Exists));
+                var context = buildService.GetContext();
 
-            var log1 = base.LogFile;
+                Assert.AreEqual(2, context.WrittenStateFiles.Count);
+                Assert.IsTrue(context.WrittenStateFiles.All(File.Exists));
+            }
 
-            PrepareForAnotherRun();
+            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+                buildService.PrepareForAnotherRun();
 
-            // Run second build
-            RunTarget("EndToEnd", properties);
+                // Run second build
+                RunTarget("EndToEnd", buildService.Properties);
 
-            context = proxy.GetContext();
-            foreach (string entry in context.WrittenStateFiles) {
-                if (entry.EndsWith(@"1\buildstate.metadata")) {
-                    var stateFile = StateFileBase.DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
+                var context = buildService.GetContext();
 
-                    if (stateFile.BucketId.Tag == "ModuleB") {
-                        Assert.AreEqual(1, stateFile.Artifacts.Keys.Count);
-                    } else {
-                        Assert.IsTrue(stateFile.Artifacts.ContainsKey("ModuleA"));
+                foreach (string entry in context.WrittenStateFiles) {
+                    if (entry.EndsWith(@"1\StateFile\buildstate.metadata")) {
+                        var stateFile = StateFileBase.DeserializeCache<BuildStateFile>(new FileStream(entry, FileMode.Open));
 
-                        var manifest = stateFile.Artifacts["ModuleA"];
-                        Assert.IsTrue(manifest.Any(m => m.Id == "ModuleA"));
-                        Assert.IsTrue(manifest.Any(m => m.Id == "Tests.ModuleA"));
+                        if (stateFile.BucketId.Tag == "ModuleB") {
+                            Assert.AreEqual(1, stateFile.Artifacts.Keys.Count);
+                        } else {
+                            Assert.IsTrue(stateFile.Artifacts.ContainsKey("ModuleA"));
 
-                        Assert.IsNotNull(stateFile.Outputs);
+                            var manifest = stateFile.Artifacts["ModuleA"];
+                            Assert.IsTrue(manifest.Any(m => m.Id == "ModuleA"));
+                            Assert.IsTrue(manifest.Any(m => m.Id == "Tests.ModuleA"));
+
+                            Assert.IsNotNull(stateFile.Outputs);
+                        }
                     }
                 }
             }
-
-            var log2 = LogFile;
-
-            WriteLogFile(Path.Combine(TestContext.DeploymentDirectory, "log1.log"), log1);
-            WriteLogFile(Path.Combine(TestContext.DeploymentDirectory, "log2.log"), log2);
         }
 
         [TestMethod]
         public void When_project_is_deleted_build_still_completes() {
-            RunTarget("EndToEnd", properties);
+            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+                RunTarget("EndToEnd", buildService.Properties);
 
-            Directory.Delete(Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob"), true);
-            CleanWorkingDirectory();
-            CommitChanges();
-            PrepareForAnotherRun();
+                Directory.Delete(Path.Combine(DeploymentItemsDirectory, "ModuleB", "Flob"), true);
 
-            Assert.IsNotNull(context.BuildStateMetadata);
-            Assert.AreNotEqual(0, context.BuildStateMetadata.BuildStateFiles.Count);
+                CleanWorkingDirectory();
+                CommitChanges();
+            }
 
-            RunTarget("EndToEnd", properties);
-        }
+            using (var buildService = new TestBuildServiceHost(TestContext, DeploymentItemsDirectory)) {
+                buildService.PrepareForAnotherRun();
+                CleanWorkingDirectory();
 
-        private void PrepareForAnotherRun() {
-            context = proxy.GetContext();
-            context = CreateContext(properties);
-            context.BuildMetadata.BuildId += 1;
+                var context = buildService.GetContext();
 
-            var buildStateMetadata = new ArtifactService(NullLogger.Default)
-                .GetBuildStateMetadata(
-                    context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
-                    context.Drops.PrimaryDropLocation);
+                Assert.IsNotNull(context.BuildStateMetadata);
+                Assert.IsNotNull(context.WrittenStateFiles);
+                Assert.AreNotEqual(0, context.BuildStateMetadata.BuildStateFiles.Count);
 
-            context.BuildStateMetadata = buildStateMetadata;
-            service.Publish(context);
-
-            CleanWorkingDirectory();
+                RunTarget("EndToEnd", buildService.Properties);
+            }
         }
 
         private void CleanWorkingDirectory() {
@@ -133,23 +99,6 @@ namespace IntegrationTest.Build.EndToEnd {
         private void CommitChanges() {
             RunCommand("& git add .");
             RunCommand("& git commit -m \"Add\"");
-        }
-
-        private BuildOperationContext CreateContext(Dictionary<string, string> props) {
-            var ctx = new BuildOperationContext();
-            ctx.Drops.PrimaryDropLocation = Path.Combine(TestContext.DeploymentDirectory, TestContext.TestName, "_drop");
-            ctx.BuildMetadata = new BuildMetadata();
-            ctx.BuildMetadata.BuildSourcesDirectory = DeploymentItemsDirectory;
-            ctx.SourceTreeMetadata = GetSourceTreeMetadata();
-            ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
-            ctx.BuildSystemDirectory = Path.Combine(TestContext.DeploymentDirectory, @"..\..\");
-
-            return ctx;
-        }
-
-        private SourceTreeMetadata GetSourceTreeMetadata() {
-            var versionControl = new GitVersionControl();
-            return versionControl.GetMetadata(DeploymentItemsDirectory, "", "");
         }
 
         private void AddFilesToNewGitRepository() {
@@ -166,6 +115,123 @@ namespace IntegrationTest.Build.EndToEnd {
                     TestContext.WriteLine(item.ToString());
                 }
             }
+        }
+    }
+
+    internal class TestBuildServiceHost : IDisposable {
+        private readonly string deploymentItemsDirectory;
+        private readonly TestContext testContext;
+
+        private BuildOperationContext context;
+
+        private string contextFile;
+        private Dictionary<string, string> properties;
+        private IBuildPipelineServiceContract proxy;
+        private BuildPipelineServiceHost service;
+
+        public TestBuildServiceHost(TestContext testContext, string deploymentItemsDirectory) {
+            this.testContext = testContext;
+            this.deploymentItemsDirectory = deploymentItemsDirectory;
+        }
+
+        public IDictionary<string, string> Properties {
+            get {
+                Initialize();
+                return properties;
+            }
+        }
+
+        public void Dispose() {
+            try {
+                proxy?.Dispose();
+            } catch {
+
+            }
+
+            try {
+                service?.Dispose();
+            } catch {
+
+            }
+        }
+
+        private void Initialize() {
+            if (properties == null) {
+                contextFile = testContext.TestName + "_" + Guid.NewGuid();
+
+                this.properties = new Dictionary<string, string> {
+                    { "BuildSystemInTestMode", bool.TrueString },
+                    { "BuildScriptsDirectory", testContext.DeploymentDirectory + "\\" },
+                    { "CompileBuildSystem", bool.FalseString },
+                    { "ProductManifestPath", Path.Combine(deploymentItemsDirectory, "ExpertManifest.xml") },
+                    { "SolutionRoot", Path.Combine(deploymentItemsDirectory) },
+                    { "PackageArtifacts", bool.TrueString },
+                    { "XamlBuildDropLocation", "A" },
+                    { "CopyToDropEnabled", bool.TrueString },
+                    { "GetProduct", bool.FalseString },
+                    { "PackageProduct", bool.FalseString },
+                    { WellKnownProperties.ContextFileName, contextFile },
+                };
+
+                context = CreateContext(properties);
+
+                StartService();
+                this.proxy = BuildPipelineServiceHost.Instance.GetProxy(contextFile);
+                service.Publish(context);
+
+                properties["PrimaryDropLocation"] = context.DropLocationInfo.PrimaryDropLocation;
+                properties["BuildCacheLocation"] = context.DropLocationInfo.BuildCacheLocation;
+            }
+        }
+
+        private void StartService() {
+            if (service != null) {
+                service.Dispose();
+            }
+
+            service = new BuildPipelineServiceHost();
+            service.StartListener(contextFile);
+        }
+
+        public BuildOperationContext GetContext() {
+            return service.CurrentContext;
+        }
+
+        private BuildOperationContext CreateContext(Dictionary<string, string> props) {
+            var ctx = new BuildOperationContext();
+            ctx.DropLocationInfo.PrimaryDropLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_drop");
+            ctx.DropLocationInfo.BuildCacheLocation = Path.Combine(testContext.DeploymentDirectory, testContext.TestName, "_cache");
+
+            ctx.BuildMetadata = new BuildMetadata { BuildSourcesDirectory = deploymentItemsDirectory };
+
+            ctx.SourceTreeMetadata = GetSourceTreeMetadata();
+            ctx.BuildScriptsDirectory = props["BuildScriptsDirectory"];
+            ctx.BuildSystemDirectory = Path.Combine(testContext.DeploymentDirectory, @"..\..\");
+
+            return ctx;
+        }
+
+        public void PrepareForAnotherRun() {
+            Initialize();
+
+            context = CreateContext(properties);
+            context.BuildMetadata.BuildId += 1;
+
+            var buildStateMetadata = new ArtifactService(NullLogger.Default)
+                .GetBuildStateMetadata(
+                    context.SourceTreeMetadata.GetBuckets().Select(s => s.Id).ToArray(),
+                    context.DropLocationInfo.BuildCacheLocation);
+
+            Assert.AreNotEqual(0, buildStateMetadata.BuildStateFiles.Count);
+
+            context.BuildStateMetadata = buildStateMetadata;
+            
+            service.Publish(context);
+        }
+
+        private SourceTreeMetadata GetSourceTreeMetadata() {
+            var versionControl = new GitVersionControl();
+            return versionControl.GetMetadata(deploymentItemsDirectory, "", "");
         }
     }
 }

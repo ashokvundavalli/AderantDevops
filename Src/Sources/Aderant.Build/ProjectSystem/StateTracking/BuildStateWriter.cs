@@ -2,22 +2,31 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.PipelineService;
+using Aderant.Build.TeamFoundation;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
     internal class BuildStateWriter {
         private readonly IFileSystem fileSystem;
+        private readonly ILogger logger;
 
-        public BuildStateWriter()
-            : this(new PhysicalFileSystem()) {
+        public BuildStateWriter(ILogger logger)
+            : this(new PhysicalFileSystem(), logger) {
+
         }
 
-        internal BuildStateWriter(IFileSystem fileSystem) {
+        internal BuildStateWriter(IFileSystem fileSystem, ILogger logger) {
             this.fileSystem = fileSystem;
+            this.logger = logger;
+            this.WrittenStateFiles = new List<string>();
         }
 
         public static string DefaultFileName { get; private set; } = "buildstate.metadata";
+
+        public ICollection<string> WrittenStateFiles { get; set; }
 
         /// <summary>
         /// Serializes the build state file
@@ -80,8 +89,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 }
             }
 
-            stateFile.DropLocation = null;
+            stateFile.PrepareForSerialization();
 
+            logger.Info("Writing state file to: " + destinationPath);
             fileSystem.AddFile(destinationPath, stream => stateFile.Serialize(stream));
 
             return destinationPath;
@@ -99,7 +109,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             //}
         }
 
-        public void WriteStateFiles(BuildOperationContext context) {
+        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
 
             foreach (var bucket in buckets) {
@@ -119,18 +129,36 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 BuildStateFile previousBuild = context.GetStateFile(tag);
 
-                WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context);
+                yield return WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context);
             }
         }
 
-        private void WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<OutputFilesSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
+        private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<OutputFilesSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
             var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
-            var file = pathBuilder.BuildPath(bucket.Tag);
-            file = Path.Combine(file, DefaultFileName);
 
-            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, file);
+            var stateFileRoot = pathBuilder.GetBucketInstancePath(bucket.Tag);
+            stateFileRoot = Path.Combine(stateFileRoot, "StateFile");
 
+            var bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
+
+            string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance);
+
+            WrittenStateFiles.Add(stateFile);
             context.WrittenStateFiles.Add(stateFile);
+
+            return new BuildArtifact {
+                SourcePath = stateFileRoot,
+                Name = "StateFile",
+                Type = VsoBuildArtifactType.FilePath
+            };
+        }
+
+        public void WriteStateFiles(IBuildPipelineServiceContract pipelineService, BuildOperationContext context) {
+            var stateArtifacts = WriteStateFiles(context);
+
+            pipelineService.AssociateArtifacts(stateArtifacts);
+
+            pipelineService.Publish(context);
         }
     }
 }

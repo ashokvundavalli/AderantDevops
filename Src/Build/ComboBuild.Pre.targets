@@ -32,7 +32,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      RetrieveArtifactsFromBuildCache;
+      RetrievePrebuildArtifacts;
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>
@@ -44,7 +44,6 @@
 
     <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)BuildTemp\</ModuleBuildTempDirectory>
     <rmBCItemTransformTemplatesEnabled>$(T4TransformEnabled)</rmBCItemTransformTemplatesEnabled>
-    <TfvcDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</TfvcDropLocation>
     <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
   </PropertyGroup>
 
@@ -104,7 +103,7 @@
   </Target>
 
 
-  <Target Name="RetrieveArtifactsFromBuildCache" Condition="'$(SolutionRoot)' != ''">
+  <Target Name="RetrievePrebuildArtifacts" Condition="'$(SolutionRoot)' != ''">
     <Message Text="$(ModuleName): restoring artifacts" />
 
     <PropertyGroup>
@@ -116,7 +115,6 @@
       <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
     </ItemGroup>
 
-    <!-- TODO: Need to restore to both BinModuleDirectory/BinTestDirectory --> 
     <RetrieveArtifacts
       ContextFileName="$(ContextFileName)"
       SolutionRoot="$(SolutionRoot)"
@@ -129,7 +127,7 @@
       ModuleName="$(ModuleName)"
       BuildType="ContinuousIntegration"
       DependenciesDirectory="$(DependenciesDirectory)"
-      DropPath="$(TfvcDropLocation)" />
+      DropPath="$(XamlBuildDropLocation)" />
 
   </Target>
 

@@ -12,14 +12,17 @@ namespace Aderant.Build {
             this.metadata = metadata;
 
             ErrorUtilities.IsNotNull(artifactStagingDirectory, nameof(artifactStagingDirectory));
-            ErrorUtilities.IsNotNull(metadata, nameof(metadata));
 
             this.StagingDirectory = Path.Combine(artifactStagingDirectory, "_artifacts");
         }
 
         public string StagingDirectory { get; }
 
-        public string BuildPath(string name) {
+
+        /// <summary>
+        /// Gets a versioned path
+        /// </summary>
+        public string GetBucketInstancePath(string name) {
             BucketId bucket = metadata.GetBucket(name);
 
             return Path.Combine(

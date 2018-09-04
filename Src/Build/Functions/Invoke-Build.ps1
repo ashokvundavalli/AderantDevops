@@ -8,21 +8,22 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
         #throw "Branch configuration file not found"
         # TODO: shim
     [xml]$config = "<BranchConfig>
-  <DropPaths>
+  <DropLocations>
     <!--\\ap.aderant.com\akl\tempswap\☃-->
-    <PrimaryDropLocation>\\dfs.aderant.com\packages\buildcache\v1</PrimaryDropLocation>
-    <AlternativeDropLocation></AlternativeDropLocation>    
-    <PullRequestDropLocation>\\dfs.aderant.com\ExpertSuite\pulls</PullRequestDropLocation>
-    <XamlBuildDropLocation>\\dfs.aderant.com\ExpertSuite\dev\vnext</XamlBuildDropLocation>
-  </DropPaths>
+    <PrimaryDropLocation>\\dfs.aderant.com\expertsuite\product</PrimaryDropLocation>
+    <BuildCacheLocation>\\dfs.aderant.com\expertsuite\buildcache\v1</BuildCacheLocation>    
+    <PullRequestDropLocation>\\dfs.aderant.com\expertsuite\pulls</PullRequestDropLocation>
+    <XamlBuildDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</XamlBuildDropLocation>
+  </DropLocations>
 </BranchConfig>"
         }
 
     #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
 
-    $context.Drops.PrimaryDropLocation = $config.BranchConfig.DropPaths.PrimaryDropLocation
-    $context.Drops.PullRequestDropLocation = $config.BranchConfig.DropPaths.PullRequestDropLocation
-    $context.Drops.XamlBuildDropLocation = $config.BranchConfig.DropPaths.XamlBuildDropLocation
+    $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
+    $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
+    $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
+    $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
 function FindProductManifest($context, $stringSearchDirectory) {        
@@ -74,11 +75,16 @@ function FindGitDir($context, $stringSearchDirectory) {
         [void]$set.Add([string]::Join(" ", $remainingArgs))
     }
 
-    [void]$set.Add("/p:PrimaryDropLocation=$($context.Drops.PrimaryDropLocation)")
-    [void]$set.Add("/p:PullRequestDropLocation=$($context.Drops.PullRequestDropLocation)")
-    [void]$set.Add("/p:XamlBuildDropLocation=$($context.Drops.XamlBuildDropLocation)")
+    [void]$set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
+    [void]$set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
+    [void]$set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
+    [void]$set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
 
     [void]$set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
+
+    if ($PackageProduct.IsPresent) {
+        [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
+    }
 
     return [string]::Join(" ", $set)
 }
@@ -125,7 +131,7 @@ function GetBuildStateMetadata($context) {
     }   
 
     $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.Drops.PrimaryDropLocation
+    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
     $context.BuildStateMetadata = $buildState
 
@@ -161,19 +167,9 @@ function PrepareEnvironment {
   }  
 }
 
-<#
-.SYNOPSIS
-    Runs a build based on your current context
 
-.DESCRIPTION
-
-.PARAMETER remainingArgs
-    A catch all that lets you specify arbitrary parameters to the build engine.
-    Useful if you wish to override some property but that property is not exposed as a first class concept.
-
-#>
 function global:Invoke-Build2
-{    
+{
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]    
     param (
         [Parameter()]
@@ -185,20 +181,22 @@ function global:Invoke-Build2
         [Parameter()]
         [switch]$Transitive,
         
-        [Parameter()]
+        [Parameter(HelpMessage = "Destroys all intermiedate objects.
+Returns the source tree to a pristine state.
+Should not be used as it prevents incremental builds which increases build times.")]
         [switch]$Clean,
 
         [Parameter()]
-        [switch]$Release,
-
-        [Parameter()]
-        [switch]$Package,
+        [switch]$Release,        
 
         [Parameter()]
         [switch]$Resume,
 
         [Parameter()]
         [switch]$SkipCompile,
+
+        [Parameter(HelpMessage = "Includes the product packaging steps. This will produce the package which can be used to install the product.")]
+        [switch]$PackageProduct,
 
         #[Parameter]
         #[switch]$integration,
@@ -210,11 +208,23 @@ function global:Invoke-Build2
         [switch]$DisplayCodeCoverage,
                 
         [Parameter(ParameterSetName="Build", Mandatory=$false)]        
-        [string]$ModulePath = "",  
+        [string]$ModulePath = "",
+
+        [Parameter(HelpMessage = "Runs the target with the provided name")]        
+        [string]$Target = "BuildAndPackage",  
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
     )
+
+    if ($Clean) {
+        Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow 
+        Write-Host "Clean should not be used as it prevents incremental builds which increases build times."        
+
+        if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
+            return
+        }        
+    } 
          
     Set-StrictMode -Version Latest
     $ErrorActionPreference = "Stop" 
@@ -251,14 +261,14 @@ function global:Invoke-Build2
 
     $contextFileName = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
-    $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceFactory]::new()
+    $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextFileName)
     $contextService.Publish($context)
 
     try {
         $args = CreateToolArgumentString $context $RemainingArgs
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:BuildAndPackage /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextFileName=$contextFileName $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextFileName=$contextFileName $args"
  
         if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"

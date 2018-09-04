@@ -25,15 +25,10 @@
     <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
     <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">false</RunIntegrationTests>
     <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
+
+    <!-- TOOD: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
-
-    <!-- Local for factory generation -->
-    <!--
-    <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
-    <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath( '$(LocalExpertBinariesDirectory)' ))</LocalExpertBinariesDirectory>
--->
-
 
     <!-- Location to drop artifacts (packaged outputputs) -->
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
@@ -42,15 +37,17 @@
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
-
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))))</BuildInfrastructureDirectory>
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
-    
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
+
+    <CopyToDropEnabled>true</CopyToDropEnabled>
+    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
+    <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
 
   <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
@@ -81,6 +78,7 @@
       <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
       <ExcludePaths Include="Collections" />
       <ExcludePaths Include="GeneralLedger" />
+      <ExcludePaths Include="Customization" />
     </ItemGroup>
 
     <!-- 
@@ -122,104 +120,11 @@
 
 
   <Target Name="WriteStateFiles">
-    <WriteBuildStateFile />
+    <WriteBuildStateFile>
+      <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
+    </WriteBuildStateFile>
   </Target>
 
-
-  <Target Name="GetAllModuleDependencies"
-          Condition="'$(UseSharedDependencyDirectory)' == 'true'">
-   
-    <!-- As we are in a build all we can get all of the dependencies in a batch operation -->
-    <Message Text="Getting dependencies for build." />
-
-    <Delete Files="$(SolutionRoot)\paket.dependencies" ContinueOnError="true" />
-    <Delete Files="$(SolutionRoot)\paket.lock" ContinueOnError="true" />
-
-    <GetDependencies
-      ProductManifest="$(ProductManifestPath)"
-      ModulesRootPath="$(SolutionRoot)"
-      DependenciesDirectory="$(SharedDependencyDirectory)"
-      DropPath="$(TfvcDropLocation)"
-      ModulesInBuild="@(ModulesInBuild)" />
-    
-    <Message Text="Finished GetDependencies" />
-
-    <ItemGroup>
-      <Files Include="$(SharedDependencyDirectory)**\*" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ModuleDirectories Include="@(ModulesInBuild->'$(SolutionRoot)%(Identity)')"
-                         Exclude="$(SolutionRoot).git" />
-    </ItemGroup>
-
-    <MakeSymlink
-      Link="%(ModuleDirectories.FullPath)\Dependencies"
-      Target="$(SharedDependencyDirectory)"
-      Type="D" 
-      FailIfLinkIsDirectoryWithContent="true" />
-
-    <MakeSymlink
-      Link="%(ModuleDirectories.FullPath)\packages"
-      Target="$(SharedDependencyDirectory)\packages"
-      Type="D"
-      FailIfLinkIsDirectoryWithContent="true" />
-
-    <!-- 
-        TFS: 122744
-        We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
-        aware of what it's building but there is a frustrating interplay here. If you resume the build from a location after the
-        production of the message file(s) then the build can fail on some application module builds. By delete the msg file from 
-        dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
-        as the test are generally written to assume no message file is available and so don't expect to find translated strings.
-      -->
-    <ItemGroup>
-      <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
-    </ItemGroup>
-
-    <Delete Files="@(MessageFiles)" />
-
-    <Message Text="End of GetAllModuleDependencies"/>
-  </Target>
-
-  <!--<Target Name="ValidateBranchConfiguration" BeforeTargets="GetAllModuleDependencies">
-
-    <ItemGroup>
-      <ThirdPartyFiles Include="$(SolutionRoot)ThirdParty\**\bin\*.dll" />
-    </ItemGroup>
-
-    -->
-  <!-- 
-      Validates that we have no duplicated third party assemblies
-      The build and packaging system does not support multiple versions of the same assembly with the same file name.
-    --><!--
-    <Message Text="Validating dependencies for build." />
-    
-    <DependencyChecker
-      Files="@(ThirdPartyFiles)" />
-
-    --><!--
-      Validates that we have no misconfigured build configurations in this branch
-    --><!--
-    <Message Text="Validating build project files." />
-    <BuildConfigurationCheck
-      ProjectFiles="@(ModulesInBuild->'%(FullPath)\Build\TFSBuild.proj')" />
-    
-  </Target>
-
-
-
-  <Target Name="Version" AfterTargets="GetAllModuleDependencies">
-    <CallTarget Targets="SetBuildNumbers" />
-  </Target>
-
-  --><!-- Override the the Team Build hook -->
-  <!--
-  <Target Name="AfterDropBuild">
-    <Message Text="After drop build" />
-  </Target>
-
-      -->
 
   <PropertyGroup>
     <InitialTargetsDependsOn>ValidateRequiredProperties</InitialTargetsDependsOn>
@@ -261,7 +166,6 @@
       <CommonBuildProperties>
         BuildInParallel=true;
         BuildNumber=$(BuildNumber);
-        TfsBuildNumber=$(BuildNumber);
         BuildScriptsDirectory=$(BuildScriptsDirectory);
         ProductManifestPath=$(ProductManifestPath);
         BuildToolsDirectory=$(BuildToolsDirectory);
@@ -286,11 +190,11 @@
 
   </Target>
 
-  <Target Name="PackageProduct">
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'">
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-      <ProductContainerFile>$(ArtifactStagingDirectory)Binaries.zip</ProductContainerFile>
+      <ProductArchiveFile>$(ArtifactStagingDirectory)package\Binaries.zip</ProductArchiveFile>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
@@ -300,6 +204,7 @@
       IncludeGeneratedArtifacts="false">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
+
     <!--
       Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
       to force msbuild to expand all the wildcard characters so to get real file paths
@@ -308,10 +213,11 @@
       <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
     </CreateItem>
 
-    <Exec ContinueOnError="false"
+    <Exec Condition="'$(GetProduct)' != 'false'"
+      ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
-      WorkingDirectory="$(PackageScriptsDirectory)" />
+      Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
+      WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire--> 
     <Copy SourceFiles="@(LocalPackageFiles)"
@@ -324,48 +230,66 @@
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
-    <Exec Command="$(BuildToolsDirectory)7z.exe a $(ProductContainerFile) $(LocalExpertBinariesDirectory)*" />
+    <Exec Command='$(BuildToolsDirectory)7z.exe a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
 
     <PropertyGroup>
-      <CreateContainerHashScript>
-        $hash = Get-FileHash -LiteralPath "$(ProductContainerFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
+      <CreateArchiveHashScript>
+        $hash = Get-FileHash -LiteralPath "$(ProductArchiveFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
         $hash = $hash.ToLower()
-        $fn = [System.IO.Path]::GetFileName("$(ProductContainerFile)")
-        Set-Content -LiteralPath "$(ProductContainerFile).sha1" -Value "$hash  $fn"
-        Add-Content -LiteralPath "$(ProductContainerFile)" -Value "$hash" -Stream "sha1"
-      </CreateContainerHashScript>
+        $fn = [System.IO.Path]::GetFileName("$(ProductArchiveFile)")
+        Set-Content -LiteralPath "$(ProductArchiveFile).sha1" -Value "$hash  $fn"
+        Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
+      </CreateArchiveHashScript>
 
     </PropertyGroup>
 
-    <PowerShellScript ScriptBlock="$(CreateContainerHashScript)" />     
+    <PowerShellScript ScriptBlock="$(CreateArchiveHashScript)" />     
     
   </Target>
 
 
-  <Target Name="CopyToDrop" Condition="'$(PrimaryDropLocation)' != ''">
+  <Target Name="ComputeFilesForDrop">
 
-    <!--<GetBuildMetadata>
-      <Output TaskParameter="BuildId" PropertyName="_BuildId" />
-      <Output TaskParameter="BranchName" PropertyName="_BranchName" />
-      <Output TaskParameter="IsPullRequest" PropertyName="_IsPullRequest" />
-    </GetBuildMetadata>-->
+    <ItemGroup>
+      <AdditionalArtifacts Include="$(ProductArchiveFile)">
+        <ArtifactId>Product</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>
+    </ItemGroup>
 
-    <!-- Tell TFS about the new artifacts so it can manage them -->
-    <UpdateBuildRecordArtifacts
-      DestinationPath="$(PrimaryDropLocation)" />
+    <PublishArtifacts
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
+      AdditionalArtifacts="@(AdditionalArtifacts)"
+      DestinationRootPath="$(PrimaryDropLocation)">
+      <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
+      <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
+    </PublishArtifacts>
 
-    <!-- We ignore exit codes less than 4 as these codes indicate success -->
+    <!--Tell TFS about the new artifacts so it can manage them -->
+    <Message Text="%(LinkCommands.Identity)" />
+    <Message Text="Copy command: %(ArtifactPaths.FullPath) -> %(TargetPath)" />
+
+  </Target>
+
+
+  <Target Name="CopyToDrop" DependsOnTargets="ComputeFilesForDrop;CopyFilesToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
+  </Target>
+
+
+  <Target Name="CopyFilesToDrop" Outputs="%(ArtifactPaths.TargetPath)">
+    <Error Condition="!Exists('%(ArtifactPaths.FullPath)')" Text="The path %(ArtifactPaths.FullPath) does not exist. This indicates a failure in artifact tracking." />
+
     <PropertyGroup>
       <CopyToDropCommand>
-<![CDATA[
-robocopy.exe "$(ArtifactStagingDirectory)_artifacts" "$(PrimaryDropLocation)" * /MT /S /NDL /R:10 /NP /LOG:CopyToDrop.log /TEE        
+robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
-]]>
       </CopyToDropCommand>
     </PropertyGroup>
 
     <Exec Command="$(CopyToDropCommand)"
           WorkingDirectory="$(ArtifactStagingDirectory)" />
+
+    <PowerShellScript ScriptBlock='Get-Content -LiteralPath "$(ArtifactStagingDirectory)CopyToDrop.log" | Write-Output' />
 
   </Target>
 
@@ -529,92 +453,6 @@ IF %ERRORLEVEL% LEQ 4 EXIT /B 0
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
   </Target>
-
   
-  <!--
-  ==========================================================================================
-  Package the built modules and place in this builds output folder on the drop.
-  ==========================================================================================
-  --><!--
-  <Target Name="GetProduct" BeforeTargets="ZipProduct">
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      Message="Package Product"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildURI)">
-
-      <Output
-        TaskParameter="id"
-        PropertyName="BuildStepId" />
-    </BuildStep>
-
-    <MakeDir Directories="$(LocalExpertBinariesDirectory)"
-             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
-
-    <Exec ContinueOnError="false"
-          IgnoreExitCode="false"
-          Command="Powershell -noprofile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(BuildAllDropPath) -binariesDirectory $(LocalExpertBinariesDirectory) -systemMapConnectionString '$(ExpertDatabaseConnectionStringForSystemMap)' -getDebugFiles $true"
-          WorkingDirectory="$(PackageScriptsDirectory)" />
-
-    <BuildStep
-      Condition="('$(IsDesktopBuild)'!='true')"
-      TeamFoundationServerUrl="$(TeamFoundationServerUrl)"
-      BuildUri="$(BuildUri)"
-      Id="$(BuildStepId)"
-      Status="Succeeded" />
-
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
-  </Target>
- 
-
-  <UsingTask
-    TaskName="MergeParameters"
-    TaskFactory="CodeTaskFactory"
-    AssemblyFile="$(CodeTaskFactoryAssembly)">
-    <ParameterGroup>
-      <Source ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-      <Target ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" Output="true" />
-      <MergeResult ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core" />
-      <Reference Include="System.Xml" />
-      <Reference Include="System.Xml.Linq "/>
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Collections.Generic" />
-      <Using Namespace="System.Linq" />
-      <Using Namespace="System.Xml.Linq" />
-      <Using Namespace="System.Text.RegularExpressions" />
-      <Code>
-        <![CDATA[
-  List<ITaskItem> items = new List<ITaskItem>(Target);
-  
-  foreach (var sourceItem in Source) {
-      var sourceKey = sourceItem.ItemSpec.Split('=')[0];
-    
-      bool add = true;
-    
-      foreach (var item in Target) {
-          var itemKey = item.ItemSpec.Split('=')[0];
-      
-          if (itemKey == sourceKey) {
-            Log.LogMessage("ItemGroup already contains key: " + itemKey, null);
-            add = false;
-            break;
-          }
-      }
-    
-      if (add) {
-          items.Add(sourceItem);
-      }    
-  } 
-  
-  MergeResult = items.ToArray(); 
-]]>
-      </Code>
-    </Task>
-  </UsingTask>-->
   
 </Project>

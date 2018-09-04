@@ -9,7 +9,7 @@ namespace IntegrationTest.Build.Tasks.RetrieveArtifacts {
         public void RetrieveArtifactsTest() {
             BuildOperationContextTask.InternalContext = new BuildOperationContext();
 
-            RunTarget(nameof(Aderant.Build.Tasks.RetrieveArtifacts)); 
+            RunTarget(nameof(Aderant.Build.Tasks.ArtifactHandling.RetrieveArtifacts)); 
         }
     }
 }
