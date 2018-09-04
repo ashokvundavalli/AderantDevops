@@ -24,7 +24,7 @@ namespace Aderant.Build {
             }
 
             if (sb != null) {
-                sb.AppendLine("The full write list is: ");
+                sb.Append(" ").AppendLine("The full write list is: ");
                 foreach (var s in filePathList) {
                     sb.AppendLine(s);
                 }

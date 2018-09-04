@@ -55,10 +55,6 @@ namespace Aderant.Build.Packaging {
 
             foreach (var item in map) {
                 foreach (var path in item.Value) {
-                    if (path.SourcePath.EndsWith(BuildStateWriter.DefaultFileName)) {
-                        continue;
-                    }
-
                     var taskItem = new TaskItem(path.SourcePath);
                     taskItem.SetMetadata("DestinationSubDirectory", PathUtility.EnsureTrailingSlash(item.Key));
 

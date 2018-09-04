@@ -114,7 +114,7 @@
     <Compile Include="Build.cs" />
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
-    <Compile Include="Commands\GetBuildTreeMetadataCommand.cs" />
+    <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
     <Compile Include="Dfs.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilder.cs" />
