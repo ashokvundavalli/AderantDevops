@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Aderant.Build.PipelineService;
-using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Packaging {
@@ -12,7 +11,7 @@ namespace Aderant.Build.Packaging {
             this.pipelineService = pipelineService;
         }
 
-        public Dictionary<string, List<BuildArtifact>> Process(bool includeGeneratedArtifacts) {
+        public IDictionary<string, List<BuildArtifact>> Process(bool includeGeneratedArtifacts) {
             BuildArtifact[] associatedArtifacts = pipelineService.GetAssociatedArtifacts();
 
             var pathMap = new Dictionary<string, List<BuildArtifact>>();

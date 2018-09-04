@@ -209,7 +209,7 @@
       Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
       to force msbuild to expand all the wildcard characters so to get real file paths
     -->
-    <CreateItem Include="@(LocalPackagePaths->'%(FullPath)\**\**')"
+    <CreateItem Include="@(LocalPackagePaths->'%(RootDir)%(Directory)\**\**')"
                 Exclude="*.metadata"
                 PreserveExistingMetadata="true">
       <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
