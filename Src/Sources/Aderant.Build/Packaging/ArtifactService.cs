@@ -43,7 +43,6 @@ namespace Aderant.Build.Packaging {
             var buildArtifacts = ProcessDefinitions(context, publisherName, definitions);
 
             if (pipelineService != null) {
-                // Tell TFS about these artifacts
                 pipelineService.AssociateArtifacts(buildArtifacts);
             }
 

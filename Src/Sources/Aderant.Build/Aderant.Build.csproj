@@ -123,7 +123,7 @@
     <Compile Include="PerformanceTimer.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceImpl.cs" />
     <Compile Include="PipelineService\BuildPipelineServiceProxy.cs" />
-    <Compile Include="PipelineService\BuildPipelineServiceFactory.cs" />
+    <Compile Include="PipelineService\BuildPipelineServiceHost.cs" />
     <Compile Include="PipelineService\IBuildPipelineService.cs" />
     <Compile Include="PipelineService\IBuildPipelineServiceContract.cs" />
     <Compile Include="MSBuild\ImportElement.cs" />
@@ -135,6 +135,8 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\MacroExpander.cs" />
     <Compile Include="MSBuild\BuildElementVisitor.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="PipelineService\IProxyAccessor.cs" />
+    <Compile Include="PipelineService\ProxyAccessor.cs" />
     <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
     <Compile Include="Packaging\AutoPackager.cs" />
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />

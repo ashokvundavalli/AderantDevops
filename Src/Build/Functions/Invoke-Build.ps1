@@ -261,7 +261,7 @@ Should not be used as it prevents incremental builds which increases build times
 
     $contextFileName = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
-    $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceFactory]::new()
+    $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextFileName)
     $contextService.Publish($context)
 

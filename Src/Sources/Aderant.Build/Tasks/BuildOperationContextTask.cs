@@ -1,4 +1,5 @@
-﻿using Aderant.Build.Logging;
+﻿using System;
+using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Microsoft.Build.Utilities;
 
@@ -32,7 +33,7 @@ namespace Aderant.Build.Tasks {
         internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineServiceContract PipelineService {
-            get { return pipelineService ?? (pipelineService = BuildPipelineServiceFactory.Instance.GetProxy(ContextFileName)); }
+            get { return pipelineService ?? (pipelineService = BuildPipelineServiceHost.Instance.GetProxy(ContextFileName)); }
         }
 
         public sealed override bool Execute() {
@@ -44,6 +45,9 @@ namespace Aderant.Build.Tasks {
 
             try {
                 return ExecuteTask();
+            } catch (Exception ex) {
+                Log.LogErrorFromException(ex);
+                throw;
             } finally {
                 executingTask = false;
 
