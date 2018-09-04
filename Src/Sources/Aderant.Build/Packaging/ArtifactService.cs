@@ -523,6 +523,7 @@ namespace Aderant.Build.Packaging {
                 AssociationCommands = artifactsWithStoragePaths
                     .Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
                     .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(s => s[0])
             };
 
             return instructions;
@@ -545,6 +546,8 @@ namespace Aderant.Build.Packaging {
             }
         }
     }
+
+ 
 
     internal class OutputMerger {
         public void Merge(string publisherName, BuildStateFile previousBuild, List<OutputFilesSnapshot> snapshots) {
