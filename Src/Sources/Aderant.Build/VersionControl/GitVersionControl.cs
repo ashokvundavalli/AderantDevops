@@ -22,7 +22,6 @@ namespace Aderant.Build.VersionControl {
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch, bool includeLocalChanges = false) {
-            System.Diagnostics.Debugger.Launch();
             var info = new SourceTreeMetadata();
 
             List<BucketId> bucketKeys = new List<BucketId>();
@@ -52,6 +51,8 @@ namespace Aderant.Build.VersionControl {
 
                 Commit oldCommit;
                 if (string.IsNullOrWhiteSpace(toBranch)) {
+                    // Lookup the branch history and find the joint commit and its branch.
+                    // TODO: change the name of commonAncestor into something like commonBranch? The oldCommit is actually the common forking point.
                     string commonAncestor;
                     oldCommit = FindMostLikelyReusableBucket(fromBranch, repository, newCommit, out commonAncestor);
                     info.CommonAncestor = commonAncestor;
@@ -70,6 +71,7 @@ namespace Aderant.Build.VersionControl {
                     }
 
                     if (oldCommit != null) {
+                        // Collect all changed files between the two commits.
                         GetChanges(includeLocalChanges, repository, oldCommit, newCommit, workingDirectory, info);
 
                         if (!string.Equals(newCommit.Tree.Sha, oldCommit.Tree.Sha)) {
@@ -111,8 +113,19 @@ namespace Aderant.Build.VersionControl {
             changes.AddRange(localChanges);
         }
 
+        /// <summary>
+        /// Recursively look for the parent of the current commit until reaching to a point that the commit is also reachable from another interested branch,
+        /// which means probably we have the cached build of that already.
+        /// </summary>
+        /// <param name="fromBranch"></param>
+        /// <param name="repository"></param>
+        /// <param name="currentTree"></param>
+        /// <param name="branchCanonicalName"></param>
+        /// <returns>The joint point where the commit is also reachable from somewhere else. The first branch name is returned in the out parameter branchCanonicalName.</returns>
         private Commit FindMostLikelyReusableBucket(string fromBranch, Repository repository, Commit currentTree, out string branchCanonicalName) {
             Commit commit = currentTree.Parents.FirstOrDefault();
+
+            
             Commit[] interestingCommit = { null };
 
             List<string> search = new List<string> {
@@ -127,29 +140,27 @@ namespace Aderant.Build.VersionControl {
 
                 var branch = CreateBranchFromRef(fromBranch, repository);
                 if (branch != null) {
-                    search.Insert(0, branch.CanonicalName);
+                    //TODO: I wonder this is not necessary as the current branch should be excluded from the interest search.
+                    //search.Insert(0, branch.CanonicalName);
                 }
             }
 
+            // Recursively walk through the parents.
             while (commit != null) {
                 interestingCommit[0] = commit;
 
+                // Get the reachable branches to this commit.
                 IEnumerable<Reference> reachableFrom = repository.Refs.ReachableFrom(repository.Refs, interestingCommit);
                 var list = reachableFrom.Select(s => s.CanonicalName).ToList();
 
-                foreach (var item in list) {
-                    branchCanonicalName = item;
-
-                    if (string.Equals("refs/heads/master", item, StringComparison.OrdinalIgnoreCase)) {
-                        return GetTip(item, repository);
-                    }
-
-                    foreach (var name in search) {
-                        if (item.StartsWith(name, StringComparison.OrdinalIgnoreCase)) {
-                            return GetTip(item, repository);
-                        }
-                    }
+                // Check if there is joint item in the two lists.
+                var commonJoint = list.Intersect(search).FirstOrDefault();
+                if (commonJoint!=null) {
+                    // If found, we can return from this point.
+                    branchCanonicalName = commonJoint;
+                    return commit;
                 }
+                // Else, go to its parent.
                 commit = commit.Parents.FirstOrDefault();
             }
 
