@@ -6,6 +6,7 @@ using System.Text;
 using Microsoft.Win32.SafeHandles;
 
 namespace Aderant.Build.Commands {
+    // TODO: Delete - now obsolete
 	[Cmdlet(VerbsCommon.Get, "SymbolicLinkTarget")]
 	public class GetSymbolicLinkTarget : PSCmdlet {
 		[Parameter(Mandatory = false, Position = 0, HelpMessage = "Sets the module name or names which are the dependency providers.")]

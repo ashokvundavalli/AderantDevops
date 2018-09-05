@@ -196,7 +196,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (stateFile.Artifacts.TryGetValue(stateFileKey, out artifacts)) {
                         if (artifacts != null) {
                             artifactsExist = true;
-                            logger.Info("Artifacts exist for: " + stateFileKey);
                         }
                     }
                 }

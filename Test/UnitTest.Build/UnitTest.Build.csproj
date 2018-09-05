@@ -96,6 +96,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BucketTests.cs" />
     <Compile Include="BuildControllerTests.cs" />
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
@@ -150,7 +151,7 @@
     <Compile Include="SourceIndexStreamTests.cs" />
     <Compile Include="SourceIndexTests.cs" />
     <Compile Include="Tasks\BuildStateFileTests.cs" />
-    <Compile Include="Tasks\DuplicateFileCheckTests.cs" />
+    <Compile Include="Tasks\DoubleWriteTests.cs" />
     <Compile Include="Tasks\SeedPackagePackingTest.cs" />
     <Compile Include="Tasks\CoberturaReportConverterTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />

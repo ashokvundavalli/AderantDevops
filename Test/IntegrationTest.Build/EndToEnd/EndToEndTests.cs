@@ -124,7 +124,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private BuildOperationContext context;
 
-        private string contextFile;
+        private string endpoint;
         private Dictionary<string, string> properties;
         private IBuildPipelineServiceContract proxy;
         private BuildPipelineServiceHost service;
@@ -157,7 +157,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private void Initialize() {
             if (properties == null) {
-                contextFile = testContext.TestName + "_" + Guid.NewGuid();
+                endpoint = testContext.TestName + "_" + Guid.NewGuid();
 
                 this.properties = new Dictionary<string, string> {
                     { "BuildSystemInTestMode", bool.TrueString },
@@ -165,18 +165,19 @@ namespace IntegrationTest.Build.EndToEnd {
                     { "CompileBuildSystem", bool.FalseString },
                     { "ProductManifestPath", Path.Combine(deploymentItemsDirectory, "ExpertManifest.xml") },
                     { "SolutionRoot", Path.Combine(deploymentItemsDirectory) },
+                    { "ArtifactStagingDirectory", Path.Combine(testContext.DeploymentDirectory, Guid.NewGuid().ToString()) },
                     { "PackageArtifacts", bool.TrueString },
                     { "XamlBuildDropLocation", "A" },
                     { "CopyToDropEnabled", bool.TrueString },
                     { "GetProduct", bool.FalseString },
                     { "PackageProduct", bool.FalseString },
-                    { WellKnownProperties.ContextFileName, contextFile },
+                    { WellKnownProperties.ContextEndpoint, endpoint },
                 };
 
                 context = CreateContext(properties);
 
                 StartService();
-                this.proxy = BuildPipelineServiceHost.Instance.GetProxy(contextFile);
+                this.proxy = BuildPipelineServiceHost.Instance.GetProxy(endpoint);
                 service.Publish(context);
 
                 properties["PrimaryDropLocation"] = context.DropLocationInfo.PrimaryDropLocation;
@@ -190,7 +191,7 @@ namespace IntegrationTest.Build.EndToEnd {
             }
 
             service = new BuildPipelineServiceHost();
-            service.StartListener(contextFile);
+            service.StartListener(endpoint);
         }
 
         public BuildOperationContext GetContext() {

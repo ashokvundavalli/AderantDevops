@@ -9,6 +9,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.TeamFoundation;
+using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {
     internal class ArtifactService {
@@ -153,7 +154,7 @@ namespace Aderant.Build.Packaging {
             } else {
                 snapshotList = snapshots.ToList();
             }
-           
+
             return MergeExistingOutputs(context, publisherName, snapshotList);
         }
 
@@ -380,7 +381,7 @@ namespace Aderant.Build.Packaging {
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
             string resolvedLocation = Dfs.ResolveDfsPath(dropLocation);
 
-            logger.Info($"Querying prebuilt artifacts from: {dropLocation} -> ({resolvedLocation})");
+            logger.Info($"Querying prebuilt artifacts from: {dropLocation} -> {resolvedLocation ?? dropLocation}");
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration} ms"))) {
 
@@ -389,7 +390,7 @@ namespace Aderant.Build.Packaging {
                 metadata.BuildStateFiles = files;
 
                 foreach (var bucketId in bucketIds) {
-                    string bucketPath = Path.Combine(dropLocation, bucketId);
+                    string bucketPath = Path.Combine(dropLocation, BucketId.CreateDirectorySegment(bucketId));
 
                     if (fileSystem.DirectoryExists(bucketPath)) {
                         IEnumerable<string> directories = fileSystem.GetDirectories(bucketPath);
@@ -397,7 +398,9 @@ namespace Aderant.Build.Packaging {
                         string[] folders = OrderBuildsByBuildNumber(directories.ToArray());
 
                         foreach (var folder in folders) {
-                            var stateFile = Path.Combine(folder, "StateFile", BuildStateWriter.DefaultFileName);
+                            // We have to nest the state file directory as TFS won't allow duplicate artifact names
+                            // For a single build we may produce 1 or more state files and so each one needs a unique artifact name
+                            var stateFile = Path.Combine(folder, BuildStateWriter.CreateContainerName(bucketId), BuildStateWriter.DefaultFileName);
 
                             if (fileSystem.FileExists(stateFile)) {
                                 if (!fileSystem.GetDirectories(folder, false).Any()) {
@@ -512,9 +515,16 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoBuildCommandBuilder();
 
+            // Ordering is an attempt to make sure we upload files first then the state files
             var instructions = new PublishCommands {
-                ArtifactPaths = artifactsWithStoragePaths.Select(s => PathSpec.Create(s.SourcePath, s.StoragePath)),
-                AssociationCommands = artifactsWithStoragePaths.Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
+                ArtifactPaths = artifactsWithStoragePaths
+                    .Select(s => PathSpec.Create(s.SourcePath, s.StoragePath))
+                    .OrderBy(s => s.Location, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(s => s.Location[0]),
+
+                AssociationCommands = artifactsWithStoragePaths
+                    .Select(s => commandBuilder.LinkArtifact(s.Name, VsoBuildArtifactType.FilePath, s.ComputeVsoPath()))
+                    .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
             };
 
             return instructions;

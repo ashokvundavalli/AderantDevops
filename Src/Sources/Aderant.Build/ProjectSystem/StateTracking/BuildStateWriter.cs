@@ -15,7 +15,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         public BuildStateWriter(ILogger logger)
             : this(new PhysicalFileSystem(), logger) {
-
         }
 
         internal BuildStateWriter(IFileSystem fileSystem, ILogger logger) {
@@ -136,8 +135,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<OutputFilesSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
             var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
+            string containerName = CreateContainerName(bucket.Id);
+
             var stateFileRoot = pathBuilder.GetBucketInstancePath(bucket.Tag);
-            stateFileRoot = Path.Combine(stateFileRoot, "StateFile");
+            stateFileRoot = Path.Combine(stateFileRoot, containerName);
 
             var bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
 
@@ -148,9 +149,16 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             return new BuildArtifact {
                 SourcePath = stateFileRoot,
-                Name = "StateFile",
+                Name = containerName, /* Name must be unique within the build artifacts or TFS will complain */
                 Type = VsoBuildArtifactType.FilePath
             };
+        }
+
+        /// <summary>
+        /// Returns a folder name to place the state file into.
+        /// </summary>
+        public static string CreateContainerName(string bucketId) {
+            return "~" + bucketId;
         }
 
         public void WriteStateFiles(IBuildPipelineServiceContract pipelineService, BuildOperationContext context) {

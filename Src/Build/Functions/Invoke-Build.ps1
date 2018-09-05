@@ -259,16 +259,16 @@ Should not be used as it prevents incremental builds which increases build times
 
     $context.StartedAt = [DateTime]::UtcNow
 
-    $contextFileName = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
+    $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
-    $contextService.StartListener($contextFileName)
+    $contextService.StartListener($contextEndpoint)
     $contextService.Publish($context)
 
     try {
         $args = CreateToolArgumentString $context $RemainingArgs
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextFileName=$contextFileName $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextEndpoint=$contextEndpoint  $args"
  
         if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"

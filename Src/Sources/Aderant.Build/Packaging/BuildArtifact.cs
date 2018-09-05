@@ -9,9 +9,13 @@ namespace Aderant.Build.Packaging {
 
     /// <summary>
     /// A build artifact is network accessible directory.
-    /// The directory path is registered with TFS so it's garbage collection routine can
-    /// purge obsoleted artifacts.
     /// </summary>
+    /// <remarks>
+    /// The directory path is registered with TFS so it's garbage collection routine can purge obsoleted artifacts.
+    /// So you would think that TFS would take the path verbatim and just store that away.
+    /// But no, it takes the UNC path you give it and then when the garbage collection occurs it appends the artifact name as a
+    /// folder to that original path as the final path to delete.
+    /// </remarks>
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class BuildArtifact {

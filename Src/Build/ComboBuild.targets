@@ -26,7 +26,7 @@
     <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">false</RunIntegrationTests>
     <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
 
-    <!-- TOOD: Move to each project -->
+    <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
 
@@ -101,7 +101,7 @@
 
     <!-- Builds the dynamic project file to control the build sequence -->
     <ParallelBuildProjectFactory
-      ContextFileName="$(ContextFileName)"
+      ContextEndpoint="$(ContextEndpoint)"
       ModulesDirectory="$(SolutionRoot)"
       InstanceFile="$(BranchBuildProject)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
@@ -142,8 +142,8 @@
     <WaitForDebugger Wait="$(WaitForDebugger)" />
 
     <GetPropertiesFromContext
-        ContextFileName="$(ContextFileName)"
-        ArtifactStagingDirectory="$(ArtifactStagingDirectory)">
+      ContextEndpoint="$(ContextEndpoint)"
+      ArtifactStagingDirectory="$(ArtifactStagingDirectory)">
       <Output TaskParameter="IsDesktopBuild" PropertyName="IsDesktopBuild" />
       <Output TaskParameter="BuildSystemDirectory" PropertyName="BuildSystemDirectory" />
       <Output TaskParameter="BuildFlavor" PropertyName="BuildFlavor" />
@@ -190,7 +190,7 @@
 
   </Target>
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'">
+  <Target Name="GetFilesForPackage">
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
@@ -198,12 +198,15 @@
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
-             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
+      Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths
       IncludeGeneratedArtifacts="false">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
+
+    <Message Text="Artifact deployment paths:" />
+    <Message Text="%(LocalPackagePaths.FullPath) -> %(DestinationSubDirectory)" />
 
     <!--
       Item lists cannot be concatenated with other strings so we need to fall back to CreateItem
@@ -212,6 +215,18 @@
     <CreateItem Include="@(LocalPackagePaths->'%(FullPath)\**\**')" PreserveExistingMetadata="true">
       <Output ItemName="LocalPackageFiles" TaskParameter="Include" />
     </CreateItem>
+  </Target>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage">
+    <ItemGroup>
+      <FilesNotWanted Include="@(StateFiles)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <!-- Subtract list of files not wanted -->
+      <LocalPackageFiles Remove="@(FilesNotWanted)" />
+    </ItemGroup>
 
     <Exec Condition="'$(GetProduct)' != 'false'"
       ContinueOnError="false"
@@ -225,7 +240,7 @@
       UseHardlinksIfPossible="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
-
+  
     <CheckForDoubleWrites FileList="@(FileWrites)" />
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->

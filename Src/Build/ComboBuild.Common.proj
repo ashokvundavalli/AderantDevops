@@ -6,7 +6,7 @@
 
   <Target Name="CreateCommonProperties">
 
-    <GetPropertiesFromContext ContextFileName="$(ContextFileName)">
+    <GetPropertiesFromContext ContextEndpoint="$(ContextEndpoint)">
       <Output TaskParameter="PropertiesToCreate" ItemName="_PropertiesToCreate" />
     </GetPropertiesFromContext>
 
