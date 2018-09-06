@@ -34,6 +34,20 @@ namespace IntegrationTest.Build.VersionControl {
             Assert.IsNotNull(result);
             Assert.AreEqual("refs/heads/master", result.CommonAncestor);
         }
+
+        /// <summary>
+        /// This one simulates manually queuing a branch build on server, where fromBranch is not null but toBranch is null.
+        /// </summary>
+        [TestMethod]
+        public void GetSourceTreeInfo_returns_most_likely_ancestor_for_branch_build() {
+            var vc = new GitVersionControl();
+            var result = vc.GetMetadata(RepositoryPath, "saturn", null);
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Changes.Count);
+            Assert.AreEqual(2, result.BucketIds.Count);
+            Assert.AreEqual("refs/heads/master", result.CommonAncestor);
+        }
     }
 
 }

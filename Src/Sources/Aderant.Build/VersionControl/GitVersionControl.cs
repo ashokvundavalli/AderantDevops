@@ -52,7 +52,6 @@ namespace Aderant.Build.VersionControl {
                 Commit oldCommit;
                 if (string.IsNullOrWhiteSpace(toBranch)) {
                     // Lookup the branch history and find the joint commit and its branch.
-                    // TODO: change the name of commonAncestor into something like commonBranch? The oldCommit is actually the common forking point.
                     string commonAncestor;
                     oldCommit = FindMostLikelyReusableBucket(fromBranch, repository, newCommit, out commonAncestor);
                     info.CommonAncestor = commonAncestor;
