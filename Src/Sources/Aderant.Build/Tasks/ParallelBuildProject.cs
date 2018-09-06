@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
@@ -80,7 +79,7 @@ namespace Aderant.Build.Tasks {
             }
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
-
+            
             var jobFiles = new OrchestrationFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
@@ -92,7 +91,7 @@ namespace Aderant.Build.Tasks {
             var analysisContext = CreateAnalysisContext();
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
 
-            var project = projectTree.ComputeBuildSequence(context, analysisContext, jobFiles).Result;
+            var project = projectTree.ComputeBuildSequence(context, analysisContext, PipelineService, jobFiles).Result;
             var element = project.CreateXml();
 
             var settings = new XmlWriterSettings {

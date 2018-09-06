@@ -10,7 +10,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
     [DataContract]
     public class StateFileBase {
 
-        private const byte CurrentSerializationVersion = 2;
+        internal const byte CurrentSerializationVersion = 2;
 
         // Version this instance is serialized with.
         [DataMember]

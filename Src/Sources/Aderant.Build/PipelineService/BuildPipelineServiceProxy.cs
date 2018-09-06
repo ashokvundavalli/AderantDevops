@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using Aderant.Build.Packaging;
@@ -27,21 +28,21 @@ namespace Aderant.Build.PipelineService {
             return Channel.GetContext();
         }
 
-        public void RecordProjectOutput(OutputFilesSnapshot snapshot) {
-            Channel.RecordProjectOutput(snapshot);
+        public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
+            Channel.RecordProjectOutputs(snapshot);
         }
 
-        public IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName) {
-            return Channel.GetProjectOutputs(publisherName);
+        public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
+            return Channel.GetProjectOutputs(container);
         }
 
-        public IEnumerable<OutputFilesSnapshot> GetAllProjectOutputs() {
+        public IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs() {
             return Channel.GetAllProjectOutputs();
         }
 
-        public void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests) {
-            ErrorUtilities.IsNotNull(key, nameof(key));
-            Channel.RecordArtifacts(key, manifests);
+        public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
+            ErrorUtilities.IsNotNull(container, nameof(container));
+            Channel.RecordArtifacts(container, manifests);
         }
 
         public void PutVariable(string scope, string variableName, string value) {
@@ -52,6 +53,20 @@ namespace Aderant.Build.PipelineService {
         public string GetVariable(string scope, string variableName) {
             ErrorUtilities.IsNotNull(scope, nameof(scope));
             return Channel.GetVariable(scope, variableName);
+        }
+
+        public void TrackProject(Guid projectGuid, string fullPath) {
+            ErrorUtilities.IsNotNull(fullPath, nameof(fullPath));
+            Channel.TrackProject(projectGuid, fullPath);
+        }
+
+        public IEnumerable<TrackedProject> GetTrackedProjects() {
+            return Channel.GetTrackedProjects();
+        }
+
+        public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
+            ErrorUtilities.IsNotNull(container, nameof(container));
+            return Channel.GetArtifactsForContainer(container);
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {

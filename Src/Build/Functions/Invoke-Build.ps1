@@ -10,9 +10,9 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
     [xml]$config = "<BranchConfig>
   <DropLocations>
     <!--\\ap.aderant.com\akl\tempswap\☃-->
-    <PrimaryDropLocation>\\dfs.aderant.com\expertsuite\product</PrimaryDropLocation>
-    <BuildCacheLocation>\\dfs.aderant.com\expertsuite\buildcache\v1</BuildCacheLocation>    
-    <PullRequestDropLocation>\\dfs.aderant.com\expertsuite\pulls</PullRequestDropLocation>
+    <PrimaryDropLocation>\\dfs.aderant.com\expertsuite\product</PrimaryDropLocation>    
+    <PullRequestDropLocation>\\dfs.aderant.com\expertsuite\product\</PullRequestDropLocation>
+    <BuildCacheLocation>\\dfs.aderant.com\expertsuite\buildcache\v1</BuildCacheLocation>
     <XamlBuildDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</XamlBuildDropLocation>
   </DropLocations>
 </BranchConfig>"
@@ -261,6 +261,11 @@ Should not be used as it prevents incremental builds which increases build times
 
     $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
+    $TASKCONTEXT = Get-Variable("distributedTaskContext")
+
+    Write-Host "TASKCONTEXT $TASKCONTEXT"
+    RETURN
+
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextEndpoint)
     $contextService.Publish($context)
@@ -268,7 +273,7 @@ Should not be used as it prevents incremental builds which increases build times
     try {
         $args = CreateToolArgumentString $context $RemainingArgs
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextEndpoint=$contextEndpoint  $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
  
         if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"

@@ -4,20 +4,20 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
+using Aderant.Build.Utils;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {
     /// <summary>
-    /// Class ConfiguredProject.
+    /// A project that has been scanned, configured and accepted by the build.
     /// </summary>
     [Export(typeof(ConfiguredProject))]
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
@@ -26,15 +26,16 @@ namespace Aderant.Build.ProjectSystem {
         private readonly IFileSystem fileSystem;
         private List<string> dirtyFiles;
 
-        //private List<ResolvedReference> resolvedDependencies;
-        private bool? isWebProject;
+        private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
+        private Memoizer<ConfiguredProject, bool> isWebProject;
+
         private Lazy<Project> project;
+        private Memoizer<ConfiguredProject, Guid> projectGuid;
         private Lazy<ProjectRootElement> projectXml;
-        private Lazy<IReadOnlyList<Guid>> typeGuids;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
-            this.Tree = tree;
+            Tree = tree;
             this.fileSystem = fileSystem;
         }
 
@@ -74,20 +75,11 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         internal IReadOnlyList<Guid> ProjectTypeGuids {
-            get { return typeGuids.Value; }
+            get { return extractTypeGuids.Evaluate(this); }
         }
 
         public bool IsWebProject {
-            get {
-                if (!isWebProject.HasValue) {
-                    var guids = ProjectTypeGuids;
-                    if (guids != null) {
-                        isWebProject = guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
-                    }
-                }
-
-                return isWebProject.GetValueOrDefault();
-            }
+            get { return isWebProject.Evaluate(this); }
         }
 
         public bool IsTestProject {
@@ -103,7 +95,7 @@ namespace Aderant.Build.ProjectSystem {
 
         /// <summary>
         /// Gets the directory that roots this project.
-        /// Driven from the path of <see cref="SolutionFile"/>
+        /// Driven from the path of <see cref="SolutionFile" />
         /// </summary>
         public string SolutionRoot {
             get {
@@ -134,30 +126,20 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public string OutputPath { get; internal set; }
 
-        public Guid ProjectGuid {
-            get {
-                var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
-                if (propertyElement != null) {
-                    try {
-                        return Guid.Parse(propertyElement);
-                    } catch (FormatException ex) {
-                        throw new FormatException(ex.Message + " " + propertyElement + " in " + FullPath, ex);
-                    }
-                }
+        /// <summary>
+        /// Indicates that a common output directory is used.
+        /// Prevents GetCopyToOutputDirectoryItems in Microsoft.Common.CurrentVersion.targets from including too much transitive
+        /// baggage
+        /// </summary>
+        public bool UseCommonOutputDirectory { get; set; }
 
-                return Guid.Empty;
-            }
+        public Guid ProjectGuid {
+            get { return projectGuid.Evaluate(this); }
         }
 
         public override string Id {
             get { return GetAssemblyName(); }
         }
-
-        /// <summary>
-        /// Indicates that a common output directory is used.
-        /// Prevents GetCopyToOutputDirectoryItems in Microsoft.Common.CurrentVersion.targets from including too much transitive baggage
-        /// </summary>
-        public bool UseCommonOutputDirectory { get; set; }
 
         public string GetAssemblyName() {
             return OutputAssembly;
@@ -180,31 +162,59 @@ namespace Aderant.Build.ProjectSystem {
                     return LoadNonDiskBackedProject(globalProperties);
                 });
 
-            this.typeGuids = new Lazy<IReadOnlyList<Guid>>(ExtractTypeGuids, LazyThreadSafetyMode.PublicationOnly);
-        }
+            extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
+                configuredProject => {
+                    var propertyElement = project.Value.GetPropertyValue("ProjectTypeGuids");
 
-        private IReadOnlyList<Guid> ExtractTypeGuids() {
-            var propertyElement = project.Value.GetPropertyValue("ProjectTypeGuids");
+                    if (!string.IsNullOrEmpty(propertyElement)) {
+                        var guids = propertyElement.Split(';');
+                        var guidList = new List<Guid>();
 
-            if (!string.IsNullOrEmpty(propertyElement)) {
-                var guids = propertyElement.Split(';');
-                var guidList = new List<Guid>();
+                        guids.Aggregate(
+                            guidList,
+                            (list, s) => {
+                                Guid result;
+                                if (Guid.TryParse(s, out result)) {
+                                    list.Add(result);
+                                }
 
-                guids.Aggregate(
-                    guidList,
-                    (list, s) => {
-                        Guid result;
-                        if (Guid.TryParse(s, out result)) {
-                            list.Add(result);
+                                return list;
+                            });
+
+                        return guidList;
+                    }
+
+                    return new Guid[0];
+                },
+                EqualityComparer<object>.Default);
+
+            isWebProject = new Memoizer<ConfiguredProject, bool>(
+                configuredProject => {
+
+                    var guids = ProjectTypeGuids;
+                    if (guids != null) {
+                        return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();
+                    }
+
+                    return false;
+                },
+                EqualityComparer<object>.Default);
+
+            projectGuid = new Memoizer<ConfiguredProject, Guid>(
+                configuredProject => {
+
+                    var propertyElement = project.Value.GetPropertyValue("ProjectGuid");
+                    if (propertyElement != null) {
+                        try {
+                            return Guid.Parse(propertyElement);
+                        } catch (FormatException ex) {
+                            throw new FormatException(ex.Message + " " + propertyElement + " in " + FullPath, ex);
                         }
+                    }
 
-                        return list;
-                    });
-
-                return guidList;
-            }
-
-            return null;
+                    return Guid.Empty;
+                },
+                EqualityComparer<object>.Default);
         }
 
         private Project LoadNonDiskBackedProject(IDictionary<string, string> globalProperties) {
@@ -248,7 +258,7 @@ namespace Aderant.Build.ProjectSystem {
                     IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
 
                     // GC optimization
-                    this.BuildConfiguration = ProjectBuildConfiguration.GetConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
+                    BuildConfiguration = ProjectBuildConfiguration.GetConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
 
                     if (BuildConfiguration == null) {
                         BuildConfiguration = new ProjectBuildConfiguration(projectConfigurationInSolution.ConfigurationName, projectConfigurationInSolution.PlatformName);
@@ -428,4 +438,5 @@ namespace Aderant.Build.ProjectSystem {
         public string Tag { get; set; }
         public DependencyAnalyzer.BuildReason Flags { get; set; }
     }
+
 }

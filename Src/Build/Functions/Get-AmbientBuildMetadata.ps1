@@ -39,11 +39,14 @@ function Get-AmbientBuildMetadata {
 
             if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { $buildInfo.DebugLoggingEnabled = $true }
 
-            $buildInfo.SetPullRequestInfo(
-                (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_PULLREQUESTID'),
-                (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
-                (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
-        } else {        
+            if (Get-EnvironmentVariable 'BUILD_REASON' -eq "PullRequest") {            
+                $buildInfo.SetPullRequestInfo(
+                    (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_PULLREQUESTID'),
+                    (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
+                    (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
+                }
+        } else {
+            #TODO: Um?
             $buildInfo.BuildSourcesDirectory = "C:\Source\ExpertSuite"
         }
 

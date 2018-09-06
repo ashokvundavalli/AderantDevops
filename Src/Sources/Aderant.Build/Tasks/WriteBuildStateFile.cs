@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Framework;
 
@@ -21,4 +20,5 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
     }
+
 }

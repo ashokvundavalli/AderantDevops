@@ -17,7 +17,7 @@ namespace Aderant.Build.Tasks {
         public string IntermediateDirectory { get; set; }
 
         [Required]
-        public string OutputPath { get; set; }
+        public ITaskItem OutputPath { get; set; }
 
         [Required]
         public string ProjectGuid { get; set; }
@@ -31,11 +31,12 @@ namespace Aderant.Build.Tasks {
         public string[] References { get; set; }
 
         public override bool ExecuteTask() {
+
             var builder = new ProjectOutputSnapshotBuilder {
                 SourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory,
                 ProjectFile = ProjectFile,
                 ProjectOutputs = ProjectOutputs,
-                OutputPath = OutputPath,
+                OutputPath = OutputPath.ItemSpec,
                 IntermediateDirectory = IntermediateDirectory,
                 ProjectTypeGuids = ProjectTypeGuids,
                 TestProjectType = TestProjectType,
@@ -43,7 +44,8 @@ namespace Aderant.Build.Tasks {
             };
 
             var snapshot = builder.BuildSnapshot(Guid.Parse(ProjectGuid));
-            PipelineService.RecordProjectOutput(snapshot);
+
+            PipelineService.RecordProjectOutputs(snapshot);
 
             return !Log.HasLoggedErrors;
         }

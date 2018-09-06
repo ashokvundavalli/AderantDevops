@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using Aderant.Build;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -22,7 +20,7 @@ namespace UnitTest.Build.ProjectSystem {
 
             var outputFilesSnapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
 
-            service.RecordProjectOutput(outputFilesSnapshot);
+            service.RecordProjectOutputs(outputFilesSnapshot);
             
             Assert.AreEqual(1, service.Outputs.Keys.Count);
             Assert.IsTrue(service.Outputs.ContainsKey(@"d\foo.csproj"));

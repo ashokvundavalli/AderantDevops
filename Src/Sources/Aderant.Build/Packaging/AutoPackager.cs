@@ -12,7 +12,7 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
         }
 
-        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<OutputFilesSnapshot> outputs, string publisherName) {
+        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<ProjectOutputSnapshot> outputs) {
             List<string> outputList = new List<string>();
 
             foreach (var project in outputs) {
@@ -53,7 +53,7 @@ namespace Aderant.Build.Packaging {
             return artifactItems;
         }
 
-        public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<OutputFilesSnapshot> snapshots, string publisherName, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
+        public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<ProjectOutputSnapshot> snapshots, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
             foreach (var artifactPackageDefinition in autoPackages) {
                 if (packages.Any(s => s.Id == artifactPackageDefinition.Id)) {
                     throw new InvalidOperationException("A generated package cannot have the same name as a custom package. The package name is: " + artifactPackageDefinition.Id);
@@ -63,7 +63,7 @@ namespace Aderant.Build.Packaging {
             var allFiles = packages.SelectMany(s => s.GetFiles()).ToList();
 
             foreach (var autoPackage in autoPackages.OrderBy(d => d.Id, StringComparer.OrdinalIgnoreCase)) {
-                var packageContent = FilterGeneratedPackage(snapshots, publisherName, autoPackage, allFiles);
+                var packageContent = FilterGeneratedPackage(snapshots, autoPackage, allFiles);
 
                 allFiles.AddRange(packageContent);
 
@@ -73,14 +73,15 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IEnumerable<OutputFilesSnapshot> snapshot, string publisherName, ArtifactPackageDefinition definition, List<PathSpec> artifact) {
-            var files = definition.GetFiles().ToList();
+        private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IEnumerable<ProjectOutputSnapshot> snapshot, ArtifactPackageDefinition definition, List<PathSpec> allFiles) {
+            var filesFromDefinition = definition.GetFiles().ToList();
 
             var uniqueContent = new List<PathSpec>();
 
-            foreach (var path in files) {
+            foreach (var path in filesFromDefinition) {
                 bool add = true;
-                foreach (PathSpec spec in artifact) {
+
+                foreach (PathSpec spec in allFiles) {
                     if (path == spec) {
                         add = false;
                         // Another package already defines this path combination
@@ -102,7 +103,7 @@ namespace Aderant.Build.Packaging {
             }
 
             logger.Info("Building package: " + definition.Id);
-            return BuildArtifact(uniqueContent, snapshot, publisherName);
+            return BuildArtifact(uniqueContent, snapshot);
         }
     }
 }

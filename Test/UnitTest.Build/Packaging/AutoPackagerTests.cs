@@ -16,14 +16,14 @@ namespace UnitTest.Build.Packaging {
                 new PathSpec("Foo.dll", "Foo.dll"),
             };
 
-            var snapshot = new OutputFilesSnapshot {
+            var snapshot = new ProjectOutputSnapshot {
                 IsTestProject = true,
                 Directory = "",
                 OutputPath = "",
                 FilesWritten = new[] { "Foo.dll" },
             };
 
-            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot }, "");
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
 
             Assert.AreEqual(1, files.Count);
         }
@@ -36,14 +36,14 @@ namespace UnitTest.Build.Packaging {
                 new PathSpec(@"Test\Foo.dll", @"Test\Foo.dll"),
             };
 
-            var snapshot = new OutputFilesSnapshot {
+            var snapshot = new ProjectOutputSnapshot {
                 IsTestProject = true,
                 Directory = "",
                 OutputPath = "",
                 FilesWritten = new[] { @"Test\Foo.dll" },
             };
 
-            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot }, "");
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
 
             Assert.AreEqual(1, files.Count);
         }
@@ -52,7 +52,7 @@ namespace UnitTest.Build.Packaging {
         public void File_content_of_auto_packages_is_unique() {
             var builder = new AutoPackager(NullLogger.Default);
 
-            var snapshot = new OutputFilesSnapshot {
+            var snapshot = new ProjectOutputSnapshot {
                 IsTestProject = true,
                 Directory = "",
                 OutputPath = "",
@@ -61,7 +61,6 @@ namespace UnitTest.Build.Packaging {
 
             var definitions = builder.CreatePackages(
                 new[] { snapshot },
-                "",
                 new[] {
                     ArtifactPackageDefinition.Create(
                         "A",

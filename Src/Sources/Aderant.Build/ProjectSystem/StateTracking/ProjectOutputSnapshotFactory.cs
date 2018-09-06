@@ -27,7 +27,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public string[] References { get; set; }
 
-        public OutputFilesSnapshot BuildSnapshot(Guid projectGuid) {
+        public ProjectOutputSnapshot BuildSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
             if (SourcesDirectory != null && projectFile.StartsWith(SourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
@@ -38,7 +38,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             bool isTestProject = IsTestProject();
 
-            var snapshot = new OutputFilesSnapshot {
+            var snapshot = new ProjectOutputSnapshot {
                 ProjectFile = projectFile,
                 ProjectGuid = projectGuid,
                 FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
@@ -93,7 +93,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return isTestProject;
         }
 
-        internal static OutputFilesSnapshot RecordProjectOutputs(
+        internal static ProjectOutputSnapshot RecordProjectOutputs(
             Guid projectGuid,
             string sourcesDirectory,
             string projectFile,

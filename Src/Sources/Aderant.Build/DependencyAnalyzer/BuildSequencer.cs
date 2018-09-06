@@ -8,6 +8,7 @@ using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl.Model;
@@ -26,6 +27,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.fileSystem = fileSystem;
         }
 
+        public IBuildPipelineService PipelineService { get; set; }
+
         public Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
@@ -41,6 +44,15 @@ namespace Aderant.Build.DependencyAnalyzer {
             AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
+
+            if (PipelineService != null) {
+                foreach (IDependable dependable in projectsInDependencyOrder) {
+                    ConfiguredProject configuredProject = dependable as ConfiguredProject;
+                    if (configuredProject != null) {
+                        PipelineService.TrackProject(configuredProject.ProjectGuid, configuredProject.FullPath);
+                    }
+                }
+            }
 
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
@@ -62,7 +74,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 logger.Info(sb.ToString());
             }
 
-            var pipeline = new BuildPipeline(fileSystem);
+            var pipeline = new PipelineProjectBuilder(fileSystem);
             return pipeline.GenerateProject(groups, files, null);
         }
 

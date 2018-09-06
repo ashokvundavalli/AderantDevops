@@ -8,13 +8,13 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         [Required]
         public string SolutionRoot { get; set; }
 
-        public string PublisherName { get; set; }
+        public string Container { get; set; }
 
         public string WorkingDirectory { get; set; }
 
         public override bool ExecuteTask() {
             var service = new ArtifactService(Logger);
-            service.Resolve(Context, PublisherName, SolutionRoot, WorkingDirectory);
+            service.Resolve(Context, Container, SolutionRoot, WorkingDirectory);
 
             return !Log.HasLoggedErrors; 
         }

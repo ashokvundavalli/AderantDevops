@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.ServiceModel;
 using Aderant.Build.Packaging;
+using ProtoBuf;
 
 namespace Aderant.Build.PipelineService {
 
@@ -13,29 +16,52 @@ namespace Aderant.Build.PipelineService {
         BuildOperationContext GetContext();
 
         [OperationContract]
-        void RecordProjectOutput(OutputFilesSnapshot snapshot);
-        
+        void RecordProjectOutputs(ProjectOutputSnapshot snapshot);
+
         /// <summary>
-        /// Returns the outputs for a specific publisher.
+        /// Returns the outputs for a specific container.
         /// </summary>
         [OperationContract]
-        IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName);
-        
+        IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container);
+
         /// <summary>
         /// Returns the outputs for all projects seen by the build.
         /// Keyed by project file.
         /// </summary>
         [OperationContract]
-        IEnumerable<OutputFilesSnapshot> GetAllProjectOutputs();
+        IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs();
 
         [OperationContract]
-        void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests);
+        void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests);
 
         [OperationContract]
         void PutVariable(string scope, string variableName, string value);
 
         [OperationContract]
         string GetVariable(string scope, string variableName);
+
+        [OperationContract]
+        void TrackProject(Guid projectGuid, string fullPath);
+
+        [OperationContract]
+        IEnumerable<TrackedProject> GetTrackedProjects();
+
+        [OperationContract]
+        IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container);
+    }
+
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    [DataContract]
+    internal class TrackedProject {
+
+        [DataMember]
+        public Guid ProjectGuid { get; set; }
+
+        /// <summary>
+        /// The full local path to the project file
+        /// </summary>
+        [DataMember]
+        public string FullPath { get; set; }
     }
 
     [ServiceContract]
