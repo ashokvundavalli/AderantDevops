@@ -261,7 +261,8 @@ Should not be used as it prevents incremental builds which increases build times
 
     $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
-    $TASKCONTEXT = Get-Variable("distributedTaskContext")
+    $TASKCONTEXT =   $ExecutionContext.SessionState.PSVariable.Get("distributedTaskContext")
+  
 
     Write-Host "TASKCONTEXT $TASKCONTEXT"
     RETURN
