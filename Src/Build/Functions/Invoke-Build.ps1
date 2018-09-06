@@ -261,6 +261,11 @@ Should not be used as it prevents incremental builds which increases build times
 
     $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
+    $TASKCONTEXT = $host.Runspace.SessionStateProxy.GetVariable("distributedTaskContext")
+
+    Write-Host "TASKCONTEXT $TASKCONTEXT"
+    RETURN
+
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextEndpoint)
     $contextService.Publish($context)
