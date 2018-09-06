@@ -14,9 +14,11 @@ namespace Aderant.Build.PipelineService {
         ConcurrencyMode = ConcurrencyMode.Single,
         MaxItemsInObjectGraph = Int32.MaxValue)]
     internal class BuildPipelineServiceImpl : IBuildPipelineService {
-        private BuildOperationContext ctx;
 
         private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
+        private BuildOperationContext ctx;
+
+        internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
         public void Publish(BuildOperationContext context) {
             ctx = context;
@@ -26,8 +28,16 @@ namespace Aderant.Build.PipelineService {
             return ctx;
         }
 
-        public void RecordProjectOutputs(OutputFilesSnapshot snapshot) {
-            ctx.RecordProjectOutputs(snapshot);
+        public void RecordProjectOutput(OutputFilesSnapshot snapshot) {
+            Outputs[snapshot.ProjectFile] = snapshot;
+        }
+
+        public IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName) {
+            return Outputs.GetProjectsForTag(publisherName);
+        }
+
+        public IEnumerable<OutputFilesSnapshot> GetAllProjectOutputs() {
+            return Outputs.Values;
         }
 
         public void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests) {

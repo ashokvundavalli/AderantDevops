@@ -56,7 +56,6 @@ namespace Aderant.Build.VersionControl {
                     string commonAncestor;
                     oldCommit = FindMostLikelyReusableBucket(fromBranch, repository, newCommit, out commonAncestor);
                     info.CommonAncestor = commonAncestor;
-                    info.CommonCommit = oldCommit.Id.Sha;
                 } else {
                     oldCommit = GetTip(toBranch, repository);
                 }
@@ -72,6 +71,8 @@ namespace Aderant.Build.VersionControl {
                     }
 
                     if (oldCommit != null) {
+                        info.CommonCommit = oldCommit.Id.Sha;
+
                         // Collect all changed files between the two commits.
                         GetChanges(includeLocalChanges, repository, oldCommit, newCommit, workingDirectory, info);
 

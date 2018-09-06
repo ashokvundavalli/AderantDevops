@@ -350,7 +350,7 @@
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
 
-    <TrackProjectOutputs
+    <RecordProjectOutputs
       ContextEndpoint="$(ContextEndpoint)"
       ProjectGuid="$(ProjectGuid)"
       ProjectTypeGuids="$(ProjectTypeGuids)"

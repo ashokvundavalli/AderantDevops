@@ -1,4 +1,5 @@
 ﻿using System;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
@@ -7,7 +8,7 @@ namespace Aderant.Build.Tasks {
     /// Records outputs from an MSBuild project.
     /// Used to drive the the build cache resolution algorithm
     /// </summary>
-    public class TrackProjectOutputs : BuildOperationContextTask {
+    public class RecordProjectOutputs : BuildOperationContextTask {
 
         [Required]
         public string ProjectFile { get; set; }
@@ -30,19 +31,19 @@ namespace Aderant.Build.Tasks {
         public string[] References { get; set; }
 
         public override bool ExecuteTask() {
+            var builder = new ProjectOutputSnapshotBuilder {
+                SourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory,
+                ProjectFile = ProjectFile,
+                ProjectOutputs = ProjectOutputs,
+                OutputPath = OutputPath,
+                IntermediateDirectory = IntermediateDirectory,
+                ProjectTypeGuids = ProjectTypeGuids,
+                TestProjectType = TestProjectType,
+                References = References,
+            };
 
-            var snapshot = Context.RecordProjectOutputs(
-                Guid.Parse(ProjectGuid),
-                Context.BuildMetadata.BuildSourcesDirectory,
-                ProjectFile,
-                ProjectOutputs,
-                OutputPath,
-                IntermediateDirectory,
-                ProjectTypeGuids,
-                TestProjectType,
-                References);
-
-            PipelineService.RecordProjectOutputs(snapshot);
+            var snapshot = builder.BuildSnapshot(Guid.Parse(ProjectGuid));
+            PipelineService.RecordProjectOutput(snapshot);
 
             return !Log.HasLoggedErrors;
         }

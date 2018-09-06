@@ -13,7 +13,20 @@ namespace Aderant.Build.PipelineService {
         BuildOperationContext GetContext();
 
         [OperationContract]
-        void RecordProjectOutputs(OutputFilesSnapshot snapshot);
+        void RecordProjectOutput(OutputFilesSnapshot snapshot);
+        
+        /// <summary>
+        /// Returns the outputs for a specific publisher.
+        /// </summary>
+        [OperationContract]
+        IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName);
+        
+        /// <summary>
+        /// Returns the outputs for all projects seen by the build.
+        /// Keyed by project file.
+        /// </summary>
+        [OperationContract]
+        IEnumerable<OutputFilesSnapshot> GetAllProjectOutputs();
 
         [OperationContract]
         void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests);

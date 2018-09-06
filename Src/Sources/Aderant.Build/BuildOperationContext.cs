@@ -6,7 +6,6 @@ using System.Runtime.Serialization;
 using System.Threading;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
-using Aderant.Build.Services;
 using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 using ProtoBuf;
@@ -41,18 +40,11 @@ namespace Aderant.Build {
         [DataMember]
         private bool isDesktopBuild = true;
 
-        [DataMember]
-        private ProjectTreeOutputSnapshot outputs;
-
         [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
 
         [IgnoreDataMember]
         private int recordArtifactCount;
-
-        [IgnoreDataMember]
-        [ProtoIgnore]
-        private IContextualServiceProvider serviceProvider;
 
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
@@ -62,9 +54,6 @@ namespace Aderant.Build {
 
         [DataMember]
         private BuildSwitches switches = default(BuildSwitches);
-
-        [IgnoreDataMember]
-        private int trackedProjectCount;
 
         [DataMember]
         private ICollection<string> writtenStateFiles;
@@ -139,16 +128,6 @@ namespace Aderant.Build {
         public BuildSwitches Switches {
             get { return switches; }
             set { switches = value; }
-        }
-
-        internal IContextualServiceProvider ServiceProvider {
-            get {
-                if (serviceProvider != null) {
-                    return serviceProvider;
-                }
-
-                return serviceProvider = ServiceContainer.Default;
-            }
         }
 
         [DataMember]
@@ -281,61 +260,6 @@ namespace Aderant.Build {
             return null;
         }
 
-        internal OutputFilesSnapshot RecordProjectOutputs(
-            Guid projectGuid,
-            string sourcesDirectory,
-            string projectFile,
-            string[] projectOutputs,
-            string outputPath,
-            string intermediateDirectory,
-            IReadOnlyCollection<string> projectTypeGuids = null,
-            string testProjectType = null,
-            string[] references = null) {
-            ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
-
-            InitOutputs();
-
-            var tracker = new ProjectOutputSnapshotFactory(outputs) {
-                SourcesDirectory = sourcesDirectory,
-                ProjectFile = projectFile,
-                ProjectOutputs = projectOutputs,
-                OutputPath = outputPath,
-                IntermediateDirectory = intermediateDirectory,
-                ProjectTypeGuids = projectTypeGuids,
-                TestProjectType = testProjectType,
-                References = references,
-            };
-
-            return tracker.TakeSnapshot(projectGuid);
-        }
-
-        private void InitOutputs() {
-            Interlocked.Increment(ref trackedProjectCount);
-
-            if (outputs == null) {
-                outputs = new ProjectTreeOutputSnapshot();
-            }
-        }
-
-        /// <summary>
-        /// Returns the outputs for all projects seen by the build.
-        /// Keyed by project file.
-        /// </summary>
-        internal ProjectTreeOutputSnapshot GetProjectOutputs() {
-            return outputs;
-        }
-
-        /// <summary>
-        /// Returns the outputs for a specific publisher.
-        /// </summary>
-        internal IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName) {
-            if (outputs != null) {
-                return outputs.GetProjectsForTag(publisherName);
-            }
-
-            return null;
-        }
-
         /// <summary>
         /// Returns the artifacts created during the build.
         /// Keyed by publisher.
@@ -362,12 +286,6 @@ namespace Aderant.Build {
                 }
 
             return null;
-        }
-
-        internal void RecordProjectOutputs(OutputFilesSnapshot snapshot) {
-            InitOutputs();
-
-            outputs[snapshot.ProjectFile] = snapshot;
         }
     }
 

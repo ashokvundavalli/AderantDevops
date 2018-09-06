@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -108,16 +109,17 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             //}
         }
 
-        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context) {
+        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<OutputFilesSnapshot> outputs) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
 
             foreach (var bucket in buckets) {
                 var tag = bucket.Tag;
-
-                IEnumerable<OutputFilesSnapshot> projectOutputSnapshot = null;
-                var outputs = context.GetProjectOutputs();
-                if (outputs != null) {
-                    projectOutputSnapshot = outputs.GetProjectsForTag(tag);
+                
+                List<OutputFilesSnapshot> projectOutputSnapshot = new List<OutputFilesSnapshot>();
+                foreach (var output in outputs) {
+                    if (string.Equals(output.Directory, tag, StringComparison.OrdinalIgnoreCase)) {
+                        projectOutputSnapshot.Add(output);
+                    }
                 }
 
                 ArtifactCollection artifactCollection = null;
@@ -162,7 +164,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         public void WriteStateFiles(IBuildPipelineServiceContract pipelineService, BuildOperationContext context) {
-            var stateArtifacts = WriteStateFiles(context);
+            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs());
 
             pipelineService.AssociateArtifacts(stateArtifacts);
 

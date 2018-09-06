@@ -22,8 +22,9 @@
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
     
     <!--Test configuration-->
-    <RunTest Condition="'$(RunTest)' == ''">true</RunTest>
-    <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">false</RunIntegrationTests>
+    
+    <RunTest>$([MSBuild]::ValueOrDefault('$(RunTest)', 'true'))</RunTest>
+    <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
     <CodeCoverage Condition="'$(CodeCoverage)' == ''">true</CodeCoverage>
 
     <!-- TODO: Move to each project -->
@@ -44,13 +45,14 @@
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
-
+    
     <CopyToDropEnabled>true</CopyToDropEnabled>
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
 
-  <Import Project="$(BuildScriptsDirectory)Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.Build.Testing.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -58,6 +60,7 @@
       <!--ArchiveStagingDirectory;-->
       CreatePipeline;
       ExecutePipeline;
+      RunTests;
       WriteStateFiles;
       PackageProduct;
       CopyToDrop;

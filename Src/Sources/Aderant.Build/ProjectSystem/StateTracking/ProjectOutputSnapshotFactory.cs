@@ -2,19 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
 
     /// <summary>
     /// Takes a snapshot of the output files of a project.
     /// </summary>
-    internal class ProjectOutputSnapshotFactory {
-        private readonly ProjectTreeOutputSnapshot outputs;
-
-        public ProjectOutputSnapshotFactory(ProjectTreeOutputSnapshot outputs) {
-            this.outputs = outputs;
-        }
+    internal class ProjectOutputSnapshotBuilder {
 
         public string SourcesDirectory { get; set; }
         public string ProjectFile { get; set; }
@@ -33,7 +27,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public string[] References { get; set; }
 
-        public OutputFilesSnapshot TakeSnapshot(Guid projectGuid) {
+        public OutputFilesSnapshot BuildSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
             if (SourcesDirectory != null && projectFile.StartsWith(SourcesDirectory, StringComparison.OrdinalIgnoreCase)) {
@@ -44,31 +38,21 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             bool isTestProject = IsTestProject();
 
-            if (!outputs.ContainsKey(projectFile)) {
-                var snapshot = outputs[projectFile] = new OutputFilesSnapshot {
-                    ProjectFile = projectFile,
-                    ProjectGuid = projectGuid,
-                    FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
-                    OutputPath = OutputPath,
-                    Origin = "ThisBuild",
-                    Directory = GetDirectory(projectFile),
-                    IsTestProject = isTestProject,
-                };
+            var snapshot = new OutputFilesSnapshot {
+                ProjectFile = projectFile,
+                ProjectGuid = projectGuid,
+                FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
+                OutputPath = OutputPath,
+                Origin = "ThisBuild",
+                Directory = GetDirectory(projectFile),
+                IsTestProject = isTestProject,
+            };
 
-                return snapshot;
-            } else {
-                ThrowDoubleWrite();
-            }
-
-            return null;
+            return snapshot;
         }
 
         private static string GetDirectory(string projectFile) {
             return projectFile.Split(Path.DirectorySeparatorChar)[0];
-        }
-
-        private static void ThrowDoubleWrite() {
-            throw new InvalidOperationException("Possible double write detected");
         }
 
         private static string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
@@ -107,6 +91,33 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             return isTestProject;
+        }
+
+        internal static OutputFilesSnapshot RecordProjectOutputs(
+            Guid projectGuid,
+            string sourcesDirectory,
+            string projectFile,
+            string[] projectOutputs,
+            string outputPath,
+            string intermediateDirectory,
+            IReadOnlyCollection<string> projectTypeGuids = null,
+            string testProjectType = null,
+            string[] references = null) {
+
+            ErrorUtilities.IsNotNull(sourcesDirectory, nameof(sourcesDirectory));
+
+            var tracker = new ProjectOutputSnapshotBuilder {
+                SourcesDirectory = sourcesDirectory,
+                ProjectFile = projectFile,
+                ProjectOutputs = projectOutputs,
+                OutputPath = outputPath,
+                IntermediateDirectory = intermediateDirectory,
+                ProjectTypeGuids = projectTypeGuids,
+                TestProjectType = testProjectType,
+                References = references,
+            };
+
+            return tracker.BuildSnapshot(projectGuid);
         }
     }
 }

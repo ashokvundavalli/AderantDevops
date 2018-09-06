@@ -66,8 +66,8 @@ namespace Aderant.Build.Packaging {
 
             var builder = new AutoPackager(logger);
 
-            snapshots.ForEach(context.RecordProjectOutputs);
-            var snapshot = context.GetProjectOutputs(publisherName);
+            snapshots.ForEach(pipelineService.RecordProjectOutput);
+            var snapshot = pipelineService.GetProjectOutputs(publisherName);
 
             IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, publisherName, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
@@ -85,7 +85,7 @@ namespace Aderant.Build.Packaging {
         private void TrackSnapshots(List<OutputFilesSnapshot> snapshots) {
             if (pipelineService != null) {
                 foreach (var filesSnapshot in snapshots) {
-                    pipelineService.RecordProjectOutputs(filesSnapshot);
+                    pipelineService.RecordProjectOutput(filesSnapshot);
                 }
             }
         }
@@ -145,7 +145,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private List<OutputFilesSnapshot> Merge(BuildOperationContext context, string publisherName) {
-            var snapshots = context.GetProjectOutputs(publisherName);
+            var snapshots = pipelineService.GetProjectOutputs(publisherName);
 
             List<OutputFilesSnapshot> snapshotList;
             if (snapshots == null) {
@@ -485,12 +485,14 @@ namespace Aderant.Build.Packaging {
         public PublishCommands GetPublishCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
             var buildId = metadata.BuildId;
 
-            // Phase 1 - assumes everything is a prebuilt/cache artifact
-            var artifacts = pipelineService.GetAssociatedArtifacts();
-            AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
-
             List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
-            artifactsWithStoragePaths.AddRange(artifacts);
+
+            if (!metadata.IsPullRequest) {
+                // Phase 1 - assumes everything is a prebuilt/cache artifact
+                var artifacts = pipelineService.GetAssociatedArtifacts();
+                AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
+                artifactsWithStoragePaths.AddRange(artifacts);
+            }
 
             // Phase 2 - non-cache artifacts
             var builder = new ArtifactDropPathBuilder {

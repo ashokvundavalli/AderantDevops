@@ -6,12 +6,12 @@ using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
-    /// Proxy for <see cref="IBuildPipelineService"/>.
+    /// Proxy for <see cref="IBuildPipelineService" />.
     /// </summary>
     internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService, IBuildPipelineServiceContract {
 
         static BuildPipelineServiceProxy() {
-            ClientBase<IBuildPipelineService>.CacheSetting = CacheSetting.AlwaysOn;
+            CacheSetting = CacheSetting.AlwaysOn;
         }
 
         public BuildPipelineServiceProxy(Binding binding, EndpointAddress remoteAddress)
@@ -27,8 +27,16 @@ namespace Aderant.Build.PipelineService {
             return Channel.GetContext();
         }
 
-        public void RecordProjectOutputs(OutputFilesSnapshot snapshot) {
-            Channel.RecordProjectOutputs(snapshot);
+        public void RecordProjectOutput(OutputFilesSnapshot snapshot) {
+            Channel.RecordProjectOutput(snapshot);
+        }
+
+        public IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName) {
+            return Channel.GetProjectOutputs(publisherName);
+        }
+
+        public IEnumerable<OutputFilesSnapshot> GetAllProjectOutputs() {
+            return Channel.GetAllProjectOutputs();
         }
 
         public void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests) {
