@@ -234,12 +234,50 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // We want to be able to specify the flavor globally in a build all so remove it from the property set
                     properties = RemoveFlavor(properties);
 
+                    properties = ApplyCommandLineProperties(properties);
+
                     propertyList.Add(CreateSinglePropertyLine(properties));
                     propertyList.Add(PathUtility.EnsureTrailingSlash($"SolutionDirectoryPath={solutionDirectoryPath}"));
                 }
             }
 
             return propertyList;
+        }
+
+        private string[] ApplyCommandLineProperties(string[] properties) {
+            // Find all global command line property specifications 
+            string[] commandLineArgs = Environment.GetCommandLineArgs();
+            List<string> comandLineArgs = new List<string>();
+            foreach (string property in commandLineArgs) {
+                if (property.StartsWith("/p:", StringComparison.InvariantCultureIgnoreCase)) {
+                    comandLineArgs.Add(property);
+                }
+            }
+
+            var splitChar = new[] { '=' };
+
+            List<string> propertyList = new List<string>();
+
+            foreach (var property in properties) {
+                string[] split = property.Split(splitChar, 2);
+
+                string s = split[0].Replace("\"", "");
+
+                bool addRspProperty = true;
+                foreach (var commandLineArg in comandLineArgs) {
+                    if (commandLineArg.StartsWith(s, StringComparison.OrdinalIgnoreCase)) {
+                        // There is a command line arg with the same property name as specified in the RSP
+                        addRspProperty = false;
+                        break;
+                    }
+                }
+
+                if (addRspProperty) {
+                    propertyList.Add(property);
+                }
+            }
+
+            return propertyList.ToArray();
         }
 
         private PropertyList AddSolutionConfigurationProperties(ConfiguredProject visualStudioProject, PropertyList propertyList) {
@@ -279,7 +317,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             IList<string> lines = new List<string>();
 
             foreach (string property in properties) {
-                if (property.StartsWith("/p:")) {
+                if (property.StartsWith("/p:", StringComparison.InvariantCultureIgnoreCase)) {
                     string line = property.Substring(property.IndexOf("/p:", StringComparison.Ordinal) + 3).Replace("\"", "").Trim();
 
                     if (!line.StartsWith("BuildInParallel")) {
