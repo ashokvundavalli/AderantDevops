@@ -72,30 +72,45 @@ namespace UnitTest.Build {
             metadata.Artifacts = new Dictionary<string, ICollection<ArtifactManifest>>();
             metadata.Artifacts["Foo"] = new List<ArtifactManifest> { new ArtifactManifest { Id = "Bar" } };
 
-            metadata.Outputs = new Dictionary<string, OutputFilesSnapshot>();
-            metadata.Outputs["Baz"] = new OutputFilesSnapshot { Directory = "Gaz" };
+            metadata.Outputs = new Dictionary<string, ProjectOutputSnapshot>();
+            metadata.Outputs["Baz"] = new ProjectOutputSnapshot { Directory = "Gaz" };
 
             var instance = RoundTrip(metadata);
 
             Assert.IsNotNull(instance);
+            Assert.AreEqual(StateFileBase.CurrentSerializationVersion, instance.serializedVersion);
+
             Assert.AreEqual(1, instance.Artifacts.Keys.Count);
             Assert.AreEqual("Bar", instance.Artifacts["Foo"].First().Id);
 
             Assert.AreEqual(1, instance.Outputs.Keys.Count);
             Assert.AreEqual("Gaz", instance.Outputs["Baz"].Directory);
+            Assert.IsInstanceOfType(instance.Outputs, typeof(ProjectTreeOutputSnapshot));
+        }
+
+        [TestMethod]
+        public void Location_property_is_preserved() {
+            var metadata = new BuildStateFile();
+
+            metadata.Location = "Abc";
+        
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual("Abc", instance.Location);
         }
 
         private static T RoundTrip<T>(T artifact) {
             return ProtoDeserialize<T>(ProtoSerialize(artifact));
         }
 
-        public static T ProtoDeserialize<T>(byte[] data) {
+        private static T ProtoDeserialize<T>(byte[] data) {
             using (var stream = new MemoryStream(data)) {
                 return Serializer.Deserialize<T>(stream);
             }
         }
 
-        public static byte[] ProtoSerialize<T>(T graph) {
+        private static byte[] ProtoSerialize<T>(T graph) {
             using (var stream = new MemoryStream()) {
                 Serializer.Serialize(stream, graph);
                 stream.Position = 0;

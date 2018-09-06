@@ -9,6 +9,16 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
     [DataContract]
     public sealed class BuildStateFile : StateFileBase {
 
+        [DataMember]
+        private IDictionary<string, ICollection<ArtifactManifest>> artifacts;
+
+        [DataMember]
+        private IDictionary<string, ProjectOutputSnapshot> outputs;
+
+        [ProtoIgnore]
+        [IgnoreDataMember]
+        private bool requiresSerializationFixUp;
+
         [DataMember(EmitDefaultValue = false)]
         public BucketId BucketId { get; set; }
 
@@ -37,10 +47,23 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string ScmCommitId { get; set; }
 
         [DataMember(EmitDefaultValue = false, Name = nameof(Outputs))]
-        internal IDictionary<string, OutputFilesSnapshot> Outputs { get; set; }
+        internal IDictionary<string, ProjectOutputSnapshot> Outputs {
+            get {
+                if (requiresSerializationFixUp) {
+                    outputs = new ProjectTreeOutputSnapshot(outputs);
+                    requiresSerializationFixUp = false;
+                }
 
-        [DataMember(EmitDefaultValue = false, Name = nameof(Artifacts))]        
-        internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts { get; set; }
+                return outputs;
+            }
+            set { outputs = value; }
+        }
+
+        [DataMember(EmitDefaultValue = false, Name = nameof(Artifacts))]
+        internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts {
+            get { return artifacts; }
+            set { artifacts = value; }
+        }
 
         [DataMember(EmitDefaultValue = false)]
         public string ParentBuildId { get; set; }
@@ -53,13 +76,28 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         /// <summary>
         /// Specifies the origin of this file.
-        /// This property should not be serialized and should only be set when the object is being used. 
+        /// This property should not be serialized and should only be set when the object is being used.
         /// </summary>
         [DataMember(EmitDefaultValue = false)]
         internal string Location { get; set; }
 
         internal void PrepareForSerialization() {
             Location = null;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserialized(StreamingContext context) {
+            // Protocol buffers will set state to persistence, JSON serializer does not
+            if (context.State == StreamingContextStates.Persistence) {
+                requiresSerializationFixUp = true;
+            }
+        }
+
+        [OnSerializing]
+        internal void OnSerializing(StreamingContext context) {
+            if (context.State != StreamingContextStates.Persistence) {
+                PrepareForSerialization();
+            }
         }
     }
 }

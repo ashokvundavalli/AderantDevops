@@ -8,7 +8,7 @@ using ProtoBuf;
 namespace Aderant.Build.Packaging {
 
     /// <summary>
-    /// A build artifact is network accessible directory.
+    /// A build artifact is a network accessible directory.
     /// </summary>
     /// <remarks>
     /// The directory path is registered with TFS so it's garbage collection routine can purge obsoleted artifacts.

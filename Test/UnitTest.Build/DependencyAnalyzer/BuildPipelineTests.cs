@@ -17,7 +17,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
             var mock = new Mock<IFileSystem2>();
             mock.Setup(s => s.Root).Returns("");
 
-            var project = new BuildPipeline(mock.Object);
+            var project = new PipelineProjectBuilder(mock.Object);
 
             var items = new List<List<IDependable>> {
                 new List<IDependable> {
@@ -41,7 +41,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 new TestConfiguredProject(null, null) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
             };
 
-            BuildPipeline.SetUseCommonOutputDirectory(projects);
+            PipelineProjectBuilder.SetUseCommonOutputDirectory(projects);
 
             Assert.IsTrue(projects[0].UseCommonOutputDirectory);
             Assert.IsTrue(projects[1].UseCommonOutputDirectory);

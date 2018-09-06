@@ -32,7 +32,7 @@
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
-      RetrievePrebuildArtifacts;
+      RetrievePrebuilts;
       rmTransformTemplates;
       UpdateContext
     </RunBuildDependsOn>
@@ -103,11 +103,10 @@
   </Target>
 
 
-  <Target Name="RetrievePrebuildArtifacts" Condition="'$(SolutionRoot)' != ''">
-    <Message Text="$(ModuleName): restoring artifacts" />
+  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false'">
+    <Message Text="$(ModuleName): Restoring prebuilts" />
 
     <PropertyGroup>
-      <ProjectToPeek>$(SolutionDirectoryPath)Build\TFSBuild.proj</ProjectToPeek>
       <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
     </PropertyGroup>
 
@@ -119,7 +118,7 @@
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
       WorkingDirectory="$(ModuleBuildTempDirectory)"
-      PublisherName="$(ModuleName)" />
+      Container="$(ModuleName)" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"

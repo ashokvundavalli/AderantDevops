@@ -12,13 +12,13 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
-    internal class BuildPipeline {
+    internal class PipelineProjectBuilder {
         private const string PropertiesKey = "Properties";
         private const string BuildGroupId = "BuildGroupId";
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
 
-        public BuildPipeline(IFileSystem2 fileSystem) {
+        public PipelineProjectBuilder(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
@@ -144,7 +144,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var projectsForSolution = projects.Where(p => string.Equals(p.SolutionRoot, keys, StringComparison.OrdinalIgnoreCase));
 
                 var projectsByOutputPath = projectsForSolution.GroupBy(g => g.OutputPath, StringComparer.OrdinalIgnoreCase);
-                
+
                 foreach (var configuredProjects in projectsByOutputPath) {
                     if (configuredProjects.Count() > 1) {
                         foreach (var configuredProject in configuredProjects) {
@@ -234,7 +234,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // We want to be able to specify the flavor globally in a build all so remove it from the property set
                     properties = RemoveFlavor(properties);
 
-                    properties = ApplyCommandLineProperties(properties);
+                    properties = ApplyPropertiesFromCommandLineArgs(properties);
 
                     propertyList.Add(CreateSinglePropertyLine(properties));
                     propertyList.Add(PathUtility.EnsureTrailingSlash($"SolutionDirectoryPath={solutionDirectoryPath}"));
@@ -244,12 +244,17 @@ namespace Aderant.Build.DependencyAnalyzer {
             return propertyList;
         }
 
-        private string[] ApplyCommandLineProperties(string[] properties) {
+        /// <summary>
+        /// We want to be able to specify options and have these properties act as global variables.
+        /// Typically this happens automatically but since we provide the RSP properties explicitly to the MSBuild tasks
+        /// within the pipeline we need to evict properties from the RSP that would nullify the command line values
+        /// </summary>
+        private string[] ApplyPropertiesFromCommandLineArgs(string[] properties) {
             // Find all global command line property specifications 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
             List<string> comandLineArgs = new List<string>();
             foreach (string property in commandLineArgs) {
-                if (property.StartsWith("/p:", StringComparison.InvariantCultureIgnoreCase)) {
+                if (property.StartsWith("/p:", StringComparison.OrdinalIgnoreCase)) {
                     comandLineArgs.Add(property);
                 }
             }
@@ -263,16 +268,16 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string s = split[0].Replace("\"", "");
 
-                bool addRspProperty = true;
+                bool addPropertyFromResponseFile = true;
                 foreach (var commandLineArg in comandLineArgs) {
                     if (commandLineArg.StartsWith(s, StringComparison.OrdinalIgnoreCase)) {
                         // There is a command line arg with the same property name as specified in the RSP
-                        addRspProperty = false;
+                        addPropertyFromResponseFile = false;
                         break;
                     }
                 }
 
-                if (addRspProperty) {
+                if (addPropertyFromResponseFile) {
                     propertyList.Add(property);
                 }
             }
@@ -290,6 +295,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (visualStudioProject.UseCommonOutputDirectory) {
                 propertyList.Add("UseCommonOutputDirectory=true");
             }
+
             return propertyList;
         }
 
@@ -308,7 +314,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private string[] RemoveFlavor(string[] properties) {
             // TODO: Remove and use TreatAsLocalProperty
-            IEnumerable<string> newProperties = properties.Where(p => p.IndexOf("BuildFlavor", StringComparison.InvariantCultureIgnoreCase) == -1);
+            IEnumerable<string> newProperties = properties.Where(p => p.IndexOf("BuildFlavor", StringComparison.OrdinalIgnoreCase) == -1);
 
             return newProperties.ToArray();
         }

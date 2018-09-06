@@ -12,6 +12,7 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
 using Aderant.Build.Tasks;
@@ -107,7 +108,7 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles jobFiles) {
+        public async Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
             await LoadProjects(context.BuildRoot, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
@@ -126,6 +127,7 @@ namespace Aderant.Build.ProjectSystem {
 
             using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
+                sequencer.PipelineService = pipelineService;
 
                 Project project = sequencer.CreateProject(context, jobFiles, graph);
                 return project;
@@ -277,6 +279,9 @@ namespace Aderant.Build.ProjectSystem {
     }
 
     internal interface ISequencer {
+
+        IBuildPipelineService PipelineService { get; set; }
+
         Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph);
     }
 }

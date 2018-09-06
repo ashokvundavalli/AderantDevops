@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.MSBuild;
+using Aderant.Build.PipelineService;
 using Aderant.Build.Tasks;
 
 namespace Aderant.Build.ProjectSystem {
@@ -33,6 +34,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector);
 
-        Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles jobFiles);
+        Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles);
     }
 }

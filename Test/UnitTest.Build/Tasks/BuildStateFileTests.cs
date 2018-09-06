@@ -17,24 +17,49 @@ namespace UnitTest.Build.Tasks {
         }
 
         [TestMethod]
+        public void Location_property_is_no_preserved() {
+            var metadata = new BuildStateFile();
+
+            metadata.Location = "Abc";
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.IsNull(instance.Location);
+        }
+
+        [TestMethod]
         public void BuildStateFile_serialization() {
             var stateFile = new BuildStateFile();
-            stateFile.Outputs = new ProjectTreeOutputSnapshot { { "Foo", new OutputFilesSnapshot() } };
+            stateFile.Outputs = new ProjectTreeOutputSnapshot { { "Foo", new ProjectOutputSnapshot() } };
             stateFile.Artifacts = new ArtifactCollection();
             stateFile.PullRequestInfo = new PullRequestInfo {
                 Id = "1", SourceBranch = "2", TargetBranch = "3"
             };
 
-            using (var ms = new MemoryStream()) {
-                stateFile.Serialize(ms);
+            var instance = RoundTrip(stateFile);
 
-                ms.Position = 0;
+            Assert.AreEqual("1", instance.PullRequestInfo.Id);
+            Assert.AreEqual("2", instance.PullRequestInfo.SourceBranch);
+            Assert.AreEqual("3", instance.PullRequestInfo.TargetBranch);
 
-                BuildStateFile file = StateFileBase.DeserializeCache<BuildStateFile>(ms);
+        }
 
-                Assert.AreEqual("1", file.PullRequestInfo.Id);
-                Assert.AreEqual("2", file.PullRequestInfo.SourceBranch);
-                Assert.AreEqual("3", file.PullRequestInfo.TargetBranch);
+        private static T RoundTrip<T>(T artifact) where T : StateFileBase {
+            return Deserialize<T>(Serialize(artifact));
+        }
+
+        private static T Deserialize<T>(byte[] data) where T : StateFileBase {
+            using (var stream = new MemoryStream(data)) {
+                return StateFileBase.DeserializeCache<T>(stream);
+            }
+        }
+
+        public static byte[] Serialize<T>(T graph) where T : StateFileBase {
+            using (var stream = new MemoryStream()) {
+                graph.Serialize(stream);
+                stream.Position = 0;
+                return stream.ToArray();
             }
         }
 
@@ -68,7 +93,7 @@ namespace UnitTest.Build.Tasks {
             writer.WriteStateFile(
                 null,
                 null,
-                new[] { new OutputFilesSnapshot { ProjectFile = "p1" } },
+                new[] { new ProjectOutputSnapshot { ProjectFile = "p1" } },
                 null,
                 null,
                 null,

@@ -41,7 +41,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public string WriteStateFile(
             BuildStateFile previousBuild,
             BucketId bucket,
-            IEnumerable<OutputFilesSnapshot> currentOutputs,
+            IEnumerable<ProjectOutputSnapshot> currentOutputs,
             IDictionary<string, ICollection<ArtifactManifest>> artifacts,
             SourceTreeMetadata metadata,
             BuildMetadata buildMetadata,
@@ -65,7 +65,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             if (currentOutputs == null) {
-                currentOutputs = Enumerable.Empty<OutputFilesSnapshot>();
+                currentOutputs = Enumerable.Empty<ProjectOutputSnapshot>();
             }
 
             if (previousBuild != null) {
@@ -97,7 +97,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return destinationPath;
         }
 
-        private static void MergeExistingOutputs(string buildId, IDictionary<string, OutputFilesSnapshot> oldOutput, IEnumerable<OutputFilesSnapshot> newOutput) {
+        private static void MergeExistingOutputs(string buildId, IDictionary<string, ProjectOutputSnapshot> oldOutput, IEnumerable<ProjectOutputSnapshot> newOutput) {
             var merger = new OutputMerger();
             //foreach (var projectOutputs in oldOutput) {
             //    if (!newOutput.ContainsKey(projectOutputs.Key)) {
@@ -109,32 +109,35 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             //}
         }
 
-        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<OutputFilesSnapshot> outputs) {
+        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, Func<string, IEnumerable<ArtifactManifest>> unknown) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
+
+            var files = new List<BuildArtifact>();
 
             foreach (var bucket in buckets) {
                 var tag = bucket.Tag;
                 
-                List<OutputFilesSnapshot> projectOutputSnapshot = new List<OutputFilesSnapshot>();
+                List<ProjectOutputSnapshot> projectOutputSnapshot = new List<ProjectOutputSnapshot>();
                 foreach (var output in outputs) {
                     if (string.Equals(output.Directory, tag, StringComparison.OrdinalIgnoreCase)) {
                         projectOutputSnapshot.Add(output);
                     }
                 }
 
-                ArtifactCollection artifactCollection = null;
-                var artifacts = context.GetArtifacts();
-                if (artifacts != null) {
-                    artifactCollection = artifacts.GetArtifactsForTag(tag);
-                }
-
                 BuildStateFile previousBuild = context.GetStateFile(tag);
 
-                yield return WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context);
+                var artifactManifests = unknown(tag);
+
+                var collection = new ArtifactCollection();
+                collection[tag] = artifactManifests.ToList();
+
+                files.Add(WriteStateFile(previousBuild, bucket, projectOutputSnapshot, collection, context));
             }
+
+            return files;
         }
 
-        private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<OutputFilesSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
+        private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<ProjectOutputSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
             var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
             string containerName = CreateContainerName(bucket.Id);
@@ -163,8 +166,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return "~" + bucketId;
         }
 
-        public void WriteStateFiles(IBuildPipelineServiceContract pipelineService, BuildOperationContext context) {
-            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs());
+        public void WriteStateFiles(IBuildPipelineService pipelineService, BuildOperationContext context) {
+            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs(), (t) => pipelineService.GetArtifactsForContainer(t));
 
             pipelineService.AssociateArtifacts(stateArtifacts);
 

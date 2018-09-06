@@ -34,14 +34,14 @@ namespace Aderant.Build.Packaging {
         /// Publishes build artifacts to some kind of repository.
         /// </summary>
         /// <param name="context">The build context.</param>
-        /// <param name="publisherName">Optional. Used to identify the publisher</param>
+        /// <param name="container">Optional. Used to identify the container</param>
         /// <param name="definitions">The artifacts to publish</param>
-        internal IReadOnlyCollection<BuildArtifact> CreateArtifacts(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> definitions) {
-            ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
+        internal IReadOnlyCollection<BuildArtifact> CreateArtifacts(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> definitions) {
+            ErrorUtilities.IsNotNull(container, nameof(container));
 
             this.pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
-            var buildArtifacts = ProcessDefinitions(context, publisherName, definitions);
+            var buildArtifacts = ProcessDefinitions(context, container, definitions);
 
             if (pipelineService != null) {
                 pipelineService.AssociateArtifacts(buildArtifacts);
@@ -50,28 +50,31 @@ namespace Aderant.Build.Packaging {
             return buildArtifacts;
         }
 
-        private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string publisherName, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
+        private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             // TODO: Slow - optimize
             List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
 
             this.autoPackages = new List<ArtifactPackageDefinition>();
 
-            List<OutputFilesSnapshot> snapshots = Merge(context, publisherName);
+            List<ProjectOutputSnapshot> snapshots = Merge(context, container);
 
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
             // to only unique content is packaged
-            ProcessDefinitionFiles(true, context, publisherName, packages, copyList, buildArtifacts);
+            ProcessDefinitionFiles(true, context, container, packages, copyList, buildArtifacts);
 
             var builder = new AutoPackager(logger);
 
-            snapshots.ForEach(pipelineService.RecordProjectOutput);
-            var snapshot = pipelineService.GetProjectOutputs(publisherName);
+            foreach (var s in snapshots) {
+                pipelineService.RecordProjectOutputs(s);
+            }
 
-            IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, publisherName, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
+            var snapshot = pipelineService.GetProjectOutputs(container);
 
-            ProcessDefinitionFiles(false, context, publisherName, definitions, copyList, buildArtifacts);
+            IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
+
+            ProcessDefinitionFiles(false, context, container, definitions, copyList, buildArtifacts);
 
             TrackSnapshots(snapshots);
 
@@ -82,15 +85,15 @@ namespace Aderant.Build.Packaging {
             return buildArtifacts;
         }
 
-        private void TrackSnapshots(List<OutputFilesSnapshot> snapshots) {
+        private void TrackSnapshots(List<ProjectOutputSnapshot> snapshots) {
             if (pipelineService != null) {
                 foreach (var filesSnapshot in snapshots) {
-                    pipelineService.RecordProjectOutput(filesSnapshot);
+                    pipelineService.RecordProjectOutputs(filesSnapshot);
                 }
             }
         }
 
-        private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string publisherName, IEnumerable<ArtifactPackageDefinition> packages, List<Tuple<string, PathSpec>> copyList, List<BuildArtifact> buildArtifacts) {
+        private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string container, IEnumerable<ArtifactPackageDefinition> packages, List<Tuple<string, PathSpec>> copyList, List<BuildArtifact> buildArtifacts) {
 
             foreach (var definition in packages) {
                 if (ignoreAutoPackages) {
@@ -105,7 +108,7 @@ namespace Aderant.Build.Packaging {
                 if (files.Any()) {
                     CheckForDuplicates(definition.Id, files);
 
-                    var artifact = CreateBuildCacheArtifact(publisherName, copyList, definition, files);
+                    var artifact = CreateBuildCacheArtifact(container, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
                     }
@@ -118,7 +121,7 @@ namespace Aderant.Build.Packaging {
                     }
 
                     RecordArtifact(
-                        publisherName,
+                        container,
                         definition.Id,
                         files.Select(
                             s => new ArtifactItem {
@@ -128,47 +131,46 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        internal void RecordArtifact(string publisherName, string artifactId, ICollection<ArtifactItem> files) {
-            ErrorUtilities.IsNotNull(publisherName, nameof(publisherName));
+        internal void RecordArtifact(string container, string artifactId, ICollection<ArtifactItem> files) {
+            ErrorUtilities.IsNotNull(container, nameof(container));
             ErrorUtilities.IsNotNull(artifactId, nameof(artifactId));
 
-            ICollection<ArtifactManifest> manifests = new List<ArtifactManifest>();
-
-            manifests.Add(
-                new ArtifactManifest {
-                    Id = artifactId,
-                    InstanceId = Guid.NewGuid(),
-                    Files = files,
+            pipelineService.RecordArtifacts(
+                container,
+                new[] {
+                    new ArtifactManifest {
+                        Id = artifactId,
+                        InstanceId = Guid.NewGuid(),
+                        Files = files
+                    }
                 });
-
-            pipelineService.RecordArtifacts(publisherName, manifests);
         }
 
-        private List<OutputFilesSnapshot> Merge(BuildOperationContext context, string publisherName) {
-            var snapshots = pipelineService.GetProjectOutputs(publisherName);
+        private List<ProjectOutputSnapshot> Merge(BuildOperationContext context, string container) {
+            var snapshots = pipelineService.GetProjectOutputs(container);
 
-            List<OutputFilesSnapshot> snapshotList;
+            List<ProjectOutputSnapshot> snapshotList;
             if (snapshots == null) {
                 // in 100% reuse scenarios there maybe no outputs
-                snapshotList = new List<OutputFilesSnapshot>();
+                snapshotList = new List<ProjectOutputSnapshot>();
             } else {
                 snapshotList = snapshots.ToList();
             }
 
-            return MergeExistingOutputs(context, publisherName, snapshotList);
+            return MergeExistingOutputs(context, container, snapshotList);
         }
 
-        private static string GetProjectKey(string publisherName) {
-            return publisherName + "\\";
+        private static string GetProjectKey(string container) {
+            return container + "\\";
         }
 
-        private static List<OutputFilesSnapshot> MergeExistingOutputs(BuildOperationContext context, string publisherName, List<OutputFilesSnapshot> snapshots) {
+        private static List<ProjectOutputSnapshot> MergeExistingOutputs(BuildOperationContext context, string container, List<ProjectOutputSnapshot> snapshots) {
             // Takes the existing (cached build) state and applies to the current state
-            var previousBuild = context.GetStateFile(publisherName);
+            var previousBuild = context.GetStateFile(container);
 
             if (previousBuild != null) {
                 var merger = new OutputMerger();
-                merger.Merge(publisherName, previousBuild, snapshots);
+                merger.Merge(container, previousBuild, snapshots);
             }
 
             return snapshots;
@@ -202,16 +204,16 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
-        private BuildArtifact CreateBuildCacheArtifact(string publisher, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
-            var basePath = pathBuilder.GetBucketInstancePath(publisher);
+        private BuildArtifact CreateBuildCacheArtifact(string container, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
+            var basePath = pathBuilder.GetBucketInstancePath(container);
 
-            string container = Path.Combine(basePath, definition.Id);
+            string artifactPath = Path.Combine(basePath, definition.Id);
 
             foreach (var pathSpec in files) {
-                copyList.Add(Tuple.Create(container, pathSpec));
+                copyList.Add(Tuple.Create(artifactPath, pathSpec));
             }
 
-            return CreateArtifact(definition, container);
+            return CreateArtifact(definition, artifactPath);
         }
 
         private static BuildArtifact CreateArtifact(ArtifactPackageDefinition definition, string artifactPath) {
@@ -236,18 +238,18 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Fetches prebuilt objects
         /// </summary>
-        public void Resolve(BuildOperationContext context, string publisherName, string solutionRoot, string workingDirectory) {
-            var paths = BuildArtifactResolveOperation(context, publisherName, workingDirectory);
-            RunResolveOperation(context, solutionRoot, publisherName, paths);
+        public void Resolve(BuildOperationContext context, string container, string solutionRoot, string workingDirectory) {
+            var paths = BuildArtifactResolveOperation(context, container, workingDirectory);
+            RunResolveOperation(context, solutionRoot, container, paths);
         }
 
-        private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string publisherName, List<ArtifactPathSpec> artifactPaths) {
+        private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
             FetchArtifacts(artifactPaths);
 
-            BuildStateFile stateFile = context.GetStateFile(publisherName);
+            BuildStateFile stateFile = context.GetStateFile(container);
 
             var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
-            var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, publisherName, localArtifactFiles);
+            var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
@@ -258,17 +260,17 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string publisherName, string workingDirectory) {
+        private List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string container, string workingDirectory) {
             var result = new ArtifactResolveOperation();
 
             List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
             result.Paths = paths;
 
             if (context.StateFiles != null) {
-                BuildStateFile stateFile = context.GetStateFile(publisherName);
+                BuildStateFile stateFile = context.GetStateFile(container);
 
                 ICollection<ArtifactManifest> artifactManifests;
-                if (stateFile != null && stateFile.Artifacts.TryGetValue(publisherName, out artifactManifests)) {
+                if (stateFile != null && stateFile.Artifacts.TryGetValue(container, out artifactManifests)) {
                     foreach (var artifactManifest in artifactManifests) {
                         string artifactFolder = Path.Combine(stateFile.Location, artifactManifest.Id);
 
@@ -301,7 +303,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string publisherName, IEnumerable<string> artifacts) {
+        internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
             List<PathSpec> copyOperations = new List<PathSpec>();
 
             // TODO: Optimize
@@ -315,7 +317,7 @@ namespace Aderant.Build.Packaging {
                 return copyOperations;
             }
 
-            string key = GetProjectKey(publisherName);
+            string key = GetProjectKey(container);
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -551,14 +553,14 @@ namespace Aderant.Build.Packaging {
     }
 
     internal class OutputMerger {
-        public void Merge(string publisherName, BuildStateFile previousBuild, List<OutputFilesSnapshot> snapshots) {
+        public void Merge(string container, BuildStateFile previousBuild, List<ProjectOutputSnapshot> snapshots) {
             var previousSnapshot = new ProjectTreeOutputSnapshot(previousBuild.Outputs);
-            var previousProjects = previousSnapshot.GetProjectsForTag(publisherName);
+            var previousProjects = previousSnapshot.GetProjectsForTag(container);
 
             foreach (var previous in previousProjects) {
                 bool add = true;
                 foreach (var snapshot in snapshots) {
-                    if (snapshot.ProjectFile == previous.ProjectFile) {
+                    if (string.Equals(snapshot.ProjectFile, previous.ProjectFile, StringComparison.OrdinalIgnoreCase)) {
                         add = false;
                         break;
                     }

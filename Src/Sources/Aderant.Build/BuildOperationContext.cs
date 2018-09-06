@@ -16,8 +16,7 @@ namespace Aderant.Build {
     [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     public class BuildOperationContext {
 
-        [DataMember]
-        private ArtifactCollection artifacts;
+
 
         [DataMember(EmitDefaultValue = false)]
         private string artifactStagingDirectory;
@@ -43,8 +42,6 @@ namespace Aderant.Build {
         [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
 
-        [IgnoreDataMember]
-        private int recordArtifactCount;
 
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
@@ -181,19 +178,6 @@ namespace Aderant.Build {
             set { writtenStateFiles = value; }
         }
 
-        internal void RecordArtifact(string key, ICollection<ArtifactManifest> collection) {
-            InitArtifacts();
-
-            ICollection<ArtifactManifest> existing;
-            if (artifacts.TryGetValue(key, out existing)) {
-                foreach (var artifactManifest in collection) {
-                    existing.Add(artifactManifest);
-                }
-            } else {
-                artifacts[key] = collection;
-            }
-        }
-
         internal DependencyRelationshipProcessing GetRelationshipProcessingMode() {
             DependencyRelationshipProcessing relationshipProcessing = DependencyRelationshipProcessing.None;
             if (Switches.Downstream) {
@@ -260,22 +244,6 @@ namespace Aderant.Build {
             return null;
         }
 
-        /// <summary>
-        /// Returns the artifacts created during the build.
-        /// Keyed by publisher.
-        /// </summary>
-        internal ArtifactCollection GetArtifacts() {
-            return artifacts;
-        }
-
-        private void InitArtifacts() {
-            if (artifacts == null) {
-                artifacts = new ArtifactCollection();
-            }
-
-            Interlocked.Increment(ref recordArtifactCount);
-        }
-
         public BuildStateFile GetStateFile(string bucketTag) {
             var files = StateFiles;
             if (files != null)
@@ -328,17 +296,17 @@ namespace Aderant.Build {
 
     [CollectionDataContract]
     [ProtoContract]
-    internal class ProjectTreeOutputSnapshot : SortedList<string, OutputFilesSnapshot> {
+    internal class ProjectTreeOutputSnapshot : SortedList<string, ProjectOutputSnapshot> {
 
         public ProjectTreeOutputSnapshot()
             : base(StringComparer.OrdinalIgnoreCase) {
         }
 
-        public ProjectTreeOutputSnapshot(IDictionary<string, OutputFilesSnapshot> dictionary)
+        public ProjectTreeOutputSnapshot(IDictionary<string, ProjectOutputSnapshot> dictionary)
             : base(dictionary, StringComparer.OrdinalIgnoreCase) {
         }
 
-        public IEnumerable<OutputFilesSnapshot> GetProjectsForTag(string tag) {
+        public IEnumerable<ProjectOutputSnapshot> GetProjectsForTag(string tag) {
             return this.Where(m => string.Equals(m.Value.Directory, tag, StringComparison.OrdinalIgnoreCase)).Select(s => s.Value);
         }
     }
@@ -367,7 +335,7 @@ namespace Aderant.Build {
 
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    internal class OutputFilesSnapshot {
+    internal class ProjectOutputSnapshot {
 
         [DataMember]
         public string ProjectFile { get; set; }
@@ -389,6 +357,7 @@ namespace Aderant.Build {
 
         [DataMember]
         public Guid ProjectGuid { get; set; }
+
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

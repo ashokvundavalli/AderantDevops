@@ -15,8 +15,12 @@ namespace Aderant.Build.PipelineService {
         MaxItemsInObjectGraph = Int32.MaxValue)]
     internal class BuildPipelineServiceImpl : IBuildPipelineService {
 
-        private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
         private BuildOperationContext ctx;
+        
+        private ArtifactCollection artifacts;
+
+        private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
+        private List<TrackedProject> projects = new List<TrackedProject>();
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
@@ -28,20 +32,29 @@ namespace Aderant.Build.PipelineService {
             return ctx;
         }
 
-        public void RecordProjectOutput(OutputFilesSnapshot snapshot) {
+        public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
             Outputs[snapshot.ProjectFile] = snapshot;
         }
 
-        public IEnumerable<OutputFilesSnapshot> GetProjectOutputs(string publisherName) {
-            return Outputs.GetProjectsForTag(publisherName);
+        public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
+            return Outputs.GetProjectsForTag(container);
         }
 
-        public IEnumerable<OutputFilesSnapshot> GetAllProjectOutputs() {
+        public IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs() {
             return Outputs.Values;
         }
 
-        public void RecordArtifacts(string key, IEnumerable<ArtifactManifest> manifests) {
-            ctx.RecordArtifact(key, manifests.ToList());
+        public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
+            InitArtifacts();
+
+            ICollection<ArtifactManifest> existing;
+            if (artifacts.TryGetValue(container, out existing)) {
+                foreach (var artifactManifest in manifests) {
+                    existing.Add(artifactManifest);
+                }
+            } else {
+                artifacts[container] = manifests.ToList();
+            }
         }
 
         public void PutVariable(string scope, string variableName, string value) {
@@ -52,6 +65,23 @@ namespace Aderant.Build.PipelineService {
             return ctx.GetVariable(scope, variableName);
         }
 
+        public void TrackProject(Guid projectGuid, string fullPath) {
+            projects.Add(new TrackedProject {
+                ProjectGuid = projectGuid,
+                FullPath = fullPath,
+            });
+        }
+
+        public IEnumerable<TrackedProject> GetTrackedProjects() {
+            return projects;
+        }
+
+        public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
+            var artifactsForTag = artifacts.GetArtifactsForTag(container);
+
+            return artifactsForTag.SelectMany(s => s.Value);
+        }
+
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
             if (artifacts != null) {
                 associatedArtifacts.AddRange(artifacts);
@@ -60,6 +90,12 @@ namespace Aderant.Build.PipelineService {
 
         public BuildArtifact[] GetAssociatedArtifacts() {
             return associatedArtifacts.ToArray();
+        }
+
+        private void InitArtifacts() {
+            if (artifacts == null) {
+                artifacts = new ArtifactCollection();
+            }
         }
     }
 }
