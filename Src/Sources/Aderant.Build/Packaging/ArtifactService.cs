@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
@@ -253,11 +254,21 @@ namespace Aderant.Build.Packaging {
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
-        private void CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {
-            // TODO: Replace with ActionBlock for performance
-            foreach (var item in filesToRestore) {
-                fileSystem.CopyFile(item.Location, item.Destination, isDesktopBuild);
+        internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {
+            ActionBlock<PathSpec> restoreFile = new ActionBlock<PathSpec>(
+                // ToDo: Optimize PhysicalFileSystem to store known directories for bulk copy operation.
+                file => fileSystem.CopyFile(file.Location, file.Destination, isDesktopBuild),
+                new ExecutionDataflowBlockOptions {
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                });
+
+            foreach (PathSpec file in filesToRestore) {
+                restoreFile.Post(file);
             }
+
+            restoreFile.Complete();
+
+            return restoreFile;
         }
 
         private List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string container, string workingDirectory) {

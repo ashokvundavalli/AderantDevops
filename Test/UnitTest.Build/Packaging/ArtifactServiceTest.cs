@@ -136,5 +136,4 @@ namespace UnitTest.Build.Packaging {
             Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=SomeOtherArtifact;type=FilePath;]\\baz\cache"));
         }
     }
-
 }
