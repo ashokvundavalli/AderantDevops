@@ -20,7 +20,7 @@
 
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
 
-    <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
+    <!--<InspectItemGroup ItemGroup="@(ProjectsInGroup)" />-->
 
     <PropertyGroup>
       <BuildAction>Build</BuildAction>

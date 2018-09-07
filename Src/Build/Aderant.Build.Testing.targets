@@ -63,8 +63,8 @@
       Query="configuration/runtime"
       Value="$(UnitTestAppConfigText)" />
 
-    <MakeSymlink Condition="'@(TestAssemblies)' != '' And Exists('$(DependenciesDirectory)')"
-      Link="$(BinTestDirectory)Dependencies"
+    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
+      Link="%(RootDir)%(Directory)Dependencies"
       Target="$(ArtifactStagingDirectory)" />
   </Target>
 
