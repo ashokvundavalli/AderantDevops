@@ -14,6 +14,10 @@
       <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
     </GetBuildOutputs>
 
+    <CreateItem Include="@(TestOutputDirectories->'%(FullPath)UnitTest*.dll')" PreserveExistingMetadata="true">
+      <Output ItemName="TestAssemblies" TaskParameter="Include" />
+    </CreateItem>
+
     <ItemGroup>
       <AssemblySearchPaths Include="@(OutputDirectories->'%(FullPath)', ' ')" />
     </ItemGroup>
