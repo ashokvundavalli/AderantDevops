@@ -259,13 +259,7 @@ Should not be used as it prevents incremental builds which increases build times
 
     $context.StartedAt = [DateTime]::UtcNow
 
-    $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
-
-    $TASKCONTEXT =   $ExecutionContext.SessionState.PSVariable.Get("distributedTaskContext")
-  
-
-    Write-Host "TASKCONTEXT $TASKCONTEXT"
-    RETURN
+    $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()    
 
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextEndpoint)
