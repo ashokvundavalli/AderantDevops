@@ -65,7 +65,7 @@
 
     <MakeSymlink Condition="'@(TestAssemblies)' != ''"
       Link="%(RootDir)%(Directory)Dependencies"
-      Target="$(ArtifactStagingDirectory)" />
+      Target="$(ArtifactStagingDirectory)out" />
   </Target>
 
 
