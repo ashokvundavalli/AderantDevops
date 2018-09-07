@@ -132,7 +132,7 @@
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
           Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(ChutzpahTestAdapterPath)' />
+          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch) $(ChutzpahTestAdapterPath)' />
 
     <!-- Run VSTest using dotCover -->
     <Exec Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
