@@ -7,17 +7,27 @@ namespace Aderant.Build.Tasks {
     public class GetBuildOutputs : BuildOperationContextTask {
 
         [Output]
-        public string[] TestAssemblyDirectories { get; private set; }
+        public string[] TestOutputDirectories { get; private set; }
+
+        [Output]
+        public string[] OutputDirectories { get; set; }
 
         public override bool ExecuteTask() {
-            var query =
+            var trackedProjects =
                 from tp in PipelineService.GetTrackedProjects()
                 join snapshot in PipelineService.GetAllProjectOutputs()
                     on tp.ProjectGuid equals snapshot.ProjectGuid
-                where snapshot.IsTestProject
                 select new { TrackedProject = tp, Snapshot = snapshot };
 
-            TestAssemblyDirectories = query
+            TestOutputDirectories = trackedProjects
+                .Where(s => s.Snapshot.IsTestProject)
+                .Select(
+                    s => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(s.TrackedProject.FullPath), s.Snapshot.OutputPath)))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            OutputDirectories = trackedProjects
+                .Where(s => !s.Snapshot.IsTestProject)
                 .Select(
                     s => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(s.TrackedProject.FullPath), s.Snapshot.OutputPath)))
                 .Distinct(StringComparer.OrdinalIgnoreCase)

@@ -10,12 +10,15 @@
   <Target Name="CollectTestAssemblies">
 
     <GetBuildOutputs>
-      <Output TaskParameter="TestAssemblyDirectories" ItemName="TestAssemblyDirectories" />
+      <Output TaskParameter="TestOutputDirectories" ItemName="TestOutputDirectories" />
+      <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
     </GetBuildOutputs>
 
-    <CreateItem Include="@(TestAssemblyDirectories->'%(FullPath)UnitTest*.dll')" PreserveExistingMetadata="true">
-      <Output ItemName="TestAssemblies" TaskParameter="Include" />
-    </CreateItem>
+    <ItemGroup>
+      <AssemblySearchPaths Include="@(OutputDirectories->'%(FullPath)', ' ')" />
+    </ItemGroup>
+
+    <PowerShellScript ScriptBlock=". Testing\DeployRunSettings.ps1 -Destination $(ArtifactStagingDirectory)obj\default.runsettings -Paths @(AssemblySearchPaths)" />
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
@@ -25,47 +28,7 @@
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
     </GetAssemblyPlatform>
 
-    <Message Text="Assembly: %(AssemblyList.FileName) [Platform: %(AssemblyList.Platform)]" Condition="'@(AssemblyList)' != ''" />
-
-    <!-- 
-      This section creates a .dll.config for each unit test assembly. The dll.config contains a probing path override 
-      which includes two additional folders "ModuleBin" and "Dependencies". This is so unit tests can find dependencies
-      without relying on copy local having deployed assemblies to the test directory.
-    -->
-    <PropertyGroup>
-      <UnitTestAppConfigText>$([System.IO.File]::ReadAllText('$(BuildScriptsDirectory)UnitTestAppConfig.txt'))</UnitTestAppConfigText>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <TestAssemblyConfigFiles Include="@(TestAssemblies->'$(BinTestDirectory)%(RecursiveDir)%(Filename)%(Extension).config')" />
-    </ItemGroup>
-
-    <Touch Condition="!Exists(%(TestAssemblyConfigFiles.FullPath))"
-      Files="%(TestAssemblyConfigFiles.FullPath)"
-      AlwaysCreate="true">
-      <Output TaskParameter="TouchedFiles" ItemName="TouchedFiles" />
-    </Touch>
-
-    <ItemGroup>
-      <XmlLinesToWrite Include="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;" />
-      <XmlLinesToWrite Include="&lt;configuration /&gt;" />
-    </ItemGroup>
-
-    <WriteLinesToFile Condition="'@(TouchedFiles)' != ''"
-      File="%(TouchedFiles.FullPath)"
-      Lines="@(XmlLinesToWrite)"
-      Encoding="UTF-8" />
-
-    <Error Condition="'$(UnitTestAppConfigText)' == ''" Text="No unit test app.config text defined!" />
-
-    <XDocumentPoke Condition="Exists(%(TestAssemblyConfigFiles.FullPath))"
-      File="%(TestAssemblyConfigFiles.FullPath)"
-      Query="configuration/runtime"
-      Value="$(UnitTestAppConfigText)" />
-
-    <MakeSymlink Condition="'@(TestAssemblies)' != ''"
-      Link="%(RootDir)%(Directory)Dependencies"
-      Target="$(ArtifactStagingDirectory)out" />
+    <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
   </Target>
 
 
@@ -125,6 +88,7 @@
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
+      <RunSettingsSwitch>/Settings:$(IntermediatesDirectory)default.runsettings</RunSettingsSwitch>
     </PropertyGroup>
 
     <!-- dotCover Setup -->
