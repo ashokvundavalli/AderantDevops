@@ -39,7 +39,7 @@ param(
 
 begin {
     $ErrorActionPreference = "Stop"
-    Write-Host $MyInvocation.MyCommand.Name
+    Write-Host "$($MyInvocation.MyCommand.Name)`r`n"
 
     . "$PSScriptRoot\..\Build\Build-Libraries.ps1"
 
@@ -51,7 +51,8 @@ begin {
         )
 
         process {
-            if (Test-Path $binariesDirectory) {                
+            if (Test-Path $binariesDirectory) {
+                Write-Host "Clearing directory: $binariesDirectory`r`n"
                 Remove-Item $binariesDirectory\* -Recurse -Force -Exclude "environment.xml", "cms.ini"
             }
         
@@ -211,7 +212,7 @@ begin {
         Remove-Item "$serverImageDirectory\Bin" -Recurse -Force -ErrorAction SilentlyContinue 
     }
     
-    function Validate-Product {
+    function Confirm-ProductContents {
         param (
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$sourceDirectory
@@ -248,20 +249,37 @@ begin {
 
 
 process {
-    return
-
-    if (-not (Test-Path $productManifestPath)) {
-        Write-Error -Message "Product manifest not found at path: $productManifestPath"
-        exit 1
-    }
-
     Clear-Environment -binariesDirectory $binariesDirectory
 
+    if (-not [string]::IsNullOrWhiteSpace($branch)) {
+        [string]$branchDropRoot = Join-Path -Path $dropRoot -ChildPath $branch
+        [string]$build = Join-Path $branchDropRoot -ChildPath (Get-ChildItem -Path $branchDropRoot -Directory | Sort-Object -Property Name | Select-Object -First 1)
 
+        [System.IO.FileInfo[]]$binaries = Get-ChildItem -Path "$build\Product" -File
+        
+        Write-Host "Copying files:"
+        Write-Host ($binaries.FullName | Format-List | Out-String)
+        Write-Host "`r`nTo directory:"
+        Write-Host "$binariesDirectory`r`n"
 
+        [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }
+        
+        Write-Host "Acquired binaries in: $($executionTime.TotalSeconds) seconds."
+    }
+
+    # if (-not (Test-Path $productManifestPath)) {
+    #     Write-Error -Message "Product manifest not found at path: $productManifestPath"
+    #     exit 1
+    # }
+
+    # Clear-Environment -binariesDirectory $binariesDirectory
 }
 
 end {
+    Write-Host ""
+    Write-Host "Product retrieved."
+    Write-Host ""
+
     if ([System.Environment]::UserInteractive -and $host.Name -eq "ConsoleHost") {
         $psInteractive = (-not [System.Environment]::GetCommandLineArgs() -Contains '-NonInteractive')
 
