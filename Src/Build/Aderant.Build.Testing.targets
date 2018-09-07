@@ -18,8 +18,6 @@
       <AssemblySearchPaths Include="@(OutputDirectories->'%(FullPath)', ' ')" />
     </ItemGroup>
 
-    <PowerShellScript ScriptBlock=". Testing\DeployRunSettings.ps1 -Destination $(ArtifactStagingDirectory)obj\default.runsettings -Paths @(AssemblySearchPaths)" />
-
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
       Condition="'$(Use32BitTestRunner)' == ''"
@@ -27,6 +25,9 @@
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
     </GetAssemblyPlatform>
+
+    <MakeDir Directories="$(IntermediatesDirectory)" />
+    <PowerShellScript ScriptBlock=". Testing\DeployRunSettings.ps1 -Destination $(IntermediatesDirectory)default.runsettings -Paths @(AssemblySearchPaths)" />
 
     <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
   </Target>
