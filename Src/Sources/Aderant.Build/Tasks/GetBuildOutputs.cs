@@ -12,12 +12,17 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string[] OutputDirectories { get; set; }
 
+        [Output]
+        public string[] SolutionRoots { get; private set; }
+
         public override bool ExecuteTask() {
+            var projects = PipelineService.GetTrackedProjects();
+
             var trackedProjects =
-                from tp in PipelineService.GetTrackedProjects()
+                from trackedProject in projects
                 join snapshot in PipelineService.GetAllProjectOutputs()
-                    on tp.ProjectGuid equals snapshot.ProjectGuid
-                select new { TrackedProject = tp, Snapshot = snapshot };
+                    on trackedProject.ProjectGuid equals snapshot.ProjectGuid
+                select new { TrackedProject = trackedProject, Snapshot = snapshot };
 
             TestOutputDirectories = trackedProjects
                 .Where(s => s.Snapshot.IsTestProject)
@@ -30,6 +35,12 @@ namespace Aderant.Build.Tasks {
                 .Where(s => !s.Snapshot.IsTestProject)
                 .Select(
                     s => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(s.TrackedProject.FullPath), s.Snapshot.OutputPath)))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            SolutionRoots = trackedProjects
+                .Select(
+                    s => s.TrackedProject.SolutionRoot)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 

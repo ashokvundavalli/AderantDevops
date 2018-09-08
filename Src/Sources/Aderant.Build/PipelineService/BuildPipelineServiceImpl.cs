@@ -15,11 +15,11 @@ namespace Aderant.Build.PipelineService {
         MaxItemsInObjectGraph = Int32.MaxValue)]
     internal class BuildPipelineServiceImpl : IBuildPipelineService {
 
-        private BuildOperationContext ctx;
-        
         private ArtifactCollection artifacts;
 
         private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
+
+        private BuildOperationContext ctx;
         private List<TrackedProject> projects = new List<TrackedProject>();
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
@@ -65,11 +65,13 @@ namespace Aderant.Build.PipelineService {
             return ctx.GetVariable(scope, variableName);
         }
 
-        public void TrackProject(Guid projectGuid, string fullPath) {
-            projects.Add(new TrackedProject {
-                ProjectGuid = projectGuid,
-                FullPath = fullPath,
-            });
+        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath) {
+            projects.Add(
+                new TrackedProject {
+                    ProjectGuid = projectGuid,
+                    FullPath = fullPath,
+                    SolutionRoot = solutionRoot,
+                });
         }
 
         public IEnumerable<TrackedProject> GetTrackedProjects() {

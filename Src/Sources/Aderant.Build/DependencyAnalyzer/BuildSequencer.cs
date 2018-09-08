@@ -49,7 +49,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (IDependable dependable in projectsInDependencyOrder) {
                     ConfiguredProject configuredProject = dependable as ConfiguredProject;
                     if (configuredProject != null) {
-                        PipelineService.TrackProject(configuredProject.ProjectGuid, configuredProject.FullPath);
+                        PipelineService.TrackProject(configuredProject.ProjectGuid, configuredProject.SolutionRoot, configuredProject.FullPath);
                     }
                 }
             }
@@ -75,7 +75,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             var pipeline = new PipelineProjectBuilder(fileSystem);
-            return pipeline.GenerateProject(groups, files, null);
+            var project = pipeline.GenerateProject(groups, files, null);
+            return project;
         }
 
         private void EvictDeletedProjects(BuildOperationContext context) {

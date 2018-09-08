@@ -55,9 +55,9 @@ namespace Aderant.Build.PipelineService {
             return Channel.GetVariable(scope, variableName);
         }
 
-        public void TrackProject(Guid projectGuid, string fullPath) {
+        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath) {
             ErrorUtilities.IsNotNull(fullPath, nameof(fullPath));
-            Channel.TrackProject(projectGuid, fullPath);
+            Channel.TrackProject(projectGuid, solutionRoot, fullPath);
         }
 
         public IEnumerable<TrackedProject> GetTrackedProjects() {

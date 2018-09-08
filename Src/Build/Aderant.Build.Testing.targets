@@ -3,24 +3,44 @@
 
   <PropertyGroup>
     <RunTestsDependsOn>
+      DefineTestPaths;
       CollectTestAssemblies
     </RunTestsDependsOn>
   </PropertyGroup>
+
+  <Target Name="DefineTestPaths">
+    <PropertyGroup>
+      <TestWorkingDirectory>$(ArtifactStagingDirectory)test\</TestWorkingDirectory>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(TestWorkingDirectory)" />
+  </Target>
 
   <Target Name="CollectTestAssemblies">
 
     <GetBuildOutputs>
       <Output TaskParameter="TestOutputDirectories" ItemName="TestOutputDirectories" />
       <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
+      <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
 
+    <ItemGroup>
+      <_AssemblyResolutionPaths Include="$(SharedDependencyDirectory)" />
+      <_AssemblyResolutionPaths Include="%(OutputDirectories.FullPath)" />
+      <_AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('%(SolutionRoots.FullPath)', 'Dependencies'))" />
+      <_AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('%(SolutionRoots.FullPath)', 'packages'))" />
+    </ItemGroup>
+
+    <Message Text="The test framework will search these directories" />
+    <Message Text="%(_AssemblyResolutionPaths.FullPath)" />
+
+    <ItemGroup>
+      <AssemblyResolutionPaths Include="@(_AssemblyResolutionPaths->'%(Identity)', ',')" />
+    </ItemGroup>
+    
     <CreateItem Include="@(TestOutputDirectories->'%(FullPath)UnitTest*.dll')" PreserveExistingMetadata="true">
       <Output ItemName="TestAssemblies" TaskParameter="Include" />
     </CreateItem>
-
-    <ItemGroup>
-      <AssemblySearchPaths Include="@(OutputDirectories->'%(FullPath)', ' ')" />
-    </ItemGroup>
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
@@ -29,9 +49,8 @@
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
     </GetAssemblyPlatform>
-
-    <MakeDir Directories="$(IntermediatesDirectory)" />
-    <PowerShellScript ScriptBlock=". Testing\DeployRunSettings.ps1 -Destination $(IntermediatesDirectory)default.runsettings -Paths @(AssemblySearchPaths)" />
+  
+    <PowerShellScript ScriptBlock=". Testing\DeployRunSettings.ps1 -Destination $(TestWorkingDirectory)default.runsettings -Paths @(AssemblyResolutionPaths)" />
 
     <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
   </Target>
@@ -41,22 +60,6 @@
     <PropertyGroup>
       <TestOutcome>Failed</TestOutcome>
     </PropertyGroup>
-  </Target>
-
-
-  <Target Name="AfterRunTests"
-    AfterTargets="RunTests">
-
-    <RemoveDir Directories="$(BinTestDirectory)Dependencies"
-      ContinueOnError="true"  />
-    <RemoveDir Directories="$(BinTestDirectory)ModuleBin"
-      ContinueOnError="true" />
-    <RemoveDir Directories="$(BinTestDirectory)TestResults\packages"
-      ContinueOnError="true" />
-
-    <Delete Condition="'@(TestAssemblyConfigFiles)' != ''"
-      Files="@(TestAssemblyConfigFiles)"
-      TreatErrorsAsWarnings="true" />
   </Target>
 
 
@@ -93,7 +96,7 @@
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <RunSettingsSwitch>/Settings:$(IntermediatesDirectory)default.runsettings</RunSettingsSwitch>
+      <RunSettingsSwitch>/Settings:$(TestWorkingDirectory)default.runsettings</RunSettingsSwitch>
     </PropertyGroup>
 
     <!-- dotCover Setup -->

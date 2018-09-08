@@ -13,7 +13,7 @@ foreach ($path in $Paths) {
     $directoryElement.SetAttribute("path", $path)
     $directoryElement.SetAttribute("includeSubDirectories", "true")
 
-    $assemblyResolution.AppendChild($directoryElement)
+    $assemblyResolution.AppendChild($directoryElement) | Out-Null
 }
 
 $sw = [System.IO.StringWriter]::new()
