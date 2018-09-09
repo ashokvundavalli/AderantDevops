@@ -92,19 +92,19 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                             continue;
                         }
 
-                        ReplicateToDependenciesDirectory(resolverRequest, fileSystem, requirement);
+                        ReplicateToDependenciesDirectory(resolverRequest, directory, fileSystem, requirement);
                     }
                 }
             }
         }
 
-        private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
+        private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
             if (requirement.Group == "Development") {
                 return;
             }
-            string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Group == Aderant.Build.Constants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
+            string packageDir = Path.Combine(directory, "packages", requirement.Group == Aderant.Build.Constants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
             if (!fileSystem.DirectoryExists(packageDir)) {
                 throw new DirectoryNotFoundException($"{packageDir} does not exist.");
             }

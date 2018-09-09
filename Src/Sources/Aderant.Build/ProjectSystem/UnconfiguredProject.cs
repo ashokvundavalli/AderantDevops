@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Threading;
 using System.Xml;
+using Aderant.Build.Utilities;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 
@@ -8,23 +11,14 @@ namespace Aderant.Build.ProjectSystem {
     [Export(typeof(UnconfiguredProject))]
     internal class UnconfiguredProject {
         private Lazy<ProjectRootElement> projectXml;
+        private Memoizer<UnconfiguredProject, Guid> projectGuid;
 
         [ImportingConstructor]
         public UnconfiguredProject() {
         }
 
         public Guid ProjectGuid {
-            get {
-                foreach (var propertyElement in projectXml.Value.Properties) {
-                    if (propertyElement.Name == "ProjectGuid") {
-                        if (propertyElement.Value != null) {
-                            return Guid.Parse(propertyElement.Value);
-                        }
-                    }
-                }
-
-                return Guid.Empty;
-            }
+            get { return projectGuid.Evaluate(this); }
         }
 
         [Import]
@@ -45,8 +39,20 @@ namespace Aderant.Build.ProjectSystem {
                     }
 
                     return ProjectRootElement.Create(reader, projectCollection);
-                },
-                true);
+                }, LazyThreadSafetyMode.PublicationOnly);
+
+
+            this.projectGuid = new Memoizer<UnconfiguredProject, Guid>(
+                project => {
+                    foreach (var propertyElement in project.projectXml.Value.Properties) {
+                        if (propertyElement.Name == "ProjectGuid") {
+                            if (propertyElement.Value != null) {
+                                return Guid.Parse(propertyElement.Value);
+                            }
+                        }
+                    }
+                    return Guid.Empty;
+                }, EqualityComparer<object>.Default);
         }
 
         private ProjectCollection CreateProjectCollection() {
@@ -59,7 +65,6 @@ namespace Aderant.Build.ProjectSystem {
             var configuredProject = result.Value;
 
             configuredProject.Initialize(projectXml, FullPath);
-
             return configuredProject;
         }
     }

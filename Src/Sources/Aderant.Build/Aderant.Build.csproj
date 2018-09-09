@@ -139,7 +139,7 @@
     <Compile Include="PipelineService\ProxyAccessor.cs" />
     <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
     <Compile Include="Packaging\AutoPackager.cs" />
-    <Compile Include="Utils\Memoizer.cs" />
+    <Compile Include="Utilities\Memoizer.cs" />
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
     <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
     <Compile Include="ErrorUtilities.cs" />

@@ -211,7 +211,10 @@ Should not be used as it prevents incremental builds which increases build times
         [string]$ModulePath = "",
 
         [Parameter(HelpMessage = "Runs the target with the provided name")]        
-        [string]$Target = "BuildAndPackage",  
+        [string]$Target = "BuildAndPackage",
+
+        [Parameter(HelpMessage = "Includes solutions and projects from the provided directories")]        
+        [string[]]$DirectoriesToBuild = $null,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -239,6 +242,7 @@ Should not be used as it prevents incremental builds which increases build times
     }
 
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
+    $context.DirectoriesToBuild = $DirectoriesToBuild
 
     FindGitDir $context $repositoryPath    
     ApplyBranchConfig $context $repositoryPath

@@ -15,7 +15,7 @@ namespace Aderant.Build.Tasks {
         public string Result { get; set; }
 
         public override bool Execute() {
-            Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{ScriptBlock}");
+            Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
 
             var pipelineExecutor = new PowerShellPipelineExecutor();
             pipelineExecutor.ProgressPreference = ProgressPreference;

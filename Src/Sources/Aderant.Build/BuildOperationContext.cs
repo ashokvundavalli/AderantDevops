@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Threading;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
@@ -15,8 +14,6 @@ namespace Aderant.Build {
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     public class BuildOperationContext {
-
-
 
         [DataMember(EmitDefaultValue = false)]
         private string artifactStagingDirectory;
@@ -41,7 +38,6 @@ namespace Aderant.Build {
 
         [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
-
 
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
@@ -75,6 +71,9 @@ namespace Aderant.Build {
                 buildScriptsDirectory = value;
             }
         }
+
+        [DataMember]
+        public string[] DirectoriesToBuild { get; set; }
 
         [DataMember]
         public string BuildRoot { get; set; }
@@ -357,7 +356,6 @@ namespace Aderant.Build {
 
         [DataMember]
         public Guid ProjectGuid { get; set; }
-
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

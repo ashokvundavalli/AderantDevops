@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Aderant.Build.Utils {
+namespace Aderant.Build.Utilities {
     /// <summary>
     /// Remembers the result of evaluating an expensive function so that subsequent
     /// evaluations are faster. Thread-safe.
