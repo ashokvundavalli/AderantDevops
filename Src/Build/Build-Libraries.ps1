@@ -69,17 +69,22 @@
         )
 
         begin {
-            [System.Object]$pdfBuild = $null
+            Set-StrictMode -Version Latest
         }
 
         process {
-            $pdfBuild = Get-ChildItem -Path $moduleBinariesDirectory -Directory | Sort-Object -Property Name | Select-Object -First 1         
+            [System.IO.FileSystemInfo]$pdfBuild = Get-ChildItem -Path $moduleBinariesDirectory -Directory | Sort-Object -Property Name | Select-Object -First 1
 
-            if ($pdfBuild -eq $null) {
+            if ($pdfBuild -eq $null -or (Measure-Object -InputObject (Get-ChildItem (Join-Path -Path $pdfBuild.FullName -ChildPath "Pdf") -Filter "*.pdf")) -eq 0) {
                 Write-Warning "Unable to acquire content for module: $($module.Name)"
                 return -1
-            } else {
+            }
+
+            try {
                 Copy-Item -Path "$($pdfBuild.FullName)\Pdf" -Recurse -Filter "*.pdf" -Destination (Join-Path -Path $binariesDirectory -ChildPath $module.Target.Split('/')[1]) -Force
+            } catch {
+                Write-Warning "Unable to acquire content from: '$($pdfBuild.FullName)\Pdf' for module: $($module.Name)"
+                return -1
             }
         }
 
