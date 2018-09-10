@@ -1,6 +1,6 @@
 ##
 # For each module in the product manifest we gets all built <ModuleName>\Bin\Module from the $dropRoot and puts
-# it into the $binariesDirectory. The factory .bin will be created from what exists in the $binariesDirectory
+# it into the $script:BinariesDirectory. The factory .bin will be created from what exists in the $script:BinariesDirectory
 #
 # Flag $getDebugFiles will get all pdb's so that you can debug
 ##
@@ -9,11 +9,11 @@
     Pull from the drop location all source and assocated tests of those modules that are defined in the given product manifest  
 .Description    
     For each module in the product manifest we get the built ouput from <ModuleName>\Bin\Test and <ModuleName>\Bin\Module 
-    and puts it into the $binariesDirectory. 
-    The factory .bin will be created from what exists in the $binariesDirectory
+    and puts it into the $script:BinariesDirectory. 
+    The factory .bin will be created from what exists in the $script:BinariesDirectory
 .Example     
-    GetProduct -$productManifestPath C:\Source\Dev\<branch name>\ExpertManifest.xml -$dropRoot \\na.aderant.com\expertsuite\dev\<branch name> -$binariesDirectory C:\Source\Dev\<branch name>\Binaries
-    GetProduct -$productManifestPath C:\Source\Dev\<branch name>\ExpertManifest.xml -$dropRoot \\na.aderant.com\expertsuite\dev\<branch name> -$binariesDirectory C:\Source\Dev\<branch name>\Binaries -$getDebugFiles $true
+    GetProduct -$productManifestPath C:\Source\Dev\<branch name>\ExpertManifest.xml -$dropRoot \\na.aderant.com\expertsuite\dev\<branch name> -$script:BinariesDirectory C:\Source\Dev\<branch name>\Binaries
+    GetProduct -$productManifestPath C:\Source\Dev\<branch name>\ExpertManifest.xml -$dropRoot \\na.aderant.com\expertsuite\dev\<branch name> -$script:BinariesDirectory C:\Source\Dev\<branch name>\Binaries -$getDebugFiles $true
 .Parameter productManifestPath
     The path to the product manifest that defines the modules that makeup the product
 .Parameter dropRoot
@@ -29,7 +29,7 @@
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
+    [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$script:BinariesDirectory,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
     [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$branch,
     [Parameter(Mandatory=$false)][int]$pullRequestId,
@@ -45,22 +45,22 @@ begin {
 
     Set-StrictMode -Version Latest
 
+    [string]$script:ExpertSourceDirectory = Join-Path -Path $script:BinariesDirectory -ChildPath "ExpertSource"
+    [string]$script:LogDirectory = Join-Path -Path $script:BinariesDirectory -ChildPath "Logs"
+
     function Clear-Environment {
         param (
-            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+            [Parameter(Mandatory = $false)][string[]]$exclusions = @("environment.xml", "cms.ini")
         )
 
         process {
-            if (Test-Path $binariesDirectory) {
-                Write-Host "Clearing directory: $binariesDirectory`r`n"
-                Remove-Item $binariesDirectory\* -Recurse -Force -Exclude "environment.xml", "cms.ini"
+            if (Test-Path $script:BinariesDirectory) {
+                Write-Host "Clearing directory: $($script:BinariesDirectory)`r`n"
+                Remove-Item $script:BinariesDirectory\* -Recurse -Force -Exclude $exclusions
             }
-        
-            $script:LogDirectory = [System.IO.Path]::Combine($binariesDirectory, "Logs")
-            New-Item -Path ($script:LogDirectory) -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
-        
-            [string]$expertSourceDirectory = Join-Path -Path $binariesDirectory -ChildPath "ExpertSource"
-            New-Item -ItemType Directory -Path $expertSourceDirectory | Out-Null
+
+            New-Item -Path $script:LogDirectory -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
+            New-Item -Path $script:ExpertSourceDirectory -ItemType Directory | Out-Null
         }
     }
 
@@ -69,7 +69,6 @@ begin {
     #>
     function New-Factory() {
         param (
-            [string]$inDirectory,
             [string]$searchPath
         )
 
@@ -84,7 +83,7 @@ begin {
                 if (Test-Path -Path "$directory\FactoryResourceGenerator.log") {
                     Remove-Item -Path "$directory\FactoryResourceGenerator.log" -Force | Out-Null # Remove log file from the source directory.
                 }
-            } -Argument $inDirectory, $searchPath, $script:LogDirectory
+            } -Argument $script:ExpertSourceDirectory, $searchPath, $script:LogDirectory
         }
     }
 
@@ -176,8 +175,8 @@ begin {
         Builds the Expert server image
     #>
     function New-ServerImage {
-        [string]$deploymentEngine = Join-Path -Path $binariesDirectory -ChildPath "DeploymentEngine.exe"
-        [string]$serverImageDirectory = Join-Path -Path $binariesDirectory -ChildPath "ExpertServerImage"
+        [string]$deploymentEngine = Join-Path -Path $script:BinariesDirectory -ChildPath "DeploymentEngine.exe"
+        [string]$serverImageDirectory = Join-Path -Path $script:BinariesDirectory -ChildPath "ExpertServerImage"
         [string]$parameters = "CreateServerImage /source:'$expertSourceDirectory' /image:'$serverImageDirectory\Bin\Module' /name:ExpertServerImage /skh"
 
         # Copy dependencies required to run DeploymentEngine
@@ -191,7 +190,7 @@ begin {
             "$expertSourceDirectory\ICSharpCode.SharpZipLib.dll"
             )
 
-        Copy-Item -Path $dependencies -Destination $binariesDirectory
+        Copy-Item -Path $dependencies -Destination $script:BinariesDirectory
 
         Write-Host $parameters
 
@@ -214,12 +213,12 @@ begin {
     
     function Confirm-ProductContents {
         param (
-            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$script:BinariesDirectory,
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$sourceDirectory
         )
 
-        if (Test-Path "$binariesDirectory\Test\DeploymentCheck\DeploymentCheck.exe") {
-            & "$binariesDirectory\Test\DeploymentCheck\DeploymentCheck.exe" ValidateRoleManifests $sourceDirectory
+        if (Test-Path "$script:BinariesDirectory\Test\DeploymentCheck\DeploymentCheck.exe") {
+            & "$script:BinariesDirectory\Test\DeploymentCheck\DeploymentCheck.exe" ValidateRoleManifests $sourceDirectory
 
             if ($LASTEXITCODE -ne 0) {
                 Write-Error "Role manifest validation failed. See above lines for details."
@@ -249,7 +248,7 @@ begin {
 
 
 process {
-    Clear-Environment -binariesDirectory $binariesDirectory
+    Clear-Environment -binariesDirectory $script:BinariesDirectory
 
     if (-not [string]::IsNullOrWhiteSpace($branch)) {
         [string]$branchDropRoot = Join-Path -Path $dropRoot -ChildPath $branch
@@ -260,9 +259,9 @@ process {
         Write-Host "Copying files:"
         Write-Host ($binaries.FullName | Format-List | Out-String)
         Write-Host "`r`nTo directory:"
-        Write-Host "$binariesDirectory`r`n"
+        Write-Host "$script:BinariesDirectory`r`n"
 
-        [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }
+        [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $script:BinariesDirectory } }
         
         Write-Host "Acquired binaries in: $($executionTime.TotalSeconds) seconds."
     }
@@ -272,7 +271,7 @@ process {
     #     exit 1
     # }
 
-    # Clear-Environment -binariesDirectory $binariesDirectory
+    # Clear-Environment -binariesDirectory $script:BinariesDirectory
 }
 
 end {
