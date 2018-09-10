@@ -12,7 +12,7 @@ namespace Aderant.Build.Tasks {
         private BuildOperationContext context;
         private bool executingTask;
         private BuildTaskLogger logger;
-        private IBuildPipelineServiceContract pipelineService;
+        private IBuildPipelineService pipelineService;
 
         public virtual string ContextEndpoint { get; set; }
 
@@ -32,8 +32,8 @@ namespace Aderant.Build.Tasks {
 
         internal static BuildOperationContext InternalContext { get; set; }
 
-        internal IBuildPipelineServiceContract PipelineService {
-            get { return pipelineService ?? (pipelineService = BuildPipelineServiceHost.Instance.GetProxy(ContextEndpoint)); }
+        internal IBuildPipelineService PipelineService {
+            get { return pipelineService ?? (pipelineService = new BuildPipelineServiceProxy(ContextEndpoint ?? BuildPipelineServiceHost.PipeId)); }
         }
 
         public sealed override bool Execute() {

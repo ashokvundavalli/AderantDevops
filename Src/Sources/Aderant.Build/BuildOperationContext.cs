@@ -42,6 +42,8 @@ namespace Aderant.Build {
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
 
+        private DateTime startedAt;
+
         [DataMember]
         private List<BuildStateFile> stateFiles;
 
@@ -78,6 +80,9 @@ namespace Aderant.Build {
         [DataMember]
         public string BuildRoot { get; set; }
 
+        [DataMember]
+        public string LogFile { get; set; }
+
         public string BuildSystemDirectory {
             get { return buildSystemDirectory; }
             set { buildSystemDirectory = value; }
@@ -98,7 +103,21 @@ namespace Aderant.Build {
         public string PipelineName { get; set; }
 
         [DataMember]
-        public DateTime StartedAt { get; set; }
+        public string BuildStatus { get; set; }
+
+        [DataMember]
+        public string BuildStatusReason { get; set; }
+
+        [DataMember]
+        public DateTime StartedAt {
+            get { return startedAt; }
+            set {
+                startedAt = value;
+                if (BuildStatus == null) {
+                    BuildStatus = "Started";
+                }
+            }
+        }
 
         [DataMember]
         public IDictionary<string, IDictionary<string, string>> ScopedVariables { get; private set; }

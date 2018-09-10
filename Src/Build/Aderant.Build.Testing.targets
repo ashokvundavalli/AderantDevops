@@ -31,7 +31,7 @@
       <_AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('%(SolutionRoots.FullPath)', 'packages'))" />
     </ItemGroup>
 
-    <Message Text="The test framework will search these directories" />
+    <Message Text="The test framework will search these directories for assembly dependencies" />
     <Message Text="%(_AssemblyResolutionPaths.FullPath)" />
 
     <ItemGroup>
@@ -79,7 +79,7 @@
           Condition="('$(RunTest)' != 'false') And ('$(IsCustomBuild)' != 'true')">
 
     <PropertyGroup>
-      <UnitTestAssemblies>@(TestAssemblies->'%(FullPath)', ' ')</UnitTestAssemblies>
+      <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
       <VsTestWorkingDirectory>$(SolutionRoot)</VsTestWorkingDirectory>
 
       <CodeCoverage Condition="'$(CodeCoverage)' == ''">false</CodeCoverage>
@@ -129,8 +129,12 @@
     </PropertyGroup>
     <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
 
+    <PowerShellScript
+      ProvideBuildContext="true"
+      ScriptBlock=". Testing\RunTests.ps1 -PathToTestTool '$(PathToTestTool)' -ToolArgs '$(ResultsFileSwitch) $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch)' -WorkingDirectory '$(SolutionRoot)' -IsDesktopBuild:$$(IsDesktopBuild) -TestAssemblies $(UnitTestAssemblies)" />
+
     <!-- Run With VSTest -->
-    <Exec Condition="('$(CodeCoverage)' != 'true') And '$(UnitTestAssemblies)' != ''"
+    <Exec Condition="false"
           ContinueOnError="false"
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"
@@ -138,7 +142,7 @@
           Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch) $(ChutzpahTestAdapterPath)' />
 
     <!-- Run VSTest using dotCover -->
-    <Exec Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''"
+    <Exec Condition="false"
           ContinueOnError="false"
           IgnoreExitCode="false"
           WorkingDirectory="$(VsTestWorkingDirectory)"

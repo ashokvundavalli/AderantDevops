@@ -213,7 +213,7 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = "Runs the target with the provided name")]        
         [string]$Target = "BuildAndPackage",
 
-        [Parameter(HelpMessage = "Includes solutions and projects from the provided directories")]        
+        [Parameter(HelpMessage = "Includes solutions and projects from the provided directories into build tree.")]        
         [string[]]$DirectoriesToBuild = $null,
         
         [Parameter(ValueFromRemainingArguments)]
@@ -262,6 +262,7 @@ Should not be used as it prevents incremental builds which increases build times
     $context.Switches = $switches
 
     $context.StartedAt = [DateTime]::UtcNow
+    $context.LogFile = "$repositoryPath\build.log"
 
     $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()    
 
@@ -272,7 +273,7 @@ Should not be used as it prevents incremental builds which increases build times
     try {
         $args = CreateToolArgumentString $context $RemainingArgs
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$repositoryPath\build.log;Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
  
         if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
@@ -283,6 +284,31 @@ Should not be used as it prevents incremental builds which increases build times
             } else {
                 Write-Warning "Unable to locate dotCover code coverage report."
             }
+        }
+    } catch {
+        $context = $contextService.CurrentContext
+        $reason = $context.BuildStatusReason
+        $status = $context.BuildStatus
+
+        Write-Output ""
+        Write-Output ""
+
+        Write-Host " Build: " -NoNewline
+
+        if ($context.BuildStatus -eq "Failed") {
+            Write-Host "[" -NoNewline
+            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
+            Write-Host "]"
+            Write-Host " $reason" -ForegroundColor Red
+
+            if (-not $context.IsDesktopBuild) {
+                throw "Build did not succeed: $($context.BuildStatusReason)"
+            }
+        } else {            
+            Write-Host "[" -NoNewline
+            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
+            Write-Host "]"
+            Write-Host " $reason" -ForegroundColor Gray    
         }
     } finally {
         if ($contextService -ne $null) {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
@@ -29,14 +30,22 @@ namespace Aderant.Build {
 
         public event EventHandler<string> Output;
 
-        public async Task RunScript(string script, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task RunScript(string[] scripts, Dictionary<string, object> variables, CancellationToken cancellationToken = default(CancellationToken)) {
             using (PowerShell shell = PowerShell.Create()) {
                 using (var runspace = RunspaceFactory.CreateRunspace()) {
                     runspace.Open();
 
+                    if (variables != null) {
+                        foreach (var variable in variables) {
+                            runspace.SessionStateProxy.SetVariable(variable.Key, variable.Value);
+                        }
+                    }
+
                     shell.Runspace = runspace;
 
-                    await RunPowerShellAsync(script, shell, cancellationToken);
+                    foreach (var script in scripts) {
+                        await RunPowerShellAsync(script, shell, cancellationToken);
+                    }
                 }
             }
         }

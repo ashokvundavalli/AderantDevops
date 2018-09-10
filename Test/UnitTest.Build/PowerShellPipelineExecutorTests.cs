@@ -10,7 +10,7 @@ namespace UnitTest.Build {
         public async Task Can_get_result_from_script() {
             var executor = new PowerShellPipelineExecutor();
 
-            await executor.RunScript("Get-FileHash -LiteralPath C:\\Windows\\System32\\notepad.exe -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash");
+            await executor.RunScript(new[] { "Get-FileHash -LiteralPath C:\\Windows\\System32\\notepad.exe -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash" }, null);
 
             var executorResult = executor.Result;
 

@@ -10,14 +10,35 @@ namespace Aderant.Build.PipelineService {
     /// Proxy for <see cref="IBuildPipelineService" />.
     /// </summary>
     internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService, IBuildPipelineServiceContract {
+        [ThreadStatic]
+        private static IBuildPipelineService threadSpecificProxy;
 
         static BuildPipelineServiceProxy() {
             CacheSetting = CacheSetting.AlwaysOn;
         }
 
+        internal BuildPipelineServiceProxy(Binding binding, string remoteAddress)
+            : this(binding, new EndpointAddress(remoteAddress)) {
+        }
+
         public BuildPipelineServiceProxy(Binding binding, EndpointAddress remoteAddress)
             : base(binding, remoteAddress) {
             Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
+        }
+
+        public BuildPipelineServiceProxy(string contextEndpoint)
+            : this(BuildPipelineServiceHost.CreateBinding(), BuildPipelineServiceHost.CreateAddress(contextEndpoint)) {
+        }
+
+        public static IBuildPipelineService Current {
+            get {
+                var tlsProxy = threadSpecificProxy;
+                if (tlsProxy == null) {
+                    return threadSpecificProxy = new BuildPipelineServiceProxy(BuildPipelineServiceHost.CreateBinding(), BuildPipelineServiceHost.CreateAddress(BuildPipelineServiceHost.PipeId));
+                }
+
+                return tlsProxy;
+            }
         }
 
         public void Publish(BuildOperationContext context) {

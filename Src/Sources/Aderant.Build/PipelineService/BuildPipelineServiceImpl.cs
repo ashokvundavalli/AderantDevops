@@ -13,7 +13,7 @@ namespace Aderant.Build.PipelineService {
         IncludeExceptionDetailInFaults = true,
         ConcurrencyMode = ConcurrencyMode.Single,
         MaxItemsInObjectGraph = Int32.MaxValue)]
-    internal class BuildPipelineServiceImpl : IBuildPipelineService {
+    internal class BuildPipelineServiceImpl : IBuildPipelineServiceContract {
 
         private ArtifactCollection artifacts;
 

@@ -79,6 +79,8 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
   $startInfo.FileName = $command
   $startInfo.Arguments = $commandArgs
 
+  Write-Host "$command $commandArgs"
+
   $startInfo.UseShellExecute = $false
   $startInfo.WorkingDirectory = Get-Location
 
@@ -118,7 +120,7 @@ function Exec-CommandCore([string]$command, [string]$commandArgs, [switch]$useCo
 
     $finished = $true
     if ($process.ExitCode -ne 0) {        
-        throw "Command failed to execute: $command $commandArgs"
+        throw "Command failed to execute successfully: $command $commandArgs"
     }
   }
   finally {
@@ -159,9 +161,9 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     $method = $type.GetMethod("GetParentProcess", [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static) 
     $process = $method.Invoke($null, ([System.Diagnostics.Process]::GetCurrentProcess()))
 
-    $debugMode = $false    
-    # PowerShell was started from Visual Studio so assume the user wishes to debug
+    $debugMode = $false
     if ($process.ProcessName -eq "devenv") {
+        Write-Output "PowerShell was started from Visual Studio assuming you wish to debug"
         $debugMode = $true
     }
      
@@ -197,13 +199,13 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     #     For some reason both 441 and 440 schedule the copy of BillModel_InquiryMatterWipAging.sql to the output even though a node should only work on a single target at a time
     #     and thus a single node should be processing the source items of a project at any given time.      
 
-    $environmentBlock = @{"MSBUILDALWAYSRETRY" = "1" }
+    $environmentBlock = @{"MSBUILDALWAYSRETRY" = "1"}
 
     # TODO: Fix hard code
     if ([System.Diagnostics.Debugger]::IsAttached -or $debugMode) {
-        $buildArgs = $buildArgs.Replace("/m", "")
-        $buildArgs = "$buildArgs /p:WaitForDebugger=true"
-        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock $process 
+        #$buildArgs = $buildArgs.Replace("/m", "")
+        #$buildArgs = "$buildArgs /p:WaitForDebugger=true"
+        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock #$process 
     } else {
         Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock  
     }
