@@ -31,15 +31,15 @@
 param(
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$script:BinariesDirectory,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
-    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$branch,
-    [Parameter(Mandatory=$false)][int]$pullRequestId,
+    [Parameter(Mandatory = $false, ParameterSetName = "Branch")][ValidateNotNullOrEmpty()][string]$branch,
+    [Parameter(Mandatory = $false, ParameterSetName = "PullRequest")][Alias("pull")][int]$pullRequestId,
     [switch]$acquireTestAssemblies,
     [switch]$buildServerImage
 )
 
 begin {
     $ErrorActionPreference = "Stop"
-    Write-Host "$($MyInvocation.MyCommand.Name)`r`n"
+    Write-Host "Running $($MyInvocation.MyCommand.Name)`r`n"
 
     . "$PSScriptRoot\..\Build\Build-Libraries.ps1"
 
@@ -48,6 +48,9 @@ begin {
     [string]$script:ExpertSourceDirectory = Join-Path -Path $script:BinariesDirectory -ChildPath "ExpertSource"
     [string]$script:LogDirectory = Join-Path -Path $script:BinariesDirectory -ChildPath "Logs"
 
+    <#
+        Clears the specified directory.
+    #>
     function Clear-Environment {
         param (
             [Parameter(Mandatory = $false)][string[]]$exclusions = @("environment.xml", "cms.ini")
@@ -67,16 +70,20 @@ begin {
     <#
         Generate the customization sitemap
     #>
-    function New-Factory() {
+    function New-Factory {
         param (
             [string]$searchPath
         )
 
-        process {
-            Write-Host "Generating factory in [$inDirectory]"
+        process {           
+            Write-Host "Generating factory in [$factoryDirectory]"
 
             return Start-Job -Name "Generate Factory" -ScriptBlock { 
-                param([string]$directory, [string]$searchPath, [string]$logDirectory)
+                param (
+                    [string]$factoryDirectory,
+                    [string]$searchPath,
+                    [string]$logDirectory
+                )
 
                 (& $directory\FactoryResourceGenerator.exe /v:+ /f:$directory /of:$directory/Factory.bin $searchPath > "$logDirectory\FactoryResourceGenerator.log") | Out-Null
 
@@ -90,9 +97,9 @@ begin {
     <#
         Generate the customization sitemap
     #>
-    function GenerateSystemMap() {
+    function New-SystemMap {
         param (
-            [string]$inDirectory,
+            [string]$systemMapDirectory,
             [string]$systemMapArgs
         )
 
@@ -101,13 +108,17 @@ begin {
         
             if ($systemMapArgs -like "*/pdbs*" -and $systemMapArgs -like "*/pdbd*" -and $systemMapArgs -like "*/pdbid*" -and $systemMapArgs -like "*/pdbpw*") {
                 return Start-Job -Name "Generate System Map" -ScriptBlock {
-                    param($directory, $systemMapArgs, $logDirectory) 
+                    param (
+                        [string]$directory,
+                        [string]$systemMapArgs,
+                        [string]$logDirectory
+                    )
 
-                    $connectionParts = $systemMapArgs.Split(" ")
+                    [string]$connectionParts = $systemMapArgs.Split(" ")
                     Write-Host "System Map builder arguments are [$connectionParts]"
 
                     & $directory\SystemMapBuilder.exe /f:$directory /o:$directory\systemmap.xml /ef:Customization $connectionParts[0] $connectionParts[1] $connectionParts[2] $connectionParts[3] > "$logDirectory\SystemMap.log"
-                } -Argument $inDirectory, $systemMapArgs, $script:LogDirectory
+                } -Argument $systemMapDirectory, $systemMapArgs, $script:LogDirectory
             
             } else {
                 throw "Connection string is invalid for use with SystemMapBuilder.exe [$systemMapArgs]"
@@ -118,7 +129,12 @@ begin {
     <#
         Write license attribution content (license.txt) to the product directory
     #>
-    function New-ThirdPartyAttributionFile([string[]]$licenseText, [string]$expertSourceDirectory) {
+    function New-ThirdPartyAttributionFile {
+        param (
+            [string[]]$licenseText,
+            [string]$expertSourceDirectory
+        )
+
         Write-Output "Generating ThirdParty license file."
         $attributionFile = Join-Path $expertSourceDirectory 'ThirdPartyLicenses.txt'        
         foreach ($license in $licenseText) {
@@ -130,9 +146,19 @@ begin {
         Write-Output "Attribution file: $attributionFile"
     }
 
-    function Get-Modules() {
+    function Get-Modules {
         [CmdletBinding()]
-        param([string]$productManifestPath, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber) 
+        param(
+            [string]$productManifestPath,
+            $modules,
+            [string[]]$folders,
+            [string]$expertSourceDirectory,
+            [string]$teamProject,
+            [string]$tfvcBranchName,
+            [string]$tfvcSourceGetVersion,
+            [string]$buildUri,
+            [string]$tfsBuildNumber
+        )
 
         [string[]]$modules = $modules | Select-Object -ExpandProperty Name
 
@@ -154,7 +180,7 @@ begin {
         }
     }  
     
-    function WaitForJobs() {
+    function WaitForJobs {
         while ((Get-Job).State -match "Running") {
             $jobs = Get-Job | Where-Object {$_.HasMoreData}
 
@@ -244,27 +270,65 @@ begin {
             }
         }
     }
+
+    function Copy-Binaries {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$dropRoot,
+            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
+            [switch]$clearBinariesDirectory
+        )
+
+        process {
+            if (-not (Test-Path $dropRoot)) {
+                Write-Error "Directory: '$dropRoot' does not exist."
+                exit 1
+            }
+
+            if ($clearBinariesDirectory.IsPresent) {
+                Clear-Environment -binariesDirectory $binariesDirectory
+            }
+
+            [System.IO.FileInfo[]]$binaries = Get-ChildItem -Path $dropRoot -File
+            
+            Write-Host "Copying files:"
+            Write-Host ($binaries.FullName | Format-List | Out-String)
+            Write-Host "`r`nTo directory:"
+            Write-Host "$binariesDirectory`r`n"
+    
+            [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }          
+        }
+
+        end {
+            Write-Host "Acquired binaries in: $([System.Math]::Round($executionTime.TotalSeconds, 2)) seconds."
+        }
+    }
 }
 
 
 process {
-    Clear-Environment -binariesDirectory $script:BinariesDirectory
+    switch ($PSCmdlet.ParameterSetName) {
+        "Branch" {
+            [string]$branchDropRoot = Join-Path -Path $dropRoot -ChildPath "product\refs\heads\$branch"
+            [string]$build = Join-Path $branchDropRoot -ChildPath (Get-ChildItem -Path $branchDropRoot -Directory | Sort-Object -Property Name | Select-Object -First 1)
 
-    if (-not [string]::IsNullOrWhiteSpace($branch)) {
-        [string]$branchDropRoot = Join-Path -Path $dropRoot -ChildPath $branch
-        [string]$build = Join-Path $branchDropRoot -ChildPath (Get-ChildItem -Path $branchDropRoot -Directory | Sort-Object -Property Name | Select-Object -First 1)
+            Copy-Binaries -dropRoot "$build\Product"-binariesDirectory $binariesDirectory -clearBinariesDirectory
+        }
+        "PullRequest" {
+            # ToDo: Remove a pulls from this path.
+            [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\pulls\$pullRequestId\Product"
 
-        [System.IO.FileInfo[]]$binaries = Get-ChildItem -Path "$build\Product" -File
-        
-        Write-Host "Copying files:"
-        Write-Host ($binaries.FullName | Format-List | Out-String)
-        Write-Host "`r`nTo directory:"
-        Write-Host "$script:BinariesDirectory`r`n"
-
-        [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $script:BinariesDirectory } }
-        
-        Write-Host "Acquired binaries in: $($executionTime.TotalSeconds) seconds."
+            Copy-Binaries -dropRoot $pullRequestDropRoot -binariesDirectory $binariesDirectory -clearBinariesDirectory
+        }
+        default {
+            Write-Error "No action specified."
+            exit 1
+        }
     }
+
+    [string]$sourceDirectory
+    New-SystemMap -systemMapDirectory $binariesDirectory
+    New-Factory -factoryDirectory $binariesDirectory
 
     # if (-not (Test-Path $productManifestPath)) {
     #     Write-Error -Message "Product manifest not found at path: $productManifestPath"
@@ -275,9 +339,7 @@ process {
 }
 
 end {
-    Write-Host ""
-    Write-Host "Product retrieved."
-    Write-Host ""
+    Write-Host "`r`nProduct retrieved.`r`n" -ForegroundColor Cyan
 
     if ([System.Environment]::UserInteractive -and $host.Name -eq "ConsoleHost") {
         $psInteractive = (-not [System.Environment]::GetCommandLineArgs() -Contains '-NonInteractive')
