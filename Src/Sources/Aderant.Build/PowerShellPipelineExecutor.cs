@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aderant.Build {
@@ -28,67 +29,72 @@ namespace Aderant.Build {
 
         public event EventHandler<string> Output;
 
-        public async Task RunScript(string script) {
-            // create a new runspace to isolate the scripts
-            using (var runspace = RunspaceFactory.CreateRunspace()) {
-                runspace.Open();
+        public async Task RunScript(string script, CancellationToken cancellationToken = default(CancellationToken)) {
+            using (PowerShell shell = PowerShell.Create()) {
+                using (var runspace = RunspaceFactory.CreateRunspace()) {
+                    runspace.Open();
 
-                await RunPowerShell(script, runspace);
+                    shell.Runspace = runspace;
+
+                    await RunPowerShellAsync(script, shell, cancellationToken);
+                }
             }
         }
 
-        private async Task RunPowerShell(string script, Runspace runspace) {
-            using (PowerShell shell = PowerShell.Create()) {
-                shell.Runspace = runspace;
+        private async Task RunPowerShellAsync(string script, PowerShell shell, CancellationToken cancellationToken) {
+            SetExecutionPolicy(shell);
 
-                SetExecutionPolicy(shell);
+            SetProgressPreference(shell);
 
-                SetProgressPreference(shell);
+            ReplaceWriteHost(shell);
 
-                ReplaceWriteHost(shell);
+            if (MeasureCommand) {
+                shell.Commands.AddScript("Measure-Command {" + script + "}");
+            } else {
+                shell.Commands.AddScript(script);
+            }
 
-                if (MeasureCommand) {
-                    shell.Commands.AddScript("Measure-Command {" + script + "}");
-                } else {
-                    shell.Commands.AddScript(script);
+            // capture errors
+            shell.Streams.Error.DataAdded += (sender, args) => {
+                var error = shell.Streams.Error[args.Index];
+                string src = error.InvocationInfo.MyCommand?.ToString() ?? error.InvocationInfo.InvocationName;
+                OnError($"{src}: {error}\n{error.InvocationInfo.PositionMessage}");
+            };
+
+            // capture write-* methods (except write-host)
+            shell.Streams.Warning.DataAdded += (sender, args) => OnWarning(shell.Streams.Warning[args.Index].Message);
+            shell.Streams.Debug.DataAdded += (sender, args) => OnDebug(shell.Streams.Debug[args.Index].Message);
+            shell.Streams.Verbose.DataAdded += (sender, args) => OnVerbose(shell.Streams.Verbose[args.Index].Message);
+
+            var outputData = new PSDataCollection<PSObject>();
+            outputData.DataAdded += (sender, args) => {
+                // capture all main output
+                object data = outputData[args.Index]?.BaseObject;
+                if (data != null) {
+                    OnOutput(data.ToString());
                 }
+            };
 
-                // capture errors
-                shell.Streams.Error.DataAdded += (sender, args) => {
-                    var error = shell.Streams.Error[args.Index];
-                    string src = error.InvocationInfo.MyCommand?.ToString() ?? error.InvocationInfo.InvocationName;
-                    OnError($"{src}: {error}\n{error.InvocationInfo.PositionMessage}");
-                };
+            try {
+                var invocationSettings = new PSInvocationSettings() { ErrorActionPreference = ActionPreference.Stop };
 
-                // capture write-* methods (except write-host)
-                shell.Streams.Warning.DataAdded += (sender, args) => OnWarning(shell.Streams.Warning[args.Index].Message);
-                shell.Streams.Debug.DataAdded += (sender, args) => OnDebug(shell.Streams.Debug[args.Index].Message);
-                shell.Streams.Verbose.DataAdded += (sender, args) => OnVerbose(shell.Streams.Verbose[args.Index].Message);
+                cancellationToken.Register(shell.Stop);
 
-                var outputData = new PSDataCollection<PSObject>();
-                outputData.DataAdded += (sender, args) => {
-                    // capture all main output
-                    object data = outputData[args.Index]?.BaseObject;
-                    if (data != null) {
-                        OnOutput(data.ToString());
-                    }
-                };
-
-                await Task.Run( 
-                    () => {
-                        try {
-                            var async = shell.BeginInvoke<PSObject, PSObject>(null, outputData);
-                            PSDataCollection<PSObject> results = shell.EndInvoke(async);
-
-                            Result = outputData.FirstOrDefault()?.ToString();
-                        } catch (ParseException ex) {
-                            // this should only happen in case of script syntax errors, otherwise
-                            // errors would be output via the invoke's error stream 
-                            OnError($"{ex.Message}");
-                        }
+                var task = Task.Factory.FromAsync(
+                    shell.BeginInvoke<PSObject, PSObject>(null, outputData, invocationSettings, pResult => { shell.EndInvoke(pResult); }, null),
+                    _ => {
+                        // dummy delegate to satisfy TPL
                     });
 
+                await task.ConfigureAwait(false);
+
+                Result = outputData.FirstOrDefault()?.ToString();
+            } catch (ParseException ex) {
+                // this should only happen in case of script syntax errors, otherwise
+                // errors would be output via the invoke's error stream 
+                OnError($"{ex.Message}");
             }
+
         }
 
         private static void SetExecutionPolicy(PowerShell shell) {

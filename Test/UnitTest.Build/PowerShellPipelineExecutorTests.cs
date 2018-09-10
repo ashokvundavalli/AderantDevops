@@ -13,6 +13,8 @@ namespace UnitTest.Build {
             await executor.RunScript("Get-FileHash -LiteralPath C:\\Windows\\System32\\notepad.exe -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash");
 
             var executorResult = executor.Result;
+
+            Assert.IsNotNull(executorResult);
         }
     }
 }

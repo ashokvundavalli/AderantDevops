@@ -1,8 +1,11 @@
-﻿using Microsoft.Build.Framework;
+﻿using System;
+using System.Threading;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public sealed class PowerShellScript : Task {
+    public sealed class PowerShellScript : Task, ICancelableTask {
+        private CancellationTokenSource cts;
 
         [Required]
         public string ScriptBlock { get; private set; }
@@ -28,9 +31,20 @@ namespace Aderant.Build.Tasks {
 
             pipelineExecutor.Output += (sender, message) => { Log.LogMessage(MessageImportance.Normal, message); };
 
-            pipelineExecutor.RunScript(ScriptBlock).Wait();
+            this.cts = new CancellationTokenSource();
+
+            try {
+                pipelineExecutor.RunScript(ScriptBlock, cts.Token).Wait(cts.Token);
+                Result = pipelineExecutor.Result;
+            } catch (OperationCanceledException) {
+                // Cancellation was requested
+            }
 
             return !Log.HasLoggedErrors;
+        }
+
+        public void Cancel() {
+            cts.Cancel();
         }
     }
 }
