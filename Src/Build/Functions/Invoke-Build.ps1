@@ -262,6 +262,9 @@ Should not be used as it prevents incremental builds which increases build times
     $contextService.StartListener($contextEndpoint)
     $contextService.Publish($context)
 
+    
+    throw "Build did not succeed"
+
     try {
         $args = CreateToolArgumentString $context $RemainingArgs
 
@@ -307,4 +310,5 @@ Should not be used as it prevents incremental builds which increases build times
             $contextService.Dispose()
         }
     }
+
 }
