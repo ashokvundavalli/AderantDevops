@@ -263,13 +263,17 @@ Should not be used as it prevents incremental builds which increases build times
     $contextService.Publish($context)
 
     
-    throw "Build did not succeed"
+    
+    $succeded = $false
 
     try {
+        throw 'sad times'
         $args = CreateToolArgumentString $context $RemainingArgs
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
- 
+        #Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
+
+        $succeded = $true
+
         if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
             [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
 
@@ -281,6 +285,8 @@ Should not be used as it prevents incremental builds which increases build times
             }
         }
     } catch {
+        $succeded = $false      
+    } finally {
         $context = $contextService.CurrentContext
         $reason = $context.BuildStatusReason
         $status = $context.BuildStatus
@@ -305,10 +311,9 @@ Should not be used as it prevents incremental builds which increases build times
             Write-Host "]"
             Write-Host " $reason" -ForegroundColor Gray    
         }
-    } finally {
+
         if ($contextService -ne $null) {
             $contextService.Dispose()
         }
     }
-
 }
