@@ -152,7 +152,7 @@ begin {
 
                 if (-not $null -eq $filesToValidate) {
                     $executionTime = [System.Math]::Round((Measure-Command { Confirm-Files -filesToValidate $filesToValidate -component $component }).TotalSeconds, 2)
-                    Write-Host "`r`nValidation for $component completed in: $executionTime seconds.`r`n" -ForegroundColor Cyan
+                    Write-Host "`r`nValidation for $component completed in: $executionTime seconds." -ForegroundColor Cyan
                     $totalTime = $totalTime + $executionTime
                 }
             }
@@ -193,9 +193,9 @@ begin {
             Write-Host "$binariesDirectory`r`n"
 
             foreach ($archive in $archives) {
-                [TimeSpan]$executionTime = Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }
-                Write-Host "Extracted archive: '$($archive.Name)' in: $([System.Math]::Round($executionTime.TotalSeconds, 2)) seconds." -ForegroundColor Cyan
-                $totalTime = $totalTime + [System.Math]::Round($executionTime.TotalSeconds, 2)
+                [double]$executionTime = [System.Math]::Round((Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }).TotalSeconds, 2)
+                Write-Host "Extracted archive: '$($archive.Name)' in: $executionTime seconds." -ForegroundColor Cyan
+                $totalTime = $totalTime + $executionTime
             }
         }
 
