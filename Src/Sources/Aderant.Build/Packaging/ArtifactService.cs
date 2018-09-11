@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
@@ -255,12 +256,21 @@ namespace Aderant.Build.Packaging {
         }
 
         internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {
+            var actionBlockOptions = new ExecutionDataflowBlockOptions {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+            };
+
             ActionBlock<PathSpec> restoreFile = new ActionBlock<PathSpec>(
-                // ToDo: Optimize PhysicalFileSystem to store known directories for bulk copy operation.
-                file => fileSystem.CopyFile(file.Location, file.Destination, isDesktopBuild),
-                new ExecutionDataflowBlockOptions {
-                    MaxDegreeOfParallelism = Environment.ProcessorCount
-                });
+                // Break from synchronous thread context of caller to get onto thread pool thread.
+
+                // ToDo: Optimize PhysicalFileSystem to store directories known to exist for bulk copy operation.
+                async file => {
+                    // Break from synchronous thread context of caller to get onto thread pool thread.
+                    await Task.Yield();
+
+                    fileSystem.CopyFile(file.Location, file.Destination, isDesktopBuild);
+                },
+                actionBlockOptions);
 
             foreach (PathSpec file in filesToRestore) {
                 logger.Info("Restoring: {0} -> {1}", file.Location, file.Destination);
@@ -268,6 +278,7 @@ namespace Aderant.Build.Packaging {
             }
 
             restoreFile.Complete();
+            restoreFile.Completion.GetAwaiter().GetResult();
 
             return restoreFile;
         }
