@@ -1,24 +1,14 @@
 ﻿$indent1 = "  "
 $indent2 = "        "
 
-function ApplyBranchConfig($context, $stringSearchDirectory) {
-    $configPath = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "branch.config")
+function ApplyBranchConfig($context, $root) {
+    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
 
     if (-not $configPath) {
-        #throw "Branch configuration file not found"
-        # TODO: shim
-    [xml]$config = "<BranchConfig>
-  <DropLocations>
-    <!--\\ap.aderant.com\akl\tempswap\☃-->
-    <PrimaryDropLocation>\\dfs.aderant.com\expertsuite\product</PrimaryDropLocation>    
-    <PullRequestDropLocation>\\dfs.aderant.com\expertsuite\product\</PullRequestDropLocation>
-    <BuildCacheLocation>\\dfs.aderant.com\expertsuite\buildcache\v1</BuildCacheLocation>
-    <XamlBuildDropLocation>\\dfs.aderant.com\expertsuite\dev\vnext</XamlBuildDropLocation>
-  </DropLocations>
-</BranchConfig>"
-        }
+        throw "Branch configuration file not found at path $($configPath)"
+    }
 
-    #[xml]$config = Get-Content -Raw -Path "$configPath\branch.config"
+    [xml]$config = Get-Content -Raw -LiteralPath $configPath
 
     $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
     $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
@@ -26,14 +16,16 @@ function ApplyBranchConfig($context, $stringSearchDirectory) {
     $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
-function FindProductManifest($context, $stringSearchDirectory) {        
-    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, "ExpertManifest.xml")
-    $context.ProductManifestPath = "$path\ExpertManifest.xml"
+function FindProductManifest($context, $stringSearchDirectory) {
+    $configPath = [System.IO.Path]::Combine($root, "Build\ExpertManifest.xml")
+    $context.ProductManifestPath = $configPath
 }
 
 function FindGitDir($context, $stringSearchDirectory) {        
     $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
     $context.Variables["_GitDir"] = "$path\.git"
+
+    return $path
 }
 
  function CreateToolArgumentString($context, $remainingArgs) {
@@ -244,10 +236,10 @@ Should not be used as it prevents incremental builds which increases build times
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
     $context.DirectoriesToBuild = $DirectoriesToBuild
 
-    FindGitDir $context $repositoryPath    
-    ApplyBranchConfig $context $repositoryPath
-    FindProductManifest $context $repositoryPath
-    GetSourceTreeMetadata $context $repositoryPath
+    $root = FindGitDir $context $repositoryPath    
+    ApplyBranchConfig $context $root
+    FindProductManifest $context $root
+    GetSourceTreeMetadata $context $root
     GetBuildStateMetadata $context
     PrepareEnvironment
 
