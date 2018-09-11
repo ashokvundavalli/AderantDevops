@@ -287,6 +287,10 @@ Should not be used as it prevents incremental builds which increases build times
     } finally {
         $context = $contextService.CurrentContext
 
+        if ($contextService -ne $null) {
+            $contextService.Dispose()
+        }
+
         $reason = $context.BuildStatusReason
         $status = $context.BuildStatus
 
@@ -296,25 +300,21 @@ Should not be used as it prevents incremental builds which increases build times
         Write-Host " Build: " -NoNewline
 
         if (-not $succeded -or $context.BuildStatus -eq "Failed") {
+            $global:LASTEXITCODE = 1
+
             Write-Host "[" -NoNewline
             Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
             Write-Host "]"
-            Write-Host " $reason" -ForegroundColor Red
+            Write-Host " $reason" -ForegroundColor Red            
 
-            if (-not $context.IsDesktopBuild) {
+            #if (-not $context.IsDesktopBuild) {
                 throw "Build did not succeed: $($context.BuildStatusReason)"
-            }
+            #}
         } else {            
             Write-Host "[" -NoNewline
             Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
             Write-Host "]"
             Write-Host " $reason" -ForegroundColor Gray    
-        }
-
-        if ($contextService -ne $null) {
-            $contextService.Dispose()
-        }
+        }        
     }
-   
-   
 }
