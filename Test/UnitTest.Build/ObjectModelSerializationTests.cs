@@ -49,11 +49,13 @@ namespace UnitTest.Build {
         public void BuildOperationContextSerialization() {
             var metadata = new BuildOperationContext();
             metadata.WrittenStateFiles = new List<string> { "1" };
+            metadata.IsDesktopBuild = false;
 
             var instance = RoundTrip(metadata);
 
             Assert.IsNotNull(instance);
             Assert.AreEqual(1, instance.WrittenStateFiles.Count);
+            Assert.IsFalse(instance.IsDesktopBuild);
         }
 
         [TestMethod]

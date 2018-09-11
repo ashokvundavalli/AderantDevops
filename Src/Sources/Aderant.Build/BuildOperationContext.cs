@@ -12,7 +12,7 @@ using ProtoBuf;
 namespace Aderant.Build {
 
     [DataContract]
-    [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
+    [ProtoContract(ImplicitFields = ImplicitFields.AllFields, SkipConstructor = true)]
     public class BuildOperationContext {
 
         [DataMember(EmitDefaultValue = false)]
@@ -34,10 +34,13 @@ namespace Aderant.Build {
         private DropLocationInfo drops;
 
         [DataMember]
-        private bool isDesktopBuild = true;
+        private bool isDesktopBuild;
 
         [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
+
+        [DataMember]
+        private IDictionary<string, IDictionary<string, string>> scopedVariables;
 
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
@@ -52,13 +55,15 @@ namespace Aderant.Build {
         private BuildSwitches switches = default(BuildSwitches);
 
         [DataMember]
+        private IDictionary<string, string> variables;
+
+        [DataMember]
         private ICollection<string> writtenStateFiles;
 
         public BuildOperationContext() {
-            ScopedVariables = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-            Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Environment = "";
             PipelineName = "";
+            IsDesktopBuild = true;
         }
 
         public string BuildScriptsDirectory {
@@ -89,7 +94,6 @@ namespace Aderant.Build {
             set { buildSystemDirectory = value; }
         }
 
-        [IgnoreDataMember]
         public bool IsDesktopBuild {
             get { return isDesktopBuild; }
             set { isDesktopBuild = value; }
@@ -110,7 +114,7 @@ namespace Aderant.Build {
         [DataMember]
         public string BuildStatusReason { get; set; }
 
-     public DateTime StartedAt {
+        public DateTime StartedAt {
             get { return startedAt; }
             set {
                 startedAt = value;
@@ -120,11 +124,13 @@ namespace Aderant.Build {
             }
         }
 
-        [DataMember]
-        public IDictionary<string, IDictionary<string, string>> ScopedVariables { get; private set; }
+        public IDictionary<string, IDictionary<string, string>> ScopedVariables {
+            get { return scopedVariables ?? (scopedVariables = new SortedDictionary<string, IDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)); }
+        }
 
-        [DataMember]
-        public IDictionary<string, string> Variables { get; private set; }
+        public IDictionary<string, string> Variables {
+            get { return variables ?? (variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)); }
+        }
 
         public BuildMetadata BuildMetadata {
             get { return buildMetadata; }

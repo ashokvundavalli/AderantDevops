@@ -69,5 +69,4 @@ namespace Aderant.Build.PipelineService {
             }
         }
     }
-
 }
