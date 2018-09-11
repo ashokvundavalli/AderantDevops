@@ -29,11 +29,14 @@ param(
 
 begin {
     $ErrorActionPreference = "Stop"
-    Write-Host "Running $($MyInvocation.MyCommand.Name)`r`n" -ForegroundColor Cyan
-
     . "$PSScriptRoot\..\Build\Build-Libraries.ps1"
-
     Set-StrictMode -Version Latest
+
+    Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
+
+    foreach ($parameter in $MyInvocation.MyCommand.Parameters) {
+        Write-Host (Get-Variable -Name $Parameter.Values.Name -ErrorAction SilentlyContinue | Out-String)
+    }
 
     function Clear-Environment {
         <#
@@ -48,7 +51,7 @@ begin {
 
         process {
             if (Test-Path $binariesDirectory) {
-                Write-Host "Clearing directory: $($binariesDirectory)`r`n"
+                Write-Host "Clearing directory: $($binariesDirectory)"
                 Remove-Item $binariesDirectory\* -Recurse -Force -Exclude $exclusions
             }
 
@@ -94,7 +97,7 @@ begin {
 
                 [System.IO.FileInfo[]]$binaries = Get-ChildItem -Path $componentPath -File
                 
-                Write-Host "Copying files:"
+                Write-Host "`r`nCopying files:"
                 Write-Host ($binaries.FullName | Format-List | Out-String)
                 Write-Host "`r`nTo directory:"
                 Write-Host "$binariesDirectory`r`n"
@@ -174,7 +177,7 @@ process {
         }
         "PullRequest" {
             # ToDo: Remove a pulls from this path.
-            [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\pulls\$pullRequestId\Product"
+            [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\pulls\$pullRequestId"
 
             Copy-Binaries -dropRoot $pullRequestDropRoot -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
         }
