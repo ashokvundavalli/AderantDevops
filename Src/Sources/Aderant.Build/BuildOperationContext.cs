@@ -128,6 +128,7 @@ namespace Aderant.Build {
         public BuildMetadata BuildMetadata {
             get { return buildMetadata; }
             set {
+                System.Diagnostics.Debugger.Launch();
                 buildMetadata = value;
 
                 if (value != null) {
