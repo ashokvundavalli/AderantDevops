@@ -255,6 +255,10 @@ namespace Aderant.Build.Packaging {
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
+        /// <summary>
+        /// Parallelize I/O
+        /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
+        /// </summary>
         internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {
             var actionBlockOptions = new ExecutionDataflowBlockOptions {
                 MaxDegreeOfParallelism = Environment.ProcessorCount,

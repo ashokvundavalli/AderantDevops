@@ -74,7 +74,8 @@
     <Message Text="Setting up build environment from: $(BuildScriptsDirectory) in project $(MSBuildThisFileFullPath)" />
 
     <Exec Condition="'$(IsDesktopBuild)' == 'false'"
-      Command="$(BuildScriptsDirectory)\paket.exe restore" WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
+          Command="$(BuildScriptsDirectory)\paket.exe restore"
+          WorkingDirectory="$(BuildScriptsDirectory)..\..\" />
 
     <ItemGroup>
       <!-- Desktop/Common projects -->

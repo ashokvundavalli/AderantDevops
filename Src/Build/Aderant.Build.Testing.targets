@@ -35,7 +35,7 @@
     <Message Text="%(_AssemblyResolutionPaths.FullPath)" />
 
     <ItemGroup>
-      <AssemblyResolutionPaths Include="@(_AssemblyResolutionPaths->'%(Identity)', ',')" />
+      <AssemblyResolutionPaths Include="@(_AssemblyResolutionPaths->'&quot;%(Identity)&quot;', ',')" />
     </ItemGroup>
     
     <CreateItem Include="@(TestOutputDirectories->'%(FullPath)UnitTest*.dll')" PreserveExistingMetadata="true">
@@ -76,7 +76,7 @@
 
   <Target Name="RunTests"
           DependsOnTargets="$(RunTestsDependsOn)"
-          Condition="('$(RunTest)' != 'false') And ('$(IsCustomBuild)' != 'true')">
+          Condition="@(TestAssemblies) != ''">
 
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>

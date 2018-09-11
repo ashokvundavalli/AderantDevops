@@ -56,6 +56,7 @@
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
+      CleanStagingDirectory;
       <!--ArchiveStagingDirectory;-->
       CreatePipeline;
       ExecutePipeline;
@@ -68,10 +69,8 @@
   </PropertyGroup>
 
 
-  <Target Name="ArchiveStagingDirectory">
-    <PowerShellScript
-      Condition="Exists($(ArtifactStagingDirectory))"
-      ScriptBlock='Move-Item -LiteralPath "$(ArtifactStagingDirectory)" -Destination ("$(SolutionRoot)\_as" + [DateTime]::UtcNow.ToFileTime()) -Verbose' />
+  <Target Name="CleanStagingDirectory" Condition="'$(IsDesktopBuild)' == 'false'">
+    <RemoveDir Directories="$(ArtifactStagingDirectory)" />
   </Target>
 
 
