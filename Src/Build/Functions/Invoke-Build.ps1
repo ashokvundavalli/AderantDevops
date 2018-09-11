@@ -307,9 +307,9 @@ Should not be used as it prevents incremental builds which increases build times
             Write-Host "]"
             Write-Host " $reason" -ForegroundColor Red            
 
-            #if (-not $context.IsDesktopBuild) {
+            if (-not $context.IsDesktopBuild) {
                 throw "Build did not succeed: $($context.BuildStatusReason)"
-            #}
+            }
         } else {            
             Write-Host "[" -NoNewline
             Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
