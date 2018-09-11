@@ -84,10 +84,16 @@ begin {
                 [string[]]$fileContent = (Get-Content -Path $file.FullName).Split(" ")
                 [string]$expectedSha1 = $fileContent[0]
                 [string]$fileToValidate = Join-Path -Path $file.DirectoryName -ChildPath $fileContent[2]
+
+                if (-not (Test-Path -Path $fileToValidate)) {
+                    Write-Error "Failed to locate file: '$fileToValidate' referenced in SHA1 file: '$($file.FullName)'." -ErrorAction Continue
+                    $errors = $true
+                }
+
                 [string]$actualSha1 = (Get-FileHash -Path $fileToValidate -Algorithm SHA1).Hash.ToUpper()
 
                 if (-not $expectedSha1 -eq $actualSha1) {
-                    Write-Error "Validation failed for file: '$fileToValidate'.`r`nExpected SHA1 hash: '$expectedSha1'`r`nActual SHA1 hash: '$actualSha1'"
+                    Write-Error "Validation failed for file: '$fileToValidate'.`r`nExpected SHA1 hash: '$expectedSha1'`r`nActual SHA1 hash: '$actualSha1'" -ErrorAction Continue
                     $errors = $true
                 } else {
                     Write-Debug "`r`nSHA1 validation for file: $fileToValidate with hash: '$actualSha1' succeeded."
