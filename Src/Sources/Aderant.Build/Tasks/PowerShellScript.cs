@@ -70,7 +70,7 @@ namespace Aderant.Build.Tasks {
 
                     pipelineExecutor.RunScript(
                         new[] {
-                            $"Import-Module {directoryName}\\Build.psm1",
+                            $"Import-Module \"{directoryName}\\Build.psm1\"",
                             ScriptBlock
                         },
                         variables,

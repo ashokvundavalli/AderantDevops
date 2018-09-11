@@ -25,7 +25,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
                 artifactService.RegisterHandler(new PullRequestHandler());
 
                 if (!Context.IsDesktopBuild) {
-                    artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
+                    //artifactService.RegisterHandler(new XamlDropHandler(FileVersion, AssemblyVersion));
                 }
 
                 artifactService.CreateArtifacts(Context, Path.GetFileName(SolutionRoot), artifacts);
