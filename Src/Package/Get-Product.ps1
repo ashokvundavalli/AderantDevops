@@ -195,15 +195,5 @@ process {
 end {
     Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
 
-    if ([System.Environment]::UserInteractive -and $host.Name -eq "ConsoleHost") {
-        [bool]$psInteractive = (-not [System.Environment]::GetCommandLineArgs() -Contains '-NonInteractive')
-
-        if ($psInteractive -and (Get-Random -Maximum 2 -Minimum 0) -eq 1) {
-            if ([System.DateTime]::Now.Month -eq 9 -and ([System.DateTime]::Now.DayOfWeek -in [System.DayOfWeek]::Monday,[System.DayOfWeek]::Tuesday,[System.DayOfWeek]::Wednesday)) {
-                Get-RickRolled
-            }
-        }
-    }
-
     exit $LASTEXITCODE
 }
