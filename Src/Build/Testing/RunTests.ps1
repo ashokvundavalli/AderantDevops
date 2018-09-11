@@ -19,12 +19,17 @@ param(
 )
 
 function GetTestResultFiles() {
-    return Get-ChildItem -LiteralPath "$WorkingDirectory\TestResults" -Filter "*.trx"
+    return Get-ChildItem -LiteralPath "$WorkingDirectory\TestResults" -Filter "*.trx" -ErrorAction SilentlyContinue
 }
 
 function GenerateHtmlReport() {
     $afterRunTrxFiles = GetTestResultFiles
-    $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
+
+    if ($beforeRunTrxFiles) {    
+        $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
+    } else {
+        $newTrxFile = $afterRunTrxFiles.FullName
+    }
 
     if ($newTrxFile) {
         & "$PSScriptRoot\..\..\Build.Tools\TrxerConsole.exe" $newTrxFile
@@ -52,6 +57,7 @@ try {
     $runner = [Aderant.Build.Utilities.ProcessRunner]::RunTestProcess($startInfo)
     $runner.RecordConsoleOutput = $true
     $runner.Start()
+
     $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
 
     if ($global:BuildLogFile) {
