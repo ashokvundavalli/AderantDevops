@@ -260,9 +260,7 @@ Should not be used as it prevents incremental builds which increases build times
 
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextEndpoint)
-    $contextService.Publish($context)
-
-    
+    $contextService.Publish($context)    
     
     $succeded = $false
 
@@ -288,32 +286,33 @@ Should not be used as it prevents incremental builds which increases build times
         $succeded = $false      
     } finally {
         $context = $contextService.CurrentContext
-        $reason = $context.BuildStatusReason
-        $status = $context.BuildStatus
-
-        Write-Output ""
-        Write-Output ""
-
-        Write-Host " Build: " -NoNewline
-
-        if ($context.BuildStatus -eq "Failed") {
-            Write-Host "[" -NoNewline
-            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
-            Write-Host "]"
-            Write-Host " $reason" -ForegroundColor Red
-
-            if (-not $context.IsDesktopBuild) {
-                throw "Build did not succeed: $($context.BuildStatusReason)"
-            }
-        } else {            
-            Write-Host "[" -NoNewline
-            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
-            Write-Host "]"
-            Write-Host " $reason" -ForegroundColor Gray    
-        }
 
         if ($contextService -ne $null) {
             $contextService.Dispose()
         }
+    }
+   
+    $reason = $context.BuildStatusReason
+    $status = $context.BuildStatus
+
+    Write-Output ""
+    Write-Output ""
+
+    Write-Host " Build: " -NoNewline
+
+    if ($context.BuildStatus -eq "Failed") {
+        Write-Host "[" -NoNewline
+        Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
+        Write-Host "]"
+        Write-Host " $reason" -ForegroundColor Red
+
+        if (-not $context.IsDesktopBuild) {
+            throw "Build did not succeed: $($context.BuildStatusReason)"
+        }
+    } else {            
+        Write-Host "[" -NoNewline
+        Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
+        Write-Host "]"
+        Write-Host " $reason" -ForegroundColor Gray    
     }
 }
