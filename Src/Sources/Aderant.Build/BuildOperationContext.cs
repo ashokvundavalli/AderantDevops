@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Threading;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.VersionControl;
@@ -15,8 +14,6 @@ namespace Aderant.Build {
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
     public class BuildOperationContext {
-
-
 
         [DataMember(EmitDefaultValue = false)]
         private string artifactStagingDirectory;
@@ -42,9 +39,10 @@ namespace Aderant.Build {
         [DataMember(EmitDefaultValue = false)]
         private string productManifestPath;
 
-
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
+
+        private DateTime startedAt;
 
         [DataMember]
         private List<BuildStateFile> stateFiles;
@@ -77,7 +75,13 @@ namespace Aderant.Build {
         }
 
         [DataMember]
+        public string[] DirectoriesToBuild { get; set; }
+
+        [DataMember]
         public string BuildRoot { get; set; }
+
+        [DataMember]
+        public string LogFile { get; set; }
 
         public string BuildSystemDirectory {
             get { return buildSystemDirectory; }
@@ -99,7 +103,21 @@ namespace Aderant.Build {
         public string PipelineName { get; set; }
 
         [DataMember]
-        public DateTime StartedAt { get; set; }
+        public string BuildStatus { get; set; }
+
+        [DataMember]
+        public string BuildStatusReason { get; set; }
+
+        [DataMember]
+        public DateTime StartedAt {
+            get { return startedAt; }
+            set {
+                startedAt = value;
+                if (BuildStatus == null) {
+                    BuildStatus = "Started";
+                }
+            }
+        }
 
         [DataMember]
         public IDictionary<string, IDictionary<string, string>> ScopedVariables { get; private set; }
@@ -357,7 +375,6 @@ namespace Aderant.Build {
 
         [DataMember]
         public Guid ProjectGuid { get; set; }
-
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

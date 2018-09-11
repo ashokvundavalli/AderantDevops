@@ -10,7 +10,7 @@ using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.Utils;
+using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;

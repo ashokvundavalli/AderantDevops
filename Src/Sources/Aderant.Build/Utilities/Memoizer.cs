@@ -1,8 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
-namespace Aderant.Build.Utils {
+namespace Aderant.Build.Utilities {
+
+    public static class ProcessRunner {
+        public static ProcessInvoker RunTestProcess(ProcessStartInfo startInfo) {
+            return new TestProcessInvoker(startInfo);
+        }
+    }
+
     /// <summary>
     /// Remembers the result of evaluating an expensive function so that subsequent
     /// evaluations are faster. Thread-safe.
@@ -11,8 +19,8 @@ namespace Aderant.Build.Utils {
     /// <typeparam name="TResult"> Type of the function result. </typeparam>
     internal sealed class Memoizer<TArg, TResult> {
         private readonly Func<TArg, TResult> function;
-        private readonly Dictionary<TArg, Result> resultCache;
         private readonly ReaderWriterLockSlim @lock;
+        private readonly Dictionary<TArg, Result> resultCache;
 
         /// <summary>
         /// Constructs
@@ -80,8 +88,8 @@ namespace Aderant.Build.Utils {
         /// be null) and when the user requests a value the delegate is invoked and stored.
         /// </summary>
         private class Result {
-            private TResult value;
             private Func<TResult> func;
+            private TResult value;
 
             internal Result(Func<TResult> createValueFunc) {
                 func = createValueFunc;
@@ -101,6 +109,7 @@ namespace Aderant.Build.Utils {
                         // thread may have computed the value
                         return value;
                     }
+
                     value = func();
 
                     // ensure _delegate (and its closure) is garbage collected, and set to null

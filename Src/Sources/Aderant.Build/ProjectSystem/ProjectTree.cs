@@ -84,9 +84,12 @@ namespace Aderant.Build.ProjectSystem {
             // Null checked to allow unit testing where projects are inserted directly
             if (LoadedUnconfiguredProjects != null) {
                 foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
-                    ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
-
-                    project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                    try {
+                        ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
+                        project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                    } catch (Exception ex) {
+                        logger.Warning("Project {0} failed to load. {1}", unconfiguredProject.FullPath, ex.Message);
+                    }
                 }
             }
 
@@ -110,6 +113,12 @@ namespace Aderant.Build.ProjectSystem {
 
         public async Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
             await LoadProjects(context.BuildRoot, true, analysisContext.ExcludePaths);
+
+            if (context.DirectoriesToBuild != null) {
+                foreach (var dir in context.DirectoriesToBuild) {
+                    await LoadProjects(dir, true, analysisContext.ExcludePaths);
+                }
+            }
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;

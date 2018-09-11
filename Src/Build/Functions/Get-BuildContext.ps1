@@ -11,7 +11,7 @@ function Get-BuildContext {
     }
     
     process {
-        Write-Debug "Retrieving current context"
+        Write-Debug "Retrieving current context" 
 
         if ($MyInvocation.MyCommand.Module -ne $null) {
             try {                

@@ -8,7 +8,7 @@ using ProtoBuf;
 namespace Aderant.Build.PipelineService {
 
     [ServiceContract(SessionMode = SessionMode.Allowed)]
-    internal interface IBuildPipelineService : IArtifactService {
+    internal interface IBuildPipelineServiceContract : IArtifactService {
         [OperationContract]
         void Publish(BuildOperationContext context);
 
