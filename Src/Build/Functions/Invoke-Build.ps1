@@ -226,6 +226,8 @@ Should not be used as it prevents incremental builds which increases build times
         
     [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
 
+         Write-Host "1111 $($context.IsDesktopBuild)"
+
     [string]$repositoryPath = $null
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
         $repositoryPath = $ModulePath
@@ -242,6 +244,8 @@ Should not be used as it prevents incremental builds which increases build times
     GetSourceTreeMetadata $context $root
     GetBuildStateMetadata $context
     PrepareEnvironment
+
+         Write-Host "aaaaa2222222aaa $($context.IsDesktopBuild)"
 
     $switches = $context.Switches    
     $switches.Branch = $Branch.IsPresent
@@ -261,7 +265,9 @@ Should not be used as it prevents incremental builds which increases build times
     $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
     $contextService.StartListener($contextEndpoint)
     $contextService.Publish($context)    
-    
+
+         Write-Host "333333 $($context.IsDesktopBuild)"
+
     $succeded = $false
 
     try {
@@ -287,6 +293,8 @@ Should not be used as it prevents incremental builds which increases build times
     } finally {
         $context = $contextService.CurrentContext
 
+             Write-Host "444444 $($context.IsDesktopBuild)"
+
         if ($contextService -ne $null) {
             $contextService.Dispose()
         }
@@ -306,6 +314,8 @@ Should not be used as it prevents incremental builds which increases build times
             Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
             Write-Host "]"
             Write-Host " $reason" -ForegroundColor Red            
+
+            Write-Host "aaaaaaaa $($context.IsDesktopBuild)"
 
             if (-not $context.IsDesktopBuild) {
                 throw "Build did not succeed: $($context.BuildStatusReason)"

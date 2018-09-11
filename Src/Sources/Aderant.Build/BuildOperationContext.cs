@@ -42,6 +42,7 @@ namespace Aderant.Build {
         [DataMember]
         private SourceTreeMetadata sourceTreeMetadata;
 
+        [DataMember]
         private DateTime startedAt;
 
         [DataMember]
@@ -88,6 +89,7 @@ namespace Aderant.Build {
             set { buildSystemDirectory = value; }
         }
 
+        [IgnoreDataMember]
         public bool IsDesktopBuild {
             get { return isDesktopBuild; }
             set { isDesktopBuild = value; }
@@ -108,8 +110,7 @@ namespace Aderant.Build {
         [DataMember]
         public string BuildStatusReason { get; set; }
 
-        [DataMember]
-        public DateTime StartedAt {
+     public DateTime StartedAt {
             get { return startedAt; }
             set {
                 startedAt = value;
@@ -128,7 +129,6 @@ namespace Aderant.Build {
         public BuildMetadata BuildMetadata {
             get { return buildMetadata; }
             set {
-                System.Diagnostics.Debugger.Launch();
                 buildMetadata = value;
 
                 if (value != null) {
