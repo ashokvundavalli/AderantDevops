@@ -46,7 +46,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         public string ScmCommitId { get; set; }
 
-        [DataMember(EmitDefaultValue = false, Name = nameof(Outputs))]
         internal IDictionary<string, ProjectOutputSnapshot> Outputs {
             get {
                 if (requiresSerializationFixUp) {
@@ -59,7 +58,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             set { outputs = value; }
         }
 
-        [DataMember(EmitDefaultValue = false, Name = nameof(Artifacts))]
         internal IDictionary<string, ICollection<ArtifactManifest>> Artifacts {
             get { return artifacts; }
             set { artifacts = value; }

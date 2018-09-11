@@ -263,6 +263,7 @@ namespace Aderant.Build.Packaging {
                 });
 
             foreach (PathSpec file in filesToRestore) {
+                logger.Info("Restoring: {0} -> {1}", file.Location, file.Destination);
                 restoreFile.Post(file);
             }
 
@@ -436,6 +437,7 @@ namespace Aderant.Build.Packaging {
                                 }
 
                                 if (IsFileTrustworthy(file)) {
+                                    logger.Info("Adding state file: " + stateFile + " as candidate");
                                     files.Add(file);
                                 }
 
