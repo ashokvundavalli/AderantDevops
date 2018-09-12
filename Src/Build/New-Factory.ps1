@@ -1,6 +1,18 @@
 <#
 .Synopsis
     Generate the customization sitemap.
+.Description    
+    Generate the customization sitemap using FactoryResourceGenerator.exe.
+.Example
+    New-Factory -factoryDirectory 'C:\TFS\ExpertSuite\Dev\vnext\Binaries\ExpertSource' -searchDirectory 'C:\TFS\ExpertSuite\Dev\vnext\Binaries\ExpertSource' -logDirectory 'C:\TFS\ExpertSuite\Dev\vnext\Binaries\Logs'
+.Parameter factoryDirectory
+    The directory containing the FactoryResourceGenerator.exe.
+.Parameter searchDirectory
+    The directory to operate on.
+.Parameter searchPath
+    The search pattern for the Factory Resource Generator to use.
+.Parameter logDirectory
+    The directory to output the FactoryResourceGenerator.log file.
 #>
 [CmdletBinding()]
 param (
@@ -30,6 +42,8 @@ process {
     }
 
     (& "$factoryDirectory\FactoryResourceGenerator.exe" /v:+ /f:"$searchDirectory" /of:"$searchDirectory\Factory.bin" /sp:"$searchPath") | Tee-Object -FilePath (Join-Path -Path $logDirectory -ChildPath "FactoryResourceGenerator.log")
+}
 
+end {
     exit $LASTEXITCODE
 }

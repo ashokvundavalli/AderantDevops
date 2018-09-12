@@ -52,6 +52,7 @@
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.Factory.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -63,7 +64,7 @@
       RunTests;
       WriteStateFiles;
 
-      <!--GenerateFactory-->
+      <!--GenerateFactory;-->
       PackageProduct;
       CopyToDrop;
     </BuildAndPackageDependsOn>
