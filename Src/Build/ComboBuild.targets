@@ -63,7 +63,7 @@
       RunTests;
       WriteStateFiles;
 
-      GenerateFactory
+      <!--GenerateFactory-->
       PackageProduct;
       CopyToDrop;
     </BuildAndPackageDependsOn>
