@@ -64,7 +64,6 @@
       RunTests;
       WriteStateFiles;
 
-      GenerateFactory;
       PackageProduct;
       CopyToDrop;
     </BuildAndPackageDependsOn>
@@ -254,13 +253,13 @@
   <Target Name="GenerateFactory" Condition="'$(GenerateFactory)' != 'false'">
 
     <PropertyGroup>
-      <FactoryResourceGenerator>$(ExpertSourceDirectory)\FactoryResourceGenerator.exe</FactoryResourceGenerator>
-      <FactorySearchPath>Aderant*.dll`,*.exe</FactorySearchPath>
+      <FactoryResourceGenerator>$(ExpertSourceDirectory)FactoryResourceGenerator.exe</FactoryResourceGenerator>
+      <FactorySearchPath>Aderant*.dll,*.exe</FactorySearchPath>
     </PropertyGroup>
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="$(FactoryResourceGenerator) /v:+ /f:&quot;$(ExpertSourceDirectory)&quot; /of:&quot;$(ExpertSourceDirectory)\Factory.bin&quot; /sp:&quot;$(FactorySearchPath)&quot;" />
+      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;" />
 
   </Target>
 
