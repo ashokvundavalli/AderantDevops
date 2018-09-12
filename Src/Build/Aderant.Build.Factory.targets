@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+
+  <Target Name="GenerateFactory" Condition="'$(IsCustomBuild)' != 'true'">
+   
+    <PropertyGroup>
+      <FactoryDirectory Condition="'$(FactoryDirectory)' == ''">$(ArtifactStagingDirectory)Product</FactoryDirectory>
+      <FactorySearchDirectory Condition="'$(FactorySearchDirectory)' == ''">$(FactoryDirectory)</FactorySearchDirectory>
+      <LogDirectory>$(ArtifactStagingDirectory)</LogDirectory>
+    </PropertyGroup>
+
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="Powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)New-Factory.ps1&apos; -factoryDirectory &apos;$(FactoryDirectory)&apos; -searchDirectory &apos;$(FactorySearchDirectory)&apos; -logDirectory &apos;$(LogDirectory)&apos;&quot;"
+      WorkingDirectory="$(FactoryDirectory)" />
+
+  </Target>
+
+</Project>
