@@ -88,6 +88,7 @@ begin {
                 if (-not (Test-Path -Path $fileToValidate)) {
                     Write-Error "Failed to locate file: '$fileToValidate' referenced in SHA1 file: '$($file.FullName)'." -ErrorAction Continue
                     $errors = $true
+                    continue
                 }
 
                 [string]$actualSha1 = (Get-FileHash -Path $fileToValidate -Algorithm SHA1).Hash.ToUpper()
