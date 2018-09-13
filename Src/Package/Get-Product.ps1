@@ -252,5 +252,5 @@ process {
 end {
     Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
 
-    exit $LASTEXITCODE
+    exit 0
 }
