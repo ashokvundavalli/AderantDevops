@@ -14,15 +14,7 @@
     <VSSDKPath Condition="'$(VSSDK140Install)' != ''">$(VSSDK140Install)</VSSDKPath>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <!--Indicates whether only out of date templates should be transformed, or whether all templates should be transformed.-->
-    <TransformOutOfDateOnly Condition=" '$(TransformOutOfDateOnly)' =='' ">true</TransformOutOfDateOnly>
 
-    <!--Directory into which .tlog files will be written.-->
-    <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(SolutionDirectoryPath)BuildTemp\T4</TrackerLogDirectory>
-
-    <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">true</TrackFileAccess>
-  </PropertyGroup>
 
   <UsingTask
     TaskName="LoadTextTemplatingTask"
@@ -123,11 +115,6 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       <TemplateIncludeFolders Include="$(rmT4TemplateIncludeFolders)" />
     </ItemGroup>
 
-    <PropertyGroup>
-      <TempDirectoryOverride Condition="'$(IsDesktopBuild)' == 'true' Or '$(BuildAll)' == 'true'">$(ModuleBuildDirectory)..\..\_BuildTemp</TempDirectoryOverride>
-      <TempDirectoryOverride Condition="'$(IsDesktopBuild)' != 'true' And '$(BuildAll)' != 'true'">$(ModuleBuildDirectory)..\BuildTemp</TempDirectoryOverride>
-    </PropertyGroup>
-
     <LoadTextTemplatingTask Directory="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\TextTemplating" />
 	
     <ItemGroup>
@@ -137,7 +124,16 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
 	
     <PropertyGroup>
       <EnvironmentVariableProperties Condition="'$(EnvironmentVariableProperties)' == ''">ExpertSourceDirectory=$(ExpertSourceDirectory);ArtifactStaging=$(AlternativeOutputDirectory)</EnvironmentVariableProperties>
+
+        <!--Indicates whether only out of date templates should be transformed, or whether all templates should be transformed.-->
+        <TransformOutOfDateOnly Condition=" '$(TransformOutOfDateOnly)' =='' ">true</TransformOutOfDateOnly>
+
+        <!--Directory into which .tlog files will be written.-->
+        <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(ModuleBuildTempDirectory)t4\</TrackerLogDirectory>
+
+        <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">true</TrackFileAccess>
     </PropertyGroup>
+
 
     <!-- Do the Transform, for newer version customization builds, where ExpertSourceDirectory is fed in CustomizationBuilder.exe -->
     <Aderant.TextTransform.Tasks.Transform
@@ -151,7 +147,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
       TrackFileAccess="$(TrackFileAccess)"
       MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
       OverwriteReadOnlyOutputFiles="true"
-      TempDirectoryOverride="$(TempDirectoryOverride)"
+      TempDirectoryOverride="$(ModuleBuildTempDirectory)"
       SearchPaths="@(SearchPaths)"
       EnvironmentVariables="$(EnvironmentVariableProperties)">
       
@@ -173,7 +169,7 @@ rmT4TemplateIncludeFolders&#xA;$(rmT4TemplateIncludeFolders)
         TrackFileAccess="$(TrackFileAccess)"
         MinimalRebuildFromTracking="$(TransformOutOfDateOnly)"
         OverwriteReadOnlyOutputFiles="true"
-        TempDirectoryOverride="$(TempDirectoryOverride)">
+        TempDirectoryOverride="$(ModuleBuildTempDirectory)">
         
       <Output ItemName="GeneratedFiles"
               TaskParameter="GeneratedFiles" />

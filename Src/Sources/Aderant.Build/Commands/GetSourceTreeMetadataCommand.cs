@@ -25,7 +25,7 @@ namespace Aderant.Build.Commands {
             
             WriteDebug(LibGit2Sharp.GlobalSettings.NativeLibraryPath);
 
-            var gvc = new GitVersionControl();
+            var gvc = new GitVersionControlService();
             var sourceInfo = gvc.GetMetadata(SourceDirectory, SourceBranch, TargetBranch, IncludeLocalChanges);
 
             WriteObject(sourceInfo);

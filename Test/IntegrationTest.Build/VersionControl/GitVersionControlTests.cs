@@ -16,7 +16,7 @@ namespace IntegrationTest.Build.VersionControl {
 
         [TestMethod]
         public void GetSourceTreeInfo_returns_without_exception() {
-            var vc = new GitVersionControl();
+            var vc = new GitVersionControlService();
             var result = vc.GetMetadata(RepositoryPath, "master", "saturn");
 
             Assert.IsNotNull(result);
@@ -28,7 +28,7 @@ namespace IntegrationTest.Build.VersionControl {
 
         [TestMethod]
         public void GetSourceTreeInfo_returns_most_likely_ancestor_when_asked_to_guess() {
-            var vc = new GitVersionControl();
+            var vc = new GitVersionControlService();
             var result = vc.GetMetadata(RepositoryPath, "", "");
 
             Assert.IsNotNull(result);
@@ -40,7 +40,7 @@ namespace IntegrationTest.Build.VersionControl {
         /// </summary>
         [TestMethod]
         public void GetSourceTreeInfo_returns_most_likely_ancestor_for_branch_build() {
-            var vc = new GitVersionControl();
+            var vc = new GitVersionControlService();
             var result = vc.GetMetadata(RepositoryPath, "saturn", null);
 
             Assert.IsNotNull(result);

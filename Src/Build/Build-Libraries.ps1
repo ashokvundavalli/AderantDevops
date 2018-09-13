@@ -9,6 +9,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 .Remarks
 #>
 
+    #TODO: Remove usages of this
     $global:IsTeamBuild = $Env:TF_BUILD -ne $null
 
     ###

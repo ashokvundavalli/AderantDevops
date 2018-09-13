@@ -232,7 +232,7 @@ namespace IntegrationTest.Build.EndToEnd {
         }
 
         private SourceTreeMetadata GetSourceTreeMetadata() {
-            var versionControl = new GitVersionControl();
+            var versionControl = new GitVersionControlService();
             return versionControl.GetMetadata(deploymentItemsDirectory, "", "");
         }
     }

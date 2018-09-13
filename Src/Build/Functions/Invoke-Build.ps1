@@ -35,11 +35,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     if ($context.BuildMetadata -ne $null) {
         if ($context.BuildMetadata.DebugLoggingEnabled) {
             [void]$set.Add("/v:diag")
-        }
-
-        #if ($context.BuildMetadata.IsPullRequest) {
-        #    $set.Add("/v:diag") | Out-Null
-        #}
+        }        
     }
         
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.

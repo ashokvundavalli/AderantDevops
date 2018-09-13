@@ -208,6 +208,8 @@
     <Compile Include="Utilities\TestProcessInvoker.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
+    <Compile Include="VersionControl\GitVersionControlService.cs" />
+    <Compile Include="VersionControl\IVersionControlService.cs" />
     <Compile Include="VersionControl\Model\BranchName.cs" />
     <Compile Include="VersionControl\Model\FileStatus.cs" />
     <Compile Include="VersionControl\GitVersionControl.cs" />

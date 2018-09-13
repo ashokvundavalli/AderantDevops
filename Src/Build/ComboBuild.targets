@@ -51,14 +51,13 @@
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
-  <Import Project="Aderant.Build.Factory.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
       <!--ArchiveStagingDirectory;-->
-      CreatePipeline;
+      CreatePipeline;get=
       ExecutePipeline;
       RunTests;
       WriteStateFiles;
@@ -256,9 +255,7 @@
       <FactorySearchPath>Aderant*.dll,*.exe</FactorySearchPath>
     </PropertyGroup>
 
-    <Exec ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;" />
+    <Exec Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;" />
 
   </Target>
 

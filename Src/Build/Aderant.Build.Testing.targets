@@ -47,7 +47,7 @@
   </Target>
 
   <Target Name="AfterTests" AfterTargets="RunTests">
-    <Message Text="##vso[task.setvariable variable=TestRunTitle]My Title" />
+    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test" />
   </Target>
 
   <Target Name="RunTests"
@@ -102,7 +102,6 @@ $referencePaths = @(_AssemblyResolutionPaths)
 $testFiles = $(UnitTestAssemblies)
 
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles' />
-
 
   </Target>
 

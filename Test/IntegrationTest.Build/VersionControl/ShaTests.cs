@@ -15,7 +15,7 @@ namespace IntegrationTest.Build.VersionControl {
 
         [TestMethod]
         public void Tree_sha_is_stable() {
-            var vc = new GitVersionControl();
+            var vc = new GitVersionControlService();
             var result = vc.GetMetadata(RepositoryPath, "", "");
 
             Assert.IsNotNull(result);
@@ -38,7 +38,7 @@ Add-Content -Path ""Dir2\dir2.txt"" -Value  ""456""
 
             RunPowerShell(TestContext, createScript);
 
-            var vc = new GitVersionControl();
+            var vc = new GitVersionControlService();
             var result = vc.GetMetadata(RepositoryPath, "", "");
 
             Assert.AreEqual("12ea309af9a27ee662c636f4b82246f8619b3bee", result.GetBucket("Dir1").Id);
