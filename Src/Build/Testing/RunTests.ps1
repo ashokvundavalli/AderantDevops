@@ -51,6 +51,11 @@ function GetTestResultFiles() {
 function GenerateHtmlReport() {
     $afterRunTrxFiles = GetTestResultFiles
 
+    if ($afterRunTrxFiles -eq $null) {
+        Write-Output "Skipped generating HTML report - no trx files present."
+        return
+    }
+
     if ($beforeRunTrxFiles) {    
         $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
     } else {

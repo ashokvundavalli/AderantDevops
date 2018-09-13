@@ -57,7 +57,7 @@
       PrepareBuildEnvironment;
       CleanStagingDirectory;
       <!--ArchiveStagingDirectory;-->
-      CreatePipeline;get=
+      CreatePipeline;
       ExecutePipeline;
       RunTests;
       WriteStateFiles;
