@@ -51,6 +51,7 @@
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.Factory.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -219,7 +220,8 @@
   </Target>
 
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage">
+  <Target Name="GetProduct">
+
     <ItemGroup>
       <FilesNotWanted Include="@(StateFiles)" />
     </ItemGroup>
@@ -235,14 +237,33 @@
       Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
       WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
-    <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire--> 
+    <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->
     <Copy SourceFiles="@(LocalPackageFiles)"
       DestinationFiles="@(LocalPackageFiles->'$(ExpertSourceDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
       UseHardlinksIfPossible="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
-  
+
     <CheckForDoubleWrites FileList="@(FileWrites)" />
+
+  </Target>
+
+  
+  <Target Name="GenerateFactory" Condition="'$(GenerateFactory)' != 'false'">
+
+    <PropertyGroup>
+      <FactoryResourceGenerator>$(ExpertSourceDirectory)FactoryResourceGenerator.exe</FactoryResourceGenerator>
+      <FactorySearchPath>Aderant*.dll,*.exe</FactorySearchPath>
+    </PropertyGroup>
+
+    <Exec ContinueOnError="false"
+      IgnoreExitCode="false"
+      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;" />
+
+  </Target>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->

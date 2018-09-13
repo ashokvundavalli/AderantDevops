@@ -62,6 +62,51 @@ begin {
         }
     }
 
+    function Confirm-Files {
+        <#
+        .Synopsis
+            Check the SHA1 file hashes match the expected values in the specified directory.
+        #>
+        param (
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][System.IO.FileInfo[]]$filesToValidate,
+            [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$component
+        )
+
+        begin {
+            Write-Host "Validating SHA1 file hashes for component: $component."
+            Write-Debug "SHA1 file validation list:"
+            Write-Debug ($filesToValidate.FullName | Format-List | Out-String)
+            [bool]$errors = $false
+        }
+
+        process {
+            foreach ($file in $filesToValidate) {
+                [string[]]$fileContent = (Get-Content -Path $file.FullName).Split(" ")
+                [string]$expectedSha1 = $fileContent[0]
+                [string]$fileToValidate = Join-Path -Path $file.DirectoryName -ChildPath $fileContent[2]
+
+                if (-not (Test-Path -Path $fileToValidate)) {
+                    Write-Error "Failed to locate file: '$fileToValidate' referenced in SHA1 file: '$($file.FullName)'." -ErrorAction Continue
+                    $errors = $true
+                    continue
+                }
+
+                [string]$actualSha1 = (Get-FileHash -Path $fileToValidate -Algorithm SHA1).Hash.ToUpper()
+
+                if (-not $expectedSha1 -eq $actualSha1) {
+                    Write-Error "Validation failed for file: '$fileToValidate'.`r`nExpected SHA1 hash: '$expectedSha1'`r`nActual SHA1 hash: '$actualSha1'" -ErrorAction Continue
+                    $errors = $true
+                } else {
+                    Write-Debug "`r`nSHA1 validation for file: $fileToValidate with hash: '$actualSha1' succeeded."
+                }
+            }
+
+            if ($errors) {
+                exit 1
+            }
+        }
+    }
+
     function Copy-Binaries {
         <#
         .Synopsis
@@ -106,9 +151,17 @@ begin {
                 Write-Host "To directory:"
                 Write-Host "$binariesDirectory`r`n"
         
-                [TimeSpan]$executionTime = Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }
-                Write-Host "Acquired $component in: $([System.Math]::Round($executionTime.TotalSeconds, 2)) seconds.`r`n" -ForegroundColor Cyan
-                $totalTime = $totalTime + [System.Math]::Round($executionTime.TotalSeconds, 2)
+                [double]$executionTime = [System.Math]::Round((Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }).TotalSeconds, 2)
+                Write-Host "Acquired $component in: $executionTime seconds.`r`n" -ForegroundColor Cyan
+                $totalTime = $totalTime + $executionTime
+
+                [System.IO.FileInfo]$filesToValidate = Get-ChildItem -Path $binariesDirectory -File -Filter "*.sha1"
+
+                if (-not $null -eq $filesToValidate) {
+                    $executionTime = [System.Math]::Round((Measure-Command { Confirm-Files -filesToValidate $filesToValidate -component $component }).TotalSeconds, 2)
+                    Write-Host "`r`nValidation for $component completed in: $executionTime seconds." -ForegroundColor Cyan
+                    $totalTime = $totalTime + $executionTime
+                }
             }
         }
 
@@ -147,9 +200,9 @@ begin {
             Write-Host "$binariesDirectory`r`n"
 
             foreach ($archive in $archives) {
-                [TimeSpan]$executionTime = Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }
-                Write-Host "Extracted archive: '$($archive.Name)' in: $([System.Math]::Round($executionTime.TotalSeconds, 2)) seconds." -ForegroundColor Cyan
-                $totalTime = $totalTime + [System.Math]::Round($executionTime.TotalSeconds, 2)
+                [double]$executionTime = [System.Math]::Round((Measure-Command { [System.IO.Compression.ZipFile]::ExtractToDirectory($archive.FullName, $binariesDirectory) }).TotalSeconds, 2)
+                Write-Host "Extracted archive: '$($archive.Name)' in: $executionTime seconds." -ForegroundColor Cyan
+                $totalTime = $totalTime + $executionTime
             }
         }
 
@@ -164,7 +217,6 @@ begin {
 
 
 }
-
 
 process {
     [double]$totalTime = 0
@@ -185,6 +237,11 @@ process {
         "PullRequest" {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
 
+            if (-not (Test-Path -Path $pullRequestDropRoot)) {
+                Write-Error "Failed to retrieve binaries for pull request: '$pullRequestId'`r`n at directory: '$pullRequestDropRoot'."
+                exit 1
+            }
+
             $totalTime = (Copy-Binaries -dropRoot $pullRequestDropRoot -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory)
         }
     }
@@ -195,5 +252,5 @@ process {
 end {
     Write-Host "`r`nProduct retrieved in $totalTime seconds.`r`n" -ForegroundColor Cyan
 
-    exit $LASTEXITCODE
+    exit 0
 }
