@@ -27,6 +27,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         /// </summary>
         public string[] References { get; set; }
 
+        public string ArtifactStagingDirectory { get; set; }
+
         public ProjectOutputSnapshot BuildSnapshot(Guid projectGuid) {
             string projectFile = ProjectFile;
 
@@ -41,7 +43,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var snapshot = new ProjectOutputSnapshot {
                 ProjectFile = projectFile,
                 ProjectGuid = projectGuid,
-                FilesWritten = RemoveIntermediateObjects(ProjectOutputs, IntermediateDirectory),
+                FilesWritten = RemoveIntermediateObjects(ProjectOutputs, new[] { IntermediateDirectory, ArtifactStagingDirectory }),
                 OutputPath = OutputPath,
                 Origin = "ThisBuild",
                 Directory = GetDirectory(projectFile),
@@ -55,19 +57,29 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return projectFile.Split(Path.DirectorySeparatorChar)[0];
         }
 
-        private static string[] RemoveIntermediateObjects(string[] projectOutputs, string path) {
-            if (projectOutputs != null)
+        private static string[] RemoveIntermediateObjects(string[] projectOutputs, string[] intermediateDirectories) {
+            if (projectOutputs != null) {
                 return projectOutputs
-                    .Where(item => item.IndexOf(path, StringComparison.OrdinalIgnoreCase) == -1)
+                    .Where(
+                        filePath => {
+                            foreach (var intermediateDirectory in intermediateDirectories) {
+                                if (filePath.IndexOf(intermediateDirectory, StringComparison.OrdinalIgnoreCase) != -1) {
+                                    return false;
+                                }
+                            }
+
+                            return true;
+                        })
                     .OrderBy(filePath => filePath)
                     .Distinct(StringComparer.OrdinalIgnoreCase /* Inputs may contain duplicates */)
                     .ToArray();
+            }
 
             return new string[] { };
         }
 
         private bool IsTestProject() {
-            // Here we handle csproj files that do not advertise themselves properly but checking many facets
+            // Here we handle csproj files that do not advertise themselves properly by checking other facets
             bool isTestProject = string.Equals(TestProjectType, "UnitTest", StringComparison.OrdinalIgnoreCase);
 
             if (ProjectTypeGuids != null && !isTestProject) {

@@ -65,6 +65,7 @@
     <UsingTask TaskName="Aderant.Build.Tasks.WriteBuildStateFile"                                 AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.RecordProjectOutputs"                                AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetBuildOutputs"                                     AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.CopyFiles"                                           AssemblyFile="$(BuildAssembly)" />
 
     <!-- Debugging task -->
     <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />

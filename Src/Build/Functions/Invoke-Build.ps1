@@ -35,11 +35,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     if ($context.BuildMetadata -ne $null) {
         if ($context.BuildMetadata.DebugLoggingEnabled) {
             [void]$set.Add("/v:diag")
-        }
-
-        #if ($context.BuildMetadata.IsPullRequest) {
-        #    $set.Add("/v:diag") | Out-Null
-        #}
+        }        
     }
         
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
@@ -190,6 +186,9 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = "Includes the product packaging steps. This will produce the package which can be used to install the product.")]
         [switch]$PackageProduct,
 
+        [Parameter(HelpMessage = "Disables the use of the build cache.")]
+        [switch]$NoBuildCache,
+
         #[Parameter]
         #[switch]$integration,
 
@@ -240,7 +239,10 @@ Should not be used as it prevents incremental builds which increases build times
     ApplyBranchConfig $context $root
     FindProductManifest $context $root
     GetSourceTreeMetadata $context $root
-    GetBuildStateMetadata $context
+
+    if (-not $NoBuildCache.IsPresent) {
+        GetBuildStateMetadata $context
+    }
     PrepareEnvironment
 
     $switches = $context.Switches    
@@ -265,7 +267,9 @@ Should not be used as it prevents incremental builds which increases build times
     $succeded = $false
 
     try {        
-        $args = CreateToolArgumentString $context $RemainingArgs
+        $args = CreateToolArgumentString $context $RemainingArgs        
+
+        #[System.Environment]::SetEnvironmentVariable("MSBUILDTARGETOUTPUTLOGGING", "true", [System.EnvironmentVariableTarget]::Process)
 
         Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
 

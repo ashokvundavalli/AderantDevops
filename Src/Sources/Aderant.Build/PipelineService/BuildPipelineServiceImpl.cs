@@ -33,6 +33,8 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
+            //snapshot.FilesWritten
+
             Outputs[snapshot.ProjectFile] = snapshot;
         }
 
@@ -65,12 +67,13 @@ namespace Aderant.Build.PipelineService {
             return ctx.GetVariable(scope, variableName);
         }
 
-        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath) {
+        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath) {
             projects.Add(
                 new TrackedProject {
                     ProjectGuid = projectGuid,
                     FullPath = fullPath,
                     SolutionRoot = solutionRoot,
+                    OutputPath = outputPath,
                 });
         }
 
@@ -79,9 +82,15 @@ namespace Aderant.Build.PipelineService {
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
-            var artifactsForTag = artifacts.GetArtifactsForTag(container);
+            if (artifacts != null) {
+                var artifactsForTag = artifacts.GetArtifactsForTag(container);
 
-            return artifactsForTag.SelectMany(s => s.Value);
+                if (artifactsForTag != null) {
+                    return artifactsForTag.SelectMany(s => s.Value);
+                }
+            }
+
+            return null;
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {

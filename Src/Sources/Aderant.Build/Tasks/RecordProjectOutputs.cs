@@ -30,6 +30,8 @@ namespace Aderant.Build.Tasks {
 
         public string[] References { get; set; }
 
+        public string ArtifactStagingDirectory { get; set; }
+
         public override bool ExecuteTask() {
 
             var builder = new ProjectOutputSnapshotBuilder {
@@ -41,6 +43,7 @@ namespace Aderant.Build.Tasks {
                 ProjectTypeGuids = ProjectTypeGuids,
                 TestProjectType = TestProjectType,
                 References = References,
+                ArtifactStagingDirectory = ArtifactStagingDirectory,
             };
 
             var snapshot = builder.BuildSnapshot(Guid.Parse(ProjectGuid));

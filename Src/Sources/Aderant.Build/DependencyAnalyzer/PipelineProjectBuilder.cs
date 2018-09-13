@@ -7,6 +7,8 @@ using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
+using Microsoft.Build.Evaluation;
+using Project = Aderant.Build.MSBuild.Project;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
@@ -148,7 +150,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var configuredProjects in projectsByOutputPath) {
                     if (configuredProjects.Count() > 1) {
                         foreach (var configuredProject in configuredProjects) {
-                            configuredProject.UseCommonOutputDirectory = true;
+
+                            if (!configuredProject.IsTestProject) {
+                                configuredProject.UseCommonOutputDirectory = true;
+                            }
                         }
                     }
                 }

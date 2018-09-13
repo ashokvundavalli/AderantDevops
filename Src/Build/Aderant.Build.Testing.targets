@@ -3,56 +3,40 @@
 
   <PropertyGroup>
     <RunTestsDependsOn>
-      DefineTestPaths;
-      CollectTestAssemblies
+      CollectTestAssemblies;
+      SetupTestProperties;
     </RunTestsDependsOn>
   </PropertyGroup>
-
-  <Target Name="DefineTestPaths">
-    <PropertyGroup>
-      <TestWorkingDirectory>$(ArtifactStagingDirectory)test\</TestWorkingDirectory>
-    </PropertyGroup>
-
-    <MakeDir Directories="$(TestWorkingDirectory)" />
-  </Target>
 
   <Target Name="CollectTestAssemblies">
 
     <GetBuildOutputs>
-      <Output TaskParameter="TestOutputDirectories" ItemName="TestOutputDirectories" />
-      <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
-
-    <ItemGroup>
-      <_AssemblyResolutionPaths Include="$(SharedDependencyDirectory)" />
-      <_AssemblyResolutionPaths Include="%(OutputDirectories.FullPath)" />
-      <_AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('%(SolutionRoots.FullPath)', 'Dependencies'))" />
-      <_AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('%(SolutionRoots.FullPath)', 'packages'))" />
-    </ItemGroup>
-
-    <Message Text="The test framework will search these directories for assembly dependencies" />
-    <Message Text="%(_AssemblyResolutionPaths.FullPath)" />
-
-    <ItemGroup>
-      <AssemblyResolutionPaths Include="@(_AssemblyResolutionPaths->'&quot;%(Identity)&quot;', ',')" />
-    </ItemGroup>
     
-    <CreateItem Include="@(TestOutputDirectories->'%(FullPath)UnitTest*.dll')" PreserveExistingMetadata="true">
-      <Output ItemName="TestAssemblies" TaskParameter="Include" />
-    </CreateItem>
+  </Target>
 
-    <!-- Determine if we can run the tests using the 64-bit test runner -->
-    <GetAssemblyPlatform
-      Condition="'$(Use32BitTestRunner)' == ''"
-      Assemblies="@(TestAssemblies)">
-      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
-      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-    </GetAssemblyPlatform>
-  
-    <PowerShellScript ScriptBlock=". Testing\DeployRunSettings.ps1 -Destination $(TestWorkingDirectory)default.runsettings -Paths @(AssemblyResolutionPaths)" />
+  <Target Name="SetupTestProperties">
+    <PropertyGroup>
+      <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
+      <VsTestWorkingDirectory>$(SolutionRoot)</VsTestWorkingDirectory>
 
-    <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
+      <CodeCoverage Condition="'$(CodeCoverage)' == ''">false</CodeCoverage>
+
+      <!-- VSTest Setup -->
+      <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
+      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
+      <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
+
+      <IsolationSwitch>/InIsolation</IsolationSwitch>
+      <RunUnitTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunUnitTestsInParallel)', 'true'))</RunUnitTestsInParallel>
+      <ParallelSwitch Condition="'$(RunUnitTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
+
+      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
+      <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
+      <RunSettingsSwitch>/Settings:$(TestWorkingDirectory)default.runsettings</RunSettingsSwitch>
+    </PropertyGroup>
   </Target>
 
 
@@ -62,21 +46,70 @@
     </PropertyGroup>
   </Target>
 
+  <Target Name="AfterTests" AfterTargets="RunTests">
+    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test" />
+  </Target>
 
-  <Target Name="CopyTrxFile" AfterTargets="RunTests">
-    <!--<ItemGroup>
-      <TestResults Include="$(SolutionDirectoryPath)**\*.trx" />
+  <Target Name="RunTests"
+          Outputs="%(SolutionRoots.Identity)"
+          DependsOnTargets="$(RunTestsDependsOn)">
+  
+    <PropertyGroup>
+      <_SolutionRoot>%(SolutionRoots.Identity)</_SolutionRoot>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <AssemblyResolutionPaths Remove="@(AssemblyResolutionPaths)" />
+      <AssemblyResolutionPaths Include="$(SharedDependencyDirectory)" />
+      <AssemblyResolutionPaths Include="$(_SolutionRoot)" />
+      <AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('$(_SolutionRoot)', 'Dependencies'))" />
+      <AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('$(_SolutionRoot)', 'packages'))" />
     </ItemGroup>
 
-    <Copy Condition="@(TestResults) != ''"
-          SourceFiles="@(TestResults)"
-          DestinationFiles="$(BinTestDirectory)TestResults.trx" />-->
+    <Message Text="The test framework will search these directories for assembly dependencies" />
+    <Message Text="%(AssemblyResolutionPaths.Identity)" />
+
+    <ItemGroup>
+      <TestAssemblies Include="$(_SolutionRoot)\Bin\TestRun\UnitTest*.dll" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
+    </PropertyGroup>
+
+    <!-- Determine if we can run the tests using the 64-bit test runner -->
+    <GetAssemblyPlatform
+      Condition="'$(Use32BitTestRunner)' == ''"
+      Assemblies="@(TestAssemblies)">
+      <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
+      <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
+    </GetAssemblyPlatform>
+
+    <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
+
+    <ItemGroup>
+      <_AssemblyResolutionPaths Include="@(AssemblyResolutionPaths->'&quot;%(Identity)&quot;', ',')" />
+    </ItemGroup>
+
+    <PowerShellScript
+      ProvideBuildContext="true"
+      ScriptBlock='
+$testTool = "$(PathToTestTool)"
+$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
+$workingDirectory = "$(SolutionRoot)"
+$isDesktopBuild = $$(IsDesktopBuild)
+$referencePaths = @(_AssemblyResolutionPaths)
+$testFiles = $(UnitTestAssemblies)
+
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles' />
+
   </Target>
 
 
-  <Target Name="RunTests"
-          DependsOnTargets="$(RunTestsDependsOn)"
-          Condition="@(TestAssemblies) != ''">
+  <Target Name="RunTests2"
+          Inputs="@(SolutionRoots)"
+          Outputs="%(Identity)"
+          DependsOnTargets="$(RunTestsDependsOn)">
 
     <PropertyGroup>
       <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
@@ -129,9 +162,29 @@
     </PropertyGroup>
     <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
 
+    <ItemGroup>
+      <_AssemblyResolutionPaths Include="@(AssemblyResolutionPaths->'&quot;%(Identity)&quot;', ',')" />
+    </ItemGroup>
+
     <PowerShellScript
       ProvideBuildContext="true"
-      ScriptBlock=". Testing\RunTests.ps1 -PathToTestTool '$(PathToTestTool)' -ToolArgs '$(ResultsFileSwitch) $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch)' -WorkingDirectory '$(SolutionRoot)' -IsDesktopBuild:$$(IsDesktopBuild) -TestAssemblies $(UnitTestAssemblies)" />
+      ScriptBlock='
+$testTool = "$(PathToTestTool)"
+$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) "
+$workingDirectory = "$(SolutionRoot)"
+$isDesktopBuild = $$(IsDesktopBuild)
+$referencePaths = @(_AssemblyResolutionPaths)
+$testFiles = $(UnitTestAssemblies)
+
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles' />
+
+    <!--<RunTests
+      TestTool="$(PathToTestTool)"
+      TestToolArgs="$(ResultsFileSwitch) $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch)"
+      WorkingDirectory="$(SolutionRoot)"
+      IsDesktopBuild="$(IsDesktopBuild)"
+      TestFiles="@(TestAssemblies)"
+      AssemblyResolutionPaths="@(AssemblyResolutionPaths)" />-->
 
     <!-- Run With VSTest -->
     <Exec Condition="false"

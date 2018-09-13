@@ -49,7 +49,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (IDependable dependable in projectsInDependencyOrder) {
                     ConfiguredProject configuredProject = dependable as ConfiguredProject;
                     if (configuredProject != null) {
-                        PipelineService.TrackProject(configuredProject.ProjectGuid, configuredProject.SolutionRoot, configuredProject.FullPath);
+                        PipelineService.TrackProject(
+                            configuredProject.ProjectGuid,
+                            configuredProject.SolutionRoot,
+                            configuredProject.FullPath,
+                            configuredProject.OutputPath);
                     }
                 }
             }

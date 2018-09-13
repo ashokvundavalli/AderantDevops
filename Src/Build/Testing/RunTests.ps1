@@ -12,11 +12,37 @@ param(
 
   [Parameter(Mandatory=$false)]
   [bool]$IsDesktopBuild,
+
+  [Parameter(Mandatory=$false)]
+  [string[]]
+  $ReferencePaths,
   
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
   [string[]]
   $TestAssemblies
 )
+
+function CreateRunSettingsFile() {
+    [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
+    $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
+
+    if ($ReferencePaths) {
+        foreach ($path in $ReferencePaths) {
+            $directoryElement = $xml.CreateElement("Directory")
+            $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
+            $directoryElement.SetAttribute("includeSubDirectories", "true")
+
+            [void]$assemblyResolution.AppendChild($directoryElement)
+        }
+    }
+
+    $sw = [System.IO.StringWriter]::new()
+    $writer = New-Object System.Xml.XmlTextWriter($sw)
+    $writer.Formatting = [System.Xml.Formatting]::Indented
+    $xml.WriteContentTo($writer)
+
+    return $sw.ToString()
+}
 
 function GetTestResultFiles() {
     return Get-ChildItem -LiteralPath "$WorkingDirectory\TestResults" -Filter "*.trx" -ErrorAction SilentlyContinue
@@ -39,7 +65,7 @@ function GenerateHtmlReport() {
             & "start" $report
         }
     }
-}
+} 
 
 $beforeRunTrxFiles = GetTestResultFiles
 
@@ -52,20 +78,33 @@ $startInfo.FileName = $PathToTestTool
 $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
 
-# Implemented in C# for performance
 try {
+    $xml = CreateRunSettingsFile
+
+    Write-Output ([System.Environment]::NewLine + "$xml")
+
+    $runSettingsFile = [System.IO.Path]::GetTempFileName()
+    Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8 
+   
+    $startInfo.Arguments += " /Settings:$runSettingsFile /Diag:C:\temp\test.log"
+    Write-Output "$($startInfo.FileName) $($startInfo.Arguments)"
+
+    # Implemented in C# for performance
     $runner = [Aderant.Build.Utilities.ProcessRunner]::RunTestProcess($startInfo)
     $runner.RecordConsoleOutput = $true
     $runner.Start()
 
-    $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
+    #$fn = $startInfo.FileName
+    #$arg = $startInfo.Arguments
 
-    if ($global:BuildLogFile) {
-        # Replay the log to MSBuild
-        #Add-Content -LiteralPath $global:BuildLogFile -Value $runner.ConsoleOutput
-    }
+    
+    #Start-Process -FilePath $startInfo.FileName -ArgumentList $startInfo.Arguments -Wait -NoNewWindow
+
+    $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
 } finally {
-    $runner.Dispose()
+   
+
+    [System.IO.File]::Delete($runSettingsFile)
 
     if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
