@@ -46,6 +46,10 @@
     </PropertyGroup>
   </Target>
 
+  <Target Name="AfterTests" AfterTargets="RunTests">
+    <Message Text="##vso[task.setvariable variable=TestRunTitle]My Title" />
+  </Target>
+
   <Target Name="RunTests"
           Outputs="%(SolutionRoots.Identity)"
           DependsOnTargets="$(RunTestsDependsOn)">
