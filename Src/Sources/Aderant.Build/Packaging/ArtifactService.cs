@@ -265,8 +265,6 @@ namespace Aderant.Build.Packaging {
             };
 
             ActionBlock<PathSpec> restoreFile = new ActionBlock<PathSpec>(
-                // Break from synchronous thread context of caller to get onto thread pool thread.
-
                 // ToDo: Optimize PhysicalFileSystem to store directories known to exist for bulk copy operation.
                 async file => {
                     // Break from synchronous thread context of caller to get onto thread pool thread.
@@ -438,8 +436,6 @@ namespace Aderant.Build.Packaging {
                                     continue;
                                 }
 
-                                logger.Info("Examining state file: " + stateFile);
-
                                 BuildStateFile file;
                                 using (Stream stream = fileSystem.OpenFile(stateFile)) {
                                     file = StateFileBase.DeserializeCache<BuildStateFile>(stream);
@@ -447,13 +443,12 @@ namespace Aderant.Build.Packaging {
 
                                 file.Location = folder;
 
-                                if (CheckForRootedPaths(file)) {
-                                    continue;
-                                }
-
-                                if (IsFileTrustworthy(file)) {
-                                    logger.Info("Adding state file: " + stateFile + " as candidate");
+                                string reason;
+                                if (IsFileTrustworthy(file, out reason)) {
+                                    logger.Info(stateFile.PadRight(200) + "Candidate");
                                     files.Add(file);
+                                } else {
+                                    logger.Info(stateFile.PadRight(200) + "Rejected->" + reason);
                                 }
 
                             }
@@ -467,16 +462,23 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private static bool IsFileTrustworthy(BuildStateFile file) {
+        private static bool IsFileTrustworthy(BuildStateFile file, out string reason) {
+            //if (CheckForRootedPaths(file)) {
+            //    return false;
+            //}
+
             // Reject files that provide no value
             if (file.Outputs == null || file.Outputs.Count == 0) {
+                reason = "No outputs";
                 return false;
             }
 
             if (file.Artifacts == null || file.Artifacts.Count == 0) {
+                reason = "No Artifacts";
                 return false;
             }
 
+            reason = null;
             return true;
         }
 

@@ -7,6 +7,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
+
     public sealed class PowerShellScript : Task, ICancelableTask {
         private CancellationTokenSource cts;
 
@@ -23,14 +24,14 @@ namespace Aderant.Build.Tasks {
         public string Result { get; set; }
 
         public override bool Execute() {
-            try {
+           try {
                 BuildEngine3.Yield();
 
                 string directoryName = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
 
                 Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
 
-                RunScript(directoryName);
+                RunScript(this.Log, directoryName);
 
                 return !Log.HasLoggedErrors;
             } finally {
@@ -42,17 +43,12 @@ namespace Aderant.Build.Tasks {
             cts.Cancel();
         }
 
-        private void RunScript(string directoryName) {
+        private void RunScript(TaskLoggingHelper name, string directoryName) {
             var pipelineExecutor = new PowerShellPipelineExecutor();
             pipelineExecutor.ProgressPreference = ProgressPreference;
             pipelineExecutor.MeasureCommand = MeasureCommand;
 
-            pipelineExecutor.Debug += (sender, message) => { Log.LogMessage(MessageImportance.Normal, message); };
-            pipelineExecutor.Verbose += (sender, message) => { Log.LogMessage(MessageImportance.Normal, message); };
-            pipelineExecutor.Warning += (sender, message) => { Log.LogWarning(message); };
-            pipelineExecutor.Error += (sender, message) => { Log.LogError(message); };
-
-            pipelineExecutor.Output += (sender, message) => { Log.LogMessage(MessageImportance.Normal, message); };
+            AttachLogger(name, pipelineExecutor);
 
             cts = new CancellationTokenSource();
 
@@ -65,7 +61,6 @@ namespace Aderant.Build.Tasks {
                     if (contract != null) {
                         operationContext = contract.GetContext();
                         variables["TaskContext"] = operationContext;
-                        variables["BuildLogFile"] = operationContext.LogFile;
                     }
 
                     pipelineExecutor.RunScript(
@@ -85,6 +80,15 @@ namespace Aderant.Build.Tasks {
             } catch (OperationCanceledException) {
                 // Cancellation was requested
             }
+        }
+
+        internal static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {
+            pipelineExecutor.Debug += (sender, message) => { log.LogMessage(MessageImportance.Normal, message); };
+            pipelineExecutor.Verbose += (sender, message) => { log.LogMessage(MessageImportance.Normal, message); };
+            pipelineExecutor.Warning += (sender, message) => { log.LogWarning(message); };
+            pipelineExecutor.Error += (sender, message) => { log.LogError(message); };
+
+            pipelineExecutor.Output += (sender, message) => { log.LogMessage(MessageImportance.Normal, message); };
         }
 
         private IBuildPipelineService GetProxy() {

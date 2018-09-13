@@ -40,18 +40,18 @@ namespace Aderant.Build.Utilities {
                 bool isSuccessful = false;
                 bool isSkipped = false;
 
-                if (singleLine.StartsWith("Passed")) {
+                if (singleLine.StartsWith("Passed ")) {
                     isStatusMessage = true;
                     isSuccessful = true;
-                } else if (singleLine.StartsWith("Failed")) {
+                } else if (singleLine.StartsWith("Failed ")) {
                     isStatusMessage = true;
-                } else if (singleLine.StartsWith("Error")) {
+                } else if (singleLine.StartsWith("Error ")) {
                     isStatusMessage = true;
-                } else if (singleLine.StartsWith("Inconclusive")) {
+                } else if (singleLine.StartsWith("Inconclusive ")) {
                     isStatusMessage = true;
-                } else if (singleLine.StartsWith("Ignored")) {
+                } else if (singleLine.StartsWith("Ignored ")) {
                     isStatusMessage = true;
-                } else if (singleLine.StartsWith("Skipped")) {
+                } else if (singleLine.StartsWith("Skipped ")) {
                     isStatusMessage = true;
                     isSkipped = true;
                 }

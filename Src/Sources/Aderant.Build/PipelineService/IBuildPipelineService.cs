@@ -41,7 +41,7 @@ namespace Aderant.Build.PipelineService {
         string GetVariable(string scope, string variableName);
 
         [OperationContract]
-        void TrackProject(Guid projectGuid, string solutionRoot, string fullPath);
+        void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath);
 
         [OperationContract]
         IEnumerable<TrackedProject> GetTrackedProjects();
@@ -65,6 +65,9 @@ namespace Aderant.Build.PipelineService {
 
         [DataMember]
         public string SolutionRoot { get; set; }
+
+        [DataMember]
+        public string OutputPath { get; set; }
     }
 
     [ServiceContract]

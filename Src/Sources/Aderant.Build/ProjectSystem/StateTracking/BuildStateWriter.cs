@@ -109,7 +109,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             //}
         }
 
-        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, Func<string, IEnumerable<ArtifactManifest>> unknown) {
+        public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, Func<string, IEnumerable<ArtifactManifest>> getArtifactsForContainer) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
 
             var files = new List<BuildArtifact>();
@@ -126,10 +126,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 BuildStateFile previousBuild = context.GetStateFile(tag);
 
-                var artifactManifests = unknown(tag);
+                var artifactManifests = getArtifactsForContainer(tag);
 
                 var collection = new ArtifactCollection();
-                collection[tag] = artifactManifests.ToList();
+                if (artifactManifests != null) {
+                    collection[tag] = artifactManifests.ToList();
+                }
 
                 files.Add(WriteStateFile(previousBuild, bucket, projectOutputSnapshot, collection, context));
             }
@@ -167,7 +169,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         public void WriteStateFiles(IBuildPipelineService pipelineService, BuildOperationContext context) {
-            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs(), (t) => pipelineService.GetArtifactsForContainer(t));
+            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs(), (container) => pipelineService.GetArtifactsForContainer(container));
 
             pipelineService.AssociateArtifacts(stateArtifacts);
 

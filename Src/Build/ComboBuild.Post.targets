@@ -38,6 +38,7 @@
       PostBuild;
       SignInstallers;-->
       PackageArtifactsCore;
+      ReplicateOutputs;
     </BuildCoreDependsOn>
   </PropertyGroup>
 
@@ -79,7 +80,7 @@
   </Target>
 
 
-  <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)" Condition="'$(PackageArtifacts)' == 'true'">
+  <Target Name="PackageArtifactsCore" DependsOnTargets="$(PackageArtifactsDependsOn)">
 
     <CreateArtifacts
       ContextEndpoint="$(ContextEndpoint)"
@@ -89,6 +90,29 @@
       AssemblyVersion="$(AssemblyVersion)"
       FileVersion="$(FileVersion)" />
 
+  </Target>
+
+
+  <Target Name="ReplicateOutputs">
+
+    <GetBuildOutputs SolutionRoot="$(SolutionRoot)">
+      <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
+    </GetBuildOutputs>
+
+    <CreateItem Include="@(OutputDirectories->'%(FullPath)**\*');">
+      <Output TaskParameter="Include" ItemName="_OutputDirectoryContents" />
+    </CreateItem>
+
+    <ItemGroup>
+      <OutputDirectoryContentsWithTargetPath Include="@(_OutputDirectoryContents)">
+        <TargetPath>@(_OutputDirectoryContents->'$(SolutionDirectoryPath)Bin\TestRun\%(RecursiveDir)%(Filename)%(Extension)')</TargetPath>
+      </OutputDirectoryContentsWithTargetPath>
+    </ItemGroup>
+
+    <CopyFiles SourceFiles="@(OutputDirectoryContentsWithTargetPath)"
+               DestinationFiles="%(OutputDirectoryContentsWithTargetPath.TargetPath)"
+               Overwrite="true" />
+    
   </Target>
   
 
