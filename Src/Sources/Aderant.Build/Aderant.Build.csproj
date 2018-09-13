@@ -210,7 +210,6 @@
     <Compile Include="VersionControl\Model\BranchName.cs" />
     <Compile Include="VersionControl\Model\FileStatus.cs" />
     <Compile Include="VersionControl\GitVersionControl.cs" />
-    <Compile Include="DependencyAnalyzer\DependencyType.cs" />
     <Compile Include="DependencyAnalyzer\Model\ProjectBuildConfiguration.cs" />
     <Compile Include="MSBuild\PropertyList.cs" />
     <Compile Include="ProjectSystem\SolutionParser\ISolutionFileParser.cs" />

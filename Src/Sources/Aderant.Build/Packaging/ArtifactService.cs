@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
@@ -54,35 +53,30 @@ namespace Aderant.Build.Packaging {
 
         private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
             // TODO: Slow - optimize
-            List<Tuple<string, PathSpec>> copyList = new List<Tuple<string, PathSpec>>();
-            List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
-
-            this.autoPackages = new List<ArtifactPackageDefinition>();
-
-            List<ProjectOutputSnapshot> snapshots = Merge(context, container);
-
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
             // to only unique content is packaged
+            List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
+            List<PathSpec> copyList = new List<PathSpec>();
+            this.autoPackages = new List<ArtifactPackageDefinition>();
+
             ProcessDefinitionFiles(true, context, container, packages, copyList, buildArtifacts);
 
-            var builder = new AutoPackager(logger);
+            List<ProjectOutputSnapshot> snapshots = Merge(context, container);
 
             foreach (var s in snapshots) {
                 pipelineService.RecordProjectOutputs(s);
             }
 
-            var snapshot = pipelineService.GetProjectOutputs(container);
+            AutoPackager builder = new AutoPackager(logger);
+            IEnumerable<ProjectOutputSnapshot> snapshot = pipelineService.GetProjectOutputs(container);
 
             IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
             ProcessDefinitionFiles(false, context, container, definitions, copyList, buildArtifacts);
-
             TrackSnapshots(snapshots);
-
-            foreach (var item in copyList) {
-                CopyToDestination(item.Item1, item.Item2, context.IsDesktopBuild);
-            }
+            // Copy the existing files.
+            CopyFiles(copyList.Where(x => fileSystem.FileExists(x.Location)).ToList(), context.IsDesktopBuild);
 
             return buildArtifacts;
         }
@@ -95,8 +89,7 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string container, IEnumerable<ArtifactPackageDefinition> packages, List<Tuple<string, PathSpec>> copyList, List<BuildArtifact> buildArtifacts) {
-
+        private void ProcessDefinitionFiles(bool ignoreAutoPackages, BuildOperationContext context, string container, IEnumerable<ArtifactPackageDefinition> packages, IList<PathSpec> copyList, List<BuildArtifact> buildArtifacts) {
             foreach (var definition in packages) {
                 if (ignoreAutoPackages) {
                     if (definition.IsAutomaticallyGenerated) {
@@ -206,13 +199,13 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
-        private BuildArtifact CreateBuildCacheArtifact(string container, List<Tuple<string, PathSpec>> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
+        private BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
             var basePath = pathBuilder.GetBucketInstancePath(container);
 
             string artifactPath = Path.Combine(basePath, definition.Id);
 
-            foreach (var pathSpec in files) {
-                copyList.Add(Tuple.Create(artifactPath, pathSpec));
+            foreach (PathSpec pathSpec in files) {
+                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, Path.GetFileName(pathSpec.Location))));
             }
 
             return CreateArtifact(definition, artifactPath);
@@ -226,15 +219,6 @@ namespace Aderant.Build.Packaging {
                 IsAutomaticallyGenerated = definition.IsAutomaticallyGenerated,
                 IsInternalDevelopmentPackage = definition.IsInternalDevelopmentPackage,
             };
-        }
-
-        private void CopyToDestination(string destinationRoot, PathSpec pathSpec, bool allowOverwrite) {
-            var destination = Path.Combine(destinationRoot, pathSpec.Destination ?? string.Empty);
-
-            if (fileSystem.FileExists(pathSpec.Location)) {
-                logger.Debug($"Copying {pathSpec.Location} -> {destination}");
-                fileSystem.CopyFile(pathSpec.Location, destination, allowOverwrite);
-            }
         }
 
         /// <summary>
@@ -256,35 +240,19 @@ namespace Aderant.Build.Packaging {
         }
 
         /// <summary>
-        /// Parallelize I/O
-        /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
-        /// </summary>
-        internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool isDesktopBuild) {
-            var actionBlockOptions = new ExecutionDataflowBlockOptions {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            };
-
-            ActionBlock<PathSpec> restoreFile = new ActionBlock<PathSpec>(
-                // Break from synchronous thread context of caller to get onto thread pool thread.
-
-                // ToDo: Optimize PhysicalFileSystem to store directories known to exist for bulk copy operation.
-                async file => {
-                    // Break from synchronous thread context of caller to get onto thread pool thread.
-                    await Task.Yield();
-
-                    fileSystem.CopyFile(file.Location, file.Destination, isDesktopBuild);
-                },
-                actionBlockOptions);
+            /// Parallelize I/O
+            /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
+            /// </summary>
+            internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite);
 
             foreach (PathSpec file in filesToRestore) {
-                logger.Info("Restoring: {0} -> {1}", file.Location, file.Destination);
-                restoreFile.Post(file);
+                logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);
             }
+            
+            bulkCopy.Completion.GetAwaiter().GetResult();
 
-            restoreFile.Complete();
-            restoreFile.Completion.GetAwaiter().GetResult();
-
-            return restoreFile;
+            return bulkCopy;
         }
 
         private List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string container, string workingDirectory) {
@@ -381,7 +349,7 @@ namespace Aderant.Build.Packaging {
                                 logger.Warning($"File {fileName} exists in more than one artifact. Choosing {localSourceFile.FullPath} arbitrarily." + Environment.NewLine + duplicates);
                             }
 
-                            var destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
+                            string destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
 
                             if (destinationPaths.Add(destination)) {
                                 copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
@@ -618,5 +586,4 @@ namespace Aderant.Build.Packaging {
     internal class ArtifactResolveOperation {
         public List<ArtifactPathSpec> Paths { get; set; }
     }
-
 }
