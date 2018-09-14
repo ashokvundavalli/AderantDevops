@@ -379,7 +379,6 @@
     <Compile Include="Commands\GetDownstreamExpertModules.cs" />
     <Compile Include="Commands\GetExpertModule.cs" />
     <Compile Include="Commands\GetExpertModules.cs" />
-    <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
     <Compile Include="Commands\NewExpertBuildDefinition.cs" />
     <Compile Include="Commands\SortModulesByBuildOrder.cs" />
     <Compile Include="Commands\UpdateBuildAllProject.cs" />

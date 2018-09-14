@@ -291,11 +291,22 @@ namespace Aderant.Build.Packaging {
             return paths;
         }
 
-        private void FetchArtifacts(List<ArtifactPathSpec> paths) {
-            // TODO: Replace with ActionBlock for performance
-            foreach (var item in paths) {
-                fileSystem.CopyDirectory(item.Source, item.Destination);
+        private void FetchArtifacts(IList<ArtifactPathSpec> paths) {
+            List<PathSpec> pathSpecs = new List<PathSpec>();
+
+            foreach (ArtifactPathSpec item in paths) {
+                IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*", true);
+                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, Path.Combine(item.Destination, Path.GetFileName(x)))));
             }
+
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true);
+
+            logger.Info("Performing copy for FetchArtifacts");
+            foreach (PathSpec pathSpec in pathSpecs) {
+                logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
+            }
+
+            bulkCopy.Completion.GetAwaiter().GetResult();
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
