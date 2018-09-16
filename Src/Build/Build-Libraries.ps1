@@ -77,9 +77,9 @@
                 [System.IO.FileSystemInfo]$pdfBuild = Get-ChildItem -Path $moduleBinariesDirectory -Directory | Sort-Object -Property Name | Select-Object -First 1
 
                 if ($pdfBuild -ne $null -and (Test-Path -Path (Join-Path -Path $pdfBuild.FullName -ChildPath "Pdf"))) {
-                    [System.IO.FileSystemInfo]$pdfBuildDir = Get-ChildItem -Path (Join-Path -Path $pdfBuild.FullName -ChildPath "Pdf")
+                    [System.IO.FileSystemInfo[]]$pdfBuildDir = Get-ChildItem -Path (Join-Path -Path $pdfBuild.FullName -ChildPath "Pdf") -Filter "*.pdf"
 
-                    if ($pdfBuildDir -ne $null -and (Measure-Object -InputObject $pdfBuildDir -Filter "*.pdf") -ne 0) {
+                    if ($pdfBuildDir -ne $null -and (Measure-Object -InputObject $pdfBuildDir) -ne 0) {
                         try {
                             Copy-Item -Path "$($pdfBuild.FullName)\Pdf" -Recurse -Filter "*.pdf" -Destination (Join-Path -Path $binariesDirectory -ChildPath $module.Target.Split('/')[1]) -Force
                             return $pdfBuild.Name
