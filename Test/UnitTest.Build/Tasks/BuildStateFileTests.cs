@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aderant.Build;
@@ -95,6 +96,68 @@ namespace UnitTest.Build.Tasks {
                 null,
                 new[] { new ProjectOutputSnapshot { ProjectFile = "p1" } },
                 null,
+                null,
+                null,
+                "foo");
+
+            Assert.IsNotNull(text);
+        }
+
+        [TestMethod]
+        public void BuildStateWriterReturnsNullWithNoOutputsOrArtifactsPresent() {
+            string text = null;
+
+            var fs = new Mock<IFileSystem>();
+            fs.Setup(s => s.AddFile(It.IsAny<string>(), It.IsAny<Action<Stream>>())).Callback<string, Action<Stream>>(
+                (_, action) => {
+                    using (var ms = new MemoryStream()) {
+                        action(ms);
+
+                        ms.Position = 0;
+                        using (var reader = new StreamReader(ms)) {
+                            text = reader.ReadToEnd();
+                        }
+                    }
+                });
+
+            var writer = new BuildStateWriter(fs.Object, NullLogger.Default);
+
+            writer.WriteStateFile(
+                null,
+                null,
+                new ProjectOutputSnapshot[0],
+                null,
+                null,
+                null,
+                "foo");
+
+            Assert.IsNull(text);
+        }
+
+        [TestMethod]
+        public void BuildStateWriterReturnsValueWithArtifacts() {
+            string text = null;
+
+            var fs = new Mock<IFileSystem>();
+            fs.Setup(s => s.AddFile(It.IsAny<string>(), It.IsAny<Action<Stream>>())).Callback<string, Action<Stream>>(
+                (_, action) => {
+                    using (var ms = new MemoryStream()) {
+                        action(ms);
+
+                        ms.Position = 0;
+                        using (var reader = new StreamReader(ms)) {
+                            text = reader.ReadToEnd();
+                        }
+                    }
+                });
+
+            var writer = new BuildStateWriter(fs.Object, NullLogger.Default);
+
+            writer.WriteStateFile(
+                null,
+                null,
+                new ProjectOutputSnapshot[0],
+                new Dictionary<string, ICollection<ArtifactManifest>> { {"Test", new List<ArtifactManifest> { new ArtifactManifest() }} },
                 null,
                 null,
                 "foo");
