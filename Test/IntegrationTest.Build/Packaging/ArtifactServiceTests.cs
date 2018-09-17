@@ -6,6 +6,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Threading.Tasks.Dataflow;
 
 namespace IntegrationTest.Build.Packaging {
@@ -14,13 +15,12 @@ namespace IntegrationTest.Build.Packaging {
     public class ArtifactServiceTests {
         public TestContext TestContext { get; set; }
         private static string sourceFiles;
-        private IList<string> destinationDirectories;
+        private ConcurrentBag<string> destinationDirectories;
 
         [TestInitialize]
         public void TestInitialize() {
             sourceFiles = Path.Combine(TestContext.DeploymentDirectory, @"TestDeployment\");
-            destinationDirectories = new List<string>();
-            destinationDirectories.Add(Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName()));
+            destinationDirectories = new ConcurrentBag<string> { Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName()) };
         }
 
         [TestCleanup]
@@ -68,7 +68,7 @@ namespace IntegrationTest.Build.Packaging {
 
         [TestMethod]
         public void TaskBlockCopyFilesTest() {
-            IList<PathSpec> pathSpecs = InitializePathSpecs(destinationDirectories[0]);
+            IList<PathSpec> pathSpecs = InitializePathSpecs(destinationDirectories.Last());
             ArtifactService artifactService = new ArtifactService(NullLogger.Default);
 
             TimeOperation(CopyFilesTaskBlock, artifactService, pathSpecs);
@@ -78,13 +78,13 @@ namespace IntegrationTest.Build.Packaging {
         [Description("TaskBlock copy appears to be more efficient for larger volumes of files.")]
         [Ignore]
         public void TaskBlockCopyPerformance() {
-            IList<PathSpec> taskBlockPathSpecs = InitializePathSpecs(destinationDirectories[0]);
+            IList<PathSpec> taskBlockPathSpecs = InitializePathSpecs(destinationDirectories.Last());
             ArtifactService artifactService = new ArtifactService(NullLogger.Default);
 
             Stopwatch taskBlockCopy = TimeOperation(CopyFilesTaskBlock, artifactService, taskBlockPathSpecs);
 
             destinationDirectories.Add(Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName()));
-            IList<PathSpec> budgetCopyPathSpecs = InitializePathSpecs(destinationDirectories[1]);
+            IList<PathSpec> budgetCopyPathSpecs = InitializePathSpecs(destinationDirectories.Last());
 
             Stopwatch budgetCopy = TimeOperation(CopyFilesBudget, null, budgetCopyPathSpecs);
 

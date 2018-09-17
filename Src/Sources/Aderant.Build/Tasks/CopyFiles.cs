@@ -54,7 +54,9 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            DoCopyFiles(copySpecs);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(copySpecs, Overwrite);
+
+            bulkCopy.Completion.GetAwaiter().GetResult();
 
             return !Log.HasLoggedErrors;
         }
@@ -77,31 +79,6 @@ namespace Aderant.Build.Tasks {
             }
 
             return true;
-        }
-
-        internal ActionBlock<PathSpec> DoCopyFiles(IList<PathSpec> filesToRestore) {
-            var actionBlockOptions = new ExecutionDataflowBlockOptions {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            };
-
-            ActionBlock<PathSpec> restoreFile = new ActionBlock<PathSpec>(
-                // ToDo: Optimize PhysicalFileSystem to store directories known to exist for bulk copy operation.
-                async file => {
-                    // Break from synchronous thread context of caller to get onto thread pool thread.
-                    await System.Threading.Tasks.Task.Yield();
-
-                    fileSystem.CopyFile(file.Location, file.Destination, Overwrite);
-                },
-                actionBlockOptions);
-
-            foreach (PathSpec file in filesToRestore) {
-                restoreFile.Post(file);
-            }
-
-            restoreFile.Complete();
-            restoreFile.Completion.GetAwaiter().GetResult();
-
-            return restoreFile;
         }
     }
 }

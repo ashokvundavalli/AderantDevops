@@ -121,6 +121,7 @@
 
 
   <Target Name="WriteStateFiles">
+    <!-- ToDo: Stop writing for empty artifacts. -->
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
@@ -260,7 +261,28 @@
   </Target>
 
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory">
+  <Target Name="ArchiveArtifacts">
+
+    <PropertyGroup>
+      <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <DirectoriesToArchive Include="@(LocalPackagePaths)" Condition="'$([System.IO.Path]::GetFileName(%(LocalPackagePaths.FullPath)).StartsWith(&quot;~&quot;))' != 'true'"></DirectoriesToArchive>
+    </ItemGroup>
+
+    <GenerateArchives
+      DirectoriesToArchive="@(DirectoriesToArchive)"
+      OutputArchives="@(DirectoriesToArchive -> '%(FullPath).zip')"
+      CompressionLevel="$(CompressionLevel)">
+
+      <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
+    </GenerateArchives>
+    
+  </Target>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
@@ -290,6 +312,8 @@
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
     </ItemGroup>
+
+    <!-- ToDo: Update this to exclude directories for archived artifacts. -->
 
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"

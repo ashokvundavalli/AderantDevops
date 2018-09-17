@@ -39,6 +39,7 @@
     <UsingTask TaskName="Aderant.Build.Tasks.ThirdPartyPackager"                                  AssemblyFile="$(BuildAssembly)" />
 
     <!-- For zip seed packages. -->
+    <UsingTask TaskName="Aderant.Build.Tasks.GenerateArchives"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.SeedPackagePacking"                                  AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetAssembliesWithTraits"                             AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetFileVersionInfo"                                  AssemblyFile="$(BuildAssembly)" />

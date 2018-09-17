@@ -377,6 +377,13 @@ namespace Aderant.Build {
             }
         }
 
+        private void EnsureDirectoryInternal(string path) {
+            // If the destination directory doesn't exist, create it.
+            if (!DirectoryExists(path)) {
+                Directory.CreateDirectory(path);
+            }
+        }
+
         private void CopyDirectoryInternal(string source, string destination, bool recursive) {
             // Get the subdirectories for the specified directory.
             DirectoryInfo dir = new DirectoryInfo(source);
@@ -424,7 +431,6 @@ namespace Aderant.Build {
             HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
-                // Break from synchronous thread context of caller to get onto thread pool thread.
                 async file => {
                     // Break from synchronous thread context of caller to get onto thread pool thread.
                     await Task.Yield();
@@ -433,7 +439,7 @@ namespace Aderant.Build {
 
                     lock (knownPaths) {
                         if (!knownPaths.Contains(destination)) {
-                            EnsureDirectory(destination);
+                            EnsureDirectoryInternal(destination);
                             knownPaths.Add(destination);
                         }
                     }
