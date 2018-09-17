@@ -273,7 +273,7 @@ reg delete "HKLM\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\Assembl
   -->
   <PropertyGroup>
     <SymbolStore Condition="'$(SymbolStore)' == '' And '$(IsDesktopBuild)' == 'true'">C:\Temp\SymbolStore</SymbolStore>
-    <SymbolStore Condition="'$(SymbolStore)' == '' And '$(IsDesktopBuild)' != 'true'">\\SVFP312\ExpertSuite\Symbols\</SymbolStore>
+    <SymbolStore Condition="'$(SymbolStore)' == '' And '$(IsDesktopBuild)' != 'true'">\\dfs.aderant.com\expert-symbols\</SymbolStore>
 
     <SymbolStoreLock Condition="'$(SymbolStoreLock)' == ''">$(SymbolStore)symstore.lock</SymbolStoreLock>
 
