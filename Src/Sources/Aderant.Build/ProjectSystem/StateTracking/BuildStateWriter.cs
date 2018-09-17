@@ -74,9 +74,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFile.Outputs = currentOutputs.ToDictionary(key => key.ProjectFile, value => value);
 
-            if (artifacts != null) {
-                stateFile.Artifacts = artifacts;
+            if ((stateFile.Outputs == null || stateFile.Outputs.Count == 0) && (artifacts == null || artifacts.Count == 0)) {
+                return null;
             }
+
+            stateFile.Artifacts = artifacts;
 
             if (buildMetadata != null) {
                 stateFile.BuildId = buildMetadata.BuildId.ToString(CultureInfo.InvariantCulture);
@@ -129,11 +131,17 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 var artifactManifests = getArtifactsForContainer(tag);
 
                 var collection = new ArtifactCollection();
-                if (artifactManifests != null) {
+                if (artifactManifests != null && artifactManifests.Any()) {
                     collection[tag] = artifactManifests.ToList();
                 }
 
-                files.Add(WriteStateFile(previousBuild, bucket, projectOutputSnapshot, collection, context));
+                BuildArtifact buildArtifact = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, collection, context);
+
+                if (buildArtifact == null) {
+                    continue;
+                }
+
+                files.Add(buildArtifact);
             }
 
             return files;
@@ -150,6 +158,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
 
             string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance);
+
+            if (string.IsNullOrWhiteSpace(stateFile)) {
+                return null;
+            }
 
             WrittenStateFiles.Add(stateFile);
             context.WrittenStateFiles.Add(stateFile);
