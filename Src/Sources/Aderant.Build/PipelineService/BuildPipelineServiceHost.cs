@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Globalization;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
@@ -17,6 +19,8 @@ namespace Aderant.Build.PipelineService {
             private set { pipeId = value; }
         }
 
+        public Uri ServerUri { get; set; }
+
         public void Dispose() {
             StopListener();
 
@@ -30,29 +34,20 @@ namespace Aderant.Build.PipelineService {
 
         public void StartListener(string pipeId) {
             if (host == null) {
-                var address = CreateAddress(pipeId);
+                var address = CreateServerUri(pipeId, "0");
 
-                host = new ServiceHost(new BuildPipelineServiceImpl(), new Uri(address));
-                var namedPipeBinding = CreateBinding();
+                host = new ServiceHost(new BuildPipelineServiceImpl(), address);
+                var namedPipeBinding = CreateServerBinding();
 
-                var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineServiceContract), namedPipeBinding, address);
+                var endpoint = host.AddServiceEndpoint(typeof(IBuildPipelineService), namedPipeBinding, address);
                 endpoint.Behaviors.Add(new ProtoEndpointBehavior());
 
                 host.Open();
 
                 PipeId = pipeId;
+                ServerUri = address;
                 Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, pipeId, EnvironmentVariableTarget.Process);
             }
-        }
-
-        internal static string CreateAddress(string pipeId) {
-            return $"net.pipe://localhost/_{pipeId}";
-        }
-
-        internal static NetNamedPipeBinding CreateBinding() {
-            NetNamedPipeBinding namedPipeBinding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None);
-            namedPipeBinding.MaxReceivedMessageSize = Int32.MaxValue;
-            return namedPipeBinding;
         }
 
         public void StopListener() {
@@ -64,9 +59,52 @@ namespace Aderant.Build.PipelineService {
         public void Publish(BuildOperationContext context) {
             ErrorUtilities.IsNotNull(PipeId, nameof(PipeId));
 
-            using (var proxy = BuildPipelineServiceProxy.Current) {
+            using (var proxy = BuildPipelineServiceClient.Current) {
                 proxy.Publish(context);
             }
+        }
+
+        internal static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken) {
+            return CreateServerUri(namedPipeProcessToken, namedPipeIdToken, Environment.MachineName);
+        }
+
+        internal static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken, string machineName) {
+            string text = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}://{1}/{2}/{3}",
+                Uri.UriSchemeNetPipe,
+                machineName,
+                namedPipeProcessToken,
+                namedPipeIdToken);
+            Uri uri;
+
+            if (Uri.TryCreate(text, UriKind.Absolute, out uri) && uri != null) {
+                return uri;
+            }
+
+            text = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}://{1}/{2}/{3}",
+                Uri.UriSchemeNetPipe,
+                "localhost",
+                namedPipeProcessToken,
+                namedPipeIdToken);
+
+            return new Uri(text);
+        }
+
+        internal static Binding CreateServerBinding() {
+            return new NetNamedPipeBinding {
+                MaxReceivedMessageSize = Int32.MaxValue,
+                MaxBufferSize = Int32.MaxValue,
+                ReaderQuotas = {
+                    MaxArrayLength = Int32.MaxValue,
+                    MaxStringContentLength = Int32.MaxValue,
+                    MaxDepth = Int32.MaxValue
+                },
+                ReceiveTimeout = TimeSpan.MaxValue,
+                SendTimeout = TimeSpan.FromMinutes(1)
+            };
         }
     }
 }

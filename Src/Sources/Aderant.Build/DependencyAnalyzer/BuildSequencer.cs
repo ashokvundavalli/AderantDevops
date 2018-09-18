@@ -37,11 +37,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                 FindStateFiles(context);
 
                 if (stateFiles != null) {
-                    EvictDeletedProjects(context);
+                    EvictNotExistentProjects(context);
                 }
             }
 
-            AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, graph);
+            AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, context.Switches.ChangedFilesOnly, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -83,7 +83,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return project;
         }
 
-        private void EvictDeletedProjects(BuildOperationContext context) {
+        private void EvictNotExistentProjects(BuildOperationContext context) {
             // here we evict deleted projects from the previous builds metadata
             // This is so we do not consider the outputs of this project in the artifact restore phase
             if (context.SourceTreeMetadata.Changes != null) {
@@ -99,7 +99,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
                 }
             }
-
         }
 
         private void FindStateFiles(BuildOperationContext context) {
@@ -145,10 +144,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             return files;
         }
 
-        private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, DependencyGraph graph) {
+        private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, bool changedFilesOnly, DependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
+
+            if (changedFilesOnly) {
+                foreach (var project in projects) {
+                    if (!project.IsDirty) {
+                        project.IncludeInBuild = false;
+                    }
+                }
+            }
 
             var grouping = projects.GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
 
@@ -175,7 +182,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                     foreach (var project in projects
                         .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
 
-                        ApplyStateFile(stateFile, solutionDirectoryName, tag, project);
+                        if (!changedFilesOnly) {
+                            ApplyStateFile(stateFile, solutionDirectoryName, tag, project);
+                        }
 
                         project.AddResolvedDependency(null, initializeNode);
                         completionNode.AddResolvedDependency(null, project);
@@ -239,7 +248,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return;
             }
 
-            MarkDirty(tag, project, BuildReason.BuildTreeNotFound | BuildReason.None);
+            MarkDirty(tag, project, BuildReason.BuildTreeNotFound);
         }
 
         private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
@@ -285,13 +294,15 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private static void MarkDirty(string tag, ConfiguredProject project, BuildReason reason) {
             project.IsDirty = true;
+            project.IncludeInBuild = true;
 
             if (project.BuildReason == null) {
-                project.BuildReason = new ProjectSystem.BuildReason();
+                project.BuildReason = new ProjectSystem.BuildReason { Flags = reason };
+            } else {
+                project.BuildReason.Flags |= reason;
             }
 
             project.BuildReason.Tag = tag;
-            project.BuildReason.Flags |= reason;
         }
 
         /// <summary>
@@ -309,7 +320,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             HashSet<string> h = new HashSet<string>();
             h.UnionWith(dirtyProjects);
 
-            // According to DownStream option, either mark the direct affected or all the recursively affected downstream projects as dirty.
+            // According to DownStream option, either mark the directly affected or all the recursively affected downstream projects as dirty.
             switch (dependencyProcessing) {
                 case DependencyRelationshipProcessing.Direct:
                     MarkDirty(visualStudioProjects, h);
@@ -330,24 +341,26 @@ namespace Aderant.Build.DependencyAnalyzer {
             return filteredProjects;
         }
 
-        private static StringBuilder DescribeChanges(IDependable pp, StringBuilder sb) {
-            ConfiguredProject configuredProject = pp as ConfiguredProject;
+        private static StringBuilder DescribeChanges(IDependable dependable, StringBuilder sb) {
+            ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
             if (configuredProject != null) {
                 if (sb == null) {
                     sb = new StringBuilder();
-                    sb.AppendLine("Changed projects: ");
+                    sb.AppendLine("Projects to build:");
                 }
 
-                sb.AppendLine("* " + configuredProject.FullPath);
+                if (configuredProject.IncludeInBuild) {
+                    sb.AppendLine("* " + configuredProject.FullPath);
 
-                if (configuredProject.BuildReason != null) {
-                    sb.AppendLine("    " + "Flags: " + configuredProject.BuildReason.Flags);
-                }
+                    if (configuredProject.BuildReason != null) {
+                        sb.AppendLine("    " + "Flags: " + configuredProject.BuildReason.Flags);
+                    }
 
-                if (configuredProject.DirtyFiles != null) {
-                    foreach (string dirtyFile in configuredProject.DirtyFiles) {
-                        sb.AppendLine("    " + dirtyFile);
+                    if (configuredProject.DirtyFiles != null) {
+                        foreach (string dirtyFile in configuredProject.DirtyFiles) {
+                            sb.AppendLine("    " + dirtyFile);
+                        }
                     }
                 }
             }
@@ -373,10 +386,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (project != null) {
                     project.IsDirty = true;
                     if (project.BuildReason == null) {
-                        project.BuildReason = new ProjectSystem.BuildReason();
+                        project.BuildReason = new ProjectSystem.BuildReason { Flags = BuildReason.DependencyChanged };
+                    } else {
+                        project.BuildReason.Flags |= BuildReason.DependencyChanged;
                     }
-                    
-                    project.BuildReason.Flags |= BuildReason.DependencyChanged;
                 }
             }
 

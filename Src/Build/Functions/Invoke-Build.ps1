@@ -155,6 +155,46 @@ function PrepareEnvironment {
   }  
 }
 
+function ExpandPaths([string[]]$paths) {
+    $resolvedPaths = @() 
+    foreach ($path in $paths) {
+        $resolvedPaths += Resolve-Path $path
+    }
+    return $resolvedPaths
+}
+
+function AssignIncludeExclude() {
+    if ($Include) {
+        $context.Include = ExpandPaths $Include
+
+        Write-Output "These paths will be included:"
+        $context.Include.ForEach({ Write-Output $_})
+    }
+
+    if ($Exclude) {
+        $context.Exclude = ExpandPaths $Exclude
+        $context.Exclude.ForEach({ Write-Output $_})
+    }
+}
+
+function AssignSwitches() {
+    $switches = $context.Switches
+    
+    $switches.Branch = $Branch.IsPresent
+    $switches.Downstream = $Downstream.IsPresent
+    $switches.Transitive = $Transitive.IsPresent
+    $switches.Clean = $Clean.IsPresent
+    $switches.Release = $Release.IsPresent
+    $switches.Resume = $Resume.IsPresent
+    $switches.SkipCompile = $SkipCompile.IsPresent
+    $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
+
+    if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
+        $switches.WhatIf = $true
+    }
+
+    $context.Switches = $switches
+}
 
 function global:Invoke-Build2
 {
@@ -169,7 +209,7 @@ function global:Invoke-Build2
         [Parameter()]
         [switch]$Transitive,
         
-        [Parameter(HelpMessage = "Destroys all intermiedate objects.
+        [Parameter(HelpMessage = "Destroys all intermediate objects.
 Returns the source tree to a pristine state.
 Should not be used as it prevents incremental builds which increases build times.")]
         [switch]$Clean,
@@ -204,8 +244,15 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = "Runs the target with the provided name")]        
         [string]$Target = "BuildAndPackage",
 
-        [Parameter(HelpMessage = "Includes solutions and projects from the provided directories into build tree.")]        
-        [string[]]$DirectoriesToBuild = $null,
+        [Parameter(HelpMessage = "Includes solutions and projects found under these paths into the build tree. Supports wildcards.")]
+        [string[]]$Include = $null,
+
+        [Parameter(HelpMessage = "Excludes solutions and projects found under these paths into the build tree. Supports wildcards.")]
+        [string[]]$Exclude = $null,
+
+        [Parameter(HelpMessage = "Only files that have modifications are considered.")]
+        [Alias("JustMyChanges")]
+        [switch]$ChangedFilesOnly,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -233,9 +280,11 @@ Should not be used as it prevents incremental builds which increases build times
     }
 
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
-    $context.DirectoriesToBuild = $DirectoriesToBuild
 
-    $root = FindGitDir $context $repositoryPath    
+    AssignIncludeExclude    
+
+    $root = FindGitDir $context $repositoryPath
+    AssignSwitches
     ApplyBranchConfig $context $root
     FindProductManifest $context $root
     GetSourceTreeMetadata $context $root
@@ -243,17 +292,8 @@ Should not be used as it prevents incremental builds which increases build times
     if (-not $NoBuildCache.IsPresent) {
         GetBuildStateMetadata $context
     }
-    PrepareEnvironment
 
-    $switches = $context.Switches    
-    $switches.Branch = $Branch.IsPresent
-    $switches.Downstream = $Downstream.IsPresent
-    $switches.Transitive = $Transitive.IsPresent
-    $switches.Clean = $Clean.IsPresent
-    $switches.Release = $Release.IsPresent
-    $switches.Resume = $Resume.IsPresent
-    $switches.SkipCompile = $SkipCompile.IsPresent        
-    $context.Switches = $switches
+    PrepareEnvironment  
 
     $context.StartedAt = [DateTime]::UtcNow
     $context.LogFile = "$repositoryPath\build.log"
@@ -267,9 +307,12 @@ Should not be used as it prevents incremental builds which increases build times
     $succeded = $false
 
     try {        
-        $args = CreateToolArgumentString $context $RemainingArgs        
+        $args = CreateToolArgumentString $context $RemainingArgs
 
-        #[System.Environment]::SetEnvironmentVariable("MSBUILDTARGETOUTPUTLOGGING", "true", [System.EnvironmentVariableTarget]::Process)
+        # When WhatIf specified just determine what would be built
+        if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
+            $Target = "CreatePipeline"
+        }        
 
         Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
 

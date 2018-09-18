@@ -13,7 +13,7 @@ namespace Aderant.Build.PipelineService {
         IncludeExceptionDetailInFaults = true,
         ConcurrencyMode = ConcurrencyMode.Single,
         MaxItemsInObjectGraph = Int32.MaxValue)]
-    internal class BuildPipelineServiceImpl : IBuildPipelineServiceContract {
+    internal class BuildPipelineServiceImpl : IBuildPipelineService {
 
         private ArtifactCollection artifacts;
 
@@ -93,6 +93,10 @@ namespace Aderant.Build.PipelineService {
             return null;
         }
 
+        public object[] Ping() {
+            return new object[] { (byte)1 };
+        }
+
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
             if (artifacts != null) {
                 associatedArtifacts.AddRange(artifacts);
@@ -101,6 +105,9 @@ namespace Aderant.Build.PipelineService {
 
         public BuildArtifact[] GetAssociatedArtifacts() {
             return associatedArtifacts.ToArray();
+        }
+
+        public void Dispose() {
         }
 
         private void InitArtifacts() {

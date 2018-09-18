@@ -126,7 +126,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         private string endpoint;
         private Dictionary<string, string> properties;
-        private IBuildPipelineService proxy;
+        private BuildPipelineServiceClient client;
         private BuildPipelineServiceHost service;
 
         public TestBuildServiceHost(TestContext testContext, string deploymentItemsDirectory) {
@@ -143,7 +143,7 @@ namespace IntegrationTest.Build.EndToEnd {
 
         public void Dispose() {
             try {
-                proxy?.Dispose();
+                client?.Dispose();
             } catch {
 
             }
@@ -179,7 +179,7 @@ namespace IntegrationTest.Build.EndToEnd {
                 StartService();
                 service.Publish(context);
 
-                this.proxy = new BuildPipelineServiceProxy(endpoint);
+                this.client = new BuildPipelineServiceClient(service.ServerUri.AbsoluteUri);
 
                 properties["PrimaryDropLocation"] = context.DropLocationInfo.PrimaryDropLocation;
                 properties["BuildCacheLocation"] = context.DropLocationInfo.BuildCacheLocation;

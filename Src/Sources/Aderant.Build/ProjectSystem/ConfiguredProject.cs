@@ -402,9 +402,10 @@ namespace Aderant.Build.ProjectSystem {
                         IsDirty = true;
                         if (BuildReason == null) {
                             BuildReason = new BuildReason();
+                            BuildReason.Flags = DependencyAnalyzer.BuildReason.ProjectFileChanged;
+                        } else {
+                            BuildReason.Flags |= DependencyAnalyzer.BuildReason.ProjectFileChanged;
                         }
-
-                        BuildReason.Flags |= DependencyAnalyzer.BuildReason.ProjectFileChanged;
 
                         if (dirtyFiles == null) {
                             dirtyFiles = new List<string>();

@@ -51,18 +51,20 @@ function GetTestResultFiles() {
 function GenerateHtmlReport() {
     $afterRunTrxFiles = GetTestResultFiles
 
-    if ($beforeRunTrxFiles) {    
-        $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
-    } else {
-        $newTrxFile = $afterRunTrxFiles.FullName
-    }
+    if ($afterRunTrxFiles) {
+        if ($beforeRunTrxFiles) {    
+            $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
+        } else {
+            $newTrxFile = $afterRunTrxFiles.FullName
+        }
 
-    if ($newTrxFile) {
-        & "$PSScriptRoot\..\..\Build.Tools\TrxerConsole.exe" $newTrxFile
+        if ($newTrxFile) {
+            & "$PSScriptRoot\..\..\Build.Tools\TrxerConsole.exe" $newTrxFile
 
-        $report = "$newTrxFile.html"
-        if (Test-Path $report) {
-            & "start" $report
+            $report = "$newTrxFile.html"
+            if (Test-Path $report) {
+                & "start" $report
+            }
         }
     }
 } 

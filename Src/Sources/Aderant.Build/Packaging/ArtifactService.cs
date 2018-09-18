@@ -17,7 +17,7 @@ namespace Aderant.Build.Packaging {
     internal class ArtifactService {
         private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
-        private readonly IBuildPipelineServiceContract pipelineService;
+        private readonly IBuildPipelineService pipelineService;
         private List<ArtifactPackageDefinition> autoPackages;
         private List<IArtifactHandler> handlers = new List<IArtifactHandler>();
         private ArtifactStagingPathBuilder pathBuilder;
@@ -26,7 +26,7 @@ namespace Aderant.Build.Packaging {
             : this(null, new PhysicalFileSystem(), logger) {
         }
 
-        public ArtifactService(IBuildPipelineServiceContract pipelineService, IFileSystem fileSystem, ILogger logger) {
+        public ArtifactService(IBuildPipelineService pipelineService, IFileSystem fileSystem, ILogger logger) {
             this.pipelineService = pipelineService;
             this.logger = logger;
             this.fileSystem = fileSystem;

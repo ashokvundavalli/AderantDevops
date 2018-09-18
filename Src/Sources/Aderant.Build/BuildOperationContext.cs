@@ -80,8 +80,17 @@ namespace Aderant.Build {
             }
         }
 
+        /// <summary>
+        /// Includes solutions and projects found under these paths into the build tree.
+        /// </summary>
         [DataMember]
-        public string[] DirectoriesToBuild { get; set; }
+        public string[] Include { get; set; }
+
+        /// <summary>
+        /// Excludes solutions and projects found under these paths into the build tree.
+        /// </summary>
+        [DataMember]
+        public string[] Exclude { get; set; }
 
         [DataMember]
         public string BuildRoot { get; set; }
@@ -448,10 +457,13 @@ namespace Aderant.Build {
         public bool Release { get; set; }
 
         [DataMember]
-        public bool DryRun { get; set; }
+        public bool WhatIf { get; set; }
 
         [DataMember]
         public bool Resume { get; set; }
+
+        [DataMember]
+        public bool ChangedFilesOnly { get; set; }
 
         [CreateProperty]
         public bool SkipCompile { get; set; }

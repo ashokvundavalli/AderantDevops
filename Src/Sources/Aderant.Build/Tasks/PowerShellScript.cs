@@ -93,7 +93,7 @@ namespace Aderant.Build.Tasks {
 
         private IBuildPipelineService GetProxy() {
             if (ProvideBuildContext) {
-                return BuildPipelineServiceProxy.Current;
+                return BuildPipelineServiceClient.Current;
             }
 
             return null;

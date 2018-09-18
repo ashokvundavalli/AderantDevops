@@ -203,9 +203,9 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
 
     # TODO: Fix hard code
     if ([System.Diagnostics.Debugger]::IsAttached -or $debugMode) {
-        #$buildArgs = $buildArgs.Replace("/m", "")
-        #$buildArgs = "$buildArgs /p:WaitForDebugger=true"
-        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock #$process 
+        $buildArgs = $buildArgs.Replace("/m", "")
+        $buildArgs = "$buildArgs /p:WaitForDebugger=true"
+        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock $process 
     } else {
         Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock  
     }

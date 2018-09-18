@@ -7,8 +7,8 @@ using ProtoBuf;
 
 namespace Aderant.Build.PipelineService {
 
-    [ServiceContract(SessionMode = SessionMode.Allowed)]
-    internal interface IBuildPipelineServiceContract : IArtifactService {
+    [ServiceContract]
+    internal interface IBuildPipelineService : IArtifactService, IDisposable {
         [OperationContract]
         void Publish(BuildOperationContext context);
 
@@ -48,6 +48,9 @@ namespace Aderant.Build.PipelineService {
 
         [OperationContract]
         IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container);
+
+        [OperationContract]
+        object[] Ping();
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

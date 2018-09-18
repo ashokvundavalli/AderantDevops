@@ -7,6 +7,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
@@ -70,14 +71,37 @@ namespace Aderant.Build.ProjectSystem {
             get { return this; }
         }
 
-        public Task LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
+        public void LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
+            LoadProjects(new[] { directory }, recursive, excludeFilterPatterns);
+        }
+
+        public void LoadProjects(IReadOnlyCollection<string> directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
             }
 
-            var files = GrovelForFiles(directory, excludeFilterPatterns);
+            ConcurrentDictionary<string, bool> files = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
-            return Task.WhenAll(files.Select(file => Task.Run(() => LoadAndParseProjectFile(file))).ToArray());
+            Parallel.ForEach(
+                directory,
+                (path) => {
+                    foreach (var file in GrovelForFiles(path, excludeFilterPatterns)) {
+                        files.TryAdd(file, true);
+                    }
+                });
+
+            var defaultCopyParallelism = Environment.ProcessorCount > 4 ? 6 : 4;
+
+            ActionBlock<string> parseBlock = new ActionBlock<string>(
+                s => LoadAndParseProjectFile(s),
+                new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = defaultCopyParallelism });
+
+            foreach (var file in files.Keys) {
+                parseBlock.Post(file);
+            }
+
+            parseBlock.Complete();
+            parseBlock.Completion.GetAwaiter().GetResult();
         }
 
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
@@ -100,7 +124,13 @@ namespace Aderant.Build.ProjectSystem {
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
             foreach (var project in LoadedConfiguredProjects) {
-                project.AnalyzeBuildDependencies(collector);
+
+                try {
+                    project.AnalyzeBuildDependencies(collector);
+                } catch (Exception ex) {
+                    logger.LogErrorFromException(ex, false, false);
+                    throw;
+                }
 
                 if (collector.SourceChanges != null) {
                     project.CalculateDirtyStateFromChanges(collector.SourceChanges);
@@ -112,13 +142,12 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
-            await LoadProjects(context.BuildRoot, true, analysisContext.ExcludePaths);
-
-            if (context.DirectoriesToBuild != null) {
-                foreach (var dir in context.DirectoriesToBuild) {
-                    await LoadProjects(dir, true, analysisContext.ExcludePaths);
-                }
+            List<string> includePaths = new List<string> { context.BuildRoot };
+            if (context.Include != null) {
+                includePaths.AddRange(context.Include);
             }
+
+            LoadProjects(includePaths, true, analysisContext.ExcludePaths);
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;

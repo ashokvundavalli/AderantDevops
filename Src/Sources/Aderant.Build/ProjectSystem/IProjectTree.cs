@@ -16,7 +16,9 @@ namespace Aderant.Build.ProjectSystem {
 
         ISolutionManager SolutionManager { get; }
 
-        Task LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
+        void LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
+
+        void LoadProjects(IReadOnlyCollection<string> directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
 
         /// <summary>
         /// Adds a configured project to this tree.

@@ -1,102 +1,143 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using Aderant.Build.Packaging;
 using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
-    /// <summary>
-    /// Proxy for <see cref="IBuildPipelineService" />.
-    /// </summary>
-    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService, IBuildPipelineServiceContract {
-        [ThreadStatic]
-        private static IBuildPipelineService threadSpecificProxy;
+    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService> {
 
         static BuildPipelineServiceProxy() {
             CacheSetting = CacheSetting.AlwaysOn;
         }
 
-        internal BuildPipelineServiceProxy(Binding binding, string remoteAddress)
-            : this(binding, new EndpointAddress(remoteAddress)) {
-        }
-
-        public BuildPipelineServiceProxy(Binding binding, EndpointAddress remoteAddress)
-            : base(binding, remoteAddress) {
+        public BuildPipelineServiceProxy(Binding binding, EndpointAddress address)
+            : base(binding, address) {
             Endpoint.Behaviors.Add(new ProtoEndpointBehavior());
         }
 
-        public BuildPipelineServiceProxy(string contextEndpoint)
-            : this(BuildPipelineServiceHost.CreateBinding(), BuildPipelineServiceHost.CreateAddress(contextEndpoint)) {
-        }
-
-        public static IBuildPipelineService Current {
-            get {
-                var tlsProxy = threadSpecificProxy;
-                if (tlsProxy == null) {
-                    return threadSpecificProxy = new BuildPipelineServiceProxy(BuildPipelineServiceHost.CreateBinding(), BuildPipelineServiceHost.CreateAddress(BuildPipelineServiceHost.PipeId));
-                }
-
-                return tlsProxy;
-            }
-        }
-
         public void Publish(BuildOperationContext context) {
-            Channel.Publish(context);
+            DoOperationWithFaultHandling(() => { Channel.Publish(context); });
         }
 
         public BuildOperationContext GetContext() {
-            return Channel.GetContext();
+            return DoOperationWithFaultHandling(() => Channel.GetContext());
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            Channel.RecordProjectOutputs(snapshot);
+            DoOperationWithFaultHandling(() => { Channel.RecordProjectOutputs(snapshot); });
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetProjectOutputs(string container) {
-            return Channel.GetProjectOutputs(container);
+            return DoOperationWithFaultHandling(() => Channel.GetProjectOutputs(container));
         }
 
         public IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs() {
-            return Channel.GetAllProjectOutputs();
+            return DoOperationWithFaultHandling(() => Channel.GetAllProjectOutputs());
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
             ErrorUtilities.IsNotNull(container, nameof(container));
-            Channel.RecordArtifacts(container, manifests);
+            DoOperationWithFaultHandling(() => { Channel.RecordArtifacts(container, manifests); });
         }
 
         public void PutVariable(string scope, string variableName, string value) {
             ErrorUtilities.IsNotNull(scope, nameof(scope));
-            Channel.PutVariable(scope, variableName, value);
+            DoOperationWithFaultHandling(() => { Channel.PutVariable(scope, variableName, value); });
         }
 
         public string GetVariable(string scope, string variableName) {
             ErrorUtilities.IsNotNull(scope, nameof(scope));
-            return Channel.GetVariable(scope, variableName);
+            return DoOperationWithFaultHandling(() => Channel.GetVariable(scope, variableName));
         }
 
         public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath) {
             ErrorUtilities.IsNotNull(fullPath, nameof(fullPath));
-            Channel.TrackProject(projectGuid, solutionRoot, fullPath, outputPath);
+            DoOperationWithFaultHandling(() => { Channel.TrackProject(projectGuid, solutionRoot, fullPath, outputPath); });
         }
 
         public IEnumerable<TrackedProject> GetTrackedProjects() {
-            return Channel.GetTrackedProjects();
+            return DoOperationWithFaultHandling(() => Channel.GetTrackedProjects());
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
             ErrorUtilities.IsNotNull(container, nameof(container));
-            return Channel.GetArtifactsForContainer(container);
+            return DoOperationWithFaultHandling(() => Channel.GetArtifactsForContainer(container));
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
             ErrorUtilities.IsNotNull(artifacts, nameof(artifacts));
-            Channel.AssociateArtifacts(artifacts);
+            DoOperationWithFaultHandling(() => { Channel.AssociateArtifacts(artifacts); });
         }
 
         public BuildArtifact[] GetAssociatedArtifacts() {
-            return Channel.GetAssociatedArtifacts();
+            return DoOperationWithFaultHandling(() => Channel.GetAssociatedArtifacts());
+
+        }
+
+        private T DoOperationWithFaultHandling<T>(Func<T> func) {
+            try {
+                return func();
+            } catch (FaultException ex) {
+                throw ExceptionConverter.ConvertException(ex);
+            }
+        }
+
+        private void DoOperationWithFaultHandling(Action func) {
+            try {
+                func();
+            } catch (FaultException ex) {
+                throw ExceptionConverter.ConvertException(ex);
+            }
+        }
+
+        public object[] Ping() {
+            return DoOperationWithFaultHandling(() => Channel.Ping());
         }
     }
+
+    internal static class ExceptionConverter {
+
+        public static Exception ConvertException(FaultException faultEx) {
+            if (faultEx.Code == null || faultEx.Code.Name == null) {
+                return new BuildPlatformException(faultEx.Message, faultEx);
+            }
+
+            return ConvertException(faultEx.Code.Name, faultEx.Message, faultEx);
+        }
+
+        private static Exception ConvertException(string exceptionType, string message, Exception innerException) {
+            try {
+                string typeName2 = "System." + exceptionType;
+                return (Exception)Activator.CreateInstance(
+                    typeof(Exception),
+                    typeName2,
+                    true,
+                    BindingFlags.Default,
+                    null,
+                    new object[] {
+                        message,
+                        innerException
+                    },
+                    CultureInfo.InvariantCulture);
+            } catch (Exception) {
+                return new BuildPlatformException(message, innerException);
+            }
+        }
+    }
+
+    [Serializable]
+    public class BuildPlatformException : Exception {
+        public BuildPlatformException(string message)
+            : base(message) {
+        }
+
+        public BuildPlatformException(string message, Exception innerException)
+            : base(message, innerException) {
+        }
+    }
+
 }
