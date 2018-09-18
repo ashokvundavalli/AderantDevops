@@ -8,6 +8,7 @@
         If we don't do this RecursiveDir would return foo\bar\ rather than just bar\
       -->
             $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\lib\win32\**\*;
+            $(MSBuildProjectDirectory)\..\..\Src\Build.Tools\7z.exe;
             $(MSBuildProjectDirectory)\..\..\Src\Build\**\*;
         </IncludePattern>
     <ExcludePattern></ExcludePattern>

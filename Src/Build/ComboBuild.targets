@@ -253,12 +253,15 @@
       <FactorySearchPath>Aderant*.dll,*.exe</FactorySearchPath>
     </PropertyGroup>
 
-    <Exec Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;" />
+    <Exec
+      Condition="Exists($(FactoryResourceGenerator))"
+      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;"
+      IgnoreExitCode="false" />
 
   </Target>
 
 
-  <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage">
+  <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'">
 
     <PropertyGroup>
       <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
@@ -283,7 +286,7 @@
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
-    <Exec Command='$(BuildToolsDirectory)7z.exe a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
 
     <PropertyGroup>
       <CreateArchiveHashScript>
