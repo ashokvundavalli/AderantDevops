@@ -4,7 +4,10 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
+using Aderant.Build.Packaging;
 
 namespace Aderant.Build {
 
@@ -262,6 +265,10 @@ namespace Aderant.Build {
             // before creating the file, ensure the parent directory exists first.
             EnsureDirectory(Path.GetDirectoryName(destination));
 
+            CopyFileInternal(source, destination, overwrite);
+        }
+
+        private static void CopyFileInternal(string source, string destination, bool overwrite) {
             File.Copy(source, destination, overwrite);
         }
 
@@ -370,6 +377,13 @@ namespace Aderant.Build {
             }
         }
 
+        private void EnsureDirectoryInternal(string path) {
+            // If the destination directory doesn't exist, create it.
+            if (!DirectoryExists(path)) {
+                Directory.CreateDirectory(path);
+            }
+        }
+
         private void CopyDirectoryInternal(string source, string destination, bool recursive) {
             // Get the subdirectories for the specified directory.
             DirectoryInfo dir = new DirectoryInfo(source);
@@ -407,6 +421,40 @@ namespace Aderant.Build {
                     CopyDirectoryInternal(subdir.FullName, temppath, recursive);
                 }
             }
+        }
+
+        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite) {
+            ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+            };
+
+            HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
+                async file => {
+                    // Break from synchronous thread context of caller to get onto thread pool thread.
+                    await Task.Yield();
+
+                    string destination = Path.GetDirectoryName(file.Destination);
+
+                    lock (knownPaths) {
+                        if (!knownPaths.Contains(destination)) {
+                            EnsureDirectoryInternal(destination);
+                            knownPaths.Add(destination);
+                        }
+                    }
+
+                    CopyFileInternal(file.Location, file.Destination, overwrite);
+                },
+                actionBlockOptions);
+
+            foreach (PathSpec pathSpec in pathSpecs) {
+                bulkCopy.Post(pathSpec);
+            }
+
+            bulkCopy.Complete();
+
+            return bulkCopy;
         }
     }
 

@@ -118,6 +118,7 @@
 
 
   <Target Name="WriteStateFiles">
+    <!-- ToDo: Stop writing for empty artifacts. -->
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
@@ -257,7 +258,28 @@
   </Target>
 
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory">
+  <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage">
+
+    <PropertyGroup>
+      <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <DirectoriesToArchive Include="@(LocalPackagePaths)" Condition="'$([System.IO.Path]::GetFileName(%(LocalPackagePaths.FullPath)).StartsWith(&quot;~&quot;))' != 'true'"></DirectoriesToArchive>
+    </ItemGroup>
+
+    <GenerateArchives
+      DirectoriesToArchive="@(DirectoriesToArchive)"
+      OutputArchives="@(DirectoriesToArchive -> '%(FullPath)\%(Filename)%(Extension).zip')"
+      CompressionLevel="$(CompressionLevel)">
+
+      <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
+    </GenerateArchives>
+    
+  </Target>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
@@ -288,6 +310,8 @@
       </AdditionalArtifacts>
     </ItemGroup>
 
+    <!-- ToDo: Update this to exclude directories for archived artifacts. -->
+
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       AdditionalArtifacts="@(AdditionalArtifacts)"
@@ -312,7 +336,7 @@
 
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" *.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>

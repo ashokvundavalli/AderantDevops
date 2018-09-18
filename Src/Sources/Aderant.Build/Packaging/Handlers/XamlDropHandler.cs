@@ -12,12 +12,12 @@ namespace Aderant.Build.Packaging.Handlers {
             AssemblyVersion = assemblyVersion;
         }
 
-        public BuildArtifact ProcessFiles(List<Tuple<string, PathSpec>> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
+        public BuildArtifact ProcessFiles(IList<PathSpec> copyList, BuildOperationContext context, string artifactId, IReadOnlyCollection<PathSpec> files) {
             string artifactName;
             var destination = CreateDropLocationPath(context.ArtifactStagingDirectory, artifactId, out artifactName);
 
-            foreach (var pathSpec in files) {
-                copyList.Add(Tuple.Create(destination, pathSpec));
+            foreach (PathSpec pathSpec in files) {
+                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(destination, Path.GetFileName(pathSpec.Location))));
             }
 
             return new BuildArtifact {

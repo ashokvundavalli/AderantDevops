@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks.Dataflow;
+using Aderant.Build.Packaging;
 
 namespace Aderant.Build {
 
@@ -71,5 +73,10 @@ namespace Aderant.Build {
         /// Searches upward for a directory containing the specified files included by the filter, beginning in the specified directory.
         /// </summary>
         IEnumerable<string> GetDirectoryNameOfFilesAbove(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories = null);
+
+        /// <summary>
+        /// Performs a bulk file copy operation on the specified path specifications.
+        /// </summary>
+        ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite);
     }
 }

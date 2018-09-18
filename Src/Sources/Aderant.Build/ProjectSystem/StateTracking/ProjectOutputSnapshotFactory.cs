@@ -63,6 +63,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                     .Where(
                         filePath => {
                             foreach (var intermediateDirectory in intermediateDirectories) {
+                                if (string.IsNullOrWhiteSpace(intermediateDirectory)) {
+                                    continue;
+                                }
+
                                 if (filePath.IndexOf(intermediateDirectory, StringComparison.OrdinalIgnoreCase) != -1) {
                                     return false;
                                 }

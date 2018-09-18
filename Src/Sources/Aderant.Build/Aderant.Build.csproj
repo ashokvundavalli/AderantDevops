@@ -138,6 +138,7 @@
     <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
     <Compile Include="Packaging\AutoPackager.cs" />
     <Compile Include="Tasks\CopyFiles.cs" />
+    <Compile Include="Tasks\GenerateArchives.cs" />
     <Compile Include="Utilities\Memoizer.cs" />
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
     <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />
@@ -211,7 +212,6 @@
     <Compile Include="VersionControl\Model\BranchName.cs" />
     <Compile Include="VersionControl\Model\FileStatus.cs" />
     <Compile Include="VersionControl\GitVersionControl.cs" />
-    <Compile Include="DependencyAnalyzer\DependencyType.cs" />
     <Compile Include="DependencyAnalyzer\Model\ProjectBuildConfiguration.cs" />
     <Compile Include="MSBuild\PropertyList.cs" />
     <Compile Include="ProjectSystem\SolutionParser\ISolutionFileParser.cs" />
@@ -378,7 +378,6 @@
     <Compile Include="Commands\GetDownstreamExpertModules.cs" />
     <Compile Include="Commands\GetExpertModule.cs" />
     <Compile Include="Commands\GetExpertModules.cs" />
-    <Compile Include="Commands\GetSymbolicLinkTarget.cs" />
     <Compile Include="Commands\NewExpertBuildDefinition.cs" />
     <Compile Include="Commands\SortModulesByBuildOrder.cs" />
     <Compile Include="Commands\UpdateBuildAllProject.cs" />

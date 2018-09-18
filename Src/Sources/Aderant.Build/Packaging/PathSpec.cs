@@ -5,7 +5,7 @@ using System.IO;
 namespace Aderant.Build.Packaging {
 
     [DebuggerDisplay("{Location} => {Destination}")]
-    internal struct PathSpec {
+    public struct PathSpec {
 
         public PathSpec(string location, string destination) {
             this.Location = location;
