@@ -171,6 +171,7 @@ namespace IntegrationTest.Build.EndToEnd {
                     { "CopyToDropEnabled", bool.TrueString },
                     { "GetProduct", bool.FalseString },
                     { "PackageProduct", bool.FalseString },
+                    { "RunTests", bool.FalseString },
                     { WellKnownProperties.ContextEndpoint, endpoint },
                 };
 

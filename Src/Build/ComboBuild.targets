@@ -261,7 +261,7 @@
   </Target>
 
 
-  <Target Name="ArchiveArtifacts">
+  <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage">
 
     <PropertyGroup>
       <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
@@ -273,7 +273,7 @@
 
     <GenerateArchives
       DirectoriesToArchive="@(DirectoriesToArchive)"
-      OutputArchives="@(DirectoriesToArchive -> '%(FullPath).zip')"
+      OutputArchives="@(DirectoriesToArchive -> '%(FullPath)\%(Filename)%(Extension).zip')"
       CompressionLevel="$(CompressionLevel)">
 
       <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
@@ -282,7 +282,7 @@
   </Target>
 
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts">
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <!-- -bb1 for file logging -->
@@ -339,7 +339,7 @@
 
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" * /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" *.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
 IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>

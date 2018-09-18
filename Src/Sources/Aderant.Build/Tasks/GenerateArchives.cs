@@ -54,7 +54,7 @@ namespace Aderant.Build.Tasks {
             }
 
             ProcessDirectories(directoriesToArchive, compressionLevel);
-            ArchivedFiles = directoriesToArchive.Select(x => (ITaskItem)new TaskItem(x.Destination)).ToArray();
+            ArchivedFiles = directoriesToArchive.Select(x => (ITaskItem)new TaskItem(x.Destination, new Dictionary<string, string> { {"Name", Path.GetFileNameWithoutExtension(x.Destination) } })).ToArray();
 
             return !Log.HasLoggedErrors;
         }
@@ -68,11 +68,11 @@ namespace Aderant.Build.Tasks {
                 directoriesToArchive,
                 new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
                 directory => {
-                    if (File.Exists(directory.Destination)) {
-                        File.Delete(directory.Destination);
-                    }
+                    string temp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                    
+                    ZipFile.CreateFromDirectory(directory.Location, temp, compressionLevel, false);
 
-                    ZipFile.CreateFromDirectory(directory.Location, directory.Destination, compressionLevel, false);
+                    File.Move(temp, directory.Destination);
                 });
         }
     }
