@@ -44,7 +44,7 @@
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
     
-    <CopyToDropEnabled>true</CopyToDropEnabled>
+    <CopyToDropEnabled>false</CopyToDropEnabled>
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
