@@ -207,7 +207,7 @@ namespace Aderant.Build.Packaging {
             string artifactPath = Path.Combine(basePath, definition.Id);
 
             foreach (PathSpec pathSpec in files) {
-                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, Path.GetFileName(pathSpec.Location))));
+                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination)));
             }
 
             return CreateArtifact(definition, artifactPath);
@@ -312,7 +312,7 @@ namespace Aderant.Build.Packaging {
 
             foreach (ArtifactPathSpec item in paths) {
                 IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*", true);
-                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, Path.Combine(item.Destination, Path.GetFileName(x)))));
+                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
             ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true);
