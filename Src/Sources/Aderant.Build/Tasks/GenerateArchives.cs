@@ -8,9 +8,10 @@ using Aderant.Build.Packaging;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Parallel = System.Threading.Tasks.Parallel;
+using Task = Microsoft.Build.Utilities.Task;
 
 namespace Aderant.Build.Tasks {
-    public sealed class GenerateArchives : BuildOperationContextTask {
+    public sealed class GenerateArchives : Task {
 
         private CompressionLevel compressionLevel;
 
@@ -29,7 +30,7 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem[] ArchivedFiles { get; private set; }
 
-        public override bool ExecuteTask() {
+        public override bool Execute() {
             if (DirectoriesToArchive == null || OutputArchives.Length == 0) {
                 Log.LogError("Value cannot be null or empty.", nameof(DirectoriesToArchive));
                 return !Log.HasLoggedErrors;
@@ -45,16 +46,29 @@ namespace Aderant.Build.Tasks {
                 return !Log.HasLoggedErrors;
             }
 
-            List<PathSpec> directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives);
+            List<PathSpec> directoriesToArchive;
 
-            Log.LogMessage($"Archive compression level set to: '{CompressionLevel}'.");
-            foreach (PathSpec pathSpec in directoriesToArchive) {
-                Log.LogMessage($"Archiving directory: '{pathSpec.Location}'");
-                Log.LogMessage($"To file: '{pathSpec.Destination}'");
+            try {
+                directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives);
+
+                Log.LogMessage($"Archive compression level set to: '{CompressionLevel}'.");
+                foreach (PathSpec pathSpec in directoriesToArchive) {
+                    Log.LogMessage($"Archiving directory: '{pathSpec.Location}'");
+                    Log.LogMessage($"To file: '{pathSpec.Destination}'");
+                }
+
+                try {
+                    ProcessDirectories(directoriesToArchive, compressionLevel);
+                } catch (AggregateException exception) {
+                    Log.LogError(exception.Flatten().ToString());
+                    return !Log.HasLoggedErrors;
+                }
+
+                ArchivedFiles = directoriesToArchive.Select(x => (ITaskItem)new TaskItem(x.Destination, new Dictionary<string, string> { { "Name", Path.GetFileNameWithoutExtension(x.Destination) } })).ToArray();
+            } catch (Exception exception) {
+                Log.LogErrorFromException(exception);
+                return !Log.HasLoggedErrors;
             }
-
-            ProcessDirectories(directoriesToArchive, compressionLevel);
-            ArchivedFiles = directoriesToArchive.Select(x => (ITaskItem)new TaskItem(x.Destination, new Dictionary<string, string> { {"Name", Path.GetFileNameWithoutExtension(x.Destination) } })).ToArray();
 
             return !Log.HasLoggedErrors;
         }
@@ -71,6 +85,10 @@ namespace Aderant.Build.Tasks {
                     string temp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                     
                     ZipFile.CreateFromDirectory(directory.Location, temp, compressionLevel, false);
+
+                    if (File.Exists(directory.Destination)) {
+                        File.Delete(directory.Destination);
+                    }
 
                     File.Move(temp, directory.Destination);
                 });

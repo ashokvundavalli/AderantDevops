@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
 using Aderant.Build.PipelineService;
@@ -205,7 +207,7 @@ namespace Aderant.Build.Packaging {
             string artifactPath = Path.Combine(basePath, definition.Id);
 
             foreach (PathSpec pathSpec in files) {
-                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, Path.GetFileName(pathSpec.Location))));
+                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination)));
             }
 
             return CreateArtifact(definition, artifactPath);
@@ -234,16 +236,30 @@ namespace Aderant.Build.Packaging {
 
             BuildStateFile stateFile = context.GetStateFile(container);
 
-            var localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
+            IEnumerable<string> localArtifactArchives = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*.zip", true));
+
+            ExtractArtifactArchives(localArtifactArchives);
+
+            IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
+
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
+        private static void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
+            Parallel.ForEach(
+                localArtifactArchives,
+                new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
+                archive => {
+                    ZipFile.ExtractToDirectory(archive, Path.GetDirectoryName(archive));
+                });
+        }
+
         /// <summary>
-            /// Parallelize I/O
-            /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
-            /// </summary>
-            internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
+        /// Parallelize I/O
+        /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
+        /// </summary>
+        internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
             ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite);
 
             foreach (PathSpec file in filesToRestore) {
@@ -296,7 +312,7 @@ namespace Aderant.Build.Packaging {
 
             foreach (ArtifactPathSpec item in paths) {
                 IEnumerable<string> artifactContents = fileSystem.GetFiles(item.Source, "*", true);
-                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, Path.Combine(item.Destination, Path.GetFileName(x)))));
+                pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
             ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true);

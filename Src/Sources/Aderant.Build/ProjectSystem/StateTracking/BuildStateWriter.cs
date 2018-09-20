@@ -74,7 +74,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFile.Outputs = currentOutputs.ToDictionary(key => key.ProjectFile, value => value);
 
-            if ((stateFile.Outputs == null || stateFile.Outputs.Count == 0) && (artifacts == null || artifacts.Count == 0)) {
+            // If there are no outputs and no associated artifacts, avoid writing the state file.
+            if ((stateFile.Outputs == null || stateFile.Outputs.Count == 0) && (artifacts == null || artifacts.Count == 0 || artifacts.All(x => x.Value.Count == 0))) {
                 return null;
             }
 
@@ -131,7 +132,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 var artifactManifests = getArtifactsForContainer(tag);
 
                 var collection = new ArtifactCollection();
-                if (artifactManifests != null && artifactManifests.Any()) {
+                if (artifactManifests != null) {
                     collection[tag] = artifactManifests.ToList();
                 }
 
