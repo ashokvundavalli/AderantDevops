@@ -207,6 +207,7 @@ namespace Aderant.Build.Packaging {
             string artifactPath = Path.Combine(basePath, definition.Id);
 
             foreach (PathSpec pathSpec in files) {
+                // Path spec destination is relative.
                 copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination)));
             }
 
