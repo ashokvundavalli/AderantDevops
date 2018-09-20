@@ -303,7 +303,7 @@
    
   </Target>
   
-  <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory">
+  <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(AlternativeOutputDirectory)' != ''">
 
     <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')" />
 
