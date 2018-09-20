@@ -1,4 +1,5 @@
-﻿using Microsoft.Build.Framework;
+﻿using System;
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -13,7 +14,11 @@ namespace Aderant.Build.Tasks {
         public string[] FileList { get; set; }
 
         public override bool Execute() {
-            DoubleWriteCheck.CheckForDoubleWrites(FileList);
+            try {
+                DoubleWriteCheck.CheckForDoubleWrites(FileList);
+            } catch (Exception exception) {
+                Log.LogErrorFromException(exception);
+            }
 
             return !Log.HasLoggedErrors;
         }
