@@ -363,9 +363,10 @@ namespace Aderant.Build.Packaging {
 
                     if (fileSystem.FileExists(localProjectFile)) {
                         foreach (var outputItem in project.Value.FilesWritten) {
-                            string fileName = Path.GetFileName(outputItem);
+                            string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
-                            var localSourceFiles = localArtifactFiles.Where(s => string.Equals(s.FileName, fileName, StringComparison.OrdinalIgnoreCase)).ToList();
+                            // Use relative path for comparison (rooted path)
+                            var localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(filePath, StringComparison.OrdinalIgnoreCase)).ToList();
                             var localSourceFile = localSourceFiles.FirstOrDefault();
 
                             if (localSourceFile == null) {
@@ -374,7 +375,7 @@ namespace Aderant.Build.Packaging {
 
                             if (localSourceFiles.Count > 1) {
                                 var duplicates = string.Join(Environment.NewLine, localSourceFiles);
-                                logger.Warning($"File {fileName} exists in more than one artifact. Choosing {localSourceFile.FullPath} arbitrarily." + Environment.NewLine + duplicates);
+                                logger.Warning($"File {filePath} exists in more than one artifact. Choosing {localSourceFile.FullPath} arbitrarily." + Environment.NewLine + duplicates);
                             }
 
                             string destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
@@ -396,7 +397,6 @@ namespace Aderant.Build.Packaging {
                     }
                 } else {
                     throw new InvalidOperationException($"The path {projectFile} was expected to contain {Path.DirectorySeparatorChar}");
-
                 }
             }
 
