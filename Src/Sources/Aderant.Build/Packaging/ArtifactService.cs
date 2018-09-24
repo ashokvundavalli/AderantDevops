@@ -331,10 +331,7 @@ namespace Aderant.Build.Packaging {
 
             // TODO: Optimize
             var localArtifactFiles = artifacts.Select(
-                path => new {
-                    FileName = Path.GetFileName(path),
-                    FullPath = path,
-                }).ToList();
+                path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
 
             if (localArtifactFiles.Count == 0) {
                 return copyOperations;
@@ -366,22 +363,23 @@ namespace Aderant.Build.Packaging {
                             string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
                             // Use relative path for comparison (rooted path)
-                            var localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(filePath, StringComparison.OrdinalIgnoreCase)).ToList();
-                            var localSourceFile = localSourceFiles.FirstOrDefault();
+                            List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(filePath, StringComparison.OrdinalIgnoreCase)).ToList();
+                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(new LocalArtifactFileComparer()).ToList();
 
-                            if (localSourceFile == null) {
-                                continue;
-                            }
+                            if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
+                                // Log duplicates
+                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, new LocalArtifactFileComparer()).Where(group => group.Count() > 1).Select(group => group.Key);
 
-                            if (localSourceFiles.Count > 1) {
-                                var duplicates = string.Join(Environment.NewLine, localSourceFiles);
-                                logger.Warning($"File {filePath} exists in more than one artifact. Choosing {localSourceFile.FullPath} arbitrarily." + Environment.NewLine + duplicates);
+                                string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
+                                logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
                             string destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
 
                             if (destinationPaths.Add(destination)) {
-                                copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+                                foreach (LocalArtifactFile file in distinctLocalSourceFiles) {
+                                    copyOperations.Add(new PathSpec(file.FileName, destination));
+                                }
                             } else {
                                 logger.Warning("Double write for file: " + destination);
                             }
@@ -401,6 +399,42 @@ namespace Aderant.Build.Packaging {
             }
 
             return copyOperations;
+        }
+
+        public class LocalArtifactFile {
+            public string FileName { get; set; }
+            public string FullPath { get; set; }
+
+            public LocalArtifactFile(string fileName, string fullPath) {
+                if (string.IsNullOrWhiteSpace(fileName)) {
+                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(fileName));
+                }
+
+                if (string.IsNullOrWhiteSpace(fullPath)) {
+                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(fullPath));
+                }
+
+                FileName = fileName;
+                FullPath = fullPath;
+            }
+        }
+
+        public class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
+            public bool Equals(LocalArtifactFile x, LocalArtifactFile y) {
+                if (x == null) {
+                    throw new ArgumentNullException(nameof(x));
+                }
+
+                if (y == null) {
+                    throw new ArgumentNullException(nameof(y));
+                }
+
+                return string.Equals(x.FullPath, y.FullPath, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(LocalArtifactFile obj) {
+                return base.GetHashCode();
+            }
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
