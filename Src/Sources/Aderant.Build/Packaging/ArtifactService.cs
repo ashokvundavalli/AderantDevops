@@ -378,7 +378,7 @@ namespace Aderant.Build.Packaging {
 
                             if (destinationPaths.Add(destination)) {
                                 foreach (LocalArtifactFile file in distinctLocalSourceFiles) {
-                                    copyOperations.Add(new PathSpec(file.FileName, destination));
+                                    copyOperations.Add(new PathSpec(file.FullPath, destination));
                                 }
                             } else {
                                 logger.Warning("Double write for file: " + destination);
