@@ -358,6 +358,8 @@ namespace Aderant.Build.Packaging {
                     }
 
                     if (fileSystem.FileExists(localProjectFile)) {
+                        logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
+
                         foreach (var outputItem in project.Value.FilesWritten) {
                             // Retain the relative path of the build artifact.
                             string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
@@ -379,8 +381,6 @@ namespace Aderant.Build.Packaging {
                                 logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
-                            logger.Info($"Project output path: {project.Value.OutputPath}");
-                            logger.Info($"Artifact file path: {filePath}");
                             string destination = Path.GetFullPath(Path.Combine(project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
