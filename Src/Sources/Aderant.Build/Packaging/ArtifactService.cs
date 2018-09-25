@@ -382,12 +382,12 @@ namespace Aderant.Build.Packaging {
 
                                 string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
                                 logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
-                                logger.Info($"Arbitrarily selected artifact: {selectedArtifact}");
                             }
 
                             string destination = Path.GetFullPath(Path.Combine(project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
+                                logger.Info($"Selected artifact: {selectedArtifact}");
                                 copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
                             } else {
                                 logger.Warning("Double write for file: " + destination);
