@@ -327,12 +327,11 @@ namespace Aderant.Build.Packaging {
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
-            List<PathSpec> copyOperations = new List<PathSpec>();
-
             // TODO: Optimize
             var localArtifactFiles = artifacts.Select(
                 path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
 
+            List<PathSpec> copyOperations = new List<PathSpec>();
             if (localArtifactFiles.Count == 0) {
                 return copyOperations;
             }
@@ -375,8 +374,8 @@ namespace Aderant.Build.Packaging {
                             }
 
                             logger.Info($"Project output path: {project.Value.OutputPath}");
-                            logger.Info($"artifact file path: {filePath}");
-                            string destination = Path.GetFullPath(Path.Combine(project.Value.OutputPath, filePath));
+                            logger.Info($"Artifact file path: {filePath}");
+                            string destination = Path.GetFullPath(Path.Combine(localProjectFile, project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
                                 foreach (LocalArtifactFile file in distinctLocalSourceFiles) {
