@@ -373,20 +373,22 @@ namespace Aderant.Build.Packaging {
 
                             List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(new LocalArtifactFileComparer()).ToList();
 
+                            // There can be only one.
+                            LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
+
                             if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
-                                // Log duplicates
+                                // Log duplicates.
                                 IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, new LocalArtifactFileComparer()).Where(group => group.Count() > 1).Select(group => group.Key);
 
                                 string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
                                 logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
+                                logger.Info($"Arbitrarily selected artifact: {selectedArtifact}");
                             }
 
                             string destination = Path.GetFullPath(Path.Combine(project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
-                                foreach (LocalArtifactFile file in distinctLocalSourceFiles) {
-                                    copyOperations.Add(new PathSpec(file.FullPath, destination));
-                                }
+                                copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
                             } else {
                                 logger.Warning("Double write for file: " + destination);
                             }
