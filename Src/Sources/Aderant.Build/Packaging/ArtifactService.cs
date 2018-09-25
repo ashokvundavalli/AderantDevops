@@ -387,7 +387,7 @@ namespace Aderant.Build.Packaging {
                             string destination = Path.GetFullPath(Path.Combine(solutionRoot, container, project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
-                                logger.Info($"Selected artifact: {selectedArtifact}");
+                                logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
                                 copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
                             } else {
                                 logger.Warning("Double write for file: " + destination);
