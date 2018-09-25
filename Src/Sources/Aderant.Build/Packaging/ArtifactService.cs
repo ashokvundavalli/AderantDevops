@@ -359,10 +359,16 @@ namespace Aderant.Build.Packaging {
 
                     if (fileSystem.FileExists(localProjectFile)) {
                         foreach (var outputItem in project.Value.FilesWritten) {
+                            // Retain the relative path of the build artifact.
                             string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
-                            // Use relative path for comparison (rooted path)
+                            // Use relative path for comparison.
                             List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(filePath, StringComparison.OrdinalIgnoreCase)).ToList();
+
+                            if (localSourceFiles.Count == 0) {
+                                continue;
+                            }
+
                             List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(new LocalArtifactFileComparer()).ToList();
 
                             if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
