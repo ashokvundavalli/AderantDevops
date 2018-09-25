@@ -375,7 +375,7 @@ namespace Aderant.Build.Packaging {
 
                             logger.Info($"Project output path: {project.Value.OutputPath}");
                             logger.Info($"Artifact file path: {filePath}");
-                            string destination = Path.GetFullPath(Path.Combine(localProjectFile, project.Value.OutputPath, filePath));
+                            string destination = Path.GetFullPath(Path.Combine(project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
                                 foreach (LocalArtifactFile file in distinctLocalSourceFiles) {
