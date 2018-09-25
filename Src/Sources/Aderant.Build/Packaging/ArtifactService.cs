@@ -374,7 +374,7 @@ namespace Aderant.Build.Packaging {
                                 logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
-                            string destination = Path.GetFullPath(Path.Combine(directoryOfProject, filePath));
+                            string destination = Path.GetFullPath(Path.Combine(project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
                                 foreach (LocalArtifactFile file in distinctLocalSourceFiles) {
