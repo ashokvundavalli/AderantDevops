@@ -381,7 +381,7 @@ namespace Aderant.Build.Packaging {
                                 IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, new LocalArtifactFileComparer()).Where(group => group.Count() > 1).Select(group => group.Key);
 
                                 string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
-                                logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
+                                logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
                             string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
@@ -392,12 +392,6 @@ namespace Aderant.Build.Packaging {
                             } else {
                                 logger.Warning("Double write for file: " + destination);
                             }
-
-                            // TODO: We need to consider that files can be placed into multiple directories so doing this might remove "Foo.ini" for the bin folder
-                            // when we actually needed to remove it from the test folder candidates
-                            //if (!localArtifactFiles.Remove(localSourceFile)) {
-                            //    throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
-                            //}
                         }
                     } else {
                         throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);

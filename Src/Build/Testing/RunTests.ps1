@@ -117,5 +117,7 @@ try {
         }
 
         Set-BuildStatus -Status "Failed" -Reason "Test failure"
+
+        Write-Error "Test execution exit code: $($global:LASTEXITCODE)"
     }
 }

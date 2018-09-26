@@ -20,6 +20,8 @@ namespace Aderant.Build {
         /// </summary>
         public string Result { get; set; }
 
+        public bool ExecutionError { get; set; }
+
         public event EventHandler<string> Error;
 
         public event EventHandler<string> Verbose;
@@ -96,6 +98,8 @@ namespace Aderant.Build {
                     });
 
                 await task.ConfigureAwait(false);
+
+                ExecutionError = shell.HadErrors;
 
                 Result = outputData.FirstOrDefault()?.ToString();
             } catch (ParseException ex) {
