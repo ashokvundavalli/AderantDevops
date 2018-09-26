@@ -340,7 +340,7 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            var destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var project in projectOutputs) {
                 string projectFile = project.Key;
@@ -384,7 +384,7 @@ namespace Aderant.Build.Packaging {
                                 logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
-                            string destination = Path.Combine(directoryOfProject, project.Value.OutputPath, filePath);
+                            string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
                                 logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
