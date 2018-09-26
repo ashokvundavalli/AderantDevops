@@ -118,7 +118,6 @@
 
 
   <Target Name="WriteStateFiles">
-    <!-- ToDo: Stop writing for empty artifacts. -->
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
