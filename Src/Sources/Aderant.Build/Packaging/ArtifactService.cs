@@ -340,7 +340,7 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            var destinationPaths = new HashSet<string>();
+            var destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var project in projectOutputs) {
                 string projectFile = project.Key;
