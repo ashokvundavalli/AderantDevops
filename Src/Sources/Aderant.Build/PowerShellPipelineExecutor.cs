@@ -20,7 +20,7 @@ namespace Aderant.Build {
         /// </summary>
         public string Result { get; set; }
 
-        public bool ExecutionError { get; set; }
+        public bool ExecutionError { get; private set; }
 
         public event EventHandler<string> Error;
 
