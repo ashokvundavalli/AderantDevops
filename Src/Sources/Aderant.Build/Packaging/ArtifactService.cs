@@ -384,7 +384,7 @@ namespace Aderant.Build.Packaging {
                                 logger.Warning($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
-                            string destination = Path.Combine(solutionRoot, container, project.Value.OutputPath, filePath);
+                            string destination = Path.Combine(directoryOfProject, project.Value.OutputPath, filePath);
 
                             if (destinationPaths.Add(destination)) {
                                 logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
