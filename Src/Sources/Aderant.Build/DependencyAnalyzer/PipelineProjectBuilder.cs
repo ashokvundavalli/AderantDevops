@@ -38,7 +38,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var dashes = new string('—', 20);
 
-           this.observedProjects.UnionWith(projectGroups.SelectMany(s => s).OfType < ConfiguredProject > ().Select(s => s.SolutionRoot));
+           this.observedProjects.UnionWith(projectGroups.SelectMany(s => s).OfType<ConfiguredProject>().Select(s => s.SolutionRoot));
 
             for (int i = 0; i < projectGroups.Count; i++) {
                 buildGroupCount++;
@@ -225,7 +225,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsProjectFile"] = bool.FalseString,
                 };
 
-                if (!observedProjects.Contains(solutionDirectoryPath)) {
+                if (observedProjects.Contains(solutionDirectoryPath)) {
                     item["T4TransformEnabled"] = bool.FalseString;
                 }
 

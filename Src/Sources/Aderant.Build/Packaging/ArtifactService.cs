@@ -327,7 +327,6 @@ namespace Aderant.Build.Packaging {
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
-            // TODO: Optimize
             var localArtifactFiles = artifacts.Select(
                 path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
 
