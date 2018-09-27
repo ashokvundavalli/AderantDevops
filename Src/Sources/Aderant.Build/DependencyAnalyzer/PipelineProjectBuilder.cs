@@ -7,7 +7,6 @@ using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
-using Microsoft.Build.Evaluation;
 using Project = Aderant.Build.MSBuild.Project;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -19,6 +18,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private const string BuildGroupId = "BuildGroupId";
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
+        private readonly HashSet<string> observedProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public PipelineProjectBuilder(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
@@ -37,6 +37,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             List<MSBuildProjectElement> groups = new List<MSBuildProjectElement>();
 
             var dashes = new string('—', 20);
+
+           this.observedProjects.UnionWith(projectGroups.SelectMany(s => s).OfType < ConfiguredProject > ().Select(s => s.SolutionRoot));
 
             for (int i = 0; i < projectGroups.Count; i++) {
                 buildGroupCount++;
@@ -222,6 +224,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsProjectFile"] = bool.FalseString,
                 };
+
+                if (!observedProjects.Contains(solutionDirectoryPath)) {
+                    item["T4TransformEnabled"] = bool.FalseString;
+                }
+
                 return item;
             }
 
