@@ -244,7 +244,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     var properties = propertiesText.Split(newLineArray, StringSplitOptions.None);
 
                     // We want to be able to specify the flavor globally in a build all so remove it from the property set
-                    properties = RemoveFlavor(properties);
+                    properties = RemoveProperties(properties, new[] { "BuildFlavor", "T4TransformEnabled" });
 
                     properties = ApplyPropertiesFromCommandLineArgs(properties);
 
@@ -324,9 +324,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertiesList.Add($"SolutionName={Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile)}");
         }
 
-        private string[] RemoveFlavor(string[] properties) {
+        internal static string[] RemoveProperties(string[] properties, string[] propertiesToRemove) {
             // TODO: Remove and use TreatAsLocalProperty
-            IEnumerable<string> newProperties = properties.Where(p => p.IndexOf("BuildFlavor", StringComparison.OrdinalIgnoreCase) == -1);
+            IEnumerable<string> newProperties = properties.Where(p => propertiesToRemove.All(x => p.IndexOf(x, StringComparison.OrdinalIgnoreCase) == -1));
 
             return newProperties.ToArray();
         }
