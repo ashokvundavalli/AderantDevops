@@ -225,7 +225,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsProjectFile"] = bool.FalseString,
                 };
 
-                if (observedProjects.Contains(solutionDirectoryPath)) {
+                if (!observedProjects.Contains(solutionDirectoryPath)) {
                     item["T4TransformEnabled"] = bool.FalseString;
                 }
 
