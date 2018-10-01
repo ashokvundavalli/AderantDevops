@@ -46,10 +46,8 @@ namespace Aderant.Build.Tasks {
                 return !Log.HasLoggedErrors;
             }
 
-            List<PathSpec> directoriesToArchive;
-
             try {
-                directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives);
+                List<PathSpec> directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives);
 
                 Log.LogMessage($"Archive compression level set to: '{CompressionLevel}'.");
                 foreach (PathSpec pathSpec in directoriesToArchive) {

@@ -211,12 +211,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             DirectoryNode node = studioProject as DirectoryNode;
             if (node != null) {
                 string solutionDirectoryPath = node.Directory;
-                var properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
+                PropertyList properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
 
-                properties.Add("SolutionRoot=" + solutionDirectoryPath);
+                properties.Add("SolutionRoot", solutionDirectoryPath);
 
                 ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
-                    [PropertiesKey] = properties.ToString(),
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
 
                     // Indicates this file is part of the build system itself
@@ -227,7 +226,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 if (!observedProjects.Contains(solutionDirectoryPath)) {
                     item["T4TransformEnabled"] = bool.FalseString;
+                    properties.TryRemove("T4TransformEnabled");
                 }
+
+                item[PropertiesKey] = properties.ToString();
 
                 return item;
             }
@@ -238,18 +240,39 @@ namespace Aderant.Build.DependencyAnalyzer {
         private PropertyList AddBuildProperties(PropertyList propertyList, IFileSystem2 fileSystem, string solutionDirectoryPath) {
             string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
             if (fileSystem.FileExists(responseFile)) {
-                using (var reader = new StreamReader(fileSystem.OpenFile(responseFile))) {
-                    var propertiesText = reader.ReadToEnd();
+                string propertiesText;
+                using (StreamReader reader = new StreamReader(fileSystem.OpenFile(responseFile))) {
+                    propertiesText = reader.ReadToEnd();
+                }
 
-                    var properties = propertiesText.Split(newLineArray, StringSplitOptions.None);
+                PropertyList properties = ParseRspContent(propertiesText.Split(newLineArray, StringSplitOptions.None));
 
-                    // We want to be able to specify the flavor globally in a build all so remove it from the property set
-                    properties = RemoveProperties(properties, new[] { "BuildFlavor", "T4TransformEnabled" });
+                // We want to be able to specify the flavor globally in a build all so remove it from the property set
+                properties.TryRemove("BuildFlavor");
 
-                    properties = ApplyPropertiesFromCommandLineArgs(properties);
+                propertyList = ApplyPropertiesFromCommandLineArgs(properties);
 
-                    propertyList.Add(CreateSinglePropertyLine(properties));
-                    propertyList.Add(PathUtility.EnsureTrailingSlash($"SolutionDirectoryPath={solutionDirectoryPath}"));
+                propertyList.Add("SolutionDirectoryPath", PathUtility.EnsureTrailingSlash(solutionDirectoryPath));
+            }
+
+            return propertyList;
+        }
+
+        internal PropertyList ParseRspContent(string[] responseFileContent) {
+            PropertyList propertyList = new PropertyList();
+
+            if (responseFileContent == null || responseFileContent.Length == 0) {
+                return propertyList;
+            }
+
+            foreach (string line in responseFileContent) {
+                if (line.StartsWith("#")) {
+                    continue;
+                }
+
+                if (line.IndexOf("/p:", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    string[] split = line.Replace("\"", "").Split(new char[] { '=' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    propertyList.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
                 }
             }
 
@@ -261,51 +284,36 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Typically this happens automatically but since we provide the RSP properties explicitly to the MSBuild tasks
         /// within the pipeline we need to evict properties from the RSP that would nullify the command line values
         /// </summary>
-        private string[] ApplyPropertiesFromCommandLineArgs(string[] properties) {
+        private PropertyList ApplyPropertiesFromCommandLineArgs(PropertyList propertyList) {
             // Find all global command line property specifications 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
-            List<string> comandLineArgs = new List<string>();
-            foreach (string property in commandLineArgs) {
-                if (property.StartsWith("/p:", StringComparison.OrdinalIgnoreCase)) {
-                    comandLineArgs.Add(property);
+
+            List<string> arguments = commandLineArgs.Where(x => x.StartsWith("/p:", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            foreach (string argument in arguments) {
+                string[] split = argument.Replace("\"", "").Split(new[] { '=' }, 2);
+
+                string key = split[0].Substring(3, split[0].Length - 3);
+
+                if (propertyList.ContainsKey(key)) {
+                    continue;
                 }
+
+                propertyList.Add(key, split[1]);
             }
 
-            var splitChar = new[] { '=' };
-
-            List<string> propertyList = new List<string>();
-
-            foreach (var property in properties) {
-                string[] split = property.Split(splitChar, 2);
-
-                string s = split[0].Replace("\"", "");
-
-                bool addPropertyFromResponseFile = true;
-                foreach (var commandLineArg in comandLineArgs) {
-                    if (commandLineArg.StartsWith(s, StringComparison.OrdinalIgnoreCase)) {
-                        // There is a command line arg with the same property name as specified in the RSP
-                        addPropertyFromResponseFile = false;
-                        break;
-                    }
-                }
-
-                if (addPropertyFromResponseFile) {
-                    propertyList.Add(property);
-                }
-            }
-
-            return propertyList.ToArray();
+            return propertyList;
         }
 
         private PropertyList AddSolutionConfigurationProperties(ConfiguredProject visualStudioProject, PropertyList propertyList) {
-            propertyList.Add($"SolutionRoot={visualStudioProject.SolutionRoot}");
-            propertyList.Add($"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}");
-            propertyList.Add($"Platform={visualStudioProject.BuildConfiguration.PlatformName}");
+            propertyList.Add("SolutionRoot", visualStudioProject.SolutionRoot);
+            propertyList.Add("Configuration", visualStudioProject.BuildConfiguration.ConfigurationName);
+            propertyList.Add("Platform", visualStudioProject.BuildConfiguration.PlatformName);
 
             AddMetaProjectProperties(visualStudioProject, propertyList);
 
             if (visualStudioProject.UseCommonOutputDirectory) {
-                propertyList.Add("UseCommonOutputDirectory=true");
+                propertyList.Add("UseCommonOutputDirectory", bool.TrueString);
             }
 
             return propertyList;
@@ -317,11 +325,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             // pre and post build steps. However, they are not defined when directly building
             // a project from the command line, only when building a solution.
             // A lot of stuff doesn't work if they aren't present (web publishing targets for example) so we add them in as compatibility items 
-            propertiesList.Add($"SolutionDir={visualStudioProject.SolutionRoot}");
-            propertiesList.Add($"SolutionExt={Path.GetExtension(visualStudioProject.SolutionFile)}");
-            propertiesList.Add($"SolutionFileName={Path.GetFileName(visualStudioProject.SolutionFile)}");
-            propertiesList.Add($"SolutionPath={visualStudioProject.SolutionRoot}");
-            propertiesList.Add($"SolutionName={Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile)}");
+            propertiesList.Add($"SolutionDir", visualStudioProject.SolutionRoot);
+            propertiesList.Add($"SolutionExt", Path.GetExtension(visualStudioProject.SolutionFile));
+            propertiesList.Add($"SolutionFileName", Path.GetFileName(visualStudioProject.SolutionFile));
+            propertiesList.Add($"SolutionPath", visualStudioProject.SolutionRoot);
+            propertiesList.Add($"SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
         }
 
         internal static string[] RemoveProperties(string[] properties, string[] propertiesToRemove) {

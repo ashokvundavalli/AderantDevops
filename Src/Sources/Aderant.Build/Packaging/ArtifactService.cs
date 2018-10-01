@@ -233,6 +233,12 @@ namespace Aderant.Build.Packaging {
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
+            if (context.IsDesktopBuild) {
+                foreach (ArtifactPathSpec artifact in artifactPaths) {
+                    Directory.Delete(artifact.Destination, true);
+                }
+            }
+
             FetchArtifacts(artifactPaths);
 
             BuildStateFile stateFile = context.GetStateFile(container);
@@ -244,6 +250,7 @@ namespace Aderant.Build.Packaging {
             IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
+
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
