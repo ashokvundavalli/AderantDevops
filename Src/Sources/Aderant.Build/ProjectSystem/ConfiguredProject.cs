@@ -386,6 +386,12 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void CalculateDirtyStateFromChanges(IReadOnlyCollection<ISourceChange> changes) {
+            MarkThisFileDirty(changes);
+
+            if (IsDirty) {
+                return;
+            }
+            
             // check if this proj contains needed files
             List<ProjectItem> items = new List<ProjectItem>();
 
@@ -398,14 +404,7 @@ namespace Aderant.Build.ProjectSystem {
                     string value = item.GetMetadataValue("FullPath");
 
                     if (string.Equals(value, file.FullPath, StringComparison.OrdinalIgnoreCase)) {
-                        // found one
-                        IsDirty = true;
-                        if (BuildReason == null) {
-                            BuildReason = new BuildReason();
-                            BuildReason.Flags = DependencyAnalyzer.BuildReason.ProjectFileChanged;
-                        } else {
-                            BuildReason.Flags |= DependencyAnalyzer.BuildReason.ProjectFileChanged;
-                        }
+                        MarkDirty();
 
                         if (dirtyFiles == null) {
                             dirtyFiles = new List<string>();
@@ -414,6 +413,25 @@ namespace Aderant.Build.ProjectSystem {
                         dirtyFiles.Add(file.Path);
                         return;
                     }
+                }
+            }
+        }
+
+        private void MarkDirty() {
+            IsDirty = true;
+            if (BuildReason == null) {
+                BuildReason = new BuildReason();
+                BuildReason.Flags = DependencyAnalyzer.BuildReason.ProjectFileChanged;
+            } else {
+                BuildReason.Flags |= DependencyAnalyzer.BuildReason.ProjectFileChanged;
+            }
+        }
+
+        private void MarkThisFileDirty(IReadOnlyCollection<ISourceChange> changes) {
+            foreach (var change in changes) {
+                if (string.Equals(FullPath, change.FullPath, StringComparison.OrdinalIgnoreCase)) {
+                    MarkDirty();
+                    return;
                 }
             }
         }

@@ -77,7 +77,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     return [string]::Join(" ", $set)
 }
 
-function GetSourceTreeMetadata($context, $repositoryPath) {
+function GetSourceTreeMetadata($context, $repositoryPath) {        
     $sourceBranch = ""
     $targetBranch = ""
 
@@ -92,7 +92,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         }
     }    
 
-    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$Context.IsDesktopBuild
+    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
 
     Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
     Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"

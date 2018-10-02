@@ -225,8 +225,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 };
 
                 if (!observedProjects.Contains(solutionDirectoryPath)) {
-                    item["T4TransformEnabled"] = bool.FalseString;
-                    properties.TryRemove("T4TransformEnabled");
+                    properties["T4TransformEnabled"] = bool.FalseString;
                 }
 
                 item[PropertiesKey] = properties.ToString();
