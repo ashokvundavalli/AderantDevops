@@ -235,7 +235,9 @@ namespace Aderant.Build.Packaging {
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
             if (context.IsDesktopBuild) {
                 foreach (ArtifactPathSpec artifact in artifactPaths) {
-                    Directory.Delete(artifact.Destination, true);
+                    if (Directory.Exists(artifact.Destination)) {
+                        Directory.Delete(artifact.Destination, true);
+                    }
                 }
             }
 
