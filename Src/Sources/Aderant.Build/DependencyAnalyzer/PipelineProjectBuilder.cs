@@ -228,6 +228,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     properties["T4TransformEnabled"] = bool.FalseString;
                 }
 
+                // Add ItemGroup elements.
                 foreach (KeyValuePair<string, string> property in properties.ItemGroups) {
                     item[property.Key] = property.Value;
                 }
@@ -277,8 +278,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                     string[] split = line.Replace("\"", "").Split(new char[] { '=' }, 2, StringSplitOptions.RemoveEmptyEntries);
 
                     if (split[1].IndexOf(";", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        // ItemGroup
                         propertyList.ItemGroups.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
                     } else {
+                        // PropertyGroup
                         propertyList.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
                     }
                 }
