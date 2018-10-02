@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Aderant.Build.MSBuild {
     internal class PropertyList : Dictionary<string, string> {
-        private static string joinString = "; " + Environment.NewLine;
+        private static readonly string joinString = "; " + Environment.NewLine;
 
         public PropertyList() : base(StringComparer.OrdinalIgnoreCase) {
         }
 
         public override string ToString() {
-            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value)));
+            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=\"", x.Value, "\"")));
         }
 
         private static string Join(IList<string> items) {
