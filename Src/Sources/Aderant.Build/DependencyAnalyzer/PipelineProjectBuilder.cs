@@ -163,7 +163,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
-            var propertyList = new PropertyList();
+            PropertyList propertyList = new PropertyList();
 
             // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
             // The difference can be confusing and very problematic if used incorrectly.
@@ -265,7 +265,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             foreach (string line in responseFileContent) {
-                if (line.StartsWith("#")) {
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) {
                     continue;
                 }
 
