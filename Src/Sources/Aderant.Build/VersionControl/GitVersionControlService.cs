@@ -123,8 +123,10 @@ namespace Aderant.Build.VersionControl {
             Commit[] interestingCommit = { null };
 
             List<string> search = new List<string> {
+                "refs/remotes/origin/monotest",
+                "refs/heads/monotest",
                 "refs/remotes/origin/master",
-                "refs/heads/master",
+                "refs/heads/master"
             };
 
             // Recursively walk through the parents.
