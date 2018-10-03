@@ -12,7 +12,7 @@ namespace Aderant.Build.MSBuild {
         }
 
         public override string ToString() {
-            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=\"", x.Value, "\"")));
+            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value)));
         }
 
         private static string Join(IList<string> items) {
