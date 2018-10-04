@@ -6,7 +6,8 @@ namespace Aderant.Build.MSBuild {
     internal class PropertyList : Dictionary<string, string> {
         private static readonly string joinString = "; " + Environment.NewLine;
 
-        public Dictionary<string, string> ItemGroups = new Dictionary<string, string>();
+        // ToDo: Excape semicolon characters and remove this.
+        internal Dictionary<string, string> ItemGroups = new Dictionary<string, string>();
 
         public PropertyList() : base(StringComparer.OrdinalIgnoreCase) {
         }

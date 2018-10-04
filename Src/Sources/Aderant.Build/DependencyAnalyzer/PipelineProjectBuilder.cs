@@ -162,6 +162,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
+        private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
+
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
             PropertyList propertyList = new PropertyList();
 
@@ -180,7 +182,15 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 propertyList = AddSolutionConfigurationProperties(visualStudioProject, propertyList);
 
-                ItemGroupItem item = new ItemGroupItem(visualStudioProject.FullPath) {
+                if (solutionPropertyLists.ContainsKey(propertyList["SolutionRoot"])) {
+                    foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertyList["SolutionRoot"]]) {
+                        if (!propertyList.ContainsKey(keyValuePair.Key)) {
+                            propertyList.Add(keyValuePair.Key, keyValuePair.Value);
+                        }
+                    }
+                }
+
+                ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
                     ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                     ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
@@ -190,13 +200,15 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsProjectFile"] = bool.TrueString
                 };
 
-                if (item["IsWebProject"] == bool.TrueString) {
-                    propertyList.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
+                if (project["IsWebProject"] == bool.TrueString) {
+                    if (!propertyList.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
+                        propertyList.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
+                    }
                 }
 
-                item[PropertiesKey] = propertyList.ToString();
+                project[PropertiesKey] = propertyList.ToString();
 
-                return item;
+                return project;
             }
 
             // TODO: Do we need this?
@@ -216,9 +228,18 @@ namespace Aderant.Build.DependencyAnalyzer {
             DirectoryNode node = studioProject as DirectoryNode;
             if (node != null) {
                 string solutionDirectoryPath = node.Directory;
-                PropertyList properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
 
-                properties.Add("SolutionRoot", solutionDirectoryPath);
+                PropertyList properties;
+                if (solutionPropertyLists.ContainsKey(solutionDirectoryPath)) {
+                    properties = solutionPropertyLists[solutionDirectoryPath];
+                } else {
+                    properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
+                    solutionPropertyLists.Add(solutionDirectoryPath, properties);
+                }
+
+                if (!properties.ContainsKey("SolutionRoot")) {
+                    properties.Add("SolutionRoot", solutionDirectoryPath);
+                }
 
                 ItemGroupItem item = new ItemGroupItem(node.IsPostTargets ? afterProjectFile : beforeProjectFile) {
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
