@@ -181,15 +181,20 @@ namespace Aderant.Build.DependencyAnalyzer {
                 propertyList = AddSolutionConfigurationProperties(visualStudioProject, propertyList);
 
                 ItemGroupItem item = new ItemGroupItem(visualStudioProject.FullPath) {
-                    [PropertiesKey] = propertyList.ToString(),
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
                     ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                     ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                     ["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}",
                     ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                     // Indicates this file is not part of the build system
-                    ["IsProjectFile"] = bool.TrueString,
+                    ["IsProjectFile"] = bool.TrueString
                 };
+
+                if (item["IsWebProject"] == bool.TrueString) {
+                    propertyList.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
+                }
+
+                item[PropertiesKey] = propertyList.ToString();
 
                 return item;
             }
@@ -336,11 +341,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             // pre and post build steps. However, they are not defined when directly building
             // a project from the command line, only when building a solution.
             // A lot of stuff doesn't work if they aren't present (web publishing targets for example) so we add them in as compatibility items 
-            propertiesList.Add($"SolutionDir", visualStudioProject.SolutionRoot);
-            propertiesList.Add($"SolutionExt", Path.GetExtension(visualStudioProject.SolutionFile));
-            propertiesList.Add($"SolutionFileName", Path.GetFileName(visualStudioProject.SolutionFile));
-            propertiesList.Add($"SolutionPath", visualStudioProject.SolutionRoot);
-            propertiesList.Add($"SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
+            propertiesList.Add("SolutionDir", visualStudioProject.SolutionRoot);
+            propertiesList.Add("SolutionExt", Path.GetExtension(visualStudioProject.SolutionFile));
+            propertiesList.Add("SolutionFileName", Path.GetFileName(visualStudioProject.SolutionFile));
+            propertiesList.Add("SolutionPath", visualStudioProject.SolutionRoot);
+            propertiesList.Add("SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
         }
 
         internal static string[] RemoveProperties(string[] properties, string[] propertiesToRemove) {
