@@ -139,6 +139,7 @@
     <Compile Include="Packaging\AutoPackager.cs" />
     <Compile Include="Tasks\CopyFiles.cs" />
     <Compile Include="Tasks\GenerateArchives.cs" />
+    <Compile Include="Tasks\CreateDependencyLinks.cs" />
     <Compile Include="Utilities\Memoizer.cs" />
     <Compile Include="ProjectSystem\StateTracking\ProjectOutputSnapshotFactory.cs" />
     <Compile Include="ProjectSystem\BuildDependenciesCollector.cs" />

@@ -375,6 +375,9 @@ namespace Aderant.Build {
         public string ProjectFile { get; set; }
 
         [DataMember]
+        public string AbsoluteProjectFile { get; set; }
+
+        [DataMember]
         public string[] FilesWritten { get; set; }
 
         [DataMember]
