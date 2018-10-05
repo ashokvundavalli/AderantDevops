@@ -6,14 +6,11 @@ namespace Aderant.Build.MSBuild {
     internal class PropertyList : Dictionary<string, string> {
         private static readonly string joinString = "; " + Environment.NewLine;
 
-        // ToDo: Excape semicolon characters and remove this.
-        internal Dictionary<string, string> ItemGroups = new Dictionary<string, string>();
-
         public PropertyList() : base(StringComparer.OrdinalIgnoreCase) {
         }
 
         public override string ToString() {
-            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value)));
+            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value.Replace(";", "%3B"))));
         }
 
         private static string Join(IList<string> items) {
