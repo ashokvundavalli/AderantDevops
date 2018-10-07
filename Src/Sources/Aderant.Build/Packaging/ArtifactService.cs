@@ -256,13 +256,15 @@ namespace Aderant.Build.Packaging {
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
-        private static void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
-            Parallel.ForEach(
-                localArtifactArchives,
-                new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
-                archive => {
-                    ZipFile.ExtractToDirectory(archive, Path.GetDirectoryName(archive));
-                });
+        private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
+            try {
+                Parallel.ForEach(
+                    localArtifactArchives,
+                    new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
+                    archive => { ZipFile.ExtractToDirectory(archive, Path.GetDirectoryName(archive)); });
+            } catch (AggregateException exception) {
+                logger.Error(exception.Flatten().ToString());
+            }
         }
 
         /// <summary>
