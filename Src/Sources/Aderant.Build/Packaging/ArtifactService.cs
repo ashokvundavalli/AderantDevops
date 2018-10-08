@@ -612,14 +612,20 @@ namespace Aderant.Build.Packaging {
         }
 
         private List<BuildArtifact> RemoveArtifacts(List<BuildArtifact> artifacts) {
+            List<BuildArtifact> artifactsToRemove = new List<BuildArtifact>();
+
             foreach (BuildArtifact artifact in artifacts) {
                 if (artifact.StoragePath.StartsWith("~")) {
                     continue;
                 }
 
                 if (!artifact.Name.Equals(Path.GetDirectoryName(artifact.StoragePath), StringComparison.OrdinalIgnoreCase)) {
-                    artifacts.Remove(artifact);
+                    artifactsToRemove.Add(artifact);
                 }
+            }
+
+            foreach (BuildArtifact artifactToRemove in artifactsToRemove) {
+                artifacts.Remove(artifactToRemove);
             }
 
             return artifacts;
