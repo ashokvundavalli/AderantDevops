@@ -619,6 +619,8 @@ namespace Aderant.Build.Packaging {
                     continue;
                 }
 
+                logger.Info($"Considering artifact: '{artifact.Name}' with source path name: {Path.GetFileName(Path.GetDirectoryName(artifact.SourcePath))}");
+
                 if (!artifact.Name.Equals(Path.GetFileName(Path.GetDirectoryName(artifact.SourcePath)), StringComparison.OrdinalIgnoreCase)) {
                     artifactsToRemove.Add(artifact);
                 }
