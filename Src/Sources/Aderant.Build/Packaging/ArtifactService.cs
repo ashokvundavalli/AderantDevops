@@ -625,7 +625,9 @@ namespace Aderant.Build.Packaging {
             }
 
             foreach (BuildArtifact artifactToRemove in artifactsToRemove) {
-                artifacts.Remove(artifactToRemove);
+                if (artifacts.Remove(artifactToRemove)) {
+                    logger.Info($"Excluding artifact: '{artifactToRemove.Name}' from publishing.");
+                }
             }
 
             return artifacts;
