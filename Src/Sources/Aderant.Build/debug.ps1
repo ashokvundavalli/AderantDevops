@@ -3,7 +3,7 @@
 # be quite overwhelming
 #bm -downstream -transitive /p:VisualStudioVersion=14.0 /p:PackageArtifacts=true /p:T4TransformEnabled=false /p:RetrievePrebuilts=false
 cd C:\Git\ExpertSuite\;cm .
-bm -Include 'C:\Git\WebCore'
+bm #-Include 'C:\Git\WebCore'
 #bm -WhatIf -JustMyChanges -downstream -transitive #-NoBuildCache 
 #bm -DirectoriesToBuild C:\tfs\ExpertSuite\Dev\vnext\Modules\SDK.Workflow\  -WhatIf
 
