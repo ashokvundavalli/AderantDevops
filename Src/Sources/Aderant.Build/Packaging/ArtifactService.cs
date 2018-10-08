@@ -594,8 +594,6 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoBuildCommandBuilder();
 
-            artifactsWithStoragePaths = RemoveArtifacts(artifactsWithStoragePaths);
-
             // Ordering is an attempt to make sure we upload files first then the state files
             var instructions = new PublishCommands {
                 ArtifactPaths = artifactsWithStoragePaths
@@ -609,28 +607,6 @@ namespace Aderant.Build.Packaging {
             };
 
             return instructions;
-        }
-
-        private List<BuildArtifact> RemoveArtifacts(List<BuildArtifact> artifacts) {
-            List<BuildArtifact> artifactsToRemove = new List<BuildArtifact>();
-
-            foreach (BuildArtifact artifact in artifacts) {
-                if (artifact.Name.StartsWith("~") || artifact.Name.Equals("Product", StringComparison.OrdinalIgnoreCase)) {
-                    continue;
-                }
-
-                if (!artifact.Name.Equals(Path.GetFileName(artifact.SourcePath), StringComparison.OrdinalIgnoreCase)) {
-                    artifactsToRemove.Add(artifact);
-                }
-            }
-
-            foreach (BuildArtifact artifactToRemove in artifactsToRemove) {
-                if (artifacts.Remove(artifactToRemove)) {
-                    logger.Info($"Excluding artifact: '{artifactToRemove.Name}' from publishing.");
-                }
-            }
-
-            return artifacts;
         }
 
         internal void AssignDropLocation(string artifactStagingDirectory, string destinationRootPath, IEnumerable<BuildArtifact> artifacts, int buildId) {
