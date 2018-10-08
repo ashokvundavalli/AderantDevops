@@ -594,8 +594,6 @@ namespace Aderant.Build.Packaging {
 
             var commandBuilder = new VsoBuildCommandBuilder();
 
-            artifactsWithStoragePaths = artifactsWithStoragePaths.Where(x => x.Name.Equals(Path.GetDirectoryName(x.StoragePath))).ToList();
-
             // Ordering is an attempt to make sure we upload files first then the state files
             var instructions = new PublishCommands {
                 ArtifactPaths = artifactsWithStoragePaths
