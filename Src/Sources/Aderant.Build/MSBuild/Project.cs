@@ -12,6 +12,8 @@ namespace Aderant.Build.MSBuild {
 
         private List<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
 
+        internal List<string> ModuleNames { get; set; } = new List<string>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Project" /> class.
         /// </summary>
@@ -73,6 +75,9 @@ namespace Aderant.Build.MSBuild {
         public XElement CreateXml() {
             TargetXmlEmitter visitor = new ParallelBuildVisitor();
             visitor.Visit(this);
+
+            ModuleNames.AddRange(visitor.ModuleNames);
+
             return visitor.GetXml();
         }
     }

@@ -4,9 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using Aderant.Build.Logging;
+using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public sealed class ParallelBuildProjectFactory : BuildOperationContextTask {
@@ -91,8 +94,11 @@ namespace Aderant.Build.Tasks {
             var analysisContext = CreateAnalysisContext();
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
 
-            var project = projectTree.ComputeBuildSequence(context, analysisContext, PipelineService, jobFiles).Result;
+            Project project = projectTree.ComputeBuildSequence(context, analysisContext, PipelineService, jobFiles).Result;
+
             var element = project.CreateXml();
+
+            ModulesInThisBuild = project.ModuleNames.ToArray();
 
             var settings = new XmlWriterSettings {
                 Encoding = Encoding.UTF8,

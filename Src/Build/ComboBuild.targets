@@ -44,13 +44,13 @@
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
     
-    <CopyToDropEnabled>false</CopyToDropEnabled>
-    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
+    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -59,6 +59,7 @@
       CreatePipeline;
       ExecutePipeline;
       RunTests;
+      RunIntegrationTests;
       WriteStateFiles;
       PackageProduct;
       CopyToDrop;
@@ -110,6 +111,8 @@
       ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
+
+    <Message Text="ModulesInBuild: @(ModulesInBuild)" />
 
     <Error Condition="!Exists('$(BranchBuildProject)')" Text="$(BranchBuildProject) does not exist." />
 
