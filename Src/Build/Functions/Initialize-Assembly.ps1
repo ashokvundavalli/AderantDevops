@@ -12,6 +12,13 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
     if ([System.IO.File]::Exists($aderantBuildAssembly) -and $forceCompile -eq $false) {
         return
     }
+
+    try {
+        [System.IO.File]::OpenWrite($aderantBuildAssembly).Close()
+    } catch {
+        Write-Debug "Skipped compiling $aderantBuildAssembly due to file lock."
+        return
+    }
   
     $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
     $toolsVersion = "14.0";

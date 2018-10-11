@@ -3,11 +3,10 @@
 
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
-    <!--<_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$([System.Environment]::GetEnvironmentVariable('RunIntegrationTests'))</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">$(RunIntegrationTests)</_RunIntegrationTests>
     <_RunIntegrationTests Condition="'$(RunDesktopIntegrationTests)' != ''">$(RunDesktopIntegrationTests)</_RunIntegrationTests>
-    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>-->
-    <_RunIntegrationTests>true</_RunIntegrationTests>
+    <_RunIntegrationTests Condition="'$(_RunIntegrationTests)' == ''">false</_RunIntegrationTests>
 
     <RunIntegrationTestsDependsOn>
       GrovelForTestAssemblies;
@@ -30,11 +29,10 @@
     <OriginBranch Condition="'$(OriginBranch)' == ''">master</OriginBranch>
     <OriginTFVCBranch Condition="'$(OriginTFVCBranch)' == ''">dev\vnext</OriginTFVCBranch>
     
-    <!--<_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$([System.Environment]::GetEnvironmentVariable('DeployEnvironment'))</_DeployEnvironment>
+    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$([System.Environment]::GetEnvironmentVariable('DeployEnvironment'))</_DeployEnvironment>
     <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">$(DeployEnvironment)</_DeployEnvironment>
     <_DeployEnvironment Condition="'$(_DeployEnvironment)' == '' And '$(IsDesktopBuild)' != 'true' And '$(_RunIntegrationTests)' == 'true'">true</_DeployEnvironment>
-    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">false</_DeployEnvironment>-->
-    <_DeployEnvironment>true</_DeployEnvironment>
+    <_DeployEnvironment Condition="'$(_DeployEnvironment)' == ''">false</_DeployEnvironment>
   </PropertyGroup>
 
 
@@ -231,14 +229,16 @@
     <!-- ToDo: Filter this by impacted tests only. -->
 
     <ItemGroup>
-      <IntegrationTestAssemblies Condition="'@(IntegrationTestAssemblies)' == ''"  Include="@(ModulesInBuild->'%(Identity)\Bin\Test\*IntegrationTest*.dll')" />
+      <TestSearchDirectories Condition="'@(IntegrationTestAssemblies)' == ''"  Include="@(ModulesInBuild->'$(SolutionRoot)%(Identity)\Bin\Test\')" />
+      <IntegrationTestAssemblies Include="%(TestSearchDirectories.Identity)*IntegrationTest*.dll" />
     </ItemGroup>
 
+    <Message Text="TestSearchDirectories: @(TestSearchDirectories)" />
     <Message Text="IntegrationTestAssemblies: @(IntegrationTestAssemblies)" />
 
   </Target>
   
-  <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">  
+  <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">
   </Target>
 
   <Target Name="RunIntegrationTests"
@@ -253,14 +253,12 @@
       <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <PlatformSwitch>/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
       <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
-      <RunSettingsSwitch Condition="Exists('$(RunSettingsFile)')">/Settings:$(RunSettingsFile)</RunSettingsSwitch>
+      <RunSettingsSwitch Condition="'$(RunSettingsFile)' != '' And Exists('$(RunSettingsFile)')">/Settings:&quot;$(RunSettingsFile)&quot;</RunSettingsSwitch>
     </PropertyGroup>
-
-    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
 
     <MakeDir Directories="$(VsTestWorkingDirectory)" />
     
@@ -283,7 +281,7 @@
       IgnoreExitCode="false"
       WorkingDirectory="$(VsTestWorkingDirectory)"
       Timeout="$(TestTimeoutMilliseconds)"
-      Command='$(EnvironmentVariables) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) "RunSettingsSwitch"' />
+      Command='$(EnvironmentVariables) &amp; "$(PathToTestTool)" $(IntegrationTestAssemblies) $(TestCaseFilter) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(RunSettingsSwitch)' />
 
     <PropertyGroup>
       <TestOutcome>Succeeded</TestOutcome>
@@ -318,7 +316,7 @@
       <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
       <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
       <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
+      <PlatformSwitch>/Platform:x64</PlatformSwitch>
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
     </PropertyGroup>
     
@@ -357,7 +355,7 @@
  
 
   <Target Name="LightsOff"
-    Condition="'$(_DeployEnvironment)' == 'true' And '$(_RunIntegrationTests)' == 'true' And '$(RunTest)' != 'false' And '$(IsCustomBuild)' != 'true'">
+    Condition="'$(_DeployEnvironment)' == 'true' And ('$(_RunIntegrationTests)' == 'true' Or '$(_RunAutomationTests)' == 'true')">
 
     <ItemGroup>
       <BackupPackageFiles Include="$(SolutionRoot)BackupPackages\**"></BackupPackageFiles>
