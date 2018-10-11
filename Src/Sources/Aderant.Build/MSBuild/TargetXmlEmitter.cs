@@ -16,7 +16,7 @@ namespace Aderant.Build.MSBuild {
 
         private Stack<XElement> elementStack = new Stack<XElement>();
         private List<string> visited = new List<string>();
-        internal HashSet<string> ModuleNames = new HashSet<string>();
+        internal HashSet<string> ModuleNames { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TargetXmlEmitter" /> class.
