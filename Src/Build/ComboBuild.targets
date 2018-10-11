@@ -23,7 +23,7 @@
     
     <!--Test configuration-->
     <RunTests>$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
-    <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
+    <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'true'))</RunIntegrationTests>
     
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
