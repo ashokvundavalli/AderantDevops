@@ -90,6 +90,7 @@
     <ItemGroup>
       <PackageDependency Condition="'$(PackageDependency)' != ''" Include="$(PackageDependency.Split('#'))" />
       <PackageFiles Include="$(SolutionRoot)Packages\**"></PackageFiles>
+      <DependencyFiles Include="$(SolutionRoot)Dependencies\**"></DependencyFiles>
     </ItemGroup>
 
     <PropertyGroup>
@@ -107,6 +108,10 @@
     <!-- Backup original packages -->
     <Move SourceFiles="@(PackageFiles)"
       DestinationFiles="@(PackageFiles->'$(SolutionRoot)BackupPackages\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <!-- Backup original dependencies -->
+    <Move SourceFiles="@(DependencyFiles)"
+      DestinationFiles="@(DependencyFiles->'$(SolutionRoot)BackupDependencies\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Exec ContinueOnError="false"
       IgnoreExitCode="false"
@@ -257,7 +262,7 @@
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
       <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
-      <RunSettingsSwitch Condition="'$(RunSettingsFile)' != '' And Exists('$(RunSettingsFile)')">/Settings:&quot;$(RunSettingsFile)&quot;</RunSettingsSwitch>
+      <RunSettingsSwitch Condition="'$(CustomRunSettingsFile)' != '' And Exists('$(CustomRunSettingsFile)')">/Settings:&quot;$(RunSettingsFile)&quot;</RunSettingsSwitch>
     </PropertyGroup>
 
     <MakeDir Directories="$(VsTestWorkingDirectory)" />
@@ -359,10 +364,15 @@
 
     <ItemGroup>
       <BackupPackageFiles Include="$(SolutionRoot)BackupPackages\**"></BackupPackageFiles>
+      <BackupDependencyFiles Include="$(SolutionRoot)BackupDependencies\**"></BackupDependencyFiles>
     </ItemGroup>
 
     <!-- Restore original packages -->
     <Move SourceFiles="@(BackupPackageFiles)"
+      DestinationFiles="@(BackupPackageFiles->'$(SolutionRoot)Packages\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <!-- Restore original dependencies -->
+    <Move SourceFiles="@(BackupDependencyFiles)"
       DestinationFiles="@(BackupPackageFiles->'$(SolutionRoot)Packages\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Message Text="Removing Expert server image: Expert_$(ExpertEnvironmentName)." />
