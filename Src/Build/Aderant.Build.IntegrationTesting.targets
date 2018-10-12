@@ -262,6 +262,7 @@
       <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
       <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
       <TestCaseFilter>/TestCaseFilter:&quot;TestCategory!=Reporting$(CustomTestFilters)&quot;</TestCaseFilter>
+      <RunSettingsSwitch></RunSettingsSwitch>
       <RunSettingsSwitch Condition="'$(CustomRunSettingsFile)' != '' And Exists('$(CustomRunSettingsFile)')">/Settings:&quot;$(RunSettingsFile)&quot;</RunSettingsSwitch>
     </PropertyGroup>
 
