@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Aderant.Build.PipelineService;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-    /// <summary>
-    /// 
-    /// </summary>
+   
     public class CreateDependencyLinks : BuildOperationContextTask {
         
         [Required]
@@ -26,19 +25,36 @@ namespace Aderant.Build.Tasks {
         /// Execute the task to generate symlinks for the packages folder
         /// </summary>
         public override bool ExecuteTask() {
+            System.Diagnostics.Debugger.Launch();
+
             if (File.Exists(Path.Combine(SolutionRoot, LinkLockFileName))) {
                 Log.LogMessage("Skipping Symlink creation as {0} is present", LinkLockFileName);
                 return true;
             }
-
-            List<DependantFile> dependantFiles = new List<DependantFile>();
             
+            var rootDirectory = Path.GetFileName(SolutionRoot);
+            List<ProjectOutputSnapshot> projectOutputSnapshots = PipelineService
+                .GetAllProjectOutputs()
+                .Where(s => !string.Equals(s.Directory, rootDirectory, StringComparison.OrdinalIgnoreCase) && !s.IsTestProject)
+                .ToList();
+
+            // TODO: Need to read dependency manifest here to get the list of artifacts, then rebuild that
+            
+            // Get all projects analyzed by the build, this gives us all seen projects regardless of their state
+            var trackedProjects = PipelineService
+                .GetTrackedProjects()
+                .ToDictionary(d => d.ProjectGuid, project => project);
+
+            RebuildProjectFullPath(projectOutputSnapshots, trackedProjects);
+
+            List<DependantFile> dependentFiles = new List<DependantFile>();
+
             string packagesRoot = Path.Combine(SolutionRoot, PackagesDirectoryName);
 
             List<string> libFolders = Directory.GetDirectories(packagesRoot, $"*{LibDirectoryName}*", SearchOption.AllDirectories).Where(lf => IsLibFolderCorrectDepth(lf, packagesRoot)).ToList();
 
             foreach (string libFolder in libFolders) {
-                dependantFiles.AddRange(
+                dependentFiles.AddRange(
                     from file in Directory.GetFiles(libFolder, "*.*", SearchOption.AllDirectories)
                     let fileName = Path.GetFileName(file)
                     where fileName != null
@@ -47,23 +63,21 @@ namespace Aderant.Build.Tasks {
                         FileInstance = file
                     });
             }
-            
-            List<ProjectOutputSnapshot> projectOutputSnapshots = PipelineService.GetAllProjectOutputs().ToList();
-            
-            foreach (DependantFile df in dependantFiles) {
-                var snapShotForDependantFile = projectOutputSnapshots.FirstOrDefault(pos => !pos.IsTestProject && !string.IsNullOrEmpty(pos.AbsoluteProjectFile) && pos.FilesWritten.Any(fw => df.FileName == Path.GetFileName(fw)));
-                if (snapShotForDependantFile != null) {
 
-                    string moduleDirectory = Path.GetDirectoryName(snapShotForDependantFile.AbsoluteProjectFile);
+            foreach (DependantFile df in dependentFiles) {
+                var snapShotForDependentFile = projectOutputSnapshots.FirstOrDefault(pos => !pos.IsTestProject && !string.IsNullOrEmpty(pos.AbsoluteProjectFile) && pos.FilesWritten.Any(fw => df.FileName == Path.GetFileName(fw)));
+                if (snapShotForDependentFile != null) {
+                    string moduleDirectory = Path.GetDirectoryName(snapShotForDependentFile.AbsoluteProjectFile);
 
                     if (string.IsNullOrEmpty(moduleDirectory)) {
                         continue;
                     }
 
                     string locationForSymlink = df.FileInstance;
-                    string symlinkTargetRawPath = Path.Combine(moduleDirectory, snapShotForDependantFile.OutputPath, df.FileName);
-                    // Normalise the path, as symlinks with \..\ in them dont resolve correctly
-                    string targetForSymlink = new Uri(symlinkTargetRawPath).LocalPath;
+                    string symlinkTargetRawPath = Path.Combine(moduleDirectory, snapShotForDependentFile.OutputPath, df.FileName);
+
+                    // Normalize the path, as symlinks with \..\ in them dont resolve correctly
+                    string targetForSymlink = Path.GetFullPath(symlinkTargetRawPath);
                     
                     if (File.Exists(locationForSymlink)) {
                         File.Delete(locationForSymlink);
@@ -76,6 +90,17 @@ namespace Aderant.Build.Tasks {
             File.Create(Path.Combine(SolutionRoot, LinkLockFileName));
 
             return true;
+        }
+
+        private static void RebuildProjectFullPath(List<ProjectOutputSnapshot> projectOutputSnapshots, Dictionary<Guid, TrackedProject> trackedProjects) {
+            foreach (var snapshot in projectOutputSnapshots) {
+                if (snapshot.AbsoluteProjectFile == null) {
+                    TrackedProject trackedProject;
+                    if (trackedProjects.TryGetValue(snapshot.ProjectGuid, out trackedProject)) {
+                        snapshot.AbsoluteProjectFile = trackedProject.FullPath;
+                    }
+                }
+            }
         }
 
         private static bool IsLibFolderCorrectDepth(string libFolder, string packagesRoot) {

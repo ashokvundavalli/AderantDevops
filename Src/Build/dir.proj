@@ -27,6 +27,20 @@
     <TSLintCli>$(PackagesDirectory)\Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
     <TSLintBreakBuildOnError>true</TSLintBreakBuildOnError>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <ResolveReferencesDependsOn>MyFancyTarget;$(ResolveReferencesDependsOn)</ResolveReferencesDependsOn>
+  </PropertyGroup>
+  
+  <Target Name="MyFancyTarget">
+     <ItemGroup>
+      <TheReferences Include="@(Reference)" Condition="%(TheReferences.HintPath) != ''" />
+     </ItemGroup>
+     
+     
+     <MyInlineCsharpTask Files="@(TheReferences)" />
+  
+  </Target>
 
 
   <!-- 

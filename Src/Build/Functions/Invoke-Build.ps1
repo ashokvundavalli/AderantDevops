@@ -253,6 +253,9 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = "Only files that have modifications are considered.")]
         [Alias("JustMyChanges")]
         [switch]$ChangedFilesOnly,
+
+        [Parameter(HelpMessage = "Explicity disables the text transformation process.")]        
+        [switch]$SkipT4,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs

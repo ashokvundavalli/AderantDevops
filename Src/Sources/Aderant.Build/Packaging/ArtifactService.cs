@@ -270,7 +270,7 @@ namespace Aderant.Build.Packaging {
         /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
         /// </summary>
         internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, true);
 
             foreach (PathSpec file in filesToRestore) {
                 logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);

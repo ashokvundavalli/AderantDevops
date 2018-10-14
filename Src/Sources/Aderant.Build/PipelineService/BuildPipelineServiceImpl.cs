@@ -33,8 +33,6 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            //snapshot.FilesWritten
-
             Outputs[snapshot.ProjectFile] = snapshot;
         }
 
@@ -83,10 +81,10 @@ namespace Aderant.Build.PipelineService {
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
             if (artifacts != null) {
-                var artifactsForTag = artifacts.GetArtifactsForTag(container);
+                    var artifactsForTag = artifacts.GetArtifactsForTag(container);
 
-                if (artifactsForTag != null) {
-                    return artifactsForTag.SelectMany(s => s.Value);
+                    if (artifactsForTag != null) {
+                        return artifactsForTag.SelectMany(s => s.Value);
                 }
             }
 

@@ -62,7 +62,7 @@ namespace Aderant.Build.Tasks {
                 using (var contract = GetProxy()) {
                     if (contract != null) {
                         operationContext = contract.GetContext();
-                        variables["TaskContext"] = operationContext;
+                        //variables["TaskContext"] = operationContext;
                     }
 
                     pipelineExecutor.RunScript(

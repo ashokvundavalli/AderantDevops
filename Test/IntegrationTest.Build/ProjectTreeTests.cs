@@ -30,14 +30,14 @@ namespace IntegrationTest.Build {
         }
 
         [TestMethod]
-        public async Task LoadProjectsAsync_sets_LoadedUnconfiguredProjects() {
+        public void LoadProjectsAsync_sets_LoadedUnconfiguredProjects() {
             projectTree.LoadProjects(deploymentDirectory, true, null);
 
             Assert.AreEqual(5, projectTree.LoadedUnconfiguredProjects.Count);
         }
 
         [TestMethod]
-        public async Task AssemblyReference_captures_hint_path() {
+        public void AssemblyReference_captures_hint_path() {
             projectTree.LoadProjects(deploymentDirectory, true, null);
 
             ConfiguredProject configuredProject = projectTree.LoadedUnconfiguredProjects.First(p => p.ProjectGuid == new Guid("{E0E257CE-8CD9-4D58-9C08-6CB6B9A87B92}"))
