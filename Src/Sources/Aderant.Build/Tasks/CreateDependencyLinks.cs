@@ -6,7 +6,10 @@ using Aderant.Build.PipelineService;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
-   
+
+    /// <summary>
+    /// Task to generate symlinks for the packages folder
+    /// </summary>
     public class CreateDependencyLinks : BuildOperationContextTask {
         
         [Required]
@@ -22,7 +25,7 @@ namespace Aderant.Build.Tasks {
         }
 
         /// <summary>
-        /// Execute the task to generate symlinks for the packages folder
+        /// Execute the task
         /// </summary>
         public override bool ExecuteTask() {
             System.Diagnostics.Debugger.Launch();
