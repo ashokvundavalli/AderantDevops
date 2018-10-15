@@ -49,7 +49,7 @@ namespace UnitTest.Build.Packaging {
         }
 
         [TestMethod]
-        public void File_content_of_auto_packages_is_unique() {
+        public void File_content_of_auto_package_is_unique() {
             var builder = new AutoPackager(NullLogger.Default);
 
             var snapshot = new ProjectOutputSnapshot {

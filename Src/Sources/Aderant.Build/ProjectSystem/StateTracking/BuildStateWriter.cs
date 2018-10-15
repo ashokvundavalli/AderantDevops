@@ -47,13 +47,27 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             BuildMetadata buildMetadata,
             string destinationPath) {
 
+            BuildStateFile newFile;
+            return WriteStateFile(previousBuild, bucket, currentOutputs, artifacts, metadata, buildMetadata, destinationPath, out newFile);
+        }
+
+        internal string WriteStateFile(
+            BuildStateFile previousBuild,
+            BucketId bucket,
+            IEnumerable<ProjectOutputSnapshot> currentOutputs,
+            IDictionary<string, ICollection<ArtifactManifest>> artifacts,
+            SourceTreeMetadata metadata,
+            BuildMetadata buildMetadata,
+            string destinationPath,
+            out BuildStateFile stateFile) {
+
             string treeShaValue = null;
             if (metadata != null) {
                 var treeSha = metadata.GetBucket(BucketId.Current);
                 treeShaValue = treeSha.Id;
             }
 
-            var stateFile = new BuildStateFile {
+            stateFile = new BuildStateFile {
                 TreeSha = treeShaValue,
                 BucketId = bucket
             };
@@ -69,7 +83,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             }
 
             if (previousBuild != null) {
-                MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
+                //TODO: Can we get away with the merge in the ArtifactService?
+                //MergeExistingOutputs(previousBuild.BuildId, previousBuild.Outputs, currentOutputs);
             }
 
             stateFile.Outputs = currentOutputs.ToDictionary(key => key.ProjectFile, value => value);
@@ -78,6 +93,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             if ((stateFile.Outputs == null || stateFile.Outputs.Count == 0) && (artifacts == null || artifacts.Count == 0 || artifacts.All(x => x.Value.Count == 0))) {
                 return null;
             }
+
+            RemoveTransitiveBaggage(stateFile.Outputs);
 
             stateFile.Artifacts = artifacts;
 
@@ -94,15 +111,43 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFile.PrepareForSerialization();
 
+            var file = stateFile;
+
             logger.Info("Writing state file to: " + destinationPath);
-            fileSystem.AddFile(destinationPath, stream => stateFile.Serialize(stream));
+            fileSystem.AddFile(destinationPath, stream => file.Serialize(stream));
 
             return destinationPath;
         }
 
+        private void RemoveTransitiveBaggage(IDictionary<string, ProjectOutputSnapshot> stateFileOutputs) {
+            // Gather up all unique dir+output pairs
+            foreach (var projects in stateFileOutputs.Values
+                .Where(g => g.IsTestProject)
+                .GroupBy(g => g.Directory + g.OutputPath, StringComparer.OrdinalIgnoreCase)) {
+
+                // All of the output
+                var seenOutputFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var project in projects) {
+                    if (project.FilesWritten != null) {
+                        var outputsWithoutTransitiveBaggage = new List<string>(project.FilesWritten.Length);
+
+                        foreach (var file in project.FilesWritten) {
+                            if (seenOutputFiles.Add(file)) {
+                                // Add was accepted, this is a unique file
+                                outputsWithoutTransitiveBaggage.Add(file);
+                            }
+                        }
+
+                        project.FilesWritten = outputsWithoutTransitiveBaggage.ToArray();
+                    }
+                }
+            }
+        }
+
         private static void MergeExistingOutputs(string buildId, IDictionary<string, ProjectOutputSnapshot> oldOutput, IEnumerable<ProjectOutputSnapshot> newOutput) {
             var merger = new OutputMerger();
-            //foreach (var projectOutputs in oldOutput) {
+            //foreach (var projectOutputs in oldOutput) {s
             //    if (!newOutput.ContainsKey(projectOutputs.Key)) {
             //        var outputs = projectOutputs.Value;
             //        outputs.Origin = buildId;
@@ -111,7 +156,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             //    }
             //}
         }
-
         public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, Func<string, IEnumerable<ArtifactManifest>> getArtifactsForContainer) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
 

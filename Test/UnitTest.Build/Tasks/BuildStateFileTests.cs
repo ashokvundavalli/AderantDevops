@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Aderant.Build;
 using Aderant.Build.Logging;
@@ -163,6 +164,48 @@ namespace UnitTest.Build.Tasks {
                 "foo");
 
             Assert.IsNotNull(text);
+        }
+
+        [TestMethod]
+        public void BuildStateWriter_removes_transitive_baggage() {
+            // Since we aren't using the common output directory for tests, the FilesWritten array gets a lot of transitive baggage included.
+            // For example each test project wants to copy log4net.xml to the output directory.
+            // This results in a double write warning when we replay the build. Stink.
+            // If we tell it to use a common output directory for tests we get other problems though such as missing dependency DLLs which results in test failures.
+            // The transitive baggage prune step unifies test project output to resolve this issue
+            var fs = new Mock<IFileSystem>();
+
+            var writer = new BuildStateWriter(fs.Object, NullLogger.Default);
+
+            BuildStateFile stateFile;
+
+            writer.WriteStateFile(
+                null,
+                null,
+                new[] {
+                    new ProjectOutputSnapshot {
+                        ProjectFile = "1",
+                        FilesWritten = new[] {"A", "B"},
+                        IsTestProject = true,
+                        Directory = "",
+                        OutputPath = "bin\\test",
+                    },
+                    new ProjectOutputSnapshot {
+                        ProjectFile = "2",
+                        FilesWritten = new[] {"A", "C"},
+                        IsTestProject = true,
+                        Directory = "",
+                        OutputPath = "bin\\test",
+                    }
+                },
+                null,
+                null,
+                null,
+                "foo", out stateFile);
+
+            var projectOutputSnapshots = stateFile.Outputs.Values.ToArray();
+            Assert.AreEqual(2, projectOutputSnapshots[0].FilesWritten.Length, "item 'A' should not have been pruned");
+            Assert.AreEqual(1, projectOutputSnapshots[1].FilesWritten.Length, "item 'A' should have been pruned");
         }
     }
 }

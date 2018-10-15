@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -353,7 +354,7 @@ namespace Aderant.Build.Packaging {
             HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var project in projectOutputs) {
-                string projectFile = project.Key;
+                string projectFile = project.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
                 int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
                 if (position >= 0) {
@@ -414,6 +415,7 @@ namespace Aderant.Build.Packaging {
             return copyOperations;
         }
 
+        [DebuggerDisplay("FileName: {FileName} FullPath: {FullPath}")]
         public class LocalArtifactFile {
             public string FileName { get; set; }
             public string FullPath { get; set; }
@@ -635,7 +637,7 @@ namespace Aderant.Build.Packaging {
             foreach (var previous in previousProjects) {
                 bool add = true;
                 foreach (var snapshot in snapshots) {
-                    if (string.Equals(snapshot.ProjectFile, previous.ProjectFile, StringComparison.OrdinalIgnoreCase)) {
+                    if (snapshot.ProjectGuid == previous.ProjectGuid) {
                         add = false;
                         break;
                     }
