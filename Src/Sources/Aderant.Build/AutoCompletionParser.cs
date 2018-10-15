@@ -7,6 +7,7 @@ using System.Management.Automation.Language;
 using System.Text;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyAnalyzer;
+using Debugger = System.Diagnostics.Debugger;
 
 namespace Aderant.Build {
 
@@ -93,6 +94,8 @@ namespace Aderant.Build {
             List<string> matches = new List<string>();
             Debug.WriteLine(string.Format("Module name split by case = {0}", searchStringSplitByCase.StringConcat(" ")));
 
+            var mmm = analyzer.GetAllModules().ToList();
+
             //if the search string is split into more than one "word" then we want to also split the module names
             //otherwise we match the string to the whole word.
             if (searchStringSplitByCase.Count > 1) {
@@ -148,6 +151,7 @@ namespace Aderant.Build {
         /// <remarks>Called from the PowerShell host.</remarks>
         public string[] GetModuleMatches(string wordToComplete, string modulePath, string productManifestPath = null) {
             lastWord = wordToComplete;
+            Debugger.Launch();
 
             ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
