@@ -23,7 +23,7 @@
     
     <!--Test configuration-->
     <RunTests>$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
-    <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'true'))</RunIntegrationTests>
+    <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
     
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
@@ -59,7 +59,7 @@
       CreatePipeline;
       ExecutePipeline;
       RunTests;
-      RunIntegrationTests;
+      <!--RunIntegrationTests;-->
       WriteStateFiles;
       PackageProduct;
       CopyToDrop;
