@@ -974,7 +974,12 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
     function global:Test-ReparsePoint([string]$path) {
         $file = Get-Item $path -Force -ea 0
-        return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
+
+        if ($file -ne $null -and $file.PSobject.Properties.name -match "Attributes") {
+            return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
+        }
+
+        return $false;
     }
 
     Function global:WriteGetBinariesMessage([System.Xml.XmlNode]$module, [string]$dropPath) {

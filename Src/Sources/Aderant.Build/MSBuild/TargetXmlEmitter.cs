@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.MSBuild {
@@ -15,6 +16,7 @@ namespace Aderant.Build.MSBuild {
 
         private Stack<XElement> elementStack = new Stack<XElement>();
         private List<string> visited = new List<string>();
+        internal HashSet<string> ModuleNames { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TargetXmlEmitter" /> class.
@@ -57,13 +59,21 @@ namespace Aderant.Build.MSBuild {
 
                 itemElement.Add(new XAttribute("Include", item.Expression));
 
-                string value;
                 var keys = item.MetadataKeys;
 
                 foreach (var key in keys) {
+                    string value;
                     if (item.TryGetValue(key, out value)) {
                         if (!string.IsNullOrEmpty(value)) {
                             itemElement.Add(new XElement(Xmlns + key, value));
+
+                            if (key.Equals("Properties", StringComparison.OrdinalIgnoreCase)) {
+                                string moduleName = Regex.Match(value, "(?<=ModuleName=)[^;]*").Value;
+
+                                if (!string.IsNullOrWhiteSpace(moduleName)) {
+                                    ModuleNames.Add(moduleName);
+                                }
+                            }
                         }
                     }
                 }

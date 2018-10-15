@@ -207,6 +207,7 @@ namespace Aderant.Build.Packaging {
             string artifactPath = Path.Combine(basePath, definition.Id);
 
             foreach (PathSpec pathSpec in files) {
+                // Path spec destination is relative.
                 copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination)));
             }
 
@@ -232,6 +233,14 @@ namespace Aderant.Build.Packaging {
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
+            if (context.IsDesktopBuild) {
+                foreach (ArtifactPathSpec artifact in artifactPaths) {
+                    if (Directory.Exists(artifact.Destination)) {
+                        Directory.Delete(artifact.Destination, true);
+                    }
+                }
+            }
+
             FetchArtifacts(artifactPaths);
 
             BuildStateFile stateFile = context.GetStateFile(container);
@@ -243,16 +252,19 @@ namespace Aderant.Build.Packaging {
             IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
 
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
+
             CopyFiles(filesToRestore, context.IsDesktopBuild);
         }
 
-        private static void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
-            Parallel.ForEach(
-                localArtifactArchives,
-                new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
-                archive => {
-                    ZipFile.ExtractToDirectory(archive, Path.GetDirectoryName(archive));
-                });
+        private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
+            try {
+                Parallel.ForEach(
+                    localArtifactArchives,
+                    new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
+                    archive => { ZipFile.ExtractToDirectory(archive, Path.GetDirectoryName(archive)); });
+            } catch (AggregateException exception) {
+                logger.Error(exception.Flatten().ToString());
+            }
         }
 
         /// <summary>
@@ -326,15 +338,10 @@ namespace Aderant.Build.Packaging {
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
-            List<PathSpec> copyOperations = new List<PathSpec>();
-
-            // TODO: Optimize
             var localArtifactFiles = artifacts.Select(
-                path => new {
-                    FileName = Path.GetFileName(path),
-                    FullPath = path,
-                }).ToList();
+                path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
 
+            List<PathSpec> copyOperations = new List<PathSpec>();
             if (localArtifactFiles.Count == 0) {
                 return copyOperations;
             }
@@ -343,7 +350,7 @@ namespace Aderant.Build.Packaging {
 
             var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            var destinationPaths = new HashSet<string>();
+            HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var project in projectOutputs) {
                 string projectFile = project.Key;
@@ -361,45 +368,86 @@ namespace Aderant.Build.Packaging {
                     }
 
                     if (fileSystem.FileExists(localProjectFile)) {
+                        logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
+
                         foreach (var outputItem in project.Value.FilesWritten) {
-                            string fileName = Path.GetFileName(outputItem);
+                            // Retain the relative path of the build artifact.
+                            string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
-                            var localSourceFiles = localArtifactFiles.Where(s => string.Equals(s.FileName, fileName, StringComparison.OrdinalIgnoreCase)).ToList();
-                            var localSourceFile = localSourceFiles.FirstOrDefault();
+                            // Use relative path for comparison.
+                            List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
 
-                            if (localSourceFile == null) {
+                            if (localSourceFiles.Count == 0) {
                                 continue;
                             }
 
-                            if (localSourceFiles.Count > 1) {
-                                var duplicates = string.Join(Environment.NewLine, localSourceFiles);
-                                logger.Warning($"File {fileName} exists in more than one artifact. Choosing {localSourceFile.FullPath} arbitrarily." + Environment.NewLine + duplicates);
+                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(new LocalArtifactFileComparer()).ToList();
+
+                            // There can be only one.
+                            LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
+
+                            if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
+                                // Log duplicates.
+                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, new LocalArtifactFileComparer()).Where(group => group.Count() > 1).Select(group => group.Key);
+
+                                string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
+                                logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
                             }
 
-                            string destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputItem));
+                            string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
 
                             if (destinationPaths.Add(destination)) {
-                                copyOperations.Add(new PathSpec(localSourceFile.FullPath, destination));
+                                logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
+                                copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
                             } else {
                                 logger.Warning("Double write for file: " + destination);
                             }
-
-                            // TODO: We need to consider that files can be placed into multiple directories so doing this might remove "Foo.ini" for the bin folder
-                            // when we actually needed to remove it from the test folder candidates
-                            //if (!localArtifactFiles.Remove(localSourceFile)) {
-                            //    throw new InvalidOperationException("Fatal: Could not remove local artifact file: " + localSourceFile.FullPath);
-                            //}
                         }
                     } else {
                         throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
                     }
                 } else {
                     throw new InvalidOperationException($"The path {projectFile} was expected to contain {Path.DirectorySeparatorChar}");
-
                 }
             }
 
             return copyOperations;
+        }
+
+        public class LocalArtifactFile {
+            public string FileName { get; set; }
+            public string FullPath { get; set; }
+
+            public LocalArtifactFile(string fileName, string fullPath) {
+                if (string.IsNullOrWhiteSpace(fileName)) {
+                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(fileName));
+                }
+
+                if (string.IsNullOrWhiteSpace(fullPath)) {
+                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(fullPath));
+                }
+
+                FileName = fileName;
+                FullPath = fullPath;
+            }
+        }
+
+        public class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
+            public bool Equals(LocalArtifactFile x, LocalArtifactFile y) {
+                if (x == null) {
+                    throw new ArgumentNullException(nameof(x));
+                }
+
+                if (y == null) {
+                    throw new ArgumentNullException(nameof(y));
+                }
+
+                return string.Equals(x.FullPath, y.FullPath, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(LocalArtifactFile obj) {
+                return base.GetHashCode();
+            }
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {

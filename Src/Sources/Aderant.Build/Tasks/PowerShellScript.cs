@@ -31,7 +31,9 @@ namespace Aderant.Build.Tasks {
 
                 Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
 
-                RunScript(this.Log, directoryName);
+               if (RunScript(this.Log, directoryName)) {
+                   Log.LogError("Execution of script: '{}' failed.", ScriptBlock);
+               }
 
                 return !Log.HasLoggedErrors;
             } finally {
@@ -43,7 +45,7 @@ namespace Aderant.Build.Tasks {
             cts.Cancel();
         }
 
-        private void RunScript(TaskLoggingHelper name, string directoryName) {
+        private bool RunScript(TaskLoggingHelper name, string directoryName) {
             var pipelineExecutor = new PowerShellPipelineExecutor();
             pipelineExecutor.ProgressPreference = ProgressPreference;
             pipelineExecutor.MeasureCommand = MeasureCommand;
@@ -80,6 +82,8 @@ namespace Aderant.Build.Tasks {
             } catch (OperationCanceledException) {
                 // Cancellation was requested
             }
+
+            return pipelineExecutor.ExecutionError;
         }
 
         internal static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {

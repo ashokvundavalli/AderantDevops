@@ -182,13 +182,14 @@ Result = uniqueFiles.ToArray();
 
   
   <Target Name="ReplicateWebModuleAssemblies" 
-          AfterTargets="CopyFilesToOutputDirectory">
+          AfterTargets="CopyFilesToOutputDirectory"
+          Condition="'$(SharedDependencyDirectory)' != ''">
     
     <Message Text="Replicating web assemblies to shared directories" />
     
-    <Copy Condition="'$(SharedDependencyDirectory)' != ''"
-          SourceFiles="@(IntermediateAssembly)"
-          DestinationFolder="$(SharedDependencyDirectory)" />
+    <Copy SourceFiles="@(IntermediateAssembly)"
+          DestinationFolder="$(SharedDependencyDirectory)"
+          SkipUnchangedFiles="true" />
     
   </Target>
 

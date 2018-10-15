@@ -44,13 +44,13 @@
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
     
-    <CopyToDropEnabled>false</CopyToDropEnabled>
-    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' == 'false'">true</CopyToDropEnabled>
+    <CopyToDropEnabled Condition="'$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
+  <Import Project="Aderant.Build.IntegrationTesting.targets" />
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -59,6 +59,7 @@
       CreatePipeline;
       ExecutePipeline;
       RunTests;
+      <!--RunIntegrationTests;-->
       WriteStateFiles;
       PackageProduct;
       CopyToDrop;
@@ -111,6 +112,8 @@
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
     </ParallelBuildProjectFactory>
 
+    <Message Text="ModulesInBuild: @(ModulesInBuild)" />
+
     <Error Condition="!Exists('$(BranchBuildProject)')" Text="$(BranchBuildProject) does not exist." />
 
     <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(BranchBuildProject)" />
@@ -118,7 +121,6 @@
 
 
   <Target Name="WriteStateFiles">
-    <!-- ToDo: Stop writing for empty artifacts. -->
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
@@ -339,8 +341,8 @@
 
     <PropertyGroup>
       <CopyToDropCommand>
-robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" *.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
-IF %ERRORLEVEL% LEQ 4 EXIT /B 0
+        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+        IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>
 

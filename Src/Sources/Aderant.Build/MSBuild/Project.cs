@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 
@@ -11,6 +12,8 @@ namespace Aderant.Build.MSBuild {
         private Target defaultTarget;
 
         private List<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
+
+        internal HashSet<string> ModuleNames { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Project" /> class.
@@ -73,6 +76,9 @@ namespace Aderant.Build.MSBuild {
         public XElement CreateXml() {
             TargetXmlEmitter visitor = new ParallelBuildVisitor();
             visitor.Visit(this);
+
+            ModuleNames.UnionWith(visitor.ModuleNames);
+
             return visitor.GetXml();
         }
     }

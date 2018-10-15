@@ -49,5 +49,18 @@ namespace UnitTest.Build.DependencyAnalyzer {
             Assert.IsFalse(projects[2].UseCommonOutputDirectory);
             Assert.IsFalse(projects[3].UseCommonOutputDirectory);
         }
+
+        [TestMethod]
+        public void RemovePropertiesRemovesPropertyTest() {
+            string[] properties = new string[] {
+                "/p:\"ModuleName=Framework\"",
+                "/p:\"T4TransformEnabled=true\""
+            };
+
+            string[] newProperties = PipelineProjectBuilder.RemoveProperties(properties, new [] { "T4TransformEnabled" });
+
+            Assert.AreEqual(1, newProperties.Length);
+            Assert.IsTrue(string.Equals("/p:\"ModuleName=Framework\"", properties[0]));
+        }
     }
 }

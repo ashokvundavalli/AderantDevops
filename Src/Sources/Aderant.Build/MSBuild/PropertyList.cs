@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Aderant.Build.MSBuild {
-    internal class PropertyList : Collection<string> {
-        private static string joinString = "; " + Environment.NewLine;
+    internal class PropertyList : Dictionary<string, string> {
+        private static readonly string joinString = "; " + Environment.NewLine;
+
+        public PropertyList() : base(StringComparer.OrdinalIgnoreCase) {
+        }
 
         public override string ToString() {
-            return Join(Items);
+            return string.Join(joinString, this.Select(x => string.Concat(x.Key, "=", x.Value.Replace(";", "%3B"))));
         }
 
         private static string Join(IList<string> items) {
@@ -17,6 +19,14 @@ namespace Aderant.Build.MSBuild {
 
         public static string CreatePropertyString(params string[] props) {
             return Join(props);
+        }
+
+        public bool TryRemove(string key) {
+            if (this.ContainsKey(key)) {
+                return this.Remove(key);
+            }
+
+            return false;
         }
     }
 }

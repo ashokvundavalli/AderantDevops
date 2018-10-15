@@ -16,5 +16,16 @@ namespace UnitTest.Build {
 
             Assert.IsNotNull(executorResult);
         }
+
+        [TestMethod]
+        public async Task Fail_result_from_script() {
+            var executor = new PowerShellPipelineExecutor();
+
+            await executor.RunScript(new[] { "Write-Error 'Oh no'" }, null);
+
+            var executorResult = executor.ExecutionError;
+
+            Assert.IsTrue(executorResult);
+        }
     }
 }
