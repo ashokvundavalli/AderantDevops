@@ -18,22 +18,26 @@ namespace Aderant.Build.Tasks {
 
         public bool MeasureCommand { get; set; }
 
-        public bool ProvideBuildContext { get; set; }
+        public string OnErrorReason { get; set; }
 
         [Output]
         public string Result { get; set; }
 
         public override bool Execute() {
-           try {
+            try {
                 BuildEngine3.Yield();
 
                 string directoryName = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
 
                 Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
 
-               if (RunScript(this.Log, directoryName)) {
-                   Log.LogError("Execution of script: '{}' failed.", ScriptBlock);
-               }
+                if (RunScript(Log, directoryName)) {
+                    Log.LogError("Execution of script: '{0}' failed.", ScriptBlock);
+
+                    using (var proxy = GetProxy()) {
+                        proxy.SetStatus("Failed", OnErrorReason);
+                    }
+                }
 
                 return !Log.HasLoggedErrors;
             } finally {
@@ -55,30 +59,18 @@ namespace Aderant.Build.Tasks {
             cts = new CancellationTokenSource();
 
             try {
-                BuildOperationContext operationContext = null;
-
                 Dictionary<string, object> variables = new Dictionary<string, object>();
 
-                using (var contract = GetProxy()) {
-                    if (contract != null) {
-                        operationContext = contract.GetContext();
-                        variables["TaskContext"] = operationContext;
-                    }
+                pipelineExecutor.RunScript(
+                    new[] {
+                        $"Import-Module \"{directoryName}\\Build.psm1\"",
+                        ScriptBlock
+                    },
+                    variables,
+                    cts.Token).Wait(cts.Token);
 
-                    pipelineExecutor.RunScript(
-                        new[] {
-                            $"Import-Module \"{directoryName}\\Build.psm1\"",
-                            ScriptBlock
-                        },
-                        variables,
-                        cts.Token).Wait(cts.Token);
+                Result = pipelineExecutor.Result;
 
-                    Result = pipelineExecutor.Result;
-
-                    if (contract != null) {
-                        contract.Publish(operationContext);
-                    }
-                }
             } catch (OperationCanceledException) {
                 // Cancellation was requested
             }
@@ -96,11 +88,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private IBuildPipelineService GetProxy() {
-            if (ProvideBuildContext) {
-                return BuildPipelineServiceClient.Current;
-            }
-
-            return null;
+            return BuildPipelineServiceClient.Current;
         }
     }
 }

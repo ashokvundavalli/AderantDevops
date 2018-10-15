@@ -20,17 +20,34 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
         return
     }
   
+	$build = [System.Reflection.Assembly]::Load("Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+	$buildEngine = [System.Reflection.Assembly]::Load("Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
     $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
     $toolsVersion = "14.0";
     Write-Debug "Loaded MS Build 14.0"   
-
-    $MSBuildLocation = [Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToBuildTools([Microsoft.Build.Utilities.ToolLocationHelper]::CurrentToolsVersion, [Microsoft.Build.Utilities.DotNetFrameworkArchitecture]::Bitness32)
-
-    Write-Debug ("Resolved MS Build {0}" -f $MSBuildLocation)
-
-    $global:MSBuildLocation = [System.IO.Path]::Combine($MSBuildLocation, "MSBuild.exe")
     $projectPath = [System.IO.Path]::Combine($buildScriptDirectory, "Aderant.Build.Common.targets")
-    & $global:MSBuildLocation $projectPath "/p:BuildScriptsDirectory=$buildScriptDirectory" "/nologo" "/m" "/nr:false"
+	
+    $logger = new-Object Microsoft.Build.BuildEngine.ConsoleLogger
+	$logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
+    $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]               
+    $arraylog.Add($logger)
+
+	$globals = New-Object 'System.Collections.Generic.Dictionary[String,String]'
+	$globals.Add("BuildScriptsDirectory", $buildScriptDirectory)
+	$globals.Add("nologo", $null)
+	$globals.Add("nr", "false")
+	$globals.Add("m", $null)
+
+	$params = new-object Microsoft.Build.Execution.BuildParameters
+	$params.Loggers=$arraylog
+	$params.GlobalProperties=$globals
+	
+	$target="PrepareBuildEnvironment"
+	$targets=@($target)	
+	
+	$request = new-object Microsoft.Build.Execution.BuildRequestData($projectPath, $globals, $toolsVersion, $targets, $null)
+	
+	[Microsoft.Build.Execution.BuildManager]::DefaultBuildManager.Build($params, $request)
 }
 
 function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$loadAsModule) {
