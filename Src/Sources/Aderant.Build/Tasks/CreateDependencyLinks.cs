@@ -28,27 +28,14 @@ namespace Aderant.Build.Tasks {
         /// Execute the task
         /// </summary>
         public override bool ExecuteTask() {
-            System.Diagnostics.Debugger.Launch();
+            ErrorUtilities.IsNotNull(SolutionRoot, nameof(SolutionRoot));
 
             if (File.Exists(Path.Combine(SolutionRoot, LinkLockFileName))) {
                 Log.LogMessage("Skipping Symlink creation as {0} is present", LinkLockFileName);
                 return true;
             }
             
-            var rootDirectory = Path.GetFileName(SolutionRoot);
-            List<ProjectOutputSnapshot> projectOutputSnapshots = PipelineService
-                .GetAllProjectOutputs()
-                .Where(s => !string.Equals(s.Directory, rootDirectory, StringComparison.OrdinalIgnoreCase) && !s.IsTestProject)
-                .ToList();
-
-            // TODO: Need to read dependency manifest here to get the list of artifacts, then rebuild that
-            
-            // Get all projects analyzed by the build, this gives us all seen projects regardless of their state
-            var trackedProjects = PipelineService
-                .GetTrackedProjects()
-                .ToDictionary(d => d.ProjectGuid, project => project);
-
-            RebuildProjectFullPath(projectOutputSnapshots, trackedProjects);
+            var projectOutputSnapshots = AssignProjectOutputSnapshotsFullPath().ToList();
 
             List<DependantFile> dependentFiles = new List<DependantFile>();
 
@@ -68,9 +55,10 @@ namespace Aderant.Build.Tasks {
             }
 
             foreach (DependantFile df in dependentFiles) {
-                var snapShotForDependentFile = projectOutputSnapshots.FirstOrDefault(pos => !pos.IsTestProject && !string.IsNullOrEmpty(pos.AbsoluteProjectFile) && pos.FilesWritten.Any(fw => df.FileName == Path.GetFileName(fw)));
+                var snapShotForDependentFile = projectOutputSnapshots.FirstOrDefault(pos => pos.FileNamesWritten.Any(fw => string.Equals(df.FileName, fw, StringComparison.OrdinalIgnoreCase)));
+
                 if (snapShotForDependentFile != null) {
-                    string moduleDirectory = Path.GetDirectoryName(snapShotForDependentFile.AbsoluteProjectFile);
+                    string moduleDirectory = Path.GetDirectoryName(snapShotForDependentFile.ProjectFileAbsolutePath);
 
                     if (string.IsNullOrEmpty(moduleDirectory)) {
                         continue;
@@ -95,12 +83,31 @@ namespace Aderant.Build.Tasks {
             return true;
         }
 
-        private static void RebuildProjectFullPath(List<ProjectOutputSnapshot> projectOutputSnapshots, Dictionary<Guid, TrackedProject> trackedProjects) {
-            foreach (var snapshot in projectOutputSnapshots) {
-                if (snapshot.AbsoluteProjectFile == null) {
-                    TrackedProject trackedProject;
-                    if (trackedProjects.TryGetValue(snapshot.ProjectGuid, out trackedProject)) {
-                        snapshot.AbsoluteProjectFile = trackedProject.FullPath;
+        private IEnumerable<ProjectOutputSnapshotWithFullPath> AssignProjectOutputSnapshotsFullPath() {
+            // TODO: Need to read dependency manifest here to get the list of artifacts, then rebuild that
+            // Get all projects analyzed by the build, this gives us all seen projects regardless of their state
+            var trackedProjects = PipelineService
+                .GetTrackedProjects()
+                .ToDictionary(d => d.ProjectGuid, project => project);
+
+            var rootDirectory = Path.GetFileName(SolutionRoot);
+            List<ProjectOutputSnapshot> projectOutputSnapshots = PipelineService
+                .GetAllProjectOutputs()
+                .Where(s => !string.Equals(s.Directory, rootDirectory, StringComparison.OrdinalIgnoreCase) && !s.IsTestProject)
+                .ToList();
+
+            foreach (var item in projectOutputSnapshots) {
+                TrackedProject trackedProject;
+                if (trackedProjects.TryGetValue(item.ProjectGuid, out trackedProject)) {
+
+                    if (trackedProject != null) {
+                        var snapshot = new ProjectOutputSnapshotWithFullPath(item) {
+                            ProjectFileAbsolutePath = trackedProject.FullPath
+                        };
+
+                        snapshot.BuildFileNamesWritten();
+
+                        yield return snapshot;
                     }
                 }
             }
@@ -116,5 +123,10 @@ namespace Aderant.Build.Tasks {
 
             return true;
         }
+    }
+
+    internal class SnapshotPair {
+        public TrackedProject TrackedProject { get; set; }
+        public ProjectOutputSnapshot Snapshot { get; set; }
     }
 }

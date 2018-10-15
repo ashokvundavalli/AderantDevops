@@ -107,16 +107,12 @@ try {
 
     $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
 } finally {
-   
-
     [System.IO.File]::Delete($runSettingsFile)
 
     if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
             GenerateHtmlReport
-        }
-
-        Set-BuildStatus -Status "Failed" -Reason "Test failure"
+        }        
 
         Write-Error "Test execution exit code: $($global:LASTEXITCODE)"
     }

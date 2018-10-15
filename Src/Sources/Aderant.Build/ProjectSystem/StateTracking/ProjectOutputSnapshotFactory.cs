@@ -41,7 +41,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             bool isTestProject = IsTestProject();
 
             var snapshot = new ProjectOutputSnapshot {
-                AbsoluteProjectFile = ProjectFile,
                 ProjectFile = projectFile,
                 ProjectGuid = projectGuid,
                 FilesWritten = RemoveIntermediateObjects(ProjectOutputs, new[] { IntermediateDirectory, ArtifactStagingDirectory }),

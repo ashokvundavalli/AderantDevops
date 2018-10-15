@@ -80,11 +80,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         internal string Location { get; set; }
 
         internal void PrepareForSerialization() {
-            // Dont serialize for the build cache with specific machine path info
-            foreach (var projectOutputSnapshot in Outputs) {
-                projectOutputSnapshot.Value.AbsoluteProjectFile = null;
-            }
-
             Location = null;
         }
 

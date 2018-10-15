@@ -27,20 +27,6 @@
     <TSLintCli>$(PackagesDirectory)\Aderant.Build.Analyzer\tslint\node_modules\tslint\bin\tslint</TSLintCli>
     <TSLintBreakBuildOnError>true</TSLintBreakBuildOnError>
   </PropertyGroup>
-  
-  <PropertyGroup>
-    <ResolveReferencesDependsOn>MyFancyTarget;$(ResolveReferencesDependsOn)</ResolveReferencesDependsOn>
-  </PropertyGroup>
-  
-  <Target Name="MyFancyTarget">
-     <ItemGroup>
-      <TheReferences Include="@(Reference)" Condition="%(TheReferences.HintPath) != ''" />
-     </ItemGroup>
-     
-     
-     <MyInlineCsharpTask Files="@(TheReferences)" />
-  
-  </Target>
 
   <PropertyGroup>
     <ResolveReferencesDependsOn>SymlinkDateUpdateTarget;$(ResolveReferencesDependsOn)</ResolveReferencesDependsOn>
@@ -51,7 +37,7 @@
     TaskFactory="CodeTaskFactory"
     AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
     <ParameterGroup>
-      <Files ParameterType="System.String[]" Required="true" />
+      <References ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <Result ParameterType="System.Boolean" Output="true" />
     </ParameterGroup>
     <Task>
@@ -87,12 +73,10 @@ public class SymlinkDateUpdateTask : Task, ITask {
     private const uint PATH_NOT_REPARSE_POINT_ERROR = 0x80071126;
 
     [Required]
-    public string[] Files { get; set; }
+    public ITaskItem[] References { get; set; }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct SymbolicLinkReparseData {
-        private const int maxUnicodePathLength = 32767 * 2;
-
         public uint ReparseTag;
         public ushort ReparseDataLength;
         public ushort Reserved;
@@ -101,7 +85,7 @@ public class SymlinkDateUpdateTask : Task, ITask {
         public ushort PrintNameOffset;
         public ushort PrintNameLength;
         public uint Flags;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = maxUnicodePathLength * 2)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16368)]
         public byte[] PathBuffer;
     }
 
@@ -119,15 +103,13 @@ public class SymlinkDateUpdateTask : Task, ITask {
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool DeviceIoControl(IntPtr hDevice, uint dwIoControlCode, IntPtr lpInBuffer, int nInBufferSize, IntPtr lpOutBuffer, int nOutBufferSize, out int lpBytesReturned, IntPtr lpOverlapped);
 
-
-    public static void setSymlinkFileTime(string symlinkPath, DateTime time) {
+    public static void SetSymlinkFileTime(string symlinkPath, DateTime time) {
         IntPtr h = CreateFile(symlinkPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, 0);
         var createationTime = time.ToFileTime();
         long accesTime = createationTime;
         long lastWrite = createationTime;
 
         try {
-
             if (!SetFileTime(h, ref createationTime, ref accesTime, ref lastWrite)) {
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
             }
@@ -137,13 +119,12 @@ public class SymlinkDateUpdateTask : Task, ITask {
         }
     }
 
-    public static DateTime getFileTime(string filename) {
+    public static DateTime GetFileTime(string filename) {
         return File.GetLastWriteTime(filename);
     }
 
-    private static SafeFileHandle getFileHandle(string path) {
-        var result = CreateFile(path, GENERIC_READ, FILE_SHARE_ALL, (uint)IntPtr.Zero, OPEN_EXISTING,
-            FILE_FLAG_OPEN_REPARSE_POINT, (uint)IntPtr.Zero);
+    private static SafeFileHandle GetFileHandle(string path) {
+        var result = CreateFile(path, GENERIC_READ, FILE_SHARE_ALL, (uint)IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, (uint)IntPtr.Zero);
 
         return new SafeFileHandle(result, true);
     }
@@ -151,19 +132,21 @@ public class SymlinkDateUpdateTask : Task, ITask {
     public static string GetTarget(string path) {
         SymbolicLinkReparseData reparseDataBuffer;
 
-        using (SafeFileHandle fileHandle = getFileHandle(path)) {
+        bool releaseDangerousHandle = false;
+
+        using (SafeFileHandle fileHandle = GetFileHandle(path)) {
             if (fileHandle.IsInvalid) {
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            }
+            }            
 
             int outBufferSize = Marshal.SizeOf(typeof(SymbolicLinkReparseData));
             IntPtr outBuffer = IntPtr.Zero;
             try {
+                fileHandle.DangerousAddRef(ref releaseDangerousHandle);
+            
                 outBuffer = Marshal.AllocHGlobal(outBufferSize);
                 int bytesReturned;
-                bool success = DeviceIoControl(
-                    fileHandle.DangerousGetHandle(), IOCTL_COMMAND_GET_REPARSE_POINT, IntPtr.Zero, 0,
-                    outBuffer, outBufferSize, out bytesReturned, IntPtr.Zero);
+                bool success = DeviceIoControl(fileHandle.DangerousGetHandle(), IOCTL_COMMAND_GET_REPARSE_POINT, IntPtr.Zero, 0, outBuffer, outBufferSize, out bytesReturned, IntPtr.Zero);
 
                 fileHandle.Close();
 
@@ -174,37 +157,54 @@ public class SymlinkDateUpdateTask : Task, ITask {
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
                 }
 
-                reparseDataBuffer = (SymbolicLinkReparseData)Marshal.PtrToStructure(
-                    outBuffer, typeof(SymbolicLinkReparseData));
+                reparseDataBuffer = (SymbolicLinkReparseData)Marshal.PtrToStructure(outBuffer, typeof(SymbolicLinkReparseData));
             } finally {
+                if (releaseDangerousHandle) {
+                    fileHandle.DangerousRelease();
+		            }
                 Marshal.FreeHGlobal(outBuffer);
             }
         }
+        
         if (reparseDataBuffer.ReparseTag != SYMLINK_TAG) {
             return null;
         }
 
-        string target = Encoding.Unicode.GetString(reparseDataBuffer.PathBuffer,
-            reparseDataBuffer.PrintNameOffset, reparseDataBuffer.PrintNameLength);
+        string target = Encoding.Unicode.GetString(reparseDataBuffer.PathBuffer, reparseDataBuffer.PrintNameOffset, reparseDataBuffer.PrintNameLength);
 
         return target;
     }
 
     public override bool Execute() {
-        foreach (string file in Files) {
-            string target = GetTarget(file);
+        foreach (var reference in References) {
+            var file = reference.GetMetadata("HintPath");
+            if (string.IsNullOrEmpty(file)) {
+                continue;
+            }
 
-            if (!string.IsNullOrEmpty(target)) {
-                DateTime targetTime = getFileTime(target);
-                DateTime linkTime = getFileTime(file);
+            if (!File.Exists(file)) {
+                Log.LogMessage(MessageImportance.Low, "HintPath: {0} does not exist", file);
+                continue;
+            }
+            
+            try {
+                string target = GetTarget(file);
 
-                if (linkTime != targetTime) {
-                    setSymlinkFileTime(file, targetTime);
+                if (!string.IsNullOrEmpty(target)) {
+                    DateTime targetTime = GetFileTime(target);
+                    DateTime linkTime = GetFileTime(file);
+
+                    if (linkTime != targetTime) {
+                        SetSymlinkFileTime(file, targetTime);
+                    }
                 }
+            } catch (Exception ex) {
+                Log.LogError("Failed to query path: {0}. Error: {1}", file, ex.Message);
+                return false;
             }
         }
 
-        return true;
+        return !Log.HasLoggedErrors;
     }
 }
 ]]>
@@ -214,11 +214,10 @@ public class SymlinkDateUpdateTask : Task, ITask {
 
   <Target Name="SymlinkDateUpdateTarget">
     <ItemGroup>
-      <References Include="@(Reference)" Condition="%(Reference.HintPath) != ''" />
-      <ReferenceHintPaths Include="%(References.HintPath)" />
+      <ReferenceHintPaths Include="@(Reference)" />
     </ItemGroup>
 
-    <SymlinkDateUpdateTask Files="@(ReferenceHintPaths)" />
+    <SymlinkDateUpdateTask References="@(Reference)" />
   </Target>
 
 

@@ -94,7 +94,6 @@
     </PropertyGroup>
 
     <PowerShellScript
-      ProvideBuildContext="true"
       ScriptBlock='
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
@@ -103,8 +102,8 @@ $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = @(_AssemblyResolutionPaths)
 $testFiles = $(UnitTestAssemblies)
 
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles' />
-
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles'
+    OnErrorReason="Test failure" />
   </Target>
 
 

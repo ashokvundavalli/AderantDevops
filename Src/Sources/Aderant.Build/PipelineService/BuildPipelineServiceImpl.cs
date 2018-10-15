@@ -81,10 +81,10 @@ namespace Aderant.Build.PipelineService {
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {
             if (artifacts != null) {
-                    var artifactsForTag = artifacts.GetArtifactsForTag(container);
+                var artifactsForTag = artifacts.GetArtifactsForTag(container);
 
-                    if (artifactsForTag != null) {
-                        return artifactsForTag.SelectMany(s => s.Value);
+                if (artifactsForTag != null) {
+                    return artifactsForTag.SelectMany(s => s.Value);
                 }
             }
 
@@ -93,6 +93,16 @@ namespace Aderant.Build.PipelineService {
 
         public object[] Ping() {
             return new object[] { (byte)1 };
+        }
+
+        public void SetStatus(string status, string reason) {
+            if (status != null) {
+                ctx.BuildStatus = status;
+            }
+
+            if (reason != null) {
+                ctx.BuildStatusReason = reason;
+            }
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
