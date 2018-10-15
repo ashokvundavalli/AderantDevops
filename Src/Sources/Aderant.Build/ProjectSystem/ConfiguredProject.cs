@@ -75,7 +75,12 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         internal IReadOnlyList<Guid> ProjectTypeGuids {
-            get { return extractTypeGuids.Evaluate(this); }
+            get {
+                if (extractTypeGuids != null) {
+                    return extractTypeGuids.Evaluate(this);
+                }
+                return new Guid[0];
+            }
         }
 
         public bool IsWebProject {
