@@ -371,6 +371,9 @@ namespace Aderant.Build {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class ProjectOutputSnapshot {
 
+        public ProjectOutputSnapshot() {
+        }
+
         [DataMember]
         public string ProjectFile { get; set; }
 
@@ -391,6 +394,38 @@ namespace Aderant.Build {
 
         [DataMember]
         public Guid ProjectGuid { get; set; }
+    }
+
+    internal class ProjectOutputSnapshotWithFullPath : ProjectOutputSnapshot {
+        public ProjectOutputSnapshotWithFullPath(ProjectOutputSnapshot snapshot) {
+            ProjectFile = snapshot.ProjectFile;
+            FilesWritten = snapshot.FilesWritten;
+            OutputPath = snapshot.OutputPath;
+            Origin = snapshot.Origin;
+            Directory = snapshot.Directory;
+            IsTestProject = snapshot.IsTestProject;
+            ProjectGuid = snapshot.ProjectGuid;
+        }
+
+        /// <summary>
+        /// Gets or sets the project file absolute path.
+        /// </summary>
+        /// <value>The project file absolute path.</value>
+        [DataMember]
+        public string ProjectFileAbsolutePath { get; set; }
+
+        /// <summary>
+        /// Populates the see <see cref="FileNamesWritten"/> property.
+        /// </summary>
+
+        public void BuildFileNamesWritten() {
+            this.FileNamesWritten = FilesWritten.Select(s => Path.GetFileName(s)).ToArray();
+        }
+
+        /// <summary>
+        /// Gets the just the file names of the output items.
+        /// </summary>
+        public string[] FileNamesWritten { get; private set; }
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

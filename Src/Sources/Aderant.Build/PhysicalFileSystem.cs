@@ -16,7 +16,10 @@ namespace Aderant.Build {
     [Export(typeof(IFileSystem))]
     [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
+        delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
+
         private ILogger logger;
+        private static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
 
         [ImportingConstructor]
         public PhysicalFileSystem() {
@@ -425,7 +428,7 @@ namespace Aderant.Build {
             }
         }
 
-        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite) {
+        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false) {
             ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
                 MaxDegreeOfParallelism = Environment.ProcessorCount,
             };
@@ -446,7 +449,11 @@ namespace Aderant.Build {
                         }
                     }
 
-                    CopyFileInternal(file.Location, file.Destination, overwrite);
+                    if (useSymlinks) {
+                        TryCopyViaLink(file.Location, file.Destination, createSymlinkLink);
+                    } else {
+                        CopyFileInternal(file.Location, file.Destination, overwrite);
+                    }
                 },
                 actionBlockOptions);
 
@@ -457,6 +464,14 @@ namespace Aderant.Build {
             bulkCopy.Complete();
 
             return bulkCopy;
+        }
+
+        private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+            // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
+            // so we need to delete the existing entry before we create the hard or symbolic link.
+            DeleteFile(fileDestination);
+
+            createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
         }
     }
 

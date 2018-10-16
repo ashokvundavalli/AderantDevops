@@ -103,7 +103,7 @@
   </Target>
 
 
-  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false'">
+  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
     <Message Text="$(ModuleName): Restoring prebuilts" />
 
     <PropertyGroup>

@@ -97,6 +97,10 @@ namespace Aderant.Build.PipelineService {
         public object[] Ping() {
             return DoOperationWithFaultHandling(() => Channel.Ping());
         }
+
+        public void SetStatus(string status, string reason) {
+            DoOperationWithFaultHandling(() => Channel.SetStatus(status, reason));
+        }
     }
 
     internal static class ExceptionConverter {

@@ -33,8 +33,6 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void RecordProjectOutputs(ProjectOutputSnapshot snapshot) {
-            //snapshot.FilesWritten
-
             Outputs[snapshot.ProjectFile] = snapshot;
         }
 
@@ -95,6 +93,16 @@ namespace Aderant.Build.PipelineService {
 
         public object[] Ping() {
             return new object[] { (byte)1 };
+        }
+
+        public void SetStatus(string status, string reason) {
+            if (status != null) {
+                ctx.BuildStatus = status;
+            }
+
+            if (reason != null) {
+                ctx.BuildStatusReason = reason;
+            }
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {
