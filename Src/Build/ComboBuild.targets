@@ -233,7 +233,7 @@
     <Exec Condition="'$(GetProduct)' != 'false'"
       ContinueOnError="false"
       IgnoreExitCode="false"
-      Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1"
+      Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck"
       WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->

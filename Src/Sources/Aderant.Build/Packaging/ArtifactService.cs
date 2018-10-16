@@ -145,7 +145,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private List<ProjectOutputSnapshot> Merge(BuildOperationContext context, string container) {
-            var snapshots = pipelineService.GetProjectOutputs(container);
+            IEnumerable<ProjectOutputSnapshot> snapshots = pipelineService.GetProjectOutputs(container);
 
             List<ProjectOutputSnapshot> snapshotList;
             if (snapshots == null) {
@@ -273,6 +273,10 @@ namespace Aderant.Build.Packaging {
         /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
         /// </summary>
         internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
+            if (filesToRestore == null || filesToRestore.Count == 0) {
+                return null;
+            }
+
             ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, false, true);
 
             foreach (PathSpec file in filesToRestore) {
@@ -355,7 +359,11 @@ namespace Aderant.Build.Packaging {
 
             HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+            LocalArtifactFileComparer localArtifactComparer = new LocalArtifactFileComparer();
+
             foreach (var project in projectOutputs) {
+                ErrorUtilities.IsNotNull(project.Value.OutputPath, nameof(project.Value.OutputPath));
+
                 string projectFile = project.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
                 int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
@@ -384,14 +392,14 @@ namespace Aderant.Build.Packaging {
                                 continue;
                             }
 
-                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(new LocalArtifactFileComparer()).ToList();
+                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(localArtifactComparer).ToList();
 
                             // There can be only one.
                             LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
 
                             if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
                                 // Log duplicates.
-                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, new LocalArtifactFileComparer()).Where(group => group.Count() > 1).Select(group => group.Key);
+                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => group.Count() > 1).Select(group => group.Key);
 
                                 string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
                                 logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
