@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -36,7 +36,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Branch { get; }
 
         public IEnumerable<ExpertModule> GetAll() {
-            var directories = fileSystem.GetDirectories(null, false);
+
+            var directories = fileSystem.GetDirectories(@"c:\git\", false);
 
             foreach (var dir in directories) {
                 string name = Path.GetFileName(dir);
