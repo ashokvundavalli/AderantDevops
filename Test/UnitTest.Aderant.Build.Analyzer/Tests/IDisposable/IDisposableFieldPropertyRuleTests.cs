@@ -1612,6 +1612,52 @@ namespace Test {
                 GetDiagnostic(6, 29, "Item"));
         }
 
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_AssignedFromConstructorParam() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable Item { get; }
+
+        public TestClass(IDisposable parm) {
+            (Item) = (parm);
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
+        [TestMethod]
+        public void IDisposableFieldPropertyRule_Property_AssignedFromConstructorParam_ThisPrefix() {
+            const string code = @"
+using System;
+
+namespace Test {
+    public class TestClass : IDisposable {
+        private IDisposable Item { get; }
+
+        public TestClass(IDisposable parm) {
+            this.(Item) = (parm);
+        }
+
+        public void Dispose() {
+            // Empty.
+        }
+    }
+}
+";
+
+            VerifyCSharpDiagnostic(code);
+        }
+
         #endregion Tests: Property
     }
 }

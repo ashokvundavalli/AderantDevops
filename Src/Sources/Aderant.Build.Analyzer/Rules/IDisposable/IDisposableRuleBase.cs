@@ -782,12 +782,10 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
             GetExpressionsFromChildNodes(ref assignmentExpressionSyntaxes, classNode);
 
-            var assignmentList = assignmentExpressionSyntaxes.ToList();
-
-            var assignmentData = new List<AssignmentData>(assignmentList.Count);
+            var assignmentData = new List<AssignmentData>(assignmentExpressionSyntaxes.Count);
 
             // Iterate through each expression.
-            foreach (var assignment in assignmentList) {
+            foreach (var assignment in assignmentExpressionSyntaxes) {
                 List<SyntaxNode> childNodes = assignment
                     .ChildNodes()
                     .ToList();
@@ -807,13 +805,26 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
                 GetExpressionsFromChildNodes(ref identifiers, target);
 
-                // Ignore any assignments that somehow have an unnamed target.
-                if (identifiers.Count != 1) {
-                    continue;
-                }
-
                 // Get the target's name.
-                IdentifierNameSyntax targetName = identifiers[0];
+                IdentifierNameSyntax targetName;
+
+                switch (identifiers.Count) {
+                    case 1: {
+                        // Simple assignment.
+                        targetName = identifiers[0];
+                        break;
+                    }
+                    case 2: {
+                        // Assignment that utilises the 'this.' expression,
+                        // which results in an additional identifier being present within the expression.
+                        targetName = identifiers[1];
+                        break;
+                    }
+                    default: {
+                        // Ignore unhandled assignments.
+                        continue;
+                    }
+                }
 
                 // Examine the 'right' side of the expression as the values.
                 SyntaxNode value = childNodes[1];
@@ -831,7 +842,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 var constructor = assignment.GetAncestorOfType<ConstructorDeclarationSyntax>();
 
                 // Get the parameters provided to that constructor, if the constructor exists and it has parameters.
-                var parameters = constructor?.ParameterList?.Parameters.ToArray() ?? new ParameterSyntax[0];
+                var parameters = constructor?.ParameterList?.Parameters.ToArray() ?? Array.Empty<ParameterSyntax>();
 
                 // Create a new data container with the acquired objects.
                 assignmentData.Add(
