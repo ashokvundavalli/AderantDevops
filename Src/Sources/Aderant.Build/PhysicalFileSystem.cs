@@ -294,8 +294,10 @@ namespace Aderant.Build {
             } else {
                 IEnumerable<string> files = GetFiles(source, true);
 
+                source = PathUtility.EnsureTrailingSlash(source);
+
                 foreach (string file in files) {
-                    MoveFile(file, Path.Combine(destination, file));
+                    MoveFile(file, Path.Combine(destination, file.Replace(source, "", StringComparison.OrdinalIgnoreCase)));
                 }
             }
         }

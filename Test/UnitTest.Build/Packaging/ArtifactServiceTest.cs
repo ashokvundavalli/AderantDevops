@@ -20,10 +20,10 @@ namespace UnitTest.Build.Packaging {
             var bucketMock = new Mock<IBucketPathBuilder>();
             bucketMock.Setup(s => s.GetBucketId(It.IsAny<string>())).Returns("");
 
-            var artifactService = new ArtifactService(null, new Mock<IFileSystem>().Object, NullLogger.Default);
+            var artifactService = new ArtifactService(new BuildPipelineServiceImpl(), new Mock<IFileSystem>().Object, NullLogger.Default);
             artifactService.RegisterHandler(new XamlDropHandler("1.0.0.0", "9.9.9.9"));
 
-            IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", null) };
+            IEnumerable<PathSpec> specs = new List<PathSpec> { new PathSpec("Baz", "") };
 
             IReadOnlyCollection<BuildArtifact> results = artifactService.CreateArtifacts(
                 new BuildOperationContext {
@@ -56,14 +56,15 @@ namespace UnitTest.Build.Packaging {
             state.Outputs["Foo\\Bar.cspoj"] = new ProjectOutputSnapshot {
                 FilesWritten = new string[] {
                     @"..\..\bin\foo.dll"
-                }
+                },
+                OutputPath = @"..\..\bin\"
             };
 
             var fsMock = new Mock<IFileSystem>();
             fsMock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
 
             var artifactService = new ArtifactService(null, fsMock.Object, NullLogger.Default);
-            var result = artifactService.CalculateFilesToRestore(state, "Foo", "Foo", new[] { "Foo.dll", "Foo.pdb" });
+            var result = artifactService.CalculateFilesToRestore(state, "Foo", "Foo", new[] { @"\Foo.dll", @"\Foo.pdb" });
 
             Assert.AreEqual(1, result.Count);
             Assert.IsTrue(result[0].Destination.EndsWith(@"bin\foo.dll"));
