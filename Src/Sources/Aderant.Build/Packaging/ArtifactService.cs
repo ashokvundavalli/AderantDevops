@@ -273,7 +273,7 @@ namespace Aderant.Build.Packaging {
         /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
         /// </summary>
         internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, true);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, false, true);
 
             foreach (PathSpec file in filesToRestore) {
                 logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);
@@ -328,11 +328,13 @@ namespace Aderant.Build.Packaging {
                 pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
 
             logger.Info("Performing copy for FetchArtifacts");
             foreach (PathSpec pathSpec in pathSpecs) {
                 logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
+
+                fileSystem.WriteAllText(Path.Combine(pathSpec.Destination + ".origin.txt"), pathSpec.Location);
             }
 
             bulkCopy.Completion.GetAwaiter().GetResult();

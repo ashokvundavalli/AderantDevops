@@ -55,7 +55,11 @@ function FindGitDir($context, $stringSearchDirectory) {
     [void]$set.Add("/p:VisualStudioVersion=14.0")
 
     if ($context.Switches.SkipCompile) {
-        [void]$set.Add("/p:Switches_SkipCompile=true")
+        [void]$set.Add("/p:switch-skip-compile=true")
+    }
+
+    if ($context.Switches.Clean) {
+        [void]$set.Add("/p:switch-clean=true")
     }
 
     if ($remainingArgs) {
@@ -314,7 +318,7 @@ Should not be used as it prevents incremental builds which increases build times
 
         # When WhatIf specified just determine what would be built
         if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
-            $Target = "CreatePipeline"
+            $Target = "CreatePlan"
         }        
 
         Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"

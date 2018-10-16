@@ -4,15 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using System.Xml.Linq;
 using Aderant.Build.Logging;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
-    public sealed class ParallelBuildProjectFactory : BuildOperationContextTask {
+    public sealed class GenerateBuildPlan : BuildOperationContextTask {
         public ITaskItem[] ModulesInBuild { get; set; }
 
         public string TfvcChangeset { get; set; }
@@ -27,11 +25,11 @@ namespace Aderant.Build.Tasks {
         public string ProductManifest { get; set; }
 
         /// <summary>
-        /// Gets or sets the instance project file.
+        /// Gets or sets the build plan project file.
         /// That is the file that represents the tasks to perform in this build.
         /// </summary>
         [Required]
-        public string InstanceFile { get; set; }
+        public string BuildPlan { get; set; }
 
         /// <summary>
         /// Gets or sets the targets file which performs the build orchestration
@@ -76,7 +74,7 @@ namespace Aderant.Build.Tasks {
             context.BuildRoot = ModulesDirectory;
 
             if (context.Switches.Resume) {
-                if (File.Exists(InstanceFile)) {
+                if (File.Exists(BuildPlan)) {
                     return;
                 }
             }
@@ -88,7 +86,7 @@ namespace Aderant.Build.Tasks {
                 AfterProjectFile = AfterProjectFile,
                 GroupExecutionFile = GroupExecutionFile,
                 CommonProjectFile = CommonProjectFile,
-                InstanceFile = InstanceFile,
+                BuildPlan = BuildPlan,
             };
 
             var analysisContext = CreateAnalysisContext();
@@ -108,7 +106,7 @@ namespace Aderant.Build.Tasks {
                 Indent = true
             };
 
-            using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, InstanceFile), settings)) {
+            using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, BuildPlan), settings)) {
                 element.WriteTo(writer);
             }
 

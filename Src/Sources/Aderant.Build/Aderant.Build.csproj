@@ -235,7 +235,7 @@
     <Compile Include="ProjectSystem\OrchestrationFiles.cs" />
     <Compile Include="ProjectSystem\ChangesToConsider.cs" />
     <Compile Include="Tasks\BuildOperationContextTask.cs" />
-    <Compile Include="Tasks\ParallelBuildProject.cs" />
+    <Compile Include="Tasks\GenerateBuildPlan.cs" />
     <Compile Include="Commands\BuildCmdlet.cs" />
     <Compile Include="Commands\GetExpertDependenciesForModule.cs" />
     <Compile Include="Commands\PushPaketTemplates.cs" />
@@ -274,7 +274,7 @@
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="ProjectSystem\WellKnownProjectTypeGuids.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
-    <Compile Include="DependencyAnalyzer\PipelineProjectBuilder.cs" />
+    <Compile Include="DependencyAnalyzer\BuildPlanGenerator.cs" />
     <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\TextTemplateAnalyzer.cs" />
     <Compile Include="Tasks\CheckFreeSpace.cs" />
