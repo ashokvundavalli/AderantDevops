@@ -36,31 +36,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Branch { get; }
 
         public IEnumerable<ExpertModule> GetAll() {
+            // Ignore as we don't know the root location here.
+            yield break;
 
-            var directories = fileSystem.GetDirectories(@"c:\git\", false);
-
-            foreach (var dir in directories) {
-                string name = Path.GetFileName(dir);
-
-                if (name.StartsWith("_")) {
-                    continue;
-                }
-
-                RepositoryType type = RepositoryType.Tfvc;
-                if (fileSystem.DirectoryExists(Path.Combine(dir, ".git"))) {
-                    type = RepositoryType.Git;
-                }
-
-                string tfvcBranch = null;
-                if (type == RepositoryType.Tfvc && context != null) {
-                    tfvcBranch = context.TfvcBranch;
-                }
-
-                yield return new ExpertModule(name) {
-                    RepositoryType = type,
-                    Branch = tfvcBranch
-                };
-            }
         }
 
         public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {

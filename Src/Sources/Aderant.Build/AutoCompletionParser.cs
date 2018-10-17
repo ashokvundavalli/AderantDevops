@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Language;
 using System.Text;
 using System.Text.RegularExpressions;
 using Aderant.Build.DependencyAnalyzer;
+using Microsoft.Win32;
 using Debugger = System.Diagnostics.Debugger;
 
 namespace Aderant.Build {
@@ -94,8 +96,6 @@ namespace Aderant.Build {
             List<string> matches = new List<string>();
             Debug.WriteLine(string.Format("Module name split by case = {0}", searchStringSplitByCase.StringConcat(" ")));
 
-            var mmm = analyzer.GetAllModules().ToList();
-
             //if the search string is split into more than one "word" then we want to also split the module names
             //otherwise we match the string to the whole word.
             if (searchStringSplitByCase.Count > 1) {
@@ -105,14 +105,19 @@ namespace Aderant.Build {
                     }
                 }
             } else {
-                matches = analyzer
-                .GetAllModules()
-                .Where(m => string.IsNullOrEmpty(lastWord) || m.Name.StartsWith(lastWord, StringComparison.OrdinalIgnoreCase)
-                            ||
-                            new string(m.Name.Split('.').Select(s => s.First()).ToArray()).StartsWith(lastWord,
-                                                                                                      StringComparison.
-                                                                                                          OrdinalIgnoreCase))
-                .Select(m => m.Name).ToList();
+                // Check local git repositories.
+                matches = CheckGitRepos(lastWord);
+                // If not found, try Expert modules.
+                if (!matches.Any()) {
+                    var allModules = analyzer.GetAllModules().ToList();
+                    matches = allModules.Where(
+                            m => string.IsNullOrEmpty(lastWord) || m.Name.StartsWith(lastWord, StringComparison.OrdinalIgnoreCase)
+                                                                ||
+                                                                new string(m.Name.Split('.').Select(s => s.First()).ToArray()).StartsWith(
+                                                                    lastWord,
+                                                                    StringComparison.OrdinalIgnoreCase))
+                        .Select(m => m.Name).ToList();
+                }
             }
             //if we still have no matches we match again, but assume that the input consists of only the first letters of a series of words
             if (!matches.Any()) {
@@ -151,12 +156,47 @@ namespace Aderant.Build {
         /// <remarks>Called from the PowerShell host.</remarks>
         public string[] GetModuleMatches(string wordToComplete, string modulePath, string productManifestPath = null) {
             lastWord = wordToComplete;
-            Debugger.Launch();
 
             ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
 
-            return GetModuleMatches(new DependencyBuilder(manifest));
+            var autoCompletes = GetModuleMatches(new DependencyBuilder(manifest));
+            return autoCompletes;
+        }
+
+        /// <summary>
+        /// Check locally registered git repositories. If found, provide them to the console for selection.
+        /// </summary>
+        /// <param name="expectedWord">The searching word.</param>
+        /// <returns>A list of all matched path.</returns>
+        private List<string> CheckGitRepos(string expectedWord) {
+            var result = new List<string>();
+
+            try {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories")) {
+                    if (key != null) {
+                        var gitReposKeys = key.GetSubKeyNames();
+                        foreach (var gitRepoKey in gitReposKeys) {
+                            var gitRepo = key.OpenSubKey(gitRepoKey);
+                            if (gitRepo != null) {
+                                var gitRepoName = gitRepo.GetValue("Name") as string;
+                                var gitRepoPath = gitRepo.GetValue("Path") as string;
+                                if (gitRepoName != null && gitRepoPath != null && gitRepoName.StartsWith(expectedWord,StringComparison.InvariantCultureIgnoreCase)) {
+                                    // Check to make sure it is an Expert repo.
+                                    if (File.Exists(Path.Combine(gitRepoPath, @"Build\TFSBuild.rsp"))) {
+                                        result.Add(gitRepoPath);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) 
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            return result;
         }
 
         private static bool CompareModuleNameToSearchString(string moduleName, List<string> searchStringSplitByCase) {
