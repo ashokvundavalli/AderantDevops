@@ -41,7 +41,7 @@ namespace Aderant.Build.Utilities {
 
         public bool RecordConsoleOutput { get; set; }
 
-        public bool HasExited => process.HasExited;
+        public bool HasExited => process == null || process.HasExited;
 
         public int ProcessId => process.Id;
 
