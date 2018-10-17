@@ -946,19 +946,12 @@ function Add-ModuleExpansionParameter {
         $parser = [Aderant.Build.AutoCompletionParser]::new($commandName, $parameterName, $commandAst)
                 
         # Evaluate Modules
-        try {   
+        try {
+
             $parser.GetModuleMatches($wordToComplete, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
-                $ModuleToBeImported = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $_
-                if (Test-Path (Join-Path -Path $ModuleToBeImported -ChildPath \Build\TFSBuild.rsp)) {
-                    [System.Management.Automation.CompletionResult]::new($ModuleToBeImported)
-                }
+                    [System.Management.Automation.CompletionResult]::new($_)
             }
             
-            # Probe for known Git repositories
-            Get-ChildItem -Path "HKCU:\SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories" | ForEach-Object { Get-ItemProperty $_.pspath } |           
-                Where-Object { $_.Name -like "$wordToComplete*" -and (Test-Path $_.Path) } | ForEach-Object { 
-                [System.Management.Automation.CompletionResult]::new($_.Path) 
-            }        
         } catch {
             [System.Exception]
             Write-Host $_.Exception.ToString()
