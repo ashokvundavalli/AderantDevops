@@ -14,6 +14,10 @@ param(
   [bool]$IsDesktopBuild,
 
   [Parameter(Mandatory=$false)]
+  [string]
+  $SolutionRoot,
+
+  [Parameter(Mandatory=$false)]
   [string[]]
   $ReferencePaths,
   
@@ -25,6 +29,10 @@ param(
 function CreateRunSettingsFile() {
     [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
     $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
+
+    if (-not $ReferencePaths -and $SolutionRoot) {
+        $ReferencePaths = @([System.IO.Path]::Combine($SolutionRoot, "packages"), [System.IO.Path]::Combine($SolutionRoot, "dependencies"))
+    }
 
     if ($ReferencePaths) {
         foreach ($path in $ReferencePaths) {
@@ -89,9 +97,11 @@ try {
     Write-Output ([System.Environment]::NewLine + "$xml")
 
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
-    Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8 
-   
-    $startInfo.Arguments += " /Settings:$runSettingsFile /Diag:C:\temp\test.log"
+    Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
+
+    #/Diag:C:\temp\test.log"
+
+    $startInfo.Arguments += " /Settings:$runSettingsFile" 
     Write-Output "$($startInfo.FileName) $($startInfo.Arguments)"
 
     # Implemented in C# for performance
@@ -101,23 +111,18 @@ try {
 
     #$fn = $startInfo.FileName
     #$arg = $startInfo.Arguments
-
     
     #Start-Process -FilePath $startInfo.FileName -ArgumentList $startInfo.Arguments -Wait -NoNewWindow
 
     $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
 } finally {
-   
-
-    [System.IO.File]::Delete($runSettingsFile)
+    [System.IO.File]::Delete($runSettingsFile)    
 
     if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
             GenerateHtmlReport
-        }
-
-        Set-BuildStatus -Status "Failed" -Reason "Test failure"
+        }        
 
         Write-Error "Test execution exit code: $($global:LASTEXITCODE)"
-    }
+    } 
 }

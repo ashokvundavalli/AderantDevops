@@ -78,7 +78,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 logger.Info(sb.ToString());
             }
 
-            var pipeline = new PipelineProjectBuilder(fileSystem);
+            var pipeline = new BuildPlanGenerator(fileSystem);
             var project = pipeline.GenerateProject(groups, files, null);
             return project;
         }
@@ -87,11 +87,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             // here we evict deleted projects from the previous builds metadata
             // This is so we do not consider the outputs of this project in the artifact restore phase
             if (context.SourceTreeMetadata.Changes != null) {
-                IEnumerable<SourceChange> deletedFiles = context.SourceTreeMetadata.Changes.Where(c => c.Status == FileStatus.Deleted);
-                foreach (var deletedFile in deletedFiles) {
+                IEnumerable<SourceChange> changes = context.SourceTreeMetadata.Changes;
 
-                    foreach (var file in stateFiles) {
-                        if (deletedFile.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+                foreach (var deletedFile in changes) {
+                    if (deletedFile.Status == FileStatus.Deleted && deletedFile.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+
+                        foreach (var file in stateFiles) {
                             if (file.Outputs.ContainsKey(deletedFile.Path)) {
                                 file.Outputs.Remove(deletedFile.Path);
                             }
@@ -274,7 +275,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 logger.Info($"Looked for {outputFile} but it was not found in packages:");
 
                 foreach (var checkedArtifact in checkedArtifacts) {
-                    logger.Info(string.Format("    {0} ({1})", checkedArtifact.Id, checkedArtifact.InstanceId));
+                    logger.Info(string.Format("    {0} ({1})", checkedArtifact.Id.PadRight(80), checkedArtifact.InstanceId));
                 }
             }
 

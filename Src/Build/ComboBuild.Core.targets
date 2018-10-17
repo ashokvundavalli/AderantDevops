@@ -31,7 +31,7 @@
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
     </ItemGroup>
 
-    <Warning Text="Skipping compile!" Condition="'$(Switches_SkipCompile)' == 'true'" />
+    <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"

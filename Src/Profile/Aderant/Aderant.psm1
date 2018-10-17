@@ -1,5 +1,13 @@
 ﻿Set-StrictMode -Version Latest
 
+function Initialize-BuildAssembly {
+	. "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
+	UpdateOrBuildAssembly "$PSScriptRoot\..\..\Build" $true
+}
+
+# Need to load Aderant.Build.dll first as it defines types used in later scripts
+Initialize-BuildAssembly
+
 # Import extensibility functions
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1" | Where-Object {$_.Extension -eq ".ps1" } | ForEach-Object { . $_.FullName }
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.ps1" | Where-Object {$_.Extension -eq ".ps1" } | ForEach-Object { . $_.FullName }
@@ -12,7 +20,7 @@ function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
     $script:ShellContext = [ShellContext]::new()
 
-    UpdateOrBuildAssembly $ShellContext.BuildScriptsDirectory $true
+    UpdateOrBuildAssembly $ShellContext.BuildScriptsDirectory $false
 
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
@@ -66,7 +74,7 @@ Initialize-Module
     "Replacing Coffee Machine",
     "Duplicating Offline Cache",
     "Replacing Headlight Fluid",
-    "Dailing Roper Hotline"
+    "Dialing Roper Hotline"
 )
 
 $Host.UI.RawUI.WindowTitle = Get-Random -InputObject $titles

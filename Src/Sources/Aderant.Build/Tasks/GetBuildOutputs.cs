@@ -51,6 +51,7 @@ namespace Aderant.Build.Tasks {
                 .Select(
                     s => s.TrackedProject.SolutionRoot)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(d => d, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
             return true;

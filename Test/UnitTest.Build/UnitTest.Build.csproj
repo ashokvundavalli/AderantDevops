@@ -101,10 +101,11 @@
     <Compile Include="BuildLogProcessorTests.cs" />
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
-    <Compile Include="DependencyAnalyzer\BuildPipelineTests.cs" />
+    <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="DependencyAnalyzer\ModuleRefTests.cs" />
+    <Compile Include="ObjectModelTests.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilderTests.cs" />
     <Compile Include="Packaging\ArtifactPackageHelperTests.cs" />
     <Compile Include="Packaging\ArtifactServiceTest.cs" />

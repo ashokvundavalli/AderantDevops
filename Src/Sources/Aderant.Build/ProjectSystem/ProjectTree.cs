@@ -179,6 +179,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void OrphanProject(ConfiguredProject configuredProject) {
+            System.Diagnostics.Debugger.Launch();
             configuredProject.IncludeInBuild = false;
             logger.Warning($"Orphaned project: '{configuredProject.FullPath}' identified.");
             this.orphanedProjects.Add(configuredProject);
@@ -231,7 +232,7 @@ namespace Aderant.Build.ProjectSystem {
                 if (excludeFilterPatterns != null) {
                     foreach (var pattern in excludeFilterPatterns) {
                         if (WildcardPattern.ContainsWildcardCharacters(pattern)) {
-                            WildcardPattern wildcardPattern = WildcardPattern.Get(pattern, WildcardOptions.IgnoreCase);
+                            WildcardPattern wildcardPattern = new WildcardPattern(pattern, WildcardOptions.IgnoreCase);
 
                             if (wildcardPattern.IsMatch(path)) {
                                 skip = true;

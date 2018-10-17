@@ -16,7 +16,12 @@ namespace Aderant.Build {
     [Export(typeof(IFileSystem))]
     [Export("FileSystemService")]
     public class PhysicalFileSystem : IFileSystem2 {
+        delegate bool CreateSymlinkLink(string lpSymlinkFileName, string lpTargetFileName, uint dwFlags);
+
         private ILogger logger;
+        private static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
+
+        private static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
 
         [ImportingConstructor]
         public PhysicalFileSystem() {
@@ -294,8 +299,10 @@ namespace Aderant.Build {
             } else {
                 IEnumerable<string> files = GetFiles(source, true);
 
+                source = PathUtility.EnsureTrailingSlash(source);
+
                 foreach (string file in files) {
-                    MoveFile(file, Path.Combine(destination, file));
+                    MoveFile(file, Path.Combine(destination, file.Replace(source, "", StringComparison.OrdinalIgnoreCase)));
                 }
             }
         }
@@ -423,12 +430,19 @@ namespace Aderant.Build {
             }
         }
 
-        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite) {
+        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false) {
             ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
                 MaxDegreeOfParallelism = Environment.ProcessorCount,
             };
 
             HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            CreateSymlinkLink link = null;
+            if (useSymlinks) {
+                link = createSymlinkLink;
+            } else if (useHardlinks) {
+                link = createHardlink;
+            }
 
             ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
                 async file => {
@@ -444,9 +458,12 @@ namespace Aderant.Build {
                         }
                     }
 
-                    CopyFileInternal(file.Location, file.Destination, overwrite);
-                },
-                actionBlockOptions);
+                    if (link != null) {
+                        TryCopyViaLink(file.Location, file.Destination, link);
+                    } else {
+                        CopyFileInternal(file.Location, file.Destination, overwrite);
+                    }
+                }, actionBlockOptions);
 
             foreach (PathSpec pathSpec in pathSpecs) {
                 bulkCopy.Post(pathSpec);
@@ -455,6 +472,16 @@ namespace Aderant.Build {
             bulkCopy.Complete();
 
             return bulkCopy;
+        }
+
+        private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
+            // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
+            // so we need to delete the existing entry before we create the hard or symbolic link.
+            DeleteFile(fileDestination);
+
+            if (!createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE)) {
+                throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
+            }
         }
     }
 

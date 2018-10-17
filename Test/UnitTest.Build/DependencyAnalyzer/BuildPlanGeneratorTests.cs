@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
@@ -10,14 +11,14 @@ using Moq;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
-    public class BuildPipelineTests {
+    public class BuildPlanGeneratorTests {
 
         [TestMethod]
         public void A_single_project_generates_one_build_group() {
             var mock = new Mock<IFileSystem2>();
             mock.Setup(s => s.Root).Returns("");
 
-            var project = new PipelineProjectBuilder(mock.Object);
+            var project = new BuildPlanGenerator(mock.Object);
 
             var items = new List<List<IDependable>> {
                 new List<IDependable> {
@@ -41,26 +42,13 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 new TestConfiguredProject(null, null) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
             };
 
-            PipelineProjectBuilder.SetUseCommonOutputDirectory(projects);
+            BuildPlanGenerator.SetUseCommonOutputDirectory(projects);
 
             Assert.IsTrue(projects[0].UseCommonOutputDirectory);
             Assert.IsTrue(projects[1].UseCommonOutputDirectory);
 
             Assert.IsFalse(projects[2].UseCommonOutputDirectory);
             Assert.IsFalse(projects[3].UseCommonOutputDirectory);
-        }
-
-        [TestMethod]
-        public void RemovePropertiesRemovesPropertyTest() {
-            string[] properties = new string[] {
-                "/p:\"ModuleName=Framework\"",
-                "/p:\"T4TransformEnabled=true\""
-            };
-
-            string[] newProperties = PipelineProjectBuilder.RemoveProperties(properties, new [] { "T4TransformEnabled" });
-
-            Assert.AreEqual(1, newProperties.Length);
-            Assert.IsTrue(string.Equals("/p:\"ModuleName=Framework\"", properties[0]));
         }
     }
 }

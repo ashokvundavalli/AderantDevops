@@ -13,14 +13,14 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
     /// Represents a dynamic MSBuild project which will build a set of projects in dependency order and in parallel
     /// </summary>
-    internal class PipelineProjectBuilder {
+    internal class BuildPlanGenerator {
         private const string PropertiesKey = "Properties";
         private const string BuildGroupId = "BuildGroupId";
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
         private readonly IFileSystem2 fileSystem;
         private readonly HashSet<string> observedProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        public PipelineProjectBuilder(IFileSystem2 fileSystem) {
+        public BuildPlanGenerator(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
@@ -38,7 +38,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             var dashes = new string('—', 20);
 
-           this.observedProjects.UnionWith(projectGroups.SelectMany(s => s).OfType<ConfiguredProject>().Select(s => s.SolutionRoot));
+            this.observedProjects.UnionWith(projectGroups.SelectMany(s => s).OfType<ConfiguredProject>().Select(s => s.SolutionRoot));
 
             for (int i = 0; i < projectGroups.Count; i++) {
                 buildGroupCount++;
@@ -211,20 +211,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return project;
             }
 
-            // TODO: Do we need this?
-            //ExpertModule marker = studioProject as ExpertModule;
-            //if (marker != null) {
-            //    string solutionDirectoryPath = new DirectoryInfo(fileSystem.Root).Name == marker.Name ? fileSystem.Root : Path.Combine(fileSystem.Root, marker.Name);
-            //    var properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
-
-            //    ItemGroupItem item = new ItemGroupItem(beforeProjectFile) {
-            //        [PropertiesKey] = properties.ToString(),
-            //        [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture)
-            //    };
-
-            //    return item;
-            //}
-
             DirectoryNode node = studioProject as DirectoryNode;
             if (node != null) {
                 string solutionDirectoryPath = node.Directory;
@@ -298,13 +284,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (line.IndexOf("/p:", StringComparison.OrdinalIgnoreCase) >= 0) {
                     string[] split = line.Replace("\"", "").Split(new char[] { '=' }, 2, StringSplitOptions.RemoveEmptyEntries);
 
-                    //if (split[1].IndexOf(";", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    //    // ItemGroup
-                    //    propertyList.ItemGroups.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
-                    //} else {
-                    //    // PropertyGroup
-                        propertyList.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
-                    //}
+                    propertyList.Add(split[0].Substring(3, split[0].Length - 3), split[1]);
                 }
             }
 
@@ -362,29 +342,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertiesList.Add("SolutionFileName", Path.GetFileName(visualStudioProject.SolutionFile));
             propertiesList.Add("SolutionPath", visualStudioProject.SolutionRoot);
             propertiesList.Add("SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
-        }
-
-        internal static string[] RemoveProperties(string[] properties, string[] propertiesToRemove) {
-            // TODO: Remove and use TreatAsLocalProperty
-            IEnumerable<string> newProperties = properties.Where(p => propertiesToRemove.All(x => p.IndexOf(x, StringComparison.OrdinalIgnoreCase) == -1));
-
-            return newProperties.ToArray();
-        }
-
-        private string CreateSinglePropertyLine(string[] properties) {
-            IList<string> lines = new List<string>();
-
-            foreach (string property in properties) {
-                if (property.StartsWith("/p:", StringComparison.InvariantCultureIgnoreCase)) {
-                    string line = property.Substring(property.IndexOf("/p:", StringComparison.Ordinal) + 3).Replace("\"", "").Trim();
-
-                    if (!line.StartsWith("BuildInParallel")) {
-                        lines.Add(line);
-                    }
-                }
-            }
-
-            return string.Join(";", lines);
         }
     }
 

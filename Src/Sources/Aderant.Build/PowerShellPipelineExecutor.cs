@@ -87,12 +87,12 @@ namespace Aderant.Build {
             };
 
             try {
-                var invocationSettings = new PSInvocationSettings() { ErrorActionPreference = ActionPreference.Stop };
+                var invocationSettings = new PSInvocationSettings { ErrorActionPreference = ActionPreference.Stop };
 
                 cancellationToken.Register(shell.Stop);
 
                 var task = Task.Factory.FromAsync(
-                    shell.BeginInvoke<PSObject, PSObject>(null, outputData, invocationSettings, pResult => { shell.EndInvoke(pResult); }, null),
+                    shell.BeginInvoke<PSObject, PSObject>(null, outputData, invocationSettings, result => { shell.EndInvoke(result); }, null),
                     _ => {
                         // dummy delegate to satisfy TPL
                     });

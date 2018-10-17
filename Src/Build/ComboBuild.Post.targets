@@ -110,8 +110,13 @@
     </ItemGroup>
 
     <CopyFiles SourceFiles="@(OutputDirectoryContentsWithTargetPath)"
-               DestinationFiles="%(OutputDirectoryContentsWithTargetPath.TargetPath)"
-               Overwrite="true" />
+      DestinationFiles="%(OutputDirectoryContentsWithTargetPath.TargetPath)"
+      Overwrite="true"
+      UseSymlinks="true" />
+
+    <CreateDependencyLinks 
+      SolutionRoot="$(SolutionRoot)"
+      ContextEndpoint="$(ContextEndpoint)" />
     
   </Target>
   

@@ -96,6 +96,10 @@ namespace Aderant.Build.PipelineService {
             return InvokeServiceAction(() => Proxy.Ping());
         }
 
+        public void SetStatus(string status, string reason) {
+            InvokeServiceAction(() => Proxy.SetStatus(status, reason));
+        }
+
         public void Dispose() {
             var proxy = Proxy;
 

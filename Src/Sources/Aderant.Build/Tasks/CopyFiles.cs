@@ -27,6 +27,10 @@ namespace Aderant.Build.Tasks {
 
         public bool Overwrite { get; set; }
 
+        public bool UseSymlinks { get; set; }
+
+        public bool UseHardlinks { get; set; }
+
         public override bool Execute() {
             if (SourceFiles == null || SourceFiles.Length == 0) {
                 DestinationFiles = new TaskItem[0];
@@ -54,7 +58,7 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(copySpecs, Overwrite);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(copySpecs, Overwrite, UseSymlinks, UseHardlinks);
 
             bulkCopy.Completion.GetAwaiter().GetResult();
 

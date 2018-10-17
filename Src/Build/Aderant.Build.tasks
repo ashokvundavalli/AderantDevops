@@ -16,7 +16,7 @@
     <UsingTask TaskName="Aderant.Build.Tasks.ReplaceProjectReferences"                            AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CompileLess"                                         AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetCopyLocalItemsToRemove"                           AssemblyFile="$(BuildAssembly)" />
-    <UsingTask TaskName="Aderant.Build.Tasks.ParallelBuildProjectFactory"                         AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.GenerateBuildPlan"                                   AssemblyFile="$(BuildAssembly)" />
 
     <!-- Adds SCC information into the pdb files for the symbol server -->
     <UsingTask TaskName="Aderant.Build.Tasks.SourceIndex"                                         AssemblyFile="$(BuildToolsDirectory)\Aderant.Build.Tasks.dll" />
@@ -67,7 +67,8 @@
     <UsingTask TaskName="Aderant.Build.Tasks.RecordProjectOutputs"                                AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetBuildOutputs"                                     AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CopyFiles"                                           AssemblyFile="$(BuildAssembly)" />
-
+    <UsingTask TaskName="Aderant.Build.Tasks.CreateDependencyLinks"                                   AssemblyFile="$(BuildAssembly)" />
+	
     <!-- Debugging task -->
     <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />
 </Project>

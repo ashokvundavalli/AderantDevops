@@ -25,9 +25,9 @@
       _BeforeBuild;
       ValidateRequiredProperties;
       CleanBin;
+      DeployPerDirectoryFiles;
       PrepareZipCustomSource;
       ZipCustomSource;
-      DeployPerDirectoryFiles;
       SetBuildNumbers;
       UpdateCommonAssemblyInfo;
       SeedPackagePacking;
@@ -42,11 +42,14 @@
   <PropertyGroup>
     <BuildProperties Condition="'$(IsWebModule)' == 'true'">$(BuildProperties);WebPublishPipelineCustomizeTargetFile=$(MSBuildThisFileDirectory)\Aderant.wpp.targets;</BuildProperties>
 
-    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath).temp\</ModuleBuildTempDirectory>
+    <ModuleBuildTempDirectory Condition="'$(ModuleBuildTempDirectory)' == ''">$(SolutionDirectoryPath)_tmp\</ModuleBuildTempDirectory>
     <rmBCItemTransformTemplatesEnabled Condition="$(T4TransformEnabled) == 'true'">true</rmBCItemTransformTemplatesEnabled>
-    <CleanBin Condition="'$(CleanBin)' == ''">false</CleanBin>
   </PropertyGroup>
 
+  <!-- Clean -->
+  <PropertyGroup>
+    <CleanBin>$([MSBuild]::ValueOrDefault('$(switch-clean)', 'false'))</CleanBin>
+  </PropertyGroup>
 
   <!--     
     Configures the environment to run text templates       
@@ -102,8 +105,11 @@
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set." />
   </Target>
 
+  <Target Name="BeforeRetrievePrebuilts" BeforeTargets="RetrievePrebuilts" Condition="Exists('$(SolutionDirectoryPath)link.lock')">
+      <Message Text="link.lock exists in $(SolutionDirectoryPath). No server artifacts will be retrieved." Importance="high" />
+  </Target>
 
-  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false'">
+  <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
     <Message Text="$(ModuleName): Restoring prebuilts" />
 
     <PropertyGroup>

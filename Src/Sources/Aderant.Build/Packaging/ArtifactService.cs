@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -144,7 +145,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private List<ProjectOutputSnapshot> Merge(BuildOperationContext context, string container) {
-            var snapshots = pipelineService.GetProjectOutputs(container);
+            IEnumerable<ProjectOutputSnapshot> snapshots = pipelineService.GetProjectOutputs(container);
 
             List<ProjectOutputSnapshot> snapshotList;
             if (snapshots == null) {
@@ -272,7 +273,11 @@ namespace Aderant.Build.Packaging {
         /// The OS can handle a lot of parallel I/O so let's minimize wall clock time to get it all done.
         /// </summary>
         internal ActionBlock<PathSpec> CopyFiles(IList<PathSpec> filesToRestore, bool allowOverwrite) {
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite);
+            if (filesToRestore == null || filesToRestore.Count == 0) {
+                return null;
+            }
+
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(filesToRestore, allowOverwrite, false, true);
 
             foreach (PathSpec file in filesToRestore) {
                 logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);
@@ -327,11 +332,13 @@ namespace Aderant.Build.Packaging {
                 pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true);
+            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
 
             logger.Info("Performing copy for FetchArtifacts");
             foreach (PathSpec pathSpec in pathSpecs) {
                 logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
+
+                fileSystem.WriteAllText(Path.Combine(pathSpec.Destination + ".origin.txt"), pathSpec.Location);
             }
 
             bulkCopy.Completion.GetAwaiter().GetResult();
@@ -352,8 +359,12 @@ namespace Aderant.Build.Packaging {
 
             HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+            LocalArtifactFileComparer localArtifactComparer = new LocalArtifactFileComparer();
+
             foreach (var project in projectOutputs) {
-                string projectFile = project.Key;
+                ErrorUtilities.IsNotNull(project.Value.OutputPath, nameof(project.Value.OutputPath));
+
+                string projectFile = project.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
                 int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
                 if (position >= 0) {
@@ -381,14 +392,14 @@ namespace Aderant.Build.Packaging {
                                 continue;
                             }
 
-                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(new LocalArtifactFileComparer()).ToList();
+                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(localArtifactComparer).ToList();
 
                             // There can be only one.
                             LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
 
                             if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
                                 // Log duplicates.
-                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, new LocalArtifactFileComparer()).Where(group => group.Count() > 1).Select(group => group.Key);
+                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => group.Count() > 1).Select(group => group.Key);
 
                                 string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
                                 logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
@@ -414,6 +425,7 @@ namespace Aderant.Build.Packaging {
             return copyOperations;
         }
 
+        [DebuggerDisplay("FileName: {FileName} FullPath: {FullPath}")]
         public class LocalArtifactFile {
             public string FileName { get; set; }
             public string FullPath { get; set; }
@@ -635,7 +647,7 @@ namespace Aderant.Build.Packaging {
             foreach (var previous in previousProjects) {
                 bool add = true;
                 foreach (var snapshot in snapshots) {
-                    if (string.Equals(snapshot.ProjectFile, previous.ProjectFile, StringComparison.OrdinalIgnoreCase)) {
+                    if (snapshot.ProjectGuid == previous.ProjectGuid) {
                         add = false;
                         break;
                     }

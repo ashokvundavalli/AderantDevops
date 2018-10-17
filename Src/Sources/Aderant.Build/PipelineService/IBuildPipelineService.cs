@@ -51,6 +51,9 @@ namespace Aderant.Build.PipelineService {
 
         [OperationContract]
         object[] Ping();
+
+        [OperationContract]
+        void SetStatus(string status, string reason);
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

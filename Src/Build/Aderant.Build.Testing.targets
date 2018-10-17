@@ -56,18 +56,7 @@
     <PropertyGroup>
       <_SolutionRoot>%(SolutionRoots.Identity)</_SolutionRoot>
     </PropertyGroup>
-    
-    <ItemGroup>
-      <AssemblyResolutionPaths Remove="@(AssemblyResolutionPaths)" />
-      <AssemblyResolutionPaths Include="$(SharedDependencyDirectory)" />
-      <AssemblyResolutionPaths Include="$(_SolutionRoot)" />
-      <AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('$(_SolutionRoot)', 'Dependencies'))" />
-      <AssemblyResolutionPaths Include="$([System.IO.Path]::Combine('$(_SolutionRoot)', 'packages'))" />
-    </ItemGroup>
-
-    <Message Text="The test framework will search these directories for assembly dependencies" />
-    <Message Text="%(AssemblyResolutionPaths.Identity)" />
-
+  
     <ItemGroup>
       <TestAssemblies Include="$(_SolutionRoot)\Bin\TestRun\UnitTest*.dll" />
     </ItemGroup>
@@ -82,10 +71,6 @@
 
     <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
 
-    <ItemGroup>
-      <_AssemblyResolutionPaths Include="@(AssemblyResolutionPaths->'&quot;%(Identity)&quot;', ',')" />
-    </ItemGroup>
-
     <PropertyGroup>
       <PlatformSwitch>/Platform:x86</PlatformSwitch>
       <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
@@ -94,21 +79,22 @@
     </PropertyGroup>
 
     <PowerShellScript
-      ProvideBuildContext="true"
       ScriptBlock='
+$ErrorActionPreference = "Stop"
+      
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
+$solutionRoot = "$(_SolutionRoot)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
-$referencePaths = @(_AssemblyResolutionPaths)
 $testFiles = $(UnitTestAssemblies)
 
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles' />
-
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $solutionRoot -IsDesktopBuild:$isDesktopBuild -TestAssemblies $testFiles'
+    OnErrorReason="Test failure" />
   </Target>
 
 
-  <Target Name="RunTests2"
+  <Target Name="RunTests2xxxxxxxxxxxxxx"
           Inputs="@(SolutionRoots)"
           Outputs="%(Identity)"
           DependsOnTargets="$(RunTestsDependsOn)">
