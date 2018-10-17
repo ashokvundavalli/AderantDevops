@@ -114,8 +114,6 @@ try {
 
     #Start-Process -FilePath $startInfo.FileName -ArgumentList $startInfo.Arguments -Wait -NoNewWindow
 
-    [int]$processId = $runner.ProcessId
-
     $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)   
 } finally {
     if ($runner.HasExited -eq $false) {
