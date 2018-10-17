@@ -279,7 +279,7 @@
       <LicenseZipFile>$(LocalExpertBinariesDirectory)LicenseGenerator.zip</LicenseZipFile>
       <RegistrationZipFile>$(LocalExpertBinariesDirectory)RegistrationService.zip</RegistrationZipFile>
       <EliteEnterpriseBinOverrideDirectory>$(ExpertSourceDirectory)EEBin\</EliteEnterpriseBinOverrideDirectory>
-      <PipelineOverrideDirectory>$(LocalExpertBinariesDirectory)AutomatedDeployment</PipelineOverrideDirectory>
+      <PipelineOverrideDirectory>$(LocalExpertBinariesDirectory)AutomatedDeployment\</PipelineOverrideDirectory>
     </PropertyGroup>
 
     <Delete Files="$(ZipFile);$(EliteEnterpriseZipFile)" />
