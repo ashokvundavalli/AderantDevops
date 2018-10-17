@@ -31,7 +31,7 @@ namespace Aderant.Build.Tasks {
             ErrorUtilities.IsNotNull(SolutionRoot, nameof(SolutionRoot));
 
             if (File.Exists(Path.Combine(SolutionRoot, LinkLockFileName))) {
-                Log.LogMessage("Skipping Symlink creation as {0} is present", LinkLockFileName);
+                Log.LogMessage("Skipping symlink creation as {0} is present", LinkLockFileName);
                 return true;
             }
             
@@ -80,7 +80,9 @@ namespace Aderant.Build.Tasks {
 
             File.Create(Path.Combine(SolutionRoot, LinkLockFileName));
 
-            return true;
+            Log.LogMessage("{0} created", LinkLockFileName);
+
+            return !Log.HasLoggedErrors;
         }
 
         private IEnumerable<ProjectOutputSnapshotWithFullPath> AssignProjectOutputSnapshotsFullPath() {

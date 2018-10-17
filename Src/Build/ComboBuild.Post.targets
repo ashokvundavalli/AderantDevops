@@ -111,7 +111,8 @@
 
     <CopyFiles SourceFiles="@(OutputDirectoryContentsWithTargetPath)"
       DestinationFiles="%(OutputDirectoryContentsWithTargetPath.TargetPath)"
-      Overwrite="true" />
+      Overwrite="true"
+      UseSymlinks="true" />
 
     <CreateDependencyLinks 
       SolutionRoot="$(SolutionRoot)"

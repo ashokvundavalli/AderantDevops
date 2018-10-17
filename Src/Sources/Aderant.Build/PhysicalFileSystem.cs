@@ -21,6 +21,8 @@ namespace Aderant.Build {
         private ILogger logger;
         private static CreateSymlinkLink createSymlinkLink = NativeMethods.CreateSymbolicLink;
 
+        private static CreateSymlinkLink createHardlink = (newFileName, target, flags) => NativeMethods.CreateHardLink(newFileName, target, IntPtr.Zero);
+
         [ImportingConstructor]
         public PhysicalFileSystem() {
         }
@@ -428,12 +430,19 @@ namespace Aderant.Build {
             }
         }
 
-        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false) {
+        public ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false) {
             ExecutionDataflowBlockOptions actionBlockOptions = new ExecutionDataflowBlockOptions {
                 MaxDegreeOfParallelism = Environment.ProcessorCount,
             };
 
             HashSet<string> knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            CreateSymlinkLink link = null;
+            if (useSymlinks) {
+                link = createSymlinkLink;
+            } else if (useHardlinks) {
+                link = createHardlink;
+            }
 
             ActionBlock<PathSpec> bulkCopy = new ActionBlock<PathSpec>(
                 async file => {
@@ -449,13 +458,12 @@ namespace Aderant.Build {
                         }
                     }
 
-                    if (useSymlinks) {
-                        TryCopyViaLink(file.Location, file.Destination, createSymlinkLink);
+                    if (link != null) {
+                        TryCopyViaLink(file.Location, file.Destination, link);
                     } else {
                         CopyFileInternal(file.Location, file.Destination, overwrite);
                     }
-                },
-                actionBlockOptions);
+                }, actionBlockOptions);
 
             foreach (PathSpec pathSpec in pathSpecs) {
                 bulkCopy.Post(pathSpec);
@@ -471,7 +479,9 @@ namespace Aderant.Build {
             // so we need to delete the existing entry before we create the hard or symbolic link.
             DeleteFile(fileDestination);
 
-            createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
+            if (!createLink(fileDestination, fileLocation, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE)) {
+                throw new InvalidOperationException($"Failed to create link {fileDestination} ==> {fileLocation}");
+            }
         }
     }
 

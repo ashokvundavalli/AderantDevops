@@ -42,7 +42,7 @@
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
-    <BranchBuildProject Condition="'$(BranchBuildProject)' == ''">$(SolutionRoot)BranchBuild.proj</BranchBuildProject>
+    <BuildPlan Condition="'$(BuildPlan)' == ''">$(SolutionRoot)BuildPlan.proj</BuildPlan>
     
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
@@ -56,8 +56,8 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
-      CreatePipeline;
-      ExecutePipeline;
+      CreatePlan;
+      ExecutePlan;
       RunTests;
       <!--RunIntegrationTests;-->
       WriteStateFiles;
@@ -72,7 +72,7 @@
   </Target>
 
 
-  <Target Name="CreatePipeline">
+  <Target Name="CreatePlan">
 
     <ItemGroup>
       <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
@@ -99,10 +99,10 @@
     </ItemGroup>
 
     <!-- Builds the dynamic project file to control the build sequence -->
-    <ParallelBuildProjectFactory
+    <GenerateBuildPlan
       ContextEndpoint="$(ContextEndpoint)"
       ModulesDirectory="$(SolutionRoot)"
-      InstanceFile="$(BranchBuildProject)"
+      BuildPlan="$(BuildPlan)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"
@@ -110,13 +110,13 @@
       ExcludePaths="@(ExcludePaths)"
       ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
-    </ParallelBuildProjectFactory>
+    </GenerateBuildPlan>
 
     <Message Text="ModulesInBuild: @(ModulesInBuild)" />
 
-    <Error Condition="!Exists('$(BranchBuildProject)')" Text="$(BranchBuildProject) does not exist." />
+    <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
 
-    <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(BranchBuildProject)" />
+    <Message Condition="'$(IsDesktopBuild)' == 'false'" Text="##vso[task.uploadfile]$(BuildPlan)" />
   </Target>
 
 
@@ -159,10 +159,10 @@
 
   <!--
     ==========================================================================================
-    This target will build the projects in the pipeline in parallel where possible.    
+    This target will build the projects in the plan
     ==========================================================================================
   -->
-  <Target Name="ExecutePipeline">
+  <Target Name="ExecutePlan">
     <PropertyGroup>
       <CommonBuildProperties>
         BuildInParallel=true;
@@ -182,9 +182,9 @@
 
     <Message Text="$(CommonBuildProperties)" />
 
-    <Error Condition="!Exists('$(BranchBuildProject)')" Text="Did not find BranchBuild.proj "/>
+    <Error Condition="!Exists('$(BuildPlan)')" Text="Did not find $(BuildPlan) "/>
 
-    <MSBuild Projects="$(BranchBuildProject)"
+    <MSBuild Projects="$(BuildPlan)"
              Properties="$(CommonBuildProperties);BuildEnabled=true"
              StopOnFirstFailure="true"
              BuildInParallel="$(BuildInParallel)" />

@@ -78,7 +78,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 logger.Info(sb.ToString());
             }
 
-            var pipeline = new PipelineProjectBuilder(fileSystem);
+            var pipeline = new BuildPlanGenerator(fileSystem);
             var project = pipeline.GenerateProject(groups, files, null);
             return project;
         }

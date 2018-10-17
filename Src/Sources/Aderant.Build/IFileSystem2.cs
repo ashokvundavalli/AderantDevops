@@ -77,6 +77,6 @@ namespace Aderant.Build {
         /// <summary>
         /// Performs a bulk file copy operation on the specified path specifications.
         /// </summary>
-        ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false);
+        ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
     }
 }
