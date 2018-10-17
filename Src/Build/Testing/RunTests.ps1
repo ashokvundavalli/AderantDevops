@@ -99,14 +99,34 @@ try {
     $runner.RecordConsoleOutput = $true
     $runner.Start()
 
+    [System.Console]::TreatControlCAsInput = $true
+
     #$fn = $startInfo.FileName
     #$arg = $startInfo.Arguments
 
-    
     #Start-Process -FilePath $startInfo.FileName -ArgumentList $startInfo.Arguments -Wait -NoNewWindow
 
-    $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
+    [int]$processId = $runner.ProcessId
+
+    Start-Job -ScriptBlock { $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds) } -Name $processId
+
+    while (Get-Job -Name $processId -match "Running") {
+        if ([System.Console]::KeyAvailable) {
+            $key = [System.Console]::readkey($true)
+            if (($key.modifiers -band [Consolemodifiers]"control") -and ($key.key -eq "C")) {
+                break
+            }
+        }
+
+        Start-Sleep -Milliseconds 500
+    }
 } finally {
+    if ($runner.HasExited -eq $false) {
+        $global:LASTEXITCODE = $runner.Kill()
+    }
+
+    [System.Console]::TreatControlCAsInput = $false
+
     [System.IO.File]::Delete($runSettingsFile)
 
     if ($global:LASTEXITCODE -ne 0) {
