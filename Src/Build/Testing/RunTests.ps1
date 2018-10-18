@@ -140,18 +140,19 @@ $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
 
 try {
+    Write-Information "Creating run settings"
     $xml = CreateRunSettingsXml
     Write-Information ([System.Environment]::NewLine + "$xml")
 
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
     Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
 
+    Write-Information "Finding and deploying references"
     FindAndDeployReferences $TestAssemblies
 
-    #/Diag:C:\temp\test.log"
-
     $startInfo.Arguments += " /Settings:$runSettingsFile" 
-    Write-Information "$($startInfo.FileName) $($startInfo.Arguments)"
+
+    Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
     # Implemented in C# for performance
     $runner = [Aderant.Build.Utilities.ProcessRunner]::InvokeTestRunner($startInfo)

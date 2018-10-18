@@ -65,7 +65,7 @@
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
       <Output ItemName="ReferencesToFind" TaskParameter="ReferencesToFind" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
-      <Output PropertyName="TaskObjectKey" TaskParameter="TaskObjectKey" />
+      <Output PropertyName="AssemblyPlatformDataKey" TaskParameter="AssemblyPlatformDataKey" />
     </GetAssemblyPlatform>
 
     <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
@@ -83,7 +83,6 @@
     <PowerShellScript
       ScriptBlock='
 $ErrorActionPreference = "Stop"
-$InformationPreference = "Continue"
       
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
@@ -91,11 +90,11 @@ $testRunDirectory = "$(TestRunDirectory)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $testFiles = $(UnitTestAssemblies)
-$referencesToFind = $$(TaskObjectKey).ReferencesToFind   
+$referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind   
     
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
     OnErrorReason="Test failure"
-    TaskObjects="$(TaskObjectKey)" />
+    TaskObjects="$(AssemblyPlatformDataKey)" />
   </Target>
 
 </Project>

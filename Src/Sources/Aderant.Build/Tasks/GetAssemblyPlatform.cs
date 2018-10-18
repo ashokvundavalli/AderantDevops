@@ -40,7 +40,7 @@ namespace Aderant.Build.Tasks {
         public bool MustRun32Bit { get; set; }
 
         [Output]
-        public string TaskObjectKey { get; private set; } = "GetAssemblyPlatformData";
+        public string AssemblyPlatformDataKey { get; private set; } = "GetAssemblyPlatformData";
 
         [Output]
         public string[] ReferencesToFind { get; private set; }
@@ -126,7 +126,7 @@ namespace Aderant.Build.Tasks {
 
             // Stash the object for downstream tasks
             BuildEngine4.RegisterTaskObject(
-                TaskObjectKey,
+                AssemblyPlatformDataKey,
                 new AssemblyPlatformData {
                     Assemblies = Assemblies,
                     ReferencesToFind = ReferencesToFind,
