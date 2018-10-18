@@ -52,6 +52,7 @@
   
     <PropertyGroup>
       <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
+      <TestRunTitle>$([System.IO.Path]::GetFileName('$(TestRunDirectory)'))</TestRunTitle>
     </PropertyGroup>
   
     <ItemGroup>
@@ -77,7 +78,7 @@
       <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
     </PropertyGroup>
 
-    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test" />
+    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test - $(TestRunTitle)" />
 
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
     <PowerShellScript
