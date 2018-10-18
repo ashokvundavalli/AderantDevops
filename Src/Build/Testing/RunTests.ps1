@@ -82,7 +82,8 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
         # Find the reference in our search space then drop it into our directory which contains the test assembly
         foreach ($reference in $ReferencesToFind) {
             # To be correct we should also support .exe and .winmd...
-            $dllName = [System.IO.Path]::ChangeExtension($reference, "dll")             
+            # Avoid ChangeExtension(...) as assemblies often have dots in the name which confuses it
+            $dllName = $reference + ".dll"
            
             $foundReferenceFile = $files | Where-Object -Property Name -EQ $dllName | Select-Object -First 1
 
