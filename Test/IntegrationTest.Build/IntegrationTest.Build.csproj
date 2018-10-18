@@ -99,6 +99,7 @@
     </Compile>
     <Compile Include="Packaging\ArtifactServiceTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
+    <Compile Include="Tasks\PowerShellScript\PowerShellScriptTests.cs" />
     <Compile Include="Tasks\RetrieveArtifacts\RetrieveArtifactsTests.cs" />
     <Compile Include="Tasks\GenerateArchivesTest.cs" />
     <Compile Include="VersionControl\GitVersionControlTests.cs" />
@@ -128,6 +129,9 @@
     <None Include="EndToEnd\Resources.proj">
       <SubType>Designer</SubType>
     </None>
+    <Content Include="Tasks\PowerShellScript\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />
     <Compile Include="VersionControl\ShaTests.cs" />
     <Compile Include="WarningRatchetTests.cs" />

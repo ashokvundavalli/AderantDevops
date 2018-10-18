@@ -5,14 +5,16 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     /// <summary>
-    /// Determines the platform of an assembly. 
-    /// Used by the build process to determine the type of test runner that should be used. If we have at least one 32-bit only assembly
-    /// then the build process must use the 32-bit of VS Test. 
+    /// Determines the platform of an assembly.
+    /// Used by the build process to determine the type of test runner that should be used. If we have at least one 32-bit only
+    /// assembly
+    /// then the build process must use the 32-bit of VS Test.
     /// </summary>
-    public sealed class GetAssemblyPlatform : Microsoft.Build.Utilities.Task {
+    public sealed class GetAssemblyPlatform : Task {
         private readonly string[] allowedAssemblyExtensions = {
             ".winmd",
             ".dll",
@@ -37,6 +39,12 @@ namespace Aderant.Build.Tasks {
         [Output]
         public bool MustRun32Bit { get; set; }
 
+        [Output]
+        public string TaskObjectKey { get; private set; } = "GetAssemblyPlatformData";
+
+        [Output]
+        public string[] ReferencesToFind { get; private set; }
+
         public override bool Execute() {
             if (Assemblies != null) {
                 Log.LogMessage(MessageImportance.High, "Building assembly platform architecture list...");
@@ -45,25 +53,35 @@ namespace Aderant.Build.Tasks {
 
                 Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
+                // TODO: No longer needed
                 IEnumerable<ITaskItem> filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
 
                 Queue<ITaskItem> scanQueue = new Queue<ITaskItem>(filteredAssemblies);
-               
-                 while (scanQueue.Count > 0) {
+
+                List<ITaskItem> failedItems = new List<ITaskItem>();
+
+                List<string> assemblyReferencesToFind = new List<string>();
+
+                while (scanQueue.Count > 0) {
                     var item = scanQueue.Dequeue();
-                  
+
                     string fullPath = item.GetMetadata("FullPath");
-                    
+
                     if (PathUtility.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
                         string hash;
                         using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
                             byte[] fileBytes = File.ReadAllBytes(fullPath);
                             hash = BitConverter.ToString(cryptoProvider.ComputeHash(fileBytes));
                         }
-                    
+
                         if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
                             try {
-                                PortableExecutableKinds peKind = inspector.GetAssemblyKind(item.ItemSpec);
+                                AssemblyName[] referencedAssemblies;
+                                PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referencedAssemblies);
+
+                                if (referencedAssemblies != null) {
+                                    assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
+                                }
 
                                 if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
                                     MustRun32Bit = true;
@@ -80,21 +98,41 @@ namespace Aderant.Build.Tasks {
 
                                 analyzedAssemblies[item] = hash;
                             } catch (FileLoadException ex) {
-                                Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}. You should delete this file or other file with the same identity to resolve this warning.");
+                                if (!failedItems.Contains(item)) {
+                                    Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}. You should delete this file or the other file with the same identity to resolve this warning.");
 
-                                inspector = CreateInspector();
+                                    inspector = CreateInspector();
 
-                                scanQueue.Enqueue(item);
+                                    scanQueue.Enqueue(item);
+
+                                    // Record this failure so we don't get stuck in a loop
+                                    failedItems.Add(item);
+                                }
                             }
                         }
                     }
                 }
 
                 if (inspectionDomain != null) {
-                    AppDomain.Unload(inspectionDomain);
-                    GC.Collect();
+                    System.Threading.Tasks.Task.Run(
+                        () => {
+                            AppDomain.Unload(inspectionDomain);
+                            inspectionDomain = null;
+                        });
                 }
+
+                this.ReferencesToFind = assemblyReferencesToFind.ToArray();
             }
+
+            // Stash the object for downstream tasks
+            BuildEngine4.RegisterTaskObject(
+                TaskObjectKey,
+                new AssemblyPlatformData {
+                    Assemblies = Assemblies,
+                    ReferencesToFind = ReferencesToFind,
+                },
+                RegisteredTaskObjectLifetime.Build,
+                false);
 
             return !Log.HasLoggedErrors;
         }
@@ -130,14 +168,34 @@ namespace Aderant.Build.Tasks {
         }
     }
 
+    public class AssemblyPlatformData {
+        public ITaskItem[] Assemblies { get; set; }
+        public string[] ReferencesToFind { get; set; }
+    }
+
     [Serializable]
     internal class AssemblyInspector : MarshalByRefObject {
-        public PortableExecutableKinds GetAssemblyKind(string assembly) {
+        public PortableExecutableKinds Inspect(string assembly, out AssemblyName[] referencesToFind) {
             Assembly asm = Assembly.ReflectionOnlyLoadFrom(assembly);
 
             PortableExecutableKinds peKind;
             ImageFileMachine imageFileMachine;
             asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
+
+            referencesToFind = null;
+
+            IList<CustomAttributeData> customAttributes = asm.GetCustomAttributesData();
+            foreach (var customAttribute in customAttributes) {
+                if (customAttribute.AttributeType == typeof(AssemblyMetadataAttribute)) {
+                    if ((string)customAttribute.ConstructorArguments[0].Value == "TestRun:DeployMissingReferences") {
+                        var deployMissingReferences = bool.Parse((string)customAttribute.ConstructorArguments[1].Value);
+
+                        if (deployMissingReferences) {
+                            referencesToFind = asm.GetReferencedAssemblies();
+                        }
+                    }
+                }
+            }
 
             return peKind;
         }

@@ -54,11 +54,11 @@
           DependsOnTargets="$(RunTestsDependsOn)">
   
     <PropertyGroup>
-      <_SolutionRoot>%(SolutionRoots.Identity)</_SolutionRoot>
+      <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
     </PropertyGroup>
   
     <ItemGroup>
-      <TestAssemblies Include="$(_SolutionRoot)\Bin\TestRun\UnitTest*.dll" />
+      <TestAssemblies Include="$(TestRunDirectory)\Bin\TestRun\UnitTest*.dll" />
     </ItemGroup>
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
@@ -66,7 +66,9 @@
       Condition="'$(Use32BitTestRunner)' == ''"
       Assemblies="@(TestAssemblies)">
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
+      <Output ItemName="ReferencesToFind" TaskParameter="ReferencesToFind" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
+      <Output PropertyName="TaskObjectKey" TaskParameter="TaskObjectKey" />
     </GetAssemblyPlatform>
 
     <Message Text="Assembly: %(AssemblyList.FileName) -> Platform: %(AssemblyList.Platform)" Condition="'@(AssemblyList)' != ''" />
@@ -78,174 +80,22 @@
       <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
     </PropertyGroup>
 
+    <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
     <PowerShellScript
       ScriptBlock='
 $ErrorActionPreference = "Stop"
       
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
-$solutionRoot = "$(_SolutionRoot)"
+$testRunDirectory = "$(TestRunDirectory)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $testFiles = $(UnitTestAssemblies)
-
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $solutionRoot -IsDesktopBuild:$isDesktopBuild -TestAssemblies $testFiles'
-    OnErrorReason="Test failure" />
+$referencesToFind = $$(TaskObjectKey).ReferencesToFind   
+    
+. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
+    OnErrorReason="Test failure"
+    TaskObjects="$(TaskObjectKey)" />
   </Target>
-
-
-  <Target Name="RunTests2xxxxxxxxxxxxxx"
-          Inputs="@(SolutionRoots)"
-          Outputs="%(Identity)"
-          DependsOnTargets="$(RunTestsDependsOn)">
-
-    <PropertyGroup>
-      <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
-      <VsTestWorkingDirectory>$(SolutionRoot)</VsTestWorkingDirectory>
-
-      <CodeCoverage Condition="'$(CodeCoverage)' == ''">false</CodeCoverage>
-
-      <!-- VSTest Setup -->
-      <VsTestDirectory Condition="'$(VsTestDirectory)' == ''">$(VsCommonTools)..\IDE\CommonExtensions\Microsoft\TestWindow</VsTestDirectory>
-      <PathToTestTool>$(VsTestDirectory)\vstest.console.exe</PathToTestTool>
-      <PathToTestTool>$([System.IO.Path]::GetFullPath('$(PathToTestTool)'))</PathToTestTool>
-
-      <IsolationSwitch>/InIsolation</IsolationSwitch>
-      <RunUnitTestsInParallel>$([MSBuild]::ValueOrDefault('$(RunUnitTestsInParallel)', 'true'))</RunUnitTestsInParallel> 
-      <ParallelSwitch Condition="'$(RunUnitTestsInParallel)' == 'true'">/Parallel</ParallelSwitch>
-      
-      <PlatformSwitch Condition="'$(Use32BitTestRunner)' != 'true'">/Platform:x64</PlatformSwitch>
-      <TestAdapterSwitch Condition="'$(PSTests)' == 'true'">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools"</TestAdapterSwitch>
-      <ResultsFileSwitch Condition="'$(ResultsFileSwitch)' == ''">/Logger:trx</ResultsFileSwitch>
-      <RunSettingsSwitch>/Settings:$(TestWorkingDirectory)default.runsettings</RunSettingsSwitch>
-    </PropertyGroup>
-
-    <!-- dotCover Setup -->
-    <ItemGroup Condition="('$(CodeCoverage)' == 'true') And '@(CodeCoverageFilterList)' != ''">      
-      <CodeCoverageFilters Include="+:%(CodeCoverageFilterList.FileName)"></CodeCoverageFilters>
-    </ItemGroup>
-
-    <PropertyGroup Condition="('$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''">
-      <DotCoverExecutablePath>$(BuildToolsDirectory)dotCover\bin\dotCover.exe</DotCoverExecutablePath>
-      <DotCoverReportType Condition="'$(IsDesktopBuild)' == 'true'">HTML</DotCoverReportType>
-      <DotCoverReportType Condition="'$(IsDesktopBuild)' != 'true'">XML</DotCoverReportType>
-      <DotCoverReportFile>$(BinTestDirectory)CodeCoverage\dotCoverReport.$(DotCoverReportType)</DotCoverReportFile>
-      <CoberturaReportTarget>$(BinTestDirectory)CodeCoverage\CoberturaReport.xml</CoberturaReportTarget>
-    </PropertyGroup>
-    
-    <Message Condition="'$(Use32BitTestRunner)' == 'true'" Text="Must run tests in 32-bit mode as at least one build output assembly has a platform of x86." />
-
-    <PropertyGroup>
-      <TestTimeoutMilliseconds>-1</TestTimeoutMilliseconds>
-      <TestTimeoutMilliseconds Condition="'$(IsDesktopBuild)' == 'false'">900000</TestTimeoutMilliseconds>
-    </PropertyGroup>
-    
-    <!-- Chutzpah - JavaScript UnitTest related -->
-    <ItemGroup>
-      <JavascriptTests Include="$(VsTestWorkingDirectory)Src\**\chutzpah.json" Exclude="$(VsTestWorkingDirectory)Src\**\obj\**" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <ChutzpahTestAdapterPath Condition="'@(JavascriptTests)' != ''">/TestAdapterPath:"$(BuildScriptsDirectory)..\Build.Tools\Chutzpah\bin"</ChutzpahTestAdapterPath>
-    </PropertyGroup>
-    <Message Condition="'@(JavascriptTests)' != ''" Text="Chutzpah.json found. JavaScript tests will be included" />
-
-    <ItemGroup>
-      <_AssemblyResolutionPaths Include="@(AssemblyResolutionPaths->'&quot;%(Identity)&quot;', ',')" />
-    </ItemGroup>
-
-    <PowerShellScript
-      ProvideBuildContext="true"
-      ScriptBlock='
-$testTool = "$(PathToTestTool)"
-$testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) "
-$workingDirectory = "$(SolutionRoot)"
-$isDesktopBuild = $$(IsDesktopBuild)
-$referencePaths = @(_AssemblyResolutionPaths)
-$testFiles = $(UnitTestAssemblies)
-
-. Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles' />
-
-    <!--<RunTests
-      TestTool="$(PathToTestTool)"
-      TestToolArgs="$(ResultsFileSwitch) $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch)"
-      WorkingDirectory="$(SolutionRoot)"
-      IsDesktopBuild="$(IsDesktopBuild)"
-      TestFiles="@(TestAssemblies)"
-      AssemblyResolutionPaths="@(AssemblyResolutionPaths)" />-->
-
-    <!-- Run With VSTest -->
-    <Exec Condition="false"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          WorkingDirectory="$(VsTestWorkingDirectory)"
-          Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(PathToTestTool)" $(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) "$(ResultsFileSwitch)" $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(RunSettingsSwitch) $(ChutzpahTestAdapterPath)' />
-
-    <!-- Run VSTest using dotCover -->
-    <Exec Condition="false"
-          ContinueOnError="false"
-          IgnoreExitCode="false"
-          WorkingDirectory="$(VsTestWorkingDirectory)"
-          Timeout="$(TestTimeoutMilliseconds)"
-          Command='SET EXPERT_MODULE_DIRECTORY=$(VsTestWorkingDirectory) &amp; "$(DotCoverExecutablePath)" analyse /TargetExecutable="$(PathToTestTool)" /TargetArguments="$(UnitTestAssemblies) @(JavascriptTests, &#39; &#39;) \&#34;$(ResultsFileSwitch)\&#34; $(PlatformSwitch) $(IsolationSwitch) $(ParallelSwitch) $(ChutzpahTestAdapterPath)" /TargetWorkingDir=$(VsTestWorkingDirectory) /Output="$(DotCoverReportFile)" /ReportType="$(DotCoverReportType)" /Filters="@(CodeCoverageFilters)" /AttributeFilters="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute;System.Runtime.CompilerServices.CompilerGeneratedAttribute;System.CodeDom.Compiler.GeneratedCodeAttribute"' />
-
-    <ReadLinesFromFile Condition="('$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true') And '$(UnitTestAssemblies)' != ''" File="$(DotCoverReportFile)">
-      <Output TaskParameter="Lines" PropertyName="DotCoverResult" />
-    </ReadLinesFromFile>
-
-    <PropertyGroup Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''">
-      <CodeCoverageValue>$([System.Text.RegularExpressions.Regex]::Match($(DotCoverResult), '(?&lt;="Total",)(.*?)(?=[,])'))</CodeCoverageValue>
-      <CodeCoverageValue Condition="'$(CodeCoverageValue)' == ''">0</CodeCoverageValue>
-    </PropertyGroup>
-
-    <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="
-
-=============================
-Code coverage percentage: $(CodeCoverageValue)
-=============================
-
-" Importance="high" />
-    
-    <Message Condition="'$(IsDesktopBuild)' == 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != '' And '$(CodeCoverageValue)' &lt; '30'" Text="
-Code coverage is less than 30%! The hounds have been released.
-
-░░░░░░░░░░░█████████████
-░░░░░░░░░███░███░░░░░░██
-███░░░░░██░░░░██░██████████
-████████░░░░░░████░░░░░░░██
-████░░░░░░░░░░██░░██████████
-████░░░░░░░░░░░███░░░░░░░░░██
-████░░░░░░░░░░░██░░██████████
-████░░░░░░░░░░░░████░░░░░░░░█
-████░░░░░░░░░░░░░███░░████░░█
-█████████░░░░░░░░░░████░░░░░█
-███░░░░░██░░░░░░░░░░░░░█████
-░░░░░░░░░███░░░░░░░██████
-░░░░░░░░░░░██░░░░░░██
-░░░░░░░░░░░░███░░░░░██
-░░░░░░░░░░░░░░██░░░░██
-░░░░░░░░░░░░░░░███░░░██
-░░░░░░░░░░░░░░░░░██░░░█
-░░░░░░░░░░░░░░░░░░█░░░█
-░░░░░░░░░░░░░░░░░░██░██
-░░░░░░░░░░░░░░░░░░░███
-" />
-
-    <!-- Run Cobertura Report Converter -->
-    <CoberturaReportConverter Condition="'$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''"
-      ImportPath="$(DotCoverReportFile)"
-      TargetPath="$(CoberturaReportTarget)">
-    </CoberturaReportConverter>
-
-    <Message Condition="'$(IsDesktopBuild)' != 'true' And '$(CodeCoverage)' == 'true' And '$(UnitTestAssemblies)' != ''" Text="##vso[codecoverage.publish codecoveragetool=Cobertura;summaryfile=$(CoberturaReportTarget);]"></Message>
-
-    <PropertyGroup>
-      <TestOutcome>Succeeded</TestOutcome>
-    </PropertyGroup>
-
-    <OnError ExecuteTargets="OnTestFailure" />
-  </Target>
-
 
 </Project>

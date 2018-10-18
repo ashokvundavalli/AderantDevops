@@ -16,9 +16,11 @@ namespace Aderant.Build.Tasks {
 
         public string ProgressPreference { get; set; }
 
-        public bool MeasureCommand { get; set; }
-
         public string OnErrorReason { get; set; }
+
+        public string[] TaskObjects { get; set; }
+
+        public bool LogScript { get; set; } = true;
 
         [Output]
         public string Result { get; set; }
@@ -27,11 +29,26 @@ namespace Aderant.Build.Tasks {
             try {
                 BuildEngine3.Yield();
 
-                string directoryName = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
+                string thisTaskExecutingDirectory = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
 
-                Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
+                Dictionary<string, object> variables = new Dictionary<string, object>();
+                if (TaskObjects != null) {
+                    foreach (var key in TaskObjects) {
+                        object registeredTaskObject = BuildEngine4.GetRegisteredTaskObject(key, RegisteredTaskObjectLifetime.Build);
 
-                if (RunScript(Log, directoryName)) {
+                        if (registeredTaskObject != null) {
+                            Log.LogMessage(MessageImportance.Normal, "Extracted registered task object: " + key);
+                        }
+
+                        variables[key] = registeredTaskObject;
+                    }
+                }
+
+                if (LogScript) {
+                    Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
+                }
+
+                if (RunScript(variables, Log, thisTaskExecutingDirectory)) {
                     Log.LogError("Execution of script: '{0}' failed.", ScriptBlock);
 
                     using (var proxy = GetProxy()) {
@@ -49,25 +66,30 @@ namespace Aderant.Build.Tasks {
             cts.Cancel();
         }
 
-        private bool RunScript(TaskLoggingHelper name, string directoryName) {
+        private bool RunScript(Dictionary<string, object> variables, TaskLoggingHelper name, string directoryName) {
             var pipelineExecutor = new PowerShellPipelineExecutor();
             pipelineExecutor.ProgressPreference = ProgressPreference;
-            pipelineExecutor.MeasureCommand = MeasureCommand;
 
             AttachLogger(name, pipelineExecutor);
 
             cts = new CancellationTokenSource();
 
             try {
-                Dictionary<string, object> variables = new Dictionary<string, object>();
+                var scripts = new List<string>();
+
+                string combine = Path.Combine(directoryName, "Build.psm1");
+                if (File.Exists(combine)) {
+                    scripts.Add(
+                        $"Import-Module \"{directoryName}\\Build.psm1\""
+                    );
+                }
+
+                scripts.Add(ScriptBlock);
 
                 pipelineExecutor.RunScript(
-                    new[] {
-                        $"Import-Module \"{directoryName}\\Build.psm1\"",
-                        ScriptBlock
-                    },
+                    scripts,
                     variables,
-                    cts.Token).Wait(cts.Token);
+                    cts.Token);
 
                 Result = pipelineExecutor.Result;
 
@@ -78,13 +100,23 @@ namespace Aderant.Build.Tasks {
             return pipelineExecutor.ExecutionError;
         }
 
-        internal static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {
-            pipelineExecutor.Debug += (sender, message) => { log.LogMessage(MessageImportance.Normal, message); };
-            pipelineExecutor.Verbose += (sender, message) => { log.LogMessage(MessageImportance.Normal, message); };
-            pipelineExecutor.Warning += (sender, message) => { log.LogWarning(message); };
-            pipelineExecutor.Error += (sender, message) => { log.LogError(message); };
+        private static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {
+            pipelineExecutor.DataReady += (sender, objects) => {
+                foreach (var o in objects) {
+                    log.LogMessage(MessageImportance.Normal, o.ToString());
+                }
+            };
 
-            pipelineExecutor.Output += (sender, message) => { log.LogMessage(MessageImportance.Normal, message); };
+            pipelineExecutor.ErrorReady += (sender, objects) => {
+                foreach (var o in objects) {
+                    log.LogError(o.ToString());
+                }
+            };
+
+            pipelineExecutor.Debug += (sender, message) => { log.LogMessage(MessageImportance.Low, message.ToString()); };
+            pipelineExecutor.Verbose += (sender, message) => { log.LogMessage(MessageImportance.Low, message.ToString()); };
+            pipelineExecutor.Warning += (sender, message) => { log.LogWarning(message.ToString()); };
+            pipelineExecutor.Info += (sender, message) => { log.LogMessage(message.ToString()); };
         }
 
         private IBuildPipelineService GetProxy() {

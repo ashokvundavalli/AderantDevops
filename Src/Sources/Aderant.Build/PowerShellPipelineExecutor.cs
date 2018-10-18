@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Aderant.Build {
     internal class PowerShellPipelineExecutor {
-        public string ProgressPreference { get; set; }
 
-        /// <summary>
-        /// Indicates you want the script invoked with Measure-Command
-        /// </summary>
-        public bool MeasureCommand { get; set; }
+        public string ProgressPreference { get; set; }
 
         /// <summary>
         /// The scalar script result.
@@ -22,92 +17,130 @@ namespace Aderant.Build {
 
         public bool ExecutionError { get; private set; }
 
-        public event EventHandler<string> Error;
+        public event EventHandler<ICollection<PSObject>> DataReady;
 
-        public event EventHandler<string> Verbose;
+        public event EventHandler<ICollection<object>> ErrorReady;
 
-        public event EventHandler<string> Warning;
+        public event EventHandler<InformationRecord> Info;
 
-        public event EventHandler<string> Debug;
+        public event EventHandler<VerboseRecord> Verbose;
 
-        public event EventHandler<string> Output;
+        public event EventHandler<WarningRecord> Warning;
 
-        public async Task RunScript(string[] scripts, Dictionary<string, object> variables, CancellationToken cancellationToken = default(CancellationToken)) {
+        public event EventHandler<DebugRecord> Debug;
+
+        public void RunScript(IReadOnlyCollection<string> scripts, Dictionary<string, object> variables, CancellationToken cancellationToken = default(CancellationToken)) {
             using (PowerShell shell = PowerShell.Create()) {
-                using (var runspace = RunspaceFactory.CreateRunspace()) {
-                    runspace.Open();
+                InvokePipeline(scripts, variables, shell, cancellationToken);
+            }
+        }
 
-                    if (variables != null) {
-                        foreach (var variable in variables) {
-                            runspace.SessionStateProxy.SetVariable(variable.Key, variable.Value);
-                        }
+        private void InvokePipeline(IReadOnlyCollection<string> scripts, Dictionary<string, object> variables, PowerShell shell, CancellationToken cancellationToken) {
+            using (var runspace = RunspaceFactory.CreateRunspace()) {
+                runspace.Open();
+
+                shell.Runspace = runspace;
+
+                SetExecutionPolicy(shell);
+                SetProgressPreference(shell);
+                
+                if (variables != null) {
+                    foreach (var variable in variables) {
+                        runspace.SessionStateProxy.SetVariable(variable.Key, variable.Value);
                     }
+                }
 
-                    shell.Runspace = runspace;
+                try {
+                    using (var pipeline = runspace.CreatePipeline()) {
+                        cancellationToken.Register(shell.Stop);
 
-                    foreach (var script in scripts) {
-                        await RunPowerShellAsync(script, shell, cancellationToken);
+                        foreach (var script in scripts) {
+                            var command = new Command(script, true);
+
+                            command.MergeMyResults(PipelineResultTypes.Null, PipelineResultTypes.Output);
+                            command.MergeMyResults(PipelineResultTypes.Debug, PipelineResultTypes.Output);
+                            command.MergeMyResults(PipelineResultTypes.Warning, PipelineResultTypes.Output);
+                            command.MergeMyResults(PipelineResultTypes.Debug, PipelineResultTypes.Output);
+                            command.MergeMyResults(PipelineResultTypes.Verbose, PipelineResultTypes.Output);
+                            command.MergeMyResults(PipelineResultTypes.Information, PipelineResultTypes.Output);
+
+                            pipeline.Commands.Add(command);
+                        }
+
+                        pipeline.Output.DataReady += HandleDataReady;
+                        pipeline.Error.DataReady += HandleErrorReady;
+
+                        var result = pipeline.Invoke();
+
+                        ExecutionError = pipeline.HadErrors;
+                    }
+                } catch (ParseException ex) {
+                    // This should only happen in case of script syntax errors
+                    if (ErrorReady != null) {
+                        ErrorReady(this, new Collection<object> { ex.Message });
                     }
                 }
             }
         }
 
-        private async Task RunPowerShellAsync(string script, PowerShell shell, CancellationToken cancellationToken) {
-            SetExecutionPolicy(shell);
+        private void HandleErrorReady(object sender, EventArgs e) {
+            var reader = sender as PipelineReader<object>;
 
-            SetProgressPreference(shell);
+            if (reader != null) {
+                while (reader.Count > 0) {
 
-            ReplaceWriteHost(shell);
+                    var item = reader.Read();
 
-            if (MeasureCommand) {
-                shell.Commands.AddScript("Measure-Command {" + script + "}");
-            } else {
-                shell.Commands.AddScript(script);
-            }
+                    if (item != null) {
 
-            // capture errors
-            shell.Streams.Error.DataAdded += (sender, args) => {
-                var error = shell.Streams.Error[args.Index];
-                string src = error.InvocationInfo.MyCommand?.ToString() ?? error.InvocationInfo.InvocationName;
-                OnError($"{src}: {error}\n{error.InvocationInfo.PositionMessage}");
-            };
-
-            // capture write-* methods (except write-host)
-            shell.Streams.Warning.DataAdded += (sender, args) => OnWarning(shell.Streams.Warning[args.Index].Message);
-            shell.Streams.Debug.DataAdded += (sender, args) => OnDebug(shell.Streams.Debug[args.Index].Message);
-            shell.Streams.Verbose.DataAdded += (sender, args) => OnVerbose(shell.Streams.Verbose[args.Index].Message);
-
-            var outputData = new PSDataCollection<PSObject>();
-            outputData.DataAdded += (sender, args) => {
-                // capture all main output
-                object data = outputData[args.Index]?.BaseObject;
-                if (data != null) {
-                    OnOutput(data.ToString());
+                        if (ErrorReady != null) {
+                            ErrorReady(this, new[] { item });
+                        }
+                    }
                 }
-            };
-
-            try {
-                var invocationSettings = new PSInvocationSettings { ErrorActionPreference = ActionPreference.Stop };
-
-                cancellationToken.Register(shell.Stop);
-
-                var task = Task.Factory.FromAsync(
-                    shell.BeginInvoke<PSObject, PSObject>(null, outputData, invocationSettings, result => { shell.EndInvoke(result); }, null),
-                    _ => {
-                        // dummy delegate to satisfy TPL
-                    });
-
-                await task.ConfigureAwait(false);
-
-                ExecutionError = shell.HadErrors;
-
-                Result = outputData.FirstOrDefault()?.ToString();
-            } catch (ParseException ex) {
-                // this should only happen in case of script syntax errors, otherwise
-                // errors would be output via the invoke's error stream 
-                OnError($"{ex.Message}");
             }
+        }
 
+        private void HandleDataReady(object sender, EventArgs e) {
+            PipelineReader<PSObject> reader = sender as PipelineReader<PSObject>;
+
+            if (reader != null) {
+                while (reader.Count > 0) {
+                    var item = reader.Read();
+
+                    if (item != null) {
+                        WarningRecord warningRecord = item.BaseObject as WarningRecord;
+                        if (warningRecord != null) {
+                            OnWarning(warningRecord);
+                            continue;
+                        }
+
+                        var verboseRecord = item.BaseObject as VerboseRecord;
+                        if (verboseRecord != null) {
+                            OnVerbose(verboseRecord);
+                            continue;
+                        }
+
+                        var debugRecord = item.BaseObject as DebugRecord;
+                        if (debugRecord != null) {
+                            OnDebug(debugRecord);
+                            continue;
+                        }
+
+                        var informationRecord = item.BaseObject as InformationRecord;
+                        if (informationRecord != null) {
+                            OnInfo(informationRecord);
+                            continue;
+                        }
+
+                        Result = item.ToString();
+
+                        if (DataReady != null) {
+                            DataReady(this, new[] { item });
+                        }
+                    }
+                }
+            }
         }
 
         private static void SetExecutionPolicy(PowerShell shell) {
@@ -119,35 +152,26 @@ namespace Aderant.Build {
                 .Invoke();
         }
 
-        private static void ReplaceWriteHost(PowerShell shell) {
-            // Write host is not supported in re-hosted scenarios - redirect host to the output stream
-            shell.AddScript("function global:Write-Host() { Write-Output $args }");
-        }
-
         private void SetProgressPreference(PowerShell shell) {
             if (!string.IsNullOrWhiteSpace(ProgressPreference)) {
                 shell.AddScript($"$ProgressPreference = '{ProgressPreference}'");
             }
         }
 
-        private void OnOutput(string e) {
-            Output?.Invoke(this, e);
-        }
-
-        private void OnVerbose(string e) {
+        private void OnVerbose(VerboseRecord e) {
             Verbose?.Invoke(this, e);
         }
 
-        private void OnDebug(string e) {
+        private void OnDebug(DebugRecord e) {
             Debug?.Invoke(this, e);
         }
 
-        private void OnWarning(string e) {
+        private void OnWarning(WarningRecord e) {
             Warning?.Invoke(this, e);
         }
 
-        protected virtual void OnError(string e) {
-            Error?.Invoke(this, e);
+        private void OnInfo(InformationRecord e) {
+            Info?.Invoke(this, e);
         }
     }
 }
