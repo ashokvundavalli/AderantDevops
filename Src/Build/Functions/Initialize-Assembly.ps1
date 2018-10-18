@@ -16,13 +16,14 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
     try {
         [System.IO.File]::OpenWrite($aderantBuildAssembly).Close()
     } catch {
-        Write-Debug "Skipped compiling $aderantBuildAssembly due to file lock."
+        Write-Warning "Skipped compiling $aderantBuildAssembly due to file lock."
         return
     }
   
-	$build = [System.Reflection.Assembly]::Load("Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-	$buildEngine = [System.Reflection.Assembly]::Load("Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-    $buildUtilities = [System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+	[void][System.Reflection.Assembly]::Load("Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+	[void][System.Reflection.Assembly]::Load("Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+    [void][System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+
     $toolsVersion = "14.0";
     Write-Debug "Loaded MS Build 14.0"   
     $projectPath = [System.IO.Path]::Combine($buildScriptDirectory, "Aderant.Build.Common.targets")
@@ -37,6 +38,7 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
 	$globals.Add("nologo", $null)
 	$globals.Add("nr", "false")
 	$globals.Add("m", $null)
+    $globals.Add("project-set", "minimal")
 
 	$params = new-object Microsoft.Build.Execution.BuildParameters
 	$params.Loggers=$arraylog
@@ -47,7 +49,8 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
 	
 	$request = new-object Microsoft.Build.Execution.BuildRequestData($projectPath, $globals, $toolsVersion, $targets, $null)
 	
-	[Microsoft.Build.Execution.BuildManager]::DefaultBuildManager.Build($params, $request)
+	$manager = [Microsoft.Build.Execution.BuildManager]::DefaultBuildManager
+    $manager.Build($params, $request)    
 }
 
 function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$loadAsModule) {

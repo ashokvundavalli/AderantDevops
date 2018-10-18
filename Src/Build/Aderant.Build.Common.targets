@@ -5,15 +5,6 @@
   DefaultTargets="PrepareBuildEnvironment"
   TreatAsLocalProperty="BuildScriptsDirectory;BuildToolsDirectory;BuildNumber">
 
-  <PropertyGroup Label="TeamBuild">
-    <SkipWorkItemCreation>true</SkipWorkItemCreation>
-    <!-- We need a custom task for this as this will associate all work items to a build even if the build doesn't relate to the work item -->
-    <UpdateAssociatedWorkItems>false</UpdateAssociatedWorkItems>
-    <StopOnFirstFailure>true</StopOnFirstFailure>
-    <StopOnTestFailure>true</StopOnTestFailure>
-    <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
-  </PropertyGroup>
-
   <PropertyGroup>
     <IsDesktopBuild Condition="'$(IsDesktopBuild)' == ''">true</IsDesktopBuild>
 
@@ -79,9 +70,9 @@
 
     <ItemGroup>
       <!-- Desktop/Common projects -->
-      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj" />
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build\Aderant.Build.csproj" />
-      <Projects Include="$(BuildSourcesDirectory)TrxerConsole\TrxerConsole.csproj" />
+      <Projects Include="$(BuildSourcesDirectory)FxCopCmd\FxCopCmd.csproj" Condition="'$(project-set)' != 'minimal'" />
+      <Projects Include="$(BuildSourcesDirectory)TrxerConsole\TrxerConsole.csproj" Condition="'$(project-set)' != 'minimal'" />
 
       <!-- Server/CI projects -->
       <Projects Include="$(BuildSourcesDirectory)Aderant.Build.Tasks\Aderant.Build.Tasks.csproj" Condition="'$(IsDesktopBuild)' == 'false'" />
@@ -96,16 +87,7 @@
       Projects="@(Projects)"
       BuildInParallel="true"
       UnloadProjectsOnCompletion="true"
-      Properties="$(PrepareBuildEnvironmentProperties)"
-      Condition="'$(Rebuild)' != 'true'" />
-
-    <MSBuild
-      Projects="@(Projects)"
-      BuildInParallel="true"
-      UnloadProjectsOnCompletion="true"
-      Properties="$(PrepareBuildEnvironmentProperties)"
-      Targets="Rebuild"
-      Condition="'$(Rebuild)' == 'true'" />
+      Properties="$(PrepareBuildEnvironmentProperties)" />
 
     <CheckFreeSpace Condition="'$(IsDesktopBuild)' != 'true'"
       FreeSpace="10"
