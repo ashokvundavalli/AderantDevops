@@ -354,9 +354,7 @@ Should not be used as it prevents incremental builds which increases build times
 
         Write-Host " Build: " -NoNewline
 
-        if (-not $succeded -or $context.BuildStatus -eq "Failed") {
-            $global:LASTEXITCODE = 1
-
+        if ($global:LASTEXITCODE -gt 0 -or -not $succeded -or $context.BuildStatus -eq "Failed") {            
             Write-Host "[" -NoNewline
             Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
             Write-Host "]"

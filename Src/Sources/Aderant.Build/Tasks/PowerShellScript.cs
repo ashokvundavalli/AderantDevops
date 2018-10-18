@@ -50,10 +50,10 @@ namespace Aderant.Build.Tasks {
 
                 try {
                     if (RunScript(variables, Log, thisTaskExecutingDirectory)) {
-                        FailTask();
+                        FailTask(null);
                     }
-                } catch {
-                    FailTask();
+                } catch (Exception ex) {
+                    FailTask(ex);
                 }
 
                 return !Log.HasLoggedErrors;
@@ -62,9 +62,12 @@ namespace Aderant.Build.Tasks {
             }
         }
 
-        private void FailTask() {
-
+        private void FailTask(Exception exception) {
             Log.LogError("Execution of script: '{0}' failed.", ScriptBlock);
+
+            if (exception != null) {
+                Log.LogErrorFromException(exception);
+            }
 
             using (var proxy = GetProxy()) {
                 proxy.SetStatus("Failed", OnErrorReason);

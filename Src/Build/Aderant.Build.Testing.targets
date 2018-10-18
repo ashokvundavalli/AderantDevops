@@ -45,9 +45,6 @@
     </PropertyGroup>
   </Target>
 
-  <Target Name="AfterTests" AfterTargets="RunTests">
-    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test" />
-  </Target>
 
   <Target Name="RunTests"
           Outputs="%(SolutionRoots.Identity)"
@@ -79,6 +76,8 @@
 
       <UnitTestAssemblies>@(TestAssemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
     </PropertyGroup>
+
+    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test" />
 
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
     <PowerShellScript
