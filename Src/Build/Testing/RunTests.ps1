@@ -157,17 +157,20 @@ try {
     $runner.Start()
     $global:LASTEXITCODE = $runner.Wait($true, [System.Timespan]::FromMinutes(20).TotalMilliseconds)
 } finally {
-    if ($Error) {
-        Write-Error $Error[0]
+    try {
+        [System.IO.File]::Delete($runSettingsFile)
+    } catch {
     }
-
-    [System.IO.File]::Delete($runSettingsFile)
 
     if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
             ShowTestRunReport
         }        
 
-        Write-Error "Test execution exit code: $($global:LASTEXITCODE)"
-    } 
+        Write-Error "Test runner exit code: $($global:LASTEXITCODE)"        
+    } else {
+        if ($Error) {
+            Write-Error $Error[0]
+        }
+    }
 }

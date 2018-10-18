@@ -70,9 +70,11 @@ namespace Aderant.Build {
                         pipeline.Output.DataReady += HandleDataReady;
                         pipeline.Error.DataReady += HandleErrorReady;
 
-                        var result = pipeline.Invoke();
-
-                        HadErrors = pipeline.HadErrors;
+                        try {
+                            var result = pipeline.Invoke();
+                        } finally {
+                            HadErrors = pipeline.HadErrors;
+                        }
                     }
                 } catch (ParseException ex) {
                     // This should only happen in case of script syntax errors

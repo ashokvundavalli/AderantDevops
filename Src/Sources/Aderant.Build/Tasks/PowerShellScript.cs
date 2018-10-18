@@ -48,17 +48,26 @@ namespace Aderant.Build.Tasks {
                     Log.LogMessage(MessageImportance.Normal, "Executing script:\r\n{0}", ScriptBlock);
                 }
 
-                if (RunScript(variables, Log, thisTaskExecutingDirectory)) {
-                    Log.LogError("Execution of script: '{0}' failed.", ScriptBlock);
-
-                    using (var proxy = GetProxy()) {
-                        proxy.SetStatus("Failed", OnErrorReason);
+                try {
+                    if (RunScript(variables, Log, thisTaskExecutingDirectory)) {
+                        FailTask();
                     }
+                } catch {
+                    FailTask();
                 }
 
                 return !Log.HasLoggedErrors;
             } finally {
                 BuildEngine3.Reacquire();
+            }
+        }
+
+        private void FailTask() {
+
+            Log.LogError("Execution of script: '{0}' failed.", ScriptBlock);
+
+            using (var proxy = GetProxy()) {
+                proxy.SetStatus("Failed", OnErrorReason);
             }
         }
 

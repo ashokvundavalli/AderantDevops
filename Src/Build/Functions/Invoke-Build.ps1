@@ -1,4 +1,6 @@
-﻿$indent1 = "  "
+﻿# This file is run by an CI agent. The CI agent PowerShell runner does not subscribe to Write-Information.
+
+$indent1 = "  "
 $indent2 = "        "
 
 function ApplyBranchConfig($context, $root) {
@@ -338,8 +340,8 @@ Should not be used as it prevents incremental builds which increases build times
         }
     } catch {
         $succeded = $false        
-    } finally {         
-        Write-Information "##vso[task.uploadfile]$($context.LogFile)"
+    } finally {        
+        Write-Host "##vso[task.uploadfile]$($context.LogFile)"        
 
         $host.UI.RawUI.ForegroundColor = $currentColor
 
