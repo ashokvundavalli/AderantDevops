@@ -15,7 +15,7 @@ namespace Aderant.Build {
         /// </summary>
         public string Result { get; set; }
 
-        public bool ExecutionError { get; private set; }
+        public bool HadErrors { get; private set; }
 
         public event EventHandler<ICollection<PSObject>> DataReady;
 
@@ -72,7 +72,7 @@ namespace Aderant.Build {
 
                         var result = pipeline.Invoke();
 
-                        ExecutionError = pipeline.HadErrors;
+                        HadErrors = pipeline.HadErrors;
                     }
                 } catch (ParseException ex) {
                     // This should only happen in case of script syntax errors

@@ -24,7 +24,7 @@ namespace UnitTest.Build {
 
             executor.RunScript(new[] { "Write-Error 'Oh no'" }, null);
 
-            var executorResult = executor.ExecutionError;
+            var executorResult = executor.HadErrors;
 
             Assert.IsTrue(executorResult);
         }

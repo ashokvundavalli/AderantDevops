@@ -338,7 +338,9 @@ Should not be used as it prevents incremental builds which increases build times
         }
     } catch {
         $succeded = $false        
-    } finally {
+    } finally {         
+        Write-Information "##vso[task.uploadfile]$($context.LogFile)"
+
         $host.UI.RawUI.ForegroundColor = $currentColor
 
         $context = $contextService.CurrentContext

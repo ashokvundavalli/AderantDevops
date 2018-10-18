@@ -97,7 +97,7 @@ namespace Aderant.Build.Tasks {
                 // Cancellation was requested
             }
 
-            return pipelineExecutor.ExecutionError;
+            return pipelineExecutor.HadErrors;
         }
 
         private static void AttachLogger(TaskLoggingHelper log, PowerShellPipelineExecutor pipelineExecutor) {
