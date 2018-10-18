@@ -32,6 +32,8 @@ param(
 
 Set-StrictMode -Version "Latest"
 
+$InformationPreference = "Continue"
+
 function CreateRunSettingsXml() {
     [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
     $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
@@ -61,10 +63,9 @@ function CreateRunSettingsXml() {
 
 function FindAndDeployReferences([string[]] $testAssemblies) {
     if ($ReferencesToFind -and $script:ReferencePaths) {
+    Write-Information "Finding references... $ReferencesToFind"
+
         [void][System.Reflection.Assembly]::Load("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-
-        Write-Information "Finding references... $ReferencesToFind"
-
         # Create the paths to drop references into
         $destinationPaths = [System.Collections.Generic.HashSet[System.String]]::new()
         foreach ($testAssemblyFile in $testAssemblies) {
