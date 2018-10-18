@@ -20,7 +20,7 @@ namespace Aderant.Build.Tasks {
 
         public string[] TaskObjects { get; set; }
 
-        public bool LogScript { get; private set; } = true;
+        public bool LogScript { get; set; } = true;
 
         [Output]
         public string Result { get; set; }

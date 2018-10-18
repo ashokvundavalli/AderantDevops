@@ -27,11 +27,12 @@ namespace Aderant.Build.Utilities {
 
         public override void Start(bool exitOnCancelKeyPress) {
             currentForegroundColor = Console.ForegroundColor;
+
             base.Start(exitOnCancelKeyPress);
         }
 
         public void Start() {
-            base.Start(true);
+            this.Start(true);
         }
 
         private bool ColorizeTestResultLine(string singleLine) {
