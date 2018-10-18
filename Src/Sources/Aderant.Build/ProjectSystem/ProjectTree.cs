@@ -179,7 +179,6 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void OrphanProject(ConfiguredProject configuredProject) {
-            System.Diagnostics.Debugger.Launch();
             configuredProject.IncludeInBuild = false;
             logger.Warning($"Orphaned project: '{configuredProject.FullPath}' identified.");
             this.orphanedProjects.Add(configuredProject);

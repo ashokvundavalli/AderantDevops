@@ -67,14 +67,16 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
 
         # Create the paths to drop references into
         $destinationPaths = [System.Collections.Generic.HashSet[System.String]]::new()
-        foreach ($file in $testAssemblies) {
-            $file = [System.IO.FileInfo]$file
+        foreach ($testAssemblyFile in $testAssemblies) {
+            $file = [System.IO.FileInfo]::new($testAssemblyFile)
             [void]$destinationPaths.Add($file.Directory.FullName)
         }
 
         $files = @()
         foreach ($path in $script:ReferencePaths) {
-            $files += Get-ChildItem -LiteralPath $path -Filter "*.dll" -Recurse
+            if ([System.IO.Directory]::Exists($path)) {
+                $files += Get-ChildItem -LiteralPath $path -Filter "*.dll" -Recurse
+            }
         }     
 
         # Find the reference in our search space  then drop it into our directory which contains the test assembly
@@ -130,9 +132,8 @@ function ShowTestRunReport() {
 
 Set-StrictMode -Version Latest
 
+$started = $false
 $beforeRunTrxFiles = GetTestResultFiles
-
-$global:LASTEXITCODE = -1
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = $PathToTestTool
@@ -156,7 +157,10 @@ try {
     # Implemented in C# for performance
     $runner = [Aderant.Build.Utilities.ProcessRunner]::InvokeTestRunner($startInfo)
     $runner.RecordConsoleOutput = $true
-    $runner.Start()
+    $runner.Start()    
+
+    $started = $true
+
     $global:LASTEXITCODE = $runner.Wait($true, [System.Timespan]::FromMinutes(20).TotalMilliseconds)
 } finally {
     try {
@@ -164,7 +168,7 @@ try {
     } catch {
     }
 
-    if ($global:LASTEXITCODE -ne 0) {
+    if ($started -and $global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
             ShowTestRunReport
         }        

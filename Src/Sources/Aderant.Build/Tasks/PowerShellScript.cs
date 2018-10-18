@@ -26,7 +26,6 @@ namespace Aderant.Build.Tasks {
         public string Result { get; set; }
 
         public override bool Execute() {
-            System.Diagnostics.Debugger.Launch();
             try {
                 BuildEngine3.Yield();
 
