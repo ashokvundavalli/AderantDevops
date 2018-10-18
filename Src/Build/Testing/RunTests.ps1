@@ -99,7 +99,9 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
 }
 
 function GetTestResultFiles() {
-    return Get-ChildItem -LiteralPath "$WorkingDirectory\TestResults" -Filter "*.trx" -ErrorAction SilentlyContinue
+    $path = "$WorkingDirectory\TestResults"    
+    [System.IO.Directory]::CreateDirectory($path)
+    return Get-ChildItem -LiteralPath $path -Filter "*.trx" -ErrorAction SilentlyContinue
 }
 
 function ShowTestRunReport() {
@@ -124,11 +126,11 @@ function ShowTestRunReport() {
             & "start" $report
         }
     }
-} 
-
-$beforeRunTrxFiles = GetTestResultFiles
+}
 
 Set-StrictMode -Version Latest
+
+$beforeRunTrxFiles = GetTestResultFiles
 
 $global:LASTEXITCODE = -1
 

@@ -63,7 +63,7 @@ namespace Aderant.Build.Tasks {
         }
 
         private void FailTask(Exception exception) {
-            Log.LogError("Execution of script: '{0}' failed.", ScriptBlock);
+            Log.LogError("[Error] Execution of script: '{0}' failed.", ScriptBlock);
 
             if (exception != null) {
                 Log.LogErrorFromException(exception);
