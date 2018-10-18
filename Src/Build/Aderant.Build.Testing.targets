@@ -83,6 +83,7 @@
     <PowerShellScript
       ScriptBlock='
 $ErrorActionPreference = "Stop"
+$InformationPreference = "Continue"
       
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"

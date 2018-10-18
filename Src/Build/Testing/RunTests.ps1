@@ -32,19 +32,17 @@ param(
 
 Set-StrictMode -Version "Latest"
 
-$InformationPreference = "Continue"
-
 function CreateRunSettingsXml() {
     [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
     $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
 
     if (-not $script:ReferencePaths -and $SolutionRoot) {
         #TODO: Drop dependencies
-        $script:ReferencePaths = @([System.IO.Path]::Combine($SolutionRoot, "packages"), [System.IO.Path]::Combine($SolutionRoot, "dependencies"))
+        $ReferencePaths = @([System.IO.Path]::Combine($SolutionRoot, "packages"), [System.IO.Path]::Combine($SolutionRoot, "dependencies"))
     }    
 
     if ($ReferencePaths) {
-        foreach ($path in $script:ReferencePaths) {
+        foreach ($path in $ReferencePaths) {
             $directoryElement = $xml.CreateElement("Directory")
             $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
             $directoryElement.SetAttribute("includeSubDirectories", "true")
@@ -62,7 +60,7 @@ function CreateRunSettingsXml() {
 }
 
 function FindAndDeployReferences([string[]] $testAssemblies) {
-    if ($ReferencesToFind -and $script:ReferencePaths) {
+    if ($ReferencesToFind -and $ReferencePaths) {
     Write-Information "Finding references... $ReferencesToFind"
 
         [void][System.Reflection.Assembly]::Load("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
@@ -80,7 +78,7 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
             }
         }     
 
-        # Find the reference in our search space  then drop it into our directory which contains the test assembly
+        # Find the reference in our search space then drop it into our directory which contains the test assembly
         foreach ($reference in $ReferencesToFind) {
             # To be correct we should also support .exe and .winmd...
             $dllName = [System.IO.Path]::ChangeExtension($reference, "dll")             
