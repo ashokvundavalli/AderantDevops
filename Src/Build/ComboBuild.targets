@@ -56,7 +56,7 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
-      GrovelForInfluenceFiles;
+      GrovelForExtensibilityFiles;
       CreatePlan;
       ExecutePlan;
       RunTests;
