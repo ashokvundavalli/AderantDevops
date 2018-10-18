@@ -152,16 +152,10 @@ try {
     Write-Information "$($startInfo.FileName) $($startInfo.Arguments)"
 
     # Implemented in C# for performance
-    $runner = [Aderant.Build.Utilities.ProcessRunner]::RunTestProcess($startInfo)
+    $runner = [Aderant.Build.Utilities.ProcessRunner]::InvokeTestRunner($startInfo)
     $runner.RecordConsoleOutput = $true
     $runner.Start()
-
-    #$fn = $startInfo.FileName
-    #$arg = $startInfo.Arguments
-
-    #Start-Process -FilePath $startInfo.FileName -ArgumentList $startInfo.Arguments -Wait -NoNewWindow
-
-    $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
+    $global:LASTEXITCODE = $runner.Wait($true, [System.Timespan]::FromMinutes(20).TotalMilliseconds)
 } finally {
     if ($Error) {
         Write-Error $Error[0]

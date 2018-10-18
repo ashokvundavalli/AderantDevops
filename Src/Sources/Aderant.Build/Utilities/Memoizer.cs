@@ -6,8 +6,8 @@ using System.Threading;
 namespace Aderant.Build.Utilities {
 
     public static class ProcessRunner {
-        public static ProcessInvoker RunTestProcess(ProcessStartInfo startInfo) {
-            return new TestProcessInvoker(startInfo);
+        public static ProcessInvoker InvokeTestRunner(ProcessStartInfo startInfo) {
+            return new VsTestProcessInvoker(startInfo);
         }
     }
 

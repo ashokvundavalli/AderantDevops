@@ -33,17 +33,26 @@ namespace Aderant.Build.Utilities {
 
         public ProcessStartInfo StartInfo { get; }
 
-        public string FileName => StartInfo.FileName;
-        public string Arguments => StartInfo.Arguments;
+        public string FileName {
+            get { return StartInfo.FileName; }
+        }
 
-        public Action<string> OnOutputLine { get; set; }
+        public string Arguments {
+            get { return StartInfo.Arguments; }
+        }
+
+        public Action<string> LineOutput { get; set; }
         public Action<string> OnErrorLine { get; set; }
 
         public bool RecordConsoleOutput { get; set; }
 
-        public bool HasExited => process == null || process.HasExited;
+        public bool HasExited {
+            get { return process == null || process.HasExited; }
+        }
 
-        public int ProcessId => process.Id;
+        public int ProcessId {
+            get { return process.Id; }
+        }
 
         public void Dispose() {
             seenNullOutput?.Dispose();
@@ -55,7 +64,12 @@ namespace Aderant.Build.Utilities {
             seenNullOutput = null;
         }
 
-        public virtual void Start() {
+        public virtual void Start(bool exitOnCancelKeyPress) {
+            if (exitOnCancelKeyPress) {
+                ConsoleCancelEventHandler eventHandler = HandleCancelKeyPress;
+                Console.CancelKeyPress += eventHandler;
+            }
+
             seenNullOutput.Wait(0);
             seenNullError.Wait(0);
 
@@ -117,7 +131,7 @@ namespace Aderant.Build.Utilities {
                     seenNullOutput.Release();
                 } else {
                     RecordConsoleData(e.Data);
-                    OnOutputLine?.Invoke(e.Data);
+                    LineOutput?.Invoke(e.Data);
                 }
             } catch (ObjectDisposedException) {
                 ((System.Diagnostics.Process)sender).OutputDataReceived -= OutputDataReceived;
@@ -144,23 +158,38 @@ namespace Aderant.Build.Utilities {
             return process?.ExitCode ?? 1;
         }
 
-        public int? Wait(int milliseconds) {
+        public int? Wait(bool killOnDomainUnload, int milliseconds) {
             if (exitCode != null) {
                 return exitCode;
             }
 
-            var cts = new CancellationTokenSource(milliseconds);
-            try {
-                var t = WaitAsync(cts.Token);
-                try {
-                    t.Wait(cts.Token);
-                    return t.Result;
-                } catch (AggregateException ae) when (ae.InnerException != null) {
-                    throw ae.InnerException;
-                }
-            } catch (OperationCanceledException) {
-                return null;
+            if (killOnDomainUnload) {
+                AppDomain.CurrentDomain.DomainUnload += OnCurrentDomainOnDomainUnload;
+                AppDomain.CurrentDomain.ProcessExit += OnCurrentDomainOnDomainUnload;
             }
+
+            try {
+                using (var cts = new CancellationTokenSource(milliseconds)) {
+                    try {
+                        var t = WaitAsync(cts.Token);
+                        try {
+                            t.Wait(cts.Token);
+                            return t.Result;
+                        } catch (AggregateException ae) when (ae.InnerException != null) {
+                            throw ae.InnerException;
+                        }
+                    } catch (OperationCanceledException) {
+                        return null;
+                    }
+                }
+            } finally {
+                AppDomain.CurrentDomain.DomainUnload -= OnCurrentDomainOnDomainUnload;
+                AppDomain.CurrentDomain.ProcessExit -= OnCurrentDomainOnDomainUnload;
+            }
+        }
+
+        private void OnCurrentDomainOnDomainUnload(object sender, EventArgs args) {
+            Kill();
         }
 
         public async Task<int> WaitAsync(CancellationToken cancellationToken) {
@@ -183,6 +212,10 @@ namespace Aderant.Build.Utilities {
 
             Debug.Assert(process.HasExited, "Process still has not exited.");
             return process.ExitCode;
+        }
+
+        private void HandleCancelKeyPress(object sender, ConsoleCancelEventArgs e) {
+            Kill();
         }
     }
 }

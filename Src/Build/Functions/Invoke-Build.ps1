@@ -313,7 +313,8 @@ Should not be used as it prevents incremental builds which increases build times
 
     $succeded = $false
 
-    try {        
+    $currentColor = $host.UI.RawUI.ForegroundColor 
+    try {         
         $args = CreateToolArgumentString $context $RemainingArgs
 
         # When WhatIf specified just determine what would be built
@@ -338,6 +339,8 @@ Should not be used as it prevents incremental builds which increases build times
     } catch {
         $succeded = $false        
     } finally {
+        $host.UI.RawUI.ForegroundColor = $currentColor
+
         $context = $contextService.CurrentContext
         $reason = $context.BuildStatusReason
         $status = $context.BuildStatus

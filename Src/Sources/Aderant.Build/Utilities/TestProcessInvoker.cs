@@ -2,13 +2,13 @@
 using System.Diagnostics;
 
 namespace Aderant.Build.Utilities {
-    internal class TestProcessInvoker : ProcessInvoker {
+    internal class VsTestProcessInvoker : ProcessInvoker {
         private ConsoleColor currentForegroundColor;
 
-        public TestProcessInvoker(ProcessStartInfo startInfo)
+        public VsTestProcessInvoker(ProcessStartInfo startInfo)
             : base(startInfo) {
 
-            OnOutputLine += singleLine => {
+            LineOutput += singleLine => {
                 if (!string.IsNullOrEmpty(singleLine)) {
                     if (ColorizeTestResultLine(singleLine))
                         return;
@@ -22,14 +22,16 @@ namespace Aderant.Build.Utilities {
                 }
             };
 
-            OnErrorLine += singleLine => {
-                WriteInColor(singleLine, currentForegroundColor);
-            };
+            OnErrorLine += singleLine => { WriteInColor(singleLine, currentForegroundColor); };
         }
 
-        public override void Start() {
+        public override void Start(bool exitOnCancelKeyPress) {
             currentForegroundColor = Console.ForegroundColor;
-            base.Start();
+            base.Start(exitOnCancelKeyPress);
+        }
+
+        public void Start() {
+            base.Start(true);
         }
 
         private bool ColorizeTestResultLine(string singleLine) {
