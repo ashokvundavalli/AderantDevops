@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
@@ -23,7 +24,6 @@ namespace Aderant.Build.ProjectSystem {
     [ExportMetadata("Scope", nameof(ConfiguredProject))]
     [DebuggerDisplay("{ProjectGuid}::{FullPath}")]
     internal class ConfiguredProject : AbstractArtifact, IReference, IBuildDependencyProjectReference, IAssemblyReference {
-        private readonly IFileSystem fileSystem;
         private List<string> dirtyFiles;
 
         private Memoizer<ConfiguredProject, IReadOnlyList<Guid>> extractTypeGuids;
@@ -34,9 +34,8 @@ namespace Aderant.Build.ProjectSystem {
         private Lazy<ProjectRootElement> projectXml;
 
         [ImportingConstructor]
-        public ConfiguredProject(IProjectTree tree, IFileSystem fileSystem) {
+        public ConfiguredProject(IProjectTree tree) {
             Tree = tree;
-            this.fileSystem = fileSystem;
         }
 
         [Import]
@@ -79,6 +78,7 @@ namespace Aderant.Build.ProjectSystem {
                 if (extractTypeGuids != null) {
                     return extractTypeGuids.Evaluate(this);
                 }
+
                 return new Guid[0];
             }
         }
@@ -366,37 +366,13 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        //private void AddResolvedDependency(BuildDependenciesCollector collector, IUnresolvedReference existingUnresolvedItem, IReference dependency) {
-        //    collector.AddResolvedDependency(existingUnresolvedItem, dependency);
-
-        //    var dependencies = resolvedDependencies;
-        //    base.AddResolvedDependency();
-
-        //    if (dependencies != null) {
-        //        resolvedDependencies.Add(new ResolvedReference(this, existingUnresolvedItem, dependency));
-        //    }
-        //}
-
-        /// <summary>
-        /// Replaces resolved dependencies with an equivalent one from the provided set.
-        /// </summary>
-        public void ReplaceDependencies(IReadOnlyCollection<IDependable> dependables, IEqualityComparer<IDependable> comparer) {
-            //foreach (var r in resolvedDependencies) {
-            //    foreach (var item in dependables) {
-            //        if (comparer.Equals(r.ResolvedReference, item) && !ReferenceEquals(r.ResolvedReference, item)) {
-            //            r.ReplaceReference(item);
-            //        }
-            //    }
-            //}
-        }
-
         public void CalculateDirtyStateFromChanges(IReadOnlyCollection<ISourceChange> changes) {
             MarkThisFileDirty(changes);
 
             if (IsDirty) {
                 return;
             }
-            
+
             // check if this proj contains needed files
             List<ProjectItem> items = new List<ProjectItem>();
 
@@ -424,12 +400,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void MarkDirty() {
             IsDirty = true;
-            if (BuildReason == null) {
-                BuildReason = new BuildReason();
-                BuildReason.Flags = DependencyAnalyzer.BuildReason.ProjectFileChanged;
-            } else {
-                BuildReason.Flags |= DependencyAnalyzer.BuildReason.ProjectFileChanged;
-            }
+            this.SetReason(DependencyAnalyzer.BuildReasonTypes.ProjectFileChanged);
         }
 
         private void MarkThisFileDirty(IReadOnlyCollection<ISourceChange> changes) {
@@ -460,7 +431,22 @@ namespace Aderant.Build.ProjectSystem {
 
     internal class BuildReason {
         public string Tag { get; set; }
-        public DependencyAnalyzer.BuildReason Flags { get; set; }
+        public DependencyAnalyzer.BuildReasonTypes Flags { get; set; }
+    }
+
+    internal static class BuildReasonExtensions {
+
+        public static void SetReason(this ConfiguredProject project, BuildReasonTypes reasonTypes, string tag = null) {
+            if (project.BuildReason == null) {
+                project.BuildReason = new BuildReason { Flags = reasonTypes };
+            } else {
+                project.BuildReason.Flags |= reasonTypes;
+            }
+
+            if (tag != null) {
+                project.BuildReason.Tag = tag;
+            }
+        }
     }
 
 }

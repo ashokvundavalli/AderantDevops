@@ -29,7 +29,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public IBuildPipelineService PipelineService { get; set; }
 
-        public Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
+        public Project CreateProject(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph) {
             bool isPullRequest = context.BuildMetadata.IsPullRequest;
             bool isDesktopBuild = context.IsDesktopBuild;
 
@@ -48,6 +48,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (PipelineService != null) {
                 foreach (IDependable dependable in projectsInDependencyOrder) {
                     ConfiguredProject configuredProject = dependable as ConfiguredProject;
+
                     if (configuredProject != null) {
                         PipelineService.TrackProject(
                             configuredProject.ProjectGuid,
@@ -61,6 +62,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
                 projectsInDependencyOrder,
+                analysisContext,
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
@@ -237,7 +239,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                                 return;
                             }
 
-                            MarkDirty(tag, project, BuildReason.ArtifactsNotFound);
+                            MarkDirty(tag, project, BuildReasonTypes.ArtifactsNotFound);
                             return;
                         }
                     }
@@ -245,11 +247,11 @@ namespace Aderant.Build.DependencyAnalyzer {
                     logger.Info($"No artifacts exist for: {stateFileKey} or there are no project outputs.");
                 }
 
-                MarkDirty(tag, project, BuildReason.ProjectOutputNotFound);
+                MarkDirty(tag, project, BuildReasonTypes.ProjectOutputNotFound);
                 return;
             }
 
-            MarkDirty(tag, project, BuildReason.BuildTreeNotFound);
+            MarkDirty(tag, project, BuildReasonTypes.BuildTreeNotFound);
         }
 
         private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
@@ -293,29 +295,31 @@ namespace Aderant.Build.DependencyAnalyzer {
             return null;
         }
 
-        private static void MarkDirty(string tag, ConfiguredProject project, BuildReason reason) {
+        private static void MarkDirty(string tag, ConfiguredProject project, BuildReasonTypes reasonTypes) {
             project.IsDirty = true;
             project.IncludeInBuild = true;
-
-            if (project.BuildReason == null) {
-                project.BuildReason = new ProjectSystem.BuildReason { Flags = reason };
-            } else {
-                project.BuildReason.Flags |= reason;
-            }
-
-            project.BuildReason.Tag = tag;
+            project.SetReason(reasonTypes, tag);
         }
 
         /// <summary>
         /// According to options, find out which projects are selected to build.
         /// </summary>
         /// <param name="visualStudioProjects">All the projects list.</param>
+        /// <param name="analysisContext"></param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="dependencyProcessing">
         /// Build the directly affected downstream projects, or recursively search for all
         /// downstream projects, or none?
         /// </param>
-        private List<IDependable> GetProjectsBuildList(List<IDependable> visualStudioProjects, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
+        internal IReadOnlyCollection<IDependable> GetProjectsBuildList(IReadOnlyCollection<IDependable> visualStudioProjects, AnalysisContext analysisContext, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
+            var projects = visualStudioProjects.OfType<ConfiguredProject>().ToList();
+
+            if (analysisContext != null) {
+                if (analysisContext.ExtensibilityImposition != null) {
+                    ApplyExtensibilityImposition(analysisContext.ExtensibilityImposition, projects);
+                }
+            }
+
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty == true).Select(x => x.Id).ToList();
             HashSet<string> h = new HashSet<string>();
@@ -332,7 +336,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
-            List<IDependable> filteredProjects;
+            IReadOnlyCollection<IDependable> filteredProjects;
             if (changesToConsider == ChangesToConsider.None) {
                 filteredProjects = visualStudioProjects;
             } else {
@@ -342,8 +346,23 @@ namespace Aderant.Build.DependencyAnalyzer {
             return filteredProjects;
         }
 
+        private void ApplyExtensibilityImposition(ExtensibilityImposition extensibilityImposition, List<ConfiguredProject> visualStudioProjects) {
+            foreach (var file in extensibilityImposition.AlwaysBuildProjects) {
+                var fileNameOfProject = Path.GetFileName(file);
+
+                foreach (var project in visualStudioProjects) {
+                    if (string.Equals(fileNameOfProject, Path.GetFileName(project.FullPath), StringComparison.OrdinalIgnoreCase)) {
+                        project.IncludeInBuild = true;
+                        project.IsDirty = true;
+                        project.SetReason(BuildReasonTypes.AlwaysBuild);
+                    }
+                }
+            }
+        }
+
         private static StringBuilder DescribeChanges(IDependable dependable, StringBuilder sb) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
+
 
             if (configuredProject != null) {
                 if (sb == null) {
@@ -351,7 +370,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     sb.AppendLine("Projects to build:");
                 }
 
-                if (configuredProject.IncludeInBuild) {
+                if (configuredProject.IncludeInBuild || configuredProject.IsDirty) {
                     sb.AppendLine("* " + configuredProject.FullPath);
 
                     if (configuredProject.BuildReason != null) {
@@ -375,7 +394,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="allProjects">The full projects list.</param>
         /// <param name="projectsToFind">The project name hashset to search for.</param>
         /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
-        internal List<IDependable> MarkDirty(List<IDependable> allProjects, HashSet<string> projectsToFind) {
+        internal List<IDependable> MarkDirty(IReadOnlyCollection<IDependable> allProjects, HashSet<string> projectsToFind) {
             var p = allProjects
                 .Where(
                     x => (x as ConfiguredProject)?.GetDependencies()
@@ -386,11 +405,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 ConfiguredProject project = x as ConfiguredProject;
                 if (project != null) {
                     project.IsDirty = true;
-                    if (project.BuildReason == null) {
-                        project.BuildReason = new ProjectSystem.BuildReason { Flags = BuildReason.DependencyChanged };
-                    } else {
-                        project.BuildReason.Flags |= BuildReason.DependencyChanged;
-                    }
+                    project.SetReason(BuildReasonTypes.DependencyChanged);
                 }
             }
 
@@ -401,7 +416,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Recursively mark all projects in allProjects where the project depends on any one in projectsToFind until no more
         /// parent project is found.
         /// </summary>
-        internal void MarkDirtyAll(List<IDependable> allProjects, HashSet<string> projectsToFind) {
+        internal void MarkDirtyAll(IReadOnlyCollection<IDependable> allProjects, HashSet<string> projectsToFind) {
             int newCount = -1;
 
             List<IDependable> p;
@@ -416,12 +431,13 @@ namespace Aderant.Build.DependencyAnalyzer {
     }
 
     [Flags]
-    internal enum BuildReason {
+    internal enum BuildReasonTypes {
         None = 1,
         ProjectFileChanged = 2,
         BuildTreeNotFound = 4,
         ArtifactsNotFound = 8,
         ProjectOutputNotFound = 16,
         DependencyChanged = 32,
+        AlwaysBuild = 64,
     }
 }

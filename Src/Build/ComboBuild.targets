@@ -56,6 +56,7 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
+      GrovelForInfluenceFiles;
       CreatePlan;
       ExecutePlan;
       RunTests;
@@ -69,6 +70,15 @@
 
   <Target Name="CleanStagingDirectory" Condition="'$(IsDesktopBuild)' == 'false'">
     <RemoveDir Directories="$(ArtifactStagingDirectory)" />
+  </Target>
+
+
+  <Target Name="GrovelForExtensibilityFiles">
+
+    <ItemGroup>
+      <ExtensibilityFiles Include="$(SolutionRoot)**\dir.props" />
+    </ItemGroup>
+
   </Target>
 
 
@@ -103,6 +113,7 @@
       ContextEndpoint="$(ContextEndpoint)"
       ModulesDirectory="$(SolutionRoot)"
       BuildPlan="$(BuildPlan)"
+      ExtensibilityFiles="@(ExtensibilityFiles)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"

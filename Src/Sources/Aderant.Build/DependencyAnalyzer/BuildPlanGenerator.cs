@@ -88,7 +88,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         StopOnFirstFailure = true,
                         Projects = orchestrationFiles.GroupExecutionFile,
                         Properties = PropertyList.CreatePropertyString(
-                            "InstanceProjectFile=$(MSBuildThisFileFullPath)",
+                            "BuildPlanFile=$(MSBuildThisFileFullPath)",
                             $"{BuildGroupId}={buildGroupCount}",
                             "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
                             "BuildInParallel=$(BuildInParallel)",

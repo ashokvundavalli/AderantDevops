@@ -3,7 +3,7 @@
          DefaultTargets="DispatchToInnerBuild"
          ToolsVersion="14.0">
 
-  <Import Project="$(InstanceProjectFile)" />
+  <Import Project="$(BuildPlanFile)" />
   <Import Project="Aderant.Build.Common.targets" Condition="'$(AderantCommonTargetsImported)' != 'true'" />
 
   <PropertyGroup>
@@ -105,11 +105,11 @@
 
     <Message Text="Setting resume point to group $(BuildGroupId)" />
 
-    <XmlPoke XmlInputPath="$(InstanceProjectFile)"
+    <XmlPoke XmlInputPath="$(BuildPlanFile)"
              Namespaces="&lt;Namespace Prefix='n' Uri='http://schemas.microsoft.com/developer/msbuild/2003' Name='_' /&gt;"
              Query="/n:Project/n:PropertyGroup/n:ResumeGroupId"
              Value="$(BuildGroupId)"/>
 
-    </Target>
+  </Target>
   
 </Project>

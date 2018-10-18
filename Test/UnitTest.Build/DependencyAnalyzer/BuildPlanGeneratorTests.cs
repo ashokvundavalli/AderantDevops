@@ -36,10 +36,10 @@ namespace UnitTest.Build.DependencyAnalyzer {
         [TestMethod]
         public void SetUseCommonOutputDirectory_groups_by_solution_root() {
             var projects = new ConfiguredProject[] {
-                new TestConfiguredProject(null, null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
-                new TestConfiguredProject(null, null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
-                new TestConfiguredProject(null, null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar2" },
-                new TestConfiguredProject(null, null) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
+                new TestConfiguredProject(null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
+                new TestConfiguredProject(null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar" },
+                new TestConfiguredProject(null) { SolutionFile = "A.sln", OutputPath = @"..\..\Foo\Bar2" },
+                new TestConfiguredProject(null) { SolutionFile = "B.sln", OutputPath = @"..\..\Foo\Baz" },
             };
 
             BuildPlanGenerator.SetUseCommonOutputDirectory(projects);

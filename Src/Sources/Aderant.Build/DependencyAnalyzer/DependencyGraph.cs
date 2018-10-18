@@ -36,11 +36,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             return queue.ToList();
         }
 
-        public List<List<IDependable>> GetBuildGroups(List<IDependable> projects) {
+        public List<List<IDependable>> GetBuildGroups(IReadOnlyCollection<IDependable> projects) {
             return GetBuildGroupsInternal(projects);
         }
 
-        private static List<List<IDependable>> GetBuildGroupsInternal(List<IDependable> sortedQueue) {
+        private static List<List<IDependable>> GetBuildGroupsInternal(IReadOnlyCollection<IDependable> sortedQueue) {
             // Now find critical path...
             // What we do here is iterate the sorted list looking for elements with no dependencies. These are the zero level modules.
             // Then we iterate again and check if the module depends on any of the zero level modules but not on anything else. These are the
