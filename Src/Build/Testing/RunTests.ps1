@@ -91,8 +91,8 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
                     $destinationFile = [System.IO.Path]::Combine($path, $dllName)
 
                     if (-not [System.IO.File]::Exists($destinationFile)) {
-                        Write-Information "Found required file $($foundReferenceFile.FullName)"
-                        New-Item -ItemType HardLink -Name $destinationFile -Target $foundReferenceFile.FullName
+                        Write-Information "Found required file $($foundReferenceFile.FullName)"                        
+                        New-Item -Path $destinationFile -ItemType HardLink -Value $foundReferenceFile.FullName
                     }
                 }
             }            
@@ -177,7 +177,7 @@ try {
         Write-Error "Test runner exit code: $($global:LASTEXITCODE)"        
     } else {
         if ($Error) {
-            Write-Error $Error[0]
+            throw $Error[0]
         }
     }
 }
