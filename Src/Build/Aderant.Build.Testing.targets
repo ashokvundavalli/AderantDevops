@@ -63,7 +63,6 @@
       Condition="'$(Use32BitTestRunner)' == ''"
       Assemblies="@(TestAssemblies)">
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
-      <Output ItemName="ReferencesToFind" TaskParameter="ReferencesToFind" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
       <Output PropertyName="AssemblyPlatformDataKey" TaskParameter="AssemblyPlatformDataKey" />
     </GetAssemblyPlatform>
@@ -83,6 +82,7 @@
     <PowerShellScript
       ScriptBlock='
 $ErrorActionPreference = "Stop"
+$InformationPreference = "Continue"
       
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
@@ -90,7 +90,7 @@ $testRunDirectory = "$(TestRunDirectory)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
 $testFiles = $(UnitTestAssemblies)
-$referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind   
+$referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
     
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
     OnErrorReason="Test failure"

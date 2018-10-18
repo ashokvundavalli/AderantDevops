@@ -31,6 +31,7 @@ param(
 )
 
 Set-StrictMode -Version "Latest"
+$InformationPreference = "Continue"
 
 function CreateRunSettingsXml() {
     [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
@@ -38,11 +39,11 @@ function CreateRunSettingsXml() {
 
     if (-not $script:ReferencePaths -and $SolutionRoot) {
         #TODO: Drop dependencies
-        $ReferencePaths = @([System.IO.Path]::Combine($SolutionRoot, "packages"), [System.IO.Path]::Combine($SolutionRoot, "dependencies"))
+        $script:ReferencePaths = @([System.IO.Path]::Combine($SolutionRoot, "packages"), [System.IO.Path]::Combine($SolutionRoot, "dependencies"))
     }    
 
-    if ($ReferencePaths) {
-        foreach ($path in $ReferencePaths) {
+    if ($script:ReferencePaths) {
+        foreach ($path in $script:ReferencePaths) {
             $directoryElement = $xml.CreateElement("Directory")
             $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
             $directoryElement.SetAttribute("includeSubDirectories", "true")
@@ -60,8 +61,8 @@ function CreateRunSettingsXml() {
 }
 
 function FindAndDeployReferences([string[]] $testAssemblies) {
-    if ($ReferencesToFind -and $ReferencePaths) {
-    Write-Information "Finding references... $ReferencesToFind"
+    if ($ReferencesToFind -and $script:ReferencePaths) {
+        Write-Information "Finding references... $ReferencesToFind"
 
         [void][System.Reflection.Assembly]::Load("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
         # Create the paths to drop references into
