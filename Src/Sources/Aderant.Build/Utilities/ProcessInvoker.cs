@@ -65,6 +65,8 @@ namespace Aderant.Build.Utilities {
         }
 
         public virtual void Start(bool exitOnCancelKeyPress) {
+            System.Diagnostics.Debugger.Launch();
+
             if (exitOnCancelKeyPress) {
                 ConsoleCancelEventHandler eventHandler = HandleCancelKeyPress;
                 Console.CancelKeyPress += eventHandler;
@@ -159,7 +161,6 @@ namespace Aderant.Build.Utilities {
         }
 
         public int? Wait(bool killOnDomainUnload, int milliseconds) {
-            System.Diagnostics.Debugger.Launch();
             if (exitCode != null) {
                 return exitCode;
             }
