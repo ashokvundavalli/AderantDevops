@@ -113,45 +113,49 @@ function global:UpdateOrBuildAssembly {
         $Update
     )
 
-    Set-StrictMode -Version 'Latest'
-
-    try {
-        [void][Aderant.Build.BuildOperationContext]
-        return
-    } catch {
-        # Type not found - we need to bootstrap
+    begin {
+        Set-StrictMode -Version 'Latest'
     }
-
-    if ($Update) {
-        if ($Host.Name.Contains("ISE")) {    
-            # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
-
-            [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
-
-            Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
-
-            if ($branch -eq "master") {
-                Write-Host $branch -ForegroundColor Green -NoNewline
-                Write-Host "]`r`n"
-                & git -C $PSScriptRoot pull --ff-only
-            } else {
-                Write-Host $branch -ForegroundColor Yellow -NoNewline
-                Write-Host "]`r`n"
-            }
-
-            [string]$head = & git -C $PSScriptRoot rev-parse HEAD
-        
-            UpdateSubmodules $head
+    
+    process {
+        try {
+            [void][Aderant.Build.BuildOperationContext]
+            return
+        } catch {
+            # Type not found - we need to bootstrap
         }
+
+        if ($Update) {
+            if ($Host.Name.Contains("ISE")) {    
+                # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
+
+                [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
+
+                Write-Host "`r`nBuild.Infrastructure branch [" -NoNewline
+
+                if ($branch -eq "master") {
+                    Write-Host $branch -ForegroundColor Green -NoNewline
+                    Write-Host "]`r`n"
+                    & git -C $PSScriptRoot pull --ff-only
+                } else {
+                    Write-Host $branch -ForegroundColor Yellow -NoNewline
+                    Write-Host "]`r`n"
+                }
+
+                [string]$head = & git -C $PSScriptRoot rev-parse HEAD
+        
+                UpdateSubmodules $head
+            }
+        }
+
+        $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
+
+        BuildProjects $BuildScriptsDirectory $true
+
+        LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\Aderant.Build.dll" $true
+        LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\paket.exe" $false
+        LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\protobuf-net.dll" $false    
+
+        LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
     }
-
-    $assemblyPathRoot = [System.IO.Path]::Combine("$BuildScriptsDirectory\..\Build.Tools")
-
-    BuildProjects $BuildScriptsDirectory $true
-
-    LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\Aderant.Build.dll" $true
-    LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\paket.exe" $false
-    LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\protobuf-net.dll" $false    
-
-    LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
 }

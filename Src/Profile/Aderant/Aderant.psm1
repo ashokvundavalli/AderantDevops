@@ -9,9 +9,9 @@ function Initialize-BuildAssembly {
 Initialize-BuildAssembly
 
 # Import extensibility functions
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1" | Where-Object {$_.Extension -eq ".ps1" } | ForEach-Object { . $_.FullName }
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.ps1" | Where-Object {$_.Extension -eq ".ps1" } | ForEach-Object { . $_.FullName }
-Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.psm1" | Where-Object {$_.Extension -eq ".psm1" } | ForEach-Object { Import-Module $_.FullName -DisableNameChecking }
+Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\Build\Functions") -Filter "*.ps1" | Where-Object {$_.Extension -eq ".ps1" } | ForEach-Object { . $_.FullName; Write-Debug "Imported build function $($_.Name)" }
+Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filter "*.ps1" | ForEach-Object { . $_.FullName;Write-Debug "Imported profile function $($_.Name)" }
+Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Modules") -Filter "*.psm1" | ForEach-Object { Import-Module $_.FullName -DisableNameChecking;Write-Debug "Imported profile module $($_.Name)" }
 Update-FormatData -PrependPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
 
 $script:ShellContext = $null

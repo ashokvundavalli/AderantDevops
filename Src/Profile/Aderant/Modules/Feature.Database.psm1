@@ -10,73 +10,75 @@
 .PARAMETER backup
     The database backup to restore. Defaults to \\[Computer_Name]\C$\AderantExpert\DatabaseBackups\[database_name].bak.
 .EXAMPLE
-        Restore-ExpertDatabase -database Expert -databaseServer SVSQL306 -backup C:\Test\DatabaseBackup.bak
+    Restore-ExpertDatabase -database Expert -databaseServer SVSQL306 -backup C:\Test\DatabaseBackup.bak
     Will restore the Expert database on to the SVSQL306 SQL server.
 #>
-function Restore-ExpertDatabase {
+function global:Restore-ExpertDatabase {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact='high')]
     param(
-        [Parameter(Mandatory=$false)]
-        [Alias("name")]
-        [string]$database,
-        
-        [Parameter(Mandatory=$false)] 
-        [string]$serverInstance,
-        
-        [Parameter(Mandatory=$false)] 
-        [string]$backup
+        [Parameter(Mandatory=$false)][Alias("name")][string]$database,
+        [Parameter(Mandatory=$false)][string]$serverInstance,        
+        [Parameter(Mandatory=$false)][string]$backup,
+        [switch]$skipManifestImport
     )
 
-    $ErrorActionPreference = "Stop"
-
-    if ([string]::IsNullOrWhiteSpace($serverInstance)) {
-        $serverInstance = Get-DatabaseServer
+    begin {
+        Set-StrictMode -Version 'Latest'
+        $ErrorActionPreference = 'Stop'
     }
 
-    if ([string]::IsNullOrWhiteSpace($database)) {
-        $database = Get-Database
-    }
+    process {
+        if ([string]::IsNullOrWhiteSpace($serverInstance)) {
+            $serverInstance = Get-DatabaseServer
+        }
 
-    if ([string]::IsNullOrWhiteSpace($backup)) {
-        [string]$backupPath = "$global:BranchBinariesDirectory\Database"
-        $backup = Get-ChildItem -Path $backupPath -Recurse | ?{$_.extension -eq ".bak"} | Select-Object -First 1 | Select -ExpandProperty FullName
+        if ([string]::IsNullOrWhiteSpace($database)) {
+            $database = Get-Database
+        }
+
         if ([string]::IsNullOrWhiteSpace($backup)) {
-            Write-Error "No backup file found at: $backupPath"
-            return
+            [string]$backupPath = "$global:BranchBinariesDirectory\Database"
+            $backup = Get-ChildItem -Path $backupPath -Recurse | ?{$_.extension -eq ".bak"} | Select-Object -First 1 | Select -ExpandProperty FullName
+            if ([string]::IsNullOrWhiteSpace($backup)) {
+                Write-Error "No backup file found at: $backupPath"
+                return
+            }
         }
-    }
 
-    if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-        Install-Module SqlServer
-    }
-
-    Write-Host "Note: This is a database restore operation - the existing database will be replaced" -ForegroundColor Yellow
-
-    if (-not $env:ForceRestoreDatabase -or ($env:ForceRestoreDatabase -eq $false)) {
-        if (-not $PSCmdlet.ShouldProcess($database, "Restore Database: $database")) {
-            return
+        if (-not (Get-Module -ListAvailable -Name SqlServer)) {
+            Install-Module SqlServer
         }
-        [Environment]::SetEnvironmentVariable("ForceRestoreDatabase", "True", "User")
-    }
+
+        Write-Host "Note: This is a database restore operation - the existing database will be replaced" -ForegroundColor Yellow
+
+        if (-not $env:ForceRestoreDatabase -or ($env:ForceRestoreDatabase -eq $false)) {
+            if (-not $PSCmdlet.ShouldProcess($database, "Restore Database: $database")) {
+                return
+            }
+            [Environment]::SetEnvironmentVariable("ForceRestoreDatabase", "True", "User")
+        }
     
-    . $global:BranchBinariesDirectory\AutomatedDeployment\ProvisionDatabase.ps1 -serverInstance $serverInstance -databaseName $database -backupPath $backup
+        & $global:BranchBinariesDirectory\AutomatedDeployment\ProvisionDatabase.ps1 -serverInstance $serverInstance -databaseName $database -backupPath $backup
 
-    [string]$environmentManifest = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
+        if (-not $skipManifestImport.IsPresent) {
+            [string]$environmentManifest = [System.IO.Path]::Combine($global:BranchBinariesDirectory, "environment.xml")
 
-    if (Test-Path ($environmentManifest)) {
-        [xml]$environmentXml = Get-Content $environmentManifest
-        $environmentXml.environment.expertDatabaseServer.serverName = $env:COMPUTERNAME
-        $environmentXml.environment.expertDatabaseServer.databaseConnection.databaseName = $database
-        $environmentXml.environment.monitoringDatabaseServer.serverName = $env:COMPUTERNAME
-        $environmentXml.environment.monitoringDatabaseServer.databaseConnection.databaseName = "$($database)Monitoring"
-        $environmentXml.environment.workflowDatabaseServer.serverName = $env:COMPUTERNAME
-        $environmentXml.environment.workflowDatabaseServer.databaseConnection.databaseName = $database
+            if (Test-Path ($environmentManifest)) {
+                [xml]$environmentXml = Get-Content $environmentManifest
+                $environmentXml.environment.expertDatabaseServer.serverName = $env:COMPUTERNAME
+                $environmentXml.environment.expertDatabaseServer.databaseConnection.databaseName = $database
+                $environmentXml.environment.monitoringDatabaseServer.serverName = $env:COMPUTERNAME
+                $environmentXml.environment.monitoringDatabaseServer.databaseConnection.databaseName = "$($database)Monitoring"
+                $environmentXml.environment.workflowDatabaseServer.serverName = $env:COMPUTERNAME
+                $environmentXml.environment.workflowDatabaseServer.databaseConnection.databaseName = $database
 
-        $environmentXml.Save($environmentManifest)
+                $environmentXml.Save($environmentManifest)
 
-        Start-DeploymentEngine -command ImportEnvironmentManifest -serverName $serverInstance -databaseName $database
-    } else {
-        Write-Warning "No environment manifest found to import at: $($environmentManifest)"
+                Start-DeploymentEngine -command ImportEnvironmentManifest -serverName $serverInstance -databaseName $database
+            } else {
+                Write-Warning "No environment manifest found to import at: $($environmentManifest)"
+            }
+        }
     }
 }
 
@@ -136,7 +138,7 @@ function Restore-ExpertDatabase {
         Backup-ExpertDatabase -databaseServer LocalHost -database Test -backupPath C:\Temp\Test.bak
     Will backup the ExpertDatabase on SVSQL306 to C:\Temp\Test.bak
 #>
-function Backup-ExpertDatabase {
+function global:Backup-ExpertDatabase {
     param(
 		[Parameter(Mandatory=$false)][Alias("name")][String] $database,    
 		[Parameter(Mandatory=$false)][string]$serverInstance,
@@ -187,8 +189,8 @@ function Backup-ExpertDatabase {
 	}
 }
 
-Export-ModuleMember Restore-ExpertDatabase
-Export-ModuleMember Backup-ExpertDatabase 
+Export-ModuleMember -Function 'Restore-ExpertDatabase'
+Export-ModuleMember -Function 'Backup-ExpertDatabase'
 
 # Provides auto-complete for databases found on SQL Server
 Register-ArgumentCompleter -CommandName "Restore-ExpertDatabase" -ParameterName "database" -ScriptBlock $databaseNameScriptBlock
