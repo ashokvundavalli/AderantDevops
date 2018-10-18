@@ -91,8 +91,8 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
                     $destinationFile = [System.IO.Path]::Combine($path, $dllName)
 
                     if (-not [System.IO.File]::Exists($destinationFile)) {
-                        Write-Information "Found required file $foundReferenceFile"                        
-                        New-Item -ItemType HardLink -Name $destinationFile -Target $foundReferenceFile
+                        Write-Information "Found required file $($foundReferenceFile.FullName)"
+                        New-Item -ItemType HardLink -Name $destinationFile -Target $foundReferenceFile.FullName
                     }
                 }
             }            

@@ -55,7 +55,8 @@
     </PropertyGroup>
   
     <ItemGroup>
-      <TestAssemblies Include="$(TestRunDirectory)\Bin\TestRun\UnitTest*.dll" />
+      <TestAssemblies Include="$(TestRunDirectory)\Bin\TestRun\UnitTest*.dll"
+                      Exclude="$(TestRunDirectory)\Bin\TestRun\*Helpers.dll" />
     </ItemGroup>
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
