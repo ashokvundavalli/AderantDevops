@@ -158,7 +158,7 @@ try {
 
     #$fn = $startInfo.FileName
     #$arg = $startInfo.Arguments
-    
+
     #Start-Process -FilePath $startInfo.FileName -ArgumentList $startInfo.Arguments -Wait -NoNewWindow
 
     $global:LASTEXITCODE = $runner.Wait([System.Timespan]::FromMinutes(20).TotalMilliseconds)
@@ -167,7 +167,7 @@ try {
         Write-Error $Error[0]
     }
 
-    [System.IO.File]::Delete($runSettingsFile)    
+    [System.IO.File]::Delete($runSettingsFile)
 
     if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {

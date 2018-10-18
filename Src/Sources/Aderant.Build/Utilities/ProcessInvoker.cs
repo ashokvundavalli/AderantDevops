@@ -41,6 +41,10 @@ namespace Aderant.Build.Utilities {
 
         public bool RecordConsoleOutput { get; set; }
 
+        public bool HasExited => process == null || process.HasExited;
+
+        public int ProcessId => process.Id;
+
         public void Dispose() {
             seenNullOutput?.Dispose();
             seenNullError?.Dispose();
@@ -129,13 +133,15 @@ namespace Aderant.Build.Utilities {
             }
         }
 
-        public void Kill() {
+        public int Kill() {
             try {
                 if (process != null && !process.HasExited) {
                     process.Kill();
                 }
             } catch (SystemException) {
             }
+
+            return process?.ExitCode ?? 1;
         }
 
         public int? Wait(int milliseconds) {

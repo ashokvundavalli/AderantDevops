@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -36,30 +36,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string Branch { get; }
 
         public IEnumerable<ExpertModule> GetAll() {
-            var directories = fileSystem.GetDirectories(null, false);
+            // Ignore as we don't know the root location here.
+            yield break;
 
-            foreach (var dir in directories) {
-                string name = Path.GetFileName(dir);
-
-                if (name.StartsWith("_")) {
-                    continue;
-                }
-
-                RepositoryType type = RepositoryType.Tfvc;
-                if (fileSystem.DirectoryExists(Path.Combine(dir, ".git"))) {
-                    type = RepositoryType.Git;
-                }
-
-                string tfvcBranch = null;
-                if (type == RepositoryType.Tfvc && context != null) {
-                    tfvcBranch = context.TfvcBranch;
-                }
-
-                yield return new ExpertModule(name) {
-                    RepositoryType = type,
-                    Branch = tfvcBranch
-                };
-            }
         }
 
         public bool TryGetDependencyManifest(string moduleName, out DependencyManifest manifest) {
