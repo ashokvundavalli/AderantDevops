@@ -56,28 +56,20 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
-      <!--GrovelForExtensibilityFiles;
+      GrovelForExtensibilityFiles;
       CreatePlan;
       ExecutePlan;
       RunTests;
-      --><!--RunIntegrationTests;--><!--
+      <!--RunIntegrationTests;-->
       WriteStateFiles;
       PackageProduct;
-      CopyToDrop;-->
+      CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
 
   <Target Name="CleanStagingDirectory" Condition="'$(IsDesktopBuild)' == 'false'">
     <RemoveDir Directories="$(ArtifactStagingDirectory)" />
-
-    <PropertyGroup>
-      <LogId>$([System.Guid]::NewGuid())</LogId>
-      <BuildGroupId>11</BuildGroupId>
-    </PropertyGroup>
-
-    <Message Text="##vso[task.logdetail id=$(LogId);name='ZZZZZ';type=build;order=$(BuildGroupId)]Build group $(BuildGroupId) started" />
-    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded]Build group $(BuildGroupId) finished" />
   </Target>
 
 
@@ -305,7 +297,7 @@
 
   <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
 
-    <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
+    <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->    
     <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
 
     <PropertyGroup>
