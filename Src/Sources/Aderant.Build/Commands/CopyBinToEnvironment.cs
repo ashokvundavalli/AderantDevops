@@ -202,11 +202,10 @@ namespace Aderant.Build.Commands {
             if (Setup()) {
                 CopyToDeployment();
             }
-            //Console.ReadKey(); //For Debugging.
         }
 
         public bool Setup() {
-            if (RestartServices) { //RestartServices (set this to true or false if you are trying to debug using F5.)
+            if (RestartServices) {
                 StopServices = true;
                 StartServices = true;
             }
@@ -608,12 +607,16 @@ namespace Aderant.Build.Commands {
                         }
                     }
                     //If we update one of these binaries then we cannot re-hydrate the workflow. Re-import the workflow to get updated binaries.
-                    if (item.DestinationFilePath.Contains("AderantExpert\\Local\\Services\\Workflows")) {
+                    if (item.DestinationFilePath.ToLowerInvariant().Contains("aderantexpert\\local\\services\\workflows")) {
                         list.Value.Remove(item); 
                         AddToWorkflowBinaries(WorkflowName(item.DestinationFilePath), item);
                     }
                     //I've wrecked deployment manager on a number of occassions, so I'm skipping these too.
-                    if (item.DestinationFilePath.Contains("AderantExpert\\Install")) {
+                    if (item.DestinationFilePath.ToLowerInvariant().Contains("aderantexpert\\install")) {
+                        list.Value.Remove(item);
+                    }
+                    //Deployment manager injects info into exe xml config files. If we overwrite them, then our apps crash on startup.
+                    if (item.SourceFileName.EndsWith(".config", StringComparison.InvariantCultureIgnoreCase)) {
                         list.Value.Remove(item);
                     }
                 }
