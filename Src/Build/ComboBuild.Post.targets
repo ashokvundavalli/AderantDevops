@@ -99,6 +99,7 @@
       <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
     </GetBuildOutputs>
 
+    <!-- TODO: just drop bin into test and ditch testrun -->
     <CreateItem Include="@(OutputDirectories->'%(FullPath)**\*');">
       <Output TaskParameter="Include" ItemName="_OutputDirectoryContents" />
     </CreateItem>

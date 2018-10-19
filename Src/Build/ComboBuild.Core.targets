@@ -34,7 +34,7 @@
 
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
-    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;order=$(BuildGroupId)]Build group $(BuildGroupId) started" />
+    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress]Build group $(BuildGroupId) started" />
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
@@ -42,7 +42,7 @@
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
-    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded]Build group $(BuildGroupId) finished" />
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded;Result=Succeeded]Build group $(BuildGroupId) finished" />
 
     <OnError ExecuteTargets="SetResumePoint" />
   </Target>
