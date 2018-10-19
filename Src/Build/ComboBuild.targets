@@ -298,8 +298,7 @@
   <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
-    <!-- -bb1 for file logging -->
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
 
     <PropertyGroup>
       <CreateArchiveHashScript>
