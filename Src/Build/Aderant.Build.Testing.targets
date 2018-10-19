@@ -58,12 +58,17 @@
     <ItemGroup>
       <TestAssemblies Include="$(TestRunDirectory)\Bin\TestRun\UnitTest*.dll"
                       Exclude="$(TestRunDirectory)\Bin\TestRun\*Helpers.dll" />
+
+      <AssemblyDependencies Include="$(TestRunDirectory)\Bin\TestRun\*.dll;
+                                     $(TestRunDirectory)\Bin\TestRun\*.exe"
+                            Exclude="@(TestAssemblies)" />
     </ItemGroup>
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform
       Condition="'$(Use32BitTestRunner)' == ''"
-      Assemblies="@(TestAssemblies)">
+      Assemblies="@(TestAssemblies)"
+      AssemblyDependencies="@(AssemblyDependencies)">
       <Output ItemName="AssemblyList" TaskParameter="Assemblies" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
       <Output PropertyName="AssemblyPlatformDataKey" TaskParameter="AssemblyPlatformDataKey" />

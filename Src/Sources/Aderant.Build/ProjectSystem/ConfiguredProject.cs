@@ -91,7 +91,13 @@ namespace Aderant.Build.ProjectSystem {
             get {
                 var guids = ProjectTypeGuids;
                 if (guids != null) {
-                    return guids.Contains(WellKnownProjectTypeGuids.TestProject);
+                    if (guids.Contains(WellKnownProjectTypeGuids.TestProject)) {
+                        return true;
+                    }
+                }
+
+                if (OutputAssembly.Contains("UIAutomation")) {
+                    return true;
                 }
 
                 return false;

@@ -157,8 +157,7 @@ try {
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
     # Implemented in C# for performance
-    $runner = [Aderant.Build.Utilities.ProcessRunner]::InvokeTestRunner($startInfo)
-    $runner.RecordConsoleOutput = $true
+    $runner = [Aderant.Build.Utilities.ProcessRunner]::InvokeTestRunner($startInfo)     
     $runner.Start()    
 
     $started = $true

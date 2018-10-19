@@ -36,8 +36,10 @@ function FindGitDir($context, $stringSearchDirectory) {
 
     if ($context.BuildMetadata -ne $null) {
         if ($context.BuildMetadata.DebugLoggingEnabled) {
-            [void]$set.Add("/v:diag")
-        }        
+            [void]$set.Add("/flp:Verbosity=Diag")
+        } else {
+            [void]$set.Add("/flp:Verbosity=Normal")
+        }
     }
         
     # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
@@ -52,7 +54,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     } else {
         [void]$set.Add("/p:IsDesktopBuild=false")
         [void]$set.Add("/clp:PerformanceSummary")
-    }
+    }    
 
     [void]$set.Add("/p:VisualStudioVersion=14.0")
 
@@ -62,6 +64,10 @@ function FindGitDir($context, $stringSearchDirectory) {
 
     if ($context.Switches.Clean) {
         [void]$set.Add("/p:switch-clean=true")
+    }
+
+    if ($SkipDependencyFetch.IsPresent) {
+        [void]$set.Add("/p:RetrievePrebuilts=false")    
     }
 
     if ($remainingArgs) {
@@ -79,7 +85,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     if ($PackageProduct.IsPresent) {
         [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
     }
-
+    
     return [string]::Join(" ", $set)
 }
 
@@ -199,6 +205,11 @@ function AssignSwitches() {
         $switches.WhatIf = $true
     }
 
+    if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {
+        $context.BuildMetadata.DebugLoggingEnabled = $true
+        Write-Output "DebugLoggingEnabled"
+    }
+
     $context.Switches = $switches
 }
 
@@ -260,8 +271,11 @@ Should not be used as it prevents incremental builds which increases build times
         [Alias("JustMyChanges")]
         [switch]$ChangedFilesOnly,
 
-        [Parameter(HelpMessage = "Explicity disables the text transformation process.")]        
+        [Parameter(HelpMessage = "Disables the text transformation process.")]        
         [switch]$SkipT4,
+
+        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
+        [switch]$SkipDependencyFetch,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -324,7 +338,7 @@ Should not be used as it prevents incremental builds which increases build times
             $Target = "CreatePlan"
         }        
 
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Verbosity=Normal /p:ContextEndpoint=$contextEndpoint $args"
+        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
 
         $succeded = $true
 

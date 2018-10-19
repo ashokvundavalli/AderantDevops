@@ -20,8 +20,6 @@
 
     <PrintBanner Text="Group $(BuildGroupId) / $(TotalNumberOfBuildGroups)" />
 
-    <!--<InspectItemGroup ItemGroup="@(ProjectsInGroup)" />-->
-
     <PropertyGroup>
       <BuildAction>Build</BuildAction>
       <LogId>$([System.Guid]::NewGuid())</LogId>
@@ -32,18 +30,22 @@
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
     </ItemGroup>
 
+    <InspectItemGroup ItemGroup="@(_ProjectsInGroup)" />
+
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
-    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started" />
+    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started"
+             Condition="'$(IsDesktopBuild)' != 'true'" />
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
              Targets="$(BuildAction)"
-             BuildInParallel="$(BuildInParallel)">
+             BuildInParallel="$(BuildInParallel)" >
     </MSBuild>
 
-    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded;Result=Succeeded]Build group $(BuildGroupId) finished" />
-
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded;Result=Succeeded]Build group $(BuildGroupId) finished"
+             Condition="'$(IsDesktopBuild)' != 'true'" />
+ 
     <OnError ExecuteTargets="SetResumePoint" />
   </Target>
 
@@ -62,13 +64,19 @@
         This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
         -->
       <BuildProperties>
-        BuildToolsDirectory=$(BuildToolsDirectory);
-        BuildScriptsDirectory=$(BuildScriptsDirectory);
-        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
-        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
-        AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ShouldUnsetParentConfigurationAndPlatform=true;
         BuildProjectReferences=false;
+
+        BuildToolsDirectory=$(BuildToolsDirectory);
+        BuildScriptsDirectory=$(BuildScriptsDirectory);
+
+        CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
+        CustomAfterMicrosoftCommonTargets=$(CustomAfterMicrosoftCommonTargets);
+
+        AlternativeOutputDirectory=$(SharedDependencyDirectory);
+        ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        <!-- Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured -->
+        Deterministic=true
       </BuildProperties>
     </PropertyGroup>
 
@@ -98,7 +106,7 @@
           ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
           _GitDir=$(_GitDir);
-          VariableScopeId=$(_SolutionRoot)
+          VariableScopeId=$(_SolutionRoot);
         </Properties>
       </ProjectsInGroup>
     </ItemGroup>

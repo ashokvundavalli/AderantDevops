@@ -29,11 +29,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <ResolveReferencesDependsOn>SymlinkDateUpdateTarget;$(ResolveReferencesDependsOn)</ResolveReferencesDependsOn>
+    <ResolveReferencesDependsOn>SymlinkTimestampRefresh;$(ResolveReferencesDependsOn)</ResolveReferencesDependsOn>
   </PropertyGroup>
 
   <UsingTask
-    TaskName="SymlinkDateUpdateTask"
+    TaskName="SymlinkTimestampUpdate"
     TaskFactory="CodeTaskFactory"
     AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
     <ParameterGroup>
@@ -59,7 +59,7 @@ using Microsoft.Win32.SafeHandles;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-public class SymlinkDateUpdateTask : Task, ITask {
+public class SymlinkTimestampUpdate : Task, ITask {
     private const uint GENERIC_READ = 0x80000000;
     private const uint GENERIC_WRITE = 0x40000000;
     private const uint OPEN_EXISTING = 3;
@@ -212,12 +212,12 @@ public class SymlinkDateUpdateTask : Task, ITask {
     </Task>
   </UsingTask>
 
-  <Target Name="SymlinkDateUpdateTarget">
+  <Target Name="SymlinkTimestampRefresh">
     <ItemGroup>
       <ReferenceHintPaths Include="@(Reference)" />
     </ItemGroup>
 
-    <SymlinkDateUpdateTask References="@(Reference)" />
+    <SymlinkTimestampUpdate References="@(Reference)" />
   </Target>
 
 

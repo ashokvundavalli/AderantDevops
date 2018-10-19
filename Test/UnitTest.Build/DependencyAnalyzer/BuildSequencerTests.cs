@@ -1,5 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using System.Threading.Tasks;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
@@ -97,7 +102,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                     })
             };
 
-            IReadOnlyCollection<IDependable> dependables = sequencer.GetProjectsBuildList(
+            sequencer.GetProjectsBuildList(
                 new IDependable[] {
                     p1
                 },

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Utilities {
     internal class VsTestProcessInvoker : ProcessInvoker {

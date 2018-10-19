@@ -500,12 +500,8 @@ namespace Aderant.Build {
         [DataMember]
         public bool ChangedFilesOnly { get; set; }
 
-        [CreateProperty]
+        [DataMember]
         public bool SkipCompile { get; set; }
-    }
-
-    [AttributeUsage(AttributeTargets.Property)]
-    internal class CreatePropertyAttribute : Attribute {
     }
 
 }
