@@ -56,20 +56,28 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
-      GrovelForExtensibilityFiles;
+      <!--GrovelForExtensibilityFiles;
       CreatePlan;
       ExecutePlan;
       RunTests;
-      <!--RunIntegrationTests;-->
+      --><!--RunIntegrationTests;--><!--
       WriteStateFiles;
       PackageProduct;
-      CopyToDrop;
+      CopyToDrop;-->
     </BuildAndPackageDependsOn>
   </PropertyGroup>
 
 
   <Target Name="CleanStagingDirectory" Condition="'$(IsDesktopBuild)' == 'false'">
     <RemoveDir Directories="$(ArtifactStagingDirectory)" />
+
+    <PropertyGroup>
+      <LogId>$([System.Guid]::NewGuid())</LogId>
+      <BuildGroupId>11</BuildGroupId>
+    </PropertyGroup>
+
+    <Message Text="##vso[task.logdetail id=$(LogId);name='ZZZZZ';type=build;order=$(BuildGroupId)]Build group $(BuildGroupId) started" />
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded]Build group $(BuildGroupId) finished" />
   </Target>
 
 
