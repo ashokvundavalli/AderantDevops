@@ -34,7 +34,7 @@
 
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
-    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress]Build group $(BuildGroupId) started" />
+    <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started" />
 
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
