@@ -24,6 +24,7 @@
 
     <PropertyGroup>
       <BuildAction>Build</BuildAction>
+      <LogId>$([System.Guid]::NewGuid())</LogId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -33,11 +34,15 @@
 
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
+    <Message Text="##vso[task.logdetail id=$(LogId);name=@(_ProjectsInGroup);type=build;order=$(BuildGroupId)]create new timeline record" />
+
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
              Targets="$(BuildAction)"
              BuildInParallel="$(BuildInParallel)">
     </MSBuild>
+
+    <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Complete;]" />
 
     <OnError ExecuteTargets="SetResumePoint" />
   </Target>
