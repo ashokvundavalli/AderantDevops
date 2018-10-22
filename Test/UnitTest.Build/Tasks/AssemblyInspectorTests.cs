@@ -9,13 +9,16 @@ namespace UnitTest.Build.Tasks {
     public class AssemblyInspectorTests {
 
         [TestMethod]
-        public void Can_find_assembly_attribute() {
-            var inspector =  new AssemblyInspector();
+        public void Can_find_assembly_deployment_attribute() {
+            var inspector = new AssemblyInspector();
 
             AssemblyName[] referencesToFind;
-            inspector.Inspect(typeof(AssemblyInspectorTests).Assembly.Location, out referencesToFind);
+            ProcessorArchitecture[] referenceArchitectures;
+
+            inspector.Inspect(typeof(AssemblyInspectorTests).Assembly.Location, out referencesToFind, out referenceArchitectures);
 
             Assert.IsNotNull(referencesToFind);
+            Assert.IsNull(referenceArchitectures, "No dependencies provided so no scanning should occur");
         }
     }
 }

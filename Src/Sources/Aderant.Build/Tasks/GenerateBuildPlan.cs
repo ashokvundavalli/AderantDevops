@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
 using Aderant.Build.Logging;
-using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
+using Project = Aderant.Build.MSBuild.Project;
 
 namespace Aderant.Build.Tasks {
     public sealed class GenerateBuildPlan : BuildOperationContextTask {
@@ -64,6 +63,12 @@ namespace Aderant.Build.Tasks {
 
         public string[] ExcludePaths { get; set; } = new string[0];
 
+        /// <summary>
+        /// Gets or sets the extensibility files.
+        /// These files contain instructions to influence the build.
+        /// </summary>
+        public string[] ExtensibilityFiles { get; set; }
+
         public override bool ExecuteTask() {
             ExecuteCore(Context);
             return !Log.HasLoggedErrors;
@@ -79,8 +84,13 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
+            ExtensibilityImposition extensibilityImposition = null;
+            if (ExtensibilityFiles != null) {
+                extensibilityImposition = ExtensibilityController.GetExtensibilityImposition(ModulesDirectory, ExtensibilityFiles);
+            }
+
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
-            
+
             var jobFiles = new OrchestrationFiles {
                 BeforeProjectFile = BeforeProjectFile,
                 AfterProjectFile = AfterProjectFile,
@@ -90,13 +100,14 @@ namespace Aderant.Build.Tasks {
             };
 
             var analysisContext = CreateAnalysisContext();
+            analysisContext.ExtensibilityImposition = extensibilityImposition;
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
 
-            Project project = projectTree.ComputeBuildSequence(context, analysisContext, PipelineService, jobFiles).Result;
+            Project buildPlan = projectTree.ComputeBuildPlan(context, analysisContext, PipelineService, jobFiles).Result;
 
-            var element = project.CreateXml();
+            var element = buildPlan.CreateXml();
 
-            ModulesInThisBuild = project.ModuleNames.ToArray();
+            ModulesInThisBuild = buildPlan.ModuleNames.ToArray();
 
             var settings = new XmlWriterSettings {
                 Encoding = Encoding.UTF8,
@@ -136,9 +147,4 @@ namespace Aderant.Build.Tasks {
             return analysisContext;
         }
     }
-
-    internal class AnalysisContext {
-        public IReadOnlyCollection<string> ExcludePaths { get; set; }
-    }
-
 }

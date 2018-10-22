@@ -73,7 +73,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 // e.g. <Target Name="Foo">
                 Target build = new Target("Run" + CreateGroupName(buildGroupCount));
                 build.Condition = "'$(BuildEnabled)' == 'true'";
-                build.DependsOnTargets.Add(new Target("CreateCommonProperties"));
 
                 if (buildGroupCount > 0) {
                     var target = project.Elements.OfType<Target>().FirstOrDefault(t => t.Name == CreateGroupName(buildGroupCount - 1));
@@ -88,11 +87,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                         StopOnFirstFailure = true,
                         Projects = orchestrationFiles.GroupExecutionFile,
                         Properties = PropertyList.CreatePropertyString(
-                            "InstanceProjectFile=$(MSBuildThisFileFullPath)",
+                            "BuildPlanFile=$(MSBuildThisFileFullPath)",
                             $"{BuildGroupId}={buildGroupCount}",
                             "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
-                            "BuildInParallel=$(BuildInParallel)",
-                            "$(AdditionalGroupProperties)")
+                            "BuildInParallel=$(BuildInParallel)")
                     });
 
                 project.Add(build);
@@ -110,7 +108,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             project.Add(groups);
             project.Add(afterCompile);
-            project.Add(new ImportElement { Project = orchestrationFiles.CommonProjectFile });
 
             // The target that MSBuild will call into to start the build
             project.DefaultTarget = afterCompile;
@@ -236,6 +233,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsProjectFile"] = bool.FalseString,
                 };
 
+                // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
                 if (!observedProjects.Contains(solutionDirectoryPath)) {
                     properties["T4TransformEnabled"] = bool.FalseString;
                 }
@@ -319,15 +317,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private PropertyList AddSolutionConfigurationProperties(ConfiguredProject visualStudioProject, PropertyList propertyList) {
             propertyList.Add("SolutionRoot", visualStudioProject.SolutionRoot);
-            propertyList.Add("Configuration", visualStudioProject.BuildConfiguration.ConfigurationName);
-            propertyList.Add("Platform", visualStudioProject.BuildConfiguration.PlatformName);
 
             AddMetaProjectProperties(visualStudioProject, propertyList);
 
             if (visualStudioProject.UseCommonOutputDirectory) {
                 propertyList.Add("UseCommonOutputDirectory", bool.TrueString);
             }
-
+            
             return propertyList;
         }
 
@@ -342,6 +338,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertiesList.Add("SolutionFileName", Path.GetFileName(visualStudioProject.SolutionFile));
             propertiesList.Add("SolutionPath", visualStudioProject.SolutionRoot);
             propertiesList.Add("SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
+
+            propertiesList.Add("BuildingSolutionFile", bool.FalseString);
+            
         }
     }
 

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,7 +7,6 @@ namespace Aderant.Build.Utilities {
     public class ProcessInvoker : IDisposable {
 
         private int? exitCode;
-        private List<string> nonEmptyOutput = new List<string>();
         private System.Diagnostics.Process process;
         private SemaphoreSlim seenNullError;
         private SemaphoreSlim seenNullOutput;
@@ -19,16 +16,6 @@ namespace Aderant.Build.Utilities {
 
             seenNullOutput = new SemaphoreSlim(1);
             seenNullError = new SemaphoreSlim(1);
-        }
-
-        public IReadOnlyCollection<string> ConsoleOutput {
-            get {
-                if (RecordConsoleOutput) {
-                    return nonEmptyOutput.ToArray();
-                }
-
-                return Enumerable.Empty<string>().ToArray();
-            }
         }
 
         public ProcessStartInfo StartInfo { get; }
@@ -43,8 +30,6 @@ namespace Aderant.Build.Utilities {
 
         public Action<string> LineOutput { get; set; }
         public Action<string> OnErrorLine { get; set; }
-
-        public bool RecordConsoleOutput { get; set; }
 
         public bool HasExited {
             get { return process == null || process.HasExited; }
@@ -117,7 +102,6 @@ namespace Aderant.Build.Utilities {
                 if (e.Data == null) {
                     seenNullError.Release();
                 } else {
-                    RecordConsoleData(e.Data);
                     OnErrorLine?.Invoke(e.Data);
                 }
             } catch (ObjectDisposedException) {
@@ -130,20 +114,10 @@ namespace Aderant.Build.Utilities {
                 if (e.Data == null) {
                     seenNullOutput.Release();
                 } else {
-                    RecordConsoleData(e.Data);
                     LineOutput?.Invoke(e.Data);
                 }
             } catch (ObjectDisposedException) {
                 ((System.Diagnostics.Process)sender).OutputDataReceived -= OutputDataReceived;
-            }
-        }
-
-        private void RecordConsoleData(string e) {
-            if (RecordConsoleOutput) {
-                string text = e.Trim();
-                if (text.Length > 0) {
-                    nonEmptyOutput.Add(text);
-                }
             }
         }
 

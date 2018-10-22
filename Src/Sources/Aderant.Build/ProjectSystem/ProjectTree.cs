@@ -80,21 +80,19 @@ namespace Aderant.Build.ProjectSystem {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
             }
 
-            ConcurrentDictionary<string, bool> files = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
             Parallel.ForEach(
                 directory,
                 (path) => {
                     foreach (var file in GrovelForFiles(path, excludeFilterPatterns)) {
-                        files.TryAdd(file, true);
+                        files.TryAdd(file, 0);
                     }
                 });
 
             var defaultCopyParallelism = Environment.ProcessorCount > 4 ? 6 : 4;
 
-            ActionBlock<string> parseBlock = new ActionBlock<string>(
-                s => LoadAndParseProjectFile(s),
-                new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = defaultCopyParallelism });
+            ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = defaultCopyParallelism });
 
             foreach (var file in files.Keys) {
                 parseBlock.Post(file);
@@ -141,7 +139,7 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> ComputeBuildSequence(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
+        public async Task<Project> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
             List<string> includePaths = new List<string> { context.BuildRoot };
             if (context.Include != null) {
                 includePaths.AddRange(context.Include);
@@ -167,7 +165,7 @@ namespace Aderant.Build.ProjectSystem {
                 var sequencer = exportLifetimeContext.Value;
                 sequencer.PipelineService = pipelineService;
 
-                Project project = sequencer.CreateProject(context, jobFiles, graph);
+                Project project = sequencer.CreateProject(context, analysisContext, jobFiles, graph);
                 return project;
             }
         }
@@ -259,14 +257,13 @@ namespace Aderant.Build.ProjectSystem {
 
             HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
 
-            ProcessProjects(allDependencies, comparer, graph);
+            ProcessProjects(allDependencies, graph);
 
             return graph;
         }
 
-        private void ProcessProjects(HashSet<IDependable> allDependencies, IEqualityComparer<IDependable> comparer, List<IArtifact> graph) {
+        private void ProcessProjects(HashSet<IDependable> allDependencies, List<IArtifact> graph) {
             foreach (var project in LoadedConfiguredProjects) {
-                project.ReplaceDependencies(allDependencies, comparer);
 
                 IReadOnlyCollection<IDependable> dependables = project.GetDependencies();
 
@@ -320,6 +317,6 @@ namespace Aderant.Build.ProjectSystem {
 
         IBuildPipelineService PipelineService { get; set; }
 
-        Project CreateProject(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph);
+        Project CreateProject(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph);
     }
 }

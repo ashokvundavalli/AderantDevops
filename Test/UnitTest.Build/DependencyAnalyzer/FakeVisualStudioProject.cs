@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using Aderant.Build;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
 
@@ -17,8 +16,8 @@ namespace UnitTest.Build.DependencyAnalyzer {
     internal class TestConfiguredProject : ConfiguredProject {
         internal string outputAssembly;
 
-        public TestConfiguredProject(IProjectTree tree, IFileSystem fileSystem)
-            : base(tree, fileSystem) {
+        public TestConfiguredProject(IProjectTree tree)
+            : base(tree) {
         }
 
         public override string OutputAssembly {

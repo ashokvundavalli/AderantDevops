@@ -713,6 +713,11 @@ function Set-Environment {
     }
 }
 
+function Set-VisualStudioVersion() {
+    $file = [System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "vsvars.ps1")   
+    . $file    
+}
+
 <#
  Re-set the local working branch
  e.g. Dev\Product or MAIN

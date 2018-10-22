@@ -57,9 +57,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Microsoft.TeamFoundation.VersionControl.Common.Integration.dll</HintPath>
     </Reference>
-    <Reference Include="MSBuild.Community.Tasks">
-      <HintPath>..\..\Build\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.dll</HintPath>
-    </Reference>
     <Reference Include="paket">
       <HintPath>..\..\Build\paket.exe</HintPath>
       <Private>True</Private>
@@ -138,7 +135,10 @@
     <Compile Include="NativeMethods.cs" />
     <Compile Include="ProjectSystem\BuildStateMetadata.cs" />
     <Compile Include="Packaging\AutoPackager.cs" />
+    <Compile Include="ProjectSystem\AnalysisContext.cs" />
     <Compile Include="Tasks\CopyFiles.cs" />
+    <Compile Include="ProjectSystem\ExtensibilityController.cs" />
+    <Compile Include="ProjectSystem\ExtensibilityImposition.cs" />
     <Compile Include="Tasks\GenerateArchives.cs" />
     <Compile Include="Tasks\CreateDependencyLinks.cs" />
     <Compile Include="Utilities\Memoizer.cs" />
