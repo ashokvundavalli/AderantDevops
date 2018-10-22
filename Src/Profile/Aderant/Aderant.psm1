@@ -38,8 +38,6 @@ Initialize-Module
 [string]$global:BuildScriptsDirectory = $global:ShellContext.BuildScriptsDirectory
 [string]$global:PackageScriptsDirectory = ""
 [string]$global:ProductManifestPath = ""
-[string]$global:CurrentModuleName = ""
-[string]$global:CurrentModulePath = ""
 [PSModuleInfo]$currentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules = @()
 [string[]]$global:LastBuildRemainingModules = @()
@@ -404,9 +402,7 @@ function Set-CurrentModule {
 
         if ([System.IO.Path]::IsPathRooted($name)) {
             $global:ShellContext.CurrentModulePath = $name
-            $global:CurrentModulePath = $global:ShellContext.CurrentModulePath
             $global:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath)).Name
-            $global:CurrentModuleName = $ShellContext.CurrentModuleName
 
             Write-Debug "Setting repository: $name"
             Import-Module $PSScriptRoot\Git.psm1 -Global

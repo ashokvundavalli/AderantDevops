@@ -10,9 +10,9 @@ function global:Enable-GitPrompt {
     
         Write-Host("")
         Write-Host ("Module [") -NoNewline
-        Write-Host ($global:CurrentModuleName) -NoNewline -ForegroundColor DarkCyan
+        Write-Host ($global:ShellContext.CurrentModuleName) -NoNewline -ForegroundColor DarkCyan
         Write-Host ("] at [") -NoNewline
-        Write-Host ($global:CurrentModulePath) -NoNewline -ForegroundColor DarkCyan
+        Write-Host ($global:ShellContext.CurrentModulePath) -NoNewline -ForegroundColor DarkCyan
         Write-Host ("]")
     
         Write-Host "PS $(location)" -NoNewline

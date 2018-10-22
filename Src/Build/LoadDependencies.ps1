@@ -18,10 +18,7 @@ begin {
     $buildScriptsDirectory = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
     Write-Debug "Using $buildScriptsDirectory as build script directory"    
 
-    $buildLibraries = "$buildScriptsDirectory\Build-Libraries.ps1"
-    & $buildLibraries
-
-    LoadLibraryAssembly $buildScriptsDirectory
+    . "$buildScriptsDirectory\Build-Libraries.ps1"
     
     $file = gci $modulesRootPath -Filter DependencyManifest.xml -Recurse | Select-Object -First 1
     [bool]$abort = $false
