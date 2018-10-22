@@ -2,8 +2,8 @@ $currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.Windows
 $isAdminProcess = $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { '' }
 
-function global:Enable-GitPrompt{
-    Function global:prompt {
+function global:Enable-GitPrompt {
+    Function global:Prompt {
         $realLASTEXITCODE = $LASTEXITCODE    
     
         $location = Get-Location
@@ -16,8 +16,8 @@ function global:Enable-GitPrompt{
         Write-Host ("]")
     
         Write-Host "PS $(location)" -NoNewline
-    
-        if ($ShellContext.PoshGitAvailable) {
+
+        if ($global:ShellContext.PoshGitAvailable) {
             Write-VcsStatus
     
             $status = Get-GitStatus
@@ -38,7 +38,7 @@ function global:Enable-GitPrompt{
     }
 }
 
-#Install-PoshGit
+Install-PoshGit
 #Initialize-Git
 
 Export-ModuleMember -Function Invoke-Build2

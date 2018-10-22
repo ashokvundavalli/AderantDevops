@@ -2,7 +2,7 @@
 
 function Initialize-BuildAssembly {
 	. "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
-	UpdateOrBuildAssembly "$PSScriptRoot\..\..\Build" $true
+	UpdateOrBuildAssembly -BuildScriptsDirectory "$PSScriptRoot\..\..\Build" $true
 }
 
 # Need to load Aderant.Build.dll first as it defines types used in later scripts
@@ -14,17 +14,17 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Functions") -Filt
 Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath "Modules") -Filter "*.psm1" | ForEach-Object { Import-Module $_.FullName -DisableNameChecking;Write-Debug "Imported profile module $($_.Name)" }
 Update-FormatData -PrependPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Build\Functions\Formats\SourceTreeMetadata.format.ps1xml')
 
-$script:ShellContext = $null
+$global:ShellContext = $null
 
 function Initialize-Module {
     . $PSScriptRoot\ShellContext.ps1
-    $script:ShellContext = [ShellContext]::new()
+    $global:ShellContext = [ShellContext]::new()
 
-    UpdateOrBuildAssembly $ShellContext.BuildScriptsDirectory $false
+    UpdateOrBuildAssembly -BuildScriptsDirectory $ShellContext.BuildScriptsDirectory $false
 
     $context = New-BuildContext -Environment "AutoDiscover"
     $MyInvocation.MyCommand.Module.PrivateData.Context = $context
-    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $script:ShellContext
+    $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
 }
 
 Initialize-Module
@@ -35,7 +35,7 @@ Initialize-Module
 [string]$global:BranchModulesDirectory = ""
 [string]$global:BranchBinariesDirectory = ""
 [string]$global:BranchExpertSourceDirectory = ""
-[string]$global:BuildScriptsDirectory = ""
+[string]$global:BuildScriptsDirectory = $global:ShellContext.BuildScriptsDirectory
 [string]$global:PackageScriptsDirectory = ""
 [string]$global:ProductManifestPath = ""
 [string]$global:CurrentModuleName = ""
@@ -297,9 +297,9 @@ function Set-ChangedBranchPaths([string]$name) {
     }
 
     #Set common paths
-    $ShellContext.BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Modules" )
+    $ShellContext.BranchModulesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Modules")
 
-    $ShellContext.BranchBinariesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Binaries" )
+    $ShellContext.BranchBinariesDirectory = (Join-Path -Path $global:BranchLocalDirectory -ChildPath "Binaries")
     if ((Test-Path $ShellContext.BranchBinariesDirectory) -eq $false) {
         New-Item -Path $ShellContext.BranchBinariesDirectory -ItemType Directory
     }
@@ -347,29 +347,28 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
 #>
 function Switch-BranchFromContainer($newBranchContainer, $previousBranchContainer, $newBranchName, $previousBranchName) {
     #change name and then container and remove extra backslash's
-    $globalBranchName = $global:BranchName.replace($previousBranchName, $newBranchName)
-    $globalBranchName = $globalBranchName.replace($previousBranchContainer, $newBranchContainer)
-    if (IsMainBanch $globalBranchName) {
-        $globalBranchName = [System.Text.RegularExpressions.Regex]::Replace($globalBranchName, "[^1-9a-zA-Z_\+]", "");
+    $branchName = $global:BranchName.Replace($previousBranchName, $newBranchName)
+    $branchName = $global:BranchName.Replace($previousBranchContainer, $newBranchContainer)
+    if (IsMainBanch $branchName) {
+        $branchName = [System.Text.RegularExpressions.Regex]::Replace($branchName, "[^1-9a-zA-Z_\+]", "");
     }
 
-    if ($globalBranchName -eq "\") {
+    if ($branchName -eq "\") {
         return $false
     }
 
-    $globalBranchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf($previousBranchContainer));
-    $globalBranchLocalDirectory = (Join-Path -Path $globalBranchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
+    $branchLocalDirectory = $global:BranchLocalDirectory.Substring(0, $global:BranchLocalDirectory.LastIndexOf($previousBranchContainer));
+    $branchLocalDirectory = (Join-Path -Path $branchLocalDirectory -ChildPath( Join-Path -Path $newBranchContainer -ChildPath $newBranchName))
 
-    if ((Test-Path $globalBranchLocalDirectory) -eq $false -or $globalBranchLocalDirectory.EndsWith("ExpertSuite")) {
+    if ((Test-Path $branchLocalDirectory) -eq $false -or $branchLocalDirectory.EndsWith("ExpertSuite")) {
         return $false
     }
 
-    $global:BranchName = $globalBranchName
-    $global:BranchLocalDirectory = $globalBranchLocalDirectory
+    $global:BranchName = $branchName
+    $global:BranchLocalDirectory = $branchLocalDirectory
 
     $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf($previousBranchContainer));
     $ShellContext.BranchServerDirectory = (Resolve-Path -Path ($ShellContext.BranchServerDirectory + $newBranchContainer + "\" + $newBranchName)).ProviderPath
-
     $ShellContext.BranchServerDirectory = [System.IO.Path]::GetFullPath($ShellContext.BranchServerDirectory)
 
     return $true
@@ -377,76 +376,80 @@ function Switch-BranchFromContainer($newBranchContainer, $previousBranchContaine
 
 function Set-CurrentModule {
     param (
-        [string]$name
+        [Parameter(Mandatory=$true)][string]$name
     )
 
-    if ([string]::IsNullOrWhiteSpace($name)) {
-        if ([string]::IsNullOrWhiteSpace($ShellContext.CurrentModuleName)) {
-            Write-Warning "No current module is set"
-            return
+    process {
+        if ([string]::IsNullOrWhiteSpace($name)) {
+            if ([string]::IsNullOrWhiteSpace($ShellContext.CurrentModuleName)) {
+                Write-Warning "No current module is set"
+                return
+            } else {
+                Write-Host "The current module is [$context.ModuleName] on the branch [$global:BranchName]"
+                return
+            }
+        }
+
+        if ($name -eq ".") {
+            $name = Resolve-Path $name
+        }
+
+        if ($null -ne $currentModuleFeature) {
+            if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {            
+                Remove-Module $currentModuleFeature
+            }
+
+            $currentModuleFeature = $null
+        }
+
+        if ([System.IO.Path]::IsPathRooted($name)) {
+            $global:ShellContext.CurrentModulePath = $name
+            $global:CurrentModulePath = $global:ShellContext.CurrentModulePath
+            $global:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath)).Name
+            $global:CurrentModuleName = $ShellContext.CurrentModuleName
+
+            Write-Debug "Setting repository: $name"
+            Import-Module $PSScriptRoot\Git.psm1 -Global
+
+            if (-not (Test-Path (Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "\Build\TFSBuild.*"))) {
+                $ShellContext.CurrentModuleName = ""
+            }
+
+            Set-Location $ShellContext.CurrentModulePath
+
+            if (IsGitRepository $ShellContext.CurrentModulePath) {
+                SetRepository $ShellContext.CurrentModulePath
+                Enable-GitPrompt
+                return
+            } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName)) {
+                Enable-GitPrompt
+                return
+            } else {
+                Enable-ExpertPrompt
+            }
         } else {
-            Write-Host "The current module is [$context.ModuleName] on the branch [$global:BranchName]"
-            return
-        }
-    }
+            $ShellContext.CurrentModuleName = $name
 
-    if ($name -eq ".") {
-        $name = Resolve-Path $name
-    }
+            Write-Debug "Current module [$ShellContext:CurrentModuleName]"
+            $ShellContext.CurrentModulePath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
 
-    if ($null -ne $currentModuleFeature) {
-        if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {            
-            Remove-Module $currentModuleFeature
-        }
+            Set-Location $ShellContext.CurrentModulePath
 
-        $currentModuleFeature = $null
-    }
-
-    if ([System.IO.Path]::IsPathRooted($name)) {
-        $ShellContext.CurrentModulePath = $name
-        $ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath)).Name
-
-        Write-Debug "Setting repository: $name"
-        Import-Module $PSScriptRoot\Git.psm1 -Global
-
-        if (-not (Test-Path (Join-Path -Path $ShellContext.CurrentModulePath -ChildPath \Build\TFSBuild.*))){
-            $ShellContext.CurrentModuleName = ""
-        }
-
-        Set-Location $ShellContext.CurrentModulePath
-
-        if (IsGitRepository $ShellContext.CurrentModulePath) {
-            SetRepository $ShellContext.CurrentModulePath
-            global:Enable-GitPrompt
-            return
-        } elseif (IsGitRepository ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath).Parent.FullName)) {
-            global:Enable-GitPrompt
-            return
-        } else {
             Enable-ExpertPrompt
         }
-    } else {
-        $ShellContext.CurrentModuleName = $name
 
-        Write-Debug "Current module [$ShellContext:CurrentModuleName]"
-        $ShellContext.CurrentModulePath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
+        if ((Test-Path $ShellContext.CurrentModulePath) -eq $false) {
+            Write-Warning "the module [$($ShellContext.CurrentModuleName)] does not exist, please check the spelling."
+            $ShellContext.CurrentModuleName = ""
+            $ShellContext.CurrentModulePath = ""
+            return
+        }
 
-        Set-Location $ShellContext.CurrentModulePath
+        Write-Debug "Current module path [$($ShellContext.CurrentModulePath)]"
+        $ShellContext.CurrentModuleBuildPath = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Build"
 
-        Enable-ExpertPrompt
+        $ShellContext.IsGitRepository = $true
     }
-
-    if ((Test-Path $ShellContext.CurrentModulePath) -eq $false) {
-        Write-Warning "the module [$($ShellContext.CurrentModuleName)] does not exist, please check the spelling."
-        $ShellContext.CurrentModuleName = ""
-        $ShellContext.CurrentModulePath = ""
-        return
-    }
-
-    Write-Debug "Current module path [$($ShellContext.CurrentModulePath)]"
-    $ShellContext.CurrentModuleBuildPath = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "Build"
-
-    $ShellContext.IsGitRepository = $true
 }
 
 function IsGitRepository {
@@ -641,7 +644,7 @@ function Install-LatestVisualStudioExtensionImpl($installDetails, [switch]$local
     }
 }
 
-Function Output-VSIXLog {
+function Output-VSIXLog {
     $errorsOccurred = $false
     $lastLogFile = Get-ChildItem $env:TEMP | Where-Object { $_.Name.StartsWith("VSIX") } | Sort-Object LastWriteTime | Select-Object -last 1
 
@@ -692,10 +695,8 @@ function Set-Environment {
     )
 
     process {
-        if ($initialize) {
+        if ($initialize.IsPresent) {
             Set-BranchPaths
-        } else {
-            Clear-Variable -Name "BranchLocalDirectory" -Scope "Global"
         }
 
         Set-ScriptPaths
@@ -716,27 +717,34 @@ function Set-Environment {
  Re-set the local working branch
  e.g. Dev\Product or MAIN
 #>
-function SwitchBranchTo($newBranch, [switch] $SetAsDefault) {
-    if ($global:BranchName -Contains $newBranch) {
-        Write-Host -ForegroundColor Yellow "The magic unicorn has refused your request."
-        return
-    }
+function SwitchBranchTo {
+    param(
+        [Parameter(Mandatory=$true)][string]$newBranch,
+        [switch]$setAsDefault
+    )
 
-    $success = Set-ChangedBranchPaths $newBranch
+    begin {
+        if ($global:BranchName -Contains $newBranch) {
+            Write-Host "The magic unicorn has refused your request." -ForegroundColor Yellow
+            return
+        }
 
-    if ($success -eq $false) {
-        return
-    }
+        $success = Set-ChangedBranchPaths $newBranch
 
-    Set-Environment
+        if ($success -eq $false) {
+            return
+        }
 
-    Set-CurrentModule $ShellContext.CurrentModuleName
+        Set-Environment
 
-    Set-Location -Path $global:BranchLocalDirectory
+        Set-CurrentModule $ShellContext.CurrentModuleName
 
-    if ($SetAsDefault) {
-        SetDefaultValue dropRootUNCPath $ShellContext.BranchServerDirectory
-        SetDefaultValue devBranchFolder $global:BranchLocalDirectory
+        Set-Location -Path $global:BranchLocalDirectory
+
+        if ($setAsDefault.IsPresent) {
+            SetDefaultValue dropRootUNCPath $ShellContext.BranchServerDirectory
+            SetDefaultValue devBranchFolder $global:BranchLocalDirectory
+        }
     }
 }
 
@@ -1044,7 +1052,7 @@ Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterNa
     Enable-ExpertPrompt
 #>
 function Enable-ExpertPrompt() {  
-    Function global:prompt {
+    Function global:Prompt {
         # set the window title to the branch name
         $Host.UI.RawUI.WindowTitle = "PS - [" + $ShellContext.CurrentModuleName + "] on branch [" + $global:BranchName + "]"
 
@@ -1070,7 +1078,7 @@ function Enable-ExpertPrompt() {
 #>
 function Disable-ExpertPrompt() {
     # Copy the current prompt function so we can fall back to it if we're not supposed to handle a command
-    Function global:prompt {
+    Function global:Prompt {
         $(if (test-path variable:/PSDebugContext) { '[DBG]: ' }
             else { '' }) + 'PS ' + $(Get-Location) `
             + $(if ($nestedpromptlevel -ge 1) { '>>' }) + '> '
