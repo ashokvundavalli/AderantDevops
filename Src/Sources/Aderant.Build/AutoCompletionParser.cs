@@ -91,7 +91,13 @@ namespace Aderant.Build {
             return false;
         }
 
-        internal string[] GetModuleMatches(IDependencyBuilder analyzer) {
+        /// <summary>
+        /// Find possible matches for the provided search word and possible current location.
+        /// </summary>
+        /// <param name="analyzer"></param>
+        /// <param name="currentModulePath">The optional current directory location so it can search possible modules under the Monorepo.</param>
+        /// <returns></returns>
+        internal string[] GetModuleMatches(IDependencyBuilder analyzer, string currentModulePath = null) {
             List<string> searchStringSplitByCase = SplitModuleNameByCase(lastWord);
             List<string> matches = new List<string>();
             Debug.WriteLine(string.Format("Module name split by case = {0}", searchStringSplitByCase.StringConcat(" ")));
@@ -106,17 +112,22 @@ namespace Aderant.Build {
                 }
             } else {
                 // Check local git repositories.
-                matches = CheckGitRepos(lastWord);
-                // If not found, try Expert modules.
+                matches = CheckGitRepos(lastWord, currentModulePath);
+
                 if (!matches.Any()) {
+
+                    // Check TFS modules.
                     var allModules = analyzer.GetAllModules().ToList();
-                    matches = allModules.Where(
+                    var matchesTFS = allModules.Where(
                             m => string.IsNullOrEmpty(lastWord) || m.Name.StartsWith(lastWord, StringComparison.OrdinalIgnoreCase)
                                                                 ||
                                                                 new string(m.Name.Split('.').Select(s => s.First()).ToArray()).StartsWith(
                                                                     lastWord,
                                                                     StringComparison.OrdinalIgnoreCase))
-                        .Select(m => m.Name).ToList();
+                        .Select(m => m.Name);
+
+                    // Group together.
+                    matches = matches.Union(matchesTFS).ToList();
                 }
             }
             //if we still have no matches we match again, but assume that the input consists of only the first letters of a series of words
@@ -132,35 +143,35 @@ namespace Aderant.Build {
             return matches.ToArray();
         }
 
-
         /// <summary>
         /// Provides the core auto complete functionality.
         /// </summary>
-        /// <param name="modulePath">The module path.</param>
+        /// <param name="modulePath">The TFS module path.</param>
+        /// <param name="currentModulePath">The git module path.</param>
         /// <param name="productManifestPath">The product manifest path.</param>
         /// <remarks>Called from the PowerShell host.</remarks>
-
-        public string[] GetModuleMatches(string modulePath, string productManifestPath = null) {
+        public string[] GetModuleMatches(string modulePath, string currentModulePath, string productManifestPath = null) {
             ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
 
-            return GetModuleMatches(new DependencyBuilder(manifest));
+            return GetModuleMatches(new DependencyBuilder(manifest), currentModulePath);
         }
 
         /// <summary>
         /// Provides the core auto complete functionality under PowerShell v5.
         /// </summary>
         /// <param name="wordToComplete">The word to complete.</param>
-        /// <param name="modulePath">The module path.</param>
+        /// <param name="currentModulePath">The git module path.</param>
+        /// <param name="modulePath">The TFS module path.</param>
         /// <param name="productManifestPath">The product manifest path.</param>
         /// <remarks>Called from the PowerShell host.</remarks>
-        public string[] GetModuleMatches(string wordToComplete, string modulePath, string productManifestPath = null) {
+        public string[] GetModuleMatches(string wordToComplete, string currentModulePath, string modulePath, string productManifestPath = null) {
             lastWord = wordToComplete;
 
             ExpertManifest manifest = ExpertManifest.Load(productManifestPath);
             manifest.ModulesDirectory = modulePath;
 
-            var autoCompletes = GetModuleMatches(new DependencyBuilder(manifest));
+            var autoCompletes = GetModuleMatches(new DependencyBuilder(manifest), currentModulePath);
             return autoCompletes;
         }
 
@@ -168,23 +179,34 @@ namespace Aderant.Build {
         /// Check locally registered git repositories. If found, provide them to the console for selection.
         /// </summary>
         /// <param name="expectedWord">The searching word.</param>
+        /// <param name="currentLocation">The current directory location.</param>
         /// <returns>A list of all matched path.</returns>
-        private List<string> CheckGitRepos(string expectedWord) {
+        private List<string> CheckGitRepos(string expectedWord, string currentLocation) {
             var result = new List<string>();
-
+            const string featureFile = @"Build\TFSBuild.rsp";
             try {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories")) {
-                    if (key != null) {
-                        var gitReposKeys = key.GetSubKeyNames();
-                        foreach (var gitRepoKey in gitReposKeys) {
-                            var gitRepo = key.OpenSubKey(gitRepoKey);
-                            if (gitRepo != null) {
-                                var gitRepoName = gitRepo.GetValue("Name") as string;
-                                var gitRepoPath = gitRepo.GetValue("Path") as string;
-                                if (gitRepoName != null && gitRepoPath != null && gitRepoName.StartsWith(expectedWord,StringComparison.InvariantCultureIgnoreCase) && Directory.Exists(gitRepoPath)) {
-                                    // Check if TFSBuild.rsp exists in .\Build or at any of the subdirectories to make sure it is an Expert repo.
-                                    if (File.Exists(Path.Combine(gitRepoPath, @"Build\TFSBuild.rsp")) || Directory.GetDirectories(gitRepoPath).Any(x=>File.Exists(Path.Combine(x, @"Build\TFSBuild.rsp")))) {
-                                        result.Add(gitRepoPath);
+                // Search for the current locations for any modules under the Monorepo first.
+                if (currentLocation != null) {
+                    if (Directory.Exists(currentLocation)) {
+                        result = Directory.GetDirectories(currentLocation).Where(x => File.Exists(Path.Combine(x, featureFile))).Select(x => x.Replace(currentLocation, ".")).ToList();
+                    }
+                }
+
+                if (!result.Any()) {
+                    using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\VisualStudio\14.0\TeamFoundation\GitSourceControl\Repositories")) {
+                        if (key != null) {
+                            var gitReposKeys = key.GetSubKeyNames();
+                            foreach (var gitRepoKey in gitReposKeys) {
+                                var gitRepo = key.OpenSubKey(gitRepoKey);
+                                if (gitRepo != null) {
+                                    var gitRepoName = gitRepo.GetValue("Name") as string;
+                                    var gitRepoPath = gitRepo.GetValue("Path") as string;
+                                    if (gitRepoName != null && gitRepoPath != null && gitRepoName.StartsWith(expectedWord, StringComparison.InvariantCultureIgnoreCase) &&
+                                        Directory.Exists(gitRepoPath)) {
+                                        // Check if TFSBuild.rsp exists in .\Build or at any of the subdirectories to make sure it is an Expert repo.
+                                        if (File.Exists(Path.Combine(gitRepoPath, featureFile)) || Directory.GetDirectories(gitRepoPath).Any(x => File.Exists(Path.Combine(x, featureFile)))) {
+                                            result.Add(gitRepoPath);
+                                        }
                                     }
                                 }
                             }

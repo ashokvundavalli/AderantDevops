@@ -958,7 +958,7 @@ function Add-ModuleExpansionParameter {
         # Evaluate Modules
         try {
 
-            $parser.GetModuleMatches($wordToComplete, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
+            $parser.GetModuleMatches($wordToComplete, $ShellContext.CurrentModulePath, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
                     [System.Management.Automation.CompletionResult]::new($_)
             }
             
