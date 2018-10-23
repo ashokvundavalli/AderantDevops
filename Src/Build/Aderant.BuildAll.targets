@@ -304,7 +304,7 @@
                  $(ExpertSourceDirectory)Internal\**\*;
                  $(LocalExpertBinariesDirectory)**\_PublishedWebsites\**\*;
                  $(LocalExpertBinariesDirectory)**\LexisNexis*;
-                 $(LocalExpertBinariesDirectory)**\*iManage*;
+                 $(ExpertSourceDirectory)*iManage*;
                  $(LocalExpertBinariesDirectory)**\CodeCoverage\**\*;
                  $(LocalExpertBinariesDirectory)**\*CodeAnalysis*;
                  $(LocalExpertBinariesDirectory)**\System.dll*;
@@ -312,7 +312,7 @@
                  $(LocalExpertBinariesDirectory)**\System.Drawing*.dll;
                  $(LocalExpertBinariesDirectory)**\System.Windows.Forms*.dll;
                  $(LocalExpertBinariesDirectory)**\System.Xml*dll*;   
-                 $(LocalExpertBinariesDirectory)**\Microsoft.TeamFoundation.*dll*;
+                 $(ExpertSourceDirectory)*Microsoft.TeamFoundation.*dll*;
                  $(LocalExpertBinariesDirectory)**\*UnitTest*;
                  $(LocalExpertBinariesDirectory)**\TestLicenseRegistration*;           
                  $(LocalExpertBinariesDirectory)**\*.deploy.cmd;   
@@ -349,8 +349,6 @@
 
       <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)**\*" />
       
-      <PipelineOverrideFiles Include="$(PipelineOverrideDirectory)**\Microsoft.TeamFoundation.*dll*" />
-      
       <EliteDocuments Include="$(LocalExpertBinariesDirectory)Elite Documentation\**\*.*"/>
       <Documents Include="$(LocalExpertBinariesDirectory)Documentation\**\*.*"/>
       
@@ -362,8 +360,6 @@
         Include="$(LocalExpertBinariesDirectory)**\*"
         Exclude="@(SharedExclusions);@(EliteRoles);@(EliteOverrideFiles);@(EliteDocuments)" />
 
-      <ZipPipelineFiles
-        Include="@(PipelineOverrideFiles)"/>
       <ZipLicenseGeneratorFiles
         Include="$(ExpertSourceDirectory)Internal\LicenseGenerator\*.*" />
       <ZipRegistrationServiceFiles
