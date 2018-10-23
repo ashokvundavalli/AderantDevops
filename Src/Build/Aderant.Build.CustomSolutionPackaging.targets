@@ -200,7 +200,7 @@
         Note: To temporary bypass the validation process, set /p:SkipPackageValidation=true in TFSBuild.rsp in the solution to be built.
     ==========================================================================================
   -->
-  <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true'" >
+  <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true' And '$(SolutionDirectoryPath)' != ''" >
     <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High" />
 
     <SeedPackagePacking

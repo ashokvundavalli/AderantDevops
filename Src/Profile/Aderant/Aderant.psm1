@@ -810,8 +810,9 @@ function global:SetDefaultValue {
 
 #>
 function Open-ModuleSolution() {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty][string]$ModuleName,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$ModuleName,
         [switch]$getDependencies,
         [switch]$getLatest,
         [switch]$code,
