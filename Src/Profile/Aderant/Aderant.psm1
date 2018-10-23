@@ -425,9 +425,8 @@ function Set-CurrentModule {
             }
         } else {
             $ShellContext.CurrentModuleName = $name
-            Write-host  $ShellContext.BranchModulesDirectory
 
-            Write-host "Current module [$ShellContext:CurrentModuleName]"
+            Write-Debug "Current module [$ShellContext:CurrentModuleName]"
             $ShellContext.CurrentModulePath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
 
             Set-Location $ShellContext.CurrentModulePath

@@ -181,7 +181,7 @@ namespace Aderant.Build {
                             if (gitRepo != null) {
                                 var gitRepoName = gitRepo.GetValue("Name") as string;
                                 var gitRepoPath = gitRepo.GetValue("Path") as string;
-                                if (gitRepoName != null && gitRepoPath != null && gitRepoName.StartsWith(expectedWord,StringComparison.InvariantCultureIgnoreCase)) {
+                                if (gitRepoName != null && gitRepoPath != null && gitRepoName.StartsWith(expectedWord,StringComparison.InvariantCultureIgnoreCase) && Directory.Exists(gitRepoPath)) {
                                     // Check if TFSBuild.rsp exists in .\Build or at any of the subdirectories to make sure it is an Expert repo.
                                     if (File.Exists(Path.Combine(gitRepoPath, @"Build\TFSBuild.rsp")) || Directory.GetDirectories(gitRepoPath).Any(x=>File.Exists(Path.Combine(x, @"Build\TFSBuild.rsp")))) {
                                         result.Add(gitRepoPath);
@@ -193,7 +193,7 @@ namespace Aderant.Build {
                 }
             } catch (Exception ex) 
             {
-                Debug.WriteLine(ex.Message);
+                result.Add($"(AutoCompletionParser Error: {ex.Message})");
             }
 
             return result;
