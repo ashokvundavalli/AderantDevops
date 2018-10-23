@@ -182,8 +182,8 @@ namespace Aderant.Build {
                                 var gitRepoName = gitRepo.GetValue("Name") as string;
                                 var gitRepoPath = gitRepo.GetValue("Path") as string;
                                 if (gitRepoName != null && gitRepoPath != null && gitRepoName.StartsWith(expectedWord,StringComparison.InvariantCultureIgnoreCase)) {
-                                    // Check to make sure it is an Expert repo.
-                                    if (File.Exists(Path.Combine(gitRepoPath, @"Build\TFSBuild.rsp"))) {
+                                    // Check if TFSBuild.rsp exists in .\Build or at any of the subdirectories to make sure it is an Expert repo.
+                                    if (File.Exists(Path.Combine(gitRepoPath, @"Build\TFSBuild.rsp")) || Directory.GetDirectories(gitRepoPath).Any(x=>File.Exists(Path.Combine(x, @"Build\TFSBuild.rsp")))) {
                                         result.Add(gitRepoPath);
                                     }
                                 }

@@ -388,7 +388,7 @@ function Set-CurrentModule {
             }
         }
 
-        if ($name -eq ".") {
+        if ($name.StartsWith(".")) { # "." or ".\Framework\"
             $name = Resolve-Path $name
         }
 
@@ -425,8 +425,9 @@ function Set-CurrentModule {
             }
         } else {
             $ShellContext.CurrentModuleName = $name
+            Write-host  $ShellContext.BranchModulesDirectory
 
-            Write-Debug "Current module [$ShellContext:CurrentModuleName]"
+            Write-host "Current module [$ShellContext:CurrentModuleName]"
             $ShellContext.CurrentModulePath = Join-Path -Path $ShellContext.BranchModulesDirectory -ChildPath $ShellContext.CurrentModuleName
 
             Set-Location $ShellContext.CurrentModulePath
