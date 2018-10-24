@@ -144,7 +144,7 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public bool UseCommonOutputDirectory { get; set; }
 
-        public Guid ProjectGuid {
+        public virtual Guid ProjectGuid {
             get { return projectGuid.Evaluate(this); }
         }
 
@@ -264,7 +264,7 @@ namespace Aderant.Build.ProjectSystem {
             if (projectInSolution.Found) {
                 SolutionFile = projectInSolution.SolutionFile;
 
-                ProjectConfigurationInSolution projectConfigurationInSolution;
+                ProjectConfigurationInSolutionWrapper projectConfigurationInSolution;
                 if (projectInSolution.Project.ProjectConfigurations.TryGetValue(solutionBuildConfiguration.FullName, out projectConfigurationInSolution)) {
                     IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
 
@@ -290,13 +290,16 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         private void SetOutputPath() {
-            var projectValue = project.Value;
+            if (project != null) {
+                var projectValue = project.Value;
 
-            projectValue.SetProperty("Configuration", BuildConfiguration.ConfigurationName);
-            projectValue.SetProperty("Platform", BuildConfiguration.PlatformName);
-            projectValue.ReevaluateIfNecessary();
+                projectValue.SetProperty("Configuration", BuildConfiguration.ConfigurationName);
+                projectValue.SetProperty("Platform", BuildConfiguration.PlatformName);
+                projectValue.ReevaluateIfNecessary();
 
-            OutputPath = projectValue.GetPropertyValue("OutputPath");
+                OutputPath = projectValue.GetPropertyValue("OutputPath");
+            }
+
         }
 
         /// <summary>
@@ -406,7 +409,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void MarkDirty() {
             IsDirty = true;
-            this.SetReason(DependencyAnalyzer.BuildReasonTypes.ProjectFileChanged);
+            this.SetReason(BuildReasonTypes.ProjectFileChanged);
         }
 
         private void MarkThisFileDirty(IReadOnlyCollection<ISourceChange> changes) {
@@ -437,7 +440,7 @@ namespace Aderant.Build.ProjectSystem {
 
     internal class BuildReason {
         public string Tag { get; set; }
-        public DependencyAnalyzer.BuildReasonTypes Flags { get; set; }
+        public BuildReasonTypes Flags { get; set; }
     }
 
     internal static class BuildReasonExtensions {

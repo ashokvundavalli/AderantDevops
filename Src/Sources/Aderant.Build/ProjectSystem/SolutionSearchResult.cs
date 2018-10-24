@@ -1,14 +1,15 @@
-﻿using Microsoft.Build.Construction;
+﻿using System.Collections.Generic;
+using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
     /// <summary>
     /// The results of a solution search.
     /// </summary>
-    internal struct SolutionSearchResult {
+    internal class SolutionSearchResult {
 
         public SolutionSearchResult(string file, ProjectInSolution project) {
             SolutionFile = file;
-            Project = project;
+            Project = new ProjectInSolutionWrapper(project);
             Found = true;
         }
 
@@ -22,11 +23,60 @@ namespace Aderant.Build.ProjectSystem {
         /// Gets the project referenced by the solution at <see cref="SolutionFile" />
         /// </summary>
         /// <value>The project.</value>
-        public ProjectInSolution Project { get; private set; }
+        public ProjectInSolutionWrapper Project { get; internal set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether a solution was found.
         /// </summary>
         public bool Found { get; internal set; }
+    }
+
+    internal class ProjectConfigurationInSolutionWrapper {
+
+        internal ProjectConfigurationInSolutionWrapper(ProjectConfigurationInSolution configuration)
+            : this(configuration.ConfigurationName, configuration.PlatformName, configuration.FullName, configuration.IncludeInBuild) {
+        }
+
+        internal ProjectConfigurationInSolutionWrapper(string configurationName = null, string platformName = null, string fullName = null, bool includeInBuild = false) {
+            ConfigurationName = configurationName;
+            PlatformName = platformName;
+            FullName = fullName;
+            IncludeInBuild = includeInBuild;
+        }
+
+        public string ConfigurationName { get; }
+        public string PlatformName { get; }
+        public string FullName { get; }
+        public bool IncludeInBuild { get; }
+    }
+
+    internal class ProjectInSolutionWrapper {
+        private readonly ProjectInSolution project;
+
+        internal ProjectInSolutionWrapper(ProjectInSolution project) {
+            this.project = project;
+            if (project != null) {
+                Wrap(project.ProjectConfigurations);
+            }
+        }
+
+        public string ProjectName => project.ProjectName;
+        public string RelativePath => project.RelativePath;
+        public string AbsolutePath => project.AbsolutePath;
+        public string ProjectGuid => project.ProjectGuid;
+        public string ParentProjectGuid => project.ParentProjectGuid;
+        public IReadOnlyList<string> Dependencies => project.Dependencies;
+
+        public IReadOnlyDictionary<string, ProjectConfigurationInSolutionWrapper> ProjectConfigurations { get; internal set; }
+
+        private IReadOnlyDictionary<string, ProjectConfigurationInSolutionWrapper> Wrap(IReadOnlyDictionary<string, ProjectConfigurationInSolution> source) {
+            var dictionary = new Dictionary<string, ProjectConfigurationInSolutionWrapper>();
+
+            foreach (var key in source.Keys) {
+                dictionary.Add(key, new ProjectConfigurationInSolutionWrapper(source[key]));
+            }
+
+            return dictionary;
+        }
     }
 }

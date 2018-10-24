@@ -12,8 +12,7 @@ namespace Aderant.Build.ProjectSystem {
     internal class UnconfiguredProject {
         private Lazy<ProjectRootElement> projectXml;
         private Memoizer<UnconfiguredProject, Guid> projectGuid;
-
-        [ImportingConstructor]
+   
         public UnconfiguredProject() {
         }
 
@@ -60,7 +59,7 @@ namespace Aderant.Build.ProjectSystem {
             return projectCollection;
         }
 
-        public ConfiguredProject LoadConfiguredProject() {
+        public virtual ConfiguredProject LoadConfiguredProject(IProjectTree projectTree) {
             var result = ConfiguredProjectFactory.CreateExport();
             var configuredProject = result.Value;
 

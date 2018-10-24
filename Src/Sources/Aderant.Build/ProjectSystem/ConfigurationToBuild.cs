@@ -12,7 +12,7 @@ namespace Aderant.Build.ProjectSystem {
     [Serializable]
     [DataContract]
     [ProtoContract]
-    public struct ConfigurationToBuild {
+    public class ConfigurationToBuild {
 
         public ConfigurationToBuild(string configurationToBuild) {
             var parts = configurationToBuild.Split('|');
@@ -50,6 +50,9 @@ namespace Aderant.Build.ProjectSystem {
 
         public static string AnyCPU = "Any CPU";
 
+        /// <summary>
+        /// The default configuration -> Debug|Any CPU
+        /// </summary>
         public static ConfigurationToBuild Default = Create(Debug, AnyCPU);
 
         private static ConfigurationToBuild Create(string configuration, string platform) {

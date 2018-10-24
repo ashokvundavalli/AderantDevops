@@ -41,7 +41,7 @@ namespace IntegrationTest.Build {
             projectTree.LoadProjects(deploymentDirectory, true, null);
 
             ConfiguredProject configuredProject = projectTree.LoadedUnconfiguredProjects.First(p => p.ProjectGuid == new Guid("{E0E257CE-8CD9-4D58-9C08-6CB6B9A87B92}"))
-                .LoadConfiguredProject();
+                .LoadConfiguredProject(projectTree);
 
             var servicesAssemblyReferences = configuredProject.Services.AssemblyReferences;
             var unresolvedAssemblyReferences = servicesAssemblyReferences.GetUnresolvedReferences();

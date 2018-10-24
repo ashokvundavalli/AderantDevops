@@ -18,7 +18,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree()), () => { }));
             project.Initialize(XmlReader.Create(new StringReader(Resources.Web_Core)), "");
 
-            var configuredProject = project.LoadConfiguredProject();
+            var configuredProject = project.LoadConfiguredProject(null);
             Assert.IsTrue(configuredProject.IsWebProject);
         }
 
@@ -28,7 +28,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree()), () => { }));
             project.Initialize(XmlReader.Create(new StringReader(Resources.Web_PrebillEditor)), "");
 
-            var configuredProject = project.LoadConfiguredProject();
+            var configuredProject = project.LoadConfiguredProject(null);
             Assert.IsTrue(configuredProject.IsWebProject);
         }
 
@@ -39,7 +39,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree()), () => { }));
             project.Initialize(LoadProjectXml(), Path.Combine(TestContext.DeploymentDirectory, "Web.PrebillEditor.csproj"));
 
-            var configuredProject = project.LoadConfiguredProject();
+            var configuredProject = project.LoadConfiguredProject(null);
             Assert.IsTrue(configuredProject.IsWebProject);
         }
 
@@ -50,7 +50,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree()), () => { }));
             project.Initialize(LoadProjectXml(), Path.Combine(TestContext.DeploymentDirectory, "Web.PrebillEditor.csproj"));
 
-            var configuredProject = project.LoadConfiguredProject();
+            var configuredProject = project.LoadConfiguredProject(null);
             Assert.AreEqual("Web.PrebillEditor.dll", configuredProject.GetOutputAssemblyWithExtension());
         }
 
