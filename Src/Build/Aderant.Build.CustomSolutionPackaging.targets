@@ -17,6 +17,55 @@
     </ItemGroup>
   </Target>
 
+
+  <!-- The Zip Custom Source inline task -->
+  <UsingTask TaskName="SourceTransformationTask" TaskFactory="CodeTaskFactory" AssemblyFile="$(CodeTaskFactoryAssembly)">
+
+    <ParameterGroup>
+      <SourcePath ParameterType="System.String" Required="true" />
+      <TransformsDefinitionFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO "/>
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Xml.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code>
+        <![CDATA[
+Log.LogMessage(string.Format("Starting transformation of source at {0} using {1}", SourcePath, TransformsDefinitionFile));
+
+// Get the list of transformations
+if(!File.Exists(TransformsDefinitionFile)){
+  Log.LogError(string.Format("The transformations file {0} does not exist", TransformsDefinitionFile));
+}
+
+XDocument transformsDoc = XDocument.Load(TransformsDefinitionFile);
+var replacements = from replacementDefinition in transformsDoc.Root.Descendants("Replacement")
+                   from file in Directory.GetFiles(SourcePath, replacementDefinition.Attribute("FileFilter").Value, SearchOption.AllDirectories)
+                   select new {
+                    FilePath = file,
+                    Regex = new Regex(replacementDefinition.Attribute("Pattern").Value),
+                    ReplaceWith = replacementDefinition.Attribute("ReplaceWith").Value
+                   };
+
+Log.LogMessage(string.Format("Starting {0} replacement tasks", replacements.Count()));
+
+foreach(var replacement in replacements){
+  string fileContent = File.ReadAllText(replacement.FilePath);
+  fileContent = replacement.Regex.Replace(fileContent, replacement.ReplaceWith);
+  File.WriteAllText(replacement.FilePath, fileContent);
+}
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+
   <Target
     Name="ZipCustomSource"
     Condition="'$(ZipSource)' != 'false' And '$(IsCustomBuild)' != 'true'"
