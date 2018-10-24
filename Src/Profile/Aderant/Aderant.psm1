@@ -388,7 +388,7 @@ function Set-CurrentModule {
             }
         }
 
-        if ($name -eq ".") {
+        if ($name.StartsWith(".")) { # "." or ".\Framework\"
             $name = Resolve-Path $name
         }
 
@@ -958,7 +958,7 @@ function Add-ModuleExpansionParameter {
         # Evaluate Modules
         try {
 
-            $parser.GetModuleMatches($wordToComplete, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
+            $parser.GetModuleMatches($wordToComplete, $ShellContext.CurrentModulePath, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
                     [System.Management.Automation.CompletionResult]::new($_)
             }
             
