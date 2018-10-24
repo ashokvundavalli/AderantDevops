@@ -95,6 +95,7 @@
     <Compile Include="Rules\IDisposable\IDisposableConstructorRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableFactoryRegistrationRule.cs" />
     <Compile Include="Rules\IDisposable\IDisposableRuleTypes.cs" />
+    <Compile Include="Rules\NHibernateRetrieveTypeNotInterfaceRule.cs" />
     <Compile Include="Rules\QueryServiceQueryAllRule.cs" />
     <Compile Include="Rules\SqlInjectionRuleBase.cs" />
     <Compile Include="Rules\SqlInjectionErrorRule.cs" />

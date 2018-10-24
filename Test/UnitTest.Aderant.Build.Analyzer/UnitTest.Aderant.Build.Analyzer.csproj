@@ -114,6 +114,7 @@
     <Compile Include="Tests\IDisposable\IDisposableMethodInvocationTests.cs" />
     <Compile Include="Tests\InvalidQueryServiceProxyExtensionTests.cs" />
     <Compile Include="Tests\InvalidLogMessageTests.cs" />
+    <Compile Include="Tests\NHibernateRetrieveTypeNotInterfaceRuleTest.cs" />
     <Compile Include="Tests\PropertyChangedNoStringNonFixableTests.cs" />
     <Compile Include="Tests\QueryServiceQueryAllTests.cs" />
     <Compile Include="Tests\SetPropertyValueNoStringNonFixableTests.cs" />
