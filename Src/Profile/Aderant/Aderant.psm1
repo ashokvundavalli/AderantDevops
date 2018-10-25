@@ -29,6 +29,7 @@ function Initialize-Module {
 
 Initialize-Module
 
+[string]$global:BranchConfigPath = ""
 [string]$global:BranchName = ""
 [string]$global:BranchLocalDirectory = ""
 [string]$global:BranchServerDirectory = ""
@@ -374,20 +375,16 @@ function Switch-BranchFromContainer($newBranchContainer, $previousBranchContaine
 
 function Set-CurrentModule {
     param (
-        [Parameter(Mandatory=$true)][string]$name
+        [Parameter(Mandatory=$false)][string]$name
     )
 
-    process {
+    begin {
         if ([string]::IsNullOrWhiteSpace($name)) {
-            if ([string]::IsNullOrWhiteSpace($ShellContext.CurrentModuleName)) {
-                Write-Warning "No current module is set"
-                return
-            } else {
-                Write-Host "The current module is [$context.ModuleName] on the branch [$global:BranchName]"
-                return
-            }
+            $name = Convert-Path -Path '.'
         }
+    }
 
+    process {
         if ($name.StartsWith(".")) { # "." or ".\Framework\"
             $name = Resolve-Path $name
         }
@@ -412,6 +409,18 @@ function Set-CurrentModule {
             }
 
             Set-Location $ShellContext.CurrentModulePath
+
+            if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+                [string]$buildDirectory = Join-Path -Path $ShellContext.CurrentModulePath -ChildPath 'Build'
+                If (Test-Path -Path $buildDirectory) {
+                    [string]$manifest = Join-Path -Path $buildDirectory -ChildPath 'ExpertManifest.xml'
+                    [string]$config = Join-Path -Path $buildDirectory -ChildPath 'BranchConfig.xml'
+
+                    if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                        $global:BranchConfigPath = $buildDirectory
+                    }
+                }
+            }
 
             if (IsGitRepository $ShellContext.CurrentModulePath) {
                 SetRepository $ShellContext.CurrentModulePath
@@ -449,15 +458,20 @@ function Set-CurrentModule {
 }
 
 function IsGitRepository {
+    [CmdletBinding()]
     param (
-        [string]$path
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$path
     )
 
-    if ([System.IO.path]::GetPathRoot($path) -eq $path) {
-        return $false
-    }
+    process {
+        $path = (Resolve-Path -Path $path).Path
 
-    return @(Get-ChildItem -Path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
+        if ([System.IO.path]::GetPathRoot($path) -eq $path) {
+            return $false
+        }
+
+        return @(Get-ChildItem -Path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
+    }
 }
 
 function SetRepository([string]$path) {
@@ -1207,7 +1221,7 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },    
     [PSCustomObject]@{ function = 'Run-ExpertVisualTests'; alias = 'revt'; },    
     [PSCustomObject]@{ function = 'Branch-Module'; alias = 'branch'; },
-    [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = 'bm'; },
+    [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = $null; },
     [PSCustomObject]@{ function = 'Build-ExpertModulesOnServer'; alias = 'bms'; },
     [PSCustomObject]@{ function = 'Build-ExpertPatch'; alias = $null; },
     [PSCustomObject]@{ function = 'Change-ExpertOwner'; alias = $null; },
