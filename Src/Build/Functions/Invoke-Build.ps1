@@ -85,7 +85,7 @@ function FindGitDir($context, $stringSearchDirectory) {
     if ($PackageProduct.IsPresent) {
         [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
     }
-    
+
     return [string]::Join(" ", $set)
 }
 
@@ -116,7 +116,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         Write-Host ""
         Write-Host "$indent1 Changes..."    
         foreach ($change in $context.SourceTreeMetadata.Changes) {
-            Write-Host "$indent2 $($change.Path):$($change.Status)"
+            Write-Host "$indent2 $($change.Path): $($change.Status)"
         }
     }
 }
@@ -184,6 +184,7 @@ function AssignIncludeExclude() {
     }
 
     if ($Exclude) {
+        Write-Output "These paths will be excluded:"
         $context.Exclude = ExpandPaths $Exclude
         $context.Exclude.ForEach({ Write-Output $_})
     }
@@ -313,7 +314,7 @@ Should not be used as it prevents incremental builds which increases build times
         ApplyBranchConfig $context $root
         FindProductManifest $context $root
         GetSourceTreeMetadata $context $root
-
+        
         if (-not $NoBuildCache.IsPresent) {
             GetBuildStateMetadata $context
         }
@@ -329,7 +330,7 @@ Should not be used as it prevents incremental builds which increases build times
         $contextService.StartListener($contextEndpoint)    
         $contextService.Publish($context)
 
-        $succeded = $false
+        $succeeded = $false
 
         $currentColor = $host.UI.RawUI.ForegroundColor 
         try {         
@@ -342,7 +343,7 @@ Should not be used as it prevents incremental builds which increases build times
 
             Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
 
-            $succeded = $true
+            $succeeded = $true
 
             if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
                 [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
@@ -355,7 +356,7 @@ Should not be used as it prevents incremental builds which increases build times
                 }
             }
         } catch {
-            $succeded = $false        
+            $succeeded = $false        
         } finally {        
             Write-Host "##vso[task.uploadfile]$($context.LogFile)"        
 
@@ -370,7 +371,7 @@ Should not be used as it prevents incremental builds which increases build times
 
             Write-Host " Build: " -NoNewline
 
-            if ($global:LASTEXITCODE -gt 0 -or -not $succeded -or $context.BuildStatus -eq "Failed") {            
+            if ($global:LASTEXITCODE -gt 0 -or -not $succeeded -or $context.BuildStatus -eq "Failed") {            
                 Write-Host "[" -NoNewline
                 Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
                 Write-Host "]"
