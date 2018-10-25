@@ -101,7 +101,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
     function global:AcquireExpertClassicBinaries([string]$moduleName, [string]$binariesDirectory, [string]$classicPath, [string]$target) {
         Push-Location
-        $build = Get-ChildItem (Join-Path -Path $classicPath -ChildPath $buildDirectory.Name) -File -Filter "*.zip"
+        $build = Get-ChildItem -Path $classicPath -File -Filter "*.zip"
 
             if ($build -ne $null) {
                 [string]$zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"

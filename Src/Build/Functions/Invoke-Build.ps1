@@ -129,7 +129,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         Write-Host ""
         Write-Host "$indent1 Changes..."    
         foreach ($change in $context.SourceTreeMetadata.Changes) {
-            Write-Host "$indent2 $($change.Path):$($change.Status)"
+            Write-Host "$indent2 $($change.Path): $($change.Status)"
         }
     }
 }
@@ -197,6 +197,7 @@ function AssignIncludeExclude() {
     }
 
     if ($Exclude) {
+        Write-Output "These paths will be excluded:"
         $context.Exclude = ExpandPaths $Exclude
         $context.Exclude.ForEach({ Write-Output $_})
     }
@@ -226,9 +227,8 @@ function AssignSwitches() {
     $context.Switches = $switches
 }
 
-function global:Invoke-Build2
-{
-    [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]    
+function global:Invoke-Build2 {
+    [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
     param (
         [Parameter()]
         [switch]$Branch,
@@ -265,7 +265,7 @@ Should not be used as it prevents incremental builds which increases build times
         #[Parameter]
         #[switch]$automation,        
 
-        [Parameter()]
+        [Parameter(HelpMessage = "Displays HTML code coverage report.")]
         [switch]$DisplayCodeCoverage,
                 
         [Parameter(ParameterSetName="Build", Mandatory=$false)]        
@@ -297,111 +297,115 @@ Should not be used as it prevents incremental builds which increases build times
         [string[]]$RemainingArgs
     )
 
-    if ($Clean) {
-        Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow 
-        Write-Host "Clean should not be used as it prevents incremental builds which increases build times."        
+    begin {
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = "Stop" 
+    }
 
-        if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
-            return
-        }        
-    } 
-         
-    Set-StrictMode -Version Latest
-    $ErrorActionPreference = "Stop" 
+    process {
+        if ($Clean.IsPresent) {
+            Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow 
+            Write-Host "Clean should not be used as it prevents incremental builds which increases build times."        
+
+            if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
+                return
+            }        
+        }
         
-    [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
+        [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
          
-    [string]$repositoryPath = $null
-    if (-not [string]::IsNullOrEmpty($ModulePath)) {
-        $repositoryPath = $ModulePath
-    } else {
-        $repositoryPath = $ShellContext.CurrentModulePath
-    }
-
-    $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
-
-    AssignIncludeExclude    
-
-    $root = FindGitDir $context $repositoryPath
-    AssignSwitches
-    ApplyBranchConfig $context $root
-    FindProductManifest $context $root
-    GetSourceTreeMetadata $context $root
-
-    if (-not $NoBuildCache.IsPresent) {
-        GetBuildStateMetadata $context
-    }
-
-    PrepareEnvironment  
-
-    $context.StartedAt = [DateTime]::UtcNow
-    $context.LogFile = "$repositoryPath\build.log"
-
-    $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()    
-
-    $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
-    $contextService.StartListener($contextEndpoint)    
-    $contextService.Publish($context)
-
-    $succeded = $false
-
-    $currentColor = $host.UI.RawUI.ForegroundColor 
-    try {         
-        $args = CreateToolArgumentString $context $RemainingArgs
-
-        # When WhatIf specified just determine what would be built
-        if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
-            $Target = "CreatePlan"
-        }        
-
-        Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
-
-        $succeded = $true
-
-        if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
-            [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
-
-            if (Test-Path ($codeCoverageReport)) {
-                Write-Host "Displaying dotCover code coverage report."
-                Start-Process $codeCoverageReport
-            } else {
-                Write-Warning "Unable to locate dotCover code coverage report."
-            }
-        }
-    } catch {
-        $succeded = $false        
-    } finally {        
-        Write-Host "##vso[task.uploadfile]$($context.LogFile)"        
-
-        $host.UI.RawUI.ForegroundColor = $currentColor
-
-        $context = $contextService.CurrentContext
-        $reason = $context.BuildStatusReason
-        $status = $context.BuildStatus
-
-        Write-Output ""
-        Write-Output ""
-
-        Write-Host " Build: " -NoNewline
-
-        if ($global:LASTEXITCODE -gt 0 -or -not $succeded -or $context.BuildStatus -eq "Failed") {            
-            Write-Host "[" -NoNewline
-            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
-            Write-Host "]"
-            Write-Host " $reason" -ForegroundColor Red
-
-            if (-not $context.IsDesktopBuild) {
-                throw "Build did not succeed: $($context.BuildStatusReason)"
-            }
-        } else {            
-            Write-Host "[" -NoNewline
-            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
-            Write-Host "]"
-            Write-Host " $reason" -ForegroundColor Gray    
+        [string]$repositoryPath = $null
+        if (-not [string]::IsNullOrEmpty($ModulePath)) {
+            $repositoryPath = $ModulePath
+        } else {
+            $repositoryPath = $global:ShellContext.CurrentModulePath
         }
 
-        if ($contextService -ne $null) {
-            $contextService.Dispose()
+        $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
+
+        AssignIncludeExclude    
+
+        $root = FindGitDir $context $repositoryPath
+        AssignSwitches
+        ApplyBranchConfig $context $root
+        FindProductManifest $context $root
+        GetSourceTreeMetadata $context $root
+        
+        if (-not $NoBuildCache.IsPresent) {
+            GetBuildStateMetadata $context
+        }
+
+        PrepareEnvironment  
+
+        $context.StartedAt = [DateTime]::UtcNow
+        $context.LogFile = "$repositoryPath\build.log"
+
+        $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()    
+
+        $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
+        $contextService.StartListener($contextEndpoint)    
+        $contextService.Publish($context)
+
+        $succeeded = $false
+
+        $currentColor = $host.UI.RawUI.ForegroundColor 
+        try {         
+            $args = CreateToolArgumentString $context $RemainingArgs
+
+            # When WhatIf specified just determine what would be built
+            if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
+                $Target = "CreatePlan"
+            }        
+
+            Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
+
+            $succeeded = $true
+
+            if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
+                [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+
+                if (Test-Path ($codeCoverageReport)) {
+                    Write-Host "Displaying dotCover code coverage report."
+                    Start-Process $codeCoverageReport
+                } else {
+                    Write-Warning "Unable to locate dotCover code coverage report."
+                }
+            }
+        } catch {
+            $succeeded = $false        
+        } finally {        
+            Write-Host "##vso[task.uploadfile]$($context.LogFile)"        
+
+            $host.UI.RawUI.ForegroundColor = $currentColor
+
+            $context = $contextService.CurrentContext
+            $reason = $context.BuildStatusReason
+            $status = $context.BuildStatus
+
+            Write-Output ""
+            Write-Output ""
+
+            Write-Host " Build: " -NoNewline
+
+            if ($global:LASTEXITCODE -gt 0 -or -not $succeeded -or $context.BuildStatus -eq "Failed") {            
+                Write-Host "[" -NoNewline
+                Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
+                Write-Host "]"
+                Write-Host " $reason" -ForegroundColor Red
+
+                if (-not $context.IsDesktopBuild) {
+                    throw "Build did not succeed: $($context.BuildStatusReason)"
+                }
+            } else {            
+                Write-Host "[" -NoNewline
+                Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
+                Write-Host "]"
+                Write-Host " $reason" -ForegroundColor Gray    
+            }
+
+            if ($contextService -ne $null) {
+                $contextService.Dispose()
+            }
         }
     }
 }

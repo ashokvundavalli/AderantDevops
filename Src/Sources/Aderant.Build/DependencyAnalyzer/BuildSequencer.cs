@@ -88,7 +88,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void EvictNotExistentProjects(BuildOperationContext context) {
             // here we evict deleted projects from the previous builds metadata
             // This is so we do not consider the outputs of this project in the artifact restore phase
-            if (context.SourceTreeMetadata.Changes != null) {
+            if (context.SourceTreeMetadata?.Changes != null) {
                 IEnumerable<SourceChange> changes = context.SourceTreeMetadata.Changes;
 
                 foreach (var deletedFile in changes) {

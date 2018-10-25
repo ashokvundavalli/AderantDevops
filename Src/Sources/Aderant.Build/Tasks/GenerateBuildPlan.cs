@@ -133,6 +133,9 @@ namespace Aderant.Build.Tasks {
                 paths.Add(Context.BuildSystemDirectory);
             }
 
+            // Add in the paths passed in by "bm -Exclude ..."
+            paths.AddRange(Context.Exclude.ToList());
+
             paths.Add(".git");
             paths.Add("$");
 
@@ -142,7 +145,7 @@ namespace Aderant.Build.Tasks {
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToList()
             };
 
-            Log.LogMessage("Excluding paths: " + string.Join("|", analysisContext.ExcludePaths));
+            Log.LogMessage("Excluding paths: " + string.Join(",", analysisContext.ExcludePaths));
 
             return analysisContext;
         }

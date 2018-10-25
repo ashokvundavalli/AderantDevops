@@ -18,9 +18,7 @@
 function Get-Product {
 param (
         [switch]$createBackup,
-
         [switch]$onlyUpdated,
-
         [alias("pr")]
         [string]$pullRquestId
     )
@@ -29,7 +27,7 @@ param (
 
     & tf.exe vc "get" $ShellContext.ProductManifestPath
             
-    & "$($ShellContext.PackageScriptsDirectory)\GetProduct.ps1" -ProductManifestPath $ShellContext.ProductManifestPath -dropRoot $ShellContext.BranchServerDirectory -binariesDirectory $ShellContext.BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString) -onlyUpdated:$onlyUpdated.ToBool() -pullRequest $pullRquestId
+    & "$($ShellContext.PackageScriptsDirectory)\GetProduct.ps1" -ProductManifestPath $ShellContext.ProductManifestPath -dropRoot $ShellContext.BranchServerDirectory -binariesDirectory $ShellContext.BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString) -pullRequest $pullRquestId
 
     if ($createBackup) {
         Write-Host "Creating backup of Binaries folder."
