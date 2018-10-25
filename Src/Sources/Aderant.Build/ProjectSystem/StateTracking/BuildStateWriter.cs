@@ -156,6 +156,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             //    }
             //}
         }
+
         public IEnumerable<BuildArtifact> WriteStateFiles(BuildOperationContext context, IEnumerable<ProjectOutputSnapshot> outputs, Func<string, IEnumerable<ArtifactManifest>> getArtifactsForContainer) {
             IReadOnlyCollection<BucketId> buckets = context.SourceTreeMetadata.GetBuckets();
 
