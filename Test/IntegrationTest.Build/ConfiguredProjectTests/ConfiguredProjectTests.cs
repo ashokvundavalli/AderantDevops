@@ -16,7 +16,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
         public void Load_project_v12_toolset() {
             var project = new UnconfiguredProject();
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree()), () => { }));
-            project.Initialize(XmlReader.Create(new StringReader(Resources.Web_Core)), "");
+            project.Initialize(LoadProjectXml(Resources.Web_Core), "");
 
             var configuredProject = project.LoadConfiguredProject(null);
             Assert.IsTrue(configuredProject.IsWebProject);
@@ -26,7 +26,7 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
         public void Load_project_v14_toolset() {
             var project = new UnconfiguredProject();
             project.ConfiguredProjectFactory = new ExportFactory<ConfiguredProject>(() => new Tuple<ConfiguredProject, Action>(new ConfiguredProject(new ProjectTree()), () => { }));
-            project.Initialize(XmlReader.Create(new StringReader(Resources.Web_PrebillEditor)), "");
+            project.Initialize(LoadProjectXml(), "");
 
             var configuredProject = project.LoadConfiguredProject(null);
             Assert.IsTrue(configuredProject.IsWebProject);
@@ -54,10 +54,8 @@ namespace IntegrationTest.Build.ConfiguredProjectTests {
             Assert.AreEqual("Web.PrebillEditor.dll", configuredProject.GetOutputAssemblyWithExtension());
         }
 
-        private XmlReader LoadProjectXml() {
-            using (var reader = new StringReader(Resources.Web_PrebillEditor)) {
-                return XmlReader.Create(reader);
-            }
+        private XmlReader LoadProjectXml(string resource = null) {
+            return XmlReader.Create(new StringReader(resource ?? Resources.Web_PrebillEditor));
         }
     }
 }

@@ -84,8 +84,8 @@ function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$load
             }
 
             # Create a new dynamic module that simply loads another module into it.
-            $module = New-Module -ScriptBlock $scriptBlock -ArgumentList $assembly
-            Import-Module $module -Global
+            $module = New-Module -Name "Aderant.ContinuousDelivery.PowerShell" -ScriptBlock $scriptBlock -ArgumentList $assembly
+            Import-Module $module -Global -DisableNameChecking
         }
     } else {
         throw "Fatal error. Assembly $loadAsModule not found"

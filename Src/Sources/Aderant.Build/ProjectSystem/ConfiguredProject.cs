@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
@@ -165,12 +163,8 @@ namespace Aderant.Build.ProjectSystem {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
                         { "WebDependencyVersion", "-1" }
                     };
-
-                    if (!string.IsNullOrEmpty(fullPath)) {
-                        return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
-                    }
-
-                    return LoadNonDiskBackedProject(globalProperties);
+                    
+                    return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
                 });
 
             extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
@@ -228,30 +222,13 @@ namespace Aderant.Build.ProjectSystem {
                 EqualityComparer<object>.Default);
         }
 
-        private Project LoadNonDiskBackedProject(IDictionary<string, string> globalProperties) {
-            var node = XDocument.Parse(projectXml.Value.RawXml);
-
-            // The fact that the load used an XmlReader instead of using a file name,
-            // properties like $(MSBuildThisFileDirectory) used during project load don't work.
-            node.Root.Descendants()
-                .Where(s => s.NodeType == XmlNodeType.Element && !s.HasElements)
-                .Where(s => s.Value.IndexOf("[MSBuild]::") > 0)
-                .Remove();
-
-            var nonDiskBackedProject = new Project(
-                node.CreateReader(),
-                globalProperties,
-                null,
-                CreateProjectCollection(),
-                ProjectLoadSettings.IgnoreMissingImports);
-            return nonDiskBackedProject;
-        }
-
         private static ProjectCollection CreateProjectCollection() {
-            return new ProjectCollection {
+            var collection = new ProjectCollection {
                 IsBuildEnabled = false,
                 DisableMarkDirty = true,
             };
+
+            return collection;
         }
 
         public ICollection<ProjectItem> GetItems(string itemType) {

@@ -129,15 +129,16 @@ namespace Aderant.Build.Tasks {
 
             var paths = ExcludePaths.ToList();
 
+            paths.InsertRange(0, new [] {".git", "$" });
+
             if (!Context.BuildSystemDirectory.Contains("TestResults")) {
                 paths.Add(Context.BuildSystemDirectory);
             }
 
             // Add in the paths passed in by "bm -Exclude ..."
-            paths.AddRange(Context.Exclude.ToList());
-
-            paths.Add(".git");
-            paths.Add("$");
+            if (Context.Exclude != null) {
+                paths.AddRange(Context.Exclude.ToList());
+            }
 
             var analysisContext = new AnalysisContext {
                 ExcludePaths = paths

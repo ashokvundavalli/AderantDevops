@@ -15,7 +15,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
     }
 
     internal class TestConfiguredProject : ConfiguredProject {
-        private readonly Guid guid;
+        private readonly Guid guid = Guid.NewGuid();
         internal string outputAssembly;
 
         public TestConfiguredProject(IProjectTree tree)
@@ -25,13 +25,14 @@ namespace UnitTest.Build.DependencyAnalyzer {
         public TestConfiguredProject(IProjectTree projectTree, Guid guid)
             : base(projectTree) {
             this.guid = guid;
-            ProjectGuid = this.guid;
         }
 
         public override string OutputAssembly {
             get { return outputAssembly; }
         }
 
-        public override Guid ProjectGuid { get; }
+        public override Guid ProjectGuid {
+            get { return guid; }
+        }
     }
 }

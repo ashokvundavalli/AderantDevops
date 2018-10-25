@@ -117,8 +117,14 @@ namespace Aderant.Build.ProjectSystem {
 
                 foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                     try {
-                        ConfiguredProject project = unconfiguredProject.LoadConfiguredProject(this);
-                        project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                        if (!unconfiguredProject.IsTemplateProject()) {
+                            ConfiguredProject project = unconfiguredProject.LoadConfiguredProject(this);
+                            project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                        } else {
+                            if (logger != null) {
+                                logger.Info("Ignored template project: {0}", unconfiguredProject.FullPath);
+                            }
+                        }
                     } catch (Exception ex) {
                         if (logger != null) {
                             logger.Error("Project {0} failed to load. {1}", unconfiguredProject.FullPath, ex.Message);
@@ -311,12 +317,12 @@ namespace Aderant.Build.ProjectSystem {
         private void LoadAndParseProjectFile(string file) {
             using (Stream stream = Services.FileSystem.OpenFile(file)) {
                 using (var reader = XmlReader.Create(stream)) {
-                    var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport();
-                    var unconfiguredProject = exportLifetimeContext.Value;
+                var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport();
+                var unconfiguredProject = exportLifetimeContext.Value;
 
                     unconfiguredProject.Initialize(reader, file);
 
-                    loadedUnconfiguredProjects.Add(unconfiguredProject);
+                loadedUnconfiguredProjects.Add(unconfiguredProject);
                 }
             }
         }
