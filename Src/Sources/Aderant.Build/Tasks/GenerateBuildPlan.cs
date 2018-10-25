@@ -129,12 +129,16 @@ namespace Aderant.Build.Tasks {
 
             var paths = ExcludePaths.ToList();
 
+            paths.InsertRange(0, new [] {".git", "$" });
+
             if (!Context.BuildSystemDirectory.Contains("TestResults")) {
                 paths.Add(Context.BuildSystemDirectory);
             }
 
-            paths.Add(".git");
-            paths.Add("$");
+            // Add in the paths passed in by "bm -Exclude ..."
+            if (Context.Exclude != null) {
+                paths.AddRange(Context.Exclude.ToList());
+            }
 
             var analysisContext = new AnalysisContext {
                 ExcludePaths = paths
@@ -142,7 +146,7 @@ namespace Aderant.Build.Tasks {
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToList()
             };
 
-            Log.LogMessage("Excluding paths: " + string.Join("|", analysisContext.ExcludePaths));
+            Log.LogMessage("Excluding paths: " + string.Join(",", analysisContext.ExcludePaths));
 
             return analysisContext;
         }

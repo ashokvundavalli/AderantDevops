@@ -57,10 +57,13 @@ Should not be used as it prevents incremental builds which increases build times
         [switch]$ChangedFilesOnly,
 
         [Parameter(HelpMessage = "Disables the text transformation process.")]        
-        [switch]$SkipT4,
+        [switch]$NoTextTemplateTransform,
+
+        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
+        [int]$MaxCpuCount,
 
         [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
-        [switch]$SkipDependencyFetch,
+        [switch]$NoDependencyFetch,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -193,45 +196,55 @@ Should not be used as it prevents incremental builds which increases build times
             return $path
         }
 
-         function CreateToolArgumentString($context, $remainingArgs) {
-            # Out-Null stops the return value from Add being left on the pipeline
-            $set = [System.Collections.Generic.HashSet[string]]::new()          
+ function CreateToolArgumentString($context, $remainingArgs) {
+    Set-StrictMode -Version Latest
 
-            if ($context.BuildMetadata -ne $null) {
-                if ($context.BuildMetadata.DebugLoggingEnabled) {
-                    [void]$set.Add("/flp:Verbosity=Diag")
-                } else {
-                    [void]$set.Add("/flp:Verbosity=Normal")
-                }
-            }
-        
-            # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
-            [void]$set.Add("/nologo")
-            [void]$set.Add("/nr:false")
+    $set = [System.Collections.Generic.HashSet[string]]::new()          
 
-            # Multi-core build
-            [void]$set.Add("/m")
+    & {
+      if ($context.IsDesktopBuild) {
+            $set.Add("/p:IsDesktopBuild=true")
+        } else {
+            $set.Add("/p:IsDesktopBuild=false")
+            $set.Add("/clp:PerformanceSummary")
+        }
 
-            if ($context.IsDesktopBuild) {
-                [void]$set.Add("/p:IsDesktopBuild=true")
+        if ($context.BuildMetadata -ne $null) {
+            if ($context.BuildMetadata.DebugLoggingEnabled) {
+                $set.Add("/flp:Verbosity=Diag")
             } else {
-                [void]$set.Add("/p:IsDesktopBuild=false")
-                [void]$set.Add("/clp:PerformanceSummary")
-            }    
-
-            [void]$set.Add("/p:VisualStudioVersion=14.0")
-
-            if ($context.Switches.SkipCompile) {
-                [void]$set.Add("/p:switch-skip-compile=true")
+                $set.Add("/flp:Verbosity=Normal")
             }
+        }
+        
+        # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
+        $set.Add("/nologo")
+        $set.Add("/nr:false")
 
-            if ($context.Switches.Clean) {
-                [void]$set.Add("/p:switch-clean=true")
-            }
+        # Multi-core build
+        if ($MaxCpuCount -gt 0) {            
+            $set.Add("/m:$MaxCpuCount")
+        } else {
+            $set.Add("/m")
+        }
 
-            if ($SkipDependencyFetch.IsPresent) {
-                [void]$set.Add("/p:RetrievePrebuilts=false")    
-            }
+        if ($NoTextTemplateTransform.IsPresent) {
+            $set.Add("/p:T4TransformEnabled=false")
+        }      
+
+        #$set.Add("/p:VisualStudioVersion=14.0")
+
+        if ($context.Switches.SkipCompile) {
+            $set.Add("/p:switch-skip-compile=true")
+        }
+
+        if ($context.Switches.Clean) {
+            $set.Add("/p:switch-clean=true")
+        }
+
+        if ($NoDependencyFetch.IsPresent) {
+            $set.Add("/p:RetrievePrebuilts=false")    
+        }
 
             if ($remainingArgs) {
                 if ($remainingArgs.Contains('.')) {
@@ -242,19 +255,22 @@ Should not be used as it prevents incremental builds which increases build times
                 [void]$set.Add([string]::Join(" ", $remainingArgs))
             }
 
-            [void]$set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
-            [void]$set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
-            [void]$set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
-            [void]$set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
+        $set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
+        $set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
+        $set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
+        $set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
 
-            [void]$set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
+        $set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 
-            if ($PackageProduct.IsPresent) {
-                [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
-            }
-    
-            return [string]::Join(" ", $set)
+        if ($PackageProduct.IsPresent) {
+            $set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
         }
+    } | Out-Null
+    # Out-Null stops the return value from Add being left on the pipeline
+  
+
+    return [string]::Join(" ", $set)
+}
 
         function GetSourceTreeMetadata($context, $repositoryPath) {
             begin {
@@ -362,6 +378,7 @@ Should not be used as it prevents incremental builds which increases build times
                 }
 
                 if ($null -ne $exclude) {
+					Write-Output "These paths will be excluded:"
                     $context.Exclude = ExpandPaths $exclude
                     $context.Exclude.ForEach({ Write-Output $_})
                 }
@@ -445,7 +462,7 @@ Should not be used as it prevents incremental builds which increases build times
         $contextService.StartListener($contextEndpoint)    
         $contextService.Publish($context)
 
-        $succeded = $false
+        $succeeded = $false
 
         $currentColor = $host.UI.RawUI.ForegroundColor 
         try {         
@@ -458,7 +475,7 @@ Should not be used as it prevents incremental builds which increases build times
 
             Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
 
-            $succeded = $true
+            $succeeded = $true
 
             if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
                 [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
@@ -471,7 +488,7 @@ Should not be used as it prevents incremental builds which increases build times
                 }
             }
         } catch {
-            $succeded = $false        
+            $succeeded = $false       
         } finally {
             if (-not $context.IsDesktopBuild) {
                 Write-Host "##vso[task.uploadfile]$($context.LogFile)"
@@ -488,7 +505,7 @@ Should not be used as it prevents incremental builds which increases build times
 
             Write-Host " Build: " -NoNewline
 
-            if ($global:LASTEXITCODE -gt 0 -or -not $succeded -or $context.BuildStatus -eq "Failed") {            
+            if ($global:LASTEXITCODE -gt 0 -or -not $succeeded -or $context.BuildStatus -eq "Failed") {            
                 Write-Host "[" -NoNewline
                 Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
                 Write-Host "]"

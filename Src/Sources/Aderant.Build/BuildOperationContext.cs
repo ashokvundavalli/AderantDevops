@@ -87,7 +87,7 @@ namespace Aderant.Build {
         public string[] Include { get; set; }
 
         /// <summary>
-        /// Excludes solutions and projects found under these paths into the build tree.
+        /// Excludes solutions and projects found under these paths from build tree.
         /// </summary>
         [DataMember]
         public string[] Exclude { get; set; }

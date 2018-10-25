@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Xml;
@@ -16,7 +17,6 @@ using Aderant.Build.MSBuild;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
-using Aderant.Build.Tasks;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
@@ -29,7 +29,7 @@ namespace Aderant.Build.ProjectSystem {
     internal class ProjectTree : IProjectTree, IProjectTreeInternal, ISolutionManager {
 
         // Holds all projects that are applicable to the build tree
-        private readonly ConcurrentBag<ConfiguredProject> loadedConfiguredProjects = new ConcurrentBag<ConfiguredProject>();
+        private readonly ConcurrentDictionary<Guid, ConfiguredProject> loadedConfiguredProjects = new ConcurrentDictionary<Guid, ConfiguredProject>();
         private readonly ILogger logger = NullLogger.Default;
 
         private ConcurrentBag<UnconfiguredProject> loadedUnconfiguredProjects;
@@ -48,6 +48,16 @@ namespace Aderant.Build.ProjectSystem {
         [ImportingConstructor]
         public ProjectTree(ILogger logger) {
             this.logger = logger;
+            SolutionManager = this;
+        }
+
+        internal ProjectTree(IEnumerable<UnconfiguredProject> unconfiguredProjects)
+            : this((ILogger)null) {
+            EnsureUnconfiguredProjects();
+
+            foreach (var project in unconfiguredProjects) {
+                loadedUnconfiguredProjects.Add(project);
+            }
         }
 
         [Import]
@@ -61,24 +71,20 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public IReadOnlyCollection<ConfiguredProject> LoadedConfiguredProjects {
-            get { return loadedConfiguredProjects; }
+            get { return loadedConfiguredProjects.Values.ToList(); }
         }
 
         [Import]
         public IProjectServices Services { get; internal set; }
 
-        public ISolutionManager SolutionManager {
-            get { return this; }
-        }
+        public ISolutionManager SolutionManager { get; set; }
 
         public void LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
             LoadProjects(new[] { directory }, recursive, excludeFilterPatterns);
         }
 
         public void LoadProjects(IReadOnlyCollection<string> directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
-            if (loadedUnconfiguredProjects == null) {
-                loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
-            }
+            EnsureUnconfiguredProjects();
 
             ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
@@ -105,12 +111,28 @@ namespace Aderant.Build.ProjectSystem {
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
             // Null checked to allow unit testing where projects are inserted directly
             if (LoadedUnconfiguredProjects != null) {
+
+                ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
+                ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
+
                 foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
                     try {
-                        ConfiguredProject project = unconfiguredProject.LoadConfiguredProject();
-                        project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                        if (!unconfiguredProject.IsTemplateProject()) {
+                            ConfiguredProject project = unconfiguredProject.LoadConfiguredProject(this);
+                            project.AssignProjectConfiguration(collector.ProjectConfiguration);
+                        } else {
+                            if (logger != null) {
+                                logger.Info("Ignored template project: {0}", unconfiguredProject.FullPath);
+                            }
+                        }
                     } catch (Exception ex) {
-                        logger.Warning("Project {0} failed to load. {1}", unconfiguredProject.FullPath, ex.Message);
+                        if (logger != null) {
+                            logger.Error("Project {0} failed to load. {1}", unconfiguredProject.FullPath, ex.Message);
+                        }
+
+                        if (ex is DuplicateGuidException) {
+                            throw;
+                        }
                     }
                 }
             }
@@ -172,13 +194,18 @@ namespace Aderant.Build.ProjectSystem {
 
         public void AddConfiguredProject(ConfiguredProject configuredProject) {
             if (configuredProject.IncludeInBuild) {
-                loadedConfiguredProjects.Add(configuredProject);
+                ConfiguredProject existing;
+                if (loadedConfiguredProjects.TryGetValue(configuredProject.ProjectGuid, out existing)) {
+                    throw new DuplicateGuidException(configuredProject.ProjectGuid, $"The project GUID {configuredProject.ProjectGuid} in file {configuredProject.FullPath} has already been assigned to {existing.FullPath}. Duplicate GUIDs are not supported.");
+                }
+
+                loadedConfiguredProjects.TryAdd(configuredProject.ProjectGuid, configuredProject);
             }
         }
 
         public void OrphanProject(ConfiguredProject configuredProject) {
             configuredProject.IncludeInBuild = false;
-            logger.Warning($"Orphaned project: '{configuredProject.FullPath}' identified.");
+            logger.Warning($"Orphaned project: '{configuredProject.FullPath}' (not referenced by any solution).");
             this.orphanedProjects.Add(configuredProject);
         }
 
@@ -210,10 +237,17 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             if (solutionFile == null) {
-                return new SolutionSearchResult { Found = false };
+                return new SolutionSearchResult(null, null) { Found = false };
             }
 
             return new SolutionSearchResult(solutionFile, projectInSolution);
+        }
+
+        private void EnsureUnconfiguredProjects() {
+
+            if (loadedUnconfiguredProjects == null) {
+                loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
+            }
         }
 
         internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
@@ -283,12 +317,12 @@ namespace Aderant.Build.ProjectSystem {
         private void LoadAndParseProjectFile(string file) {
             using (Stream stream = Services.FileSystem.OpenFile(file)) {
                 using (var reader = XmlReader.Create(stream)) {
-                    var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport();
-                    var unconfiguredProject = exportLifetimeContext.Value;
+                var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport();
+                var unconfiguredProject = exportLifetimeContext.Value;
 
                     unconfiguredProject.Initialize(reader, file);
 
-                    loadedUnconfiguredProjects.Add(unconfiguredProject);
+                loadedUnconfiguredProjects.Add(unconfiguredProject);
                 }
             }
         }
@@ -318,5 +352,22 @@ namespace Aderant.Build.ProjectSystem {
         IBuildPipelineService PipelineService { get; set; }
 
         Project CreateProject(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph);
+    }
+
+    [Serializable]
+    public class DuplicateGuidException : Exception {
+
+        public DuplicateGuidException(Guid guid, string message)
+            : base(message) {
+            this.Guid = guid;
+        }
+
+        protected DuplicateGuidException(SerializationInfo info, StreamingContext context) {
+        }
+
+        /// <summary>
+        /// Gets the unique identifier.
+        /// </summary>
+        public Guid Guid { get; private set; }
     }
 }

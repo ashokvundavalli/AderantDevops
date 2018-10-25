@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
@@ -144,7 +142,7 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         public bool UseCommonOutputDirectory { get; set; }
 
-        public Guid ProjectGuid {
+        public virtual Guid ProjectGuid {
             get { return projectGuid.Evaluate(this); }
         }
 
@@ -165,12 +163,8 @@ namespace Aderant.Build.ProjectSystem {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
                         { "WebDependencyVersion", "-1" }
                     };
-
-                    if (!string.IsNullOrEmpty(fullPath)) {
-                        return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
-                    }
-
-                    return LoadNonDiskBackedProject(globalProperties);
+                    
+                    return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
                 });
 
             extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
@@ -228,30 +222,13 @@ namespace Aderant.Build.ProjectSystem {
                 EqualityComparer<object>.Default);
         }
 
-        private Project LoadNonDiskBackedProject(IDictionary<string, string> globalProperties) {
-            var node = XDocument.Parse(projectXml.Value.RawXml);
-
-            // The fact that the load used an XmlReader instead of using a file name,
-            // properties like $(MSBuildThisFileDirectory) used during project load don't work.
-            node.Root.Descendants()
-                .Where(s => s.NodeType == XmlNodeType.Element && !s.HasElements)
-                .Where(s => s.Value.IndexOf("[MSBuild]::") > 0)
-                .Remove();
-
-            var nonDiskBackedProject = new Project(
-                node.CreateReader(),
-                globalProperties,
-                null,
-                CreateProjectCollection(),
-                ProjectLoadSettings.IgnoreMissingImports);
-            return nonDiskBackedProject;
-        }
-
         private static ProjectCollection CreateProjectCollection() {
-            return new ProjectCollection {
+            var collection = new ProjectCollection {
                 IsBuildEnabled = false,
                 DisableMarkDirty = true,
             };
+
+            return collection;
         }
 
         public ICollection<ProjectItem> GetItems(string itemType) {
@@ -264,7 +241,7 @@ namespace Aderant.Build.ProjectSystem {
             if (projectInSolution.Found) {
                 SolutionFile = projectInSolution.SolutionFile;
 
-                ProjectConfigurationInSolution projectConfigurationInSolution;
+                ProjectConfigurationInSolutionWrapper projectConfigurationInSolution;
                 if (projectInSolution.Project.ProjectConfigurations.TryGetValue(solutionBuildConfiguration.FullName, out projectConfigurationInSolution)) {
                     IncludeInBuild = projectConfigurationInSolution.IncludeInBuild;
 
@@ -290,13 +267,16 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         private void SetOutputPath() {
-            var projectValue = project.Value;
+            if (project != null) {
+                var projectValue = project.Value;
 
-            projectValue.SetProperty("Configuration", BuildConfiguration.ConfigurationName);
-            projectValue.SetProperty("Platform", BuildConfiguration.PlatformName);
-            projectValue.ReevaluateIfNecessary();
+                projectValue.SetProperty("Configuration", BuildConfiguration.ConfigurationName);
+                projectValue.SetProperty("Platform", BuildConfiguration.PlatformName);
+                projectValue.ReevaluateIfNecessary();
 
-            OutputPath = projectValue.GetPropertyValue("OutputPath");
+                OutputPath = projectValue.GetPropertyValue("OutputPath");
+            }
+
         }
 
         /// <summary>
@@ -406,7 +386,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void MarkDirty() {
             IsDirty = true;
-            this.SetReason(DependencyAnalyzer.BuildReasonTypes.ProjectFileChanged);
+            this.SetReason(BuildReasonTypes.ProjectFileChanged);
         }
 
         private void MarkThisFileDirty(IReadOnlyCollection<ISourceChange> changes) {
@@ -437,7 +417,7 @@ namespace Aderant.Build.ProjectSystem {
 
     internal class BuildReason {
         public string Tag { get; set; }
-        public DependencyAnalyzer.BuildReasonTypes Flags { get; set; }
+        public BuildReasonTypes Flags { get; set; }
     }
 
     internal static class BuildReasonExtensions {
