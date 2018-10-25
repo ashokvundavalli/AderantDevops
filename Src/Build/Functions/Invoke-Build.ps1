@@ -31,61 +31,74 @@ function FindGitDir($context, $stringSearchDirectory) {
 }
 
  function CreateToolArgumentString($context, $remainingArgs) {
-    # Out-Null stops the return value from Add being left on the pipeline
+    Set-StrictMode -Version Latest
+
     $set = [System.Collections.Generic.HashSet[string]]::new()          
 
-    if ($context.BuildMetadata -ne $null) {
-        if ($context.BuildMetadata.DebugLoggingEnabled) {
-            [void]$set.Add("/flp:Verbosity=Diag")
+    & {
+      if ($context.IsDesktopBuild) {
+            $set.Add("/p:IsDesktopBuild=true")
         } else {
-            [void]$set.Add("/flp:Verbosity=Normal")
+            $set.Add("/p:IsDesktopBuild=false")
+            $set.Add("/clp:PerformanceSummary")
         }
-    }
+
+        if ($context.BuildMetadata -ne $null) {
+            if ($context.BuildMetadata.DebugLoggingEnabled) {
+                $set.Add("/flp:Verbosity=Diag")
+            } else {
+                $set.Add("/flp:Verbosity=Normal")
+            }
+        }
         
-    # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
-    [void]$set.Add("/nologo")
-    [void]$set.Add("/nr:false")
+        # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
+        $set.Add("/nologo")
+        $set.Add("/nr:false")
 
-    # Multi-core build
-    [void]$set.Add("/m")
+        # Multi-core build
+        if ($MaxCpuCount -gt 0) {            
+            $set.Add("/m:$MaxCpuCount")
+        } else {
+            $set.Add("/m")
+        }
 
-    if ($context.IsDesktopBuild) {
-        [void]$set.Add("/p:IsDesktopBuild=true")
-    } else {
-        [void]$set.Add("/p:IsDesktopBuild=false")
-        [void]$set.Add("/clp:PerformanceSummary")
-    }    
+        if ($NoTextTemplateTransform.IsPresent) {
+            $set.Add("/p:T4TransformEnabled=false")
+        }      
 
-    [void]$set.Add("/p:VisualStudioVersion=14.0")
+        #$set.Add("/p:VisualStudioVersion=14.0")
 
-    if ($context.Switches.SkipCompile) {
-        [void]$set.Add("/p:switch-skip-compile=true")
-    }
+        if ($context.Switches.SkipCompile) {
+            $set.Add("/p:switch-skip-compile=true")
+        }
 
-    if ($context.Switches.Clean) {
-        [void]$set.Add("/p:switch-clean=true")
-    }
+        if ($context.Switches.Clean) {
+            $set.Add("/p:switch-clean=true")
+        }
 
-    if ($SkipDependencyFetch.IsPresent) {
-        [void]$set.Add("/p:RetrievePrebuilts=false")    
-    }
+        if ($NoDependencyFetch.IsPresent) {
+            $set.Add("/p:RetrievePrebuilts=false")    
+        }
 
-    if ($remainingArgs) {
-        # Add pass-thru args
-        [void]$set.Add([string]::Join(" ", $remainingArgs))
-    }
+        if ($remainingArgs) {
+            # Add pass-thru args
+            $set.Add([string]::Join(" ", $remainingArgs))
+        }
 
-    [void]$set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
-    [void]$set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
-    [void]$set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
-    [void]$set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
+        $set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
+        $set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
+        $set.Add("/p:PullRequestDropLocation=$($context.DropLocationInfo.PullRequestDropLocation)")
+        $set.Add("/p:XamlBuildDropLocation=$($context.DropLocationInfo.XamlBuildDropLocation)")
 
-    [void]$set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
+        $set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 
-    if ($PackageProduct.IsPresent) {
-        [void]$set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
-    }
-    
+        if ($PackageProduct.IsPresent) {
+            $set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
+        }
+    } | Out-Null
+    # Out-Null stops the return value from Add being left on the pipeline
+  
+
     return [string]::Join(" ", $set)
 }
 
@@ -272,10 +285,13 @@ Should not be used as it prevents incremental builds which increases build times
         [switch]$ChangedFilesOnly,
 
         [Parameter(HelpMessage = "Disables the text transformation process.")]        
-        [switch]$SkipT4,
+        [switch]$NoTextTemplateTransform,
+
+        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
+        [int]$MaxCpuCount,
 
         [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
-        [switch]$SkipDependencyFetch,
+        [switch]$NoDependencyFetch,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs

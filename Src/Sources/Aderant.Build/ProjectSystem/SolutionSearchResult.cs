@@ -56,7 +56,7 @@ namespace Aderant.Build.ProjectSystem {
         internal ProjectInSolutionWrapper(ProjectInSolution project) {
             this.project = project;
             if (project != null) {
-                Wrap(project.ProjectConfigurations);
+                ProjectConfigurations = Wrap(project.ProjectConfigurations);
             }
         }
 

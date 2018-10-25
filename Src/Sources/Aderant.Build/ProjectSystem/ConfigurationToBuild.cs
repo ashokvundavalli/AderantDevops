@@ -9,10 +9,12 @@ namespace Aderant.Build.ProjectSystem {
     /// The main difference is the solution configuration usually has a space between "Any" and "CPU" where as the project
     /// configuration does not.
     /// </summary>
-    [Serializable]
     [DataContract]
     [ProtoContract]
     public class ConfigurationToBuild {
+
+        internal ConfigurationToBuild() {
+        }
 
         public ConfigurationToBuild(string configurationToBuild) {
             var parts = configurationToBuild.Split('|');

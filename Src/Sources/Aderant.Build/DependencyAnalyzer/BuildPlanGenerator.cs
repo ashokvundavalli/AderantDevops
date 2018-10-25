@@ -20,11 +20,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         private readonly IFileSystem2 fileSystem;
         private readonly HashSet<string> observedProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
+        private string[] commandLineArgs;
+        
         public BuildPlanGenerator(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
 
         public Project GenerateProject(List<List<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
+            CaptureCommandLine();
+
             Project project = new Project();
 
             // Create a list of call targets for each build
@@ -115,6 +120,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             return project;
         }
 
+        private void CaptureCommandLine() {
+            this.commandLineArgs = Environment.GetCommandLineArgs();
+            // Find all global command line property specifications 
+            commandLineArgs = commandLineArgs.Where(x => x.StartsWith("/p:", StringComparison.OrdinalIgnoreCase)).ToArray();
+        }
+
         private static string CreateGroupName(int buildGroupCount) {
             return "ProjectsToBuild" + buildGroupCount;
         }
@@ -158,8 +169,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
         }
-
-        private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
 
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
             PropertyList propertyList = new PropertyList();
@@ -295,21 +304,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// within the pipeline we need to evict properties from the RSP that would nullify the command line values
         /// </summary>
         private PropertyList ApplyPropertiesFromCommandLineArgs(PropertyList propertyList) {
-            // Find all global command line property specifications 
-            string[] commandLineArgs = Environment.GetCommandLineArgs();
+            foreach (string argument in commandLineArgs) {
+                string[] arg = argument.Replace("\"", "").Split(new[] { '=' }, 2);
 
-            List<string> arguments = commandLineArgs.Where(x => x.StartsWith("/p:", StringComparison.OrdinalIgnoreCase)).ToList();
+                string key = arg[0].Substring(3, arg[0].Length - 3);
 
-            foreach (string argument in arguments) {
-                string[] split = argument.Replace("\"", "").Split(new[] { '=' }, 2);
-
-                string key = split[0].Substring(3, split[0].Length - 3);
-
-                if (propertyList.ContainsKey(key)) {
-                    continue;
-                }
-
-                propertyList.Add(key, split[1]);
+                // Here we take the command line arg and apply it, this overwrites whatever the RSP defined
+                propertyList[key] = arg[1];
             }
 
             return propertyList;
