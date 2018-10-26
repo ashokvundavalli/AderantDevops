@@ -355,10 +355,35 @@ Should not be used as it prevents incremental builds which increases build times
             }
         }
 
-        function ExpandPaths([string[]]$paths) {
+       # Expand input paths into array. Try to resolve the path to full.
+        function ExpandPaths() {
+            param(
+                [Parameter(Mandatory=$true)][string[]]$paths,
+                [Parameter(Mandatory=$false)][string[]]$includePaths
+            )
+
             $resolvedPaths = @() 
             foreach ($path in $paths) {
-                $resolvedPaths += Resolve-Path $path
+                # Check current location
+                $testedPath = ''
+                if (Test-Path($path)){
+                    $testedPath = Resolve-Path $path
+                } elseif ($includePaths) {
+                    # If not found, check include locations. e.g. bm -Include C:\TFSfolder\Dev\vnext\Modules\ -Exclude Services.Query
+                    $includePaths.ForEach({
+                        $currentPath = $_
+                        $currentPath = Join-Path -Path $currentPath -ChildPath $path
+                        if (Test-Path($currentPath)) {
+                            $testedPath = $currentPath
+                        }
+                    })
+                }
+
+                if ($testedPath -ne '') {
+                    $resolvedPaths += Resolve-Path $testedPath
+                } else {
+                    Write-Error "Can't resolve path: $path" 
+                }
             }
             return $resolvedPaths
         }
@@ -379,7 +404,7 @@ Should not be used as it prevents incremental builds which increases build times
 
                 if ($null -ne $exclude) {
 					Write-Output "These paths will be excluded:"
-                    $context.Exclude = ExpandPaths $exclude
+                    $context.Exclude = ExpandPaths $exclude $context.Include
                     $context.Exclude.ForEach({ Write-Output $_})
                 }
             }
