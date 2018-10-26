@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 
 namespace Aderant.Build.Utilities {
-
-    public static class ProcessRunner {
-        public static ProcessInvoker InvokeTestRunner(ProcessStartInfo startInfo) {
-            return new VsTestProcessInvoker(startInfo);
-        }
-    }
 
     /// <summary>
     /// Remembers the result of evaluating an expensive function so that subsequent

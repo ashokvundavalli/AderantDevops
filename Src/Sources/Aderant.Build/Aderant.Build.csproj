@@ -205,8 +205,6 @@
     <Compile Include="Tasks\WaitForDebugger.cs" />
     <Compile Include="Tasks\WriteBuildStateFile.cs" />
     <Compile Include="Packaging\Handlers\XamlDropHandler.cs" />
-    <Compile Include="Utilities\ProcessInvoker.cs" />
-    <Compile Include="Utilities\TestProcessInvoker.cs" />
     <Compile Include="Utilities\TopologicalSort.cs" />
     <Compile Include="DependencyAnalyzer\DependencyGraph.cs" />
     <Compile Include="VersionControl\GitVersionControlService.cs" />

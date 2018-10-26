@@ -137,7 +137,7 @@ $started = $false
 $beforeRunTrxFiles = GetTestResultFiles
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-$startInfo.FileName = $PathToTestTool
+$startInfo.FileName = '"' + $PathToTestTool + '"'
 $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
 
@@ -148,28 +148,21 @@ try {
 
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
     Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
-
-    Write-Information "Finding and deploying references"
-    FindAndDeployReferences $TestAssemblies
-
     $startInfo.Arguments += " /Settings:$runSettingsFile" 
 
+    Write-Information "Finding and deploying references"
+    FindAndDeployReferences $TestAssemblies   
+
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
-
-    # Implemented in C# for performance
-    $runner = [Aderant.Build.Utilities.ProcessRunner]::InvokeTestRunner($startInfo)     
-    $runner.Start()    
-
-    $started = $true
-
-    $global:LASTEXITCODE = $runner.Wait($true, [System.Timespan]::FromMinutes(20).TotalMilliseconds)
+    
+    $global:LASTEXITCODE = $exec.Invoke($startInfo)
 } finally {
     try {
         [System.IO.File]::Delete($runSettingsFile)
     } catch {
     }
 
-    if ($started -and $global:LASTEXITCODE -ne 0) {
+    if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
             ShowTestRunReport
         }        

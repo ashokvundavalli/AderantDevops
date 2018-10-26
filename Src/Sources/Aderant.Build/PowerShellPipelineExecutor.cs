@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Threading;
+using Aderant.Build.Tasks;
 
 namespace Aderant.Build {
     internal class PowerShellPipelineExecutor {
@@ -16,6 +17,7 @@ namespace Aderant.Build {
         public string Result { get; set; }
 
         public bool HadErrors { get; private set; }
+        public ProcessRunner ProcessRunner { get; set; }
 
         public event EventHandler<ICollection<PSObject>> DataReady;
 
@@ -43,7 +45,11 @@ namespace Aderant.Build {
 
                 SetExecutionPolicy(shell);
                 SetProgressPreference(shell);
-                
+
+                if (ProcessRunner != null) {
+                    runspace.SessionStateProxy.SetVariable("exec", ProcessRunner.StartProcess);
+                }
+
                 if (variables != null) {
                     foreach (var variable in variables) {
                         runspace.SessionStateProxy.SetVariable(variable.Key, variable.Value);
