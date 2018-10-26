@@ -206,7 +206,7 @@ function Build-ExpertModules {
             $global:LastBuildGetLocal = $getLocal
             $global:LastBuildExclude = $exclude
 
-            if (!($workflowModuleNames)) {
+            if (-not $workflowModuleNames) {
                 write "No modules specified."
                 return
             }
@@ -413,7 +413,7 @@ function Build-ExpertModulesOnServer([string[]] $workflowModuleNames, [switch] $
         }
     }
 
-    if (!($workflowModuleNames)) {
+    if (-not ($workflowModuleNames)) {
         write "No modules specified.";
         return;
     }

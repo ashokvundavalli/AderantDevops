@@ -1,34 +1,200 @@
 ﻿# This file is run by an CI agent. The CI agent PowerShell runner does not subscribe to Write-Information.
+function global:Invoke-Build2 {
+    [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
+    param (
+        [Parameter()]
+        [switch]$Branch,
 
-$indent1 = "  "
-$indent2 = "        "
+        [Parameter()]
+        [switch]$Downstream,
 
-function ApplyBranchConfig($context, $root) {
-    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
+        [Parameter()]
+        [switch]$Transitive,
+        
+        [Parameter(HelpMessage = "Destroys all intermediate objects.
+Returns the source tree to a pristine state.
+Should not be used as it prevents incremental builds which increases build times.")]
+        [switch]$Clean,
 
-    if (-not $configPath) {
-        throw "Branch configuration file not found at path $($configPath)"
-    }
+        [Parameter()]
+        [switch]$Release,        
 
-    [xml]$config = Get-Content -Raw -LiteralPath $configPath
+        [Parameter()]
+        [switch]$Resume,
 
-    $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
-    $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
-    $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
-    $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
-}
+        [Parameter()]
+        [switch]$SkipCompile,
 
-function FindProductManifest($context, $stringSearchDirectory) {
-    $configPath = [System.IO.Path]::Combine($root, "Build\ExpertManifest.xml")
-    $context.ProductManifestPath = $configPath
-}
+        [Parameter(HelpMessage = "Includes the product packaging steps. This will produce the package which can be used to install the product.")]
+        [switch]$PackageProduct,
 
-function FindGitDir($context, $stringSearchDirectory) {        
-    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
-    $context.Variables["_GitDir"] = "$path\.git"
+        [Parameter(HelpMessage = "Disables the use of the build cache.")]
+        [switch]$NoBuildCache,
 
-    return $path
-}
+        #[Parameter]
+        #[switch]$integration,
+
+        #[Parameter]
+        #[switch]$automation,        
+
+        [Parameter(HelpMessage = "Displays HTML code coverage report.")]
+        [switch]$DisplayCodeCoverage,
+                
+        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]        
+        [string]$ModulePath = "",
+
+        [Parameter(HelpMessage = "Runs the target with the provided name")]        
+        [string]$Target = "BuildAndPackage",
+
+        [Parameter(HelpMessage = "Includes solutions and projects found under these paths into the build tree. Supports wildcards.")]
+        [string[]]$Include = $null,
+
+        [Parameter(HelpMessage = "Excludes solutions and projects found under these paths into the build tree. Supports wildcards.")]
+        [string[]]$Exclude = $null,
+
+        [Parameter(HelpMessage = "Only files that have modifications are considered.")]
+        [Alias("JustMyChanges")]
+        [switch]$ChangedFilesOnly,
+
+        [Parameter(HelpMessage = "Disables the text transformation process.")]        
+        [switch]$NoTextTemplateTransform,
+
+        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
+        [int]$MaxCpuCount,
+
+        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
+        [switch]$NoDependencyFetch,
+        
+        [Parameter(ValueFromRemainingArguments)]
+        [string[]]$RemainingArgs
+    )
+
+    begin {
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = 'Stop'
+
+        function IsGitRepository {
+            [CmdletBinding()]
+            param (
+                [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$path
+            )
+
+            process {
+                $path = (Resolve-Path -Path $path).Path
+
+                if ([System.IO.path]::GetPathRoot($path) -eq $path) {
+                    return $false
+                }
+
+                return @(Get-ChildItem -Path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
+            }
+        }
+
+        [string]$indent1 = "  "
+        [string]$indent2 = "        "
+
+        function Get-Branch {
+            [CmdletBinding()]
+            param (
+                [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$root
+            )
+
+            begin {
+                [string]$rspFile = [System.IO.Path]::Combine($root, "Build\TFSBuild.rsp")
+                # ToDo: Change 'monotest' to 'master' once the monotest has been merged.
+                [string]$branch = 'monotest'
+            }
+
+            process {
+                if (Test-Path -Path $rspFile) {
+                    [string[]]$content = Get-Content -Path $rspFile
+
+                    [string[]]$variable = $content | Where-Object { $_ -match '/p:OriginBranch=' }
+
+                    if ($null -ne $variable -and $variable.Length -gt 0) {
+                        return $branch = $variable[0].Split('=')[1]
+                    }
+                }
+
+                return $branch
+            }
+        }
+
+        function Get-BuildManifest {
+            [CmdletBinding()]
+            param (
+                [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$manifest,
+                [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$branch
+            )
+
+            process {
+                return (Invoke-WebRequest -Uri "http://tfs.$($env:USERDNSDOMAIN.ToLower()):8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/316b9ba9-3a49-47b2-992e-a9a2a2835b3f/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&path=%2FBuild%2F$($manifest)&version=GB$($branch)&contentOnly=false&__v=5" -UseBasicParsing -UseDefaultCredentials).Content
+            }
+        }
+
+        function ApplyBranchConfig($context, $root) {
+            $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
+
+            [xml]$config = $null
+            if (-not (Test-Path -Path $configPath)) {
+                # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
+                [string]$branch = Get-Branch -root $root
+
+                $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
+            } else {
+                $config = Get-Content -Raw -LiteralPath $configPath
+            }
+
+            $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
+            $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
+            $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
+            $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
+        }
+
+        function Get-BuildDirectory {
+            if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+                If (Test-Path -Path $global:BranchConfigPath) {
+                    [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+                    [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
+
+                    if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                        return
+                    }
+                }
+            }
+
+            $global:BranchConfigPath = Read-Host -Prompt 'Please supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
+            Get-BuildDirectory
+        }
+
+        function FindProductManifest($context, $stringSearchDirectory) {
+            [string]$configPath = [System.IO.Path]::Combine($stringSearchDirectory, 'Build\ExpertManifest.xml')
+
+            if (-not (Test-Path -Path $configPath)) {
+                if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+                    Get-BuildDirectory
+
+                    $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+                    return
+                }
+
+                [string]$branch = Get-Branch -root $stringSearchDirectory
+
+                $config = Get-BuildManifest -manifest 'ExpertManifest.xml' -branch $branch
+                $temp = New-TemporaryFile
+                $config | Out-File -File $temp.FullName -Encoding 'UTF8'
+                $configPath = $temp.FullName
+            }
+
+            $context.ProductManifestPath = $configPath
+        }
+
+        function FindGitDir($context, $stringSearchDirectory) {        
+            $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
+            $context.Variables["_GitDir"] = "$path\.git"
+
+            return $path
+        }
 
  function CreateToolArgumentString($context, $remainingArgs) {
     Set-StrictMode -Version Latest
@@ -80,10 +246,14 @@ function FindGitDir($context, $stringSearchDirectory) {
             $set.Add("/p:RetrievePrebuilts=false")    
         }
 
-        if ($remainingArgs) {
-            # Add pass-thru args
-            $set.Add([string]::Join(" ", $remainingArgs))
-        }
+            if ($remainingArgs) {
+                if ($remainingArgs.Contains('.')) {
+                    return
+                }
+
+                # Add pass-thru args
+                [void]$set.Add([string]::Join(" ", $remainingArgs))
+            }
 
         $set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
         $set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
@@ -102,204 +272,167 @@ function FindGitDir($context, $stringSearchDirectory) {
     return [string]::Join(" ", $set)
 }
 
-function GetSourceTreeMetadata($context, $repositoryPath) {        
-    $sourceBranch = ""
-    $targetBranch = ""
+        function GetSourceTreeMetadata($context, $repositoryPath) {
+            begin {
+                [string]$sourceBranch = ""
+                [string]$targetBranch = ""
+            }
 
-    if (-not $context.IsDesktopBuild) {
-        $metadata = $context.BuildMetadata
-        $sourceBranch = $metadata.ScmBranch;
+            process {
+                if (-not $context.IsDesktopBuild) {
+                    $metadata = $context.BuildMetadata
+                    $sourceBranch = $metadata.ScmBranch;
 
-        if ($metadata.IsPullRequest) {            
-            $targetBranch = $metadata.PullRequest.TargetBranch
+                    if ($metadata.IsPullRequest) {            
+                        $targetBranch = $metadata.PullRequest.TargetBranch
 
-            Write-Host "Calculating changes between $sourceBranch and $targetBranch"
-        }
-    }    
+                        Write-Host "Calculating changes between $sourceBranch and $targetBranch"
+                    }
+                }    
 
-    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
+                $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
 
-    Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
-    Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
-    if ($context.SourceTreeMetadata.CommonAncestor) {
-        Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
-    }
+                Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
+                Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
+                if ($context.SourceTreeMetadata.CommonAncestor) {
+                    Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
+                }
    
-    if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
-        Write-Host ""
-        Write-Host "$indent1 Changes..."    
-        foreach ($change in $context.SourceTreeMetadata.Changes) {
-            Write-Host "$indent2 $($change.Path): $($change.Status)"
+                if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
+                    Write-Host ""
+                    Write-Host "$indent1 Changes..."    
+                    foreach ($change in $context.SourceTreeMetadata.Changes) {
+                        Write-Host "$indent2 $($change.Path):$($change.Status)"
+                    }
+                }
+            }
         }
-    }
-}
 
-function GetBuildStateMetadata($context) {    
-    $stm = $context.SourceTreeMetadata
+        function GetBuildStateMetadata($context) {    
+            $stm = $context.SourceTreeMetadata
 
-    Write-Host ""
-    Write-Host "$indent1 Build Tree"
-    foreach ($id in $stm.BucketIds) {
-        Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
-    }   
+            if ($null -eq $stm) {
+                return
+            }
 
-    $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
-    $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
+            Write-Host ""
+            Write-Host "$indent1 Build Tree"
+            foreach ($id in $stm.BucketIds) {
+                Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
+            }   
 
-    $context.BuildStateMetadata = $buildState
+            $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
+            $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
-    foreach ($file in $buildState.BuildStateFiles) {
-        Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)/$($file.BucketId.Tag)")
-    }    
-}
+            $context.BuildStateMetadata = $buildState
 
-function PrepareEnvironment {
-  # Setup environment for JavaScript tests
-  Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" -Name "iexplore.exe" -Type "DWORD" -Value 0
+            foreach ($file in $buildState.BuildStateFiles) {
+                Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)/$($file.BucketId.Tag)")
+            }    
+        }
 
-  $lockDownPath = "HKCU:\Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
-  if ((Test-Path "$lockDownPath") -eq 0)
-  {
-    New-Item -Path "$lockDownPath\Settings" -Type Directory -Force
-    New-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
-  }
-  elseif ((Test-Path "$lockDownPath") -eq 1)
-  {
-    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
-  }  
+        function PrepareEnvironment {
+            # Setup environment for JavaScript tests
+            Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" -Name "iexplore.exe" -Type "DWORD" -Value 0
 
-  # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
-  $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-  $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-  if (Test-Path $wcfPath32) {  
-    Remove-Item -Path $wcfPath32 -Recurse
-  }
+            $lockDownPath = "HKCU:\Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
+            if ((Test-Path "$lockDownPath") -eq 0) {
+                New-Item -Path "$lockDownPath\Settings" -Type Directory -Force
+                New-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
+            } elseif ((Test-Path "$lockDownPath") -eq 1) {
+                Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
+            }  
 
-  if (Test-Path $wcfPath64) {  
-    Remove-Item -Path $wcfPath64 -Recurse
-  }  
-}
+            # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
+            $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+            $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
+            if (Test-Path $wcfPath32) {  
+                Remove-Item -Path $wcfPath32 -Recurse
+            }
 
-function ExpandPaths([string[]]$paths) {
-    $resolvedPaths = @() 
-    foreach ($path in $paths) {
-        $resolvedPaths += Resolve-Path $path
-    }
-    return $resolvedPaths
-}
+            if (Test-Path $wcfPath64) {  
+                Remove-Item -Path $wcfPath64 -Recurse
+            }
+        }
 
-function AssignIncludeExclude() {
-    if ($Include) {
-        $context.Include = ExpandPaths $Include
+       # Expand input paths into array. Try to resolve the path to full.
+        function ExpandPaths() {
+            param(
+                [Parameter(Mandatory=$true)][string[]]$paths,
+                [Parameter(Mandatory=$false)][string[]]$includePaths
+            )
 
-        Write-Output "These paths will be included:"
-        $context.Include.ForEach({ Write-Output $_})
-    }
+            $resolvedPaths = @() 
+            foreach ($path in $paths) {
+                # Check current location
+                $testedPath = ''
+                if (Test-Path($path)){
+                    $testedPath = Resolve-Path $path
+                } elseif ($includePaths) {
+                    # If not found, check include locations. e.g. bm -Include C:\TFSfolder\Dev\vnext\Modules\ -Exclude Services.Query
+                    $includePaths.ForEach({
+                        $currentPath = $_
+                        $currentPath = Join-Path -Path $currentPath -ChildPath $path
+                        if (Test-Path($currentPath)) {
+                            $testedPath = $currentPath
+                        }
+                    })
+                }
 
-    if ($Exclude) {
-        Write-Output "These paths will be excluded:"
-        $context.Exclude = ExpandPaths $Exclude
-        $context.Exclude.ForEach({ Write-Output $_})
-    }
-}
+                if ($testedPath -ne '') {
+                    $resolvedPaths += Resolve-Path $testedPath
+                } else {
+                    Write-Error "Can't resolve path: $path" 
+                }
+            }
+            return $resolvedPaths
+        }
 
-function AssignSwitches() {
-    $switches = $context.Switches
+        function AssignIncludeExclude {
+            param(
+                [Parameter(Mandatory=$false)][string[]]$include,
+                [Parameter(Mandatory=$false)][string[]]$exclude
+            )
+
+            begin {
+                if ($null -ne $include) {
+                    $context.Include = ExpandPaths $include
+
+                    Write-Output "These paths will be included:"
+                    $context.Include.ForEach({ Write-Output $_})
+                }
+
+                if ($null -ne $exclude) {
+					Write-Output "These paths will be excluded:"
+                    $context.Exclude = ExpandPaths $exclude $context.Include
+                    $context.Exclude.ForEach({ Write-Output $_})
+                }
+            }
+        }
+
+        function AssignSwitches() {
+            $switches = $context.Switches
     
-    $switches.Branch = $Branch.IsPresent
-    $switches.Downstream = $Downstream.IsPresent
-    $switches.Transitive = $Transitive.IsPresent
-    $switches.Clean = $Clean.IsPresent
-    $switches.Release = $Release.IsPresent
-    $switches.Resume = $Resume.IsPresent
-    $switches.SkipCompile = $SkipCompile.IsPresent
-    $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
+            $switches.Branch = $Branch.IsPresent
+            $switches.Downstream = $Downstream.IsPresent
+            $switches.Transitive = $Transitive.IsPresent
+            $switches.Clean = $Clean.IsPresent
+            $switches.Release = $Release.IsPresent
+            $switches.Resume = $Resume.IsPresent
+            $switches.SkipCompile = $SkipCompile.IsPresent
+            $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
 
-    if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
-        $switches.WhatIf = $true
-    }
+            if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
+                $switches.WhatIf = $true
+            }
 
-    if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {
-        $context.BuildMetadata.DebugLoggingEnabled = $true
-        Write-Output "DebugLoggingEnabled"
-    }
+            if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {
+                $context.BuildMetadata.DebugLoggingEnabled = $true
+                Write-Output "DebugLoggingEnabled"
+            }
 
-    $context.Switches = $switches
-}
-
-function global:Invoke-Build2 {
-    [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
-    param (
-        [Parameter()]
-        [switch]$Branch,
-
-        [Parameter()]
-        [switch]$Downstream,
-
-        [Parameter()]
-        [switch]$Transitive,
-        
-        [Parameter(HelpMessage = "Destroys all intermediate objects.
-Returns the source tree to a pristine state.
-Should not be used as it prevents incremental builds which increases build times.")]
-        [switch]$Clean,
-
-        [Parameter()]
-        [switch]$Release,        
-
-        [Parameter()]
-        [switch]$Resume,
-
-        [Parameter()]
-        [switch]$SkipCompile,
-
-        [Parameter(HelpMessage = "Includes the product packaging steps. This will produce the package which can be used to install the product.")]
-        [switch]$PackageProduct,
-
-        [Parameter(HelpMessage = "Disables the use of the build cache.")]
-        [switch]$NoBuildCache,
-
-        #[Parameter]
-        #[switch]$integration,
-
-        #[Parameter]
-        #[switch]$automation,        
-
-        [Parameter(HelpMessage = "Displays HTML code coverage report.")]
-        [switch]$DisplayCodeCoverage,
-                
-        [Parameter(ParameterSetName="Build", Mandatory=$false)]        
-        [string]$ModulePath = "",
-
-        [Parameter(HelpMessage = "Runs the target with the provided name")]        
-        [string]$Target = "BuildAndPackage",
-
-        [Parameter(HelpMessage = "Includes solutions and projects found under these paths into the build tree. Supports wildcards.")]
-        [string[]]$Include = $null,
-
-        [Parameter(HelpMessage = "Excludes solutions and projects found under these paths into the build tree. Supports wildcards.")]
-        [string[]]$Exclude = $null,
-
-        [Parameter(HelpMessage = "Only files that have modifications are considered.")]
-        [Alias("JustMyChanges")]
-        [switch]$ChangedFilesOnly,
-
-        [Parameter(HelpMessage = "Disables the text transformation process.")]        
-        [switch]$NoTextTemplateTransform,
-
-        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
-        [int]$MaxCpuCount,
-
-        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
-        [switch]$NoDependencyFetch,
-        
-        [Parameter(ValueFromRemainingArguments)]
-        [string[]]$RemainingArgs
-    )
-
-    begin {
-        Set-StrictMode -Version Latest
-        $ErrorActionPreference = "Stop" 
+            $context.Switches = $switches
+        }
     }
 
     process {
@@ -318,24 +451,32 @@ Should not be used as it prevents incremental builds which increases build times
         if (-not [string]::IsNullOrEmpty($ModulePath)) {
             $repositoryPath = $ModulePath
         } else {
-            $repositoryPath = $global:ShellContext.CurrentModulePath
+            $repositoryPath = Convert-Path -Path '.'
         }
 
         $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
-        AssignIncludeExclude    
+        AssignIncludeExclude -include $Include -exclude $Exclude
 
-        $root = FindGitDir $context $repositoryPath
+        [string]$root = $null
+        if (IsGitRepository -path $repositoryPath) {
+            $root = FindGitDir $context $repositoryPath
+            GetSourceTreeMetadata $context $root
+        } else {
+            $root = (Resolve-Path -Path $repositoryPath).Path
+        }
+
         AssignSwitches
+
         ApplyBranchConfig $context $root
+
         FindProductManifest $context $root
-        GetSourceTreeMetadata $context $root
-        
+
         if (-not $NoBuildCache.IsPresent) {
             GetBuildStateMetadata $context
         }
 
-        PrepareEnvironment  
+        PrepareEnvironment
 
         $context.StartedAt = [DateTime]::UtcNow
         $context.LogFile = "$repositoryPath\build.log"
@@ -357,7 +498,7 @@ Should not be used as it prevents incremental builds which increases build times
                 $Target = "CreatePlan"
             }        
 
-            Run-MSBuild "$($context.BuildScriptsDirectory)\ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
+            Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
 
             $succeeded = $true
 
@@ -372,9 +513,11 @@ Should not be used as it prevents incremental builds which increases build times
                 }
             }
         } catch {
-            $succeeded = $false        
-        } finally {        
-            Write-Host "##vso[task.uploadfile]$($context.LogFile)"        
+            $succeeded = $false       
+        } finally {
+            if (-not $context.IsDesktopBuild) {
+                Write-Host "##vso[task.uploadfile]$($context.LogFile)"
+            }
 
             $host.UI.RawUI.ForegroundColor = $currentColor
 
@@ -409,3 +552,5 @@ Should not be used as it prevents incremental builds which increases build times
         }
     }
 }
+
+Set-Alias -Name bm -Value global:Invoke-Build2 -Scope 'Global'

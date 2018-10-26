@@ -131,7 +131,7 @@
   </Target>
 
 
-  <Target Name="WriteStateFiles">
+  <Target Name="WriteStateFiles" Condition="'$(IsDesktopBuild)' != 'true'">
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
