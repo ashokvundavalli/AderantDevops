@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Aderant.Build.PipelineService;
-using Microsoft.Build.BuildEngine;
-using Microsoft.Build.Evaluation;
-using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Tasks;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
@@ -86,7 +81,12 @@ namespace Aderant.Build.Tasks {
         }
 
         private bool RunScript(Dictionary<string, object> variables, TaskLoggingHelper name, string directoryName) {
-            var pipelineExecutor = new PowerShellPipelineExecutor();
+
+            var processRunner = new ProcessRunner(new Exec { BuildEngine = this.BuildEngine });
+            var pipelineExecutor = new PowerShellPipelineExecutor {
+                ProcessRunner = processRunner
+            };
+
             pipelineExecutor.ProgressPreference = ProgressPreference;
 
             AttachLogger(name, pipelineExecutor);
@@ -104,6 +104,7 @@ namespace Aderant.Build.Tasks {
                 }
 
                 scripts.Add(ScriptBlock);
+
 
                 pipelineExecutor.RunScript(
                     scripts,
@@ -141,5 +142,27 @@ namespace Aderant.Build.Tasks {
         private IBuildPipelineService GetProxy() {
             return BuildPipelineServiceClient.Current;
         }
+    }
+
+    /// <summary>
+    /// Wraps the build engine command runner
+    /// </summary>
+    internal class ProcessRunner {
+        private readonly Exec execTask;
+
+        public ProcessRunner(Exec execTask) {
+            this.execTask = execTask;
+
+            StartProcess = command => {
+                execTask.Command = command.FileName + " " + command.Arguments;
+                execTask.IgnoreExitCode = false;
+                execTask.WorkingDirectory = command.WorkingDirectory;
+                
+                execTask.Execute();
+                return execTask.ExitCode;
+            };
+        }
+
+        public Func<ProcessStartInfo, int> StartProcess { get; set; }
     }
 }

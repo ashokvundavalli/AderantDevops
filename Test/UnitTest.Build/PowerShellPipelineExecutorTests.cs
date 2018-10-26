@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Threading;
 using Aderant.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -62,8 +61,7 @@ Write-Host 'Host'
 $DebugPreference = 'Continue'
 Write-Debug 'Verbose'"
                 },
-                null,
-                CancellationToken.None);
+                null);
 
             Assert.AreEqual(6, calls.Sum());
         }
@@ -81,8 +79,7 @@ Write-Debug 'Verbose'"
 Write-Error 'Error'
 "
                 },
-                null,
-                CancellationToken.None);
+                null);
 
             Assert.IsNotNull(errors);
         }

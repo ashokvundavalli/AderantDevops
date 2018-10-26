@@ -88,6 +88,8 @@
       <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
       <ExcludePaths Include="Collections" />
       <ExcludePaths Include="GeneralLedger" />
+      <ExcludePaths Include="TempTransform\" />
+      <ExcludePaths Include="Tests.Load\" />
     </ItemGroup>
 
     <!-- 
