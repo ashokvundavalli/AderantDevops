@@ -1,21 +1,4 @@
-﻿function script:IsGitRepository {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$path
-    )
-
-    process {
-        $path = (Resolve-Path -Path $path).Path
-
-        if ([System.IO.path]::GetPathRoot($path) -eq $path) {
-            return $false
-        }
-
-        return [System.IO.Directory]::Exists("$path\.git")
-    }
-}
-
-[string]$indent1 = "  "
+﻿[string]$indent1 = "  "
 [string]$indent2 = "        "
 
 function Get-Branch {
@@ -148,16 +131,14 @@ function CreateToolArgumentString($context, $remainingArgs) {
 
         # Multi-core build
         if ($MaxCpuCount -gt 0) {            
-            $set.Add("/m:$MaxCpuCount")
+            $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
             $set.Add("/m")
         }
 
         if ($NoTextTemplateTransform.IsPresent) {
             $set.Add("/p:T4TransformEnabled=false")
-        }      
-
-        #$set.Add("/p:VisualStudioVersion=14.0")
+        }
 
         if ($context.Switches.SkipCompile) {
             $set.Add("/p:switch-skip-compile=true")
@@ -459,15 +440,10 @@ Should not be used as it prevents incremental builds which increases build times
 
         $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
-        AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
-
-        [string]$root = $null
-        if (IsGitRepository -path $repositoryPath) {
-            $root = FindGitDir $context $repositoryPath
-            GetSourceTreeMetadata $context $root
-        } else {
-            $root = (Resolve-Path -Path $repositoryPath).Path
-        }
+        AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath               
+        
+        $root = FindGitDir $context $repositoryPath
+        GetSourceTreeMetadata $context $root        
 
         AssignSwitches
         ApplyBranchConfig $context $root
