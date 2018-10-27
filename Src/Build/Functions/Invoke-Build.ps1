@@ -11,7 +11,7 @@
             return $false
         }
 
-        return @(Get-ChildItem -Path $path -Filter ".git" -Recurse -Depth 1 -Attributes Hidden -Directory).Length -gt 0
+        return [System.IO.Directory]::Exists("$path\.git")
     }
 }
 
@@ -171,14 +171,14 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/p:RetrievePrebuilts=false")    
         }
 
-            if ($remainingArgs) {
-                if ($remainingArgs.Contains('.')) {
-                    return
-                }
-
-                # Add pass-thru args
-                [void]$set.Add([string]::Join(" ", $remainingArgs))
+        if ($remainingArgs) {
+            if ($remainingArgs.Contains('.')) {
+                return
             }
+
+            # Add pass-thru args
+            [void]$set.Add([string]::Join(" ", $remainingArgs))
+        }
 
         $set.Add("/p:PrimaryDropLocation=$($context.DropLocationInfo.PrimaryDropLocation)")
         $set.Add("/p:BuildCacheLocation=$($context.DropLocationInfo.BuildCacheLocation)")
@@ -191,8 +191,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
         }
     } | Out-Null
-    # Out-Null stops the return value from Add being left on the pipeline
-  
+    # Out-Null stops the return value from Add being left on the pipeline  
 
     return [string]::Join(" ", $set)
 }
@@ -278,11 +277,12 @@ function PrepareEnvironment {
     if (Test-Path $wcfPath64) {  
         Remove-Item -Path $wcfPath64 -Recurse
     }
+
+    Optimize-BuildEnvironment     
 }
 
 # Expand input paths into array. Try to resolve the path to full.
-function ExpandPaths {
-    [CmdletBinding()]
+function ExpandPaths {    
     param(
         [Parameter(Mandatory=$true)][string[]]$paths,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$rootPath,
@@ -295,14 +295,13 @@ function ExpandPaths {
         $testedPath = ''
         if (Test-Path($path)) {
             $testedPath = Resolve-Path $path
-        } elseif(-not [string]::IsNullOrWhiteSpace($rootPath)) {
+        } elseif (-not [string]::IsNullOrWhiteSpace($rootPath)) {
             $currentDirPath = Join-Path -Path $rootPath -ChildPath $path
 
             if (Test-Path -Path $currentDirPath) {
                 $testedPath = $currentDirPath
             }
-        } elseif ($includePaths) {
-            # If not found, check include locations. e.g. bm -Include C:\TFSfolder\Dev\vnext\Modules\ -Exclude Services.Query
+        } elseif ($includePaths) {            
             $includePaths.ForEach({
                 $currentPath = $_
                 $currentPath = Join-Path -Path $currentPath -ChildPath $path
@@ -322,38 +321,31 @@ function ExpandPaths {
     return $resolvedPaths
 }
 
-function AssignIncludeExclude {
-    [CmdletBinding()]
+function AssignIncludeExclude {    
     param(
         [Parameter(Mandatory=$false)][string[]]$include,
         [Parameter(Mandatory=$false)][string[]]$exclude,
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$rootPath
     )
-
-    begin {
-        if ($null -ne $include) {
-            $context.Include = ExpandPaths $include
-
-            Write-Output "These paths will be included:"
-            $context.Include.ForEach({ Write-Output $_})
-        }
-
-        if ($null -ne $exclude) {
-			Write-Output "These paths will be excluded:"
-            $context.Exclude = ExpandPaths -paths $exclude -rootPath $rootPath -includePaths $context.Include
-            $context.Exclude.ForEach({ Write-Output $_})
-        }
+    
+    if ($null -ne $include) {
+        $context.Include = ExpandPaths $include
     }
+
+    if ($null -ne $exclude) {			
+        $context.Exclude = ExpandPaths -paths $exclude -rootPath $rootPath -includePaths $context.Include            
+    }    
 }
 
 function AssignSwitches() {
     $switches = $context.Switches
+
     
     $switches.Branch = $Branch.IsPresent
     $switches.Downstream = $Downstream.IsPresent
     $switches.Transitive = $Transitive.IsPresent
     $switches.Clean = $Clean.IsPresent
-    $switches.Release = $Release.IsPresent
+    $switches.Release = $Release.IsPresent    
     $switches.Resume = $Resume.IsPresent
     $switches.SkipCompile = $SkipCompile.IsPresent
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
@@ -391,7 +383,7 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter()]
         [switch]$Release,        
 
-        [Parameter()]
+        [Parameter(HelpMessage = "Resumes the build from the last failure point.")]
         [switch]$Resume,
 
         [Parameter()]
@@ -478,9 +470,7 @@ Should not be used as it prevents incremental builds which increases build times
         }
 
         AssignSwitches
-
         ApplyBranchConfig $context $root
-
         FindProductManifest $context $root
 
         if (-not $NoBuildCache.IsPresent) {
@@ -495,7 +485,8 @@ Should not be used as it prevents incremental builds which increases build times
         $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()    
 
         $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
-        $contextService.StartListener($contextEndpoint)    
+        $contextService.StartListener($contextEndpoint)
+        Write-Debug "Service running on uri: $($contextService.ServerUri)"
         $contextService.Publish($context)
 
         $succeeded = $false
@@ -526,11 +517,11 @@ Should not be used as it prevents incremental builds which increases build times
         } catch {
             $succeeded = $false       
         } finally {
+            $host.UI.RawUI.ForegroundColor = $currentColor
+
             if (-not $context.IsDesktopBuild) {
                 Write-Host "##vso[task.uploadfile]$($context.LogFile)"
-            }
-
-            $host.UI.RawUI.ForegroundColor = $currentColor
+            }            
 
             $context = $contextService.CurrentContext
             $reason = $context.BuildStatusReason

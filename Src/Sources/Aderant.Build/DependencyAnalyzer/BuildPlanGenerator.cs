@@ -309,8 +309,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string key = arg[0].Substring(3, arg[0].Length - 3);
 
-                // Here we take the command line arg and apply it, this overwrites whatever the RSP defined
-                propertyList[key] = arg[1];
+                if (propertyList.ContainsKey(key)) {
+                    // Here we take the command line arg and apply it, this overwrites whatever the RSP defined
+                    propertyList[key] = arg[1];
+                }
             }
 
             return propertyList;

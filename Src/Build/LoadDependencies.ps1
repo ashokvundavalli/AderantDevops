@@ -90,10 +90,18 @@ process {
 
 		(Get-Content "$modulesRootPath\$solutionName.sln.DotSettings") | Foreach-Object { ($_ -replace '\[ABSOLUTEPATH\]', $absolutePath) -replace '\[RELATIVEPATH\]', $relativePath }  | Out-File "$modulesRootPath\$solutionName.sln.DotSettings"
 	}
-       
-    Copy-Item "$PSScriptRoot\dir.proj" -Destination "$modulesRootPath\dir.proj" -Force
-    Copy-Item "$PSScriptRoot\Aderant.wpp.content.proj" -Destination "$modulesRootPath\Aderant.wpp.content.proj" -Force
-    Copy-Item "$PSScriptRoot\Aderant.wpp.content.v2.proj" -Destination "$modulesRootPath\Aderant.wpp.content.v2.proj" -Force
+
+    $filesToDeploy = @(
+     "dir.proj",
+     "Aderant.wpp.content.proj",
+     "Aderant.wpp.content.v2.proj"  
+    )
+
+    foreach ($file in $filesToDeploy) {
+        if (-not (Get-Item "$modulesRootPath\$file").Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            New-Item -Name "$modulesRootPath\$file" -Value "$PSScriptRoot\$file" -ItemType HardLink
+        }
+    }
 
     if (Test-ReparsePoint $moduleDependenciesDirectory) {
         [System.IO.Directory]::Delete($moduleDependenciesDirectory)

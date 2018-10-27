@@ -87,6 +87,12 @@ namespace Aderant.Build.ProjectSystem {
             EnsureUnconfiguredProjects();
 
             ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            
+            if (excludeFilterPatterns != null) {
+                excludeFilterPatterns = excludeFilterPatterns.Select(PathUtility.GetFullPath).ToList();
+
+                logger.Info("Excluding paths: " + string.Join(",", excludeFilterPatterns));
+            }
 
             Parallel.ForEach(
                 directory,
@@ -219,21 +225,34 @@ namespace Aderant.Build.ProjectSystem {
             projectToSolutionMap.TryGetValue(projectGuid, out solutionFile);
 
             if (projectInSolution == null || solutionFile == null) {
-                string directoryName = Path.GetDirectoryName(projectFilePath);
-                var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryName, "*.sln", null);
 
-                foreach (var file in files) {
-                    ParseResult parseResult = parser.Parse(file);
+                FileInfo fileInfo = new FileInfo(projectFilePath);
+                DirectoryInfo directoryToSearch = fileInfo.Directory;
 
-                    if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
+                do {
+                  
 
-                        projectsByGuid.Add(projectGuid, projectInSolution);
-                        projectToSolutionMap.Add(projectGuid, parseResult.SolutionFile);
+                    if (directoryToSearch != null) {
+                        var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryToSearch.FullName, "*.sln", null);
 
-                        solutionFile = parseResult.SolutionFile;
-                        break;
+                        foreach (var file in files) {
+                            ParseResult parseResult = parser.Parse(file);
+
+                            if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
+                                projectsByGuid.Add(projectGuid, projectInSolution);
+                                projectToSolutionMap.Add(projectGuid, parseResult.SolutionFile);
+
+                                solutionFile = parseResult.SolutionFile;
+                                directoryToSearch = null;
+                                break;
+                            }
+                        }
+
+                        if (directoryToSearch != null) {
+                            directoryToSearch = directoryToSearch.Parent;
+                        }
                     }
-                }
+                } while (directoryToSearch != null);
             }
 
             if (solutionFile == null) {
@@ -251,13 +270,12 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
-            if (excludeFilterPatterns != null) {
-                excludeFilterPatterns = excludeFilterPatterns.Select(PathUtility.GetFullPath).ToList();
-            }
-
             var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
 
             foreach (var path in files) {
+                if (path.Contains("Important")) {
+
+                }
                 bool skip = false;
 
                 if (excludeFilterPatterns != null) {

@@ -167,13 +167,16 @@ namespace Aderant.Build.PipelineService {
             bool connectionValid;
 
             const long timeout = 60000;
+
             do {
                 connectionValid = TestConnection(binding, address, out proxy, out ex);
                 if (ex is EndpointNotFoundException) {
                     break;
                 }
 
-                Thread.Sleep(50);
+                if (!connectionValid) {
+                    Thread.Sleep(50);
+                }
             } while (stopwatch.ElapsedMilliseconds < timeout && !connectionValid);
 
             if (!connectionValid) {

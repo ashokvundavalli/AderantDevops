@@ -1,45 +1,44 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
-using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.Logging;
+using Aderant.Build.ProjectSystem;
+using Aderant.Build.Utilities;
 
 namespace Aderant.Build.Commands {
 
-    [Cmdlet("Get", "ExpertModuleDependencyTree")]
+    [Cmdlet("Get", "BuildDependencyTree")]
     public class GetDependencyTree : PSCmdlet {
-        [Parameter(Mandatory = false, Position = 0)]
-        public SwitchParameter RestrictToModulesInBranch {
-            get;
-            set;
-        }
 
-        [Parameter(Mandatory = false, Position = 1)]
-        public string BranchPath {
-            get;
-            set;
-        }
+        [Parameter(Mandatory = false, Position = 0)]
+        public string Directory { get; set; }
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
 
-            string branchPath = ParameterHelper.GetBranchPath(BranchPath, this.SessionState);
+            var projectTree = ProjectTree.CreateDefaultImplementation(new PowerShellLogger(this.Host));
+            var collector = new BuildDependenciesCollector();
+            collector.ProjectConfiguration = ConfigurationToBuild.Default;
 
-            DependencyBuilder builder = new DependencyBuilder(branchPath);
-            IEnumerable<Build> builds = builder.GetTree(RestrictToModulesInBranch.IsPresent);
+            projectTree.LoadProjects(Directory, true, null);
+            projectTree.CollectBuildDependencies(collector).Wait();
+            var buildDependencyGraph = projectTree.CreateBuildDependencyGraph(collector);
 
-            WriteToHost(builds);
-        }
+            var groups = buildDependencyGraph.GetBuildGroups(buildDependencyGraph.GetDependencyOrder());
 
-        private void WriteToHost(IEnumerable<Build> builds) {
-            WriteObject("Builds");
-            WriteObject(new string('=', 80));
-            foreach (Build build in builds.OrderBy(b => b.Order)) {
-                WriteObject("Build Level: " + build.Order);
+            var topLevelNodes = new List<TreePrinter.Node>();
 
-                foreach (ExpertModule module in build.Modules) {
-                    WriteObject("    " + module);
-                }
+            int i = 0;
+            foreach (var group in groups) {
+                var topLevelNode = new TreePrinter.Node();
+                topLevelNode.Name = "Group " +  i;
+                topLevelNode.Children = group.Select(s => new TreePrinter.Node { Name = s.Id }).ToList();
+                i++;
+
+                topLevelNodes.Add(topLevelNode);
             }
+
+            TreePrinter.Print(topLevelNodes, Host.UI.Write);
         }
     }
 }
