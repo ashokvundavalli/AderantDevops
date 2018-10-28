@@ -21,4 +21,5 @@ namespace UnitTest.Build.Tasks {
             Assert.IsNull(referenceArchitectures, "No dependencies provided so no scanning should occur");
         }
     }
+
 }

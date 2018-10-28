@@ -50,93 +50,95 @@ namespace Aderant.Build.Tasks {
         public string[] ReferencesToFind { get; private set; }
 
         public override bool Execute() {
-            if (Assemblies != null) {
-                Log.LogMessage(MessageImportance.High, "Building assembly platform architecture list...");
+            if (Assemblies == null) {
+                return true;
+            }
 
-                AssemblyInspector inspector = CreateInspector();
+            Log.LogMessage(MessageImportance.High, "Building assembly platform architecture list...");
 
-                Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
+            AssemblyInspector inspector = CreateInspector();
 
-                // TODO: No longer needed
-                IEnumerable<ITaskItem> filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
+            Dictionary<ITaskItem, string> analyzedAssemblies = new Dictionary<ITaskItem, string>();
 
-                Queue<ITaskItem> scanQueue = new Queue<ITaskItem>(filteredAssemblies);
+            // TODO: No longer needed
+            IEnumerable<ITaskItem> filteredAssemblies = Assemblies.Where(item => !item.GetMetadata("FullPath").Contains("SharedBin"));
 
-                List<ITaskItem> failedItems = new List<ITaskItem>();
+            Queue<ITaskItem> scanQueue = new Queue<ITaskItem>(filteredAssemblies);
 
-                List<string> assemblyReferencesToFind = new List<string>();
-                
-                while (scanQueue.Count > 0) {
-                    var item = scanQueue.Dequeue();
+            List<ITaskItem> failedItems = new List<ITaskItem>();
 
-                    string fullPath = item.GetMetadata("FullPath");
+            List<string> assemblyReferencesToFind = new List<string>();
 
-                    if (PathUtility.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
-                        string hash;
-                        using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
-                            byte[] fileBytes = File.ReadAllBytes(fullPath);
-                            hash = BitConverter.ToString(cryptoProvider.ComputeHash(fileBytes));
-                        }
+            while (scanQueue.Count > 0) {
+                var item = scanQueue.Dequeue();
 
-                        if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
-                            try {
-                                AssemblyName[] referencedAssemblies;
-                                ProcessorArchitecture[] referenceArchitectures;
-                                PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referencedAssemblies, out referenceArchitectures);
+                string fullPath = item.GetMetadata("FullPath");
 
-                                if (referencedAssemblies != null) {
-                                    assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
-                                }
+                if (PathUtility.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
+                    string hash;
+                    using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
+                        byte[] fileBytes = File.ReadAllBytes(fullPath);
+                        hash = BitConverter.ToString(cryptoProvider.ComputeHash(fileBytes));
+                    }
 
-                                if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
-                                    MustRun32Bit = true;
-                                }
+                    if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
+                        try {
+                            AssemblyName[] referencedAssemblies;
+                            ProcessorArchitecture[] referenceArchitectures;
+                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referencedAssemblies, out referenceArchitectures);
 
-                                if (referenceArchitectures != null) {
-                                    foreach (var arch in referenceArchitectures) {
-                                        if (arch == ProcessorArchitecture.X86) {
-                                            MustRun32Bit = true;
-                                            break;
-                                        }
+                            if (referencedAssemblies != null) {
+                                assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
+                            }
+
+                            if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
+                                MustRun32Bit = true;
+                            }
+
+                            if (referenceArchitectures != null) {
+                                foreach (var arch in referenceArchitectures) {
+                                    if (arch == ProcessorArchitecture.X86) {
+                                        MustRun32Bit = true;
+                                        break;
                                     }
                                 }
+                            }
 
-                                // Optimization to reduce boxing for the common case
-                                if (peKind == PortableExecutableKinds.ILOnly) {
-                                    item.SetMetadata("Platform", "ILOnly");
-                                } else if (peKind == PortableExecutableKinds.Required32Bit) {
-                                    item.SetMetadata("Platform", "x86");
-                                } else {
-                                    item.SetMetadata("Platform", peKind.ToString());
-                                }
+                            // Optimization to reduce boxing for the common case
+                            if (peKind == PortableExecutableKinds.ILOnly) {
+                                item.SetMetadata("Platform", "ILOnly");
+                            } else if (peKind == PortableExecutableKinds.Required32Bit) {
+                                item.SetMetadata("Platform", "x86");
+                            } else {
+                                item.SetMetadata("Platform", peKind.ToString());
+                            }
 
-                                analyzedAssemblies[item] = hash;
-                            } catch (FileLoadException ex) {
-                                if (!failedItems.Contains(item)) {
-                                    Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}. You should delete this file or the other file with the same identity to resolve this warning.");
+                            analyzedAssemblies[item] = hash;
+                        } catch (FileLoadException ex) {
+                            if (!failedItems.Contains(item)) {
+                                Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}. You should delete this file or the other file with the same identity to resolve this warning.");
 
-                                    inspector = CreateInspector();
+                                inspector = CreateInspector();
 
-                                    scanQueue.Enqueue(item);
+                                scanQueue.Enqueue(item);
 
-                                    // Record this failure so we don't get stuck in a loop
-                                    failedItems.Add(item);
-                                }
+                                // Record this failure so we don't get stuck in a loop
+                                failedItems.Add(item);
                             }
                         }
                     }
                 }
-
-                if (inspectionDomain != null) {
-                    System.Threading.Tasks.Task.Run(
-                        () => {
-                            AppDomain.Unload(inspectionDomain);
-                            inspectionDomain = null;
-                        });
-                }
-
-                this.ReferencesToFind = assemblyReferencesToFind.ToArray();
             }
+
+            if (inspectionDomain != null) {
+                System.Threading.Tasks.Task.Run(
+                    () => {
+                        AppDomain.Unload(inspectionDomain);
+                        inspectionDomain = null;
+                    });
+            }
+
+            this.ReferencesToFind = assemblyReferencesToFind.ToArray();
 
             // Stash the object for downstream tasks
             BuildEngine4.RegisterTaskObject(
@@ -162,6 +164,7 @@ namespace Aderant.Build.Tasks {
             inspectionDomain = AppDomain.CreateDomain("Inspection Domain", null, Path.GetDirectoryName(thisAssembly.Location), null, false);
             var inspector = (AssemblyInspector)inspectionDomain.CreateInstanceAndUnwrap(thisAssembly.FullName, typeof(AssemblyInspector).FullName);
             inspector.AssemblyDependencies = AssemblyDependencies;
+            inspector.Logger = Log;
 
             return inspector;
         }
@@ -195,13 +198,27 @@ namespace Aderant.Build.Tasks {
         private HashSet<string> seenAssemblies = new HashSet<string>();
 
         public string[] AssemblyDependencies { get; set; }
+        public TaskLoggingHelper Logger { get; set; }
 
         public PortableExecutableKinds Inspect(string assembly, out AssemblyName[] referencesToFind, out ProcessorArchitecture[] referenceArchitectures) {
             referencesToFind = null;
             referenceArchitectures = null;
 
             if (fileMap == null && AssemblyDependencies != null) {
-                fileMap = AssemblyDependencies.ToDictionary(s => Path.GetFileName(s), s => s);
+                Dictionary<string, string> dictionary = new Dictionary<string, string>();
+
+                foreach (var dependency in AssemblyDependencies) {
+                    string key = Path.GetFileName(dependency);
+                    if (!dictionary.ContainsKey(key)) {
+                        dictionary.Add(key, dependency);
+                    } else {
+                        if (Logger != null) {
+                            Logger.LogWarning("Already seen file: " + dependency);
+                        }
+                    }
+                }
+
+                fileMap = dictionary;
             }
 
             Assembly asm = Assembly.ReflectionOnlyLoadFrom(assembly);

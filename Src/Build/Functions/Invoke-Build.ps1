@@ -177,40 +177,36 @@ function CreateToolArgumentString($context, $remainingArgs) {
     return [string]::Join(" ", $set)
 }
 
-function GetSourceTreeMetadata($context, $repositoryPath) {
-    begin {
-        [string]$sourceBranch = ""
-        [string]$targetBranch = ""
-    }
+function GetSourceTreeMetadata($context, $repositoryPath) {    
+    [string]$sourceBranch = ""
+    [string]$targetBranch = ""
 
-    process {
-        if (-not $context.IsDesktopBuild) {
-            $metadata = $context.BuildMetadata
-            $sourceBranch = $metadata.ScmBranch;
+    if (-not $context.IsDesktopBuild) {
+        $metadata = $context.BuildMetadata
+        $sourceBranch = $metadata.ScmBranch;
 
-            if ($metadata.IsPullRequest) {            
-                $targetBranch = $metadata.PullRequest.TargetBranch
+        if ($metadata.IsPullRequest) {            
+            $targetBranch = $metadata.PullRequest.TargetBranch
 
-                Write-Host "Calculating changes between $sourceBranch and $targetBranch"
-            }
-        }    
-
-        $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
-
-        Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
-        Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
-        if ($context.SourceTreeMetadata.CommonAncestor) {
-            Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
+            Write-Host "Calculating changes between $sourceBranch and $targetBranch"
         }
+    }    
+
+    $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
+
+    Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
+    Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
+    if ($context.SourceTreeMetadata.CommonAncestor) {
+        Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
+    }
    
-        if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
-            Write-Host ""
-            Write-Host "$indent1 Changes..."    
-            foreach ($change in $context.SourceTreeMetadata.Changes) {
-                Write-Host "$indent2 $($change.Path):$($change.Status)"
-            }
+    if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
+        Write-Host ""
+        Write-Host "$indent1 Changes..."    
+        foreach ($change in $context.SourceTreeMetadata.Changes) {
+            Write-Host "$indent2 $($change.Path):$($change.Status)"
         }
-    }
+    }    
 }
 
 function GetBuildStateMetadata($context) {
@@ -320,7 +316,6 @@ function AssignIncludeExclude {
 
 function AssignSwitches() {
     $switches = $context.Switches
-
     
     $switches.Branch = $Branch.IsPresent
     $switches.Downstream = $Downstream.IsPresent
@@ -346,7 +341,10 @@ function AssignSwitches() {
 # This file is run by an CI agent. The CI agent PowerShell runner does not subscribe to Write-Information.
 function global:Invoke-Build2 {
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
-    param (
+    param (               
+        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]        
+        [string]$ModulePath = "",
+
         [Parameter()]
         [switch]$Branch,
 
@@ -383,10 +381,7 @@ Should not be used as it prevents incremental builds which increases build times
         #[switch]$automation,        
 
         [Parameter(HelpMessage = "Displays HTML code coverage report.")]
-        [switch]$DisplayCodeCoverage,
-                
-        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]        
-        [string]$ModulePath = "",
+        [switch]$DisplayCodeCoverage,     
 
         [Parameter(HelpMessage = "Runs the target with the provided name")]        
         [string]$Target = "BuildAndPackage",
@@ -435,7 +430,7 @@ Should not be used as it prevents incremental builds which increases build times
         if (-not [string]::IsNullOrEmpty($ModulePath)) {
             $repositoryPath = $ModulePath
         } else {
-            $repositoryPath = Convert-Path -Path '.'
+            $repositoryPath = (Get-Location).Path
         }
 
         $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"

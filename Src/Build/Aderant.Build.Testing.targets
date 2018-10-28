@@ -11,11 +11,12 @@
   <Target Name="CollectTestAssemblies">
 
     <GetBuildOutputs>
+      <Output TaskParameter="TrackedProjects" ItemName="TrackedProjects" />
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
 
     <Message Text="Looking for test assemblies in these directories:" />
-    <Message Text="%(SolutionRoots.Identity)" />
+    <Message Text="%(TrackedProjects.OutputPath)" />
     
   </Target>
 
@@ -57,13 +58,20 @@
       <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
       <TestRunTitle>$([System.IO.Path]::GetFileName('$(TestRunDirectory)'))</TestRunTitle>
     </PropertyGroup>
-  
-    <ItemGroup>
-      <TestAssemblies Include="$(TestRunDirectory)\Bin\TestRun\UnitTest*.dll"
-                      Exclude="$(TestRunDirectory)\Bin\TestRun\*Helpers.dll" />
 
-      <AssemblyDependencies Include="$(TestRunDirectory)\Bin\TestRun\*.dll;
-                                     $(TestRunDirectory)\Bin\TestRun\*.exe"
+    <ItemGroup>
+      <ProjectsForThisRoot Include="@(TrackedProjects->WithMetadataValue('SolutionRoot', '$(TestRunDirectory)'))" />
+      <TestAssemblyDirectories Include="@(ProjectsForThisRoot->'%(OutputPath)'->Distinct())" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <TestAssemblies Include="%(TestAssemblyDirectories.FullPath)**\*UnitTest*.dll"
+                      Exclude="%(TestAssemblyDirectories.FullPath)**\*Helpers*.dll;
+                               %(TestAssemblyDirectories.FullPath)**\Microsoft.*;
+                               %(TestAssemblyDirectories.FullPath)**\System.*;" />
+
+      <AssemblyDependencies Include="%(TestAssemblyDirectories.FullPath)**\*.dll;
+                                     %(TestAssemblyDirectories.FullPath)**\*.exe"
                             Exclude="@(TestAssemblies)" />
     </ItemGroup>
 

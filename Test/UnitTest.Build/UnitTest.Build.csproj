@@ -155,6 +155,7 @@
     <Compile Include="Tasks\BuildStateFileTests.cs" />
     <Compile Include="Tasks\AssemblyInspectorTests.cs" />
     <Compile Include="Tasks\DoubleWriteTests.cs" />
+    <Compile Include="Tasks\GetBuildOutputsTests.cs" />
     <Compile Include="Tasks\SeedPackagePackingTest.cs" />
     <Compile Include="Tasks\CoberturaReportConverterTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />

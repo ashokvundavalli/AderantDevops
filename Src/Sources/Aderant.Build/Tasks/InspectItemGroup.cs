@@ -8,7 +8,7 @@ namespace Aderant.Build.Tasks {
         public ITaskItem[] ItemGroup { get; set; }
 
         public override bool Execute() {
-            return !Log.HasLoggedErrors;
+            return true;
         }
     }
 }
