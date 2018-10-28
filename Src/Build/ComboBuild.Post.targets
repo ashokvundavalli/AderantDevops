@@ -135,7 +135,7 @@
 
 
   <Target Name="ValidateRequiredProperties">
-    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined" />
+    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined in $(ItemId)" />
   </Target>
 
 

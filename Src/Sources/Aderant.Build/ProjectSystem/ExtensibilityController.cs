@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Aderant.Build.Tasks;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {

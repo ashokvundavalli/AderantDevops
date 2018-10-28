@@ -113,6 +113,8 @@
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="ProjectSystem\TrackedProject.cs" />
+    <Compile Include="ProjectSystem\ExistingPlanLoader.cs" />
     <Compile Include="Utilities\TreePrinter.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
     <Compile Include="Dfs.cs" />

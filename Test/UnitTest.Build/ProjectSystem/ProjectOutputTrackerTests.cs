@@ -73,4 +73,5 @@ namespace UnitTest.Build.ProjectSystem {
             Assert.AreEqual("Z", snapshot.FilesWritten[5]);
         }
     }
+
 }

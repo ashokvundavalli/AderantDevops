@@ -136,6 +136,7 @@
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="PathUtilityTests.cs" />
     <Compile Include="ProductAssemblyContextTests.cs" />
+    <Compile Include="ProjectSystem\TrackedProjectTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="ResolverRequestTests.cs" />
     <Compile Include="ResolverTests.cs" />

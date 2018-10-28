@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using Aderant.Build.Model;
 using Aderant.Build.Packaging;
+using Aderant.Build.ProjectSystem;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
@@ -65,14 +67,8 @@ namespace Aderant.Build.PipelineService {
             return ctx.GetVariable(scope, variableName);
         }
 
-        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath) {
-            projects.Add(
-                new TrackedProject {
-                    ProjectGuid = projectGuid,
-                    FullPath = fullPath,
-                    SolutionRoot = solutionRoot,
-                    OutputPath = outputPath,
-                });
+        public void TrackProject(TrackedProject trackedProject) {
+            projects.Add(trackedProject);
         }
 
         public IEnumerable<TrackedProject> GetTrackedProjects() {

@@ -14,9 +14,6 @@ namespace Aderant.Build.Tasks {
         public string[] OutputDirectories { get; set; }
 
         [Output]
-        public string[] TestOutputDirectories { get; private set; }
-
-        [Output]
         public string[] SolutionRoots { get; private set; }
 
         public override bool ExecuteTask() {
@@ -24,34 +21,18 @@ namespace Aderant.Build.Tasks {
 
             solutionRootFilter = !string.IsNullOrWhiteSpace(SolutionRoot);
 
-            var trackedProjects =
-                from trackedProject in projects
-                join snapshot in PipelineService.GetAllProjectOutputs()
-                    on trackedProject.ProjectGuid equals snapshot.ProjectGuid
-                select new { TrackedProject = trackedProject, Snapshot = snapshot };
-
-            TestOutputDirectories = trackedProjects
-                .Where(s => SolutionRootFilter(s.TrackedProject.SolutionRoot) && s.Snapshot.IsTestProject)
+            var outputDirectories = projects
+                .Where(s => SolutionRootFilter(s.SolutionRoot))
                 .Select(
-                    s => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(s.TrackedProject.FullPath), s.Snapshot.OutputPath)))
+                    s => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(s.FullPath), s.OutputPath)))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            var outputDirectories = trackedProjects
-                .Where(s => SolutionRootFilter(s.TrackedProject.SolutionRoot) && !s.Snapshot.IsTestProject)
-                .Select(
-                    s => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(s.TrackedProject.FullPath), s.Snapshot.OutputPath)))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            OutputDirectories = outputDirectories.ToArray();
 
-            // Prefer non-test outputs, return these items first
-            OutputDirectories = outputDirectories.Concat(TestOutputDirectories).ToArray();
-
-            SolutionRoots = trackedProjects
-                .Select(
-                    s => s.TrackedProject.SolutionRoot)
+            SolutionRoots = projects
+                .Select(s => s.SolutionRoot)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderByDescending(d => d, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
             return true;

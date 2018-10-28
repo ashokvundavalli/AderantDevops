@@ -95,6 +95,7 @@
       <ExcludePaths Include="GeneralLedger\" />
       <ExcludePaths Include="TempTransform\" />
       <ExcludePaths Include="Tests.Load\" />
+      <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
       <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
     </ItemGroup>

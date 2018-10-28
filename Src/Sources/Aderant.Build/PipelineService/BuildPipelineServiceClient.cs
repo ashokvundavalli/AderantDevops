@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using System.Threading;
+using Aderant.Build.Model;
 using Aderant.Build.Packaging;
+using Aderant.Build.ProjectSystem;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
@@ -80,8 +82,8 @@ namespace Aderant.Build.PipelineService {
             return InvokeServiceAction(() => Proxy.GetVariable(scope, variableName));
         }
 
-        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath) {
-            InvokeServiceAction(() => Proxy.TrackProject(projectGuid, solutionRoot, fullPath, outputPath));
+        public void TrackProject(TrackedProject trackedProject) {
+            InvokeServiceAction(() => Proxy.TrackProject(trackedProject));
         }
 
         public IEnumerable<TrackedProject> GetTrackedProjects() {

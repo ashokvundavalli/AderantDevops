@@ -13,6 +13,9 @@
     <GetBuildOutputs>
       <Output TaskParameter="SolutionRoots" ItemName="SolutionRoots" />
     </GetBuildOutputs>
+
+    <Message Text="Looking for test assemblies in these directories:" />
+    <Message Text="%(SolutionRoots.Identity)" />
     
   </Target>
 
@@ -87,6 +90,7 @@
 
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
     <PowerShellScript
+      Condition="'@(TestAssemblies)' != ''"
       ScriptBlock='
 $ErrorActionPreference = "Stop"
 $InformationPreference = "Continue"

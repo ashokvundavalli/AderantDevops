@@ -6,6 +6,7 @@ using System.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
+using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Project = Aderant.Build.MSBuild.Project;
 
@@ -171,6 +172,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
+            Guid itemId = Guid.NewGuid();
+            
             PropertyList propertyList = new PropertyList();
 
             // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
@@ -187,6 +190,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 propertyList = AddSolutionConfigurationProperties(visualStudioProject, propertyList);
+                propertyList["Id"] = itemId.ToString("D");
 
                 if (solutionPropertyLists.ContainsKey(propertyList["SolutionRoot"])) {
                     foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertyList["SolutionRoot"]]) {
@@ -197,14 +201,17 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
 
                 ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
+                    ["Id"] = itemId.ToString("D"),
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
                     ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                     ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
                     ["AdditionalProperties"] = $"Configuration={visualStudioProject.BuildConfiguration.ConfigurationName}; Platform={visualStudioProject.BuildConfiguration.PlatformName}",
                     ["IsWebProject"] = visualStudioProject.IsWebProject.ToString(),
                     // Indicates this file is not part of the build system
-                    ["IsProjectFile"] = bool.TrueString
+                    ["IsProjectFile"] = bool.TrueString,
                 };
+
+                TrackProjectItems(project, visualStudioProject);
 
                 if (project["IsWebProject"] == bool.TrueString) {
                     if (!propertyList.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
@@ -240,6 +247,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsProjectFile"] = bool.FalseString,
+                    ["ItemId"] = itemId.ToString("D")
                 };
 
                 // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
@@ -247,12 +255,17 @@ namespace Aderant.Build.DependencyAnalyzer {
                     properties["T4TransformEnabled"] = bool.FalseString;
                 }
 
+                properties["ItemId"] = itemId.ToString("D");
                 item[PropertiesKey] = properties.ToString();
 
                 return item;
             }
 
             return null;
+        }
+
+        private static void TrackProjectItems(ItemGroupItem project, ConfiguredProject visualStudioProject) {
+            TrackedProject.SetPropertiesNeededForTracking(project, visualStudioProject);
         }
 
         private PropertyList AddBuildProperties(PropertyList propertyList, IFileSystem2 fileSystem, string solutionDirectoryPath) {
@@ -319,12 +332,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private PropertyList AddSolutionConfigurationProperties(ConfiguredProject visualStudioProject, PropertyList propertyList) {
-            propertyList.Add("SolutionRoot", visualStudioProject.SolutionRoot);
+            propertyList.Add(nameof(ConfiguredProject.SolutionRoot), visualStudioProject.SolutionRoot);
 
             AddMetaProjectProperties(visualStudioProject, propertyList);
 
             if (visualStudioProject.UseCommonOutputDirectory) {
-                propertyList.Add("UseCommonOutputDirectory", bool.TrueString);
+                propertyList.Add(nameof(ConfiguredProject.UseCommonOutputDirectory), bool.TrueString);
             }
             
             return propertyList;
@@ -346,5 +359,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             
         }
     }
+
+   
 
 }
