@@ -92,6 +92,7 @@
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
       <ExcludePaths Include="TempTransform\" />
+      <ExcludePaths Include="Collections\" />
       <ExcludePaths Include="Tests.Load\" />
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
