@@ -56,12 +56,12 @@ function Get-BuildDirectory {
     Get-BuildDirectory
 }
 
-function ApplyBranchConfig($context, [string]$root, [switch]$enableConfigDownload) {
+function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownload) {
     $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
 
     [xml]$config = $null
     if (-not (Test-Path -Path $configPath)) {
-        if (-not $enableConfigDownload.IsPresent) {
+        if (-not $EnableConfigDownload.IsPresent) {
             Get-BuildDirectory
             $config = Get-Content -Raw -LiteralPath $global:BranchConfigPath
         } else {
@@ -80,11 +80,11 @@ function ApplyBranchConfig($context, [string]$root, [switch]$enableConfigDownloa
     $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
-function FindProductManifest($context, [string]$root, [switch]$enableConfigDownload) {
+function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownload) {
     [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
 
     if (-not (Test-Path -Path $configPath)) {
-        if (-not $enableConfigDownload.IsPresent) {
+        if (-not $EnableConfigDownload.IsPresent) {
             Get-BuildDirectory
 
             $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
@@ -411,7 +411,7 @@ Should not be used as it prevents incremental builds which increases build times
         [switch]$NoDependencyFetch,
 
         [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]
-        [switch]$enableConfigDownload,
+        [switch]$EnableConfigDownload,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -453,8 +453,8 @@ Should not be used as it prevents incremental builds which increases build times
         }
 
         AssignSwitches
-        ApplyBranchConfig -context $context -root $root -enableConfigDownload:$enableConfigDownload.IsPresent
-        FindProductManifest -context $context -root $root -enableConfigDownload:$enableConfigDownload.IsPresent
+        ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
+        FindProductManifest -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
 
         if (-not $NoBuildCache.IsPresent) {
             GetBuildStateMetadata $context
