@@ -38,7 +38,7 @@
       PostBuild;
       SignInstallers;-->
       PackageArtifactsCore;
-      ReplicateOutputs;
+      CreateDependencyLinks;
     </BuildCoreDependsOn>
   </PropertyGroup>
 
@@ -93,7 +93,7 @@
   </Target>
 
 
-  <Target Name="ReplicateOutputs">
+  <Target Name="CreateDependencyLinks">
 
     <CreateDependencyLinks 
       SolutionRoot="$(SolutionRoot)"

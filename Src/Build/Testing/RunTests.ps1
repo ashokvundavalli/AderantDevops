@@ -1,9 +1,9 @@
 ﻿[CmdletBinding()]
 param(      
-  [Parameter(Mandatory=$true)]
+  [Parameter(Mandatory=$true, HelpMessage="The path to the test runner such as vstest.console.exe")]
   [string]$PathToTestTool,
 
-  [Parameter(Mandatory=$false)]   
+  [Parameter(Mandatory=$false, HelpMessage="The tool arguments such as the logger type")]
   [string]$ToolArgs,
 
   [Parameter(Mandatory=$true)]
@@ -17,7 +17,7 @@ param(
   [string]
   $SolutionRoot,
 
-  [Parameter(Mandatory=$false)]
+  [Parameter(Mandatory=$false, HelpMessage="The paths to provide to the test tool assembly resolver")]
   [string[]]
   $ReferencePaths,
 
@@ -37,20 +37,23 @@ function CreateRunSettingsXml() {
     [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
     $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
 
-    if (-not $script:ReferencePaths -and $SolutionRoot) {
-        #TODO: Drop dependencies
-        $script:ReferencePaths = @([System.IO.Path]::Combine($SolutionRoot, "packages"), [System.IO.Path]::Combine($SolutionRoot, "dependencies"))
-    }    
-
-    if ($script:ReferencePaths) {
-        foreach ($path in $script:ReferencePaths) {
-            $directoryElement = $xml.CreateElement("Directory")
-            $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
-            $directoryElement.SetAttribute("includeSubDirectories", "true")
-
-            [void]$assemblyResolution.AppendChild($directoryElement)
-        }
+    if (-not $script:ReferencePaths) {
+        $script:ReferencePaths = @()
     }
+
+    if ($SolutionRoot) {
+        $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")
+        $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "packages")
+        $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "dependencies")
+    }    
+    
+    foreach ($path in $script:ReferencePaths) {
+        $directoryElement = $xml.CreateElement("Directory")
+        $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
+        $directoryElement.SetAttribute("includeSubDirectories", "true")
+
+        [void]$assemblyResolution.AppendChild($directoryElement)
+    }    
 
     $sw = [System.IO.StringWriter]::new()
     $writer = New-Object System.Xml.XmlTextWriter($sw)
@@ -93,7 +96,7 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
 
                     if (-not [System.IO.File]::Exists($destinationFile)) {
                         Write-Information "Found required file $($foundReferenceFile.FullName)"                        
-                        New-Item -Path $destinationFile -ItemType HardLink -Value $foundReferenceFile.FullName
+                        New-Item -Path $destinationFile -ItemType HardLink -Value $foundReferenceFile.FullName | Out-Null
                     }
                 }
             }            
