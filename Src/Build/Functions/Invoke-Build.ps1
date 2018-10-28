@@ -223,11 +223,15 @@ function GetBuildStateMetadata($context) {
 
     Write-Host ""
     Write-Host "$indent1 Build Tree"
+
     foreach ($id in $stm.BucketIds) {
         Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
     }   
 
-    $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
+    [string[]]$ids = @()
+    if ($stm.BucketIds.Count -gt 0) {
+        $ids = $stm.BucketIds | Select-Object -ExpandProperty Id
+    }
     $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
     $context.BuildStateMetadata = $buildState
@@ -446,9 +450,8 @@ Should not be used as it prevents incremental builds which increases build times
         AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath               
         
         [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
-        if (-not [string]::IsNullOrWhiteSpace($root)) {
-            GetSourceTreeMetadata -context $context -repositoryPath $root
-        } else {
+        GetSourceTreeMetadata -context $context -repositoryPath $root
+        if ([string]::IsNullOrWhiteSpace($root)) {
             $root = $repositoryPath
         }
 
