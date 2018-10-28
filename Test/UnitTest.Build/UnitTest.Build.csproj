@@ -136,6 +136,7 @@
     <Compile Include="PathHelperTest.cs" />
     <Compile Include="PathUtilityTests.cs" />
     <Compile Include="ProductAssemblyContextTests.cs" />
+    <Compile Include="ProjectSystem\TrackedProjectTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="ResolverRequestTests.cs" />
     <Compile Include="ResolverTests.cs" />
@@ -154,6 +155,7 @@
     <Compile Include="Tasks\BuildStateFileTests.cs" />
     <Compile Include="Tasks\AssemblyInspectorTests.cs" />
     <Compile Include="Tasks\DoubleWriteTests.cs" />
+    <Compile Include="Tasks\GetBuildOutputsTests.cs" />
     <Compile Include="Tasks\SeedPackagePackingTest.cs" />
     <Compile Include="Tasks\CoberturaReportConverterTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />

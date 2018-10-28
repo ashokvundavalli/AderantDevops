@@ -33,7 +33,12 @@ namespace Aderant.Build.Tasks {
         internal static BuildOperationContext InternalContext { get; set; }
 
         internal IBuildPipelineService PipelineService {
-            get { return pipelineService ?? (pipelineService = BuildPipelineServiceClient.CreateFromPipeId(ContextEndpoint ?? BuildPipelineServiceHost.PipeId)); }
+            get { return Service ?? (Service = BuildPipelineServiceClient.CreateFromPipeId(ContextEndpoint ?? BuildPipelineServiceHost.PipeId)); }
+        }
+
+        internal IBuildPipelineService Service {
+            get { return pipelineService; }
+            set { pipelineService = value; }
         }
 
         public sealed override bool Execute() {
@@ -51,8 +56,8 @@ namespace Aderant.Build.Tasks {
             } finally {
                 executingTask = false;
 
-                if (pipelineService != null) {
-                    pipelineService.Dispose();
+                if (Service != null) {
+                    Service.Dispose();
                 }
             }
         }

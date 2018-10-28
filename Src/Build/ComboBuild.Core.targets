@@ -30,8 +30,6 @@
       <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
     </ItemGroup>
 
-    <InspectItemGroup ItemGroup="@(_ProjectsInGroup)" />
-
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
 
     <Message Text="##vso[task.logdetail id=$(LogId);name=Group $(BuildGroupId) of $(TotalNumberOfBuildGroups);type=build;state=InProgress;progress=0]Build group $(BuildGroupId) started"

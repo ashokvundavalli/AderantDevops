@@ -118,7 +118,8 @@ namespace Aderant.Build {
         /// </summary>
         public static string GetFullPath(string path) {
             ErrorUtilities.IsNotNull(path, nameof(path));
-            if (Path.IsPathRooted(path)) {
+
+            if (Path.IsPathRooted(path) && (path[0] != Path.DirectorySeparatorChar && path[0] != Path.AltDirectorySeparatorChar)) {
                 return Path.GetFullPath(path);
             }
             return path;

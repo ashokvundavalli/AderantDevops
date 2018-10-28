@@ -10,18 +10,13 @@ using Project = Aderant.Build.MSBuild.Project;
 
 namespace Aderant.Build.Tasks {
     public sealed class GenerateBuildPlan : BuildOperationContextTask {
+
         public ITaskItem[] ModulesInBuild { get; set; }
-
-        public string TfvcChangeset { get; set; }
-
-        public string TfvcBranch { get; set; }
 
         public string BuildFrom { get; set; }
 
         [Required]
         public string ModulesDirectory { get; set; }
-
-        public string ProductManifest { get; set; }
 
         /// <summary>
         /// Gets or sets the build plan project file.
@@ -80,6 +75,10 @@ namespace Aderant.Build.Tasks {
 
             if (context.Switches.Resume) {
                 if (File.Exists(BuildPlan)) {
+                    // When resuming we need to reconstruct the TrackedProjects collection.
+                    // This is typically done in the sequencer but since we aren't entering that code path
+                    // we need to load the existing set of known projects from our previous plan
+                    RebuildFromExistingPlan(BuildPlan);
                     return;
                 }
             }
@@ -124,12 +123,15 @@ namespace Aderant.Build.Tasks {
             PipelineService.Publish(context);
         }
 
+        private void RebuildFromExistingPlan(string planFile) {
+            var planLoader = new ExistingPlanLoader();
+            planLoader.LoadPlan(planFile, PipelineService);
+        }
+
         private AnalysisContext CreateAnalysisContext() {
             ErrorUtilities.IsNotNull(Context.BuildSystemDirectory, nameof(Context.BuildSystemDirectory));
 
             var paths = ExcludePaths.ToList();
-
-            paths.InsertRange(0, new [] {".git", "$", "_" });
 
             if (!Context.BuildSystemDirectory.Contains("TestResults")) {
                 paths.Add(Context.BuildSystemDirectory);
@@ -141,14 +143,11 @@ namespace Aderant.Build.Tasks {
             }
 
             var analysisContext = new AnalysisContext {
-                ExcludePaths = paths
-                    .Select(PathUtility.GetFullPath)
-                    .Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+                ExcludePaths = paths.Distinct(StringComparer.OrdinalIgnoreCase).ToList()
             };
-
-            Log.LogMessage("Excluding paths: " + string.Join(",", analysisContext.ExcludePaths));
 
             return analysisContext;
         }
     }
+
 }

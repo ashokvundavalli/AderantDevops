@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.ServiceModel;
+using Aderant.Build.Model;
 using Aderant.Build.Packaging;
-using ProtoBuf;
+using Aderant.Build.ProjectSystem;
+using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.PipelineService {
 
@@ -41,7 +42,7 @@ namespace Aderant.Build.PipelineService {
         string GetVariable(string scope, string variableName);
 
         [OperationContract]
-        void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath);
+        void TrackProject(TrackedProject trackedProject);
 
         [OperationContract]
         IEnumerable<TrackedProject> GetTrackedProjects();
@@ -54,26 +55,6 @@ namespace Aderant.Build.PipelineService {
 
         [OperationContract]
         void SetStatus(string status, string reason);
-    }
-
-    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    [DataContract]
-    internal class TrackedProject {
-
-        [DataMember]
-        public Guid ProjectGuid { get; set; }
-
-        /// <summary>
-        /// The full local path to the project file
-        /// </summary>
-        [DataMember]
-        public string FullPath { get; set; }
-
-        [DataMember]
-        public string SolutionRoot { get; set; }
-
-        [DataMember]
-        public string OutputPath { get; set; }
     }
 
     [ServiceContract]

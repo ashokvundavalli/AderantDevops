@@ -6,9 +6,13 @@ using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
     public class BuildPipelineServiceHost : IDisposable {
+
         private static string pipeId;
 
         ServiceHost host;
+
+        public BuildPipelineServiceHost() {
+        }
 
         public BuildOperationContext CurrentContext {
             get { return ((BuildPipelineServiceImpl)host.SingletonInstance).GetContext(); }
@@ -26,13 +30,15 @@ namespace Aderant.Build.PipelineService {
 
             try {
                 ((IDisposable)host)?.Dispose();
-                host = null;
             } catch {
-
+                // ignored
+            } finally {
+                host = null;
             }
         }
 
         public void StartListener(string pipeId) {
+
             if (host == null) {
                 var address = CreateServerUri(pipeId, "0");
 

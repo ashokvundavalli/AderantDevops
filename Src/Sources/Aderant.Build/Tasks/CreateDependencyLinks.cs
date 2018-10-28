@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Aderant.Build.PipelineService;
+using Aderant.Build.Model;
+using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {

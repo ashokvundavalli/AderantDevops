@@ -4,7 +4,9 @@ using System.Globalization;
 using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using Aderant.Build.Model;
 using Aderant.Build.Packaging;
+using Aderant.Build.ProjectSystem;
 using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
@@ -54,9 +56,9 @@ namespace Aderant.Build.PipelineService {
             return DoOperationWithFaultHandling(() => Channel.GetVariable(scope, variableName));
         }
 
-        public void TrackProject(Guid projectGuid, string solutionRoot, string fullPath, string outputPath) {
-            ErrorUtilities.IsNotNull(fullPath, nameof(fullPath));
-            DoOperationWithFaultHandling(() => { Channel.TrackProject(projectGuid, solutionRoot, fullPath, outputPath); });
+        public void TrackProject(TrackedProject trackedProject) {
+            ErrorUtilities.IsNotNull(trackedProject.FullPath, nameof(trackedProject.FullPath));
+            DoOperationWithFaultHandling(() => { Channel.TrackProject(trackedProject); });
         }
 
         public IEnumerable<TrackedProject> GetTrackedProjects() {

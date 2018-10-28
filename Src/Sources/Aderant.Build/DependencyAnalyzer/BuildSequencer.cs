@@ -51,10 +51,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (configuredProject != null) {
                         PipelineService.TrackProject(
-                            configuredProject.ProjectGuid,
-                            configuredProject.SolutionRoot,
-                            configuredProject.FullPath,
-                            configuredProject.OutputPath);
+                            new TrackedProject {
+                                ProjectGuid = configuredProject.ProjectGuid,
+                                SolutionRoot = configuredProject.SolutionRoot,
+                                FullPath = configuredProject.FullPath,
+                                OutputPath = configuredProject.OutputPath,
+                            });
                     }
                 }
             }
@@ -362,7 +364,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private static StringBuilder DescribeChanges(IDependable dependable, StringBuilder sb) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
-
 
             if (configuredProject != null) {
                 if (sb == null) {

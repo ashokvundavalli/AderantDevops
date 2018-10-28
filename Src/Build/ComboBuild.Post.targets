@@ -38,7 +38,7 @@
       PostBuild;
       SignInstallers;-->
       PackageArtifactsCore;
-      ReplicateOutputs;
+      CreateDependencyLinks;
     </BuildCoreDependsOn>
   </PropertyGroup>
 
@@ -93,27 +93,7 @@
   </Target>
 
 
-  <Target Name="ReplicateOutputs">
-
-    <GetBuildOutputs SolutionRoot="$(SolutionRoot)">
-      <Output TaskParameter="OutputDirectories" ItemName="OutputDirectories" />
-    </GetBuildOutputs>
-
-    <!-- TODO: just drop bin into test and ditch testrun -->
-    <CreateItem Include="@(OutputDirectories->'%(FullPath)**\*');">
-      <Output TaskParameter="Include" ItemName="_OutputDirectoryContents" />
-    </CreateItem>
-
-    <ItemGroup>
-      <OutputDirectoryContentsWithTargetPath Include="@(_OutputDirectoryContents)">
-        <TargetPath>@(_OutputDirectoryContents->'$(SolutionDirectoryPath)Bin\TestRun\%(RecursiveDir)%(Filename)%(Extension)')</TargetPath>
-      </OutputDirectoryContentsWithTargetPath>
-    </ItemGroup>
-
-    <CopyFiles SourceFiles="@(OutputDirectoryContentsWithTargetPath)"
-      DestinationFiles="%(OutputDirectoryContentsWithTargetPath.TargetPath)"
-      Overwrite="true"
-      UseSymlinks="true" />
+  <Target Name="CreateDependencyLinks">
 
     <CreateDependencyLinks 
       SolutionRoot="$(SolutionRoot)"
@@ -135,7 +115,7 @@
 
 
   <Target Name="ValidateRequiredProperties">
-    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined" />
+    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="SolutionDirectoryPath is undefined in $(ItemId)" />
   </Target>
 
 

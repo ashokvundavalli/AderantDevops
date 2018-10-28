@@ -86,10 +86,18 @@
 
     <ItemGroup>
       <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
-      <ExcludePaths Include="Collections" />
-      <ExcludePaths Include="GeneralLedger" />
+      <ExcludePaths Include=".git" />
+      <ExcludePaths Include="$" />
+      <ExcludePaths Include="\_" />
+      <ExcludePaths Include="Applications.MatterCenterIntegration\" />
+      <ExcludePaths Include="Applications.DocuDraftAddIn\" />
       <ExcludePaths Include="TempTransform\" />
+      <ExcludePaths Include="Collections\" />
+      <ExcludePaths Include="Libraries.Entities.GeneralLedger\" />
       <ExcludePaths Include="Tests.Load\" />
+      <ExcludePaths Include="MomentumFileOpening\" />
+      <ExcludePaths Include="Performance.ExpertSuite\" />
+      <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
     </ItemGroup>
 
     <!-- 
