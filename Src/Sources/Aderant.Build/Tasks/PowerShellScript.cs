@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using Aderant.Build.PipelineService;
 using Microsoft.Build.Framework;
@@ -157,7 +159,11 @@ namespace Aderant.Build.Tasks {
                 execTask.Command = command.FileName + " " + command.Arguments;
                 execTask.IgnoreExitCode = false;
                 execTask.WorkingDirectory = command.WorkingDirectory;
-                
+
+                if (command.Environment != null) {
+                    execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();
+                }
+
                 execTask.Execute();
                 return execTask.ExitCode;
             };

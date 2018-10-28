@@ -3,6 +3,7 @@
 
   <PropertyGroup>
     <RunTestsDependsOn>
+      CreatePlan;
       CollectTestAssemblies;
       SetupTestProperties;
     </RunTestsDependsOn>

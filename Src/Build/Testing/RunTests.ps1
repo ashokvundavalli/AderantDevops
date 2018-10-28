@@ -143,6 +143,7 @@ $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = '"' + $PathToTestTool + '"'
 $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
+$startInfo.Environment["EXPERT_MODULE_DIRECTORY"] = $SolutionRoot
 
 try {
     Write-Information "Creating run settings"
