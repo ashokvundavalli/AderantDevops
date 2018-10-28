@@ -40,25 +40,6 @@ function Get-BuildManifest {
     }
 }
 
-function ApplyBranchConfig($context, $root) {
-    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
-
-    [xml]$config = $null
-    if (-not (Test-Path -Path $configPath)) {
-        # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
-        [string]$branch = Get-Branch -root $root
-
-        $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
-    } else {
-        $config = Get-Content -Raw -LiteralPath $configPath
-    }
-
-    $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
-    $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
-    $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
-    $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
-}
-
 function Get-BuildDirectory {
     if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
         If (Test-Path -Path $global:BranchConfigPath) {
@@ -75,18 +56,42 @@ function Get-BuildDirectory {
     Get-BuildDirectory
 }
 
-function FindProductManifest($context, $stringSearchDirectory) {
-    [string]$configPath = [System.IO.Path]::Combine($stringSearchDirectory, 'Build\ExpertManifest.xml')
+function ApplyBranchConfig($context, [string]$root, [switch]$enableConfigDownload) {
+    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
+
+    [xml]$config = $null
+    if (-not (Test-Path -Path $configPath)) {
+        if (-not $enableConfigDownload.IsPresent) {
+            Get-BuildDirectory
+            $config = Get-Content -Raw -LiteralPath $global:BranchConfigPath
+        } else {
+            # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
+            [string]$branch = Get-Branch -root $root
+
+            $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
+        }
+    } else {
+        $config = Get-Content -Raw -LiteralPath $configPath
+    }
+
+    $context.DropLocationInfo.PrimaryDropLocation = $config.BranchConfig.DropLocations.PrimaryDropLocation
+    $context.DropLocationInfo.BuildCacheLocation = $config.BranchConfig.DropLocations.BuildCacheLocation
+    $context.DropLocationInfo.PullRequestDropLocation = $config.BranchConfig.DropLocations.PullRequestDropLocation
+    $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
+}
+
+function FindProductManifest($context, [string]$root, [switch]$enableConfigDownload) {
+    [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
 
     if (-not (Test-Path -Path $configPath)) {
-        if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        if (-not $enableConfigDownload.IsPresent) {
             Get-BuildDirectory
 
             $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
             return
         }
 
-        [string]$branch = Get-Branch -root $stringSearchDirectory
+        [string]$branch = Get-Branch -root $root
 
         $config = Get-BuildManifest -manifest 'ExpertManifest.xml' -branch $branch
         $temp = New-TemporaryFile
@@ -97,8 +102,8 @@ function FindProductManifest($context, $stringSearchDirectory) {
     $context.ProductManifestPath = $configPath
 }
 
-function FindGitDir($context, $stringSearchDirectory) {        
-    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
+function FindGitDir($context, [string]$searchDirectory) {        
+    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($searchDirectory, ".git", $null, $true)
     $context.Variables["_GitDir"] = "$path\.git"
 
     return $path
@@ -190,7 +195,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 
             Write-Host "Calculating changes between $sourceBranch and $targetBranch"
         }
-    }    
+    }
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
 
@@ -402,8 +407,11 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
         [int]$MaxCpuCount,
 
-        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
+        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]
         [switch]$NoDependencyFetch,
+
+        [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]
+        [switch]$enableConfigDownload,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -437,12 +445,16 @@ Should not be used as it prevents incremental builds which increases build times
 
         AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath               
         
-        $root = FindGitDir $context $repositoryPath
-        GetSourceTreeMetadata $context $root        
+        [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
+        if (-not [string]::IsNullOrWhiteSpace($root)) {
+            GetSourceTreeMetadata -context $context -repositoryPath $root
+        } else {
+            $root = $repositoryPath
+        }
 
         AssignSwitches
-        ApplyBranchConfig $context $root
-        FindProductManifest $context $root
+        ApplyBranchConfig -context $context -root $root -enableConfigDownload:$enableConfigDownload.IsPresent
+        FindProductManifest -context $context -root $root -enableConfigDownload:$enableConfigDownload.IsPresent
 
         if (-not $NoBuildCache.IsPresent) {
             GetBuildStateMetadata $context
