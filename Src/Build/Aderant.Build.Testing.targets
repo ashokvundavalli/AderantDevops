@@ -109,7 +109,7 @@ $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
 $testRunDirectory = "$(TestRunDirectory)"
 $workingDirectory = "$(SolutionRoot)"
 $isDesktopBuild = $$(IsDesktopBuild)
-$referencePaths = $(ArtifactStagingDirectory)
+$referencePaths = "$(ArtifactStagingDirectory)"
 $testFiles = $(UnitTestAssemblies)
 $referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
     
