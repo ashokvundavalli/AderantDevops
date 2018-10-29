@@ -236,12 +236,12 @@ function PrepareEnvironment {
     # Setup environment for JavaScript tests
     $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
 
-    Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0
+    Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
    
     if ((Test-Path "$lockDownPath\Settings") -eq 0) {
-        New-Item -Path "$lockDownPath\Settings" -Type Directory -Force
+        New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
     } 
-    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force
+    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
    
 
     # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
