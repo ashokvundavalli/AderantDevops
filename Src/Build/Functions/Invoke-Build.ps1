@@ -278,7 +278,9 @@ function ExpandPaths {
             if (Test-Path -Path $currentDirPath) {
                 $testedPath = $currentDirPath
             }
-        } elseif ($includePaths) {            
+        }
+
+        if ($testedPath -eq '' -And $includePaths) {            
             $includePaths.ForEach({
                 $currentPath = $_
                 $currentPath = Join-Path -Path $currentPath -ChildPath $path
