@@ -98,8 +98,20 @@ process {
     )
 
     foreach ($file in $filesToDeploy) {
-        if (-not (Get-Item "$modulesRootPath\$file").Attributes -band [IO.FileAttributes]::ReparsePoint) {
-            New-Item -Name "$modulesRootPath\$file" -Value "$PSScriptRoot\$file" -ItemType HardLink
+        $create = $false
+
+        $destination = "$modulesRootPath\$file"
+
+        if (Test-Path $destination ) {            
+            if (-not (Get-Item $destination).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                $create = $true
+            }
+        } else {
+            $create = $true
+        }
+       
+        if ($create) {
+            New-Item -Path $destination -Value "$PSScriptRoot\$file" -ItemType HardLink | Out-Null
         }
     }
 

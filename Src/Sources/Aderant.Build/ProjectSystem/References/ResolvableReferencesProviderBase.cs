@@ -6,7 +6,7 @@ using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
 
-    internal abstract class ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> : IResolvableReferencesService<TUnresolvedReference, TResolvedReference>, IDisposable
+    internal abstract class ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> : IResolvableReferencesService<TUnresolvedReference, TResolvedReference>
         where TUnresolvedReference : class, IUnresolvedReference, TResolvedReference where TResolvedReference : class, IReference {
 
         private readonly string unresolvedReferenceType;
@@ -21,10 +21,6 @@ namespace Aderant.Build.ProjectSystem.References {
         /// </summary>
         [Import]
         protected internal ConfiguredProject ConfiguredProject { get; private set; }
-
-        public void Dispose() {
-            this.Dispose(true);
-        }
 
         public virtual IReadOnlyCollection<TUnresolvedReference> GetUnresolvedReferences() {
             ICollection<ProjectItem> projectItems = ConfiguredProject.GetItems(unresolvedReferenceType);
@@ -59,8 +55,5 @@ namespace Aderant.Build.ProjectSystem.References {
         protected abstract TResolvedReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, TUnresolvedReference unresolved);
 
         protected abstract TUnresolvedReference CreateUnresolvedReference(ProjectItem unresolved);
-
-        protected virtual void Dispose(bool disposing) {
-        }
     }
 }

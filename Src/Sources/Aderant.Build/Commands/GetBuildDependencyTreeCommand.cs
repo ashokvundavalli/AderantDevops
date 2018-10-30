@@ -8,7 +8,7 @@ using Aderant.Build.Utilities;
 namespace Aderant.Build.Commands {
 
     [Cmdlet("Get", "BuildDependencyTree")]
-    public class GetDependencyTree : PSCmdlet {
+    public class GetBuildDependencyTreeCommand : PSCmdlet {
 
         [Parameter(Mandatory = false, Position = 0)]
         public string Directory { get; set; }

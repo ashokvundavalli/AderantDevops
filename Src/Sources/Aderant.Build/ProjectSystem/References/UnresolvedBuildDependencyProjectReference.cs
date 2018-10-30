@@ -19,6 +19,10 @@ namespace Aderant.Build.ProjectSystem.References {
             }
         }
 
+        public string ProjectPath {
+            get { return moniker.ProjectPath; }
+        }
+
         public override string Id {
             get { return ProjectGuid.ToString(); }
         }

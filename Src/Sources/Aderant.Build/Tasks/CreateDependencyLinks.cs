@@ -57,8 +57,15 @@ namespace Aderant.Build.Tasks {
 
             foreach (DependantFile df in dependentFiles) {
                 var snapShotForDependentFile = projectOutputSnapshots.FirstOrDefault(pos => pos.FileNamesWritten.Any(fw => string.Equals(df.FileName, fw, StringComparison.OrdinalIgnoreCase)));
-
+              
                 if (snapShotForDependentFile != null) {
+                    if (string.Equals(SolutionRoot, snapShotForDependentFile.Directory)) {
+                        // Do not link to ourselves
+                        // This prevents
+                        // Foo\packages\ThirdParty.AddinExpress\lib\adxloader.dll -> Foo\Bin\Module\adxloader.dll
+                        continue;
+                    }
+
                     string moduleDirectory = Path.GetDirectoryName(snapShotForDependentFile.ProjectFileAbsolutePath);
 
                     if (string.IsNullOrEmpty(moduleDirectory)) {
@@ -68,13 +75,14 @@ namespace Aderant.Build.Tasks {
                     string locationForSymlink = df.FileInstance;
                     string symlinkTargetRawPath = Path.Combine(moduleDirectory, snapShotForDependentFile.OutputPath, df.FileName);
 
-                    // Normalize the path, as symlinks with \..\ in them dont resolve correctly
+                    // Normalize the path, as symlinks with \..\ in them don't resolve correctly
                     string targetForSymlink = Path.GetFullPath(symlinkTargetRawPath);
                     
                     if (File.Exists(locationForSymlink)) {
                         File.Delete(locationForSymlink);
                     }
 
+                    Log.LogMessage($"Replacing {locationForSymlink} with symlink -> {targetForSymlink}");
                     NativeMethods.CreateSymbolicLink(locationForSymlink, targetForSymlink, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
                 }
             }
@@ -126,10 +134,5 @@ namespace Aderant.Build.Tasks {
 
             return true;
         }
-    }
-
-    internal class SnapshotPair {
-        public TrackedProject TrackedProject { get; set; }
-        public ProjectOutputSnapshot Snapshot { get; set; }
     }
 }
