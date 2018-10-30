@@ -96,11 +96,11 @@ function Get-BuildDirectory {
     Get-BuildDirectory
 }
 
-function FindProductManifest($context, $stringSearchDirectory) {
-    [string]$configPath = [System.IO.Path]::Combine($stringSearchDirectory, 'Build\ExpertManifest.xml')
+function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownload) {
+    [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
 
     if (-not (Test-Path -Path $configPath)) {
-        if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        if (-not $EnableConfigDownload.IsPresent) {
             Get-BuildDirectory
 
             $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
