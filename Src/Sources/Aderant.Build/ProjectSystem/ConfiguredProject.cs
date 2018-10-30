@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
+using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 using Aderant.Build.Utilities;
@@ -148,6 +149,10 @@ namespace Aderant.Build.ProjectSystem {
 
         public override string Id {
             get { return GetAssemblyName(); }
+        }
+
+        internal ILogger Logger {
+            get { return this.Logger; }
         }
 
         public string GetAssemblyName() {
@@ -322,6 +327,8 @@ namespace Aderant.Build.ProjectSystem {
 
                 return Task.WhenAll(t1, t2, t3);
             }
+
+            BuildDependencyProjectReferencesService.ClearProjectReferenceGuidsInError();
 
             return Task.CompletedTask;
         }

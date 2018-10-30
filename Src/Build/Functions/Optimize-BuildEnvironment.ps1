@@ -13,6 +13,7 @@ function Optimize-BuildEnvironment {
         "lc.exe",
         "JetBrains.Profiler.Windows.PdbServer.exe",
         "JetBrains.ReSharper.TaskRunner.CLR45.x64.exe",
+        "JetBrains.ETW.Collector.Host.exe",
         "Microsoft.Alm.Shared.Remoting.RemoteContainer.dll",
         "Microsoft.VsHub.Server.HttpHost.exe",
         "Microsoft.Alm.Shared.RemoteContainer.dll",

@@ -144,7 +144,12 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             foreach (var project in LoadedConfiguredProjects) {
-                await project.CollectBuildDependencies(collector);
+                try {
+                    await project.CollectBuildDependencies(collector);
+                } catch (Exception ex) {
+                    logger.LogErrorFromException(ex, false, false);
+                    throw;
+                }
             }
         }
 

@@ -80,11 +80,27 @@ function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownloa
     $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
-function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownload) {
-    [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
+function Get-BuildDirectory {
+    if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        If (Test-Path -Path $global:BranchConfigPath) {
+            [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+            [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
+
+            if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                return
+            }
+        }
+    }
+
+    $global:BranchConfigPath = Read-Host -Prompt 'Please supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
+    Get-BuildDirectory
+}
+
+function FindProductManifest($context, $stringSearchDirectory) {
+    [string]$configPath = [System.IO.Path]::Combine($stringSearchDirectory, 'Build\ExpertManifest.xml')
 
     if (-not (Test-Path -Path $configPath)) {
-        if (-not $EnableConfigDownload.IsPresent) {
+        if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
             Get-BuildDirectory
 
             $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
@@ -195,7 +211,7 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
 
             Write-Host "Calculating changes between $sourceBranch and $targetBranch"
         }
-    }
+    }    
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
 
@@ -243,15 +259,15 @@ function GetBuildStateMetadata($context) {
 
 function PrepareEnvironment {
     # Setup environment for JavaScript tests
-    Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" -Name "iexplore.exe" -Type "DWORD" -Value 0
+    $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
 
-    $lockDownPath = "HKCU:\Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
-    if ((Test-Path "$lockDownPath") -eq 0) {
-        New-Item -Path "$lockDownPath\Settings" -Type Directory -Force
-        New-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
-    } elseif ((Test-Path "$lockDownPath") -eq 1) {
-        Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0
-    }  
+    Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
+   
+    if ((Test-Path "$lockDownPath\Settings") -eq 0) {
+        New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
+    } 
+    Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
+   
 
     # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
     $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
@@ -287,7 +303,9 @@ function ExpandPaths {
             if (Test-Path -Path $currentDirPath) {
                 $testedPath = $currentDirPath
             }
-        } elseif ($includePaths) {            
+        }
+
+        if ($testedPath -eq '' -And $includePaths) {            
             $includePaths.ForEach({
                 $currentPath = $_
                 $currentPath = Join-Path -Path $currentPath -ChildPath $path
@@ -411,7 +429,7 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
         [int]$MaxCpuCount,
 
-        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]
+        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
         [switch]$NoDependencyFetch,
 
         [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]

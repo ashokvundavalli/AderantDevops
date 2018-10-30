@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Model;
+using Aderant.Build.ProjectSystem;
 using Aderant.Build.Utilities;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -93,6 +94,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public void Add(IArtifact artifact) {
             artifacts.Add(artifact);
+        }
+
+        public void AddNear(IArtifact project, IArtifact node) {
+            int index = artifacts.IndexOf(project);
+
+            if (index > 1) {
+                artifacts.Insert(index - 1, node);
+            } else {
+                artifacts.Add(node);
+            }
         }
     }
 }

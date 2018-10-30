@@ -376,7 +376,7 @@
     <Compile Include="Commands\GetDependencies.cs" />
     <Compile Include="Commands\GetDependenciesFrom.cs" />
     <Compile Include="Commands\GetDependencyGraph.cs" />
-    <Compile Include="Commands\GetDependencyTree.cs" />
+    <Compile Include="Commands\GetBuildDependencyTreeCommand.cs" />
     <Compile Include="Commands\GetDependsOn.cs" />
     <Compile Include="Commands\GetDownstreamExpertModules.cs" />
     <Compile Include="Commands\GetExpertModule.cs" />

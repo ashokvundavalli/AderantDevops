@@ -6,7 +6,6 @@ using System.Linq;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
-using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Project = Aderant.Build.MSBuild.Project;
 

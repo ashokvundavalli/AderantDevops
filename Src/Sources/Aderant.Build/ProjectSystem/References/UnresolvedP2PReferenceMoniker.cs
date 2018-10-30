@@ -10,11 +10,8 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         internal string ProjectPath { get; private set; }
-        public Guid ProjectGuid { get; private set; }
 
-        public string GetIdentifier() {
-            return ToString();
-        }
+        public Guid ProjectGuid { get; private set; }
 
         public override string ToString() {
             return this.ProjectGuid.ToString();
@@ -23,7 +20,6 @@ namespace Aderant.Build.ProjectSystem.References {
         public static UnresolvedP2PReferenceMoniker Create(ProjectItem projectItem) {
             // Project is the foreign project guid
             string metadataValue = projectItem.GetMetadataValue("Project");
-
             Guid projectGuid = Guid.Parse(metadataValue);
 
             // Evaluated include is a project relative path like "..\\ProjectA\\ProjectA.csproj"
