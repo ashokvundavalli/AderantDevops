@@ -63,7 +63,7 @@ function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownloa
     if (-not (Test-Path -Path $configPath)) {
         if (-not $EnableConfigDownload.IsPresent) {
             Get-BuildDirectory
-            $config = Get-Content -Raw -LiteralPath $global:BranchConfigPath
+            $config = Get-Content -Raw -LiteralPath (Join-Path -Path $global:BranchConfigPath -ChildPath "BranchConfig.xml")
         } else {
             # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
             [string]$branch = Get-Branch -root $root
