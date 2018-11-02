@@ -11,7 +11,7 @@ namespace Aderant.Build.Commands {
     public class GetBuildDependencyTreeCommand : PSCmdlet {
 
         [Parameter(Mandatory = false, Position = 0)]
-        public string Directory { get; set; }
+        public string[] Directories { get; set; }
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
@@ -20,7 +20,7 @@ namespace Aderant.Build.Commands {
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = ConfigurationToBuild.Default;
 
-            projectTree.LoadProjects(Directory, true, null);
+            projectTree.LoadProjects(Directories, true, null);
             projectTree.CollectBuildDependencies(collector).Wait();
             var buildDependencyGraph = projectTree.CreateBuildDependencyGraph(collector);
 

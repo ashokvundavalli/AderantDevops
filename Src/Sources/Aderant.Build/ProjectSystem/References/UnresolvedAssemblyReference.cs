@@ -13,7 +13,7 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         public string GetAssemblyName() {
-            return moniker.AssemblyName.FullName;
+            return moniker.AssemblyName.Name;
         }
 
         public override string Id {
