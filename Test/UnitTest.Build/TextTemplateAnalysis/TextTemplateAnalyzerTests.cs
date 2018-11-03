@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
-using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.TextTemplates;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.TextTemplateAnalysis {
@@ -20,7 +20,18 @@ namespace UnitTest.Build.TextTemplateAnalysis {
                 Assert.AreEqual(5, result.AssemblyReferences.Count);
                 Assert.AreEqual("System.Core", result.AssemblyReferences.First());
             }
+        }
 
+        [TestMethod]
+        public void Extract_include_directive() {
+            var analyzer = new TextTemplateAnalyzer();
+
+            using (var reader = new StringReader(Resources.TextTemplateWithInclude)) {
+                TextTemplateAnalysisResult result = analyzer.Analyze(reader, TestContext.DeploymentDirectory);
+
+                Assert.AreEqual("common.ttinclude", result.Includes[0]);
+                Assert.AreEqual(Path.Combine(TestContext.DeploymentDirectory, "common1.ttinclude"), result.Includes[1]);
+            }
         }
     }
 }

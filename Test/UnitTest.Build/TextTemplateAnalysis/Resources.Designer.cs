@@ -77,5 +77,21 @@ namespace UnitTest.Build.TextTemplateAnalysis {
                 return ResourceManager.GetString("SimpleTextTemplate", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;#@ template debug=&quot;false&quot; hostspecific=&quot;false&quot; language=&quot;C#&quot; #&gt;
+        ///&lt;#@ assembly name=&quot;System.Core&quot; #&gt;
+        ///&lt;#@ import namespace=&quot;System.Linq&quot; #&gt;
+        ///&lt;#@ import namespace=&quot;System.Text&quot; #&gt;
+        ///&lt;#@ import namespace=&quot;System.Collections.Generic&quot; #&gt;
+        ///&lt;#@ output extension=&quot;.cs&quot; #&gt;
+        ///
+        ///&lt;#@ include file=&quot;common.ttinclude&quot;#&gt;.
+        /// </summary>
+        internal static string TextTemplateWithInclude {
+            get {
+                return ResourceManager.GetString("TextTemplateWithInclude", resourceCulture);
+            }
+        }
     }
 }

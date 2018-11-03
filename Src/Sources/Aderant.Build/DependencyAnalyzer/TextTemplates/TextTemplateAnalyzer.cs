@@ -1,56 +1,65 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
-using Aderant.Build.DependencyAnalyzer.TextTemplates;
 
-namespace Aderant.Build.DependencyAnalyzer {
+namespace Aderant.Build.DependencyAnalyzer.TextTemplates {
     internal class TextTemplateAnalyzer {
-        static readonly Regex nameMatch = new Regex(@"name=""([^""]*)\""", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        private readonly List<string> excludedPatterns = new List<string>();
-        private readonly IFileSystem2 fileSystem;
-
-        public TextTemplateAnalyzer(IFileSystem2 fileSystem) {
-            this.fileSystem = fileSystem;
-        }
+        private MacroExpander expander;
 
         public TextTemplateAnalyzer() {
         }
 
         public TextTemplateAnalysisResult Analyze(TextReader reader, string projectDirectory) {
-            var expander = new MacroExpander();
+            expander = new MacroExpander();
             expander.ProjectDir = projectDirectory;
 
             var template = new TextTemplateAnalysisResult();
 
-            string text;
-            while ((text = reader.ReadLine()) != null) {
-                var line = text.TrimStart();
+            var tokenizer = new Tokenizer(null, reader.ReadToEnd());
 
-                line = expander.Expand(line);
+            //      AnalyzerState state = AnalyzerState.ExpectingAttribute;
 
-                if (line.StartsWith("<#@")) {
-                    if (line.IndexOf("ServiceDsl", StringComparison.OrdinalIgnoreCase) >= 0) {
-                        template.IsServiceDslTemplate = true;
+            bool isAssemblyElement = false;
+            bool isIncludeElement = false;
+
+            while (tokenizer.Advance()) {
+                if (!string.IsNullOrEmpty(tokenizer.Value)) {
+                    string tokenizerValue = tokenizer.Value;
+
+                    if (isAssemblyElement && tokenizer.State == TokenizerState.DirectiveValue) {
+                        ParseAssembly(template, tokenizerValue);
+                        
+                        isAssemblyElement = false;
+                        continue;
                     }
 
-                    if (line.IndexOf("DomainModelDsl", StringComparison.OrdinalIgnoreCase) >= 0) {
-                        template.IsDomainModelDslTemplate = true;
+                    if (isIncludeElement && tokenizer.State == TokenizerState.DirectiveValue) {
+                        ParseInclude(template, tokenizerValue);
+                        isIncludeElement = false;
+                        continue;
                     }
 
-                    const string assemblyText = "assembly ";
-
-                    if (line.IndexOf(assemblyText, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        Match match = nameMatch.Match(line);
-
-                        Group matchGroup = match.Groups[1];
-                        string assemblyNameValue = matchGroup.Value;
-                        template.AssemblyReferences.Add(assemblyNameValue.Trim());
+                    if (tokenizer.State == TokenizerState.DirectiveName) {
+                        if (string.Equals(tokenizerValue, "assembly", StringComparison.OrdinalIgnoreCase)) {
+                            isAssemblyElement = true;
+                        } else if (string.Equals(tokenizerValue, "include", StringComparison.InvariantCultureIgnoreCase)) {
+                            isIncludeElement = true;
+                        }
                     }
                 }
             }
 
             return template;
+        }
+
+        private void ParseInclude(TextTemplateAnalysisResult template, string tokenizerValue) {
+            var value = expander.Expand(tokenizerValue);
+            template.Includes.Add(value);
+        }
+
+        private void ParseAssembly(TextTemplateAnalysisResult template, string tokenizerValue) {
+            var value = expander.Expand(tokenizerValue);
+            template.AssemblyReferences.Add(Path.GetFileName(value));
         }
     }
 
@@ -78,14 +87,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <value>The template file.</value>
         public string TemplateFile { get; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this instance is a service DSL template.
-        /// </summary>
-        public bool IsServiceDslTemplate { get; internal set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this instance is a domain model DSL template.
-        /// </summary>
-        public bool IsDomainModelDslTemplate { get; internal set; }
+        public IList<string> Includes { get; private set; } = new List<string>();
     }
 }

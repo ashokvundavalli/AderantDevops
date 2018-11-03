@@ -4,6 +4,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Reflection;
 using Aderant.Build.DependencyAnalyzer;
+using Aderant.Build.DependencyAnalyzer.TextTemplates;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
@@ -36,30 +37,59 @@ namespace Aderant.Build.ProjectSystem.References {
                     var generator = item.GetMetadataValue("Generator");
 
                     if (string.Equals(generator, "TextTemplatingFileGenerator", StringComparison.OrdinalIgnoreCase)) {
-                        using (Stream openFile = fileSystem.OpenFile(filePath)) {
-                            using (var reader = new StreamReader(openFile)) {
-
-                                var analyzer = new TextTemplateAnalyzer(null);
-                                TextTemplateAnalysisResult result = analyzer.Analyze(reader, project.FullPath);
-
-                                foreach (var assemblyReference in result.AssemblyReferences) {
-                                    UnresolvedAssemblyReferenceMoniker moniker;
-
-                                    if (assemblyReference.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) {
-                                        moniker = new UnresolvedAssemblyReferenceMoniker(null, assemblyReference);
-                                    } else {
-                                        moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(assemblyReference), null);
-                                    }
-
-                                    unresolvedReferences.Add(CreateUnresolvedReference(moniker));
-                                }
-                            }
-                        }
+                        AnalyzeTemplate(filePath, project, unresolvedReferences, new List<string>());
                     }
                 }
             }
 
             return unresolvedReferences;
+        }
+
+        private void AnalyzeTemplate(string filePath, ConfiguredProject project, List<IUnresolvedAssemblyReference> unresolvedReferences, List<string> seenTemplates) {
+            using (Stream openFile = fileSystem.OpenFile(filePath)) {
+                using (var reader = new StreamReader(openFile)) {
+
+                    var analyzer = new TextTemplateAnalyzer();
+                    TextTemplateAnalysisResult result = analyzer.Analyze(reader, project.FullPath);
+
+                    CreateReferences(result, unresolvedReferences);
+
+                    if (result.Includes != null) {
+                        for (var i = 0; i < result.Includes.Count; i++) {
+                            var include = result.Includes[i];
+
+                            string path = CreatePathToInclude(filePath, include);
+
+                            if (path != null && !seenTemplates.Contains(path)) {
+                                AnalyzeTemplate(path, project, unresolvedReferences, seenTemplates);
+                                seenTemplates.Add(path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private string CreatePathToInclude(string currentTemplatePath, string include) {
+            if (!fileSystem.FileExists(include)) {
+                return Path.Combine(Path.GetDirectoryName(currentTemplatePath), include);
+            }
+
+            return include;
+        }
+
+        private void CreateReferences(TextTemplateAnalysisResult result, List<IUnresolvedAssemblyReference> unresolvedReferences) {
+            foreach (var assemblyReference in result.AssemblyReferences) {
+                UnresolvedAssemblyReferenceMoniker moniker;
+
+                if (assemblyReference.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) {
+                    moniker = new UnresolvedAssemblyReferenceMoniker(null, assemblyReference);
+                } else {
+                    moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(assemblyReference), null);
+                }
+
+                unresolvedReferences.Add(CreateUnresolvedReference(moniker));
+            }
         }
     }
 }
