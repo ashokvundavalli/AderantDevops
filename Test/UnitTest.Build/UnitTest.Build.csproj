@@ -104,7 +104,6 @@
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
-    <Compile Include="DependencyAnalyzer\ModuleRefTests.cs" />
     <Compile Include="ObjectModelTests.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilderTests.cs" />
     <Compile Include="Packaging\ArtifactPackageHelperTests.cs" />
@@ -200,6 +199,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\test-paket-template-with-exclude-section.txt" />
+    <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithInclude.tt" />
     <Content Include="TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
     <None Include="Resources\BuildLogs\buildlog-1.json" />
     <None Include="Resources\BuildLogs\buildlog-2.json" />
@@ -236,6 +236,7 @@
     <EmbeddedResource Include="TextTemplateAnalysis\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
