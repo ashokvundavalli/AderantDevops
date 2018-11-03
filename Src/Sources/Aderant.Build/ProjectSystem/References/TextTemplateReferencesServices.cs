@@ -46,6 +46,10 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         private void AnalyzeTemplate(string filePath, ConfiguredProject project, List<IUnresolvedAssemblyReference> unresolvedReferences, List<string> seenTemplates) {
+            if (!fileSystem.FileExists(filePath)) {
+                return;
+            }
+
             using (Stream openFile = fileSystem.OpenFile(filePath)) {
                 using (var reader = new StreamReader(openFile)) {
 
