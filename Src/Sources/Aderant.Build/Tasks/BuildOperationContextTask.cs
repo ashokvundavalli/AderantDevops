@@ -51,7 +51,14 @@ namespace Aderant.Build.Tasks {
             try {
                 return ExecuteTask();
             } catch (Exception ex) {
-                Log.LogErrorFromException(ex);
+                Exception exceptionToLog = ex;
+
+                AggregateException aggregateException = ex as AggregateException;
+                if (aggregateException != null) {
+                    exceptionToLog = aggregateException.Flatten().InnerException;
+                }
+
+                Log.LogErrorFromException(exceptionToLog, true);
                 return false;
             } finally {
                 executingTask = false;
