@@ -17,8 +17,6 @@ namespace Aderant.Build.DependencyAnalyzer.TextTemplates {
 
             var tokenizer = new Tokenizer(null, reader.ReadToEnd());
 
-            //      AnalyzerState state = AnalyzerState.ExpectingAttribute;
-
             bool isAssemblyElement = false;
             bool isIncludeElement = false;
 
@@ -87,6 +85,6 @@ namespace Aderant.Build.DependencyAnalyzer.TextTemplates {
         /// <value>The template file.</value>
         public string TemplateFile { get; }
 
-        public IList<string> Includes { get; private set; } = new List<string>();
+        public IList<string> Includes { get; } = new List<string>();
     }
 }
