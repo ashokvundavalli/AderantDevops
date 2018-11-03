@@ -117,6 +117,10 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/clp:PerformanceSummary")
         }
 
+        if ($MinimalConsoleLogging.IsPresent) {
+            $set.Add("/NoConsoleLogger")
+        }
+
         if ($context.BuildMetadata -ne $null) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
                 $set.Add("/flp:Verbosity=Diag")
@@ -406,6 +410,9 @@ Should not be used as it prevents incremental builds which increases build times
 
         [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
         [switch]$NoDependencyFetch,
+
+        [Parameter(HelpMessage = "Instructs the console logger to be quiet.")]        
+        [switch]$MinimalConsoleLogging,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
@@ -473,7 +480,7 @@ Should not be used as it prevents incremental builds which increases build times
                 $Target = "CreatePlan"
             }        
 
-            Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile) /p:ContextEndpoint=$contextEndpoint $args"
+            Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
 
             $succeeded = $true
 
