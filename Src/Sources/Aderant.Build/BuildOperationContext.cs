@@ -370,6 +370,8 @@ namespace Aderant.Build {
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class ProjectOutputSnapshot {
+        [DataMember(Name = nameof(Directory))]
+        private string directory;
 
         public ProjectOutputSnapshot() {
         }
@@ -386,8 +388,19 @@ namespace Aderant.Build {
         [DataMember]
         public string Origin { get; set; }
 
-        [DataMember]
-        public string Directory { get; set; }
+      
+        public string Directory {
+            get { return directory; }
+            set {
+                if (value != null) {
+                    if (Path.IsPathRooted(value)) {
+                        System.Diagnostics.Debugger.Launch();
+                        throw new InvalidOperationException("Corrupted model. Directory must not be rooted.");
+                    }
+                }
+                directory = value;
+            }
+        }
 
         [DataMember]
         public bool IsTestProject { get; set; }

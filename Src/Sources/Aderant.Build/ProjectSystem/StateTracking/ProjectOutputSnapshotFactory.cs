@@ -46,15 +46,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 FilesWritten = RemoveIntermediateObjects(ProjectOutputs, new[] { IntermediateDirectory, ArtifactStagingDirectory }),
                 OutputPath = OutputPath,
                 Origin = "ThisBuild",
-                Directory = GetDirectory(projectFile),
+                Directory = GetDirectory(SourcesDirectory),
                 IsTestProject = isTestProject,
             };
 
             return snapshot;
         }
 
-        private static string GetDirectory(string projectFile) {
-            return projectFile.Split(Path.DirectorySeparatorChar)[0];
+        private static string GetDirectory(string dir) {
+            return Path.GetFileName(dir);
         }
 
         private static string[] RemoveIntermediateObjects(string[] projectOutputs, string[] intermediateDirectories) {
