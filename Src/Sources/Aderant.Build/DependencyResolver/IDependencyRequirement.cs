@@ -11,7 +11,7 @@ namespace Aderant.Build.DependencyResolver {
         VersionRequirement VersionRequirement { get; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this instance can override (blat) any contraint expression in your dependency file.
+        /// Gets or sets a value indicating whether this instance can override (blat) any constraint expression in your dependency file.
         /// </summary>
         bool ReplaceVersionConstraint { get; set; }
 

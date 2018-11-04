@@ -114,7 +114,6 @@
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
     <Compile Include="DependencyResolver\FolderDependencySystem.cs" />
-    <Compile Include="DependencyResolver\DependencyFetchContext.cs" />
     <Compile Include="DependencyResolver\RepositoryType.cs" />
     <Compile Include="DependencyResolver\Resolvers\NupkgResolver.cs" />
     <Compile Include="DependencyResolver\DependencyRequirement.cs" />

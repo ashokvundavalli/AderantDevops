@@ -65,7 +65,7 @@ namespace Aderant.Build.DependencyResolver {
             return dependencies;
         }
 
-        public void Add(IPackageContext context, IEnumerable<IDependencyRequirement> requirements) {
+        public void Add(IEnumerable<IDependencyRequirement> requirements) {
             var file = dependencies.GetDependenciesFile();
 
             FileSystem.MakeFileWritable(file.FileName);
@@ -91,7 +91,7 @@ namespace Aderant.Build.DependencyResolver {
                 }
             }
 
-            AddModules(context, requirements, file);
+            AddModules(requirements, file);
         }
 
         // Paket is unable to write version ranges to file.
@@ -112,16 +112,19 @@ namespace Aderant.Build.DependencyResolver {
             return version;
         }
 
-        private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
+        private void AddModules(IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
+                bool hasCustomVersion = false;
                 string version = string.Empty;
+
                 if (referencedModule.VersionRequirement != null) {
+                    hasCustomVersion = true;
                     version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
                 }
                 
                 var name = Domain.PackageName(referencedModule.Name);
 
-                if (referencedModule.ReplaceVersionConstraint) {
+                if (referencedModule.ReplaceVersionConstraint && hasCustomVersion) {
                     try {
                         file = file.Remove(Domain.GroupName(BuildConstants.MainDependencyGroup), name);
                     } catch {

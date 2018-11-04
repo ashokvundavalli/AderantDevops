@@ -68,7 +68,7 @@ namespace Aderant.Build.Tasks {
             // Download the existing package
             try {
                 using (PackageManager packageManager = new PackageManager(fileSystem, logger)) {
-                    packageManager.Add(new DependencyFetchContext(false), new[] { DependencyRequirement.Create(packageName) });
+                    packageManager.Add(new[] { DependencyRequirement.Create(packageName) });
                     packageManager.Restore();
                 }
             } catch (Exception ex) {
