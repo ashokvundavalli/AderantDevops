@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Aderant.Build.PipelineService;
 using Microsoft.Build.Framework;
@@ -66,6 +65,10 @@ namespace Aderant.Build.Tasks {
             }
         }
 
+        public void Cancel() {
+            cts.Cancel();
+        }
+
         private void FailTask(Exception exception) {
             Log.LogError("[Error] Execution of script: '{0}' failed.", ScriptBlock);
 
@@ -76,10 +79,6 @@ namespace Aderant.Build.Tasks {
             using (var proxy = GetProxy()) {
                 proxy.SetStatus("Failed", OnErrorReason);
             }
-        }
-
-        public void Cancel() {
-            cts.Cancel();
         }
 
         private bool RunScript(Dictionary<string, object> variables, TaskLoggingHelper name, string directoryName) {
@@ -106,7 +105,6 @@ namespace Aderant.Build.Tasks {
                 }
 
                 scripts.Add(ScriptBlock);
-
 
                 pipelineExecutor.RunScript(
                     scripts,
@@ -150,22 +148,28 @@ namespace Aderant.Build.Tasks {
     /// Wraps the build engine command runner
     /// </summary>
     internal class ProcessRunner {
-        private readonly Exec execTask;
 
         public ProcessRunner(Exec execTask) {
-            this.execTask = execTask;
 
             StartProcess = command => {
-                execTask.Command = command.FileName + " " + command.Arguments;
-                execTask.IgnoreExitCode = false;
-                execTask.WorkingDirectory = command.WorkingDirectory;
+                var cancelEventHandler = new ConsoleCancelEventHandler((sender, args) => { execTask.Cancel(); });
 
-                if (command.Environment != null) {
-                    execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();
+                try {
+                    Console.CancelKeyPress += cancelEventHandler;
+
+                    execTask.Command = command.FileName + " " + command.Arguments;
+                    execTask.IgnoreExitCode = false;
+                    execTask.WorkingDirectory = command.WorkingDirectory;
+
+                    if (command.Environment != null) {
+                        execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();
+                    }
+
+                    execTask.Execute();
+                    return execTask.ExitCode;
+                } finally {
+                    Console.CancelKeyPress -= cancelEventHandler;
                 }
-
-                execTask.Execute();
-                return execTask.ExitCode;
             };
         }
 
