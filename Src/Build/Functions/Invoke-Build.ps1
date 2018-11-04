@@ -436,6 +436,9 @@ Should not be used as it prevents incremental builds which increases build times
 
         [Parameter(HelpMessage = "Instructs the console logger to be quiet.")]        
         [switch]$MinimalConsoleLogging,
+
+        [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]
+        [switch]$EnableConfigDownload,
         
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
