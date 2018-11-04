@@ -20,7 +20,7 @@ namespace Aderant.Build.Tasks {
         private const string LibDirectoryName = "lib";
         private const string LinkLockFileName = "link.lock";
 
-        private class DependantFile {
+        private class DependentFile {
             public string FileName { get; set; }
             public string FileInstance { get; set; }
         }
@@ -35,12 +35,17 @@ namespace Aderant.Build.Tasks {
                 Log.LogMessage("Skipping symlink creation as {0} is present", LinkLockFileName);
                 return true;
             }
-            
-            var projectOutputSnapshots = AssignProjectOutputSnapshotsFullPath().ToList();
-
-            List<DependantFile> dependentFiles = new List<DependantFile>();
 
             string packagesRoot = Path.Combine(SolutionRoot, PackagesDirectoryName);
+
+            if (new DirectoryInfo(packagesRoot).Attributes.HasFlag(FileAttributes.ReparsePoint)) {
+                Log.LogMessage("Skipping symlink creation as '{0}' is symlink", LinkLockFileName);
+                return true;
+            }
+
+            var projectOutputSnapshots = AssignProjectOutputSnapshotsFullPath().ToList();
+
+            List<DependentFile> dependentFiles = new List<DependentFile>();
 
             List<string> libFolders = Directory.GetDirectories(packagesRoot, $"*{LibDirectoryName}*", SearchOption.AllDirectories).Where(lf => IsLibFolderCorrectDepth(lf, packagesRoot)).ToList();
 
@@ -49,13 +54,14 @@ namespace Aderant.Build.Tasks {
                     from file in Directory.GetFiles(libFolder, "*.*", SearchOption.AllDirectories)
                     let fileName = Path.GetFileName(file)
                     where fileName != null
-                    select new DependantFile {
+                    select new DependentFile {
                         FileName = fileName,
                         FileInstance = file
                     });
             }
 
-            foreach (DependantFile df in dependentFiles) {
+            foreach (DependentFile df in dependentFiles) {
+                
                 var snapShotForDependentFile = projectOutputSnapshots.FirstOrDefault(pos => pos.FileNamesWritten.Any(fw => string.Equals(df.FileName, fw, StringComparison.OrdinalIgnoreCase)));
               
                 if (snapShotForDependentFile != null) {
@@ -81,7 +87,7 @@ namespace Aderant.Build.Tasks {
                     if (File.Exists(locationForSymlink)) {
                         File.Delete(locationForSymlink);
                     }
-
+                
                     Log.LogMessage($"Replacing {locationForSymlink} with symlink -> {targetForSymlink}");
                     NativeMethods.CreateSymbolicLink(locationForSymlink, targetForSymlink, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
                 }

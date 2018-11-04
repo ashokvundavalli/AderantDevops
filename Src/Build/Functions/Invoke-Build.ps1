@@ -137,7 +137,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
         if ($MaxCpuCount -gt 0) {            
             $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
-            $set.Add("/m")
+            $set.Add("/m:" + [Math]::Max(1, [System.Environment]::ProcessorCount - 2).ToString())
         }
 
         if ($NoTextTemplateTransform.IsPresent) {
@@ -157,10 +157,6 @@ function CreateToolArgumentString($context, $remainingArgs) {
         }
 
         if ($remainingArgs) {
-            if ($remainingArgs.Contains('.')) {
-                return
-            }
-
             # Add pass-thru args
             [void]$set.Add([string]::Join(" ", $remainingArgs))
         }
@@ -208,7 +204,9 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         Write-Host ""
         Write-Host "$indent1 Changes..."    
         foreach ($change in $context.SourceTreeMetadata.Changes) {
-            Write-Host "$indent2 $($change.Path):$($change.Status)"
+            if ($change.Status -ne "Untracked") {
+                Write-Host "$indent2 $($change.Path):$($change.Status)"
+            }
         }
     }    
 }

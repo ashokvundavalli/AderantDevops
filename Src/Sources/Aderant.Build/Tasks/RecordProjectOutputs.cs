@@ -14,6 +14,9 @@ namespace Aderant.Build.Tasks {
         public string ProjectFile { get; set; }
 
         [Required]
+        public string SolutionRoot { get; set; }
+
+        [Required]
         public string IntermediateDirectory { get; set; }
 
         [Required]
@@ -35,7 +38,7 @@ namespace Aderant.Build.Tasks {
         public override bool ExecuteTask() {
 
             var builder = new ProjectOutputSnapshotBuilder {
-                SourcesDirectory = Context.BuildMetadata.BuildSourcesDirectory,
+                SourcesDirectory = SolutionRoot,
                 ProjectFile = ProjectFile,
                 ProjectOutputs = ProjectOutputs,
                 OutputPath = OutputPath.ItemSpec,

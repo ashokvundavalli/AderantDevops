@@ -96,10 +96,13 @@
       <ExcludePaths Include="Collections\" />
       <ExcludePaths Include="Libraries.Entities.GeneralLedger\" />
       <ExcludePaths Include="Tests.Load\" />
+      <ExcludePaths Include="Tests.Query\" />
+      <!--bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Exclude Web.Workflow,Build.T4Task,Libraries.SoftwareFactory,Applications.Rates,Tests.Query -RemainingArgs /p:UseSharedDependencyDirectory=true-->
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" /> 
       <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" /> <!-- Has stuff we can't build - missing third party libs-->
       <ExcludePaths Include="Workflow.Integration.Samples\" /> <!--Has "packages" checked in-->
+
       
     </ItemGroup>
 
@@ -182,7 +185,7 @@
 
 
   <Target Name="GetAllDependencies"
-          Condition="'$(UseSharedDependencyDirectory)' == 'true'">
+          Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(RetrievePrebuilts)' != 'false'">
 
     <Message Text="Getting dependencies for build." />
 
