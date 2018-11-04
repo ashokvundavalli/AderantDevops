@@ -22,6 +22,11 @@ namespace Aderant.Build.VersionControl {
 
             HashSet<BucketId> bucketKeys = new HashSet<BucketId>();
 
+            if (string.IsNullOrWhiteSpace(repositoryPath)) {
+                info.BucketIds = bucketKeys;
+                return info;
+            }
+            
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
 

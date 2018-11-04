@@ -9,7 +9,7 @@ namespace Aderant.Build.Commands {
     [OutputType(typeof(BuildStateMetadata))]
     public class GetBuildStateMetadataCommand : PSCmdlet {
 
-        [Parameter(Mandatory = true)]
+        [Parameter(Mandatory = false)]
         public string[] BucketIds { get; set; }
 
         [Parameter(Mandatory = true)]

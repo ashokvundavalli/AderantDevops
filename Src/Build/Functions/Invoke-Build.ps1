@@ -40,15 +40,36 @@ function Get-BuildManifest {
     }
 }
 
-function ApplyBranchConfig($context, $root) {
+function Get-BuildDirectory {
+    if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        If (Test-Path -Path $global:BranchConfigPath) {
+            [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+            [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
+
+            if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                return
+            }
+        }
+    }
+
+    $global:BranchConfigPath = Read-Host -Prompt 'Please supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
+    Get-BuildDirectory
+}
+
+function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownload) {
     $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
 
     [xml]$config = $null
     if (-not (Test-Path -Path $configPath)) {
-        # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
-        [string]$branch = Get-Branch -root $root
+        if (-not $EnableConfigDownload.IsPresent) {
+            Get-BuildDirectory
+            $config = Get-Content -Raw -LiteralPath (Join-Path -Path $global:BranchConfigPath -ChildPath "BranchConfig.xml")
+        } else {
+            # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
+            [string]$branch = Get-Branch -root $root
 
-        $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
+            $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
+        }
     } else {
         $config = Get-Content -Raw -LiteralPath $configPath
     }
@@ -75,18 +96,18 @@ function Get-BuildDirectory {
     Get-BuildDirectory
 }
 
-function FindProductManifest($context, $stringSearchDirectory) {
-    [string]$configPath = [System.IO.Path]::Combine($stringSearchDirectory, 'Build\ExpertManifest.xml')
+function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownload) {
+    [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
 
     if (-not (Test-Path -Path $configPath)) {
-        if ([string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        if (-not $EnableConfigDownload.IsPresent) {
             Get-BuildDirectory
 
             $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
             return
         }
 
-        [string]$branch = Get-Branch -root $stringSearchDirectory
+        [string]$branch = Get-Branch -root $root
 
         $config = Get-BuildManifest -manifest 'ExpertManifest.xml' -branch $branch
         $temp = New-TemporaryFile
@@ -97,8 +118,8 @@ function FindProductManifest($context, $stringSearchDirectory) {
     $context.ProductManifestPath = $configPath
 }
 
-function FindGitDir($context, $stringSearchDirectory) {        
-    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($stringSearchDirectory, ".git", $null, $true)
+function FindGitDir($context, [string]$searchDirectory) {        
+    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($searchDirectory, ".git", $null, $true)
     $context.Variables["_GitDir"] = "$path\.git"
 
     return $path
@@ -220,11 +241,15 @@ function GetBuildStateMetadata($context) {
 
     Write-Host ""
     Write-Host "$indent1 Build Tree"
+
     foreach ($id in $stm.BucketIds) {
         Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
     }   
 
-    $ids = $stm.BucketIds | Select-Object -ExpandProperty Id    
+    [string[]]$ids = @()
+    if ($stm.BucketIds.Count -gt 0) {
+        $ids = $stm.BucketIds | Select-Object -ExpandProperty Id
+    }
     $buildState = Get-BuildStateMetadata -BucketIds $ids -DropLocation $context.DropLocationInfo.BuildCacheLocation
 
     $context.BuildStateMetadata = $buildState
@@ -444,12 +469,15 @@ Should not be used as it prevents incremental builds which increases build times
 
         AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath               
         
-        $root = FindGitDir $context $repositoryPath
-        GetSourceTreeMetadata $context $root        
+        [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
+        GetSourceTreeMetadata -context $context -repositoryPath $root
+        if ([string]::IsNullOrWhiteSpace($root)) {
+            $root = $repositoryPath
+        }
 
         AssignSwitches
-        ApplyBranchConfig $context $root
-        FindProductManifest $context $root
+        ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
+        FindProductManifest -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
 
         if (-not $NoBuildCache.IsPresent) {
             GetBuildStateMetadata $context
