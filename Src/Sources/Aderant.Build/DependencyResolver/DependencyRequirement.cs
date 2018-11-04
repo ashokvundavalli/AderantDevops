@@ -118,5 +118,7 @@ namespace Aderant.Build.DependencyResolver {
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
         public bool? ReplicateToDependencies { get; set; }
+
+        public string Location { get; set; }
     }
 }

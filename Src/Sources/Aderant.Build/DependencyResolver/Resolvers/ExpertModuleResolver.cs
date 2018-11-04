@@ -71,7 +71,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 }
 
                 foreach (ExpertModule reference in manifest.ReferencedModules) {
-                    yield return DependencyRequirement.Create(reference);
+                    var requirement = DependencyRequirement.Create(reference);
+                    requirement.Location = moduleDirectory;
+                    yield return requirement;
                 }
             } else {
                 resolverRequest.Logger.Info("No DependencyManifest found");

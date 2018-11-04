@@ -18,11 +18,10 @@ namespace UnitTest.Build {
         }
 
         [TestMethod]
-        [Ignore]
         public void When_instances_are_not_memberwise_identical_instances_are_not_equal() {
             var a = new VersionRequirement {
                 AssemblyVersion = "1",
-                ConstraintExpression = "Foo",
+                ConstraintExpression = "> 1",
             };
 
             var b = new VersionRequirement {
@@ -30,6 +29,24 @@ namespace UnitTest.Build {
             };
 
             Assert.AreNotEqual(a, b);
+        }
+
+        [TestMethod]
+        public void Null_inequality() {
+            var a = new VersionRequirement {
+                AssemblyVersion = "1",
+            };
+            
+            Assert.AreNotEqual(null, a);
+            Assert.AreNotEqual(a, null);
+        }
+
+        [TestMethod]
+        public void Null_equality() {
+            var dependencyRequirement = DependencyRequirement.Create("Foo", "");
+
+            Assert.AreEqual(null, dependencyRequirement.VersionRequirement);
+            Assert.AreEqual(dependencyRequirement.VersionRequirement, null);
         }
     }
 }

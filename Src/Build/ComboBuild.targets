@@ -93,7 +93,6 @@
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
       <ExcludePaths Include="TempTransform\" />
-      <ExcludePaths Include="Collections\" />
       <ExcludePaths Include="Libraries.Entities.GeneralLedger\" />
       <ExcludePaths Include="Tests.Load\" />
       <ExcludePaths Include="Tests.Query\" />

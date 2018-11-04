@@ -47,20 +47,30 @@ namespace Aderant.Build.DependencyResolver {
         public string OriginatingFile { get; set; }
 
         public bool Equals(VersionRequirement other) {
-            if (ReferenceEquals(null, other))
+            if (ReferenceEquals(null, other)) {
                 return false;
-            if (ReferenceEquals(this, other))
+            }
+
+            if (ReferenceEquals(this, other)) {
                 return true;
+            }
+
             return string.Equals(ConstraintExpression, other.ConstraintExpression, StringComparison.OrdinalIgnoreCase) && string.Equals(AssemblyVersion, other.AssemblyVersion, StringComparison.OrdinalIgnoreCase);
         }
 
         public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj))
+            if (ReferenceEquals(null, obj)) {
                 return false;
-            if (ReferenceEquals(this, obj))
+            }
+
+            if (ReferenceEquals(this, obj)) {
                 return true;
-            if (obj.GetType() != this.GetType())
+            }
+
+            if (obj.GetType() != this.GetType()) {
                 return false;
+            }
+
             return Equals((VersionRequirement)obj);
         }
 
@@ -68,14 +78,6 @@ namespace Aderant.Build.DependencyResolver {
             unchecked {
                 return ((ConstraintExpression != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(ConstraintExpression) : 0) * 397) ^ (AssemblyVersion != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(AssemblyVersion) : 0);
             }
-        }
-
-        public static bool operator ==(VersionRequirement left, VersionRequirement right) {
-            return Equals(left, right);
-        }
-
-        public static bool operator !=(VersionRequirement left, VersionRequirement right) {
-            return !Equals(left, right);
         }
     }
 }

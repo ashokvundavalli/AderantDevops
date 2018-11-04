@@ -12,6 +12,10 @@
         /// <value>The group name.</value>
         string Group { get; }
 
+        /// <summary>
+        /// Gets the version constraint that this requirement demands
+        /// </summary>
+        /// <value>The version requirement.</value>
         VersionRequirement VersionRequirement { get; }
 
         /// <summary>
@@ -23,5 +27,7 @@
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
         bool? ReplicateToDependencies { get; set; }
+
+        string Location { get; set; }
     }
 }

@@ -22,10 +22,13 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
                     List<string> groupList = pm.FindGroups();
+
                     foreach (string groupName in groupList) {
                         var requirements = pm.GetDependencies(Domain.GroupName(groupName));
                         foreach (var item in requirements) {
-                            yield return DependencyRequirement.Create(item.Key, groupName, item.Value);
+                            var requirement = DependencyRequirement.Create(item.Key, groupName, item.Value);
+                            requirement.Location = moduleDirectory;
+                            yield return requirement;
                         }
                     }
                 }
