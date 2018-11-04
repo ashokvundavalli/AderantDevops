@@ -6,7 +6,6 @@ using System.Xml;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
-using Project = Aderant.Build.MSBuild.Project;
 
 namespace Aderant.Build.Tasks {
     public sealed class GenerateBuildPlan : BuildOperationContextTask {
@@ -54,7 +53,7 @@ namespace Aderant.Build.Tasks {
         public string ConfigurationToBuild { get; set; }
 
         [Output]
-        public string[] ModulesInThisBuild { get; set; }
+        public string[] DirectoriesInBuild { get; set; }
 
         public string[] ExcludePaths { get; set; } = new string[0];
 
@@ -102,11 +101,12 @@ namespace Aderant.Build.Tasks {
             analysisContext.ExtensibilityImposition = extensibilityImposition;
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
 
-            Project buildPlan = projectTree.ComputeBuildPlan(context, analysisContext, PipelineService, jobFiles).Result;
+            var buildPlan = projectTree.ComputeBuildPlan(context, analysisContext, PipelineService, jobFiles).Result;
+            if (buildPlan.DirectoriesInBuild != null) {
+                DirectoriesInBuild = buildPlan.DirectoriesInBuild.ToArray();
+            }
 
             var element = buildPlan.CreateXml();
-
-            ModulesInThisBuild = buildPlan.ModuleNames.ToArray();
 
             var settings = new XmlWriterSettings {
                 Encoding = Encoding.UTF8,
@@ -125,7 +125,7 @@ namespace Aderant.Build.Tasks {
 
         private void RebuildFromExistingPlan(string planFile) {
             var planLoader = new ExistingPlanLoader();
-            planLoader.LoadPlan(planFile, PipelineService);
+            DirectoriesInBuild = planLoader.LoadPlan(planFile, PipelineService).ToArray();
         }
 
         private AnalysisContext CreateAnalysisContext() {

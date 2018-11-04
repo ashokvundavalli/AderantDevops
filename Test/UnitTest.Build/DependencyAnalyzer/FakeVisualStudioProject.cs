@@ -34,5 +34,6 @@ namespace UnitTest.Build.DependencyAnalyzer {
         public override Guid ProjectGuid {
             get { return guid; }
         }
+
     }
 }

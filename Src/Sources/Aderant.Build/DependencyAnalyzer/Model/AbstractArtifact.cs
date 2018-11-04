@@ -12,7 +12,7 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
             return resolvedDependencies.Select(d => d.ResolvedReference).ToList();
         }
 
-        public virtual void AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
+        public virtual IResolvedDependency AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
             IResolvedDependency resolvedDependency;
 
             if (unresolvedDependency == null) {
@@ -26,6 +26,8 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
             if (unresolvedDependency != null) {
                 unresolvedDependencies.Remove(unresolvedDependency);
             }
+
+            return resolvedDependency;
         }
 
         public abstract string Id { get; }

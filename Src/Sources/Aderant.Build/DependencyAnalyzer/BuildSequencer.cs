@@ -4,13 +4,14 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
-using Aderant.Build.MSBuild;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -19,6 +20,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal class ProjectSequencer : ISequencer {
         private readonly IFileSystem2 fileSystem;
         private readonly ILogger logger;
+        private bool isDesktopBuild;
         private List<BuildStateFile> stateFiles;
 
         [ImportingConstructor]
@@ -29,9 +31,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public IBuildPipelineService PipelineService { get; set; }
 
-        public Project CreateProject(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph) {
-            bool isPullRequest = context.BuildMetadata.IsPullRequest;
-            bool isDesktopBuild = context.IsDesktopBuild;
+        public BuildPlan CreatePlan(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph) {
+            var isPullRequest = context.BuildMetadata.IsPullRequest;
+            isDesktopBuild = context.IsDesktopBuild;
 
             if (context.StateFiles == null) {
                 FindStateFiles(context);
@@ -45,11 +47,18 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
-            if (PipelineService != null) {
-                foreach (IDependable dependable in projectsInDependencyOrder) {
-                    ConfiguredProject configuredProject = dependable as ConfiguredProject;
+            List<string> directoriesInBuild = new List<string>();
 
-                    if (configuredProject != null) {
+            foreach (IDependable dependable in projectsInDependencyOrder) {
+
+                ConfiguredProject configuredProject = dependable as ConfiguredProject;
+
+                if (configuredProject != null) {
+                    if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
+                        directoriesInBuild.Add(configuredProject.SolutionRoot);
+                    }
+
+                    if (PipelineService != null) {
                         PipelineService.TrackProject(
                             new TrackedProject {
                                 ProjectGuid = configuredProject.ProjectGuid,
@@ -70,21 +79,44 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
 
-            StringBuilder sb = null;
+            PrintBuildTree(groups);
 
-            foreach (var group in groups) {
-                foreach (var item in group) {
-                    sb = DescribeChanges(item, sb);
+            var planGenerator = new BuildPlanGenerator(fileSystem);
+            var project = planGenerator.GenerateProject(groups, files, null);
+
+            return new BuildPlan(project) {
+                DirectoriesInBuild = directoriesInBuild,
+            };
+        }
+
+        private void PrintBuildTree(List<List<IDependable>> groups) {
+            if (logger != null) {
+                var topLevelNodes = new List<TreePrinter.Node>();
+
+                int i = 0;
+                foreach (var group in groups) {
+                    var topLevelNode = new TreePrinter.Node();
+                    topLevelNode.Name = "Group " + i;
+                    topLevelNode.Children = group.Select(
+                        s =>
+                            new TreePrinter.Node {
+                                Name = s.Id,
+                                Children = DescribeChanges(s)
+                            }).ToList();
+                    i++;
+
+                    topLevelNodes.Add(topLevelNode);
+                }
+
+                StringBuilder sb = new StringBuilder();
+                TreePrinter.Print(topLevelNodes, message => sb.Append(message));
+
+                logger.Info(sb.ToString());
+
+                if (isDesktopBuild) {
+                    Thread.Sleep(2000);
                 }
             }
-
-            if (sb != null) {
-                logger.Info(sb.ToString());
-            }
-
-            var pipeline = new BuildPlanGenerator(fileSystem);
-            var project = pipeline.GenerateProject(groups, files, null);
-            return project;
         }
 
         private void EvictNotExistentProjects(BuildOperationContext context) {
@@ -184,8 +216,14 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     var stateFile = SelectStateFile(solutionDirectoryName);
 
-                    foreach (var project in projects
-                        .Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
+                    foreach (var project in projects.Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
+                        // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
+                        IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
+                        if (textTemplateDependencies != null) {
+                            foreach (var dependency in textTemplateDependencies) {
+                                initializeNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
+                            }
+                        }
 
                         if (!changedFilesOnly) {
                             ApplyStateFile(stateFile, solutionDirectoryName, tag, project);
@@ -362,31 +400,30 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private static StringBuilder DescribeChanges(IDependable dependable, StringBuilder sb) {
+        private static List<TreePrinter.Node> DescribeChanges(IDependable dependable) {
             ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
             if (configuredProject != null) {
-                if (sb == null) {
-                    sb = new StringBuilder();
-                    sb.AppendLine("Projects to build:");
-                }
-
                 if (configuredProject.IncludeInBuild || configuredProject.IsDirty) {
-                    sb.AppendLine("* " + configuredProject.FullPath);
 
-                    if (configuredProject.BuildReason != null) {
-                        sb.AppendLine("    " + "Flags: " + configuredProject.BuildReason.Flags);
-                    }
+                    var children = new List<TreePrinter.Node> {
+                        new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, },
+                        new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags, }
+                    };
 
                     if (configuredProject.DirtyFiles != null) {
-                        foreach (string dirtyFile in configuredProject.DirtyFiles) {
-                            sb.AppendLine("    " + dirtyFile);
-                        }
+                        children.Add(
+                            new TreePrinter.Node() {
+                                Name = "Dirty files",
+                                Children = configuredProject.DirtyFiles.Select(s => new TreePrinter.Node { Name = s }).ToList()
+                            });
                     }
+
+                    return children;
                 }
             }
 
-            return sb;
+            return null;
         }
 
         /// <summary>
@@ -429,6 +466,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                 projectsToFind = newSearchList;
             }
         }
+    }
+
+    internal interface IFoo {
     }
 
     [Flags]

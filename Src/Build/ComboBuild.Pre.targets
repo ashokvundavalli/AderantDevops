@@ -116,10 +116,6 @@
       <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>
     </PropertyGroup>
 
-    <ItemGroup>
-      <DependencyManifests Include="$(SolutionRoot)\**\DependencyManifest.xml" />
-    </ItemGroup>
-
     <RetrieveArtifacts
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
@@ -129,8 +125,7 @@
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
-      ModuleName="$(ModuleName)"
-      BuildType="ContinuousIntegration"
+      ModuleName="$(SolutionRoot)"
       DependenciesDirectory="$(DependenciesDirectory)"
       DropPath="$(XamlBuildDropLocation)" />
 

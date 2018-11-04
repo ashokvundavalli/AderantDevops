@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Management.Automation;
 using System.Threading;
 using Aderant.Build.DependencyAnalyzer;
@@ -80,8 +80,8 @@ namespace Aderant.Build.Commands {
                 request.ModuleFactory = productManifest;
             }
 
-            if (!string.IsNullOrEmpty(ModuleName)) {
-                request.AddModule(ModuleName);
+            if (!string.IsNullOrEmpty(ModulesRootPath)) {
+                request.AddModule(ModulesRootPath);
             }
 
             if (!string.IsNullOrEmpty(DependenciesDirectory)) {

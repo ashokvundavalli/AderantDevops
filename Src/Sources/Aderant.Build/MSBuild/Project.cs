@@ -13,8 +13,6 @@ namespace Aderant.Build.MSBuild {
 
         private List<MSBuildProjectElement> elements = new List<MSBuildProjectElement>();
 
-        internal HashSet<string> ModuleNames { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Project" /> class.
         /// </summary>
@@ -76,8 +74,6 @@ namespace Aderant.Build.MSBuild {
         public XElement CreateXml() {
             TargetXmlEmitter visitor = new ParallelBuildVisitor();
             visitor.Visit(this);
-
-            ModuleNames.UnionWith(visitor.ModuleNames);
 
             return visitor.GetXml();
         }

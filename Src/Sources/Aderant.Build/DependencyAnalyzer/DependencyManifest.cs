@@ -135,7 +135,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Loads a dependency manifest from the given module directory.
         /// </summary>
         /// <param name="modulePath">The module path.</param>
-        /// <returns></returns>
         public static DependencyManifest LoadDirectlyFromModule(string modulePath) {
             DependencyManifest dependencyManifest;
             if (TryLoadFromModule(modulePath, out dependencyManifest)) {
@@ -204,8 +203,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             dependencies.Add(requirement);
         }
 
-        public static DependencyManifest Load(XDocument document) {
-            return new DependencyManifest("", document);
-        }
     }
 }

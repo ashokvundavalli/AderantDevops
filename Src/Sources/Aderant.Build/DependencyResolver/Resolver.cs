@@ -36,7 +36,8 @@ namespace Aderant.Build.DependencyResolver {
 
             AddAlwaysRequired(resolverRequest, requirements);
 
-            RemoveRequirementsBeingBuilt(resolverRequest, requirements);
+            //TODO: Restore this behaviour
+            //RemoveRequirementsBeingBuilt(resolverRequest, requirements);
 
             List<IDependencyRequirement> distinctRequirements = requirements.Distinct().ToList();
 
@@ -61,12 +62,6 @@ namespace Aderant.Build.DependencyResolver {
         private void AddAlwaysRequired(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
             if (resolverRequest.Modules.All(m => string.Equals(m.Name, "Build.Infrastructure"))) {
                 return;
-            }
-
-            using (var process = System.Diagnostics.Process.GetCurrentProcess()) {
-                if (string.Equals(process.ProcessName, "testhost.x86")) {
-                    return;
-                }
             }
 
             ExpertModule module = null;
@@ -104,7 +99,7 @@ namespace Aderant.Build.DependencyResolver {
                     }
 
                     IEnumerable<IDependencyRequirement> dependencyRequirements = resolver.GetDependencyRequirements(resolverRequest, module);
-
+                    
                     if (dependencyRequirements != null) {
                         loopRequirements.AddRange(dependencyRequirements.ToList());
                     }

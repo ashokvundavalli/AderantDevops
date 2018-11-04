@@ -1,7 +1,9 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
+
     public sealed class PrintBanner : Task {
 
         private static string header = "╔═════════════════════════════════════════════════════════════════════╗";

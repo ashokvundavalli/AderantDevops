@@ -113,6 +113,12 @@
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
+    <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
+    <Compile Include="ProjectSystem\BuildPlan.cs" />
+    <Compile Include="ProjectSystem\DuplicateGuidException.cs" />
+    <Compile Include="ProjectSystem\References\ResolvedReference.cs" />
     <Compile Include="ProjectSystem\TrackedProject.cs" />
     <Compile Include="ProjectSystem\ExistingPlanLoader.cs" />
     <Compile Include="Utilities\TreePrinter.cs" />
@@ -156,7 +162,6 @@
     <Compile Include="ProjectSystem\References\BuildDependencyProjectReferencesService.cs" />
     <Compile Include="ProjectSystem\References\IBuildDependencyProjectReference.cs" />
     <Compile Include="ProjectSystem\References\IBuildDependencyProjectReferencesService.cs" />
-    <Compile Include="ProjectSystem\References\ResolvedReference.cs" />
     <Compile Include="ProjectSystem\References\UnresolvedAssemblyReferenceMoniker.cs" />
     <Compile Include="ProjectSystem\References\UnresolvedBuildDependencyProjectReference.cs" />
     <Compile Include="ProjectSystem\References\UnresolvedP2PReferenceMoniker.cs" />
@@ -219,7 +224,6 @@
     <Compile Include="MSBuild\PropertyList.cs" />
     <Compile Include="ProjectSystem\SolutionParser\ISolutionFileParser.cs" />
     <Compile Include="DependencyAnalyzer\Model\DirectoryNode.cs" />
-    <Compile Include="DependencyAnalyzer\Model\ModuleRef.cs" />
     <Compile Include="ProjectSystem\SolutionParser\ParseResult.cs" />
     <Compile Include="ProjectSystem\SolutionParser\SolutionFileParser.cs" />
     <Compile Include="Services\IContextualServiceProvider.cs" />
@@ -243,7 +247,6 @@
     <Compile Include="Commands\ExpertModulesToExcludeFromPackagingCommand.cs" />
     <Compile Include="BuildNotFoundException.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModuleExtensions.cs" />
-    <Compile Include="DependencyAnalyzer\Model\IDependencyRef.cs" />
     <Compile Include="DependencyResolver\FolderBasedRequirement.cs" />
     <Compile Include="DependencyResolver\FolderDependencySystem.cs" />
     <Compile Include="DependencyResolver\DependencyFetchContext.cs" />
@@ -368,13 +371,10 @@
     <Compile Include="DependencyAnalyzer\DependencyManifest.cs" />
     <Compile Include="DuplicateModuleInManifestException.cs" />
     <Compile Include="DependencyAnalyzer\ThirdPartyModule.cs" />
-    <Compile Include="Commands\BranchModule.cs" />
     <Compile Include="Commands\CopyBinToEnvironment.cs" />
     <Compile Include="Process\DefinitionParametersConfigurator.cs" />
-    <Compile Include="Commands\ExpertManifestForBranchCommand.cs" />
     <Compile Include="Commands\GetExpertBranches.cs" />
     <Compile Include="Commands\GetDependencies.cs" />
-    <Compile Include="Commands\GetDependenciesFrom.cs" />
     <Compile Include="Commands\GetDependencyGraph.cs" />
     <Compile Include="Commands\GetBuildDependencyTreeCommand.cs" />
     <Compile Include="Commands\GetDependsOn.cs" />
@@ -383,16 +383,12 @@
     <Compile Include="Commands\GetExpertModules.cs" />
     <Compile Include="Commands\NewExpertBuildDefinition.cs" />
     <Compile Include="Commands\SortModulesByBuildOrder.cs" />
-    <Compile Include="Commands\UpdateBuildAllProject.cs" />
-    <Compile Include="DependencyAnalyzer\BuildProjectSequencer.cs" />
     <Compile Include="DependencyAnalyzer\CircularDependencyException.cs" />
     <Compile Include="DependencyAnalyzer\DependencyBuilder.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModule.cs" />
     <Compile Include="DependencyAnalyzer\ModuleDependency.cs" />
     <Compile Include="DependencyAnalyzer\ModuleType.cs" />
-    <Compile Include="DependencyAnalyzer\NamingExtensions.cs" />
     <Compile Include="DependencyAnalyzer\ParameterHelper.cs" />
-    <Compile Include="DependencyAnalyzer\ProductManifestUpdater.cs" />
     <Compile Include="DependencyAnalyzer\ShellInvocationHelper.cs" />
     <Compile Include="FontInstaller.cs" />
     <Compile Include="Logging\ILogger.cs" />

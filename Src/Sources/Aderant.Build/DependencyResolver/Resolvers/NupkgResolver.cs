@@ -70,9 +70,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void PackageRestore(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             using (var manager = new PaketPackageManager(directory, fileSystem, logger)) {
                 manager.Add(new DependencyFetchContext(), requirements);
+
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);
                 }
+
                 manager.Restore(resolverRequest.Force);
 
                 foreach (var requirement in requirements) {
@@ -99,11 +101,13 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
+          
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
             if (requirement.Group == "Development") {
                 return;
             }
+
             string packageDir = Path.Combine(directory, "packages", requirement.Group == Aderant.Build.Constants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
             if (!fileSystem.DirectoryExists(packageDir)) {
                 throw new DirectoryNotFoundException($"{packageDir} does not exist.");
@@ -113,17 +117,21 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    
                     foreach (string zipPath in fileSystem.GetFiles(dir, "Web.*.zip", true).Where(f => !f.EndsWith("dependencies.zip"))) {
                         logger.Info("Extracting web package archive {0}", zipPath);
-                        var fs = new WebArchiveFileSystem(fileSystem.GetFullPath(dir));
-                        fs.ExtractArchive(fileSystem.GetFullPath(zipPath), fileSystem.GetFullPath(dir));
-                        logger.Info("Replicating {0} to {1}", dir, target);
+                        var fs = new WebArchiveFileSystem(dir);
+                        fs.ExtractArchive(zipPath, dir);
                     }
+
+                    // Sigh: Janky hack with the OR clause
                     if (requirement.Name.IsOneOf(ModuleType.ThirdParty, ModuleType.Web)) {
+                        logger.Info("Replicating {0} to {1}", dir, target);
+
                         // We need to do some "drafting" on the target path for Web module dependencies - a different destination path is
                         // used depending on the content type.
                         var selector = new WebContentDestinationRule(requirement, target);
-                        FileSystem.DirectoryCopyAsync(fileSystem.GetFullPath(dir), target, selector.GetDestinationForFile, true, false).Wait();
+                        FileSystem.DirectoryCopyAsync(dir, target, selector.GetDestinationForFile, true, false).Wait();
                         return;
                     }
 

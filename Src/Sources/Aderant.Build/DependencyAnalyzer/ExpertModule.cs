@@ -4,9 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
@@ -15,7 +13,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Represents a module in the expert code base
     /// </summary>
     [DebuggerDisplay("Module: {Name} ({DebuggerDisplayNames})")]
-    public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule>, IDependencyRef {
+    public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule> {
 
         private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
             { "Libraries", ModuleType.Library },
@@ -29,12 +27,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         };
 
         private readonly IList<XAttribute> customAttributes;
-        public readonly string[] Names;
-        private HashSet<IDependencyRef> dependsOn;
-        public DependencyManifest Manifest;
 
         private string name;
-        public string SolutionRoot;
         private ModuleType? type;
 
         /// <summary>
@@ -51,15 +45,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             Name = name;
         }
 
-        public ExpertModule(string solutionRoot, string[] names, DependencyManifest manifest) {
-            this.SolutionRoot = solutionRoot;
-            this.Names = names;
-            this.Manifest = manifest;
-            if (names != null) {
-                this.Name = !string.IsNullOrWhiteSpace(names[0]) ? names[0] : string.Empty;
-            }
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ExpertModule" /> class from a Product Manifest element.
         /// </summary>
@@ -69,30 +54,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
 
-        internal string DebuggerDisplayNames {
-            get {
-                if (Names != null) {
-                    return string.Join(", ", Names);
-                }
-
-                return string.Empty;
-            }
-        }
-
-        internal IReadOnlyCollection<IDependencyRef> DependsOn {
-            get {
-                if (dependsOn == null) {
-                    if (Manifest != null) {
-                        dependsOn = new HashSet<IDependencyRef>(Manifest.ReferencedModules.ToList<IDependencyRef>());
-                    } else {
-                        dependsOn = new HashSet<IDependencyRef>();
-                    }
-                }
-
-                return dependsOn;
-            }
-            set { dependsOn = new HashSet<IDependencyRef>(value); }
-        }
+        /// <summary>
+        /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays
+        /// in package)
+        /// </summary>
+        public bool ReplicateToDependencies { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the name of the module.
@@ -161,7 +127,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public bool Extract { get; set; }
         public string Target { get; set; }
-        public PackageType PackageRootRelativeDirectory { get; set; }
 
         internal VersionRequirement VersionRequirement {
             get {
@@ -174,7 +139,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public RepositoryType RepositoryType { get; set; }
+        public string FullPath { get; set; }
 
         public int CompareTo(ExpertModule other) {
             if (other == null) {
@@ -182,19 +147,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
-        }
-
-        string IDependencyRef.Name {
-            get { return Name; }
-        }
-
-        IReadOnlyCollection<IDependencyRef> IDependencyRef.DependsOn {
-            get { return null; }
-        }
-
-        bool IEquatable<IDependencyRef>.Equals(IDependencyRef other) {
-            ExpertModule expertModule = other as ExpertModule;
-            return expertModule != null && expertModule.Equals(this);
         }
 
         /// <summary>
@@ -286,10 +238,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             return string.Empty.GetHashCode();
         }
 
-        private string PadNumbers(string input) {
-            return Regex.Replace(input, "[0-9]+", match => match.Value.PadLeft(10, '0'));
-        }
-
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
@@ -298,31 +246,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </returns>
         public override string ToString() {
             return Name;
-        }
-
-        public static ExpertModule Create(string solutionRoot, string[] names, DependencyManifest manifest) {
-            return new ExpertModule(solutionRoot, names, manifest);
-        }
-
-        internal bool Equals(IDependencyRef other) {
-            ExpertModule module = other as ExpertModule;
-            return Equals(module);
-        }
-
-        public bool Match(string depName) {
-            foreach (var name in Names) {
-                if (string.Equals(name, depName, StringComparison.OrdinalIgnoreCase)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-    }
-
-    public abstract class GraphVisitorBase {
-        public virtual void Visit(ExpertModule expertModule, StreamWriter outputFile) {
-
         }
     }
 

@@ -34,7 +34,8 @@ namespace Aderant.Build.Packaging {
             return null;
         }
 
-        public void AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
+        public IResolvedDependency AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable) {
+            return null;
         }
 
         /// <summary>

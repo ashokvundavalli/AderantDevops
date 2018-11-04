@@ -58,6 +58,7 @@
       CleanStagingDirectory;
       GrovelForExtensibilityFiles;
       CreatePlan;
+      GetAllDependencies;
       ExecutePlan;
       RunTests;
       <!--RunIntegrationTests;-->
@@ -96,8 +97,10 @@
       <ExcludePaths Include="Libraries.Entities.GeneralLedger\" />
       <ExcludePaths Include="Tests.Load\" />
       <ExcludePaths Include="MomentumFileOpening\" />
-      <ExcludePaths Include="Performance.ExpertSuite\" />
-      <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
+      <ExcludePaths Include="Performance.ExpertSuite\" /> 
+      <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" /> <!-- Has stuff we can't build - missing third party libs-->
+      <ExcludePaths Include="Workflow.Integration.Samples\" /> <!--Has "packages" checked in-->
+      
     </ItemGroup>
 
     <!-- 
@@ -130,10 +133,10 @@
       CommonProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Common.proj"
       ExcludePaths="@(ExcludePaths)"
       ConfigurationToBuild="@(ConfigurationToBuild)">
-      <Output TaskParameter="ModulesInThisBuild" ItemName="ModulesInBuild"/>
+      <Output TaskParameter="DirectoriesInBuild" ItemName="DirectoriesInBuild"/>
     </GenerateBuildPlan>
 
-    <Message Text="ModulesInBuild: @(ModulesInBuild)" />
+    <Message Text="ModulesInBuild: %(DirectoriesInBuild.Identity)" />
 
     <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
 
@@ -175,6 +178,31 @@
   
 
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
+  </Target>
+
+
+  <Target Name="GetAllDependencies"
+          Condition="'$(UseSharedDependencyDirectory)' == 'true'">
+
+    <Message Text="Getting dependencies for build." />
+
+    <GetDependencies
+      ProductManifest="$(ProductManifestPath)"
+      ModulesRootPath="$(SolutionRoot)"
+      DependenciesDirectory="$(SharedDependencyDirectory)"
+      DropPath="$(XamlBuildDropLocation)"
+      ModulesInBuild="@(DirectoriesInBuild)" />
+
+    <MakeSymlink
+      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
+      Target="$(SharedDependencyDirectory)"
+      Type="D" />
+
+    <MakeSymlink
+      Link="%(DirectoriesInBuild.FullPath)\packages"
+      Target="$(SharedDependencyDirectory)\packages"
+      Type="D" />
+
   </Target>
 
 

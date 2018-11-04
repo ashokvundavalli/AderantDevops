@@ -53,7 +53,7 @@ namespace Aderant.Build.DependencyResolver {
 
         public static IDependencyRequirement Create(ExpertModule reference) {
             if (reference.GetAction == GetAction.NuGet) {
-                return new DependencyRequirement(reference.Name, Constants.MainDependencyGroup, reference.VersionRequirement);
+                return new DependencyRequirement(reference.Name, Constants.MainDependencyGroup, reference.VersionRequirement) { ReplicateToDependencies = reference.ReplicateToDependencies };
             }
             return new FolderBasedRequirement(reference);
         }
@@ -65,20 +65,30 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public bool Equals(DependencyRequirement other) {
-            if (ReferenceEquals(null, other))
+            if (ReferenceEquals(null, other)) {
                 return false;
-            if (ReferenceEquals(this, other))
+            }
+
+            if (ReferenceEquals(this, other)) {
                 return true;
+            }
+
             return Source == other.Source && string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase) && Equals(VersionRequirement, other.VersionRequirement);
         }
 
         public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj))
+            if (ReferenceEquals(null, obj)) {
                 return false;
-            if (ReferenceEquals(this, obj))
+            }
+
+            if (ReferenceEquals(this, obj)) {
                 return true;
-            if (obj.GetType() != this.GetType())
+            }
+
+            if (obj.GetType() != this.GetType()) {
                 return false;
+            }
+
             return Equals((DependencyRequirement)obj);
         }
 
@@ -100,7 +110,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this instance can override (blat) any contraint expression in your dependency file.
+        /// Gets or sets a value indicating whether this instance can override (blat) any constraint expression in your dependency file.
         /// </summary>
         public bool ReplaceVersionConstraint { get; set; }
 

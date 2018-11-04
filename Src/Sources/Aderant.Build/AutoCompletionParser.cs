@@ -100,8 +100,7 @@ namespace Aderant.Build {
         internal string[] GetModuleMatches(IDependencyBuilder analyzer, string currentModulePath = null) {
             List<string> searchStringSplitByCase = SplitModuleNameByCase(lastWord);
             List<string> matches = new List<string>();
-            Debug.WriteLine(string.Format("Module name split by case = {0}", searchStringSplitByCase.StringConcat(" ")));
-
+            
             //if the search string is split into more than one "word" then we want to also split the module names
             //otherwise we match the string to the whole word.
             if (searchStringSplitByCase.Count > 1) {

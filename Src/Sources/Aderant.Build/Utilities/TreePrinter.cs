@@ -19,12 +19,14 @@ namespace Aderant.Build.Utilities {
             printAction(node.Name);
             printAction(Environment.NewLine);
 
-            var numberOfChildren = node.Children.Count;
+            if (node.Children != null) {
+                var numberOfChildren = node.Children.Count;
 
-            for (var i = 0; i < numberOfChildren; i++) {
-                var child = node.Children[i];
-                var isLast = (i == (numberOfChildren - 1));
-                PrintChildNode(printAction, child, indent, isLast);
+                for (var i = 0; i < numberOfChildren; i++) {
+                    var child = node.Children[i];
+                    var isLast = (i == (numberOfChildren - 1));
+                    PrintChildNode(printAction, child, indent, isLast);
+                }
             }
         }
 

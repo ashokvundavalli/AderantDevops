@@ -16,8 +16,7 @@ namespace Aderant.Build.MSBuild {
 
         private Stack<XElement> elementStack = new Stack<XElement>();
         private List<string> visited = new List<string>();
-        internal HashSet<string> ModuleNames { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="TargetXmlEmitter" /> class.
         /// </summary>
@@ -66,14 +65,6 @@ namespace Aderant.Build.MSBuild {
                     if (item.TryGetValue(key, out value)) {
                         if (!string.IsNullOrEmpty(value)) {
                             itemElement.Add(new XElement(Xmlns + key, value));
-
-                            if (key.Equals("Properties", StringComparison.OrdinalIgnoreCase)) {
-                                string moduleName = Regex.Match(value, "(?<=ModuleName=)[^;]*").Value;
-
-                                if (!string.IsNullOrWhiteSpace(moduleName)) {
-                                    ModuleNames.Add(moduleName);
-                                }
-                            }
                         }
                     }
                 }

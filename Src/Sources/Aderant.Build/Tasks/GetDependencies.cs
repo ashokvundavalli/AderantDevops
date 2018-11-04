@@ -10,9 +10,8 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks {
     public class GetDependencies : Task, ICancelableTask {
-        private CancellationTokenSource cancellationToken = new CancellationTokenSource();
-
-        [Required]
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        
         public string ModulesRootPath { get; set; }
 
         public string DropPath { get; set; }
@@ -50,21 +49,18 @@ namespace Aderant.Build.Tasks {
         public override bool Execute() {
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
-            if (ProductManifest != null) {
-                ProductManifest = Path.GetFullPath(ProductManifest);
-            }
-
-            LogParameters();
-
             var logger = new BuildTaskLogger(this);
 
             ResolverRequest request = new ResolverRequest(logger, ModulesRootPath);
 
             if (ProductManifest != null) {
+                ProductManifest = Path.GetFullPath(ProductManifest);
                 ExpertManifest productManifest = ExpertManifest.Load(ProductManifest);
                 productManifest.ModulesDirectory = ModulesRootPath;
                 request.ModuleFactory = productManifest;
             }
+
+            LogParameters();
 
             request.SetDependenciesDirectory(DependenciesDirectory);
             request.DirectoryContext = BuildType;
@@ -75,7 +71,7 @@ namespace Aderant.Build.Tasks {
 
             if (ModulesInBuild != null) {
                 foreach (ITaskItem module in ModulesInBuild) {
-                    request.AddModule(module.ItemSpec, true);
+                    request.AddModule(module.ItemSpec);
                 }
             }
 
@@ -83,7 +79,7 @@ namespace Aderant.Build.Tasks {
             moduleResolver.AddDependencySource(DropPath, ExpertModuleResolver.DropLocation);
 
             Resolver resolver = new Resolver(logger, moduleResolver, new NupkgResolver());
-            resolver.ResolveDependencies(request, cancellationToken.Token);
+            resolver.ResolveDependencies(request, cancellationTokenSource.Token);
 
             return !Log.HasLoggedErrors;
         }
@@ -92,9 +88,9 @@ namespace Aderant.Build.Tasks {
         /// Attempts to cancel this instance.
         /// </summary>
         public void Cancel() {
-            if (cancellationToken != null) {
+            if (cancellationTokenSource != null) {
                 // Signal the cancellation token that we want to abort the async task
-                cancellationToken.Cancel();
+                cancellationTokenSource.Cancel();
             }
         }
 

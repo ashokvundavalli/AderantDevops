@@ -5,6 +5,6 @@ namespace Aderant.Build.Model {
     public interface IArtifact : IDependable {
         IReadOnlyCollection<IDependable> GetDependencies();
 
-        void AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable);
+        IResolvedDependency AddResolvedDependency(IUnresolvedDependency unresolvedDependency, IDependable dependable);
     }
 }

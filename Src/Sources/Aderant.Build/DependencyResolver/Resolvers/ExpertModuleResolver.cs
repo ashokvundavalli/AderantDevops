@@ -61,14 +61,14 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 DependencyManifest manifest;
                 using (stream) {
                     manifest = new DependencyManifest(module.Name, stream);
-
-                    bool? dependencyReplicationEnabled = manifest.DependencyReplicationEnabled;
-                    if (dependencyReplicationEnabled.HasValue) {
-                        ReplicationExplicitlyDisabled = !dependencyReplicationEnabled.Value;
-                    }
                 }
 
                 manifest.GlobalAttributesProvider = ModuleFactory as IGlobalAttributesProvider;
+
+                bool? dependencyReplicationEnabled = manifest.DependencyReplicationEnabled;
+                if (dependencyReplicationEnabled.HasValue) {
+                    ReplicationExplicitlyDisabled = !dependencyReplicationEnabled.Value;
+                }
 
                 foreach (ExpertModule reference in manifest.ReferencedModules) {
                     yield return DependencyRequirement.Create(reference);
