@@ -123,8 +123,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                         var fs = new WebArchiveFileSystem(dir);
                         fs.ExtractArchive(zipPath, dir);
                     }
-
-                    // Sigh: Janky hack with the OR clause
+                    
                     if (requirement.Name.IsOneOf(ModuleType.ThirdParty, ModuleType.Web)) {
                         logger.Info("Replicating {0} to {1}", dir, target);
 
