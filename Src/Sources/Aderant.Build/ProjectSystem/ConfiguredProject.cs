@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.Model;
-using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 using Aderant.Build.Utilities;
@@ -31,6 +30,7 @@ namespace Aderant.Build.ProjectSystem {
         private Lazy<Project> project;
         private Memoizer<ConfiguredProject, Guid> projectGuid;
         private Lazy<ProjectRootElement> projectXml;
+        private List<IResolvedDependency> textTemplateDependencies;
 
         [ImportingConstructor]
         public ConfiguredProject(IProjectTree tree) {
@@ -95,7 +95,7 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 }
 
-                if (OutputAssembly.Contains("UIAutomation")) {
+                if (OutputAssembly != null && OutputAssembly.Contains("UIAutomation")) {
                     return true;
                 }
 
@@ -149,10 +149,6 @@ namespace Aderant.Build.ProjectSystem {
 
         public override string Id {
             get { return GetAssemblyName(); }
-        }
-
-        internal ILogger Logger {
-            get { return this.Logger; }
         }
 
         public string GetAssemblyName() {
@@ -288,51 +284,56 @@ namespace Aderant.Build.ProjectSystem {
         /// Collects the build dependencies required to build the artifacts in this result.
         /// </summary>
         public Task CollectBuildDependencies(BuildDependenciesCollector collector) {
+            try {
+                // Allows unit testing
+                if (ServicesImport != null) {
+                    // Force MEF import
+                    var services = Services;
 
-            // Allows unit testing
-            if (ServicesImport != null) {
-                // Force MEF import
-                var services = Services;
-
-                // OK boots, start walking...
-                var t1 = Task.Run(
-                    () => {
-                        if (Services.TextTemplateReferences != null) {
-                            IReadOnlyCollection<IUnresolvedReference> references = services.TextTemplateReferences.GetUnresolvedReferences();
-                            if (references != null) {
-                                collector.AddUnresolvedReferences(references);
+                    // OK boots, start walking...
+                    var t1 = Task.Run(
+                        () => {
+                            if (Services.TextTemplateReferences != null) {
+                                IReadOnlyCollection<IUnresolvedReference> references = services.TextTemplateReferences.GetUnresolvedReferences();
+                                AddUnresolvedReferences(collector, references);
                             }
-                        }
-                    });
+                        });
 
-                var t2 = Task.Run(
-                    () => {
-                        if (Services.ProjectReferences != null) {
-                            IReadOnlyCollection<IUnresolvedReference> references = services.ProjectReferences.GetUnresolvedReferences();
-                            if (references != null) {
-                                collector.AddUnresolvedReferences(references);
+                    var t2 = Task.Run(
+                        () => {
+                            if (Services.ProjectReferences != null) {
+                                IReadOnlyCollection<IUnresolvedReference> references = services.ProjectReferences.GetUnresolvedReferences();
+                                AddUnresolvedReferences(collector, references);
                             }
-                        }
-                    });
+                        });
 
-                var t3 = Task.Run(
-                    () => {
-                        if (Services.AssemblyReferences != null) {
-                            IReadOnlyCollection<IUnresolvedReference> references = services.AssemblyReferences.GetUnresolvedReferences();
-                            if (references != null) {
-                                collector.AddUnresolvedReferences(references);
+                    var t3 = Task.Run(
+                        () => {
+                            if (Services.AssemblyReferences != null) {
+                                IReadOnlyCollection<IUnresolvedReference> references = services.AssemblyReferences.GetUnresolvedReferences();
+                                AddUnresolvedReferences(collector, references);
                             }
-                        }
-                    });
+                        });
 
-                return Task.WhenAll(t1, t2, t3);
+                    return Task.WhenAll(t1, t2, t3);
+                }
+            } finally {
+                BuildDependencyProjectReferencesService.ClearProjectReferenceGuidsInError();
             }
-
-            BuildDependencyProjectReferencesService.ClearProjectReferenceGuidsInError();
 
             return Task.CompletedTask;
         }
 
+        private static void AddUnresolvedReferences(BuildDependenciesCollector collector, IReadOnlyCollection<IUnresolvedReference> references) {
+            if (references != null && references.Count > 0) {
+                collector.AddUnresolvedReferences(references);
+            }
+        }
+
+        /// <summary>
+        /// Analyzes the build dependencies.
+        /// </summary>
+        /// <param name="collector">The collector.</param>
         public void AnalyzeBuildDependencies(BuildDependenciesCollector collector) {
             // Force MEF import
             var services = Services;
@@ -342,20 +343,41 @@ namespace Aderant.Build.ProjectSystem {
                 if (results != null) {
                     foreach (var reference in results) {
                         AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
+                        collector.AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
                     }
                 }
             }
-
+            
             if (services.AssemblyReferences != null) {
-                var results = services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences);
+                AddResolvedAssemblyDependency(collector, services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences));
+            }
 
-                // Because assembly references can be replaced by a dependency on another project
-                // we need to check if this has happened and unpack the result
-                if (results != null) {
-                    foreach (var reference in results) {
-                        AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
-                    }
+            if (services.TextTemplateReferences != null) {
+                AddResolvedAssemblyDependency(collector, services.TextTemplateReferences.GetResolvedReferences(collector.UnresolvedReferences));
+            }
+        }
+
+        private void AddResolvedAssemblyDependency(BuildDependenciesCollector collector, IReadOnlyCollection<ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference>> results) {
+            if (results != null) {
+                foreach (var resolvedDependency in results) {
+                    AddResolvedAssemblyDependency(collector, resolvedDependency);
                 }
+            }
+        }
+
+        private void AddResolvedAssemblyDependency(BuildDependenciesCollector collector, ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference> reference) {
+            IResolvedDependency resolvedDependency = AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
+            AddTextTemplateDependency(reference, resolvedDependency);
+            collector.AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
+        }
+
+        private void AddTextTemplateDependency(ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference> reference, IResolvedDependency resolvedDependency) {
+            if (reference.ExistingUnresolvedItem.IsForTextTemplate) {
+                if (textTemplateDependencies == null) {
+                    textTemplateDependencies = new List<IResolvedDependency>();
+                }
+
+                textTemplateDependencies.Add(resolvedDependency);
             }
         }
 
@@ -419,6 +441,10 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             throw new NotSupportedException("Unable to determine output extension from type:" + OutputType);
+        }
+
+        public IReadOnlyCollection<IResolvedDependency> GetTextTemplateDependencies() {
+            return textTemplateDependencies;
         }
     }
 

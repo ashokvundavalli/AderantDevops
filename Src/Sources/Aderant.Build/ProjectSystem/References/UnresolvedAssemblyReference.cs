@@ -9,11 +9,15 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         public string GetHintPath() {
-            return moniker.AssemblyPath;
+            return Moniker.AssemblyPath;
+        }
+
+        public bool IsForTextTemplate {
+            get { return Moniker.IsFromTextTemplate; }
         }
 
         public string GetAssemblyName() {
-            return moniker.AssemblyName.Name;
+            return Moniker.AssemblyName.Name;
         }
 
         public override string Id {

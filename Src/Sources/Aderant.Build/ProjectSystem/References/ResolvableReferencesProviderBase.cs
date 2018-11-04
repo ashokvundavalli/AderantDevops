@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using Aderant.Build.Model;
 using Microsoft.Build.Evaluation;
 
@@ -10,7 +11,6 @@ namespace Aderant.Build.ProjectSystem.References {
         where TUnresolvedReference : class, IUnresolvedReference, TResolvedReference where TResolvedReference : class, IReference {
 
         private readonly string unresolvedReferenceType;
-        private List<TUnresolvedReference> unresolvedReferences;
 
         protected ResolvableReferencesProviderBase(string unresolvedReferenceType) {
             this.unresolvedReferenceType = unresolvedReferenceType;
@@ -21,6 +21,8 @@ namespace Aderant.Build.ProjectSystem.References {
         /// </summary>
         [Import]
         protected internal ConfiguredProject ConfiguredProject { get; private set; }
+        
+        public List<TUnresolvedReference> UnresolvedReferences { get; set; }
 
         public virtual IReadOnlyCollection<TUnresolvedReference> GetUnresolvedReferences() {
             ICollection<ProjectItem> projectItems = ConfiguredProject.GetItems(unresolvedReferenceType);
@@ -32,24 +34,32 @@ namespace Aderant.Build.ProjectSystem.References {
                 references.Add(unresolvedReference);
             }
 
-            return unresolvedReferences = references;
+            return UnresolvedReferences = references;
         }
 
         public IReadOnlyCollection<ResolvedDependency<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
+            if (UnresolvedReferences == null) {
+                throw new InvalidOperationException("GetUnresolvedReferences not called");
+            }
+
             var nowResolvedReferences = new List<ResolvedDependency<TUnresolvedReference, TResolvedReference>>();
 
-            foreach (var unresolved in unresolvedReferences) {
+            Resolve(UnresolvedReferences, references, nowResolvedReferences);
+
+            foreach (var nowResolvedReference in nowResolvedReferences) {
+                UnresolvedReferences.Remove(nowResolvedReference.ExistingUnresolvedItem);
+            }
+
+            return nowResolvedReferences;
+        }
+
+        private void Resolve(IEnumerable<TUnresolvedReference> list, IReadOnlyCollection<IUnresolvedReference> references, List<ResolvedDependency<TUnresolvedReference, TResolvedReference>> nowResolvedReferences) {
+            foreach (var unresolved in list) {
                 TResolvedReference resolvedReference = CreateResolvedReference(references, unresolved);
                 if (resolvedReference != null) {
                     nowResolvedReferences.Add(new ResolvedDependency<TUnresolvedReference, TResolvedReference>(ConfiguredProject, resolvedReference, unresolved));
                 }
             }
-
-            foreach (var nowResolvedReference in nowResolvedReferences) {
-                unresolvedReferences.Remove(nowResolvedReference.ExistingUnresolvedItem);
-            }
-
-            return nowResolvedReferences;
         }
 
         protected abstract TResolvedReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, TUnresolvedReference unresolved);

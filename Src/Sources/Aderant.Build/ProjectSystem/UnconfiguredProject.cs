@@ -33,7 +33,7 @@ namespace Aderant.Build.ProjectSystem {
                 return isTemplateProject;
             }
 
-            return projectElement.Value == null;
+            return projectElement != null && projectElement.Value == null;
         }
 
         public void Initialize(XmlReader reader, string projectLocation) {

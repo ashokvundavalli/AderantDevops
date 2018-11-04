@@ -12,19 +12,19 @@ namespace Aderant.Build.ProjectSystem.References {
         where TUnresolvedReference : class, IUnresolvedReference, TResolvedReference
         where TResolvedReference : class, IReference {
 
-        protected readonly TMoniker moniker;
-
         private ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> service;
 
         protected UnresolvedReferenceBase(ResolvableReferencesProviderBase<TUnresolvedReference, TResolvedReference> service, TMoniker moniker) {
             this.service = service;
-            this.moniker = moniker;
+            this.Moniker = moniker;
         }
        
         /// <summary>
         /// Gets the unique moniker that identifies this dependency within the build.
         /// </summary>
         public abstract string Id { get; }
+
+        protected TMoniker Moniker { get; private set; }
     }
 
     public interface IUnresolvedDependency {

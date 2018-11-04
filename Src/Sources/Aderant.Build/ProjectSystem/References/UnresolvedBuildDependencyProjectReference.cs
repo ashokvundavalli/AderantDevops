@@ -11,8 +11,8 @@ namespace Aderant.Build.ProjectSystem.References {
 
         public Guid ProjectGuid {
             get {
-                if (moniker != null) {
-                    return moniker.ProjectGuid;
+                if (Moniker != null) {
+                    return Moniker.ProjectGuid;
                 }
 
                 return Guid.Empty;
@@ -20,7 +20,7 @@ namespace Aderant.Build.ProjectSystem.References {
         }
 
         public string ProjectPath {
-            get { return moniker.ProjectPath; }
+            get { return Moniker.ProjectPath; }
         }
 
         public override string Id {

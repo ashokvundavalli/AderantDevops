@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.DependencyAnalyzer.TextTemplates;
 using Microsoft.Build.Evaluation;
 
@@ -42,7 +42,7 @@ namespace Aderant.Build.ProjectSystem.References {
                 }
             }
 
-            return unresolvedReferences;
+            return UnresolvedReferences = unresolvedReferences;
         }
 
         private void AnalyzeTemplate(string filePath, ConfiguredProject project, List<IUnresolvedAssemblyReference> unresolvedReferences, List<string> seenTemplates) {
@@ -86,13 +86,17 @@ namespace Aderant.Build.ProjectSystem.References {
             foreach (var assemblyReference in result.AssemblyReferences) {
                 UnresolvedAssemblyReferenceMoniker moniker;
 
+                string path = null;
+                string name = assemblyReference;
                 if (assemblyReference.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) {
-                    moniker = new UnresolvedAssemblyReferenceMoniker(null, assemblyReference);
-                } else {
-                    moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(assemblyReference), null);
+                    path = assemblyReference;
+                    name = assemblyReference.Substring(0, assemblyReference.Length - 4);
                 }
 
-                unresolvedReferences.Add(CreateUnresolvedReference(moniker));
+                moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(name), path) { IsFromTextTemplate = true };
+
+                var unresolvedAssemblyReference = CreateUnresolvedReference(moniker);
+                unresolvedReferences.Add(unresolvedAssemblyReference);               
             }
         }
     }

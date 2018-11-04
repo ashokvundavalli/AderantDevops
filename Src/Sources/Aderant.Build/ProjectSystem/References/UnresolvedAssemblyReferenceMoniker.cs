@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
@@ -13,6 +12,8 @@ namespace Aderant.Build.ProjectSystem.References {
 
         internal string AssemblyPath { get; private set; }
 
+        public bool IsFromTextTemplate { get; set; }
+
         public override string ToString() {
             if (!string.IsNullOrEmpty(AssemblyPath)) {
                 return AssemblyPath;
@@ -20,7 +21,7 @@ namespace Aderant.Build.ProjectSystem.References {
 
             return AssemblyName.FullName;
         }
-     
+
         public static UnresolvedAssemblyReferenceMoniker Create(ProjectItem unresolved) {
             string evaluatedInclude = unresolved.EvaluatedInclude;
 

@@ -36,6 +36,6 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector);
 
-        Task<Project> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles);
+        Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles);
     }
 }

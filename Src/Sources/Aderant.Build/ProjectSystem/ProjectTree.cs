@@ -6,14 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Xml;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
-using Aderant.Build.MSBuild;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
@@ -117,8 +115,6 @@ namespace Aderant.Build.ProjectSystem {
         public async Task CollectBuildDependencies(BuildDependenciesCollector collector) {
             // Null checked to allow unit testing where projects are inserted directly
             if (LoadedUnconfiguredProjects != null) {
-
-                ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
                 ErrorUtilities.IsNotNull(collector.ProjectConfiguration, nameof(collector.ProjectConfiguration));
 
                 foreach (var unconfiguredProject in LoadedUnconfiguredProjects) {
@@ -172,7 +168,7 @@ namespace Aderant.Build.ProjectSystem {
             return new DependencyGraph(graph);
         }
 
-        public async Task<Project> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
+        public async Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
             List<string> includePaths = new List<string> { context.BuildRoot };
             if (context.Include != null) {
                 includePaths.AddRange(context.Include);
@@ -198,8 +194,8 @@ namespace Aderant.Build.ProjectSystem {
                 var sequencer = exportLifetimeContext.Value;
                 sequencer.PipelineService = pipelineService;
 
-                Project project = sequencer.CreateProject(context, analysisContext, jobFiles, graph);
-                return project;
+                BuildPlan plan = sequencer.CreatePlan(context, analysisContext, jobFiles, graph);
+                return plan;
             }
         }
 
@@ -235,8 +231,6 @@ namespace Aderant.Build.ProjectSystem {
                 DirectoryInfo directoryToSearch = fileInfo.Directory;
 
                 do {
-                  
-
                     if (directoryToSearch != null) {
                         var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryToSearch.FullName, "*.sln", null);
 
@@ -278,9 +272,6 @@ namespace Aderant.Build.ProjectSystem {
             var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
 
             foreach (var path in files) {
-                if (path.Contains("Important")) {
-
-                }
                 bool skip = false;
 
                 if (excludeFilterPatterns != null) {
@@ -340,12 +331,16 @@ namespace Aderant.Build.ProjectSystem {
         private void LoadAndParseProjectFile(string file) {
             using (Stream stream = Services.FileSystem.OpenFile(file)) {
                 using (var reader = XmlReader.Create(stream)) {
-                var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport();
-                var unconfiguredProject = exportLifetimeContext.Value;
 
-                    unconfiguredProject.Initialize(reader, file);
+                    UnconfiguredProject unconfiguredProject;
 
-                loadedUnconfiguredProjects.Add(unconfiguredProject);
+                    using (var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport()) {
+                        unconfiguredProject = exportLifetimeContext.Value;
+
+                        unconfiguredProject.Initialize(reader, file);
+
+                        loadedUnconfiguredProjects.Add(unconfiguredProject);
+                    }
                 }
             }
         }
@@ -374,23 +369,7 @@ namespace Aderant.Build.ProjectSystem {
 
         IBuildPipelineService PipelineService { get; set; }
 
-        Project CreateProject(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph);
+        BuildPlan CreatePlan(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph);
     }
 
-    [Serializable]
-    public class DuplicateGuidException : Exception {
-
-        public DuplicateGuidException(Guid guid, string message)
-            : base(message) {
-            this.Guid = guid;
-        }
-
-        protected DuplicateGuidException(SerializationInfo info, StreamingContext context) {
-        }
-
-        /// <summary>
-        /// Gets the unique identifier.
-        /// </summary>
-        public Guid Guid { get; private set; }
-    }
 }
