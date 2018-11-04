@@ -352,6 +352,7 @@
 
     <RecordProjectOutputs
       ContextEndpoint="$(ContextEndpoint)"
+      SolutionRoot="$(SolutionRoot)"
       ProjectGuid="$(ProjectGuid)"
       ProjectTypeGuids="$(ProjectTypeGuids)"
       TestProjectType="$(TestProjectType)"
