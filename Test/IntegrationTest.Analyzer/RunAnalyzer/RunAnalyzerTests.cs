@@ -1,8 +1,9 @@
 ﻿using System;
 using Aderant.Build.Analyzer.Rules.CodeQuality;
+using IntegrationTest.Build;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IntegrationTest.Build.Tasks.RunAnalyzer {
+namespace IntegrationTest.Analyzer.RunAnalyzer {
     [TestClass]
     [DeploymentItem("Aderant.Build.Analyzer.dll")]
     public class RunAnalyzerTests : MSBuildIntegrationTestBase {

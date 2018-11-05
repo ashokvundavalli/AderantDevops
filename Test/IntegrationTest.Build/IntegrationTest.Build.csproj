@@ -115,7 +115,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Tasks\RunAnalyzer\RunAnalyzerTests.cs" />
     <Compile Include="MSBuildIntegrationTestBase.cs" />
     <Compile Include="Tasks\CheckCertificate\CheckCertificateTests.cs" />
     <Compile Include="Tasks\ContextTaskBaseTests.cs" />
@@ -177,9 +176,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tasks\RetrieveArtifacts\DependencyManifest.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tasks\RunAnalyzer\test.targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tasks\RetrieveArtifacts\test.targets">

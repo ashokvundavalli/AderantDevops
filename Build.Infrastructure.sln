@@ -59,12 +59,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WindowsPowerShell", "Window
 		Src\Profile\WindowsPowerShell\Microsoft.PowerShell_profile.ps1 = Src\Profile\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxCopCmd", "Src\Sources\FxCopCmd\FxCopCmd.csproj", "{BEB9578D-9007-4646-AEA4-97A878EE9840}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build", "Src\Sources\Aderant.Build\Aderant.Build.csproj", "{66E50D39-8E73-4D16-944B-43F18C308FE0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Build", "Test\UnitTest.Build\UnitTest.Build.csproj", "{DC82E590-6F89-42E2-9A22-54375D01A492}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD66D46-70EB-4965-8C51-09738F486E31}"
 	ProjectSection(SolutionItems) = preProject
 		Src\Package\GetProduct.ps1 = Src\Package\GetProduct.ps1
@@ -72,15 +66,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2FD6
 		Src\Package\GetProductZip.ps1 = Src\Package\GetProductZip.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
-EndProject
-Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "Aderant.Build.Agent", "Src\Sources\Aderant.Build.Agent\Aderant.Build.Agent.pssproj", "{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0D21869D-9571-43E3-BC5D-6F3044F252B2}"
 	ProjectSection(SolutionItems) = preProject
 		paket.dependencies = paket.dependencies
 		profilesetup.cmd = profilesetup.cmd
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{FF9D5E44-F36C-467C-A1CB-31F56A56D091}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FxCopCmd", "Src\Sources\FxCopCmd\FxCopCmd.csproj", "{BEB9578D-9007-4646-AEA4-97A878EE9840}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build", "Src\Sources\Aderant.Build\Aderant.Build.csproj", "{66E50D39-8E73-4D16-944B-43F18C308FE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Build", "Test\UnitTest.Build\UnitTest.Build.csproj", "{DC82E590-6F89-42E2-9A22-54375D01A492}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Tasks", "Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj", "{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}"
+EndProject
+Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "Aderant.Build.Agent", "Src\Sources\Aderant.Build.Agent\Aderant.Build.Agent.pssproj", "{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.Build.Analyzer.Vsix", "Src\Sources\Aderant.Build.Analyzer.Vsix\Aderant.Build.Analyzer.Vsix.csproj", "{29D606F5-8DEA-48FF-A85C-B96AD8229ED8}"
 EndProject
@@ -91,8 +93,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aderant.DeveloperTools.XamlAdorner", "Src\Sources\Aderant.DeveloperTools.XamlAdorner\Aderant.DeveloperTools.XamlAdorner.csproj", "{A95D9CA7-A5A8-405E-89E9-CA90A610EF7A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest.Aderant.Build.Analyzer", "Test\UnitTest.Aderant.Build.Analyzer\UnitTest.Aderant.Build.Analyzer.csproj", "{EEF1A8AB-0097-435B-9DBF-7031179FDFA7}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{FF9D5E44-F36C-467C-A1CB-31F56A56D091}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectReferenceTool", "Src\Sources\ProjectReferenceTool\ProjectReferenceTool.csproj", "{215BE033-1FED-4B9D-B1E7-BD5DA8F9A65F}"
 EndProject
@@ -113,6 +113,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTest.Build", "Test\IntegrationTest.Build\IntegrationTest.Build.csproj", "{473D8878-64C8-46BD-8AE3-A79CD3ECC353}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrxerConsole", "Src\Sources\TrxerConsole\TrxerConsole.csproj", "{48849461-6971-4B2B-8FC6-FBDD3E8ADBFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTest.Analyzer", "Test\IntegrationTest.Analyzer\IntegrationTest.Analyzer.csproj", "{EE7FA89A-D218-4383-93C7-92225B017E10}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -199,6 +201,10 @@ Global
 		{48849461-6971-4B2B-8FC6-FBDD3E8ADBFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48849461-6971-4B2B-8FC6-FBDD3E8ADBFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48849461-6971-4B2B-8FC6-FBDD3E8ADBFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE7FA89A-D218-4383-93C7-92225B017E10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE7FA89A-D218-4383-93C7-92225B017E10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE7FA89A-D218-4383-93C7-92225B017E10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE7FA89A-D218-4383-93C7-92225B017E10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -213,6 +219,7 @@ Global
 		{876D9DB6-F991-45C0-95A5-64F108A0F086} = {31A06791-2770-4455-94CF-489136D6405A}
 		{72BB7EF7-8D07-428F-AF91-D5B22DE2B909} = {FF9D5E44-F36C-467C-A1CB-31F56A56D091}
 		{473D8878-64C8-46BD-8AE3-A79CD3ECC353} = {31A06791-2770-4455-94CF-489136D6405A}
+		{EE7FA89A-D218-4383-93C7-92225B017E10} = {31A06791-2770-4455-94CF-489136D6405A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18B1C754-4CEB-4583-8FB8-8B06C521503F}
