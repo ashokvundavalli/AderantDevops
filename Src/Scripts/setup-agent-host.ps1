@@ -227,7 +227,7 @@ process {
             foreach ($directory in $directories) {        
                 cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
 
-                Remove-Item -Path $directory.FullName -Force -Recurse -ErrorAction SilentlyContinue
+                Remove-Item -Path $directory.FullName -Force -Recurse -Verbose -ErrorAction SilentlyContinue
             }    
         }        
 
@@ -237,7 +237,15 @@ process {
         
         # Clear build agent working directory
         [string]$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B")
-        Remove-Item -Path "$workingDirectory\*" -Force -Recurse -ErrorAction SilentlyContinue
+
+        # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
+        # https://github.com/PowerShell/PowerShell/issues/5699
+        if (Test-Path $workingDirectory) {            
+            # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
+            Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
+        
+            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue 
+        }
         
         & $PSScriptRoot\iis-cleanup.ps1
         

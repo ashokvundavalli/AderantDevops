@@ -44,12 +44,10 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             string name,
             Location location,
             bool isAssignedAtDeclaration,
-            bool isStatic,
             DeclarationCollectionType collection) {
             Node = node;
             Name = name;
             IsAssignedAtDeclaration = isAssignedAtDeclaration;
-            IsStatic = isStatic;
             Location = location;
             CollectionType = collection;
         }
@@ -59,8 +57,6 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         public Location Location { get; }
 
         public bool IsAssignedAtDeclaration { get; }
-
-        public bool IsStatic { get; }
 
         public string Name { get; }
 

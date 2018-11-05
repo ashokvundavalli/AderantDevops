@@ -84,10 +84,10 @@ namespace Aderant.Build.DependencyResolver {
             return groups;
         }
 
-        public void Add(IPackageContext context, IEnumerable<IDependencyRequirement> requirements) {
+        public void Add(IEnumerable<IDependencyRequirement> requirements) {
             DependenciesFile file = dependencies.GetDependenciesFile();
             FileSystem.MakeFileWritable(file.FileName);
-            AddModules(context, requirements, file);
+            AddModules(requirements, file);
             file = dependencies.GetDependenciesFile();
             string[] lines = file.Lines;
 
@@ -108,7 +108,7 @@ namespace Aderant.Build.DependencyResolver {
                     }
                 }
 
-                file.Save();
+                AddModules(requirements, file);
             }
         }
 
@@ -130,16 +130,19 @@ namespace Aderant.Build.DependencyResolver {
             return version;
         }
 
-        private void AddModules(IPackageContext context, IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
+        private void AddModules(IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
             foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
+                bool hasCustomVersion = false;
                 string version = string.Empty;
+
                 if (referencedModule.VersionRequirement != null && !string.IsNullOrWhiteSpace(referencedModule.VersionRequirement.ConstraintExpression)) {
+                    hasCustomVersion = true;
                     version = referencedModule.VersionRequirement.ConstraintExpression;
                 }
 
                 Domain.PackageName name = Domain.PackageName(referencedModule.Name);
 
-                if (referencedModule.ReplaceVersionConstraint) {
+                if (referencedModule.ReplaceVersionConstraint && hasCustomVersion) {
                     try {
                         file = file.Remove(Domain.GroupName(Constants.MainDependencyGroup), name);
                     } catch {

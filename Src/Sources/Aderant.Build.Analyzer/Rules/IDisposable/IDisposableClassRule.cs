@@ -60,11 +60,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 List<string> memberNames = null;
 
                 var field = childNode as FieldDeclarationSyntax;
-                if (field != null) {
+                if (field != null && !GetIsDeclarationStatic(field.Modifiers)) {
                     memberNames = field.Declaration.Variables.Select(variable => variable.Identifier.Text).ToList();
                 } else {
                     var property = childNode as PropertyDeclarationSyntax;
-                    if (property != null) {
+                    if (property != null && !GetIsDeclarationStatic(property.Modifiers)) {
                         memberNames = new List<string> { property.Identifier.Text };
                     }
                 }

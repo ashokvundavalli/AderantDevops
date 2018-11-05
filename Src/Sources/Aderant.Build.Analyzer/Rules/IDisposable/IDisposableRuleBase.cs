@@ -483,8 +483,21 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             string variableName) {
             var conditionalExpression = node as ConditionalAccessExpressionSyntax;
 
-            string name = (conditionalExpression?.Expression as IdentifierNameSyntax)?.Identifier.Text;
-            string expression = (conditionalExpression?.WhenNotNull as InvocationExpressionSyntax)?.Expression.ToString();
+            if (conditionalExpression == null) {
+                return;
+            }
+
+            // First evaluation expects no 'this' keyword prefixing the expression.
+            // Second evaluation expects a 'this' keyword prefixing the expression.
+            var nameIdentifier = (conditionalExpression.Expression as IdentifierNameSyntax)?.Identifier ??
+                                 (conditionalExpression.Expression as MemberAccessExpressionSyntax)?.Name.Identifier;
+
+            if (nameIdentifier == null) {
+                return;
+            }
+
+            string name = nameIdentifier.Value.Text;
+            string expression = (conditionalExpression.WhenNotNull as InvocationExpressionSyntax)?.Expression.ToString();
 
             // Attempt to evaluate the expression as a conditional expression.
             //      If the 'Expression' is the variable and the 'WhenNotNull' is a Dispose()/Close() method invocation...
@@ -688,20 +701,28 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
             string variableName) {
             var accessExpression = node?.Expression as MemberAccessExpressionSyntax;
 
+            if (accessExpression == null) {
+                return ExpressionType.None;
+            }
+
             // Get all the 'Identifiers' from among the invocation expression's children.
             // It is expected that there are two results:
             //     1. The name of the object being operated upon.
             //     2. The name of the method being invoked.
-            var identifierNames = accessExpression?
-                .ChildNodes()
-                .OfType<IdentifierNameSyntax>()
-                .Select(x => x.Identifier.ToString())
+            var identifiers = new List<IdentifierNameSyntax>();
+
+            // Use a recursive search of child nodes,
+            // to handle chains involving the 'this' keyword.
+            GetExpressionsFromChildNodes(ref identifiers, accessExpression);
+
+            var identifierNames = identifiers
+                .Where(identifier => identifier != null)
+                .Select(identifier => identifier.Identifier.Text)
                 .ToList();
 
             // If the first identifier is the name of the field being processed,
             //     and the second is the Dispose method (or the Close method)...
-            if (identifierNames != null &&
-                identifierNames.Count > 1 &&
+            if (identifierNames.Count > 1 &&
                 identifierNames[0].Equals(variableName, StringComparison.Ordinal) &&
                 (identifierNames[1].Equals("Dispose", StringComparison.Ordinal) ||
                  identifierNames[1].Equals("Close", StringComparison.Ordinal))) {
@@ -761,12 +782,10 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
             GetExpressionsFromChildNodes(ref assignmentExpressionSyntaxes, classNode);
 
-            var assignmentList = assignmentExpressionSyntaxes.ToList();
-
-            var assignmentData = new List<AssignmentData>(assignmentList.Count);
+            var assignmentData = new List<AssignmentData>(assignmentExpressionSyntaxes.Count);
 
             // Iterate through each expression.
-            foreach (var assignment in assignmentList) {
+            foreach (var assignment in assignmentExpressionSyntaxes) {
                 List<SyntaxNode> childNodes = assignment
                     .ChildNodes()
                     .ToList();
@@ -786,13 +805,26 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
 
                 GetExpressionsFromChildNodes(ref identifiers, target);
 
-                // Ignore any assignments that somehow have an unnamed target.
-                if (identifiers.Count != 1) {
-                    continue;
-                }
-
                 // Get the target's name.
-                IdentifierNameSyntax targetName = identifiers[0];
+                IdentifierNameSyntax targetName;
+
+                switch (identifiers.Count) {
+                    case 1: {
+                        // Simple assignment.
+                        targetName = identifiers[0];
+                        break;
+                    }
+                    case 2: {
+                        // Assignment that utilises the 'this.' expression,
+                        // which results in an additional identifier being present within the expression.
+                        targetName = identifiers[1];
+                        break;
+                    }
+                    default: {
+                        // Ignore unhandled assignments.
+                        continue;
+                    }
+                }
 
                 // Examine the 'right' side of the expression as the values.
                 SyntaxNode value = childNodes[1];
@@ -810,7 +842,7 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 var constructor = assignment.GetAncestorOfType<ConstructorDeclarationSyntax>();
 
                 // Get the parameters provided to that constructor, if the constructor exists and it has parameters.
-                var parameters = constructor?.ParameterList?.Parameters.ToArray() ?? new ParameterSyntax[0];
+                var parameters = constructor?.ParameterList?.Parameters.ToArray() ?? Array.Empty<ParameterSyntax>();
 
                 // Create a new data container with the acquired objects.
                 assignmentData.Add(

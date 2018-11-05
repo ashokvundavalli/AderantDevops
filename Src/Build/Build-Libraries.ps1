@@ -71,31 +71,31 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         )
 
         begin {
-            [System.Object]$pdfBuild = $null
+            Set-StrictMode -Version Latest
         }
 
         process {
-            [System.Object[]]$pdfBuilds = Get-ChildItem -Path $moduleBinariesDirectory -Directory
+            try {
+                [System.IO.FileSystemInfo]$pdfBuild = Get-ChildItem -Path $moduleBinariesDirectory -Directory | Sort-Object -Property Name | Select-Object -First 1
 
-            for ([int]$i = 1; $i -lt ($pdfBuilds.Count - 1); $i++) {
-                [System.Object]$pdfBuildCandidate = ($pdfBuilds | Select-Object -Last $i)[0]
+                if ($pdfBuild -ne $null -and (Test-Path -Path (Join-Path -Path $pdfBuild.FullName -ChildPath "Pdf"))) {
+                    [System.IO.FileSystemInfo[]]$pdfBuildDir = Get-ChildItem -Path (Join-Path -Path $pdfBuild.FullName -ChildPath "Pdf") -Filter "*.pdf"
 
-                if ((Measure-Object -InputObject (Get-ChildItem $pdfBuildCandidate.FullName)) -ne 0) {
-                    $pdfBuild = $pdfBuildCandidate
-                    break
+                    if ($pdfBuildDir -ne $null -and (Measure-Object -InputObject $pdfBuildDir) -ne 0) {
+                        try {
+                            Copy-Item -Path "$($pdfBuild.FullName)\Pdf" -Recurse -Filter "*.pdf" -Destination (Join-Path -Path $binariesDirectory -ChildPath $module.Target.Split('/')[1]) -Force
+                            return $pdfBuild.Name
+                        } catch {
+                            Write-Warning "Unable to acquire content from: '$($pdfBuild.FullName)\Pdf' for module: $($module.Name)"
+                            return $null
+                        }
+                    }
                 }
+            } catch {
             }
 
-            if ($pdfBuild -eq $null) {
-                Write-Warning "Unable to acquire content for module: $($module.Name)"
-                return -1
-            } else {
-                Copy-Item -Path "$($pdfBuild.FullName)\Pdf" -Recurse -Filter "*.pdf" -Destination (Join-Path -Path $binariesDirectory -ChildPath $module.Target.Split('/')[1]) -Force
-            }
-        }
-
-        end {
-            return [System.Convert]::ToInt32($pdfBuild.Name)
+            Write-Warning "Unable to acquire content for module: $($module.Name)"
+            return $null
         }
     }
 

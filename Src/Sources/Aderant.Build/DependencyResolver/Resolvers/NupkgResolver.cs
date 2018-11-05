@@ -72,7 +72,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
         private void PackageRestore(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             using (var manager = new PaketPackageManager(directory, fileSystem, logger)) {
-                manager.Add(new DependencyFetchContext(), requirements);
+                manager.Add(requirements);
 
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);

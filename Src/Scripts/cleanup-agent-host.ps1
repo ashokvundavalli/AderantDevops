@@ -55,17 +55,23 @@ foreach ($dir in $directoriesToRemove) {
 
 # Should a human run this script, don't nuke their environment
 if (-not [System.Environment]::UserInteractive) {
-  Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$machineWideDirectories += $_.Root + "ExpertShare"}
-  
-  # Yay for people who check in PostBuild events :)
-  machineWideDirectories += "C:\tfs"
+    Get-PSDrive -PSProvider FileSystem | Select-Object -Property Root | % {$machineWideDirectories += $_.Root + "ExpertShare"}
+
+    # Yay for people who check in PostBuild events :)
+    machineWideDirectories += "C:\tfs"
 }
 
 foreach ($dir in $machineWideDirectories) {
-  if (Test-Path $dir) {
-    Push-Location $dir
-    Write-Output "Deleting files under $dir"
-    Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue
-    Pop-Location
-  }
+    if (Test-Path $dir) {
+        Push-Location $dir
+        Write-Output "Deleting files under $dir"
+        Remove-Item * -Verbose -Force -Recurse -ErrorAction SilentlyContinue
+        Pop-Location
+    }
 }
+
+# Clean up databases
+Import-Module SqlServer
+cd sqlserver:\
+cd sql\localhost\default\databases
+gci | % { $_.DropBackupHistory(); $_.Drop() }

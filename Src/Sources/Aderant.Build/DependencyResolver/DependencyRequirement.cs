@@ -53,7 +53,10 @@ namespace Aderant.Build.DependencyResolver {
 
         public static IDependencyRequirement Create(ExpertModule reference) {
             if (reference.GetAction == GetAction.NuGet) {
-                return new DependencyRequirement(reference.Name, Constants.MainDependencyGroup, reference.VersionRequirement) { ReplicateToDependencies = reference.ReplicateToDependencies };
+                return new DependencyRequirement(reference.Name, Constants.MainDependencyGroup, reference.VersionRequirement) {
+                    ReplicateToDependencies = reference.ReplicateToDependencies,
+                    ReplaceVersionConstraint = true
+                };
             }
             return new FolderBasedRequirement(reference);
         }

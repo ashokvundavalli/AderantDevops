@@ -60,16 +60,12 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 return;
             }
 
-            List<SyntaxNode> actionsNonStatic;
-            List<SyntaxNode> actionsStatic;
-
-            // Retrieve all action declarations from the current class declaration, split by non-static/static.
-            GetClassActionDeclarations(out actionsNonStatic, out actionsStatic, classNode);
+            // Retrieve all non-static action declarations from the current class declaration.
+            List<SyntaxNode> actions = GetClassActionDeclarations(classNode);
 
             var diagnosticResults = EvaluateDeclarations(
                 declarations,
-                actionsNonStatic,
-                actionsStatic,
+                actions,
                 context.SemanticModel);
 
             // Iterate through and display each diagnostics raised during declaration evaluation.
@@ -177,31 +173,18 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
         /// Evaluates the specified declarations and returns a list of diagnostics and their locations.
         /// </summary>
         /// <param name="declarations">The declarations.</param>
-        /// <param name="actionsNonStatic">The actions non static.</param>
-        /// <param name="actionsStatic">The actions static.</param>
+        /// <param name="actions">The actions.</param>
         /// <param name="semanticModel">The semantic model.</param>
         private static IEnumerable<Tuple<SyntaxNode, string, Location>> EvaluateDeclarations(
             IEnumerable<DisposableDeclaration> declarations,
-            List<SyntaxNode> actionsNonStatic,
-            List<SyntaxNode> actionsStatic,
+            IReadOnlyCollection<SyntaxNode> actions,
             SemanticModel semanticModel) {
             var diagnostics = new List<Tuple<SyntaxNode, string, Location>>();
 
             // Iterate through each field.
             foreach (var declaration in declarations) {
-                // State-tracking flags.
+                // State-tracking flag.
                 bool fieldDisposed = false;
-
-                List<SyntaxNode> actions;
-
-                // If the declaration is static, add the static actions to the list of actions to be evaluated.
-                if (declaration.IsStatic) {
-                    actions = new List<SyntaxNode>(actionsNonStatic.Count + actionsStatic.Count);
-                    actions.AddRange(actionsNonStatic);
-                    actions.AddRange(actionsStatic);
-                } else {
-                    actions = actionsNonStatic;
-                }
 
                 switch (declaration.CollectionType) {
                     case DeclarationCollectionType.Collection:
@@ -322,6 +305,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 // Determine if the field is static.
                 bool isFieldStatic = GetIsDeclarationStatic(fieldDeclaration.Modifiers);
 
+                // Static fields can never be disposed, as they exist for the lifetime of the appdomain.
+                if (isFieldStatic) {
+                    continue;
+                }
+
                 // A single field declaration may have multiple fields created using declarator syntax.
                 // Example:
                 //      public static int item0 = 0, item1, item2 = 2;
@@ -339,7 +327,6 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                                 field.Identifier.GetLocation(),
                                 // Declaration is not considered 'assigned' if the assigned value is a literal e.g. 'null'.
                                 field.Initializer != null && !(field.Initializer.Value is LiteralExpressionSyntax),
-                                isFieldStatic,
                                 declarationCollectionType)));
             }
         }
@@ -465,6 +452,11 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                 // Determine if the property is static.
                 bool isPropertyStatic = GetIsDeclarationStatic(propertyDeclaration.Modifiers);
 
+                // Static properties can never be disposed, as they exist for the lifetime of the appdomain.
+                if (isPropertyStatic) {
+                    continue;
+                }
+
                 // Add the property to the list of declarations that must be disposed.
                 declarations.Add(
                     new DisposableDeclaration(
@@ -473,47 +465,37 @@ namespace Aderant.Build.Analyzer.Rules.IDisposable {
                         propertyDeclaration.Identifier.GetLocation(),
                         propertyDeclaration.Initializer != null &&
                         !(propertyDeclaration.Initializer.Value is LiteralExpressionSyntax),
-                        isPropertyStatic,
                         declarationCollectionType));
             }
         }
 
         /// <summary>
-        /// Retrieves all method and property accessor declarations from the specified parent class, split by non-static/static.
+        /// Retrieves all non-static method and property accessor declarations from the specified parent class.
         /// </summary>
-        /// <param name="actionsNonStatic">The non static actions.</param>
-        /// <param name="actionsStatic">The static actions.</param>
         /// <param name="classDeclaration">The class declaration.</param>
-        private static void GetClassActionDeclarations(
-            out List<SyntaxNode> actionsNonStatic,
-            out List<SyntaxNode> actionsStatic,
+        private static List<SyntaxNode> GetClassActionDeclarations(
             ClassDeclarationSyntax classDeclaration) {
-            actionsNonStatic = new List<SyntaxNode>(DefaultCapacity);
-            actionsStatic = new List<SyntaxNode>(DefaultCapacity);
+            var actions= new List<SyntaxNode>(DefaultCapacity);
 
-            foreach (var declaration in classDeclaration.ChildNodes().OfType<BaseMethodDeclarationSyntax>()) {
-                if (GetIsDeclarationStatic(declaration.Modifiers)) {
-                    actionsStatic.Add(declaration);
-                } else {
-                    actionsNonStatic.Add(declaration);
-                }
-            }
+            actions.AddRange(
+                classDeclaration
+                    .ChildNodes()
+                    .OfType<BaseMethodDeclarationSyntax>()
+                    .Where(declaration => !GetIsDeclarationStatic(declaration.Modifiers)));
 
             foreach (var declaration in classDeclaration.ChildNodes().OfType<PropertyDeclarationSyntax>()) {
                 if (GetIsDeclarationStatic(declaration.Modifiers)) {
-                    if (declaration.AccessorList != null) {
-                        actionsStatic.AddRange(declaration.AccessorList.Accessors);
-                    } else {
-                        actionsStatic.Add(declaration.ExpressionBody);
-                    }
+                    continue;
+                }
+
+                if (declaration.AccessorList != null) {
+                    actions.AddRange(declaration.AccessorList.Accessors);
                 } else {
-                    if (declaration.AccessorList != null) {
-                        actionsNonStatic.AddRange(declaration.AccessorList.Accessors);
-                    } else {
-                        actionsNonStatic.Add(declaration.ExpressionBody);
-                    }
+                    actions.Add(declaration.ExpressionBody);
                 }
             }
+
+            return actions;
         }
 
         /// <summary>

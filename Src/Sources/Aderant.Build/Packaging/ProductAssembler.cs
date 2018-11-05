@@ -93,7 +93,7 @@ namespace Aderant.Build.Packaging {
             var fs = new RetryingPhysicalFileSystem();
 
             using (var manager = new PaketPackageManager(workingDirectory, fs, logger)) {
-                manager.Add(context, context.Modules.Select(DependencyRequirement.Create));
+                manager.Add(context.Modules.Select(DependencyRequirement.Create));
                 manager.Restore();
             }
 

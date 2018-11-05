@@ -18,14 +18,6 @@ namespace Aderant.Build.Packaging {
             }
         }
 
-        public bool IncludeDevelopmentDependencies {
-            get { return false; }
-        }
-
-        public bool AllowExternalPackages {
-            get { return false; }
-        }
-
         public IEnumerable<string> BuildOutputs { get; internal set; }
 
         public ExpertModule GetModuleByPackage(string packageDirectory) {

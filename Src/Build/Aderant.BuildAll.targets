@@ -7,9 +7,9 @@
   <PropertyGroup>
     <BuildInParallel Condition="'$(BuildInParallel)' == '' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
-    <!-- Local for factory generation -->
     <LocalExpertBinariesDirectory>$(SolutionRoot)..\ExpertBinaries\</LocalExpertBinariesDirectory>
-    <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath( '$(LocalExpertBinariesDirectory)' ))</LocalExpertBinariesDirectory>
+    <LocalExpertBinariesDirectory>$([System.IO.Path]::GetFullPath('$(LocalExpertBinariesDirectory)'))</LocalExpertBinariesDirectory>
+    <LocalExpertBinariesDirectory Condition="'$(LocalExpertBinariesDirectory)' != '' and !HasTrailingSlash('$(LocalExpertBinariesDirectory)')">$(LocalExpertBinariesDirectory)\</LocalExpertBinariesDirectory>
 
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
@@ -265,22 +265,24 @@
     <OnError ExecuteTargets="SetBuildBreakProperties;OnBuildBreak" />
   </Target>
 
-  <!--
-    ==========================================================================================
-    Zip output
-    ==========================================================================================
-  -->
+
   <Target Name="ZipProduct" BeforeTargets="Package">
 
     <PropertyGroup>
-      <ZipFileDirectory Condition="'$(ZipFileDirectory)' == ''">$(BuildAllDropPath)\$(BuildNumber)</ZipFileDirectory>
-      <ZipFile>$(ZipFileDirectory)\ExpertBinaries.zip</ZipFile>
-      <EliteEnterpriseZipFile>$(ZipFileDirectory)\ExpertEEIntegrationBinaries.zip</EliteEnterpriseZipFile>
-      <LicenseZipFile>$(ZipFileDirectory)\LicenseGenerator.zip</LicenseZipFile>
-      <RegistrationZipFile>$(ZipFileDirectory)\RegistrationService.zip</RegistrationZipFile>
-      <EliteEnterpriseBinOverrideDirectory>$(LocalExpertBinariesDirectory)\ExpertSource\EEBin</EliteEnterpriseBinOverrideDirectory>
-      <PipelineOverrideDirectory>$(LocalExpertBinariesDirectory)\AutomatedDeployment</PipelineOverrideDirectory>
+      <PackageDropLocation Condition="'$(PackageDropLocation)' == ''">$(BuildAllDropPath)\$(BuildNumber)</PackageDropLocation>
+
+      <!--@list for 7-zip-->
+      <FilesToZipList>$(LocalExpertBinariesDirectory)cmd_ZipSourceFiles.lst</FilesToZipList>
+
+      <ZipFile>$(LocalExpertBinariesDirectory)ExpertBinaries.zip</ZipFile>
+      <EliteEnterpriseZipFile>$(LocalExpertBinariesDirectory)ExpertEEIntegrationBinaries.zip</EliteEnterpriseZipFile>
+      <LicenseZipFile>$(LocalExpertBinariesDirectory)LicenseGenerator.zip</LicenseZipFile>
+      <RegistrationZipFile>$(LocalExpertBinariesDirectory)RegistrationService.zip</RegistrationZipFile>
+      <EliteEnterpriseBinOverrideDirectory>$(ExpertSourceDirectory)EEBin\</EliteEnterpriseBinOverrideDirectory>
+      <PipelineOverrideDirectory>$(LocalExpertBinariesDirectory)\AutomatedDeployment\</PipelineOverrideDirectory>
     </PropertyGroup>
+
+    <Delete Files="$(ZipFile);$(EliteEnterpriseZipFile)" />
     
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -297,117 +299,104 @@
     <!-- Create ItemGroup used in Zip task.-->
     <ItemGroup>
       <SharedExclusions
-        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\**\*.*;
-                 $(LocalExpertBinariesDirectory)\**\_PublishedWebsites\**\*;
-                 $(LocalExpertBinariesDirectory)\**\LexisNexis*.*;
-                 $(LocalExpertBinariesDirectory)\**\iManage*.*;
-                 $(LocalExpertBinariesDirectory)\**\System.dll*;
-                 $(LocalExpertBinariesDirectory)\**\System.Data.dll;
-                 $(LocalExpertBinariesDirectory)\**\System.Drawing*.dll;
-                 $(LocalExpertBinariesDirectory)\**\System.Windows.Forms*.dll;
-                 $(LocalExpertBinariesDirectory)\**\System.Xml*dll*;   
-                 $(LocalExpertBinariesDirectory)\**\Microsoft.TeamFoundation.*dll*;
-                 $(LocalExpertBinariesDirectory)\**\*UnitTest*;
-                 $(LocalExpertBinariesDirectory)\**\TestLicenseRegistration*;
-                 $(LocalExpertBinariesDirectory)\**\*CodeAnalysis*;
-                 $(LocalExpertBinariesDirectory)\**\*.deploy.cmd;   
-                 $(LocalExpertBinariesDirectory)\**\*.deploy-readme.txt;
-                 $(LocalExpertBinariesDirectory)\**\*.SetParameters.*;
-                 $(LocalExpertBinariesDirectory)\**\*.BuildInfo.config;
-                 $(LocalExpertBinariesDirectory)\**\DropFolderBuildNumbers.txt;" />
+        Include="$(ZipFile);
+                 $(EliteEnterpriseZipFile);
+                 $(ExpertSourceDirectory)Internal\**\*;
+                 $(LocalExpertBinariesDirectory)**\_PublishedWebsites\**\*;
+                 $(LocalExpertBinariesDirectory)**\LexisNexis*;
+                 $(ExpertSourceDirectory)*iManage*;
+                 $(LocalExpertBinariesDirectory)**\CodeCoverage\**\*;
+                 $(LocalExpertBinariesDirectory)**\*CodeAnalysis*;
+                 $(LocalExpertBinariesDirectory)**\System.dll*;
+                 $(LocalExpertBinariesDirectory)**\System.Data.dll;
+                 $(LocalExpertBinariesDirectory)**\System.Drawing*.dll;
+                 $(LocalExpertBinariesDirectory)**\System.Windows.Forms*.dll;
+                 $(LocalExpertBinariesDirectory)**\System.Xml*dll*;   
+                 $(ExpertSourceDirectory)*Microsoft.TeamFoundation.*dll*;
+                 $(LocalExpertBinariesDirectory)**\*UnitTest*;
+                 $(LocalExpertBinariesDirectory)**\TestLicenseRegistration*;           
+                 $(LocalExpertBinariesDirectory)**\*.deploy.cmd;   
+                 $(LocalExpertBinariesDirectory)**\*.deploy-readme.txt;
+                 $(LocalExpertBinariesDirectory)**\*.SetParameters.*;
+                 $(LocalExpertBinariesDirectory)**\*.BuildInfo.config;
+                 $(LocalExpertBinariesDirectory)**\*.srcsrv;
+                 $(LocalExpertBinariesDirectory)**\DropFolderBuildNumbers.txt;" />
 
       <!-- Group of the roles shared between expert and elite -->
       <SharedRoles
-        Include="$(LocalExpertBinariesDirectory)\**\commonapplications.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\configuration.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\customworkflows.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\firmcontrol.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\instrumentation.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\messaging.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\notes.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\queryservice.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\security.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\webcore.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\workflow.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\workflowauthoring.role.xml" />
+        Include="$(ExpertSourceDirectory)commonapplications.role.xml;
+                 $(ExpertSourceDirectory)configuration.role.xml;
+                 $(ExpertSourceDirectory)customworkflows.role.xml;
+                 $(ExpertSourceDirectory)firmcontrol.role.xml;
+                 $(ExpertSourceDirectory)instrumentation.role.xml;
+                 $(ExpertSourceDirectory)messaging.role.xml;
+                 $(ExpertSourceDirectory)notes.role.xml;
+                 $(ExpertSourceDirectory)queryservice.role.xml;
+                 $(ExpertSourceDirectory)security.role.xml;
+                 $(ExpertSourceDirectory)webcore.role.xml;
+                 $(ExpertSourceDirectory)workflow.role.xml;
+                 $(ExpertSourceDirectory)workflowauthoring.role.xml" />
 
       <!-- Group of the roles that should be elite only -->
       <EliteRoles
-        Include="$(LocalExpertBinariesDirectory)\**\eliteintegration.role.xml;
-                 $(LocalExpertBinariesDirectory)\**\matterplanningelite.role.xml" />
+        Include="$(ExpertSourceDirectory)eliteintegration.role.xml;
+                 $(ExpertSourceDirectory)matterplanningelite.role.xml" />
 
       <!-- Create a group of roles to exclude from elite (all roles minus the elite roles and shared roles) -->
       <EliteRoleExclusions
-        Include="$(LocalExpertBinariesDirectory)\**\*.role.xml"
+        Include="$(ExpertSourceDirectory)*.role.xml"
         Exclude="@(SharedRoles);@(EliteRoles)"/>
 
-      <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)\**\*.*" />
+      <EliteOverrideFiles Include="$(EliteEnterpriseBinOverrideDirectory)**\*" />
       
-      <PipelineOverrideFiles Include="$(PipelineOverrideDirectory)\**\Microsoft.TeamFoundation.*dll*" />
+      <EliteDocuments Include="$(LocalExpertBinariesDirectory)Elite Documentation\**\*.*"/>
+      <Documents Include="$(LocalExpertBinariesDirectory)Documentation\**\*.*"/>
       
-      <EliteDocuments Include="$(LocalExpertBinariesDirectory)\Elite Documentation\**\*.*"/>
-      <Documents Include="$(LocalExpertBinariesDirectory)\Documentation\**\*.*"/>
-      
-      <InquiriesFiles Include="$(LocalExpertBinariesDirectory)\ExpertSource\Aderant.Inquiries*.dll"/>
+      <InquiriesFiles Include="$(ExpertSourceDirectory)Aderant.Inquiries*.dll"/>
    
-      <IntegrationTestDependencies Include="$(LocalExpertBinariesDirectory)\**\UnitTest.*Helpers.*" />
+      <IntegrationTestDependencies Include="$(LocalExpertBinariesDirectory)**\UnitTest.*Helpers.*" />
 
       <ZipSourceFiles
-        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Include="$(LocalExpertBinariesDirectory)**\*"
         Exclude="@(SharedExclusions);@(EliteRoles);@(EliteOverrideFiles);@(EliteDocuments)" />
-      <ZipPipelineFiles
-        Include="@(PipelineOverrideFiles)"/>
+
       <ZipLicenseGeneratorFiles
-        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator\*.*" />
+        Include="$(ExpertSourceDirectory)Internal\LicenseGenerator\*.*" />
       <ZipRegistrationServiceFiles
-        Include="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService\*.*" />
+        Include="$(ExpertSourceDirectory)Internal\RegistrationService\*.*" />
 
       <ZipSourceFiles 
         Include="@(IntegrationTestDependencies)" />
     </ItemGroup>
 
-    <MakeDir
-      Directories="$(ZipFileDirectory)"/>
-
-    <MakeDir
-      Directories="$(ZipFileDirectory)\ReleaseManagement"/>
-
-    <!-- Copy commit info file and scripts over. -->
-    <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\..\CommitInfo.json"
-      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\CommitInfo.json" />
-    <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\..\persist-build.ps1"
-      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\persist-build.ps1" />
-    <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\..\persist-build.bat"
-      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\persist-build.bat" />
-    <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\..\undo-buildpersistence.bat"
-      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\undo-buildpersistence.bat" />
-    <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\..\_readme.txt"
-      DestinationFiles="$(ZipFileDirectory)\ReleaseManagement\_readme.txt" />
-
     <!-- Create ZIP for ExpertSource -->
-    <MSBuild.Community.Tasks.Zip
-      Files="@(ZipSourceFiles);@(ZipPipelineFiles)"
-      ZipFileName="$(ZipFile)"
-      WorkingDirectory="$(LocalExpertBinariesDirectory)"
-      ParallelCompression="false" />
+    <ItemGroup>
+      <ZipSourceFiles Include="@(ZipSourceFiles)">
+        <RelativePath>$([MSBuild]::MakeRelative($(LocalExpertBinariesDirectory), %(FullPath)))</RelativePath>
+      </ZipSourceFiles>
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(FilesToZipList)"
+                      Lines="@(ZipSourceFiles->'%(RelativePath)')"
+                      Overwrite="true" />
+
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb a "$(ZipFile)" @$(FilesToZipList)'
+          WorkingDirectory="$(LocalExpertBinariesDirectory)" />
+
+    <Delete Files="$(FilesToZipList)" />
 
     <!-- Replace files in ExpertSource with the Elite bin folder overrides, used for things like message files and help. -->
     <Copy
       SourceFiles="@(EliteOverrideFiles)"
-      DestinationFiles="@(EliteOverrideFiles->'$(LocalExpertBinariesDirectory)\ExpertSource\%(RecursiveDir)%(Filename)%(Extension)')" />
+      DestinationFiles="@(EliteOverrideFiles->'$(ExpertSourceDirectory)%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <!-- Essentially rename Elite.Help to Expert.Help -->
     <Copy
-      SourceFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx"
-      DestinationFiles="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Expert.Help.sfx" />
+      SourceFiles="$(ExpertSourceDirectory)Help\Elite.Help.sfx"
+      DestinationFiles="$(ExpertSourceDirectory)Help\Expert.Help.sfx" ContinueOnError="true" />
 
     <Delete
-      Files="$(LocalExpertBinariesDirectory)\ExpertSource\Help\Elite.Help.sfx" />
+      Files="$(ExpertSourceDirectory)Help\Elite.Help.sfx" />
 
     <!-- Move the Elite specific docs into the Documents folder-->
     <Delete
@@ -415,35 +404,60 @@
 
     <Copy
       SourceFiles="@(EliteDocuments)"
-      DestinationFiles="@(EliteDocuments->'$(LocalExpertBinariesDirectory)\Documentation\%(RecursiveDir)%(Filename)%(Extension)')" />
+      DestinationFiles="@(EliteDocuments->'$(LocalExpertBinariesDirectory)Documentation\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <!-- This item group must go after the copy so that any moved files are included -->
     <ItemGroup>
       <ZipEliteEnterpriseSourceFiles
-        Include="$(LocalExpertBinariesDirectory)\**\*.*"
+        Include="$(LocalExpertBinariesDirectory)**\*.*"
         Exclude="@(SharedExclusions);@(EliteRoleExclusions);@(EliteDocuments);@(InquiriesFiles)" />
     </ItemGroup>
 
-    <!-- Create ZIP for Elite Enterprise ExpertSource -->
-    <MSBuild.Community.Tasks.Zip
-      Files="@(ZipEliteEnterpriseSourceFiles)"
-      ZipFileName="$(EliteEnterpriseZipFile)"
-      WorkingDirectory="$(LocalExpertBinariesDirectory)"
-      ParallelCompression="false" />
+    <!-- Create ZIP for Elite Enterprise -->
+    <ItemGroup>
+      <ZipEliteEnterpriseSourceFiles Include="@(ZipEliteEnterpriseSourceFiles)">
+        <RelativePath>$([MSBuild]::MakeRelative($(LocalExpertBinariesDirectory), %(FullPath)))</RelativePath>
+      </ZipEliteEnterpriseSourceFiles>
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(FilesToZipList)"
+                      Lines="@(ZipEliteEnterpriseSourceFiles->'%(RelativePath)')"
+                      Overwrite="true" />
+
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb a "$(EliteEnterpriseZipFile)" @$(FilesToZipList)'
+          WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <!-- Create ZIP for LicenseGenerator -->
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipLicenseGeneratorFiles)"
       ZipFileName="$(LicenseZipFile)"
-      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\LicenseGenerator"
+      WorkingDirectory="$(ExpertSourceDirectory)Internal\LicenseGenerator"
       ParallelCompression="false" />
 
     <!-- Create ZIP for RegistrationService -->
     <MSBuild.Community.Tasks.Zip
       Files="@(ZipRegistrationServiceFiles)"
       ZipFileName="$(RegistrationZipFile)"
-      WorkingDirectory="$(LocalExpertBinariesDirectory)\ExpertSource\Internal\RegistrationService"
+      WorkingDirectory="$(ExpertSourceDirectory)Internal\RegistrationService"
       ParallelCompression="false" />
+
+    <Copy SourceFiles="$(ZipFile);$(EliteEnterpriseZipFile);$(LicenseZipFile);$(RegistrationZipFile)"
+          DestinationFolder="$(PackageDropLocation)" />
+
+    <!-- Copy commit info file and scripts over. -->
+    <ItemGroup>
+      <CommitInfoFiles Include="
+                       $(LocalExpertBinariesDirectory)..\CommitInfo.json;
+                       $(LocalExpertBinariesDirectory)..\persist-build.ps1;
+                       $(LocalExpertBinariesDirectory)..\persist-build.bat;
+                       $(LocalExpertBinariesDirectory)..\undo-buildpersistence.bat;
+                       $(LocalExpertBinariesDirectory)..\_readme.txt" />
+    </ItemGroup>
+
+    <Copy
+      SourceFiles="@(CommitInfoFiles)"
+      DestinationFolder="$(PackageDropLocation)\ReleaseManagement\"
+      ContinueOnError="true" />
 
     <BuildStep
       Condition="('$(IsDesktopBuild)'!='true')"
@@ -452,9 +466,9 @@
       Id="$(BuildStepId)"
       Status="Succeeded" />
 
+
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
-
   
   <!--
   ==========================================================================================
@@ -553,6 +567,7 @@
       </Code>
     </Task>
   </UsingTask>
-  
+
+  <Target Name="MarkBuildStepAsFailed" />
 </Project>
  
