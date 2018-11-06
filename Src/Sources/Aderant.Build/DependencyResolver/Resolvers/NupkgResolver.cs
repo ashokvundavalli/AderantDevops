@@ -111,7 +111,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                 return;
             }
 
-            string packageDir = Path.Combine(directory, "packages", requirement.Group == Aderant.Build.Constants.MainDependencyGroup ? "" : requirement.Group, requirement.Name);
+            string packageDir = GeneratePathToPackage(directory, requirement);
             if (!fileSystem.DirectoryExists(packageDir)) {
                 throw new DirectoryNotFoundException($"{packageDir} does not exist.");
             }
@@ -140,6 +140,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
                     fileSystem.CopyDirectory(dir, target);
                 }
             }
+        }
+
+        private static string GeneratePathToPackage(string directory, IDependencyRequirement requirement) {
+            var path = string.Equals(requirement.Group, Aderant.Build.Constants.MainDependencyGroup, StringComparison.OrdinalIgnoreCase) ? "" : requirement.Group;
+            return Path.Combine(directory, "packages", path, requirement.Name);
         }
 
         /// <summary>

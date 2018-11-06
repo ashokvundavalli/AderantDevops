@@ -3,6 +3,31 @@ using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.DependencyResolver {
     internal class DependencyRequirement : IDependencyRequirement, IEquatable<DependencyRequirement> {
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((DependencyRequirement)obj);
+        }
+
+        public override int GetHashCode() {
+            unchecked {
+                var hashCode = (@group != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(@group) : 0);
+                hashCode = (hashCode * 397) ^ (Name != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(Name) : 0);
+                hashCode = (hashCode * 397) ^ (VersionRequirement != null ? VersionRequirement.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+
         private string group;
 
         protected DependencyRequirement() {
@@ -76,32 +101,10 @@ namespace Aderant.Build.DependencyResolver {
                 return true;
             }
 
-            return Source == other.Source && string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase) && Equals(VersionRequirement, other.VersionRequirement);
-        }
-
-        public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj)) {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj)) {
-                return true;
-            }
-
-            if (obj.GetType() != this.GetType()) {
-                return false;
-            }
-
-            return Equals((DependencyRequirement)obj);
-        }
-
-        public override int GetHashCode() {
-            unchecked {
-                var hashCode = (int)Source;
-                hashCode = (hashCode * 397) ^ (Name != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(Name) : 0);
-                hashCode = (hashCode * 397) ^ (VersionRequirement != null ? VersionRequirement.GetHashCode() : 0);
-                return hashCode;
-            }
+            return Source == other.Source
+                   && string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(@group, other.@group, StringComparison.OrdinalIgnoreCase)
+                   && Equals(VersionRequirement, other.VersionRequirement);
         }
 
         public static bool operator ==(DependencyRequirement left, DependencyRequirement right) {

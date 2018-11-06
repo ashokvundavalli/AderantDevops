@@ -107,8 +107,6 @@ namespace Aderant.Build.DependencyResolver {
                         }
                     }
                 }
-
-                AddModules(requirements, file);
             }
         }
 
@@ -131,36 +129,38 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void AddModules(IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
-            foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
+            foreach (var requirement in requirements.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)) {
                 bool hasCustomVersion = false;
                 string version = string.Empty;
 
-                if (referencedModule.VersionRequirement != null && !string.IsNullOrWhiteSpace(referencedModule.VersionRequirement.ConstraintExpression)) {
+                if (requirement.VersionRequirement != null && !string.IsNullOrWhiteSpace(requirement.VersionRequirement.ConstraintExpression)) {
                     hasCustomVersion = true;
-                    version = referencedModule.VersionRequirement.ConstraintExpression;
+                    version = requirement.VersionRequirement.ConstraintExpression;
                 }
 
-                Domain.PackageName name = Domain.PackageName(referencedModule.Name);
+                var packageName = Domain.PackageName(requirement.Name);
+                var groupName = Domain.GroupName(requirement.Group);
 
-                if (referencedModule.ReplaceVersionConstraint && hasCustomVersion) {
+                if (requirement.ReplaceVersionConstraint && hasCustomVersion) {
                     try {
-                        file = file.Remove(Domain.GroupName(Constants.MainDependencyGroup), name);
+                        file = file.Remove(Domain.GroupName(Constants.MainDependencyGroup), packageName);
                     } catch {
                     }
                 }
+                
+                if (!file.HasPackage(groupName, packageName)) {
+                    version = RemoveVersionRange(requirement.Name, version);
 
-                if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(name))) {
-                    version = RemoveVersionRange(referencedModule.Name, version);
                     try {
-                        file = file.Add(Domain.GroupName(referencedModule.Group), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
+                        file = file.Add(Domain.GroupName(requirement.Group), Domain.PackageName(requirement.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                     } catch (Exception ex) {
-                        if (referencedModule.VersionRequirement != null && referencedModule.VersionRequirement.OriginatingFile != null) {
+                        if (requirement.VersionRequirement != null && requirement.VersionRequirement.OriginatingFile != null) {
                             string message = ex.Message;
                             if (!message.EndsWith(".")) {
                                 message += ".";
                             }
 
-                            throw new InvalidOperationException(message + " The source file which caused the error was " + referencedModule.VersionRequirement.OriginatingFile);
+                            throw new InvalidOperationException(message + " The source file which caused the error was " + requirement.VersionRequirement.OriginatingFile);
                         }
                         throw;
                     }

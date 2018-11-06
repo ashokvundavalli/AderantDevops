@@ -43,7 +43,7 @@ namespace Aderant.Build.DependencyResolver {
             List<IDependencyRequirement> distinctRequirements = requirements.Distinct().ToList();
 
             logger.Info("Required inputs: {0}", string.Join(",", distinctRequirements.Select(s => s.Name)));
-
+            
             foreach (IDependencyResolver resolver in resolvers) {
                 if (resolver.ReplicationExplicitlyDisabled != null) {
                     resolverRequest.ReplicationExplicitlyDisabled = true;
