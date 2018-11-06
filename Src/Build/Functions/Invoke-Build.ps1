@@ -88,7 +88,8 @@ function CreateToolArgumentString($context, $remainingArgs) {
         if ($MaxCpuCount -gt 0) {            
             $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
-            $set.Add("/m:" + [Math]::Max(1, [System.Environment]::ProcessorCount - 2).ToString())
+            $numberOfCores = (Get-WmiObject -Class win32_Processor).NumberOfCores
+            $set.Add("/m:" + [Math]::Max(1, $numberOfCores).ToString())
         }
 
         if ($NoTextTemplateTransform.IsPresent) {

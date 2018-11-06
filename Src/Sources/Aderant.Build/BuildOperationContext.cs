@@ -394,7 +394,6 @@ namespace Aderant.Build {
             set {
                 if (value != null) {
                     if (Path.IsPathRooted(value)) {
-                        System.Diagnostics.Debugger.Launch();
                         throw new InvalidOperationException("Corrupted model. Directory must not be rooted.");
                     }
                 }

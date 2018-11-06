@@ -93,7 +93,7 @@
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
       <ExcludePaths Include="TempTransform\" />
-      <ExcludePaths Include="Libraries.Entities.GeneralLedger\" />
+      <ExcludePaths Include="C:\Source\ExpertSuite\GeneralLedger" />
       <ExcludePaths Include="Tests.Load\" />
       <ExcludePaths Include="Tests.Query\" />
       <!--bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Exclude Web.Workflow,Build.T4Task,Libraries.SoftwareFactory,Applications.Rates,Tests.Query -RemainingArgs /p:UseSharedDependencyDirectory=true-->

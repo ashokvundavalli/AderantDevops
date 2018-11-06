@@ -21,20 +21,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Topologically sort artifacts to determine a reasonable order in which they must be built.
         /// </summary>
         public List<IDependable> GetDependencyOrder() {
-            var queue = TopologicalSort.Sort<IDependable>(
-                artifacts,
-                dep => {
-                    var artifact = dep as IArtifact;
+            return artifacts.TopologicalSort<IDependable>(
+                dependable => {
+                    var artifact = dependable as IArtifact;
                     if (artifact != null) {
                         var dependencies = artifact.GetDependencies();
 
                         return dependencies;
                     }
-
                     return Enumerable.Empty<IDependable>();
-                });
-
-            return queue.ToList();
+                }).ToList();
         }
 
         public List<List<IDependable>> GetBuildGroups(IReadOnlyCollection<IDependable> projects) {

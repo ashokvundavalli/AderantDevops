@@ -48,5 +48,21 @@ namespace UnitTest.Build {
             Assert.AreEqual(null, dependencyRequirement.VersionRequirement);
             Assert.AreEqual(dependencyRequirement.VersionRequirement, null);
         }
+
+        [TestMethod]
+        public void When_not_equal_equality_considers_group() {
+            var dependencyRequirement1 = DependencyRequirement.Create("Foo", "A");
+            var dependencyRequirement2 = DependencyRequirement.Create("Foo", "B");
+
+            Assert.AreNotEqual(dependencyRequirement1, dependencyRequirement2);
+        }
+
+        [TestMethod]
+        public void When_equal_equality_considers_group() {
+            var dependencyRequirement1 = DependencyRequirement.Create("Foo", "A");
+            var dependencyRequirement2 = DependencyRequirement.Create("Foo", "A");
+
+            Assert.AreEqual(dependencyRequirement1, dependencyRequirement2);
+        }
     }
 }

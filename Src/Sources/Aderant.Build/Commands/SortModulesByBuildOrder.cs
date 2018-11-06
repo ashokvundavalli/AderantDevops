@@ -4,6 +4,10 @@ using System.Management.Automation;
 using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Commands {
+    /// <summary>
+    /// TODO: Restore
+    /// </summary>
+    /// <seealso cref="System.Management.Automation.PSCmdlet" />
     [Cmdlet("Sort", "ExpertModulesByBuildOrder")]
     public class SortModulesByBuildOrder : PSCmdlet {
 
@@ -20,33 +24,6 @@ namespace Aderant.Build.Commands {
         public string ProductManifestPath { get; set; }
 
         protected override void ProcessRecord() {
-            if (Modules == null && ModuleNames == null) {
-                throw new ArgumentException("Must specify Modules or ModuleNames");
-            }
-
-            ExpertManifest manifest = ExpertManifest.Load(ProductManifestPath);
-            manifest.ModulesDirectory = BranchPath;
-
-            DependencyBuilder builder = new DependencyBuilder(manifest);
-
-            if (Modules == null) {
-                Modules = (from module in builder.GetAllModules()
-                           where ModuleNames.Contains(module.Name, StringComparer.OrdinalIgnoreCase)
-                           select module).ToArray();
-            }
-
-            if (ModuleNames != null && ModuleNames.Length == 1) {
-                WriteObject(Modules.FirstOrDefault(m => m.Name.Equals(ModuleNames[0], StringComparison.OrdinalIgnoreCase)), true);
-                return;
-            }
-
-            var modules = (from build in builder.GetTree(true)
-                           from module in build.Modules
-                           where Modules.Contains(module)
-                           select new {Module = module,
-                               BuildNumber = build.Order}).OrderBy(x => x.BuildNumber).Select(x => x.Module).ToArray();
-
-            WriteObject(modules, true);
         }
     }
 }

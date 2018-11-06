@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Aderant.Build.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build {
@@ -41,7 +42,7 @@ namespace UnitTest.Build {
         }
 
         private void AssertSort(FooType[] fooTypes, params string[] expectedSequence) {
-            var result = Aderant.Build.Utilities.TopologicalSort.Sort(fooTypes, sort => sort.GetDependencies(), sort => (string)sort);
+            var result = TopologicalSorter.TopologicalSort(fooTypes, sort => sort.GetDependencies().Select(s =>(FooType)s));
 
             var sequence = string.Join("", result);
 

@@ -10,10 +10,6 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Tasks {
     public sealed class GenerateBuildPlan : BuildOperationContextTask {
 
-        public ITaskItem[] ModulesInBuild { get; set; }
-
-        public string BuildFrom { get; set; }
-
         [Required]
         public string ModulesDirectory { get; set; }
 

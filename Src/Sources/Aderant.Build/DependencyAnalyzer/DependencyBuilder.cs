@@ -382,41 +382,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <returns></returns>
         /// <exception cref="CircularDependencyException">Whe a a circular dependency between following modules is detected</exception>
         public IEnumerable<Build> GetTree(bool restrictToModulesInBranch) {
-            IEnumerable<ModuleDependency> dependencies = GetModuleDependencies();
-
-            if (restrictToModulesInBranch) {
-                dependencies = dependencies.Where(dep => dep.Branch == null || dep.Branch.Equals(moduleProvider.Branch, StringComparison.OrdinalIgnoreCase));
-            }
-
-            TopologicalSort<ExpertModule> sort = new TopologicalSort<ExpertModule>();
-            foreach (ModuleDependency module in dependencies) {
-                if (module.Provider.ModuleType == ModuleType.ThirdParty) {
-                    continue;
-                }
-
-                // Filter by targets in our branch - if we have the target locally it means we can build it
-                // so is therefore is allowed to be included in the dependency tree.
-                // If doesn't exist then it must be an external module, so it just gets given to us during the build process and we don't need an edge for 
-                // the module
-
-                if (moduleProvider.IsAvailable(module.Provider.Name) == ModuleAvailability.Availabile) {
-                    if (module.Provider.ModuleType != ModuleType.ThirdParty && !module.Provider.Equals(module.Consumer)) {
-                        sort.Edge(module.Consumer, module.Provider);
-                    } else {
-                        // No dependencies within this branch -- edge
-                        sort.Edge(module.Consumer);
-                    }
-                } else {
-                    sort.Edge(module.Consumer);
-                }
-            }
-
-            Queue<ExpertModule> sortedQueue;
-            if (!sort.Sort(out sortedQueue)) {
-                throw new CircularDependencyException(sortedQueue.Select(s => s.Name));
-            }
-
-            return GetBuildGroups(sortedQueue, dependencies);
+            return null;
         }
 
         private static IEnumerable<Build> GetBuildGroups(Queue<ExpertModule> sortedQueue, IEnumerable<ModuleDependency> dependencies) {
