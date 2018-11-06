@@ -47,7 +47,6 @@ namespace Aderant.Build.Tasks {
                 if (!Directory.Exists(Target)) {
                     throw new InvalidOperationException(string.Format("Target: {0} does not exist", Target));
                 }
-                Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
 
                 DirectoryInfo info = new DirectoryInfo(Link);
                 if (FailIfLinkIsDirectoryWithContent && info.Exists && !info.Attributes.HasFlag(FileAttributes.ReparsePoint)) {
@@ -58,9 +57,11 @@ namespace Aderant.Build.Tasks {
                 }
 
                 if (info.Exists) {
+                    Log.LogMessage("Deleting directory: " + info.FullName);
                     info.Delete(true);
                 }
 
+                Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
                 if (!NativeMethods.CreateSymbolicLink(Link, Target, (uint)link)) {
                     Log.LogError($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
                 }
