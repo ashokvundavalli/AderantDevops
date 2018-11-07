@@ -165,6 +165,8 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     if ($process.ProcessName -eq "devenv") {
         Write-Output "PowerShell was started from Visual Studio assuming you wish to debug"
         $debugMode = $true
+    } else {
+        $process = $null
     }
      
     #     As part of our builds, quite a few projects copy files to the binaries directory or other locations.  
@@ -200,15 +202,15 @@ function Run-MSBuild([string]$projectFilePath, [string]$buildArgs = "", [string]
     #     and thus a single node should be processing the source items of a project at any given time.      
 
     $environmentBlock = @{"MSBUILDALWAYSRETRY" = "1"}
-
-    # TODO: Fix hard code
+        
     if ([System.Diagnostics.Debugger]::IsAttached -or $debugMode) {
-        $buildArgs = $buildArgs.Replace("/m", "")
-        $buildArgs = "$buildArgs /p:WaitForDebugger=true"
-        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock $process 
-    } else {
-        Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock  
-    }
+        $buildArgs = $buildArgs -ireplace "\/m:([^\s]+)","" #replace /m:<n> arg. This makes debugging easier as only 1 process is spawned
+        $buildArgs = "$buildArgs /p:WaitForDebugger=true"        
+    } 
 
-    $process.Dispose()
+    Exec-Console "C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" "$projectFilePath $buildArgs" $environmentBlock $process
+
+    if ($process) {
+        $process.Dispose()
+    }
 }

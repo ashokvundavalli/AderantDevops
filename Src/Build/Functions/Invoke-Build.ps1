@@ -89,7 +89,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
             $numberOfCores = (Get-WmiObject -Class win32_Processor).NumberOfCores
-            $set.Add("/m:" + [Math]::Max(1, $numberOfCores).ToString())
+            $set.Add("/m:" + ([Math]::Max(1, $numberOfCores)))
         }
 
         if ($NoTextTemplateTransform.IsPresent) {
@@ -287,7 +287,7 @@ function AssignSwitches() {
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
-        $switches.WhatIf = $true
+        $Target = "CreatePlan"
     }
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {

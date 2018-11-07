@@ -504,9 +504,6 @@ namespace Aderant.Build {
         public bool Release { get; set; }
 
         [DataMember]
-        public bool WhatIf { get; set; }
-
-        [DataMember]
         public bool Resume { get; set; }
 
         [DataMember]
