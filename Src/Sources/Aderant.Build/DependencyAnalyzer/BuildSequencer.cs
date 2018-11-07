@@ -361,7 +361,9 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all the dirty projects due to user's modification.
-            var dirtyProjects = visualStudioProjects.Where(x => (x as ConfiguredProject)?.IsDirty == true).Select(x => x.Id).ToList();
+            var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
+          
+
             HashSet<string> h = new HashSet<string>();
             h.UnionWith(dirtyProjects);
 
@@ -384,6 +386,22 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return filteredProjects;
+        }
+
+        private static bool IncludeProject(bool desktopBuild, IDependable x) {
+            var configuredProject = x as ConfiguredProject;
+
+            if (desktopBuild) {
+                if (configuredProject != null) {
+                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags == BuildReasonTypes.BuildTreeNotFound) {
+                        return false;
+                    }
+
+                    return configuredProject.IsDirty;
+                }
+            }
+
+            return configuredProject?.IsDirty == true;
         }
 
         private void ApplyExtensibilityImposition(ExtensibilityImposition extensibilityImposition, List<ConfiguredProject> visualStudioProjects) {
@@ -466,9 +484,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 projectsToFind = newSearchList;
             }
         }
-    }
-
-    internal interface IFoo {
     }
 
     [Flags]
