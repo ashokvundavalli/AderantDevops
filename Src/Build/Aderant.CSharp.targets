@@ -341,7 +341,8 @@
     <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')" />
 
     <Copy
-      SourceFiles="@(IntermediateAssembly)"
+      SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
+      Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
       DestinationFolder="$(AlternativeOutputDirectory)"
       UseHardlinksIfPossible="true"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"

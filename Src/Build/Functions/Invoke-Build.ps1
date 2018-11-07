@@ -1,13 +1,50 @@
 ﻿[string]$indent1 = "  "
 [string]$indent2 = "        "
 
-$branchConfigPath = $null
+function Get-Branch {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$root
+    )
 
-function GetBuildConfigDirectory {
-    if (-not [string]::IsNullOrWhiteSpace($branchConfigPath)) {
-        If (Test-Path -Path $branchConfigPath) {
-            [string]$manifest = Join-Path -Path $branchConfigPath -ChildPath 'ExpertManifest.xml'
-            [string]$config = Join-Path -Path $branchConfigPath -ChildPath 'BranchConfig.xml'
+    begin {
+        [string]$rspFile = [System.IO.Path]::Combine($root, "Build\TFSBuild.rsp")
+        # ToDo: Change 'monotest' to 'master' once the monotest has been merged.
+        [string]$branch = 'monotest'
+    }
+
+    process {
+        if (Test-Path -Path $rspFile) {
+            [string[]]$content = Get-Content -Path $rspFile
+
+            [string[]]$variable = $content | Where-Object { $_ -match '/p:OriginBranch=' }
+
+            if ($null -ne $variable -and $variable.Length -gt 0) {
+                return $branch = $variable[0].Split('=')[1]
+            }
+        }
+
+        return $branch
+    }
+}
+
+function Get-BuildManifest {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$manifest,
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$branch
+    )
+
+    process {
+        return (Invoke-WebRequest -Uri "http://tfs.$($env:USERDNSDOMAIN.ToLower()):8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/316b9ba9-3a49-47b2-992e-a9a2a2835b3f/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&path=%2FBuild%2F$($manifest)&version=GB$($branch)&contentOnly=false&__v=5" -UseBasicParsing -UseDefaultCredentials).Content
+    }
+}
+
+function Get-BuildDirectory {
+    if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        If (Test-Path -Path $global:BranchConfigPath) {
+            [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+            [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
 
             if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
                 return
@@ -15,17 +52,24 @@ function GetBuildConfigDirectory {
         }
     }
 
-    $branchConfigPath = Read-Host -Prompt 'Supply a path to the ExpertManifest.xml and BranchConfig.xml files'
-    GetBuildConfigDirectory
+    $global:BranchConfigPath = Read-Host -Prompt 'Supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
+    Get-BuildDirectory
 }
 
-function ApplyBranchConfig($context, [string]$root) {
+function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownload) {
     $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
 
     [xml]$config = $null
-    if (-not (Test-Path -Path $configPath)) {        
-        Get-BuildDirectory
-        $config = Get-Content -Raw -LiteralPath (Join-Path -Path $branchConfigPath -ChildPath "BranchConfig.xml")        
+    if (-not (Test-Path -Path $configPath)) {
+        if (-not $EnableConfigDownload.IsPresent) {
+            Get-BuildDirectory
+            $config = Get-Content -Raw -LiteralPath (Join-Path -Path $global:BranchConfigPath -ChildPath "BranchConfig.xml")
+        } else {
+            # ToDo: Change 'monotest' to 'master' once the BranchConfig.xml file exists.
+            [string]$branch = Get-Branch -root $root
+
+            $config = Get-BuildManifest -manifest 'BranchConfig.xml' -branch $branch
+        }
     } else {
         $config = Get-Content -Raw -LiteralPath $configPath
     }
@@ -36,13 +80,39 @@ function ApplyBranchConfig($context, [string]$root) {
     $context.DropLocationInfo.XamlBuildDropLocation = $config.BranchConfig.DropLocations.XamlBuildDropLocation
 }
 
-function FindProductManifest($context, [string]$root) {
+function Get-BuildDirectory {
+    if (-not [string]::IsNullOrWhiteSpace($global:BranchConfigPath)) {
+        If (Test-Path -Path $global:BranchConfigPath) {
+            [string]$manifest = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+            [string]$config = Join-Path -Path $global:BranchConfigPath -ChildPath 'BranchConfig.xml'
+
+            if ((Test-Path -Path $manifest) -and (Test-Path -Path $config)) {
+                return
+            }
+        }
+    }
+
+    $global:BranchConfigPath = Read-Host -Prompt 'Please supply a valid path to the ExpertManifest.xml and BranchConfig.xml files'
+    Get-BuildDirectory
+}
+
+function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownload) {
     [string]$configPath = [System.IO.Path]::Combine($root, 'Build\ExpertManifest.xml')
 
-    if (-not (Test-Path -Path $configPath)) {        
-        Get-BuildDirectory
-        $context.ProductManifestPath = Join-Path -Path $branchConfigPath -ChildPath 'ExpertManifest.xml'
-        return
+    if (-not (Test-Path -Path $configPath)) {
+        if (-not $EnableConfigDownload.IsPresent) {
+            Get-BuildDirectory
+
+            $context.ProductManifestPath = Join-Path -Path $global:BranchConfigPath -ChildPath 'ExpertManifest.xml'
+            return
+        }
+
+        [string]$branch = Get-Branch -root $root
+
+        $config = Get-BuildManifest -manifest 'ExpertManifest.xml' -branch $branch
+        $temp = New-TemporaryFile
+        $config | Out-File -File $temp.FullName -Encoding 'UTF8'
+        $configPath = $temp.FullName
     }
 
     $context.ProductManifestPath = $configPath
@@ -410,8 +480,8 @@ Should not be used as it prevents incremental builds which increases build times
         }
 
         AssignSwitches
-        ApplyBranchConfig $context $root
-        FindProductManifest $context $root
+        ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
+        FindProductManifest -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
 
         if (-not $NoBuildCache.IsPresent) {
             GetBuildStateMetadata $context
