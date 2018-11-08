@@ -175,7 +175,7 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         internal DependencyState<IDependencyRequirement> GetOrAdd(IDependencyRequirement requirement) {
-            DependencyState<IDependencyRequirement> dependency = dependencies.FirstOrDefault(s => Equals(s.Item.Name, requirement.Name));
+            DependencyState<IDependencyRequirement> dependency = dependencies.FirstOrDefault(s => requirement.Equals(s.Item));
 
             if (dependency == null) {
                 dependency = new DependencyState<IDependencyRequirement>();

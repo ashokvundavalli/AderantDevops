@@ -152,12 +152,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("Target", value => expertModule.Target = value);
 
-            SetPropertyValue("PackageType", value => ParseEnum<PackageType>(value));
-
             SetPropertyValue("ReplicateToDependencies", value => expertModule.ReplicateToDependencies = ToBoolean(value));
 
-            SetPropertyValue("GetAction", value => {
+            SetPropertyValue("DependencyGroup", value => expertModule.DependencyGroup = value);
 
+            SetPropertyValue("GetAction", value => {
                 if (!string.IsNullOrEmpty(value)) {
                     expertModule.GetAction = (GetAction)Enum.Parse(typeof(GetAction), value.Replace("_", "-"), true);
                 }
@@ -200,9 +199,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
     }
-
-    public enum PackageType {
-        Binaries,
-        Side,
-    }
+  
 }

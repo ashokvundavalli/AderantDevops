@@ -58,6 +58,20 @@ ExcludeFromPackaging='true' />"));
         }
 
         [TestMethod]
+        public void Default_dependency_group_is_main() {
+            var module = new ExpertModule();
+
+            Assert.AreEqual("Main", module.DependencyGroup);
+        }
+
+        [TestMethod]
+        public void Mapping_of_dependency_group() {
+            var module = new ExpertModule(XElement.Parse(@"<Module Name='UIAutomation.Framework' DependencyGroup='Bar' />"));
+
+            Assert.AreEqual("Bar", module.DependencyGroup);
+        }
+
+        [TestMethod]
         [DeploymentItem("Resources\\BadBuildLog.txt")]
         [DeploymentItem("Resources\\GoodBuildLog.txt")]
         public void CheckLog_returns_true_for_log_with_no_errors() {
@@ -301,4 +315,5 @@ ExcludeFromPackaging='true' />"));
             Assert.IsTrue("Marketing.Help".IsOneOf(ModuleType.Help));
         }
     }
+
 }
