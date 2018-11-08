@@ -92,9 +92,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return false;
             }
 
-            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase) 
-                   && VersionRequirement == other.VersionRequirement
-                   && string.Equals(DependencyGroup, other.DependencyGroup, StringComparison.OrdinalIgnoreCase);
+            if (Char.IsUpper(Name[0]) && char.IsUpper(other.name[0])) {
+                if (Name[0] != other.name[0]) {
+                    return false;
+                }
+            }
+
+            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
 
         private static readonly Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
@@ -183,6 +187,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public bool ReplicateToDependencies { get; set; } = true;
 
+        public PackageType PackageRootRelativeDirectory { get; set; }
+
         internal VersionRequirement VersionRequirement {
             get {
                 if (customAttributes != null) {
@@ -194,12 +200,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 return null;
             }
-        }
-
-        public string DependencyGroup { get; set; } = BuildConstants.MainDependencyGroup;
-
-        internal bool IsInDefaultDependencyGroup {
-            get { return string.IsNullOrWhiteSpace(DependencyGroup) || string.Equals(DependencyGroup, BuildConstants.MainDependencyGroup); }
         }
 
         /// <summary>

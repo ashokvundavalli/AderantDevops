@@ -158,7 +158,9 @@ begin {
     function RetreiveModules() {
         [CmdletBinding()]
         param([string]$productManifestPath, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber) 
-                
+
+        [string[]]$modules = $modules | Select-Object -ExpandProperty Name
+
         # only do this for a CI build
         if ($teamProject -and $tfvcBranchName -and $tfvcSourceGetVersion) {
 

@@ -47,30 +47,6 @@ namespace UnitTest.Build {
             Assert.AreEqual(context.ProductDirectory, resolvePackageRelativeDirectory);
         }
 
-        [TestMethod]
-        public void Target_attribute__is_used_for_target() {
-            var module = ExpertModule.Create(XElement.Parse(@"<Module Name=""Aderant.Web.Core"" GetAction=""NuGet"" Target=""TheTarget"" />"));
-
-            var context = new ProductAssemblyContext();
-            context.ProductDirectory = @"C:\a\b";
-
-            var resolvePackageRelativeDirectory = context.ResolvePackageRelativeDirectory(module);
-
-            Assert.AreEqual(@"C:\a\b\TheTarget", resolvePackageRelativeDirectory);
-        }
-
-        [TestMethod]
-        public void DependencyGroup_attribute_is_used_for_target() {
-            var module = ExpertModule.Create(XElement.Parse(@"<Module Name=""Aderant.Web.Core"" GetAction=""NuGet"" DependencyGroup=""Group1"" />"));
-
-            var context = new ProductAssemblyContext();
-            context.ProductDirectory = @"C:\a\b";
-
-            var resolvePackageRelativeDirectory = context.ResolvePackageRelativeDirectory(module);
-
-            Assert.AreEqual(@"C:\a\b\Group1", resolvePackageRelativeDirectory);
-        }
-
 
         [TestMethod]
         public void Root_directory_is_substituted_for_replacement_token() {

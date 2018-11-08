@@ -20,14 +20,10 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var pm = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
-                    var groupList = pm.FindGroups();
+                    var requirements = pm.GetDependencies();
 
-                    foreach (string groupName in groupList) {
-                        var requirements = pm.GetDependencies(groupName);
-                        foreach (var item in requirements) {
-                            var requirement = DependencyRequirement.Create(item.Key, groupName, item.Value);
-                            yield return requirement;
-                        }
+                    foreach (var item in requirements) {
+                        yield return DependencyRequirement.Create(item.Key, item.Value);
                     }
                 }
             }
@@ -71,11 +67,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void PackageRestore(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             using (var manager = new PackageManager(fileSystem, logger)) {
                 manager.Add(requirements);
-
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);
                 }
-
                 manager.Restore(resolverRequest.Force);
 
                 foreach (var requirement in requirements) {

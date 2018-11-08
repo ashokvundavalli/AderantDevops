@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Aderant.Build.Logging;
@@ -12,8 +11,7 @@ using Paket;
 
 namespace Aderant.Build.DependencyResolver {
     internal class PackageManager : IDisposable {
-        private readonly FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
-
+        private FSharpHandler<Paket.Logging.Trace> logMessageDelegate;
         private readonly ILogger logger;
         public IFileSystem2 FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
@@ -68,38 +66,37 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public void Add(IEnumerable<IDependencyRequirement> requirements) {
-            DependenciesFile file = dependencies.GetDependenciesFile();
-            FileSystem.MakeFileWritable(file.FileName);
-            AddModules(requirements, file);
+            var file = dependencies.GetDependenciesFile();
 
-            file = dependencies.GetDependenciesFile();
+            FileSystem.MakeFileWritable(file.FileName);
 
             string[] lines = file.Lines;
 
-            if (!lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
-                for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
-                    }
-                }
-            } else if (lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
+            if (!lines.Contains(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparer.OrdinalIgnoreCase) || !lines.Contains(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
                 for (int i = 0; i < lines.Length; i++) {
                     if (lines[i].IndexOf(string.Concat("source ", BuildConstants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        if (lines[i + 1].IndexOf(string.Concat("source ", BuildConstants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
+                        if (lines[i + 1].IndexOf(string.Concat("source " + BuildConstants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
                             lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                            file.Save();
                         }
+
+                        break;
+                    }
+
+                    if (lines[i].IndexOf(string.Concat("source ", BuildConstants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
+                        lines[i] = string.Concat("source ", BuildConstants.PackageServerUrl, Environment.NewLine, "source ", BuildConstants.DatabasePackageUri);
+                        file.Save();
+                        break;
                     }
                 }
             }
 
-            logger.Debug(string.Join(Environment.NewLine, file.Lines));
-
-            file.Save();
+            AddModules(requirements, file);
         }
 
         // Paket is unable to write version ranges to file.
         private string RemoveVersionRange(string name, string version) {
-            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")) {
+            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")){
                 return version;
             }
 
@@ -116,38 +113,36 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private void AddModules(IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
-            foreach (var requirement in requirements.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)) {
+            foreach (var referencedModule in requirements.OrderBy(m => m.Name)) {
                 bool hasCustomVersion = false;
                 string version = string.Empty;
 
-                if (requirement.VersionRequirement != null && !string.IsNullOrWhiteSpace(requirement.VersionRequirement.ConstraintExpression)) {
+                if (referencedModule.VersionRequirement != null) {
                     hasCustomVersion = true;
-                    version = requirement.VersionRequirement.ConstraintExpression;
+                    version = referencedModule.VersionRequirement.ConstraintExpression ?? ">= 0 build ci rc unstable";
                 }
+                
+                var name = Domain.PackageName(referencedModule.Name);
 
-                var packageName = Domain.PackageName(requirement.Name);
-                var groupName = Domain.GroupName(requirement.Group);
-
-                if (requirement.ReplaceVersionConstraint && hasCustomVersion) {
+                if (referencedModule.ReplaceVersionConstraint && hasCustomVersion) {
                     try {
-                        file = file.Remove(Domain.GroupName(BuildConstants.MainDependencyGroup), packageName);
+                        file = file.Remove(Domain.GroupName(BuildConstants.MainDependencyGroup), name);
                     } catch {
                     }
                 }
 
-                if (!file.HasPackage(groupName, packageName)) {
-                    version = RemoveVersionRange(requirement.Name, version);
-
+                if (string.IsNullOrEmpty(file.CheckIfPackageExistsInAnyGroup(name))) {
+                    version = RemoveVersionRange(referencedModule.Name, version);
                     try {
-                        file = file.Add(Domain.GroupName(requirement.Group), Domain.PackageName(requirement.Name), version, FSharpOption<Requirements.InstallSettings>.None);
+                        file = file.Add(Domain.GroupName(BuildConstants.MainDependencyGroup), Domain.PackageName(referencedModule.Name), version, FSharpOption<Requirements.InstallSettings>.None);
                     } catch (Exception ex) {
-                        if (requirement.VersionRequirement != null && requirement.VersionRequirement.OriginatingFile != null) {
+                        if (referencedModule.VersionRequirement != null && referencedModule.VersionRequirement.OriginatingFile != null) {
                             string message = ex.Message;
                             if (!message.EndsWith(".")) {
                                 message += ".";
                             }
 
-                            throw new InvalidOperationException(message + " The source file which caused the error was " + requirement.VersionRequirement.OriginatingFile);
+                            throw new InvalidOperationException(message + " The source file which caused the error was " + referencedModule.VersionRequirement.OriginatingFile);
                         }
                         throw;
                     }
@@ -182,23 +177,15 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IDictionary<string, VersionRequirement> GetDependencies() {
-            return GetDependencies(BuildConstants.MainDependencyGroup);
-        }
-
-        public IDictionary<string, VersionRequirement> GetDependencies(string groupName) {
             Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
             var file = dependenciesFile.GetDependenciesFile();
 
-            try {
-                FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Domain.GroupName(groupName));
-                return requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
-            } catch (Exception e) {
-                Console.WriteLine(e);
-                throw;
-            }
+            FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Domain.GroupName(BuildConstants.MainDependencyGroup));
+
+            return requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
         }
 
-        private static readonly Regex invalidVersionPattern = new Regex("^0[.]0[.]0-\\w*");
+        private static Regex invalidVersionPattern = new Regex("0[.]0[.]0-\\w*");
         private VersionRequirement NewRequirement(KeyValuePair<Domain.PackageName, Paket.VersionRequirement> pair, string filePath) {
             List<string> prereleases = new List<string>();
 
@@ -223,23 +210,17 @@ namespace Aderant.Build.DependencyResolver {
             string expression = pair.Value.ToString();
 
             if (invalidVersionPattern.IsMatch(pair.Value.FormatInNuGetSyntax())) {
-                logger.Error($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified? Please fix the version.");
+                logger.Warning($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified? This expression will be converted into >= 0");
                 // Dirty fix, if we have a invalid requirement pattern that has no operators we need to convert this to a 
                 // valid paket pattern otherwise a parse exception will occur. However the paket API is dreadful and does not implement ToString() for "min version"
                 // so I cheat and check if the NuGet format of the  requirement as this seems to be a reliable marker that we need to fudge the input data.
-                throw new Exception("Version format is incorrect.");
+                expression = ">= 0";
             }
 
             return new VersionRequirement {
                 OriginatingFile = filePath,
                 ConstraintExpression = $"{expression} {string.Join(" ", prereleases)}",
             };
-        }
-
-        public IEnumerable<string> FindGroups() {
-            Dependencies dependenciesFile = Dependencies.Locate(FileSystem.Root);
-            var file = dependenciesFile.GetDependenciesFile();
-            return file.Groups.Select(s => s.Key.Item1);
         }
     }
 }

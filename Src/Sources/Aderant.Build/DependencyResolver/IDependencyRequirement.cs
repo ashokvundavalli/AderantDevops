@@ -8,12 +8,6 @@ namespace Aderant.Build.DependencyResolver {
         /// <value>The name.</value>
         string Name { get; }
 
-        /// <summary>
-        /// Gets the group name of the requirement (module name or package name).
-        /// </summary>
-        /// <value>The group name.</value>
-        string Group { get; }
-        
         VersionRequirement VersionRequirement { get; }
 
         /// <summary>

@@ -102,7 +102,6 @@
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="ModuleWorkspaceTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
-    <Compile Include="DependencyResolver\PackageManagerTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\NuspecTests.cs" />
     <Compile Include="Packaging\NuspecTokenProcessorTests.cs" />
