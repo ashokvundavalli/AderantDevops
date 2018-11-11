@@ -1,0 +1,3 @@
+del-temp-files.bat - Script to delete files from service.tfsbuild.ap temp folder. These files accumulate over time and need to be cleaned out periodically.
+make-free-space* - "Intelligent" script to clean out work folders used by build agents when they become full, also covers nuget folders. See script for more comments.
+sync_build_status - This script identifies builds which show as in progress but aren't, and stops them
