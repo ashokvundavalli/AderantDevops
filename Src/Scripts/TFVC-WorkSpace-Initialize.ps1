@@ -15,6 +15,8 @@ if ($null -eq $workspaceName) {
     $workspaceName = [System.Guid]::NewGuid().Guid
 }
 
+[string]$serverPath = "$/ExpertSuite/$($branch.Replace('\', '/'))/Modules"
+
 if (-not (Test-Path -Path $workfolder)) {
     New-Item -Path $workfolder -ItemType Directory -Force
 }
@@ -22,13 +24,16 @@ if (-not (Test-Path -Path $workfolder)) {
 Push-Location -Path $workfolder
 
 try {
+    Write-Output "Mapping workspace: $workspaceName;$env:USERNAME"
     TF.exe vc workspace /new "$workspaceName;$env:USERNAME" /collection:$tfsUrl /noprompt
-    TF.exe vc workfold /map "$/ExpertSuite/$($branch.Replace('\', '/'))/Modules" $workfolder /collection:$tfsUrl /workspace:$workspaceName
+    Write-Output "Using workfolder: $workfolder"
+    TF.exe vc workfold /map $serverPath $workfolder /collection:$tfsUrl /workspace:$workspaceName
 
-    foreach ($path in $paths) {
-        TF.exe vc get $paths /recurse /force /noprompt
+    foreach ($module in $modules) {
+        TF.exe vc get "$serverPath/$module" /recursive /force /noprompt
     }
 } finally {
+    Write-Output "Removing workspace mapping: $workspaceName;$env:USERNAME"
     TF.exe vc workspace /delete "$workspaceName;$env:USERNAME" /noprompt
 }
 
