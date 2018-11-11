@@ -20,10 +20,15 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
                 using (var pm = new PackageManager(new PhysicalFileSystem(moduleDirectory), logger)) {
-                    var requirements = pm.GetDependencies();
+                    var groupList = pm.FindGroups();
 
-                    foreach (var item in requirements) {
-                        yield return DependencyRequirement.Create(item.Key, item.Value);
+                    foreach (string groupName in groupList) {
+                        var requirements = pm.GetDependencies(groupName);
+                        foreach (var item in requirements) {
+                            var requirement = DependencyRequirement.Create(item.Key, groupName, item.Value);
+                            requirement.ReplicateToDependencies = true;
+                            yield return requirement;
+                        }
                     }
                 }
             }
@@ -67,9 +72,11 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void PackageRestore(ResolverRequest resolverRequest, IFileSystem2 fileSystem, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             using (var manager = new PackageManager(fileSystem, logger)) {
                 manager.Add(requirements);
+
                 if (resolverRequest.Update) {
                     manager.Update(resolverRequest.Force);
                 }
+
                 manager.Restore(resolverRequest.Force);
 
                 foreach (var requirement in requirements) {
@@ -77,11 +84,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                     resolverRequest.Resolved(requirement, this);
 
-                    if (requirement.ReplicateToDependencies.HasValue) {
-                        // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
-                        if (!requirement.ReplicateToDependencies.Value) {
-                            continue;
-                        }
+                    // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
+                    if (!requirement.ReplicateToDependencies) {
+                        continue;
                     }
 
                     if (resolverRequest.RequiresThirdPartyReplication) {
@@ -100,15 +105,15 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             // For a single module, it goes next to the dependencies folder
             string packageDir = Path.Combine(fileSystem.Root, "packages", requirement.Name);
             if (!fileSystem.DirectoryExists(packageDir)) {
-                var javaScriptPackageDir = Path.Combine(fileSystem.Root, "packages", "javascript", requirement.Name);
-                if (!fileSystem.DirectoryExists(javaScriptPackageDir)) {
-                    throw new DirectoryNotFoundException($"Neither {packageDir} nor {javaScriptPackageDir} exist.");
+                var groupPackageDir = Path.Combine(fileSystem.Root, "packages", requirement.Group, requirement.Name);
+                if (!fileSystem.DirectoryExists(groupPackageDir)) {
+                    throw new DirectoryNotFoundException($"Neither {packageDir} nor {groupPackageDir} exist.");
                 }
-                packageDir = javaScriptPackageDir;
+                packageDir = groupPackageDir;
             }
 
             string target = resolverRequest.GetDependenciesDirectory(requirement);
-
+            
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
                     foreach (string zipPath in fileSystem.GetFiles(dir, "Web.*.zip", true, true).Where(f => !f.EndsWith("dependencies.zip"))) {

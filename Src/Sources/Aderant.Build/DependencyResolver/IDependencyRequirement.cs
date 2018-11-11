@@ -8,6 +8,12 @@ namespace Aderant.Build.DependencyResolver {
         /// <value>The name.</value>
         string Name { get; }
 
+        /// <summary>
+        /// Gets the group name of the requirement (module name or package name).
+        /// </summary>
+        /// <value>The group name.</value>
+        string Group { get; }
+        
         VersionRequirement VersionRequirement { get; }
 
         /// <summary>
@@ -18,6 +24,6 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
-        bool? ReplicateToDependencies { get; set; }
+        bool ReplicateToDependencies { get; set; }
     }
 }

@@ -154,17 +154,46 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Gets the module with the specified name.
         /// </summary>
         /// <param name="moduleName">Name of the module.</param>
-        /// <returns></returns>
+
         public ExpertModule GetModule(string moduleName) {
+            return GetModule(moduleName, null);
+        }
+
+        /// <summary>
+        /// Gets the module with the specified name.
+        /// </summary>
+        /// <param name="moduleName">Name of the module.</param>
+        /// <param name="group">The name of the group for which the module belongs</param>
+        /// <returns></returns>
+        public ExpertModule GetModule(string moduleName, string group = null) {
             foreach (ExpertModule module in modules) {
                 if (string.Equals(module.Name, moduleName, StringComparison.OrdinalIgnoreCase)) {
+                    if (group != null) {
+                        if (string.Equals(module.DependencyGroup, group, StringComparison.OrdinalIgnoreCase)) {
+                            return module;
+                        }
+                        continue;
+                    }
                     return module;
                 }
             }
             return null;
         }
 
-        public void Add(ExpertModule module) {
+		/// <summary>
+		/// Gets all modules with the specified name
+		/// </summary>
+		/// <param name="moduleName">Name of the modules</param>
+		/// <returns></returns>
+	    public IEnumerable<ExpertModule> GetModules(string moduleName) {
+			List<ExpertModule> expertModules = modules.Where(m => string.Equals(m.Name, moduleName, StringComparison.OrdinalIgnoreCase)).ToList();
+		    if (expertModules.Any()) {
+			    return expertModules;
+		    }
+		    return null;
+	    }
+
+	    public void Add(ExpertModule module) {
             ExpertModule existingModule = GetModule(module.Name);
 
             if (existingModule != null) {

@@ -19,7 +19,7 @@
     <TransformOutOfDateOnly Condition=" '$(TransformOutOfDateOnly)' =='' ">true</TransformOutOfDateOnly>
 
     <!--Directory into which .tlog files will be written.-->
-    <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(SolutionDirectoryPath)\BuildTemp\T4</TrackerLogDirectory>
+    <TrackerLogDirectory Condition=" '$(TrackerLogDirectory)' =='' ">$(SolutionDirectoryPath)BuildTemp\T4</TrackerLogDirectory>
 
     <TrackFileAccess Condition=" '$(TrackFileAccess)' =='' ">true</TrackFileAccess>
   </PropertyGroup>
