@@ -191,10 +191,7 @@ namespace Aderant.Build.Packaging {
             string[] nupkgEntries = new[] { "lib", "content" };
 
             foreach (var packageDirectory in packages) {
-                ExpertModule module = null;
-                if (group != null) {
-                    module = context.GetModuleByPackage(packageDirectory, group);
-                }
+                ExpertModule module = context.GetModuleByPackage(packageDirectory, group);
 
                 foreach (var packageDir in nupkgEntries) {
                     string nupkgDir = Path.Combine(packageDirectory, packageDir);
