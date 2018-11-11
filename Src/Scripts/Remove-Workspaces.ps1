@@ -79,12 +79,12 @@ process {
 
     for ([int]$i = 0; $i -lt $workspaceMappings.Count; $i++) {
         if (-not $force.IsPresent) {
-            tf workspace /delete "$($workspaceMappings[$i].Workspace);$($workspaceMappings[$i].UserName)"
+            TF.exe workspace /delete "$($workspaceMappings[$i].Workspace);$($workspaceMappings[$i].UserName)"
         } else {
             Write-Output "Removing workspace: $($workspaceMappings[$i].Workspace) assoicated with username: $($workspaceMappings[$i].UserName)"
 
             try {
-                Write-Output '~' | tf workspace /delete "$($workspaceMappings[$i].Workspace);$($workspaceMappings[$i].UserName)" | Out-Null
+                TF.exe workspace /delete "$($workspaceMappings[$i].Workspace);$($workspaceMappings[$i].UserName)" /noprompt
             } catch {
                 $Error[0] | Format-List -Force
                 $error = $true
