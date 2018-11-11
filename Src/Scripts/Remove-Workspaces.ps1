@@ -17,7 +17,7 @@ Skip remove confirmation.
 [CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$computerName,
-    [Parameter(Mandatory=$false)][string[]]$workspaceNames,
+    [Parameter(Mandatory=$false)][string[]]$workspacesToRemove,
     [switch]$remove,
     [switch]$force
 )
@@ -78,6 +78,10 @@ process {
     [bool]$error = $false
 
     for ([int]$i = 0; $i -lt $workspaceMappings.Count; $i++) {
+        if ($null -ne $workspacesToRemove -and -not $workspacesToRemove.Contains($workspaceMappings[$i].Workspace)) {
+            continue
+        }
+
         if (-not $force.IsPresent) {
             TF.exe workspace /delete "$($workspaceMappings[$i].Workspace);$($workspaceMappings[$i].UserName)"
         } else {
