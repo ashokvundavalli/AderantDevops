@@ -234,8 +234,9 @@
     <!-- ToDo: Filter this by impacted tests only. -->
 
     <ItemGroup>
-      <TestSearchDirectories Condition="'@(IntegrationTestAssemblies)' == ''"  Include="@(ModulesInBuild->'$(SolutionRoot)%(Identity)\Bin\Test\')" />
-      <IntegrationTestAssemblies Include="%(TestSearchDirectories.Identity)*IntegrationTest*.dll" />
+      <TestSearchDirectories Include="@(DirectoriesInBuild->'%(Identity)\Bin\Test\')" />
+      <IntegrationTestAssemblies Include="%(TestSearchDirectories.Identity)*IntegrationTest*" />
+      <IntegrationTestAssemblies Include="@(IntegrationTestAssemblies)" Condition="'%(Extension)' == 'dll'" />
     </ItemGroup>
 
     <Message Text="TestSearchDirectories: @(TestSearchDirectories)" />

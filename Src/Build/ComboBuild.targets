@@ -61,7 +61,7 @@
       GetAllDependencies;
       ExecutePlan;
       RunTests;
-      <!--RunIntegrationTests;-->
+      RunIntegrationTests;
       WriteStateFiles;
       PackageProduct;
       CopyToDrop;

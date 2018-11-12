@@ -126,8 +126,6 @@ function FindGitDir($context, [string]$searchDirectory) {
 }
 
 function CreateToolArgumentString($context, $remainingArgs) {
-    Set-StrictMode -Version Latest
-
     $set = [System.Collections.Generic.HashSet[string]]::new()          
 
     & {
@@ -175,6 +173,10 @@ function CreateToolArgumentString($context, $remainingArgs) {
 
         if ($NoDependencyFetch.IsPresent) {
             $set.Add("/p:RetrievePrebuilts=false")    
+        }
+
+        if ($Integration.IsPresent) {
+            $set.Add("/p:RunDesktopIntegrationTests=true")
         }
 
         if ($remainingArgs) {
@@ -403,8 +405,8 @@ Should not be used as it prevents incremental builds which increases build times
         [Parameter(HelpMessage = "Disables the use of the build cache.")]
         [switch]$NoBuildCache,
 
-        #[Parameter]
-        #[switch]$integration,
+        [Parameter(HelpMessage = "Enables integration tests.")]
+        [switch]$Integration,
 
         #[Parameter]
         #[switch]$automation,        
