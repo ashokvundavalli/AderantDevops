@@ -61,7 +61,7 @@
       GetAllDependencies;
       ExecutePlan;
       RunTests;
-      <!--RunIntegrationTests;-->
+      RunIntegrationTests;
       WriteStateFiles;
       PackageProduct;
       CopyToDrop;
@@ -563,6 +563,20 @@
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />-->
   </Target>
-  
-  
+
+
+  <Target Name="GetTfvc" Condition="'$(IsDesktopBuild)' != 'true'">
+
+    <PropertyGroup>
+      <TfvcWorkFolder>$(SolutionRoot)</TfvcWorkFolder>
+      <TfvcBranch>$(XamlBuildDropLocation.Replace("\\dfs.aderant.com\expertsuite\", ""))</TfvcBranch>
+      <TfvcExcludedModules>Tests.Load</TfvcExcludedModules>
+    </PropertyGroup>
+
+    <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;$(TfvcExcludedModules)&apos;&quot;"
+      ContinueOnError="false"
+      IgnoreExitCode="false" />
+
+  </Target>
+
 </Project>

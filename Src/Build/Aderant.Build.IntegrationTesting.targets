@@ -216,9 +216,17 @@
   </Target>
   
   <Target Name="GrovelForTestAssemblies" Returns="@(IntegrationTestAssemblies)">
+    <!-- ToDo: Filter this by impacted tests only. -->
+
     <ItemGroup>
-      <IntegrationTestAssemblies Include="$(BinTestDirectory)*IntegrationTest*.dll" />
+      <TestSearchDirectories Include="@(DirectoriesInBuild->'%(Identity)\Bin\Test\')" />
+      <IntegrationTestAssemblies Include="%(TestSearchDirectories.Identity)*IntegrationTest*" />
+      <IntegrationTestAssemblies Include="@(IntegrationTestAssemblies)" Condition="'%(Extension)' == 'dll'" />
     </ItemGroup>
+
+    <Message Text="TestSearchDirectories: @(TestSearchDirectories)" />
+    <Message Text="IntegrationTestAssemblies: @(IntegrationTestAssemblies)" />
+
   </Target>
   
   <Target Name="RunIntegrationTestsCore" BeforeTargets="RunIntegrationTests">  
