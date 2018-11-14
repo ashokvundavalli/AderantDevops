@@ -18,7 +18,7 @@ if (-not (Test-Path $tf)) {
 [string]$tfsUrl = $Env:SYSTEM_TEAMFOUNDATIONSERVERURI
 
 if ([string]::IsNullOrWhiteSpace($tfsUrl)) {
-    Write-Output "SYSTEM_TEAMFOUNDATIONSERVERURI could not be identified"
+    Write-Output "SYSTEM_TEAMFOUNDATIONSERVERURI could not be identified."
     $tfsUrl = "http://tfs.$($Env:USERDNSDOMAIN.ToLowerInvariant()):8080/tfs/"
 }
 
