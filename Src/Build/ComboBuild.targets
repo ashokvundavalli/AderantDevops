@@ -56,6 +56,7 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
+      GetTfvc;
       GrovelForExtensibilityFiles;
       CreatePlan;
       GetAllDependencies;
