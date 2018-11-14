@@ -52,7 +52,10 @@ namespace Aderant.Build.Tasks {
                 var snapshots = projectOutputSnapshots.Where(pos => pos.FileNamesWritten.Any(fw => dependencyFile.IndexOf(fw, StringComparison.OrdinalIgnoreCase) >= 0));
 
                 foreach (var snapshot in snapshots) {
-                    CalculateSymlinkTarget(snapshot, dependencyFile, out var locationForSymlink, out var targetForSymlink);
+
+                    string locationForSymlink;
+                    string targetForSymlink;
+                    CalculateSymlinkTarget(snapshot, dependencyFile, out locationForSymlink, out targetForSymlink);
 
                     if (locationForSymlink != null && targetForSymlink != null) {
                         if (File.Exists(targetForSymlink)) {
