@@ -8,7 +8,7 @@ param (
 Set-StrictMode -Version 'Latest'
 $ErrorActionPreference = 'Stop'
 
-[string]$tf = "$($env:VSINSTALLDIR)Common7\IDE\TF.exe"
+[string]$tf = "$($Env:VSINSTALLDIR)Common7\IDE\TF.exe"
 
 if (-not (Test-Path $tf)) {
     Write-Error "Unable to locate TF.exe at path: $tf"
@@ -16,6 +16,11 @@ if (-not (Test-Path $tf)) {
 }
 
 [string]$tfsUrl = $Env:SYSTEM_TEAMFOUNDATIONSERVERURI
+
+if ([string]::IsNullOrWhiteSpace($tfsUrl)) {
+    $tfsUrl = "http://tfs.$($Env:USERDNSDOMAIN.ToLowerInvariant()):8080/tfs/"
+}
+
 [string]$workspaceName = [System.Guid]::NewGuid().Guid
 [string]$serverPath = "$/ExpertSuite/$($branch.Replace('\', '/'))/Modules"
 
@@ -28,8 +33,8 @@ if (-not (Test-Path -Path $workfolder)) {
 Push-Location -Path $workfolder
 
 try {
-    Write-Output "Mapping workspace: $workspaceName;$env:USERNAME"
-    & $tf vc workspace /new "$workspaceName;$env:USERNAME" /collection:$tfsUrl /noprompt
+    Write-Output "Mapping workspace: $workspaceName;$Env:USERNAME"
+    & $tf vc workspace /new "$workspaceName;$Env:USERNAME" /collection:$tfsUrl /noprompt
     Write-Output "Using workfolder: $workfolder"
     & $tf vc workfold /map $serverPath $workfolder /collection:$tfsUrl /workspace:$workspaceName
 
@@ -44,8 +49,8 @@ try {
         }
     }
 } finally {
-    Write-Output "Removing workspace mapping: $workspaceName;$env:USERNAME"
-    & $tf vc workspace /delete "$workspaceName;$env:USERNAME" /noprompt
+    Write-Output "Removing workspace mapping: $workspaceName;$Env:USERNAME"
+    & $tf vc workspace /delete "$workspaceName;$Env:USERNAME" /noprompt
 }
 
 Pop-Location
