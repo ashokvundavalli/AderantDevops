@@ -136,10 +136,6 @@
     <Compile Include="WarningRatchetTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Analyzer\Aderant.Build.Analyzer.csproj">
-      <Project>{46204EE0-8A49-4F2F-B776-E5E1F1E79E10}</Project>
-      <Name>Aderant.Build.Analyzer</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Src\Sources\Aderant.Build.Tasks\Aderant.Build.Tasks.csproj">
       <Project>{256CB4BF-2AD9-497F-9174-9C4FDD9F6CE3}</Project>
       <Name>Aderant.Build.Tasks</Name>

@@ -388,7 +388,7 @@ namespace Aderant.Build {
         [DataMember]
         public string Origin { get; set; }
 
-      
+
         public string Directory {
             get { return directory; }
             set {
@@ -397,6 +397,7 @@ namespace Aderant.Build {
                         throw new InvalidOperationException("Corrupted model. Directory must not be rooted.");
                     }
                 }
+
                 directory = value;
             }
         }
@@ -427,17 +428,24 @@ namespace Aderant.Build {
         public string ProjectFileAbsolutePath { get; set; }
 
         /// <summary>
-        /// Populates the see <see cref="FileNamesWritten"/> property.
-        /// </summary>
-
-        public void BuildFileNamesWritten() {
-            this.FileNamesWritten = FilesWritten.Select(s => Path.GetFileName(s)).ToArray();
-        }
-
-        /// <summary>
         /// Gets the just the file names of the output items.
         /// </summary>
         public string[] FileNamesWritten { get; private set; }
+
+        /// <summary>
+        /// Populates the see <see cref="FileNamesWritten" /> property.
+        /// </summary>
+        public void BuildFileNamesWritten() {
+            FileNamesWritten = FilesWritten.Select(
+                file => {
+                    if (file.StartsWith(OutputPath, StringComparison.OrdinalIgnoreCase)) {
+                        return file.Remove(0, OutputPath.Length);
+                    }
+
+                    return file;
+                }
+            ).ToArray();
+        }
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

@@ -20,11 +20,6 @@ namespace Aderant.Build.Tasks {
         private const string LibDirectoryName = "lib";
         private const string LinkLockFileName = "link.lock";
 
-        private class DependentFile {
-            public string FileName { get; set; }
-            public string FileInstance { get; set; }
-        }
-
         /// <summary>
         /// Execute the task
         /// </summary>
@@ -33,63 +28,45 @@ namespace Aderant.Build.Tasks {
 
             if (File.Exists(Path.Combine(SolutionRoot, LinkLockFileName))) {
                 Log.LogMessage("Skipping symlink creation as {0} is present", LinkLockFileName);
-                return true;
+                //return true;
             }
 
             string packagesRoot = Path.Combine(SolutionRoot, PackagesDirectoryName);
 
             if (new DirectoryInfo(packagesRoot).Attributes.HasFlag(FileAttributes.ReparsePoint)) {
                 Log.LogMessage("Skipping symlink creation as '{0}' is symlink", LinkLockFileName);
-                return true;
+                //return true;
             }
 
             var projectOutputSnapshots = AssignProjectOutputSnapshotsFullPath().ToList();
 
-            List<DependentFile> dependentFiles = new List<DependentFile>();
+            List<string> dependencies = new List<string>();
 
             List<string> libFolders = Directory.GetDirectories(packagesRoot, $"*{LibDirectoryName}*", SearchOption.AllDirectories).Where(lf => IsLibFolderCorrectDepth(lf, packagesRoot)).ToList();
 
             foreach (string libFolder in libFolders) {
-                dependentFiles.AddRange(
-                    from file in Directory.GetFiles(libFolder, "*.*", SearchOption.AllDirectories)
-                    let fileName = Path.GetFileName(file)
-                    where fileName != null
-                    select new DependentFile {
-                        FileName = fileName,
-                        FileInstance = file
-                    });
+                dependencies.AddRange(Directory.GetFiles(libFolder, "*.*", SearchOption.AllDirectories));
             }
 
-            foreach (DependentFile df in dependentFiles) {
-                
-                var snapShotForDependentFile = projectOutputSnapshots.FirstOrDefault(pos => pos.FileNamesWritten.Any(fw => string.Equals(df.FileName, fw, StringComparison.OrdinalIgnoreCase)));
-              
-                if (snapShotForDependentFile != null) {
-                    if (string.Equals(SolutionRoot, snapShotForDependentFile.Directory)) {
-                        // Do not link to ourselves
-                        // This prevents
-                        // Foo\packages\ThirdParty.AddinExpress\lib\adxloader.dll -> Foo\Bin\Module\adxloader.dll
-                        continue;
+            foreach (var dependencyFile in dependencies) {
+                var snapshots = projectOutputSnapshots.Where(pos => pos.FileNamesWritten.Any(fw => dependencyFile.IndexOf(fw, StringComparison.OrdinalIgnoreCase) >= 0));
+
+                foreach (var snapshot in snapshots) {
+                    CalculateSymlinkTarget(snapshot, dependencyFile, out var locationForSymlink, out var targetForSymlink);
+
+                    if (locationForSymlink != null && targetForSymlink != null) {
+                        if (File.Exists(targetForSymlink)) {
+                            if (File.Exists(locationForSymlink)) {
+                                File.Delete(locationForSymlink);
+                            }
+
+                            Log.LogMessage($"Replacing {locationForSymlink} with symlink -> {targetForSymlink}");
+                            NativeMethods.CreateSymbolicLink(locationForSymlink, targetForSymlink, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
+                            break;
+                        }
+
+                        throw new FileNotFoundException(null, targetForSymlink);
                     }
-
-                    string moduleDirectory = Path.GetDirectoryName(snapShotForDependentFile.ProjectFileAbsolutePath);
-
-                    if (string.IsNullOrEmpty(moduleDirectory)) {
-                        continue;
-                    }
-
-                    string locationForSymlink = df.FileInstance;
-                    string symlinkTargetRawPath = Path.Combine(moduleDirectory, snapShotForDependentFile.OutputPath, df.FileName);
-
-                    // Normalize the path, as symlinks with \..\ in them don't resolve correctly
-                    string targetForSymlink = Path.GetFullPath(symlinkTargetRawPath);
-                    
-                    if (File.Exists(locationForSymlink)) {
-                        File.Delete(locationForSymlink);
-                    }
-                
-                    Log.LogMessage($"Replacing {locationForSymlink} with symlink -> {targetForSymlink}");
-                    NativeMethods.CreateSymbolicLink(locationForSymlink, targetForSymlink, (uint)NativeMethods.SymbolicLink.SYMBOLIC_LINK_FLAG_FILE);
                 }
             }
 
@@ -100,9 +77,48 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
+        internal void CalculateSymlinkTarget(ProjectOutputSnapshotWithFullPath snapshotForDependentFile, string dependency, out string locationForSymlink, out string targetForSymlink) {
+            ErrorUtilities.IsNotNull(snapshotForDependentFile.OutputPath, nameof(snapshotForDependentFile.OutputPath));
+
+            locationForSymlink = null;
+            targetForSymlink = null;
+
+            if (string.Equals(SolutionRoot, snapshotForDependentFile.Directory)) {
+                // Do not link to ourselves
+                // This prevents
+                // Foo\packages\ThirdParty.AddinExpress\lib\adxloader.dll -> Foo\Bin\Module\adxloader.dll
+                return;
+            }
+
+            string moduleDirectory = Path.GetDirectoryName(snapshotForDependentFile.ProjectFileAbsolutePath);
+
+            if (string.IsNullOrEmpty(moduleDirectory)) {
+                return;
+            }
+
+            string targetPath = null;
+            foreach (var file in snapshotForDependentFile.FilesWritten) {
+                string candidateFile = file.Substring(snapshotForDependentFile.OutputPath.Length).TrimStart(Path.DirectorySeparatorChar);
+
+                if (dependency.EndsWith(candidateFile, StringComparison.OrdinalIgnoreCase)) {
+                    targetPath = file;
+                    break;
+                }
+            }
+
+            if (targetPath == null) {
+                // No match, bail
+                return;
+            }
+
+            locationForSymlink = dependency;
+            string symlinkTargetRawPath = Path.Combine(moduleDirectory, targetPath);
+
+            // Normalize the path, as symlinks with \..\ in them don't resolve correctly
+            targetForSymlink = Path.GetFullPath(symlinkTargetRawPath);
+        }
+
         private IEnumerable<ProjectOutputSnapshotWithFullPath> AssignProjectOutputSnapshotsFullPath() {
-            // TODO: Need to read dependency manifest here to get the list of artifacts, then rebuild that
-            // Get all projects analyzed by the build, this gives us all seen projects regardless of their state
             var trackedProjects = PipelineService
                 .GetTrackedProjects()
                 .ToDictionary(d => d.ProjectGuid, project => project);
