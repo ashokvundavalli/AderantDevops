@@ -8,7 +8,7 @@ param (
 Set-StrictMode -Version 'Latest'
 $ErrorActionPreference = 'Stop'
 
-[string]$tf = "$($Env:VSINSTALLDIR)Common7\IDE\TF.exe"
+[string]$tf = "${Env:ProgramFiles(x86)}\Microsoft Visual Studio 14.0\Common7\IDE\TF.exe"
 
 if (-not (Test-Path $tf)) {
     Write-Error "Unable to locate TF.exe at path: $tf"
@@ -18,6 +18,7 @@ if (-not (Test-Path $tf)) {
 [string]$tfsUrl = $Env:SYSTEM_TEAMFOUNDATIONSERVERURI
 
 if ([string]::IsNullOrWhiteSpace($tfsUrl)) {
+    Write-Output "SYSTEM_TEAMFOUNDATIONSERVERURI could not be identified"
     $tfsUrl = "http://tfs.$($Env:USERDNSDOMAIN.ToLowerInvariant()):8080/tfs/"
 }
 
