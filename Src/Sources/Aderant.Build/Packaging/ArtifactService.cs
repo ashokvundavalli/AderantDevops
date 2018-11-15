@@ -158,9 +158,7 @@ namespace Aderant.Build.Packaging {
             return MergeExistingOutputs(context, container, snapshotList);
         }
 
-        private static string GetProjectKey(string container) {
-            return container + "\\";
-        }
+
 
         private static List<ProjectOutputSnapshot> MergeExistingOutputs(BuildOperationContext context, string container, List<ProjectOutputSnapshot> snapshots) {
             // Takes the existing (cached build) state and applies to the current state
@@ -355,9 +353,7 @@ namespace Aderant.Build.Packaging {
                 return copyOperations;
             }
 
-            string key = GetProjectKey(container);
-
-            var projectOutputs = stateFile.Outputs.Where(o => o.Key.StartsWith(key, StringComparison.OrdinalIgnoreCase)).ToList();
+            var projectOutputs = stateFile.Outputs.Where(o => string.Equals(o.Value.Directory, container, StringComparison.OrdinalIgnoreCase)).ToList();
 
             HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -368,60 +364,50 @@ namespace Aderant.Build.Packaging {
 
                 string projectFile = project.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
-                int position = projectFile.IndexOf(Path.DirectorySeparatorChar);
-                if (position >= 0) {
-                    // Adjust the source relative path to a solution relative path
-                    string solutionRootRelativeFile = projectFile.Substring(position + 1);
-                    string localProjectFile = Path.Combine(solutionRoot, solutionRootRelativeFile);
+                // Adjust the source relative path to a solution relative path
+                string localProjectFile = Path.Combine(solutionRoot, projectFile);
+                var directoryOfProject = Path.GetDirectoryName(localProjectFile);
 
-                    var directoryOfProject = Path.GetDirectoryName(localProjectFile);
+                if (fileSystem.FileExists(localProjectFile)) {
+                    logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
 
-                    if (directoryOfProject == null) {
-                        throw new InvalidOperationException("Could not determine directory of file: " + localProjectFile);
-                    }
+                    foreach (var outputItem in project.Value.FilesWritten) {
+                        // Retain the relative path of the build artifact.
+                        string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
 
-                    if (fileSystem.FileExists(localProjectFile)) {
-                        logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
+                        // Use relative path for comparison.
+                        List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
 
-                        foreach (var outputItem in project.Value.FilesWritten) {
-                            // Retain the relative path of the build artifact.
-                            string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
-
-                            // Use relative path for comparison.
-                            List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
-
-                            if (localSourceFiles.Count == 0) {
-                                continue;
-                            }
-
-                            List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(localArtifactComparer).ToList();
-
-                            // There can be only one.
-                            LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
-
-                            if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
-                                // Log duplicates.
-                                IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => group.Count() > 1).Select(group => group.Key);
-
-                                string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
-                                logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
-                            }
-
-                            string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
-
-                            if (destinationPaths.Add(destination)) {
-                                logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
-                                copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
-                            } else {
-                                logger.Warning("Double write for file: " + destination);
-                            }
+                        if (localSourceFiles.Count == 0) {
+                            continue;
                         }
-                    } else {
-                        throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
+
+                        List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(localArtifactComparer).ToList();
+
+                        // There can be only one.
+                        LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
+
+                        if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
+                            // Log duplicates.
+                            IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => group.Count() > 1).Select(group => group.Key);
+
+                            string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
+                            logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
+                        }
+
+                        string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
+
+                        if (destinationPaths.Add(destination)) {
+                            logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
+                            copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
+                        } else {
+                            logger.Warning("Double write for file: " + destination);
+                        }
                     }
                 } else {
-                    throw new InvalidOperationException($"The path {projectFile} was expected to contain {Path.DirectorySeparatorChar}");
+                    throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
                 }
+
             }
 
             return copyOperations;
@@ -522,9 +508,10 @@ namespace Aderant.Build.Packaging {
         }
 
         private static bool IsFileTrustworthy(BuildStateFile file, out string reason) {
-            //if (CheckForRootedPaths(file)) {
-            //    return false;
-            //}
+            if (CheckForRootedPaths(file)) {
+                reason = "Corrupt";
+                return false;
+            }
 
             // Reject files that provide no value
             if (file.Outputs == null || file.Outputs.Count == 0) {
