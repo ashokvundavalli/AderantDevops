@@ -3,7 +3,7 @@
          DefaultTargets="Build"
          ToolsVersion="14.0"
          TreatAsLocalProperty="SolutionDirectoryPath;T4TransformEnabled">
-  
+
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="RM.TransformTemplates.Targets" />
   <Import Project="Aderant.TextTransform.targets" />
@@ -51,8 +51,8 @@
     <CleanBin>$([MSBuild]::ValueOrDefault('$(switch-clean)', 'false'))</CleanBin>
   </PropertyGroup>
 
-  <!--     
-    Configures the environment to run text templates       
+  <!--
+    Configures the environment to run text templates
   -->
   <Target Name="rmBeforeTransformTemplates">
     <PropertyGroup>
@@ -61,7 +61,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process 
+      <!-- __*.tt is special convention which we ignore. Underscore underscore template are transformed by some other process
            crafted by the developer -->
       <rmT4TextTemplates Condition="('$(ModuleName)' != 'Libraries.SoftwareFactory')"
         Include="$(ModuleSourceDirectory)**\*.tt;
@@ -157,7 +157,7 @@
 
   <!--
     ==========================================================================================
-        Versioning 
+        Versioning
     ==========================================================================================
   -->
   <Target Name="UpdateCommonAssemblyInfo"
@@ -166,6 +166,9 @@
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
     </PropertyGroup>
+
+    <!--TF VC compatiblity-->
+    <PowerShellScript ScriptBlock="Set-ItemProperty $(AssemblyInfoFile) -Name IsReadOnly -Value $false" />
 
     <FileUpdate
       Files="$(AssemblyInfoFile)"
