@@ -90,8 +90,6 @@ namespace Aderant.Build.Commands {
 
             ExpertModuleResolver moduleResolver;
 
-            System.Diagnostics.Debugger.Launch();
-
             if (!string.IsNullOrWhiteSpace(ManifestFile)) {
                 moduleResolver = new ExpertModuleResolver(new PhysicalFileSystem(ModulesRootPath, Logger), ManifestFile);
                 request.RequiresThirdPartyReplication = true;
