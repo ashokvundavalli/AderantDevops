@@ -57,7 +57,7 @@ function Get-BuildDirectory {
 }
 
 function ApplyBranchConfig($context, [string]$root, [switch]$EnableConfigDownload) {
-    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")    
+    $configPath = [System.IO.Path]::Combine($root, "Build\BranchConfig.xml")
 
     [xml]$config = $null
     if (-not (Test-Path -Path $configPath)) {
@@ -118,7 +118,7 @@ function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownl
     $context.ProductManifestPath = $configPath
 }
 
-function FindGitDir($context, [string]$searchDirectory) {        
+function FindGitDir($context, [string]$searchDirectory) {
     $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($searchDirectory, ".git", $null, $true)
     $context.Variables["_GitDir"] = "$path\.git"
 
@@ -147,13 +147,13 @@ function CreateToolArgumentString($context, $remainingArgs) {
                 $set.Add("/flp:Verbosity=Normal")
             }
         }
-        
+
         # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
         $set.Add("/nologo")
         $set.Add("/nr:false")
 
         # Multi-core build
-        if ($MaxCpuCount -gt 0) {            
+        if ($MaxCpuCount -gt 0) {
             $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
             $numberOfCores = (Get-WmiObject -Class win32_Processor).NumberOfCores
@@ -189,15 +189,15 @@ function CreateToolArgumentString($context, $remainingArgs) {
         $set.Add("/p:ProductManifestPath=$($context.ProductManifestPath)")
 
         if ($PackageProduct.IsPresent) {
-            $set.Add("/p:RunPackageProduct=$($PackageProduct.IsPresent)")
+            $set.Add("/p:PackageProduct=$($PackageProduct.IsPresent)")
         }
     } | Out-Null
-    # Out-Null stops the return value from Add being left on the pipeline  
+    # Out-Null stops the return value from Add being left on the pipeline
 
     return [string]::Join(" ", $set)
 }
 
-function GetSourceTreeMetadata($context, $repositoryPath) {    
+function GetSourceTreeMetadata($context, $repositoryPath) {
     [string]$sourceBranch = ""
     [string]$targetBranch = ""
 
@@ -205,12 +205,12 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         $metadata = $context.BuildMetadata
         $sourceBranch = $metadata.ScmBranch;
 
-        if ($metadata.IsPullRequest) {            
+        if ($metadata.IsPullRequest) {
             $targetBranch = $metadata.PullRequest.TargetBranch
 
             Write-Host "Calculating changes between $sourceBranch and $targetBranch"
         }
-    }    
+    }
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
 
@@ -219,16 +219,16 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
     if ($context.SourceTreeMetadata.CommonAncestor) {
         Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
     }
-   
+
     if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
         Write-Host ""
-        Write-Host "$indent1 Changes..."    
+        Write-Host "$indent1 Changes..."
         foreach ($change in $context.SourceTreeMetadata.Changes) {
             if ($change.Status -ne "Untracked") {
                 Write-Host "$indent2 $($change.Path):$($change.Status)"
             }
         }
-    }    
+    }
 }
 
 function GetBuildStateMetadata($context) {
@@ -243,7 +243,7 @@ function GetBuildStateMetadata($context) {
 
     foreach ($id in $stm.BucketIds) {
         Write-Host ("$indent2 BucketId: $($id.Tag) -> $($id.Id)")
-    }   
+    }
 
     [string[]]$ids = @()
     if ($stm.BucketIds.Count -gt 0) {
@@ -255,7 +255,7 @@ function GetBuildStateMetadata($context) {
 
     foreach ($file in $buildState.BuildStateFiles) {
         Write-Host ("$indent2 Build: $($file.BuildId) -> Bucket: $($file.BucketId.Id)/$($file.BucketId.Tag)")
-    }    
+    }
 }
 
 function PrepareEnvironment {
@@ -263,29 +263,29 @@ function PrepareEnvironment {
     $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
 
     Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
-   
+
     if ((Test-Path "$lockDownPath\Settings") -eq 0) {
         New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
-    } 
+    }
     Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
-   
+
 
     # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
     $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
     $wcfPath64 = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
-    if (Test-Path $wcfPath32) {  
+    if (Test-Path $wcfPath32) {
         Remove-Item -Path $wcfPath32 -Recurse
     }
 
-    if (Test-Path $wcfPath64) {  
+    if (Test-Path $wcfPath64) {
         Remove-Item -Path $wcfPath64 -Recurse
     }
 
-    Optimize-BuildEnvironment     
+    Optimize-BuildEnvironment
 }
 
 # Expand input paths into array. Try to resolve the path to full.
-function ExpandPaths {    
+function ExpandPaths {
     param(
         [Parameter(Mandatory=$true)][string[]]$paths,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$rootPath,
@@ -306,7 +306,7 @@ function ExpandPaths {
             }
         }
 
-        if ($testedPath -eq '' -And $includePaths) {            
+        if ($testedPath -eq '' -And $includePaths) {
             $includePaths.ForEach({
                 $currentPath = $_
                 $currentPath = Join-Path -Path $currentPath -ChildPath $path
@@ -319,37 +319,37 @@ function ExpandPaths {
         if ($testedPath -ne '') {
             $resolvedPaths += Resolve-Path $testedPath
         } else {
-            Write-Error "Can't resolve path: $path" 
+            Write-Error "Can't resolve path: $path"
         }
     }
 
     return $resolvedPaths
 }
 
-function AssignIncludeExclude {    
+function AssignIncludeExclude {
     param(
         [Parameter(Mandatory=$false)][string[]]$include,
         [Parameter(Mandatory=$false)][string[]]$exclude,
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$rootPath
     )
-    
+
     if ($null -ne $include) {
         $context.Include = ExpandPaths $include
     }
 
-    if ($null -ne $exclude) {			
-        $context.Exclude = ExpandPaths -paths $exclude -rootPath $rootPath -includePaths $context.Include            
-    }    
+    if ($null -ne $exclude) {
+        $context.Exclude = ExpandPaths -paths $exclude -rootPath $rootPath -includePaths $context.Include
+    }
 }
 
 function AssignSwitches() {
     $switches = $context.Switches
-    
+
     $switches.Branch = $Branch.IsPresent
     $switches.Downstream = $Downstream.IsPresent
     $switches.Transitive = $Transitive.IsPresent
     $switches.Clean = $Clean.IsPresent
-    $switches.Release = $Release.IsPresent    
+    $switches.Release = $Release.IsPresent
     $switches.Resume = $Resume.IsPresent
     $switches.SkipCompile = $SkipCompile.IsPresent
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
@@ -369,8 +369,8 @@ function AssignSwitches() {
 # This file is run by an CI agent. The CI agent PowerShell runner does not subscribe to Write-Information.
 function global:Invoke-Build2 {
     [CmdletBinding(DefaultParameterSetName="Build", SupportsShouldProcess=$true)]
-    param (               
-        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]        
+    param (
+        [Parameter(ParameterSetName="Build", Mandatory=$false, Position=0)]
         [string]$ModulePath = "",
 
         [Parameter()]
@@ -381,14 +381,14 @@ function global:Invoke-Build2 {
 
         [Parameter()]
         [switch]$Transitive,
-        
+
         [Parameter(HelpMessage = "Destroys all intermediate objects.
 Returns the source tree to a pristine state.
 Should not be used as it prevents incremental builds which increases build times.")]
         [switch]$Clean,
 
         [Parameter()]
-        [switch]$Release,        
+        [switch]$Release,
 
         [Parameter(HelpMessage = "Resumes the build from the last failure point.")]
         [switch]$Resume,
@@ -406,12 +406,12 @@ Should not be used as it prevents incremental builds which increases build times
         [switch]$RunIntegrationTests,
 
         #[Parameter]
-        #[switch]$automation,        
+        #[switch]$automation,
 
         [Parameter(HelpMessage = "Displays HTML code coverage report.")]
-        [switch]$DisplayCodeCoverage,     
+        [switch]$DisplayCodeCoverage,
 
-        [Parameter(HelpMessage = "Runs the target with the provided name")]        
+        [Parameter(HelpMessage = "Runs the target with the provided name")]
         [string]$Target = "BuildAndPackage",
 
         [Parameter(HelpMessage = "Includes solutions and projects found under these paths into the build tree. Supports wildcards.")]
@@ -424,21 +424,21 @@ Should not be used as it prevents incremental builds which increases build times
         [Alias("JustMyChanges")]
         [switch]$ChangedFilesOnly,
 
-        [Parameter(HelpMessage = "Disables the text transformation process.")]        
+        [Parameter(HelpMessage = "Disables the text transformation process.")]
         [switch]$NoTextTemplateTransform,
 
-        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]        
+        [Parameter(HelpMessage = " Specifies the maximum number of concurrent processes to sbuild with.")]
         [int]$MaxCpuCount,
 
-        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]        
+        [Parameter(HelpMessage = "Disables fetching of dependencies. Used to bypass the default behaviour of keeping you up to date.")]
         [switch]$NoDependencyFetch,
 
-        [Parameter(HelpMessage = "Instructs the console logger to be quiet.")]        
+        [Parameter(HelpMessage = "Instructs the console logger to be quiet.")]
         [switch]$MinimalConsoleLogging,
 
         [Parameter(HelpMessage = "Enables fetching build configuration files from TFS.")]
         [switch]$EnableConfigDownload,
-        
+
         [Parameter(ValueFromRemainingArguments)]
         [string[]]$RemainingArgs
     )
@@ -450,16 +450,16 @@ Should not be used as it prevents incremental builds which increases build times
 
     process {
         if ($Clean.IsPresent) {
-            Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow 
-            Write-Host "Clean should not be used as it prevents incremental builds which increases build times."        
+            Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow
+            Write-Host "Clean should not be used as it prevents incremental builds which increases build times."
 
             if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
                 return
-            }        
+            }
         }
-        
+
         [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
-         
+
         [string]$repositoryPath = $null
         if (-not [string]::IsNullOrEmpty($ModulePath)) {
             $repositoryPath = $ModulePath
@@ -469,8 +469,8 @@ Should not be used as it prevents incremental builds which increases build times
 
         $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
-        AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath               
-        
+        AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
+
         [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
         GetSourceTreeMetadata -context $context -repositoryPath $root
         if ([string]::IsNullOrWhiteSpace($root)) {
@@ -490,7 +490,7 @@ Should not be used as it prevents incremental builds which increases build times
         $context.StartedAt = [DateTime]::UtcNow
         $context.LogFile = "$repositoryPath\build.log"
 
-        $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()    
+        $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
 
         $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
         $contextService.StartListener($contextEndpoint)
@@ -499,14 +499,14 @@ Should not be used as it prevents incremental builds which increases build times
 
         $succeeded = $false
 
-        $currentColor = $host.UI.RawUI.ForegroundColor 
-        try {         
+        $currentColor = $host.UI.RawUI.ForegroundColor
+        try {
             $args = CreateToolArgumentString $context $RemainingArgs
 
             # When WhatIf specified just determine what would be built
             if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
                 $Target = "CreatePlan"
-            }        
+            }
 
             Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
 
@@ -523,13 +523,13 @@ Should not be used as it prevents incremental builds which increases build times
                 }
             }
         } catch {
-            $succeeded = $false       
+            $succeeded = $false
         } finally {
             $host.UI.RawUI.ForegroundColor = $currentColor
 
             if (-not $context.IsDesktopBuild) {
                 Write-Host "##vso[task.uploadfile]$($context.LogFile)"
-            }            
+            }
 
             $context = $contextService.CurrentContext
             $reason = $context.BuildStatusReason
@@ -540,7 +540,7 @@ Should not be used as it prevents incremental builds which increases build times
 
             Write-Host " Build: " -NoNewline
 
-            if ($global:LASTEXITCODE -gt 0 -or -not $succeeded -or $context.BuildStatus -eq "Failed") {            
+            if ($global:LASTEXITCODE -gt 0 -or -not $succeeded -or $context.BuildStatus -eq "Failed") {
                 Write-Host "[" -NoNewline
                 Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
                 Write-Host "]"
@@ -549,11 +549,11 @@ Should not be used as it prevents incremental builds which increases build times
                 if (-not $context.IsDesktopBuild) {
                     throw "Build did not succeed: $($context.BuildStatusReason)"
                 }
-            } else {            
+            } else {
                 Write-Host "[" -NoNewline
                 Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
                 Write-Host "]"
-                Write-Host " $reason" -ForegroundColor Gray    
+                Write-Host " $reason" -ForegroundColor Gray
             }
 
             if ($contextService -ne $null) {
