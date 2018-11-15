@@ -262,7 +262,7 @@ namespace Aderant.Build.Packaging {
                 archive => {
                     string destination = Path.GetDirectoryName(archive);
 
-                    logger.Info("Extracting {sourceArchiveFileName} -> {destination}");
+                    logger.Info("Extracting {0} -> {1}", archive, destination);
 
                     fileSystem.ExtractZipToDirectory(archive, destination);
                 });
