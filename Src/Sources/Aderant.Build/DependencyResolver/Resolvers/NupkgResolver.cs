@@ -17,10 +17,6 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             logger = resolverRequest.Logger;
             logger.Info("Calculating dependency requirements for {0}", module.Name);
 
-            if (string.Equals(module.Name, "Libraries.Query", StringComparison.OrdinalIgnoreCase)) {
-                System.Diagnostics.Debugger.Launch();
-            }
-
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {

@@ -84,7 +84,7 @@ namespace Aderant.Build.DependencyResolver {
         public bool Update { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether replication explicitly disabled. 
+        /// Gets or sets a value indicating whether replication explicitly disabled.
         /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
         /// </summary>
         public bool ReplicationExplicitlyDisabled { get; set; }
@@ -120,7 +120,7 @@ namespace Aderant.Build.DependencyResolver {
             if (!Path.IsPathRooted(fullPath)) {
                 throw new InvalidOperationException("Path must be rooted");
             }
-            
+
             string name = Path.GetFileName(fullPath);
 
             ExpertModule resolvedModule = null;
@@ -128,24 +128,13 @@ namespace Aderant.Build.DependencyResolver {
                 resolvedModule = ModuleFactory.GetModule(name);
             }
 
-            bool isGit = physicalFileSystem.DirectoryExists(".git") || physicalFileSystem.DirectoryExists(Path.Combine(physicalFileSystem.GetParent(physicalFileSystem.Root), ".git"));
-
             if (resolvedModule == null) {
-                if (!isGit) {
-                    //throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Unable to resolve module {0}. Does the name exist in the Expert Manifest?", module));
-                }
                 resolvedModule = new ExpertModule(name);
-            }
-
-            bool requiresThirdPartyReplication = true;
-
-            if (isGit) {
-                requiresThirdPartyReplication = physicalFileSystem.GetDirectories(physicalFileSystem.Root, true).Any(d => d.Contains("Web.") && !d.Contains("_BUILD_"));
             }
 
             resolvedModule.FullPath = fullPath;
 
-            modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = requiresThirdPartyReplication });
+            modules.Add(new ModuleState<ExpertModule>(resolvedModule) { IsInBuildChain = true, RequiresThirdPartyReplication = true });
         }
 
         public virtual void Unresolved(IDependencyRequirement requirement, object resolver) {
