@@ -49,46 +49,32 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        private Dependencies Initialize(string Root) {
+        private Dependencies Initialize(string root) {
             try {
-                var file = FileSystem.GetFiles(Root, DependenciesFile, true).FirstOrDefault();
+                var file = FileSystem.GetFiles(root, DependenciesFile, true).FirstOrDefault();
                 if (file != null) {
-                    dependencies = Dependencies.Locate(Root);
+                    dependencies = Dependencies.Locate(root);
                 }
             } catch (Exception) {
             } finally {
                 if (dependencies == null) {
                     // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems 
                     // as it will no doubt locate something it shouldn't use (eg one from another product)
-                    Dependencies.Init(Root);
-                    dependencies = Dependencies.Locate(Root);
+                    Dependencies.Init(root);
+                    dependencies = Dependencies.Locate(root);
                 }
             }
 
             return dependencies;
         }
 
-        public List<string> FindGroups() {
-            List<string> groups = new List<string> { Constants.MainDependencyGroup };
-            string dependenciesFile = $@"{root}\{DependenciesFile}";
-
-            using (StreamReader streamReader = new StreamReader(dependenciesFile)) {
-                string line;
-                while ((line = streamReader.ReadLine()) != null) {
-                    if (line.StartsWith("group")) {
-                        groups.Add(line.Replace("group ", ""));
-                    }
-                }
-            }
-
-            return groups;
-        }
-
         public void Add(IEnumerable<IDependencyRequirement> requirements) {
             DependenciesFile file = dependencies.GetDependenciesFile();
             FileSystem.MakeFileWritable(file.FileName);
             AddModules(requirements, file);
+
             file = dependencies.GetDependenciesFile();
+
             string[] lines = file.Lines;
 
             if (!lines.Contains(string.Concat("source ", Constants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
@@ -97,8 +83,6 @@ namespace Aderant.Build.DependencyResolver {
                         lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", Constants.PackageServerUrl, Environment.NewLine, "source ", Constants.DatabasePackageUri);
                     }
                 }
-
-                file.Save();
             } else if (lines.Contains(string.Concat("source ", Constants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
                 for (int i = 0; i < lines.Length; i++) {
                     if (lines[i].IndexOf(string.Concat("source ", Constants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
@@ -108,11 +92,15 @@ namespace Aderant.Build.DependencyResolver {
                     }
                 }
             }
+
+            logger.Debug(string.Join(Environment.NewLine, file.Lines));
+
+            file.Save();
         }
 
         // Paket is unable to write version ranges to file.
         private string RemoveVersionRange(string name, string version) {
-            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")){
+            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")) {
                 return version;
             }
 
@@ -143,11 +131,11 @@ namespace Aderant.Build.DependencyResolver {
 
                 if (requirement.ReplaceVersionConstraint && hasCustomVersion) {
                     try {
-                        file = file.Remove(Domain.GroupName(Constants.MainDependencyGroup), packageName);
+                        file = file.Remove(Domain.GroupName(requirement.Group), packageName);
                     } catch {
                     }
                 }
-                
+
                 if (!file.HasPackage(groupName, packageName)) {
                     version = RemoveVersionRange(requirement.Name, version);
 
@@ -195,15 +183,15 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         public IDictionary<string, VersionRequirement> GetDependencies() {
-            return GetDependencies(Domain.GroupName(Constants.MainDependencyGroup));
+            return GetDependencies(Constants.MainDependencyGroup);
         }
 
-        public IDictionary<string, VersionRequirement> GetDependencies(Domain.GroupName groupName) {
+        public IDictionary<string, VersionRequirement> GetDependencies(string groupName) {
             Dependencies dependenciesFile = Dependencies.Locate(root);
             var file = dependenciesFile.GetDependenciesFile();
 
             try {
-                FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(groupName);
+                FSharpMap<Domain.PackageName, Paket.VersionRequirement> requirements = file.GetDependenciesInGroup(Domain.GroupName(groupName));
                 return requirements.ToDictionary(pair => pair.Key.ToString(), pair => NewRequirement(pair, file.FileName));
             } catch (Exception e) {
                 Console.WriteLine(e);
@@ -247,6 +235,12 @@ namespace Aderant.Build.DependencyResolver {
                 OriginatingFile = filePath,
                 ConstraintExpression = $"{expression} {string.Join(" ", prereleases)}",
             };
+        }
+
+        public IEnumerable<string> FindGroups() {
+            Dependencies dependenciesFile = Dependencies.Locate(root);
+            var file = dependenciesFile.GetDependenciesFile();
+            return file.Groups.Select(s => s.Key.Item1);
         }
     }
 }

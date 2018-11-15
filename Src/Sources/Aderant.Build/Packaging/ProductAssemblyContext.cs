@@ -20,10 +20,13 @@ namespace Aderant.Build.Packaging {
 
         public IEnumerable<string> BuildOutputs { get; internal set; }
 
-        public ExpertModule GetModuleByPackage(string packageDirectory) {
+        public ExpertModule GetModuleByPackage(string packageDirectory, string group) {
             var name = Path.GetFileName(packageDirectory);
 
-            return Modules.FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrEmpty(group)) {
+                return Modules.FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase) && m.IsInDefaultDependencyGroup);
+            }
+            return Modules.FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase) && string.Equals(m.DependencyGroup, group, StringComparison.OrdinalIgnoreCase));
         }
 
         public string ResolvePackageRelativeDirectory(ExpertModule module) {
@@ -34,6 +37,10 @@ namespace Aderant.Build.Packaging {
 
             if (!string.IsNullOrEmpty(module.Target)) {
                 return Path.Combine(ProductDirectory, module.Target);
+            }
+
+            if (!module.IsInDefaultDependencyGroup && !string.IsNullOrEmpty(module.DependencyGroup)) {
+                return Path.Combine(ProductDirectory, module.DependencyGroup);
             }
 
             return ProductDirectory;

@@ -1,7 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
+using System.Runtime.ExceptionServices;
+using System.Xml;
+using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
+using Microsoft.Build.Framework;
+using Microsoft.TeamFoundation.Build.Client;
 
 namespace Aderant.Build.Packaging {
     [Cmdlet("Package", "ExpertRelease")]
@@ -12,7 +18,7 @@ namespace Aderant.Build.Packaging {
         public string ProductManifestPath { get; set; }
 
         [Parameter(Mandatory = false, Position = 1)]
-        public IEnumerable<string> Modules { get; set; }
+        public PSObject[] Modules { get; set; }
 
         [Parameter(Mandatory = false, Position = 2)]
         public IEnumerable<string> Folders { get; set; }
@@ -46,11 +52,33 @@ namespace Aderant.Build.Packaging {
 
         protected override void ProcessRecord() {
             base.ProcessRecord();
-           
-            var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
-            var result = assembler.AssembleProduct(Modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
 
-            WriteObject(result);
+            List<ExpertModule> modules = new List<ExpertModule>();
+            
+            foreach (PSObject manifestEntry in Modules) {
+                var module = new ExpertModule();
+                modules.Add(module);
+
+                foreach (PSPropertyInfo moduleProperty in manifestEntry.Properties) {
+                    if (string.Equals(moduleProperty.Name, nameof(ExpertModule.Name), StringComparison.OrdinalIgnoreCase)) {
+                        module.Name = (string)moduleProperty.Value;
+                    }
+
+                    if (string.Equals(moduleProperty.Name, nameof(ExpertModule.DependencyGroup), StringComparison.OrdinalIgnoreCase)) {
+                        module.DependencyGroup = (string)moduleProperty.Value;
+                    }
+                }
+            }
+            
+            try {
+                var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
+                var result = assembler.AssembleProduct(modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);
+
+                WriteObject(result);
+            } catch (AggregateException ex) {
+                throw ex.Flatten().InnerException;
+            }
         }
     }
 }
+

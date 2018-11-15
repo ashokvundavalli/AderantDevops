@@ -64,7 +64,7 @@ namespace Aderant.Build.DependencyResolver {
             }
         }
 
-        /// <summary>
+
         /// Gets or sets the version required.
         /// </summary>
         /// <value>The version requirement.</value>
@@ -123,8 +123,6 @@ namespace Aderant.Build.DependencyResolver {
         /// <summary>
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
-        public bool? ReplicateToDependencies { get; set; }
-
-        public string Location { get; set; }
+        public bool ReplicateToDependencies { get; set; }
     }
 }

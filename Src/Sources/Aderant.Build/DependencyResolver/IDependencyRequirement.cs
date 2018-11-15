@@ -1,4 +1,6 @@
-﻿namespace Aderant.Build.DependencyResolver {
+﻿using Aderant.Build.DependencyAnalyzer;
+
+namespace Aderant.Build.DependencyResolver {
     internal interface IDependencyRequirement {
         /// <summary>
         /// Gets the name of the requirement (module name or package name).
@@ -11,11 +13,7 @@
         /// </summary>
         /// <value>The group name.</value>
         string Group { get; }
-
-        /// <summary>
-        /// Gets the version constraint that this requirement demands
-        /// </summary>
-        /// <value>The version requirement.</value>
+        
         VersionRequirement VersionRequirement { get; }
 
         /// <summary>
@@ -26,8 +24,6 @@
         /// <summary>
         /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
         /// </summary>
-        bool? ReplicateToDependencies { get; set; }
-
-        string Location { get; set; }
+        bool ReplicateToDependencies { get; set; }
     }
 }

@@ -121,6 +121,7 @@
     <Compile Include="ExpertManifestTests.cs" />
     <Compile Include="ModuleDependencyResolverTests.cs" />
     <Compile Include="IndendedFileParserTests.cs" />
+    <Compile Include="DependencyResolver\PackageManagerTests.cs" />
     <Compile Include="PackageProcessorTests.cs" />
     <Compile Include="Packaging\ArtifactPackageTests.cs" />
     <Compile Include="ObjectModelSerializationTests.cs" />

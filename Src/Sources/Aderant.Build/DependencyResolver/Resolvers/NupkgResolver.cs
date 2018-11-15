@@ -20,14 +20,14 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
-                    List<string> groupList = pm.FindGroups();
+                using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {   
+                    var groupList = pm.FindGroups();
 
                     foreach (string groupName in groupList) {
-                        var requirements = pm.GetDependencies(Domain.GroupName(groupName));
+                        var requirements = pm.GetDependencies(groupName);
                         foreach (var item in requirements) {
                             var requirement = DependencyRequirement.Create(item.Key, groupName, item.Value);
-                            requirement.Location = moduleDirectory;
+                            requirement.ReplicateToDependencies = true;
                             yield return requirement;
                         }
                     }
@@ -85,11 +85,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
 
                     resolverRequest.Resolved(requirement, this);
 
-                    if (requirement.ReplicateToDependencies.HasValue) {
-                        // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
-                        if (!requirement.ReplicateToDependencies.Value) {
-                            continue;
-                        }
+                    // here we override the global requires replication, if the individual package doesn't want to be replicated we honor that.
+                    if (!requirement.ReplicateToDependencies) {
+                        continue;
                     }
 
                     if (resolverRequest.RequiresThirdPartyReplication) {
@@ -117,7 +115,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             }
 
             string target = resolverRequest.GetDependenciesDirectory(requirement);
-
+            
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
                     

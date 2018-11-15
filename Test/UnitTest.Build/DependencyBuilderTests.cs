@@ -189,8 +189,8 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public override ModuleAvailability IsAvailable(string moduleName) {
-            return ModuleAvailability.Availabile;
+        public override bool IsAvailable(string moduleName) {
+            return true;
         }
     }
 
@@ -274,8 +274,8 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public override ModuleAvailability IsAvailable(string moduleName) {
-            return ModuleAvailability.Availabile;
+        public override bool IsAvailable(string moduleName) {
+            return true;
         }
 
     }
@@ -327,8 +327,8 @@ namespace UnitTest.Build {
             return false;
         }
 
-        public override ModuleAvailability IsAvailable(string moduleName) {
-            return ModuleAvailability.Availabile;
+        public override bool IsAvailable(string moduleName) {
+            return true;
         }
     }
 }

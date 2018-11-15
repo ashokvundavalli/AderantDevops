@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -8,57 +8,62 @@ using System.Xml.Linq;
 using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
-
     /// <summary>
     /// Represents a module in the expert code base
     /// </summary>
-    [DebuggerDisplay("Module: {Name} ({DebuggerDisplayNames})")]
+    [DebuggerDisplay("{Name}")]
     public class ExpertModule : IEquatable<ExpertModule>, IComparable<ExpertModule> {
-
-        private static Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
-            { "Libraries", ModuleType.Library },
-            { "Services", ModuleType.Service },
-            { "Applications", ModuleType.Application },
-            { "Workflow", ModuleType.Sample },
-            { "Internal", ModuleType.InternalTool },
-            { "Web", ModuleType.Web },
-            { "Mobile", ModuleType.Web },
-            { "Tests", ModuleType.Test },
-        };
-
-        private readonly IList<XAttribute> customAttributes;
-
         private string name;
+        private IList<XAttribute> customAttributes;
         private ModuleType? type;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExpertModule" /> class.
+        /// Initializes a new instance of the <see cref="ExpertModule"/> class.
         /// </summary>
-        internal ExpertModule() {
-        }
-
-        public ExpertModule(string name) {
-            if (string.IsNullOrWhiteSpace(name)) {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+        public ExpertModule() {
+            if (!string.IsNullOrEmpty(Branch)) {
+                RepositoryType = RepositoryType.Folder;
             }
-
-            Name = name;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExpertModule" /> class from a Product Manifest element.
+        /// Creates a Expert Module from the specified element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        public static ExpertModule Create(XElement element) {
+            XAttribute name = element.Attribute("Name");
+
+            if (string.IsNullOrEmpty(name?.Value)) {
+                throw new ArgumentNullException(nameof(element), "No name element specified");
+            }
+
+            ModuleType moduleType = GetModuleType(name.Value);
+
+            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
+                return new ThirdPartyModule(element);
+            }
+
+            if (moduleType == ModuleType.Web) {
+                return new WebModule(element);
+            }
+            return new ExpertModule(element);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
-        internal ExpertModule(XElement element)
+        internal ExpertModule(XElement element) 
             : this() {
             ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays
-        /// in package)
-        /// </summary>
-        public bool ReplicateToDependencies { get; set; } = true;
+        internal ExpertModule(string name) {
+            if (string.IsNullOrWhiteSpace(name)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+            }
+            Name = name;
+        }
 
         /// <summary>
         /// Gets or sets the name of the module.
@@ -78,9 +83,61 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (type == null) {
                     type = GetModuleType(Name);
                 }
-
                 return type.Value;
             }
+        }
+
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <returns>
+        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        /// <param name="other">An object to compare with this object.</param>
+        public bool Equals(ExpertModule other) {
+            if (ModuleType != other.ModuleType) {
+                return false;
+            }
+
+            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase) 
+                   && VersionRequirement == other.VersionRequirement
+                   && string.Equals(DependencyGroup, other.DependencyGroup, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static readonly Dictionary<string, ModuleType> typeMap = new Dictionary<string, ModuleType>(StringComparer.OrdinalIgnoreCase) {
+            { "Libraries", ModuleType.Library },
+            { "Services", ModuleType.Service },
+            { "Applications", ModuleType.Application },
+            { "Workflow", ModuleType.Sample },
+            { "Internal", ModuleType.InternalTool },
+            { "Web", ModuleType.Web },
+            { "Mobile", ModuleType.Web },
+            { "Tests", ModuleType.Test },
+        };
+
+        public static ModuleType GetModuleType(string name) {
+            string firstPart = name.Split('.')[0];
+
+            ModuleType type;
+
+            if (typeMap.TryGetValue(firstPart, out type)) {
+                return type;
+            }
+           
+            if (Enum.TryParse(firstPart, true, out type)) {
+                return type;
+            }
+
+            // Help builds to /bin just like a third party module
+            if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
+                return ModuleType.Help;
+            }
+
+            return ModuleType.Unknown;
+        }
+
+        public static bool IsNonProductModule(ModuleType type) {
+            return (type == ModuleType.Build || type == ModuleType.Performance || type == ModuleType.Test);
         }
 
         /// <summary>
@@ -120,13 +177,18 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (customAttributes == null) {
                     return (ICollection<XAttribute>)Enumerable.Empty<XAttribute>();
                 }
-
                 return new ReadOnlyCollection<XAttribute>(customAttributes);
             }
         }
 
+        internal RepositoryType RepositoryType { get; set; }
         public bool Extract { get; set; }
         public string Target { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to replicate this instance to the dependencies folder (otherwise it just stays in package)
+        /// </summary>
+        public bool ReplicateToDependencies { get; set; } = true;
 
         internal VersionRequirement VersionRequirement {
             get {
@@ -142,87 +204,23 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public string FullPath { get; set; }
+        public string DependencyGroup { get; set; } = Constants.MainDependencyGroup;
 
-        public int CompareTo(ExpertModule other) {
-            if (other == null) {
-                throw new ArgumentNullException(nameof(other));
-            }
-
-            return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
+        internal bool IsInDefaultDependencyGroup {
+            get { return string.IsNullOrWhiteSpace(DependencyGroup) || string.Equals(DependencyGroup, Constants.MainDependencyGroup); }
         }
 
         /// <summary>
-        /// Indicates whether the current object is equal to another object of the same type.
+        /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
         /// </summary>
+        /// <param name="obj">The <see cref="System.Object"/> to compare with this instance.</param>
         /// <returns>
-        /// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
-        /// </returns>
-        /// <param name="other">An object to compare with this object.</param>
-        public bool Equals(ExpertModule other) {
-            return other != null && String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Creates a Expert Module from the specified element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        public static ExpertModule Create(XElement element) {
-            var name = element.Attribute("Name");
-
-            if (string.IsNullOrEmpty(name?.Value)) {
-                throw new ArgumentNullException(nameof(element), "No name element specified");
-            }
-
-            ModuleType moduleType = GetModuleType(name.Value);
-
-            if (moduleType == ModuleType.ThirdParty || moduleType == ModuleType.Help) {
-                return new ThirdPartyModule(element);
-            }
-
-            if (moduleType == ModuleType.Web) {
-                return new WebModule(element);
-            }
-
-            return new ExpertModule(element);
-        }
-
-        public static ModuleType GetModuleType(string name) {
-            string firstPart = name.Split('.')[0];
-
-            ModuleType type;
-
-            if (typeMap.TryGetValue(firstPart, out type)) {
-                return type;
-            }
-
-            if (Enum.TryParse(firstPart, true, out type)) {
-                return type;
-            }
-
-            // Help builds to /bin just like a third party module
-            if (name.EndsWith(".HELP", StringComparison.OrdinalIgnoreCase)) {
-                return ModuleType.Help;
-            }
-
-            return ModuleType.Unknown;
-        }
-
-        public static bool IsNonProductModule(ModuleType type) {
-            return (type == ModuleType.Build || type == ModuleType.Performance || type == ModuleType.Test);
-        }
-
-        /// <summary>
-        /// Determines whether the specified <see cref="System.Object" /> is equal to this instance.
-        /// </summary>
-        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
-        /// <returns>
-        /// 	<c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+        /// 	<c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
         /// </returns>
         public override bool Equals(object obj) {
             if (!(obj is ExpertModule)) {
                 return false;
             }
-
             return Equals((ExpertModule)obj);
         }
 
@@ -230,7 +228,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
         /// </returns>
         public override int GetHashCode() {
             if (name != null) {
@@ -241,13 +239,23 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         /// <summary>
-        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// Returns a <see cref="System.String"/> that represents this instance.
         /// </summary>
         /// <returns>
-        /// A <see cref="System.String" /> that represents this instance.
+        /// A <see cref="System.String"/> that represents this instance.
         /// </returns>
         public override string ToString() {
             return Name;
+        }
+
+        public int CompareTo(ExpertModule other) {
+            if (ReferenceEquals(this, other)) {
+                return 0;
+            }
+            if (ReferenceEquals(null, other)) {
+                return 1;
+            }
+            return string.Compare(name, other.name, StringComparison.OrdinalIgnoreCase);
         }
     }
 

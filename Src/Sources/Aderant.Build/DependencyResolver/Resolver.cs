@@ -109,55 +109,6 @@ namespace Aderant.Build.DependencyResolver {
                 resolverRequest.AssociateRequirements(module, loopRequirements);
                 requirements.AddRange(loopRequirements);
             }
-
-            //ValidateRequirements(requirements);
-        }
-
-        private void ValidateRequirements(List<IDependencyRequirement> requirements) {
-            StringBuilder sb = new StringBuilder();
-
-            IEnumerable<IGrouping<string, IDependencyRequirement>> groupings = requirements.GroupBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
-
-            foreach (var group in groupings) {
-                List<IDependencyRequirement> requirementsWithConstraints = new List<IDependencyRequirement>();
-
-                foreach (var requirement in group) {
-                    if (requirement.VersionRequirement != null) {
-                        requirementsWithConstraints.Add(requirement);
-                    }
-                }
-
-                var unique = requirementsWithConstraints
-                    .GroupBy(req => GetExpression(req), StringComparer.OrdinalIgnoreCase)
-                    .Select(s => s.First());
-
-                if (unique.Count() > 1) {
-                    var @join = string.Join(Environment.NewLine, unique.Select(s => $"{s.VersionRequirement.ConstraintExpression} in {s.VersionRequirement.OriginatingFile ?? s.Location}"));
-                    sb.AppendLine($"The dependency {group.Key} in has incompatible version constraints: {join}");
-                }
-            }
-
-            if (sb.Length > 0) {
-                throw new InvalidOperationException(sb.ToString());
-            }
-        }
-
-        private string GetExpression(IDependencyRequirement dependencyRequirement) {
-            if (dependencyRequirement.VersionRequirement != null) {
-                if (string.IsNullOrWhiteSpace(dependencyRequirement.VersionRequirement.ConstraintExpression)) {
-                    return null;
-                }
-                return dependencyRequirement.VersionRequirement.ConstraintExpression;
-            }
-
-            return null;
-        }
-
-        private static void RemoveRequirementsBeingBuilt(ResolverRequest resolverRequest, List<IDependencyRequirement> requirements) {
-            IEnumerable<ExpertModule> modules = resolverRequest.GetModulesInBuild();
-            foreach (var module in modules) {
-                requirements.RemoveAll(req => string.Equals(req.Name, module.Name, StringComparison.OrdinalIgnoreCase));
-            }
         }
     }
 }

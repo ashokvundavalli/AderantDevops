@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class ExpertModuleMapper {
@@ -23,7 +24,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             XElement root = new XElement("Modules");
 
             if (isProductManifest) {
-                root = new XElement("ProductManifest", new XAttribute("Name", "Expert"), new XAttribute("ExpertVersion", ""));
+                root = new XElement("Modules");
             } else {
                 root = new XElement("ReferencedModules");
             }
@@ -151,10 +152,11 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("Target", value => expertModule.Target = value);
 
-            SetPropertyValue("PackageType", value => ParseEnum<PackageType>(value));
+            SetPropertyValue("ReplicateToDependencies", value => expertModule.ReplicateToDependencies = ToBoolean(value));
+
+            SetPropertyValue("DependencyGroup", value => expertModule.DependencyGroup = value);
 
             SetPropertyValue("GetAction", value => {
-
                 if (!string.IsNullOrEmpty(value)) {
                     expertModule.GetAction = (GetAction)Enum.Parse(typeof(GetAction), value.Replace("_", "-"), true);
                 }
@@ -162,9 +164,11 @@ namespace Aderant.Build.DependencyAnalyzer {
             });
 
             if (expertModule.ModuleType == ModuleType.ThirdParty) {
+                expertModule.RepositoryType = RepositoryType.NuGet;
             }
 
             if (expertModule.GetAction == GetAction.NuGet) {
+                expertModule.RepositoryType = RepositoryType.NuGet;
             }
         }
 
@@ -181,6 +185,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (bool.TryParse(value, out result)) {
                 return result;
             }
+
             return false;
         }
 
@@ -194,9 +199,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
     }
-
-    public enum PackageType {
-        Binaries,
-        Side,
-    }
+  
 }
