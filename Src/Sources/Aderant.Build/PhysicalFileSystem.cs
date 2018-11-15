@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -472,6 +473,10 @@ namespace Aderant.Build {
             bulkCopy.Complete();
 
             return bulkCopy;
+        }
+
+        public void ExtractZipToDirectory(string sourceArchiveFileName, string destination) {
+            ZipFile.ExtractToDirectory(sourceArchiveFileName, destination);
         }
 
         private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {

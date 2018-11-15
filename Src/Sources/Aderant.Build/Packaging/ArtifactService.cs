@@ -242,15 +242,13 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            FetchArtifacts(artifactPaths);
-
-            BuildStateFile stateFile = context.GetStateFile(container);
-
-            IEnumerable<string> localArtifactArchives = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*.zip", true));
+            IEnumerable<string> localArtifactArchives = FetchArtifacts(artifactPaths);
 
             ExtractArtifactArchives(localArtifactArchives);
 
             IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
+
+            BuildStateFile stateFile = context.GetStateFile(container);
 
             var filesToRestore = CalculateFilesToRestore(stateFile, solutionRoot, container, localArtifactFiles);
 
@@ -258,14 +256,16 @@ namespace Aderant.Build.Packaging {
         }
 
         private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
-            try {
-                Parallel.ForEach(
-                    localArtifactArchives,
-                    new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
-                    archive => { ZipFile.ExtractToDirectory(archive, Path.GetDirectoryName(archive)); });
-            } catch (AggregateException exception) {
-                logger.Error(exception.Flatten().ToString());
-            }
+            Parallel.ForEach(
+                localArtifactArchives,
+                new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
+                archive => {
+                    string destination = Path.GetDirectoryName(archive);
+
+                    logger.Info("Extracting {sourceArchiveFileName} -> {destination}");
+
+                    fileSystem.ExtractZipToDirectory(archive, destination);
+                });
         }
 
         /// <summary>
@@ -282,7 +282,7 @@ namespace Aderant.Build.Packaging {
             foreach (PathSpec file in filesToRestore) {
                 logger.Info("Copying: {0} -> {1}", file.Location, file.Destination);
             }
-            
+
             bulkCopy.Completion.GetAwaiter().GetResult();
 
             return bulkCopy;
@@ -324,7 +324,7 @@ namespace Aderant.Build.Packaging {
             return paths;
         }
 
-        private void FetchArtifacts(IList<ArtifactPathSpec> paths) {
+        private IEnumerable<string> FetchArtifacts(IList<ArtifactPathSpec> paths) {
             List<PathSpec> pathSpecs = new List<PathSpec>();
 
             foreach (ArtifactPathSpec item in paths) {
@@ -342,14 +342,16 @@ namespace Aderant.Build.Packaging {
             }
 
             bulkCopy.Completion.GetAwaiter().GetResult();
+
+            return pathSpecs.Select(s => s.Destination);
         }
 
         internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
-            var localArtifactFiles = artifacts.Select(
-                path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
+            var localArtifactFiles = artifacts.Select(path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
 
             List<PathSpec> copyOperations = new List<PathSpec>();
             if (localArtifactFiles.Count == 0) {
+                logger.Info("No artifacts to restore from: " + solutionRoot);
                 return copyOperations;
             }
 

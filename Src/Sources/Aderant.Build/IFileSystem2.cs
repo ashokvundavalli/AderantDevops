@@ -11,7 +11,7 @@ namespace Aderant.Build {
     }
 
     public interface IFileSystem {
-    
+
         void DeleteDirectory(string path, bool recursive);
 
         /// <summary>
@@ -78,5 +78,7 @@ namespace Aderant.Build {
         /// Performs a bulk file copy operation on the specified path specifications.
         /// </summary>
         ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
+
+        void ExtractZipToDirectory(string sourceArchiveFileName, string destination);
     }
 }
