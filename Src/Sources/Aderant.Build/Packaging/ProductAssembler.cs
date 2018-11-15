@@ -57,7 +57,7 @@ namespace Aderant.Build.Packaging {
                 });
 
                 return operation;
-            
+
 
         }
 
@@ -67,7 +67,7 @@ namespace Aderant.Build.Packaging {
             RetrieveBuildOutputs(context);
 
             IEnumerable<string> licenseText = RetrievePackages(context);
-        
+
             return new ProductAssemblyResult {
                 ThirdPartyLicenses = licenseText.ToList()
             };
@@ -97,7 +97,7 @@ namespace Aderant.Build.Packaging {
                 .Where(s => s.DependencyGroup != Constants.MainDependencyGroup)
                 .Select(s => s.DependencyGroup)
                 .ToArray();
-         
+
 
             // assemble information about source code for CI build
             if (!isLocalBuild) {
@@ -133,7 +133,7 @@ namespace Aderant.Build.Packaging {
                 fs.WriteAllText(Path.Combine(context.ProductDirectory, "..", "..", "undo-buildpersistence.bat"), Resources.UndoBatch);
             }
 
-            fs.DeleteDirectory(fs.Root, true);
+            fs.DeleteDirectory(workingDirectory, true);
 
             return licenseText;
         }
