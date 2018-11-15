@@ -47,10 +47,6 @@ namespace Aderant.Build.Tasks {
         public string BuildType { get; set; }
 
         public override bool Execute() {
-            if (ModuleName == "Libraries.Query") {
-                System.Diagnostics.Debugger.Launch();
-            }
-
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
             var logger = new BuildTaskLogger(this);

@@ -17,10 +17,14 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             logger = resolverRequest.Logger;
             logger.Info("Calculating dependency requirements for {0}", module.Name);
 
+            if (string.Equals(module.Name, "Libraries.Query", StringComparison.OrdinalIgnoreCase)) {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             string moduleDirectory = resolverRequest.GetModuleDirectory(module);
 
             if (!string.IsNullOrEmpty(moduleDirectory)) {
-                using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {   
+                using (var pm = new PaketPackageManager(moduleDirectory, new PhysicalFileSystem(), logger)) {
                     var groupList = pm.FindGroups();
 
                     foreach (string groupName in groupList) {
@@ -102,7 +106,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         private void ReplicateToDependenciesDirectory(ResolverRequest resolverRequest, string directory, IFileSystem2 fileSystem, IDependencyRequirement requirement) {
-          
+
             // For a build all we place the packages folder under dependencies
             // For a single module, it goes next to the dependencies folder
             if (requirement.Group == "Development") {
@@ -115,16 +119,16 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
             }
 
             string target = resolverRequest.GetDependenciesDirectory(requirement);
-            
+
             foreach (string dir in fileSystem.GetDirectories(packageDir)) {
                 if (dir.IndexOf("\\lib", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    
+
                     foreach (string zipPath in fileSystem.GetFiles(dir, "Web.*.zip", true).Where(f => !f.EndsWith("dependencies.zip"))) {
                         logger.Info("Extracting web package archive {0}", zipPath);
                         var fs = new WebArchiveFileSystem(dir);
                         fs.ExtractArchive(zipPath, dir);
                     }
-                    
+
                     if (requirement.Name.IsOneOf(ModuleType.ThirdParty, ModuleType.Web)) {
                         logger.Info("Replicating {0} to {1}", dir, target);
 
@@ -146,7 +150,7 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether replication explicitly disabled. 
+        /// Gets or sets a value indicating whether replication explicitly disabled.
         /// Modules can tell the build system to not replicate packages to the dependencies folder via DependencyReplication=false in the DependencyManifest.xml
         /// </summary>
         public bool? ReplicationExplicitlyDisabled { get; set; }
