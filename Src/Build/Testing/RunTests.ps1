@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param(      
+param(
   [Parameter(Mandatory=$true, HelpMessage="The path to the test runner such as vstest.console.exe")]
   [string]$PathToTestTool,
 
@@ -24,7 +24,7 @@ param(
   [Parameter(Mandatory=$false)]
   [string[]]
   $ReferencesToFind,
-  
+
   [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
   [string[]]
   $TestAssemblies
@@ -44,16 +44,15 @@ function CreateRunSettingsXml() {
     if ($SolutionRoot) {
         $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")
         $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "packages")
-        $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "dependencies")
-    }    
-    
+    }
+
     foreach ($path in $script:ReferencePaths) {
         $directoryElement = $xml.CreateElement("Directory")
         $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
         $directoryElement.SetAttribute("includeSubDirectories", "true")
 
         [void]$assemblyResolution.AppendChild($directoryElement)
-    }    
+    }
 
     $sw = [System.IO.StringWriter]::new()
     $writer = New-Object System.Xml.XmlTextWriter($sw)
@@ -80,32 +79,32 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
             if ([System.IO.Directory]::Exists($path)) {
                 $files += Get-ChildItem -LiteralPath $path -Filter "*.dll" -Recurse
             }
-        }     
+        }
 
         # Find the reference in our search space then drop it into our directory which contains the test assembly
         foreach ($reference in $ReferencesToFind) {
             # To be correct we should also support .exe and .winmd...
             # Avoid ChangeExtension(...) as assemblies often have dots in the name which confuses it
             $dllName = $reference + ".dll"
-           
+
             $foundReferenceFile = $files | Where-Object -Property Name -EQ $dllName | Select-Object -First 1
 
-            if ($foundReferenceFile) {            
+            if ($foundReferenceFile) {
                 foreach ($path in $destinationPaths) {
                     $destinationFile = [System.IO.Path]::Combine($path, $dllName)
 
                     if (-not [System.IO.File]::Exists($destinationFile)) {
-                        Write-Information "Found required file $($foundReferenceFile.FullName)"                        
+                        Write-Information "Found required file $($foundReferenceFile.FullName)"
                         New-Item -Path $destinationFile -ItemType HardLink -Value $foundReferenceFile.FullName | Out-Null
                     }
                 }
-            }            
-        }        
+            }
+        }
     }
 }
 
 function GetTestResultFiles() {
-    $path = "$WorkingDirectory\TestResults"    
+    $path = "$WorkingDirectory\TestResults"
     [System.IO.Directory]::CreateDirectory($path)
     return Get-ChildItem -LiteralPath $path -Filter "*.trx" -ErrorAction SilentlyContinue
 }
@@ -118,7 +117,7 @@ function ShowTestRunReport() {
         return
     }
 
-    if ($beforeRunTrxFiles) {    
+    if ($beforeRunTrxFiles) {
         $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
     } else {
         $newTrxFile = $afterRunTrxFiles.FullName
@@ -152,13 +151,13 @@ try {
 
     $runSettingsFile = [System.IO.Path]::GetTempFileName()
     Add-Content -LiteralPath $runSettingsFile -Value $xml -Encoding UTF8
-    $startInfo.Arguments += " /Settings:$runSettingsFile" 
+    $startInfo.Arguments += " /Settings:$runSettingsFile"
 
     Write-Information "Finding and deploying references"
-    FindAndDeployReferences $TestAssemblies   
+    FindAndDeployReferences $TestAssemblies
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
-    
+
     $global:LASTEXITCODE = $exec.Invoke($startInfo)
 } finally {
     try {
@@ -169,9 +168,9 @@ try {
     if ($global:LASTEXITCODE -ne 0) {
         if ($IsDesktopBuild) {
             ShowTestRunReport
-        }        
+        }
 
-        Write-Error "Test runner exit code: $($global:LASTEXITCODE)"        
+        Write-Error "Test runner exit code: $($global:LASTEXITCODE)"
     } else {
         if ($Error) {
             throw $Error[0]

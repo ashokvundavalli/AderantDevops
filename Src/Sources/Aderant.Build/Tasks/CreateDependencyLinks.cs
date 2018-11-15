@@ -12,7 +12,7 @@ namespace Aderant.Build.Tasks {
     /// Task to generate symlinks for the packages folder
     /// </summary>
     public class CreateDependencyLinks : BuildOperationContextTask {
-        
+
         [Required]
         public string SolutionRoot { get; set; }
 
@@ -49,6 +49,10 @@ namespace Aderant.Build.Tasks {
             }
 
             foreach (var dependencyFile in dependencies) {
+                if (dependencyFile.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
                 var snapshots = projectOutputSnapshots.Where(pos => pos.FileNamesWritten.Any(fw => dependencyFile.IndexOf(fw, StringComparison.OrdinalIgnoreCase) >= 0));
 
                 foreach (var snapshot in snapshots) {
