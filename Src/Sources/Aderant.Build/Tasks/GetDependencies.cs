@@ -47,7 +47,10 @@ namespace Aderant.Build.Tasks {
         public string BuildType { get; set; }
 
         public override bool Execute() {
-            System.Diagnostics.Debugger.Launch();
+            if (ModulesRootPath.Contains("Libraries.Query")) {
+                System.Diagnostics.Debugger.Launch();
+            }
+
 
             ModulesRootPath = Path.GetFullPath(ModulesRootPath);
 
