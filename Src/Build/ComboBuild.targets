@@ -33,7 +33,7 @@
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
 
     <!-- Location to drop outputs to share within the build -->
-    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
+    <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))))</BuildInfrastructureDirectory>
@@ -56,7 +56,7 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
-      <!--GetTfvc;-->
+      GetTfvc;
       GrovelForExtensibilityFiles;
       CreatePlan;
       GetAllDependencies;
