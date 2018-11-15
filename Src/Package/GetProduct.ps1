@@ -4,14 +4,14 @@
 #
 # Flag $getDebugFiles will get all pdb's so that you can debug
 ##
-<# 
-.Synopsis 
-    Pull from the drop location all source and assocated tests of those modules that are defined in the given product manifest  
-.Description    
-    For each module in the product manifest we get the built ouput from <ModuleName>\Bin\Test and <ModuleName>\Bin\Module 
-    and puts it into the $binariesDirectory. 
+<#
+.Synopsis
+    Pull from the drop location all source and assocated tests of those modules that are defined in the given product manifest
+.Description
+    For each module in the product manifest we get the built ouput from <ModuleName>\Bin\Test and <ModuleName>\Bin\Module
+    and puts it into the $binariesDirectory.
     The factory .bin will be created from what exists in the $binariesDirectory
-.Example     
+.Example
     GetProduct -$productManifestPath C:\Source\Dev\<branch name>\ExpertManifest.xml -$dropRoot \\na.aderant.com\expertsuite\dev\<branch name> -$binariesDirectory C:\Source\Dev\<branch name>\Binaries
     GetProduct -$productManifestPath C:\Source\Dev\<branch name>\ExpertManifest.xml -$dropRoot \\na.aderant.com\expertsuite\dev\<branch name> -$binariesDirectory C:\Source\Dev\<branch name>\Binaries -$getDebugFiles $true
 .Parameter productManifestPath
@@ -44,7 +44,7 @@ param(
     [switch]$skipDeploymentCheck
 )
 
-begin {  
+begin {
     function global:GenerateFactory() {
         param (
             [string]$inDirectory,
@@ -54,7 +54,7 @@ begin {
         process {
             Write-Host "Generating factory in [$inDirectory]"
 
-            return Start-Job -Name "Generate Factory" -ScriptBlock { 
+            return Start-Job -Name "Generate Factory" -ScriptBlock {
                 param([string]$directory, [string]$searchPath, [string]$logDirectory)
 
                 (& $directory\FactoryResourceGenerator.exe /v:+ /f:$directory /of:$directory/Factory.bin $searchPath > "$logDirectory\FactoryResourceGenerator.log") | Out-Null
@@ -77,17 +77,17 @@ begin {
 
         process {
             Write-Host "About to generate the system map"
-        
+
             if ($systemMapArgs -like "*/pdbs*" -and $systemMapArgs -like "*/pdbd*" -and $systemMapArgs -like "*/pdbid*" -and $systemMapArgs -like "*/pdbpw*") {
                 return Start-Job -Name "Generate System Map" -ScriptBlock {
-                    param($directory, $systemMapArgs, $logDirectory) 
+                    param($directory, $systemMapArgs, $logDirectory)
 
                     $connectionParts = $systemMapArgs.Split(" ")
                     Write-Host "System Map builder arguments are [$connectionParts]"
 
                     & $directory\SystemMapBuilder.exe /f:$directory /o:$directory\systemmap.xml /ef:Customization $connectionParts[0] $connectionParts[1] $connectionParts[2] $connectionParts[3] > "$logDirectory\SystemMap.log"
                 } -Argument $inDirectory, $systemMapArgs, $script:LogDirectory
-            
+
             } else {
                 throw "Connection string is invalid for use with SystemMapBuilder.exe [$systemMapArgs]"
             }
@@ -98,11 +98,11 @@ begin {
         $nodes = $productManifest.SelectNodes("//ProductManifest/Modules/Module")
         return (Get-ExpertModulesToExcludeFromPackaging -Manifest $nodes -ExpertManifestPath $productManifestPath)
     }
-    
+
     function SkipModule() {
         [CmdletBinding()]
         param([string]$moduleBinariesDirectory, $module, $excludelist)
-        
+
         if ([string]::IsNullOrWhiteSpace($moduleBinariesDirectory)) { #If we could not find a last successful drop path
             if ($module.Name -eq "Tests.UIAutomation") {
                 Write-Warning "No drop path for $($module.Name) you need to build this module."
@@ -119,7 +119,7 @@ begin {
                 if ($excludedModule.Name -ieq $module.Name) {
 
                     $items = Get-ChildItem $moduleBinariesDirectory -Filter *.dll -ErrorAction SilentlyContinue
-                
+
                     if ($null -eq $items -or $items.Count -eq 0) {
                         $skipModule = $true
                     }
@@ -127,19 +127,19 @@ begin {
             }
         }
 
-        if ($skipModule -eq $true) {        
+        if ($skipModule -eq $true) {
             return $skipModule
         }
 
         return $skipModule
-    } 
+    }
 
     <#
         Write license attribution content (license.txt) to the product directory
     #>
     Function global:Generate-ThirdPartyAttributionFile([string[]]$licenseText, [string]$expertSourceDirectory) {
         Write-Output "Generating ThirdParty license file."
-        $attributionFile = Join-Path $expertSourceDirectory 'ThirdPartyLicenses.txt'        
+        $attributionFile = Join-Path $expertSourceDirectory 'ThirdPartyLicenses.txt'
         foreach ($license in $licenseText) {
             Add-Content -Path $attributionFile -Value $license -Encoding UTF8
         }
@@ -150,8 +150,8 @@ begin {
     }
     function RetreiveModules() {
         [CmdletBinding()]
-        param([string]$productManifestPath, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber) 
-                
+        param([string]$productManifestPath, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber)
+
         # only do this for a CI build
         if ($teamProject -and $tfvcBranchName -and $tfvcSourceGetVersion) {
 
@@ -168,8 +168,8 @@ begin {
         if ($result) {
             Generate-ThirdPartyAttributionFile $result.ThirdPartyLicenses $expertSourceDirectory
         }
-    }  
-    
+    }
+
     function WaitForJobs() {
         while ((Get-Job).State -match "Running") {
             $jobs = Get-Job | Where-Object {$_.HasMoreData}
@@ -182,9 +182,9 @@ begin {
             foreach ($job in $jobs) {
                 Receive-Job $job -ErrorAction SilentlyContinue # Log4net throws exceptions when the output of the FactoryResourceGenerator is redirected.
             }
-                
+
             Start-Sleep -Seconds 5
-        }        
+        }
     }
 
     function CreateServerImage() {
@@ -221,19 +221,19 @@ begin {
         # Fix folder paths in the Expert Binaries
         Move-Item -Path "$serverImageDirectory\Bin\Module\*" -Destination $serverImageDirectory
         Get-ChildItem "$serverImageDirectory\Bin" -Recurse -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        Remove-Item "$serverImageDirectory\Bin" -Recurse -Force -ErrorAction SilentlyContinue 
+        Remove-Item "$serverImageDirectory\Bin" -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     $ErrorActionPreference = 'Stop'
 
     Write-Host $MyInvocation.MyCommand.Name
 
-    . "$PSScriptRoot\..\Build\Build-Libraries.ps1"    
+    . "$PSScriptRoot\..\Build\Build-Libraries.ps1"
 }
 
 
 process {
-    if (Test-Path $binariesDirectory) {                
+    if (Test-Path $binariesDirectory) {
         Remove-Item $binariesDirectory\* -Recurse -Force -Exclude "environment.xml", "cms.ini"
     }
 
@@ -244,14 +244,14 @@ process {
     CreateDirectory $expertSourceDirectory | Out-Null
 
     [xml]$productManifest = Get-Content $productManifestPath
-        
+
     $excludeList = $null
     $modules = $productManifest.SelectNodes("//ProductManifest/Modules/Module")
 
     #TODO: Remove this
     $newdropFolderBuildNumbers = @()
 
-    $folders = @()  
+    $folders = @()
     foreach ($module in $modules) {
         if ($module.PSObject.Properties.Name -match "GetAction") {
             if ($module.GetAction -eq "NuGet") {
@@ -260,7 +260,7 @@ process {
         }
 
         Write-Info "Resolving latest version for $($module.Name)"
-        
+
         if (IsThirdParty $module) {
             Write-Info "Ignored: {0}" $module.Name
             continue;
@@ -291,11 +291,11 @@ process {
             } else {
                 AcquireExpertClassicBinaries -moduleName $module.Name -binariesDirectory $binariesDirectory -classicPath $moduleBinariesDirectory -target $module.Target.Split('/')[1]
             }
-            
+
             $newdropFolderBuildNumbers += $module.Name + "=" + ((Get-Item $moduleBinariesDirectory).LastWriteTimeUtc).ToString("o")
             continue
         }
-        
+
         $folders += $moduleBinariesDirectory
 
         if (($module.Name.Contains("Help")) -and -not ($module.Name.Contains("Admin"))) {
@@ -336,7 +336,7 @@ process {
     }
 
     Get-ChildItem -Path $binariesDirectory -Depth 0 -File | Where-Object { -not ($_.Name.EndsWith(".msi") -or ($_.BaseName.Contains("ClassicBuildNumbers"))) } | Remove-Item -Force -Exclude "environment.xml","DropFolderBuildNumbers.txt"
-    
+
     $newdropFolderBuildNumbers | Out-File $binariesDirectory\DropFolderBuildNumbers.txt
 }
 
