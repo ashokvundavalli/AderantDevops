@@ -11,9 +11,9 @@
       AssignProjectProperties
     </DispatchToInnerBuildDependsOn>
   </PropertyGroup>
-    
-  <!-- 
-  This project file exists to provide an appropriate seam for adding new properties to the group without having to 
+
+  <!--
+  This project file exists to provide an appropriate seam for adding new properties to the group without having to
   modify the project generator itself.
   -->
   <Target Name="DispatchToInnerBuild" DependsOnTargets="$(DispatchToInnerBuildDependsOn)">
@@ -43,7 +43,7 @@
 
     <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded;Result=Succeeded]Build group $(BuildGroupId) finished"
              Condition="'$(IsDesktopBuild)' != 'true'" />
- 
+
     <OnError ExecuteTargets="SetResumePoint" />
   </Target>
 
@@ -56,8 +56,8 @@
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
       <!--
-        ShouldUnsetParentConfigurationAndPlatform        
-        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the 
+        ShouldUnsetParentConfigurationAndPlatform
+        Simulates building a solution and controls whether the Configuration and Platform metadata will be unset, allowing the
         child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
         This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
         -->
@@ -73,6 +73,7 @@
 
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
+        RunCodeAnalysisOnThisProject=false
         <!-- Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured -->
         Deterministic=true
       </BuildProperties>
@@ -122,5 +123,5 @@
              Value="$(BuildGroupId)"/>
 
   </Target>
-  
+
 </Project>

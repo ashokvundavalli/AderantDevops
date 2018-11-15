@@ -93,6 +93,8 @@
       <ExcludePaths Include="\_" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
+      <!--Need to teach the system that this provides the t4 engine-->
+      <ExcludePaths Include="Build.T4Task\" />
       <ExcludePaths Include="TempTransform\" />
       <ExcludePaths Include="C:\Source\ExpertSuite\GeneralLedger" />
       <ExcludePaths Include="Tests.Load\" />
