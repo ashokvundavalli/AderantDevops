@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="14.0"
          DefaultTargets="BuildAndPackage"
          InitialTargets="SetPropertiesFromContext;"
@@ -20,18 +20,18 @@
     <SolutionRoot Condition="'$(SolutionRoot)' != '' and !HasTrailingSlash('$(SolutionRoot)')">$(SolutionRoot)\</SolutionRoot>
 
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
-    
+
     <!--Test configuration-->
     <RunTests>$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
     <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
-    
+
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
 
     <!-- Location to drop artifacts (packaged outputputs) -->
     <ArtifactStagingDirectory Condition="'$(ArtifactStagingDirectory)' == ''">$(SolutionRoot)_as\</ArtifactStagingDirectory>
-    
+
     <!-- Location to drop outputs to share within the build -->
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">false</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
@@ -43,7 +43,7 @@
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BuildPlan Condition="'$(BuildPlan)' == ''">$(SolutionRoot)BuildPlan.proj</BuildPlan>
-    
+
     <CopyToDropEnabled Condition="'$(IsDesktopBuild)' != 'true'">true</CopyToDropEnabled>
     <PackageProduct Condition="'$(CopyToDropEnabled)' == 'true'">true</PackageProduct>
   </PropertyGroup>
@@ -56,7 +56,7 @@
     <BuildAndPackageDependsOn>
       PrepareBuildEnvironment;
       CleanStagingDirectory;
-      GetTfvc;
+      <!--GetTfvc;-->
       GrovelForExtensibilityFiles;
       CreatePlan;
       GetAllDependencies;
@@ -99,14 +99,14 @@
       <ExcludePaths Include="Tests.Query\" />
       <!--bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Exclude Web.Workflow,Build.T4Task,Libraries.SoftwareFactory,Applications.Rates,Tests.Query -RemainingArgs /p:UseSharedDependencyDirectory=true-->
       <ExcludePaths Include="MomentumFileOpening\" />
-      <ExcludePaths Include="Performance.ExpertSuite\" /> 
+      <ExcludePaths Include="Performance.ExpertSuite\" />
       <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" /> <!-- Has stuff we can't build - missing third party libs-->
       <ExcludePaths Include="Workflow.Integration.Samples\" /> <!--Has "packages" checked in-->
 
-      
+
     </ItemGroup>
 
-    <!-- 
+    <!--
     ==========================================================================================
         Build Configurations
     ==========================================================================================
@@ -178,7 +178,7 @@
     </GetPropertiesFromContext>
 
   </Target>
-  
+
 
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
   </Target>
@@ -299,7 +299,7 @@
 
   </Target>
 
-  
+
   <Target Name="GenerateFactory" Condition="'$(GenerateFactory)' != 'false'">
 
     <PropertyGroup>
@@ -332,13 +332,13 @@
 
       <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
     </GenerateArchives>
-    
+
   </Target>
 
 
   <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
 
-    <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->    
+    <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
 
     <PropertyGroup>
@@ -352,8 +352,8 @@
 
     </PropertyGroup>
 
-    <PowerShellScript ScriptBlock="$(CreateArchiveHashScript)" />     
-    
+    <PowerShellScript ScriptBlock="$(CreateArchiveHashScript)" />
+
   </Target>
 
 
@@ -434,12 +434,12 @@
                  $(LocalExpertBinariesDirectory)\**\System.Data.dll;
                  $(LocalExpertBinariesDirectory)\**\System.Drawing*.dll;
                  $(LocalExpertBinariesDirectory)\**\System.Windows.Forms*.dll;
-                 $(LocalExpertBinariesDirectory)\**\System.Xml*dll*;   
+                 $(LocalExpertBinariesDirectory)\**\System.Xml*dll*;
                  $(LocalExpertBinariesDirectory)\**\Microsoft.TeamFoundation.*dll*;
                  $(LocalExpertBinariesDirectory)\**\*UnitTest*;
                  $(LocalExpertBinariesDirectory)\**\TestLicenseRegistration*;
                  $(LocalExpertBinariesDirectory)\**\*CodeAnalysis*;
-                 $(LocalExpertBinariesDirectory)\**\*.deploy.cmd;   
+                 $(LocalExpertBinariesDirectory)\**\*.deploy.cmd;
                  $(LocalExpertBinariesDirectory)\**\*.deploy-readme.txt;
                  $(LocalExpertBinariesDirectory)\**\*.SetParameters.*;
                  $(LocalExpertBinariesDirectory)\**\*.BuildInfo.config;
