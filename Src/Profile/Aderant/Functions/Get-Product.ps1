@@ -16,20 +16,29 @@
     Get-Product -createBackup
 #>
 function Get-Product {
-param (
-        [switch]$createBackup,
-        [switch]$onlyUpdated,
-        [alias("pr")]
-        [string]$pullRquestId
+    [CmdletBinding(DefaultParameterSetName="master")]
+    param (
+        [Parameter(Mandatory=$false, ParameterSetName = "Branch")][ValidateNotNullOrEmpty()][string]$branch,
+        [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
+        [switch]$createBackup
     )
 
-    $buildInfrastructure = $ShellContext.PackageScriptsDirectory.Replace("Package", "")
+    [string]$getProduct = Join-Path -Path $ShellContext.PackageScriptsDirectory -ChildPath 'Get-Product.ps1'
+    [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
 
-    & tf.exe vc "get" $ShellContext.ProductManifestPath
-            
-    & "$($ShellContext.PackageScriptsDirectory)\GetProduct.ps1" -ProductManifestPath $ShellContext.ProductManifestPath -dropRoot $ShellContext.BranchServerDirectory -binariesDirectory $ShellContext.BranchBinariesDirectory -getDebugFiles 1 -systemMapConnectionString (Get-SystemMapConnectionString) -pullRequest $pullRquestId
+    switch ($PSCmdlet.ParameterSetName) {
+        "Branch" {
+            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch $ShellContext.BranchName
+        }
+        "PullRequest" {
+            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId
+        }
+        "master" {
+            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch 'master'
+        }
+    }
 
-    if ($createBackup) {
+    if ($createBackup.IsPresent) {
         Write-Host "Creating backup of Binaries folder."
         $backupPath = $ShellContext.BranchLocalDirectory + "\BinariesBackup"
         if (-not (Test-Path $backupPath)) {
@@ -37,6 +46,26 @@ param (
         }
         Invoke-Expression "robocopy.exe $ShellContext.BranchBinariesDirectory $backupPath /MIR /SEC /TEE /R:2 /XD $ShellContext.BranchBinariesDirectory\ExpertSource\Customization" | Out-Null
         Write-Host "Backup complete."
+    }
+}
+
+#TODO: Front end with the http build service to cache the results for remote clients 
+Register-ArgumentCompleter -CommandName Get-Product -ParameterName "pullRequestId" -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)        
+
+    # TODO: Externalize
+    # TODO: Call build service for caching for people in the US
+    $stem = "http://tfs:8080/tfs/Aderant/ExpertSuite"
+    $results = Invoke-RestMethod -Uri "$stem/_apis/git/pullrequests" -ContentType "application/json" -UseDefaultCredentials
+
+    $ids = $results.value | Select-Object -Property pullRequestId, title
+
+    if (-not $wordToComplete.EndsWith("*")) {
+        $wordToComplete += "*"
+    }
+
+    $ids | Where-Object -FilterScript { $_.pullRequestId -like $wordToComplete -or $_.title -like $wordToComplete } | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_.pullRequestId, $_.title, [System.Management.Automation.CompletionResultType]::Text, $_.title)
     }
 }
 
@@ -60,11 +89,11 @@ function Get-ProductZip([switch]$unstable) {
     $pathToZip = $pathToZip.Trim()
     DeleteContentsFromExcludingFile -directory $BranchBinariesDirectory "environment.xml"
     Copy-Item -Path $pathToZip -Destination $BranchBinariesDirectory
-    $localZip = (Join-Path $BranchBinariesDirectory $zipName)
+    $localZip = (Join-Path -Path $BranchBinariesDirectory -ChildPath $zipName)
     Write-Host "About to extract zip to [$BranchBinariesDirectory]"
     
-    $zipExe = join-path $ShellContext.BuildToolsDirectory "\7z.exe"
-    if (test-path $zipExe) {
+    $zipExe = Join-Path -Path $ShellContext.BuildToolsDirectory -ChildPath "7z.exe"
+    if (Test-Path $zipExe) {
         $SourceFile = $localZip
         $Destination = $BranchBinariesDirectory
         &$zipExe x $SourceFile "-o$Destination" -y

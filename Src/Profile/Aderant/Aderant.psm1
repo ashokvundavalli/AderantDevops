@@ -30,7 +30,7 @@ function Initialize-Module {
 Initialize-Module
 
 [string]$global:BranchConfigPath = ""
-[string]$global:BranchName = ""
+[string]$ShellContext.BranchName = ""
 [string]$global:BranchLocalDirectory = ""
 [string]$global:BranchServerDirectory = ""
 [string]$global:BranchModulesDirectory = ""
@@ -185,7 +185,8 @@ function Set-BranchPaths {
     #initialise from default setting
     Write-Debug "Setting information for branch from your defaults"
     $global:BranchLocalDirectory = (GetDefaultValue "DevBranchFolder").ToLower()
-    $global:BranchName = ResolveBranchName $global:BranchLocalDirectory
+    $ShellContext.BranchLocalDirectory = $global:BranchLocalDirectory
+    $ShellContext.BranchName = ResolveBranchName $global:BranchLocalDirectory
     $ShellContext.BranchServerDirectory = (GetDefaultValue "DropRootUNCPath").ToLower()
     $ShellContext.BranchModulesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Modules"
     $ShellContext.BranchBinariesDirectory = Join-Path -Path $global:BranchLocalDirectory -ChildPath "\Binaries"
@@ -267,10 +268,10 @@ function Set-ChangedBranchPaths([string]$name) {
     [bool]$changeToContainerFromMAIN = $false
 
     # get the new and previous name a container parts
-    if ((IsDevBanch $global:BranchName) -or (IsReleaseBanch $global:BranchName)) {
-        $previousBranchContainer = $global:BranchName.Substring(0, $global:BranchName.LastIndexOf("\"))
-        $previousBranchName = $global:BranchName.Substring($global:BranchName.LastIndexOf("\") + 1)
-    } elseif ((IsMainBanch $global:BranchName)) {
+    if ((IsDevBanch $ShellContext.BranchName) -or (IsReleaseBanch $ShellContext.BranchName)) {
+        $previousBranchContainer = $ShellContext.BranchName.Substring(0, $ShellContext.BranchName.LastIndexOf("\"))
+        $previousBranchName = $ShellContext.BranchName.Substring($ShellContext.BranchName.LastIndexOf("\") + 1)
+    } elseif ((IsMainBanch $ShellContext.BranchName)) {
         $previousBranchName = "MAIN"
         $changeToContainerFromMAIN = $true
     }
@@ -311,7 +312,7 @@ function Set-ChangedBranchPaths([string]$name) {
 #>
 function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $previousBranchName) {
     #change name and then container and remove extra backslash's
-    $globalBranchName = ($global:BranchName -replace $previousBranchName, $newBranchName)
+    $globalBranchName = ($ShellContext.BranchName -replace $previousBranchName, $newBranchName)
     $globalBranchName = $newBranchContainer + "\" + $globalBranchName
 
     if ($globalBranchName -eq "\") {
@@ -329,7 +330,7 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
         return $false
     }
 
-    $global:BranchName = $globalBranchName
+    $ShellContext.BranchName = $globalBranchName
     $global:BranchLocalDirectory = $globalBranchLocalDirectory
 
     #strip MAIN then add container and name
@@ -346,8 +347,8 @@ function Switch-BranchFromMAINToContainer($newBranchContainer, $newBranchName, $
 #>
 function Switch-BranchFromContainer($newBranchContainer, $previousBranchContainer, $newBranchName, $previousBranchName) {
     #change name and then container and remove extra backslash's
-    $branchName = $global:BranchName.Replace($previousBranchName, $newBranchName)
-    $branchName = $global:BranchName.Replace($previousBranchContainer, $newBranchContainer)
+    $branchName = $ShellContext.BranchName.Replace($previousBranchName, $newBranchName)
+    $branchName = $ShellContext.BranchName.Replace($previousBranchContainer, $newBranchContainer)
     if (IsMainBanch $branchName) {
         $branchName = [System.Text.RegularExpressions.Regex]::Replace($branchName, "[^1-9a-zA-Z_\+]", "");
     }
@@ -363,7 +364,7 @@ function Switch-BranchFromContainer($newBranchContainer, $previousBranchContaine
         return $false
     }
 
-    $global:BranchName = $branchName
+    $ShellContext.BranchName = $branchName
     $global:BranchLocalDirectory = $branchLocalDirectory
 
     $ShellContext.BranchServerDirectory = $ShellContext.BranchServerDirectory.Substring(0, $ShellContext.BranchServerDirectory.LastIndexOf($previousBranchContainer));
@@ -503,7 +504,7 @@ function OutputEnvironmentDetails {
     Write-Host "-----------------------------"
     Write-Host "Local Branch Information"
     Write-Host "-----------------------------"
-    Write-Host "Name :" $global:BranchName
+    Write-Host "Name :" $ShellContext.BranchName
     Write-Host "Path :" $global:BranchLocalDirectory
     Write-Host ""
     Write-Host "-----------------------------"
@@ -671,26 +672,6 @@ function Output-VSIXLog {
     return $errorsOccurred
 }
 
-#TODO: Front end with the http build service to cache the results for remote clients 
-Register-ArgumentCompleter -CommandName Get-Product -ParameterName "pullRquestId" -ScriptBlock {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)        
-
-    # TODO: Externalize
-    # TODO: Call build service for caching for people in the US
-    $stem = "http://tfs:8080/tfs/Aderant/ExpertSuite"
-    $results = Invoke-RestMethod -Uri "$stem/_apis/git/pullrequests" -ContentType "application/json" -UseDefaultCredentials
-
-    $ids = $results.value | Select-Object -Property pullRequestId, title
-
-    if (-not $wordToComplete.EndsWith("*")) {
-        $wordToComplete += "*"
-    }
-
-    $ids | Where-Object -FilterScript { $_.pullRequestId -like $wordToComplete -or $_.title -like $wordToComplete } | ForEach-Object {
-        [System.Management.Automation.CompletionResult]::new($_.pullRequestId, $_.title, [System.Management.Automation.CompletionResultType]::Text, $_.title)
-    }
-}
-
 <#
 .Synopsis
     Sets up visual studio environment, called from Profile.ps1 when starting PS.
@@ -739,7 +720,7 @@ function SwitchBranchTo {
     )
 
     begin {
-        if ($global:BranchName -Contains $newBranch) {
+        if ($ShellContext.BranchName -Contains $newBranch) {
             Write-Host "The magic unicorn has refused your request." -ForegroundColor Yellow
             return
         }
@@ -1042,7 +1023,7 @@ Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModules" -ParameterName "skipUntil"
 Add-ModuleExpansionParameter -CommandName "Build-ExpertModulesOnServer" -ParameterName "workflowModuleNames"
 Add-ModuleExpansionParameter -CommandName "Get-DependenciesForCurrentModule" -ParameterName "onlyUpdated"
-Add-ModuleExpansionParameter -CommandName "Get-Product" -ParameterName "onlyUpdated"
+Add-ModuleExpansionParameter -CommandName "Get-DependenciesForCurrentModule" -ParameterName "onlyUpdated"
 Add-ModuleExpansionParameter -CommandName "Get-DependenciesFrom" -ParameterName "ProviderModules"
 Add-ModuleExpansionParameter -CommandName "Get-DependenciesFrom" -ParameterName "ConsumerModules"
 Add-ModuleExpansionParameter -CommandName "Get-ExpertModuleDependencies" -ParameterName "SourceModuleName"
@@ -1070,7 +1051,7 @@ Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterNa
 function Enable-ExpertPrompt() {  
     Function global:Prompt {
         # set the window title to the branch name
-        $Host.UI.RawUI.WindowTitle = "PS - [" + $ShellContext.CurrentModuleName + "] on branch [" + $global:BranchName + "]"
+        $Host.UI.RawUI.WindowTitle = "PS - [" + $ShellContext.CurrentModuleName + "] on branch [" + $ShellContext.BranchName + "]"
 
         Write-Host("")
         Write-Host ("Module [") -nonewline
@@ -1078,7 +1059,7 @@ function Enable-ExpertPrompt() {
         Write-Host ("] at [") -nonewline
         Write-Host ($ShellContext.CurrentModulePath) -nonewline -foregroundcolor DarkCyan
         Write-Host ("] on branch [") -nonewline
-        Write-Host ($global:BranchName) -nonewline -foregroundcolor Green
+        Write-Host ($ShellContext.BranchName) -nonewline -foregroundcolor Green
         Write-Host ("]")
 
         Write-Host ("PS " + $(get-location) + ">") -nonewline
@@ -1242,9 +1223,7 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Get-Latest'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-LocalDependenciesForCurrentModule'; alias = 'gdl'; },
     [PSCustomObject]@{ function = 'Get-Product'; alias = $null; },
-    [PSCustomObject]@{ function = 'Get-ProductNoDebugFiles'; alias = $null; },
     [PSCustomObject]@{ function = 'Get-ProductBuild'; alias = 'gpb'; },
-    [PSCustomObject]@{ function = 'Get-ProductZip'; alias = $null; },
     [PSCustomObject]@{ function = 'Git-Merge'; alias = $null; },
     [PSCustomObject]@{ function = 'Help'; alias = $null; },
     [PSCustomObject]@{ function = 'Install-DeploymentManager'; alias = $null; },

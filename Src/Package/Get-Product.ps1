@@ -28,8 +28,8 @@ param(
 )
 
 begin {
-    $ErrorActionPreference = "Stop"
-    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+    Set-StrictMode -Version 'Latest'
 
     Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
 
