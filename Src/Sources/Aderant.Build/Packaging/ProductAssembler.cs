@@ -40,25 +40,23 @@ namespace Aderant.Build.Packaging {
             IEnumerable<ExpertModule> resolvedModules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup));
 
             // the additional TFS info will only be passed in a CI build
-                if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
-                    this.isLocalBuild = true;
-                } else {
-                    this.tfvcSourceGetVersion = tfvcSourceGetVersion;
-                    this.teamProject = teamProject;
-                    this.tfvcBranch = tfvcBranch;
-                    this.tfsBuildId = tfsBuildId;
-                    this.tfsBuildNumber = tfsBuildNumber;
-                }
+            if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
+                this.isLocalBuild = true;
+            } else {
+                this.tfvcSourceGetVersion = tfvcSourceGetVersion;
+                this.teamProject = teamProject;
+                this.tfvcBranch = tfvcBranch;
+                this.tfsBuildId = tfsBuildId;
+                this.tfsBuildNumber = tfsBuildNumber;
+            }
 
-                var operation = AssembleProduct(new ProductAssemblyContext {
-                    Modules = resolvedModules,
-                    BuildOutputs = buildOutputs,
-                    ProductDirectory = productDirectory
-                });
+            var operation = AssembleProduct(new ProductAssemblyContext {
+                Modules = resolvedModules,
+                BuildOutputs = buildOutputs,
+                ProductDirectory = productDirectory
+            });
 
-                return operation;
-
-
+            return operation;
         }
 
         private IProductAssemblyResult AssembleProduct(ProductAssemblyContext context) {
@@ -114,13 +112,19 @@ namespace Aderant.Build.Packaging {
                 };
             }
 
-            var packages = fs.GetDirectories("packages").ToArray();
+            var packages = fs.GetDirectories(Path.Combine(workingDirectory, "packages")).ToArray();
             packages = packages.Where(p => p.IndexOf("Aderant.Build.Analyzer", StringComparison.OrdinalIgnoreCase) == -1).ToArray();
 
             var licenseText = CopyPackageContentToProductDirectory(context, fs, packages, null);
 
             foreach (var group in groups) {
-                packages = fs.GetDirectories(Path.Combine("packages", group)).ToArray();
+                var path = Path.Combine(workingDirectory, "packages", group);
+                packages = fs.GetDirectories(path).ToArray();
+
+                if (!packages.Any()) {
+                    throw new InvalidOperationException("There are no packages under path: " + path);
+                }
+
                 CopyPackageContentToProductDirectory(context, fs, packages, group);
             }
 

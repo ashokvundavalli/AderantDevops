@@ -54,7 +54,7 @@ namespace Aderant.Build.Packaging {
             base.ProcessRecord();
 
             List<ExpertModule> modules = new List<ExpertModule>();
-            
+
             foreach (PSObject manifestEntry in Modules) {
                 var module = new ExpertModule();
                 modules.Add(module);
@@ -69,7 +69,7 @@ namespace Aderant.Build.Packaging {
                     }
                 }
             }
-            
+
             try {
                 var assembler = new ProductAssembler(ProductManifestPath, new PowerShellLogger(Host));
                 var result = assembler.AssembleProduct(modules, Folders, ProductDirectory, TfvcSourceGetVersion, TeamProject, TfvcBranch, TfsBuildId, TfsBuildNumber);

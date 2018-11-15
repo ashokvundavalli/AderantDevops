@@ -137,7 +137,7 @@ begin {
     <#
         Write license attribution content (license.txt) to the product directory
     #>
-    Function global:Generate-ThirdPartyAttributionFile([string[]]$licenseText, [string]$expertSourceDirectory) {
+    Function GenerateThirdPartyAttributionFile([string[]]$licenseText, [string]$expertSourceDirectory) {
         Write-Output "Generating ThirdParty license file."
         $attributionFile = Join-Path $expertSourceDirectory 'ThirdPartyLicenses.txt'
         foreach ($license in $licenseText) {
@@ -148,6 +148,7 @@ begin {
         }
         Write-Output "Attribution file: $attributionFile"
     }
+
     function RetreiveModules() {
         [CmdletBinding()]
         param([string]$productManifestPath, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber)
@@ -166,7 +167,7 @@ begin {
         Write-Output "-Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber"
         $result = Package-ExpertRelease -ProductManifestPath $productManifestPath -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber
         if ($result) {
-            Generate-ThirdPartyAttributionFile $result.ThirdPartyLicenses $expertSourceDirectory
+            GenerateThirdPartyAttributionFile $result.ThirdPartyLicenses $expertSourceDirectory
         }
     }
 
