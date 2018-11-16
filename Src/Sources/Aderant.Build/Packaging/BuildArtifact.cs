@@ -46,7 +46,7 @@ namespace Aderant.Build.Packaging {
                     return true;
                 }
 
-                if (Name.StartsWith(ArtifactPackageDefinition.TestPackagePrefix)) {
+                if (Name.EndsWith(".tests", StringComparison.OrdinalIgnoreCase)) {
                     return true;
                 }
 

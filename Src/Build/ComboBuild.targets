@@ -129,7 +129,7 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <GenerateBuildPlan
       ContextEndpoint="$(ContextEndpoint)"
-      ModulesDirectory="$(SolutionRoot)\Collections"
+      ModulesDirectory="$(SolutionRoot)"
       BuildPlan="$(BuildPlan)"
       ExtensibilityFiles="@(ExtensibilityFiles)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
@@ -256,7 +256,7 @@
              Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths
-      IncludeGeneratedArtifacts="false">
+      IncludeGeneratedArtifacts="true">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 
@@ -374,7 +374,7 @@
 
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
-      AdditionalArtifacts="@(AdditionalArtifacts)"
+      Artifacts="@(AdditionalArtifacts)"
       DestinationRootPath="$(PrimaryDropLocation)">
       <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />

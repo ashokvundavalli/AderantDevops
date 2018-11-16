@@ -13,41 +13,55 @@ namespace Aderant.Build.Packaging {
         }
 
         public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<ProjectOutputSnapshot> outputs) {
-            List<string> outputList = new List<string>();
+            List<string> filesProducedByProjects = new List<string>();
 
             foreach (var project in outputs) {
-                if (project.IsTestProject) {
-                    foreach (var file in project.FilesWritten) {
+                foreach (var file in project.FilesWritten) {
 
-                        string outputRelativePath = null;
-                     
-                            var pos = file.IndexOf(project.OutputPath, StringComparison.OrdinalIgnoreCase);
-                            if (pos >= 0) {
-                                outputRelativePath = file.Remove(pos, project.OutputPath.Length);
-                            }
-                        
+                    string outputRelativePath = null;
 
-                        if (outputRelativePath != null && !Path.IsPathRooted(outputRelativePath)) {
-                            if (!outputList.Contains(outputRelativePath)) {
-                                outputList.Add(outputRelativePath);
-                            }
+                    var pos = file.IndexOf(project.OutputPath, StringComparison.OrdinalIgnoreCase);
+                    if (pos >= 0) {
+                        outputRelativePath = file.Remove(pos, project.OutputPath.Length);
+                    }
+
+                    if (outputRelativePath != null && !Path.IsPathRooted(outputRelativePath)) {
+                        if (!filesProducedByProjects.Contains(outputRelativePath)) {
+                            filesProducedByProjects.Add(outputRelativePath);
                         }
                     }
                 }
             }
 
             var artifactItems = new List<PathSpec>();
+            var packageQueue = filesToPackage.ToList();
 
-            foreach (var file in filesToPackage) {
-                foreach (var output in outputList) {
-                    if (string.Equals(file.Destination, output, StringComparison.OrdinalIgnoreCase)) {
+            for (var i = packageQueue.Count - 1; i >= 0; i--) {
+                var file = packageQueue[i];
+
+                foreach (var output in filesProducedByProjects) {
+                    if (string.Equals(Path.GetFileName(file.Location), output, StringComparison.OrdinalIgnoreCase)) {
 
                         if (!artifactItems.Contains(file)) {
                             logger.Info(file.Location);
                             artifactItems.Add(file);
+
+                            packageQueue.RemoveAt(i);
                         }
                     }
                 }
+            }
+
+            for (var i = packageQueue.Count - 1; i >= 0; i--) {
+                var file = packageQueue[i];
+                if (file.Location.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
+                    artifactItems.Add(file);
+                    packageQueue.RemoveAt(i);
+                }
+            }
+
+            foreach (var item in packageQueue) {
+                logger.Warning("File was not packaged: " + item.Location);
             }
 
             return artifactItems;
@@ -55,7 +69,7 @@ namespace Aderant.Build.Packaging {
 
         public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<ProjectOutputSnapshot> snapshots, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
             foreach (var artifactPackageDefinition in autoPackages) {
-                if (packages.Any(s => s.Id == artifactPackageDefinition.Id)) {
+                if (packages.Any(s => string.Equals(s.Id, artifactPackageDefinition.Id, StringComparison.OrdinalIgnoreCase))) {
                     throw new InvalidOperationException("A generated package cannot have the same name as a custom package. The package name is: " + artifactPackageDefinition.Id);
                 }
             }
@@ -74,6 +88,8 @@ namespace Aderant.Build.Packaging {
         }
 
         private IReadOnlyCollection<PathSpec> FilterGeneratedPackage(IEnumerable<ProjectOutputSnapshot> snapshot, ArtifactPackageDefinition definition, List<PathSpec> allFiles) {
+            logger.Info("Building package: " + definition.Id);
+
             var filesFromDefinition = definition.GetFiles().ToList();
 
             var uniqueContent = new List<PathSpec>();
@@ -102,7 +118,7 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            logger.Info("Building package: " + definition.Id);
+
             return BuildArtifact(uniqueContent, snapshot);
         }
     }

@@ -55,10 +55,9 @@ namespace Aderant.Build.Packaging {
         }
 
         private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
-            // TODO: Slow - optimize
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
-            // to only unique content is packaged
+            // so only unique content is packaged
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
             List<PathSpec> copyList = new List<PathSpec>();
             this.autoPackages = new List<ArtifactPackageDefinition>();
@@ -71,9 +70,9 @@ namespace Aderant.Build.Packaging {
                 pipelineService.RecordProjectOutputs(s);
             }
 
-            AutoPackager builder = new AutoPackager(logger);
             IEnumerable<ProjectOutputSnapshot> snapshot = pipelineService.GetProjectOutputs(container);
 
+            AutoPackager builder = new AutoPackager(logger);
             IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
             ProcessDefinitionFiles(false, context, container, definitions, copyList, buildArtifacts);
@@ -493,10 +492,10 @@ namespace Aderant.Build.Packaging {
 
                                 string reason;
                                 if (IsFileTrustworthy(file, out reason)) {
-                                    logger.Info(stateFile.PadRight(200) + "Candidate");
+                                    logger.Info($"Candidate-> {stateFile}");
                                     files.Add(file);
                                 } else {
-                                    logger.Info(stateFile.PadRight(200) + "Rejected->" + reason);
+                                    logger.Info($"Rejected-> {stateFile}");
                                 }
 
                             }

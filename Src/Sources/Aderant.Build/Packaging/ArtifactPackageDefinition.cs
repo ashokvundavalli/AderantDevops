@@ -14,16 +14,11 @@ namespace Aderant.Build.Packaging {
         }
 
         public ArtifactPackageDefinition(string id, IReadOnlyCollection<PathSpec> pathSpecs) {
-            Id = id;
+            Id = id.ToLowerInvariant();
             this.pathSpecs = pathSpecs;
         }
 
         public bool IsAutomaticallyGenerated { get; set; }
-
-        /// <summary>
-        /// The test artifact package prefix
-        /// </summary>
-        public static string TestPackagePrefix { get; } = "Tests.";
 
         public bool IsInternalDevelopmentPackage { get; set; }
         public ArtifactType ArtifactType { get; set; }
