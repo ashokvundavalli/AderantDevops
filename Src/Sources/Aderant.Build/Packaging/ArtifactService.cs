@@ -78,6 +78,8 @@ namespace Aderant.Build.Packaging {
 
             ProcessDefinitionFiles(false, context, container, definitions, copyList, buildArtifacts);
             TrackSnapshots(snapshots);
+
+            logger.Info($"ProcessDefinitions: {container}");
             // Copy the existing files.
             CopyFiles(copyList.Where(x => fileSystem.FileExists(x.Location)).ToList(), context.IsDesktopBuild);
 
@@ -106,9 +108,12 @@ namespace Aderant.Build.Packaging {
                 if (files.Any()) {
                     CheckForDuplicates(definition.Id, files);
 
+                    bool recordArtifact = false;
+
                     var artifact = CreateBuildCacheArtifact(container, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
+                        recordArtifact = true;
                     }
 
                     foreach (var handler in handlers) {
@@ -118,13 +123,15 @@ namespace Aderant.Build.Packaging {
                         }
                     }
 
-                    RecordArtifact(
-                        container,
-                        definition.Id,
-                        files.Select(
-                            s => new ArtifactItem {
-                                File = s.Destination
-                            }).ToList());
+                    if (recordArtifact) {
+                        RecordArtifact(
+                            container,
+                            definition.Id,
+                            files.Select(
+                                s => new ArtifactItem {
+                                    File = s.Destination
+                                }).ToList());
+                    }
                 }
             }
         }
@@ -201,7 +208,12 @@ namespace Aderant.Build.Packaging {
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
         private BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
-            var basePath = pathBuilder.GetBucketInstancePath(container);
+            var basePath = pathBuilder.CreatePath(container);
+
+            if (basePath == null) {
+                logger.Info($"No path for {container} was generated. Artifact cache will not be created.");
+                return null;
+            }
 
             string artifactPath = Path.Combine(basePath, definition.Id);
 
@@ -261,7 +273,6 @@ namespace Aderant.Build.Packaging {
                     string destination = Path.GetDirectoryName(archive);
 
                     logger.Info("Extracting {0} -> {1}", archive, destination);
-
                     fileSystem.ExtractZipToDirectory(archive, destination);
                 });
         }

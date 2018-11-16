@@ -253,7 +253,7 @@
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
-      Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
+             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths
       IncludeGeneratedArtifacts="false">

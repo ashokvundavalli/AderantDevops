@@ -28,14 +28,14 @@ namespace Aderant.Build.Tasks {
 
             if (File.Exists(Path.Combine(SolutionRoot, LinkLockFileName))) {
                 Log.LogMessage("Skipping symlink creation as {0} is present", LinkLockFileName);
-                //return true;
+                return true;
             }
 
             string packagesRoot = Path.Combine(SolutionRoot, PackagesDirectoryName);
 
             if (new DirectoryInfo(packagesRoot).Attributes.HasFlag(FileAttributes.ReparsePoint)) {
                 Log.LogMessage("Skipping symlink creation as '{0}' is symlink", LinkLockFileName);
-                //return true;
+                return true;
             }
 
             var projectOutputSnapshots = AssignProjectOutputSnapshotsFullPath().ToList();
@@ -50,6 +50,7 @@ namespace Aderant.Build.Tasks {
 
             foreach (var dependencyFile in dependencies) {
                 if (dependencyFile.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase)) {
+                    Log.LogMessage("Skipping symlink creation as '{0}' is not important", dependencyFile);
                     continue;
                 }
 

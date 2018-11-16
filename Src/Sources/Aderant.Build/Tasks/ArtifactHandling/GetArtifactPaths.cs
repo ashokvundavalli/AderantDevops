@@ -5,7 +5,7 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Tasks.ArtifactHandling {
 
     public sealed class GetArtifactPaths : BuildOperationContextTask {
-        
+
         public bool IncludeGeneratedArtifacts { get; set; }
 
         [Output]
