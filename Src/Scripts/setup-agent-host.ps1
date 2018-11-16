@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory=$false)][int]$agentsToProvision = 0,
     [Switch]$removeAllAgents = $true,
-    [Parameter(Mandatory=$false)][string]$agentArchive = "$env:SystemDrive\Scripts\vsts.agent.zip",
+    [Parameter(Mandatory=$false)][string]$agentArchive,
     [Parameter(Mandatory=$false)][string]$tfsHost = "http://tfs:8080/tfs",
     [Parameter(Mandatory=$false)][string]$agentPool,
     # The scratch drive for the agent, this is where the intermediate objects will be placed
@@ -39,11 +39,15 @@ begin {
 
 process {
     Start-Transcript -Path "$env:SystemDrive\Scripts\SetupAgentHostLog.txt" -Force
+
     $ErrorActionPreference = "Stop"
     [string]$AgentRootDirectory = "C:\Agents"
 
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
-        $agentArchive = "$PSScriptRoot\vsts.agent.zip"
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $ProgressPreference = 'SilentlyContinue'
+        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
+        Invoke-WebRequest  https://github.com/Microsoft/azure-pipelines-agent/releases/download/v2.119.1/vsts-agent-win7-x64-2.119.1.zip -OutFile $agentArchive
     }
 
     if (-not (Test-Path $workDirectory)) {
