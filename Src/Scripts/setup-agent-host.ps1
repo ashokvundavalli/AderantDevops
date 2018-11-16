@@ -246,7 +246,7 @@ process {
     }
 
     function RemoveAllAgents() {
-        Write-Host "Removing existing build agents"
+        Write-Output "Removing existing build agents"
 
         $agentServices = Get-Service -Name "VSTS Agent (tfs.*)"
 
@@ -259,7 +259,7 @@ process {
         }
 
         if (Test-Path $AgentRootDirectory) {
-            $directories = gci $AgentRootDirectory
+            $directories = Get-ChildItem -LiteralPath $AgentRootDirectory
 
             foreach ($directory in $directories) {
                 cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
@@ -299,6 +299,66 @@ process {
         . $PSScriptRoot\configure-git-for-agent-host.ps1
     }
 
+    function OptimizeBuildEnvironment {
+        # TODO: merge with "Optimize-Environment"
+        try {
+            Import-Module Defender
+
+            $processes = @(
+            "7z.exe",
+            "7zip.exe",
+            "csc.exe",
+            "csi.exe",
+            "devenv.exe",
+            "git.exe",
+            "lc.exe",
+            "JetBrains.Profiler.Windows.PdbServer.exe",
+            "JetBrains.ReSharper.TaskRunner.CLR45.x64.exe",
+            "JetBrains.ETW.Collector.Host.exe",
+            "Microsoft.Alm.Shared.Remoting.RemoteContainer.dll",
+            "Microsoft.VsHub.Server.HttpHost.exe",
+            "Microsoft.Alm.Shared.RemoteContainer.dll",
+            "MSBuild.exe",
+            "PowerShell.exe",
+            "ServiceHub.Host.CLR.x86.exe",
+            "ServiceHub.Host.Node.x86.exe",
+            "ServiceHub.RoslynCodeAnalysisService32.exe",
+            "ServiceHub.VSDetouredHost.exe",
+            "TE.ProcessHost.Managed.exe",
+            "testhost.x86.exe",
+            "testhostw.exe",
+            "VBCSCCompiler.exe",
+            "aspnet_compiler.exe",
+            "vstest.console.exe",
+            "vstest.discoveryengine.exe",
+            "vstest.discoveryengine.x86.exe",
+            "vstest.executionengine.exe",
+            "vstest.executionengine.x86.exe",
+
+            "node.exe",
+            "tsc.exe",
+
+            "FxCopCmd.exe",
+            "dbprepare.exe",
+            "DeploymentEngine.exe",
+            "DeploymentManager.exe",
+            "Expert.Help.sfx"
+            "PackageManagerConsole.exe",
+
+            "ffmpeg.exe",
+            "Agent.Listener.exe",
+            "AgentService.exe",
+            "robocopy.exe"
+            )
+
+            foreach ($proc in $processes) {
+                Add-MpPreference -ExclusionProcess $proc
+            }
+        } catch {
+            Write-Verbose $Error[0].Exception
+        }
+    }
+
     function ProvisionAgent() {
         SetHighPower
         ConfigureGit
@@ -309,7 +369,7 @@ process {
 
         $workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $scratchDirectoryName)
 
-        Write-Host "Agent: $agentName Working directory $workingDirectory"
+        Write-Output "Agent: $agentName Working directory $workingDirectory"
 
         $agentInstallationPath = "$AgentRootDirectory\$agentName"
 
@@ -320,7 +380,7 @@ process {
         try {
             Push-Location -Path $agentInstallationPath
 
-            Write-Host "Installing agent $agentName"
+            Write-Output "Installing agent $agentName"
 
             .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --windowslogonaccount "ADERANT_AP\tfsbuildservice$" --work "$workingDirectory" --replace
 
@@ -338,6 +398,8 @@ process {
     if ($removeAllAgents) {
         RemoveAllAgents
     }
+
+    OptimizeBuildEnvironment
 
     for ($i = 0; $i -lt $agentsToProvision; $i++) {
         ProvisionAgent
