@@ -33,22 +33,24 @@ function Optimize-BuildEnvironment {
         "vstest.discoveryengine.x86.exe",
         "vstest.executionengine.exe",
         "vstest.executionengine.x86.exe",
-        
+
         "node.exe",
         "tsc.exe",
-        
+
         "FxCopCmd.exe",
         "dbprepare.exe",
         "DeploymentEngine.exe",
         "DeploymentManager.exe",
         "Expert.Help.sfx"
-        "PackageManagerConsole.exe"
+        "PackageManagerConsole.exe",
+
+        "ffmpeg.exe"
         )
 
         foreach ($proc in $processes) {
             Add-MpPreference -ExclusionProcess $proc
         }
     } catch {
-        
+
     }
 }
