@@ -108,12 +108,10 @@ namespace Aderant.Build.Packaging {
                 if (files.Any()) {
                     CheckForDuplicates(definition.Id, files);
 
-                    bool recordArtifact = false;
-
                     var artifact = CreateBuildCacheArtifact(container, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
-                        recordArtifact = true;
+
                     }
 
                     foreach (var handler in handlers) {
@@ -123,15 +121,9 @@ namespace Aderant.Build.Packaging {
                         }
                     }
 
-                    if (recordArtifact) {
-                        RecordArtifact(
-                            container,
-                            definition.Id,
-                            files.Select(
-                                s => new ArtifactItem {
-                                    File = s.Destination
-                                }).ToList());
-                    }
+                    // Even if CreateBuildCacheArtifact did not produce an item we want to record the paths involved
+                    // so we can get them later in phases such as product assembly
+                    RecordArtifact(container, definition.Id, files.Select(s => new ArtifactItem {File = s.Destination}).ToList());
                 }
             }
         }
