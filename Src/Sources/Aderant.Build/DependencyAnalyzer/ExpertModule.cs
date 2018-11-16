@@ -53,7 +53,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Initializes a new instance of the <see cref="ExpertModule"/> class from a Product Manifest element.
         /// </summary>
         /// <param name="element">The product manifest module element.</param>
-        internal ExpertModule(XElement element) 
+        internal ExpertModule(XElement element)
             : this() {
             ExpertModuleMapper.MapFrom(element, this, out customAttributes);
         }
@@ -99,7 +99,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return false;
             }
 
-            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase) 
+            return String.Equals(name, other.name, StringComparison.OrdinalIgnoreCase)
                    && VersionRequirement == other.VersionRequirement
                    && string.Equals(DependencyGroup, other.DependencyGroup, StringComparison.OrdinalIgnoreCase);
         }
@@ -123,7 +123,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (typeMap.TryGetValue(firstPart, out type)) {
                 return type;
             }
-           
+
             if (Enum.TryParse(firstPart, true, out type)) {
                 return type;
             }
@@ -204,6 +204,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         public string FullPath { get; set; }
+
         public string DependencyGroup { get; set; } = Constants.MainDependencyGroup;
 
         internal bool IsInDefaultDependencyGroup {
@@ -228,7 +229,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
         public override int GetHashCode() {
             if (name != null) {
