@@ -254,7 +254,7 @@ process {
 
         $agentServices = Get-Service -Name "VSTS Agent (tfs.*)"
 
-        if ($agentServices -ne $null) {
+        if ($null -ne $agentServices) {
             Stop-Service -InputObject $agentServices
 
             foreach ($agent in $agentServices) {
