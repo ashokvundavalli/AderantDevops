@@ -44,7 +44,10 @@ function Optimize-BuildEnvironment {
         "Expert.Help.sfx"
         "PackageManagerConsole.exe",
 
-        "ffmpeg.exe"
+        "ffmpeg.exe",
+        "Agent.Listener.exe",
+        "AgentService.exe",
+        "robocopy.exe"
         )
 
         foreach ($proc in $processes) {
