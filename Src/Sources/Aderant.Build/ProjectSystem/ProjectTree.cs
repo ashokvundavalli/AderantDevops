@@ -85,7 +85,7 @@ namespace Aderant.Build.ProjectSystem {
             EnsureUnconfiguredProjects();
 
             ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-            
+
             if (excludeFilterPatterns != null) {
                 excludeFilterPatterns = excludeFilterPatterns.Select(PathUtility.GetFullPath).ToList();
 
