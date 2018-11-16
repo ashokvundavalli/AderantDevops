@@ -129,7 +129,7 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <GenerateBuildPlan
       ContextEndpoint="$(ContextEndpoint)"
-      ModulesDirectory="$(SolutionRoot)"
+      ModulesDirectory="$(SolutionRoot)\Collections"
       BuildPlan="$(BuildPlan)"
       ExtensibilityFiles="@(ExtensibilityFiles)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
@@ -289,6 +289,8 @@
       IgnoreExitCode="false"
       Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck"
       WorkingDirectory="$(LocalExpertBinariesDirectory)" />
+
+    <Message Text="Updating product with outputs from this build..." />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->
     <Copy SourceFiles="@(LocalPackageFiles)"
