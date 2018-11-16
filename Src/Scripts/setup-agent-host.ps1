@@ -1,6 +1,6 @@
 ﻿[CmdletBinding()]
 param(
-    [Parameter(Mandatory=$false)][int]$agentsToProvision = ($Env:NUMBER_OF_PROCESSORS / 2),
+    [Parameter(Mandatory=$false)][int]$agentsToProvision = 0,
     [Switch]$removeAllAgents = $true,
     [Parameter(Mandatory=$false)][string]$agentArchive = "$env:SystemDrive\Scripts\vsts.agent.zip",
     [Parameter(Mandatory=$false)][string]$tfsHost = "http://tfs:8080/tfs",
@@ -11,6 +11,18 @@ param(
 
 begin {
     Set-StrictMode -Version Latest
+
+    if ($agentsToProvision -eq 0) {
+        $agentsToProvision = ((Get-CimInstance -Class win32_Processor).NumberOfCores / 2)
+
+        if ((Get-CimInstance win32_computersystem).Model -eq "Virtual Machine") {
+            $agentsToProvision = 1
+        }
+
+        if ($agentsToProvision -eq 0) {
+            $agentsToProvision = 1
+        }
+    }
 
     if ([string]::IsNullOrWhiteSpace($agentPool)) {
         if (-not [string]::IsNullOrWhiteSpace($Env:AgentPool)) {
@@ -33,7 +45,7 @@ process {
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
         $agentArchive = "$PSScriptRoot\vsts.agent.zip"
     }
-    
+
     if (-not (Test-Path $workDirectory)) {
         $workDirectory = $Env:SystemDrive + "\"
     }
@@ -249,31 +261,31 @@ process {
         if (Test-Path $AgentRootDirectory) {
             $directories = gci $AgentRootDirectory
 
-            foreach ($directory in $directories) {        
+            foreach ($directory in $directories) {
                 cmd /c "$($directory.FullName)\config.cmd remove --auth Integrated"
 
                 Remove-Item -Path $directory.FullName -Force -Recurse -Verbose -ErrorAction SilentlyContinue
-            }    
-        }        
+            }
+        }
 
         # Stop IIS while removing build agent directories to prevent file locks
         Import-Module WebAdministration
         iisreset.exe /STOP
-        
+
         # Clear build agent working directory
         [string]$workingDirectory = [System.IO.Path]::Combine($workDirectory, "B")
 
         # If the path doesn't exist Get-ChildItem will happily pick the working directory instead which could delete C:\Windows\ ...
         # https://github.com/PowerShell/PowerShell/issues/5699
-        if (Test-Path $workingDirectory) {            
+        if (Test-Path $workingDirectory) {
             # Work around PowerShell bugs: https://github.com/powershell/powershell/issues/621
             Get-ChildItem -LiteralPath $workingDirectory -Recurse -Attributes ReparsePoint | % { $_.Delete() }
-        
-            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue 
+
+            Remove-Item -Path $workingDirectory -Force -Recurse -Verbose -ErrorAction SilentlyContinue
         }
-        
+
         & $PSScriptRoot\iis-cleanup.ps1
-        
+
         # Start IIS after removing files
         iisreset.exe /START
     }
@@ -288,7 +300,7 @@ process {
     }
 
     function ProvisionAgent() {
-        SetHighPower 
+        SetHighPower
         ConfigureGit
 
         $agentName = GetRandomName
@@ -297,10 +309,10 @@ process {
 
         $workingDirectory = [System.IO.Path]::Combine($workDirectory, "B", $scratchDirectoryName)
 
-        Write-Host "Agent: $agentName Working directory $workingDirectory"   
+        Write-Host "Agent: $agentName Working directory $workingDirectory"
 
         $agentInstallationPath = "$AgentRootDirectory\$agentName"
-    
+
         New-Item -ItemType Directory -Path $AgentRootDirectory -ErrorAction SilentlyContinue
 
         Expand-Archive $agentArchive -DestinationPath $agentInstallationPath -Force
@@ -311,13 +323,13 @@ process {
             Write-Host "Installing agent $agentName"
 
             .\config.cmd --unattended --url $tfsHost --auth Integrated --pool $agentPool --agent $agentName --windowslogonaccount "ADERANT_AP\tfsbuildservice$" --work "$workingDirectory" --replace
-        
+
             $command = "sc create `"VSTS Agent (tfs.$agentName)`" binpath=$agentInstallationPath\bin\AgentService.exe obj= `"ADERANT_AP\tfsbuildservice$`" start= delayed-auto"
             & cmd /c $command
             net start "VSTS Agent (tfs.$agentName)"
         } finally {
             Pop-Location
-        }    
+        }
     }
 
     ##
