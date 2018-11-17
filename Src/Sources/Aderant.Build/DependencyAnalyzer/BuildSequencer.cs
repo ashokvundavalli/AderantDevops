@@ -35,11 +35,16 @@ namespace Aderant.Build.DependencyAnalyzer {
             var isPullRequest = context.BuildMetadata.IsPullRequest;
             isDesktopBuild = context.IsDesktopBuild;
 
+            bool assumeNoBuildCache = false;
             if (context.StateFiles == null) {
                 FindStateFiles(context);
 
                 if (stateFiles != null) {
                     EvictNotExistentProjects(context);
+                }
+
+                if (context.StateFiles == null || context.StateFiles.Count == 0) {
+                    assumeNoBuildCache = true;
                 }
             }
 
@@ -50,10 +55,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             List<string> directoriesInBuild = new List<string>();
 
             foreach (IDependable dependable in projectsInDependencyOrder) {
-
                 ConfiguredProject configuredProject = dependable as ConfiguredProject;
 
                 if (configuredProject != null) {
+                    if (assumeNoBuildCache) {
+                        // No cache so mark everything as changed
+                        configuredProject.IsDirty = true;
+                    }
+
                     if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
                         directoriesInBuild.Add(configuredProject.SolutionRoot);
                     }
@@ -144,7 +153,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 this.stateFiles = context.StateFiles = files;
 
                 foreach (var file in stateFiles) {
-                    logger.Info($"Selected state file: {file.Id}:{file.Location}");
+                    logger.Info($"Selected state file: {file.Id}:{file.Location}:{file.BucketId.Tag}");
                 }
             }
         }
@@ -362,7 +371,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
-          
+
 
             HashSet<string> h = new HashSet<string>();
             h.UnionWith(dirtyProjects);

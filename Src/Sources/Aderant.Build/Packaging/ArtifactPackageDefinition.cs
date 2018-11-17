@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
 
@@ -24,6 +25,15 @@ namespace Aderant.Build.Packaging {
         public ArtifactType ArtifactType { get; set; }
 
         public string Id { get; }
+
+        // Match "test" or "tests" at the start or end of the phrase
+        private static Regex matchRegex = new Regex("test[s]?\\.|\\.test[s]?", RegexOptions.IgnoreCase);
+
+        public bool IsTestPackage {
+            get {
+                return matchRegex.IsMatch(Id);
+            }
+        }
 
         public IReadOnlyCollection<IDependable> GetDependencies() {
             return null;

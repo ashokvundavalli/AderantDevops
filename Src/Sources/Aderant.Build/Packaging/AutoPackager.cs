@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management.Automation.Security;
 using Aderant.Build.Logging;
 
 namespace Aderant.Build.Packaging {
@@ -12,7 +13,12 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
         }
 
-        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<ProjectOutputSnapshot> outputs) {
+        public IReadOnlyCollection<PathSpec> BuildArtifact(bool isTestPackage, IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<ProjectOutputSnapshot> outputs) {
+            var artifactItems = new List<PathSpec>();
+            if (filesToPackage.Count == 0) {
+                return artifactItems;
+            }
+
             List<string> filesProducedByProjects = new List<string>();
 
             foreach (var project in outputs) {
@@ -33,14 +39,13 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
-            var artifactItems = new List<PathSpec>();
             var packageQueue = filesToPackage.ToList();
 
             for (var i = packageQueue.Count - 1; i >= 0; i--) {
                 var file = packageQueue[i];
 
                 foreach (var output in filesProducedByProjects) {
-                    if (string.Equals(Path.GetFileName(file.Location), output, StringComparison.OrdinalIgnoreCase)) {
+                    if (string.Equals(file.Destination, output, StringComparison.OrdinalIgnoreCase)) {
 
                         if (!artifactItems.Contains(file)) {
                             logger.Info(file.Location);
@@ -54,9 +59,11 @@ namespace Aderant.Build.Packaging {
 
             for (var i = packageQueue.Count - 1; i >= 0; i--) {
                 var file = packageQueue[i];
+
                 if (file.Location.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
                     artifactItems.Add(file);
                     packageQueue.RemoveAt(i);
+                    continue;
                 }
             }
 
@@ -118,8 +125,9 @@ namespace Aderant.Build.Packaging {
                 }
             }
 
+            bool isTestPackage = definition.IsAutomaticallyGenerated && definition.IsTestPackage;
 
-            return BuildArtifact(uniqueContent, snapshot);
+            return BuildArtifact(isTestPackage, uniqueContent, snapshot);
         }
     }
 }

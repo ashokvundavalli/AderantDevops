@@ -23,7 +23,7 @@ namespace UnitTest.Build.Packaging {
                 FilesWritten = new[] { "Foo.dll" },
             };
 
-            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
+            var files = builder.BuildArtifact(false, filesToPackage, new[] { snapshot });
 
             Assert.AreEqual(1, files.Count);
         }
@@ -43,7 +43,7 @@ namespace UnitTest.Build.Packaging {
                 FilesWritten = new[] { @"Test\Foo.dll" },
             };
 
-            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
+            var files = builder.BuildArtifact(false, filesToPackage, new[] { snapshot });
 
             Assert.AreEqual(1, files.Count);
         }

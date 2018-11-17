@@ -1,4 +1,5 @@
-﻿using Aderant.Build.Packaging;
+﻿using System.Collections.Generic;
+using Aderant.Build.Packaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.Packaging {
@@ -9,8 +10,8 @@ namespace UnitTest.Build.Packaging {
         public void Vso_storage_path_is_full_path_minus_name() {
             // Damn build systems. So you would think that TFS would take the path verbatim and just store that away.
             // But no, it takes the UNC path you give it and then when the garbage collection occurs it appends the artifact name as a folder
-            // to that original path as the final path to delete. 
-            // This means the web UI for a build will always point to the root folder, which is useless for usability and we need to 
+            // to that original path as the final path to delete.
+            // This means the web UI for a build will always point to the root folder, which is useless for usability and we need to
             // set the actual final folder as the name.
 
             BuildArtifact storageInfo = new BuildArtifact {
@@ -47,6 +48,18 @@ namespace UnitTest.Build.Packaging {
         public void Destination_is_respected_when_directory() {
             PathSpec spec = ArtifactPackageDefinition.CreatePathSpecification(null, @"Foo\Bar\Baz.dll", "Foo");
             Assert.AreEqual(@"Foo\Baz.dll", spec.Destination);
+        }
+
+        [TestMethod]
+        public void Is_test_package_when_name_starts_with_test() {
+            var definition = new ArtifactPackageDefinition("tests.bar", new List<PathSpec>());
+            Assert.IsTrue(definition.IsTestPackage);
+        }
+
+        [TestMethod]
+        public void Is_test_package_when_name_ends_with_test() {
+            var definition = new ArtifactPackageDefinition("Foo.Test", new List<PathSpec>());
+            Assert.IsTrue(definition.IsTestPackage);
         }
     }
 }

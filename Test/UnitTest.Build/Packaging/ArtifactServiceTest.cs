@@ -97,10 +97,10 @@ namespace UnitTest.Build.Packaging {
             Assert.IsNotNull(linkCommands);
 
             PathSpec spec1 = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\MyProduct.zip");
-            Assert.AreEqual(@"\\foo\bar\refs\heads\master\0\TheProduct", spec1.Destination);
+            Assert.IsTrue(string.Equals(@"\\foo\bar\refs\heads\master\0\TheProduct", spec1.Destination, StringComparison.OrdinalIgnoreCase));
 
             PathSpec spec2 = linkCommands.ArtifactPaths.SingleOrDefault(s => s.Location == @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff");
-            Assert.AreEqual(@"\\baz\cache\SomeOtherArtifactOnDisk\Stuff", spec2.Destination);
+            Assert.IsTrue(string.Equals(@"\\baz\cache\SomeOtherArtifactOnDisk\Stuff", spec2.Destination, StringComparison.OrdinalIgnoreCase));
         }
 
         [TestMethod]
@@ -133,8 +133,8 @@ namespace UnitTest.Build.Packaging {
 
             Assert.IsNotNull(linkCommands);
 
-            Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=TheProduct;type=FilePath;]\\foo\bar\refs\heads\master\0"));
-            Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=SomeOtherArtifact;type=FilePath;]\\baz\cache"));
+            Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=TheProduct;type=FilePath;]\\foo\bar\refs\heads\master\0", StringComparer.OrdinalIgnoreCase));
+            Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=SomeOtherArtifact;type=FilePath;]\\baz\cache", StringComparer.OrdinalIgnoreCase));
         }
     }
 }
