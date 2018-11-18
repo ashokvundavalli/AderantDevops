@@ -191,7 +191,7 @@ begin {
                 return
             }
 
-            Add-Type -AssemblyName "System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+            Add-Type -AssemblyName 'System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'
             [double]$totalTime = 0
 
             Write-Host "`r`nExtracting archives:"
@@ -229,10 +229,13 @@ process {
                 Write-Error "Failed to retrieve binaries for branch: '$branch'`r`n at directory: '$branchDropRoot'."
                 exit 1
             }
+            
+            [int[]]$buildNumbers = Get-ChildItem -Path $branchDropRoot -Directory | Select-Object -ExpandProperty Name | Where-Object { $_ -match "^[\d\.]+$" }
+            [string]$build = Join-Path $branchDropRoot -ChildPath ($buildNumbers | Sort-Object -Descending | Select-Object -First 1)
 
-            [string]$build = Join-Path $branchDropRoot -ChildPath (Get-ChildItem -Path $branchDropRoot -Directory | Sort-Object -Property Name | Select-Object -First 1)
+            Write-Host "Selected build: $build"
 
-            $totalTime = (Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory)
+            $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
         }
         "PullRequest" {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
