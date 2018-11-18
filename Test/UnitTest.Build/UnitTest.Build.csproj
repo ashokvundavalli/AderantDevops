@@ -103,6 +103,7 @@
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
+    <Compile Include="DependencyRequirementTests.cs" />
     <Compile Include="ObjectModelTests.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilderTests.cs" />
     <Compile Include="Packaging\ArtifactPackageHelperTests.cs" />
