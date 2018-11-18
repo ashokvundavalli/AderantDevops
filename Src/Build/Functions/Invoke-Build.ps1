@@ -156,7 +156,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
         if ($MaxCpuCount -gt 0) {
             $set.Add("/m:" + $MaxCpuCount.ToString())
         } else {
-            $numberOfCores = (Get-WmiObject -Class win32_Processor).NumberOfCores
+            $numberOfCores = (Get-CimInstance -Class win32_Processor).NumberOfCores
             $set.Add("/m:" + ([Math]::Max(1, $numberOfCores)))
         }
 

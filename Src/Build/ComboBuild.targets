@@ -253,10 +253,10 @@
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
-      Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
+             Condition="!Exists('$(LocalExpertBinariesDirectory)')" />
 
     <GetArtifactPaths
-      IncludeGeneratedArtifacts="false">
+      IncludeGeneratedArtifacts="true">
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 
@@ -289,6 +289,8 @@
       IgnoreExitCode="false"
       Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck"
       WorkingDirectory="$(LocalExpertBinariesDirectory)" />
+
+    <Message Text="Updating product with outputs from this build..." />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->
     <Copy SourceFiles="@(LocalPackageFiles)"
@@ -372,7 +374,7 @@
 
     <PublishArtifacts
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
-      AdditionalArtifacts="@(AdditionalArtifacts)"
+      Artifacts="@(AdditionalArtifacts)"
       DestinationRootPath="$(PrimaryDropLocation)">
       <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />

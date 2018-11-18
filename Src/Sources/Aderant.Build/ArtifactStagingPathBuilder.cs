@@ -19,15 +19,16 @@ namespace Aderant.Build {
         public string StagingDirectory { get; }
 
         /// <summary>
-        /// Gets a versioned path
+        /// Gets a location to store the artifact. If the item is not known the source control system it returns null.
         /// </summary>
-        public string GetBucketInstancePath(string name) {
+        public string CreatePath(string name) {
             BucketId bucket = metadata.GetBucket(name);
 
-            return Path.Combine(
-                StagingDirectory,
-                bucket != null ? bucket.DirectorySegment ?? string.Empty : string.Empty,
-                buildId.ToString(CultureInfo.InvariantCulture));
+            if (bucket == null || string.IsNullOrEmpty(bucket.DirectorySegment)) {
+                return null;
+            }
+
+            return Path.Combine(StagingDirectory, bucket.DirectorySegment, buildId.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

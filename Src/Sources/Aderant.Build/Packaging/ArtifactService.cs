@@ -55,10 +55,9 @@ namespace Aderant.Build.Packaging {
         }
 
         private IReadOnlyCollection<BuildArtifact> ProcessDefinitions(BuildOperationContext context, string container, IReadOnlyCollection<ArtifactPackageDefinition> packages) {
-            // TODO: Slow - optimize
             // Process custom packages first
             // Then create auto-packages taking into consideration any items from custom packages
-            // to only unique content is packaged
+            // so only unique content is packaged
             List<BuildArtifact> buildArtifacts = new List<BuildArtifact>();
             List<PathSpec> copyList = new List<PathSpec>();
             this.autoPackages = new List<ArtifactPackageDefinition>();
@@ -71,13 +70,15 @@ namespace Aderant.Build.Packaging {
                 pipelineService.RecordProjectOutputs(s);
             }
 
-            AutoPackager builder = new AutoPackager(logger);
             IEnumerable<ProjectOutputSnapshot> snapshot = pipelineService.GetProjectOutputs(container);
 
+            AutoPackager builder = new AutoPackager(logger);
             IEnumerable<ArtifactPackageDefinition> definitions = builder.CreatePackages(snapshot, packages.Where(p => !p.IsAutomaticallyGenerated), autoPackages);
 
             ProcessDefinitionFiles(false, context, container, definitions, copyList, buildArtifacts);
             TrackSnapshots(snapshots);
+
+            logger.Info($"ProcessDefinitions: {container}");
             // Copy the existing files.
             CopyFiles(copyList.Where(x => fileSystem.FileExists(x.Location)).ToList(), context.IsDesktopBuild);
 
@@ -109,6 +110,7 @@ namespace Aderant.Build.Packaging {
                     var artifact = CreateBuildCacheArtifact(container, copyList, definition, files);
                     if (artifact != null) {
                         buildArtifacts.Add(artifact);
+
                     }
 
                     foreach (var handler in handlers) {
@@ -118,13 +120,9 @@ namespace Aderant.Build.Packaging {
                         }
                     }
 
-                    RecordArtifact(
-                        container,
-                        definition.Id,
-                        files.Select(
-                            s => new ArtifactItem {
-                                File = s.Destination
-                            }).ToList());
+                    // Even if CreateBuildCacheArtifact did not produce an item we want to record the paths involved
+                    // so we can get them later in phases such as product assembly
+                    RecordArtifact(container, definition.Id, files.Select(s => new ArtifactItem {File = s.Destination}).ToList());
                 }
             }
         }
@@ -201,7 +199,12 @@ namespace Aderant.Build.Packaging {
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
         private BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
-            var basePath = pathBuilder.GetBucketInstancePath(container);
+            var basePath = pathBuilder.CreatePath(container);
+
+            if (basePath == null) {
+                logger.Info($"No path for {container} was generated. Artifact cache will not be created.");
+                return null;
+            }
 
             string artifactPath = Path.Combine(basePath, definition.Id);
 
@@ -261,7 +264,6 @@ namespace Aderant.Build.Packaging {
                     string destination = Path.GetDirectoryName(archive);
 
                     logger.Info("Extracting {0} -> {1}", archive, destination);
-
                     fileSystem.ExtractZipToDirectory(archive, destination);
                 });
         }
@@ -490,10 +492,10 @@ namespace Aderant.Build.Packaging {
 
                                 string reason;
                                 if (IsFileTrustworthy(file, out reason)) {
-                                    logger.Info(stateFile.PadRight(200) + "Candidate");
+                                    logger.Info($"Candidate-> {stateFile}");
                                     files.Add(file);
                                 } else {
-                                    logger.Info(stateFile.PadRight(200) + "Rejected->" + reason);
+                                    logger.Info($"Rejected-> {stateFile}");
                                 }
 
                             }

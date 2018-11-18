@@ -53,11 +53,9 @@ namespace Aderant.Build.DependencyResolver.Resolvers {
         private void SingleModuleRestore(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {
             string directory = resolverRequest.GetDependenciesDirectory(requirements.First());
 
-            if (directory.IndexOf("Dependencies", StringComparison.OrdinalIgnoreCase) >= 0) {
-                var fs = new PhysicalFileSystem();
+            var fs = new PhysicalFileSystem();
+            PackageRestore(resolverRequest, Path.GetDirectoryName(directory), fs, requirements, cancellationToken);
 
-                PackageRestore(resolverRequest, Path.GetDirectoryName(directory), fs, requirements, cancellationToken);
-            }
         }
 
         private void ServerBuildRestore(ResolverRequest resolverRequest, IEnumerable<IDependencyRequirement> requirements, CancellationToken cancellationToken) {

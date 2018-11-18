@@ -8,13 +8,6 @@
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Mobile.targets" />
 
-  <PropertyGroup>
-    <AutomaticallyPackageTests Condition="'$(AutomaticallyPackageTests)' == ''">true</AutomaticallyPackageTests>
-
-    <PackageArtifacts Condition="'$(IsDesktopBuild)' == 'true'">false</PackageArtifacts>
-    <PackageArtifacts Condition="'$(IsDesktopBuild)' == 'false'">true</PackageArtifacts>
-  </PropertyGroup>
-
   <!--
     ==========================================================================================
         Test Configuration
@@ -45,7 +38,7 @@
   <PropertyGroup>
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
-      CreateDefaultTestsArtifact;
+      CreateDefaultArtifacts;
       PackageArtifacts
     </PackageArtifactsDependsOn>
   </PropertyGroup>
@@ -69,10 +62,16 @@
   </Target>
 
 
-  <Target Name="CreateDefaultTestsArtifact" Condition="'$(AutomaticallyPackageTests)' == 'true'">
+  <Target Name="CreateDefaultArtifacts">
     <ItemGroup>
       <_PackageArtifact Include="$(BinTestDirectory)\**\*;">
-        <ArtifactId>Tests.$(ModuleName)</ArtifactId>
+        <ArtifactId>$(ModuleName).default.tests</ArtifactId>
+        <Generated>true</Generated>
+        <ArtifactType>Prebuilt</ArtifactType>
+      </_PackageArtifact>
+
+      <_PackageArtifact Include="$(BinModuleDirectory)\**\*;">
+        <ArtifactId>$(ModuleName).default</ArtifactId>
         <Generated>true</Generated>
         <ArtifactType>Prebuilt</ArtifactType>
       </_PackageArtifact>
@@ -95,12 +94,12 @@
 
   <Target Name="CreateDependencyLinks">
 
-    <CreateDependencyLinks 
+    <CreateDependencyLinks
       SolutionRoot="$(SolutionRoot)"
       ContextEndpoint="$(ContextEndpoint)" />
-    
+
   </Target>
-  
+
 
   <!-- Stub for customizers to override -->
   <Target Name="PostBuild" />

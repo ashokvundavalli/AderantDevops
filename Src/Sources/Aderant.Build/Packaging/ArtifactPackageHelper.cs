@@ -8,6 +8,9 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Creates a definition from a bag of task items.
         /// </summary>
+        /// <param name="artifactDefinitions">The artifact definitions.</param>
+        /// <param name="relativeFrom">The rooting directories to create relative paths from.</param>
+        /// <param name="includeDirectoryPathsOnly">if set to <c>true</c> then only directories paths will be added to the artifact definition instead of files.</param>
         internal static List<ArtifactPackageDefinition> MaterializeArtifactPackages(ITaskItem[] artifactDefinitions, string[] relativeFrom, bool includeDirectoryPathsOnly) {
             List<ArtifactPackageDefinition> artifacts = new List<ArtifactPackageDefinition>();
             var grouping = artifactDefinitions.GroupBy(g => g.GetMetadata("ArtifactId"), StringComparer.OrdinalIgnoreCase);

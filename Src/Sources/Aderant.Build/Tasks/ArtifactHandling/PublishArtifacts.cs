@@ -14,7 +14,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         public string ArtifactStagingDirectory { get; set; }
 
         [Required]
-        public ITaskItem[] AdditionalArtifacts { get; set; }
+        public ITaskItem[] Artifacts { get; set; }
 
         /// <summary>
         /// The VSTS artifact association commands
@@ -30,7 +30,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
         public TaskItem[] ArtifactPaths { get; private set; }
 
         public override bool ExecuteTask() {
-            var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(AdditionalArtifacts, null, true);
+            var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(Artifacts, null, true);
 
             var service = new ArtifactService(PipelineService, null, Logger);
             var commands = service.GetPublishCommands(ArtifactStagingDirectory, Context.DropLocationInfo, Context.BuildMetadata, additionalArtifacts);

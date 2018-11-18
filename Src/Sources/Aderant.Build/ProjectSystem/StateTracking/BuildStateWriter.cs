@@ -164,7 +164,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             foreach (var bucket in buckets) {
                 var tag = bucket.Tag;
-                
+
                 List<ProjectOutputSnapshot> projectOutputSnapshot = new List<ProjectOutputSnapshot>();
                 foreach (var output in outputs) {
                     if (string.Equals(output.Directory, tag, StringComparison.OrdinalIgnoreCase)) {
@@ -198,7 +198,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             string containerName = CreateContainerName(bucket.Id);
 
-            var stateFileRoot = pathBuilder.GetBucketInstancePath(bucket.Tag);
+            var stateFileRoot = pathBuilder.CreatePath(bucket.Tag);
+
+            if (stateFileRoot == null) {
+                logger.Info($"No path for {bucket.Tag} was generated.");
+                return null;
+            }
+
             stateFileRoot = Path.Combine(stateFileRoot, containerName);
 
             var bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);

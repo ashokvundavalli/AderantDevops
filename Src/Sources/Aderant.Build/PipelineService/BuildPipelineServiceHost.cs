@@ -12,6 +12,8 @@ namespace Aderant.Build.PipelineService {
         ServiceHost host;
 
         public BuildPipelineServiceHost() {
+            // Tear down any previous state (we never want to reconnect to the existing endpoint)
+            pipeId = null;
         }
 
         public BuildOperationContext CurrentContext {
