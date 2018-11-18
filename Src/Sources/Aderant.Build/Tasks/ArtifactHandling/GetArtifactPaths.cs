@@ -18,5 +18,4 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
             return !Log.HasLoggedErrors;
         }
     }
-
 }
