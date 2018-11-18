@@ -28,7 +28,7 @@ function Get-Product {
 
     switch ($PSCmdlet.ParameterSetName) {
         "Branch" {
-            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch $ShellContext.BranchName
+            & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch $branch
         }
         "PullRequest" {
             & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId
