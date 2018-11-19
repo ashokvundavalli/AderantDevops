@@ -199,8 +199,7 @@ namespace Aderant.Build.Packaging {
         /// Creates an artifact that will be stored into the build cache
         /// </summary>
         private BuildArtifact CreateBuildCacheArtifact(string container, IList<PathSpec> copyList, ArtifactPackageDefinition definition, IReadOnlyCollection<PathSpec> files) {
-            bool sendToArtifactCache;
-            string basePath = pathBuilder.CreatePath(container, out sendToArtifactCache);
+            var basePath = pathBuilder.CreatePath(container);
 
             if (basePath == null) {
                 logger.Info($"No path for {container} was generated. Artifact cache will not be created.");
@@ -214,17 +213,16 @@ namespace Aderant.Build.Packaging {
                 copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination)));
             }
 
-            return CreateArtifact(definition, artifactPath, sendToArtifactCache);
+            return CreateArtifact(definition, artifactPath);
         }
 
-        private static BuildArtifact CreateArtifact(ArtifactPackageDefinition definition, string artifactPath, bool sendToArtifactCache) {
+        private static BuildArtifact CreateArtifact(ArtifactPackageDefinition definition, string artifactPath) {
             return new BuildArtifact {
                 Name = definition.Id,
                 SourcePath = artifactPath,
                 Type = VsoBuildArtifactType.FilePath,
                 IsAutomaticallyGenerated = definition.IsAutomaticallyGenerated,
                 IsInternalDevelopmentPackage = definition.IsInternalDevelopmentPackage,
-                SendToArtifactCache = sendToArtifactCache
             };
         }
 
@@ -573,11 +571,7 @@ namespace Aderant.Build.Packaging {
                 // Phase 1 - assumes everything is a prebuilt/cache artifact
                 var artifacts = pipelineService.GetAssociatedArtifacts();
                 AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, artifacts, buildId);
-                foreach (BuildArtifact artifact in artifacts) {
-                    if (artifact.SendToArtifactCache) {
-                        artifactsWithStoragePaths.Add(artifact);
-                    }
-                }
+                artifactsWithStoragePaths.AddRange(artifacts);
             }
 
             // Phase 2 - non-cache artifacts
@@ -588,7 +582,7 @@ namespace Aderant.Build.Packaging {
             };
 
             foreach (var artifact in additionalArtifacts) {
-                BuildArtifact buildArtifact = CreateArtifact(artifact, artifact.GetRootDirectory(), true);
+                BuildArtifact buildArtifact = CreateArtifact(artifact, artifact.GetRootDirectory());
 
                 if (artifact.ArtifactType == ArtifactType.Branch) {
                     buildArtifact.StoragePath = builder.CreatePath(

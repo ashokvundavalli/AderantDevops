@@ -21,19 +21,14 @@ namespace Aderant.Build {
         /// <summary>
         /// Gets a location to store the artifact. If the item is not known the source control system it returns null.
         /// </summary>
-        public string CreatePath(string name, out bool sendToArtifactCache) {
+        public string CreatePath(string name) {
             BucketId bucket = metadata.GetBucket(name);
 
-            sendToArtifactCache = bucket != null && !string.IsNullOrEmpty(bucket.DirectorySegment);
-
-            string directorySegment;
-            if (!string.IsNullOrWhiteSpace(bucket?.DirectorySegment)) {
-                directorySegment = bucket.DirectorySegment;
-            } else {
-                directorySegment = name;
+            if (bucket == null || string.IsNullOrEmpty(bucket.DirectorySegment)) {
+                return null;
             }
 
-            return Path.Combine(StagingDirectory, directorySegment, buildId.ToString(CultureInfo.InvariantCulture));
+            return Path.Combine(StagingDirectory, bucket.DirectorySegment, buildId.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

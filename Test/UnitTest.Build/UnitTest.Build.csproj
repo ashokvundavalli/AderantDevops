@@ -176,7 +176,6 @@
     </Compile>
     <Compile Include="TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
     <Compile Include="TopologicalSortTests.cs" />
-    <Compile Include="ArtifactStagingPathBuilderTests.cs" />
     <Compile Include="VersionRequirementTests.cs" />
   </ItemGroup>
   <ItemGroup>

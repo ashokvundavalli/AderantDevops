@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ServiceModel;
+using Aderant.Build.Model;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
+using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.PipelineService {
 
@@ -72,4 +74,5 @@ namespace Aderant.Build.PipelineService {
         [OperationContract]
         BuildArtifact[] GetAssociatedArtifacts();
     }
+
 }

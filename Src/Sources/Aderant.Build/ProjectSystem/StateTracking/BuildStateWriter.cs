@@ -194,12 +194,11 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         private BuildArtifact WriteStateFile(BuildStateFile previousBuild, BucketId bucket, IEnumerable<ProjectOutputSnapshot> projectOutputSnapshot, ArtifactCollection artifactCollection, BuildOperationContext context) {
-            ArtifactStagingPathBuilder pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
+            var pathBuilder = new ArtifactStagingPathBuilder(context.ArtifactStagingDirectory, context.BuildMetadata.BuildId, context.SourceTreeMetadata);
 
             string containerName = CreateContainerName(bucket.Id);
 
-            bool sendToArtifactCache;
-            string stateFileRoot = pathBuilder.CreatePath(bucket.Tag, out sendToArtifactCache);
+            var stateFileRoot = pathBuilder.CreatePath(bucket.Tag);
 
             if (stateFileRoot == null) {
                 logger.Info($"No path for {bucket.Tag} was generated.");
@@ -208,7 +207,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
             stateFileRoot = Path.Combine(stateFileRoot, containerName);
 
-            string bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
+            var bucketInstance = Path.Combine(stateFileRoot, DefaultFileName);
 
             string stateFile = WriteStateFile(previousBuild, bucket, projectOutputSnapshot, artifactCollection, context.SourceTreeMetadata, context.BuildMetadata, bucketInstance);
 
@@ -222,8 +221,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return new BuildArtifact {
                 SourcePath = stateFileRoot,
                 Name = containerName, /* Name must be unique within the build artifacts or TFS will complain */
-                Type = VsoBuildArtifactType.FilePath,
-                SendToArtifactCache = sendToArtifactCache
+                Type = VsoBuildArtifactType.FilePath
             };
         }
 
@@ -235,7 +233,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         public void WriteStateFiles(IBuildPipelineService pipelineService, BuildOperationContext context) {
-            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs(), container => pipelineService.GetArtifactsForContainer(container));
+            var stateArtifacts = WriteStateFiles(context, pipelineService.GetAllProjectOutputs(), (container) => pipelineService.GetArtifactsForContainer(container));
 
             pipelineService.AssociateArtifacts(stateArtifacts);
 
