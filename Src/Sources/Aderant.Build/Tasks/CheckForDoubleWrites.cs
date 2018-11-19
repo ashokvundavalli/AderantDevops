@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aderant.Build.Packaging;
 using Microsoft.Build.Framework;
@@ -16,6 +17,8 @@ namespace Aderant.Build.Tasks {
         [Required]
         public ITaskItem[] FileList { get; set; }
 
+        public bool CheckFileSize { get; set; }
+
         public override bool Execute() {
             List<PathSpec> paths = new List<PathSpec>(FileList.Length);
 
@@ -28,7 +31,9 @@ namespace Aderant.Build.Tasks {
             }
 
             try {
-                DoubleWriteCheck.CheckForDoubleWrites(paths);
+                var checker = new DoubleWriteCheck(s => new FileInfo(s));
+                checker.CheckFileSize = CheckFileSize;
+                checker.CheckForDoubleWrites(paths);
             } catch (Exception exception) {
                 Log.LogErrorFromException(exception);
             }

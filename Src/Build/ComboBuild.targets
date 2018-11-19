@@ -299,7 +299,9 @@
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
 
-    <CheckForDoubleWrites FileList="@(FileWrites)" />
+    <CheckForDoubleWrites
+      FileList="@(FileWrites)"
+      CheckFileSize="true" />
 
   </Target>
 

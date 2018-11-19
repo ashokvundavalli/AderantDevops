@@ -160,6 +160,7 @@ namespace Aderant.Build.Tasks {
                     execTask.Command = command.FileName + " " + command.Arguments;
                     execTask.IgnoreExitCode = false;
                     execTask.WorkingDirectory = command.WorkingDirectory;
+                    execTask.IgnoreStandardErrorWarningFormat = true;
 
                     if (command.Environment != null) {
                         execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();

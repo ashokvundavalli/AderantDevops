@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Web.UI;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using ProcessorArchitecture = System.Reflection.ProcessorArchitecture;
@@ -139,6 +138,8 @@ namespace Aderant.Build.Tasks {
             }
 
             this.ReferencesToFind = assemblyReferencesToFind.ToArray();
+
+            BuildEngine4.UnregisterTaskObject(AssemblyPlatformDataKey, RegisteredTaskObjectLifetime.Build);
 
             // Stash the object for downstream tasks
             BuildEngine4.RegisterTaskObject(
