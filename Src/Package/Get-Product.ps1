@@ -214,8 +214,6 @@ begin {
             return $totalTime
         }
     }
-
-
 }
 
 process {
