@@ -65,12 +65,20 @@ namespace IntegrationTest.Build {
                         WriteLogFile(@"C:\temp\" + TestContext.TestName + ".log", logger.LogFile);
                     }
 
-                    Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
+                    this.Result = result;
+
+                    if (BuildMustSucceed) {
+                        Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
+                    }
 
                     LogFile = logger.LogFile;
                 }
             }
         }
+
+        public BuildResult Result { get; set; }
+
+        public bool BuildMustSucceed { get; set; } = true;
 
         protected void WriteLogFile(string path, List<string> logFile) {
             using (FileStream file = new FileStream(path, FileMode.Create)) {
