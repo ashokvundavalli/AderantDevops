@@ -61,7 +61,7 @@
       CreatePlan;
       GetAllDependencies;
       ExecutePlan;
-      RunTests;
+      <!--RunTests;-->
       RunIntegrationTests;
       WriteStateFiles;
       PackageProduct;
