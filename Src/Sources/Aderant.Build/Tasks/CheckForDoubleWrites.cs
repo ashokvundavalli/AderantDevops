@@ -32,6 +32,7 @@ namespace Aderant.Build.Tasks {
 
             try {
                 var checker = new DoubleWriteCheck(s => new FileInfo(s));
+
                 checker.CheckFileSize = CheckFileSize;
                 checker.CheckForDoubleWrites(paths);
 
@@ -43,6 +44,8 @@ namespace Aderant.Build.Tasks {
                 }
 
             } catch (Exception exception) {
+                System.Diagnostics.Debugger.Launch();
+
                 Log.LogErrorFromException(exception);
             }
 
