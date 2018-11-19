@@ -48,7 +48,7 @@ function CreateRunSettingsXml() {
 
         # We want the test runner resolver to bind content produced by the solution build
         # for the most reliable test run as there could be matching by older assemblies in the other directories
-        $referencePathList.Insert([System.IO.Path]::Combine($SolutionRoot, "Bin", "Module"))
+        $referencePathList.Insert(0, [System.IO.Path]::Combine($SolutionRoot, "Bin", "Module"))
     }
 
     foreach ($path in $referencePathList) {
@@ -138,8 +138,6 @@ function ShowTestRunReport() {
     }
 }
 
-Set-StrictMode -Version Latest
-
 $beforeRunTrxFiles = GetTestResultFiles
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
@@ -149,7 +147,7 @@ $startInfo.WorkingDirectory = $WorkingDirectory
 $startInfo.Environment["EXPERT_MODULE_DIRECTORY"] = $SolutionRoot
 
 $global:LASTEXITCODE = 0
-$runSettingsFile = $null
+$runSettingsFile = ""
 
 try {
     Write-Information "Creating run settings"
@@ -171,7 +169,9 @@ try {
 
     if ($lastExitCode -eq 0) {
         try {
-            [System.IO.File]::Delete($runSettingsFile)
+            if ($runSettingsFile) {
+                [System.IO.File]::Delete($runSettingsFile)
+            }
         } catch {
         }
     }
