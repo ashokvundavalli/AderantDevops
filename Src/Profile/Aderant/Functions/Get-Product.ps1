@@ -18,7 +18,7 @@
 function Get-Product {
     [CmdletBinding(DefaultParameterSetName="master")]
     param (
-        [Parameter(Mandatory=$false, ParameterSetName = "Branch")][ValidateNotNullOrEmpty()][string]$branch,
+        [Parameter(Mandatory=$false, ParameterSetName = "Branch", Position = 0)][ValidateNotNullOrEmpty()][string]$branch,
         [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
         [switch]$createBackup
     )
