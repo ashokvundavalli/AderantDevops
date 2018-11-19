@@ -164,7 +164,7 @@ begin {
         $splitBuildUri = $buildUri.Split('/')
         $tfsBuildId = $splitBuildUri[$splitBuildUri.Length - 1]
 
-        Write-Output "-Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber"
+        Write-Output "-Modules $($modules.Name) -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber"
         $result = Package-ExpertRelease -ProductManifestPath $productManifestPath -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber
         if ($result) {
             GenerateThirdPartyAttributionFile $result.ThirdPartyLicenses $expertSourceDirectory
