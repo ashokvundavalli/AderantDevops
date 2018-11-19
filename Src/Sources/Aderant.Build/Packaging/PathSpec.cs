@@ -12,8 +12,16 @@ namespace Aderant.Build.Packaging {
             this.Destination = destination;
         }
 
+        /// <summary>
+        /// Gets the destination. Where the file should go to.
+        /// </summary>
+        /// <value>The destination.</value>
         public string Destination { get; }
 
+        /// <summary>
+        /// Gets the location, or source. The location where the file currently is.
+        /// </summary>
+        /// <value>The location.</value>
         public string Location { get; }
 
         public override bool Equals(object obj) {

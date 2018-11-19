@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Aderant.Build.Packaging;
 
 namespace Aderant.Build {
     /// <summary>
@@ -10,31 +11,25 @@ namespace Aderant.Build {
     /// </summary>
     internal static class DoubleWriteCheck {
 
-        public static void CheckForDoubleWrites(IEnumerable<string> filePathList) {
-            IEnumerable<IGrouping<string, string>> duplicates = filePathList
-                .GroupBy(g => g, StringComparer.OrdinalIgnoreCase)
+        public static void CheckForDoubleWrites(IEnumerable<PathSpec> filePathList) {
+            var duplicates = filePathList
+                .GroupBy(g => g.Destination, StringComparer.OrdinalIgnoreCase)
                 .Where(g => g.Count() > 1);
 
             StringBuilder sb = null;
 
             foreach (var group in duplicates) {
-                foreach (var g in group) {
-
+                foreach (var path in group) {
                     if (sb == null) {
                         sb = new StringBuilder();
-                        sb.AppendFormat("Double write detected for file path: {0}.", g);
                     }
+                    sb.AppendFormat("Double write: {0} -> {1}.", path.Location, path.Destination);
+                    sb.AppendLine();
                 }
             }
 
             if (sb != null) {
-                sb.Append(" ").AppendLine("The full write list is: ");
-                foreach (var s in filePathList) {
-                    sb.AppendLine(s);
-                }
-
                 string errorText = sb.ToString();
-
                 throw new InvalidOperationException(errorText);
             }
         }
