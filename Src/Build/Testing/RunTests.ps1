@@ -117,13 +117,13 @@ function GetTestResultFiles() {
 function ShowTestRunReport() {
     $afterRunTrxFiles = GetTestResultFiles
 
-    if ($afterRunTrxFiles -eq $null) {
+    if ($null -eq $afterRunTrxFiles) {
         Write-Output "Skipped generating HTML report - no .trx files present in directory: '$WorkingDirectory\TestResults'."
         return
     }
 
     if ($beforeRunTrxFiles) {
-        $newTrxFile = $afterRunTrxFiles.FullName | ? {!($beforeRunTrxFiles.FullName -contains $_)}
+        $newTrxFile = $afterRunTrxFiles.FullName | Where-Object {!($beforeRunTrxFiles.FullName -contains $_)}
     } else {
         $newTrxFile = $afterRunTrxFiles.FullName
     }
@@ -133,14 +133,13 @@ function ShowTestRunReport() {
 
         $report = "$newTrxFile.html"
         if (Test-Path $report) {
-            & "start" $report
+            & Start-Process $report
         }
     }
 }
 
 Set-StrictMode -Version Latest
 
-$started = $false
 $beforeRunTrxFiles = GetTestResultFiles
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
@@ -150,6 +149,7 @@ $startInfo.WorkingDirectory = $WorkingDirectory
 $startInfo.Environment["EXPERT_MODULE_DIRECTORY"] = $SolutionRoot
 
 $global:LASTEXITCODE = 0
+$runSettingsFile = $null
 
 try {
     Write-Information "Creating run settings"
