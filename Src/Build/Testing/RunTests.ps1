@@ -163,6 +163,7 @@ try {
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
+    $global:LASTEXITCODE = 0
     $global:LASTEXITCODE = $exec.Invoke($startInfo)
 } finally {
     if ($global:LASTEXITCODE -eq 0) {
