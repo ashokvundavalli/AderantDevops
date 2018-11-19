@@ -129,7 +129,7 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <GenerateBuildPlan
       ContextEndpoint="$(ContextEndpoint)"
-      ModulesDirectory="$(SolutionRoot)\Customization"
+      ModulesDirectory="$(SolutionRoot)"
       BuildPlan="$(BuildPlan)"
       ExtensibilityFiles="@(ExtensibilityFiles)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"

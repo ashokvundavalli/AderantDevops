@@ -32,6 +32,7 @@ param(
 
 Set-StrictMode -Version "Latest"
 $InformationPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 $referencePathList = [System.Collections.Generic.List[string]]::new()
 
