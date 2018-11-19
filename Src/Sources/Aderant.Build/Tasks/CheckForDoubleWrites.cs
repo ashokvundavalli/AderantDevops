@@ -34,6 +34,14 @@ namespace Aderant.Build.Tasks {
                 var checker = new DoubleWriteCheck(s => new FileInfo(s));
                 checker.CheckFileSize = CheckFileSize;
                 checker.CheckForDoubleWrites(paths);
+
+                if (checker.IgnoredDoubleWrites != null) {
+                    Log.LogMessage("Ignored double writes");
+                    foreach (PathSpec pathSpec in checker.IgnoredDoubleWrites) {
+                        Log.LogMessage("{0} -> {1}", pathSpec.Location, pathSpec.Destination);
+                    }
+                }
+
             } catch (Exception exception) {
                 Log.LogErrorFromException(exception);
             }

@@ -303,6 +303,12 @@
       FileList="@(FileWrites)"
       CheckFileSize="true" />
 
+    <OnError ExecuteTargets="HandleGetProductError" />
+  </Target>
+
+  <Target Name="HandleGetProductError">
+    <Message Text="LocalPackageFiles:" />
+    <Message Text="%(LocalPackageFiles.FullPath)" />
   </Target>
 
 

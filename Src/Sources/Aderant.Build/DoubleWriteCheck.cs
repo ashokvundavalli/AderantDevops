@@ -32,6 +32,12 @@ namespace Aderant.Build {
                 if (CheckFileSize) {
                     var fileData = group.Select(s => createFileInfo(s.Location));
                     fail = fileData.Select(s => s.Length).Distinct().Count() > 1;
+
+                    if (!fail) {
+                        foreach (PathSpec spec in group.Select(s => s)) {
+                            IgnoredDoubleWrites.Add(spec);
+                        }
+                    }
                 }
 
                 // If all files are the same length, assume they are the same file
@@ -54,5 +60,7 @@ namespace Aderant.Build {
                 }
             }
         }
+
+        public ICollection<PathSpec> IgnoredDoubleWrites { get; set; } = new List<PathSpec>();
     }
 }
