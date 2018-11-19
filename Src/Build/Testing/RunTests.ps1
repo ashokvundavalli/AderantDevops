@@ -149,6 +149,8 @@ $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
 $startInfo.Environment["EXPERT_MODULE_DIRECTORY"] = $SolutionRoot
 
+$global:LASTEXITCODE = 0
+
 try {
     Write-Information "Creating run settings"
     $xml = CreateRunSettingsXml
@@ -163,22 +165,23 @@ try {
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
-    $global:LASTEXITCODE = 0
     $global:LASTEXITCODE = $exec.Invoke($startInfo)
 } finally {
-    if ($global:LASTEXITCODE -eq 0) {
+    $lastExitCode = $global:LASTEXITCODE
+
+    if ($lastExitCode -eq 0) {
         try {
             [System.IO.File]::Delete($runSettingsFile)
         } catch {
         }
     }
 
-    if ($global:LASTEXITCODE -ne 0) {
+    if ($lastExitCode -ne 0) {
         if ($IsDesktopBuild) {
             ShowTestRunReport
         }
 
-        Write-Error "Test runner exit code: $($global:LASTEXITCODE)"
+        Write-Error "Test runner exit code: $lastExitCode"
     } else {
         if ($Error) {
             throw $Error[0]
