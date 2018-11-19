@@ -33,20 +33,25 @@ param(
 Set-StrictMode -Version "Latest"
 $InformationPreference = "Continue"
 
+$referencePathList = [System.Collections.Generic.List[string]]::new()
+
 function CreateRunSettingsXml() {
     [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
     $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
 
-    if (-not $script:ReferencePaths) {
-        $script:ReferencePaths = @()
+    if ($script:ReferencePaths) {
+        $referencePathList.AddRange($ReferencePaths)
     }
 
     if ($SolutionRoot) {
-        $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")
-        $script:ReferencePaths += [System.IO.Path]::Combine($SolutionRoot, "packages")
+        $referencePathList.Add([System.IO.Path]::Combine($SolutionRoot, "packages"))
+
+        # We want the test runner resolver to bind content produced by the solution build
+        # for the most reliable test run as there could be matching by older assemblies in the other directories
+        $referencePathList.Insert([System.IO.Path]::Combine($SolutionRoot, "Bin", "Module"))
     }
 
-    foreach ($path in $script:ReferencePaths) {
+    foreach ($path in $referencePathList) {
         $directoryElement = $xml.CreateElement("Directory")
         $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
         $directoryElement.SetAttribute("includeSubDirectories", "true")
@@ -63,7 +68,7 @@ function CreateRunSettingsXml() {
 }
 
 function FindAndDeployReferences([string[]] $testAssemblies) {
-    if ($ReferencesToFind -and $script:ReferencePaths) {
+    if ($ReferencesToFind -and $referencePathList) {
         Write-Information "Finding references... $ReferencesToFind"
 
         [void][System.Reflection.Assembly]::Load("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
@@ -75,7 +80,7 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
         }
 
         $files = @()
-        foreach ($path in $script:ReferencePaths) {
+        foreach ($path in $referencePathList) {
             if ([System.IO.Directory]::Exists($path)) {
                 $files += Get-ChildItem -LiteralPath $path -Filter "*.dll" -Recurse
             }
@@ -160,9 +165,11 @@ try {
 
     $global:LASTEXITCODE = $exec.Invoke($startInfo)
 } finally {
-    try {
-        [System.IO.File]::Delete($runSettingsFile)
-    } catch {
+    if ($global:LASTEXITCODE -eq 0) {
+        try {
+            [System.IO.File]::Delete($runSettingsFile)
+        } catch {
+        }
     }
 
     if ($global:LASTEXITCODE -ne 0) {
