@@ -22,8 +22,8 @@
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
     <!--Test configuration-->
-    <RunTests>$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
-    <RunIntegrationTests>$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
+    <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
+    <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
 
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
