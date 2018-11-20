@@ -13,6 +13,9 @@ namespace Aderant.Build {
     internal class DoubleWriteCheck {
         private readonly Func<string, FileInfo> createFileInfo;
 
+        public DoubleWriteCheck() : this (file => new FileInfo(file)) {
+        }
+
         public DoubleWriteCheck(Func<string, FileInfo> createFileInfo) {
             this.createFileInfo = createFileInfo;
         }
@@ -29,13 +32,28 @@ namespace Aderant.Build {
             foreach (var group in duplicates) {
                 bool fail = true;
 
-                if (CheckFileSize) {
-                    var fileData = group.Select(s => createFileInfo(s.Location));
-                    fail = fileData.Select(s => s.Length).Distinct().Count() > 1;
+                if (createFileInfo != null && CheckFileSize) {
+                    List<FileInfo> files = new List<FileInfo>();
+
+                    foreach (PathSpec spec in group) {
+                        // Path spec may contain a RecursiveDir expression so it does not represent a path we can access
+                        if (!spec.Location.Contains("**")) {
+                            try {
+                                FileInfo info = createFileInfo(spec.Location);
+                                files.Add(info);
+                            } catch {
+                                IgnoredDoubleWrites.Add(spec);
+                            }
+                        }
+                    }
+
+                    fail = files.Select(s => s.Length).Distinct().Count() > 1;
 
                     if (!fail) {
                         foreach (PathSpec spec in group.Select(s => s)) {
-                            IgnoredDoubleWrites.Add(spec);
+                            if (!IgnoredDoubleWrites.Contains(spec)) {
+                                IgnoredDoubleWrites.Add(spec);
+                            }
                         }
                     }
                 }
