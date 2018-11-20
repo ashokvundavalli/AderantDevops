@@ -152,7 +152,7 @@ process {
         "http://tfs:8080/tfs/Aderant",
         "$/ExpertSuite/$($branchName)/Modules/$($moduleName)",
         "$($stagingDirectory)\$($moduleName)",
-        "--batch-size=50"        
+        "--batch-size=50"
     )
 
     if ($changeSet -ne 0) {

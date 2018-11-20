@@ -316,12 +316,11 @@
 
     <PropertyGroup>
       <FactoryResourceGenerator>$(ExpertSourceDirectory)FactoryResourceGenerator.exe</FactoryResourceGenerator>
-      <FactorySearchPath>Aderant*.dll,*.exe</FactorySearchPath>
     </PropertyGroup>
 
     <Exec
       Condition="Exists($(FactoryResourceGenerator))"
-      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin /sp:&quot;$(FactorySearchPath)&quot;"
+      Command="&quot;$(FactoryResourceGenerator)&quot; /v:+ /SuppressHeader /f:$(ExpertSourceDirectory) /of:$(ExpertSourceDirectory)Factory.bin"
       IgnoreExitCode="false" />
 
   </Target>
