@@ -42,10 +42,7 @@ namespace Aderant.Build.Tasks {
                         Log.LogMessage("{0} -> {1}", pathSpec.Location, pathSpec.Destination);
                     }
                 }
-
             } catch (Exception exception) {
-                System.Diagnostics.Debugger.Launch();
-
                 Log.LogErrorFromException(exception);
             }
 

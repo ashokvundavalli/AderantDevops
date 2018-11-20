@@ -285,17 +285,17 @@
     </ItemGroup>
 
     <Exec Condition="'$(GetProduct)' != 'false'"
-      ContinueOnError="false"
-      IgnoreExitCode="false"
-      Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck"
-      WorkingDirectory="$(LocalExpertBinariesDirectory)" />
+          ContinueOnError="false"
+          IgnoreExitCode="false"
+          Command="Powershell -NonInteractive -NoProfile $(PackageScriptsDirectory)GetProduct.ps1 -productManifestPath $(ProductManifestPath) -dropRoot $(XamlBuildDropLocation) -binariesDirectory $(LocalExpertBinariesDirectory) -getDebugFiles:1 -skipDeploymentCheck"
+          WorkingDirectory="$(LocalExpertBinariesDirectory)" />
 
     <Message Text="Updating product with outputs from this build..." />
 
     <!--TODO: Should we teach GetProduct how to do this? What if we have crazy assembly rules we want to fire-->
     <Copy SourceFiles="@(LocalPackageFiles)"
-      DestinationFiles="@(LocalPackageFiles->'$(ExpertSourceDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
-      UseHardlinksIfPossible="true">
+          DestinationFiles="@(LocalPackageFiles->'$(ExpertSourceDirectory)%(DestinationSubDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+          UseHardlinksIfPossible="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
 
@@ -354,11 +354,11 @@
 
     <PropertyGroup>
       <CreateArchiveHashScript>
-        $hash = Get-FileHash -LiteralPath "$(ProductArchiveFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
-        $hash = $hash.ToLower()
-        $fn = [System.IO.Path]::GetFileName("$(ProductArchiveFile)")
-        Set-Content -LiteralPath "$(ProductArchiveFile).sha1" -Value "$hash  $fn"
-        Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
+$hash = Get-FileHash -LiteralPath "$(ProductArchiveFile)" -Algorithm SHA1 -Verbose | Select-Object -ExpandProperty Hash
+$hash = $hash.ToLower()
+$fn = [System.IO.Path]::GetFileName("$(ProductArchiveFile)")
+Set-Content -LiteralPath "$(ProductArchiveFile).sha1" -Value "$hash  $fn"
+Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
       </CreateArchiveHashScript>
 
     </PropertyGroup>
