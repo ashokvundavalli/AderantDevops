@@ -94,11 +94,6 @@ begin {
         }
     }
 
-    function GetPackagingExcludeList([xml]$productManifest, [string]$productManifestPath) {
-        $nodes = $productManifest.SelectNodes("//ProductManifest/Modules/Module")
-        return (Get-ExpertModulesToExcludeFromPackaging -Manifest $nodes -ExpertManifestPath $productManifestPath)
-    }
-
     function SkipModule() {
         [CmdletBinding()]
         param([string]$moduleBinariesDirectory, $module, $excludelist)
@@ -216,7 +211,7 @@ begin {
             throw "Failed to create server image successfully."
         }
 
-        # Copy the Expert Server Image to the drop
+        # Copy the Expert Server Image to the derop
         & "$PSScriptRoot\..\Build\CopyToDrop.ps1" -moduleName "ExpertApplicationServer" -moduleRootPath $serverImageDirectory -dropRootUNCPath "\\dfs.aderant.com\ExpertSuite\$tfvcBranchName\ExpertApplicationServer\1.8.0.0" -assemblyFileVersion $($tfsBuildNumber).Split('_')[1]
 
         # Fix folder paths in the Expert Binaries
@@ -267,8 +262,8 @@ process {
             continue;
         }
 
-        if ($module.PSObject.Properties.Name -match "ExcludeFromPackaging") {
-            if ($module.ExcludeFromPackaging) {
+        if ($module.PSObject.Properties.Name -eq "ExcludeFromPackaging") {
+            if ($module.ExcludeFromPackaging -eq $true) {
                 Write-Warning "Excluding $($module.Name) from product"
                 continue
             }
@@ -284,7 +279,7 @@ process {
             if ($module.Name.EndsWith("Pdf")) {
                 [string]$pdfBuildNumber = AcquireExpertClassicDocumentation -moduleBinariesDirectory $moduleBinariesDirectory
 
-                if ($pdfBuildNumber -ne $null) {
+                if ($null -ne $pdfBuildNumber) {
                     $newdropFolderBuildNumbers += "$($module.Name)=$pdfBuildNumber"
                 }
 
