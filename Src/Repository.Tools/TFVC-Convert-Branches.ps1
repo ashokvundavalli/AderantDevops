@@ -11,6 +11,7 @@
 
 begin {
     Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
 
     function Restore-Folders {
         param (
@@ -27,7 +28,7 @@ begin {
 
     function Restore-Branches {
         param (
-            [Parameter(Mandatory=$true)][string[]]$branches,
+            [Parameter(Mandatory=$true)][System.Collections.ArrayList]$branches,
             [Parameter(Mandatory=$false)][string]$moduleName
         )
 
@@ -48,24 +49,25 @@ begin {
         }
     }
 
-    Push-Location -Path $tfsDirectory
-
-    [System.Collections.ArrayList]$branches = @('Main')
-    [System.Collections.ArrayList]$deletedBranches = @()
+    [System.Collections.ArrayList]$branches = [System.Collections.ArrayList]::new()
+    $branches.Add('Main') | Out-Null
+    [System.Collections.ArrayList]$deletedBranches = [System.Collections.ArrayList]::new()
 
     [string[]]$searchPaths = @('Dev', 'Releases')
 
     foreach ($searchPath in $searchPaths) {
         [string[]]$results = TF.exe vc dir "$/ExpertSuite/$searchPath" /deleted
 
-        for ([int]$i = 1; $i -lt $results.Count - 2; $i++) {
-            if ($results[$i].IndexOf(';')) {
+        for ([int]$i = 1; $i -lt $results.Length - 2; $i++) {
+            if ($results[$i].IndexOf(';') -ne -1) {
                 $deletedBranches.Add("$searchPath/$($results[$i].TrimStart().Replace('$', '').Split(';')[0])") | Out-Null
             } else {
-                $branches.Add($results[$i].TrimStart().Replace('$', '')) | Out-Null
+                $branches.Add("$searchPath/$($results[$i].TrimStart().Replace('$', ''))") | Out-Null
             }
         }
     }
+
+    Push-Location -Path $tfsDirectory
 }
 
 process {
