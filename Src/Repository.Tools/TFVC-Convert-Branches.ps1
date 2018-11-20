@@ -5,7 +5,8 @@
     [Parameter(Mandatory=$false)][string]$stagingDirectory = "C:\Temp\Staging",
     [Parameter(Mandatory=$false)][int]$changeSet,
     [switch]$gitIgnore,
-    [switch]$restoreBranches
+    [switch]$restoreBranches,
+    [switch]$skipBranchManipulation
 )
 
 begin {
@@ -50,6 +51,7 @@ begin {
     Push-Location -Path $tfsDirectory
 
     [System.Collections.ArrayList]$branches = @('Main')
+    [System.Collections.ArrayList]$deletedBranches = @()
 
     [string[]]$searchPaths = @('Dev', 'Releases')
 
@@ -58,7 +60,7 @@ begin {
 
         for ([int]$i = 1; $i -lt $results.Count - 2; $i++) {
             if ($results[$i].IndexOf(';')) {
-                $branches.Add("$searchPath/$($results[$i].TrimStart().Replace('$', '').Split(';')[0])") | Out-Null
+                $deletedBranches.Add("$searchPath/$($results[$i].TrimStart().Replace('$', '').Split(';')[0])") | Out-Null
             } else {
                 $branches.Add($results[$i].TrimStart().Replace('$', '')) | Out-Null
             }
@@ -72,32 +74,36 @@ process {
         return
     }
 
-    Restore-Folders -branches $branches
+    if (-not $skipBranchManipulation.IsPresent) {
+        Restore-Folders -branches $branches
+        Restore-Folders -branches $deletedBranches
 
-    foreach ($existingBranch In TFPT.EXE Branches /listBranches:roots) {
-        $existingBranch = $existingBranch.TrimStart()
+        foreach ($existingBranch In TFPT.EXE Branches /listBranches:roots) {
+            $existingBranch = $existingBranch.TrimStart()
 
-        If ($existingBranch.StartsWith("$/ExpertSuite")) {
-            Write-Output y|tfpt branches /convertToFolder $($existingBranch)
+            If ($existingBranch.StartsWith("$/ExpertSuite")) {
+                Write-Output y|tfpt branches /convertToFolder $($existingBranch)
+            }
+        }
+
+        foreach ($branch in $branches) {
+            try {
+                Write-Output y|tfpt branches /convertToBranch "$/ExpertSuite/$branch/Modules/$moduleName" /recursive
+            } catch {
+            }
         }
     }
 
-    foreach ($branch in $branches) {
-        try {
-            Write-Output y|tfpt branches /convertToBranch "$/ExpertSuite/$branch/Modules/$moduleName" /recursive
-        } catch {
-        }
-    }
-
-    Write-Host "Using staging directory: $stagingDirectory"
+    Write-Output "Using staging directory: $stagingDirectory"
     Set-Location -Path $stagingDirectory
 
     [System.Collections.ArrayList]$parameters = @(
         "--resumable",
         "http://tfs:8080/tfs/Aderant",
-        "$/ExpertSuite/$($branchName)/Modules/$($moduleName)",
+        "$/ExpertSuite/$($branchName)/Modules/$moduleName",
         "$($stagingDirectory)\$($moduleName)",
-        "--batch-size=50"
+        "--batch-size=50",
+        "--branches=all"
     )
 
     if ($changeSet -ne 0) {
