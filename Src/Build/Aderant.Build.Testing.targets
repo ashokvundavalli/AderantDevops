@@ -18,7 +18,7 @@
 
     <Message Text="Looking for test assemblies in these directories:" />
     <Message Text="%(TrackedProjects.OutputPath)" />
-    
+
   </Target>
 
   <Target Name="SetupTestProperties">
@@ -53,8 +53,9 @@
 
   <Target Name="RunTests"
           Outputs="%(SolutionRoots.Identity)"
+          Condition="'$(RunTests)' != 'false'"
           DependsOnTargets="$(RunTestsDependsOn)">
-  
+
     <PropertyGroup>
       <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
       <TestRunTitle>$([System.IO.Path]::GetFileName('$(TestRunDirectory)'))</TestRunTitle>
@@ -103,7 +104,7 @@
       ScriptBlock='
 $ErrorActionPreference = "Stop"
 $InformationPreference = "Continue"
-      
+
 $testTool = "$(PathToTestTool)"
 $testToolArgs = "$(ResultsFileSwitch) $(PlatformSwitch) $(ParallelSwitch)"
 $testRunDirectory = "$(TestRunDirectory)"
@@ -112,13 +113,20 @@ $isDesktopBuild = $$(IsDesktopBuild)
 $referencePaths = "$(ArtifactStagingDirectory)"
 $testFiles = $(UnitTestAssemblies)
 $referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
-    
+
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
     OnErrorReason="Test failure"
     TaskObjects="$(AssemblyPlatformDataKey)" />
 
+      <OnError ExecuteTargets="ShowTestFailureHelp" />
+
+  </Target>
 
 
+  <Target Name="ShowTestFailureHelp">
+    <Message Text="!!!" Importance="High" />
+    <Message Text="Run 'bm -Target RunTests' to issue another test run" Importance="High" />
+    <Message Text="!!!" Importance="High" />
   </Target>
 
 </Project>
