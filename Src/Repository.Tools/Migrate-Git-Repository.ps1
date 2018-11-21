@@ -18,6 +18,22 @@ if (-not (Test-Path -Path $targetRepository)) {
 
 [string]$module = [System.IO.Path]::GetFileName($sourceRepository)
 
+[string[]]$files = (Get-ChildItem -Path $sourceRepository).FullName
+[string]$moduleDir = Join-Path -Path $sourceRepository -ChildPath $module
+
+New-Item -ItemType Directory -Path $moduleDir
+
+foreach ($file in $files) {
+    Move-Item -Path $file -Destination $file.Replace($sourceRepository, $moduleDir) -Force
+}
+
+Push-Location -Path $sourceRepository
+
+git add .
+git commit -m "Moved $module to directory"
+
+Pop-Location
+
 Push-Location -Path $targetRepository
 
 git checkout master
