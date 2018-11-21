@@ -14,4 +14,36 @@
       <CheckForDoubleWrites FileList="@(CheckForDoubleWritesFiles)" />
   </Target>
 
+  <Target Name="CheckForDoubleWrites_Globbing_Setup">
+      <PropertyGroup>
+          <GlobbingTestDir>$(MSBuildThisFileDirectory)\babd35be-e3a6-45d4-bd4b-1499b1112c7a\</GlobbingTestDir>
+      </PropertyGroup>
+
+      <MakeDir Directories="$(GlobbingTestDir);
+                            $(GlobbingTestDir)Dir1;
+                            $(GlobbingTestDir)Dir2" />
+
+      <Touch Files="$(GlobbingTestDir)a1;
+                    $(GlobbingTestDir)a2;
+                    $(GlobbingTestDir)a3;
+                    $(GlobbingTestDir)Dir1\a1;
+                    $(GlobbingTestDir)Dir2\a1;"
+            AlwaysCreate="true" />
+
+      <CreateItem Include="$(GlobbingTestDir)**\**" PreserveExistingMetadata="true">
+          <Output ItemName="CheckForDoubleWrites_Globbing_Tests_Files" TaskParameter="Include" />
+      </CreateItem>
+  </Target>
+
+  <Target Name="CheckForDoubleWrites_Globbing_Tests" DependsOnTargets="CheckForDoubleWrites_Globbing_Setup">
+
+      <Copy SourceFiles="@(CheckForDoubleWrites_Globbing_Tests_Files)"
+            DestinationFiles="@(CheckForDoubleWrites_Globbing_Tests_Files->'$(MSBuildThisFileDirectory)\998adc82-cb59-4594-bc76-3339bc2f5ca2\%(Filename)%(Extension)')">
+        <Output TaskParameter="DestinationFiles" ItemName="CheckForDoubleWrites_Globbing_Tests_CopiedFiles" />
+      </Copy>
+
+      <CheckForDoubleWrites FileList="@(CheckForDoubleWrites_Globbing_Tests_CopiedFiles)"
+                            CheckFileSize="true"  />
+  </Target>
+
 </Project>

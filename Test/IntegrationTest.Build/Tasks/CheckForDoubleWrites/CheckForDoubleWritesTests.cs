@@ -13,5 +13,14 @@ namespace IntegrationTest.Build.Tasks.CheckForDoubleWrites {
 
             Assert.IsTrue(this.LogFile.Any(s => s.Contains("Double write")));
         }
+
+        [TestMethod]
+        public void Globbing_pattern_does_not_cause_errors() {
+            BuildMustSucceed = true;
+
+            RunTarget("CheckForDoubleWrites_Globbing_Tests");
+        }
     }
+
+
 }

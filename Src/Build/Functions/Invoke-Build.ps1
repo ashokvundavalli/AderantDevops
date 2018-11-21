@@ -151,6 +151,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
         # Don't show the logo and do not allow node reuse so all child nodes are shut down once the master node has completed build orchestration.
         $set.Add("/nologo")
         $set.Add("/nr:false")
+        $set.Add("/clp:FORCENOALIGN=true")
 
         # Multi-core build
         if ($MaxCpuCount -gt 0) {

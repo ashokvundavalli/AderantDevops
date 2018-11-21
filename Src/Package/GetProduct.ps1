@@ -211,7 +211,7 @@ begin {
             throw "Failed to create server image successfully."
         }
 
-        # Copy the Expert Server Image to the derop
+        # Copy the Expert Server Image to the drop
         & "$PSScriptRoot\..\Build\CopyToDrop.ps1" -moduleName "ExpertApplicationServer" -moduleRootPath $serverImageDirectory -dropRootUNCPath "\\dfs.aderant.com\ExpertSuite\$tfvcBranchName\ExpertApplicationServer\1.8.0.0" -assemblyFileVersion $($tfsBuildNumber).Split('_')[1]
 
         # Fix folder paths in the Expert Binaries

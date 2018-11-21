@@ -137,13 +137,13 @@ public class SymlinkTimestampUpdate : Task, ITask {
         using (SafeFileHandle fileHandle = GetFileHandle(path)) {
             if (fileHandle.IsInvalid) {
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            }            
+            }
 
             int outBufferSize = Marshal.SizeOf(typeof(SymbolicLinkReparseData));
             IntPtr outBuffer = IntPtr.Zero;
             try {
                 fileHandle.DangerousAddRef(ref releaseDangerousHandle);
-            
+
                 outBuffer = Marshal.AllocHGlobal(outBufferSize);
                 int bytesReturned;
                 bool success = DeviceIoControl(fileHandle.DangerousGetHandle(), IOCTL_COMMAND_GET_REPARSE_POINT, IntPtr.Zero, 0, outBuffer, outBufferSize, out bytesReturned, IntPtr.Zero);
@@ -165,7 +165,7 @@ public class SymlinkTimestampUpdate : Task, ITask {
                 Marshal.FreeHGlobal(outBuffer);
             }
         }
-        
+
         if (reparseDataBuffer.ReparseTag != SYMLINK_TAG) {
             return null;
         }
@@ -186,7 +186,7 @@ public class SymlinkTimestampUpdate : Task, ITask {
                 Log.LogMessage(MessageImportance.Low, "HintPath: {0} does not exist", file);
                 continue;
             }
-            
+
             try {
                 string target = GetTarget(file);
 
@@ -221,8 +221,8 @@ public class SymlinkTimestampUpdate : Task, ITask {
   </Target>
 
 
-  <!-- 
-    Debugging   
+  <!--
+    Debugging
     msbuild Web.Foundation.csproj /target:_DirDebug
   -->
   <Target Name="_DirDebug">
@@ -232,7 +232,7 @@ IsMobile:            $(IsMobile)
 IsWebOrMobile:       $(IsWebOrMobile)
              "/>
     <Message Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == ''" Text="
-Loaded WebDependencyVersion 2"/>    
+Loaded WebDependencyVersion 2"/>
     <Message Condition="'$(IsWebOrMobile)' == 'true' And '$(WebDependencyVersion)' == '3'" Text="
 Loaded WebDependencyVersion 3"/>-->
   </Target>
