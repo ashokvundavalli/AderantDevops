@@ -4,14 +4,16 @@
     [Parameter(Mandatory=$false)][string]$branchName = "Dev/vnext",
     [Parameter(Mandatory=$false)][string]$stagingDirectory = "C:\Temp\Staging",
     [Parameter(Mandatory=$false)][int]$changeSet,
-    [switch]$gitIgnore,
     [switch]$restoreBranches,
+    [switch]$listBranches,
     [switch]$skipBranchManipulation
 )
 
 begin {
     Set-StrictMode -Version Latest
     $ErrorActionPreference = 'Stop'
+
+    [string]$tfsUrl = "http://tfs.$($Env:USERDNSDOMAIN.ToLowerInvariant()):8080/tfs/"
 
     function Restore-Folders {
         param (
@@ -20,7 +22,8 @@ begin {
 
         foreach ($branch in $branches) {
             try {
-                Write-Output y|tfpt branches /convertToFolder "$/ExpertSuite/$branch/Modules"
+                Write-Output 'Y' | TFPT.exe branches /convertToFolder "$/ExpertSuite/$branch/Modules" /collection:$tfsUrl
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
             } catch {
             }
         }
@@ -35,7 +38,8 @@ begin {
         if (-not [string]::IsNullOrWhiteSpace($moduleName)) {
             foreach ($branch in $branches) {
                 try {
-                    Write-Output y|tfpt branches /convertToFolder "$/ExpertSuite/$branch/Modules/$moduleName"
+                    Write-Output 'Y' | TFPT.EXE branches /convertToFolder "$/ExpertSuite/$branch/Modules/$moduleName" /collection:$tfsUrl
+                    Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
                 } catch {
                 }
             }
@@ -43,10 +47,37 @@ begin {
     
         foreach ($branch in $branches) {
             try {
-                Write-Output y|tfpt branches /convertToBranch "$/ExpertSuite/$branch/Modules" /recursive
+                Write-Output 'Y' | TFPT.EXE branches /convertToBranch "$/ExpertSuite/$branch/Modules" /recursive /collection:$tfsUrl
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
             } catch {
             }
         }
+    }
+}
+
+process {
+    if ($listBranches.IsPresent) {
+        [System.Collections.ArrayList]$rootBranches = [System.Collections.ArrayList]::new()
+
+        [string[]]$results = TFPT.EXE Branches /listBranches:roots
+
+        for ([int]$i = 1; $i -lt $results.Count; $i++) {
+            if ($results[$i].IndexOf('$/ExpertSuite') -ne -1) {
+                $rootBranches.Add($results[$i].TrimStart()) | Out-Null
+            }
+        }
+
+        if ($rootBranches.Count -eq 0) {
+            Write-Output "No TFVC root branches for ExpertSuite found."
+            exit 0
+        }
+
+        Write-Output "TFVC root branches:"
+        foreach ($branch in $rootBranches) {
+            Write-Output "`t$branch"
+        }
+        
+        exit 0
     }
 
     [System.Collections.ArrayList]$branches = [System.Collections.ArrayList]::new()
@@ -68,12 +99,10 @@ begin {
     }
 
     Push-Location -Path $tfsDirectory
-}
 
-process {
     if ($restoreBranches.IsPresent) {
         Restore-Branches -branches $branches -moduleName $moduleName
-        return
+        exit 0
     }
 
     if (-not $skipBranchManipulation.IsPresent) {
@@ -84,13 +113,15 @@ process {
             $existingBranch = $existingBranch.TrimStart()
 
             If ($existingBranch.StartsWith("$/ExpertSuite")) {
-                Write-Output y|tfpt branches /convertToFolder $($existingBranch)
+                Write-Output 'Y' | TFPT.EXE branches /convertToFolder $existingBranch
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
             }
         }
 
         foreach ($branch in $branches) {
             try {
-                Write-Output y|tfpt branches /convertToBranch "$/ExpertSuite/$branch/Modules/$moduleName" /recursive
+                Write-Output 'Y' | TFPT.EXE branches /convertToBranch "$/ExpertSuite/$branch/Modules/$moduleName" /recursive /collection:$tfsUrl
+                Start-Sleep -Milliseconds 300 # TFPT does not support prompt suppression.
             } catch {
             }
         }
@@ -111,15 +142,15 @@ process {
         [Void]$parameters.Add("--changeset=$changeSet")
     }
 
-    if ($gitIgnore.IsPresent) {
+    if (Test-Path -Path "$stagingDirectory\.gitignore") {
         [Void]$parameters.Add("--gitignore=`"$stagingDirectory\.gitignore`"")
     }
 
-    git-tfs.exe clone @parameters
+    try {
+        git-tfs.exe clone @parameters
+    } finally {
+        Restore-Branches -branches $branches -moduleName $moduleName
+    }
 
-    Restore-Branches -branches $branches -moduleName $moduleName
-}
-
-end {
     Pop-Location
 }
