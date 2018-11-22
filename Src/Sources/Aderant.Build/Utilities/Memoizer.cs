@@ -56,6 +56,17 @@ namespace Aderant.Build.Utilities {
             return result.GetValue();
         }
 
+        internal bool TryGetValue(TArg arg, out TResult value) {
+            Result result;
+            if (TryGetResult(arg, out result)) {
+                value = result.GetValue();
+                return true;
+            } else {
+                value = default(TResult);
+                return false;
+            }
+        }
+
         private bool TryGetResult(TArg arg, out Result result) {
             @lock.EnterReadLock();
             try {

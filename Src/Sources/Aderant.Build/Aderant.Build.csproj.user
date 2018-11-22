@@ -6,7 +6,4 @@
     <StartArguments>-noexit -File $(MSBuildThisFileDirectory)\debug.ps1</StartArguments>
     <StartWorkingDirectory>$(MSBuildThisFileDirectory)</StartWorkingDirectory>
   </PropertyGroup>
-  <PropertyGroup>
-    <ProjectView>ShowAllFiles</ProjectView>
-  </PropertyGroup>
 </Project>
