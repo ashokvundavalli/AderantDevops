@@ -83,9 +83,9 @@ namespace Aderant.Build.Tasks {
 
         private bool RunScript(Dictionary<string, object> variables, TaskLoggingHelper name, string directoryName) {
 
-            var processRunner = new ProcessRunner(new Exec { BuildEngine = this.BuildEngine });
+            var processRunner = new BuildEngineExecTask(new Exec { BuildEngine = this.BuildEngine });
             var pipelineExecutor = new PowerShellPipelineExecutor {
-                ProcessRunner = processRunner
+                BuildEngineExecTask = processRunner
             };
 
             pipelineExecutor.ProgressPreference = ProgressPreference;
@@ -97,12 +97,12 @@ namespace Aderant.Build.Tasks {
             try {
                 var scripts = new List<string>();
 
-                string combine = Path.Combine(directoryName, "Build.psm1");
-                if (File.Exists(combine)) {
-                    scripts.Add(
-                        $"Import-Module \"{directoryName}\\Build.psm1\""
-                    );
-                }
+                //string combine = Path.Combine(directoryName, "Build.psm1");
+                //if (File.Exists(combine)) {
+                //    scripts.Add(
+                //        $"Import-Module \"{directoryName}\\Build.psm1\""
+                //    );
+                //}
 
                 scripts.Add(ScriptBlock);
 
@@ -147,9 +147,9 @@ namespace Aderant.Build.Tasks {
     /// <summary>
     /// Wraps the build engine command runner
     /// </summary>
-    internal class ProcessRunner {
+    internal class BuildEngineExecTask {
 
-        public ProcessRunner(Exec execTask) {
+        public BuildEngineExecTask(Exec execTask) {
 
             StartProcess = command => {
                 var cancelEventHandler = new ConsoleCancelEventHandler((sender, args) => { execTask.Cancel(); });

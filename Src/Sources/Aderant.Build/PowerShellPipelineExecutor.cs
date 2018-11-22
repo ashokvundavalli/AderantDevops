@@ -17,7 +17,7 @@ namespace Aderant.Build {
         public string Result { get; set; }
 
         public bool HadErrors { get; private set; }
-        public ProcessRunner ProcessRunner { get; set; }
+        public BuildEngineExecTask BuildEngineExecTask { get; set; }
 
         public event EventHandler<ICollection<PSObject>> DataReady;
 
@@ -46,8 +46,8 @@ namespace Aderant.Build {
                 SetExecutionPolicy(shell);
                 SetProgressPreference(shell);
 
-                if (ProcessRunner != null) {
-                    runspace.SessionStateProxy.SetVariable("exec", ProcessRunner.StartProcess);
+                if (BuildEngineExecTask != null) {
+                    runspace.SessionStateProxy.SetVariable("exec", BuildEngineExecTask.StartProcess);
                 }
 
                 if (variables != null) {
