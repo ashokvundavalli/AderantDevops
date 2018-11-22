@@ -582,7 +582,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
     <PropertyGroup>
       <TfvcWorkFolder>$(SolutionRoot)</TfvcWorkFolder>
       <TfvcBranch>$(XamlBuildDropLocation.Replace("\\dfs.aderant.com\expertsuite\", ""))</TfvcBranch>
-      <TfvcExcludedModules>Tests.Load;Applications.TeamManager;Libraries.Entities.Marketing;Services.Metadata;Workflow.TeamManager</TfvcExcludedModules>
+      <TfvcExcludedModules>Tests.Load;Applications.ExpertAssistant;Applications.TeamManager;Libraries.Entities.Marketing;Services.AuditServices.Communication;Services.Deployment;Services.Integration;Services.Metadata;Services.Notes;Workflow.TeamManager</TfvcExcludedModules>
     </PropertyGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;$(TfvcExcludedModules)&apos;&quot;"
