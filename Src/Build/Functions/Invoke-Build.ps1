@@ -1,7 +1,9 @@
 ﻿[string]$indent1 = "  "
 [string]$indent2 = "        "
 
+
 function Get-Branch {
+    [OutputType([String])]
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$root
@@ -262,6 +264,9 @@ function GetBuildStateMetadata($context) {
 function PrepareEnvironment {
     # Setup environment for JavaScript tests
     $lockDownPath = "HKCU:\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN"
+    if (-not ( Test-Path $lockDownPath)) {
+        New-Item -Path "$lockDownPath" -Type Directory -Force | Out-Null
+    }
 
     Set-ItemProperty -Path $lockDownPath -Name "iexplore.exe" -Type "DWORD" -Value 0 | Out-Null
 
@@ -269,7 +274,6 @@ function PrepareEnvironment {
         New-Item -Path "$lockDownPath\Settings" -Type Directory -Force | Out-Null
     }
     Set-ItemProperty -Path "$lockDownPath\Settings" -Name "LOCALMACHINE_CD_UNLOCK" -Value 0 -Force | Out-Null
-
 
     # To avoid runtime problems by binding to interesting assemblies, we delete this so MSBuild will always try to bind to our version of WCF and not one found on the computer somewhere
     $wcfPath32 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319\AssemblyFoldersEx\WCF Data Services Standalone Assemblies"
@@ -311,7 +315,7 @@ function ExpandPaths {
             $includePaths.ForEach({
                 $currentPath = $_
                 $currentPath = Join-Path -Path $currentPath -ChildPath $path
-                if (Test-Path($currentPath)) {
+                if (Test-Path ($currentPath)) {
                     $testedPath = $currentPath
                 }
             })
@@ -557,7 +561,7 @@ Should not be used as it prevents incremental builds which increases build times
                 Write-Host " $reason" -ForegroundColor Gray
             }
 
-            if ($contextService -ne $null) {
+            if ($null -ne $contextService) {
                 $contextService.Dispose()
             }
         }
