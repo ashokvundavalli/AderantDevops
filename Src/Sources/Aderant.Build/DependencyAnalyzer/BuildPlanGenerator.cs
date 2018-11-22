@@ -22,7 +22,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
         private string[] commandLineArgs;
-        
+
         public BuildPlanGenerator(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
@@ -122,7 +122,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private void CaptureCommandLine() {
             this.commandLineArgs = Environment.GetCommandLineArgs();
-            // Find all global command line property specifications 
+            // Find all global command line property specifications
             commandLineArgs = commandLineArgs.Where(x => x.StartsWith("/p:", StringComparison.OrdinalIgnoreCase)).ToArray();
         }
 
@@ -172,13 +172,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
             Guid itemId = Guid.NewGuid();
-            
+
             PropertyList propertyList = new PropertyList();
 
-            // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties. 
+            // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties.
             // The difference can be confusing and very problematic if used incorrectly.
-            // The difference is that if you specify properties using the Properties metadata then any properties defined using the Properties attribute 
-            // on the MSBuild Task will be ignored. 
+            // The difference is that if you specify properties using the Properties metadata then any properties defined using the Properties attribute
+            // on the MSBuild Task will be ignored.
             // In contrast to that if you use the AdditionalProperties metadata then both values will be used, with a preference going to the AdditionalProperties values.
 
             ConfiguredProject visualStudioProject = studioProject as ConfiguredProject;
@@ -338,7 +338,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (visualStudioProject.UseCommonOutputDirectory) {
                 propertyList.Add(nameof(ConfiguredProject.UseCommonOutputDirectory), bool.TrueString);
             }
-            
+
             return propertyList;
         }
 
@@ -347,7 +347,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // The following properties are 'macros' that are available via IDE for
             // pre and post build steps. However, they are not defined when directly building
             // a project from the command line, only when building a solution.
-            // A lot of stuff doesn't work if they aren't present (web publishing targets for example) so we add them in as compatibility items 
+            // A lot of stuff doesn't work if they aren't present (web publishing targets for example) so we add them in as compatibility items
             propertiesList.Add("SolutionDir", visualStudioProject.SolutionRoot);
             propertiesList.Add("SolutionExt", Path.GetExtension(visualStudioProject.SolutionFile));
             propertiesList.Add("SolutionFileName", Path.GetFileName(visualStudioProject.SolutionFile));
@@ -355,10 +355,10 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertiesList.Add("SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
 
             propertiesList.Add("BuildingSolutionFile", bool.FalseString);
-            
+
         }
     }
 
-   
+
 
 }
