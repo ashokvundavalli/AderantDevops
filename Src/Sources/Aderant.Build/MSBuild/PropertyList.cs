@@ -6,6 +6,9 @@ namespace Aderant.Build.MSBuild {
     internal class PropertyList : Dictionary<string, string> {
         private static readonly string joinString = "; " + Environment.NewLine;
 
+        public PropertyList(IDictionary<string, string> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase) {
+        }
+
         public PropertyList() : base(StringComparer.OrdinalIgnoreCase) {
         }
 

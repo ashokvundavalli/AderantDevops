@@ -104,6 +104,8 @@
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
     <Compile Include="DependencyRequirementTests.cs" />
+    <Compile Include="MSBuild\PropertyListTests.cs" />
+    <Compile Include="MSBuild\SolutionConfigurationContentsGeneratorTests\SolutionConfigurationContentsGeneratorTests.cs" />
     <Compile Include="ObjectModelTests.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilderTests.cs" />
     <Compile Include="Packaging\ArtifactPackageHelperTests.cs" />
@@ -188,6 +190,9 @@
     <None Include="Resources\buildstate.json" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="MSBuild\SolutionConfigurationContentsGeneratorTests\Sample.sln">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\BadBuildLog.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -251,9 +256,7 @@
       <Name>Aderant.Build</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Ipc\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
 </Project>

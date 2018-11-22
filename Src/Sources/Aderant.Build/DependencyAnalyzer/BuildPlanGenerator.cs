@@ -7,7 +7,6 @@ using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Model;
 using Aderant.Build.MSBuild;
 using Aderant.Build.ProjectSystem;
-using Project = Aderant.Build.MSBuild.Project;
 
 namespace Aderant.Build.DependencyAnalyzer {
     /// <summary>
@@ -26,6 +25,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         public BuildPlanGenerator(IFileSystem2 fileSystem) {
             this.fileSystem = fileSystem;
         }
+
+        public string MetaprojectXml { get; set; }
 
         public Project GenerateProject(List<List<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
             CaptureCommandLine();
@@ -91,11 +92,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                         BuildInParallel = "$(BuildInParallel)",
                         StopOnFirstFailure = true,
                         Projects = orchestrationFiles.GroupExecutionFile,
-                        Properties = PropertyList.CreatePropertyString(
-                            "BuildPlanFile=$(MSBuildThisFileFullPath)",
-                            $"{BuildGroupId}={buildGroupCount}",
-                            "TotalNumberOfBuildGroups=$(TotalNumberOfBuildGroups)",
-                            "BuildInParallel=$(BuildInParallel)")
+                        Properties = new PropertyList(new Dictionary<string, string>()) {
+                            { "BuildPlanFile", "$(MSBuildThisFileFullPath)" },
+                            { $"{BuildGroupId}", $"{buildGroupCount}" },
+                            { "TotalNumberOfBuildGroups", "$(TotalNumberOfBuildGroups)" },
+                            { "BuildInParallel", "$(BuildInParallel)" },
+                            { "CurrentSolutionConfigurationContents", "$(CurrentSolutionConfigurationContents)" },
+                        }.ToString()
                     });
 
                 project.Add(build);
@@ -107,6 +110,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             project.Add(
                 new PropertyGroup(
                     new Dictionary<string, string> {
+                        { "CurrentSolutionConfigurationContents", MetaprojectXml ?? string.Empty },
                         { "TotalNumberOfBuildGroups", buildGroupCount.ToString(CultureInfo.InvariantCulture) },
                         { "ResumeGroupId", "" }
                     }));
@@ -358,7 +362,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         }
     }
-
 
 
 }

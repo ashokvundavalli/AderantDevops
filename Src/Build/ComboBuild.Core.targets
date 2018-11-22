@@ -61,7 +61,7 @@
         child project to build in its default configuration / platform if the one specified from the solution file doesn't actually exist in the project.
         This is a janky hack and should be removed but removing will trigger trigger a missing configuration/platform error for many projects in the tree
         -->
-      <BuildProperties>
+      <PropertiesCommonToAllProjects>
         ShouldUnsetParentConfigurationAndPlatform=true;
         BuildProjectReferences=false;
 
@@ -73,10 +73,18 @@
 
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
-        RunCodeAnalysisOnThisProject=false
-        <!-- Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured -->
-        Deterministic=true
-      </BuildProperties>
+        RunCodeAnalysisOnThisProject=false;
+<!--
+Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured
+-->
+        Deterministic=true;
+<!--
+    Specifies whether to run the MarkupCompilePass1 task in a separate AppDomain.
+    If this parameter returns false, the task runs in the same AppDomain as Microsoft build engine (MSBuild) and it runs faster.
+    If the parameter returns true, the task runs in a second AppDomain that is isolated from MSBuild and runs slower.
+-->
+          AlwaysCompileMarkupFilesInSeparateDomain=false
+      </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
   </Target>
@@ -96,9 +104,9 @@
     <ItemGroup>
       <ProjectsInGroup>
         <Properties>
-          %(ProjectsInGroup.Properties);    <!-- Include the original properties list -->
-          $(BuildProperties);               <!-- Include global (non-project specific) properties -->
-          SolutionRoot=$(_SolutionRoot);    <!-- Merge in build system properties that hang off SolutionRoot -->
+          %(ProjectsInGroup.Properties);       <!-- Include the original properties list -->
+          $(PropertiesCommonToAllProjects);    <!-- Include global (non-project specific) properties -->
+          SolutionRoot=$(_SolutionRoot);       <!-- Merge in build system properties that hang off SolutionRoot -->
           BinModuleDirectory=$(_SolutionRoot)\Bin\Module\;
           BinTestDirectory=$(_SolutionRoot)\Bin\Test\;
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
@@ -109,6 +117,8 @@
         </Properties>
       </ProjectsInGroup>
     </ItemGroup>
+
+    <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
 
   </Target>
 

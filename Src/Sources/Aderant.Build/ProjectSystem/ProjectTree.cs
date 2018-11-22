@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -36,6 +37,10 @@ namespace Aderant.Build.ProjectSystem {
         private ConcurrentBag<ConfiguredProject> orphanedProjects = new ConcurrentBag<ConfiguredProject>();
 
         // First level cache for parsed solution information
+        // Also stores the data needed to create the "CurrentSolutionConfigurationContents" object that
+        // MSBuild uses when building from a solution. Unfortunately the build engine doesn't let us build just projects
+        // due to the way that AssignProjectConfiguration in Microsoft.Common.CurrentVersion.targets assumes that you are coming from a solution
+        // and attempts to assign platforms and targets to project references, even if you are not building them.
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
 
@@ -141,6 +146,8 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var project in LoadedConfiguredProjects) {
                 try {
+                    BuildCurrentSolutionConfigurationContents(collector.ProjectConfiguration);
+
                     await project.CollectBuildDependencies(collector);
                 } catch (Exception ex) {
                     logger.LogErrorFromException(ex, false, false);
@@ -148,6 +155,15 @@ namespace Aderant.Build.ProjectSystem {
                 }
             }
         }
+
+        private void BuildCurrentSolutionConfigurationContents(ConfigurationToBuild collectorProjectConfiguration) {
+            var projectsInSolutions = projectsByGuid.Values;
+
+            var generator = new SolutionConfigurationContentsGenerator(collectorProjectConfiguration);
+            MetaprojectXml = generator.CreateSolutionProject(projectsInSolutions);
+        }
+
+        public string MetaprojectXml { get; private set; }
 
         public DependencyGraph CreateBuildDependencyGraph(BuildDependenciesCollector collector) {
             foreach (var project in LoadedConfiguredProjects) {
@@ -193,6 +209,7 @@ namespace Aderant.Build.ProjectSystem {
             using (var exportLifetimeContext = SequencerFactory.CreateExport()) {
                 var sequencer = exportLifetimeContext.Value;
                 sequencer.PipelineService = pipelineService;
+                sequencer.MetaprojectXml = this.MetaprojectXml;
 
                 BuildPlan plan = sequencer.CreatePlan(context, analysisContext, jobFiles, graph);
                 return plan;
@@ -262,14 +279,22 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         private void EnsureUnconfiguredProjects() {
-
             if (loadedUnconfiguredProjects == null) {
                 loadedUnconfiguredProjects = new ConcurrentBag<UnconfiguredProject>();
             }
         }
 
         internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
-            var files = Services.FileSystem.GetFiles(directory, "*.csproj", true);
+            IEnumerable<string> files = Enumerable.Empty<string>();
+
+            string[] extensions = new[] {
+                "*.csproj",
+                "*.wixproj",
+            };
+
+            foreach (var extension in extensions) {
+                files = files.Concat(Services.FileSystem.GetFiles(directory, extension, true));
+            }
 
             foreach (var path in files) {
                 bool skip = false;
@@ -368,6 +393,12 @@ namespace Aderant.Build.ProjectSystem {
     internal interface ISequencer {
 
         IBuildPipelineService PipelineService { get; set; }
+
+        /// <summary>
+        /// Gets or sets the solution meta configuration.
+        /// This is the SolutionConfiguration data from the sln.metaproj
+        /// </summary>
+        string MetaprojectXml { get; set; }
 
         BuildPlan CreatePlan(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph);
     }

@@ -164,7 +164,7 @@ namespace Aderant.Build.ProjectSystem {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
                         { "WebDependencyVersion", "-1" }
                     };
-                    
+
                     return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
                 });
 
@@ -277,7 +277,6 @@ namespace Aderant.Build.ProjectSystem {
 
                 OutputPath = projectValue.GetPropertyValue("OutputPath");
             }
-
         }
 
         /// <summary>
@@ -347,7 +346,7 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 }
             }
-            
+
             if (services.AssemblyReferences != null) {
                 AddResolvedAssemblyDependency(collector, services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences));
             }

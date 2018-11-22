@@ -76,11 +76,10 @@
 
 
   <Target Name="GrovelForExtensibilityFiles">
-
+     <!-- Work around https://github.com/Microsoft/msbuild/issues/2452 -->
     <ItemGroup>
-      <ExtensibilityFiles Include="$(SolutionRoot)**\dir.props" />
+      <ExtensibilityFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'dir.props', SearchOption.AllDirectories))" />
     </ItemGroup>
-
   </Target>
 
 

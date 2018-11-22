@@ -14,18 +14,7 @@ namespace Aderant.Build.ProjectSystem.SolutionParser {
                 SolutionConfigurations = file.SolutionConfigurations
             };
 
-            RaiseSolutionFileParsed(result);
-
             return result;
-        }
-
-        /// <summary>
-        /// Occurs when a solution file has been parsed.
-        /// </summary>
-        public event EventHandler<ParseResult> SolutionFileParsed;
-
-        protected virtual void RaiseSolutionFileParsed(ParseResult e) {
-            SolutionFileParsed?.Invoke(this, e);
         }
     }
 }

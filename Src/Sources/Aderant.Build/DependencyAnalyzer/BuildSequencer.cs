@@ -31,6 +31,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public IBuildPipelineService PipelineService { get; set; }
 
+        /// <summary>
+        /// Gets or sets the solution meta configuration.
+        /// This is the SolutionConfiguration data from the sln.metaproj
+        /// </summary>
+        public string MetaprojectXml { get; set; }
+
         public BuildPlan CreatePlan(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph) {
             var isPullRequest = context.BuildMetadata.IsPullRequest;
             isDesktopBuild = context.IsDesktopBuild;
@@ -91,6 +97,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             PrintBuildTree(groups);
 
             var planGenerator = new BuildPlanGenerator(fileSystem);
+            planGenerator.MetaprojectXml = MetaprojectXml;
             var project = planGenerator.GenerateProject(groups, files, null);
 
             return new BuildPlan(project) {
