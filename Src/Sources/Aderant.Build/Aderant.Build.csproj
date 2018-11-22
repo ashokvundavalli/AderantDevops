@@ -119,6 +119,7 @@
     <Compile Include="ProjectSystem\BuildPlan.cs" />
     <Compile Include="ProjectSystem\DuplicateGuidException.cs" />
     <Compile Include="ProjectSystem\References\ResolvedReference.cs" />
+    <Compile Include="ProjectSystem\SolutionConfigurationContentsGenerator.cs" />
     <Compile Include="ProjectSystem\TrackedProject.cs" />
     <Compile Include="ProjectSystem\ExistingPlanLoader.cs" />
     <Compile Include="Utilities\TreePrinter.cs" />

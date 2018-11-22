@@ -24,7 +24,6 @@ namespace Aderant.Build.ProjectSystem {
 
                 foreach (var project in projectsInSolutions) {
                     ProjectConfigurationInSolution projectConfigurationInSolution;
-
                     if (project.ProjectConfigurations.TryGetValue(configurationToBuild.FullName, out projectConfigurationInSolution)) {
                         xmlWriter.WriteStartElement("ProjectConfiguration");
                         xmlWriter.WriteAttributeString("Project", project.ProjectGuid);
