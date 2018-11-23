@@ -601,7 +601,9 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
                                       Services.Notes;
                                       Services.Communication
                                       Workflow.TeamManager;
-                                      Workflow.CheckRequest" />
+                                      Workflow.CheckRequest;
+                                      Workflow.Samples;
+                                      Workflow.FileOpening" />
       </ItemGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"
