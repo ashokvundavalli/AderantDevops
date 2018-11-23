@@ -285,8 +285,7 @@ process {
 
                 continue
             } else {
-                $destinationFolder = AcquireExpertClassicBinaries -moduleName $module.Name -binariesDirectory $binariesDirectory -classicPath $moduleBinariesDirectory -target $module.Target.Split('/')[1]
-                Remove-Item -LiteralPath $destinationFolder -Filter "*.pdb" -Recurse -Force -Verbose
+                AcquireExpertClassicBinaries -moduleName $module.Name -binariesDirectory $binariesDirectory -classicPath $moduleBinariesDirectory -target $module.Target.Split('/')[1]
             }
 
             $newdropFolderBuildNumbers += $module.Name + "=" + ((Get-Item $moduleBinariesDirectory).LastWriteTimeUtc).ToString("o")

@@ -101,7 +101,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
     function global:AcquireExpertClassicBinaries([string]$moduleName, [string]$binariesDirectory, [string]$classicPath, [string]$target) {
         Push-Location
-        $build = Get-ChildItem -Path $classicPath -File -Filter "*.zip"
+        $build = Get-ChildItem -LiteralPath $classicPath -File -Filter "*.zip"
 
         $destinationFolder = $null
 
@@ -124,14 +124,10 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
                 $destinationFolder = Join-Path -Path $binariesDirectory -ChildPath $target
 
-                & $zipExe x $build.FullName "-o$destinationFolder $filter -r -y"
+                Start-Process -FilePath $zipExe -ArgumentList "x `"$($build.FullName)`" -o`"$destinationFolder`" $filter -x!*.pdb -r -y" -NoNewWindow -Wait
+
                 [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
-
-                if (-not (Test-Path $classicBuildNumbersFile)) {
-                    New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
-                }
-
-                Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
+                Add-Content -LiteralPath $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])" -Force
                 Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
             } else {
                 Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
@@ -141,7 +137,6 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         }
 
         Pop-Location
-        return $destinationFolder
     }
 
     ##
