@@ -16,13 +16,13 @@ namespace Aderant.Build.DependencyAnalyzer {
         private const string PropertiesKey = "Properties";
         private const string BuildGroupId = "BuildGroupId";
         private static readonly char[] newLineArray = Environment.NewLine.ToCharArray();
-        private readonly IFileSystem2 fileSystem;
+        private readonly IFileSystem fileSystem;
         private readonly HashSet<string> observedProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private readonly Dictionary<string, PropertyList> solutionPropertyLists = new Dictionary<string, PropertyList>(StringComparer.OrdinalIgnoreCase);
         private string[] commandLineArgs;
 
-        public BuildPlanGenerator(IFileSystem2 fileSystem) {
+        public BuildPlanGenerator(IFileSystem fileSystem) {
             this.fileSystem = fileSystem;
         }
 
@@ -175,9 +175,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private ItemGroupItem GenerateItem(string beforeProjectFile, string afterProjectFile, int buildGroup, IDependable studioProject) {
-            Guid itemId = Guid.NewGuid();
+            Guid projectInstanceId = Guid.NewGuid();
 
-            PropertyList propertyList = new PropertyList();
+            PropertyList propertiesForProjectInstance = new PropertyList();
 
             // there are two new ways to pass properties in item metadata, Properties and AdditionalProperties.
             // The difference can be confusing and very problematic if used incorrectly.
@@ -192,19 +192,19 @@ namespace Aderant.Build.DependencyAnalyzer {
                     return null;
                 }
 
-                propertyList = AddSolutionConfigurationProperties(visualStudioProject, propertyList);
-                propertyList["Id"] = itemId.ToString("D");
+                propertiesForProjectInstance = AddSolutionConfigurationProperties(visualStudioProject, propertiesForProjectInstance);
+                propertiesForProjectInstance["Id"] = projectInstanceId.ToString("D");
 
-                if (solutionPropertyLists.ContainsKey(propertyList["SolutionRoot"])) {
-                    foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertyList["SolutionRoot"]]) {
-                        if (!propertyList.ContainsKey(keyValuePair.Key)) {
-                            propertyList.Add(keyValuePair.Key, keyValuePair.Value);
+                if (solutionPropertyLists.ContainsKey(propertiesForProjectInstance["SolutionRoot"])) {
+                    foreach (KeyValuePair<string, string> keyValuePair in solutionPropertyLists[propertiesForProjectInstance["SolutionRoot"]]) {
+                        if (!propertiesForProjectInstance.ContainsKey(keyValuePair.Key)) {
+                            propertiesForProjectInstance.Add(keyValuePair.Key, keyValuePair.Value);
                         }
                     }
                 }
 
                 ItemGroupItem project = new ItemGroupItem(visualStudioProject.FullPath) {
-                    ["Id"] = itemId.ToString("D"),
+                    ["Id"] = projectInstanceId.ToString("D"),
                     [BuildGroupId] = buildGroup.ToString(CultureInfo.InvariantCulture),
                     ["Configuration"] = visualStudioProject.BuildConfiguration.ConfigurationName,
                     ["Platform"] = visualStudioProject.BuildConfiguration.PlatformName,
@@ -217,12 +217,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                 TrackProjectItems(project, visualStudioProject);
 
                 if (project["IsWebProject"] == bool.TrueString) {
-                    if (!propertyList.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
-                        propertyList.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
+                    if (!propertiesForProjectInstance.ContainsKey("WebPublishPipelineCustomizeTargetFile")) {
+                        propertiesForProjectInstance.Add("WebPublishPipelineCustomizeTargetFile", "$(BuildScriptsDirectory)Aderant.wpp.targets");
                     }
                 }
 
-                project[PropertiesKey] = propertyList.ToString();
+                project[PropertiesKey] = propertiesForProjectInstance.ToString();
 
                 return project;
             }
@@ -235,7 +235,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 if (solutionPropertyLists.ContainsKey(solutionDirectoryPath)) {
                     properties = solutionPropertyLists[solutionDirectoryPath];
                 } else {
-                    properties = AddBuildProperties(propertyList, fileSystem, solutionDirectoryPath);
+                    properties = AddBuildProperties(propertiesForProjectInstance, fileSystem, solutionDirectoryPath);
                     solutionPropertyLists.Add(solutionDirectoryPath, properties);
                 }
 
@@ -250,7 +250,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsPostTargets"] = node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsPreTargets"] = !node.IsPostTargets ? bool.TrueString : bool.FalseString,
                     ["IsProjectFile"] = bool.FalseString,
-                    ["ItemId"] = itemId.ToString("D")
+                    ["ProjectInstanceId"] = projectInstanceId.ToString("D")
                 };
 
                 // Perf optimization, we can disable T4 if we haven't seen any projects under this solution path
@@ -258,7 +258,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     properties["T4TransformEnabled"] = bool.FalseString;
                 }
 
-                properties["ItemId"] = itemId.ToString("D");
+                properties["ProjectInstanceId"] = projectInstanceId.ToString("D");
                 item[PropertiesKey] = properties.ToString();
 
                 return item;
@@ -271,25 +271,24 @@ namespace Aderant.Build.DependencyAnalyzer {
             TrackedProject.SetPropertiesNeededForTracking(project, visualStudioProject);
         }
 
-        private PropertyList AddBuildProperties(PropertyList propertyList, IFileSystem2 fileSystem, string solutionDirectoryPath) {
+        internal PropertyList AddBuildProperties(PropertyList propertiesForProjectInstance, IFileSystem fileSystem, string solutionDirectoryPath) {
             string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
+
             if (fileSystem.FileExists(responseFile)) {
                 string propertiesText;
                 using (StreamReader reader = new StreamReader(fileSystem.OpenFile(responseFile))) {
                     propertiesText = reader.ReadToEnd();
                 }
 
-                PropertyList properties = ParseRspContent(propertiesText.Split(newLineArray, StringSplitOptions.None));
-
+                var properties = ParseRspContent(propertiesText.Split(newLineArray, StringSplitOptions.None));
                 // We want to be able to specify the flavor globally in a build all so remove it from the property set
                 properties.TryRemove("BuildFlavor");
 
-                propertyList = ApplyPropertiesFromCommandLineArgs(properties);
-
-                propertyList.Add("SolutionDirectoryPath", PathUtility.EnsureTrailingSlash(solutionDirectoryPath));
+                propertiesForProjectInstance = ApplyPropertiesFromCommandLineArgs(properties);
             }
 
-            return propertyList;
+            propertiesForProjectInstance.Add("SolutionDirectoryPath", PathUtility.EnsureTrailingSlash(solutionDirectoryPath));
+            return propertiesForProjectInstance;
         }
 
         internal PropertyList ParseRspContent(string[] responseFileContent) {
@@ -320,14 +319,16 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// within the pipeline we need to evict properties from the RSP that would nullify the command line values
         /// </summary>
         private PropertyList ApplyPropertiesFromCommandLineArgs(PropertyList propertyList) {
-            foreach (string argument in commandLineArgs) {
-                string[] arg = argument.Replace("\"", "").Split(new[] { '=' }, 2);
+            if (commandLineArgs != null) {
+                foreach (string argument in commandLineArgs) {
+                    string[] arg = argument.Replace("\"", "").Split(new[] { '=' }, 2);
 
-                string key = arg[0].Substring(3, arg[0].Length - 3);
+                    string key = arg[0].Substring(3, arg[0].Length - 3);
 
-                if (propertyList.ContainsKey(key)) {
-                    // Here we take the command line arg and apply it, this overwrites whatever the RSP defined
-                    propertyList[key] = arg[1];
+                    if (propertyList.ContainsKey(key)) {
+                        // Here we take the command line arg and apply it, this overwrites whatever the RSP defined
+                        propertyList[key] = arg[1];
+                    }
                 }
             }
 

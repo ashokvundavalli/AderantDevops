@@ -100,6 +100,7 @@
 
 
   <Target Name="ValidateRequiredProperties">
+    <Error Condition="'$(SolutionDirectoryPath)' == ''" Text="Fatal error. SolutionDirectoryPath is undefined in element $(ProjectInstanceId)" />
     <Error Condition="'$(SolutionRoot)' == ''" Text="SolutionRoot is undefined." />
     <Error Condition="'$(CustomAfterMicrosoftCSharpTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom CSharp targets file set." />
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set." />

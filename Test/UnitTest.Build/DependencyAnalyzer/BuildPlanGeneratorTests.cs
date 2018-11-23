@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Model;
@@ -49,6 +51,35 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.IsFalse(projects[2].UseCommonOutputDirectory);
             Assert.IsFalse(projects[3].UseCommonOutputDirectory);
+        }
+
+        [TestMethod]
+        public void Properties_contains_solution_directory_path_when_rsp_file_exists() {
+            Mock<IFileSystem> mock = new Mock<IFileSystem>();
+            mock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
+            mock.Setup(s => s.OpenFile(It.IsAny<string>())).Returns(new MemoryStream(Encoding.Default.GetBytes("")));
+
+            var generator = new BuildPlanGenerator(mock.Object);
+
+            var propertyList = new PropertyList();
+            PropertyList list = generator.AddBuildProperties(propertyList, mock.Object, "abc");
+
+            Assert.IsTrue(list.ContainsKey("SolutionDirectoryPath"));
+            Assert.IsTrue(list.ContainsValue(@"abc\"));
+        }
+
+        [TestMethod]
+        public void Properties_contains_solution_directory_path_when_rsp_file_does_not_exist() {
+            Mock<IFileSystem> mock = new Mock<IFileSystem>();
+            mock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(false);
+
+            var generator = new BuildPlanGenerator(mock.Object);
+
+            var propertyList = new PropertyList();
+            PropertyList list = generator.AddBuildProperties(propertyList, mock.Object, "abc");
+
+            Assert.IsTrue(list.ContainsKey("SolutionDirectoryPath"));
+            Assert.IsTrue(list.ContainsValue(@"abc\"));
         }
     }
 }
