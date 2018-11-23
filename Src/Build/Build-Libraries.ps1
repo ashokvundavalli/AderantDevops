@@ -103,6 +103,8 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         Push-Location
         $build = Get-ChildItem -Path $classicPath -File -Filter "*.zip"
 
+        $destinationFolder = $null
+
         if ($null -ne $build) {
             $zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
 
@@ -131,8 +133,6 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
                 Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
                 Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
-
-                return $destinationFolder
             } else {
                 Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
             }
@@ -141,6 +141,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         }
 
         Pop-Location
+        return $destinationFolder
     }
 
     ##

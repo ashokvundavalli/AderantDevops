@@ -114,6 +114,8 @@ $referencePaths = "$(ArtifactStagingDirectory)"
 $testFiles = $(UnitTestAssemblies)
 $referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
 
+Write-Output $referencesToFind
+
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
     OnErrorReason="Test failure"
     TaskObjects="$(AssemblyPlatformDataKey)" />
