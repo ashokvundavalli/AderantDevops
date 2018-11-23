@@ -103,41 +103,45 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         Push-Location
         $build = Get-ChildItem -Path $classicPath -File -Filter "*.zip"
 
-            if ($build -ne $null) {
-                [string]$zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
+        if ($null -ne $build) {
+            $zipExe = Join-Path -Path "$($PSScriptRoot)\..\Build.Tools\" -ChildPath "\7z.exe"
 
-                if (Test-Path $zipExe) {
-                    [string]$filter = ""
+            if (Test-Path $zipExe) {
+                [string]$filter = ""
 
-                    switch ($moduleName) {
-                        "Expert.Classic.CS" {
-                            $filter = "ApplicationServer\*"
-                            break
-                        }
-                        default {
-                            $filter = ""
-                            break
-                        }
+                switch ($moduleName) {
+                    "Expert.Classic.CS" {
+                        $filter = "ApplicationServer\*"
+                        break
                     }
-
-                    & $zipExe x $build.FullName "-o$(Join-Path -Path $binariesDirectory -ChildPath $target)" $filter -r -y
-                    [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
-
-                    if (-not (Test-Path $classicBuildNumbersFile)) {
-                        New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
+                    default {
+                        $filter = ""
+                        break
                     }
-
-                    Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
-                    Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
-                } else {
-                    Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
                 }
-            } else {
-                Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
-            }
 
-            Pop-Location
+                $destinationFolder = Join-Path -Path $binariesDirectory -ChildPath $target
+
+                & $zipExe x $build.FullName "-o$destinationFolder $filter -r -y"
+                [string]$classicBuildNumbersFile = "$($binariesDirectory)\ClassicBuildNumbers.txt"
+
+                if (-not (Test-Path $classicBuildNumbersFile)) {
+                    New-Item -ItemType File -Path $binariesDirectory -Name "ClassicBuildNumbers.txt" | Out-Null
+                }
+
+                Add-Content -Path $classicBuildNumbersFile -Value "$($moduleName) $($build.BaseName.split('_')[1])"
+                Write-Host "Successfully acquired Expert Classic binaries $($build.Directory.Name)"
+
+                return $destinationFolder
+            } else {
+                Write-Error "Unable to locate 7z.exe at path: $($PSScriptRoot)\..\Build.Tools\"
+            }
+        } else {
+            Write-Error "Unable to acquire Expert Classic binaries from: $($classicPath)"
         }
+
+        Pop-Location
+    }
 
     ##
     # Resolves the path to the binaries for the given module
@@ -302,20 +306,20 @@ UpdateOrBuildAssembly $PSScriptRoot $false
             #TODO: Externalize the path
             $locationsToProbe += "\\dfs.aderant.com\ExpertSuite\pulls\$pullRequestId"
         }
-        
+
         if (!$dropPath) {
             $rootPath = (Get-DropRootPath)
         } else {
             $rootPath = $dropPath
-        }        
-    
+        }
+
         if ($action.Equals("other-branch") -and ![string]::IsNullOrEmpty($module.Path)) {
             $rootPath = ChangeBranch $rootPath $module.Path
         }
 
         if ($action.Equals("specific-path") -and ![string]::IsNullOrEmpty($module.Path)) {
             $rootPath = $module.Path
-        }        
+        }
 
         $locationsToProbe += $rootPath
 
@@ -326,13 +330,13 @@ UpdateOrBuildAssembly $PSScriptRoot $false
                 $pathToModuleAssemblyVersion = Join-Path -Path (Join-Path $location $module.Name) -ChildPath $module.AssemblyVersion
             } else {
                 $pathToModuleAssemblyVersion = Join-Path $location -ChildPath $module.Name
-            }            
+            }
 
             if ($module.HasAttribute("FileVersion")) {
-                $modulePath = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $module.FileVersion) -ChildPath $binModule         
+                $modulePath = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $module.FileVersion) -ChildPath $binModule
             } else {
                 $modulePath = PathToLatestSuccessfulBuild $pathToModuleAssemblyVersion -suppressThrow
-            }     
+            }
 
             if ($modulePath -ne $null) {
                 Write-Debug $modulePath
@@ -375,13 +379,13 @@ UpdateOrBuildAssembly $PSScriptRoot $false
     # Find the last successfully build in the drop location.
     ###
     Function global:PathToLatestSuccessfulBuild([string]$pathToModuleAssemblyVersion, [switch]$suppressThrow) {
-        $sortedFolders = SortedFolders $pathToModuleAssemblyVersion    
+        $sortedFolders = SortedFolders $pathToModuleAssemblyVersion
 
         [bool]$noBuildFound = $true
         [string]$pathToLatestSuccessfulBuild = $null
 
         foreach ($folderName in $sortedFolders) {
-         
+
            [string]$pathToLatestSuccessfulBuild = Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name
            [string]$successfulBuildBinModule = Join-Path -Path $pathToLatestSuccessfulBuild -ChildPath "\Bin\Module"
 
@@ -399,7 +403,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
            if ($isSuccessfulBuild) {
                 Write-Debug "Returning: $pathToLatestSuccessfulBuild"
                 return $pathToLatestSuccessfulBuild
-           }              
+           }
 
            [string]$buildLog = Join-Path -Path (Join-Path -Path $pathToModuleAssemblyVersion -ChildPath $folderName.Name) -ChildPath "\BuildLog.txt"
            if (Test-Path $buildLog) {
@@ -447,33 +451,33 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         $packagingFolders = (dir -Path $pathToPackages |
                 where {$_.PsIsContainer -and $_.name.Contains(".BuildAll")} |
                 sort $ToNatural -Descending)
-        
+
         foreach ($folderName in $packagingFolders) {
             Write-Info "Testing $folderName"
-            
+
             $buildLog = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\BuildLog.txt")
             $stableBuild = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath "\StableBuild.txt")
             [string]$pathToLatestSuccessfulPackage = (Join-Path -Path( Join-Path -Path $pathToPackages -ChildPath $folderName ) -ChildPath $packageZipName)
 
             if (Test-Path $pathToLatestSuccessfulPackage) {
                 if ($unstable){
-                    if (CheckBuild $buildLog) {               
+                    if (CheckBuild $buildLog) {
                         return $pathToLatestSuccessfulPackage
                     } else {
                         Write-Warning "Rejected failed build: $folderName"
-                    }        
+                    }
                 }
                 if (CheckStableBuild $stableBuild){
                     return $pathToLatestSuccessfulPackage
                 }  else {
                     Write-Warning "Rejected unstable build: $folderName"
-                }        
+                }
             } else {
                 Write-Warning "Rejected $folderName as it doesn't contain a package."
             }
         }
-        
-        Write-Error "No latest build found for [$pathToPackages]"        
+
+        Write-Error "No latest build found for [$pathToPackages]"
     }
 
     ###
@@ -489,7 +493,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
                 return $true
             }
 
-            Write-Debug "Folder $($container.FullName) is not a valid build drop folder" 
+            Write-Debug "Folder $($container.FullName) is not a valid build drop folder"
             return $false
         }
 
@@ -540,7 +544,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
             }
 
             Write-Host "Calling robocopy with args: $args"
-            
+
             $classes = @("Lonely", "Tweaked", "Same", "Changed", "Newer", "New File", "Older", "[*]Extra File", "Mismatched")
             $maxClassLength = ($classes | Measure-Object -Maximum -Property Length).Maximum
             $regex = "({0})" -f ($classes -join "|")
@@ -550,10 +554,10 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
             [string]$robocopyTool = Invoke-Expression "cmd /c where robocopy.exe"
 
-            Invoke-Tool -FileName $robocopyTool -Arguments ($params -join " ") | 
+            Invoke-Tool -FileName $robocopyTool -Arguments ($params -join " ") |
                 ForEach {
                     try {
-                    if ($_ -and 
+                    if ($_ -and
                         -not [string]::IsNullOrEmpty($_)) {
                         $parts = $split.Split($_)
 
@@ -589,21 +593,21 @@ UpdateOrBuildAssembly $PSScriptRoot $false
                                 Write-Host $line -ForegroundColor DarkGray
                                 return
                             }
-                            
+
                             Write-Debug $line
                             return
                         }
-                        Write-Host $_                       
+                        Write-Host $_
                     }
                 } catch {
                     Write-Debug $_
-                }               
+                }
             }
         } finally {
             # robocopy has non-standard exit values that are documented here: https://support.microsoft.com/en-us/kb/954404
             # Exit codes 0-8 are considered success, while all other exit codes indicate at least one failure.
             # Some build systems treat all non-0 return values as failures, so we massage the exit code into
-            # something that they can understand.            
+            # something that they can understand.
             if ($global:LASTEXITCODE -lt 8) {
                 $global:LASTEXITCODE = 0
             }
@@ -641,7 +645,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
             robocopy $from $to /XD service.tfsbuild* /XF *.pdb /E /XO /NJH /NJS /NP /NFL /NDL /MT /A-:R
         }
     }
-    
+
 
     <#
     Copy only files from the bin\module and bin\test that are built as part of this module for the drop
@@ -680,7 +684,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
                     CopyContents -copyFrom $binTestPath -copyTo $dropBinTestPath
                 } else {
                    Write-Host "Copying integration test artifacts to drop"
-                    
+
                     $patterns = @(
                         "IntegrationTest*.dll*",
                         "IntegrationTest*.pdb",
@@ -692,7 +696,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
                         "*.csv",
                         "*.bil",
                         "*Helper*.dll")
-                    
+
                     # Fucking garbage VMBLD301 with its shit old version of robocopy does not support multiple file patterns ffs
                     # PREPARE THE LOOP CAPTAIN
                     $patterns | % { & robocopy.exe $binTestPath $_ "$dropBinTestPath" /s }
@@ -728,7 +732,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
 
                 $hashes = $b | Select-Object -ExpandProperty Hash
 
-                [string]$content = $a | where { $hashes -contains $_.Hash } | Select -ExpandProperty Path                
+                [string]$content = $a | where { $hashes -contains $_.Hash } | Select -ExpandProperty Path
 
                 $sb = [System.Text.StringBuilder]::new()
                 $sb.AppendLine("/XF")
@@ -801,7 +805,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
              }
             "803" {
                 MoveDeploymentFilesV802 $binariesDirectory $expertSourceDirectory
-             }             
+             }
             default {
                 throw "Unknown manifest version $expertVersion"
             }
@@ -998,7 +1002,7 @@ UpdateOrBuildAssembly $PSScriptRoot $false
         } else {
             Write-Host $module.Path -ForegroundColor Green
         }
-    }    
+    }
 
 
 <#
@@ -1068,11 +1072,11 @@ function global:Write-Error {
     [CmdletBinding()]
     param (
         [parameter(ValueFromRemainingArguments=$true)][string[]] $args
-    )    
+    )
 
     $remainingArgs = $args | select -Skip 1
 
-    Write-Host ("! $($args[0])" -f $remainingArgs) -ForegroundColor Red    
+    Write-Host ("! $($args[0])" -f $remainingArgs) -ForegroundColor Red
 }
 
 <#
@@ -1083,11 +1087,11 @@ function global:Write-Warning {
     [CmdletBinding()]
     param (
         [parameter(ValueFromRemainingArguments=$true)][string[]] $args
-    )    
+    )
 
     $remainingArgs = $args | select -Skip 1
 
-    Write-Host ("! $($args[0])" -f $remainingArgs) -ForegroundColor Yellow    
+    Write-Host ("! $($args[0])" -f $remainingArgs) -ForegroundColor Yellow
 }
 
 <#
@@ -1098,11 +1102,11 @@ function global:Write-Info {
     [CmdletBinding()]
     param (
         [parameter(ValueFromRemainingArguments=$true)][string[]] $args
-    )    
+    )
 
     $remainingArgs = $args | select -Skip 1
 
-    Write-Host ("$($args[0])" -f $remainingArgs) -ForegroundColor Cyan    
+    Write-Host ("$($args[0])" -f $remainingArgs) -ForegroundColor Cyan
 }
 
 
@@ -1114,11 +1118,11 @@ function global:Write-Success {
     [CmdletBinding()]
     param (
         [parameter(ValueFromRemainingArguments=$true)][string[]] $args
-    )    
+    )
 
     $remainingArgs = $args | select -Skip 1
 
-    Write-Host ("$($args[0])" -f $remainingArgs) -ForegroundColor Green    
+    Write-Host ("$($args[0])" -f $remainingArgs) -ForegroundColor Green
 }
 
 Set-Alias robocopy InvokeRobocopy -Scope Global
@@ -1137,42 +1141,42 @@ task Init {
 
     Write-Info "Build tree"
     .\Show-BuildTree.ps1 -File $PSCommandPath
-   
+
     $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 
     if ($global:IsDesktopBuild -ne $true) {
         # hoho, fucking hilarious
         # For some reason we cannot load Microsoft assemblies as we get an exception
         # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
-        # so to work around this we just disable strong-name validation....     
+        # so to work around this we just disable strong-name validation....
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
-              
+
         $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
             if ($e.Name -like "*resources*") {
                 return $null
-            }            
+            }
 
             Write-Host "Resolving $($e.Name)"
-            
+
             $fileName = $e.Name.Split(",")[0]
             $fileName = $fileName + ".dll"
-        
-            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")              
-            foreach ($dir in $probeDirectories) {                
+
+            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")
+            foreach ($dir in $probeDirectories) {
                 $fullFilePath = "$dir\$fileName"
 
                 Write-Debug "Probing: $fullFilePath"
-                
-                if (Test-Path ($fullFilePath)) {    
-                    Write-Debug "File exists: $fullFilePath"        
+
+                if (Test-Path ($fullFilePath)) {
+                    Write-Debug "File exists: $fullFilePath"
                     try {
                         $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
                         Write-Debug "Loaded dependency: $fullFilePath"
                         return $a
                     } catch {
                         Write-Error "Failed to load $fullFilePath. $_.Exception"
-                    }   
+                    }
                 } else {
                     foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
                         if ($a.FullName -eq $e.Name) {
@@ -1186,15 +1190,15 @@ task Init {
                     }
                 }
             }
-            
+
             Write-Host "Cannot locate $($e.Name). The build will probably fail now."
             return $null
         }
-        
+
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
-        
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"                      
-                
+
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
+
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
     }
