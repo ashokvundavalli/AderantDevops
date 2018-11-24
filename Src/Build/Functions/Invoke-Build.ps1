@@ -495,17 +495,17 @@ Should not be used as it prevents incremental builds which increases build times
         $context.StartedAt = [DateTime]::UtcNow
         $context.LogFile = "$repositoryPath\build.log"
 
-        $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
-
-        $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
-        $contextService.StartListener($contextEndpoint)
-        Write-Debug "Service running on uri: $($contextService.ServerUri)"
-        $contextService.Publish($context)
-
         $succeeded = $false
 
         $currentColor = $host.UI.RawUI.ForegroundColor
         try {
+            $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
+
+            $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
+            $contextService.StartListener($contextEndpoint)
+            Write-Debug "Service running on uri: $($contextService.ServerUri)"
+            $contextService.Publish($context)
+
             $args = CreateToolArgumentString $context $RemainingArgs
 
             # When WhatIf specified just determine what would be built
@@ -545,7 +545,7 @@ Should not be used as it prevents incremental builds which increases build times
 
             Write-Host " Build: " -NoNewline
 
-            if ($global:LASTEXITCODE -gt 0 -or -not $succeeded -or $context.BuildStatus -eq "Failed") {
+            if ($global:LASTEXITCODE -gt 0 -or (-not $succeeded) -or $context.BuildStatus -eq "Failed") {
                 Write-Host "[" -NoNewline
                 Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
                 Write-Host "]"

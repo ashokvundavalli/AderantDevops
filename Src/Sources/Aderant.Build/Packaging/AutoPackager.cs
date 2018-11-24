@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Management.Automation.Security;
 using Aderant.Build.Logging;
 
 namespace Aderant.Build.Packaging {
@@ -60,10 +59,9 @@ namespace Aderant.Build.Packaging {
             for (var i = packageQueue.Count - 1; i >= 0; i--) {
                 var file = packageQueue[i];
 
-                if (file.Location.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
+                if (PackageOtherExtensions(file)) {
                     artifactItems.Add(file);
                     packageQueue.RemoveAt(i);
-                    continue;
                 }
             }
 
@@ -72,6 +70,16 @@ namespace Aderant.Build.Packaging {
             }
 
             return artifactItems;
+        }
+
+        private static bool PackageOtherExtensions(PathSpec file) {
+            foreach (var extension in new[] { ".zip", ".msi" }) {
+                if (file.Location.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public IEnumerable<ArtifactPackageDefinition> CreatePackages(IEnumerable<ProjectOutputSnapshot> snapshots, IEnumerable<ArtifactPackageDefinition> packages, IEnumerable<ArtifactPackageDefinition> autoPackages) {
