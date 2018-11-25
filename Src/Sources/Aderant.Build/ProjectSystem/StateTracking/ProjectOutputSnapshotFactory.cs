@@ -59,7 +59,14 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             for (var i = 0; i < fileWrites.Count; i++) {
                 string fileWrite = fileWrites[i];
 
-                cleanedFileWrites[i] = fileWrite.Replace(@"\\", @"\");
+                var cleanFileWrite = fileWrite.Replace(@"\\", @"\");
+
+                // Turns "C:\\B\\516\\2\\s\\Foo\\Bin\\Module\\Notification.zip" into a relative path
+                if (Path.IsPathRooted(cleanFileWrite)) {
+                    cleanFileWrite = PathUtility.MakeRelative(Path.GetDirectoryName(ProjectFile), cleanFileWrite);
+                }
+
+                cleanedFileWrites[i] = cleanFileWrite;
             }
 
             return cleanedFileWrites;

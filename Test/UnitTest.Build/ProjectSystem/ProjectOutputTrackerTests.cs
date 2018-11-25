@@ -79,5 +79,20 @@ namespace UnitTest.Build.ProjectSystem {
 
             Assert.AreEqual(@"foo\bin\baz.dll", snapshot.FilesWritten[0]);
         }
+
+        [TestMethod]
+        public void FileWrites_are_relative_paths() {
+            var snapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(
+                Guid.NewGuid(),
+                "",
+                "C:\\B\\516\\2\\s\\Services.Communication\\Src\\Aderant.Notification\\Aderant.Notification.cspoj",
+                new[] {
+                    "C:\\B\\516\\2\\s\\Services.Communication\\Bin\\Module\\Aderant.Notification.Api.zip"
+                },
+                "..\\..\\bin",
+                "obj");
+
+            Assert.AreEqual(@"..\..\Bin\Module\Aderant.Notification.Api.zip", snapshot.FilesWritten[0]);
+        }
     }
 }
