@@ -3,16 +3,19 @@
 param(
    [Parameter(Mandatory=$true)][string]$TaskPath,
    [Parameter(Mandatory=$false)][string]$TfsUrl = "http://tfs:8080/tfs/Aderant",
-   [switch]$Overwrite = $false
+   [Parameter(Mandatory=$true)]
+   [bool]$Overwrite = $false
 )
 
 # Load task definition from the JSON file
 $taskDefinition = (Get-Content $taskPath\task.json) -join "`n" | ConvertFrom-Json
 $taskFolder = Get-Item $TaskPath
 
+if (-not $Overwrite) {
 # Bump the patch version. This is so our changes are automatically deployed to the build agents
-$taskDefinition.version.patch = $taskDefinition.version.patch + 1
-ConvertTo-Json -InputObject $taskDefinition -Depth 100 | Out-File $taskPath\task.json -Encoding utf8
+  $taskDefinition.version.patch = $taskDefinition.version.patch + 1
+  ConvertTo-Json -InputObject $taskDefinition -Depth 100 | Out-File $taskPath\task.json -Encoding utf8
+}
 
 # Zip the task content
 Write-Output "Zipping task content"
