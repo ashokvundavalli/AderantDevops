@@ -54,22 +54,26 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         }
 
         private string[] CleanFileWrites(IReadOnlyList<string> fileWrites) {
-            string[] cleanedFileWrites = new string[fileWrites.Count];
+            if (fileWrites != null) {
+                string[] cleanedFileWrites = new string[fileWrites.Count];
 
-            for (var i = 0; i < fileWrites.Count; i++) {
-                string fileWrite = fileWrites[i];
+                for (var i = 0; i < fileWrites.Count; i++) {
+                    string fileWrite = fileWrites[i];
 
-                var cleanFileWrite = fileWrite.Replace(@"\\", @"\");
+                    var cleanFileWrite = fileWrite.Replace(@"\\", @"\");
 
-                // Turns "C:\\B\\516\\2\\s\\Foo\\Bin\\Module\\Notification.zip" into a relative path
-                if (Path.IsPathRooted(cleanFileWrite)) {
-                    cleanFileWrite = PathUtility.MakeRelative(Path.GetDirectoryName(ProjectFile), cleanFileWrite);
+                    // Turns "C:\\B\\516\\2\\s\\Foo\\Bin\\Module\\Notification.zip" into a relative path
+                    if (Path.IsPathRooted(cleanFileWrite)) {
+                        cleanFileWrite = PathUtility.MakeRelative(Path.GetDirectoryName(ProjectFile), cleanFileWrite);
+                    }
+
+                    cleanedFileWrites[i] = cleanFileWrite;
                 }
 
-                cleanedFileWrites[i] = cleanFileWrite;
+                return cleanedFileWrites;
             }
 
-            return cleanedFileWrites;
+            return null;
         }
 
         private static string GetDirectory(string dir) {

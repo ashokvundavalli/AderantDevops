@@ -116,6 +116,7 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
+    <Compile Include="Utilities\StringExtensions.cs" />
     <Compile Include="ProjectSystem\BuildPlan.cs" />
     <Compile Include="ProjectSystem\DuplicateGuidException.cs" />
     <Compile Include="ProjectSystem\References\ResolvedReference.cs" />

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.Utilities;
@@ -89,6 +90,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public void Add(IArtifact artifact) {
             artifacts.Add(artifact);
+        }
+
+        public IDependable GetNodeById(string id) {
+            return Nodes.FirstOrDefault(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

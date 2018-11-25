@@ -48,6 +48,8 @@ namespace Aderant.Build.Tasks {
 
         public string ConfigurationToBuild { get; set; }
 
+        public string[] MakeFiles { get; set; }
+
         [Output]
         public string[] DirectoriesInBuild { get; set; }
 
@@ -90,11 +92,13 @@ namespace Aderant.Build.Tasks {
                 AfterProjectFile = AfterProjectFile,
                 GroupExecutionFile = GroupExecutionFile,
                 CommonProjectFile = CommonProjectFile,
+                ExtensibilityImposition = extensibilityImposition,
+                MakeFiles = MakeFiles,
                 BuildPlan = BuildPlan,
             };
 
             var analysisContext = CreateAnalysisContext();
-            analysisContext.ExtensibilityImposition = extensibilityImposition;
+
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
 
             var buildPlan = projectTree.ComputeBuildPlan(context, analysisContext, PipelineService, jobFiles).Result;

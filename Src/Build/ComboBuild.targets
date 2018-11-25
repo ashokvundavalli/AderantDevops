@@ -80,6 +80,10 @@
     <ItemGroup>
       <ExtensibilityFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'dir.props', SearchOption.AllDirectories))" />
     </ItemGroup>
+
+    <ItemGroup>
+      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'Build\TFSBuild.proj', SearchOption.AllDirectories))" />
+    </ItemGroup>
   </Target>
 
 
@@ -131,6 +135,7 @@
       ModulesDirectory="$(SolutionRoot)"
       BuildPlan="$(BuildPlan)"
       ExtensibilityFiles="@(ExtensibilityFiles)"
+      MakeFiles="@(DirectoryMakeFiles)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"

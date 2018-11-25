@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Aderant.Build.Logging;
 using Aderant.Build.Packaging;
+using Aderant.Build.Utilities;
 
 namespace Aderant.Build {
 

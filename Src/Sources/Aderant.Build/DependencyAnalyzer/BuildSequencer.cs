@@ -8,6 +8,7 @@ using System.Threading;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
+using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -18,13 +19,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
     [Export(typeof(ISequencer))]
     internal class ProjectSequencer : ISequencer {
-        private readonly IFileSystem2 fileSystem;
+        private readonly IFileSystem fileSystem;
         private readonly ILogger logger;
         private bool isDesktopBuild;
         private List<BuildStateFile> stateFiles;
 
         [ImportingConstructor]
-        public ProjectSequencer(ILogger logger, IFileSystem2 fileSystem) {
+        public ProjectSequencer(ILogger logger, IFileSystem fileSystem) {
             this.logger = logger;
             this.fileSystem = fileSystem;
         }
@@ -37,11 +38,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// </summary>
         public string MetaprojectXml { get; set; }
 
-        public BuildPlan CreatePlan(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph) {
-            var isPullRequest = context.BuildMetadata.IsPullRequest;
+        public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
             isDesktopBuild = context.IsDesktopBuild;
 
             bool assumeNoBuildCache = false;
+
             if (context.StateFiles == null) {
                 FindStateFiles(context);
 
@@ -54,7 +55,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            AddInitializeAndCompletionNodes(isPullRequest, isDesktopBuild, context.Switches.ChangedFilesOnly, graph);
+            AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, graph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -88,7 +89,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
                 projectsInDependencyOrder,
-                analysisContext,
+                files,
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
@@ -103,36 +104,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             return new BuildPlan(project) {
                 DirectoriesInBuild = directoriesInBuild,
             };
-        }
-
-        private void PrintBuildTree(List<List<IDependable>> groups) {
-            if (logger != null) {
-                var topLevelNodes = new List<TreePrinter.Node>();
-
-                int i = 0;
-                foreach (var group in groups) {
-                    var topLevelNode = new TreePrinter.Node();
-                    topLevelNode.Name = "Group " + i;
-                    topLevelNode.Children = group.Select(
-                        s =>
-                            new TreePrinter.Node {
-                                Name = s.Id,
-                                Children = DescribeChanges(s)
-                            }).ToList();
-                    i++;
-
-                    topLevelNodes.Add(topLevelNode);
-                }
-
-                StringBuilder sb = new StringBuilder();
-                TreePrinter.Print(topLevelNodes, message => sb.Append(message));
-
-                logger.Info(sb.ToString());
-
-                if (isDesktopBuild) {
-                    Thread.Sleep(2000);
-                }
-            }
         }
 
         private void EvictNotExistentProjects(BuildOperationContext context) {
@@ -197,7 +168,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return files;
         }
 
-        private void AddInitializeAndCompletionNodes(bool isPullRequest, bool isDesktopBuild, bool changedFilesOnly, DependencyGraph graph) {
+        private void AddInitializeAndCompletionNodes(bool changedFilesOnly, IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -210,63 +181,78 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
+            SynthesizeNodesForAllDirectories(makeFiles, graph);
+
             var grouping = projects.GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
 
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
 
-                if (AddNodes(dirtyProjects, isPullRequest, isDesktopBuild)) {
-                    string tag = string.Join(", ", dirtyProjects.Select(s => s.Id));
+                string tag = string.Join(", ", dirtyProjects.Select(s => s.Id));
 
-                    IArtifact initializeNode;
-                    string solutionDirectoryName = Path.GetFileName(group.Key);
+                string solutionDirectoryName = Path.GetFileName(group.Key);
 
-                    // Create a new node that represents the start of a directory
-                    graph.Add(initializeNode = new DirectoryNode(solutionDirectoryName, group.Key, false));
+                IArtifact initializeNode;
+                IArtifact completionNode;
+                AddDirectoryNodes(graph, solutionDirectoryName, group.Key, out initializeNode, out completionNode);
 
-                    // Create a new node that represents the completion of a directory
-                    DirectoryNode completionNode = new DirectoryNode(solutionDirectoryName, group.Key, true);
+                var stateFile = SelectStateFile(solutionDirectoryName);
 
-                    graph.Add(completionNode);
-                    completionNode.AddResolvedDependency(null, initializeNode);
-
-                    var stateFile = SelectStateFile(solutionDirectoryName);
-
-                    foreach (var project in projects.Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
-                        // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
-                        IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
-                        if (textTemplateDependencies != null) {
-                            foreach (var dependency in textTemplateDependencies) {
-                                initializeNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
-                            }
+                foreach (var project in projects.Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
+                    // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
+                    IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
+                    if (textTemplateDependencies != null) {
+                        foreach (var dependency in textTemplateDependencies) {
+                            initializeNode.AddResolvedDependency(dependency.ExistingUnresolvedItem, dependency.ResolvedReference);
                         }
-
-                        if (!changedFilesOnly) {
-                            ApplyStateFile(stateFile, solutionDirectoryName, tag, project);
-                        }
-
-                        project.AddResolvedDependency(null, initializeNode);
-                        completionNode.AddResolvedDependency(null, project);
                     }
+
+                    if (!changedFilesOnly) {
+                        ApplyStateFile(stateFile, solutionDirectoryName, tag, project);
+                    }
+
+                    project.AddResolvedDependency(null, initializeNode);
+                    completionNode.AddResolvedDependency(null, project);
                 }
             }
         }
 
-        private bool AddNodes(List<ConfiguredProject> dirtyProjects, bool isPullRequest, bool isDesktopBuild) {
-            // TODO: Not sure why we need this function?
-            if (dirtyProjects.Any()) {
-                return true;
+        /// <summary>
+        /// Synthesizes the nodes for all directories whether they contain a solution or not.
+        /// We want to run any custom directory targets as these may invoke actions we cannot gain insight into and so need to schedule
+        /// them as part of the sequence
+        /// </summary>
+        private static void SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
+            foreach (var makeFile in makeFiles) {
+                var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimEnd(Path.DirectorySeparatorChar);
+                string solutionDirectoryName = Path.GetFileName(directoryAboveMakeFile);
+
+                IArtifact initializeNode;
+                IArtifact completionNode;
+                AddDirectoryNodes(graph, solutionDirectoryName, directoryAboveMakeFile, out initializeNode, out completionNode);
+            }
+        }
+
+        private static void AddDirectoryNodes(DependencyGraph graph, string nodeName, string nodeFullPath, out IArtifact initializeNode, out IArtifact completionNode) {
+            // Create a new node that represents the start of a directory
+            initializeNode = new DirectoryNode(nodeName, nodeFullPath, false);
+
+            var existing = graph.GetNodeById(initializeNode.Id) as IArtifact;
+            if (existing == null) {
+                graph.Add(initializeNode);
+            } else {
+                initializeNode = existing;
             }
 
-            if (!isPullRequest && !isDesktopBuild) {
-                return true;
+            // Create a new node that represents the completion of a directory
+            completionNode = new DirectoryNode(nodeName, nodeFullPath, true);
+            existing = graph.GetNodeById(completionNode.Id) as IArtifact;
+            if (existing == null) {
+                graph.Add(completionNode);
+                completionNode.AddResolvedDependency(null, initializeNode);
+            } else {
+                completionNode = existing;
             }
-
-            if (isDesktopBuild) {
-                return true;
-            }
-
-            return true;
         }
 
         private void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string tag, ConfiguredProject project) {
@@ -361,18 +347,18 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// According to options, find out which projects are selected to build.
         /// </summary>
         /// <param name="visualStudioProjects">All the projects list.</param>
-        /// <param name="analysisContext"></param>
+        /// <param name="orchestrationFiles"></param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="dependencyProcessing">
         /// Build the directly affected downstream projects, or recursively search for all
         /// downstream projects, or none?
         /// </param>
-        internal IReadOnlyCollection<IDependable> GetProjectsBuildList(IReadOnlyCollection<IDependable> visualStudioProjects, AnalysisContext analysisContext, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
+        internal IReadOnlyCollection<IDependable> GetProjectsBuildList(IReadOnlyCollection<IDependable> visualStudioProjects, OrchestrationFiles orchestrationFiles, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
             var projects = visualStudioProjects.OfType<ConfiguredProject>().ToList();
 
-            if (analysisContext != null) {
-                if (analysisContext.ExtensibilityImposition != null) {
-                    ApplyExtensibilityImposition(analysisContext.ExtensibilityImposition, projects);
+            if (orchestrationFiles != null) {
+                if (orchestrationFiles.ExtensibilityImposition != null) {
+                    ApplyExtensibilityImposition(orchestrationFiles.ExtensibilityImposition, projects);
                 }
             }
 
@@ -498,6 +484,36 @@ namespace Aderant.Build.DependencyAnalyzer {
                 var newSearchList = new HashSet<string>();
                 newSearchList.UnionWith(p.Select(x => x.Id));
                 projectsToFind = newSearchList;
+            }
+        }
+
+        private void PrintBuildTree(List<List<IDependable>> groups) {
+            if (logger != null) {
+                var topLevelNodes = new List<TreePrinter.Node>();
+
+                int i = 0;
+                foreach (var group in groups) {
+                    var topLevelNode = new TreePrinter.Node();
+                    topLevelNode.Name = "Group " + i;
+                    topLevelNode.Children = group.Select(
+                        s =>
+                            new TreePrinter.Node {
+                                Name = s.Id,
+                                Children = DescribeChanges(s)
+                            }).ToList();
+                    i++;
+
+                    topLevelNodes.Add(topLevelNode);
+                }
+
+                StringBuilder sb = new StringBuilder();
+                TreePrinter.Print(topLevelNodes, message => sb.Append(message));
+
+                logger.Info(sb.ToString());
+
+                if (isDesktopBuild) {
+                    Thread.Sleep(2000);
+                }
             }
         }
     }

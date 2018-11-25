@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +12,7 @@ using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Aderant.Build.TeamFoundation;
+using Aderant.Build.Utilities;
 using Aderant.Build.VersionControl;
 
 namespace Aderant.Build.Packaging {

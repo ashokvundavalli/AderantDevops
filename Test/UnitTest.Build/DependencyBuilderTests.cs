@@ -158,7 +158,7 @@ namespace UnitTest.Build {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
-    <ReferencedModules>        
+    <ReferencedModules>
     </ReferencedModules>
 </DependencyManifest>");
                 return true;
@@ -232,7 +232,7 @@ namespace UnitTest.Build {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
-    <ReferencedModules>        
+    <ReferencedModules>
     </ReferencedModules>
 </DependencyManifest>");
                 return true;
@@ -306,7 +306,7 @@ namespace UnitTest.Build {
             if (moduleName == "A") {
                 manifest = DependencyManifest.Parse("A", @"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
-    <ReferencedModules>        
+    <ReferencedModules>
        <ReferencedModule Name='B' />
     </ReferencedModules>
 </DependencyManifest>");

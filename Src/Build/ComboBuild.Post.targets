@@ -30,7 +30,7 @@
       MobileBuild;
       PostBuild;
       SignInstallers;-->
-      OnAfterBuild;
+      RunBuildExtensions;
       PackageArtifactsCore;
       CreateDependencyLinks;
     </BuildCoreDependsOn>
@@ -119,8 +119,11 @@
   </Target>
 
 
-  <!-- TODO: Rename this as it's ugly -->
+  <!-- TODO: Legacy extension name... replace this -->
   <Target Name="OnAfterBuild" />
+  <Target Name="PostBuild" />
+
+  <Target Name="RunBuildExtensions" DependsOnTargets="PostBuild;OnAfterBuild" />
 
   <!-- Pull the entry targets into our context. This lets us call into PostBuild for people who want to customize the workflow -->
   <Import Project="$(SolutionDirectoryPath)Build\TFSBuild.proj" Condition="Exists('$(SolutionDirectoryPath)Build\TFSBuild.proj')" />

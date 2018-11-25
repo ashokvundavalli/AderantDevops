@@ -146,7 +146,7 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var project in LoadedConfiguredProjects) {
                 try {
-                    BuildCurrentSolutionConfigurationContents(collector.ProjectConfiguration);
+                    BuildCurrentSolutionConfigurationXml(collector.ProjectConfiguration);
 
                     await project.CollectBuildDependencies(collector);
                 } catch (Exception ex) {
@@ -156,7 +156,7 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        private void BuildCurrentSolutionConfigurationContents(ConfigurationToBuild collectorProjectConfiguration) {
+        private void BuildCurrentSolutionConfigurationXml(ConfigurationToBuild collectorProjectConfiguration) {
             var projectsInSolutions = projectsByGuid.Values;
 
             var generator = new SolutionConfigurationContentsGenerator(collectorProjectConfiguration);
@@ -211,7 +211,7 @@ namespace Aderant.Build.ProjectSystem {
                 sequencer.PipelineService = pipelineService;
                 sequencer.MetaprojectXml = this.MetaprojectXml;
 
-                BuildPlan plan = sequencer.CreatePlan(context, analysisContext, jobFiles, graph);
+                BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph);
                 return plan;
             }
         }
@@ -400,7 +400,7 @@ namespace Aderant.Build.ProjectSystem {
         /// </summary>
         string MetaprojectXml { get; set; }
 
-        BuildPlan CreatePlan(BuildOperationContext context, AnalysisContext analysisContext, OrchestrationFiles files, DependencyGraph graph);
+        BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph);
     }
 
 }

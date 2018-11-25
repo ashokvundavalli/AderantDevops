@@ -20,7 +20,7 @@ namespace Aderant.Build.DependencyAnalyzer.Model {
         /// </summary>
         public string Directory { get; private set; }
 
-        public static string CreateName(string name, bool isPostTargets) {
+        private static string CreateName(string name, bool isPostTargets) {
             if (isPostTargets) {
                 name += ".Post";
             } else {

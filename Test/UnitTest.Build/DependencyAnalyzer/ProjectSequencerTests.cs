@@ -89,7 +89,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
 
-            var ctx = new AnalysisContext {
+            var orchestrationFiles = new OrchestrationFiles() {
                 ExtensibilityImposition = new ExtensibilityImposition(
                     new[] {
                         "MyProject.proj"
@@ -100,7 +100,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 new IDependable[] {
                     p1
                 },
-                ctx,
+                orchestrationFiles,
                 ChangesToConsider.None,
                 DependencyRelationshipProcessing.None);
 

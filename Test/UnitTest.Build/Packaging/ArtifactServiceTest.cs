@@ -74,7 +74,13 @@ namespace UnitTest.Build.Packaging {
         [TestMethod]
         public void CreateLinkCommands() {
             var mock = new Mock<IBuildPipelineService>();
-            mock.Setup(s => s.GetAssociatedArtifacts()).Returns(new[] { new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff" } });
+            mock.Setup(s => s.GetAssociatedArtifacts()).Returns(
+                new[] {
+                    new BuildArtifact {
+                        Name = "SomeOtherArtifact",
+                        SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff"
+                    }
+                });
 
             var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
 
@@ -107,11 +113,11 @@ namespace UnitTest.Build.Packaging {
         [Description("Confirms that we do not append the artifact name to the link path. This is critical to the proper functioning of the TFS garbage collector which appends the name when running a prune operation")]
         public void Artifact_association_command_does_not_end_with_artifact_name() {
             var mock = new Mock<IBuildPipelineService>();
-            mock.Setup(s => s.GetAssociatedArtifacts()).Returns(new[]
-            {
-                new BuildArtifact { Name = "~A", SourcePath = @"C:\Foo\_artifacts\~A" },
-                new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff" },
-            });
+            mock.Setup(s => s.GetAssociatedArtifacts()).Returns(
+                new[] {
+                    new BuildArtifact { Name = "~A", SourcePath = @"C:\Foo\_artifacts\~A" },
+                    new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff" },
+                });
 
             var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
 
