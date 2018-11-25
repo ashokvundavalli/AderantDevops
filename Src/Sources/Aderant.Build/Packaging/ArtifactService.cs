@@ -418,7 +418,7 @@ namespace Aderant.Build.Packaging {
         }
 
         [DebuggerDisplay("FileName: {FileName} FullPath: {FullPath}")]
-        public class LocalArtifactFile {
+        private class LocalArtifactFile {
             public string FileName { get; set; }
             public string FullPath { get; set; }
 
@@ -434,9 +434,13 @@ namespace Aderant.Build.Packaging {
                 FileName = fileName;
                 FullPath = fullPath;
             }
+
+            public override int GetHashCode() {
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(FullPath);
+            }
         }
 
-        public class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
+        private class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
             public bool Equals(LocalArtifactFile x, LocalArtifactFile y) {
                 if (x == null) {
                     throw new ArgumentNullException(nameof(x));
@@ -450,7 +454,7 @@ namespace Aderant.Build.Packaging {
             }
 
             public int GetHashCode(LocalArtifactFile obj) {
-                return base.GetHashCode();
+                return obj.GetHashCode();
             }
         }
 
