@@ -223,13 +223,17 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// them as part of the sequence
         /// </summary>
         private static void SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
-            foreach (var makeFile in makeFiles) {
-                var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimEnd(Path.DirectorySeparatorChar);
-                string solutionDirectoryName = Path.GetFileName(directoryAboveMakeFile);
+            if (makeFiles != null) {
+                foreach (var makeFile in makeFiles) {
+                    if (!string.IsNullOrWhiteSpace(makeFile)) {
+                        var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimEnd(Path.DirectorySeparatorChar);
+                        string solutionDirectoryName = Path.GetFileName(directoryAboveMakeFile);
 
-                IArtifact initializeNode;
-                IArtifact completionNode;
-                AddDirectoryNodes(graph, solutionDirectoryName, directoryAboveMakeFile, out initializeNode, out completionNode);
+                        IArtifact initializeNode;
+                        IArtifact completionNode;
+                        AddDirectoryNodes(graph, solutionDirectoryName, directoryAboveMakeFile, out initializeNode, out completionNode);
+                    }
+                }
             }
         }
 
