@@ -29,7 +29,7 @@ foreach ($file in $files) {
 
 Push-Location -Path $sourceRepository
 
-git add .
+git add . -f
 git commit -m "Moved $module to directory"
 
 Pop-Location

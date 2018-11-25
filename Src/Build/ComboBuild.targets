@@ -596,16 +596,16 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
                                       Libraries.Entities.Marketing;
                                       Libraries.Entities.Trust;
                                       Services.AuditServices.Communication;
+                                      Services.Communication;
                                       Services.Deployment;
                                       Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
                                       Services.Audit;
                                       Services.Deployment;
-                                      Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
-                                      Services.Communication;
+                                      Services.Security;
                                       Workflow.TeamManager;
                                       Workflow.CheckRequest;
                                       Workflow.Samples;
