@@ -48,6 +48,13 @@ namespace Aderant.Build.Tasks {
 
         public string ConfigurationToBuild { get; set; }
 
+
+        /// <summary>
+        /// Gets or sets the make files.
+        /// This eventually becomes additional directories to traverse into for cases when projects do not exist in the directory
+        /// yet there are build targets that need to be executed.
+        /// </summary>
+        /// <value>The make files.</value>
         public string[] MakeFiles { get; set; }
 
         [Output]
@@ -83,6 +90,12 @@ namespace Aderant.Build.Tasks {
             ExtensibilityImposition extensibilityImposition = null;
             if (ExtensibilityFiles != null) {
                 extensibilityImposition = ExtensibilityController.GetExtensibilityImposition(ModulesDirectory, ExtensibilityFiles);
+            }
+
+            if (MakeFiles != null) {
+                foreach (var file in MakeFiles) {
+                    Log.LogMessage(MessageImportance.Normal, "Make file: " + file);
+                }
             }
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));

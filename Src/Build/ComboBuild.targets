@@ -253,7 +253,8 @@
     <PropertyGroup>
       <LocalExpertBinariesDirectory>$(ArtifactStagingDirectory)product\</LocalExpertBinariesDirectory>
       <ExpertSourceDirectory>$(LocalExpertBinariesDirectory)ExpertSource\</ExpertSourceDirectory>
-      <ProductArchiveFile>$(ArtifactStagingDirectory)package\Binaries.zip</ProductArchiveFile>
+      <ProductArchiveFileName Condition="'$(ProductArchiveFileName)' == ''">Binaries.zip</ProductArchiveFileName>
+      <ProductArchiveFile>$(ArtifactStagingDirectory)package\$(ProductArchiveFileName)</ProductArchiveFile>
     </PropertyGroup>
 
     <MakeDir Directories="$(LocalExpertBinariesDirectory)"
@@ -362,9 +363,10 @@ $hash = Get-FileHash -LiteralPath "$(ProductArchiveFile)" -Algorithm SHA1 -Verbo
 $hash = $hash.ToLower()
 $fn = [System.IO.Path]::GetFileName("$(ProductArchiveFile)")
 Set-Content -LiteralPath "$(ProductArchiveFile).sha1" -Value "$hash  $fn"
-Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
-      </CreateArchiveHashScript>
 
+Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$hash" -Stream "sha1"
+Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -Stream "build-number"
+      </CreateArchiveHashScript>
     </PropertyGroup>
 
     <PowerShellScript ScriptBlock="$(CreateArchiveHashScript)" />
