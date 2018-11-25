@@ -9,23 +9,24 @@ function Get-BuildContext {
     begin {
         Set-StrictMode -Version Latest
     }
-    
-    process {
-        Write-Debug "Retrieving current context" 
 
-        if ($MyInvocation.MyCommand.Module -ne $null) {
-            try {                
+    process {
+        Write-Debug "Retrieving current context"
+
+        if ($null -ne $MyInvocation.MyCommand.Module) {
+            try {
                 $data = $MyInvocation.MyCommand.Module.PrivateData
 
-                Write-Debug ($data | Out-String)
-                Write-Debug ($data.Context | Out-String)
-
-                return $data.Context
+                if ($null -ne $data.Context) {
+                    Write-Debug ($data | Out-String)
+                    Write-Debug ($data.Context | Out-String)
+                    return $data.Context
+                }
             } catch {
                 if ($CreateIfNeeded) {
                     return New-BuildContext
                 }
-                # Can be invoked from a non-moduule context such when invoked from CI                
+                # Can be invoked from a non-module context such when invoked from CI
                 return $null
             }
         }

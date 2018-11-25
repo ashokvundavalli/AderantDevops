@@ -3,7 +3,7 @@
     Gets metadata about the current build.
 .DESCRIPTION
     The `Get-AmbientBuildMetadata` function gets information about the current build.
-    It is exists to hide what CI flavour the current build is running under. 
+    It is exists to hide what CI flavour the current build is running under.
 #>
 function Get-AmbientBuildMetadata {
     [CmdletBinding()]
@@ -15,7 +15,7 @@ function Get-AmbientBuildMetadata {
         Set-StrictMode -Version Latest
 
         function Get-EnvironmentVariable {
-            param (               
+            param (
                 [string]$Name
             )
 
@@ -31,7 +31,7 @@ function Get-AmbientBuildMetadata {
             $buildInfo.BuildId = Get-EnvironmentVariable 'BUILD_BUILDID'
             $buildInfo.BuildUri = Get-EnvironmentVariable 'BUILD_BUILDURI'
             $buildInfo.Flavor = Get-EnvironmentVariable 'BUILD_FLAVOR'
-        
+
             $buildInfo.ScmUri = Get-EnvironmentVariable 'BUILD_REPOSITORY_URI'
             $buildInfo.ScmCommitId = Get-EnvironmentVariable 'BUILD_SOURCEVERSION'
             $buildInfo.ScmBranch = Get-EnvironmentVariable 'BUILD_SOURCEBRANCH'
@@ -39,15 +39,12 @@ function Get-AmbientBuildMetadata {
 
             if (Get-EnvironmentVariable 'SYSTEM_DEBUG' -eq "true") { $buildInfo.DebugLoggingEnabled = $true }
 
-            if (Get-EnvironmentVariable 'BUILD_REASON' -eq "PullRequest") {            
+            if (Get-EnvironmentVariable 'BUILD_REASON' -eq "PullRequest") {
                 $buildInfo.SetPullRequestInfo(
                     (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_PULLREQUESTID'),
                     (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_SOURCEBRANCH'),
                     (Get-EnvironmentVariable 'SYSTEM_PULLREQUEST_TARGETBRANCH'))
                 }
-        } else {
-            #TODO: Um?
-            $buildInfo.BuildSourcesDirectory = "C:\Source\ExpertSuite"
         }
 
         return $buildInfo

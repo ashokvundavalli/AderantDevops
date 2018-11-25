@@ -12,7 +12,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         public string SourcesDirectory { get; set; }
         public string ProjectFile { get; set; }
-        public string[] ProjectOutputs { get; set; }
+        public string[] FileWrites { get; set; }
         public string OutputPath { get; set; }
         public string IntermediateDirectory { get; set; }
         public IReadOnlyCollection<string> ProjectTypeGuids { get; set; }
@@ -43,7 +43,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var snapshot = new ProjectOutputSnapshot {
                 ProjectFile = projectFile,
                 ProjectGuid = projectGuid,
-                FilesWritten = RemoveIntermediateObjects(ProjectOutputs, new[] { IntermediateDirectory, ArtifactStagingDirectory }),
+                FilesWritten = RemoveIntermediateObjects(CleanFileWrites(FileWrites), new[] { IntermediateDirectory, ArtifactStagingDirectory }),
                 OutputPath = OutputPath,
                 Origin = "ThisBuild",
                 Directory = GetDirectory(SourcesDirectory),
@@ -53,11 +53,23 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return snapshot;
         }
 
+        private string[] CleanFileWrites(IReadOnlyList<string> fileWrites) {
+            string[] cleanedFileWrites = new string[fileWrites.Count];
+
+            for (var i = 0; i < fileWrites.Count; i++) {
+                string fileWrite = fileWrites[i];
+
+                cleanedFileWrites[i] = fileWrite.Replace(@"\\", @"\");
+            }
+
+            return cleanedFileWrites;
+        }
+
         private static string GetDirectory(string dir) {
             return Path.GetFileName(dir);
         }
 
-        private static string[] RemoveIntermediateObjects(string[] projectOutputs, string[] intermediateDirectories) {
+        private static string[] RemoveIntermediateObjects(IReadOnlyList<string> projectOutputs, string[] intermediateDirectories) {
             if (projectOutputs != null) {
                 return projectOutputs
                     .Where(
@@ -125,7 +137,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var tracker = new ProjectOutputSnapshotBuilder {
                 SourcesDirectory = sourcesDirectory,
                 ProjectFile = projectFile,
-                ProjectOutputs = projectOutputs,
+                FileWrites = projectOutputs,
                 OutputPath = outputPath,
                 IntermediateDirectory = intermediateDirectory,
                 ProjectTypeGuids = projectTypeGuids,

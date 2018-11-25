@@ -25,7 +25,7 @@ namespace Aderant.Build.Tasks {
         [Required]
         public string ProjectGuid { get; set; }
 
-        public string[] ProjectOutputs { get; set; }
+        public string[] FileWrites { get; set; }
 
         public string[] ProjectTypeGuids { get; set; }
 
@@ -36,11 +36,10 @@ namespace Aderant.Build.Tasks {
         public string ArtifactStagingDirectory { get; set; }
 
         public override bool ExecuteTask() {
-
             var builder = new ProjectOutputSnapshotBuilder {
                 SourcesDirectory = SolutionRoot,
                 ProjectFile = ProjectFile,
-                ProjectOutputs = ProjectOutputs,
+                FileWrites = FileWrites,
                 OutputPath = OutputPath.ItemSpec,
                 IntermediateDirectory = IntermediateDirectory,
                 ProjectTypeGuids = ProjectTypeGuids,

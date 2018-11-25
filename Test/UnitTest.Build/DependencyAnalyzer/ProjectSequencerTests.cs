@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.MemoryMappedFiles;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Threading.Tasks;
-using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
@@ -16,7 +10,7 @@ using Moq;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     [TestClass]
-    public class BuildSequencerTests {
+    public class ProjectSequencerTests {
 
         [TestMethod]
         public async Task MarkDirtyTest() {

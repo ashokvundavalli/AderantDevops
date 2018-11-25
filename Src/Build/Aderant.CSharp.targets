@@ -18,6 +18,9 @@
 
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
+
+    <OnAfterPackageUsingManifest>$(OnAfterPackageUsingManifest);ReplicateOutputs</OnAfterPackageUsingManifest>
+
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>
 
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -25,8 +28,8 @@
 
   <Import Project="Aderant.CodeSigning.targets" Condition="'$(SignApplications)' == 'true'" />
 
-  <UsingTask TaskName="GetProductName" 
-             TaskFactory="CodeTaskFactory" 
+  <UsingTask TaskName="GetProductName"
+             TaskFactory="CodeTaskFactory"
              AssemblyFile="$(CodeTaskFactoryAssembly)">
     <ParameterGroup>
       <AssemblyInfo ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
@@ -44,15 +47,15 @@
             var fullPath = AssemblyInfo.GetMetadata("FullPath");
             string text = System.IO.File.ReadAllText(fullPath);
 
-            var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)"); 
+            var assemblyTitleExpression = new Regex(@"(AssemblyProduct|AssemblyTitle)\((.*?)\)");
             GroupCollection match = assemblyTitleExpression.Match(text).Groups;
             string value = match[match.Count - 1].Value;
 
             if (!string.IsNullOrEmpty(value)) {
                 // Product names for the splash screen don't have Expert in the name, unless you want to run Expert ExpertTime :)
                 ProductName = value.Replace("\"", string.Empty);
-                return true;              
-            }          
+                return true;
+            }
         ]]>
       </Code>
     </Task>
@@ -66,7 +69,7 @@
           Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe'"
           AfterTargets="OnBeforeCompile">
     <!--
-      This needs to run before BeforeResolveReferences target otherwise changes Resources item group 
+      This needs to run before BeforeResolveReferences target otherwise changes Resources item group
       is not reflected through out the in memory project
     -->
 
@@ -81,7 +84,7 @@
       <OriginalSplashScreen Include="@(SplashScreen)" Condition="@(OriginalSplashScreen) == '' And %(Extension) == '.png' And $([System.String]::Copy(%(Filename)).StartsWith('Expert_SplashScreen', StringComparison.OrdinalIgnoreCase))">
         <IsSplashScreen>true</IsSplashScreen>
       </OriginalSplashScreen>
-      
+
       <AssemblyInfo Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
 
       <!-- Remove the original splash screen resource node -->
@@ -90,7 +93,7 @@
     </ItemGroup>
 
     <GetProductName AssemblyInfo="@(AssemblyInfo)">
-      <Output PropertyName="ExpertProductName" 
+      <Output PropertyName="ExpertProductName"
               TaskParameter="ProductName" />
     </GetProductName>
 
@@ -98,8 +101,8 @@
       <OutputSplashScreen>@(OriginalSplashScreen->'$(IntermediateOutputPath)%(RelativeDir)%(Filename)%(Extension)')</OutputSplashScreen>
     </PropertyGroup>
 
-    <!-- 
-      This task can return a previously generated file to keep incremental builds working.      
+    <!--
+      This task can return a previously generated file to keep incremental builds working.
     -->
 
     <PropertyGroup>
@@ -114,13 +117,13 @@
 
     <Aderant.Build.Tasks.UpdateSplashScreenImage
      Condition="'@(OriginalSplashScreen)' != '' And '$(ExpertProductName)' != ''"
-     
+
      TrackerLogDirectory="$(IntermediateOutputPath)"
      Sources="@(OriginalSplashScreen)"
      OutputFile="$(OutputSplashScreen)"
      TrackFileAccess="true"
      MinimalRebuildFromTracking="true"
-     
+
      Text="$(SplashScreenText)"
      Version="$(SplashScreenVersion)"
      Style="$(SplashScreenStyle)">
@@ -135,26 +138,26 @@
       <Resource Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsResource)' == 'true'" />
       <SplashScreen Include="$(OutputSplashScreen)" Condition="'%(OriginalSplashScreen.IsSplashScreen)' == 'true'" />
     </ItemGroup>
-  </Target>  
+  </Target>
 
-  
+
   <PropertyGroup>
     <GetReferenceAssemblyPathsDependsOn>
       $(GetReferenceAssemblyPathsDependsOn);
       SetAssemblySearchPaths
     </GetReferenceAssemblyPathsDependsOn>
   </PropertyGroup>
-  
+
   <!-- Code to handle project references in Customization build. Aderant.Build.dll is packed into BuildScripts.zip in Framework build. -->
   <UsingTask TaskName="SmartReference" Condition="'$(IsCustomBuild)' == 'true'"
              AssemblyFile="$(BuildScriptsDirectory)\Build.Tools\Aderant.Build.dll" />
 
-  
+
   <Target Name="SetAssemblySearchPaths" BeforeTargets="GetReferenceAssemblyPaths;BeforeResolveReferences">
 
     <!--
         This changes the search path of the ResolveReferences task to look in the dependencies/packages folder. The normal probe sequence is
-      
+
         (1) Files from current project - indicated by {CandidateAssemblyFiles}
         (2) $(ReferencePath) - the reference path property, which comes from the .USER file.
         (3) The hintpath from the referenced item itself, indicated by {HintPathFromItem}.
@@ -164,11 +167,11 @@
         (6) Legacy registered assembly folders, indicated by {AssemblyFolders}
         (7) Resolve to the GAC.
         (8) Treat the reference's Include as if it were a real file name.
-        (9) Look in the application's output folder (like bin\debug)            
-    -->    
-       
+        (9) Look in the application's output folder (like bin\debug)
+    -->
+
     <PropertyGroup>
-      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>      
+      <RootFolder>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Paket.Dependencies'))</RootFolder>
       <CopyLocalDependenciesWhenParentReferenceInGac>false</CopyLocalDependenciesWhenParentReferenceInGac>
       <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
 
@@ -177,7 +180,7 @@
       <!-- This defaults to true within RAR and causes RAR to go off and find dependencies of dependencies which I feel is unnessessary. -->
       <!-- <_FindDependencies>false</_FindDependencies>  -->
     </PropertyGroup>
-    
+
     <ItemGroup>
       <!-- TODO: Optimize and cache this data -->
       <_AllFiles Include="$(RootFolder)\packages\**\lib\*.dll"/>
@@ -222,18 +225,18 @@
     </ItemGroup>
 
   </Target>
-  
-  
+
+
   <Target Name="FailOnAmbiguousAssemblyResolve" AfterTargets="ResolveAssemblyReferences">
       <ItemGroup>
         <DataServiceRedirect Include="@(SuggestedBindingRedirects)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(SuggestedBindingRedirects.Identity)', '(Microsoft[.]Data)'))" />
       </ItemGroup>
-  
+
       <Warning Text="The compiler could not resolve a concrete reference to @(DataServiceRedirect) and so selected a version arbitrarily. This will probably result in runtime problems. Please fix any references to Microsoft.Data.* assemblies to ensure the version you want to use is selected by the compiler." Condition="'@(DataServiceRedirect)' != ''" />
   </Target>
 
-  
-  <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild" 
+
+  <Target Name="CheckOrmMappingFile" BeforeTargets="CoreBuild"
           Condition="'$(IsCustomBuild)' != 'true' And '$(AssemblyName)' != 'Aderant.Framework.SoftwareFactory.Domain'">
 
     <Aderant.Build.Tasks.OrmMappingValidator
@@ -242,17 +245,17 @@
       None="@(None)"
       EmbeddedResource="@(EmbeddedResource)"
       ProjectTypeGuids="$(ProjectTypeGuids)" />
-  
+
   </Target>
 
-  
+
   <Target Name="ApplyCodeAnalzyer"
           Condition="'$(IsCustomBuild)' != 'true'"
           BeforeTargets="CoreCompile;ResolveAssemblyReferences">
 
     <ProjectConformityCheck Project="$(MSBuildProjectFullPath)" IsDesktopBuild="$(IsDesktopBuild)" />
   </Target>
-  
+
 
   <!-- Disable copy local for all projects which build to Bin\Module excluding Office integration projects (addins).
        VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
@@ -261,7 +264,7 @@
     BeforeTargets="BeforeResolveReferences"
     AfterTargets="SetAssemblySearchPaths"
     Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
-    
+
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
     <PropertyGroup>
       <DisableCopyLocal Condition="$(OutputPath.ToLower().Contains('bin\module')) == 'true'">true</DisableCopyLocal>
@@ -270,9 +273,9 @@
       <DisableCopyLocal Condition="'%(Whitelist.Identity)' == '$(AssemblyName)'">false</DisableCopyLocal>
 
       <!-- This changes the copy local behaviour for _CopyFilesMarkedCopyLocal -->
-      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>      
+      <UseCommonOutputDirectory Condition="'$(DisableCopyLocal)' == 'true'">true</UseCommonOutputDirectory>
     </PropertyGroup>
-    
+
     <Message Text="Copy local disabled: $(DisableCopyLocal)" />
 
     <ItemGroup>
@@ -280,7 +283,7 @@
         <Private>False</Private>
         <CopyLocal>False</CopyLocal>
       </ReferenceNew>
-      
+
       <Reference Remove="@(Reference)" Condition="'$(DisableCopyLocal)' == 'true'" />
 
       <!-- Replace the Reference item group with the modified version -->
@@ -299,16 +302,16 @@
     </ItemGroup>
 
   </Target>
-  
- 
-  <!-- 
+
+
+  <!--
     This target only runs after the publishing step of a VSTO addin project
-    It is used to clean up the reference items that are moved into the bin folder during the build. 
-    We cannot suppress the copy local items as they could be dependencies needed for the FindRibbons task to run successfully. 
-    In summary for VSTO projects we will copy local the dependencies, run the VSTO pipeline and then clean up the bin folder afterwards. 
+    It is used to clean up the reference items that are moved into the bin folder during the build.
+    We cannot suppress the copy local items as they could be dependencies needed for the FindRibbons task to run successfully.
+    In summary for VSTO projects we will copy local the dependencies, run the VSTO pipeline and then clean up the bin folder afterwards.
   -->
-  <Target Name="AfterVstoPublish" 
-          AfterTargets="AfterPublish" 
+  <Target Name="AfterVstoPublish"
+          AfterTargets="AfterPublish"
           Condition="'$(VSTO_ProjectType)' != ''">
 
     <ItemGroup>
@@ -321,7 +324,7 @@
        Dependencies="@(Dependencies)">
       <Output TaskParameter="CopyLocalFiles" ItemName="CopyLocalFilesToRemove" />
     </GetCopyLocalItemsToRemove>
-    
+
     <Delete Files="@(CopyLocalFilesToRemove)" />
 
     <!-- Remove empty directories -->
@@ -331,11 +334,11 @@
         <Files>$([System.IO.Directory]::GetFiles("%(Directories.Identity)", "*", System.IO.SearchOption.AllDirectories).get_Length())</Files>
       </Directories>
     </ItemGroup>
-    
+
     <RemoveDir Directories="@(Directories)" Condition="'%(Files)' == '0'" />
-   
+
   </Target>
-  
+
   <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(AlternativeOutputDirectory)' != ''">
 
     <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')" />
@@ -362,8 +365,8 @@
       IntermediateDirectory="$(IntermediateOutputPath)"
       OutputPath="$(OutDir)"
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
-      ProjectOutputs="@(FileWrites)" />
-   
+      FileWrites="@(FileWrites);$(PackageFileName)" />
+
   </Target>
-  
+
 </Project>

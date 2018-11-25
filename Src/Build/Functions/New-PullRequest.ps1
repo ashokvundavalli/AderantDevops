@@ -1,6 +1,6 @@
 function New-PullRequest
 {
-    param()      
+    param()
 
     Set-StrictMode -Version 'Latest'
 

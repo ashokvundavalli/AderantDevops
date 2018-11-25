@@ -21,7 +21,7 @@ namespace UnitTest.Build.ProjectSystem {
             var outputFilesSnapshot = snapshotBuilder.BuildSnapshot(Guid.NewGuid());
 
             service.RecordProjectOutputs(outputFilesSnapshot);
-            
+
             Assert.AreEqual(1, service.Outputs.Keys.Count);
             Assert.IsTrue(service.Outputs.ContainsKey(@"d\foo.csproj"));
         }
@@ -72,6 +72,12 @@ namespace UnitTest.Build.ProjectSystem {
             Assert.AreEqual("B", snapshot.FilesWritten[4]);
             Assert.AreEqual("Z", snapshot.FilesWritten[5]);
         }
-    }
 
+        [TestMethod]
+        public void FileWrites_are_cleaned() {
+            var snapshot = ProjectOutputSnapshotBuilder.RecordProjectOutputs(Guid.NewGuid(), "", "Foo", new[] { @"foo\\bin\\baz.dll" }, @"..\..\bin", "obj");
+
+            Assert.AreEqual(@"foo\bin\baz.dll", snapshot.FilesWritten[0]);
+        }
+    }
 }

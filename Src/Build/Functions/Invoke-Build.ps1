@@ -142,7 +142,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/NoConsoleLogger")
         }
 
-        if ($context.BuildMetadata -ne $null) {
+        if ($null -ne $context.BuildMetadata) {
             if ($context.BuildMetadata.DebugLoggingEnabled) {
                 $set.Add("/flp:Verbosity=Diag")
             } else {
@@ -464,6 +464,10 @@ Should not be used as it prevents incremental builds which increases build times
         }
 
         [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
+
+        if ($null -eq $context) {
+            throw 'Fatal error. Failed to create context'
+        }
 
         [string]$repositoryPath = $null
         if (-not [string]::IsNullOrEmpty($ModulePath)) {

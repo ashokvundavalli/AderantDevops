@@ -22,8 +22,6 @@ function Initialize-Module {
 
     UpdateOrBuildAssembly -BuildScriptsDirectory $ShellContext.BuildScriptsDirectory $false
 
-    $context = New-BuildContext -Environment "AutoDiscover"
-    $MyInvocation.MyCommand.Module.PrivateData.Context = $context
     $MyInvocation.MyCommand.Module.PrivateData.ShellContext = $global:ShellContext
 }
 
@@ -391,7 +389,7 @@ function Set-CurrentModule {
         }
 
         if ($null -ne $currentModuleFeature) {
-            if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {            
+            if (Get-Module | Where-Object -Property Name -eq $currentModuleFeature.Name) {
                 Remove-Module $currentModuleFeature
             }
 
@@ -511,8 +509,8 @@ function OutputEnvironmentDetails {
     Write-Host "Server Branch Information"
     Write-Host "-----------------------------"
     Write-Host "Path :" $ShellContext.BranchServerDirectory
-    
-    if ($ShellContext.CurrentModuleName -and $ShellContext.CurrentModulePath) {    
+
+    if ($ShellContext.CurrentModuleName -and $ShellContext.CurrentModulePath) {
         Write-Host ""
         Write-Host "-----------------------------"
         Write-Host "Current Module Information"
@@ -705,8 +703,8 @@ function Set-Environment {
 }
 
 function Set-VisualStudioVersion() {
-    $file = [System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "vsvars.ps1")   
-    . $file    
+    $file = [System.IO.Path]::Combine($ShellContext.BuildScriptsDirectory, "vsvars.ps1")
+    . $file
 }
 
 <#
@@ -818,7 +816,7 @@ function Open-ModuleSolution() {
         [string]$devenv = "devenv"
     }
 
-    process {      
+    process {
         if ($seventeen) {
             [string]$vsSeventeenDirectory = "C:\Program Files (x86)\Microsoft Visual Studio\2017\*\Common7\IDE\devenv.exe"
 
@@ -843,7 +841,7 @@ function Open-ModuleSolution() {
 
         if (-not [string]::IsNullOrWhiteSpace($ModuleName)) {
             $rootPath = Join-Path $global:BranchLocalDirectory "Modules\$ModuleName"
-        } else {                
+        } else {
             $ModuleName = $ShellContext.CurrentModuleName
             $rootPath = $ShellContext.CurrentModulePath
         }
@@ -916,10 +914,10 @@ function TabExpansion([string] $line, [string] $lastword) {
         } Catch {
             [system.exception]
             Write-Host $_.Exception.ToString()
-        }        
+        }
     }
 
-    [System.Diagnostics.Debug]::WriteLine("Aderant Build Tools:Falling back to default tab expansion for Last word: $lastword, Line: $line")   
+    [System.Diagnostics.Debug]::WriteLine("Aderant Build Tools:Falling back to default tab expansion for Last word: $lastword, Line: $line")
 }
 
 $global:expertTabBranchExpansions = @()
@@ -944,19 +942,19 @@ function Add-ModuleExpansionParameter {
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$CommandName,
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$ParameterName
     )
-       
+
     Register-ArgumentCompleter -CommandName $CommandName -ParameterName $ParameterName -ScriptBlock {
         param($commandName, $parameterName, $wordToComplete, $commandAst, $boundParameters)
 
         $parser = [Aderant.Build.AutoCompletionParser]::new($commandName, $parameterName, $commandAst)
-                
+
         # Evaluate Modules
         try {
 
             $parser.GetModuleMatches($wordToComplete, $ShellContext.CurrentModulePath, $ShellContext.BranchModulesDirectory, $ShellContext.ProductManifestPath) | Get-Unique | ForEach-Object {
                     [System.Management.Automation.CompletionResult]::new($_)
             }
-            
+
         } catch {
             [System.Exception]
             Write-Host $_.Exception.ToString()
@@ -1048,7 +1046,7 @@ Add-ModuleExpansionParameter –CommandName "Get-WebDependencies" –ParameterNa
 .Description
     Enable-ExpertPrompt
 #>
-function Enable-ExpertPrompt() {  
+function Enable-ExpertPrompt() {
     Function global:Prompt {
         # set the window title to the branch name
         $Host.UI.RawUI.WindowTitle = "PS - [" + $ShellContext.CurrentModuleName + "] on branch [" + $ShellContext.BranchName + "]"
@@ -1123,10 +1121,10 @@ function Help ($searchText) {
     foreach ($toExport in $functionsToExport) {
         if (-not $toExport.advanced) {
             $ast = (Get-Command $toExport.function).ScriptBlock.Ast
-            if ($ast) {        
+            if ($ast) {
                 $help = $ast.GetHelpContent()
             }
-      
+
             if ($toExport.alias) {
                 $theHelpList += [PSCustomObject]@{Command = $toExport.alias; alias = $toExport.alias; Synopsis = $help.Synopsis}
             } else {
@@ -1199,8 +1197,8 @@ function Reset-DeveloperShell() {
 # export functions and variables we want external to this script
 $functionsToExport = @(
     [PSCustomObject]@{ function = 'Run-ExpertUITests'; alias = $null; },
-    [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },    
-    [PSCustomObject]@{ function = 'Run-ExpertVisualTests'; alias = 'revt'; },    
+    [PSCustomObject]@{ function = 'Run-ExpertSanityTests'; alias = 'rest'; },
+    [PSCustomObject]@{ function = 'Run-ExpertVisualTests'; alias = 'revt'; },
     [PSCustomObject]@{ function = 'Branch-Module'; alias = 'branch'; },
     [PSCustomObject]@{ function = 'Build-ExpertModules'; alias = $null; },
     [PSCustomObject]@{ function = 'Build-ExpertModulesOnServer'; alias = 'bms'; },
@@ -1234,7 +1232,7 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Open-ModuleSolution'; alias = 'vs'; },
     [PSCustomObject]@{ function = 'Set-CurrentModule'; alias = 'cm'; },
     [PSCustomObject]@{ function = 'Set-Environment'; advanced = $true; alias = $null; },
-    [PSCustomObject]@{ function = 'Set-ExpertBranchInfo'; alias = $null; },    
+    [PSCustomObject]@{ function = 'Set-ExpertBranchInfo'; alias = $null; },
     [PSCustomObject]@{ function = 'Start-dbgen'; alias = 'dbgen'; },
     [PSCustomObject]@{ function = 'Start-DeploymentEngine'; alias = 'de'; },
     [PSCustomObject]@{ function = 'Start-DeploymentManager'; alias = 'dm'; },
@@ -1245,7 +1243,7 @@ $functionsToExport = @(
     [PSCustomObject]@{ function = 'Scorch'; alias = $null; },
     [PSCustomObject]@{ function = 'Clean'; alias = $null; },
     [PSCustomObject]@{ function = 'CleanupIISCache'; alias = $null; },
-    
+
     # IIS related functions
     [PSCustomObject]@{ function = 'Hunt-Zombies'; alias = 'hz'},
     [PSCustomObject]@{ function = 'Remove-Zombies'; alias = 'rz'},
