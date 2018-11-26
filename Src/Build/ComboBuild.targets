@@ -86,7 +86,7 @@
     <ItemGroup>
       <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'TFSBuild.proj', SearchOption.AllDirectories))"
                           Exclude="$(SolutionRoot)TFSBuild.proj;
-                                   $(BuildInfrastructureDirectory)**" />
+                                   $(BuildInfrastructureDirectory)**\**" />
     </ItemGroup>
   </Target>
 
