@@ -28,10 +28,12 @@ $directoriesToRemove = @(
 
 $machineWideDirectories = @(
     "C:\Temp",
-    "C:\Windows\Temp", 
-    
+    "C:\Windows\Temp",
+    "C:\UIAutomation",
+    "C:\CMS.net",
+
     ([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "Temporary ASP.NET Files"),
-        
+
     "$Env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
 )
 
