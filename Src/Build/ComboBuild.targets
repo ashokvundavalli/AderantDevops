@@ -84,7 +84,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'TFSBuild.proj', SearchOption.AllDirectories))" />
+      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'TFSBuild.proj', SearchOption.AllDirectories))"
+                          Exclude="$(SolutionRoot)TFSBuild.proj;
+                                   $(BuildInfrastructureDirectory)**" />
     </ItemGroup>
   </Target>
 
@@ -631,8 +633,8 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       </ItemGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"
-      ContinueOnError="false"
-      IgnoreExitCode="false" />
+          ContinueOnError="false"
+          IgnoreExitCode="false" />
 
   </Target>
 
