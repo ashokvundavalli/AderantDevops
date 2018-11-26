@@ -93,13 +93,8 @@ function GetVssConnection() {
     try {
         Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
 
-        $assemblyLocation = [Microsoft.VisualStudio.Services.WebApi.VssConnection].Assembly.Location
-
-        Write-Host "Using VSS connection type: $assemblyLocation"
-
-        $uri = [Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)
-        $credentials = [Microsoft.VisualStudio.Services.Common.VssCredentials]::new()
-        return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new($uri, $credentials)
+        $connection = Get-VssConnection
+        return $connection
     } catch {
         Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
         throw $_
