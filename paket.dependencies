@@ -7,24 +7,24 @@ framework: net46, net45
 # System.Collections.Immutable 1.1.37.0 (or less)
 # as there are binding redirects in devenv.exe.config which redirect to these versions.
 
-nuget Microsoft.CodeAnalysis.CSharp
-nuget Microsoft.CodeAnalysis.CSharp.Workspaces
-nuget WindowsAPICodePack-Core
-nuget Microsoft.WindowsAPICodePack-Shell
-nuget Microsoft.Composition
-nuget System.Collections.Immutable <= 1.1.37
+#nuget Microsoft.CodeAnalysis.CSharp
+#nuget Microsoft.CodeAnalysis.CSharp.Workspaces
+#nuget WindowsAPICodePack-Core
+#nuget Microsoft.WindowsAPICodePack-Shell
+#nuget Microsoft.Composition
+#nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
 
-nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 15.112.1
-nuget Microsoft.VisualStudio.Services.Client ~> 15.112.1
-nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
-nuget Microsoft.AspNet.WebApi.WebHost
-nuget Microsoft.AspNet.WebHooks.Common
-nuget Microsoft.AspNet.WebHooks.Receivers
-nuget Microsoft.AspNet.WebHooks.Receivers.Generic
-nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
-#nuget Microsoft.IdentityModel.Clients.ActiveDirectory <= 2.28.4
-nuget Newtonsoft.Json ~> 8.0.0
+nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
+nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
+#nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
+#nuget Microsoft.AspNet.WebApi.WebHost
+#nuget Microsoft.AspNet.WebHooks.Common
+#nuget Microsoft.AspNet.WebHooks.Receivers
+#nuget Microsoft.AspNet.WebHooks.Receivers.Generic
+#nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
+##nuget Microsoft.IdentityModel.Clients.ActiveDirectory <= 2.28.4
+#nuget Newtonsoft.Json ~> 8.0.0
 
 nuget RouteMagic
 nuget WebActivatorEx
