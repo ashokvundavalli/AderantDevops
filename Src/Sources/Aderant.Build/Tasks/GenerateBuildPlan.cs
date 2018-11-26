@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -92,12 +93,6 @@ namespace Aderant.Build.Tasks {
                 extensibilityImposition = ExtensibilityController.GetExtensibilityImposition(ModulesDirectory, ExtensibilityFiles);
             }
 
-            if (MakeFiles != null) {
-                foreach (var file in MakeFiles) {
-                    Log.LogMessage(MessageImportance.Normal, "Make file: " + file);
-                }
-            }
-
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
 
             var jobFiles = new OrchestrationFiles {
@@ -106,7 +101,7 @@ namespace Aderant.Build.Tasks {
                 GroupExecutionFile = GroupExecutionFile,
                 CommonProjectFile = CommonProjectFile,
                 ExtensibilityImposition = extensibilityImposition,
-                MakeFiles = MakeFiles,
+                MakeFiles = FilterMakeFiles(),
                 BuildPlan = BuildPlan,
             };
 
@@ -134,6 +129,29 @@ namespace Aderant.Build.Tasks {
             }
 
             PipelineService.Publish(context);
+        }
+
+        private List<string> FilterMakeFiles() {
+            var files = new List<string>();
+
+            if (MakeFiles != null) {
+                foreach (var file in MakeFiles) {
+                    bool skip = false;
+
+                    if (ExcludePaths != null) {
+                        if (ExcludePaths.Any(pattern => file.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)) {
+                            skip = true;
+                        }
+                    }
+
+                    if (!skip) {
+                        Log.LogMessage(MessageImportance.Normal, "Make file: " + file);
+                        files.Add(file);
+                    }
+                }
+            }
+
+            return files;
         }
 
         private void RebuildFromExistingPlan(string planFile) {
