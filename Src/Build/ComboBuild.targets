@@ -594,10 +594,12 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       <ItemGroup>
         <TfvcExcludedModules Include="Administration.HubSetup;
                                       Applications.ExpertAssistant;
+                                      Applications.MatterCenterIntegration;
                                       Applications.TeamManager;
                                       Libraries.CheckRequest;
                                       Libraries.Entities.CashManagement;
                                       Libraries.Entities.Employee;
+                                      Libraries.Entities.Firm;
                                       Libraries.Entities.Marketing;
                                       Libraries.Entities.Parameters;
                                       Libraries.Entities.Rates;
