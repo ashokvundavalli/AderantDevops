@@ -461,7 +461,8 @@ task Init {
 
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)        
 
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
+        $assembly = [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll")
+        Import-Module -Assembly $assembly
     }
 
     Write-Info "Established build environment"
