@@ -76,13 +76,15 @@
 
 
   <Target Name="GrovelForExtensibilityFiles">
-     <!-- Work around https://github.com/Microsoft/msbuild/issues/2452 -->
+    <Message Text="Grovelling for extensibility files under: $(SolutionRoot)" />
+
+    <!-- Work around https://github.com/Microsoft/msbuild/issues/2452 -->
     <ItemGroup>
       <ExtensibilityFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'dir.props', SearchOption.AllDirectories))" />
     </ItemGroup>
 
     <ItemGroup>
-      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'Build\TFSBuild.proj', SearchOption.AllDirectories))" />
+      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'TFSBuild.proj', SearchOption.AllDirectories))" />
     </ItemGroup>
   </Target>
 
@@ -265,7 +267,6 @@
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 
-    <Message Text="Artifact deployment paths:" />
     <Message Text="%(LocalPackagePaths.FullPath) -> %(DestinationSubDirectory)" />
 
     <!--
@@ -337,22 +338,27 @@
       <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
     </PropertyGroup>
 
-    <ItemGroup>
-      <DirectoriesToArchive Include="@(LocalPackagePaths)" Condition="'$([System.IO.Path]::GetFileName(%(LocalPackagePaths.FullPath)).StartsWith(&quot;~&quot;))' != 'true'"></DirectoriesToArchive>
-    </ItemGroup>
-
     <GenerateArchives
-      DirectoriesToArchive="@(DirectoriesToArchive)"
-      OutputArchives="@(DirectoriesToArchive -> '%(FullPath)\%(Filename)%(Extension).zip')"
+      DirectoriesToArchive="@(LocalPackagePaths)"
+      OutputArchives="@(LocalPackagePaths -> '%(FullPath)\%(Filename)%(Extension).zip')"
+      ExcludeFilter="~"
       CompressionLevel="$(CompressionLevel)">
-
       <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
     </GenerateArchives>
 
   </Target>
 
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
+  <Target Name="CleanBinariesBeforePackaging">
+    <ItemGroup>
+      <FilesToDelete Include="$(LocalExpertBinariesDirectory)**\*.srcsrv" />
+    </ItemGroup>
+
+    <Delete Files="@(FilesToDelete)" />
+  </Target>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;CleanBinariesBeforePackaging">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
@@ -408,6 +414,8 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     <Error Condition="!Exists('%(ArtifactPaths.FullPath)')" Text="The path %(ArtifactPaths.FullPath) does not exist. This indicates a failure in artifact tracking." />
 
     <PropertyGroup>
+      <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
+
       <CopyToDropCommand>
         robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
         IF %ERRORLEVEL% LEQ 4 EXIT /B 0
@@ -417,9 +425,16 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     <Exec Command="$(CopyToDropCommand)"
           WorkingDirectory="$(ArtifactStagingDirectory)" />
 
-    <PowerShellScript ScriptBlock='Get-Content -LiteralPath "$(ArtifactStagingDirectory)CopyToDrop.log" | Write-Output' />
+    <CallTarget Targets="$(ShowCopyToDropTarget)" />
+    <OnError ExecuteTargets="$(ShowCopyToDropTarget)" />
 
   </Target>
+
+
+  <Target Name="ShowCopyToDropLog">
+    <PowerShellScript ScriptBlock='Get-Content -LiteralPath "$(ArtifactStagingDirectory)CopyToDrop.log" | Write-Output' />
+  </Target>
+
 
   <!--
     ==========================================================================================

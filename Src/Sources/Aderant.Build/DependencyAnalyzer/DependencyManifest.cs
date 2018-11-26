@@ -186,7 +186,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 var paketFile = fs.GetFiles(modulePath, "paket.dependencies", false).FirstOrDefault();
                 if (!string.IsNullOrEmpty(paketFile)) {
-                    manifest = new PaketView(fs, paketFile, manifest);
+                    manifest = new PaketView(paketFile, manifest);
                 }
 
                 return manifest;

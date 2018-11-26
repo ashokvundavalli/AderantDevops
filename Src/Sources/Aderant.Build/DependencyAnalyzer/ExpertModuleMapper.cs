@@ -9,13 +9,11 @@ using Aderant.Build.DependencyResolver;
 
 namespace Aderant.Build.DependencyAnalyzer {
     internal class ExpertModuleMapper {
-        public static ExpertModule MapFrom(XElement element, ExpertModule expertModule, out IList<XAttribute> customAttributes) {
+        public static void MapFrom(XElement element, ExpertModule expertModule, out IList<XAttribute> customAttributes) {
             var mapper = new Mapper(element);
             mapper.Map(expertModule);
 
             customAttributes = mapper.CustomAttributes;
-
-            return expertModule;
         }
 
         internal XElement Save(IEnumerable<ExpertModule> modules, bool isProductManifest) {
@@ -156,6 +154,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SetPropertyValue("DependencyGroup", value => expertModule.DependencyGroup = value);
 
+            SetPropertyValue("ExcludeFromPackaging", value => expertModule.ExcludeFromPackaging = ToBoolean(value));
+
             SetPropertyValue("GetAction", value => {
                 if (!string.IsNullOrEmpty(value)) {
                     expertModule.GetAction = (GetAction)Enum.Parse(typeof(GetAction), value.Replace("_", "-"), true);
@@ -199,5 +199,5 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
     }
-  
+
 }
