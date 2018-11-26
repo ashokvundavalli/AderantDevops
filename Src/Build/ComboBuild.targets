@@ -607,34 +607,27 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     </PropertyGroup>
 
       <ItemGroup>
-        <TfvcExcludedModules Include="Administration.HubSetup;
+        <TfvcExcludedModules Include="Tests.Load;
                                       Applications.ExpertAssistant;
-                                      Applications.MatterCenterIntegration;
                                       Applications.TeamManager;
-                                      Libraries.CheckRequest;
-                                      Libraries.Entities.CashManagement;
-                                      Libraries.Entities.Employee;
-                                      Libraries.Entities.Firm;
                                       Libraries.Entities.Marketing;
-                                      Libraries.Entities.Parameters;
-                                      Libraries.Entities.Rates;
-                                      Libraries.Entities.Tax;
                                       Libraries.Entities.Trust;
-                                      Services.Applications.EmployeeIntake;
-                                      Services.Audit;
+                                      Services.AuditServices.Communication;
                                       Services.Communication;
                                       Services.Deployment;
                                       Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
-                                      Services.Query.Constants;
+                                      Services.Audit;
+                                      Services.Deployment;
+                                      Services.Metadata;
+                                      Services.Notes;
                                       Services.Security;
-                                      Tests.Load;
+                                      Services.Query.Constants;
+                                      Workflow.TeamManager;
                                       Workflow.CheckRequest;
-                                      Workflow.FileOpening;
-                                      Workflow.Integration.Samples;
                                       Workflow.Samples;
-                                      Workflow.TeamManager" />
+                                      Workflow.FileOpening" />
       </ItemGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"
