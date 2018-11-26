@@ -293,7 +293,7 @@ task Build {
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"
-            #. $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+            . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
         }
     } finally {
         Pop-Location
@@ -396,9 +396,7 @@ task Init {
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
-
-        
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")        
 
         $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
