@@ -92,9 +92,7 @@ $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 function GetVssConnection() {
     try {
         Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
-
-        $connection = Get-VssConnection
-        return $connection
+        return [Microsoft.TeamFoundation.DistributedTask.Task.DevTestLabs.VssHelper]::GetVssConnection()        
     } catch {
         Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
         throw $_
@@ -436,17 +434,6 @@ task Init {
                     } catch {
                         Write-Error "Failed to load $fullFilePath. $_.Exception"
                     }
-                } else {
-                    #foreach ($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
-                    #    if ($a.FullName -eq $e.Name) {
-                    #        Write-Debug "Found already loaded match: $a"
-                    #        return $a
-                    #    }
-                    #    if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
-                    #        Write-Debug "Found already loaded match: $a"
-                    #        return $a
-                    #    }
-                    #}
                 }
             }
 
@@ -458,6 +445,8 @@ task Init {
 
         $assembly = [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll")
         Import-Module -Assembly $assembly
+
+        Get-VssConnection
     }
 
     Write-Info "Established build environment"
