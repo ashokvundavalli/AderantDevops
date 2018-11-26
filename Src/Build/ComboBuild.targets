@@ -592,7 +592,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     </PropertyGroup>
 
       <ItemGroup>
-        <TfvcExcludedModules Include="Tests.Load;
+        <TfvcExcludedModules Include="Administration.HubSetup;
                                       Applications.ExpertAssistant;
                                       Applications.TeamManager;
                                       Libraries.CheckRequest;
@@ -612,6 +612,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Services.Notes;
                                       Services.Query.Constants;
                                       Services.Security;
+                                      Tests.Load;
                                       Workflow.CheckRequest;
                                       Workflow.FileOpening;
                                       Workflow.Integration.Samples;
