@@ -36,8 +36,8 @@
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
-    <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\..</BuildInfrastructureDirectory>
-    <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory))`)</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory)`))</BuildInfrastructureDirectory>
     <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' != '' and !HasTrailingSlash('$(BuildInfrastructureDirectory)')">$(BuildInfrastructureDirectory)\</BuildInfrastructureDirectory>
 
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
