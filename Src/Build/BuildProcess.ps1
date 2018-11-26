@@ -435,7 +435,7 @@ task Init {
                     #        Write-Debug "Found already loaded match: $a"
                     #        return $a
                     #    }
-                    }
+                    #}
                 }
             }
 
