@@ -446,7 +446,8 @@ task Init {
         $assembly = [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll")
         Import-Module -Assembly $assembly
 
-        Get-VssConnection
+        # Ensure the VSS connection can be created
+        GetVssConnection
     }
 
     Write-Info "Established build environment"
