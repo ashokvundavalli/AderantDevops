@@ -291,7 +291,7 @@ task Build {
             Invoke-Tool -FileName $MSBuildLocation\MSBuild.exe -Arguments $commonArgs -RequireExitCodeZero
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"
-            . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
+            #. $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
         }
     } finally {
         Pop-Location
@@ -401,10 +401,12 @@ task Init {
 
             Write-Host "Resolving $($e.Name)"
 
+            $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)
+
             $fileName = $e.Name.Split(",")[0]
             $fileName = $fileName + ".dll"
 
-            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals.2.105.7\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals.2.105.7\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\bin")
+            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\bin")
             foreach ($dir in $probeDirectories) {
                 $fullFilePath = "$dir\$fileName"
 
@@ -413,22 +415,26 @@ task Init {
                 if (Test-Path ($fullFilePath)) {
                     Write-Debug "File exists: $fullFilePath"
                     try {
-                        $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
-                        Write-Debug "Loaded dependency: $fullFilePath"
-                        return $a
+                        $name = [System.Reflection.AssemblyName]::GetAssemblyName($fullFilePath)
+
+                        if ($name.FullName -eq $assemblyName.FullName) {
+                            $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+                            Write-Debug "Loaded dependency: $fullFilePath"
+                            return $a
+                        }
                     } catch {
                         Write-Error "Failed to load $fullFilePath. $_.Exception"
                     }
                 } else {
-                    foreach ($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
-                        if ($a.FullName -eq $e.Name) {
-                            Write-Debug "Found already loaded match: $a"
-                            return $a
-                        }
-                        if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
-                            Write-Debug "Found already loaded match: $a"
-                            return $a
-                        }
+                    #foreach ($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+                    #    if ($a.FullName -eq $e.Name) {
+                    #        Write-Debug "Found already loaded match: $a"
+                    #        return $a
+                    #    }
+                    #    if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
+                    #        Write-Debug "Found already loaded match: $a"
+                    #        return $a
+                    #    }
                     }
                 }
             }
