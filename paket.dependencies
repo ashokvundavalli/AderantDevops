@@ -17,6 +17,7 @@ nuget Moq
 
 nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
 nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
+nuget Microsoft.Net.Http
 #nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
 #nuget Microsoft.AspNet.WebApi.WebHost
 #nuget Microsoft.AspNet.WebHooks.Common
@@ -26,12 +27,12 @@ nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
 ##nuget Microsoft.IdentityModel.Clients.ActiveDirectory <= 2.28.4
 #nuget Newtonsoft.Json ~> 8.0.0
 
-nuget RouteMagic
-nuget WebActivatorEx
-nuget Microsoft.Web.Infrastructure
-nuget Microsoft.Web.Xdt
-nuget Microsoft.CodeDom.Providers.DotNetCompilerPlatform >= 1.0.0 <= 1.0.0
-nuget Microsoft.Net.Compilers >= 1.0.0 <= 1.0.0
+#nuget RouteMagic
+#nuget WebActivatorEx
+#nuget Microsoft.Web.Infrastructure
+#nuget Microsoft.Web.Xdt
+#nuget Microsoft.CodeDom.Providers.DotNetCompilerPlatform >= 1.0.0 <= 1.0.0
+#nuget Microsoft.Net.Compilers >= 1.0.0 <= 1.0.0
 
 
 group Analyzer
