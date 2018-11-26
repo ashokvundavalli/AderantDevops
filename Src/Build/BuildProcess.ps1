@@ -388,11 +388,7 @@ task Init {
     Write-Info ("Build Uri:".PadRight(20) + $Env:BUILD_BUILDURI)
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 
-    if (-not $IsDesktopBuild) {
-        # hoho, fucking hilarious
-        # For some reason we cannot load Microsoft assemblies as we get an exception
-        # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
-        # so to work around this we just disable strong-name validation....
+    if (-not $IsDesktopBuild) {        
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
@@ -461,11 +457,11 @@ task Init {
 
             Write-Host "Cannot locate $($e.Name). The build will probably fail now."
             return $null
-        }
-
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
+        }        
 
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)        
+
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
     }
 
     Write-Info "Established build environment"
