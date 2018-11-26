@@ -616,23 +616,20 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Applications.ExpertAssistant;
                                       Applications.TeamManager;
                                       Libraries.Entities.Marketing;
-                                      Libraries.Entities.Trust;
-                                      Services.AuditServices.Communication;
+                                      Libraries.Entities.Employee;
                                       Services.Communication;
+                                      Services.Deployment;
+                                      Services.Integration;
+                                      Services.Audit;
                                       Services.Deployment;
                                       Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
-                                      Services.Audit;
-                                      Services.Deployment;
-                                      Services.Metadata;
-                                      Services.Notes;
-                                      Services.Security;
-                                      Services.Query.Constants;
-                                      Workflow.TeamManager;
                                       Workflow.CheckRequest;
+                                      Workflow.FileOpening;
+                                      Workflow.Integration.Samples;
                                       Workflow.Samples;
-                                      Workflow.FileOpening" />
+                                      Workflow.TeamManager" />
       </ItemGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"
