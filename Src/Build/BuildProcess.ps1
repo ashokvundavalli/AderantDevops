@@ -417,7 +417,8 @@ task Init {
             # Lookup if we are allowed to rebind this assembly
             $newName = $rebindMap[$assemblyName.FullName]
             if ($null -ne $newName) {
-                $assemblyName = $newName
+                Write-Information "Rebinding $($assemblyName.FullName) -> $newName"
+                $assemblyName = [System.Reflection.AssemblyName]::new($newName)
             }
 
             $fileName = $e.Name.Split(",")[0]
