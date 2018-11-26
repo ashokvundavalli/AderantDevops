@@ -91,15 +91,15 @@ $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 
 function GetVssConnection() {
     try {
-        Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)" 
-        
+        Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
+
         $assemblyLocation = [Microsoft.VisualStudio.Services.WebApi.VssConnection].Assembly.Location
-        
-        Write-Host "Using VSS connection type: $assemblyLocation" 
-        
+
+        Write-Host "Using VSS connection type: $assemblyLocation"
+
         return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())
     } catch {
-        Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)" 
+        Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
         throw $_
     }
 }
@@ -110,7 +110,7 @@ function WarningRatchet() {
     if ($isPullRequest) {
         Write-Host "Running warning ratchet for $destinationBranch"
         Import-Module $global:ToolsDirectory\WarningRatchet.dll
-        $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID -DestinationBranchName $destinationBranch  
+        $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID -DestinationBranchName $destinationBranch
 
         $lastGoodBuildWarningCount = $result.LastGoodBuildCount
         $currentBuildCount = $result.CurrentBuildCount
@@ -129,18 +129,18 @@ function WarningRatchet() {
             if ($currentBuildCount -gt $lastGoodBuildCount) {
                 $reporter = $ratchet.GetWarningReporter($ratchetRequest)
 
-                GenerateAndUploadReport $reporter 
+                GenerateAndUploadReport $reporter
 
                 [int]$adjustedWarningCount = $reporter.GetAdjustedWarningCount()
                 Write-Output "Adjusted build warnings: $adjustedWarningCount"
 
                 RenderWarningShields $true $adjustedWarningCount $lastGoodBuildCount
-            
+
                 $permittedWarningsThreshold = 5
 
                 # Only fail if the adjusted count exceeds the last build
-                if ($adjustedWarningCount -gt $lastGoodBuildCount -and $adjustedWarningCount -gt $permittedWarningsThreshold) {  
-                
+                if ($adjustedWarningCount -gt $lastGoodBuildCount -and $adjustedWarningCount -gt $permittedWarningsThreshold) {
+
                     $sourceBranchName = $Env:BUILD_SOURCEBRANCHNAME
 
                     # We always want the master branch to build
@@ -150,18 +150,18 @@ function WarningRatchet() {
                 }
                 return
             }
-            RenderWarningShields $false $currentBuildCount $lastGoodBuildCount      
+            RenderWarningShields $false $currentBuildCount $lastGoodBuildCount
         }
     } else {
         Write-Host "Build is not for a pull request, skipping warning ratchet"
-        RenderWarningShields $false $currentBuildCount $lastGoodBuildCount 
+        RenderWarningShields $false $currentBuildCount $lastGoodBuildCount
         return
     }
 }
 
 function GenerateAndUploadReport($reporter) {
     $report = $reporter.CreateWarningReport()
-    
+
     $stream = [System.IO.StreamWriter] "$env:SYSTEM_DEFAULTWORKINGDIRECTORY\WarningReport.md"
     $stream.WriteLine($report)
     $stream.Close()
@@ -259,10 +259,10 @@ task Build {
     if ($buildFlavor -eq "") {
         $buildFlavor = GetBuildFlavor   # to build in debug or release
     }
-    
+
     $global:BuildFlavor = $buildFlavor # to remember and display at the end
 
-    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor" 
+    $commonArgs = "$commonArgs /p:BuildFlavor=$buildFlavor"
 
     if ($Clean) {
         $commonArgs = "$commonArgs /p:CleanBin=true"
@@ -292,7 +292,7 @@ task Build {
         } else {
             $commonArgs = "$commonArgs /clp:PerformanceSummary"
             . $Env:EXPERT_BUILD_DIRECTORY\Build\InvokeServerBuild.ps1 -Repository $Repository -MSBuildLocation $MSBuildLocation -CommonArgs $commonArgs
-        }    
+        }
     } finally {
         Pop-Location
     }
@@ -390,27 +390,27 @@ task Init {
         # hoho, fucking hilarious
         # For some reason we cannot load Microsoft assemblies as we get an exception
         # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
-        # so to work around this we just disable strong-name validation....     
+        # so to work around this we just disable strong-name validation....
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
-              
+
         $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
             if ($e.Name -like "*resources*") {
                 return $null
-            }            
+            }
 
             Write-Host "Resolving $($e.Name)"
-            
+
             $fileName = $e.Name.Split(",")[0]
             $fileName = $fileName + ".dll"
-        
+
             $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals.2.105.7\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals.2.105.7\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\bin")
             foreach ($dir in $probeDirectories) {
                 $fullFilePath = "$dir\$fileName"
 
                 Write-Debug "Probing: $fullFilePath"
-                
-                if (Test-Path ($fullFilePath)) {    
+
+                if (Test-Path ($fullFilePath)) {
                     Write-Debug "File exists: $fullFilePath"
                     try {
                         $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
@@ -418,7 +418,7 @@ task Init {
                         return $a
                     } catch {
                         Write-Error "Failed to load $fullFilePath. $_.Exception"
-                    }   
+                    }
                 } else {
                     foreach ($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
                         if ($a.FullName -eq $e.Name) {
@@ -432,13 +432,13 @@ task Init {
                     }
                 }
             }
-            
+
             Write-Host "Cannot locate $($e.Name). The build will probably fail now."
             return $null
         }
-        
+
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
-        
+
         Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
 
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
