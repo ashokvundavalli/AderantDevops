@@ -418,9 +418,11 @@ task Init {
                         $name = [System.Reflection.AssemblyName]::GetAssemblyName($fullFilePath)
 
                         if ($name.FullName -eq $assemblyName.FullName) {
-                            $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+                            $asm = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
                             Write-Debug "Loaded dependency: $fullFilePath"
-                            return $a
+                            return $asm
+                        } else {
+                            Write-Debug "Not loading assembly. Name mismatch $($name.FullName) != $($assemblyName.FullName)"
                         }
                     } catch {
                         Write-Error "Failed to load $fullFilePath. $_.Exception"
