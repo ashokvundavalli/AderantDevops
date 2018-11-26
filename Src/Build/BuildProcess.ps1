@@ -97,7 +97,9 @@ function GetVssConnection() {
 
         Write-Host "Using VSS connection type: $assemblyLocation"
 
-        return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new([Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI), [Microsoft.VisualStudio.Services.Common.VssCredentials]::new())
+        $uri = [Uri]::new($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)
+        $credentials = [Microsoft.VisualStudio.Services.Common.VssCredentials]::new()
+        return [Microsoft.VisualStudio.Services.WebApi.VssConnection]::new($uri, $credentials)
     } catch {
         Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
         throw $_
@@ -393,6 +395,9 @@ task Init {
         # so to work around this we just disable strong-name validation....
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
+        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
+
         $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
             if ($e.Name -like "*resources*") {
@@ -447,10 +452,7 @@ task Init {
 
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
 
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
-
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"        
     }
 
     Write-Info "Established build environment"
