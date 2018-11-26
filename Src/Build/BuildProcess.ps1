@@ -398,7 +398,7 @@ task Init {
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
         [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
 
-        $rebindMap = @{"System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"}
+        
 
         $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
@@ -409,7 +409,8 @@ task Init {
             Write-Host "Resolving $($e.Name)"
 
             $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)
-            
+        
+            $rebindMap = @{"System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"}    
             # Lookup if we are allowed to rebind this assembly
             $newName = $rebindMap[$assemblyName.FullName]
             if ($newName) {
