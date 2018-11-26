@@ -407,13 +407,16 @@ task Init {
             }
 
             Write-Host "Resolving $($e.Name)"
+                        
+            $rebindMap = @{
+                "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+                "System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
+            }    
 
-            $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)
-        
-            $rebindMap = @{"System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"}    
+            $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)        
             # Lookup if we are allowed to rebind this assembly
             $newName = $rebindMap[$assemblyName.FullName]
-            if ($newName) {
+            if ($null -ne $newName) {
                 $assemblyName = $newName
             }
 
@@ -459,9 +462,9 @@ task Init {
             return $null
         }
 
-        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
+        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
 
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"        
+        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)        
     }
 
     Write-Info "Established build environment"
