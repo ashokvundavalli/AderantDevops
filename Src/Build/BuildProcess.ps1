@@ -238,10 +238,7 @@ function AttachResolver() {
         if ($null -ne $newName) {
             Write-Information "Rebinding $($assemblyName.FullName) -> $newName"
             $assemblyName = [System.Reflection.AssemblyName]::new($newName)
-        }
-        if ($assemblyName.Name -eq "Newtonsoft.Json") {
-            $assemblyName = [System.Reflection.AssemblyName]::new("Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed")
-        }
+        }   
 
         $fileName = $e.Name.Split(",")[0]
         $fileName = $fileName + ".dll"
