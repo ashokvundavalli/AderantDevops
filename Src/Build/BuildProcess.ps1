@@ -299,7 +299,7 @@ param(
 # # Applies a common build number, executes unit tests and packages the assemblies as a NuGet
 # # package
 # #=================================================================================================
-task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
+task EndToEnd {
 #     # End of all tasks. Print out current build flavor: Debug or Release.
 #     Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
 
