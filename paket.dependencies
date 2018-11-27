@@ -15,6 +15,7 @@ framework: net46, net45
 #nuget System.Collections.Immutable <= 1.1.37
 nuget Moq
 
+nuget Newtonsoft.Json ~> 10.0.0
 nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
 nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
 nuget Microsoft.Net.Http 2.2.22 
