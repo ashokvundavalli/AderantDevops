@@ -299,10 +299,21 @@ param(
 # # Applies a common build number, executes unit tests and packages the assemblies as a NuGet
 # # package
 # #=================================================================================================
-# task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
+task EndToEnd -Jobs Init, Clean, GetDependencies, BuildCore, Test, Package, {
 #     # End of all tasks. Print out current build flavor: Debug or Release.
 #     Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
-# }
+
+    #TODO: Move to preparebuildenv
+    # Get submodules
+    & git submodule update --init --recursive
+
+    # Import extensibility functions
+    Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Functions') -Filter '*.ps1' | ForEach-Object { . $_.FullName }
+
+    UpdateOrBuildAssembly $PSScriptRoot $false
+
+    Invoke-Build2 -ModulePath $Env:BUILD_SOURCESDIRECTORY
+}
 
 # task PostBuild -Jobs Init, Package, CopyToDrop, {
 # }
