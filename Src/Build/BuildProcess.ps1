@@ -92,7 +92,16 @@ $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
 function GetVssConnection() {
     try {
         Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
-        return [Microsoft.TeamFoundation.DistributedTask.Task.DevTestLabs.VssHelper]::GetVssConnection()        
+
+         $property = [Microsoft.TeamFoundation.DistributedTask.Task.TestResults.InvokeResultPublisherCmdlet].GetProperty("Connection")
+         $constructorInfo = $property.PropertyType.GetConstructors()[0]
+         $parameters = $constructorInfo.GetParameters()
+         $uri = [System.Uri]::new("http://tfs:8080/tfs")
+         $instance = [System.Activator]::CreateInstance($parameters[1].ParameterType)
+         $invoke = $constructorInfo.Invoke(@($uri, $instance))
+
+         return $invoke
+        #return [Microsoft.TeamFoundation.DistributedTask.Task.DevTestLabs.VssHelper]::GetVssConnection()        
     } catch {
         Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
         throw $_
