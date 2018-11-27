@@ -18,6 +18,8 @@ nuget Moq
 nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
 nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
 nuget Microsoft.Net.Http
+nuget Newtonsoft.Json ~> 10.0.0
+
 #nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
 #nuget Microsoft.AspNet.WebApi.WebHost
 #nuget Microsoft.AspNet.WebHooks.Common
@@ -25,7 +27,7 @@ nuget Microsoft.Net.Http
 #nuget Microsoft.AspNet.WebHooks.Receivers.Generic
 #nuget Microsoft.AspNet.WebHooks.Receivers.VSTS
 ##nuget Microsoft.IdentityModel.Clients.ActiveDirectory <= 2.28.4
-#nuget Newtonsoft.Json ~> 8.0.0
+
 
 #nuget RouteMagic
 #nuget WebActivatorEx
