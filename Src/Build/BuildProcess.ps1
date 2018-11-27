@@ -21,6 +21,21 @@ if (-not [string]::IsNullOrWhiteSpace($env:directoryToBuild)) {
 $EntryPoint = Get-Variable "BuildTask"
 $global:BuildFlavor = ""
 
+$global:probeDirectories = @(
+    $global:ToolsDirectory, 
+    "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", 
+    "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", 
+    "$Env:AGENT_HOMEDIRECTORY\bin", 
+    "$Env:VS140COMNTOOLS..\IDE\PrivateAssemblies")        
+
+$global:rebindMap = @{
+        "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.22.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+        #"System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
+        # Legacy SDK depends on version 9 but System.Net.Http.Formatting depends on version 6, version 10 and 11 cannot be substituted
+        "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"                
+        #"Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
+    }  
+
 # The VsTsTaskSdk specifies a prefix of Vsts. Thus commands are renamed from what appears in the source under ps_modules.
 # eg Invoke-Tool becomes Invoke-VstsTool
 
@@ -205,6 +220,56 @@ function GetBuildFlavor() {
         Write-Host "....... Build in debug mode ................" -foregroundcolor Green
     }
     return [string]$buildFlavor;
+}
+
+function AttachResolver() {
+    $global:OnAssemblyResolve = [System.ResolveEventHandler] {
+        param($sender, $e)
+        if ($e.Name -like "*resources*") {
+            return $null
+        }
+
+        Write-Host "Resolving $($e.Name)"
+
+        $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)        
+            Lookup if we are allowed to rebind this assembly
+        $newName = $global:rebindMap[$assemblyName.FullName]
+        if ($null -ne $newName) {
+            Write-Information "Rebinding $($assemblyName.FullName) -> $newName"
+            $assemblyName = [System.Reflection.AssemblyName]::new($newName)
+        }
+
+        $fileName = $e.Name.Split(",")[0]
+        $fileName = $fileName + ".dll"
+            
+        foreach ($dir in $global:probeDirectories) {
+            $fullFilePath = "$dir\$fileName"
+
+            Write-Debug "Probing: $fullFilePath"
+
+            if (Test-Path ($fullFilePath)) {
+                Write-Debug "File exists: $fullFilePath"
+                try {
+                    $name = [System.Reflection.AssemblyName]::GetAssemblyName($fullFilePath)
+
+                    if ($name.FullName -eq $assemblyName.FullName) {
+                        $asm = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+                        Write-Debug "Loaded dependency: $fullFilePath"
+                        return $asm
+                    } else {
+                        Write-Debug "Not loading assembly. Name mismatch $($name.FullName) != $($assemblyName.FullName)"
+                    }
+                } catch {
+                    Write-Error "Failed to load $fullFilePath. $_.Exception"
+                }
+            }
+        }
+
+        Write-Host "Cannot locate $($e.Name). The build will probably fail now."
+        return $null
+    }        
+
+    [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
 }
 
 function LoadAgentSdk() {
@@ -397,71 +462,9 @@ task Init {
     Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 
     if (-not $IsDesktopBuild) {        
-        cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
+        cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"   
 
-        $global:probeDirectories = @(
-            $global:ToolsDirectory, 
-            "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", 
-            "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", 
-            "$Env:AGENT_HOMEDIRECTORY\bin", 
-            "$Env:VS140COMNTOOLS..\IDE\PrivateAssemblies")        
-
-        $global:rebindMap = @{
-                "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.22.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-                #"System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
-                # Legacy SDK depends on version 9 but System.Net.Http.Formatting depends on version 6, version 10 and 11 cannot be substituted
-                "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"                
-                #"Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
-            }     
-
-        $global:OnAssemblyResolve = [System.ResolveEventHandler] {
-            param($sender, $e)
-            if ($e.Name -like "*resources*") {
-                return $null
-            }
-
-            Write-Host "Resolving $($e.Name)"
-
-            $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)        
-             Lookup if we are allowed to rebind this assembly
-            $newName = $global:rebindMap[$assemblyName.FullName]
-            if ($null -ne $newName) {
-                Write-Information "Rebinding $($assemblyName.FullName) -> $newName"
-                $assemblyName = [System.Reflection.AssemblyName]::new($newName)
-            }
-
-            $fileName = $e.Name.Split(",")[0]
-            $fileName = $fileName + ".dll"
-            
-            foreach ($dir in $global:probeDirectories) {
-                $fullFilePath = "$dir\$fileName"
-
-                Write-Debug "Probing: $fullFilePath"
-
-                if (Test-Path ($fullFilePath)) {
-                    Write-Debug "File exists: $fullFilePath"
-                    try {
-                        $name = [System.Reflection.AssemblyName]::GetAssemblyName($fullFilePath)
-
-                        if ($name.FullName -eq $assemblyName.FullName) {
-                            $asm = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
-                            Write-Debug "Loaded dependency: $fullFilePath"
-                            return $asm
-                        } else {
-                            Write-Debug "Not loading assembly. Name mismatch $($name.FullName) != $($assemblyName.FullName)"
-                        }
-                    } catch {
-                        Write-Error "Failed to load $fullFilePath. $_.Exception"
-                    }
-                }
-            }
-
-            Write-Host "Cannot locate $($e.Name). The build will probably fail now."
-            return $null
-        }        
-
-        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
-        
+        AttachResolver        
         LoadAgentSdk        
     }
 
