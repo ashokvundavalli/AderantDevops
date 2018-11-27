@@ -105,7 +105,7 @@ function WarningRatchet() {
     if ($true) {
         Write-Host "Running warning ratchet for $destinationBranch"
         
-        $assembly = [System.Reflection.Asssembly]::LoadFrom("$global:ToolsDirectory\WarningRatchet.dll")
+        $assembly = [System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\WarningRatchet.dll")
         Import-Module -Assembly $assembly
 
         $destinationBranch = "master"
