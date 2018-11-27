@@ -452,6 +452,8 @@ task Init {
 
         [System.AppDomain]::CurrentDomain.add_AssemblyResolve($OnAssemblyResolve)        
 
+        
+        [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\System.Net.Http.Formatting.dll")
         $assembly = [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll")
         Import-Module -Assembly $assembly
 
