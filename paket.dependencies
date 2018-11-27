@@ -17,7 +17,7 @@ nuget Moq
 
 nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
 nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
-nuget Microsoft.Net.Http
+nuget Microsoft.Net.Http 2.2.22 
 
 #nuget Microsoft.AspNet.WebApi.Client <= 5.2.2
 #nuget Microsoft.AspNet.WebApi.WebHost

@@ -19,23 +19,7 @@ if (-not [string]::IsNullOrWhiteSpace($env:directoryToBuild)) {
 }
 
 $EntryPoint = Get-Variable "BuildTask"
-$global:BuildFlavor = ""
-
-$global:probeDirectories = @(
-    $global:ToolsDirectory, 
-    "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", 
-    "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", 
-    "$Env:AGENT_HOMEDIRECTORY\bin", 
-    "$Env:VS140COMNTOOLS..\IDE\PrivateAssemblies")        
-
-$global:rebindMap = @{
-        #"System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.22.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-        "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-        #"System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
-        # Legacy SDK depends on version 9 but System.Net.Http.Formatting depends on version 6, version 10 and 11 cannot be substituted
-        "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"                
-        #"Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
-    }  
+$global:BuildFlavor = "" 
 
 # The VsTsTaskSdk specifies a prefix of Vsts. Thus commands are renamed from what appears in the source under ps_modules.
 # eg Invoke-Tool becomes Invoke-VstsTool
@@ -224,7 +208,21 @@ function GetBuildFlavor() {
 }
 
 function AttachResolver() {
-    Set-StrictMode -Version 'Latest'
+    $global:probeDirectories = @(
+        $global:ToolsDirectory, 
+        "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", 
+        "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", 
+        "$Env:AGENT_HOMEDIRECTORY\bin", 
+        "$Env:VS140COMNTOOLS..\IDE\PrivateAssemblies")        
+
+    $global:rebindMap = @{
+        "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.22.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+        #"System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+        #"System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
+        # Legacy SDK depends on version 9 but System.Net.Http.Formatting depends on version 6, version 10 and 11 cannot be substituted
+        "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"                
+        #"Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
+    } 
 
     $global:OnAssemblyResolve = [System.ResolveEventHandler] {
         param($sender, $e)

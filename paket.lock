@@ -17,8 +17,8 @@ NUGET
     Microsoft.IdentityModel.Tokens (5.3) - framework: net45, net46
       Microsoft.IdentityModel.Logging (>= 5.3) - framework: net45
       Newtonsoft.Json (>= 10.0.1) - framework: net45
-    Microsoft.Net.Http (2.2.29) - framework: net45, net46
-      Microsoft.Bcl (>= 1.1.10) - framework: net45, net46
+    Microsoft.Net.Http (2.2.22) - framework: net45, net46
+      Microsoft.Bcl (>= 1.1.9) - framework: net45, net46
       Microsoft.Bcl.Build (>= 1.0.14) - framework: net45, net46
     Microsoft.TeamFoundation.DistributedTask.Common.Contracts (16.141.1-preview) - framework: net45, net46
       Microsoft.VisualStudio.Services.Client (16.141.1-preview) - framework: net45, net46
@@ -52,7 +52,7 @@ NUGET
       Castle.Core (>= 4.3.1) - framework: net45, net46
       System.Threading.Tasks.Extensions (>= 4.3) - framework: net45, net46
       System.ValueTuple (>= 4.4) - framework: net45, net46
-    Newtonsoft.Json (10.0.3) - framework: net45, net46
+    Newtonsoft.Json (11.0.2) - framework: net45, net46
     System.IdentityModel.Tokens.Jwt (5.3) - framework: net45, net46
       Microsoft.IdentityModel.JsonWebTokens (>= 5.3) - framework: net45
       Microsoft.IdentityModel.Tokens (>= 5.3) - framework: net45
