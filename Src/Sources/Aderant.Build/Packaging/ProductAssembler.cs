@@ -12,7 +12,6 @@ using Newtonsoft.Json;
 namespace Aderant.Build.Packaging {
     internal class ProductAssembler {
         private readonly ILogger logger;
-        private ExpertManifest manifest;
         private VersionTracker versionTracker;
         private string tfvcSourceGetVersion;
         private string teamProject;
@@ -21,14 +20,15 @@ namespace Aderant.Build.Packaging {
         private string tfsBuildNumber;
         private bool isLocalBuild;
         private SourceCodeInfo sourceCodeInfo;
+        private ExpertManifest manifest;
 
-        public ProductAssembler(string productManifestPath, ILogger logger) {
+        public ProductAssembler(string productManifestXml, ILogger logger) {
             this.logger = logger;
-            this.manifest = ExpertManifest.Load(productManifestPath);
+            this.manifest = ExpertManifest.Parse(productManifestXml);
         }
 
         public IProductAssemblyResult AssembleProduct(
-            IEnumerable<ExpertModule> modules,
+            IReadOnlyCollection<ExpertModule> modules,
             IEnumerable<string> buildOutputs,
             string productDirectory,
             string tfvcSourceGetVersion,
@@ -36,8 +36,6 @@ namespace Aderant.Build.Packaging {
             string tfvcBranch,
             string tfsBuildId,
             string tfsBuildNumber) {
-
-            IEnumerable<ExpertModule> resolvedModules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup));
 
             // the additional TFS info will only be passed in a CI build
             if (string.IsNullOrEmpty(tfvcBranch) && string.IsNullOrEmpty(tfvcSourceGetVersion) && string.IsNullOrEmpty(teamProject) && string.IsNullOrEmpty(tfsBuildId) && string.IsNullOrEmpty(tfsBuildNumber)) {
@@ -51,7 +49,7 @@ namespace Aderant.Build.Packaging {
             }
 
             var operation = AssembleProduct(new ProductAssemblyContext {
-                Modules = resolvedModules,
+                Modules = modules.Select(m => manifest.GetModule(m.Name, m.DependencyGroup)).ToList(),
                 BuildOutputs = buildOutputs,
                 ProductDirectory = productDirectory
             });
@@ -268,8 +266,10 @@ namespace Aderant.Build.Packaging {
                             relativeDirectory = Path.Combine(context.ProductDirectory, group ?? string.Empty);
                         }
 
-                        logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
-                        fs.CopyDirectory(nupkgDir, relativeDirectory);
+                        if (module == null || module.ExcludeFromPackaging != true) {
+                            logger.Info("Copying {0} ==> {1}", nupkgDir, relativeDirectory);
+                            fs.CopyDirectory(nupkgDir, relativeDirectory);
+                        }
                     }
                 }
             }

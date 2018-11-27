@@ -111,7 +111,7 @@
   </Target>
 
   <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
-    <Message Text="$(ModuleName): Restoring prebuilts" />
+    <Message Text="$(ModuleName): Restoring objects from build cache" />
 
     <PropertyGroup>
       <DependenciesDirectory>$(SolutionDirectoryPath)\Dependencies</DependenciesDirectory>

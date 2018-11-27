@@ -77,6 +77,8 @@ namespace Aderant.Build.DependencyResolver {
         public GetAction Source { get; protected set; }
 
         public static IDependencyRequirement Create(ExpertModule reference) {
+            ErrorUtilities.IsNotNull(reference, nameof(reference));
+
             if (reference.RepositoryType == RepositoryType.NuGet) {
                 return new DependencyRequirement(reference.Name, reference.DependencyGroup, reference.VersionRequirement) {
                     ReplicateToDependencies = reference.ReplicateToDependencies,

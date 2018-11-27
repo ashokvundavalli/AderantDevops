@@ -115,6 +115,8 @@ namespace Aderant.Build.DependencyAnalyzer {
             { "Tests", ModuleType.Test },
         };
 
+        public bool ExcludeFromPackaging { get; set; }
+
         public static ModuleType GetModuleType(string name) {
             string firstPart = name.Split('.')[0];
 

@@ -16,6 +16,7 @@ using Aderant.Build.Model;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
+using Aderant.Build.Utilities;
 using Microsoft.Build.Construction;
 
 namespace Aderant.Build.ProjectSystem {
@@ -105,7 +106,7 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 });
 
-            var defaultCopyParallelism = Environment.ProcessorCount > 4 ? 6 : 4;
+            var defaultCopyParallelism = ParallelismHelper.MaxDegreeOfParallelism();
 
             ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = defaultCopyParallelism });
 

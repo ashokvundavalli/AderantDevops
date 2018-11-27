@@ -5,9 +5,9 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using Aderant.Build.Packaging;
+using Aderant.Build.Utilities;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using Parallel = System.Threading.Tasks.Parallel;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace Aderant.Build.Tasks {
@@ -30,14 +30,16 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem[] ArchivedFiles { get; private set; }
 
+        public string[] ExcludeFilter { get; set; }
+
         public override bool Execute() {
             if (DirectoriesToArchive == null || OutputArchives.Length == 0) {
-                Log.LogError("Value cannot be null or empty.", nameof(DirectoriesToArchive));
+                Log.LogError("Value {0} cannot be null or empty.", nameof(DirectoriesToArchive));
                 return !Log.HasLoggedErrors;
             }
 
             if (OutputArchives == null || OutputArchives.Length == 0) {
-                Log.LogError("Value cannot be null or whitespace.", nameof(OutputArchives));
+                Log.LogError("Value {0} cannot be null or whitespace.", nameof(OutputArchives));
                 return !Log.HasLoggedErrors;
             }
 
@@ -47,7 +49,7 @@ namespace Aderant.Build.Tasks {
             }
 
             try {
-                List<PathSpec> directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives);
+                List<PathSpec> directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives, ExcludeFilter);
 
                 Log.LogMessage($"Archive compression level set to: '{CompressionLevel}'.");
                 foreach (PathSpec pathSpec in directoriesToArchive) {
@@ -71,17 +73,39 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        internal static List<PathSpec> ConstructPathSpecs(ITaskItem[] directoriesToArchive, ITaskItem[] outputArchives) {
-            return directoriesToArchive.Select((t, i) => new PathSpec(t.ItemSpec, outputArchives[i].ItemSpec)).ToList();
+        internal static List<PathSpec> ConstructPathSpecs(ITaskItem[] directoriesToArchive, ITaskItem[] outputArchives, string[] excludeFilter = null) {
+            List<PathSpec> outputs = new List<PathSpec>();
+
+            for (var i = 0; i < directoriesToArchive.Length; i++) {
+                var item = directoriesToArchive[i];
+                var destination = outputArchives[i];
+
+                bool add = true;
+
+                if (excludeFilter != null) {
+                    foreach (var filter in excludeFilter) {
+                        if (item.ItemSpec.StartsWith(filter, StringComparison.OrdinalIgnoreCase)) {
+                            add = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (add) {
+                    outputs.Add(new PathSpec(item.ItemSpec, destination.ItemSpec));
+                }
+            }
+
+            return outputs;
         }
 
         internal static void ProcessDirectories(IList<PathSpec> directoriesToArchive, CompressionLevel compressionLevel) {
             Parallel.ForEach(
                 directoriesToArchive,
-                new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount < 6 ? Environment.ProcessorCount : 6 },
+                new ParallelOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism() },
                 directory => {
                     string temp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                    
+
                     ZipFile.CreateFromDirectory(directory.Location, temp, compressionLevel, false);
 
                     if (File.Exists(directory.Destination)) {
@@ -92,4 +116,5 @@ namespace Aderant.Build.Tasks {
                 });
         }
     }
+
 }

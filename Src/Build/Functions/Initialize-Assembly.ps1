@@ -6,7 +6,7 @@ function GetBuildLibraryAssemblyPath([string]$buildScriptDirectory) {
     return [System.IO.Path]::GetFullPath($file)
 }
 
-function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {	
+function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
     $aderantBuildAssembly = GetBuildLibraryAssemblyPath $buildScriptDirectory
 
     if ([System.IO.File]::Exists($aderantBuildAssembly) -and $forceCompile -eq $false) {
@@ -19,18 +19,18 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
         Write-Warning "Skipped compiling $aderantBuildAssembly due to file lock."
         return
     }
-  
+
 	[void][System.Reflection.Assembly]::Load("Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 	[void][System.Reflection.Assembly]::Load("Microsoft.Build.Engine, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
     [void][System.Reflection.Assembly]::Load("Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 
     $toolsVersion = "14.0";
-    Write-Debug "Loaded MS Build 14.0"   
+    Write-Debug "Loaded MS Build 14.0"
     $projectPath = [System.IO.Path]::Combine($buildScriptDirectory, "Aderant.Build.Common.targets")
-	
+
     $logger = new-Object Microsoft.Build.BuildEngine.ConsoleLogger
 	$logger.Verbosity = [Microsoft.Build.Framework.LoggerVerbosity]::Quiet
-    $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]               
+    $arraylog = New-Object collections.generic.list[Microsoft.Build.Framework.ILogger]
     $arraylog.Add($logger)
 
 	$globals = New-Object 'System.Collections.Generic.Dictionary[String,String]'
@@ -43,14 +43,14 @@ function BuildProjects($buildScriptDirectory, [bool]$forceCompile) {
 	$params = new-object Microsoft.Build.Execution.BuildParameters
 	$params.Loggers=$arraylog
 	$params.GlobalProperties=$globals
-	
+
 	$target="PrepareBuildEnvironment"
-	$targets=@($target)	
-	
+	$targets=@($target)
+
 	$request = new-object Microsoft.Build.Execution.BuildRequestData($projectPath, $globals, $toolsVersion, $targets, $null)
-	
+
 	$manager = [Microsoft.Build.Execution.BuildManager]::DefaultBuildManager
-    $manager.Build($params, $request)    
+    $manager.Build($params, $request)
 }
 
 function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$loadAsModule) {
@@ -79,7 +79,7 @@ function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$load
             # Creating a runtime module to wrap the import of the compiled module works around
             # whatever PS bug prevents it from working.
             $scriptBlock = {
-                param($assembly)      
+                param($assembly)
                 Import-Module -Assembly $assembly -DisableNameChecking
             }
 
@@ -93,22 +93,22 @@ function LoadAssembly($buildScriptsDirectory, [string]$assemblyPath, [bool]$load
 }
 
 function UpdateSubmodules([string]$head) {
-    #TODO speed this up    
-    Set-StrictMode -Version 'Latest'  
+    #TODO speed this up
+    Set-StrictMode -Version 'Latest'
     & git -C $PSScriptRoot submodule update --init --recursive
 }
 
-function LoadLibGit2Sharp([string]$buildToolsDirectory) {    
+function LoadLibGit2Sharp([string]$buildToolsDirectory) {
     [void][System.Reflection.Assembly]::LoadFrom("$buildToolsDirectory\LibGit2Sharp.dll")
 }
 
 function global:UpdateOrBuildAssembly {
   Param(
-        [Parameter(Mandatory=$true)]        
+        [Parameter(Mandatory=$true)]
         [string]
         $BuildScriptsDirectory,
 
-        [Parameter(Mandatory=$true)]        
+        [Parameter(Mandatory=$true)]
         [bool]
         $Update
     )
@@ -116,7 +116,7 @@ function global:UpdateOrBuildAssembly {
     begin {
         Set-StrictMode -Version 'Latest'
     }
-    
+
     process {
         try {
             [void][Aderant.Build.BuildOperationContext]
@@ -126,8 +126,8 @@ function global:UpdateOrBuildAssembly {
         }
 
         if ($Update) {
-            if ($Host.Name.Contains("ISE")) {    
-                # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE     
+            if ($Host.Name.Contains("ISE")) {
+                # ISE logs stderror as fatal. Git logs stuff to stderror and thus if any git output occurs the import will fail inside the ISE
 
                 [string]$branch = & git -C $PSScriptRoot rev-parse --abbrev-ref HEAD
 
@@ -143,7 +143,7 @@ function global:UpdateOrBuildAssembly {
                 }
 
                 [string]$head = & git -C $PSScriptRoot rev-parse HEAD
-        
+
                 UpdateSubmodules $head
             }
         }
@@ -154,7 +154,7 @@ function global:UpdateOrBuildAssembly {
 
         LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\Aderant.Build.dll" $true
         LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\paket.exe" $false
-        LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\protobuf-net.dll" $false    
+        LoadAssembly $BuildScriptsDirectory "$assemblyPathRoot\protobuf-net.dll" $false
 
         LoadLibGit2Sharp "$BuildScriptsDirectory\..\Build.Tools"
     }

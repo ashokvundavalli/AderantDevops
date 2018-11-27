@@ -29,7 +29,7 @@ namespace Aderant.Build.Packaging {
 
                 fs.DeleteDirectory(contentDirectory, true);
             }
-            
+
         }
     }
 }

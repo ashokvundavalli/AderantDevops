@@ -145,12 +145,10 @@ begin {
     }
 
     function RetreiveModules() {
-        [CmdletBinding()]
-        param([string]$productManifestPath, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber)
+        param([Xml]$productManifestXml, $modules, [string[]]$folders, [string]$expertSourceDirectory, [string]$teamProject, [string]$tfvcBranchName, [string]$tfvcSourceGetVersion, [string]$buildUri, [string]$tfsBuildNumber)
 
         # only do this for a CI build
         if ($teamProject -and $tfvcBranchName -and $tfvcSourceGetVersion) {
-
             Write-Output "Team project: $teamProject"
             Write-Output "TFVC branch: $tfvcBranchName"
             Write-Output "Associated TFVC changeset: $tfvcSourceGetVersion"
@@ -159,8 +157,7 @@ begin {
         $splitBuildUri = $buildUri.Split('/')
         $tfsBuildId = $splitBuildUri[$splitBuildUri.Length - 1]
 
-        Write-Output "-Modules $($modules.Name) -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber"
-        $result = Package-ExpertRelease -ProductManifestPath $productManifestPath -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber
+        $result = Package-ExpertRelease -ProductManifestXml $productManifestXml.InnerXml -Modules $modules -Folders $folders -ProductDirectory $expertSourceDirectory -TfvcSourceGetVersion $tfvcSourceGetVersion -TeamProject $teamProject -TfvcBranch $tfvcBranchName -TfsBuildId $tfsBuildId -TfsBuildNumber $tfsBuildNumber
         if ($result) {
             GenerateThirdPartyAttributionFile $result.ThirdPartyLicenses $expertSourceDirectory
         }
@@ -239,7 +236,7 @@ process {
     [string]$expertSourceDirectory = Join-Path -Path $binariesDirectory -ChildPath 'ExpertSource'
     CreateDirectory $expertSourceDirectory | Out-Null
 
-    [xml]$productManifest = Get-Content $productManifestPath
+    [xml]$productManifest = Get-Content -LiteralPath $productManifestPath
 
     $excludeList = $null
     $modules = $productManifest.SelectNodes("//ProductManifest/Modules/Module")
@@ -255,19 +252,19 @@ process {
             }
         }
 
-        Write-Info "Resolving latest version for $($module.Name)"
-
         if (IsThirdParty $module) {
-            Write-Info "Ignored: {0}" $module.Name
-            continue;
+            Write-Information "Ignored: {0}" $module.Name
+            continue
         }
 
         if ($module.PSObject.Properties.Name -eq "ExcludeFromPackaging") {
             if ($module.ExcludeFromPackaging -eq $true) {
-                Write-Warning "Excluding $($module.Name) from product"
+                Write-Information "Excluding $($module.Name) from product"
                 continue
             }
         }
+
+        Write-Info "Resolving latest version for $($module.Name)"
 
         [string]$moduleBinariesDirectory = GetPathToBinaries $module $dropRoot $pullRequestId
 
@@ -309,7 +306,7 @@ process {
     $packagedModules = $modules | Where-Object { $_.GetAction -eq "NuGet" -or (IsThirdParty $_) }
     Set-StrictMode -Version Latest
 
-    RetreiveModules $productManifestPath $packagedModules $folders $expertSourceDirectory $teamProject $tfvcBranchName $tfvcSourceGetVersion $buildUri $tfsBuildNumber
+    RetreiveModules $productManifest $packagedModules $folders $expertSourceDirectory $teamProject $tfvcBranchName $tfvcSourceGetVersion $buildUri $tfsBuildNumber
 
     RemoveReadOnlyAttribute $binariesDirectory
 

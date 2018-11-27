@@ -157,8 +157,14 @@
     <Compile Include="SourceIndexTests.cs" />
     <Compile Include="Tasks\BuildStateFileTests.cs" />
     <Compile Include="Tasks\AssemblyInspectorTests.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo\ReadAssemblyInfo.cs" />
     <Compile Include="Tasks\DoubleWriteTests.cs" />
     <Compile Include="Tasks\GetBuildOutputsTests.cs" />
+    <Compile Include="Tasks\ReadAssemblyInfo\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tasks\SeedPackagePackingTest.cs" />
     <Compile Include="Tasks\CoberturaReportConverterTests.cs" />
     <Compile Include="Tasks\OrmMappingValidatorTests.cs" />
@@ -239,6 +245,10 @@
     <EmbeddedResource Include="Resources\BuildLogs\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <CustomToolNamespace>UnitTest.Build.BuildLogProcessor</CustomToolNamespace>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tasks\ReadAssemblyInfo\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="TextTemplateAnalysis\Resources.resx">

@@ -8,7 +8,7 @@ namespace Aderant.Build.Packaging {
     public sealed class ProductAssemblyContext : IPackageContext {
         private string productDirectory;
         private string rootDirectory;
-        public IEnumerable<ExpertModule> Modules { get; internal set; }
+        public IReadOnlyCollection<ExpertModule> Modules { get; internal set; }
 
         public string ProductDirectory {
             get { return productDirectory; }

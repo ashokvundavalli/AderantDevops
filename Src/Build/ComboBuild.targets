@@ -36,7 +36,10 @@
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
-    <BuildInfrastructureDirectory>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))))</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory)`))</BuildInfrastructureDirectory>
+    <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' != '' and !HasTrailingSlash('$(BuildInfrastructureDirectory)')">$(BuildInfrastructureDirectory)\</BuildInfrastructureDirectory>
+
     <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
     <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
     <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
@@ -76,13 +79,17 @@
 
 
   <Target Name="GrovelForExtensibilityFiles">
-     <!-- Work around https://github.com/Microsoft/msbuild/issues/2452 -->
+    <Message Text="Grovelling for extensibility files under: $(SolutionRoot)" />
+
+    <!-- Work around https://github.com/Microsoft/msbuild/issues/2452 -->
     <ItemGroup>
       <ExtensibilityFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'dir.props', SearchOption.AllDirectories))" />
     </ItemGroup>
 
     <ItemGroup>
-      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'Build\TFSBuild.proj', SearchOption.AllDirectories))" />
+      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'TFSBuild.proj', SearchOption.AllDirectories))"
+                          Exclude="$(SolutionRoot)TFSBuild.proj;
+                                   $(BuildInfrastructureDirectory)**\**" />
     </ItemGroup>
   </Target>
 
@@ -265,7 +272,6 @@
       <Output TaskParameter="ArtifactPaths" ItemName="LocalPackagePaths" />
     </GetArtifactPaths>
 
-    <Message Text="Artifact deployment paths:" />
     <Message Text="%(LocalPackagePaths.FullPath) -> %(DestinationSubDirectory)" />
 
     <!--
@@ -337,22 +343,27 @@
       <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
     </PropertyGroup>
 
-    <ItemGroup>
-      <DirectoriesToArchive Include="@(LocalPackagePaths)" Condition="'$([System.IO.Path]::GetFileName(%(LocalPackagePaths.FullPath)).StartsWith(&quot;~&quot;))' != 'true'"></DirectoriesToArchive>
-    </ItemGroup>
-
     <GenerateArchives
-      DirectoriesToArchive="@(DirectoriesToArchive)"
-      OutputArchives="@(DirectoriesToArchive -> '%(FullPath)\%(Filename)%(Extension).zip')"
+      DirectoriesToArchive="@(LocalPackagePaths)"
+      OutputArchives="@(LocalPackagePaths -> '%(FullPath)\%(Filename)%(Extension).zip')"
+      ExcludeFilter="~"
       CompressionLevel="$(CompressionLevel)">
-
       <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
     </GenerateArchives>
 
   </Target>
 
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;">
+  <Target Name="CleanBinariesBeforePackaging">
+    <ItemGroup>
+      <FilesToDelete Include="$(LocalExpertBinariesDirectory)**\*.srcsrv" />
+    </ItemGroup>
+
+    <Delete Files="@(FilesToDelete)" />
+  </Target>
+
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;CleanBinariesBeforePackaging">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
@@ -408,6 +419,8 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     <Error Condition="!Exists('%(ArtifactPaths.FullPath)')" Text="The path %(ArtifactPaths.FullPath) does not exist. This indicates a failure in artifact tracking." />
 
     <PropertyGroup>
+      <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
+
       <CopyToDropCommand>
         robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
         IF %ERRORLEVEL% LEQ 4 EXIT /B 0
@@ -417,9 +430,16 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     <Exec Command="$(CopyToDropCommand)"
           WorkingDirectory="$(ArtifactStagingDirectory)" />
 
-    <PowerShellScript ScriptBlock='Get-Content -LiteralPath "$(ArtifactStagingDirectory)CopyToDrop.log" | Write-Output' />
+    <CallTarget Targets="$(ShowCopyToDropTarget)" />
+    <OnError ExecuteTargets="$(ShowCopyToDropTarget)" />
 
   </Target>
+
+
+  <Target Name="ShowCopyToDropLog">
+    <PowerShellScript ScriptBlock='Get-Content -LiteralPath "$(ArtifactStagingDirectory)CopyToDrop.log" | Write-Output' />
+  </Target>
+
 
   <!--
     ==========================================================================================
@@ -592,29 +612,19 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     </PropertyGroup>
 
       <ItemGroup>
-        <TfvcExcludedModules Include="Administration.HubSetup;
+        <TfvcExcludedModules Include="Tests.Load;
                                       Applications.ExpertAssistant;
-                                      Applications.MatterCenterIntegration;
                                       Applications.TeamManager;
-                                      Libraries.CheckRequest;
-                                      Libraries.Entities.CashManagement;
-                                      Libraries.Entities.Employee;
-                                      Libraries.Entities.Firm;
                                       Libraries.Entities.Marketing;
-                                      Libraries.Entities.Parameters;
-                                      Libraries.Entities.Rates;
-                                      Libraries.Entities.Tax;
-                                      Libraries.Entities.Trust;
-                                      Services.Applications.EmployeeIntake;
-                                      Services.Audit;
+                                      Libraries.Entities.Employee;
                                       Services.Communication;
+                                      Services.Deployment;
+                                      Services.Integration;
+                                      Services.Audit;
                                       Services.Deployment;
                                       Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
-                                      Services.Query.Constants;
-                                      Services.Security;
-                                      Tests.Load;
                                       Workflow.CheckRequest;
                                       Workflow.FileOpening;
                                       Workflow.Integration.Samples;
@@ -623,8 +633,8 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       </ItemGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"
-      ContinueOnError="false"
-      IgnoreExitCode="false" />
+          ContinueOnError="false"
+          IgnoreExitCode="false" />
 
   </Target>
 
