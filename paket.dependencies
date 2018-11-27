@@ -7,6 +7,7 @@ nuget WindowsAPICodePack-Core
 nuget Microsoft.WindowsAPICodePack-Shell
 
 nuget Moq
+nuget System.Threading.Tasks.Extensions 4.3.0
 
 nuget Newtonsoft.Json ~> 10.0.0
 nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
