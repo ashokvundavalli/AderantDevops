@@ -636,6 +636,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Services.Query.Constants;
                                       Services.Security;
                                       Tests.Load;
+                                      Web.Expenses;
                                       Workflow.CheckRequest;
                                       Workflow.FileOpening;
                                       Workflow.Integration.Samples;
