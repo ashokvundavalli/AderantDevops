@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -121,7 +122,7 @@ namespace Aderant.Build.Tasks {
         }
 
         public WarningRatchetRequest CreateNewRequest(string teamProject, int buildId, string destinationBranchName) {
-            var build = client.GetBuildAsync(teamProject, buildId).Result;
+            var build = client.GetBuildAsync(teamProject, buildId, null, null, CancellationToken.None).Result;
 
             return new WarningRatchetRequest {
                 TeamProject = teamProject,

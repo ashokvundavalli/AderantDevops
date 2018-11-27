@@ -150,7 +150,7 @@ process {
         git-tfs.exe clone @parameters
     } finally {
         Restore-Branches -branches $branches -moduleName $moduleName
-    }
 
-    Pop-Location
+        Pop-Location
+    }
 }

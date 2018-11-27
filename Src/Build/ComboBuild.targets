@@ -612,19 +612,31 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     </PropertyGroup>
 
       <ItemGroup>
-        <TfvcExcludedModules Include="Tests.Load;
+        <TfvcExcludedModules Include="Administration.HubSetup;
                                       Applications.ExpertAssistant;
+                                      Applications.MatterCenterIntegration;
                                       Applications.TeamManager;
-                                      Libraries.Entities.Marketing;
+                                      Libraries.CheckRequest;
+                                      Libraries.Entities.CashManagement;
                                       Libraries.Entities.Employee;
-                                      Services.Communication;
-                                      Services.Deployment;
-                                      Services.Integration;
+                                      Libraries.Entities.Firm;
+                                      Libraries.Entities.Marketing;
+                                      Libraries.Entities.Parameters;
+                                      Libraries.Entities.Rates;
+                                      Libraries.Entities.Tax;
+                                      Libraries.Entities.Trust;
+                                      Services.Applications.EmployeeIntake;
+                                      Services.Applications.Rates;
                                       Services.Audit;
+                                      Services.Communication;
                                       Services.Deployment;
                                       Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
+                                      Services.Query.Constants;
+                                      Services.Security;
+                                      Tests.Load;
+                                      Web.Expenses;
                                       Workflow.CheckRequest;
                                       Workflow.FileOpening;
                                       Workflow.Integration.Samples;
