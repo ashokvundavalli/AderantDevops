@@ -78,7 +78,7 @@
       <HintPath>$(TeamFoundationReferencePath)\Microsoft.TeamFoundation.VersionControl.Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
+
   </ItemGroup>
 
 </Project>

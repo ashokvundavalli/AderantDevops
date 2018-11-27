@@ -1131,72 +1131,117 @@ if (-not (Get-Command task -ErrorAction SilentlyContinue)) {
     Set-Alias task Add-BuildTask
 }
 
+function AttachResolver() {
+    $global:probeDirectories = @(
+        $global:ToolsDirectory,
+        "$Env:AGENT_HOMEDIRECTORY\externals\vstshost",
+        "$Env:AGENT_HOMEDIRECTORY\externals\vstsom",
+        "$Env:AGENT_HOMEDIRECTORY\bin",
+        "$Env:VS140COMNTOOLS..\IDE\PrivateAssemblies")
+
+    $global:rebindMap = @{
+        "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+        "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
+    }
+
+    $global:OnAssemblyResolve = [System.ResolveEventHandler] {
+        param($sender, $e)
+        if ($e.Name -like "*resources*") {
+            return $null
+        }
+
+        Write-Host "Resolving $($e.Name)"
+
+        $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)
+        # Lookup if we are allowed to rebind this assembly
+        $newName = $global:rebindMap[$assemblyName.FullName]
+        if ($null -ne $newName) {
+            Write-Information "Rebinding $($assemblyName.FullName) -> $newName"
+            $assemblyName = [System.Reflection.AssemblyName]::new($newName)
+        }
+
+        $fileName = $e.Name.Split(",")[0]
+        $fileName = $fileName + ".dll"
+
+        foreach ($dir in $global:probeDirectories) {
+            $fullFilePath = "$dir\$fileName"
+
+            Write-Debug "Probing: $fullFilePath"
+
+            if (Test-Path ($fullFilePath)) {
+                Write-Debug "File exists: $fullFilePath"
+
+                try {
+                    $name = [System.Reflection.AssemblyName]::GetAssemblyName($fullFilePath)
+
+                    if ($name.FullName -eq $assemblyName.FullName) {
+                        $asm = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
+                        Write-Debug "Loaded dependency: $($asm.Location) $($asm.FullName)"
+                        return $asm
+                    } else {
+                        Write-Debug "Not loading assembly. Name mismatch $($name.FullName) != $($assemblyName.FullName)"
+                    }
+                } catch {
+                    Write-Error "Failed to load $fullFilePath. $_.Exception"
+                }
+            }
+        }
+
+        Write-Host "Cannot locate $($e.Name). The build will probably fail now."
+        return $null
+    }
+
+    [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
+}
+
+function GetVssConnection() {
+    try {
+        Write-Host "Creating VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
+
+         $property = [Microsoft.TeamFoundation.DistributedTask.Task.TestResults.InvokeResultPublisherCmdlet].GetProperty("Connection")
+         $constructorInfo = $property.PropertyType.GetConstructors()[0]
+         $parameters = $constructorInfo.GetParameters()
+         $uri = [System.Uri]::new("http://tfs:8080/tfs")
+         $instance = [System.Activator]::CreateInstance($parameters[1].ParameterType)
+         $invoke = $constructorInfo.Invoke(@($uri, $instance))
+
+         return $invoke
+    } catch {
+        Write-Error "Failed to create VSS connection to: $($Env:SYSTEM_TEAMFOUNDATIONSERVERURI)"
+        throw $_
+    }
+}
+
+function LoadAgentSdk() {
+    # PowerShell has it's own assembly resolver and assembly cache.
+    # That cache is populated by binary modules so to ensure it doesn't interrer with us we need to load our types into this
+    # app domain first, then load the assembly as a binary module
+	[void][System.Reflection.Assembly]::Load("Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed")
+
+    $assembly = [System.Reflection.Assembly]::Load("Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK, Version=16.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
+
+    # Ensure the VSS connection can be created as this thing is a nightmare of dependency hell.
+    # All of the libraries involved depend on different version of System.Net.Http.Formatting and Newtonsoft.Json
+    GetVssConnection
+
+    Import-Module -Assembly $assembly
+}
+
 task Init {
-    CompileBuildLibraryAssembly "$PSScriptRoot"
-    LoadLibraryAssembly "$PSScriptRoot"
+    CompileBuildLibraryAssembly "$Env:EXPERT_BUILD_DIRECTORY\Build\"
+    LoadLibraryAssembly "$Env:EXPERT_BUILD_DIRECTORY\Build\"
 
     Write-Info "Build tree"
     .\Show-BuildTree.ps1 -File $PSCommandPath
 
-    $global:ToolsDirectory = "$PSScriptRoot\..\Build.Tools"
+    Write-Info ("Build Uri:".PadRight(20) + $Env:BUILD_BUILDURI)
+    Write-Info ("Is Desktop Build:".PadRight(20) + $IsDesktopBuild)
 
-    if ($global:IsDesktopBuild -ne $true) {
-        # hoho, fucking hilarious
-        # For some reason we cannot load Microsoft assemblies as we get an exception
-        # "Could not load file or assembly 'Microsoft.TeamFoundation.TestManagement.WebApi, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. Strong name validation failed. (Exception from HRESULT: 0x8013141A)
-        # so to work around this we just disable strong-name validation....
+    if (-not $IsDesktopBuild) {
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 
-        $global:OnAssemblyResolve = [System.ResolveEventHandler] {
-            param($sender, $e)
-            if ($e.Name -like "*resources*") {
-                return $null
-            }
-
-            Write-Host "Resolving $($e.Name)"
-
-            $fileName = $e.Name.Split(",")[0]
-            $fileName = $fileName + ".dll"
-
-            $probeDirectories = @($global:ToolsDirectory, "$Env:AGENT_HOMEDIRECTORY\externals\vstsom", "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", "$Env:AGENT_HOMEDIRECTORY\bin")
-            foreach ($dir in $probeDirectories) {
-                $fullFilePath = "$dir\$fileName"
-
-                Write-Debug "Probing: $fullFilePath"
-
-                if (Test-Path ($fullFilePath)) {
-                    Write-Debug "File exists: $fullFilePath"
-                    try {
-                        $a = [System.Reflection.Assembly]::LoadFrom($fullFilePath)
-                        Write-Debug "Loaded dependency: $fullFilePath"
-                        return $a
-                    } catch {
-                        Write-Error "Failed to load $fullFilePath. $_.Exception"
-                    }
-                } else {
-                    foreach($a in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
-                        if ($a.FullName -eq $e.Name) {
-                            Write-Debug "Found already loaded match: $a"
-                            return $a
-                        }
-                        if ([System.IO.Path]::GetFileName($a.Location) -eq $fileName) {
-                            Write-Debug "Found already loaded match: $a"
-                            return $a
-                        }
-                    }
-                }
-            }
-
-            Write-Host "Cannot locate $($e.Name). The build will probably fail now."
-            return $null
-        }
-
-        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
-
-        Import-Module "$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll"
-
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
+        AttachResolver
+        LoadAgentSdk
     }
 
     Write-Info "Established build environment"
