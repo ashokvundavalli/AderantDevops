@@ -1,3 +1,4 @@
+REFERENCES: STRICT
 FRAMEWORK: NET46, NET45
 NUGET
   remote: https://www.nuget.org/api/v2
