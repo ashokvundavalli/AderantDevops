@@ -232,7 +232,7 @@ function AttachResolver() {
         Write-Host "Resolving $($e.Name)"
 
         $assemblyName = [System.Reflection.AssemblyName]::new($e.Name)        
-            Lookup if we are allowed to rebind this assembly
+        # Lookup if we are allowed to rebind this assembly
         $newName = $global:rebindMap[$assemblyName.FullName]
         if ($null -ne $newName) {
             Write-Information "Rebinding $($assemblyName.FullName) -> $newName"
