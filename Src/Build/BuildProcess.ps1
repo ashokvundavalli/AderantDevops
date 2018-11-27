@@ -224,13 +224,9 @@ function AttachResolver() {
         "$Env:AGENT_HOMEDIRECTORY\bin", 
         "$Env:VS140COMNTOOLS..\IDE\PrivateAssemblies")        
 
-    $global:rebindMap = @{
-        #System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.22.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+    $global:rebindMap = @{        
         "System.Net.Http.Primitives, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-        #"System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
-        
-        "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"                
-        #"Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
+        "Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
     } 
 
     $global:OnAssemblyResolve = [System.ResolveEventHandler] {
@@ -283,7 +279,10 @@ function AttachResolver() {
     [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
 }
 
-function LoadAgentSdk() {    
+function LoadAgentSdk() {
+    # PowerShell has it's own assembly resolver and assembly cache.
+    # That cache is populated by binary modules so to ensure it doesn't interrer with us we need to load our types into this
+    # app domain first, then load the assembly as a binary module
 	[void][System.Reflection.Assembly]::Load("Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed")
     
     $assembly = [System.Reflection.Assembly]::Load("Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK, Version=16.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
@@ -292,8 +291,7 @@ function LoadAgentSdk() {
     # All of the libraries involved depend on different version of System.Net.Http.Formatting and Newtonsoft.Json
     GetVssConnection
 
-    Import-Module -Assembly $assembly
-    WarningRatchet
+    Import-Module -Assembly $assembly    
 }
 
 #=================================================================================================
@@ -439,7 +437,7 @@ task Test {
 
 task Quality -If (-not $IsDesktopBuild) {
     if ($LimitBuildWarnings) {
-        WarningRatchet
+        #WarningRatchet
     }
 }
 
