@@ -207,6 +207,16 @@ function GetBuildFlavor() {
     return [string]$buildFlavor;
 }
 
+function LoadAgentSdk() {
+    $assembly = [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll")
+    Import-Module -Assembly $assembly
+
+    # Ensure the VSS connection can be created as this thing is a nightmare of dependency hell.
+    # All of the libraries involved depend on different version of System.Net.Http.Formatting and Newtonsoft.Json
+    GetVssConnection
+    WarningRatchet
+}
+
 #=================================================================================================
 # Synopsis: Performs a incremental build of the Visual Studio Solution if possible.
 # Applies a common build number, executes unit tests and packages the assemblies as a NuGet
@@ -450,16 +460,9 @@ task Init {
             return $null
         }        
 
-        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($OnAssemblyResolve)        
-
-                
-        $assembly = [System.Reflection.Assembly]::LoadFrom("$($env:AGENT_HOMEDIRECTORY)\externals\vstshost\Microsoft.TeamFoundation.DistributedTask.Task.LegacySDK.dll")
-        Import-Module -Assembly $assembly
-
-        # Ensure the VSS connection can be created as this thing is a nightmare of dependency hell. All of the libraries involved depend on different version of
-        # System.Net.Http.Formatting and Newtonsoft.Json
-        GetVssConnection
-        WarningRatchet
+        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($OnAssemblyResolve)
+        
+        LoadAgentSdk        
     }
 
     Write-Info "Established build environment"
