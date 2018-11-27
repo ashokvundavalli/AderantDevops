@@ -104,7 +104,12 @@ function WarningRatchet() {
     $isPullRequest = ![string]::IsNullOrEmpty($destinationBranch)
     if ($true) {
         Write-Host "Running warning ratchet for $destinationBranch"
-        Import-Module $global:ToolsDirectory\WarningRatchet.dll
+        
+        $assembly = [System.Reflection.Asssembly]::LoadFrom("$global:ToolsDirectory\WarningRatchet.dll")
+        Import-Module -Assembly $assembly
+
+        $destinationBranch = "master"
+
         $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID -DestinationBranchName $destinationBranch
 
         $lastGoodBuildWarningCount = $result.LastGoodBuildCount
