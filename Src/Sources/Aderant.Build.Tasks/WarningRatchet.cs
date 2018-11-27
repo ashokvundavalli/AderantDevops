@@ -122,20 +122,15 @@ namespace Aderant.Build.Tasks {
         }
 
         public WarningRatchetRequest CreateNewRequest(string teamProject, int buildId, string destinationBranchName) {
-            throw new Exception(client.GetType().Assembly.Location);
-            //try {
-            //    var build = client.GetBuildAsync(teamProject, buildId, null, null, CancellationToken.None).Result;
+            var build = client.GetBuildAsync(teamProject, buildId, null, null, CancellationToken.None).Result;
 
-            //    return new WarningRatchetRequest {
-            //        TeamProject = teamProject,
-            //        BuildId = buildId,
-            //        Build = build,
-            //        BuildDefinitionId = build.Definition.Id,
-            //        DestinationBranchName = destinationBranchName,
-            //    };
-            //} catch {
-               
-            //}
+            return new WarningRatchetRequest {
+                TeamProject = teamProject,
+                BuildId = buildId,
+                Build = build,
+                BuildDefinitionId = build.Definition.Id,
+                DestinationBranchName = destinationBranchName,
+            };
         }
     }
 }
