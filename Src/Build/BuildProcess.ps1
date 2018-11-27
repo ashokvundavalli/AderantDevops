@@ -102,7 +102,7 @@ function GetVssConnection() {
 function WarningRatchet() {
     $destinationBranch = $Env:SYSTEM_PULLREQUEST_TARGETBRANCH
     $isPullRequest = ![string]::IsNullOrEmpty($destinationBranch)
-    if ($isPullRequest) {
+    if ($true) {
         Write-Host "Running warning ratchet for $destinationBranch"
         Import-Module $global:ToolsDirectory\WarningRatchet.dll
         $result = Invoke-WarningRatchet -TeamFoundationServer $Env:SYSTEM_TEAMFOUNDATIONSERVERURI -TeamProject $Env:SYSTEM_TEAMPROJECT -BuildId $Env:BUILD_BUILDID -DestinationBranchName $destinationBranch
