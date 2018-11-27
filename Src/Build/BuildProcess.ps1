@@ -414,7 +414,7 @@ task Init {
                 #"Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed"
             }     
 
-        $OnAssemblyResolve = [System.ResolveEventHandler] {
+        $global:OnAssemblyResolve = [System.ResolveEventHandler] {
             param($sender, $e)
             if ($e.Name -like "*resources*") {
                 return $null
@@ -460,7 +460,7 @@ task Init {
             return $null
         }        
 
-        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($OnAssemblyResolve)
+        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($global:OnAssemblyResolve)
         
         LoadAgentSdk        
     }
