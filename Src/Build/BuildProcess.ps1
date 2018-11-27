@@ -389,9 +389,6 @@ task Init {
     if (-not $IsDesktopBuild) {        
         cmd /c "`"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\x64\sn.exe`" -Vr *,b03f5f7f11d50a3a"
 
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.WebApi.dll")
-        [System.Void][System.Reflection.Assembly]::LoadFrom("$global:ToolsDirectory\Microsoft.VisualStudio.Services.Common.dll")
-
         $global:probeDirectories = @(
             $global:ToolsDirectory, 
             "$Env:AGENT_HOMEDIRECTORY\externals\vstshost", 
