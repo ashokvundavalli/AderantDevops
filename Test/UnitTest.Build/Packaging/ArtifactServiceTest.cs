@@ -78,7 +78,8 @@ namespace UnitTest.Build.Packaging {
                 new[] {
                     new BuildArtifact {
                         Name = "SomeOtherArtifact",
-                        SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff"
+                        SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff",
+                        SendToArtifactCache = true
                     }
                 });
 
@@ -115,8 +116,8 @@ namespace UnitTest.Build.Packaging {
             var mock = new Mock<IBuildPipelineService>();
             mock.Setup(s => s.GetAssociatedArtifacts()).Returns(
                 new[] {
-                    new BuildArtifact { Name = "~A", SourcePath = @"C:\Foo\_artifacts\~A" },
-                    new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff" },
+                    new BuildArtifact { Name = "~A", SourcePath = @"C:\Foo\_artifacts\~A", SendToArtifactCache =  true},
+                    new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff", SendToArtifactCache = true},
                 });
 
             var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);

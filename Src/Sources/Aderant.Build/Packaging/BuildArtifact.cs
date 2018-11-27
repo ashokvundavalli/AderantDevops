@@ -39,7 +39,7 @@ namespace Aderant.Build.Packaging {
         public bool IsInternalDevelopmentPackage { get; set; }
 
         [DataMember]
-        public bool SendToArtifactCache { get; set; } = true;
+        public bool SendToArtifactCache { get; set; }
 
         [IgnoreDataMember]
         [ProtoIgnore]
