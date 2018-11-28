@@ -120,8 +120,7 @@
     <RetrieveArtifacts
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
-      WorkingDirectory="$(ModuleBuildTempDirectory)"
-      Container="$(ModuleName)" />
+      WorkingDirectory="$(ModuleBuildTempDirectory)" />
 
     <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
       ProductManifest="$(ProductManifestPath)"

@@ -233,9 +233,9 @@ namespace Aderant.Build.Packaging {
         /// <summary>
         /// Fetches prebuilt objects
         /// </summary>
-        public void Resolve(BuildOperationContext context, string container, string solutionRoot, string workingDirectory) {
-            var paths = BuildArtifactResolveOperation(context, container, workingDirectory);
-            RunResolveOperation(context, solutionRoot, container, paths);
+        public void Resolve(BuildOperationContext context, string containerKey, string solutionRoot, string workingDirectory) {
+            var paths = BuildArtifactResolveOperation(context, containerKey, workingDirectory);
+            RunResolveOperation(context, solutionRoot, containerKey, paths);
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
@@ -292,17 +292,24 @@ namespace Aderant.Build.Packaging {
             return bulkCopy;
         }
 
-        private List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string container, string workingDirectory) {
+        internal List<ArtifactPathSpec> BuildArtifactResolveOperation(BuildOperationContext context, string containerKey, string workingDirectory) {
             var result = new ArtifactResolveOperation();
 
             List<ArtifactPathSpec> paths = new List<ArtifactPathSpec>();
             result.Paths = paths;
 
             if (context.StateFiles != null) {
-                BuildStateFile stateFile = context.GetStateFile(container);
+                BuildStateFile stateFile = context.GetStateFile(containerKey);
 
                 ICollection<ArtifactManifest> artifactManifests;
-                if (stateFile != null && stateFile.Artifacts.TryGetValue(container, out artifactManifests)) {
+
+                if (stateFile != null) {
+                    if (!string.Equals(stateFile.BucketId.Tag, containerKey, StringComparison.OrdinalIgnoreCase)) {
+                        throw new InvalidOperationException($"Unexpected state file returned. Expected {containerKey} but found {stateFile.BucketId.Tag}");
+                    }
+                }
+
+                if (stateFile != null && stateFile.GetArtifacts(containerKey, out artifactManifests)) {
                     foreach (var artifactManifest in artifactManifests) {
                         string artifactFolder = Path.Combine(stateFile.Location, artifactManifest.Id);
 

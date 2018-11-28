@@ -97,5 +97,15 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 PrepareForSerialization();
             }
         }
+
+        internal bool GetArtifacts(string containerKey, out ICollection<ArtifactManifest> artifactManifests) {
+            return Artifacts.TryGetValue(containerKey, out artifactManifests);
+        }
+
+        //public void AddArtifact(string s) {
+        //    if (artifacts == null) {
+        //        artifacts = new ArtifactCollection();
+        //    }
+        //}
     }
 }

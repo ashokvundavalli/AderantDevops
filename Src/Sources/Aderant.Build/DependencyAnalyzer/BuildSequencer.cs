@@ -127,12 +127,9 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private void FindStateFiles(BuildOperationContext context) {
             var files = GetBuildStateFile(context);
-            if (files != null) {
-                this.stateFiles = context.StateFiles = files;
 
-                foreach (var file in stateFiles) {
-                    logger.Info($"Selected state file: {file.Id}:{file.Location}:{file.BucketId.Tag}");
-                }
+            if (files != null) {
+                stateFiles = context.StateFiles = files;
             }
         }
 
@@ -140,7 +137,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             List<BuildStateFile> files = new List<BuildStateFile>();
 
             // Here we select an appropriate tree to reuse
-            // TODO: This needs way more validation
             var buildStateMetadata = context.BuildStateMetadata;
 
             if (buildStateMetadata != null && context.SourceTreeMetadata != null) {
@@ -157,7 +153,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
 
                         if (stateFile != null) {
-                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}.");
+                            logger.Info($"Using state file: {stateFile.Id} -> {stateFile.BuildId} -> {stateFile.Location}:{stateFile.BucketId.Tag}.");
                             files.Add(stateFile);
                         }
                     }

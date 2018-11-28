@@ -8,6 +8,7 @@ using Aderant.Build.Packaging;
 using Aderant.Build.Packaging.Handlers;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Aderant.Build.VersionControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -71,6 +72,37 @@ namespace UnitTest.Build.Packaging {
             Assert.IsTrue(Path.IsPathRooted(result[0].Destination));
         }
 
+        //[TestMethod]
+        //public void BuildArtifactResolveOperation_returns_paths_from_artifact() {
+        //    var state = new BuildStateFile();
+        //    state.Outputs = new ProjectTreeOutputSnapshot();
+        //    state.Outputs["Foo\\Bar.cspoj"] = new ProjectOutputSnapshot {
+        //        FilesWritten = new string[] {
+        //            @"..\..\bin\foo.dll"
+        //        },
+        //        OutputPath = @"..\..\bin\"
+        //    };
+
+        //    var fsMock = new Mock<IFileSystem>();
+        //    fsMock.Setup(s => s.FileExists(It.IsAny<string>())).Returns(true);
+
+        //    var stateFile = new BuildStateFile();
+        //    stateFile.BucketId = new BucketId(Path.GetRandomFileName(), "a");
+        //    stateFile.AddArtifact("a");
+
+        //    var context = new BuildOperationContext {
+        //        StateFiles = new List<BuildStateFile> {
+
+
+        //        }
+        //    };
+
+        //    var artifactService = new ArtifactService(null, fsMock.Object, NullLogger.Default);
+        //    List<ArtifactPathSpec> paths = artifactService.BuildArtifactResolveOperation(context, "a", "bar");
+
+        //    Assert.AreEqual(1, paths.Count);
+        //}
+
         [TestMethod]
         public void CreateLinkCommands() {
             var mock = new Mock<IBuildPipelineService>();
@@ -116,8 +148,8 @@ namespace UnitTest.Build.Packaging {
             var mock = new Mock<IBuildPipelineService>();
             mock.Setup(s => s.GetAssociatedArtifacts()).Returns(
                 new[] {
-                    new BuildArtifact { Name = "~A", SourcePath = @"C:\Foo\_artifacts\~A", SendToArtifactCache =  true},
-                    new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff", SendToArtifactCache = true},
+                    new BuildArtifact { Name = "~A", SourcePath = @"C:\Foo\_artifacts\~A", SendToArtifactCache = true },
+                    new BuildArtifact { Name = "SomeOtherArtifact", SourcePath = @"C:\Foo\_artifacts\SomeOtherArtifactOnDisk\Stuff", SendToArtifactCache = true },
                 });
 
             var artifactService = new ArtifactService(mock.Object, new Mock<IFileSystem>().Object, NullLogger.Default);
