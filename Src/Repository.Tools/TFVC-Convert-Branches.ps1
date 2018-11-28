@@ -44,7 +44,7 @@ begin {
                 }
             }
         }
-    
+
         foreach ($branch in $branches) {
             try {
                 Write-Output 'Y' | TFPT.EXE branches /convertToBranch "$/ExpertSuite/$branch/Modules" /recursive /collection:$tfsUrl
@@ -76,7 +76,7 @@ process {
         foreach ($branch in $rootBranches) {
             Write-Output "`t$branch"
         }
-        
+
         exit 0
     }
 
@@ -102,6 +102,7 @@ process {
 
     if ($restoreBranches.IsPresent) {
         Restore-Branches -branches $branches -moduleName $moduleName
+        Restore-Branches -branches $deletedBranches -moduleName $moduleName
         exit 0
     }
 
@@ -150,6 +151,7 @@ process {
         git-tfs.exe clone @parameters
     } finally {
         Restore-Branches -branches $branches -moduleName $moduleName
+        Restore-Branches -branches $deletedBranches -moduleName $moduleName
 
         Pop-Location
     }
