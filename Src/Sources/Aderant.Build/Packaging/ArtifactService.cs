@@ -207,6 +207,8 @@ namespace Aderant.Build.Packaging {
                 return null;
             }
 
+            logger.Info($"Artifact {container} will be sent to the cache: {sendToArtifactCache}");
+
             string artifactPath = Path.Combine(basePath, definition.Id);
 
             foreach (PathSpec pathSpec in files) {
