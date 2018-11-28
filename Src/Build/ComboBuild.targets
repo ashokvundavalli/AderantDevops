@@ -40,9 +40,9 @@
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory)`))</BuildInfrastructureDirectory>
     <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' != '' and !HasTrailingSlash('$(BuildInfrastructureDirectory)')">$(BuildInfrastructureDirectory)\</BuildInfrastructureDirectory>
 
-    <PackageScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Package\</PackageScriptsDirectory>
-    <BuildScriptsDirectory>$(BuildInfrastructureDirectory)\Src\Build\</BuildScriptsDirectory>
-    <BuildToolsDirectory>$(BuildInfrastructureDirectory)\Src\Build.Tools\</BuildToolsDirectory>
+    <PackageScriptsDirectory>$(BuildInfrastructureDirectory)Src\Package\</PackageScriptsDirectory>
+    <BuildScriptsDirectory>$(BuildInfrastructureDirectory)Src\Build\</BuildScriptsDirectory>
+    <BuildToolsDirectory>$(BuildInfrastructureDirectory)Src\Build.Tools\</BuildToolsDirectory>
 
     <!-- Defines the dynamic project file which contains all projects within this build -->
     <BuildPlan Condition="'$(BuildPlan)' == ''">$(SolutionRoot)BuildPlan.proj</BuildPlan>
@@ -355,12 +355,6 @@
 
 
   <Target Name="CleanBinariesBeforePackaging">
-    <ItemGroup>
-      <FilesToDelete Include="$(LocalExpertBinariesDirectory)**\*.srcsrv;
-                              $(LocalExpertBinariesDirectory)**\*.lic;" />
-    </ItemGroup>
-
-    <Delete Files="@(FilesToDelete)" />
   </Target>
 
   <PropertyGroup>
@@ -377,7 +371,7 @@
   <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="$(PackageProductDependsOn)">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" -xr@"$(PackageScriptsDirectory)PackageExclusionListFile.txt"' />
 
     <PropertyGroup>
       <CreateArchiveHashScript>
