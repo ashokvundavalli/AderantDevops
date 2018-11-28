@@ -356,14 +356,25 @@
 
   <Target Name="CleanBinariesBeforePackaging">
     <ItemGroup>
-      <FilesToDelete Include="$(LocalExpertBinariesDirectory)**\*.srcsrv" />
+      <FilesToDelete Include="$(LocalExpertBinariesDirectory)**\*.srcsrv;
+                              $(LocalExpertBinariesDirectory)**\*.lic;" />
     </ItemGroup>
 
     <Delete Files="@(FilesToDelete)" />
   </Target>
 
+  <PropertyGroup>
+    <PackageProductDependsOn>
+      GetFilesForPackage;
+      GetProduct;
+      GenerateFactory;
+      ArchiveArtifacts;
+      CleanBinariesBeforePackaging
+    </PackageProductDependsOn>
+  </PropertyGroup>
 
-  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="GetFilesForPackage;GetProduct;GenerateFactory;ArchiveArtifacts;CleanBinariesBeforePackaging">
+
+  <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="$(PackageProductDependsOn)">
 
     <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*"' />
