@@ -320,6 +320,7 @@
                  $(LocalExpertBinariesDirectory)**\*.SetParameters.*;
                  $(LocalExpertBinariesDirectory)**\*.BuildInfo.config;
                  $(LocalExpertBinariesDirectory)**\*.srcsrv;
+                 $(LocalExpertBinariesDirectory)**\*.lic;
                  $(LocalExpertBinariesDirectory)**\DropFolderBuildNumbers.txt;" />
 
       <!-- Group of the roles shared between expert and elite -->
