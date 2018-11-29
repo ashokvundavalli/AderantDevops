@@ -17,7 +17,7 @@ function global:Install-PoshGit() {
     [CmdletBinding()]
     param(
         [Aderant.Build.BuildOperationContext]       
-        $Context = (Get-BuildContext)
+        $Context = (Get-BuildContext -CreateIfNeeded)
     )
 
     if (-not [System.Environment]::Is64BitProcess) {
