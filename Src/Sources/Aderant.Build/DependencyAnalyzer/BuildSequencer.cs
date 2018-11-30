@@ -76,11 +76,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (PipelineService != null) {
                         PipelineService.TrackProject(
-                            new TrackedProject {
+                            new OnDiskProjectInfo {
                                 ProjectGuid = configuredProject.ProjectGuid,
                                 SolutionRoot = configuredProject.SolutionRoot,
                                 FullPath = configuredProject.FullPath,
                                 OutputPath = configuredProject.OutputPath,
+                                IsWebProject = configuredProject.IsWebProject,
                             });
                     }
                 }
@@ -112,12 +113,12 @@ namespace Aderant.Build.DependencyAnalyzer {
             if (context.SourceTreeMetadata?.Changes != null) {
                 IEnumerable<SourceChange> changes = context.SourceTreeMetadata.Changes;
 
-                foreach (var deletedFile in changes) {
-                    if (deletedFile.Status == FileStatus.Deleted && deletedFile.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+                foreach (var sourceChange in changes) {
+                    if (sourceChange.Status == FileStatus.Deleted) {
 
                         foreach (var file in stateFiles) {
-                            if (file.Outputs.ContainsKey(deletedFile.Path)) {
-                                file.Outputs.Remove(deletedFile.Path);
+                            if (file.Outputs.ContainsKey(sourceChange.Path)) {
+                                file.Outputs.Remove(sourceChange.Path);
                             }
                         }
                     }
@@ -362,9 +363,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
+            ApplyQuirkFixes(projects);
+
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
-
 
             HashSet<string> h = new HashSet<string>();
             h.UnionWith(dirtyProjects);
@@ -388,6 +390,14 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return filteredProjects;
+        }
+
+        private void ApplyQuirkFixes(List<ConfiguredProject> projects) {
+            foreach (var project in projects) {
+                if (project.IsWebProject) {
+                    project.IsDirty = true;
+                }
+            }
         }
 
         private static bool IncludeProject(bool desktopBuild, IDependable x) {
