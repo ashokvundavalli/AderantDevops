@@ -52,6 +52,9 @@ function CreateRunSettingsXml() {
         $referencePathList.Insert(0, [System.IO.Path]::Combine($SolutionRoot, "Bin", "Module"))
     }
 
+    # VS SDK
+    $referencePathList.Add("$Env:VSSDK140Install" + "VisualStudioIntegration\Common\Assemblies\v4.0")
+
     foreach ($path in $referencePathList) {
         $directoryElement = $xml.CreateElement("Directory")
         $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
