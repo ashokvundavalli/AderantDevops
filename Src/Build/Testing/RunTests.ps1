@@ -149,6 +149,7 @@ $startInfo.FileName = '"' + $PathToTestTool + '"'
 $startInfo.Arguments = "$ToolArgs $TestAssemblies"
 $startInfo.WorkingDirectory = $WorkingDirectory
 $startInfo.Environment["EXPERT_MODULE_DIRECTORY"] = $SolutionRoot
+$startInfo.Environment["BUILD_SOLUTION_ROOT"] = $SolutionRoot
 
 $global:LASTEXITCODE = 0
 $runSettingsFile = ""

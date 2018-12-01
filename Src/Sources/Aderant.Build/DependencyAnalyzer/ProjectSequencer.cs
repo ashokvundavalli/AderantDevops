@@ -355,6 +355,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// downstream projects, or none?
         /// </param>
         internal IReadOnlyCollection<IDependable> GetProjectsBuildList(IReadOnlyCollection<IDependable> visualStudioProjects, OrchestrationFiles orchestrationFiles, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
+            logger.Info("ChangesToConsider:" + changesToConsider);
+            logger.Info("DependencyRelationshipProcessing:" + dependencyProcessing);
+
             var projects = visualStudioProjects.OfType<ConfiguredProject>().ToList();
 
             if (orchestrationFiles != null) {
@@ -368,7 +371,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
 
-            HashSet<string> h = new HashSet<string>();
+            HashSet<string> h = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             h.UnionWith(dirtyProjects);
 
             // According to DownStream option, either mark the directly affected or all the recursively affected downstream projects as dirty.
@@ -472,8 +475,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             foreach (var x in p) {
                 ConfiguredProject project = x as ConfiguredProject;
                 if (project != null) {
-                    project.IsDirty = true;
-                    project.SetReason(BuildReasonTypes.DependencyChanged);
+                    MarkDirty("", project, BuildReasonTypes.DependencyChanged);
                 }
             }
 
