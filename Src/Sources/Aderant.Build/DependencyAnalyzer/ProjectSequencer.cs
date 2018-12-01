@@ -366,7 +366,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            ApplyQuirkFixes(projects);
+            //ApplyQuirkFixes(projects);
 
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
