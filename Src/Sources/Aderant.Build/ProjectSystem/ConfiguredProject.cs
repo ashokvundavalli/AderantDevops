@@ -15,6 +15,7 @@ using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {
+
     /// <summary>
     /// A project that has been scanned, configured and accepted by the build.
     /// </summary>
@@ -29,7 +30,6 @@ namespace Aderant.Build.ProjectSystem {
 
         private Lazy<Project> project;
         private Memoizer<ConfiguredProject, Guid> projectGuid;
-        private Lazy<ProjectRootElement> projectXml;
         private List<IResolvedDependency> textTemplateDependencies;
 
         [ImportingConstructor]
@@ -82,11 +82,12 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
-        public bool IsWebProject {
+        public virtual bool IsWebProject {
             get { return isWebProject.Evaluate(this); }
+            set { isWebProject = value ? Memoizer<ConfiguredProject>.True : Memoizer<ConfiguredProject>.False; }
         }
 
-        public bool IsTestProject {
+        public virtual bool IsTestProject {
             get {
                 var guids = ProjectTypeGuids;
                 if (guids != null) {
@@ -157,16 +158,8 @@ namespace Aderant.Build.ProjectSystem {
 
         public void Initialize(Lazy<ProjectRootElement> projectElement, string fullPath) {
             FullPath = fullPath;
-            projectXml = projectElement;
 
-            project = new Lazy<Project>(
-                () => {
-                    IDictionary<string, string> globalProperties = new Dictionary<string, string> {
-                        { "WebDependencyVersion", "-1" }
-                    };
-
-                    return new Project(projectXml.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
-                });
+            project = InitializeProject(projectElement);
 
             extractTypeGuids = new Memoizer<ConfiguredProject, IReadOnlyList<Guid>>(
                 configuredProject => {
@@ -174,25 +167,21 @@ namespace Aderant.Build.ProjectSystem {
 
                     if (!string.IsNullOrEmpty(propertyElement)) {
                         var guids = propertyElement.Split(';');
-                        var guidList = new List<Guid>();
 
-                        guids.Aggregate(
-                            guidList,
-                            (list, s) => {
-                                Guid result;
-                                if (Guid.TryParse(s, out result)) {
-                                    list.Add(result);
-                                }
+                        List<Guid> guidList = new List<Guid>();
 
-                                return list;
-                            });
+                        foreach (var guidString in guids) {
+                            Guid result;
+                            if (Guid.TryParse(guidString, out result)) {
+                                guidList.Add(result);
+                            }
+                        }
 
                         return guidList;
                     }
 
                     return new Guid[0];
-                },
-                EqualityComparer<object>.Default);
+                });
 
             isWebProject = new Memoizer<ConfiguredProject, bool>(
                 configuredProject => {
@@ -203,8 +192,7 @@ namespace Aderant.Build.ProjectSystem {
                     }
 
                     return false;
-                },
-                EqualityComparer<object>.Default);
+                });
 
             projectGuid = new Memoizer<ConfiguredProject, Guid>(
                 configuredProject => {
@@ -219,8 +207,18 @@ namespace Aderant.Build.ProjectSystem {
                     }
 
                     return Guid.Empty;
-                },
-                EqualityComparer<object>.Default);
+                });
+        }
+
+        protected virtual Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
+            return new Lazy<Project>(
+                () => {
+                    IDictionary<string, string> globalProperties = new Dictionary<string, string> {
+                        { "WebDependencyVersion", "-1" }
+                    };
+
+                    return new Project(projectElement.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);
+                });
         }
 
         private static ProjectCollection CreateProjectCollection() {

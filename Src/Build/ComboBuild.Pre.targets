@@ -106,9 +106,11 @@
     <Error Condition="'$(CustomAfterMicrosoftCommonTargets)' == '' And '$(IsCustomBuild)' != 'true'" Text="No custom Microsoft common targets file set." />
   </Target>
 
+
   <Target Name="BeforeRetrievePrebuilts" BeforeTargets="RetrievePrebuilts" Condition="Exists('$(SolutionDirectoryPath)link.lock')">
       <Message Text="link.lock exists in $(SolutionDirectoryPath). No server artifacts will be retrieved." Importance="high" />
   </Target>
+
 
   <Target Name="RetrievePrebuilts" Condition="'$(RetrievePrebuilts)' != 'false' And !Exists('$(SolutionDirectoryPath)link.lock')">
     <Message Text="$(ModuleName): Restoring objects from build cache" />
@@ -120,9 +122,10 @@
     <RetrieveArtifacts
       ContextEndpoint="$(ContextEndpoint)"
       SolutionRoot="$(SolutionRoot)"
-      WorkingDirectory="$(ModuleBuildTempDirectory)" />
+      WorkingDirectory="$(ModuleBuildTempDirectory)"
+      CommonOutputDirectory="$(BinModuleDirectory)" />
 
-    <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true'"
+    <GetDependencies Condition="'$(UseSharedDependencyDirectory)' != 'true' And '$(NoDependencyFetch)' != 'true'"
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       ModuleName="$(SolutionRoot)"
@@ -130,6 +133,7 @@
       DropPath="$(XamlBuildDropLocation)" />
 
   </Target>
+
 
   <Target Name="DeployPerDirectoryFiles" Condition="'$(SolutionRoot)' != ''">
 
@@ -154,6 +158,7 @@
       SkipUnchangedFiles="true" />
 
   </Target>
+
 
   <!--
     ==========================================================================================

@@ -193,7 +193,7 @@ namespace IntegrationTest.Build.EndToEnd {
             }
 
             service = new BuildPipelineServiceHost();
-            service.StartListener(endpoint);
+            service.StartService(endpoint);
         }
 
         public BuildOperationContext GetContext() {

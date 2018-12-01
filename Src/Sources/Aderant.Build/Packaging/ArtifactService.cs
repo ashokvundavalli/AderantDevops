@@ -34,6 +34,8 @@ namespace Aderant.Build.Packaging {
             this.fileSystem = fileSystem;
         }
 
+        public string CommonOutputDirectory { get; set; }
+
         /// <summary>
         /// Publishes build artifacts to some kind of repository.
         /// </summary>
@@ -357,7 +359,7 @@ namespace Aderant.Build.Packaging {
             return pathSpecs.Select(s => s.Destination);
         }
 
-        internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string container, IEnumerable<string> artifacts) {
+        internal IList<PathSpec> CalculateFilesToRestore(BuildStateFile stateFile, string solutionRoot, string containerKey, IEnumerable<string> artifacts) {
             var localArtifactFiles = artifacts.Select(path => new LocalArtifactFile(Path.GetFileName(path), path)).ToList();
 
             List<PathSpec> copyOperations = new List<PathSpec>();
@@ -366,105 +368,11 @@ namespace Aderant.Build.Packaging {
                 return copyOperations;
             }
 
-            var projectOutputs = stateFile.Outputs.Where(o => string.Equals(o.Value.Directory, container, StringComparison.OrdinalIgnoreCase)).ToList();
+            var fileRestore = new FileRestore(localArtifactFiles, pipelineService, fileSystem, logger);
+            fileRestore.CommonOutputDirectory = CommonOutputDirectory;
 
-            HashSet<string> destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            LocalArtifactFileComparer localArtifactComparer = new LocalArtifactFileComparer();
-
-            foreach (var project in projectOutputs) {
-                ErrorUtilities.IsNotNull(project.Value.OutputPath, nameof(project.Value.OutputPath));
-
-                string projectFile = project.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-
-                // Adjust the source relative path to a solution relative path
-                string localProjectFile = Path.Combine(solutionRoot, projectFile);
-                var directoryOfProject = Path.GetDirectoryName(localProjectFile);
-
-                if (fileSystem.FileExists(localProjectFile)) {
-                    logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
-
-                    foreach (var outputItem in project.Value.FilesWritten) {
-                        // Retain the relative path of the build artifact.
-                        string filePath = outputItem.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
-
-                        // Use relative path for comparison.
-                        List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
-
-                        if (localSourceFiles.Count == 0) {
-                            continue;
-                        }
-
-                        List<LocalArtifactFile> distinctLocalSourceFiles = localSourceFiles.Distinct(localArtifactComparer).ToList();
-
-                        // There can be only one.
-                        LocalArtifactFile selectedArtifact = distinctLocalSourceFiles.First();
-
-                        if (localSourceFiles.Count > distinctLocalSourceFiles.Count) {
-                            // Log duplicates.
-                            IEnumerable<LocalArtifactFile> duplicateArtifacts = localSourceFiles.GroupBy(x => x, localArtifactComparer).Where(group => group.Count() > 1).Select(group => group.Key);
-
-                            string duplicates = string.Join(Environment.NewLine, duplicateArtifacts);
-                            logger.Error($"File {filePath} exists in more than one artifact." + Environment.NewLine + duplicates);
-                        }
-
-                        string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
-
-                        if (destinationPaths.Add(destination)) {
-                            logger.Info($"Selected artifact: {selectedArtifact.FullPath}");
-                            copyOperations.Add(new PathSpec(selectedArtifact.FullPath, destination));
-                        } else {
-                            logger.Warning("Double write for file: " + destination);
-                        }
-                    }
-                } else {
-                    throw new FileNotFoundException($"The file {localProjectFile} does not exist or cannot be accessed.", localProjectFile);
-                }
-
-            }
-
-            return copyOperations;
-        }
-
-        [DebuggerDisplay("FileName: {FileName} FullPath: {FullPath}")]
-        private class LocalArtifactFile {
-            public string FileName { get; set; }
-            public string FullPath { get; set; }
-
-            public LocalArtifactFile(string fileName, string fullPath) {
-                if (string.IsNullOrWhiteSpace(fileName)) {
-                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(fileName));
-                }
-
-                if (string.IsNullOrWhiteSpace(fullPath)) {
-                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(fullPath));
-                }
-
-                FileName = fileName;
-                FullPath = fullPath;
-            }
-
-            public override int GetHashCode() {
-                return StringComparer.OrdinalIgnoreCase.GetHashCode(FullPath);
-            }
-        }
-
-        private class LocalArtifactFileComparer : IEqualityComparer<LocalArtifactFile> {
-            public bool Equals(LocalArtifactFile x, LocalArtifactFile y) {
-                if (x == null) {
-                    throw new ArgumentNullException(nameof(x));
-                }
-
-                if (y == null) {
-                    throw new ArgumentNullException(nameof(y));
-                }
-
-                return string.Equals(x.FullPath, y.FullPath, StringComparison.OrdinalIgnoreCase);
-            }
-
-            public int GetHashCode(LocalArtifactFile obj) {
-                return obj.GetHashCode();
-            }
+            fileRestore.DetermineAdditionalRestorePaths(stateFile);
+            return fileRestore.BuildRestoreOperations(solutionRoot, containerKey, stateFile);
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
@@ -507,10 +415,10 @@ namespace Aderant.Build.Packaging {
 
                                 string reason;
                                 if (IsFileTrustworthy(file, out reason)) {
-                                    logger.Info($"Candidate-> {stateFile}");
+                                    logger.Info($"Candidate-> {stateFile}:{reason}");
                                     files.Add(file);
                                 } else {
-                                    logger.Info($"Rejected-> {stateFile}");
+                                    logger.Info($"Rejected-> {stateFile}:{reason}");
                                 }
 
                             }
@@ -646,6 +554,29 @@ namespace Aderant.Build.Packaging {
 
                 artifact.StoragePath = artifact.CreateStoragePath(builder.StagingDirectory, destinationRootPath);
             }
+        }
+    }
+
+    [DebuggerDisplay("FileName: {FileName} FullPath: {FullPath}")]
+    internal class LocalArtifactFile {
+        public string FileName { get; set; }
+        public string FullPath { get; set; }
+
+        public LocalArtifactFile(string fileName, string fullPath) {
+            if (string.IsNullOrWhiteSpace(fileName)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(fileName));
+            }
+
+            if (string.IsNullOrWhiteSpace(fullPath)) {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(fullPath));
+            }
+
+            FileName = fileName;
+            FullPath = fullPath;
+        }
+
+        public override int GetHashCode() {
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(FullPath);
         }
     }
 

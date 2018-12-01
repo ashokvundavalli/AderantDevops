@@ -113,9 +113,11 @@
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectSequencer.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
+    <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="Utilities\RoslynLocator.cs" />
     <Compile Include="Utilities\ParallelismHelper.cs" />
     <Compile Include="Utilities\StringExtensions.cs" />
@@ -123,7 +125,7 @@
     <Compile Include="ProjectSystem\DuplicateGuidException.cs" />
     <Compile Include="ProjectSystem\References\ResolvedReference.cs" />
     <Compile Include="ProjectSystem\SolutionConfigurationContentsGenerator.cs" />
-    <Compile Include="ProjectSystem\TrackedProject.cs" />
+    <Compile Include="ProjectSystem\OnDiskProjectInfo.cs" />
     <Compile Include="ProjectSystem\ExistingPlanLoader.cs" />
     <Compile Include="Utilities\TreePrinter.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
@@ -279,7 +281,6 @@
     <Compile Include="Packaging\Parsing\Section.cs" />
     <Compile Include="Packaging\SectionWriter.cs" />
     <Compile Include="ProjectSystem\WellKnownProjectTypeGuids.cs" />
-    <Compile Include="DependencyAnalyzer\BuildSequencer.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGenerator.cs" />
     <Compile Include="DependencyAnalyzer\ParallelBuildVisitor.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\TextTemplateAnalyzer.cs" />

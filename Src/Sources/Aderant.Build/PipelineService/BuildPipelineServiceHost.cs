@@ -39,7 +39,7 @@ namespace Aderant.Build.PipelineService {
             }
         }
 
-        public void StartListener(string pipeId) {
+        public void StartService(string pipeId) {
 
             if (host == null) {
                 var address = CreateServerUri(pipeId, "0");

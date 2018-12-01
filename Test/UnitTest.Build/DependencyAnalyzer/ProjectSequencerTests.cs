@@ -96,7 +96,7 @@ namespace UnitTest.Build.DependencyAnalyzer {
                     })
             };
 
-            sequencer.GetProjectsBuildList(
+            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
                 new IDependable[] {
                     p1
                 },
@@ -104,8 +104,36 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 ChangesToConsider.None,
                 DependencyRelationshipProcessing.None);
 
+            Assert.AreEqual(1, buildList.Count);
+            Assert.IsTrue(p1.IncludeInBuild);
+            Assert.IsTrue(p1.IsDirty);
+        }
+
+        [TestMethod]
+        public void Web_projects_are_always_built() {
+            var tree = new Mock<IProjectTree>();
+
+            var p1 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "A",
+                IsDirty = false,
+                IncludeInBuild = false,
+                IsWebProject = true
+            };
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+
+            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
+                new IDependable[] {
+                    p1
+                },
+                null,
+                ChangesToConsider.None,
+                DependencyRelationshipProcessing.None);
+
+            Assert.AreEqual(1, buildList.Count);
             Assert.IsTrue(p1.IncludeInBuild);
             Assert.IsTrue(p1.IsDirty);
         }
     }
+
 }

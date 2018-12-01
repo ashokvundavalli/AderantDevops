@@ -8,7 +8,6 @@ using System.Threading;
 using Aderant.Build.DependencyAnalyzer.Model;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
-using Aderant.Build.Packaging;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.StateTracking;
@@ -68,6 +67,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (assumeNoBuildCache) {
                         // No cache so mark everything as changed
                         configuredProject.IsDirty = true;
+                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.BuildTreeNotFound);
                     }
 
                     if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
@@ -395,7 +395,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void ApplyQuirkFixes(List<ConfiguredProject> projects) {
             foreach (var project in projects) {
                 if (project.IsWebProject) {
-                    project.IsDirty = true;
+                    MarkDirty("", project, BuildReasonTypes.Forced);
                 }
             }
         }
@@ -405,7 +405,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (desktopBuild) {
                 if (configuredProject != null) {
-                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags == BuildReasonTypes.BuildTreeNotFound) {
+                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags.HasFlag(BuildReasonTypes.BuildTreeNotFound)) {
                         return false;
                     }
 
@@ -537,5 +537,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         ProjectOutputNotFound = 16,
         DependencyChanged = 32,
         AlwaysBuild = 64,
+        Forced
     }
 }

@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using Aderant.Build;
 using Aderant.Build.DependencyAnalyzer;
@@ -96,14 +95,14 @@ namespace UnitTest.Build {
             var dependencyManifest1 = new DependencyManifest("Module1", XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
-        <ReferencedModule Name='Module0' AssemblyVersion='1.8.0.0' />    
+        <ReferencedModule Name='Module0' AssemblyVersion='1.8.0.0' />
     </ReferencedModules>
 </DependencyManifest>"));
 
             var dependencyManifest2 = new DependencyManifest("Module2", XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
 <DependencyManifest>
     <ReferencedModules>
-        <ReferencedModule Name='Module1' AssemblyVersion='1.8.0.0' />    
+        <ReferencedModule Name='Module1' AssemblyVersion='1.8.0.0' />
     </ReferencedModules>
 </DependencyManifest>"));
 

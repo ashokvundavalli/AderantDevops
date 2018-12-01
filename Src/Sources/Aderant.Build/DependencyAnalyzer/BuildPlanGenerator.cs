@@ -268,7 +268,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private static void TrackProjectItems(ItemGroupItem project, ConfiguredProject visualStudioProject) {
-            TrackedProject.SetPropertiesNeededForTracking(project, visualStudioProject);
+            OnDiskProjectInfo.SetPropertiesNeededForTracking(project, visualStudioProject);
         }
 
         internal PropertyList AddBuildProperties(PropertyList propertiesForProjectInstance, IFileSystem fileSystem, string solutionDirectoryPath) {

@@ -18,7 +18,7 @@ namespace UnitTest.Build.Tasks {
             var mock = new Mock<IBuildPipelineService>();
             mock.Setup(s => s.GetTrackedProjects()).Returns(
                 new[] {
-                    new TrackedProject {
+                    new OnDiskProjectInfo {
                         FullPath = TestContext.DeploymentDirectory,
                         OutputPath = @"..\..\bin",
                         ProjectGuid = Guid.NewGuid(),

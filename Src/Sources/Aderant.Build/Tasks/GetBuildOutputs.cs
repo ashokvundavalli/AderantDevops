@@ -9,7 +9,7 @@ using Microsoft.Build.Utilities;
 namespace Aderant.Build.Tasks {
 
     public class GetBuildOutputs : BuildOperationContextTask {
-        private IEnumerable<TrackedProject> projects;
+        private IEnumerable<OnDiskProjectInfo> projects;
         private bool solutionRootFilter;
 
         public string SolutionRoot { get; set; }
@@ -35,7 +35,7 @@ namespace Aderant.Build.Tasks {
             return true;
         }
 
-        private ITaskItem[] CreateProjectTaskItems(IEnumerable<TrackedProject> projects) {
+        private ITaskItem[] CreateProjectTaskItems(IEnumerable<OnDiskProjectInfo> projects) {
             List<ITaskItem> projectTaskItems = new List<ITaskItem>();
 
             foreach (var project in projects) {

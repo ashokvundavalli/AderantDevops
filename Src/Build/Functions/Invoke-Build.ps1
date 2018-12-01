@@ -176,7 +176,7 @@ function CreateToolArgumentString($context, $remainingArgs) {
         }
 
         if ($NoDependencyFetch.IsPresent) {
-            $set.Add("/p:RetrievePrebuilts=false")
+            $set.Add("/p:NoDependencyFetch=true")
         }
 
         if ($remainingArgs) {
@@ -448,128 +448,126 @@ Should not be used as it prevents incremental builds which increases build times
         [string[]]$RemainingArgs
     )
 
-    begin {
-        Set-StrictMode -Version Latest
-        $ErrorActionPreference = 'Stop'
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
+
+    if ($Clean.IsPresent) {
+        Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow
+        Write-Host "Clean should not be used as it prevents incremental builds which increases build times."
+
+        if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
+            return
+        }
     }
 
-    process {
-        if ($Clean.IsPresent) {
-            Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow
-            Write-Host "Clean should not be used as it prevents incremental builds which increases build times."
+    [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
 
-            if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
-                return
+    if ($null -eq $context) {
+        throw 'Fatal error. Failed to create context'
+    }
+
+    [string]$repositoryPath = $null
+    if (-not [string]::IsNullOrEmpty($ModulePath)) {
+        $repositoryPath = $ModulePath
+    } else {
+        $repositoryPath = (Get-Location).Path
+    }
+
+    $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
+
+    AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
+
+    [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
+    GetSourceTreeMetadata -context $context -repositoryPath $root
+    if ([string]::IsNullOrWhiteSpace($root)) {
+        $root = $repositoryPath
+    }
+
+    AssignSwitches
+    ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
+    FindProductManifest -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
+
+    if (-not $NoBuildCache.IsPresent) {
+        GetBuildStateMetadata $context
+    }
+
+    PrepareEnvironment
+
+    $context.StartedAt = [DateTime]::UtcNow
+    $context.LogFile = "$repositoryPath\build.log"
+
+    $succeeded = $false
+
+    $currentColor = $host.UI.RawUI.ForegroundColor
+    try {
+        $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
+
+        $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
+        $contextService.StartService($contextEndpoint)
+        Write-Debug "Service running on uri: $($contextService.ServerUri)"
+        $contextService.Publish($context)
+
+        $args = CreateToolArgumentString $context $RemainingArgs
+
+        # When WhatIf specified just determine what would be built
+        if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
+            $Target = "CreatePlan"
+        }
+
+        Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
+
+        $succeeded = $true
+
+        if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
+            [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
+
+            if (Test-Path ($codeCoverageReport)) {
+                Write-Host "Displaying dotCover code coverage report."
+                Start-Process $codeCoverageReport
+            } else {
+                Write-Warning "Unable to locate dotCover code coverage report."
             }
         }
-
-        [Aderant.Build.BuildOperationContext]$context = Get-BuildContext -CreateIfNeeded
-
-        if ($null -eq $context) {
-            throw 'Fatal error. Failed to create context'
-        }
-
-        [string]$repositoryPath = $null
-        if (-not [string]::IsNullOrEmpty($ModulePath)) {
-            $repositoryPath = $ModulePath
-        } else {
-            $repositoryPath = (Get-Location).Path
-        }
-
-        $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
-
-        AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
-
-        [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
-        GetSourceTreeMetadata -context $context -repositoryPath $root
-        if ([string]::IsNullOrWhiteSpace($root)) {
-            $root = $repositoryPath
-        }
-
-        AssignSwitches
-        ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
-        FindProductManifest -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
-
-        if (-not $NoBuildCache.IsPresent) {
-            GetBuildStateMetadata $context
-        }
-
-        PrepareEnvironment
-
-        $context.StartedAt = [DateTime]::UtcNow
-        $context.LogFile = "$repositoryPath\build.log"
-
+    } catch {
         $succeeded = $false
+    } finally {
+        $host.UI.RawUI.ForegroundColor = $currentColor
 
-        $currentColor = $host.UI.RawUI.ForegroundColor
-        try {
-            $contextEndpoint = [DateTime]::UtcNow.ToFileTimeUtc().ToString()
+        if (-not $context.IsDesktopBuild) {
+            Write-Host "##vso[task.uploadfile]$($context.LogFile)"
+        }
 
-            $contextService = [Aderant.Build.PipelineService.BuildPipelineServiceHost]::new()
-            $contextService.StartListener($contextEndpoint)
-            Write-Debug "Service running on uri: $($contextService.ServerUri)"
-            $contextService.Publish($context)
+        $context = $contextService.CurrentContext
+        $reason = $context.BuildStatusReason
+        $status = $context.BuildStatus
 
-            $args = CreateToolArgumentString $context $RemainingArgs
+        Write-Output ""
+        Write-Output ""
 
-            # When WhatIf specified just determine what would be built
-            if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
-                $Target = "CreatePlan"
-            }
+        Write-Host " Build: " -NoNewline
 
-            Run-MSBuild "$($context.BuildScriptsDirectory)ComboBuild.targets" "/target:$($Target) /verbosity:normal /fl /flp:logfile=$($context.LogFile);Encoding=UTF-8 /p:ContextEndpoint=$contextEndpoint $args"
-
-            $succeeded = $true
-
-            if ($LASTEXITCODE -eq 0 -and $displayCodeCoverage.IsPresent) {
-                [string]$codeCoverageReport = Join-Path -Path $repositoryPath -ChildPath "Bin\Test\CodeCoverage\dotCoverReport.html"
-
-                if (Test-Path ($codeCoverageReport)) {
-                    Write-Host "Displaying dotCover code coverage report."
-                    Start-Process $codeCoverageReport
-                } else {
-                    Write-Warning "Unable to locate dotCover code coverage report."
-                }
-            }
-        } catch {
-            $succeeded = $false
-        } finally {
-            $host.UI.RawUI.ForegroundColor = $currentColor
+        if ($global:LASTEXITCODE -gt 0 -or (-not $succeeded) -or $context.BuildStatus -eq "Failed") {
+            Write-Host "[" -NoNewline
+            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
+            Write-Host "]"
+            Write-Host " $reason" -ForegroundColor Red
 
             if (-not $context.IsDesktopBuild) {
-                Write-Host "##vso[task.uploadfile]$($context.LogFile)"
+                throw "Build did not succeed: $($context.BuildStatusReason)"
             }
+        } else {
+            Write-Host "[" -NoNewline
+            Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
+            Write-Host "]"
+            Write-Host " $reason" -ForegroundColor Gray
+        }
 
-            $context = $contextService.CurrentContext
-            $reason = $context.BuildStatusReason
-            $status = $context.BuildStatus
-
-            Write-Output ""
-            Write-Output ""
-
-            Write-Host " Build: " -NoNewline
-
-            if ($global:LASTEXITCODE -gt 0 -or (-not $succeeded) -or $context.BuildStatus -eq "Failed") {
-                Write-Host "[" -NoNewline
-                Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Red
-                Write-Host "]"
-                Write-Host " $reason" -ForegroundColor Red
-
-                if (-not $context.IsDesktopBuild) {
-                    throw "Build did not succeed: $($context.BuildStatusReason)"
-                }
-            } else {
-                Write-Host "[" -NoNewline
-                Write-Host ($status.ToUpper()) -NoNewline -ForegroundColor Green
-                Write-Host "]"
-                Write-Host " $reason" -ForegroundColor Gray
-            }
-
-            if ($null -ne $contextService) {
-                $contextService.Dispose()
-            }
+        if ($null -ne $contextService) {
+            $contextService.Dispose()
         }
     }
+
 }
 
 Set-Alias -Name bm -Value global:Invoke-Build2 -Scope 'Global'

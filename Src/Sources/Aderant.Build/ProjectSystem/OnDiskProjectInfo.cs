@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Aderant.Build.MSBuild;
+using Aderant.Build.ProjectSystem.StateTracking;
 using ProtoBuf;
 
 namespace Aderant.Build.ProjectSystem {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     [DataContract]
-    internal class TrackedProject {
+    internal class OnDiskProjectInfo {
 
         [DataMember]
         public Guid ProjectGuid { get; set; }
@@ -24,6 +25,9 @@ namespace Aderant.Build.ProjectSystem {
         [DataMember]
         public string OutputPath { get; set; }
 
+        [DataMember]
+        public bool? IsWebProject { get; set; }
+
         public static void SetPropertiesNeededForTracking(ItemGroupItem project, ConfiguredProject visualStudioProject) {
             // Stashes the data needed for TrackProject(...) in resume scenarios
             project[nameof(ConfiguredProject.ProjectGuid)] = visualStudioProject.ProjectGuid.ToString("D");
@@ -31,11 +35,11 @@ namespace Aderant.Build.ProjectSystem {
             project[nameof(ConfiguredProject.OutputPath)] = visualStudioProject.OutputPath;
         }
 
-        public static TrackedProject GetPropertiesNeededForTracking(IDictionary<string, string> item) {
+        public static OnDiskProjectInfo CreateFromSerializedValues(IDictionary<string, string> item) {
             var guidValue = GetValueOrDefault(nameof(ConfiguredProject.ProjectGuid), item);
             var solutionRoot = GetValueOrDefault(nameof(ConfiguredProject.SolutionRoot), item);
             var outputPath = GetValueOrDefault(nameof(ConfiguredProject.OutputPath), item);
-            
+
             if (string.IsNullOrEmpty(guidValue)) {
                 throw new ArgumentNullException("Project Guid metadata item not present");
             }
@@ -48,7 +52,7 @@ namespace Aderant.Build.ProjectSystem {
                 throw new ArgumentNullException("Project OutputPath metadata item not present");
             }
 
-            return new TrackedProject {
+            return new OnDiskProjectInfo {
                 ProjectGuid = new Guid(guidValue),
                 OutputPath = outputPath,
                 SolutionRoot = solutionRoot,

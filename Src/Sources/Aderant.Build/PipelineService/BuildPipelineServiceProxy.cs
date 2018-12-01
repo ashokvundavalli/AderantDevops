@@ -56,13 +56,17 @@ namespace Aderant.Build.PipelineService {
             return DoOperationWithFaultHandling(() => Channel.GetVariable(scope, variableName));
         }
 
-        public void TrackProject(TrackedProject trackedProject) {
-            ErrorUtilities.IsNotNull(trackedProject.FullPath, nameof(trackedProject.FullPath));
-            DoOperationWithFaultHandling(() => { Channel.TrackProject(trackedProject); });
+        public void TrackProject(OnDiskProjectInfo onDiskProject) {
+            ErrorUtilities.IsNotNull(onDiskProject.FullPath, nameof(onDiskProject.FullPath));
+            DoOperationWithFaultHandling(() => { Channel.TrackProject(onDiskProject); });
         }
 
-        public IEnumerable<TrackedProject> GetTrackedProjects() {
+        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
             return DoOperationWithFaultHandling(() => Channel.GetTrackedProjects());
+        }
+
+        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
+            return DoOperationWithFaultHandling(() => Channel.GetTrackedProjects(ids));
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {

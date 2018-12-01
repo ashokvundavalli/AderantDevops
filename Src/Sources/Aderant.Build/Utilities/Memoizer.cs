@@ -4,13 +4,22 @@ using System.Threading;
 
 namespace Aderant.Build.Utilities {
 
+    internal sealed class Memoizer<TArg> : Memoizer<TArg, bool> {
+        internal Memoizer(Func<TArg, bool> function, IEqualityComparer<TArg> argComparer = null)
+            : base(function, argComparer) {
+        }
+
+        public static Memoizer<TArg> True { get; set; } = new Memoizer<TArg>(arg => true);
+        public static Memoizer<TArg> False { get; set; } = new Memoizer<TArg>(arg => false);
+    }
+
     /// <summary>
     /// Remembers the result of evaluating an expensive function so that subsequent
     /// evaluations are faster. Thread-safe.
     /// </summary>
     /// <typeparam name="TArg"> Type of the argument to the function. </typeparam>
     /// <typeparam name="TResult"> Type of the function result. </typeparam>
-    internal sealed class Memoizer<TArg, TResult> {
+    internal class Memoizer<TArg, TResult> {
         private readonly Func<TArg, TResult> function;
         private readonly ReaderWriterLockSlim @lock;
         private readonly Dictionary<TArg, Result> resultCache;
@@ -20,11 +29,17 @@ namespace Aderant.Build.Utilities {
         /// </summary>
         /// <param name="function"> Required. Function whose values are being cached. </param>
         /// <param name="argComparer"> Optional. Comparer used to determine if two functions arguments are the same. </param>
-        internal Memoizer(Func<TArg, TResult> function, IEqualityComparer<TArg> argComparer) {
+        internal Memoizer(Func<TArg, TResult> function, IEqualityComparer<TArg> argComparer = null) {
             this.function = function;
+
+            if (argComparer == null) {
+                argComparer = EqualityComparer<TArg>.Default;
+            }
+
             resultCache = new Dictionary<TArg, Result>(argComparer);
             @lock = new ReaderWriterLockSlim();
         }
+
 
         // <summary>
         // Evaluates the wrapped function for the given argument. If the function has already

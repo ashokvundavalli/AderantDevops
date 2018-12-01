@@ -22,7 +22,7 @@ namespace Aderant.Build.PipelineService {
         private List<BuildArtifact> associatedArtifacts = new List<BuildArtifact>();
 
         private BuildOperationContext ctx;
-        private List<TrackedProject> projects = new List<TrackedProject>();
+        private List<OnDiskProjectInfo> projects = new List<OnDiskProjectInfo>();
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
@@ -67,12 +67,18 @@ namespace Aderant.Build.PipelineService {
             return ctx.GetVariable(scope, variableName);
         }
 
-        public void TrackProject(TrackedProject trackedProject) {
-            projects.Add(trackedProject);
+        public void TrackProject(OnDiskProjectInfo onDiskProject) {
+            projects.Add(onDiskProject);
         }
 
-        public IEnumerable<TrackedProject> GetTrackedProjects() {
+        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
             return projects;
+        }
+
+        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
+            ErrorUtilities.IsNotNull(ids, nameof(ids));
+
+            return projects.Where(p => ids.Contains(p.ProjectGuid));
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {

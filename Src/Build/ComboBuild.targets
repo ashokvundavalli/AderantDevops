@@ -196,9 +196,8 @@
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
   </Target>
 
-
   <Target Name="GetAllDependencies"
-          Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(RetrievePrebuilts)' != 'false'">
+          Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
 
     <Message Text="Getting dependencies for build." />
 

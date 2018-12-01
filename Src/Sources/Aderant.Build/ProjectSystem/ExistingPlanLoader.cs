@@ -28,14 +28,14 @@ namespace Aderant.Build.ProjectSystem {
                     if (string.Equals(bool.TrueString, item.GetMetadataValue("IsProjectFile"), StringComparison.OrdinalIgnoreCase)) {
                         string fullPath = item.GetMetadataValue("Identity");
 
-                        TrackedProject trackedProject = TrackedProject.GetPropertiesNeededForTracking(item.Metadata.ToDictionary(s => s.Name, s => s.EvaluatedValue));
-                        trackedProject.FullPath = fullPath;
+                        OnDiskProjectInfo onDiskProject = OnDiskProjectInfo.CreateFromSerializedValues(item.Metadata.ToDictionary(s => s.Name, s => s.EvaluatedValue));
+                        onDiskProject.FullPath = fullPath;
 
-                        if (!directoriesInBuild.Contains(trackedProject.SolutionRoot)) {
-                            directoriesInBuild.Add(trackedProject.SolutionRoot);
+                        if (!directoriesInBuild.Contains(onDiskProject.SolutionRoot)) {
+                            directoriesInBuild.Add(onDiskProject.SolutionRoot);
                         }
 
-                        service.TrackProject(trackedProject);
+                        service.TrackProject(onDiskProject);
                     }
                 }
 

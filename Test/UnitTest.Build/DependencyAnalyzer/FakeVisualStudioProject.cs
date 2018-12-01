@@ -2,6 +2,8 @@
 using System.Threading;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
+using Microsoft.Build.Construction;
+using Microsoft.Build.Evaluation;
 
 namespace UnitTest.Build.DependencyAnalyzer {
     internal class FakeVisualStudioProject : IDependable {
@@ -25,6 +27,10 @@ namespace UnitTest.Build.DependencyAnalyzer {
         public TestConfiguredProject(IProjectTree projectTree, Guid guid)
             : base(projectTree) {
             this.guid = guid;
+        }
+
+        protected override Lazy<Project> InitializeProject(Lazy<ProjectRootElement> projectElement) {
+            return new Lazy<Project>(() => new Project());
         }
 
         public override string OutputAssembly {

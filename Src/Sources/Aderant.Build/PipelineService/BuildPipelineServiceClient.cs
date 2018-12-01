@@ -82,12 +82,16 @@ namespace Aderant.Build.PipelineService {
             return InvokeServiceAction(() => Proxy.GetVariable(scope, variableName));
         }
 
-        public void TrackProject(TrackedProject trackedProject) {
-            InvokeServiceAction(() => Proxy.TrackProject(trackedProject));
+        public void TrackProject(OnDiskProjectInfo onDiskProject) {
+            InvokeServiceAction(() => Proxy.TrackProject(onDiskProject));
         }
 
-        public IEnumerable<TrackedProject> GetTrackedProjects() {
+        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects() {
             return InvokeServiceAction(() => Proxy.GetTrackedProjects());
+        }
+
+        public IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids) {
+            return InvokeServiceAction(() => Proxy.GetTrackedProjects(ids));
         }
 
         public IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container) {

@@ -5,12 +5,12 @@ using UnitTest.Build.DependencyAnalyzer;
 
 namespace UnitTest.Build.ProjectSystem {
     [TestClass]
-    public class TrackedProjectTests {
+    public class OnDiskProjectInfoTests {
 
         [TestMethod]
         public void SetPropertiesNeededForTracking_adds_metadata() {
             var item = new ItemGroupItem("");
-            TrackedProject.SetPropertiesNeededForTracking(item, new TestConfiguredProject(null));
+            OnDiskProjectInfo.SetPropertiesNeededForTracking(item, new TestConfiguredProject(null));
 
             Assert.AreNotEqual(0, item.MetadataKeys);
         }

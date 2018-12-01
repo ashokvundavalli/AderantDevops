@@ -102,10 +102,17 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return Artifacts.TryGetValue(containerKey, out artifactManifests);
         }
 
-        //public void AddArtifact(string s) {
-        //    if (artifacts == null) {
-        //        artifacts = new ArtifactCollection();
-        //    }
-        //}
+        /// <summary>
+        /// Gets the projects guids contained within the snapshot.
+        /// </summary>
+        public IReadOnlyCollection<Guid> GetProjectGuids() {
+            List<Guid> ids = new List<Guid>();
+
+            foreach (KeyValuePair<string, ProjectOutputSnapshot> snapshot in outputs) {
+                ids.Add(snapshot.Value.ProjectGuid);
+            }
+
+            return ids;
+        }
     }
 }

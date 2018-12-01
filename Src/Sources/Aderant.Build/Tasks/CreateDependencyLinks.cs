@@ -138,12 +138,12 @@ namespace Aderant.Build.Tasks {
                 .ToList();
 
             foreach (var item in projectOutputSnapshots) {
-                TrackedProject trackedProject;
-                if (trackedProjects.TryGetValue(item.ProjectGuid, out trackedProject)) {
+                OnDiskProjectInfo onDiskProject;
+                if (trackedProjects.TryGetValue(item.ProjectGuid, out onDiskProject)) {
 
-                    if (trackedProject != null) {
+                    if (onDiskProject != null) {
                         var snapshot = new ProjectOutputSnapshotWithFullPath(item) {
-                            ProjectFileAbsolutePath = trackedProject.FullPath
+                            ProjectFileAbsolutePath = onDiskProject.FullPath
                         };
 
                         snapshot.BuildFileNamesWritten();

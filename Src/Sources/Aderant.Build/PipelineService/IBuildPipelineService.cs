@@ -40,10 +40,13 @@ namespace Aderant.Build.PipelineService {
         string GetVariable(string scope, string variableName);
 
         [OperationContract]
-        void TrackProject(TrackedProject trackedProject);
+        void TrackProject(OnDiskProjectInfo onDiskProject);
 
         [OperationContract]
-        IEnumerable<TrackedProject> GetTrackedProjects();
+        IEnumerable<OnDiskProjectInfo> GetTrackedProjects();
+
+        [OperationContract(Name = "GetTrackedProjects2")]
+        IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids);
 
         [OperationContract]
         IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container);
