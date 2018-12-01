@@ -71,6 +71,8 @@ function CreateRunSettingsXml() {
     return $sw.ToString()
 }
 
+# Finds assemblies references by the test container in our search space then drops them into the conntainer directory.
+# This is a fall back for DLLs which are needed for JIT and the VSTest resolver may not be able to locate the assemblies
 function FindAndDeployReferences([string[]] $testAssemblies) {
     if ($ReferencesToFind -and $referencePathList) {
         Write-Information "Finding references... $ReferencesToFind"
@@ -90,7 +92,6 @@ function FindAndDeployReferences([string[]] $testAssemblies) {
             }
         }
 
-        # Find the reference in our search space then drop it into our directory which contains the test assembly
         foreach ($reference in $ReferencesToFind) {
             # To be correct we should also support .exe and .winmd...
             # Avoid ChangeExtension(...) as assemblies often have dots in the name which confuses it
@@ -178,6 +179,7 @@ try {
                 [System.IO.File]::Delete($runSettingsFile)
             }
         } catch {
+            Write-Debug "Failed to delete temporary run settings file $runSettingsFile"
         }
     }
 
