@@ -46,8 +46,7 @@ process {
     if ([string]::IsNullOrWhiteSpace($agentArchive)) {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $ProgressPreference = 'SilentlyContinue'
-        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"
-        #Invoke-WebRequest "https://github.com/Microsoft/azure-pipelines-agent/releases/download/v2.119.1/vsts-agent-win7-x64-2.119.1.zip" -OutFile $agentArchive
+        $agentArchive = "$env:SystemDrive\Scripts\vsts-agent.zip"        
         Invoke-WebRequest "https://vstsagentpackage.azureedge.net/agent/2.141.2/vsts-agent-win-x64-2.141.2.zip" -OutFile $agentArchive        
     }
 
