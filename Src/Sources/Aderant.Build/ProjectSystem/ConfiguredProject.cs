@@ -72,7 +72,7 @@ namespace Aderant.Build.ProjectSystem {
             get { return project.Value.GetPropertyValue("OutputType"); }
         }
 
-        internal IReadOnlyList<Guid> ProjectTypeGuids {
+        public IReadOnlyList<Guid> ProjectTypeGuids {
             get {
                 if (extractTypeGuids != null) {
                     return extractTypeGuids.Evaluate(this);
@@ -185,7 +185,6 @@ namespace Aderant.Build.ProjectSystem {
 
             isWebProject = new Memoizer<ConfiguredProject, bool>(
                 configuredProject => {
-
                     var guids = ProjectTypeGuids;
                     if (guids != null) {
                         return guids.Intersect(WellKnownProjectTypeGuids.WebProjectGuids).Any();

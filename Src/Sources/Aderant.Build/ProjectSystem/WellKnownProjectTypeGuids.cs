@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Aderant.Build.ProjectSystem {
     internal static class WellKnownProjectTypeGuids {
@@ -10,6 +11,15 @@ namespace Aderant.Build.ProjectSystem {
             new Guid("{E3E379DF-F4C6-4180-9B81-6769533ABE47}"),
             new Guid("{349C5851-65DF-11DA-9384-00065B846F21}"),
         };
+
+        public static Guid WorkflowFoundation { get; } = new Guid("{32f31d43-81cc-4c15-9de6-3fc5453562b6}");
         public static Guid TestProject { get; } = new Guid("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}");
+    }
+
+    internal static class ConfiguredProjectExtensions {
+
+        public static bool IsWorkflowProject(this ConfiguredProject project) {
+            return project.ProjectTypeGuids.Contains(WellKnownProjectTypeGuids.WorkflowFoundation);
+        }
     }
 }

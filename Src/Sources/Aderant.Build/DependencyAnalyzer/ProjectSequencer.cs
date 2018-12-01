@@ -366,7 +366,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            //ApplyQuirkFixes(projects);
+            ApplyQuirkFixes(projects);
 
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
@@ -397,7 +397,12 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         private void ApplyQuirkFixes(List<ConfiguredProject> projects) {
             foreach (var project in projects) {
-                if (project.IsWebProject) {
+                if (project.IsWebProject && !project.IsWorkflowProject()) {
+                    // Web projects always need to be built as they have paths that reference content that needs to be deployed
+                    // during the build.
+                    // E.g tags such as this requires that we install this file on disk. It's more reliable to have
+                    // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
+                    // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
                     MarkDirty("", project, BuildReasonTypes.Forced);
                 }
             }
