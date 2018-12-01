@@ -139,7 +139,7 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <GenerateBuildPlan
       ContextEndpoint="$(ContextEndpoint)"
-      ModulesDirectory="$(SolutionRoot)Framework"
+      ModulesDirectory="$(SolutionRoot)"
       BuildPlan="$(BuildPlan)"
       ExtensibilityFiles="@(ExtensibilityFiles)"
       MakeFiles="@(DirectoryMakeFiles)"
