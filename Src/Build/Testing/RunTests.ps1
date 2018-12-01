@@ -165,7 +165,10 @@ try {
     $startInfo.Arguments += " /Settings:$runSettingsFile"
 
     Write-Information "Finding and deploying references"
-    FindAndDeployReferences $TestAssemblies
+
+    if ($null -ne $Env:BUILD_NO_DEPLOY_REFERENCES) {
+        FindAndDeployReferences $TestAssemblies
+    }
 
     Write-Information "Starting runner: $($startInfo.FileName) $($startInfo.Arguments)"
 
