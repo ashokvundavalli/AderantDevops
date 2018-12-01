@@ -55,6 +55,7 @@ namespace UnitTest.Build.Packaging {
             var state = new BuildStateFile();
             state.Outputs = new ProjectTreeOutputSnapshot();
             state.Outputs["Foo\\Bar.cspoj"] = new ProjectOutputSnapshot {
+                Directory = "Foo",
                 FilesWritten = new string[] {
                     @"..\..\bin\foo.dll"
                 },
