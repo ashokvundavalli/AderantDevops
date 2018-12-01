@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
 
-  <DataCollectionRunSettings>
+  <!--<DataCollectionRunSettings>
     <DataCollectors>
-      <!-- This is the TestImpact data collector.-->
+      --><!-- This is the TestImpact data collector.--><!--
       <DataCollector uri="datacollector://microsoft/TestImpact/1.0" assemblyQualifiedName="Microsoft.VisualStudio.TraceCollector.TestImpactDataCollector, Microsoft.VisualStudio.TraceCollector, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" friendlyName="Test Impact">
         <Configuration>
           <LogFilePath>true</LogFilePath>
@@ -12,7 +12,7 @@
         </Configuration>
       </DataCollector>
     </DataCollectors>
-  </DataCollectionRunSettings>
+  </DataCollectionRunSettings>-->
 
   <!-- MSTest adapter -->
   <MSTest>
