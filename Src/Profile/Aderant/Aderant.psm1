@@ -31,7 +31,7 @@ param (
 [string]$global:ModuleCreationScripts
 [string]$global:ProductManifestPath
 [string]$global:CurrentModuleName
-[string]$global:CurrentModulePath
+[string]$global:CurrentModulePath = ''
 [string]$global:CurrentModuleBuildPath
 [PSModuleInfo]$global:CurrentModuleFeature = $null
 [string[]]$global:LastBuildBuiltModules
@@ -4218,6 +4218,8 @@ Export-ModuleMember -variable BranchModulesDirectory
 Export-ModuleMember -variable ProductManifestPath
 
 . $PSScriptRoot\Feature.Database.ps1
+
+Import-Module $PSScriptRoot\CopyMissingDlls.psm1
 
 Measure-Command {
   Enable-ExpertPrompt
