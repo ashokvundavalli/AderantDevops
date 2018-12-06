@@ -662,6 +662,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Services.Security;
                                       SmartForms.CheckRequest;
                                       Tests.Load;
+                                      Tests.Query;
                                       Web.Expenses;
                                       Web.HtmlEditor;
                                       Web.SystemInformation;
