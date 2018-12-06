@@ -618,11 +618,14 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       <ItemGroup>
         <TfvcExcludedModules Include="Administration.HubSetup;
                                       Applications.Administration;
+                                      Applications.CCLogViewer;
                                       Applications.ExpertAssistant;
+                                      Applications.ExpertOutlookAddIn;
                                       Applications.HelpAdministration;
                                       Applications.MatterCenterIntegration;
                                       Applications.Rates;
                                       Applications.TeamManager;
+                                      Build.T4Task;
                                       Libraries.CheckRequest;
                                       Libraries.Entities.CashManagement;
                                       Libraries.Entities.Employee;
@@ -632,8 +635,12 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Libraries.Entities.Rates;
                                       Libraries.Entities.Tax;
                                       Libraries.Entities.Trust;
+                                      Libraries.Packaging;
                                       Libraries.Presentation.Firm;
                                       Libraries.Query;
+                                      Libraries.Roles;
+                                      Libraries.SoftwareFactory;
+                                      Libraries.Workflow;
                                       Packages;
                                       SDK;
                                       SDK.Workflow;
@@ -646,6 +653,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Services.Integration;
                                       Services.Metadata;
                                       Services.Notes;
+                                      Services.Query;
                                       Services.Query.Constants;
                                       Services.Security;
                                       SmartForms.CheckRequest;
@@ -655,6 +663,8 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Web.SystemInformation;
                                       Web.Workflow;
                                       Workflow.CheckRequest;
+                                      Workflow.EmployeeIntake;
+                                      Workflow.EntityManager;
                                       Workflow.FileOpening;
                                       Workflow.Integration.Samples;
                                       Workflow.Samples;
