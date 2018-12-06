@@ -67,7 +67,7 @@ process {
         "backstabbing",
         "berserk",
         "big",
-        "blessedby",
+        "blessed",
         "boring",
         "bothersome",
         "cached",
@@ -130,6 +130,8 @@ process {
         "pensive",
         "prickly",
         "psychopathic",
+        "psychedelic",
+        "quality",
         "reluctant",
         "reverent",
         "romantic",
@@ -158,11 +160,13 @@ process {
 
     $right = @(
         "aardvark",
+        "ai-chan",
         "ant",
         "albatross",
         "alligator",
         "badger",
         "bee",
+        "bread",
         "bug",
         "camel",
         "cake",
@@ -196,6 +200,7 @@ process {
         "goose",
         "hamster",
         "hippopotamus",
+        "homura",
         "horse",
         "ibex",
         "jello",
@@ -205,6 +210,7 @@ process {
         "kyubey"
         "lion",
         "lobster",
+        "madoka",
         "memelord",
         "monkey",
         "nekomimi",
@@ -222,6 +228,7 @@ process {
         "qilin",
         "rabbit",
         "rat",
+        "roper",
         "scorpion",
         "seal",
         "shark",
@@ -237,8 +244,10 @@ process {
         "turtle",
         "unicorn",
         "userstory",
+        "wizard",
         "wolf",
         "wonton",
+        "workflow",
         "zebra"
     )
 
