@@ -25,6 +25,8 @@
     <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
     <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
 
+    <EnableTFVCGet Condition="'$(EnableTFVCGet)' == ''">false</EnableTFVCGet>
+
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
@@ -607,7 +609,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
   </Target>
 
 
-  <Target Name="GetTfvc" Condition="'$(IsDesktopBuild)' != 'true'">
+  <Target Name="GetTfvc" Condition="'$(IsDesktopBuild)' != 'true' And '$(EnableTFVCGet)' != 'false'">
 
     <PropertyGroup>
       <TfvcWorkFolder>$(SolutionRoot)</TfvcWorkFolder>
@@ -642,10 +644,12 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
                                       Libraries.SoftwareFactory;
                                       Libraries.Workflow;
                                       Packages;
+                                      Performance.ExpertSuite;
                                       SDK;
                                       SDK.Workflow;
                                       Services.Applications.CheckRequest;
                                       Services.Applications.EmployeeIntake;
+                                      Services.Applications.FirmControl;
                                       Services.Applications.Rates;
                                       Services.Audit;
                                       Services.Communication;
