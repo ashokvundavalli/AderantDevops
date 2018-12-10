@@ -369,7 +369,6 @@
 
   <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="$(PackageProductDependsOn)">
 
-    <!-- Compress-Archive fails in a 32-bit process due to its naive implementation so we shell out to 7zip -->
     <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" -xr@"$(PackageScriptsDirectory)PackageExclusionListFile.txt"' />
 
     <PropertyGroup>
