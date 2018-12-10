@@ -25,6 +25,8 @@
     <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
     <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
 
+    <EnableTFVCGet Condition="'$(EnableTFVCGet)' == ''">false</EnableTFVCGet>
+
     <!-- TODO: Move to each project -->
     <RunCodeAnalysis>$(RunCodeAnalysisSetting)</RunCodeAnalysis>
     <RunCodeAnalysis Condition="'$(IsCustomBuild)' == 'true'">false</RunCodeAnalysis>
@@ -606,7 +608,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
   </Target>
 
 
-  <Target Name="GetTfvc" Condition="'$(IsDesktopBuild)' != 'true'">
+  <Target Name="GetTfvc" Condition="'$(IsDesktopBuild)' != 'true' And '$(EnableTFVCGet)' != 'false'">
 
     <PropertyGroup>
       <TfvcWorkFolder>$(SolutionRoot)</TfvcWorkFolder>
@@ -616,50 +618,61 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
 
       <ItemGroup>
         <TfvcExcludedModules Include="Administration.HubSetup;
-Applications.ExpertAssistant;
-Applications.HelpAdministration;
-Applications.MatterCenterIntegration;
-Applications.TeamManager;
-Build;
-Collections;
-Customization;
-Framework;
-GeneralLedger;
-Libraries.CheckRequest;
-Libraries.Entities.CashManagement;
-Libraries.Entities.Employee;
-Libraries.Entities.Firm;
-Libraries.Entities.Marketing;
-Libraries.Entities.Parameters;
-Libraries.Entities.Rates;
-Libraries.Entities.Tax;
-Libraries.Entities.Trust;
-Libraries.Presentation.Firm;
-Libraries.Query;
-SDK;
-SDK.Workflow;
-Services.Applications.CheckRequest;
-Services.Applications.EmployeeIntake;
-Services.Applications.Rates;
-Services.Audit;
-Services.Communication;
-Services.Deployment;
-Services.Integration;
-Services.Metadata;
-Services.Notes;
-Services.Query.Constants;
-Services.Security;
-SmartForms.CheckRequest;
-TestResults;
-Web.Expenses;
-Web.HtmlEditor;
-Web.SystemInformation;
-Web.Workflow;
-Workflow.CheckRequest;
-Workflow.FileOpening;
-Workflow.Integration.Samples;
-Workflow.Samples;
-Workflow.TeamManager;" />
+                                      Applications.Administration;
+                                      Applications.CCLogViewer;
+                                      Applications.ExpertAssistant;
+                                      Applications.ExpertOutlookAddIn;
+                                      Applications.HelpAdministration;
+                                      Applications.MatterCenterIntegration;
+                                      Applications.Rates;
+                                      Applications.TeamManager;
+                                      Build.T4Task;
+                                      Libraries.CheckRequest;
+                                      Libraries.Entities.CashManagement;
+                                      Libraries.Entities.Employee;
+                                      Libraries.Entities.Firm;
+                                      Libraries.Entities.Marketing;
+                                      Libraries.Entities.Parameters;
+                                      Libraries.Entities.Rates;
+                                      Libraries.Entities.Tax;
+                                      Libraries.Entities.Trust;
+                                      Libraries.Packaging;
+                                      Libraries.Presentation.Firm;
+                                      Libraries.Query;
+                                      Libraries.Roles;
+                                      Libraries.SoftwareFactory;
+                                      Libraries.Workflow;
+                                      Packages;
+                                      Performance.ExpertSuite;
+                                      SDK;
+                                      SDK.Workflow;
+                                      Services.Applications.CheckRequest;
+                                      Services.Applications.EmployeeIntake;
+                                      Services.Applications.FirmControl;
+                                      Services.Applications.Rates;
+                                      Services.Audit;
+                                      Services.Communication;
+                                      Services.Deployment;
+                                      Services.Integration;
+                                      Services.Metadata;
+                                      Services.Notes;
+                                      Services.Query;
+                                      Services.Query.Constants;
+                                      Services.Security;
+                                      SmartForms.CheckRequest;
+                                      Tests.Load;
+                                      Tests.Query;
+                                      Web.Expenses;
+                                      Web.HtmlEditor;
+                                      Web.SystemInformation;
+                                      Web.Workflow;
+                                      Workflow.CheckRequest;
+                                      Workflow.EmployeeIntake;
+                                      Workflow.EntityManager;
+                                      Workflow.FileOpening;
+                                      Workflow.Integration.Samples;
+                                      Workflow.Samples;
+                                      Workflow.TeamManager" />
       </ItemGroup>
 
     <Exec Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command &quot;&amp; &apos;$(BuildScriptsDirectory)TFVC-WorkSpace-Initialize.ps1&apos; -workfolder &apos;$(TfvcWorkFolder)&apos; -branch &apos;$(TfvcBranch)&apos; -ExcludedModules &apos;@(TfvcExcludedModules)&apos;&quot;"

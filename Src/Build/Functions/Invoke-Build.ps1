@@ -179,6 +179,10 @@ function CreateToolArgumentString($context, $remainingArgs) {
             $set.Add("/p:NoDependencyFetch=true")
         }
 
+        if ($RunIntegrationTests.IsPresent) {
+            $set.Add("/p:RunIntegrationTests=true")
+        }
+
         if ($remainingArgs) {
             # Add pass-thru args
             [void]$set.Add([string]::Join(" ", $remainingArgs))
