@@ -107,7 +107,7 @@ namespace Aderant.Build.ProjectSystem {
         /// <summary>
         /// Flag for if a test project requires testing.
         /// </summary>
-        public bool AreTestsImpacted => IsTestProject && BuildReason.Flags != BuildReasonTypes.None;
+        public bool AreTestsImpacted => IsTestProject && BuildReason?.Flags != BuildReasonTypes.None;
 
         /// <summary>
         /// Gets the directory that roots this project.
@@ -134,7 +134,7 @@ namespace Aderant.Build.ProjectSystem {
         public IReadOnlyList<string> DirtyFiles {
             get { return dirtyFiles; }
         }
-        
+
         internal BuildReason BuildReason { get; set; }
 
         /// <summary>
