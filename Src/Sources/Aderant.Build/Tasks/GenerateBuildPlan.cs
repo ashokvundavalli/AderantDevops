@@ -61,6 +61,9 @@ namespace Aderant.Build.Tasks {
         [Output]
         public string[] DirectoriesInBuild { get; set; }
 
+        [Output]
+        public string[] ImpactedTestProjects { get; set; }
+
         public string[] ExcludePaths { get; set; } = new string[0];
 
         /// <summary>
@@ -127,6 +130,9 @@ namespace Aderant.Build.Tasks {
             using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, BuildPlan), settings)) {
                 element.WriteTo(writer);
             }
+
+            ImpactedTestProjects = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted)
+                .Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
 
             PipelineService.Publish(context);
         }
