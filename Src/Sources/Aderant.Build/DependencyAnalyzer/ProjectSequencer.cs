@@ -537,13 +537,13 @@ namespace Aderant.Build.DependencyAnalyzer {
 
     [Flags]
     internal enum BuildReasonTypes {
-        None = 1,
-        ProjectFileChanged = 2,
-        BuildTreeNotFound = 4,
-        ArtifactsNotFound = 8,
-        ProjectOutputNotFound = 16,
-        DependencyChanged = 32,
-        AlwaysBuild = 64,
-        Forced
+        None = 0,
+        ProjectFileChanged = 1,
+        BuildTreeNotFound = 2,
+        ArtifactsNotFound = 4,
+        ProjectOutputNotFound = 8,
+        DependencyChanged = 16,
+        AlwaysBuild = 32,
+        Forced = 64
     }
 }

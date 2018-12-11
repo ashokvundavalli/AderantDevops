@@ -152,6 +152,7 @@
       ExcludePaths="@(ExcludePaths)"
       ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="DirectoriesInBuild" ItemName="DirectoriesInBuild"/>
+      <Output TaskParameter="ImpactedTestProjects" ItemName="ImpactedTestProjects"/>
     </GenerateBuildPlan>
 
     <Message Text="ModulesInBuild: %(DirectoriesInBuild.Identity)" />
