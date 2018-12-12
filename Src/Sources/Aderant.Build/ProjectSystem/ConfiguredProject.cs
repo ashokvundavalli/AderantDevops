@@ -105,6 +105,11 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         /// <summary>
+        /// Flag for if a test project requires testing.
+        /// </summary>
+        public bool AreTestsImpacted => IsTestProject && BuildReason?.Flags != BuildReasonTypes.None;
+
+        /// <summary>
         /// Gets the directory that roots this project.
         /// Driven from the path of <see cref="SolutionFile" />
         /// </summary>
