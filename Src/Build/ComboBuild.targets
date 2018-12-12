@@ -155,7 +155,9 @@
       <Output TaskParameter="ImpactedTestProjects" ItemName="ImpactedTestProjects"/>
     </GenerateBuildPlan>
 
-    <Message Text="ModulesInBuild: %(DirectoriesInBuild.Identity)" />
+    <Message Text="Modules In Build: %(DirectoriesInBuild.Identity)" />
+
+    <Message Text="Impacted Tests: %(ImpactedTestProjects.Identity)" />
 
     <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
 

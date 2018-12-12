@@ -473,20 +473,19 @@ Should not be used as it prevents incremental builds which increases build times
 
     [string]$repositoryPath = $null
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
-        $repositoryPath = $ModulePath
+        $repositoryPath = Resolve-Path $ModulePath
     } else {
         $repositoryPath = (Get-Location).Path
     }
+    Write-Debug "Resolved repositoryPath to $repositoryPath"
 
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
     AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
 
     [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
+
     GetSourceTreeMetadata -context $context -repositoryPath $root
-    if ([string]::IsNullOrWhiteSpace($root)) {
-        $root = $repositoryPath
-    }
 
     AssignSwitches
     ApplyBranchConfig -context $context -root $root -enableConfigDownload:$EnableConfigDownload.IsPresent
@@ -499,7 +498,7 @@ Should not be used as it prevents incremental builds which increases build times
     PrepareEnvironment
 
     $context.StartedAt = [DateTime]::UtcNow
-    $context.LogFile = "$repositoryPath\build.log"
+    $context.LogFile = "$root\build.log"
 
     $succeeded = $false
 

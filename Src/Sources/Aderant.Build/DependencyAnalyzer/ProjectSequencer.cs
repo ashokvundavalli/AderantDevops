@@ -451,7 +451,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (configuredProject.DirtyFiles != null) {
                         children.Add(
-                            new TreePrinter.Node() {
+                            new TreePrinter.Node {
                                 Name = "Dirty files",
                                 Children = configuredProject.DirtyFiles.Select(s => new TreePrinter.Node { Name = s }).ToList()
                             });
