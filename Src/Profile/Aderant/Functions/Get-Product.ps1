@@ -20,7 +20,7 @@ function Get-Product {
     param (
         [Parameter(Mandatory=$false, ParameterSetName = "Branch", Position = 0)][ValidateNotNullOrEmpty()][string]$branch,
         [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
-        [string[]]$components
+        [string[]]$components,
         [switch]$createBackup
     )
 
