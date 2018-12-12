@@ -12,7 +12,6 @@
 
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([System.Environment]::GetEnvironmentVariable('CreateServerImage'))</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$(CreateServerImage)</_CreateServerImage>
-    <_CreateServerImage Condition="'$(_CreateServerImage)' == '' And '$(IsDesktopBuild)' != 'true'">true</_CreateServerImage>
     <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">false</_CreateServerImage>
   </PropertyGroup>
 
@@ -38,7 +37,7 @@
   </Target>
 
 
-  <Target Name="CreateServerImage" Condition="'$(IsDesktopBuild)' != 'true' And Exists('$(ServerImageDependencies)')" DependsOnTargets="CreateServerImageCore;$(CreateServerImageDependsOn)">
+  <Target Name="CreateServerImage" Condition="Exists('$(ServerImageDependencies)') And '$(_CreateServerImage)' == 'true'" DependsOnTargets="CreateServerImageCore;$(CreateServerImageDependsOn)">
 
     <PropertyGroup>
       <DeploymentEngine>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\DeploymentEngine.exe</DeploymentEngine>
@@ -48,7 +47,7 @@
     <Exec Command="&quot;$(DeploymentEngine)&quot; CreateServerImage /source:$(ExpertSourceDirectory) /image:$(ImageWorkingDirectory) /name:ExpertServerImage $(_SkipHelp)" />
 
     <ItemGroup>
-      <AdditionalArtifacts Include="$(ImageWorkingDirectory)ExpertServerImage.zip">
+      <AdditionalArtifacts Condition="'$(IsDesktopBuild)' != 'true'" Include="$(ImageWorkingDirectory)ExpertServerImage.zip">
         <ArtifactId>ExpertServerImage</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
