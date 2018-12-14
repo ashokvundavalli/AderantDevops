@@ -26,13 +26,13 @@ namespace Aderant.Build.VersionControl {
                 info.BucketIds = bucketKeys;
                 return info;
             }
-            
+
             using (var repository = OpenRepository(repositoryPath)) {
                 var workingDirectory = repository.Info.WorkingDirectory;
 
                 // The current tree - what you have
                 // It could be behind some branch you are diffing or it could be the
-                // result of a pull request merge making it the new tree to be committed 
+                // result of a pull request merge making it the new tree to be committed
                 Commit newCommit = null;
 
                 if (string.IsNullOrWhiteSpace(fromBranch)) {
@@ -128,8 +128,6 @@ namespace Aderant.Build.VersionControl {
             Commit[] interestingCommit = { null };
 
             List<string> search = new List<string> {
-                "refs/remotes/origin/monotest",
-                "refs/heads/monotest",
                 "refs/remotes/origin/master",
                 "refs/heads/master"
             };
@@ -143,7 +141,7 @@ namespace Aderant.Build.VersionControl {
                 var list = reachableFrom.Select(s => s.CanonicalName).ToList();
 
                 // Check if there is joint item in the two lists.
-                var commonJoint = list.Intersect(search).FirstOrDefault();
+                var commonJoint = list.Intersect(search, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
                 if (commonJoint != null) {
                     // If found, we can return from this point.
                     commonBranch = commonJoint;

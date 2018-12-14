@@ -31,7 +31,7 @@ namespace Aderant.Build.ProjectSystem.References {
             var unresolvedReferences = new List<IUnresolvedAssemblyReference>();
 
             foreach (ProjectItem item in projectItems) {
-                if (item.EvaluatedInclude.EndsWith(".tt", StringComparison.OrdinalIgnoreCase)) {
+                if (ShouldParseTemplate(item.EvaluatedInclude)) {
                     string filePath = item.GetMetadataValue("FullPath");
 
                     var generator = item.GetMetadataValue("Generator");
@@ -43,6 +43,17 @@ namespace Aderant.Build.ProjectSystem.References {
             }
 
             return UnresolvedReferences = unresolvedReferences;
+        }
+
+        private bool ShouldParseTemplate(string itemEvaluatedInclude) {
+            if (itemEvaluatedInclude.EndsWith(".tt", StringComparison.OrdinalIgnoreCase)) {
+                // __ is a special prefix that the build will ignore even if this template may cause a circular reference
+                if (!itemEvaluatedInclude.StartsWith("__")) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void AnalyzeTemplate(string filePath, ConfiguredProject project, List<IUnresolvedAssemblyReference> unresolvedReferences, List<string> seenTemplates) {
@@ -96,7 +107,7 @@ namespace Aderant.Build.ProjectSystem.References {
                 moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(name), path) { IsFromTextTemplate = true };
 
                 var unresolvedAssemblyReference = CreateUnresolvedReference(moniker);
-                unresolvedReferences.Add(unresolvedAssemblyReference);               
+                unresolvedReferences.Add(unresolvedAssemblyReference);
             }
         }
     }

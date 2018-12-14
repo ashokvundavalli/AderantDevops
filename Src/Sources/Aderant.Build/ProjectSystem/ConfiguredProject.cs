@@ -447,6 +447,10 @@ namespace Aderant.Build.ProjectSystem {
         public IReadOnlyCollection<IResolvedDependency> GetTextTemplateDependencies() {
             return textTemplateDependencies;
         }
+
+        public bool IsUnderSolutionRoot(string path) {
+            return string.Equals(SolutionRoot, path, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     internal class BuildReason {

@@ -195,7 +195,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 var stateFile = SelectStateFile(solutionDirectoryName);
 
-                foreach (var project in projects.Where(p => string.Equals(Path.GetDirectoryName(p.SolutionFile), group.Key, StringComparison.OrdinalIgnoreCase))) {
+                foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
                     // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
                     IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
                     if (textTemplateDependencies != null) {
