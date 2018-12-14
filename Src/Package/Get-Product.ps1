@@ -24,12 +24,16 @@ param(
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$dropRoot,
     [Parameter(Mandatory=$false, ParameterSetName = "Branch")][ValidateNotNullOrEmpty()][string]$branch,
     [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pull")][int]$pullRequestId,
-    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][ValidateSet("Product", "Test")][string[]]$components = @("Product")
+    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][ValidateSet("Product", "Test")][string[]]$components
 )
 
 begin {
     $ErrorActionPreference = 'Stop'
     Set-StrictMode -Version 'Latest'
+
+    if ($null -eq $components -or $components.Length -eq 0) {
+         $components = @("Product")
+    }
 
     Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
 
@@ -53,12 +57,6 @@ begin {
                 Write-Host "Clearing directory: $($binariesDirectory)"
                 Remove-Item $binariesDirectory\* -Recurse -Force -Exclude $exclusions
             }
-
-            [string]$expertSourceDirectory = Join-Path -Path $binariesDirectory -ChildPath "ExpertSource"
-            [string]$logDirectory = Join-Path -Path $binariesDirectory -ChildPath "Logs"
-
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-            New-Item -Path $expertSourceDirectory -ItemType Directory | Out-Null
         }
     }
 
@@ -166,7 +164,7 @@ begin {
         }
 
         end {
-            if ($components.Count -gt 1) {
+            if ($null -ne $components -and $components.Length -gt 1) {
                 Write-Host "Total binary acquisition time: $totalTime seconds." -ForegroundColor Cyan
             }
 
@@ -184,16 +182,25 @@ begin {
         )
 
         process {
-            [System.IO.FileInfo[]]$archives = Get-ChildItem -Path $binariesDirectory -File -Filter "*.zip"
+            [System.IO.FileInfo[]]$archives = Get-ChildItem -Path $binariesDirectory -File -Filter '*.zip'
 
-            if ($null -eq $archives) {
+            [double]$totalTime = 0
+
+            if ($null -eq $archives -or $archives.Length -eq 0) {
                 Write-Host "No archives discovered at path: '$binariesDirectory'."
                 return
             }
 
-            Add-Type -AssemblyName 'System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'
-            [double]$totalTime = 0
+            if ($archives.Name.Contains("Binaries.zip")) {
+                [string]$expertSourceDirectory = Join-Path -Path $binariesDirectory -ChildPath 'ExpertSource'
+                [string]$logDirectory = Join-Path -Path $binariesDirectory -ChildPath 'Logs'
 
+                New-Item -Path $logDirectory -ItemType Directory | Out-Null
+                New-Item -Path $expertSourceDirectory -ItemType Directory | Out-Null
+            }
+
+            Add-Type -AssemblyName 'System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'
+            
             Write-Host "`r`nExtracting archives:"
             Write-Host ($archives.FullName | Format-List | Out-String)
             Write-Host "To directory:"
@@ -207,7 +214,7 @@ begin {
         }
 
         end {
-            if ($archives.Count -gt 1) {
+            if ($null -ne $archives -and $archives.Length -gt 1) {
                 Write-Host "`r`nTotal archive extraction time: $totalTime seconds." -ForegroundColor Cyan
             }
 

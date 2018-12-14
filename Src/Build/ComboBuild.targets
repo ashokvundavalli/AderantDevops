@@ -55,7 +55,8 @@
 
   <Import Project="Aderant.Build.Common.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
-  <Import Project="Aderant.Build.IntegrationTesting.targets" />
+  <Import Project="Aderant.Build.ServerImage.targets" />
+  <!--<Import Project="Aderant.Build.IntegrationTesting.targets" />-->
 
   <PropertyGroup>
     <BuildAndPackageDependsOn>
@@ -67,9 +68,10 @@
       GetAllDependencies;
       ExecutePlan;
       RunTests;
-      RunIntegrationTests;
       WriteStateFiles;
       PackageProduct;
+      CreateServerImage;
+      <!--RunIntegrationTests;-->
       CopyToDrop;
     </BuildAndPackageDependsOn>
   </PropertyGroup>
@@ -367,7 +369,7 @@
       GetProduct;
       GenerateFactory;
       ArchiveArtifacts;
-      CleanBinariesBeforePackaging
+      CleanBinariesBeforePackaging;
     </PackageProductDependsOn>
   </PropertyGroup>
 
@@ -430,7 +432,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       <ShowCopyToDropTarget>ShowCopyToDropLog</ShowCopyToDropTarget>
 
       <CopyToDropCommand>
-        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
+        robocopy.exe "%(ArtifactPaths.FullPath)" "%(TargetPath)" %(ArtifactPaths.FileName)%(ArtifactPaths.Extension).zip Binaries.zip ExpertServerImage.zip *.metadata *.sha1 /MT /S /NDL /R:10 /NP /LOG:"$(ArtifactStagingDirectory)CopyToDrop.log" /TEE
         IF %ERRORLEVEL% LEQ 4 EXIT /B 0
       </CopyToDropCommand>
     </PropertyGroup>

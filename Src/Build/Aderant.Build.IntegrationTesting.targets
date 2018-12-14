@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0"
+  TreatAsLocalProperty="ImageWorkingDirectory">
 
   <PropertyGroup>
     <!-- Allows environment variables to override RSP parameters -->
@@ -90,7 +91,8 @@
       <PackageFiles Include="$(SolutionDirectoryPath)Packages\**"></PackageFiles>
     </ItemGroup>
 
-    <Exec ContinueOnError="false"
+    <Exec Condition="!Exists('$(LightUpManifest)')"
+      ContinueOnError="false"
       IgnoreExitCode="false"
       Command="Powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -command &quot;&amp; { Invoke-WebRequest -Uri 'http://tfs.ap.aderant.com:8080/tfs/ADERANT/44f228f7-b636-4bd3-99ee-eb2f1570d768/_api/_versioncontrol/itemContent?repositoryId=e6138670-7236-4e80-aa7c-6417eea253f5&amp;path=%2FBuild%2FLightUpManifest.xml&amp;version=GB$(OriginBranch)&amp;contentOnly=false&amp;__v=5' -OutFile $(LightUpManifest) -UseBasicParsing -UseDefaultCredentials }&quot;" />
 

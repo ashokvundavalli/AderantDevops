@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0"
+  TreatAsLocalProperty="ImageWorkingDirectory">
+<!-- External variables: ArtifactStagingDirectory, BuildToolsDirectory, ExpertSourceDirectory, SolutionRoot -->
+
+  <PropertyGroup>
+    <CreateServerImageDependsOn>
+      GetFilesForPackage;
+      GetServerImageDependencies;
+    </CreateServerImageDependsOn>
+
+    <ImageWorkingDirectory>$(ArtifactStagingDirectory)ServerImage\</ImageWorkingDirectory>
+    <ServerImageDependencies>$(SolutionRoot)Build\ServerImage.dependencies</ServerImageDependencies>
+
+    <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$([System.Environment]::GetEnvironmentVariable('CreateServerImage'))</_CreateServerImage>
+    <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">$(CreateServerImage)</_CreateServerImage>
+    <_CreateServerImage Condition="'$(_CreateServerImage)' == ''">false</_CreateServerImage>
+  </PropertyGroup>
+
+
+  <Target Name="GetServerImageDependencies" Condition="Exists('$(ServerImageDependencies)')">
+
+    <PropertyGroup>
+      <PackageDependencyFile>$(ImageWorkingDirectory)paket.dependencies</PackageDependencyFile>
+    </PropertyGroup>
+
+    <Copy SourceFiles="$(ServerImageDependencies)"
+      DestinationFiles="$(PackageDependencyFile)"
+      SkipUnchangedFiles="true" />
+
+    <Exec Command="$(BuildToolsDirectory)paket.exe update"
+      WorkingDirectory="$(ImageWorkingDirectory)" />
+
+  </Target>
+
+
+  <Target Name="CreateServerImageCore" BeforeTargets="CreateServerImage">
+    <!-- Initializes PropertyGroup variables. -->
+  </Target>
+
+
+  <Target Name="CreateServerImage" Condition="Exists('$(ServerImageDependencies)') And '$(_CreateServerImage)' == 'true'" DependsOnTargets="CreateServerImageCore;$(CreateServerImageDependsOn)">
+
+    <PropertyGroup>
+      <DeploymentEngine>$(ImageWorkingDirectory)packages\Aderant.Deployment.Internal\lib\DeploymentEngine.exe</DeploymentEngine>
+      <_SkipHelp Condition="'$(SkipHelp)' != 'false'">/skh</_SkipHelp>
+    </PropertyGroup>
+
+    <Exec Command="&quot;$(DeploymentEngine)&quot; CreateServerImage /source:$(ExpertSourceDirectory) /image:$(ImageWorkingDirectory) /name:ExpertServerImage $(_SkipHelp)" />
+
+    <ItemGroup>
+      <AdditionalArtifacts Condition="'$(IsDesktopBuild)' != 'true'" Include="$(ImageWorkingDirectory)ExpertServerImage.zip">
+        <ArtifactId>ExpertServerImage</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>
+    </ItemGroup>
+
+  </Target>
+
+</Project>

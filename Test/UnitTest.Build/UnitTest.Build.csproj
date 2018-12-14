@@ -114,6 +114,7 @@
     <Compile Include="BuildMetadataTests.cs" />
     <Compile Include="BuildProjectCheckTests.cs" />
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
+    <Compile Include="ServerImage\DependencyGenerationTests.cs" />
     <Compile Include="Utilities\MemoizerTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
