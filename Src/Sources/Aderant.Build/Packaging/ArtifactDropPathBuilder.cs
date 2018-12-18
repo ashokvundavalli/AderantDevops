@@ -10,6 +10,10 @@ namespace Aderant.Build.Packaging {
         public string StagingDirectory { get; internal set; }
 
         public string CreatePath(string artifactId, BuildMetadata buildMetadata) {
+            return CreatePath(artifactId, buildMetadata, false);
+        }
+
+        public string CreatePath(string artifactId, BuildMetadata buildMetadata, bool allowNullScmBranch) {
             string[] parts;
 
             if (buildMetadata.IsPullRequest) {
@@ -19,7 +23,7 @@ namespace Aderant.Build.Packaging {
                     artifactId
                 };
             } else {
-                if (string.IsNullOrWhiteSpace(buildMetadata.ScmBranch)) {
+                if (!allowNullScmBranch && string.IsNullOrWhiteSpace(buildMetadata.ScmBranch)) {
                     var invalidOperation = new InvalidOperationException("When constructing a drop path ScmBranch cannot be null or empty.");
                     throw invalidOperation;
                 }

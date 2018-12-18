@@ -485,7 +485,7 @@ namespace Aderant.Build.Packaging {
             this.handlers.Add(handler);
         }
 
-        public PublishCommands GetPublishCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts) {
+        public PublishCommands GetPublishCommands(string artifactStagingDirectory, DropLocationInfo dropLocationInfo, BuildMetadata metadata, IEnumerable<ArtifactPackageDefinition> additionalArtifacts, bool allowNullScmBranch) {
             var buildId = metadata.BuildId;
 
             List<BuildArtifact> artifactsWithStoragePaths = new List<BuildArtifact>();
@@ -514,7 +514,8 @@ namespace Aderant.Build.Packaging {
                 if (artifact.ArtifactType == ArtifactType.Branch) {
                     buildArtifact.StoragePath = builder.CreatePath(
                         artifact.Id,
-                        metadata);
+                        metadata,
+                        allowNullScmBranch);
                 } else if (artifact.ArtifactType == ArtifactType.Prebuilt) {
                     AssignDropLocation(artifactStagingDirectory, dropLocationInfo.BuildCacheLocation, new[] { buildArtifact }, buildId);
                 }
