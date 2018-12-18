@@ -6,7 +6,10 @@ using Microsoft.Build.Utilities;
 
 namespace Aderant.Build.Tasks.ArtifactHandling {
 
-    public sealed class PublishArtifacts : BuildOperationContextTask {
+    /// <summary>
+    /// Prepares the item vectors that will be bundled and send to some kind of repository (drop, docker etc)
+    /// </summary>
+    public sealed class CollectArtifactsForPublishing : BuildOperationContextTask {
 
         [Required]
         public string DestinationRootPath { get; set; }
@@ -15,6 +18,8 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
 
         [Required]
         public ITaskItem[] Artifacts { get; set; }
+
+        public bool AllowNullScmBranch { get; set; }
 
         /// <summary>
         /// The VSTS artifact association commands
@@ -33,7 +38,7 @@ namespace Aderant.Build.Tasks.ArtifactHandling {
             var additionalArtifacts = ArtifactPackageHelper.MaterializeArtifactPackages(Artifacts, null, true);
 
             var service = new ArtifactService(PipelineService, null, Logger);
-            var commands = service.GetPublishCommands(ArtifactStagingDirectory, Context.DropLocationInfo, Context.BuildMetadata, additionalArtifacts);
+            var commands = service.GetPublishCommands(ArtifactStagingDirectory, Context.DropLocationInfo, Context.BuildMetadata, additionalArtifacts, AllowNullScmBranch);
 
             LinkCommands = commands.AssociationCommands.ToArray();
             ArtifactPaths = commands.ArtifactPaths.Select(s => new TaskItem(s.Location, new Hashtable { { "TargetPath", s.Destination } })).ToArray();

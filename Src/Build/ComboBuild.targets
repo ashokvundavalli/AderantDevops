@@ -101,7 +101,7 @@
   <Target Name="CreatePlan">
 
     <ItemGroup>
-      <ExcludePaths Condition="'$(BuildSystemInTestMode)' != 'true'" Include="$(BuildSystemDirectory)" />
+
       <ExcludePaths Include=".git" />
       <ExcludePaths Include="$" />
       <ExcludePaths Include="\_" />
@@ -167,7 +167,7 @@
   </Target>
 
 
-  <Target Name="WriteStateFiles" Condition="'$(IsDesktopBuild)' != 'true'">
+  <Target Name="WriteStateFiles" >
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
@@ -376,7 +376,12 @@
 
   <Target Name="PackageProduct" Condition="'$(PackageProduct)' == 'true'" DependsOnTargets="$(PackageProductDependsOn)">
 
-    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" -xr@"$(PackageScriptsDirectory)PackageExclusionListFile.txt"' />
+    <PropertyGroup>
+      <ExclusionFile>$(PackageScriptsDirectory)PackageExclusionListFile.txt</ExclusionFile>
+      <ExclusionFileSwitch Condition="Exists('$(ExclusionFile)')">-xr@$(ExclusionFile)</ExclusionFileSwitch>
+    </PropertyGroup>
+
+    <Exec Command='"$(BuildToolsDirectory)7z.exe" -bb1 a "$(ProductArchiveFile)" "$(LocalExpertBinariesDirectory)*" $(ExclusionFileSwitch)' />
 
     <PropertyGroup>
       <CreateArchiveHashScript>
@@ -395,7 +400,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
   </Target>
 
 
-  <Target Name="ComputeFilesForDrop">
+  <Target Name="CollectFilesForPublishing">
 
     <ItemGroup>
       <AdditionalArtifacts Include="$(ProductArchiveFile)">
@@ -406,13 +411,14 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->
 
-    <PublishArtifacts
+    <CollectArtifactsForPublishing
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       Artifacts="@(AdditionalArtifacts)"
-      DestinationRootPath="$(PrimaryDropLocation)">
+      DestinationRootPath="$(PrimaryDropLocation)"
+      AllowNullScmBranch="$(AllowNullScmBranch)">
       <Output TaskParameter="ArtifactPaths" ItemName="ArtifactPaths" />
       <Output TaskParameter="LinkCommands" ItemName="LinkCommands" />
-    </PublishArtifacts>
+    </CollectArtifactsForPublishing>
 
     <!--Tell TFS about the new artifacts so it can manage them -->
     <Message Text="%(LinkCommands.Identity)" />
@@ -421,7 +427,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
   </Target>
 
 
-  <Target Name="CopyToDrop" DependsOnTargets="ComputeFilesForDrop;CopyFilesToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
+  <Target Name="CopyToDrop" DependsOnTargets="CollectFilesForPublishing;CopyFilesToDrop" Condition="'$(CopyToDropEnabled)' == 'true' And '$(PrimaryDropLocation)' != ''">
   </Target>
 
 
@@ -452,7 +458,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
 
 
   <!--
-    ==========================================================================================
+    ==========================================================================================c
     Zip output
     ==========================================================================================
   -->
