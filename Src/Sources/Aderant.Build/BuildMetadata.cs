@@ -10,7 +10,6 @@ namespace Aderant.Build {
 
         public BuildMetadata() {
             BuildId = 0;
-            JobName = "";
             ScmBranch = "";
             ScmCommitId = "";
             Flavor = "";
@@ -24,12 +23,6 @@ namespace Aderant.Build {
 
         [DataMember]
         public string BuildUri { get; set; }
-
-        [DataMember]
-        public string JobName { get; set; }
-
-        [DataMember]
-        public string JobUri { get; set; }
 
         [DataMember]
         public string ScmBranch { get; set; }
