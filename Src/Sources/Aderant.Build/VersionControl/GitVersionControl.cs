@@ -32,7 +32,7 @@ namespace Aderant.Build.VersionControl {
         public static string Previous { get; } = nameof(Previous);
 
         /// <summary>
-        /// The object key - usually some kind of hash.
+        /// The object key - the SHA1 hash.
         /// </summary>
         public string Id {
             get { return id; }
