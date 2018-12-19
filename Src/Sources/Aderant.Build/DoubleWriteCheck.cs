@@ -37,6 +37,7 @@ namespace Aderant.Build {
 
                     foreach (PathSpec spec in group) {
                         // Path spec may contain a RecursiveDir expression so it does not represent a path we can access
+                        // This can happen when a symlink is dangling (e.g. the symlink target does not exist)
                         if (!spec.Location.Contains("**")) {
                             try {
                                 FileInfo info = createFileInfo(spec.Location);

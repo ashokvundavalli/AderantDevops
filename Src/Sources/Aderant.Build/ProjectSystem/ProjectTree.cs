@@ -313,7 +313,7 @@ namespace Aderant.Build.ProjectSystem {
                             }
                         }
 
-                        if (projectFilePath.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        if (projectFilePath.IndexOf(resolvedPath, StringComparison.OrdinalIgnoreCase) >= 0) {
                             skip = true;
                             break;
                         }
