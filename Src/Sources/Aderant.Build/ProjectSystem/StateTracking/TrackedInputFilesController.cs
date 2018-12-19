@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
+using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
+using Project = Microsoft.Build.Evaluation.Project;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
     internal class TrackedInputFilesController {
@@ -114,35 +116,37 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 ProjectInstance projectInstance = project.CreateProjectInstance(ProjectInstanceSettings.None);
 
                 const string target = "GenerateTrackedInputFiles";
-                BuildResult result;
-                using (BuildManager manager = new BuildManager()) {
-                    result = manager.Build(
-                        new BuildParameters(collection) { EnableNodeReuse = false },
-                        new BuildRequestData(
-                            projectInstance,
-                            new[] { target },
-                            null,
-                            BuildRequestDataFlags.ProvideProjectStateAfterBuild));
-                }
 
-                if (result.OverallResult == BuildResultCode.Failure) {
-                    throw new Exception("Failed to evaluate: " + target, result.Exception);
-                }
+                if (projectInstance.Targets.ContainsKey(target)) {
+                    using (BuildManager manager = new BuildManager()) {
+                        var result = manager.Build(
+                            new BuildParameters(collection) { EnableNodeReuse = false },
+                            new BuildRequestData(
+                                projectInstance,
+                                new[] { target },
+                                null,
+                                BuildRequestDataFlags.ProvideProjectStateAfterBuild));
 
-                if (result.HasResultsForTarget(target)) {
-                    TargetResult targetResult = result.ResultsByTarget[target];
+                        if (result.OverallResult == BuildResultCode.Failure) {
+                            throw new Exception("Failed to evaluate: " + target, result.Exception);
+                        }
 
-                    List<TrackedInputFile> filesToTrack = new List<TrackedInputFile>();
+                        if (result.HasResultsForTarget(target)) {
+                            TargetResult targetResult = result.ResultsByTarget[target];
 
-                    foreach (ITaskItem item in targetResult.Items) {
-                        string itemFullPath = item.GetMetadata("FullPath");
-                        if (fileSystem.FileExists(itemFullPath)) {
-                            var hash = fileSystem.ComputeSha1Hash(itemFullPath);
-                            filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });
+                            List<TrackedInputFile> filesToTrack = new List<TrackedInputFile>();
+
+                            foreach (ITaskItem item in targetResult.Items) {
+                                string itemFullPath = item.GetMetadata("FullPath");
+                                if (fileSystem.FileExists(itemFullPath)) {
+                                    var hash = fileSystem.ComputeSha1Hash(itemFullPath);
+                                    filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });
+                                }
+                            }
+
+                            return filesToTrack;
                         }
                     }
-
-                    return filesToTrack;
                 }
             }
 
