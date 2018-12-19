@@ -18,6 +18,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             this.fileSystem = system;
         }
 
+        public bool TreatInputAsFiles { get; set; } = true;
+
         public InputFilesDependencyAnalysisResult PerformDependencyAnalysis(ICollection<TrackedInputFile> trackedFiles, string projectSolutionRoot) {
             if (!string.IsNullOrEmpty(projectSolutionRoot)) {
                 var filesToTrack = GetFilesToTrack(projectSolutionRoot);
@@ -67,8 +69,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return dictionary;
         }
 
-        public bool TreatInputAsFiles { get; set; } = true;
-
         private static void DiffHashtables<T, V>(IDictionary<T, V> table1, IDictionary<T, V> table2, out List<T> commonKeys, out List<T> uniqueKeysInTable1, out List<T> uniqueKeysInTable2) where T : class, IEquatable<T> where V : class {
             commonKeys = new List<T>();
             uniqueKeysInTable1 = new List<T>();
@@ -113,19 +113,17 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 ProjectInstance projectInstance = project.CreateProjectInstance(ProjectInstanceSettings.None);
 
-                BuildManager manager = BuildManager.DefaultBuildManager;
-
                 const string target = "GenerateTrackedInputFiles";
-
-                BuildResult result = manager.Build(
-                    new BuildParameters(collection) { EnableNodeReuse = false },
-                    new BuildRequestData(
-                        projectInstance,
-                        new[] {
-                            target
-                        },
-                        null,
-                        BuildRequestDataFlags.ProvideProjectStateAfterBuild));
+                BuildResult result;
+                using (BuildManager manager = new BuildManager()) {
+                    result = manager.Build(
+                        new BuildParameters(collection) { EnableNodeReuse = false },
+                        new BuildRequestData(
+                            projectInstance,
+                            new[] { target },
+                            null,
+                            BuildRequestDataFlags.ProvideProjectStateAfterBuild));
+                }
 
                 if (result.OverallResult == BuildResultCode.Failure) {
                     throw new Exception("Failed to evaluate: " + target, result.Exception);
