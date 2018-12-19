@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 
 namespace Aderant.Build.PipelineService {
 
     [ServiceContract]
-    internal interface IBuildPipelineService : IArtifactService, IDisposable {
+    internal interface IBuildPipelineService : IArtifactService, IInputFileTrackingService, IDisposable {
+
+        [OperationContract]
+        object[] Ping();
+
         [OperationContract]
         void Publish(BuildOperationContext context);
 
@@ -25,13 +30,9 @@ namespace Aderant.Build.PipelineService {
 
         /// <summary>
         /// Returns the outputs for all projects seen by the build.
-        /// Keyed by project file.
         /// </summary>
         [OperationContract]
-        IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs();
-
-        [OperationContract]
-        void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests);
+        IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots();
 
         [OperationContract]
         void PutVariable(string scope, string variableName, string value);
@@ -49,13 +50,17 @@ namespace Aderant.Build.PipelineService {
         IEnumerable<OnDiskProjectInfo> GetTrackedProjects(IEnumerable<Guid> ids);
 
         [OperationContract]
-        IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container);
-
-        [OperationContract]
-        object[] Ping();
-
-        [OperationContract]
         void SetStatus(string status, string reason);
+    }
+
+    [ServiceContract]
+    internal interface IInputFileTrackingService {
+
+        [OperationContract]
+        void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies);
+
+        [OperationContract]
+        IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag);
     }
 
     [ServiceContract]
@@ -74,5 +79,11 @@ namespace Aderant.Build.PipelineService {
         /// <returns></returns>
         [OperationContract]
         BuildArtifact[] GetAssociatedArtifacts();
+
+        [OperationContract]
+        IEnumerable<ArtifactManifest> GetArtifactsForContainer(string container);
+
+        [OperationContract]
+        void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests);
     }
 }

@@ -118,6 +118,8 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
+    <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />
+    <Compile Include="ProjectSystem\StateTracking\TrackedInputFilesController.cs" />
     <Compile Include="Utilities\RoslynLocator.cs" />
     <Compile Include="Utilities\ParallelismHelper.cs" />
     <Compile Include="Utilities\StringExtensions.cs" />
@@ -208,7 +210,7 @@
     <Compile Include="Tasks\GetBuildOutputs.cs" />
     <Compile Include="Tasks\PowerShellScript.cs" />
     <Compile Include="Tasks\InspectItemGroup.cs" />
-    <Compile Include="Tasks\ArtifactHandling\PublishArtifacts.cs" />
+    <Compile Include="Tasks\ArtifactHandling\CollectArtifactsForPublishing.cs" />
     <Compile Include="Packaging\PathSpec.cs" />
     <Compile Include="Tasks\PrintBanner.cs" />
     <Compile Include="Packaging\Handlers\PullRequestHandler.cs" />

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
-using Aderant.Build.Model;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
@@ -23,6 +23,7 @@ namespace Aderant.Build.PipelineService {
 
         private BuildOperationContext ctx;
         private List<OnDiskProjectInfo> projects = new List<OnDiskProjectInfo>();
+        private Dictionary<string, IReadOnlyCollection<TrackedInputFile>> trackedDependenciesBySolutionRoot = new Dictionary<string, IReadOnlyCollection<TrackedInputFile>>(StringComparer.OrdinalIgnoreCase);
 
         internal ProjectTreeOutputSnapshot Outputs { get; } = new ProjectTreeOutputSnapshot();
 
@@ -42,7 +43,7 @@ namespace Aderant.Build.PipelineService {
             return Outputs.GetProjectsForTag(container);
         }
 
-        public IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs() {
+        public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
             return Outputs.Values;
         }
 
@@ -105,6 +106,19 @@ namespace Aderant.Build.PipelineService {
             if (reason != null) {
                 ctx.BuildStatusReason = reason;
             }
+        }
+
+        public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
+            trackedDependenciesBySolutionRoot[solutionRoot] = fileDependencies;
+        }
+
+        public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
+            IReadOnlyCollection<TrackedInputFile> trackedFiles;
+            if (trackedDependenciesBySolutionRoot.TryGetValue(tag, out trackedFiles)) {
+                trackedDependenciesBySolutionRoot.Remove(tag);
+            }
+
+            return trackedFiles;
         }
 
         public void AssociateArtifacts(IEnumerable<BuildArtifact> artifacts) {

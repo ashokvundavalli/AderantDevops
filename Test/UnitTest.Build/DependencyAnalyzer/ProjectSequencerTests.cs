@@ -5,6 +5,7 @@ using Aderant.Build.DependencyAnalyzer;
 using Aderant.Build.Logging;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -132,6 +133,27 @@ namespace UnitTest.Build.DependencyAnalyzer {
 
             Assert.AreEqual(1, buildList.Count);
             Assert.IsTrue(p1.IncludeInBuild);
+            Assert.IsTrue(p1.IsDirty);
+        }
+
+        [TestMethod]
+        public void When_there_are_no_objects_in_the_build_cache_the_project_is_dirty() {
+            var tree = new Mock<IProjectTree>();
+
+            var p1 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "A",
+                IsDirty = false,
+                IncludeInBuild = false,
+                IsWebProject = true,
+                SolutionFile = "MyFile.sln"
+            };
+
+            BuildStateFile file = new BuildStateFile();
+
+            var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            sequencer.ApplyStateFile(file, "", "", p1);
+
+            Assert.AreEqual(p1.BuildReason.Flags, BuildReasonTypes.ProjectOutputNotFound);
             Assert.IsTrue(p1.IsDirty);
         }
     }

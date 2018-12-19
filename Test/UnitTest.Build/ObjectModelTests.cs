@@ -7,7 +7,7 @@ namespace UnitTest.Build {
     public class ObjectModelTests {
 
         [TestMethod]
-        public void ProjectOutputSnapshotWithFullPath_Copy_constructor() {
+        public void ProjectOutputSnapshotWithFullPath_copy_constructor() {
             var snapshot = new ProjectOutputSnapshot {
                 OutputPath = "Foo",
                 IsTestProject = true,

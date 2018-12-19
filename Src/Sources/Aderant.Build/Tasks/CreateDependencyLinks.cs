@@ -133,7 +133,7 @@ namespace Aderant.Build.Tasks {
 
             var rootDirectory = Path.GetFileName(SolutionRoot);
             List<ProjectOutputSnapshot> projectOutputSnapshots = PipelineService
-                .GetAllProjectOutputs()
+                .GetProjectSnapshots()
                 .Where(s => !string.Equals(s.Directory, rootDirectory, StringComparison.OrdinalIgnoreCase) && !s.IsTestProject)
                 .ToList();
 

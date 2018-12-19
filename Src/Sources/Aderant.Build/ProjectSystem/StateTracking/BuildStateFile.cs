@@ -79,6 +79,9 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember(EmitDefaultValue = false)]
         internal string Location { get; set; }
 
+        [DataMember(EmitDefaultValue = false)]
+        public ICollection<TrackedInputFile> TrackedFiles { get; set; }
+
         internal void PrepareForSerialization() {
             Location = null;
         }
@@ -115,4 +118,5 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return ids;
         }
     }
+
 }

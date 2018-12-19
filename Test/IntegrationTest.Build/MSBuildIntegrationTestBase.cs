@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
@@ -23,7 +24,7 @@ namespace IntegrationTest.Build {
 
         public bool DetailedSummary { get; set; } = true;
 
-        public List<string> LogFile { get; set; }
+        public List<string> LogLines { get; set; }
 
         /// <summary>
         /// Runs a target in your targets
@@ -36,7 +37,6 @@ namespace IntegrationTest.Build {
             Dictionary<string, string> globalProperties = new Dictionary<string, string>(properties) {
               //  { "NoMSBuildCommunityTasks", "true" },
                 { "BuildToolsDirectory", TestContext.DeploymentDirectory },
-                //{ "BuildInfrastructureDirectory", Path.Combine(TestContext.DeploymentDirectory, @"..\..\") /*TODO: Remove the need for this*/ }
                 { "TestContextDeploymentDirectory", Path.Combine(TestContext.DeploymentDirectory) }
             };
 
@@ -62,19 +62,26 @@ namespace IntegrationTest.Build {
                             null));
 
                     if (result.OverallResult == BuildResultCode.Failure) {
-                        WriteLogFile(@"C:\temp\" + TestContext.TestName + ".log", logger.LogFile);
+                        LogFile = @"C:\temp\" + TestContext.TestName + ".log";
+                        WriteLogFile(LogFile, logger.LogLines);
                     }
 
-                    this.Result = result;
+                    Result = result;
 
                     if (BuildMustSucceed) {
+                        if (Environment.UserInteractive) {
+                            Process.Start("notepad++", LogFile);
+                        }
+
                         Assert.AreNotEqual(BuildResultCode.Failure, result.OverallResult);
                     }
 
-                    LogFile = logger.LogFile;
+                    LogLines = logger.LogLines;
                 }
             }
         }
+
+        public string LogFile { get; set; }
 
         public BuildResult Result { get; set; }
 
@@ -99,14 +106,14 @@ namespace IntegrationTest.Build {
                 : base(verbosity) {
 
                 WriteHandler = message => {
-                    LogFile.Add(message);
+                    LogLines.Add(message);
                     context.WriteLine(message.Replace("{", "{{").Replace("}", "}}").TrimEnd(newLine));
                 };
             }
 
             public bool HasRaisedErrors { get; set; }
 
-            public List<string> LogFile { get; } = new List<string>(10000);
+            public List<string> LogLines { get; } = new List<string>(10000);
 
             public override void Initialize(IEventSource eventSource) {
                 base.Initialize(eventSource);

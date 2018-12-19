@@ -2,9 +2,6 @@
          ToolsVersion="14.0">
 
     <Target Name="EndToEnd">
-      <Error Condition="'$(BuildSystemInTestMode)' != 'true'" Text="Build system must be in test mode" />
-             
-
       <MSBuild Projects="$(TestContextDeploymentDirectory)\ComboBuild.targets"
                Targets="BuildAndPackage" />
     </Target>

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace IntegrationTest.Build.EndToEnd {
+namespace UnitTest.Build.StateTracking {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace IntegrationTest.Build.EndToEnd {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IntegrationTest.Build.EndToEnd.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("UnitTest.Build.StateTracking.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,24 +61,24 @@ namespace IntegrationTest.Build.EndToEnd {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to cd $PSScriptRoot
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;Project ToolsVersion=&quot;14.0&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
         ///
-        ///&amp; git init
+        ///    &lt;Target Name=&quot;GenerateTrackedInputFiles&quot; Returns=&quot;@(TrackedInputFiles)&quot;&gt;
         ///
-        ///Add-Content -Path &quot;.gitignore&quot; -value @&quot;
-        ///[Bb]in/
-        ///[Oo]bj/
-        ///&quot;@
+        ///      &lt;ItemGroup&gt;
+        ///         &lt;TrackedInputFiles Include=&quot;$(MSBuildThisFileFullPath)&quot; /&gt;
+        ///         &lt;TrackedInputFiles Include=&quot;$(MSBuildThisFileFullPath)&quot; /&gt;
+        ///      &lt;/ItemGroup&gt;
         ///
-        ///&amp; git add .
-        ///&amp; git add ModuleA/Build/TFSBuild.rsp -f
-        ///&amp; git add ModuleB/Build/TFSBuild.rsp -f
-        ///&amp; git commit -m &quot;Added all files&quot;
+        ///    &lt;/Target&gt;
+        ///
+        ///&lt;/Project&gt;
         ///.
         /// </summary>
-        internal static string CreateRepo {
+        internal static string ExampleTrackedInputFiles {
             get {
-                return ResourceManager.GetString("CreateRepo", resourceCulture);
+                return ResourceManager.GetString("ExampleTrackedInputFiles", resourceCulture);
             }
         }
     }

@@ -61,25 +61,25 @@ namespace IntegrationTest.Build.VersionControl {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to $int = 1
+        ///   Looks up a localized string similar to Set-StrictMode -Version &quot;Latest&quot;
+        ///[int]$i = 1
         ///
-        ///&amp; git init Repo
-        ///cd repo
+        ///&amp; git init
         ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some text&quot;
         ///&amp; git add &quot;master.txt&quot;
-        ///&amp; git commit -m &quot;$(++$i) Added master.txt&quot;
+        ///&amp; git commit -m &quot;$($i++;$i) Added master.txt&quot;
         ///
         ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some more&quot;
         ///&amp; git add &quot;master.txt&quot;
-        ///&amp; git commit -m &quot;$(++$i) Modified master.txt&quot;
+        ///&amp; git commit -m &quot;$($i++;$i) Modified master.txt&quot;
         ///
         ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some more!&quot;
         ///&amp; git add &quot;master.txt&quot;
-        ///&amp; git commit -m &quot;$(++$i) Modified master.txt&quot;
+        ///&amp; git commit -m &quot;$($i++;$i) Modified master.txt&quot;
         ///
         ///# Create saturn branch
         ///&amp; git checkout -b &quot;saturn&quot;
-        ///Add-Content -Path &quot;saturn.txt&quot; -Value  &quot;Some text [rest of string was truncated]&quot;;.
+        ///Add-Content -Path [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CommitGraphWalking {
             get {
@@ -88,8 +88,7 @@ namespace IntegrationTest.Build.VersionControl {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &amp; git init Repo
-        ///cd repo
+        ///   Looks up a localized string similar to &amp; git init
         ///Add-Content -Path &quot;master.txt&quot; -Value  &quot;Some text&quot;
         ///&amp; git add &quot;master.txt&quot;
         ///&amp; git commit -m &quot;Added master.txt&quot;

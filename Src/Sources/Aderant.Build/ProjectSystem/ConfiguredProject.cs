@@ -454,21 +454,21 @@ namespace Aderant.Build.ProjectSystem {
     }
 
     internal class BuildReason {
-        public string Tag { get; set; }
+        public string Description { get; set; }
         public BuildReasonTypes Flags { get; set; }
     }
 
     internal static class BuildReasonExtensions {
 
-        public static void SetReason(this ConfiguredProject project, BuildReasonTypes reasonTypes, string tag = null) {
+        public static void SetReason(this ConfiguredProject project, BuildReasonTypes reasonTypes, string reasonDescription = null) {
             if (project.BuildReason == null) {
                 project.BuildReason = new BuildReason { Flags = reasonTypes };
             } else {
                 project.BuildReason.Flags |= reasonTypes;
             }
 
-            if (tag != null) {
-                project.BuildReason.Tag = tag;
+            if (reasonDescription != null) {
+                project.BuildReason.Description = reasonDescription;
             }
         }
     }

@@ -1,18 +1,15 @@
 ﻿# This file specifies the default launch actions from Visual Studio for this project
 # Used as a debugging aid as the number of args to pass to sucessfully boot up the build system can
-# be quite overwhelming
 
 
-cd C:\Source\ExpertSuite\
-cm
-cd Framework
-bm -Resume -MaxCpuCount 1
+cd C:\Source\ExpertSuite\WebCore
+bm . -Include ..\Office\, ..\Case\ -NoDependencyFetch
 
 #bm -downstream -transitive /p:VisualStudioVersion=14.0 /p:PackageArtifacts=true /p:T4TransformEnabled=false /p:RetrievePrebuilts=false
 
  #bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Resume
 
-#bm -WhatIf -JustMyChanges -downstream -transitive #-NoBuildCache 
+#bm -WhatIf -JustMyChanges -downstream -transitive #-NoBuildCache
 #bm -DirectoriesToBuild C:\tfs\ExpertSuite\Dev\vnext\Modules\SDK.Workflow\  -WhatIf
 
 

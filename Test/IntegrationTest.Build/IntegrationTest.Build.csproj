@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>IntegrationTest.Build</RootNamespace>
     <AssemblyName>IntegrationTest.Build</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -109,6 +109,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="EndToEnd\TestBuildServiceHost.cs" />
     <Compile Include="Packaging\ArtifactServiceTests.cs" />
     <Compile Include="ProjectTreeTests.cs" />
     <Compile Include="Tasks\CheckForDoubleWrites\CheckForDoubleWritesTests.cs" />
@@ -145,6 +146,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tasks\CheckForDoubleWrites\test.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="EndToEnd\Resources\Source\ModuleA\dir.props">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="VersionControl\Resources\CommitGraphWalking.ps1" />

@@ -402,9 +402,15 @@ namespace Aderant.Build {
             }
         }
 
+        /// <summary>
+        /// Indicates if this is a test project.
+        /// </summary>
         [DataMember]
         public bool IsTestProject { get; set; }
 
+        /// <summary>
+        /// The unique project guid - used to identify this project file within the source tree
+        /// </summary>
         [DataMember]
         public Guid ProjectGuid { get; set; }
     }

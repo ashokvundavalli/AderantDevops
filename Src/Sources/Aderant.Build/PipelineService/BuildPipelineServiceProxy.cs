@@ -4,13 +4,13 @@ using System.Globalization;
 using System.Reflection;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
-using Aderant.Build.Model;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 using ProtoBuf.ServiceModel;
 
 namespace Aderant.Build.PipelineService {
-    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService> {
+    internal class BuildPipelineServiceProxy : ClientBase<IBuildPipelineService>, IBuildPipelineService {
 
         static BuildPipelineServiceProxy() {
             CacheSetting = CacheSetting.AlwaysOn;
@@ -37,8 +37,8 @@ namespace Aderant.Build.PipelineService {
             return DoOperationWithFaultHandling(() => Channel.GetProjectOutputs(container));
         }
 
-        public IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs() {
-            return DoOperationWithFaultHandling(() => Channel.GetAllProjectOutputs());
+        public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
+            return DoOperationWithFaultHandling(() => Channel.GetProjectSnapshots());
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
@@ -84,6 +84,22 @@ namespace Aderant.Build.PipelineService {
 
         }
 
+        public object[] Ping() {
+            return DoOperationWithFaultHandling(() => Channel.Ping());
+        }
+
+        public void SetStatus(string status, string reason) {
+            DoOperationWithFaultHandling(() => Channel.SetStatus(status, reason));
+        }
+
+        public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
+            DoOperationWithFaultHandling(() => Channel.TrackInputFileDependencies(solutionRoot, fileDependencies));
+        }
+
+        public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
+            return DoOperationWithFaultHandling(() => Channel.ClaimTrackedInputFiles(tag));
+        }
+
         private T DoOperationWithFaultHandling<T>(Func<T> func) {
             try {
                 return func();
@@ -98,14 +114,6 @@ namespace Aderant.Build.PipelineService {
             } catch (FaultException ex) {
                 throw ExceptionConverter.ConvertException(ex);
             }
-        }
-
-        public object[] Ping() {
-            return DoOperationWithFaultHandling(() => Channel.Ping());
-        }
-
-        public void SetStatus(string status, string reason) {
-            DoOperationWithFaultHandling(() => Channel.SetStatus(status, reason));
         }
     }
 

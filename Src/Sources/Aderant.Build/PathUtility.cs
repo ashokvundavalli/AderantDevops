@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Aderant.Build {
     public static class PathUtility {
@@ -44,11 +46,11 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Given the absolute location of a file, and a disc location, returns relative file path to that disk location. 
+        /// Given the absolute location of a file, and a disc location, returns relative file path to that disk location.
         /// Throws UriFormatException.
         /// </summary>
         /// <param name="basePath">
-        /// The base path we want to be relative to. Must be absolute.  
+        /// The base path we want to be relative to. Must be absolute.
         /// Should <i>not</i> include a filename as the last segment will be interpreted as a directory.
         /// </param>
         /// <param name="path">

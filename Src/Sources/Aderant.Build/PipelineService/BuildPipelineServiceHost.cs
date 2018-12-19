@@ -40,7 +40,6 @@ namespace Aderant.Build.PipelineService {
         }
 
         public void StartService(string pipeId) {
-
             if (host == null) {
                 var address = CreateServerUri(pipeId, "0");
 
@@ -54,6 +53,7 @@ namespace Aderant.Build.PipelineService {
 
                 PipeId = pipeId;
                 ServerUri = address;
+
                 Environment.SetEnvironmentVariable(WellKnownProperties.ContextEndpoint, pipeId, EnvironmentVariableTarget.Process);
             }
         }
@@ -77,20 +77,20 @@ namespace Aderant.Build.PipelineService {
         }
 
         internal static Uri CreateServerUri(string namedPipeProcessToken, string namedPipeIdToken, string machineName) {
-            string text = string.Format(
+            string endpoint = string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}://{1}/{2}/{3}",
                 Uri.UriSchemeNetPipe,
                 machineName,
                 namedPipeProcessToken,
                 namedPipeIdToken);
-            Uri uri;
 
-            if (Uri.TryCreate(text, UriKind.Absolute, out uri) && uri != null) {
+            Uri uri;
+            if (Uri.TryCreate(endpoint, UriKind.Absolute, out uri) && uri != null) {
                 return uri;
             }
 
-            text = string.Format(
+            endpoint = string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}://{1}/{2}/{3}",
                 Uri.UriSchemeNetPipe,
@@ -98,7 +98,7 @@ namespace Aderant.Build.PipelineService {
                 namedPipeProcessToken,
                 namedPipeIdToken);
 
-            return new Uri(text);
+            return new Uri(endpoint);
         }
 
         internal static Binding CreateServerBinding() {

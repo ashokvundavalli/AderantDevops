@@ -18,7 +18,7 @@ namespace Aderant.Build.ProjectSystem {
 
         void LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
 
-        void LoadProjects(IReadOnlyCollection<string> directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
+        void LoadProjects(IReadOnlyCollection<string> directories, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns);
 
         /// <summary>
         /// Adds a configured project to this tree.

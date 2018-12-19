@@ -12,7 +12,7 @@ namespace IntegrationTest.Analyzer.RunAnalyzer {
         public static void ClasInitialize(TestContext context) {
             var unused = typeof(CodeQualitySystemDiagnosticsRule).FullName;
         }
-       
+
         [TestMethod]
         public void RunAnalyzer_CiOnlyRules() {
             // If the test is being run in an environment that lacks a Build ID, exit early.

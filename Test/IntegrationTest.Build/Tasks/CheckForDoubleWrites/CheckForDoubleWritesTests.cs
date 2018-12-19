@@ -11,7 +11,7 @@ namespace IntegrationTest.Build.Tasks.CheckForDoubleWrites {
 
             RunTarget("CheckForDoubleWritesTests");
 
-            Assert.IsTrue(this.LogFile.Any(s => s.Contains("Double write")));
+            Assert.IsTrue(this.LogLines.Any(s => s.Contains("Double write")));
         }
 
         [TestMethod]

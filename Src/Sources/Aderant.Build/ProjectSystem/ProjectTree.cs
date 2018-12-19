@@ -87,7 +87,7 @@ namespace Aderant.Build.ProjectSystem {
             LoadProjects(new[] { directory }, recursive, excludeFilterPatterns);
         }
 
-        public void LoadProjects(IReadOnlyCollection<string> directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
+        public void LoadProjects(IReadOnlyCollection<string> directories, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
             EnsureUnconfiguredProjects();
 
             ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
@@ -99,7 +99,7 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             Parallel.ForEach(
-                directory,
+                directories,
                 (path) => {
                     foreach (var file in GrovelForFiles(path, excludeFilterPatterns)) {
                         files.TryAdd(file, 0);
@@ -297,21 +297,23 @@ namespace Aderant.Build.ProjectSystem {
                 files = files.Concat(Services.FileSystem.GetFiles(directory, extension, true));
             }
 
-            foreach (var path in files) {
+            foreach (var projectFilePath in files) {
                 bool skip = false;
 
                 if (excludeFilterPatterns != null) {
                     foreach (var pattern in excludeFilterPatterns) {
-                        if (WildcardPattern.ContainsWildcardCharacters(pattern)) {
-                            WildcardPattern wildcardPattern = new WildcardPattern(pattern, WildcardOptions.IgnoreCase);
+                        string resolvedPath = Path.GetFullPath(pattern);
 
-                            if (wildcardPattern.IsMatch(path)) {
+                        if (WildcardPattern.ContainsWildcardCharacters(resolvedPath)) {
+                            WildcardPattern wildcardPattern = new WildcardPattern(resolvedPath, WildcardOptions.IgnoreCase);
+
+                            if (wildcardPattern.IsMatch(projectFilePath)) {
                                 skip = true;
                                 break;
                             }
                         }
 
-                        if (path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        if (projectFilePath.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0) {
                             skip = true;
                             break;
                         }
@@ -319,7 +321,7 @@ namespace Aderant.Build.ProjectSystem {
                 }
 
                 if (!skip) {
-                    yield return path;
+                    yield return projectFilePath;
                 }
             }
         }

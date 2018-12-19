@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using System.Threading;
-using Aderant.Build.Model;
 using Aderant.Build.Packaging;
 using Aderant.Build.ProjectSystem;
+using Aderant.Build.ProjectSystem.StateTracking;
 
 namespace Aderant.Build.PipelineService {
     /// <summary>
@@ -66,8 +66,8 @@ namespace Aderant.Build.PipelineService {
             return InvokeServiceAction(() => Proxy.GetProjectOutputs(container));
         }
 
-        public IEnumerable<ProjectOutputSnapshot> GetAllProjectOutputs() {
-            return InvokeServiceAction(() => Proxy.GetAllProjectOutputs());
+        public IEnumerable<ProjectOutputSnapshot> GetProjectSnapshots() {
+            return InvokeServiceAction(() => Proxy.GetProjectSnapshots());
         }
 
         public void RecordArtifacts(string container, IEnumerable<ArtifactManifest> manifests) {
@@ -104,6 +104,14 @@ namespace Aderant.Build.PipelineService {
 
         public void SetStatus(string status, string reason) {
             InvokeServiceAction(() => Proxy.SetStatus(status, reason));
+        }
+
+        public void TrackInputFileDependencies(string solutionRoot, IReadOnlyCollection<TrackedInputFile> fileDependencies) {
+            InvokeServiceAction(() => Proxy.TrackInputFileDependencies(solutionRoot, fileDependencies));
+        }
+
+        public IReadOnlyCollection<TrackedInputFile> ClaimTrackedInputFiles(string tag) {
+            return InvokeServiceAction(() => Proxy.ClaimTrackedInputFiles(tag));
         }
 
         public void Dispose() {

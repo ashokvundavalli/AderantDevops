@@ -132,7 +132,8 @@ namespace UnitTest.Build.Packaging {
                         ArtifactType = ArtifactType.Branch
 
                     }
-                });
+                },
+                false);
 
             Assert.IsNotNull(linkCommands);
 
@@ -169,17 +170,13 @@ namespace UnitTest.Build.Packaging {
                         ArtifactType = ArtifactType.Branch
 
                     }
-                });
+                },
+                false);
 
             Assert.IsNotNull(linkCommands);
 
             Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=TheProduct;type=FilePath;]\\foo\bar\refs\heads\master\0", StringComparer.OrdinalIgnoreCase));
             Assert.IsTrue(linkCommands.AssociationCommands.Contains(@"##vso[artifact.associate artifactname=SomeOtherArtifact;type=FilePath;]\\baz\cache", StringComparer.OrdinalIgnoreCase));
         }
-    }
-
-    [TestClass]
-    public class BuildPipelineServiceImplTests {
-
     }
 }

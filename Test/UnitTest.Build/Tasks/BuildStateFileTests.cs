@@ -99,6 +99,7 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
+                null,
                 "foo");
 
             Assert.IsNotNull(text);
@@ -130,6 +131,7 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
+                null,
                 "foo");
 
             Assert.IsNull(text);
@@ -158,6 +160,7 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 new ProjectOutputSnapshot[0],
+                null,
                 new Dictionary<string, ICollection<ArtifactManifest>> { {"Test", new List<ArtifactManifest> { new ArtifactManifest() }} },
                 null,
                 null,
@@ -201,7 +204,9 @@ namespace UnitTest.Build.Tasks {
                 null,
                 null,
                 null,
-                "foo", out stateFile);
+                null,
+                "foo",
+                out stateFile);
 
             var projectOutputSnapshots = stateFile.Outputs.Values.ToArray();
             Assert.AreEqual(2, projectOutputSnapshots[0].FilesWritten.Length, "item 'A' should not have been pruned");
