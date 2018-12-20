@@ -318,7 +318,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                     trackedInputs.Add(solutionRoot, inputFilesAnalysisResult);
 
                     if (PipelineService != null) {
-                        PipelineService.TrackInputFileDependencies(Path.GetFileName(solutionRoot), inputFilesAnalysisResult.TrackedFiles);
+                        var solutionRootName = Path.GetFileName(solutionRoot);
+                        logger.Info($"Tracking input files for {solutionRootName}");
+
+                        PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);
                         return inputFilesAnalysisResult;
                     }
                 }
