@@ -302,7 +302,10 @@ namespace Aderant.Build.ProjectSystem {
 
                 if (excludeFilterPatterns != null) {
                     foreach (var pattern in excludeFilterPatterns) {
-                        string resolvedPath = Path.GetFullPath(pattern);
+                        string resolvedPath = pattern;
+                        if (pattern.Contains("..")) {
+                            resolvedPath = Path.GetFullPath(pattern);
+                        }
 
                         if (WildcardPattern.ContainsWildcardCharacters(resolvedPath)) {
                             WildcardPattern wildcardPattern = new WildcardPattern(resolvedPath, WildcardOptions.IgnoreCase);
