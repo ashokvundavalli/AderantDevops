@@ -341,7 +341,8 @@
 
   <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(AlternativeOutputDirectory)' != ''">
 
-    <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')" />
+    <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')"
+            ContinueOnError="true" />
 
     <Copy
       SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
@@ -350,7 +351,8 @@
       UseHardlinksIfPossible="true"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
       Retries="$(CopyRetryCount)"
-      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)">
+      RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+      ContinueOnError="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
 
