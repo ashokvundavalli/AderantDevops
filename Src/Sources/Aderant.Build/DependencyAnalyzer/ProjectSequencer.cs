@@ -266,7 +266,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             bool upToDate = inputFiles.IsUpToDate.GetValueOrDefault(true);
             if (!upToDate && inputFiles.TrackedFiles != null && inputFiles.TrackedFiles.Any()) {
-                System.Diagnostics.Debugger.Launch();
                 MarkDirty("", project, BuildReasonTypes.InputsChanged);
                 return;
             }
@@ -293,7 +292,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                             bool artifactContainsProject = DoesArtifactContainProjectItem(project, artifacts);
                             if (artifactContainsProject) {
-                                MarkDirty("", project, BuildReasonTypes.InputsChanged);
                                 return;
                             }
 
