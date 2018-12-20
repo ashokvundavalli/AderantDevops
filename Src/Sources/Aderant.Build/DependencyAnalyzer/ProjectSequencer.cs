@@ -199,6 +199,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 var stateFile = SelectStateFile(solutionDirectoryName);
 
+                bool hasLoggedUpToDate = false;
+
                 foreach (var project in projects.Where(p => p.IsUnderSolutionRoot(group.Key))) {
                     // Push template dependencies into the prolog file to ensure it is scheduled after the dependencies are compiled
                     IReadOnlyCollection<IResolvedDependency> textTemplateDependencies = project.GetTextTemplateDependencies();
@@ -209,7 +211,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     }
 
                     if (!changedFilesOnly) {
-                        ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project);
+                        ApplyStateFile(stateFile, solutionDirectoryName, dirtyProjectsLogLine, project, ref hasLoggedUpToDate);
                     }
 
                     project.AddResolvedDependency(null, initializeNode);
@@ -260,14 +262,20 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string dirtyProjects, ConfiguredProject project) {
+        internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
             InputFilesDependencyAnalysisResult inputFiles = BeginTrackingInputFiles(stateFile, solutionRoot);
 
             bool upToDate = inputFiles.IsUpToDate.GetValueOrDefault(true);
-            if (!upToDate && inputFiles.TrackedFiles != null && inputFiles.TrackedFiles.Any()) {
+            bool hasTrackedFiles = inputFiles.TrackedFiles != null && inputFiles.TrackedFiles.Any();
+            if (!upToDate && hasTrackedFiles) {
                 MarkDirty("", project, BuildReasonTypes.InputsChanged);
                 return;
+            }
+
+            if (hasTrackedFiles && !hasLoggedUpToDate) {
+                logger.Info("All tracked files are up to date: " + solutionRoot);
+                hasLoggedUpToDate = true;
             }
 
             // See if we can skip this project because we can re-use the previous outputs
@@ -321,7 +329,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (PipelineService != null) {
                         if (inputFilesAnalysisResult.TrackedFiles != null && inputFilesAnalysisResult.TrackedFiles.Any()) {
                             var solutionRootName = PathUtility.GetFileName(solutionRoot);
-                            logger.Info($"Tracking input {inputFilesAnalysisResult.TrackedFiles.Count} files for {solutionRootName}");
+                            logger.Info($"Tracking {inputFilesAnalysisResult.TrackedFiles.Count} input files for {solutionRootName}");
 
                             PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);
                         }
