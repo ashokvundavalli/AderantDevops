@@ -264,16 +264,16 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         internal void ApplyStateFile(BuildStateFile stateFile, string stateFileKey, string dirtyProjects, ConfiguredProject project, ref bool hasLoggedUpToDate) {
             string solutionRoot = project.SolutionRoot;
-            InputFilesDependencyAnalysisResult inputFiles = BeginTrackingInputFiles(stateFile, solutionRoot);
+            InputFilesDependencyAnalysisResult result = BeginTrackingInputFiles(stateFile, solutionRoot);
 
-            bool upToDate = inputFiles.IsUpToDate.GetValueOrDefault(true);
-            bool hasTrackedFiles = inputFiles.TrackedFiles != null && inputFiles.TrackedFiles.Any();
+            bool upToDate = result.IsUpToDate.GetValueOrDefault(true);
+            bool hasTrackedFiles = result.TrackedFiles != null && result.TrackedFiles.Any();
             if (!upToDate && hasTrackedFiles) {
                 MarkDirty("", project, BuildReasonTypes.InputsChanged);
                 return;
             }
 
-            if (hasTrackedFiles && !hasLoggedUpToDate) {
+            if (upToDate && hasTrackedFiles && !hasLoggedUpToDate) {
                 logger.Info("All tracked files are up to date: " + solutionRoot);
                 hasLoggedUpToDate = true;
             }
@@ -319,7 +319,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
-            System.Diagnostics.Debugger.Launch();
             if (!trackedInputs.ContainsKey(solutionRoot)) {
                 var inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(stateFile?.TrackedFiles, solutionRoot);
 

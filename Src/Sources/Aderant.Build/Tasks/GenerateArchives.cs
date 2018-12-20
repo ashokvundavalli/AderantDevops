@@ -49,7 +49,7 @@ namespace Aderant.Build.Tasks {
             }
 
             try {
-                List<PathSpec> directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives, ExcludeFilter);
+                List<PathSpec> directoriesToArchive = ConstructPathSpecs(DirectoriesToArchive, OutputArchives, ExcludeFilter, Log);
 
                 Log.LogMessage($"Archive compression level set to: '{CompressionLevel}'.");
 
@@ -73,7 +73,7 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        internal List<PathSpec> ConstructPathSpecs(ITaskItem[] directoriesToArchive, ITaskItem[] outputArchives, string[] excludeFilter = null) {
+        internal static List<PathSpec> ConstructPathSpecs(ITaskItem[] directoriesToArchive, ITaskItem[] outputArchives, string[] excludeFilter = null, TaskLoggingHelper log = null) {
             List<PathSpec> outputs = new List<PathSpec>();
 
             for (var i = 0; i < directoriesToArchive.Length; i++) {
@@ -85,7 +85,10 @@ namespace Aderant.Build.Tasks {
                 if (excludeFilter != null) {
                     foreach (var filter in excludeFilter) {
                         if (item.ItemSpec.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0) {
-                            Log.LogMessage(MessageImportance.Low, $"Ignoring file {item.ItemSpec} as it contains filter {filter}");
+                            if (log != null) {
+                                log.LogMessage(MessageImportance.Low, $"Ignoring file {item.ItemSpec} as it contains filter {filter}");
+                            }
+
                             add = false;
                             break;
                         }

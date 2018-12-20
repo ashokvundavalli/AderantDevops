@@ -41,15 +41,16 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             // depending on the transform expression, there might be no relation between the results of the transforms
 
             if (existingTrackedFiles != null && existingTrackedFiles.Any()) {
-                Dictionary<string, TrackedInputFile> inputFiles = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
-                Dictionary<string, TrackedInputFile> existingInputFiles = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
+                Dictionary<string, TrackedInputFile> table1 = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
+                Dictionary<string, TrackedInputFile> table2 = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
 
                 List<string> commonKeys;
                 List<string> uniqueKeysInTable1;
                 List<string> uniqueKeysInTable2;
-                DiffHashtables(inputFiles, existingInputFiles, out commonKeys, out uniqueKeysInTable1, out uniqueKeysInTable2);
+                DiffHashtables(table1, table2, out commonKeys, out uniqueKeysInTable1, out uniqueKeysInTable2);
 
-                if (uniqueKeysInTable2.Count > 0 || uniqueKeysInTable1.Count > 0) {
+                if (uniqueKeysInTable1.Count > 0 || uniqueKeysInTable2.Count > 0) {
+                    logger.Info($"Correlated tracked files: UniqueKeysInTable1: {uniqueKeysInTable1.Count} | UniqueKeysInTable2:{uniqueKeysInTable2.Count}");
                     return new InputFilesDependencyAnalysisResult(false, trackedInputFiles);
                 }
             }
@@ -59,6 +60,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         private Dictionary<string, TrackedInputFile> CreateDictionaryFromTrackedInputFiles(IEnumerable<TrackedInputFile> trackedInputFiles) {
             Dictionary<string, TrackedInputFile> dictionary = new Dictionary<string, TrackedInputFile>(StringComparer.OrdinalIgnoreCase);
+
             if (trackedInputFiles != null) {
                 foreach (var file in trackedInputFiles) {
                     if (TreatInputAsFiles) {
