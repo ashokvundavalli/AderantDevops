@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Evaluation;
@@ -38,16 +39,18 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             // Note: two item vector transforms may not be able to be correlated, even if they reference the same item vector, because
             // depending on the transform expression, there might be no relation between the results of the transforms
 
-            Dictionary<string, TrackedInputFile> inputFiles = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
-            Dictionary<string, TrackedInputFile> existingInputFiles = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
+            if (existingTrackedFiles != null && existingTrackedFiles.Any()) {
+                Dictionary<string, TrackedInputFile> inputFiles = CreateDictionaryFromTrackedInputFiles(trackedInputFiles);
+                Dictionary<string, TrackedInputFile> existingInputFiles = CreateDictionaryFromTrackedInputFiles(existingTrackedFiles);
 
-            List<string> commonKeys;
-            List<string> uniqueKeysInTable1;
-            List<string> uniqueKeysInTable2;
-            DiffHashtables(inputFiles, existingInputFiles, out commonKeys, out uniqueKeysInTable1, out uniqueKeysInTable2);
+                List<string> commonKeys;
+                List<string> uniqueKeysInTable1;
+                List<string> uniqueKeysInTable2;
+                DiffHashtables(inputFiles, existingInputFiles, out commonKeys, out uniqueKeysInTable1, out uniqueKeysInTable2);
 
-            if (uniqueKeysInTable2.Count > 0 || uniqueKeysInTable1.Count > 0) {
-                return new InputFilesDependencyAnalysisResult(false, trackedInputFiles);
+                if (uniqueKeysInTable2.Count > 0 || uniqueKeysInTable1.Count > 0) {
+                    return new InputFilesDependencyAnalysisResult(false, trackedInputFiles);
+                }
             }
 
             return new InputFilesDependencyAnalysisResult(true);

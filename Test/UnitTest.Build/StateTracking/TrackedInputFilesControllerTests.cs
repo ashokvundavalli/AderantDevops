@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using Aderant.Build;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
 namespace UnitTest.Build.StateTracking {
 
