@@ -5,6 +5,7 @@
 
     <ItemGroup>
       <TrackedInputFiles Include="C:\Temp\go.build" />
+      <TrackedInputFiles Include="$(MSBuildThisFileFullPath)" />
       <TrackedInputFiles Include="A" />
     </ItemGroup>
 

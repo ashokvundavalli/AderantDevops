@@ -2,6 +2,7 @@
 using System.IO;
 using System.Xml;
 using Aderant.Build.ProjectSystem.StateTracking;
+using Microsoft.Build.Evaluation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.StateTracking {
@@ -13,13 +14,11 @@ namespace UnitTest.Build.StateTracking {
 
         [TestMethod]
         public void Target_returns_file_list() {
-            var controller = new TrackedInputFilesController();
+            var controller = new TestTrackedInputFilesController();
+            controller.ProjectReader = XmlReader.Create(new StringReader(Resources.ExampleTrackedInputFiles));
 
             IReadOnlyCollection<TrackedInputFile> trackedInputFiles;
-
-            using (var reader = XmlReader.Create(new StringReader(Resources.ExampleTrackedInputFiles))) {
-                trackedInputFiles = controller.GetFilesToTrack(reader, null, TestContext.DeploymentDirectory);
-            }
+            trackedInputFiles = controller.GetFilesToTrack(TestContext.DeploymentDirectory + @"\dummy.txt", TestContext.DeploymentDirectory);
 
             Assert.IsNotNull(trackedInputFiles);
             Assert.AreNotEqual(0, trackedInputFiles.Count);
@@ -73,6 +72,17 @@ namespace UnitTest.Build.StateTracking {
 
             Assert.IsNotNull(areInputsUpToDate);
             Assert.IsTrue(areInputsUpToDate.IsUpToDate.Value);
+        }
+    }
+
+    internal class TestTrackedInputFilesController : TrackedInputFilesController {
+
+        public XmlReader ProjectReader { get; set; }
+
+        protected override Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
+            // LoadProject from reader breaks MSBuildThisFile*
+            // https://github.com/Microsoft/msbuild/issues/3030
+            return collection.LoadProject(ProjectReader);
         }
     }
 }

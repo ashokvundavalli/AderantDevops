@@ -2,21 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml;
-using Microsoft.Build.BuildEngine;
+using Aderant.Build.Logging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using ILogger = Aderant.Build.Logging.ILogger;
-using Project = Microsoft.Build.Evaluation.Project;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
     internal class TrackedInputFilesController {
-        private IFileSystem fileSystem;
         private readonly ILogger logger;
+        private IFileSystem fileSystem;
 
         public TrackedInputFilesController()
-            : this(new PhysicalFileSystem(), Logging.NullLogger.Default) {
+            : this(new PhysicalFileSystem(), NullLogger.Default) {
         }
 
         public TrackedInputFilesController(IFileSystem system, ILogger logger) {
@@ -101,25 +99,21 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var directoryPropertiesFile = Path.Combine(directory, "dir.props");
 
             if (fileSystem.FileExists(directoryPropertiesFile)) {
-                logger.Info($"Found file: {directoryPropertiesFile} to get tracked inputs from");
+                logger.Info($"Using file: {directoryPropertiesFile} to get tracked inputs from");
 
-                using (Stream stream = fileSystem.OpenFile(directoryPropertiesFile)) {
-                    using (XmlReader reader = XmlReader.Create(stream, new XmlReaderSettings { CloseInput = true, DtdProcessing = DtdProcessing.Ignore, IgnoreProcessingInstructions = true })) {
-                        return GetFilesToTrack(reader, directoryPropertiesFile, directory);
-                    }
-                }
+                return GetFilesToTrack(directoryPropertiesFile, directory);
             }
 
             return null;
         }
 
-        internal IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(XmlReader reader, string directoryPropertiesFile, string directory) {
+        internal IReadOnlyCollection<TrackedInputFile> GetFilesToTrack(string directoryPropertiesFile, string directory) {
             var globalProps = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "SolutionRoot", directory } };
 
             using (var collection = new ProjectCollection(globalProps)) {
                 collection.IsBuildEnabled = true;
 
-                Project project = LoadProjectAndSetPath(reader, directoryPropertiesFile, collection);
+                Project project = LoadProject(directoryPropertiesFile, collection);
 
                 ProjectInstance projectInstance = project.CreateProjectInstance(ProjectInstanceSettings.None);
 
@@ -164,19 +158,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             return null;
         }
 
-        private static Project LoadProjectAndSetPath(XmlReader reader, string directoryPropertiesFile, ProjectCollection collection) {
-            Project project;
-            if (reader != null) {
-                project = collection.LoadProject(reader);
-            } else {
-                project = collection.LoadProject(directoryPropertiesFile);
-            }
-
-            if (string.IsNullOrEmpty(project.FullPath) && directoryPropertiesFile != null) {
-                project.FullPath = directoryPropertiesFile;
-            }
-
-            return project;
+        protected virtual Project LoadProject(string directoryPropertiesFile, ProjectCollection collection) {
+            return collection.LoadProject(directoryPropertiesFile);
         }
     }
 
@@ -192,6 +175,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             IsUpToDate = isUpToDate;
             TrackedFiles = trackedInputFiles;
         }
+
         /// <summary>
         /// Gets a value that indicates if the inputs are up to date.
         /// </summary>
