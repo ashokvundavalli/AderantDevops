@@ -7,18 +7,21 @@ using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
+using ILogger = Aderant.Build.Logging.ILogger;
 using Project = Microsoft.Build.Evaluation.Project;
 
 namespace Aderant.Build.ProjectSystem.StateTracking {
     internal class TrackedInputFilesController {
         private IFileSystem fileSystem;
+        private readonly ILogger logger;
 
         public TrackedInputFilesController()
-            : this(new PhysicalFileSystem()) {
+            : this(new PhysicalFileSystem(), Logging.NullLogger.Default) {
         }
 
-        public TrackedInputFilesController(IFileSystem system) {
-            this.fileSystem = system;
+        public TrackedInputFilesController(IFileSystem system, ILogger logger) {
+            fileSystem = system;
+            this.logger = logger;
         }
 
         public bool TreatInputAsFiles { get; set; } = true;
@@ -98,10 +101,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             var directoryPropertiesFile = Path.Combine(directory, "dir.props");
 
             if (fileSystem.FileExists(directoryPropertiesFile)) {
-                Stream stream = fileSystem.OpenFile(directoryPropertiesFile);
+                logger.Info($"Found file: {directoryPropertiesFile} to get tracked inputs from");
 
-                using (XmlReader reader = XmlReader.Create(stream, new XmlReaderSettings { CloseInput = true, DtdProcessing = DtdProcessing.Ignore, IgnoreProcessingInstructions = true })) {
-                    return GetFilesToTrack(reader, directoryPropertiesFile, directory);
+                using (Stream stream = fileSystem.OpenFile(directoryPropertiesFile)) {
+                    using (XmlReader reader = XmlReader.Create(stream, new XmlReaderSettings { CloseInput = true, DtdProcessing = DtdProcessing.Ignore, IgnoreProcessingInstructions = true })) {
+                        return GetFilesToTrack(reader, directoryPropertiesFile, directory);
+                    }
                 }
             }
 
@@ -121,6 +126,8 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 const string target = "GenerateTrackedInputFiles";
 
                 if (projectInstance.Targets.ContainsKey(target)) {
+                    logger.Info($"Evaluating target {target} in {directoryPropertiesFile}");
+
                     using (BuildManager manager = new BuildManager()) {
                         var result = manager.Build(
                             new BuildParameters(collection) { EnableNodeReuse = false },
@@ -141,6 +148,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                             foreach (ITaskItem item in targetResult.Items) {
                                 string itemFullPath = item.GetMetadata("FullPath");
+
                                 if (fileSystem.FileExists(itemFullPath)) {
                                     var hash = fileSystem.ComputeSha1Hash(itemFullPath);
                                     filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });

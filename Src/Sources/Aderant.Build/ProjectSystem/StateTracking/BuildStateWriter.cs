@@ -181,7 +181,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
                 var artifactManifests = service.GetArtifactsForContainer(tag);
 
-                logger.Info("Claiming tracked input files for: " + tag);
                 var trackedInputFiles = service.ClaimTrackedInputFiles(tag);
 
                 if (trackedInputFiles != null) {

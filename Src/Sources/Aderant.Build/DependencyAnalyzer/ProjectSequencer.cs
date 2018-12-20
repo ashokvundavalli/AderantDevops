@@ -30,7 +30,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             this.logger = logger;
             this.fileSystem = fileSystem;
 
-            this.trackedInputFilesCheck = new TrackedInputFilesController(fileSystem);
+            this.trackedInputFilesCheck = new TrackedInputFilesController(fileSystem, logger);
         }
 
         public IBuildPipelineService PipelineService { get; set; }
@@ -318,10 +318,13 @@ namespace Aderant.Build.DependencyAnalyzer {
                     trackedInputs.Add(solutionRoot, inputFilesAnalysisResult);
 
                     if (PipelineService != null) {
-                        var solutionRootName = Path.GetFileName(solutionRoot);
-                        logger.Info($"Tracking input files for {solutionRootName}");
+                        if (inputFilesAnalysisResult.TrackedFiles != null && inputFilesAnalysisResult.TrackedFiles.Any()) {
+                            var solutionRootName = Path.GetFileName(solutionRoot);
+                            logger.Info($"Tracking input {inputFilesAnalysisResult.TrackedFiles.Count} files for {solutionRootName}");
 
-                        PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);
+                            PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);
+                        }
+
                         return inputFilesAnalysisResult;
                     }
                 }

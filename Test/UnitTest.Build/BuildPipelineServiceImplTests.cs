@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Aderant.Build.PipelineService;
 using Aderant.Build.ProjectSystem.StateTracking;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -9,21 +10,26 @@ namespace UnitTest.Build {
 
 
         [TestMethod]
-        public void Put_and_claim_tracked_files() {
+        public void Put_and_claim_tracked_files_over_wcf() {
             const string key = "some_key";
 
-            BuildPipelineServiceImpl impl = new BuildPipelineServiceImpl();
+            using (var host = new BuildPipelineServiceHost()) {
+                host.StartService(DateTime.Now.Ticks.ToString());
 
-            impl.TrackInputFileDependencies(key, new List<TrackedInputFile> { new TrackedInputFile("") });
+                using (var impl = BuildPipelineServiceClient.Current) {
 
-            IReadOnlyCollection<TrackedInputFile> files1 = impl.ClaimTrackedInputFiles(key);
+                    impl.TrackInputFileDependencies(key, new List<TrackedInputFile> { new TrackedInputFile("") });
 
-            Assert.IsNotNull(files1);
-            Assert.AreEqual(1, files1.Count);
+                    IReadOnlyCollection<TrackedInputFile> files1 = impl.ClaimTrackedInputFiles(key);
 
-            var files2 = impl.ClaimTrackedInputFiles(key);
+                    Assert.IsNotNull(files1);
+                    Assert.AreEqual(1, files1.Count);
 
-            Assert.IsNull(files2);
+                    var files2 = impl.ClaimTrackedInputFiles(key);
+
+                    Assert.IsNull(files2);
+                }
+            }
         }
     }
 }
