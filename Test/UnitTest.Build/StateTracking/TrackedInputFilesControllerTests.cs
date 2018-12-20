@@ -34,8 +34,8 @@ namespace UnitTest.Build.StateTracking {
                 new[] { new TrackedInputFile("abc") },
                 new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") });
 
-            Assert.IsNotNull(result.UpToDate);
-            Assert.IsFalse(result.UpToDate.Value);
+            Assert.IsNotNull(result.IsUpToDate);
+            Assert.IsFalse(result.IsUpToDate.Value);
         }
 
         [TestMethod]
@@ -47,8 +47,8 @@ namespace UnitTest.Build.StateTracking {
                 new[] { new TrackedInputFile("abc"), new TrackedInputFile("def") },
                 new[] { new TrackedInputFile("abc") });
 
-            Assert.IsNotNull(result.UpToDate);
-            Assert.IsFalse(result.UpToDate.Value);
+            Assert.IsNotNull(result.IsUpToDate);
+            Assert.IsFalse(result.IsUpToDate.Value);
         }
 
 
@@ -60,17 +60,19 @@ namespace UnitTest.Build.StateTracking {
             InputFilesDependencyAnalysisResult result = controller.CorrelateInputs(
                 new[] { new TrackedInputFile("abc") },
                 new[] { new TrackedInputFile("abc") });
+
+            Assert.IsTrue(result.IsUpToDate.Value);
         }
 
         [TestMethod]
-        public void When_no_state_file_then_result_is_null() {
+        public void When_no_state_file_then_result_is_up_to_date() {
             var controller = new TrackedInputFilesController();
             controller.TreatInputAsFiles = false;
 
             var areInputsUpToDate = controller.PerformDependencyAnalysis(null, null);
 
             Assert.IsNotNull(areInputsUpToDate);
-            Assert.IsNull(areInputsUpToDate.UpToDate);
+            Assert.IsTrue(areInputsUpToDate.IsUpToDate.Value);
         }
     }
 }

@@ -264,7 +264,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             string solutionRoot = project.SolutionRoot;
             InputFilesDependencyAnalysisResult inputFiles = BeginTrackingInputFiles(stateFile, solutionRoot);
 
-            bool upToDate = inputFiles.UpToDate.GetValueOrDefault(true);
+            bool upToDate = inputFiles.IsUpToDate.GetValueOrDefault(true);
             if (!upToDate && inputFiles.TrackedFiles != null && inputFiles.TrackedFiles.Any()) {
                 MarkDirty("", project, BuildReasonTypes.InputsChanged);
                 return;

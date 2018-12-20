@@ -31,7 +31,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 }
             }
 
-            return InputFilesDependencyAnalysisResult.Null;
+            return new InputFilesDependencyAnalysisResult(true, trackedFiles?.ToList());
         }
 
         internal InputFilesDependencyAnalysisResult CorrelateInputs(IReadOnlyCollection<TrackedInputFile> trackedInputFiles, ICollection<TrackedInputFile> existingTrackedFiles) {
@@ -53,7 +53,7 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 }
             }
 
-            return new InputFilesDependencyAnalysisResult(true);
+            return new InputFilesDependencyAnalysisResult(true, trackedInputFiles);
         }
 
         private Dictionary<string, TrackedInputFile> CreateDictionaryFromTrackedInputFiles(IEnumerable<TrackedInputFile> trackedInputFiles) {
@@ -176,25 +176,18 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         public InputFilesDependencyAnalysisResult() {
         }
 
-        public InputFilesDependencyAnalysisResult(bool upToDate)
-            : this(upToDate, null) {
+        public InputFilesDependencyAnalysisResult(bool isUpToDate)
+            : this(isUpToDate, null) {
         }
 
-        public InputFilesDependencyAnalysisResult(bool upToDate, IReadOnlyCollection<TrackedInputFile> trackedInputFiles) {
-            UpToDate = upToDate;
+        public InputFilesDependencyAnalysisResult(bool isUpToDate, IReadOnlyCollection<TrackedInputFile> trackedInputFiles) {
+            IsUpToDate = isUpToDate;
             TrackedFiles = trackedInputFiles;
         }
-
-        /// <summary>
-        /// The default result instance. This is indicates the tracked files are not up to date.
-        /// </summary>
-        public static InputFilesDependencyAnalysisResult Null { get; } = new InputFilesDependencyAnalysisResult();
-
         /// <summary>
         /// Gets a value that indicates if the inputs are up to date.
         /// </summary>
-        public bool? UpToDate { get; }
-
+        public bool? IsUpToDate { get; }
 
         public IReadOnlyCollection<TrackedInputFile> TrackedFiles { get; private set; }
     }
