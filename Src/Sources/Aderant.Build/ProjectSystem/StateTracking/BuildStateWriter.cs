@@ -180,7 +180,13 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                 BuildStateFile previousBuild = context.GetStateFile(tag);
 
                 var artifactManifests = service.GetArtifactsForContainer(tag);
+
+                logger.Info("Claiming tracked input files for: " + tag);
                 var trackedInputFiles = service.ClaimTrackedInputFiles(tag);
+
+                if (trackedInputFiles != null) {
+                    logger.Info($"Claimed {trackedInputFiles.Count} tracked files for:" + tag);
+                }
 
                 var collection = new ArtifactCollection();
                 if (artifactManifests != null) {
