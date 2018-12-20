@@ -131,7 +131,6 @@
     <Compile Include="ProjectSystem\ExistingPlanLoader.cs" />
     <Compile Include="Utilities\TreePrinter.cs" />
     <Compile Include="DependencyAnalyzer\AmbiguousNameException.cs" />
-    <Compile Include="Dfs.cs" />
     <Compile Include="Packaging\ArtifactDropPathBuilder.cs" />
     <Compile Include="Packaging\IArtifactProcessContributor.cs" />
     <Compile Include="Packaging\LinkCommands.cs" />

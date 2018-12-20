@@ -376,9 +376,7 @@ namespace Aderant.Build.Packaging {
         }
 
         public BuildStateMetadata GetBuildStateMetadata(string[] bucketIds, string dropLocation) {
-            string resolvedLocation = Dfs.ResolveDfsPath(dropLocation);
-
-            logger.Info($"Querying prebuilt artifacts from: {dropLocation} -> {resolvedLocation ?? dropLocation}");
+            logger.Info($"Querying prebuilt artifacts from: {dropLocation}");
 
             using (PerformanceTimer.Start(duration => logger.Info($"{nameof(GetBuildStateMetadata)} completed in: {duration} ms"))) {
 
