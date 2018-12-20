@@ -64,8 +64,8 @@
       CleanStagingDirectory;
       GetTfvc;
       GrovelForExtensibilityFiles;
-      CreatePlan;
       GetAllDependencies;
+      CreatePlan;
       ExecutePlan;
       RunTests;
       WriteStateFiles;
