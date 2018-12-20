@@ -101,7 +101,6 @@
   <Target Name="CreatePlan">
 
     <ItemGroup>
-
       <ExcludePaths Include=".git" />
       <ExcludePaths Include="$" />
       <ExcludePaths Include="\_" />
@@ -158,7 +157,6 @@
     </GenerateBuildPlan>
 
     <Message Text="Modules In Build: %(DirectoriesInBuild.Identity)" />
-
     <Message Text="Impacted Tests: %(ImpactedTestProjects.Identity)" />
 
     <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
@@ -205,23 +203,37 @@
 
   <Target Name="GetAllDependencies"
           Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
+    <!--
+      We have an issue here.
+      The construction of a plan requires external files to be avaiable before the plan generation takes place.
+      However the fetching of external files require that we know what build tree items are out of date.
+      To determine what build tree items are out of date we need the external files.
 
+      To work around this we assume all build tree items are going to contribute to the build always. This means
+      we always end up fetching more than is needed which is sub optimal.
+    -->
     <Message Text="Getting dependencies for build." />
+
+    <ItemGroup>
+      <ModuleDirectoriesFullPath Include="$([System.IO.Path]::GetFullPath('%(DirectoryMakeFiles.RootDir)%(DirectoryMakeFiles.Directory)..\'))"
+                                 Exclude="$(SharedDependencyDirectory)" />
+
+    </ItemGroup>
 
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
-      ModulesInBuild="@(DirectoriesInBuild)" />
+      ModulesInBuild="@(ModuleDirectoriesFullPath)" />
 
     <MakeSymlink
-      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
+      Link="%(ModuleDirectoriesFullPath.FullPath)\Dependencies"
       Target="$(SharedDependencyDirectory)"
       Type="D" />
 
     <MakeSymlink
-      Link="%(DirectoriesInBuild.FullPath)\packages"
+      Link="%(ModuleDirectoriesFullPath.FullPath)\packages"
       Target="$(SharedDependencyDirectory)\packages"
       Type="D" />
 

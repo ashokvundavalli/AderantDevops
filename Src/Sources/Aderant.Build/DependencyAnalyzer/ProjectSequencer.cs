@@ -191,7 +191,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 string dirtyProjectsLogLine = string.Join(", ", dirtyProjects.Select(s => s.Id));
 
-                string solutionDirectoryName = Path.GetFileName(group.Key);
+                string solutionDirectoryName = PathUtility.GetFileName(group.Key);
 
                 IArtifact initializeNode;
                 IArtifact completionNode;
@@ -228,7 +228,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 foreach (var makeFile in makeFiles) {
                     if (!string.IsNullOrWhiteSpace(makeFile)) {
                         var directoryAboveMakeFile = makeFile.Replace(@"Build\TFSBuild.proj", string.Empty, StringComparison.OrdinalIgnoreCase).TrimEnd(Path.DirectorySeparatorChar);
-                        string solutionDirectoryName = Path.GetFileName(directoryAboveMakeFile);
+                        string solutionDirectoryName = PathUtility.GetFileName(directoryAboveMakeFile);
 
                         IArtifact initializeNode;
                         IArtifact completionNode;
@@ -319,7 +319,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     if (PipelineService != null) {
                         if (inputFilesAnalysisResult.TrackedFiles != null && inputFilesAnalysisResult.TrackedFiles.Any()) {
-                            var solutionRootName = Path.GetFileName(solutionRoot);
+                            var solutionRootName = PathUtility.GetFileName(solutionRoot);
                             logger.Info($"Tracking input {inputFilesAnalysisResult.TrackedFiles.Count} files for {solutionRootName}");
 
                             PipelineService.TrackInputFileDependencies(solutionRootName, inputFilesAnalysisResult.TrackedFiles);

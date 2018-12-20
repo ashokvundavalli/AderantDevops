@@ -126,5 +126,14 @@ namespace Aderant.Build {
             }
             return path;
         }
+
+        /// <summary>
+        /// Path.GetFileName returns "" when given a path ending with a trailing slash
+        /// </summary>
+        /// <param name="fullPath"></param>
+        /// <returns></returns>
+        internal static string GetFileName(string fullPath) {
+            return Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar));
+        }
     }
 }

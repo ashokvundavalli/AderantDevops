@@ -121,7 +121,7 @@ namespace Aderant.Build.DependencyResolver {
                 throw new InvalidOperationException("Path must be rooted");
             }
 
-            string name = Path.GetFileName(fullPath);
+            string name = PathUtility.GetFileName(fullPath);
 
             ExpertModule resolvedModule = null;
             if (ModuleFactory != null) {
