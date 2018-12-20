@@ -311,6 +311,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
+            System.Diagnostics.Debugger.Launch();
             if (!trackedInputs.ContainsKey(solutionRoot)) {
                 var inputFilesAnalysisResult = trackedInputFilesCheck.PerformDependencyAnalysis(stateFile?.TrackedFiles, solutionRoot);
 
