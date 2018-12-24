@@ -286,18 +286,11 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
-            IEnumerable<string> files = Enumerable.Empty<string>();
+            var filePathCollector = new List<string>();
 
-            string[] extensions = new[] {
-                "*.csproj",
-                "*.wixproj",
-            };
+            GetFilesWithExtensionRecursive(filePathCollector, directory);
 
-            foreach (var extension in extensions) {
-                files = files.Concat(Services.FileSystem.GetFiles(directory, extension, true));
-            }
-
-            foreach (var projectFilePath in files) {
+            foreach (var projectFilePath in filePathCollector) {
                 bool skip = false;
 
                 if (excludeFilterPatterns != null) {
@@ -325,6 +318,39 @@ namespace Aderant.Build.ProjectSystem {
 
                 if (!skip) {
                     yield return projectFilePath;
+                }
+            }
+        }
+
+        string[] extensions = new[] {
+            "*.csproj",
+            "*.wixproj",
+        };
+
+        string[] directoryFilter = new[] {
+            "packages",
+            "dependencies",
+        };
+
+        private void GetFilesWithExtensionRecursive(List<string> filePathCollector, string directory) {
+            // For performance reasons it is important to avoid known symlink directories so here we do not traverse into them
+            IEnumerable<string> directories = Services.FileSystem.GetDirectories(directory, false);
+
+            foreach (var dir in directories) {
+                bool process = true;
+                foreach (var dirFilter in directoryFilter) {
+                    if (dir.IndexOf(dirFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
+                        process = false;
+                        break;
+                    }
+                }
+
+                if (process) {
+                    foreach (var extension in extensions) {
+                        filePathCollector.AddRange(Services.FileSystem.GetFiles(directory, extension, false));
+                    }
+
+                    GetFilesWithExtensionRecursive(filePathCollector, dir);
                 }
             }
         }

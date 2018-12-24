@@ -107,6 +107,8 @@
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
 
+      <ExcludePaths Include="Tests.UIAutomation\" />
+
       <!--Need to teach the system that this provides the t4 engine-->
       <ExcludePaths Include="Build.T4Task\" />
       <ExcludePaths Include="Libraries.SoftwareFactory\" />
@@ -117,6 +119,7 @@
       <!--bm -Include C:\tfs\ExpertSuite\Dev\vnext\Modules\ -Exclude Web.Workflow,Build.T4Task,Libraries.SoftwareFactory,Applications.Rates,Tests.Query -RemainingArgs /p:UseSharedDependencyDirectory=true-->
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
+      <ExcludePaths Include="Tests.Customization\" />
       <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" /> <!-- Has stuff we can't build - missing third party libs-->
       <ExcludePaths Include="Workflow.Integration.Samples\" /> <!--Has "packages" checked in-->
     </ItemGroup>
