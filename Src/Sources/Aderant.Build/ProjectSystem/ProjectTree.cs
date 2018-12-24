@@ -338,10 +338,14 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var dir in directories) {
                 bool process = true;
-                foreach (var dirFilter in directoryFilter) {
-                    if (dir.IndexOf(dirFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
-                        process = false;
-                        break;
+
+                bool doExtensionFilter = Services.FileSystem.GetFiles(dir, "*.sln", false).Any();
+                if (doExtensionFilter) {
+                    foreach (var dirFilter in directoryFilter) {
+                        if (dir.IndexOf(dirFilter, StringComparison.OrdinalIgnoreCase) >= 0) {
+                            process = false;
+                            break;
+                        }
                     }
                 }
 
