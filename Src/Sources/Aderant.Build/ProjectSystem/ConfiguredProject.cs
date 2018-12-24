@@ -157,6 +157,18 @@ namespace Aderant.Build.ProjectSystem {
             get { return GetAssemblyName(); }
         }
 
+        public bool IsOfficeProject {
+            get {
+                var guids = ProjectTypeGuids;
+                if (guids != null) {
+                    if (guids.Contains(WellKnownProjectTypeGuids.VisualStudioToolsForOffice)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
         public string GetAssemblyName() {
             return OutputAssembly;
         }

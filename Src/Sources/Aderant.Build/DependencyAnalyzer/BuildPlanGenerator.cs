@@ -165,7 +165,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (configuredProjects.Count() > 1) {
                         foreach (var configuredProject in configuredProjects) {
 
-                            if (!configuredProject.IsTestProject) {
+                            if (!configuredProject.IsTestProject && !configuredProject.IsOfficeProject) {
                                 configuredProject.UseCommonOutputDirectory = true;
                             }
                         }
@@ -274,21 +274,30 @@ namespace Aderant.Build.DependencyAnalyzer {
         internal PropertyList AddBuildProperties(PropertyList propertiesForProjectInstance, IFileSystem fileSystem, string solutionDirectoryPath) {
             string responseFile = Path.Combine(solutionDirectoryPath, "Build", Path.ChangeExtension(Constants.EntryPointFile, "rsp"));
 
+            PropertyList properties = null;
+
             if (fileSystem.FileExists(responseFile)) {
                 string propertiesText;
                 using (StreamReader reader = new StreamReader(fileSystem.OpenFile(responseFile))) {
                     propertiesText = reader.ReadToEnd();
                 }
 
-                var properties = ParseRspContent(propertiesText.Split(newLineArray, StringSplitOptions.None));
+                properties = ParseRspContent(propertiesText.Split(newLineArray, StringSplitOptions.None));
                 // We want to be able to specify the flavor globally in a build all so remove it from the property set
                 properties.TryRemove("BuildFlavor");
 
                 propertiesForProjectInstance = ApplyPropertiesFromCommandLineArgs(properties);
             }
 
-            propertiesForProjectInstance.Add("SolutionDirectoryPath", PathUtility.EnsureTrailingSlash(solutionDirectoryPath));
+            AddDefault("Deterministic", bool.TrueString, propertiesForProjectInstance, properties);
+            AddDefault("SolutionDirectoryPath", PathUtility.EnsureTrailingSlash(solutionDirectoryPath), propertiesForProjectInstance, properties);
+
             return propertiesForProjectInstance;
+        }
+        private static void AddDefault(string key, string value, PropertyList propertiesForProjectInstance, PropertyList properties) {
+            if (properties == null || !properties.ContainsKey(key)) {
+                propertiesForProjectInstance.Add(key, value);
+            }
         }
 
         internal PropertyList ParseRspContent(string[] responseFileContent) {

@@ -14,6 +14,7 @@ namespace Aderant.Build.ProjectSystem {
 
         public static Guid WorkflowFoundation { get; } = new Guid("{32f31d43-81cc-4c15-9de6-3fc5453562b6}");
         public static Guid TestProject { get; } = new Guid("{3AC096D0-A1C2-E12C-1390-A8335801FDAB}");
+        public static Guid VisualStudioToolsForOffice { get; } = new Guid("{BAA0C2D2-18E2-41B9-852F-F413020CAA33}");
     }
 
     internal static class ConfiguredProjectExtensions {

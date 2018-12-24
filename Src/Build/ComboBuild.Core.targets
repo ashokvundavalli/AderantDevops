@@ -75,10 +75,6 @@
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         RunCodeAnalysisOnThisProject=false;
 <!--
-Opt into C# deterministic compiles... TODO: needs PATHMAP to be configured
--->
-        Deterministic=true
-<!--
     Specifies whether to run the MarkupCompilePass1 task in a separate AppDomain.
     If this parameter returns false, the task runs in the same AppDomain as Microsoft build engine (MSBuild) and it runs faster.
     If the parameter returns true, the task runs in a second AppDomain that is isolated from MSBuild and runs slower.

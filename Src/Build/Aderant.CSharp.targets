@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         ToolsVersion="14.0">
+         ToolsVersion="14.0"
+         TreatAsLocalProperty="UseCommonOutputDirectory">
 
   <Import Project="Aderant.Build.Common.targets" Condition="'$(PrepareBuildEnvironmentTargetImported)' == ''" />
 
@@ -261,9 +262,9 @@
        VSTO projects run a target called VisualStudioForApplicationsBuild which executes FindRibbons. The FindRibbons task is stupid and has no
        mechanism for supply a dependency directory - it depends on the dependencies of your project being available by virtue of copy local -->
   <Target Name="CommonBuildDisableCopyLocal"
-    BeforeTargets="BeforeResolveReferences"
-    AfterTargets="SetAssemblySearchPaths"
-    Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
+          BeforeTargets="BeforeResolveReferences"
+          AfterTargets="SetAssemblySearchPaths"
+          Condition="('$(VSTO_ProjectType)' == '' And '$(WixCATargetsPath)' == '') And '$(DisableCopyLocal)' != 'false'">
 
     <!-- Contains is used to cover Bin\Module and Bin\Module\ -->
     <PropertyGroup>
@@ -289,6 +290,16 @@
       <!-- Replace the Reference item group with the modified version -->
       <Reference Include="@(ReferenceNew)" Condition="'$(DisableCopyLocal)' == 'true'" />
     </ItemGroup>
+  </Target>
+
+
+  <Target Name="SetUseCommonOutputDirectoryForVsto"
+          BeforeTargets="BeforeResolveReferences"
+          Condition="'$(VSTO_ProjectType)' != ''">
+
+    <PropertyGroup>
+      <UseCommonOutputDirectory>false</UseCommonOutputDirectory>
+    </PropertyGroup>
   </Target>
 
 
