@@ -145,7 +145,7 @@ process {
         "stoic",
         "stupefied",
         "stylish",
-        "surprise",
+        "surprised",
         "suspicious",
         "swagalicious",
         "swish",
