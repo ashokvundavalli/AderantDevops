@@ -173,7 +173,9 @@
     </PropertyGroup>
 
     <!--TF VC compatiblity-->
-    <PowerShellScript ScriptBlock="Set-ItemProperty $(AssemblyInfoFile) -Name IsReadOnly -Value $false" />
+    <PowerShellScript
+      Condition="Exists('$(AssemblyInfoFile)')"
+      ScriptBlock="Set-ItemProperty $(AssemblyInfoFile) -Name IsReadOnly -Value $false" />
 
     <FileUpdate
       Files="$(AssemblyInfoFile)"
