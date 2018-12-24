@@ -170,14 +170,16 @@
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
+      <AssemblyInfoFileExists Condition="Exists('$(AssemblyInfoFile)')">true</AssemblyInfoFileExists>
     </PropertyGroup>
 
     <!--TF VC compatiblity-->
     <PowerShellScript
-      Condition="Exists('$(AssemblyInfoFile)')"
+      Condition="'$(AssemblyInfoFile)' == 'true'"
       ScriptBlock="Set-ItemProperty $(AssemblyInfoFile) -Name IsReadOnly -Value $false" />
 
     <FileUpdate
+      Condition="'$(AssemblyInfoFile)' == 'true'"
       Files="$(AssemblyInfoFile)"
       IgnoreCase="true"
       Multiline="true"
