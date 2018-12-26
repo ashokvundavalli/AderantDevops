@@ -44,7 +44,7 @@ namespace Aderant.Build.ProjectSystem {
             get { return ServicesImport.Value; }
         }
 
-        public string FullPath { get; private set; }
+        public virtual string FullPath { get; private set; }
 
         /// <summary>
         /// Gets or sets the solution file which contains this project.
@@ -246,7 +246,7 @@ namespace Aderant.Build.ProjectSystem {
             return collection;
         }
 
-        public ICollection<ProjectItem> GetItems(string itemType) {
+        public virtual ICollection<ProjectItem> GetItems(string itemType) {
             return project.Value.GetItems(itemType);
         }
 
