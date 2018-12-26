@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Aderant.Build.DependencyAnalyzer.TextTemplates;
 using Microsoft.Build.Evaluation;
@@ -45,6 +45,25 @@ namespace Aderant.Build.ProjectSystem.References {
             return UnresolvedReferences = unresolvedReferences;
         }
 
+        protected override IAssemblyReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedAssemblyReference unresolved, Dictionary<string, string> aliasMap) {
+            IReadOnlyCollection<ConfiguredProject> projects = ConfiguredProject.Tree.LoadedConfiguredProjects;
+
+            if (unresolved.IsForTextTemplate) {
+                if (aliasMap != null) {
+                    string projectPath;
+                    if (aliasMap.TryGetValue(unresolved.Id, out projectPath)) {
+
+                        var project = projects.FirstOrDefault(s => s.FullPath.IndexOf(projectPath, StringComparison.OrdinalIgnoreCase) >= 0);
+                        if (project != null) {
+                            return project;
+                        }
+                    }
+                }
+            }
+
+            return base.CreateResolvedReference(references, unresolved, aliasMap);
+        }
+
         private bool ShouldParseTemplate(string itemEvaluatedInclude) {
             if (itemEvaluatedInclude.EndsWith(".tt", StringComparison.OrdinalIgnoreCase)) {
                 // __ is a special prefix that the build will ignore even if this template may cause a circular reference
@@ -68,6 +87,12 @@ namespace Aderant.Build.ProjectSystem.References {
                     TextTemplateAnalysisResult result = analyzer.Analyze(reader, project.FullPath);
 
                     CreateReferences(result, unresolvedReferences);
+
+                    if (result.CustomProcessors != null) {
+                        foreach (var processor in result.CustomProcessors) {
+                            AddReference(unresolvedReferences, processor, null);
+                        }
+                    }
 
                     if (result.Includes != null) {
                         for (var i = 0; i < result.Includes.Count; i++) {
@@ -95,8 +120,6 @@ namespace Aderant.Build.ProjectSystem.References {
 
         private void CreateReferences(TextTemplateAnalysisResult result, List<IUnresolvedAssemblyReference> unresolvedReferences) {
             foreach (var assemblyReference in result.AssemblyReferences) {
-                UnresolvedAssemblyReferenceMoniker moniker;
-
                 string path = null;
                 string name = assemblyReference;
                 if (assemblyReference.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) {
@@ -104,11 +127,23 @@ namespace Aderant.Build.ProjectSystem.References {
                     name = assemblyReference.Substring(0, assemblyReference.Length - 4);
                 }
 
-                moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(name), path) { IsFromTextTemplate = true };
-
-                var unresolvedAssemblyReference = CreateUnresolvedReference(moniker);
-                unresolvedReferences.Add(unresolvedAssemblyReference);
+                AddReference(unresolvedReferences, name, path);
             }
+        }
+
+        private static char[] invalidChars = Path.GetInvalidFileNameChars().Union(new[] { '=' }).ToArray();
+
+        private void AddReference(List<IUnresolvedAssemblyReference> unresolvedReferences, string name, string path) {
+            foreach (var ch in name) {
+                if (invalidChars.Contains(ch)) {
+                    return;
+                }
+            }
+
+            var moniker = new UnresolvedAssemblyReferenceMoniker(new AssemblyName(name), path) { IsFromTextTemplate = true };
+
+            var unresolvedAssemblyReference = CreateUnresolvedReference(moniker);
+            unresolvedReferences.Add(unresolvedAssemblyReference);
         }
     }
 }

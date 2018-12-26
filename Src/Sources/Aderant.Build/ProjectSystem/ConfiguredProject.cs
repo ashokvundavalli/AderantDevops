@@ -351,8 +351,10 @@ namespace Aderant.Build.ProjectSystem {
             // Force MEF import
             var services = Services;
 
+            var aliasMap =  collector.ExtensibilityImposition?.AliasMap;
+
             if (services.ProjectReferences != null) {
-                var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences);
+                var results = services.ProjectReferences.GetResolvedReferences(collector.UnresolvedReferences, null);
                 if (results != null) {
                     foreach (var reference in results) {
                         AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
@@ -362,11 +364,11 @@ namespace Aderant.Build.ProjectSystem {
             }
 
             if (services.AssemblyReferences != null) {
-                AddResolvedAssemblyDependency(collector, services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences));
+                AddResolvedAssemblyDependency(collector, services.AssemblyReferences.GetResolvedReferences(collector.UnresolvedReferences, aliasMap));
             }
 
             if (services.TextTemplateReferences != null) {
-                AddResolvedAssemblyDependency(collector, services.TextTemplateReferences.GetResolvedReferences(collector.UnresolvedReferences));
+                AddResolvedAssemblyDependency(collector, services.TextTemplateReferences.GetResolvedReferences(collector.UnresolvedReferences, aliasMap));
             }
         }
 

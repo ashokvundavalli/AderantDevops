@@ -195,6 +195,7 @@ namespace Aderant.Build.ProjectSystem {
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;
+            collector.ExtensibilityImposition = jobFiles.ExtensibilityImposition;
 
             await CollectBuildDependencies(collector);
 

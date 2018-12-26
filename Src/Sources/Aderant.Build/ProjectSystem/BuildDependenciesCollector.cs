@@ -24,6 +24,7 @@ namespace Aderant.Build.ProjectSystem {
         public ConfigurationToBuild ProjectConfiguration { get; set; }
 
         public IReadOnlyCollection<ISourceChange> SourceChanges { get; set; }
+        public ExtensibilityImposition ExtensibilityImposition { get; set; }
 
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));

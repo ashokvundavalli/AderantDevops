@@ -13,5 +13,7 @@ namespace Aderant.Build.ProjectSystem {
         /// which it easier to to regenerate rather than try and replay.
         /// </summary>
         public IReadOnlyCollection<string> AlwaysBuildProjects { get; }
+
+        public Dictionary<string, string> AliasMap { get; set; }
     }
 }

@@ -26,7 +26,7 @@ namespace Aderant.Build.ProjectSystem.References {
             this.logger = logger;
         }
 
-        protected override IBuildDependencyProjectReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedBuildDependencyProjectReference unresolved) {
+        protected override IBuildDependencyProjectReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedBuildDependencyProjectReference unresolved, Dictionary<string, string> aliasMap) {
             var projects = this.ConfiguredProject.Tree.LoadedConfiguredProjects;
 
             try {

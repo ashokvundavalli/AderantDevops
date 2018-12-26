@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using Aderant.Build.Model;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem.References {
@@ -15,12 +16,13 @@ namespace Aderant.Build.ProjectSystem.References {
             "exe",
         };
 
-        protected override IAssemblyReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedAssemblyReference unresolved) {
+
+        protected override IAssemblyReference CreateResolvedReference(IReadOnlyCollection<IUnresolvedReference> references, IUnresolvedAssemblyReference unresolved, Dictionary<string, string> aliasMap) {
             IReadOnlyCollection<ConfiguredProject> projects = ConfiguredProject.Tree.LoadedConfiguredProjects;
 
             foreach (var project in projects) {
                 var reference = project.Services.AssemblyReferences.SynthesizeResolvedReferenceForProjectOutput(unresolved);
-                
+
                 if (reference != null) {
                     return reference;
                 }

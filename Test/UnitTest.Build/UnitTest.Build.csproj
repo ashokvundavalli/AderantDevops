@@ -116,6 +116,7 @@
     <Compile Include="DependencyAnalyzer\BuildPlanGeneratorTests.cs" />
     <Compile Include="FileSystemTests.cs" />
     <Compile Include="BuildPipelineServiceImplTests.cs" />
+    <Compile Include="ProjectSystem\TextTemplateReferencesServicesTests.cs" />
     <Compile Include="StateTracking\TrackedInputFilesControllerTests.cs" />
     <Compile Include="StateTracking\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -238,6 +239,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\test-paket-template-with-exclude-section.txt" />
+    <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithCustomProcessor.tt" />
     <Content Include="TextTemplateAnalysis\Resources\TextTemplateWithInclude.tt" />
     <Content Include="TextTemplateAnalysis\Resources\SimpleTextTemplate.tt" />
     <None Include="Resources\BuildLogs\buildlog-1.json" />

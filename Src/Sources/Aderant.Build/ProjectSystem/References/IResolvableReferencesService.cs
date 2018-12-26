@@ -10,7 +10,7 @@ namespace Aderant.Build.ProjectSystem.References {
         where TResolvedReference : class, IReference {
         IReadOnlyCollection<TUnresolvedReference> GetUnresolvedReferences();
 
-        IReadOnlyCollection<ResolvedDependency<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references);
+        IReadOnlyCollection<ResolvedDependency<TUnresolvedReference, TResolvedReference>> GetResolvedReferences(IReadOnlyCollection<IUnresolvedReference> references, Dictionary<string, string> aliasMap);
     }
 
 }

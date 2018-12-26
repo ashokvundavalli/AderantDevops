@@ -86,7 +86,17 @@ namespace UnitTest.Build.TextTemplateAnalysis {
         ///&lt;#@ import namespace=&quot;System.Collections.Generic&quot; #&gt;
         ///&lt;#@ output extension=&quot;.cs&quot; #&gt;
         ///
-        ///&lt;#@ include file=&quot;common.ttinclude&quot;#&gt;.
+        ///&lt;#@ include file=&quot;common.ttinclude&quot;#&gt;
+        ///&lt;#@ include file=&quot;$(ProjectDir)\common1.ttinclude&quot;#&gt;.
+        /// </summary>
+        internal static string TextTemplateWithCustomProcessor {
+            get {
+                return ResourceManager.GetString("TextTemplateWithCustomProcessor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;#@ DomainModelDsl processor=&quot;DomainModelDslDirectiveProcessor&quot; requires=&quot;fileName=&apos;..\..\..\Dependencies\Collections.dmdsl&apos;&quot; provides=&quot;DomainPart=RootDomainPart&quot; #&gt;.
         /// </summary>
         internal static string TextTemplateWithInclude {
             get {

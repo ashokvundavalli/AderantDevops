@@ -1,6 +1,4 @@
-﻿using Aderant.Build.Model;
-
-namespace Aderant.Build.ProjectSystem.References {
+﻿namespace Aderant.Build.ProjectSystem.References {
     internal interface IAssemblyReferencesService : IResolvableReferencesService<IUnresolvedAssemblyReference, IAssemblyReference> {
 
         /// <summary>

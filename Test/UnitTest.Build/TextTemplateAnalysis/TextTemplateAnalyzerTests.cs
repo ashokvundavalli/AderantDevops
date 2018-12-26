@@ -33,5 +33,16 @@ namespace UnitTest.Build.TextTemplateAnalysis {
                 Assert.AreEqual(Path.Combine(TestContext.DeploymentDirectory, "common1.ttinclude"), result.Includes[1]);
             }
         }
+
+        [TestMethod]
+        public void Extract_custom_processor_directive() {
+            var analyzer = new TextTemplateAnalyzer();
+
+            using (var reader = new StringReader(Resources.TextTemplateWithCustomProcessor)) {
+                TextTemplateAnalysisResult result = analyzer.Analyze(reader, TestContext.DeploymentDirectory);
+
+                Assert.AreEqual("DomainModelDslDirectiveProcessor", result.CustomProcessors[0]);
+            }
+        }
     }
 }
