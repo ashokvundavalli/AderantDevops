@@ -123,37 +123,51 @@ namespace Aderant.Build.VersionControl {
         /// the out parameter branchCanonicalName.
         /// </returns>
         private Commit FindMostLikelyReusableBucket(Repository repository, Commit currentTree, out string commonBranch) {
-            Commit commit = currentTree.Parents.FirstOrDefault();
+            var refs = GetRefsToSearchForCommit(repository);
 
+            Commit commit = currentTree.Parents.FirstOrDefault();
             Commit[] interestingCommit = { null };
 
-            List<string> search = new List<string> {
-                "refs/remotes/origin/master",
-                "refs/heads/master"
-            };
-
+            int i = 0;
             // Recursively walk through the parents.
             while (commit != null) {
+                i++;
+
                 interestingCommit[0] = commit;
 
                 // Get the reachable branches to this commit.
-                IEnumerable<Reference> reachableFrom = repository.Refs.ReachableFrom(repository.Refs, interestingCommit);
-                var list = reachableFrom.Select(s => s.CanonicalName).ToList();
+                var reachableFrom = repository.Refs.ReachableFrom(refs, interestingCommit).FirstOrDefault();
 
-                // Check if there is joint item in the two lists.
-                var commonJoint = list.Intersect(search, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
-                if (commonJoint != null) {
+                if (reachableFrom != null) {
                     // If found, we can return from this point.
-                    commonBranch = commonJoint;
+                    commonBranch = reachableFrom.CanonicalName;
                     return commit;
                 }
 
                 // Else, go to its parent.
                 commit = commit.Parents.FirstOrDefault();
+
+                if (i > 128) {
+                    break;
+                }
             }
 
             commonBranch = null;
             return null;
+        }
+
+        private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
+            List<string> search = new List<string> {
+                "refs/remotes/origin/master",
+                "refs/heads/master"
+            };
+
+            List<Reference> refs = new List<Reference>();
+            foreach (var pattern in search) {
+                refs.AddRange(repository.Refs.FromGlob(pattern));
+            }
+
+            return refs;
         }
 
         private static Commit GetTip(string refName, Repository repository) {
