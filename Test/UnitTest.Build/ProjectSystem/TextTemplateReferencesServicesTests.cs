@@ -36,7 +36,7 @@ namespace UnitTest.Build.ProjectSystem {
 
             service.UnresolvedReferences = unresolved.ToList();
 
-            var aliasMap = new Dictionary<string, string> { { "Bar", "abc\\def.csproj"}} ;
+            var aliasMap = new Dictionary<string, string> { { "Bar", "abc\\def.csproj" } };
 
             var resolvedReferences = service.GetResolvedReferences(
                 unresolved,
