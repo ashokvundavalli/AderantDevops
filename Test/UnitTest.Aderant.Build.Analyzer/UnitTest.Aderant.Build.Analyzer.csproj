@@ -100,6 +100,7 @@
     <Compile Include="Tests\AderantQueryServiceMigrationTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDbConnectionStringTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityDefaultTransactionScopeTests.cs" />
+    <Compile Include="Tests\CodeQuality\CodeQualityMathRoundRuleTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualityNewExceptionTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualitySessionTransactionTests.cs" />
     <Compile Include="Tests\CodeQuality\CodeQualitySqlQueryTests.cs" />
