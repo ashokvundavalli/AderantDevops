@@ -8,14 +8,14 @@ using Aderant.Build.Logging;
 namespace Aderant.Build.ProjectSystem {
 
     internal class DirectoryGroveler {
+        private readonly IFileSystem physicalFileSystem;
+
         private readonly List<string> extensibilityFiles = new List<string>();
         private readonly List<string> makeFiles = new List<string>();
-        private readonly PhysicalFileSystem physicalFileSystem;
         private readonly List<string> projectFiles = new List<string>();
-
         private ICollection<string> directoriesInBuild = new List<string>();
 
-        public DirectoryGroveler(PhysicalFileSystem physicalFileSystem) {
+        public DirectoryGroveler(IFileSystem physicalFileSystem) {
             this.physicalFileSystem = physicalFileSystem;
         }
 
@@ -122,7 +122,7 @@ namespace Aderant.Build.ProjectSystem {
             return commonPath;
         }
 
-        private IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
+        internal IEnumerable<string> GrovelForFiles(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
             var files = new List<string>();
 
             string[] extensions = new[] {
