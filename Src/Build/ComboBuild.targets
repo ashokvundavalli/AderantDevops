@@ -12,7 +12,7 @@
 
   <!-- Desktop build property setup -->
   <PropertyGroup Condition="'$(BUILD_BUILDURI)' == ''">
-    <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(MSBuildStartupDirectory)</SolutionRoot>
+    <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(BUILD_ROOT)</SolutionRoot>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -63,7 +63,7 @@
       PrepareBuildEnvironment;
       CleanStagingDirectory;
       GetTfvc;
-      GrovelForExtensibilityFiles;
+      GatherProjectsToBuild;
       GetAllDependencies;
       CreatePlan;
       ExecutePlan;
@@ -82,23 +82,7 @@
   </Target>
 
 
-  <Target Name="GrovelForExtensibilityFiles">
-    <Message Text="Grovelling for extensibility files under: $(SolutionRoot)" />
-
-    <!-- Work around https://github.com/Microsoft/msbuild/issues/2452 -->
-    <ItemGroup>
-      <ExtensibilityFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'dir.props', SearchOption.AllDirectories))" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <DirectoryMakeFiles Include="$([System.IO.Directory]::GetFiles($(SolutionRoot), 'TFSBuild.proj', SearchOption.AllDirectories))"
-                          Exclude="$(SolutionRoot)TFSBuild.proj;
-                                   $(BuildInfrastructureDirectory)**\**" />
-    </ItemGroup>
-  </Target>
-
-
-  <Target Name="CreatePlan">
+  <Target Name="GatherProjectsToBuild">
 
     <ItemGroup>
       <ExcludePaths Include=".git" />
@@ -111,7 +95,6 @@
 
       <!--Need to teach the system that this provides the t4 engine-->
       <ExcludePaths Include="Build.T4Task\" />
-      <ExcludePaths Include="Libraries.SoftwareFactory\" />
 
       <ExcludePaths Include="TempTransform\" />
       <ExcludePaths Include="Tests.Load\" />
@@ -120,9 +103,22 @@
       <ExcludePaths Include="MomentumFileOpening\" />
       <ExcludePaths Include="Performance.ExpertSuite\" />
       <ExcludePaths Include="Tests.Customization\" />
-      <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" /> <!-- Has stuff we can't build - missing third party libs-->
-      <ExcludePaths Include="Workflow.Integration.Samples\" /> <!--Has "packages" checked in-->
+      <ExcludePaths Include="Aderant.ExpertIntegration.iManage\" />
+      <!-- Has stuff we can't build - missing third party libs-->
+      <ExcludePaths Include="Workflow.Integration.Samples\" />
     </ItemGroup>
+
+    <GatherProjectsToBuild
+      ExcludedPaths="@(ExcludePaths)">
+      <Output TaskParameter="DirectoriesInBuild" ItemName="DirectoriesInBuild" />
+      <Output TaskParameter="ExtensibilityFiles" ItemName="ExtensibilityFiles" />
+      <Output TaskParameter="DirectoryMakeFiles" ItemName="DirectoryMakeFiles" />
+      <Output TaskParameter="ProjectFiles" ItemName="ProjectFiles" />
+    </GatherProjectsToBuild>
+
+  </Target>
+
+  <Target Name="CreatePlan">
 
     <!--
     ==========================================================================================
@@ -145,15 +141,14 @@
     <!-- Builds the dynamic project file to control the build sequence -->
     <GenerateBuildPlan
       ContextEndpoint="$(ContextEndpoint)"
-      ModulesDirectory="$(SolutionRoot)"
       BuildPlan="$(BuildPlan)"
       ExtensibilityFiles="@(ExtensibilityFiles)"
       MakeFiles="@(DirectoryMakeFiles)"
+      ProjectFiles="@(ProjectFiles)"
       GroupExecutionFile="$(MSBuildThisFileDirectory)ComboBuild.Core.targets"
       BeforeProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Pre.targets"
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"
       CommonProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Common.proj"
-      ExcludePaths="@(ExcludePaths)"
       ConfigurationToBuild="@(ConfigurationToBuild)">
       <Output TaskParameter="DirectoriesInBuild" ItemName="DirectoriesInBuild"/>
       <Output TaskParameter="ImpactedTestProjects" ItemName="ImpactedTestProjects"/>
@@ -168,7 +163,7 @@
   </Target>
 
 
-  <Target Name="WriteStateFiles" >
+  <Target Name="WriteStateFiles">
     <WriteBuildStateFile>
       <Output TaskParameter="WrittenStateFiles" ItemName="StateFiles" />
     </WriteBuildStateFile>
@@ -204,6 +199,7 @@
   <Target Name="BuildAndPackage" DependsOnTargets="$(BuildAndPackageDependsOn)">
   </Target>
 
+
   <Target Name="GetAllDependencies"
           Condition="'$(UseSharedDependencyDirectory)' == 'true' And '$(NoDependencyFetch)' != 'true'">
     <!--
@@ -217,29 +213,28 @@
     -->
     <Message Text="Getting dependencies for build." />
 
-    <ItemGroup>
-      <ModuleDirectoriesFullPath Include="$([System.IO.Path]::GetFullPath('%(DirectoryMakeFiles.RootDir)%(DirectoryMakeFiles.Directory)..\'))"
-                                 Exclude="$(SharedDependencyDirectory)" />
-
-    </ItemGroup>
-
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
       DependenciesDirectory="$(SharedDependencyDirectory)"
       DropPath="$(XamlBuildDropLocation)"
-      ModulesInBuild="@(ModuleDirectoriesFullPath)" />
+      ModulesInBuild="@(DirectoriesInBuild)" />
 
     <MakeSymlink
-      Link="%(ModuleDirectoriesFullPath.FullPath)\Dependencies"
+      Link="%(DirectoriesInBuild.FullPath)\Dependencies"
       Target="$(SharedDependencyDirectory)"
-      Type="D" />
+      Type="D">
+        <Output TaskParameter="Link" ItemName="CreatedLinks" />
+      </MakeSymlink>
 
     <MakeSymlink
-      Link="%(ModuleDirectoriesFullPath.FullPath)\packages"
+      Link="%(DirectoriesInBuild.FullPath)\packages"
       Target="$(SharedDependencyDirectory)\packages"
-      Type="D" />
+      Type="D">
+        <Output TaskParameter="Link" ItemName="CreatedLinks" />
+    </MakeSymlink>
 
+    <WriteLinesToFile File="$(SolutionRoot)CreatedLinks.txt" Lines="@(CreatedLinks)" />
   </Target>
 
 

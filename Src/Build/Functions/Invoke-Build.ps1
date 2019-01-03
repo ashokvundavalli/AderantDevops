@@ -121,16 +121,55 @@ function FindProductManifest($context, [string]$root, [switch]$EnableConfigDownl
 }
 
 function FindGitDir($context, [string]$searchDirectory) {
-    $path = [Aderant.Build.PathUtility]::GetDirectoryNameOfFileAbove($searchDirectory, ".git", $null, $true)
+    $path = SearchForFile $searchDirectory ".git" $true
     $context.Variables["_GitDir"] = "$path\.git"
 
     return $path
+}
+
+function SearchForFile($startingDirectory, $fileName, $isDirectory = $false) {
+    # Canonicalize our starting location
+    $lookInDirectory = [System.IO.Path]::GetFullPath($startingDirectory)
+
+    if ($isDirectory) {
+        $exists = {
+            param($arg)
+            return [System.IO.Directory]::Exists($arg)
+        }
+    } else {
+        $exists = {
+            param($arg)
+            return [System.IO.File]::Exists($arg)
+        }
+    }
+
+    do {
+        # Construct the path that we will use to test against
+        $possibleFileDirectory = [System.IO.Path]::Combine($lookInDirectory, $fileName)
+
+        # If we successfully locate the file in the directory that we're
+        # looking in, simply return that location. Otherwise we'll
+        # keep moving up the tree.
+        if ($exists.Invoke($possibleFileDirectory)) {
+            # We've found the file, return the directory we found it in
+            return $lookInDirectory
+        } else {
+            # GetDirectoryName will return null when we reach the root
+            # terminating our search
+            $lookInDirectory = [System.IO.Path]::GetDirectoryName($lookInDirectory)
+        }
+    } while ($lookInDirectory -ne $null)
+
+    # When we didn't find the location, then return an empty string
+    return ""
 }
 
 function CreateToolArgumentString($context, $remainingArgs) {
     $set = [System.Collections.Generic.HashSet[string]]::new()
 
     & {
+        $set.Add("/p:BUILD_ROOT=$($context.BuildRoot)")
+
         if ($context.IsDesktopBuild) {
             $set.Add("/p:IsDesktopBuild=true")
         } else {
@@ -342,9 +381,13 @@ function AssignIncludeExclude {
         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$rootPath
     )
 
-    if ($null -ne $include) {
-        $context.Include = ExpandPaths $include
+    if ($null -eq $include) {
+        $include = @()
     }
+
+    $include += $ModulePath
+    $context.Include = ExpandPaths $include
+
 
     if ($null -ne $exclude) {
         $context.Exclude = ExpandPaths -paths $exclude -rootPath $rootPath -includePaths $context.Include
@@ -364,7 +407,7 @@ function AssignSwitches() {
     $switches.ChangedFilesOnly = $ChangedFilesOnly.IsPresent
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("WhatIf")) {
-        $Target = "CreatePlan"
+        $script:Target = "CreatePlan"
     }
 
     if ($PSCmdLet.MyInvocation.BoundParameters.ContainsKey("Verbose")) {
@@ -457,7 +500,7 @@ Should not be used as it prevents incremental builds which increases build times
 
 
     if ($Clean.IsPresent) {
-        Write-Host "If you're reading this, you have specified 'Clean'." -ForegroundColor Yellow
+        Write-Host "You have specified 'Clean'." -ForegroundColor Yellow
         Write-Host "Clean should not be used as it prevents incremental builds which increases build times."
 
         if (-not($PSCmdlet.ShouldContinue("Continue cleaning", ""))) {
@@ -477,13 +520,13 @@ Should not be used as it prevents incremental builds which increases build times
     } else {
         $repositoryPath = (Get-Location).Path
     }
-    Write-Debug "Resolved repositoryPath to $repositoryPath"
 
     $context.BuildSystemDirectory = "$PSScriptRoot\..\..\..\"
 
     AssignIncludeExclude -include $Include -exclude $Exclude -rootPath $repositoryPath
 
     [string]$root = FindGitDir -context $context -searchDirectory $repositoryPath
+    $context.BuildRoot = $root
 
     GetSourceTreeMetadata -context $context -repositoryPath $root
 

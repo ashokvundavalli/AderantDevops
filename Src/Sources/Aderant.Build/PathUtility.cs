@@ -105,17 +105,6 @@ namespace Aderant.Build {
         }
 
         /// <summary>
-        /// Searches upward for a directory containing the specified file, beginning in the specified directory.
-        /// </summary>
-        public static string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName) {
-            return new PhysicalFileSystem().GetDirectoryNameOfFileAbove(startingDirectory, fileName);
-        }
-
-        public static string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories, bool considerDirectories) {
-            return new PhysicalFileSystem().GetDirectoryNameOfFileAbove(startingDirectory, fileName, ceilingDirectories, considerDirectories);
-        }
-
-        /// <summary>
         /// Gets the resolved path if the input is rooted
         /// </summary>
         public static string GetFullPath(string path) {

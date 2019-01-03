@@ -8,10 +8,13 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Tasks {
 
     public class MakeSymlink : Microsoft.Build.Utilities.Task {
+
         [Required]
+        [Output]
         public string Link { get; set; }
 
         [Required]
+        [Output]
         public string Target { get; set; }
 
         public string Type { get; set; }
@@ -21,6 +24,7 @@ namespace Aderant.Build.Tasks {
         /// People like to check in a dependencies or package folder which breaks us so we fail if we bump into one of these gems.
         /// </summary>
         public bool FailIfLinkIsDirectoryWithContent { get; set; }
+
 
         public override bool Execute() {
             if (!ValidateIsAdmin()) {
@@ -62,6 +66,9 @@ namespace Aderant.Build.Tasks {
                 }
 
                 Log.LogMessage("Creating symlink {0} <=====> {1}", Link, Target);
+
+
+
                 if (!NativeMethods.CreateSymbolicLink(Link, Target, (uint)link)) {
                     Log.LogError($"Error: Unable to create symbolic link '{Link}'. (Error Code: {Marshal.GetLastWin32Error()})");
                 }

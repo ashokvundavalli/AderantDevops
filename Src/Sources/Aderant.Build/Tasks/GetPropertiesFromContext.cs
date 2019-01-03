@@ -10,24 +10,30 @@ namespace Aderant.Build.Tasks {
         public string ArtifactStagingDirectory { get; set; }
 
         [Output]
-        public bool IsDesktopBuild { get; set; }
+        public bool IsDesktopBuild {
+            get { return Context.IsDesktopBuild; }
+        }
 
         [Output]
-        public string BuildSystemDirectory { get; set; }
+        public string BuildSystemDirectory {
+            get { return Context.BuildSystemDirectory; }
+        }
+
+        [Output]
+        public string[] IncludePaths {
+            get {
+                return Context.Include;
+            }
+        }
+
 
         [Output]
         public string BuildFlavor { get; set; }
-
-        [Output]
-        public ITaskItem[] PropertiesToCreate { get; set; }
 
         public override bool ExecuteTask() {
             base.Execute();
 
             var context = Context;
-
-            IsDesktopBuild = context.IsDesktopBuild;
-            BuildSystemDirectory = context.BuildSystemDirectory;
 
             SetFlavor(context);
 

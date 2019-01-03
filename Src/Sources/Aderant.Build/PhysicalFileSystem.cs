@@ -63,22 +63,6 @@ namespace Aderant.Build {
             return SearchByPattern(startingDirectory, filter, ceilingDirectories);
         }
 
-        public string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName) {
-            return GetDirectoryNameOfFileAbove(startingDirectory, fileName, null, false);
-        }
-
-        public string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null, bool treatDirectoryAsFile = false) {
-            if (startingDirectory == null) {
-                throw new ArgumentNullException(nameof(startingDirectory));
-            }
-
-            if (fileName == null) {
-                throw new ArgumentNullException(nameof(fileName));
-            }
-
-            return SearchForFile(startingDirectory, fileName, new SearchOptions { CeilingDirectories = ceilingDirectories, ConsiderDirectories = treatDirectoryAsFile});
-        }
-
         public virtual string GetFullPath(string path) {
             ErrorUtilities.IsNotNull(path, nameof(path));
             return Path.GetFullPath(path);

@@ -57,6 +57,7 @@ namespace Aderant.Build.ProjectSystem {
 
         internal ProjectTree(IEnumerable<UnconfiguredProject> unconfiguredProjects)
             : this((ILogger)null) {
+
             EnsureUnconfiguredProjects();
 
             foreach (var project in unconfiguredProjects) {
@@ -91,6 +92,8 @@ namespace Aderant.Build.ProjectSystem {
             EnsureUnconfiguredProjects();
 
             ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+
+            logger.Info("Raw scanning paths: " + string.Join(",", directories));
 
             if (excludeFilterPatterns != null) {
                 excludeFilterPatterns = excludeFilterPatterns.Select(PathUtility.GetFullPath).ToList();
@@ -186,12 +189,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public async Task<BuildPlan> ComputeBuildPlan(BuildOperationContext context, AnalysisContext analysisContext, IBuildPipelineService pipelineService, OrchestrationFiles jobFiles) {
-            List<string> includePaths = new List<string> { context.BuildRoot };
-            if (context.Include != null) {
-                includePaths.AddRange(context.Include);
-            }
-
-            LoadProjects(includePaths, true, analysisContext.ExcludePaths);
+            LoadProjects(analysisContext.ProjectFiles);
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = context.ConfigurationToBuild;
@@ -215,6 +213,14 @@ namespace Aderant.Build.ProjectSystem {
 
                 BuildPlan plan = sequencer.CreatePlan(context, jobFiles, graph);
                 return plan;
+            }
+        }
+
+        private void LoadProjects(IReadOnlyCollection<string> analysisContextProjectFiles) {
+            EnsureUnconfiguredProjects();
+
+            foreach (string projectFile in analysisContextProjectFiles) {
+                LoadAndParseProjectFile(projectFile);
             }
         }
 
@@ -291,36 +297,7 @@ namespace Aderant.Build.ProjectSystem {
 
             GetFilesWithExtensionRecursive(filePathCollector, directory);
 
-            foreach (var projectFilePath in filePathCollector) {
-                bool skip = false;
-
-                if (excludeFilterPatterns != null) {
-                    foreach (var pattern in excludeFilterPatterns) {
-                        string resolvedPath = pattern;
-                        if (pattern.Contains("..")) {
-                            resolvedPath = Path.GetFullPath(pattern);
-                        }
-
-                        if (WildcardPattern.ContainsWildcardCharacters(resolvedPath)) {
-                            WildcardPattern wildcardPattern = new WildcardPattern(resolvedPath, WildcardOptions.IgnoreCase);
-
-                            if (wildcardPattern.IsMatch(projectFilePath)) {
-                                skip = true;
-                                break;
-                            }
-                        }
-
-                        if (projectFilePath.IndexOf(resolvedPath, StringComparison.OrdinalIgnoreCase) >= 0) {
-                            skip = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!skip) {
-                    yield return projectFilePath;
-                }
-            }
+            return DirectoryGroveler.FilterFiles(filePathCollector, excludeFilterPatterns);
         }
 
         string[] extensions = new[] {

@@ -120,6 +120,8 @@
     <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFilesController.cs" />
+    <Compile Include="Tasks\GatherProjectsToBuild.cs" />
+    <Compile Include="ProjectSystem\DirectoryGroveler.cs" />
     <Compile Include="Utilities\RoslynLocator.cs" />
     <Compile Include="Utilities\ParallelismHelper.cs" />
     <Compile Include="Utilities\StringExtensions.cs" />

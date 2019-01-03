@@ -60,16 +60,6 @@ namespace Aderant.Build {
         void MoveDirectory(string source, string destination);
 
         /// <summary>
-        /// Searches upward for a directory containing the specified file, beginning in the specified directory.
-        /// </summary>
-        string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName);
-
-        /// <summary>
-        /// Searches upward for a directory containing the specified file, beginning in the specified directory.
-        /// </summary>
-        string GetDirectoryNameOfFileAbove(string startingDirectory, string fileName, string[] ceilingDirectories = null, bool treatDirectoryAsFile = false);
-
-        /// <summary>
         /// Searches upward for a directory containing the specified files included by the filter, beginning in the specified directory.
         /// </summary>
         IEnumerable<string> GetDirectoryNameOfFilesAbove(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories = null);

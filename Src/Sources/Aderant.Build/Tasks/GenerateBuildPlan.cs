@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using Aderant.Build.Logging;
 using Aderant.Build.ProjectSystem;
 using Microsoft.Build.Framework;
@@ -11,15 +10,15 @@ using Microsoft.Build.Framework;
 namespace Aderant.Build.Tasks {
     public sealed class GenerateBuildPlan : BuildOperationContextTask {
 
-        [Required]
-        public string ModulesDirectory { get; set; }
-
         /// <summary>
         /// Gets or sets the build plan project file.
         /// That is the file that represents the tasks to perform in this build.
         /// </summary>
         [Required]
         public string BuildPlan { get; set; }
+
+        [Required]
+        public string[] ProjectFiles { get; set; }
 
         /// <summary>
         /// Gets or sets the targets file which performs the build orchestration
@@ -49,7 +48,6 @@ namespace Aderant.Build.Tasks {
 
         public string ConfigurationToBuild { get; set; }
 
-
         /// <summary>
         /// Gets or sets the make files.
         /// This eventually becomes additional directories to traverse into for cases when projects do not exist in the directory
@@ -58,19 +56,18 @@ namespace Aderant.Build.Tasks {
         /// <value>The make files.</value>
         public string[] MakeFiles { get; set; }
 
-        [Output]
-        public string[] DirectoriesInBuild { get; set; }
-
-        [Output]
-        public string[] ImpactedTestProjects { get; set; }
-
-        public string[] ExcludePaths { get; set; } = new string[0];
-
         /// <summary>
         /// Gets or sets the extensibility files.
         /// These files contain instructions to influence the build.
         /// </summary>
         public string[] ExtensibilityFiles { get; set; }
+
+
+        [Output]
+        public string[] DirectoriesInBuild { get; set; }
+
+        [Output]
+        public string[] ImpactedTestProjects { get; set; }
 
         public override bool ExecuteTask() {
             ExecuteCore(Context);
@@ -78,8 +75,6 @@ namespace Aderant.Build.Tasks {
         }
 
         private void ExecuteCore(BuildOperationContext context) {
-            // TODO: keep this shim?
-            context.BuildRoot = ModulesDirectory;
 
             if (context.Switches.Resume) {
                 if (File.Exists(BuildPlan)) {
@@ -91,10 +86,8 @@ namespace Aderant.Build.Tasks {
                 }
             }
 
-            ExtensibilityImposition extensibilityImposition = null;
-            if (ExtensibilityFiles != null) {
-                extensibilityImposition = ExtensibilityController.GetExtensibilityImposition(ModulesDirectory, ExtensibilityFiles);
-            }
+            ExtensibilityController controller = new ExtensibilityController();
+            var extensibilityImposition = controller.GetExtensibilityImposition(ExtensibilityFiles);
 
             var projectTree = ProjectTree.CreateDefaultImplementation(new BuildTaskLogger(Log));
 
@@ -104,13 +97,14 @@ namespace Aderant.Build.Tasks {
                 GroupExecutionFile = GroupExecutionFile,
                 CommonProjectFile = CommonProjectFile,
                 ExtensibilityImposition = extensibilityImposition,
-                MakeFiles = FilterMakeFiles(),
+                MakeFiles = MakeFiles,
                 BuildPlan = BuildPlan,
             };
 
-            var analysisContext = CreateAnalysisContext();
-
             context.ConfigurationToBuild = new ConfigurationToBuild(ConfigurationToBuild);
+
+            var analysisContext = new AnalysisContext();
+            analysisContext.ProjectFiles = ProjectFiles;
 
             var buildPlan = projectTree.ComputeBuildPlan(context, analysisContext, PipelineService, jobFiles).Result;
             if (buildPlan.DirectoriesInBuild != null) {
@@ -118,6 +112,15 @@ namespace Aderant.Build.Tasks {
             }
 
             var element = buildPlan.CreateXml();
+
+            WritePlanToFile(context, element);
+
+            ImpactedTestProjects = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted).Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
+
+            PipelineService.Publish(context);
+        }
+
+        private void WritePlanToFile(BuildOperationContext context, XElement element) {
 
             var settings = new XmlWriterSettings {
                 Encoding = Encoding.UTF8,
@@ -127,63 +130,14 @@ namespace Aderant.Build.Tasks {
                 Indent = true
             };
 
-            using (var writer = XmlWriter.Create(Path.Combine(ModulesDirectory, BuildPlan), settings)) {
+            using (var writer = XmlWriter.Create(Path.Combine(context.BuildRoot, BuildPlan), settings)) {
                 element.WriteTo(writer);
             }
-
-            ImpactedTestProjects = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted)
-                .Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
-
-            PipelineService.Publish(context);
-        }
-
-        private List<string> FilterMakeFiles() {
-            var files = new List<string>();
-
-            if (MakeFiles != null) {
-                foreach (var file in MakeFiles) {
-                    bool skip = false;
-
-                    if (ExcludePaths != null) {
-                        if (ExcludePaths.Any(pattern => file.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)) {
-                            skip = true;
-                        }
-                    }
-
-                    if (!skip) {
-                        Log.LogMessage(MessageImportance.Normal, "Make file: " + file);
-                        files.Add(file);
-                    }
-                }
-            }
-
-            return files;
         }
 
         private void RebuildFromExistingPlan(string planFile) {
             var planLoader = new ExistingPlanLoader();
             DirectoriesInBuild = planLoader.LoadPlan(planFile, PipelineService).ToArray();
-        }
-
-        private AnalysisContext CreateAnalysisContext() {
-            ErrorUtilities.IsNotNull(Context.BuildSystemDirectory, nameof(Context.BuildSystemDirectory));
-
-            var paths = ExcludePaths.ToList();
-
-            if (!Context.BuildSystemDirectory.Contains("TestResults")) {
-                paths.Add(Context.BuildSystemDirectory);
-            }
-
-            // Add in the paths passed in by "bm -Exclude ..."
-            if (Context.Exclude != null) {
-                paths.AddRange(Context.Exclude.ToList());
-            }
-
-            var analysisContext = new AnalysisContext {
-                ExcludePaths = paths.Distinct(StringComparer.OrdinalIgnoreCase).ToList()
-            };
-
-            return analysisContext;
         }
     }
 

@@ -1,24 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {
     internal class ExtensibilityController {
-        public static ExtensibilityImposition GetExtensibilityImposition(string modulesDirectory, string[] extensibilityFiles) {
+        public ExtensibilityImposition GetExtensibilityImposition(string[] extensibilityFiles) {
             var alwaysBuildProjects = new List<string>();
             var projectMetadataLookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            var globalProps = new Dictionary<string, string> { { "SolutionRoot", modulesDirectory } };
+            if (extensibilityFiles != null) {
+                using (var collection = new ProjectCollection()) {
+                    collection.IsBuildEnabled = false;
 
-            using (var collection = new ProjectCollection(globalProps)) {
-                collection.IsBuildEnabled = false;
+                    foreach (var file in extensibilityFiles) {
+                        var globalProps = new Dictionary<string, string> { { "SolutionRoot", Path.GetDirectoryName(file) } };
 
-                foreach (var file in extensibilityFiles) {
-                    var loadProject = collection.LoadProject(file);
+                        var loadProject = collection.LoadProject(file, globalProps, null);
 
-                    AddAlwaysBuild(loadProject, alwaysBuildProjects);
+                        AddAlwaysBuild(loadProject, alwaysBuildProjects);
 
-                    ExtractAssemblyAliases(loadProject, projectMetadataLookup);
+                        ExtractAssemblyAliases(loadProject, projectMetadataLookup);
+                    }
                 }
             }
 
