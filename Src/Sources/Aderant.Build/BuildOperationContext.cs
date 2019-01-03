@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -349,6 +350,9 @@ namespace Aderant.Build {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     internal class ArtifactManifest {
 
+        /// <summary>
+        /// The stable natural key of the artifact manifest.
+        /// </summary>
         [DataMember]
         public string Id { get; set; }
 
@@ -361,6 +365,7 @@ namespace Aderant.Build {
 
     [DataContract]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    [DebuggerDisplay("{" + nameof(File) + "}")]
     internal class ArtifactItem {
 
         [DataMember]

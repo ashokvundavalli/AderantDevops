@@ -342,7 +342,12 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private bool DoesArtifactContainProjectItem(ConfiguredProject project, ICollection<ArtifactManifest> artifacts) {
+            // Packaged files such as workflows and web projects produce both an assembly an a package
+            // We want to interrogate the package for the packaged content if we have one of those projects
             var outputFile = project.GetOutputAssemblyWithExtension();
+            if (project.IsZipPackaged) {
+                outputFile = Path.ChangeExtension(outputFile, ".zip");
+            }
 
             List<ArtifactManifest> checkedArtifacts = null;
 
@@ -364,7 +369,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 logger.Info($"Looked for {outputFile} but it was not found in packages:");
 
                 foreach (var checkedArtifact in checkedArtifacts) {
-                    logger.Info(string.Format("    {0} ({1})", checkedArtifact.Id.PadRight(80), checkedArtifact.InstanceId));
+                    logger.Info(string.Format("    {0} (package id: {1})", checkedArtifact.Id.PadRight(80), checkedArtifact.InstanceId));
                 }
             }
 

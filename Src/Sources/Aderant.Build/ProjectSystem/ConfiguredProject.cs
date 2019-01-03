@@ -169,6 +169,13 @@ namespace Aderant.Build.ProjectSystem {
             }
         }
 
+        /// <summary>
+        /// Gets a value that indicates if this project is packaged as a zip file.
+        /// </summary>
+        public bool IsZipPackaged {
+            get { return IsWebProject; }
+        }
+
         public string GetAssemblyName() {
             return OutputAssembly;
         }

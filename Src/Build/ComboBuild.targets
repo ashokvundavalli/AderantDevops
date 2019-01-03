@@ -88,6 +88,7 @@
       <ExcludePaths Include=".git" />
       <ExcludePaths Include="$" />
       <ExcludePaths Include="\_" />
+      <ExcludePaths Include="TempTemplateTransform\" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
 
@@ -150,11 +151,9 @@
       AfterProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Post.targets"
       CommonProjectFile="$(MSBuildThisFileDirectory)ComboBuild.Common.proj"
       ConfigurationToBuild="@(ConfigurationToBuild)">
-      <Output TaskParameter="DirectoriesInBuild" ItemName="DirectoriesInBuild"/>
       <Output TaskParameter="ImpactedTestProjects" ItemName="ImpactedTestProjects"/>
     </GenerateBuildPlan>
 
-    <Message Text="Modules In Build: %(DirectoriesInBuild.Identity)" />
     <Message Text="Impacted Tests: %(ImpactedTestProjects.Identity)" />
 
     <Error Condition="!Exists('$(BuildPlan)')" Text="$(BuildPlan) does not exist." />
