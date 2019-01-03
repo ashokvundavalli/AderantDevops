@@ -422,7 +422,12 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
       </AdditionalArtifacts>
     </ItemGroup>
 
-
+    <ItemGroup>
+      <AdditionalArtifacts Include="$(UpdateStagingDirectory)**\**">
+        <ArtifactId>Update</ArtifactId>
+        <ArtifactType>Branch</ArtifactType>
+      </AdditionalArtifacts>
+    </ItemGroup>
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->
 
