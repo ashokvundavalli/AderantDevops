@@ -352,13 +352,13 @@
 
   <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(AlternativeOutputDirectory)' != ''">
 
-    <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')"
+    <Delete Files="@(IntermediateAssembly->'$(ArtifactStagingDirectory)%(Filename)%(Extension)')"
             ContinueOnError="true" />
 
     <Copy
       SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
       Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
-      DestinationFolder="$(AlternativeOutputDirectory)"
+      DestinationFolder="$(ArtifactStagingDirectory)"
       UseHardlinksIfPossible="true"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
       Retries="$(CopyRetryCount)"
@@ -366,6 +366,10 @@
       ContinueOnError="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
+
+    <PropertyGroup>
+      <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(ArtifactStagingDirectory)))</RelativeArtifactStagingDirectory>
+    </PropertyGroup>
 
     <RecordProjectOutputs
       ContextEndpoint="$(ContextEndpoint)"
@@ -377,7 +381,7 @@
       ProjectFile="$(MSBuildProjectFullPath)"
       IntermediateDirectory="$(IntermediateOutputPath)"
       OutputPath="$(OutDir)"
-      ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
+      ArtifactStagingDirectory="$(RelativeArtifactStagingDirectory)"
       FileWrites="@(FileWrites);$(PackageFileName)" />
 
   </Target>

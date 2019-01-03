@@ -22,7 +22,7 @@ namespace Aderant.Build.Commands {
             if (SourceDirectory == null) {
                 SourceDirectory = this.SessionState.Path.CurrentFileSystemLocation.Path;
             }
-            
+
             WriteDebug(LibGit2Sharp.GlobalSettings.NativeLibraryPath);
 
             var gvc = new GitVersionControlService();
