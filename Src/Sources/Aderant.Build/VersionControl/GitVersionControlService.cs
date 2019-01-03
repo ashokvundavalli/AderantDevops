@@ -158,6 +158,12 @@ namespace Aderant.Build.VersionControl {
 
         private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
             List<string> search = new List<string> {
+                "refs/heads/patch/*",
+                "refs/remotes/heads/patch/*",
+
+                "refs/heads/releases/*",
+                "refs/remotes/heads/releases/*",
+
                 "refs/remotes/origin/master",
                 "refs/heads/master"
             };
