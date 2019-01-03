@@ -38,6 +38,9 @@
     <UseSharedDependencyDirectory Condition="'$(UseSharedDependencyDirectory)' == ''">true</UseSharedDependencyDirectory>
     <SharedDependencyDirectory Condition="'$(SharedDependencyDirectory)' == ''">$(ArtifactStagingDirectory)out\</SharedDependencyDirectory>
 
+    <!-- Specifies the drop location for patch/update content -->
+    <UpdateStagingDirectory Condition="'$(UpdateStagingDirectory)' == ''">$(ArtifactStagingDirectory)update\</UpdateStagingDirectory>
+
     <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\</BuildInfrastructureDirectory>
     <BuildInfrastructureDirectory>$([System.IO.Path]::GetFullPath(`$(BuildInfrastructureDirectory)`))</BuildInfrastructureDirectory>
     <BuildInfrastructureDirectory Condition="'$(BuildInfrastructureDirectory)' != '' and !HasTrailingSlash('$(BuildInfrastructureDirectory)')">$(BuildInfrastructureDirectory)\</BuildInfrastructureDirectory>
@@ -252,6 +255,7 @@
         BuildToolsDirectory=$(BuildToolsDirectory);
         UseSharedDependencyDirectory=$(UseSharedDependencyDirectory);
         SharedDependencyDirectory=$(SharedDependencyDirectory);
+        UpdateStagingDirectory=$(UpdateStagingDirectory);
         BuildFlavor=$(BuildFlavor);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         CustomAfterMicrosoftCSharpTargets=$(CustomAfterMicrosoftCSharpTargets);
@@ -417,6 +421,8 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
     </ItemGroup>
+
+
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->
 

@@ -145,9 +145,12 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
                             foreach (ITaskItem item in targetResult.Items) {
                                 string itemFullPath = item.GetMetadata("FullPath");
 
-                                if (fileSystem.FileExists(itemFullPath)) {
-                                    var hash = fileSystem.ComputeSha1Hash(itemFullPath);
-                                    filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });
+                                // If globbing evaluation failed, then ignore the path
+                                if (!itemFullPath.Contains("**")) {
+                                    if (fileSystem.FileExists(itemFullPath)) {
+                                        var hash = fileSystem.ComputeSha1Hash(itemFullPath);
+                                        filesToTrack.Add(new TrackedInputFile(itemFullPath) { Sha1 = hash });
+                                    }
                                 }
                             }
 

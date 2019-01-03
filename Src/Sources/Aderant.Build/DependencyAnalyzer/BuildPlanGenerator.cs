@@ -214,6 +214,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                     ["IsProjectFile"] = bool.TrueString,
                 };
 
+                AddProjectOutputToUpdatePackage(propertiesForProjectInstance, visualStudioProject);
+
                 TrackProjectItems(project, visualStudioProject);
 
                 if (project["IsWebProject"] == bool.TrueString) {
@@ -265,6 +267,13 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             return null;
+        }
+
+        private static void AddProjectOutputToUpdatePackage(PropertyList propertyList, ConfiguredProject visualStudioProject) {
+            bool? hasDirtyFiles = visualStudioProject.DirtyFiles?.Any();
+            if (hasDirtyFiles.GetValueOrDefault()) {
+                propertyList["IncludeOutputInUpdatePackage"] = bool.TrueString;
+            }
         }
 
         private static void TrackProjectItems(ItemGroupItem project, ConfiguredProject visualStudioProject) {
@@ -369,9 +378,6 @@ namespace Aderant.Build.DependencyAnalyzer {
             propertiesList.Add("SolutionName", Path.GetFileNameWithoutExtension(visualStudioProject.SolutionFile));
 
             propertiesList.Add("BuildingSolutionFile", bool.FalseString);
-
         }
     }
-
-
 }

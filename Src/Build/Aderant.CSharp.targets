@@ -355,10 +355,15 @@
     <Delete Files="@(IntermediateAssembly->'$(ArtifactStagingDirectory)%(Filename)%(Extension)')"
             ContinueOnError="true" />
 
+    <ItemGroup>
+      <DestinationFolders Include="$(AlternativeOutputDirectory)" />
+      <DestinationFolders Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Include="$(UpdateStagingDirectory)" />
+    </ItemGroup>
+
     <Copy
       SourceFiles="@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')"
       Condition="Exists('@(IntermediateAssembly->'$(OutputPath)%(Filename)%(Extension)')')"
-      DestinationFolder="$(ArtifactStagingDirectory)"
+      DestinationFolder="%(DestinationFolders.FullPath)"
       UseHardlinksIfPossible="true"
       OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
       Retries="$(CopyRetryCount)"
@@ -368,7 +373,7 @@
     </Copy>
 
     <PropertyGroup>
-      <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(ArtifactStagingDirectory)))</RelativeArtifactStagingDirectory>
+      <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(AlternativeOutputDirectory)))</RelativeArtifactStagingDirectory>
     </PropertyGroup>
 
     <RecordProjectOutputs

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Aderant.Build.MSBuild;
-using Aderant.Build.ProjectSystem.StateTracking;
 using ProtoBuf;
 
 namespace Aderant.Build.ProjectSystem {
@@ -28,8 +27,12 @@ namespace Aderant.Build.ProjectSystem {
         [DataMember]
         public bool? IsWebProject { get; set; }
 
+        /// <summary>
+        /// Stashes the data needed for TrackProject(...) in resume scenarios
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="visualStudioProject"></param>
         public static void SetPropertiesNeededForTracking(ItemGroupItem project, ConfiguredProject visualStudioProject) {
-            // Stashes the data needed for TrackProject(...) in resume scenarios
             project[nameof(ConfiguredProject.ProjectGuid)] = visualStudioProject.ProjectGuid.ToString("D");
             project[nameof(ConfiguredProject.SolutionRoot)] = visualStudioProject.SolutionRoot;
             project[nameof(ConfiguredProject.OutputPath)] = visualStudioProject.OutputPath;
