@@ -357,7 +357,6 @@
 
     <ItemGroup>
       <DestinationFolders Include="$(AlternativeOutputDirectory)" />
-      <!--<DestinationFolders Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Include="$(UpdateStagingDirectory)" />-->
     </ItemGroup>
 
     <Copy
@@ -372,6 +371,7 @@
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
 
+    <!--Send all outputs of the project to the update staging area for later collection-->
     <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true'"
              Projects="$(MSBuildProjectFullPath)"
              Targets="CopyFilesToOutputDirectory"

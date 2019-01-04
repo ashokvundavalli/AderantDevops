@@ -399,6 +399,11 @@ function AssignSwitches() {
 
     $switches.Branch = $Branch.IsPresent
     $switches.Downstream = $Downstream.IsPresent
+
+    if ($context.BuildMetadata.IsPullRequest) {
+        $switches.Downstream = $true
+    }
+
     $switches.Transitive = $Transitive.IsPresent
     $switches.Clean = $Clean.IsPresent
     $switches.Release = $Release.IsPresent
