@@ -22,7 +22,7 @@
     <BuildInParallel Condition="'$(BuildInParallel)' != 'false' And '$(MSBuildNodeCount)' &gt; '1'">true</BuildInParallel>
 
     <!--Test configuration-->
-    <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'false'))</RunTests>
+    <RunTests Condition="'$(RunTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunTests)', 'true'))</RunTests>
     <RunIntegrationTests Condition="'$(RunIntegrationTests)' == ''">$([MSBuild]::ValueOrDefault('$(RunIntegrationTests)', 'false'))</RunIntegrationTests>
 
     <EnableTFVCGet Condition="'$(EnableTFVCGet)' == ''">false</EnableTFVCGet>
