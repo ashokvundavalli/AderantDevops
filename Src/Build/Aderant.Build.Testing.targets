@@ -18,9 +18,6 @@
 
     <Message Text="Looking for test assemblies in these directories:" />
     <Message Text="%(TrackedProjects.OutputPath)" />
-
-    <Message Text="##vso[task.setvariable variable=TestRunTitle]Unit Test - $(BUILD_DEFINITIONNAME)|$(BUILD_BUILDNUMBER)" />
-
   </Target>
 
 

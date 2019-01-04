@@ -352,12 +352,12 @@
 
   <Target Name="ReplicateOutputs" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(AlternativeOutputDirectory)' != ''">
 
-    <Delete Files="@(IntermediateAssembly->'$(ArtifactStagingDirectory)%(Filename)%(Extension)')"
+    <Delete Files="@(IntermediateAssembly->'$(AlternativeOutputDirectory)%(Filename)%(Extension)')"
             ContinueOnError="true" />
 
     <ItemGroup>
       <DestinationFolders Include="$(AlternativeOutputDirectory)" />
-      <DestinationFolders Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Include="$(UpdateStagingDirectory)" />
+      <!--<DestinationFolders Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Include="$(UpdateStagingDirectory)" />-->
     </ItemGroup>
 
     <Copy
@@ -371,6 +371,14 @@
       ContinueOnError="true">
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
     </Copy>
+
+    <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true'"
+             Projects="$(MSBuildProjectFullPath)"
+             Targets="CopyFilesToOutputDirectory"
+             Properties="OutDir=$(UpdateStagingDirectory);
+                         CreateHardLinksForCopyAdditionalFilesIfPossible=true;
+                         CopyOutputSymbolsToOutputDirectory=false;
+                         _DocumentationFileProduced=false" />
 
     <PropertyGroup>
       <RelativeArtifactStagingDirectory>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(AlternativeOutputDirectory)))</RelativeArtifactStagingDirectory>
