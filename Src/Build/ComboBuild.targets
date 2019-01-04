@@ -358,10 +358,6 @@
 
   <Target Name="ArchiveArtifacts" Condition="'$(PackageProduct)' == 'true'">
 
-    <PropertyGroup>
-      <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
-    </PropertyGroup>
-
     <GenerateArchives
       DirectoriesToArchive="@(LocalPackagePaths)"
       OutputArchives="@(LocalPackagePaths -> '%(FullPath)\%(Filename)%(Extension).zip')"
@@ -369,6 +365,8 @@
       CompressionLevel="$(CompressionLevel)">
       <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
     </GenerateArchives>
+
+    <Message Text="Build artifact: %(ArtifactArchives.FullPath)" />
 
   </Target>
 
@@ -384,6 +382,11 @@
       ArchiveArtifacts;
       CleanBinariesBeforePackaging;
     </PackageProductDependsOn>
+  </PropertyGroup>
+
+
+  <PropertyGroup>
+    <CompressionLevel Condition="'$(CompressionLevel)' == ''">Fastest</CompressionLevel>
   </PropertyGroup>
 
 
@@ -412,25 +415,40 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
 
   </Target>
 
+  <!--Package all files for an update/patch-->
+  <Target Name="ProduceUpdatePackage">
 
-  <Target Name="CollectFilesForPublishing">
+    <PropertyGroup>
+      <UpdateArchiveFile>$(UpdateStagingDirectory)Update.zip</UpdateArchiveFile>
+    </PropertyGroup>
+
+    <GenerateArchives
+      DirectoriesToArchive="$(UpdateStagingDirectory)"
+      OutputArchives="$(UpdateArchiveFile)"
+      CompressionLevel="$(CompressionLevel)">
+      <Output TaskParameter="ArchivedFiles" ItemName="ArtifactArchives" />
+    </GenerateArchives>
 
     <ItemGroup>
-      <AdditionalArtifacts Include="$(ProductArchiveFile)">
-        <ArtifactId>Product</ArtifactId>
+      <AdditionalArtifacts Include="$(UpdateArchiveFile)">
+        <ArtifactId>update</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
     </ItemGroup>
 
+  </Target>
+
+
+  <Target Name="CollectFilesForPublishing" DependsOnTargets="ProduceUpdatePackage">
+
     <ItemGroup>
-      <AdditionalArtifacts Include="$(UpdateStagingDirectory)**\**">
-        <ArtifactId>Update</ArtifactId>
+      <AdditionalArtifacts Include="$(ProductArchiveFile)">
+        <ArtifactId>product</ArtifactId>
         <ArtifactType>Branch</ArtifactType>
       </AdditionalArtifacts>
     </ItemGroup>
 
     <!-- ToDo: Update this to exclude directories for archived artifacts. -->
-
     <CollectArtifactsForPublishing
       ArtifactStagingDirectory="$(ArtifactStagingDirectory)"
       Artifacts="@(AdditionalArtifacts)"
@@ -441,6 +459,7 @@ Add-Content -LiteralPath "$(ProductArchiveFile)" -Value "$(BUILD_BUILDNUMBER)" -
     </CollectArtifactsForPublishing>
 
     <!--Tell TFS about the new artifacts so it can manage them -->
+    <Message Text="Artifact association data..." />
     <Message Text="%(LinkCommands.Identity)" />
     <Message Text="Copy command: %(ArtifactPaths.FullPath) -> %(TargetPath)" />
 
