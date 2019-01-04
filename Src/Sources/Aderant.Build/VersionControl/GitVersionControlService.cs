@@ -18,7 +18,6 @@ namespace Aderant.Build.VersionControl {
         /// Gets the changed files between two branches as well as the artifact bucket cache key
         /// </summary>
         public SourceTreeMetadata GetMetadata(string repositoryPath, string fromBranch, string toBranch, bool includeLocalChanges = false) {
-            System.Diagnostics.Debugger.Launch();
             var info = new SourceTreeMetadata();
 
             HashSet<BucketId> bucketKeys = new HashSet<BucketId>();
@@ -160,14 +159,19 @@ namespace Aderant.Build.VersionControl {
         private static List<Reference> GetRefsToSearchForCommit(Repository repository) {
             List<string> search = new List<string> {
                 "refs/heads/patch/*",
-                "refs/remotes/heads/patch/*",
-
                 "refs/heads/releases/*",
-                "refs/remotes/heads/releases/*",
-
-                "refs/remotes/origin/master",
                 "refs/heads/master"
             };
+
+            // For non-pull request CI builds the branch is checked out at a particular commit
+            // and we need to include /remotes/origin/ in the ref spec (I don't know why)
+            if (repository.Info.IsHeadDetached) {
+                search = new List<string> {
+                    "refs/remotes/origin/patch/*",
+                    "refs/remotes/origin/releases/*",
+                    "refs/remotes/origin/master",
+                };
+            }
 
             List<Reference> refs = new List<Reference>();
             foreach (var pattern in search) {
