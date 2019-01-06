@@ -67,7 +67,9 @@ namespace Aderant.Build.ProjectSystem.References {
         private bool ShouldParseTemplate(string itemEvaluatedInclude) {
             if (itemEvaluatedInclude.EndsWith(".tt", StringComparison.OrdinalIgnoreCase)) {
                 // __ is a special prefix that the build will ignore even if this template may cause a circular reference
-                if (!itemEvaluatedInclude.StartsWith("__")) {
+                var itemEvaluatedIncludeFileName = Path.GetFileName(itemEvaluatedInclude);
+
+                if (!itemEvaluatedIncludeFileName.StartsWith("__")) {
                     return true;
                 }
             }
