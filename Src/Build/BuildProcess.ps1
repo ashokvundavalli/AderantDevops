@@ -294,14 +294,14 @@ param(
 #     Import-Module -Assembly $assembly
 # }
 
-# #=================================================================================================
-# # Synopsis: Performs a incremental build of the Visual Studio Solution if possible.
-# # Applies a common build number, executes unit tests and packages the assemblies as a NuGet
-# # package
-# #=================================================================================================
+#=================================================================================================
+# Synopsis: Performs a incremental build of the Visual Studio Solution if possible.
+# Applies a common build number, executes unit tests and packages the assemblies as a NuGet
+# package
+#=================================================================================================
 task EndToEnd {
-#     # End of all tasks. Print out current build flavor: Debug or Release.
-#     Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
+    # End of all tasks. Print out current build flavor: Debug or Release.
+    # Write-Host "Finished build in $global:buildFlavor. Use the -debug or -release to switch." -foregroundcolor Green
 
     #TODO: Move to preparebuildenv
     # Get submodules

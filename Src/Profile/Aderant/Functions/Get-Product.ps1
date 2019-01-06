@@ -20,7 +20,7 @@ function Get-Product {
     param (
         [Parameter(Mandatory=$false, ParameterSetName = "Branch", Position = 0)][ValidateNotNullOrEmpty()][string]$branch,
         [Parameter(Mandatory=$false, ParameterSetName = "PullRequest")][Alias("pr")][int]$pullRequestId,
-        [string[]]$components,
+        [string[]]$components = @('Product'),
         [switch]$createBackup
     )
 
@@ -28,13 +28,13 @@ function Get-Product {
     [string]$dropRoot = '\\dfs.aderant.com\expert-ci'
 
     switch ($PSCmdlet.ParameterSetName) {
-        "Branch" {
+        'Branch' {
             & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch $branch -components $components
         }
-        "PullRequest" {
+        'PullRequest' {
             & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -pullRequestId $pullRequestId -components $components
         }
-        "master" {
+        'master' {
             & $getProduct -binariesDirectory $ShellContext.BranchBinariesDirectory -dropRoot $dropRoot -branch 'master' -components $components
         }
     }

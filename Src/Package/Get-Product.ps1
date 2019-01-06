@@ -31,10 +31,6 @@ begin {
     $ErrorActionPreference = 'Stop'
     Set-StrictMode -Version 'Latest'
 
-    if ($null -eq $components -or $components.Length -eq 0) {
-         $components = @("Product")
-    }
-
     Write-Host "Running '$($MyInvocation.MyCommand.Name.Replace(`".ps1`", `"`"))' with the following parameters:" -ForegroundColor Cyan
 
     foreach ($parameter in $MyInvocation.MyCommand.Parameters) {
@@ -49,7 +45,7 @@ begin {
         [CmdletBinding()]
         param (
             [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$binariesDirectory,
-            [Parameter(Mandatory=$false)][string[]]$exclusions = @("environment.xml", "cms.ini")
+            [Parameter(Mandatory=$false)][string[]]$exclusions = @('environment.xml', 'cms.ini')
         )
 
         process {
@@ -72,7 +68,7 @@ begin {
 
         begin {
             Write-Host "Validating SHA1 file hashes for component: $component."
-            Write-Debug "SHA1 file validation list:"
+            Write-Debug 'SHA1 file validation list:'
             Write-Debug ($filesToValidate.FullName | Format-List | Out-String)
             [bool]$errors = $false
         }
@@ -146,7 +142,7 @@ begin {
                 
                 Write-Host "`r`nCopying files:"
                 Write-Host ($binaries.FullName | Format-List | Out-String)
-                Write-Host "To directory:"
+                Write-Host 'To directory:'
                 Write-Host "$binariesDirectory`r`n"
         
                 [double]$executionTime = [System.Math]::Round((Measure-Command { ForEach-Object -InputObject $binaries { Copy-Item -Path $_.FullName -Destination $binariesDirectory } }).TotalSeconds, 2)
@@ -203,7 +199,7 @@ begin {
             
             Write-Host "`r`nExtracting archives:"
             Write-Host ($archives.FullName | Format-List | Out-String)
-            Write-Host "To directory:"
+            Write-Host 'To directory:'
             Write-Host "$binariesDirectory`r`n"
 
             foreach ($archive in $archives) {
@@ -227,7 +223,7 @@ process {
     [double]$totalTime = 0
 
     switch ($PSCmdlet.ParameterSetName) {
-        "Branch" {
+        'Branch' {
             [string]$branchDropRoot = Join-Path -Path $dropRoot -ChildPath "product\refs\heads\$branch"
 
             if (-not (Test-Path -Path $branchDropRoot)) {
@@ -242,7 +238,7 @@ process {
 
             $totalTime = Copy-Binaries -dropRoot $build -binariesDirectory $binariesDirectory -components $components -clearBinariesDirectory
         }
-        "PullRequest" {
+        'PullRequest' {
             [string]$pullRequestDropRoot = Join-Path -Path $dropRoot -ChildPath "pulls\$pullRequestId"
 
             if (-not (Test-Path -Path $pullRequestDropRoot)) {
