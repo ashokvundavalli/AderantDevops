@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version 'Latest'
 
 function Initialize-BuildAssembly {
 	. "$PSScriptRoot\..\..\Build\Functions\Initialize-Assembly.ps1"
