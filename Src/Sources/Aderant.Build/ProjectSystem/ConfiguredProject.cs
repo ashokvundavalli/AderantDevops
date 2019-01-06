@@ -404,6 +404,7 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public void CalculateDirtyStateFromChanges(IReadOnlyCollection<ISourceChange> changes) {
+            System.Diagnostics.Debugger.Launch();
             MarkThisFileDirty(changes);
 
             if (IsDirty) {
