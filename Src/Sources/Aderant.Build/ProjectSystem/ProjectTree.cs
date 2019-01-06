@@ -180,7 +180,6 @@ namespace Aderant.Build.ProjectSystem {
                 }
 
                 if (collector.SourceChanges != null) {
-                    //logger.Info("Calculating dirty files for each project in the tree...");
                     project.CalculateDirtyStateFromChanges(collector.SourceChanges);
                 }
             }
