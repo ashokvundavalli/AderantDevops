@@ -82,6 +82,8 @@
 
   <Target Name="CleanStagingDirectory" Condition="'$(IsDesktopBuild)' == 'false'">
     <RemoveDir Directories="$(ArtifactStagingDirectory)" />
+
+    <MakeDir Directories="$(UpdateStagingDirectory)" />
   </Target>
 
 

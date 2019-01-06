@@ -372,6 +372,7 @@
     </Copy>
 
     <!--Send all outputs of the project to the update staging area for later collection-->
+    <Message  Condition="'$(IncludeOutputInUpdatePackage)' == 'true'" Importance="High" Text="Including outputs from $(MSBuildProjectFullPath) in update package" />
     <MSBuild Condition="'$(IncludeOutputInUpdatePackage)' == 'true'"
              Projects="$(MSBuildProjectFullPath)"
              Targets="CopyFilesToOutputDirectory"
