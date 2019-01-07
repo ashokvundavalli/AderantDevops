@@ -1,6 +1,7 @@
 function New-PullRequest {
     [CmdletBinding()]
     param(
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$sourceModule = $global:CurrentModuleName,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]$targetBranch = 'master'
     )
 
@@ -10,7 +11,7 @@ function New-PullRequest {
     [string]$repository = git ls-remote --get-url
 
     if ($null -ne (git ls-remote --heads $repository $currentBranch)) {
-        [string]$url = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/$($global:CurrentModuleName)/pullrequestcreate?sourceRef=$($currentBranch)&targetRef=$targetBranch"
+        [string]$url = "http://tfs:8080/tfs/ADERANT/ExpertSuite/_git/$($sourceModule)/pullrequestcreate?sourceRef=$($currentBranch)&targetRef=$targetBranch"
         Start-Process $url
     } else {
         Write-Error "No remote branch present. Use git push -u origin $($currentBranch)"
