@@ -217,6 +217,9 @@
     -->
     <Message Text="Getting dependencies for build." />
 
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory))')"
+      Directories="$(SharedDependencyDirectory)" />
+
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
@@ -231,9 +234,12 @@
         <Output TaskParameter="Link" ItemName="CreatedLinks" />
       </MakeSymlink>
 
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)packages)')"
+      Directories="$(SharedDependencyDirectory)packages" />
+
     <MakeSymlink
       Link="%(DirectoriesInBuild.FullPath)\packages"
-      Target="$(SharedDependencyDirectory)\packages"
+      Target="$(SharedDependencyDirectory)packages"
       Type="D">
         <Output TaskParameter="Link" ItemName="CreatedLinks" />
     </MakeSymlink>

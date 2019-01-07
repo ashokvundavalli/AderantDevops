@@ -11,8 +11,7 @@ function Get-Branch {
 
     begin {
         [string]$rspFile = [System.IO.Path]::Combine($root, "Build\TFSBuild.rsp")
-        # ToDo: Change 'monotest' to 'master' once the monotest has been merged.
-        [string]$branch = 'monotest'
+        [string]$branch = 'master'
     }
 
     process {
@@ -385,7 +384,7 @@ function AssignIncludeExclude {
         $include = @()
     }
 
-    $include += $ModulePath
+    $include += $rootPath
     $context.Include = ExpandPaths $include
 
 
@@ -520,7 +519,7 @@ Should not be used as it prevents incremental builds which increases build times
 
     [string]$repositoryPath = $null
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
-        $repositoryPath = Resolve-Path $ModulePath
+        $repositoryPath = Resolve-Path $ModulePath        
     } else {
         $repositoryPath = (Get-Location).Path
     }
