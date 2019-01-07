@@ -217,6 +217,9 @@
     -->
     <Message Text="Getting dependencies for build." />
 
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory))')"
+      Directories="$(SharedDependencyDirectory)" />
+
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"
@@ -231,14 +234,30 @@
         <Output TaskParameter="Link" ItemName="CreatedLinks" />
       </MakeSymlink>
 
+    <MakeDir Condition="!Exists('$(SharedDependencyDirectory)packages)')"
+      Directories="$(SharedDependencyDirectory)packages" />
+
     <MakeSymlink
       Link="%(DirectoriesInBuild.FullPath)\packages"
-      Target="$(SharedDependencyDirectory)\packages"
+      Target="$(SharedDependencyDirectory)packages"
       Type="D">
         <Output TaskParameter="Link" ItemName="CreatedLinks" />
     </MakeSymlink>
 
     <WriteLinesToFile File="$(SolutionRoot)CreatedLinks.txt" Lines="@(CreatedLinks)" />
+
+    <!--
+        TFS: 122744
+        We delete the cmsmsg files here. I don't think this is "correct" as it makes the build system
+        aware of what it's building but there is a frustrating interplay here. By deleting the msg file from
+        dependency directory it prevents the TextTranslator loading a message file while unit tests are running and then having those tests fail
+        as the tests are generally written to assume no message file is available and so don't expect to find translated strings.
+     -->
+    <ItemGroup>
+      <MessageFiles Include="$(SharedDependencyDirectory)\cmsmsg*.msg;" />
+    </ItemGroup>
+
+    <Delete Files="@(MessageFiles)" />
   </Target>
 
 
