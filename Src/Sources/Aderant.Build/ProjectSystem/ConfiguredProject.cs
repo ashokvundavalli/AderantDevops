@@ -406,7 +406,7 @@ namespace Aderant.Build.ProjectSystem {
         public void CalculateDirtyStateFromChanges(IReadOnlyCollection<ISourceChange> changes) {
             MarkThisFileDirty(changes);
 
-            if (IsDirty) {
+            if (IsDirty && dirtyFiles != null) {
                 return;
             }
 
@@ -429,7 +429,6 @@ namespace Aderant.Build.ProjectSystem {
                         }
 
                         dirtyFiles.Add(file.Path);
-                        return;
                     }
                 }
             }
