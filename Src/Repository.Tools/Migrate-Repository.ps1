@@ -4,7 +4,8 @@ param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$sourceBranch,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$targetRepository,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$destinationBranch,
-    [switch]$prepareSource
+    [switch]$prepareSource,
+    [Alias('pr')][switch]$createPullRequest
 )
 
 Set-StrictMode -Version 'Latest'
@@ -21,9 +22,9 @@ if (-not (Test-Path -Path $targetRepository)) {
 # Prepare origin
 Push-Location -Path $sourceRepository
 git checkout $sourceBranch --force
+git pull
 git add . --force
 git reset --hard
-git pull
 git clean -fdx
 
 [string]$module = [System.IO.Path]::GetFileName($sourceRepository)
@@ -52,9 +53,9 @@ Pop-Location
 Push-Location -Path $targetRepository
 
 git checkout $destinationBranch --force
+git pull
 git add .
 git reset --hard
-git pull
 git branch -D "relocate/$module"
 git checkout -b "relocate/$module"
 git remote add $module $sourceRepository
@@ -62,3 +63,8 @@ git fetch $module
 git merge $module/$sourceTempBranch --allow-unrelated-histories
 git remote remove $module
 git push -u
+
+if ($createPullRequest.IsPresent) {
+    [string]$targetModule = [System.IO.Path]::GetFileName($targetRepository)
+    New-PullRequest -sourceModule $targetModule -targetBranch $destinationBranch
+}
