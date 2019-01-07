@@ -416,6 +416,7 @@ namespace Aderant.Build.ProjectSystem {
             items.AddRange(project.Value.GetItems("Compile"));
             items.AddRange(project.Value.GetItems("Content"));
             items.AddRange(project.Value.GetItems("None"));
+            items.AddRange(project.Value.GetItems("XamlAppdef"));
 
             foreach (var item in items) {
                 foreach (var file in changes) {

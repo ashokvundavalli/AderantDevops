@@ -27,17 +27,17 @@ foreach (ITaskItem directory in DependencyDirectories) {
 }
 
 var uniqueFiles = new List<ITaskItem>();
-            
+
 foreach (ITaskItem taskItem in FilesToProcess) {
     ITaskItem item1 = taskItem;
     if (!dependencies.Any(item => String.Equals(Path.GetFileName(item), Path.GetFileName(item1.ItemSpec), StringComparison.OrdinalIgnoreCase))) {
-        
+
         var fileName = taskItem.GetMetadata("FileName");
         if (fileName.IndexOf("VisualStudio") >= 0)
           continue;
         if (fileName.IndexOf("UnitTest") >= 0)
-          continue;        
-    
+          continue;
+
         Log.LogMessage("File {0} is a unique dependency", taskItem.ItemSpec);
         uniqueFiles.Add(taskItem);
     }
@@ -62,7 +62,19 @@ Result = uniqueFiles.ToArray();
     <DesktopBuildPackageLocation>$(BinModuleDirectory)</DesktopBuildPackageLocation>
   </PropertyGroup>
 
-  <Target Name="CollectFilesFromReferenceOverride" AfterTargets="CollectFilesFromReference">
+
+  <Target Name="IsWorkflowProject" BeforeTargets="AfterCollectFilesFromReference">
+    <PropertyGroup>
+      <_IsWorkflowProject>false</_IsWorkflowProject>
+      <_IsWorkflowProject Condition="$(AssemblyName.Contains('Workflow'))">true</_IsWorkflowProject>
+      <OnAfterCollectFilesFromReference Condition="'$(_IsWorkflowProject)' != 'true'">$(OnAfterCollectFilesFromReference);CustomAfterCollectFilesFromReference</OnAfterCollectFilesFromReference>
+    </PropertyGroup>
+
+    <Message Condition="'$(_IsWorkflowProject)' != 'true'" Importance="high" Text="Skipping web pipeline customizations as this is a workflow project" />
+  </Target>
+
+
+  <Target Name="CustomAfterCollectFilesFromReference">
     <!-- Take a copy of the dependencies -->
     <ItemGroup>
       <Dependencies Include="@(ReferenceCopyLocalPaths)"
@@ -91,15 +103,15 @@ Result = uniqueFiles.ToArray();
       <DependenciesForPackaging Include="$(DependenciesPackagingDir)\**\*.dll" />
     </ItemGroup>
 
-    <!-- 
+    <!--
       From the references and dependencies of the web project find any assembly that is not in the Dependency directory. These could be dependencies from
       NuGet which aren't part of the standard dependency system and so we need to bundle these along side the zip.
     -->
     <ResolveUniqueDependencies
         FilesToProcess="@(DependenciesForPackaging)"
         DependencyDirectories="$(DependenciesDirectory)">
-        <Output TaskParameter="Result"
-                ItemName="ResolvedDependenciesForPackaging" />
+      <Output TaskParameter="Result"
+              ItemName="ResolvedDependenciesForPackaging" />
     </ResolveUniqueDependencies>
 
     <!-- Add all web dependencies into a separate zip -->
@@ -112,8 +124,8 @@ Result = uniqueFiles.ToArray();
 
     <RemoveDir Directories="$(DependenciesPackagingDir)" />
   </Target>
-  
-  
+
+
   <!-- CollectFilesFrom_binDeployableAssemblies is the last step in PublishPipelineCollectFilesCore from Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets-->
   <Target Name="CollectFilesFromContentCleanUp" AfterTargets="CollectFilesFrom_binDeployableAssemblies">
     <!-- Exclude all environment specific files from packaging -->
@@ -180,17 +192,17 @@ Result = uniqueFiles.ToArray();
             ContinueOnError="true" />
   </Target>
 
-  
-  <Target Name="ReplicateWebModuleAssemblies" 
+
+  <Target Name="ReplicateWebModuleAssemblies"
           AfterTargets="CopyFilesToOutputDirectory"
           Condition="'$(SharedDependencyDirectory)' != ''">
-    
+
     <Message Text="Replicating web assemblies to shared directories" />
-    
+
     <Copy SourceFiles="@(IntermediateAssembly)"
           DestinationFolder="$(SharedDependencyDirectory)"
           SkipUnchangedFiles="true" />
-    
+
   </Target>
 
 </Project>
