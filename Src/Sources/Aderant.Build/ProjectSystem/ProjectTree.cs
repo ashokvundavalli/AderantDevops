@@ -180,8 +180,6 @@ namespace Aderant.Build.ProjectSystem {
                 }
 
                 if (collector.SourceChanges != null) {
-                    System.Diagnostics.Debugger.Launch();
-
                     project.CalculateDirtyStateFromChanges(collector.SourceChanges);
                 }
             }
