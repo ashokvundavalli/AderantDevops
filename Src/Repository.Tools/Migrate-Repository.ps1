@@ -4,7 +4,8 @@ param (
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$sourceBranch,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$targetRepository,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$destinationBranch,
-    [switch]$prepareSource
+    [switch]$prepareSource,
+    [Alias('pr')][switch]$createPullRequest
 )
 
 Set-StrictMode -Version 'Latest'
@@ -62,3 +63,7 @@ git fetch $module
 git merge $module/$sourceTempBranch --allow-unrelated-histories
 git remote remove $module
 git push -u
+
+if ($createPullRequest.IsPresent) {
+    New-PullRequest -targetBranch $destinationBranch
+}
