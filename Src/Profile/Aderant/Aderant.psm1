@@ -398,14 +398,11 @@ function Set-CurrentModule {
 
         if ([System.IO.Path]::IsPathRooted($name)) {
             $global:ShellContext.CurrentModulePath = $name
-            $global:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($ShellContext.CurrentModulePath)).Name
+            $global:ShellContext.CurrentModuleName = ([System.IO.DirectoryInfo]::new($global:ShellContext.CurrentModulePath)).Name
+            Write-Debug "CurrentModuleName set to: $($global:ShellContext.CurrentModuleName)"
 
             Write-Debug "Setting repository: $name"
             Import-Module $PSScriptRoot\Git.psm1 -Global
-
-            if (-not (Test-Path (Join-Path -Path $ShellContext.CurrentModulePath -ChildPath "\Build\TFSBuild.*"))) {
-                $ShellContext.CurrentModuleName = ""
-            }
 
             Set-Location $ShellContext.CurrentModulePath
 

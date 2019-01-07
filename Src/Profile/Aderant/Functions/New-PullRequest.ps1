@@ -1,7 +1,7 @@
 function New-PullRequest {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$sourceModule = $global:CurrentModuleName,
+        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][string]$sourceModule = $global:ShellContext.CurrentModuleName,
         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]$targetBranch = 'master'
     )
 
