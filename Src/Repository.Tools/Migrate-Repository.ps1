@@ -56,8 +56,8 @@ git checkout $destinationBranch --force
 git pull
 git add .
 git reset --hard
-git branch -D "relocate/$module"
-git checkout -b "relocate/$module"
+git branch -D "relocate/$sourceBranch/$module"
+git checkout -b "relocate/$sourceBranch/$module"
 git remote add $module $sourceRepository
 git fetch $module
 git merge $module/$sourceTempBranch --allow-unrelated-histories
