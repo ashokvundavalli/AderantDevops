@@ -75,7 +75,7 @@ function DeleteBuildOutputs($pathsToDelete) {
                 $pathsWithErrors += $kvp.Key
             }
         } else {
-            Write-Information "Path $kvp.Key does not exist"
+            Write-Information "Path $($kvp.Key) does not exist"
         }
 
         if (-not $hadError) {
@@ -91,6 +91,9 @@ Write-Information "Querying builds..."
 
 foreach ($tableEntity in $builds) {
     $buildUrl = $tableEntity.Url
+
+    Write-Information "Processing '$($tableEntity.RowKey)' => $buildUrl"
+
     $result = $null
     $seenBefore = $false
 
