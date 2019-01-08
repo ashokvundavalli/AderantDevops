@@ -102,6 +102,8 @@ foreach ($tableEntity in $builds) {
         $queryCache.Add($buildUrl, $result)
     }
 
+    Write-Debug $result
+
     if ($null -ne $result.PSObject.Properties.Item("deleted")) {
         if ($result.deleted) {
             if ($result.keepForever) {
