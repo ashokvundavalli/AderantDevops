@@ -89,7 +89,6 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="BuildAssociationTests.cs" />
     <Content Include="ConfiguredProjectTests\Web.Core.csproj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

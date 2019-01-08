@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.Design;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -12,7 +11,7 @@ namespace IntegrationTest.Build {
         [Ignore]
         public void WarningRatchet() {
             var ratchet = new WarningRatchet(new Microsoft.VisualStudio.Services.WebApi.VssConnection(new Uri("http://tfs:8080/tfs/Aderant"), new VssCredentials()));
-            
+
             //you'll have to find a recent build ID (or some kind of stub tfs server) to use for this to work as data is cleaned up periodically
             var request = ratchet.CreateNewRequest("ExpertSuite", 854734, "refs/heads/master");
 

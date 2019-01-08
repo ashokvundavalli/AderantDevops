@@ -299,7 +299,6 @@
       <Name>Aderant.Build</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TestDeployment.proj" />
 </Project>
