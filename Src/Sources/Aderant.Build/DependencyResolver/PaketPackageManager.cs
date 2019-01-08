@@ -100,7 +100,7 @@ namespace Aderant.Build.DependencyResolver {
 
         // Paket is unable to write version ranges to file.
         private string RemoveVersionRange(string name, string version) {
-            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.")) {
+            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(name) || !name.StartsWith("Aderant.", StringComparison.OrdinalIgnoreCase) && !name.StartsWith("EE.", StringComparison.OrdinalIgnoreCase)) {
                 return version;
             }
 
