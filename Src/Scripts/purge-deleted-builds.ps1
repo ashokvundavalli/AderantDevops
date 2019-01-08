@@ -1,3 +1,10 @@
+# This scripts takes care of purging outputs from builds that have been deleted
+# because apparently TFS is incapable of doing this reliably
+# https://github.com/Microsoft/azure-pipelines-agent/issues/1302
+# https://developercommunity.visualstudio.com/content/problem/19481/old-builds-cant-be-deleted-even-if-the-retention-p.html
+# https://developercommunity.visualstudio.com/content/problem/376720/retention-policy-not-removing-all-builds-artifacts.html
+# https://developercommunity.visualstudio.com/content/problem/308559/tfs-2018-build-artifacts-not-being-removed.html
+
 Set-StrictMode -Version Latest
 $InformationPreference = 'Continue'
 
@@ -6,6 +13,10 @@ $storageAccount = "expertbuildrete8bb0"
 $storageTable = "builds"
 $table_url = "https://$storageAccount.table.core.windows.net"
 $accesskey = "Te2XHPUov+UvG09q94Kh5Cbl8hHAMlfBQwfGPi9flevbnGBCNaf/c0tJmDwrqJwxCY4HKgGYFfElIlHGCwwTRw=="
+
+# A lookup cache so we don't query the same build more than once
+$queryCache = @{}
+$pathsToDelete = @{}
 
 function SignContent($resource) {
     $GMTTime = (Get-Date).ToUniversalTime().ToString('R')
@@ -75,11 +86,8 @@ function DeleteBuildOutputs($pathsToDelete) {
     return $rowKeysToDelete
 }
 
-# A lookup cache so we don't query the same build more than once
+Write-Information "Querying builds..."
 [Array]$builds = GetTableEntityAll $storageTable
-
-$queryCache = @{}
-$pathsToDelete = @{}
 
 foreach ($tableEntity in $builds) {
     $buildUrl = $tableEntity.Url
@@ -104,6 +112,7 @@ foreach ($tableEntity in $builds) {
 
             $artifactPath = $tableEntity.ArtifactPath
             if (-not $pathsToDelete.ContainsKey($artifactPath)) {
+                Write-Information "Adding '$artifactPath' to delete queue"
                 $pathsToDelete[$artifactPath] = @()
             }
 
