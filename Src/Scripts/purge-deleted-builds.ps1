@@ -69,7 +69,7 @@ function DeleteBuildOutputs($pathsToDelete) {
 
         if (Test-Path -LiteralPath $kvp.Key) {
             try {
-                Remove-Item -LiteralPath $kvp.Key -Force -Recurse -Verbose -WhatIf -ErrorAction Continue
+                Remove-Item -LiteralPath $kvp.Key -Force -Recurse -Verbose -ErrorAction Continue
             } catch {
                 $hadError = $true
                 $pathsWithErrors += $kvp.Key
@@ -92,9 +92,11 @@ Write-Information "Querying builds..."
 foreach ($tableEntity in $builds) {
     $buildUrl = $tableEntity.Url
     $result = $null
+    $seenBefore = $false
 
     if ($queryCache.ContainsKey($buildUrl)) {
         $result = $queryCache[$buildUrl]
+        $seenBefore = $true
     } else {
         $result = Invoke-RestMethod -Method Get -Uri $buildUrl -UseDefaultCredentials
         $queryCache.Add($buildUrl, $result)
@@ -117,6 +119,10 @@ foreach ($tableEntity in $builds) {
             }
 
             $pathsToDelete[$artifactPath] += $tableEntity.RowKey
+        }
+    } else {
+        if (-not $seenBefore) {
+            Write-Information "Build $buildUrl is not deleted yet"
         }
     }
 }
