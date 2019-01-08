@@ -69,7 +69,7 @@ function DeleteBuildOutputs($pathsToDelete) {
 
         if (Test-Path -LiteralPath $kvp.Key) {
             try {
-                Remove-Item -LiteralPath $kvp.Key -Force -Recurse -Verbose -ErrorAction Continue
+                Remove-Item -LiteralPath $kvp.Key -Force -Recurse -Verbose -WhatIf -ErrorAction Continue
             } catch {
                 $hadError = $true
                 $pathsWithErrors += $kvp.Key
@@ -138,5 +138,5 @@ $rowKeysToDelete = DeleteBuildOutputs $pathsToDelete
 
 foreach ($key in $rowKeysToDelete) {
     Write-Information "Deleting artifact data with row key: $key"
-    DeleteTableEntity $storageTable "" $key
+    #DeleteTableEntity $storageTable "" $key
 }
