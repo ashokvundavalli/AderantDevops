@@ -79,7 +79,9 @@ function DeleteBuildOutputs($pathsToDelete) {
         }
 
         if (-not $hadError) {
-            $rowKeysToDelete += $kvp.Value
+            foreach ($rowKey in $kvp.Value) {
+                $rowKeysToDelete += $rowKey
+            }
         }
     }
 
@@ -92,7 +94,7 @@ Write-Information "Querying builds..."
 foreach ($tableEntity in $builds) {
     $buildUrl = $tableEntity.Url
 
-    Write-Information "Processing '$($tableEntity.RowKey)' => $buildUrl"
+    Write-Information "'$($tableEntity.RowKey): Processing: $buildUrl"
 
     $result = $null
     $seenBefore = $false
@@ -127,7 +129,7 @@ foreach ($tableEntity in $builds) {
         }
     } else {
         if (-not $seenBefore) {
-            Write-Information "Build $buildUrl is not deleted yet"
+            Write-Information "'$($tableEntity.RowKey): Build $buildUrl is not deleted yet"
         }
     }
 }
