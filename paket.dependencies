@@ -12,9 +12,9 @@ nuget System.ValueTuple 4.4.0
 
 
 nuget Newtonsoft.Json ~> 10.0.0
-nuget Microsoft.TeamFoundationServer.ExtendedClient ~> 16.141.1 preview
-nuget Microsoft.VisualStudio.Services.Client ~> 16.141.1 preview
-nuget Microsoft.Net.Http 2.2.22 
+nuget Microsoft.TeamFoundationServer.ExtendedClient
+nuget Microsoft.VisualStudio.Services.Client
+nuget Microsoft.Net.Http 2.2.22
 
 nuget Microsoft.AspNet.WebApi.WebHost
 nuget Microsoft.AspNet.WebHooks.Common
