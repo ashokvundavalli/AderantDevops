@@ -22,8 +22,12 @@ namespace Aderant.Build.Packaging {
 
             foreach (var project in outputs) {
                 string projectOutputPath = project.OutputPath;
-                // Normalize path as sometimes it ends with two slashes
-                projectOutputPath = projectOutputPath.Replace(@"\\", @"\");
+
+                if (projectOutputPath.EndsWith(@"\\")) {
+                    logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
+                    // Normalize path as sometimes it ends with two slashes
+                    projectOutputPath = projectOutputPath.Replace(@"\\", @"\");
+                }
 
                 foreach (var file in project.FilesWritten) {
                     string outputRelativePath = null;
