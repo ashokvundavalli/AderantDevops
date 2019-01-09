@@ -452,7 +452,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // E.g script tags require that a file exists on disk. It's more reliable to have
                     // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
                     // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                    MarkDirty("", project, BuildReasonTypes.Forced);
+                    //MarkDirty("", project, BuildReasonTypes.Forced);
                 }
             }
         }

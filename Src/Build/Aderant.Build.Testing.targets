@@ -44,13 +44,6 @@
   </Target>
 
 
-  <Target Name="OnTestFailure">
-    <PropertyGroup>
-      <TestOutcome>Failed</TestOutcome>
-    </PropertyGroup>
-  </Target>
-
-
   <Target Name="RunTests"
           Outputs="%(SolutionRoots.Identity)"
           Condition="'$(RunTests)' != 'false'"
@@ -66,15 +59,26 @@
     </ItemGroup>
 
     <ItemGroup>
-      <TestAssemblies Include="%(TestAssemblyDirectories.FullPath)**\*UnitTest*.dll"
-                      Exclude="%(TestAssemblyDirectories.FullPath)**\*Helpers*.dll;
-                               %(TestAssemblyDirectories.FullPath)**\Microsoft.*;
-                               %(TestAssemblyDirectories.FullPath)**\System.*;" />
+      <CandidateTestAssemblies Include="%(TestAssemblyDirectories.FullPath)**\*UnitTest*.dll"
+                               Exclude="%(TestAssemblyDirectories.FullPath)**\*Helpers*.dll;
+                                        %(TestAssemblyDirectories.FullPath)**\Microsoft.*;
+                                        %(TestAssemblyDirectories.FullPath)**\System.*;" />
 
       <AssemblyDependencies Include="%(TestAssemblyDirectories.FullPath)**\*.dll;
                                      %(TestAssemblyDirectories.FullPath)**\*.exe"
-                            Exclude="@(TestAssemblies)" />
+                            Exclude="@(CandidateTestAssemblies)" />
     </ItemGroup>
+
+
+    <FindInList
+      MatchFileNameOnly="true"
+      CaseSensitive="false"
+      List="@(CandidateTestAssemblies)"
+      ItemSpecToFind="%(ImpactedTestAssemblies.Identity)">
+      <Output TaskParameter="ItemFound" ItemName="TestAssemblies" />
+    </FindInList>
+
+
 
     <!-- Determine if we can run the tests using the 64-bit test runner -->
     <GetAssemblyPlatform

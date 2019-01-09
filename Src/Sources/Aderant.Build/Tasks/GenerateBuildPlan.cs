@@ -67,7 +67,7 @@ namespace Aderant.Build.Tasks {
         public string[] DirectoriesInBuild { get; set; }
 
         [Output]
-        public string[] ImpactedTestProjects { get; set; }
+        public string[] ImpactedTestAssemblies { get; set; }
 
         public override bool ExecuteTask() {
             ExecuteCore(Context);
@@ -115,7 +115,7 @@ namespace Aderant.Build.Tasks {
 
             WritePlanToFile(context, element);
 
-            ImpactedTestProjects = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted).Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
+            ImpactedTestAssemblies = projectTree.LoadedConfiguredProjects.Where(proj => proj.AreTestsImpacted).Select(proj => proj.GetOutputAssemblyWithExtension()).ToArray();
 
             PipelineService.Publish(context);
         }
