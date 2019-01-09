@@ -8,11 +8,6 @@
   <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Mobile.targets" />
 
-  <!--
-    ==========================================================================================
-        Test Configuration
-    ==========================================================================================
-  -->
   <PropertyGroup>
     <RunTestsDependsOn>
       $(RunTestsDependsOn);
@@ -31,17 +26,20 @@
       PostBuild;
       SignInstallers;-->
       RunBuildExtensions;
+      SignInstallers;
       PackageArtifactsCore;
       CreateDependencyLinks;
     </BuildCoreDependsOn>
-  </PropertyGroup>
 
-  <PropertyGroup>
     <PackageArtifactsDependsOn>
       $(PackageArtifactsDependsOn);
       CreateDefaultArtifacts;
       PackageArtifacts
     </PackageArtifactsDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignApplications Condition="'$(SignApplications)' == ''">true</SignApplications>
   </PropertyGroup>
 
   <!--Stub-->

@@ -71,7 +71,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (assumeNoBuildCache) {
                         // No cache so mark everything as changed
                         configuredProject.IsDirty = true;
-                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.BuildTreeNotFound);
+                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
                     }
 
                     if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
@@ -315,7 +315,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 return;
             }
 
-            MarkDirty(dirtyProjects, project, BuildReasonTypes.BuildTreeNotFound);
+            MarkDirty(dirtyProjects, project, BuildReasonTypes.CachedBuildNotFound);
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
@@ -462,7 +462,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (desktopBuild) {
                 if (configuredProject != null) {
-                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags.HasFlag(BuildReasonTypes.BuildTreeNotFound)) {
+                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags.HasFlag(BuildReasonTypes.CachedBuildNotFound)) {
                         return false;
                     }
 
@@ -524,7 +524,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 .Where(
                     x => (x as ConfiguredProject)?.GetDependencies()
                          .Select(y => y.Id)
-                         .Intersect(projectsToFind).Any() == true).ToList();
+                         .Intersect(projectsToFind, StringComparer.OrdinalIgnoreCase).Any() == true).ToList();
+
 
             foreach (var x in p) {
                 ConfiguredProject project = x as ConfiguredProject;
@@ -588,7 +589,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal enum BuildReasonTypes {
         None = 0,
         ProjectFileChanged = 1,
-        BuildTreeNotFound = 2,
+        CachedBuildNotFound = 2,
         OutputNotFoundInCachedBuild = 4,
         ProjectOutputNotFound = 8,
         DependencyChanged = 16,
