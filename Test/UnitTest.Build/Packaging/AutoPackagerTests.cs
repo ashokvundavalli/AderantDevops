@@ -23,7 +23,27 @@ namespace UnitTest.Build.Packaging {
                 FilesWritten = new[] { "Foo.dll" },
             };
 
-            var files = builder.BuildArtifact(false, filesToPackage, new[] { snapshot });
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
+
+            Assert.AreEqual(1, files.Count);
+        }
+
+        [TestMethod]
+        public void Trailing_slash_on_output_path_is_normalized() {
+            var builder = new AutoPackager(NullLogger.Default);
+
+            var filesToPackage = new PathSpec[] {
+                new PathSpec("Foo.dll", "Foo.dll"),
+            };
+
+            var snapshot = new ProjectOutputSnapshot {
+                IsTestProject = true,
+                Directory = "",
+                OutputPath = @"..\..\Bin\Module\\",
+                FilesWritten = new[] { @"..\..\Bin\Module\Foo.dll" },
+            };
+
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
 
             Assert.AreEqual(1, files.Count);
         }
@@ -43,7 +63,7 @@ namespace UnitTest.Build.Packaging {
                 FilesWritten = new[] { @"Test\Foo.dll" },
             };
 
-            var files = builder.BuildArtifact(false, filesToPackage, new[] { snapshot });
+            var files = builder.BuildArtifact(filesToPackage, new[] { snapshot });
 
             Assert.AreEqual(1, files.Count);
         }

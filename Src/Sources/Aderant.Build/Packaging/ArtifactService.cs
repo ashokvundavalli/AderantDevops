@@ -209,14 +209,22 @@ namespace Aderant.Build.Packaging {
                 return null;
             }
 
-            logger.Info($"Artifact {container} will be sent to the cache: {sendToArtifactCache}");
-
             string artifactPath = Path.Combine(basePath, definition.Id);
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendFormat("Artifact {0} at {1} will be sent to the cache: {2}", container, artifactPath, sendToArtifactCache);
 
             foreach (PathSpec pathSpec in files) {
                 // Path spec destination is relative.
-                copyList.Add(new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination)));
+                var spec = new PathSpec(pathSpec.Location, Path.Combine(artifactPath, pathSpec.Destination));
+
+                sb.AppendFormat("Adding file ({0})", spec.Location);
+                sb.AppendLine();
+
+                copyList.Add(spec);
             }
+
+            logger.Info(sb.ToString());
 
             return CreateArtifact(definition, artifactPath, sendToArtifactCache);
         }
