@@ -34,6 +34,10 @@ namespace Aderant.Build.Packaging {
             this.fileSystem = fileSystem;
         }
 
+        /// <summary>
+        /// Gets or sets the optional common output directory.
+        /// Typically where all projects within a module/directory place the outputs
+        /// </summary>
         public string CommonOutputDirectory { get; set; }
 
         /// <summary>

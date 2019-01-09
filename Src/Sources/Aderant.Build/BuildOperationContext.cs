@@ -378,6 +378,8 @@ namespace Aderant.Build {
         [DataMember(Name = nameof(Directory))]
         private string directory;
 
+        private string outputPath;
+
         public ProjectOutputSnapshot() {
         }
 
@@ -387,12 +389,17 @@ namespace Aderant.Build {
         [DataMember]
         public string[] FilesWritten { get; set; }
 
-        [DataMember]
-        public string OutputPath { get; set; }
+        [DataMember()]
+        public string OutputPath {
+            get { return outputPath; }
+            set {
+                value = value.NormalizePath();
+                outputPath = value;
+            }
+        }
 
         [DataMember]
         public string Origin { get; set; }
-
 
         public string Directory {
             get { return directory; }
