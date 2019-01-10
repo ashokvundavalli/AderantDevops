@@ -153,7 +153,20 @@
                            $(BinModuleDirectory)**\deploymentmanager.msi;
                            $(BinModuleDirectory)**\*wizard*.msi;" />
     </ItemGroup>
+  </Target>
 
+
+  <Target Name="SignInstallers"
+          Condition="'$(CodeSigningEnabled)' == 'true' And '$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'"
+          DependsOnTargets="FindInstallersToSign">
+    <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
+  </Target>
+
+  <Target Name="SignInstallersCore" DependsOnTargets="AssignInstallerVersionInfo;TrySignInstallers">
+    <Error Condition="'$(InstallerSignedResult)' == ''" Text="Failed to sign @(Installers)" />
+  </Target>
+
+  <Target Name="AssignInstallerVersionInfo">
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
 
     <Aderant.Build.Tasks.GetFileVersionInfo
@@ -168,19 +181,6 @@
       <InstallerSignedKey>$(InstallerSignedKey);@(Installers)</InstallerSignedKey>
     </PropertyGroup>
   </Target>
-
-
-  <Target Name="SignInstallers"
-          Condition="'$(CodeSigningEnabled)' == 'true' And '$(SignApplications)' == 'true' And '$(IsCustomBuild)' != 'true'"
-          DependsOnTargets="FindInstallersToSign">
-    <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
-  </Target>
-
-
-  <Target Name="SignInstallersCore" DependsOnTargets="TrySignInstallers">
-    <Error Condition="'$(InstallerSignedResult)' == ''" Text="Failed to sign @(Installers)" />
-  </Target>
-
 
   <Target Name="TrySignInstallers" Outputs="%(TimestampUrls.Identity)">
     <PropertyGroup>
