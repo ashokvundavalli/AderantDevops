@@ -162,9 +162,11 @@
     <CallTarget Targets="SignInstallersCore" Condition="'@(Installers)' != ''" />
   </Target>
 
+
   <Target Name="SignInstallersCore" DependsOnTargets="AssignInstallerVersionInfo;TrySignInstallers">
     <Error Condition="'$(InstallerSignedResult)' == ''" Text="Failed to sign @(Installers)" />
   </Target>
+
 
   <Target Name="AssignInstallerVersionInfo">
     <Message Text="Signing installer: %(Installers.Filename)%(Installers.Extension)" Condition="'@(Installers)' != ''" />
@@ -181,6 +183,7 @@
       <InstallerSignedKey>$(InstallerSignedKey);@(Installers)</InstallerSignedKey>
     </PropertyGroup>
   </Target>
+
 
   <Target Name="TrySignInstallers" Outputs="%(TimestampUrls.Identity)">
     <PropertyGroup>
