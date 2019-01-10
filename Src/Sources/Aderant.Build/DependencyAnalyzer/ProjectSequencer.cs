@@ -445,6 +445,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void MarkWebProjectDirty(List<ConfiguredProject> projects) {
+            // TODO: Remove this hack as it costs too much perf
+            // We need a way to trigger the content deployment of web projects
             foreach (var project in projects) {
                 if (project.IsWebProject && !project.IsWorkflowProject()) {
                     // Web projects always need to be built as they have paths that reference content that needs to be deployed
