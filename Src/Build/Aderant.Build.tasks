@@ -53,6 +53,7 @@
 
     <UsingTask TaskName="Aderant.Build.Tasks.PowerShellScript"                                    AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.CheckForDoubleWrites"                                AssemblyFile="$(BuildAssembly)" />
+    <UsingTask TaskName="Aderant.Build.Tasks.StringCache"                                         AssemblyFile="$(BuildAssembly)" />
 
     <UsingTask TaskName="Aderant.Build.Tasks.WaitForDebugger"                                     AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GetPropertiesFromContext"                            AssemblyFile="$(BuildAssembly)" />

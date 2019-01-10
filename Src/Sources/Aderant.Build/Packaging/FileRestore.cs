@@ -63,9 +63,11 @@ namespace Aderant.Build.Packaging {
                 if (fileSystem.FileExists(localProjectFile)) {
                     logger.Info($"Calculating files to restore for project: {Path.GetFileNameWithoutExtension(project.Key)}");
 
+                    string outputPath = project.Value.OutputPath.NormalizePath();
+
                     foreach (var fileWrite in project.Value.FilesWritten) {
                         // Retain the relative path of the build artifact.
-                        string filePath = fileWrite.Replace(project.Value.OutputPath, "", StringComparison.OrdinalIgnoreCase);
+                        string filePath = fileWrite.Replace(outputPath, "", StringComparison.OrdinalIgnoreCase);
 
                         // Use relative path for comparison.
                         List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
@@ -84,11 +86,10 @@ namespace Aderant.Build.Packaging {
                             break;
                         }
 
-
                         // There can be only one.
                         LocalArtifactFile artifactFile = distinctLocalSourceFiles.First();
 
-                        string destination = Path.GetFullPath(Path.Combine(directoryOfProject, project.Value.OutputPath, filePath));
+                        string destination = Path.GetFullPath(Path.Combine(directoryOfProject, outputPath, filePath));
                         AddFileDestination(
                             destinationPaths,
                             artifactFile,
@@ -96,7 +97,6 @@ namespace Aderant.Build.Packaging {
                             copyOperations);
 
                         if (!string.IsNullOrWhiteSpace(CommonOutputDirectory)) {
-
                             if (webProjects.Contains(project.Value)) {
                                 AddFileDestination(
                                     destinationPaths,

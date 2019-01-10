@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -30,6 +31,7 @@ namespace Aderant.Build {
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -86,6 +88,7 @@ namespace Aderant.Build {
             if (!Uri.TryCreate(path, UriKind.Absolute, out result)) {
                 result = new Uri(path, UriKind.Relative);
             }
+
             return result;
         }
 
@@ -113,15 +116,30 @@ namespace Aderant.Build {
             if (Path.IsPathRooted(path) && (path[0] != Path.DirectorySeparatorChar && path[0] != Path.AltDirectorySeparatorChar)) {
                 return Path.GetFullPath(path);
             }
+
+            return path;
+        }
+
+        /// <summary>
+        /// Normalizes the path segment
+        /// - Fixes double trailing slashes
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string NormalizePath(this string path) {
+            if (path != null && path.EndsWith(@"\\")) {
+                //logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
+                // Normalize path as sometimes it ends with two slashes
+                return path.Replace(@"\\", @"\");
+            }
+
             return path;
         }
 
         /// <summary>
         /// Path.GetFileName returns "" when given a path ending with a trailing slash
         /// </summary>
-        /// <param name="fullPath"></param>
-        /// <returns></returns>
-        internal static string GetFileName(string fullPath) {
+        public static string GetFileName(string fullPath) {
             return Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar));
         }
     }

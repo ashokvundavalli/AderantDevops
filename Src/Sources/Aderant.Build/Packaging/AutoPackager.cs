@@ -12,7 +12,7 @@ namespace Aderant.Build.Packaging {
             this.logger = logger;
         }
 
-        public IReadOnlyCollection<PathSpec> BuildArtifact(bool isTestPackage, IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<ProjectOutputSnapshot> outputs) {
+        public IReadOnlyCollection<PathSpec> BuildArtifact(IReadOnlyCollection<PathSpec> filesToPackage, IEnumerable<ProjectOutputSnapshot> outputs) {
             var artifactItems = new List<PathSpec>();
             if (filesToPackage.Count == 0) {
                 return artifactItems;
@@ -21,13 +21,21 @@ namespace Aderant.Build.Packaging {
             List<string> filesProducedByProjects = new List<string>();
 
             foreach (var project in outputs) {
-                foreach (var file in project.FilesWritten) {
+                string outputPath = project.OutputPath;
 
+                // Normalize path as sometimes it ends with two slashes
+                string projectOutputPath = outputPath.NormalizePath();
+
+                if (outputPath != projectOutputPath) {
+                    logger.Warning($"! Project {project.ProjectFile} output path ends with two path separators: '{projectOutputPath}'. Normalize this path.");
+                }
+
+                foreach (var file in project.FilesWritten) {
                     string outputRelativePath = null;
 
-                    var pos = file.IndexOf(project.OutputPath, StringComparison.OrdinalIgnoreCase);
+                    var pos = file.IndexOf(projectOutputPath, StringComparison.OrdinalIgnoreCase);
                     if (pos >= 0) {
-                        outputRelativePath = file.Remove(pos, project.OutputPath.Length);
+                        outputRelativePath = file.Remove(pos, projectOutputPath.Length);
                     }
 
                     if (outputRelativePath != null && !Path.IsPathRooted(outputRelativePath)) {
@@ -135,7 +143,7 @@ namespace Aderant.Build.Packaging {
 
             bool isTestPackage = definition.IsAutomaticallyGenerated && definition.IsTestPackage;
 
-            return BuildArtifact(isTestPackage, uniqueContent, snapshot);
+            return BuildArtifact(uniqueContent, snapshot);
         }
     }
 }

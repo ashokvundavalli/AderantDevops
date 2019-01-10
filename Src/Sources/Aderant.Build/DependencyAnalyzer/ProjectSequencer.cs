@@ -71,7 +71,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (assumeNoBuildCache) {
                         // No cache so mark everything as changed
                         configuredProject.IsDirty = true;
-                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.BuildTreeNotFound);
+                        configuredProject.SetReason(BuildReasonTypes.Forced | BuildReasonTypes.CachedBuildNotFound);
                     }
 
                     if (!directoriesInBuild.Contains(configuredProject.SolutionRoot)) {
@@ -308,14 +308,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
                     }
                 } else {
-                    logger.Info($"No artifacts exist for: {stateFileKey} or there are no project outputs.");
+                    logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.");
                 }
 
                 MarkDirty(dirtyProjects, project, BuildReasonTypes.ProjectOutputNotFound);
                 return;
             }
 
-            MarkDirty(dirtyProjects, project, BuildReasonTypes.BuildTreeNotFound);
+            MarkDirty(dirtyProjects, project, BuildReasonTypes.CachedBuildNotFound);
         }
 
         private InputFilesDependencyAnalysisResult BeginTrackingInputFiles(BuildStateFile stateFile, string solutionRoot) {
@@ -445,6 +445,8 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         private void MarkWebProjectDirty(List<ConfiguredProject> projects) {
+            // TODO: Remove this hack as it costs too much perf
+            // We need a way to trigger the content deployment of web projects
             foreach (var project in projects) {
                 if (project.IsWebProject && !project.IsWorkflowProject()) {
                     // Web projects always need to be built as they have paths that reference content that needs to be deployed
@@ -452,7 +454,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                     // E.g script tags require that a file exists on disk. It's more reliable to have
                     // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
                     // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                    //MarkDirty("", project, BuildReasonTypes.Forced);
+                    MarkDirty("", project, BuildReasonTypes.Forced);
                 }
             }
         }
@@ -462,7 +464,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (desktopBuild) {
                 if (configuredProject != null) {
-                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags.HasFlag(BuildReasonTypes.BuildTreeNotFound)) {
+                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags.HasFlag(BuildReasonTypes.CachedBuildNotFound)) {
                         return false;
                     }
 
@@ -524,7 +526,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 .Where(
                     x => (x as ConfiguredProject)?.GetDependencies()
                          .Select(y => y.Id)
-                         .Intersect(projectsToFind).Any() == true).ToList();
+                         .Intersect(projectsToFind, StringComparer.OrdinalIgnoreCase).Any() == true).ToList();
+
 
             foreach (var x in p) {
                 ConfiguredProject project = x as ConfiguredProject;
@@ -588,7 +591,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     internal enum BuildReasonTypes {
         None = 0,
         ProjectFileChanged = 1,
-        BuildTreeNotFound = 2,
+        CachedBuildNotFound = 2,
         OutputNotFoundInCachedBuild = 4,
         ProjectOutputNotFound = 8,
         DependencyChanged = 16,

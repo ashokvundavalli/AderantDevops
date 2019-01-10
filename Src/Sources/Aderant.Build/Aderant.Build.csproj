@@ -120,6 +120,7 @@
     <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFilesController.cs" />
+    <Compile Include="Tasks\StringCache.cs" />
     <Compile Include="Tasks\GatherProjectsToBuild.cs" />
     <Compile Include="ProjectSystem\DirectoryGroveler.cs" />
     <Compile Include="Utilities\RoslynLocator.cs" />
@@ -342,7 +343,7 @@
     <Compile Include="Tasks\OrmMappingValidator.cs" />
     <Compile Include="Tasks\ProjectConformityCheck.cs" />
     <Compile Include="Tasks\ProjectConformityController.cs" />
-    <Compile Include="Tasks\PushPaketTemplatesTask.cs" />
+    <Compile Include="Tasks\Legacy\PushPaketTemplatesTask.cs" />
     <Compile Include="Packaging\NuGet\StringNuspecValue.cs" />
     <Compile Include="Tasks\ThirdPartyPackager.cs" />
     <Compile Include="DependencyResolver\UpdateAction.cs" />
@@ -361,7 +362,7 @@
     <Compile Include="ServiceLocator.cs" />
     <Compile Include="Tasks\AddBuildProjectNode.cs" />
     <Compile Include="Tasks\CheckCertificate.cs" />
-    <Compile Include="Tasks\FinalizeBuild.cs" />
+    <Compile Include="Tasks\Legacy\FinalizeBuild.cs" />
     <Compile Include="IBuildProcessTemplate.cs" />
     <Compile Include="WellKnownProperties.cs" />
     <Compile Include="XElementExtensions.cs" />
@@ -414,9 +415,9 @@
     <Compile Include="SplashScreenText.cs" />
     <Compile Include="Tasks\BuildConfigurationCheck.cs" />
     <Compile Include="Tasks\GetCopyLocalItemsToRemove.cs" />
-    <Compile Include="Tasks\DependencyChecker.cs" />
+    <Compile Include="Tasks\Legacy\DependencyChecker.cs" />
     <Compile Include="Tasks\ExtractWebModule.cs" />
-    <Compile Include="Tasks\FilterModules.cs" />
+    <Compile Include="Tasks\Legacy\FilterModules.cs" />
     <Compile Include="Tasks\GetDependencies.cs" />
     <Compile Include="Tasks\MakeSymlink.cs" />
     <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
