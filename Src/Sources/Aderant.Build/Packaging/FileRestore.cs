@@ -66,13 +66,23 @@ namespace Aderant.Build.Packaging {
                     string outputPath = project.Value.OutputPath.NormalizePath();
 
                     foreach (var fileWrite in project.Value.FilesWritten) {
-                        // Retain the relative path of the build artifact.
-                        string filePath = fileWrite.Replace(outputPath, "", StringComparison.OrdinalIgnoreCase);
+                        string filePath = null;
+                        var index = fileWrite.IndexOf(outputPath, StringComparison.OrdinalIgnoreCase);
+                        if (index == 0) {
+                            // Retain the relative path of the build artifact.
+                            filePath = fileWrite.Remove(index, outputPath.Length);
+                        } else {
+                            logger.Info($"{localProjectFile}: '{fileWrite}' does not start with project output path '{outputPath}'.");
+                        }
 
                         // Use relative path for comparison.
                         List<LocalArtifactFile> localSourceFiles = localArtifactFiles.Where(s => s.FullPath.EndsWith(string.Concat(@"\", filePath), StringComparison.OrdinalIgnoreCase)).ToList();
 
                         if (localSourceFiles.Count == 0) {
+                            if (filePath != null) {
+                                logger.Warning($"{localProjectFile}: Could not locate '{filePath}' in build cache.");
+                            }
+
                             continue;
                         }
 
