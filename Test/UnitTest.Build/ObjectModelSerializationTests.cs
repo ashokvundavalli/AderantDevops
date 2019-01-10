@@ -90,12 +90,33 @@ namespace UnitTest.Build {
             Assert.IsInstanceOfType(instance.Outputs, typeof(ProjectTreeOutputSnapshot));
         }
 
+
+        [TestMethod]
+        public void Outputs_is_case_insensitive() {
+            var metadata = new BuildStateFile();
+
+            metadata.Artifacts = new Dictionary<string, ICollection<ArtifactManifest>>();
+            metadata.Artifacts["Foo"] = new List<ArtifactManifest> { new ArtifactManifest { Id = "Bar" } };
+
+            metadata.Outputs = new Dictionary<string, ProjectOutputSnapshot>();
+            metadata.Outputs["Baz"] = new ProjectOutputSnapshot { Directory = "Gaz" };
+
+            var instance = RoundTrip(metadata);
+
+            Assert.IsNotNull(instance);
+            Assert.AreEqual(StateFileBase.CurrentSerializationVersion, instance.serializedVersion);
+
+            Assert.IsTrue(instance.Artifacts.ContainsKey("foo"));
+            Assert.IsTrue(instance.Outputs.ContainsKey("baz"));
+            Assert.IsInstanceOfType(instance.Outputs, typeof(ProjectTreeOutputSnapshot));
+        }
+
         [TestMethod]
         public void Location_property_is_preserved() {
             var metadata = new BuildStateFile();
 
             metadata.Location = "Abc";
-        
+
             var instance = RoundTrip(metadata);
 
             Assert.IsNotNull(instance);

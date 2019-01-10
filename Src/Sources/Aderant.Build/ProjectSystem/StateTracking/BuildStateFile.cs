@@ -15,10 +15,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
         [DataMember]
         private IDictionary<string, ProjectOutputSnapshot> outputs;
 
-        [ProtoIgnore]
-        [IgnoreDataMember]
-        private bool requiresSerializationFixUp;
-
         [DataMember(EmitDefaultValue = false)]
         public BucketId BucketId { get; set; }
 
@@ -48,11 +44,6 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
 
         internal IDictionary<string, ProjectOutputSnapshot> Outputs {
             get {
-                if (requiresSerializationFixUp) {
-                    outputs = new ProjectTreeOutputSnapshot(outputs);
-                    requiresSerializationFixUp = false;
-                }
-
                 return outputs;
             }
             set { outputs = value; }
@@ -86,12 +77,10 @@ namespace Aderant.Build.ProjectSystem.StateTracking {
             Location = null;
         }
 
-        [OnDeserialized]
-        internal void OnDeserialized(StreamingContext context) {
-            // Protocol buffers will set state to persistence, JSON serializer does not
-            if (context.State == StreamingContextStates.Persistence) {
-                requiresSerializationFixUp = true;
-            }
+        [OnDeserializing]
+        internal void OnDeserializing(StreamingContext context) {
+            outputs = new ProjectTreeOutputSnapshot();
+            artifacts = new ArtifactCollection();
         }
 
         [OnSerializing]

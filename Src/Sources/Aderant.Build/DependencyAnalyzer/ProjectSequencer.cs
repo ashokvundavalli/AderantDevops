@@ -308,7 +308,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                         }
                     }
                 } else {
-                    logger.Info($"No artifacts exist for: {stateFileKey} or there are no project outputs.");
+                    logger.Info($"No artifacts exist for '{stateFileKey}' or there are no project outputs.");
                 }
 
                 MarkDirty(dirtyProjects, project, BuildReasonTypes.ProjectOutputNotFound);

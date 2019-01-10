@@ -111,7 +111,7 @@ namespace Aderant.Build.ProjectSystem {
             get {
                 if (IsTestProject) {
                     if (BuildReason != null) {
-                        return IsTestProject && BuildReason.Flags != BuildReasonTypes.None;
+                        return BuildReason.Flags != BuildReasonTypes.None;
                     }
                 }
 
