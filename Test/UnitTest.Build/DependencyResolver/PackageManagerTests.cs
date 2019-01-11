@@ -1,7 +1,16 @@
-﻿using Aderant.Build;
+﻿using System;
+using System.Linq;
+using System.Reflection;
+using Aderant.Build;
 using Aderant.Build.DependencyResolver;
 using Aderant.Build.Logging;
+using Castle.Core.Internal;
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Paket;
+using Constants = Aderant.Build.Constants;
 
 namespace UnitTest.Build.DependencyResolver {
     [TestClass]
@@ -25,7 +34,18 @@ namespace UnitTest.Build.DependencyResolver {
 
             Assert.AreEqual(1, items1.Count);
             Assert.AreEqual(1, items2.Count);
+        }
 
+        [TestMethod]
+        public void DependenciesFileUpdateViaReflection() {
+            Mock<IFileSystem2> fs = new Moq.Mock<IFileSystem2>();
+            fs.Setup(s => s.Root).Returns(TestContext.DeploymentDirectory);
+            PaketPackageManager packageManager = new PaketPackageManager(TestContext.DeploymentDirectory, fs.Object, new NullLogger());
+
+            DependenciesFile file = packageManager.Dependencies.GetDependenciesFile();
+            PaketPackageManager.UpdateDependenciesFile(file, new string[4]);
+
+            Assert.AreEqual(4, file.Lines.Length);
         }
     }
 }

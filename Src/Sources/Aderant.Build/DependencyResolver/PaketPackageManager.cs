@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using Aderant.Build.DependencyResolver.Models;
 using Aderant.Build.Logging;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Control;
@@ -18,13 +19,16 @@ namespace Aderant.Build.DependencyResolver {
         public IFileSystem FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
 
-        private Dependencies dependencies;
+        private readonly string sourceFile;
+
+        internal Dependencies Dependencies;
 
         public PaketPackageManager(string root, IFileSystem2 fileSystem, ILogger logger) {
             this.root = root;
             this.logger = logger;
             this.FileSystem = fileSystem;
-            dependencies = Initialize(root);
+            Dependencies = Initialize(root);
+            sourceFile = Dependencies.DependenciesFile;
 
             this.logMessageDelegate = OnTraceEvent;
 
@@ -53,49 +57,48 @@ namespace Aderant.Build.DependencyResolver {
             try {
                 var file = FileSystem.GetFiles(root, DependenciesFile, true).FirstOrDefault();
                 if (file != null) {
-                    dependencies = Dependencies.Locate(root);
+                    Dependencies = Dependencies.Locate(root);
                 }
             } catch (Exception) {
             } finally {
-                if (dependencies == null) {
+                if (Dependencies == null) {
                     // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems 
                     // as it will no doubt locate something it shouldn't use (eg one from another product)
                     Dependencies.Init(root);
-                    dependencies = Dependencies.Locate(root);
+                    Dependencies = Dependencies.Locate(root);
                 }
             }
 
-            return dependencies;
+            return Dependencies;
         }
 
         public void Add(IEnumerable<IDependencyRequirement> requirements) {
-            DependenciesFile file = dependencies.GetDependenciesFile();
+            DependenciesFile file = Dependencies.GetDependenciesFile();
             FileSystem.MakeFileWritable(file.FileName);
             AddModules(requirements, file);
 
-            file = dependencies.GetDependenciesFile();
+            file = Dependencies.GetDependenciesFile();
 
-            string[] lines = file.Lines;
+            // Read from disk because Paket is a bit special and can't handle reading its own properties.
+            string[] lines = FileSystem.FileExists(sourceFile) ? FileSystem.ReadAllLines(sourceFile) : file.Lines;
 
-            if (!lines.Contains(string.Concat("source ", Constants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
-                for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].IndexOf(string.Concat("source ", Constants.DefaultNuGetServer), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", Constants.PackageServerUrl, Environment.NewLine, "source ", Constants.DatabasePackageUri);
-                    }
-                }
-            } else if (lines.Contains(string.Concat("source ", Constants.PackageServerUrl), StringComparer.OrdinalIgnoreCase)) {
-                for (int i = 0; i < lines.Length; i++) {
-                    if (lines[i].IndexOf(string.Concat("source ", Constants.PackageServerUrl), StringComparison.OrdinalIgnoreCase) >= 0) {
-                        if (lines[i + 1].IndexOf(string.Concat("source ", Constants.DatabasePackageUri), StringComparison.OrdinalIgnoreCase) == -1) {
-                            lines[i] = string.Concat(lines[i], Environment.NewLine, "source ", Constants.DatabasePackageUri);
-                        }
-                    }
-                }
-            }
+            PaketDependenciesStructure structure = new PaketDependenciesStructure(lines);
+            UpdateDependenciesFile(file, structure.Content);
 
             logger.Debug(string.Join(Environment.NewLine, file.Lines));
 
             file.Save();
+        }
+
+        internal static void UpdateDependenciesFile(DependenciesFile file, string[] lines) {
+            const string textRepresentation = "textRepresentation";
+            FieldInfo field = typeof(DependenciesFile).GetField(textRepresentation, BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (field != null) {
+                field.SetValue(file, lines);
+            } else {
+                throw new InvalidOperationException($"Field: '{textRepresentation}' not identified on object: '{nameof(DependenciesFile)}'.");
+            }
         }
 
         // Paket is unable to write version ranges to file.
@@ -159,23 +162,23 @@ namespace Aderant.Build.DependencyResolver {
         }
 
         private bool HasLockFile() {
-            return FileSystem.FileExists(dependencies.GetDependenciesFile().FindLockfile().FullName);
+            return FileSystem.FileExists(Dependencies.GetDependenciesFile().FindLockfile().FullName);
         }
 
         public void Restore(bool force = false) {
             if (!HasLockFile()) {
-                new UpdateAction(dependencies, force).Run();
+                new UpdateAction(Dependencies, force).Run();
             }
-            new RestoreAction(dependencies, force).Run();
+            new RestoreAction(Dependencies, force).Run();
         }
 
         public void Update(bool force) {
-            new UpdateAction(dependencies, force).Run();
+            new UpdateAction(Dependencies, force).Run();
         }
 
         public void ShowOutdated() {
             // TODO: Break UI binding - return a list
-            dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(Constants.MainDependencyGroup));
+            Dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(Constants.MainDependencyGroup));
         }
 
         public void Dispose() {
