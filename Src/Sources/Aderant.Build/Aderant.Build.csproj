@@ -117,6 +117,7 @@
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Tokenizer.cs" />
+    <Compile Include="DependencyResolver\Models\PaketDependenciesStructure.cs" />
     <Compile Include="Packaging\FileRestore.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFile.cs" />
     <Compile Include="ProjectSystem\StateTracking\TrackedInputFilesController.cs" />

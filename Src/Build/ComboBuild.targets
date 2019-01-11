@@ -220,6 +220,8 @@
     <MakeDir Condition="!Exists('$(SharedDependencyDirectory))')"
       Directories="$(SharedDependencyDirectory)" />
 
+    <Delete Files="$(SharedDependencyDirectory)paket.dependencies;$(SharedDependencyDirectory)paket.lock" />
+
     <GetDependencies
       ProductManifest="$(ProductManifestPath)"
       ModulesRootPath="$(SolutionRoot)"

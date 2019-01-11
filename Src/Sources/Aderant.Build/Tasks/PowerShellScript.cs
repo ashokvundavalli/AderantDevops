@@ -167,7 +167,7 @@ namespace Aderant.Build.Tasks {
                         execTask.EnvironmentVariables = command.Environment.Select(s => s.Key + "=" + s.Value).ToArray();
                     }
 
-                    execTask.Timeout = (int)TimeSpan.FromMinutes(10).TotalMilliseconds;
+                    execTask.Timeout = (int)TimeSpan.FromMinutes(20).TotalMilliseconds;
                     execTask.Execute();
                     return execTask.ExitCode;
                 } finally {

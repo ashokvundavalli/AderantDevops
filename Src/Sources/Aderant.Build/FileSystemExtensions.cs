@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -18,6 +19,21 @@ namespace Aderant.Build {
                     return reader.ReadToEnd();
                 }
             }
+        }
+
+        public static string[] ReadAllLines(this IFileSystem fileSystem, string path) {
+            List<String> lines = new List<String>();
+
+            using (Stream fs = fileSystem.OpenFile(path)) {
+                using (StreamReader reader = new StreamReader(fs)) {
+                    string line;
+                    while ((line = reader.ReadLine()) != null) {
+                        lines.Add(line);
+                    }
+                }
+            }
+
+            return lines.ToArray();
         }
 
         /// <summary>
