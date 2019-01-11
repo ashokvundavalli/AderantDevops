@@ -46,7 +46,7 @@
 
   <Target Name="RunTests"
           Outputs="%(SolutionRoots.Identity)"
-          Condition="'$(RunTests)' != 'false'"
+          Condition="'$(RunTests)' != 'false' And '@(ImpactedTestAssemblies)' != ''"
           DependsOnTargets="$(RunTestsDependsOn)">
 
     <PropertyGroup>
