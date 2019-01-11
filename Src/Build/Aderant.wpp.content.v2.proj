@@ -15,11 +15,11 @@
 
   </PropertyGroup>
 
-  <!-- 
+  <!--
     We need to share JavaScript, CSS or images files amongst several web applications.
-    
-    This target takes care of including the shared content from the dependency directory into the project and importantly maintaining 
-    the F5 experience by virtue of the CopyLinkedContentFiles target  
+
+    This target takes care of including the shared content from the dependency directory into the project and importantly maintaining
+    the F5 experience by virtue of the CopyLinkedContentFiles target
   -->
 
   <!--ExternalContent item group defines the unprocessed content provided by dependency modules or by the file system in the module dependency directory
@@ -36,7 +36,7 @@
     <DependencyManifest>$(ProjectDir)..\..\Build\DependencyManifest.xml</DependencyManifest>
     <DependencyManifestContent>$([System.IO.File]::ReadAllText('$(DependencyManifest)'))</DependencyManifestContent>
     <Pattern>="((Aderant.Web|Web|Mobile)\..*?)"</Pattern>
-    <!-- 
+    <!--
       Extract the web modules referenced in the dependency manifest
       The extracted result looks like ="Web.Foundation"
     -->
@@ -132,7 +132,7 @@
     </ExternalContent>
 
   </ItemGroup>
-  
+
   <!-- Views -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
     <ExternalContent Include="$(DependenciesDirectory)Web.*\Views\**\Shared\**\*.cshtml">
@@ -141,16 +141,16 @@
     </ExternalContent>
   </ItemGroup>
 
-  <!-- 
-    Content Processing 
-    
+  <!--
+    Content Processing
+
     Assign relative project path
     Exclude content not referenced by the dependency manifest
   -->
   <ItemGroup Condition=" '$(EnableContentLink)' == 'true' ">
     <AllDependencyContent Include="@(ExternalContent)">
-      <!-- 
-        DependenciesRelativePath returns a path with the path up to the module in the dependency folder removed        
+      <!--
+        DependenciesRelativePath returns a path with the path up to the module in the dependency folder removed
       -->
       <DependenciesRelativePath>$([System.String]::Copy(%(FullPath)).Replace($(DependenciesDirectory), ''))</DependenciesRelativePath>
 
@@ -164,7 +164,7 @@
       <RegexEscapedOTG>$([System.Text.RegularExpressions.Regex]::Escape('Web.OTG'))</RegexEscapedOTG>
       <RegexContentPattern>%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity))</RegexContentPattern>
       <RegexContentPattern Condition="'%(Module)' == 'Web.Core'">%(RegexEscapedIdentity)(.*)(%(RegexEscapedIdentity)|%(RegexEscapedPresentation)|%(RegexEscapedFoundation)|%(RegexEscapedOTG))</RegexContentPattern>
-      
+
 
       <!-- Test if this is direct or transitive content like Modules\Web.SMB\Dependencies\Web.Presentation\Scripts\Web.Foundation\add2home.js -->
       <ContentIsNonTransitive>$([System.Text.RegularExpressions.Regex]::IsMatch('%(DependenciesRelativePath)', '%(RegexContentPattern)'))</ContentIsNonTransitive>
@@ -176,7 +176,7 @@
 
       <!-- Test if the content is from any known modules from the dependency manifest -->
       <IsReferenced>$(WebModuleText.Contains(%(Module)))</IsReferenced>
-      
+
       <!--Can be removed once Mobile.* modules are in git-->
       <IsReferenced Condition="'%(IsReferenced)' == 'false'">$(MSBuildProjectName.Contains('Mobile.'))</IsReferenced>
       <!--Can be removed once Mobile.* modules are in git-->
@@ -187,12 +187,12 @@
 
     <AllDirectNotNestedContent Include="@(AllDependencyContent->WithMetadataValue('ContentIsNestedWeb', 'False'))" />
 
-    <!-- 
+    <!--
       During the build all there might be more Web modules in the dependency folder than those referenced by directly by this module.
       This transform takes care of ensuring only paths that contain referenced module content are included in the project and thus zipped package
     -->
     <DependencyContent Include="@(AllDirectContent->WithMetadataValue('IsReferenced', 'True'))">
-      <!--         
+      <!--
         ProjectRelativePath returns a path that represents the relative include path within the project eg Scripts\Web.Foundation\foo.js
       -->
       <ProjectRelativePath>$([System.Text.RegularExpressions.Regex]::Replace(%(DependenciesRelativePath), '^(.*?\\.*?)', ''))</ProjectRelativePath>
@@ -202,7 +202,7 @@
 
 
     <DependencyContent Include="@(AllDirectNotNestedContent->WithMetadataValue('IsReferenced', 'True'))">
-      <!--         
+      <!--
         ProjectRelativePath returns a path that represents the relative include path within the project eg Scripts\Web.Foundation\foo.js
       -->
       <Path>$([System.Text.RegularExpressions.Regex]::Replace(%(DependenciesRelativePath), '^(.*?\\.*?)', ''))</Path>
@@ -228,8 +228,8 @@
 
 
 
-  
-    
+
+
   <Target Name="CollectLinkedContentFiles" BeforeTargets="CopyLinkedContentFiles">
 
     <ItemGroup>
@@ -255,19 +255,19 @@
           Outputs="@(ContentToCopy->'$(ProjectDir)%(Link)')">
 
     <!-- Only copy files with the Link attribute set -->
-    <Copy SourceFiles="%(ContentToCopy.OriginalItemSpec)"
+    <Copy SourceFiles="@(ContentToCopy->'%(OriginalItemSpec)')"
           DestinationFiles="@(ContentToCopy->'$(ProjectDir)%(Link)')"
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true"
           UseHardlinksIfPossible="true" />
 
   </Target>
-  
+
   <Target Name="CompileLess"
           AfterTargets="CopyLinkedContentFiles"
           Condition="'$(EnableLESSCompile)' == 'True'">
     <ItemGroup>
-      
+
       <!--Exclude any .less files beginning with an '_' from being compiled as a convention, also exclude all less files from the obj directories -->
       <LessFiles Include="$(ProjectDir)\Content\*.less"
                  Exclude="$(ProjectDir)\Content\_*.less" />
@@ -281,8 +281,8 @@
           Condition="'$(BuildingInsideVisualStudio)' != 'true'"
           AfterTargets="CompileTypeScriptWithTSConfig">
     <ItemGroup>
-      <CustomTSConfigs 
-        Include="$(ProjectDir)**\*custom.tsconfig.json" 
+      <CustomTSConfigs
+        Include="$(ProjectDir)**\*custom.tsconfig.json"
         Exclude="$(ProjectDir)**\obj\**;
                  $(ProjectDir)**\bin\**;"/>
     </ItemGroup>
@@ -293,8 +293,8 @@
   <!-- Suppress the TypeScript compile phase if we are building a linked project -->
   <!--<Target Name="CompileTypeScript" Condition="'$(LinkedBuild)' == 'true'" />-->
 
-  <!-- 
-    Debugging   
+  <!--
+    Debugging
     msbuild Web.Foundation.csproj /target:_ItemGroupDebug
   -->
   <Target Name="_ItemGroupDebug">
@@ -303,11 +303,11 @@
     <Message Text="$([System.IO.Path]::GetFullPath('$(ProjectDir)'))" />
     <Message Text="Referenced web module: %(ReferencedWebModules.Identity)" />-->
     <!--<Message Condition="'%(AllDependencyContent.IsReferenced)' == 'true'" Text="
-Identity:                 %(AllDependencyContent.Identity) 
-RecursiveDir:             %(AllDependencyContent.RecursiveDir) 
-FullPath:                 %(AllDependencyContent.FullPath) 
+Identity:                 %(AllDependencyContent.Identity)
+RecursiveDir:             %(AllDependencyContent.RecursiveDir)
+FullPath:                 %(AllDependencyContent.FullPath)
 DependenciesRelativePath: %(AllDependencyContent.DependenciesRelativePath)
-ProjectRelativePath:      %(AllDependencyContent.ProjectRelativePath)            
+ProjectRelativePath:      %(AllDependencyContent.ProjectRelativePath)
 Link:                     %(AllDependencyContent.Link)
 IsReferenced:             %(AllDependencyContent.IsReferenced)
 RegexEscapedIdentity:     %(AllDependencyContent.RegexEscapedIdentity)
@@ -322,10 +322,10 @@ Type:                     %(AllDependencyContent.Type)" />
 WebModuleText:            $(WebModuleText) "
     />-->
 
-    
-    
-    
-    <!--<Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />    
-    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />-->    
+
+
+
+    <!--<Message Text="ExternalTypeScript: %(ExternalTypeScript.RelativePath)%(Filename)%(Extension)" />
+    <Message Text="AspxContent: %(AspxContent.RelativePath)%(Filename)%(Extension)" />-->
   </Target>
 </Project>
