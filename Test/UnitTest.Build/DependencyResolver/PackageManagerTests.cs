@@ -37,15 +37,19 @@ namespace UnitTest.Build.DependencyResolver {
         }
 
         [TestMethod]
-        public void DependenciesFileUpdateViaReflection() {
-            Mock<IFileSystem2> fs = new Moq.Mock<IFileSystem2>();
+        public void Local_package_server_is_listed_first() {
+            var fs = new Moq.Mock<IFileSystem2>();
             fs.Setup(s => s.Root).Returns(TestContext.DeploymentDirectory);
-            PaketPackageManager packageManager = new PaketPackageManager(TestContext.DeploymentDirectory, fs.Object, new NullLogger());
+            var packageManager = new PaketPackageManager(TestContext.DeploymentDirectory, fs.Object, new NullLogger());
 
-            DependenciesFile file = packageManager.Dependencies.GetDependenciesFile();
-            PaketPackageManager.UpdateDependenciesFile(file, new string[4]);
+            packageManager.Add(new[] {
+                DependencyRequirement.Create("Foo", "Main"),
+                DependencyRequirement.Create("Foo", "Bar"),
+            });
 
-            Assert.AreEqual(4, file.Lines.Length);
+            var packageManagerLines = packageManager.Lines;
+
+            Assert.AreEqual(packageManagerLines[0], "source " + Constants.PackageServerUrl);
         }
     }
 }

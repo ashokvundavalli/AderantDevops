@@ -22,16 +22,23 @@ namespace Aderant.Build.DependencyResolver.Models {
             while (index < lines.Length) {
                 DependencyGroup group = GenerateGroups(lines, index, out index);
                 group.AddSource(Constants.PackageServerUrl);
+
                 if (group.Dependencies.Any(x => x.IndexOf("nuget Aderant.Database.Backup", StringComparison.OrdinalIgnoreCase) != -1)) {
                     group.AddSource(Constants.DatabasePackageUri);
                 } else {
                     group.RemoveSource(Constants.DatabasePackageUri);
                 }
 
+                SortSources(group.Sources);
+
                 dependencyGroups.Add(group);
             }
 
             Content = GenerateContent(dependencyGroups);
+        }
+
+        private void SortSources(List<string> groupSources) {
+            groupSources.Sort((s, s1) => s.IndexOf("nuget.org", StringComparison.OrdinalIgnoreCase));
         }
 
         internal static DependencyGroup GenerateGroups(string[] lines, int index, out int updateIndex) {

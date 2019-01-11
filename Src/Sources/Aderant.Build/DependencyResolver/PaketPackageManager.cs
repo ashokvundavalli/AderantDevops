@@ -19,16 +19,13 @@ namespace Aderant.Build.DependencyResolver {
         public IFileSystem FileSystem { get; }
         public static string DependenciesFile { get; } = "paket.dependencies";
 
-        private readonly string sourceFile;
-
-        internal Dependencies Dependencies;
+        private Dependencies dependencies;
 
         public PaketPackageManager(string root, IFileSystem2 fileSystem, ILogger logger) {
             this.root = root;
             this.logger = logger;
             this.FileSystem = fileSystem;
-            Dependencies = Initialize(root);
-            sourceFile = Dependencies.DependenciesFile;
+            dependencies = Initialize(root);
 
             this.logMessageDelegate = OnTraceEvent;
 
@@ -57,48 +54,37 @@ namespace Aderant.Build.DependencyResolver {
             try {
                 var file = FileSystem.GetFiles(root, DependenciesFile, true).FirstOrDefault();
                 if (file != null) {
-                    Dependencies = Dependencies.Locate(root);
+                    dependencies = Dependencies.Locate(root);
                 }
             } catch (Exception) {
             } finally {
-                if (Dependencies == null) {
-                    // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems 
+                if (dependencies == null) {
+                    // If the dependencies file doesn't exist Paket will scan up until it finds one, which causes massive problems
                     // as it will no doubt locate something it shouldn't use (eg one from another product)
                     Dependencies.Init(root);
-                    Dependencies = Dependencies.Locate(root);
+                    dependencies = Dependencies.Locate(root);
                 }
             }
 
-            return Dependencies;
+            return dependencies;
         }
 
         public void Add(IEnumerable<IDependencyRequirement> requirements) {
-            DependenciesFile file = Dependencies.GetDependenciesFile();
+            DependenciesFile file = dependencies.GetDependenciesFile();
             FileSystem.MakeFileWritable(file.FileName);
-            AddModules(requirements, file);
+            AddModules(requirements, ref file);
 
-            file = Dependencies.GetDependenciesFile();
+            PaketDependenciesStructure structure = new PaketDependenciesStructure(file.Lines);
+            file = new DependenciesFile(file.FileName, MapModule.Empty<Domain.GroupName, DependenciesGroup>(), structure.Content);
 
-            // Read from disk because Paket is a bit special and can't handle reading its own properties.
-            string[] lines = FileSystem.FileExists(sourceFile) ? FileSystem.ReadAllLines(sourceFile) : file.Lines;
-
-            PaketDependenciesStructure structure = new PaketDependenciesStructure(lines);
-            UpdateDependenciesFile(file, structure.Content);
-
-            logger.Debug(string.Join(Environment.NewLine, file.Lines));
+            Lines = file.Lines;
 
             file.Save();
         }
 
-        internal static void UpdateDependenciesFile(DependenciesFile file, string[] lines) {
-            const string textRepresentation = "textRepresentation";
-            FieldInfo field = typeof(DependenciesFile).GetField(textRepresentation, BindingFlags.Instance | BindingFlags.NonPublic);
-
-            if (field != null) {
-                field.SetValue(file, lines);
-            } else {
-                throw new InvalidOperationException($"Field: '{textRepresentation}' not identified on object: '{nameof(DependenciesFile)}'.");
-            }
+        public string[] Lines {
+            get;
+            private set;
         }
 
         // Paket is unable to write version ranges to file.
@@ -119,7 +105,7 @@ namespace Aderant.Build.DependencyResolver {
             return version;
         }
 
-        private void AddModules(IEnumerable<IDependencyRequirement> requirements, DependenciesFile file) {
+        private void AddModules(IEnumerable<IDependencyRequirement> requirements, ref DependenciesFile file) {
             foreach (var requirement in requirements.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)) {
                 bool hasCustomVersion = false;
                 string version = string.Empty;
@@ -157,28 +143,26 @@ namespace Aderant.Build.DependencyResolver {
                     }
                 }
             }
-
-            file.Save();
         }
 
         private bool HasLockFile() {
-            return FileSystem.FileExists(Dependencies.GetDependenciesFile().FindLockfile().FullName);
+            return FileSystem.FileExists(dependencies.GetDependenciesFile().FindLockfile().FullName);
         }
 
         public void Restore(bool force = false) {
             if (!HasLockFile()) {
-                new UpdateAction(Dependencies, force).Run();
+                new UpdateAction(dependencies, force).Run();
             }
-            new RestoreAction(Dependencies, force).Run();
+            new RestoreAction(dependencies, force).Run();
         }
 
         public void Update(bool force) {
-            new UpdateAction(Dependencies, force).Run();
+            new UpdateAction(dependencies, force).Run();
         }
 
         public void ShowOutdated() {
             // TODO: Break UI binding - return a list
-            Dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(Constants.MainDependencyGroup));
+            dependencies.ShowOutdated(true, false, FSharpOption<string>.Some(Constants.MainDependencyGroup));
         }
 
         public void Dispose() {
@@ -228,7 +212,7 @@ namespace Aderant.Build.DependencyResolver {
 
             if (invalidVersionPattern.IsMatch(pair.Value.FormatInNuGetSyntax())) {
                 logger.Error($"Invalid version expression for requirement {pair.Key.Item1} in file {filePath}. Does this requirement have any operators ('>', '<', '=') specified? Please fix the version.");
-                // Dirty fix, if we have a invalid requirement pattern that has no operators we need to convert this to a 
+                // Dirty fix, if we have a invalid requirement pattern that has no operators we need to convert this to a
                 // valid paket pattern otherwise a parse exception will occur. However the paket API is dreadful and does not implement ToString() for "min version"
                 // so I cheat and check if the NuGet format of the  requirement as this seems to be a reliable marker that we need to fudge the input data.
                 throw new Exception("Version format is incorrect.");
