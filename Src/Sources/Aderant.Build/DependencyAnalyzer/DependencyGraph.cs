@@ -7,9 +7,9 @@ using Aderant.Build.Utilities;
 namespace Aderant.Build.DependencyAnalyzer {
 
     internal class DependencyGraph {
-        private readonly List<IArtifact> artifacts;
+        private readonly List<IDependable> artifacts;
 
-        public DependencyGraph(IEnumerable<IArtifact> artifacts) {
+        public DependencyGraph(IEnumerable<IDependable> artifacts) {
             this.artifacts = artifacts.ToList();
         }
 
@@ -88,7 +88,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Adds a new artifact to the container.
         /// </summary>
-        public void Add(IArtifact artifact) {
+        public virtual void Add(IArtifact artifact) {
             artifacts.Add(artifact);
         }
 

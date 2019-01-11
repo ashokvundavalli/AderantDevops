@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -58,7 +59,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, graph);
+            var projectGraph = new ProjectDependencyGraph(graph);
+            AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
 
             List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
 
@@ -93,6 +95,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // According to options, find out which projects are selected to build.
             var filteredProjects = GetProjectsBuildList(
+                projectGraph,
                 projectsInDependencyOrder,
                 files,
                 context.GetChangeConsiderationMode(),
@@ -169,7 +172,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return files;
         }
 
-        private void AddInitializeAndCompletionNodes(bool changedFilesOnly, IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
+        private void AddInitializeAndCompletionNodes(bool changedFilesOnly, IReadOnlyCollection<string> makeFiles, ProjectDependencyGraph graph) {
             var projects = graph.Nodes
                 .OfType<ConfiguredProject>()
                 .ToList();
@@ -184,7 +187,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             SynthesizeNodesForAllDirectories(makeFiles, graph);
 
-            var grouping = projects.GroupBy(g => Path.GetDirectoryName(g.SolutionFile), StringComparer.OrdinalIgnoreCase);
+            var grouping = graph.ProjectsBySolutionRoot;
 
             foreach (var group in grouping) {
                 List<ConfiguredProject> dirtyProjects = group.Where(g => g.IsDirty).ToList();
@@ -396,14 +399,21 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// According to options, find out which projects are selected to build.
         /// </summary>
+        /// <param name="graph">The dependency graph</param>
         /// <param name="visualStudioProjects">All the projects list.</param>
-        /// <param name="orchestrationFiles"></param>
+        /// <param name="orchestrationFiles">File metadata for the target files that will orchestrate the build</param>
         /// <param name="changesToConsider">Build the current branch, the changed files since forking from master, or all?</param>
         /// <param name="dependencyProcessing">
         /// Build the directly affected downstream projects, or recursively search for all
         /// downstream projects, or none?
         /// </param>
-        internal IReadOnlyCollection<IDependable> GetProjectsBuildList(IReadOnlyCollection<IDependable> visualStudioProjects, OrchestrationFiles orchestrationFiles, ChangesToConsider changesToConsider, DependencyRelationshipProcessing dependencyProcessing) {
+        internal IReadOnlyCollection<IDependable> GetProjectsBuildList(
+            ProjectDependencyGraph graph,
+            IReadOnlyCollection<IDependable> visualStudioProjects,
+            OrchestrationFiles orchestrationFiles,
+            ChangesToConsider changesToConsider,
+            DependencyRelationshipProcessing dependencyProcessing) {
+
             logger.Info("ChangesToConsider:" + changesToConsider);
             logger.Info("DependencyRelationshipProcessing:" + dependencyProcessing);
 
@@ -415,10 +425,10 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            MarkWebProjectDirty(projects);
-
             // Get all the dirty projects due to user's modification.
             var dirtyProjects = visualStudioProjects.Where(p => IncludeProject(isDesktopBuild, p)).Select(x => x.Id).ToList();
+
+            MarkWebProjectsDirty(graph);
 
             HashSet<string> h = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             h.UnionWith(dirtyProjects);
@@ -444,17 +454,29 @@ namespace Aderant.Build.DependencyAnalyzer {
             return filteredProjects;
         }
 
-        private void MarkWebProjectDirty(List<ConfiguredProject> projects) {
+        private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
             // TODO: Remove this hack as it costs too much perf
             // We need a way to trigger the content deployment of web projects
-            foreach (var project in projects) {
-                if (project.IsWebProject && !project.IsWorkflowProject()) {
-                    // Web projects always need to be built as they have paths that reference content that needs to be deployed
-                    // during the build.
-                    // E.g script tags require that a file exists on disk. It's more reliable to have
-                    // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
-                    // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
-                    MarkDirty("", project, BuildReasonTypes.Forced);
+
+            ILookup<string, ConfiguredProject> lookup = graph.ProjectsBySolutionRoot;
+            foreach (var grouping in lookup) {
+                List<ConfiguredProject> configuredProjects = grouping.ToList();
+
+                // A forced build is queued if any project within the directory container is also requiring a build
+                var dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
+                if (dirtyProject != null) {
+
+                    foreach (ConfiguredProject project in configuredProjects) {
+                        if (project.IsWebProject && !project.IsWorkflowProject()) {
+                            logger.Info($"Quirking! Web project {project.FullPath} requires forced build as {dirtyProject.FullPath} is modified");
+                            // Web projects always need to be built as they have paths that reference content that needs to be deployed
+                            // during the build.
+                            // E.g script tags require that a file exists on disk. It's more reliable to have
+                            // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
+                            // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
+                            MarkDirty("", project, BuildReasonTypes.Forced);
+                        }
+                    }
                 }
             }
         }

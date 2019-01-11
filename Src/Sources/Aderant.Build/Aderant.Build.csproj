@@ -113,6 +113,7 @@
     <Compile Include="Annotations\ReSharperAttributes.cs" />
     <Compile Include="Commands\GetSourceTreeMetadataCommand.cs" />
     <Compile Include="Commands\GetBuildStateMetadataCommand.cs" />
+    <Compile Include="DependencyAnalyzer\ProjectDependencyGraph.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencer.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\Location.cs" />
     <Compile Include="DependencyAnalyzer\TextTemplates\ParserException.cs" />

@@ -97,10 +97,10 @@ namespace UnitTest.Build.DependencyAnalyzer {
                     })
             };
 
-            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
-                new IDependable[] {
-                    p1
-                },
+            var g = new ProjectDependencyGraph(p1);
+
+            IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(g,
+                g.GetDependencyOrder(),
                 orchestrationFiles,
                 ChangesToConsider.None,
                 DependencyRelationshipProcessing.None);
@@ -118,20 +118,29 @@ namespace UnitTest.Build.DependencyAnalyzer {
                 outputAssembly = "A",
                 IsDirty = false,
                 IncludeInBuild = false,
-                IsWebProject = true
+                IsWebProject = true,
+                SolutionFile = "A\\MySolution.sln",
+            };
+
+            var p2 = new TestConfiguredProject(tree.Object) {
+                outputAssembly = "A",
+                IsDirty = false,
+                IncludeInBuild = false,
+                IsWebProject = true,
+                SolutionFile = "B\\MySolution.sln",
             };
 
             var sequencer = new ProjectSequencer(NullLogger.Default, null);
+            var g = new ProjectDependencyGraph(p1, p2);
 
             IReadOnlyCollection<IDependable> buildList = sequencer.GetProjectsBuildList(
-                new IDependable[] {
-                    p1
-                },
+                g,
+                g.GetDependencyOrder(),
                 null,
                 ChangesToConsider.None,
                 DependencyRelationshipProcessing.None);
 
-            Assert.AreEqual(1, buildList.Count);
+            Assert.AreEqual(2, buildList.Count);
             Assert.IsTrue(p1.IncludeInBuild);
             Assert.IsTrue(p1.IsDirty);
         }
