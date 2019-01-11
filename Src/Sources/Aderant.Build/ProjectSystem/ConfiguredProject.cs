@@ -447,7 +447,7 @@ namespace Aderant.Build.ProjectSystem {
 
         private void MarkDirty() {
             IsDirty = true;
-            this.SetReason(BuildReasonTypes.ProjectFileChanged);
+            this.SetReason(BuildReasonTypes.ProjectItemChanged);
         }
 
         private void MarkThisFileDirty(IReadOnlyCollection<ISourceChange> changes) {

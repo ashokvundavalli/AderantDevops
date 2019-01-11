@@ -253,16 +253,7 @@ namespace Aderant.Build.Packaging {
         }
 
         private void RunResolveOperation(BuildOperationContext context, string solutionRoot, string container, List<ArtifactPathSpec> artifactPaths) {
-            if (context.IsDesktopBuild) {
-                foreach (ArtifactPathSpec artifact in artifactPaths) {
-                    if (Directory.Exists(artifact.Destination)) {
-                        Directory.Delete(artifact.Destination, true);
-                    }
-                }
-            }
-
             IEnumerable<string> localArtifactArchives = FetchArtifacts(artifactPaths);
-
             ExtractArtifactArchives(localArtifactArchives);
 
             IEnumerable<string> localArtifactFiles = artifactPaths.SelectMany(artifact => fileSystem.GetFiles(artifact.Destination, "*", true));
@@ -357,16 +348,37 @@ namespace Aderant.Build.Packaging {
                 pathSpecs.AddRange(artifactContents.Select(x => new PathSpec(x, x.Replace(item.Source, item.Destination, StringComparison.OrdinalIgnoreCase))));
             }
 
-            ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
-
             logger.Info("Performing copy for FetchArtifacts");
-            foreach (PathSpec pathSpec in pathSpecs) {
-                logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
 
-                fileSystem.WriteAllText(Path.Combine(pathSpec.Destination + ".origin.txt"), pathSpec.Location);
+            for (var i = pathSpecs.Count - 1; i >= 0; i--) {
+                PathSpec pathSpec = pathSpecs[i];
+                var originFile = Path.Combine(pathSpec.Destination + ".origin.txt");
+
+                if (fileSystem.FileExists(originFile)) {
+                    var linesFromFile = fileSystem.ReadAllLines(originFile);
+
+                    var firstLine = linesFromFile[0];
+
+                    if (string.Equals(firstLine, pathSpec.Location, StringComparison.OrdinalIgnoreCase)) {
+                        if (fileSystem.FileExists(pathSpec.Destination)) {
+                            logger.Info("Artifact download skipped from: " + pathSpec.Location);
+                            pathSpecs.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                }
+
+                // Ensure the existing artifact is zapped
+                fileSystem.DeleteDirectory(pathSpec.Destination, true);
+
+                logger.Info("Copying: {0} -> {1}", pathSpec.Location, pathSpec.Destination);
+                fileSystem.WriteAllText(originFile, pathSpec.Location);
             }
 
-            bulkCopy.Completion.GetAwaiter().GetResult();
+            if (pathSpecs.Count > 0) {
+                ActionBlock<PathSpec> bulkCopy = fileSystem.BulkCopy(pathSpecs, true, false, false);
+                bulkCopy.Completion.GetAwaiter().GetResult();
+            }
 
             return pathSpecs.Select(s => s.Destination);
         }

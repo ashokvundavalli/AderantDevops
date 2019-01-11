@@ -612,7 +612,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     [Flags]
     internal enum BuildReasonTypes {
         None = 0,
-        ProjectFileChanged = 1,
+        ProjectItemChanged = 1,
         CachedBuildNotFound = 2,
         OutputNotFoundInCachedBuild = 4,
         ProjectOutputNotFound = 8,
