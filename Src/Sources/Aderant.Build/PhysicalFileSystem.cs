@@ -51,18 +51,6 @@ namespace Aderant.Build {
         /// </summary>
         public string Root { get; }
 
-        public IEnumerable<string> GetDirectoryNameOfFilesAbove(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories = null) {
-            if (startingDirectory == null) {
-                throw new ArgumentNullException(nameof(startingDirectory));
-            }
-
-            if (filter == null) {
-                throw new ArgumentNullException(nameof(filter));
-            }
-
-            return SearchByPattern(startingDirectory, filter, ceilingDirectories);
-        }
-
         public virtual string GetFullPath(string path) {
             ErrorUtilities.IsNotNull(path, nameof(path));
             return Path.GetFullPath(path);

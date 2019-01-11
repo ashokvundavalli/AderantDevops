@@ -257,12 +257,27 @@ namespace Aderant.Build.ProjectSystem {
 
                 do {
                     if (directoryToSearch != null) {
-                        var files = Services.FileSystem.GetDirectoryNameOfFilesAbove(directoryToSearch.FullName, "*.sln", null);
+                        var files = Services.FileSystem.GetFiles(directoryToSearch.FullName, "*.sln", false);
+                        
+                        var exactMatch = files.FirstOrDefault(file => string.Equals(Path.GetFileNameWithoutExtension(file), directoryToSearch.Name, StringComparison.InvariantCultureIgnoreCase));
+                        if (exactMatch != null) {
+                            files = new[] { exactMatch };
+                        }
 
                         foreach (var file in files) {
+                            if (file.EndsWith(".Custom.sln", StringComparison.InvariantCultureIgnoreCase)) {
+                                continue;
+                            }
+
                             ParseResult parseResult = parser.Parse(file);
 
                             if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
+                                if (exactMatch != null) {
+                                    logger.Info($"Found exact solution match for project {projectFilePath} -> {exactMatch}");
+                                } else {
+                                    logger.Info($"Found inexact solution match for project {projectFilePath} -> {file}");
+                                }
+
                                 projectsByGuid.Add(projectGuid, projectInSolution);
                                 projectToSolutionMap.Add(projectGuid, parseResult.SolutionFile);
 

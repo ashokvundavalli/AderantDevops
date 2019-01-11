@@ -60,11 +60,6 @@ namespace Aderant.Build {
         void MoveDirectory(string source, string destination);
 
         /// <summary>
-        /// Searches upward for a directory containing the specified files included by the filter, beginning in the specified directory.
-        /// </summary>
-        IEnumerable<string> GetDirectoryNameOfFilesAbove(string startingDirectory, string filter, IReadOnlyCollection<string> ceilingDirectories = null);
-
-        /// <summary>
         /// Performs a bulk file copy operation on the specified path specifications.
         /// </summary>
         ActionBlock<PathSpec> BulkCopy(IEnumerable<PathSpec> pathSpecs, bool overwrite, bool useSymlinks = false, bool useHardlinks = false);
