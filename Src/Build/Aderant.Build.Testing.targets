@@ -101,14 +101,6 @@
     <Message Text="Assembly: %(AssembliesTargetingX64.FileName) -> Platform: %(AssembliesTargetingX64.PEKind) (x64)" Condition="'@(AssembliesTargetingX64)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX86.FileName) -> Platform: %(AssembliesTargetingX86.PEKind) (x86)" Condition="'@(AssembliesTargetingX86)' != ''" />
 
-    <!--<CreateItem Include="_Assemblies" PreserveExistingMetadata="true">
-
-    </CreateItem>-->
-
-    <!--<CreateItem Include="@(_NuGetContentItems)" Condition="'@(_NuGetContentItems)' != ''">
-      <Output TaskParameter="Include" ItemName="%(_NuGetContentItems.NuGetItemType)" />
-    </CreateItem>-->
-
     <ItemGroup>
       <_Assemblies Include="@(AssembliesTargetingAnyCpu)" />
       <_Assemblies Include="@(AssembliesTargetingX64)" />

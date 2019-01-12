@@ -40,7 +40,11 @@ namespace Aderant.Build.Tasks {
         [Output]
         public ITaskItem[] Assemblies {
             get { return assemblies.ToArray(); }
-            set { assemblies = new List<ITaskItem>(value); }
+            set {
+                if (value != null) {
+                    assemblies = new List<ITaskItem>(value);
+                }
+            }
         }
 
         [Output]
@@ -69,7 +73,7 @@ namespace Aderant.Build.Tasks {
         public string[] ReferencesToFind { get; private set; }
 
         public override bool Execute() {
-            if (Assemblies == null) {
+            if (assemblies == null) {
                 return true;
             }
 
