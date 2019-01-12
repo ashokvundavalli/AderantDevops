@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Aderant.Build.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,7 +16,9 @@ namespace UnitTest.Build.Tasks {
             AssemblyName[] referencesToFind;
             ProcessorArchitecture[] referenceArchitectures;
 
-            inspector.Inspect(typeof(AssemblyInspectorTests).Assembly.Location, out referencesToFind, out referenceArchitectures);
+            ImageFileMachine imageFileMachine;
+            Exception exception;
+            inspector.Inspect(typeof(AssemblyInspectorTests).Assembly.Location, out referencesToFind, out referenceArchitectures, out imageFileMachine, out exception);
 
             Assert.IsNotNull(referencesToFind);
             Assert.IsNull(referenceArchitectures, "No dependencies provided so no scanning should occur");

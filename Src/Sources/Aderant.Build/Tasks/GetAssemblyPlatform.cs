@@ -115,13 +115,9 @@ namespace Aderant.Build.Tasks {
                         try {
                             AssemblyName[] referencedAssemblies;
                             ProcessorArchitecture[] referenceArchitectures;
-                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referencedAssemblies, out referenceArchitectures);
-
-                            if (referencedAssemblies != null) {
-                                assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
-                            }
-
-                            item.SetMetadata("Platform", "x64");
+                            ImageFileMachine imageFileMachine;
+                            Exception exception;
+                            PortableExecutableKinds peKind = inspector.Inspect(item.ItemSpec, out referencedAssemblies, out referenceArchitectures, out imageFileMachine, out exception);
 
                             if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
                                 item.SetMetadata("Platform", "x86");
@@ -131,30 +127,16 @@ namespace Aderant.Build.Tasks {
 
                                 assemblies.Remove(item);
                                 MustRun32Bit = true;
+                            } else {
+                                item.SetMetadata("Platform", "x64");
+                            }
+
+                            if (referencedAssemblies != null) {
+                                assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
                             }
 
                             if (referenceArchitectures != null) {
-                                foreach (var arch in referenceArchitectures) {
-                                    if (arch == ProcessorArchitecture.X86) {
-                                        Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX86)} set");
-                                        if (!assembliesTargetingX86.Contains(item)) {
-                                            assembliesTargetingX86.Add(item);
-                                        }
-
-                                        Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
-                                        assemblies.Remove(item);
-                                    }
-
-                                    // Some test assemblies are ILOnly but reference 64-bit executables so we need to
-                                    // run in 64-bit mode for these assemblies
-                                    if (arch == ProcessorArchitecture.Amd64) {
-                                        Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX64)} set");
-                                        assembliesTargetingX64.Add(item);
-
-                                        Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
-                                        assemblies.Remove(item);
-                                    }
-                                }
+                                ProcessReferencesOfAssembly(referenceArchitectures, item);
                             }
 
                             // Optimization to reduce boxing for the common case
@@ -166,10 +148,14 @@ namespace Aderant.Build.Tasks {
                                 item.SetMetadata("PEKind", peKind.ToString());
                             }
 
+                            if (exception != null) {
+                                throw exception;
+                            }
+
                             analyzedAssemblies[item] = hash;
                         } catch (FileLoadException ex) {
                             if (!failedItems.Contains(item)) {
-                                Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}. You should delete this file or the other file with the same identity to resolve this warning.");
+                                Log.LogWarning($"Creating new inspection domain for {item.ItemSpec} due to: {ex.Message}\r\nYou should delete this file or the other file with the same identity to resolve this warning if it was caused by duplicate assemblies.");
 
                                 inspector = CreateInspector();
 
@@ -206,6 +192,30 @@ namespace Aderant.Build.Tasks {
                 false);
 
             return !Log.HasLoggedErrors;
+        }
+
+        private void ProcessReferencesOfAssembly(ProcessorArchitecture[] referenceArchitectures, ITaskItem item) {
+            foreach (var arch in referenceArchitectures) {
+                if (arch == ProcessorArchitecture.X86) {
+                    Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX86)} set");
+                    if (!assembliesTargetingX86.Contains(item)) {
+                        assembliesTargetingX86.Add(item);
+                    }
+
+                    Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
+                    assemblies.Remove(item);
+                }
+
+                // Some test assemblies are ILOnly but reference 64-bit executables so we need to
+                // run in 64-bit mode for these assemblies
+                if (arch == ProcessorArchitecture.Amd64) {
+                    Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX64)} set");
+                    assembliesTargetingX64.Add(item);
+
+                    Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
+                    assemblies.Remove(item);
+                }
+            }
         }
 
         private AssemblyInspector CreateInspector() {
@@ -261,9 +271,12 @@ namespace Aderant.Build.Tasks {
         /// The architectures this assembly has references to Islamic, Romanesque, Bauhaus
         /// etc.
         /// </param>
-        public PortableExecutableKinds Inspect(string assembly, out AssemblyName[] referencesToFind, out ProcessorArchitecture[] referenceArchitectures) {
+        /// <param name="imageFileMachine"></param>
+        /// <param name="exception"></param>
+        public PortableExecutableKinds Inspect(string assembly, out AssemblyName[] referencesToFind, out ProcessorArchitecture[] referenceArchitectures, out ImageFileMachine imageFileMachine, out Exception exception) {
             referencesToFind = null;
             referenceArchitectures = null;
+            exception = null;
 
             if (fileMap == null && AssemblyDependencies != null) {
                 Dictionary<string, string> dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -285,17 +298,20 @@ namespace Aderant.Build.Tasks {
             Assembly asm = Assembly.ReflectionOnlyLoadFrom(assembly);
 
             PortableExecutableKinds peKind;
-            ImageFileMachine imageFileMachine;
             asm.ManifestModule.GetPEKind(out peKind, out imageFileMachine);
 
-            var references = asm.GetReferencedAssemblies();
+            try {
+                var references = asm.GetReferencedAssemblies();
 
-            if (ShouldDeployMissingReferences(asm)) {
-                referencesToFind = references;
-            }
+                if (ShouldDeployMissingReferences(asm)) {
+                    referencesToFind = references;
+                }
 
-            if (fileMap != null) {
-                referenceArchitectures = GetReferenceArchitectures(references);
+                if (fileMap != null) {
+                    referenceArchitectures = GetReferenceArchitectures(references);
+                }
+            } catch (Exception ex) {
+                exception = ex;
             }
 
             return peKind;
