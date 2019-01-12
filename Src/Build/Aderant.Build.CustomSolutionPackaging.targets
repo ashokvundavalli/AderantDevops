@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
-  
+
     <!--
     ==========================================================================================
-        Zip Source 
+        Zip Source
     ==========================================================================================
   -->
 
@@ -88,7 +88,7 @@ foreach(var replacement in replacements){
                    $(SolutionDirectoryPath)Build\TestResults\**\*
                    $(SolutionDirectoryPath)BuildTemp\**\*;
                    $(SolutionDirectoryPath)**\obj\**;
-                   $(SolutionDirectoryPath)**\_Resharper*\**; 
+                   $(SolutionDirectoryPath)**\_Resharper*\**;
                    $(SolutionDirectoryPath)**\*.g*.cs;
                    $(SolutionDirectoryPath)**\*.pfx;
                    $(SolutionDirectoryPath)**\*.vssscc;
@@ -241,7 +241,7 @@ foreach(var replacement in replacements){
 
     <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
-  
+
     <!--
     ==========================================================================================
         Zip seed package(s)
@@ -249,7 +249,22 @@ foreach(var replacement in replacements){
         Note: To temporary bypass the validation process, set /p:SkipPackageValidation=true in TFSBuild.rsp in the solution to be built.
     ==========================================================================================
   -->
-  <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true' And '$(SolutionDirectoryPath)' != ''" >
+  <Target Name="CollectPackageContent">
+    <ItemGroup>
+      <SeedPackageInputs Include="$(SolutionDirectoryPath)Src\SeedPackages\**\*" />
+      <SeedPackageInputs Include="$(SolutionDirectoryPath)Test\TestPackages\**\*" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <GenerateSeedPackageCache>$(ModuleBuildTempDirectory)GenerateSeedPackage.cache</GenerateSeedPackageCache>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true' And '$(SolutionDirectoryPath)' != ''"
+          DependsOnTargets="CollectPackageContent"
+          Inputs="@(SeedPackageInputs)"
+          Outputs="$(GenerateSeedPackageCache)">
+
     <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High" />
 
     <SeedPackagePacking
@@ -264,8 +279,10 @@ foreach(var replacement in replacements){
         SeedPackageSrc="$(SolutionDirectoryPath)Test\TestPackages"
         SeedPackageDrop="$(SolutionDirectoryPath)Bin\Test\TestPackages" />
 
+    <Touch AlwaysCreate="true" Files="$(GenerateSeedPackageCache)" />
+
   </Target>
-  
+
     <!--
     ==========================================================================================
         Zip Sample Workflow Solutions
@@ -280,8 +297,8 @@ foreach(var replacement in replacements){
   <Target
     Name="ZipWorkflowTemplateSource"
     Condition="('$(IsTemplateModule)'=='true') And ('$(IsCustomBuild)'!='true')"
-    Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip"
-    Inputs="@(TemplateSolutionFiles)">
+    Inputs="@(TemplateSolutionFiles)"
+    Outputs="$(BinModuleDirectory)Workflow\Templates\%(TemplateSolutionFiles.Filename).zip">
 
     <PropertyGroup>
       <ZipFileDirectory>$(BinModuleDirectory)Workflow\Templates</ZipFileDirectory>
@@ -299,13 +316,13 @@ foreach(var replacement in replacements){
                     $(SolutionDirectoryPath)Build\TestResults\**\*
                     $(SolutionDirectoryPath)BuildTemp\**\*;
                     $(SolutionDirectoryPath)**\obj\**;
-                    $(SolutionDirectoryPath)**\_Resharper*\**; 
+                    $(SolutionDirectoryPath)**\_Resharper*\**;
                     $(SolutionDirectoryPath)**\*.g*.cs;
                     $(SolutionDirectoryPath)**\*.pfx;
                     $(SolutionDirectoryPath)**\*.vssscc;
-                    $(SolutionDirectoryPath)**\*.vspscc; 
+                    $(SolutionDirectoryPath)**\*.vspscc;
                     $(SolutionDirectoryPath)**\*.sln.cache;
-                    $(SolutionDirectoryPath)**\*.vsmdi;      
+                    $(SolutionDirectoryPath)**\*.vsmdi;
                     $(SolutionDirectoryPath)**\*.testrunconfig;
                     $(SolutionDirectoryPath)**\*.suo;
                     $(SolutionDirectoryPath)**\*.sln.Debug.vsprops;
@@ -314,11 +331,11 @@ foreach(var replacement in replacements){
                     $(SolutionDirectoryPath)**\_Resharper*\**;
                     $(SolutionDirectoryPath)**\*resharper.user;
                     $(SolutionDirectoryPath)**\*.DotSettings;
-                    $(SolutionDirectoryPath)**\Bin;      
+                    $(SolutionDirectoryPath)**\Bin;
                     $(SolutionDirectoryPath)**\obj\**;
                     $(SolutionDirectoryPath)CommonBuild\**;
                     $(SolutionDirectoryPath)ThirdPartyBuild.txt;
-                    $(SolutionDirectoryPath)**\*.csproj.user;  
+                    $(SolutionDirectoryPath)**\*.csproj.user;
                     $(SolutionDirectoryPath)**\SharedBin\**;
 					          $(SolutionDirectoryPath)Src\**\Web.*\**;">
         <DestinationSubDirectory>Src\</DestinationSubDirectory>
@@ -456,7 +473,6 @@ foreach(var replacement in replacements){
     <RemoveDir
       Directories="$(TempTemplateSolutionDirectory)"/>
 
-    <OnError ExecuteTargets="MarkBuildStepAsFailed" />
   </Target>
 
 </Project>
