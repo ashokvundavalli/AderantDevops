@@ -36,37 +36,43 @@ $ErrorActionPreference = "Stop"
 
 $referencePathList = [System.Collections.Generic.List[string]]::new()
 
+function AddSearchDirectory($element, [string]$path, [bool]$includeSubDirectories, [bool]$prepend) {
+    $directoryElement = $script:settingsDocument.CreateElement("Directory")
+    $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
+    $directoryElement.SetAttribute("includeSubDirectories", "$includeSubDirectories")
+
+    if ($prepend) {
+        [void]$element.PrependChild($directoryElement)
+    } else {
+        [void]$element.AppendChild($directoryElement)
+    }
+}
+
 function CreateRunSettingsXml() {
-    [xml]$xml = Get-Content -Path "$PSScriptRoot\default.runsettings"
-    $assemblyResolution = $xml.RunSettings.MSTest.AssemblyResolution
+    [xml]$script:settingsDocument = Get-Content -Path "$PSScriptRoot\default.runsettings"
+    $assemblyResolution = $settingsDocument.RunSettings.MSTest.AssemblyResolution
 
     if ($script:ReferencePaths) {
-        $referencePathList.AddRange($ReferencePaths)
+        foreach ($path in $script:ReferencePaths) {
+            AddSearchDirectory $assemblyResolution $path -includeSubDirectories:$false -prepend:$false
+        }
     }
 
     if ($SolutionRoot) {
-        $referencePathList.Add([System.IO.Path]::Combine($SolutionRoot, "packages"))
+        #AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($SolutionRoot, "packages")) $false $false
 
         # We want the test runner resolver to bind content produced by the solution build
         # for the most reliable test run as there could be matching by older assemblies in the other directories
-        $referencePathList.Insert(0, [System.IO.Path]::Combine($SolutionRoot, "Bin", "Module"))
+        AddSearchDirectory $assemblyResolution ([System.IO.Path]::Combine($SolutionRoot, "Bin", "Module")) -includeSubDirectories:$true -prepend:$true
     }
 
     # VS SDK
-    $referencePathList.Add("$Env:VSSDK140Install" + "VisualStudioIntegration\Common\Assemblies\v4.0")
-
-    foreach ($path in $referencePathList) {
-        $directoryElement = $xml.CreateElement("Directory")
-        $directoryElement.SetAttribute("path", $path.TrimEnd('\'))
-        $directoryElement.SetAttribute("includeSubDirectories", "true")
-
-        [void]$assemblyResolution.AppendChild($directoryElement)
-    }
+    AddSearchDirectory $assemblyResolution ("$Env:VSSDK140Install" + "VisualStudioIntegration\Common\Assemblies\v4.0") -includeSubDirectories:$false -prepend:$false
 
     $sw = [System.IO.StringWriter]::new()
     $writer = New-Object System.Xml.XmlTextWriter($sw)
     $writer.Formatting = [System.Xml.Formatting]::Indented
-    $xml.WriteContentTo($writer)
+    $settingsDocument.WriteContentTo($writer)
 
     return $sw.ToString()
 }

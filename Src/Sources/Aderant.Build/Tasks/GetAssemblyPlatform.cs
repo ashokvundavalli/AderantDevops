@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -16,13 +17,18 @@ namespace Aderant.Build.Tasks {
     /// then the build process must use the 32-bit of VS Test.
     /// </summary>
     public sealed class GetAssemblyPlatform : Task {
-        private readonly string[] allowedAssemblyExtensions = {
+        private static readonly string[] allowedAssemblyExtensions = {
             ".winmd",
             ".dll",
             ".exe"
         };
 
+        private List<ITaskItem> assemblies;
+
         private AppDomain inspectionDomain;
+
+        private List<ITaskItem> assembliesTargetingX64 = new List<ITaskItem>();
+        private List<ITaskItem> assembliesTargetingX86 = new List<ITaskItem>();
 
         /// <summary>
         /// Gets or sets the assemblies to analyze.
@@ -32,12 +38,26 @@ namespace Aderant.Build.Tasks {
         /// The assemblies.
         /// </value>
         [Output]
-        public ITaskItem[] Assemblies { get; set; }
+        public ITaskItem[] Assemblies {
+            get { return assemblies.ToArray(); }
+            set { assemblies = new List<ITaskItem>(value); }
+        }
+
+        [Output]
+        public ITaskItem[] AssembliesTargetingX64 {
+            get { return assembliesTargetingX64.ToArray(); }
+        }
+
+        [Output]
+        public ITaskItem[] AssembliesTargetingX86 {
+            get { return assembliesTargetingX86.ToArray(); }
+        }
+
 
         public string[] AssemblyDependencies { get; set; }
 
         /// <summary>
-        /// Gets or sets  the flag indicating if the 32-bit test runner should be used.
+        /// Gets or sets the flag indicating if the 32-bit test runner should be used.
         /// </summary>
         [Output]
         public bool MustRun32Bit { get; set; }
@@ -76,8 +96,9 @@ namespace Aderant.Build.Tasks {
                 if (PathUtility.HasExtension(item.ItemSpec, allowedAssemblyExtensions) && File.Exists(item.ItemSpec)) {
                     string hash;
                     using (var cryptoProvider = new SHA1CryptoServiceProvider()) {
-                        byte[] fileBytes = File.ReadAllBytes(fullPath);
-                        hash = BitConverter.ToString(cryptoProvider.ComputeHash(fileBytes));
+                        using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1024 * 1024)) {
+                            hash = BitConverter.ToString(cryptoProvider.ComputeHash(stream));
+                        }
                     }
 
                     if (ShouldAnalyze(analyzedAssemblies, hash, item)) {
@@ -90,26 +111,49 @@ namespace Aderant.Build.Tasks {
                                 assemblyReferencesToFind.AddRange(referencedAssemblies.Select(s => s.Name));
                             }
 
+                            item.SetMetadata("Platform", "x64");
+
                             if ((peKind & PortableExecutableKinds.Required32Bit) != 0) {
+                                item.SetMetadata("Platform", "x86");
+                                if (!assembliesTargetingX86.Contains(item)) {
+                                    assembliesTargetingX86.Add(item);
+                                }
+
+                                assemblies.Remove(item);
                                 MustRun32Bit = true;
                             }
 
                             if (referenceArchitectures != null) {
                                 foreach (var arch in referenceArchitectures) {
                                     if (arch == ProcessorArchitecture.X86) {
-                                        MustRun32Bit = true;
-                                        break;
+                                        Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX86)} set");
+                                        if (!assembliesTargetingX86.Contains(item)) {
+                                            assembliesTargetingX86.Add(item);
+                                        }
+
+                                        Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
+                                        assemblies.Remove(item);
+                                    }
+
+                                    // Some test assemblies are ILOnly but reference 64-bit executables so we need to
+                                    // run in 64-bit mode for these assemblies
+                                    if (arch == ProcessorArchitecture.Amd64) {
+                                        Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX64)} set");
+                                        assembliesTargetingX64.Add(item);
+
+                                        Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
+                                        assemblies.Remove(item);
                                     }
                                 }
                             }
 
                             // Optimization to reduce boxing for the common case
                             if (peKind == PortableExecutableKinds.ILOnly) {
-                                item.SetMetadata("Platform", "ILOnly");
+                                item.SetMetadata("PEKind", "ILOnly");
                             } else if (peKind == PortableExecutableKinds.Required32Bit) {
-                                item.SetMetadata("Platform", "x86");
+                                item.SetMetadata("PEKind", "x86");
                             } else {
-                                item.SetMetadata("Platform", peKind.ToString());
+                                item.SetMetadata("PEKind", peKind.ToString());
                             }
 
                             analyzedAssemblies[item] = hash;
@@ -196,17 +240,23 @@ namespace Aderant.Build.Tasks {
 
     internal class AssemblyInspector : MarshalByRefObject {
         private Dictionary<string, string> fileMap;
-        private HashSet<string> seenAssemblies = new HashSet<string>();
+        private Dictionary<string, ProcessorArchitecture[]> seenAssemblies = new Dictionary<string, ProcessorArchitecture[]>(StringComparer.OrdinalIgnoreCase);
 
         public string[] AssemblyDependencies { get; set; }
         public TaskLoggingHelper Logger { get; set; }
 
+        /// <param name="assembly"></param>
+        /// <param name="referencesToFind"></param>
+        /// <param name="referenceArchitectures">
+        /// The architectures this assembly has references to Islamic, Romanesque, Bauhaus
+        /// etc.
+        /// </param>
         public PortableExecutableKinds Inspect(string assembly, out AssemblyName[] referencesToFind, out ProcessorArchitecture[] referenceArchitectures) {
             referencesToFind = null;
             referenceArchitectures = null;
 
             if (fileMap == null && AssemblyDependencies != null) {
-                Dictionary<string, string> dictionary = new Dictionary<string, string>();
+                Dictionary<string, string> dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var dependency in AssemblyDependencies) {
                     string key = Path.GetFileName(dependency);
@@ -235,52 +285,74 @@ namespace Aderant.Build.Tasks {
             }
 
             if (fileMap != null) {
-                var architectures = GetReferenceArchitectures(references);
-                referenceArchitectures = architectures.ToArray();
+                referenceArchitectures = GetReferenceArchitectures(references);
             }
 
             return peKind;
         }
 
-        private List<ProcessorArchitecture> GetReferenceArchitectures(AssemblyName[] references) {
-            List<ProcessorArchitecture> architectures = new List<ProcessorArchitecture>();
+        private ProcessorArchitecture[] GetReferenceArchitectures(AssemblyName[] references) {
+            List<ProcessorArchitecture> collector = new List<ProcessorArchitecture>();
 
             foreach (var reference in references) {
                 try {
-                    if (!seenAssemblies.Contains(reference.Name)) {
-                        var names = new string[] {
-                            reference.Name + ".dll",
-                            reference.Name + ".exe",
-                            reference.Name + ".winmd",
-                        };
-
-                        for (var i = 0; i < names.Length; i++) {
-                            var name = names[i];
-                            if (SetArchitecture(name, architectures)) {
-                                break;
-                            }
+                    ProcessorArchitecture[] arch;
+                    if (seenAssemblies.TryGetValue(reference.Name, out arch)) {
+                        if (arch != null) {
+                            collector.AddRange(arch);
                         }
-                    }
-                } catch (Exception) {
 
-                } finally {
-                    seenAssemblies.Add(reference.Name);
+                        continue;
+                    }
+
+                    FindReference(reference, collector);
+                } catch (Exception ex) {
+                    Logger.LogMessage(MessageImportance.Low, "Exception while processing reference list. " + ex);
                 }
             }
 
-            return architectures;
+            return collector.ToArray();
         }
 
-        private bool SetArchitecture(string fileName, List<ProcessorArchitecture> architectures) {
+        private void FindReference(AssemblyName reference, List<ProcessorArchitecture> collector) {
+            var names = new string[] {
+                reference.Name + ".dll",
+                reference.Name + ".exe",
+                reference.Name + ".winmd",
+            };
+
+            bool addNullSentinel = true;
+            foreach (var name in names) {
+
+                ProcessorArchitecture[] referenceArchitecture;
+                if (DiscoverReferenceArchitecture(name, out referenceArchitecture)) {
+                    if (referenceArchitecture != null) {
+                        seenAssemblies.Add(reference.Name, referenceArchitecture);
+                        collector.AddRange(referenceArchitecture);
+                        addNullSentinel = false;
+                        break;
+                    }
+                }
+            }
+
+            if (addNullSentinel) {
+                // Record we never found this assembly to avoid future lookups
+                seenAssemblies.Add(reference.Name, null);
+            }
+        }
+
+        private bool DiscoverReferenceArchitecture(string fileName, out ProcessorArchitecture[] architectures) {
             string locationOnDisk;
             if (fileMap.TryGetValue(fileName, out locationOnDisk)) {
                 var assemblyName = AssemblyName.GetAssemblyName(locationOnDisk);
 
                 if (assemblyName.ProcessorArchitecture != ProcessorArchitecture.MSIL) {
-                    architectures.Add(assemblyName.ProcessorArchitecture);
+                    architectures = new ProcessorArchitecture[] { assemblyName.ProcessorArchitecture };
+                    return true;
                 }
             }
 
+            architectures = null;
             return locationOnDisk != null;
         }
 
