@@ -39,7 +39,13 @@ namespace Aderant.Build.Tasks {
         /// </value>
         [Output]
         public ITaskItem[] Assemblies {
-            get { return assemblies.ToArray(); }
+            get {
+                if (assemblies != null) {
+                    return assemblies.ToArray();
+                }
+
+                return Array.Empty<ITaskItem>();
+            }
             set {
                 if (value != null) {
                     assemblies = new List<ITaskItem>(value);
