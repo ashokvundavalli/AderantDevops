@@ -59,10 +59,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
+
             var projectGraph = new ProjectDependencyGraph(graph);
+            // Ensure that any additional usages of graph refer to our wrapper
+            graph = projectGraph;
+
             AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
 
-            List<IDependable> projectsInDependencyOrder = graph.GetDependencyOrder();
+            List<IDependable> projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
             List<string> directoriesInBuild = new List<string>();
 
