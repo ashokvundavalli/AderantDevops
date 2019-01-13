@@ -1,26 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          ToolsVersion="14.0">
 
   <PropertyGroup>
     <DefaultLanguageSourceExtension Condition="'$(DefaultLanguageSourceExtension)' == ''">.cs</DefaultLanguageSourceExtension>
     <Language Condition="'$(Language)' == ''">CS</Language>
   </PropertyGroup>
-  
+
 
   <PropertyGroup>
-    <OnBeforeCompileDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
+    <SetVersionAttributesDependsOn Condition="'$(IsCustomBuild)' != 'true' And '$(ProjectGuid)' != ''">
       $(OnBeforeCompileDependsOn);
       GenerateAssemblyInfo;
       AsemblyInfoUpdateCopyright;
       ReadVersionInfo
-    </OnBeforeCompileDependsOn>
+    </SetVersionAttributesDependsOn>
   </PropertyGroup>
-  
+
+  <PropertyGroup>
+    <SetVersionAttributesBeforeTargets Condition="'$(Language)' == 'C#'">
+      BeforeCompile
+    </SetVersionAttributesBeforeTargets>
+  </PropertyGroup>
 
   <!-- Stub that lets us hook BeforeCompile without breaking others that also override BeforeCompile -->
-  <Target Name="OnBeforeCompile" BeforeTargets="$(PrepareResourcesDependsOn);BeforeCompile" DependsOnTargets="$(OnBeforeCompileDependsOn)" />
-
+  <Target Name="SetVersionAttributes" BeforeTargets="$(PrepareResourcesDependsOn);$(SetVersionAttributesBeforeTargets)" DependsOnTargets="$(SetVersionAttributesDependsOn)" />
 
   <Target Name="GenerateAssemblyAttributes">
 
@@ -78,18 +82,12 @@
         <_Parameter1>Build.Flavor</_Parameter1>
         <_Parameter2>$(BuildFlavor)</_Parameter2>
       </_AssemblyAttributes>
-
-      <_AssemblyAttributes Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(Deterministic)' != ''">
-        <_Parameter1>Build.IsDeterministic</_Parameter1>
-        <_Parameter2>$(Deterministic)</_Parameter2>
-      </_AssemblyAttributes>
-      
     </ItemGroup>
 
   </Target>
 
 
-  <!-- 
+  <!--
     To allow version changes to be respected on incremental builds (e.g. through CLI parameters),
     create a hash of all assembly attributes so that the cache file will change with the calculated
     assembly attribute values and MS Build will then execute CoreGenerateAssembly to generate a new file.
@@ -99,17 +97,17 @@
 
     <PropertyGroup>
       <GeneratedAssemblyInfoInputsCacheFile>$(IntermediateOutputPath)Versioning.AssemblyInfoInputs.cache</GeneratedAssemblyInfoInputsCacheFile>
-      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g$(DefaultLanguageSourceExtension)</GeneratedAssemblyInfoFile>
+      <GeneratedAssemblyInfoFile Condition="'$(GeneratedAssemblyInfoFile)' == ''">$(IntermediateOutputPath)AssemblyInfo.g.cs</GeneratedAssemblyInfoFile>
     </PropertyGroup>
 
     <Hash ItemsToHash="@(_AssemblyAttributes->'%(Identity)%(_Parameter2)')">
       <Output TaskParameter="HashResult" PropertyName="__AssemblyAttributesHash" />
     </Hash>
 
-    <Aderant.Build.Tasks.WriteLinesToFile 
-      Lines="$(__AssemblyAttributesHash)" 
-      File="$(GeneratedAssemblyInfoInputsCacheFile)" 
-      Overwrite="true" 
+    <Aderant.Build.Tasks.WriteLinesToFile
+      Lines="$(__AssemblyAttributesHash)"
+      File="$(GeneratedAssemblyInfoInputsCacheFile)"
+      Overwrite="true"
       WriteOnlyWhenDifferent="true" />
 
     <ItemGroup>
@@ -117,7 +115,7 @@
     </ItemGroup>
 
   </Target>
-  
+
 
   <PropertyGroup>
     <GenerateAssemblyInfoDependsOn>
@@ -135,12 +133,12 @@
           DependsOnTargets="CreateGeneratedAssemblyInfoInputsCacheFile"
           Inputs="$(GeneratedAssemblyInfoInputsCacheFile)"
           Outputs="$(GeneratedAssemblyInfoFile)">
-          
+
     <Error Condition="'@(_AssemblyAttributes)' == ''"        Text="No assembly attributes specified" />
     <Error Condition="'$(GeneratedAssemblyInfoFile)' == ''"  Text="GeneratedAssemblyInfoFile is undefined" />
 
-    <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)" 
-                       Language="$(Language)" 
+    <WriteCodeFragment AssemblyAttributes="@(_AssemblyAttributes)"
+                       Language="CS"
                        OutputFile="$(GeneratedAssemblyInfoFile)">
     </WriteCodeFragment>
 
@@ -169,7 +167,7 @@
 
 
   <!--
-      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset 
+      Creates modified version of CommonAssemblyInfo.cs without touching the original file so we don't upset
       incremental builds
   -->
   <Target Name="AsemblyInfoUpdateCopyright"
@@ -201,18 +199,18 @@
 
 
   <Target Name="ReadVersionInfo">
-    
+
     <ItemGroup>
       <AssemblyInfoFiles Include="$(NewCommonAssemblyInfoFile)" />
       <AssemblyInfoFiles Include="@(Compile)" Condition="%(Filename) == 'AssemblyInfo' And %(Extension) == '.cs'" />
     </ItemGroup>
-    
+
     <ReadAssemblyInfo AssemblyInfoFiles="@(AssemblyInfoFiles)">
       <Output ItemName="CommonAssemblyInformationalVersion" TaskParameter="AssemblyInformationalVersion" />
       <Output ItemName="CommonAssemblyVersion"              TaskParameter="AssemblyVersion" />
       <Output ItemName="CommonAssemblyFileVersion"          TaskParameter="AssemblyFileVersion" />
     </ReadAssemblyInfo>
-    
+
   </Target>
 
 </Project>
