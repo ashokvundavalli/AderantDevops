@@ -26,8 +26,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
-      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(Switches_SkipCompile)' != 'true'" />
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' == 'true' And '%(ProjectsInGroup.IsProjectFile)' != 'true'" />
+      <_ProjectsInGroup Include="@(ProjectsInGroup)" Condition="'$(switch-skip-compile)' != 'true'" />
     </ItemGroup>
 
     <Warning Text="Skipping compile!" Condition="'$(switch-skip-compile)' == 'true'" />
@@ -38,7 +38,7 @@
     <MSBuild Projects="@(_ProjectsInGroup)"
              StopOnFirstFailure="true"
              Targets="$(BuildAction)"
-             BuildInParallel="$(BuildInParallel)" >
+             BuildInParallel="$(BuildInParallel)">
     </MSBuild>
 
     <Message Text="##vso[task.logdetail id=$(LogId);progress=100;state=Succeeded;Result=Succeeded]Build group $(BuildGroupId) finished"
@@ -52,6 +52,11 @@
     <ItemGroup>
       <ProjectsInGroup Include="@(ProjectsToBuild->WithMetadataValue('BuildGroupId', '$(BuildGroupId)'))" />
     </ItemGroup>
+
+    <GetOrPutContextVariable
+      VariableName="_GitDir">
+      <Output TaskParameter="Value" PropertyName="_GitDir" />
+    </GetOrPutContextVariable>
 
     <!-- Properties available to both projects files and orchestration participants -->
     <PropertyGroup>
@@ -74,14 +79,7 @@
         AlternativeOutputDirectory=$(SharedDependencyDirectory);
         ArtifactStagingDirectory=$(ArtifactStagingDirectory);
         RunCodeAnalysisOnThisProject=false;
-<!--
-    Specifies whether to run the MarkupCompilePass1 task in a separate AppDomain.
-    If this parameter returns false, the task runs in the same AppDomain as Microsoft build engine (MSBuild) and it runs faster.
-    If the parameter returns true, the task runs in a second AppDomain that is isolated from MSBuild and runs slower.
-
-    AlwaysCompileMarkupFilesInSeparateDomain=false
--->
-
+        _GitDir=$(_GitDir)
       </PropertiesCommonToAllProjects>
     </PropertyGroup>
 
@@ -110,13 +108,10 @@
           ModuleSourceDirectory=$(_SolutionRoot)\Src\;
           ModuleTestDirectory=$(_SolutionRoot)\Test\;
           ModuleBuildDirectory=$(_SolutionRoot)\Build\;
-          _GitDir=$(_GitDir);
-          VariableScopeId=$(_SolutionRoot);
+          VariableScopeId=$(_SolutionRoot)
         </Properties>
       </ProjectsInGroup>
     </ItemGroup>
-
-    <InspectItemGroup ItemGroup="@(ProjectsInGroup)" />
 
   </Target>
 
