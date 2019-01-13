@@ -68,7 +68,7 @@
   -->
   <Target Name="CommonBuildUpdateSplashscreen"
           Condition="'$(IsCustomBuild)' != 'true' And '$(OutputType)' == 'WinExe'"
-          AfterTargets="OnBeforeCompile">
+          AfterTargets="SetVersionAttributes">
     <!--
       This needs to run before BeforeResolveReferences target otherwise changes Resources item group
       is not reflected through out the in memory project

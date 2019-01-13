@@ -23,8 +23,7 @@
       PublishModule;
       IndexSourcesAndPublishSymbols;
       MobileBuild;
-      PostBuild;
-      SignInstallers;-->
+      PostBuild;      -->
       RunBuildExtensions;
       SignInstallers;
       PackageArtifactsCore;
@@ -45,15 +44,20 @@
   <!--Stub-->
   <Target Name="PackageArtifacts" />
 
+
   <Target Name="RefreshVersionVariables">
+
+    <ItemGroup>
+      <_Variables Include="FileVersion" />
+      <_Variables Include="AssemblyVersion" />
+      <_Variables Include="ModuleName" />
+    </ItemGroup>
 
     <GetOrPutContextVariable
       Scope="$(VariableScopeId)"
       ContextEndpoint="$(ContextEndpoint)"
-      Output="true">
-      <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
-      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
-      <Output TaskParameter="ModuleName" PropertyName="ModuleName" />
+      VariableName="%(_Variables.Identity)">
+      <Output TaskParameter="Value" PropertyName="%(_Variables.Identity)" />
     </GetOrPutContextVariable>
 
     <Error Text="FileVersion is undefined" Condition="'$(FileVersion)' == '' And '$(IsDesktopBuild)' != 'true'" />
@@ -91,7 +95,7 @@
   </Target>
 
 
-  <Target Name="CreateDependencyLinks">
+  <Target Name="CreateDependencyLinks" Condition="'$(IsDesktopBuild)' == 'true'">
 
     <CreateDependencyLinks
       SolutionRoot="$(SolutionRoot)"

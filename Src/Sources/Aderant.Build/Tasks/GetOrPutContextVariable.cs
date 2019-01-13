@@ -1,38 +1,64 @@
-﻿using Microsoft.Build.Framework;
+﻿using System;
+using Microsoft.Build.Framework;
 
 namespace Aderant.Build.Tasks {
     public sealed class GetOrPutContextVariable : BuildOperationContextTask {
 
-        [Required]
+        private static char[] splitChar = new char[] { '=' };
+
         public string Scope { get; set; }
 
-        [Output]
-        public string FileVersion { get; set; }
+        public string VariableName { get; set; }
 
         [Output]
-        public string AssemblyVersion { get; set; }
+        public string Value { get; set; }
 
-        [Output]
-        public string ModuleName { get; set; }
-
-        public bool Output { get; set; }
+        public ITaskItem[] Data { get; set; }
 
         public override bool ExecuteTask() {
-            if (Output) {
-                FileVersion = PipelineService.GetVariable(Scope, nameof(FileVersion));
-                AssemblyVersion = PipelineService.GetVariable(Scope, nameof(AssemblyVersion));
-                ModuleName = PipelineService.GetVariable(Scope, nameof(ModuleName));
-            } else {
-                Log.LogMessage("FileVersion: {0}", FileVersion);
-                Log.LogMessage("AssemblyVersion: {0}", AssemblyVersion);
-                Log.LogMessage("ModuleName: {0}", ModuleName);
+            if (!string.IsNullOrEmpty(VariableName)) {
+                if (string.IsNullOrEmpty(Value)) {
+                    Value = GetExistingVariable();
+                    Log.LogMessage($"Retrieved variable: {VariableName} with value {Value}");
+                    return !Log.HasLoggedErrors;
+                }
+            }
 
-                PipelineService.PutVariable(Scope, nameof(FileVersion), FileVersion);
-                PipelineService.PutVariable(Scope, nameof(AssemblyVersion), AssemblyVersion);
-                PipelineService.PutVariable(Scope, nameof(ModuleName), ModuleName);
+            if (Data != null) {
+                foreach (var item in Data) {
+                    string[] parts = item.ItemSpec.Split(splitChar, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length == 2) {
+                        string variableName = parts[0];
+                        string value = parts[1];
+
+                        Log.LogMessage($"Variable {variableName} -> {value}");
+
+                        if (string.IsNullOrEmpty(Scope)) {
+                            Context.Variables[variableName] = value;
+                        } else {
+                            PipelineService.PutVariable(Scope, variableName, value);
+                        }
+                    }
+                }
             }
 
             return !Log.HasLoggedErrors;
+        }
+
+        private string GetExistingVariable() {
+            Log.LogMessage(MessageImportance.Low, "Looking up variable: " + VariableName);
+
+            if (string.IsNullOrEmpty(Scope)) {
+                string value;
+                if (Context.Variables.TryGetValue(VariableName, out value)) {
+                    return value;
+                }
+            } else {
+                return PipelineService.GetVariable(Scope, VariableName);
+            }
+
+            return null;
         }
     }
 

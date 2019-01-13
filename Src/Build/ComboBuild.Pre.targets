@@ -26,15 +26,14 @@
       ValidateRequiredProperties;
       CleanBin;
       DeployPerDirectoryFiles;
+      UpdateCommonAssemblyInfo;
+      UpdateContext;
       PrepareZipCustomSource;
       ZipCustomSource;
-      SetBuildNumbers;
-      UpdateCommonAssemblyInfo;
       SeedPackagePacking;
       ZipWorkflowTemplateSource;
       RetrievePrebuilts;
       rmTransformTemplates;
-      UpdateContext
     </RunBuildDependsOn>
   </PropertyGroup>
 
@@ -166,7 +165,7 @@
     ==========================================================================================
   -->
   <Target Name="UpdateCommonAssemblyInfo"
-          Condition="'$(IsDesktopBuild)' == 'false'" DependsOnTargets="SetBuildNumbers">
+          DependsOnTargets="SetBuildNumbers">
 
     <PropertyGroup>
       <AssemblyInfoFile>$(ModuleBuildDirectory)CommonAssemblyInfo.cs</AssemblyInfoFile>
@@ -175,11 +174,11 @@
 
     <!--TF VC compatiblity-->
     <PowerShellScript
-      Condition="'$(AssemblyInfoFile)' == 'true'"
+      Condition="'$(AssemblyInfoFileExists)' == 'true'"
       ScriptBlock="Set-ItemProperty $(AssemblyInfoFile) -Name IsReadOnly -Value $false" />
 
     <FileUpdate
-      Condition="'$(AssemblyInfoFile)' == 'true'"
+      Condition="'$(AssemblyInfoFileExists)' == 'true'"
       Files="$(AssemblyInfoFile)"
       IgnoreCase="true"
       Multiline="true"
@@ -187,22 +186,23 @@
       Regex="(?&lt;section1&gt;AssemblyFileVersion\(\&quot;)(?&lt;version&gt;[0-9]*.[0-9]*.[0-9]*.[0-9]*)(?&lt;section2&gt;\&quot;\))"
       ReplacementText="${section1}$(FileVersion)${section2}" />
 
+    <PropertyGroup>
+      <AssemblyInfoFileUpdated>tue</AssemblyInfoFileUpdated>
+    </PropertyGroup>
+
   </Target>
 
 
   <Target Name="UpdateContext">
-
     <PropertyGroup>
-      <FileVersion Condition="'$(FileVersion)' == ''">1.0.0.0</FileVersion>
+      <FileVersion Condition="'$(FileVersion)' == ''">99.99.99.99</FileVersion>
       <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">1.8.0.0</AssemblyVersion>
     </PropertyGroup>
 
     <GetOrPutContextVariable
-      Scope="$(VariableScopeId)"
       ContextEndpoint="$(ContextEndpoint)"
-      FileVersion="$(FileVersion)"
-      AssemblyVersion="$(AssemblyVersion)"
-      ModuleName="$(ModuleName)" />
+      Scope="$(VariableScopeId)"
+      Data="FileVersion=$(FileVersion);AssemblyVersion=$(AssemblyVersion);ModuleName=$(ModuleName)" />
 
   </Target>
 
