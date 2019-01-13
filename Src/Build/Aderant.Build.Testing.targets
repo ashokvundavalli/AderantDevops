@@ -6,8 +6,16 @@
       CreatePlan;
       CollectTestAssemblies;
       SetupTestProperties;
+      CollectAssemblyPlatforms;
+      RunTestAssemblies
     </RunTestsDependsOn>
   </PropertyGroup>
+
+  <Target Name="RunTests"
+          Condition="'$(RunTests)' != 'false' And '@(ImpactedTestAssemblies)' != ''"
+          DependsOnTargets="$(RunTestsDependsOn)">
+  </Target>
+
 
   <Target Name="CollectTestAssemblies">
 
@@ -52,10 +60,8 @@
   </Target>
 
 
-  <Target Name="RunTests"
-          Outputs="%(SolutionRoots.Identity)"
-          Condition="'$(RunTests)' != 'false' And '@(ImpactedTestAssemblies)' != ''"
-          DependsOnTargets="$(RunTestsDependsOn)">
+  <Target Name="CollectAssemblyPlatforms"
+          Outputs="%(SolutionRoots.Identity)">
 
     <PropertyGroup>
       <TestRunDirectory>%(SolutionRoots.Identity)</TestRunDirectory>
@@ -90,33 +96,32 @@
       Condition="'$(Use32BitTestRunner)' == ''"
       Assemblies="@(TestAssemblies)"
       AssemblyDependencies="@(AssemblyDependencies)">
-      <Output ItemName="AssembliesTargetingAnyCpu" TaskParameter="Assemblies" />
+      <Output ItemName="AssembliesWithTargetPlatform" TaskParameter="Assemblies" />
       <Output ItemName="AssembliesTargetingX86" TaskParameter="AssembliesTargetingX86" />
       <Output ItemName="AssembliesTargetingX64" TaskParameter="AssembliesTargetingX64" />
       <Output PropertyName="Use32BitTestRunner" TaskParameter="MustRun32Bit" />
       <Output PropertyName="AssemblyPlatformDataKey" TaskParameter="AssemblyPlatformDataKey" />
     </GetAssemblyPlatform>
 
-    <Message Text="Assembly: %(AssembliesTargetingAnyCpu.FileName) -> Platform: %(AssembliesTargetingAnyCpu.PEKind) (AnyCPU)" Condition="'@(AssembliesTargetingAnyCpu)' != ''" />
+    <Message Text="Assembly: %(AssembliesWithTargetPlatform.FileName) -> Platform: %(AssembliesWithTargetPlatform.PEKind) (AnyCPU)" Condition="'@(AssembliesWithTargetPlatform)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX64.FileName) -> Platform: %(AssembliesTargetingX64.PEKind) (x64)" Condition="'@(AssembliesTargetingX64)' != ''" />
     <Message Text="Assembly: %(AssembliesTargetingX86.FileName) -> Platform: %(AssembliesTargetingX86.PEKind) (x86)" Condition="'@(AssembliesTargetingX86)' != ''" />
 
     <ItemGroup>
-      <_Assemblies Include="@(AssembliesTargetingAnyCpu)" />
-      <_Assemblies Include="@(AssembliesTargetingX64)" />
-      <_Assemblies Include="@(AssembliesTargetingX86)" />
+      <_Assemblies Include="@(AssembliesWithTargetPlatform)">
+        <SolutionRoot>$(SolutionRoot)</SolutionRoot>
+        <TestRunDirectory>$(TestRunDirectory)</TestRunDirectory>
+      </_Assemblies>
     </ItemGroup>
 
   </Target>
 
 
-  <Target Name="InvokeTestRunner"
-          AfterTargets="RunTests"
-          Inputs="@(_Assemblies)"
-          Outputs="%(Platform)">
+  <Target Name="RunTestAssemblies" Inputs="@(_Assemblies)" Outputs="%(_Assemblies.TestRunDirectory);%(_Assemblies.Platform)">
 
     <PropertyGroup>
       <PlatformSwitch>/Platform:%(_Assemblies.Platform)</PlatformSwitch>
+      <TestRunDirectory>%(_Assemblies.TestRunDirectory)</TestRunDirectory>
       <UnitTestAssemblies>@(_Assemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
     </PropertyGroup>
 
@@ -137,12 +142,11 @@ $testFiles = $(UnitTestAssemblies)
 $referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
 
 Write-Information $referencesToFind
-
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
-      OnErrorReason="Test failure"
-      TaskObjects="$(AssemblyPlatformDataKey)" />
+     OnErrorReason="Test failure"
+     TaskObjects="$(AssemblyPlatformDataKey)" />
 
-    <OnError ExecuteTargets="ShowTestFailureHelp" />
+   <OnError ExecuteTargets="ShowTestFailureHelp" />
 
   </Target>
 

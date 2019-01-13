@@ -125,7 +125,6 @@ namespace Aderant.Build.Tasks {
                                     assembliesTargetingX86.Add(item);
                                 }
 
-                                assemblies.Remove(item);
                                 MustRun32Bit = true;
                             } else {
                                 item.SetMetadata("Platform", "x64");
@@ -136,7 +135,7 @@ namespace Aderant.Build.Tasks {
                             }
 
                             if (referenceArchitectures != null) {
-                                ProcessReferencesOfAssembly(referenceArchitectures, item);
+                                SelectRunPlatformConsideringReferencesOfAssembly(referenceArchitectures, item);
                             }
 
                             // Optimization to reduce boxing for the common case
@@ -194,16 +193,13 @@ namespace Aderant.Build.Tasks {
             return !Log.HasLoggedErrors;
         }
 
-        private void ProcessReferencesOfAssembly(ProcessorArchitecture[] referenceArchitectures, ITaskItem item) {
+        private void SelectRunPlatformConsideringReferencesOfAssembly(ProcessorArchitecture[] referenceArchitectures, ITaskItem item) {
             foreach (var arch in referenceArchitectures) {
                 if (arch == ProcessorArchitecture.X86) {
                     Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX86)} set");
                     if (!assembliesTargetingX86.Contains(item)) {
                         assembliesTargetingX86.Add(item);
                     }
-
-                    Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
-                    assemblies.Remove(item);
                 }
 
                 // Some test assemblies are ILOnly but reference 64-bit executables so we need to
@@ -211,9 +207,6 @@ namespace Aderant.Build.Tasks {
                 if (arch == ProcessorArchitecture.Amd64) {
                     Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX64)} set");
                     assembliesTargetingX64.Add(item);
-
-                    Log.LogMessage(MessageImportance.Low, $"Removing {item} from input set");
-                    assemblies.Remove(item);
                 }
             }
         }

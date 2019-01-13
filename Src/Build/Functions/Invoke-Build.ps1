@@ -382,11 +382,10 @@ function AssignIncludeExclude {
 
     if ($null -eq $include) {
         $include = @()
+        $include += $rootPath
     }
 
-    $include += $rootPath
     $context.Include = ExpandPaths $include
-
 
     if ($null -ne $exclude) {
         $context.Exclude = ExpandPaths -paths $exclude -rootPath $rootPath -includePaths $context.Include
@@ -519,7 +518,7 @@ Should not be used as it prevents incremental builds which increases build times
 
     [string]$repositoryPath = $null
     if (-not [string]::IsNullOrEmpty($ModulePath)) {
-        $repositoryPath = Resolve-Path $ModulePath        
+        $repositoryPath = Resolve-Path $ModulePath
     } else {
         $repositoryPath = (Get-Location).Path
     }
