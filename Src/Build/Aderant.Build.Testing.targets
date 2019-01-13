@@ -125,6 +125,7 @@
       <UnitTestAssemblies>@(_Assemblies->'"%(FullPath)"', ',')</UnitTestAssemblies>
     </PropertyGroup>
 
+
     <!-- TaskObjectKey will be the task object from GetAssemblyPlatform -->
     <PowerShellScript
       Condition="'$(UnitTestAssemblies)' != ''"
@@ -143,10 +144,10 @@ $referencesToFind = $$(AssemblyPlatformDataKey).ReferencesToFind
 
 Write-Information $referencesToFind
 . Testing\RunTests.ps1 -PathToTestTool $testTool -ToolArgs $testToolArgs -WorkingDirectory $workingDirectory -SolutionRoot $testRunDirectory -IsDesktopBuild:$isDesktopBuild -ReferencePaths $referencePaths -TestAssemblies $testFiles -ReferencesToFind $referencesToFind'
-     OnErrorReason="Test failure"
-     TaskObjects="$(AssemblyPlatformDataKey)" />
+      OnErrorReason="Test failure"
+      TaskObjects="$(AssemblyPlatformDataKey)" />
 
-   <OnError ExecuteTargets="ShowTestFailureHelp" />
+    <OnError ExecuteTargets="ShowTestFailureHelp" />
 
   </Target>
 

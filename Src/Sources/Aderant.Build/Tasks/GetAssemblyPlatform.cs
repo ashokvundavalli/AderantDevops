@@ -196,6 +196,8 @@ namespace Aderant.Build.Tasks {
         private void SelectRunPlatformConsideringReferencesOfAssembly(ProcessorArchitecture[] referenceArchitectures, ITaskItem item) {
             foreach (var arch in referenceArchitectures) {
                 if (arch == ProcessorArchitecture.X86) {
+                    item.SetMetadata("Platform", "x86");
+
                     Log.LogMessage(MessageImportance.Low, $"Adding {item} to {nameof(AssembliesTargetingX86)} set");
                     if (!assembliesTargetingX86.Contains(item)) {
                         assembliesTargetingX86.Add(item);
