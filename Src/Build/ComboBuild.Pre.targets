@@ -165,6 +165,7 @@
     ==========================================================================================
   -->
   <Target Name="UpdateCommonAssemblyInfo"
+          Condition="'$(IsDesktopBuild)' == 'false'"
           DependsOnTargets="SetBuildNumbers">
 
     <PropertyGroup>
