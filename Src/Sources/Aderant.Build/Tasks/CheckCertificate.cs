@@ -69,10 +69,10 @@ namespace Aderant.Build.Tasks {
         }
 
         private bool CopyCertificateFromMachineStore(X509Store userStore) {
-            using (X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine)) {
-                store.Open(OpenFlags.ReadOnly);
+            using (X509Store machineStore = new X509Store(StoreName.My, StoreLocation.LocalMachine)) {
+                machineStore.Open(OpenFlags.ReadOnly);
 
-                var certificates = store.Certificates.Find(X509FindType.FindByThumbprint, ThumbPrint, true);
+                var certificates = machineStore.Certificates.Find(X509FindType.FindByThumbprint, ThumbPrint, true);
                 if (certificates.Count > 0) {
                     userStore.Add(certificates[0]);
                     return true;
