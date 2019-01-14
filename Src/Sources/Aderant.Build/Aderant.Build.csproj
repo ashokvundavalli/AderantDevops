@@ -380,9 +380,9 @@
     <Compile Include="DependencyAnalyzer\DependencyManifest.cs" />
     <Compile Include="DuplicateModuleInManifestException.cs" />
     <Compile Include="DependencyAnalyzer\ThirdPartyModule.cs" />
-    <Compile Include="Commands\CopyBinToEnvironment.cs" />
+    <Compile Include="Commands\Legacy\CopyBinToEnvironment.cs" />
     <Compile Include="Process\DefinitionParametersConfigurator.cs" />
-    <Compile Include="Commands\GetExpertBranches.cs" />
+    <Compile Include="Commands\Legacy\GetExpertBranches.cs" />
     <Compile Include="Commands\GetDependencies.cs" />
     <Compile Include="Commands\GetDependencyGraph.cs" />
     <Compile Include="Commands\GetBuildDependencyTreeCommand.cs" />
@@ -391,7 +391,7 @@
     <Compile Include="Commands\GetExpertModule.cs" />
     <Compile Include="Commands\GetExpertModules.cs" />
     <Compile Include="Commands\NewExpertBuildDefinition.cs" />
-    <Compile Include="Commands\SortModulesByBuildOrder.cs" />
+    <Compile Include="Commands\Legacy\SortModulesByBuildOrder.cs" />
     <Compile Include="DependencyAnalyzer\CircularDependencyException.cs" />
     <Compile Include="DependencyAnalyzer\DependencyBuilder.cs" />
     <Compile Include="DependencyAnalyzer\ExpertModule.cs" />
@@ -425,7 +425,7 @@
     <Compile Include="Tasks\TrackedSourcesBuildTask.cs" />
     <Compile Include="Tasks\UpdateSplashScreenImage.cs" />
     <Compile Include="Tasks\GetAssemblyPlatform.cs" />
-    <Compile Include="Commands\ProjectFileFolderSync.cs" />
+    <Compile Include="Commands\Legacy\ProjectFileFolderSync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\WebPackageExtract.cs" />
     <Compile Include="DependencyResolver\VersionRequirement.cs" />
