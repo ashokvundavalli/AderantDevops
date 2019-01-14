@@ -57,6 +57,7 @@
   </PropertyGroup>
 
   <Import Project="Aderant.Build.Common.targets" />
+  <Import Project="Aderant.CodeSigning.targets" />
   <Import Project="Aderant.Build.Testing.targets" />
   <Import Project="Aderant.Build.ServerImage.targets" />
   <!--<Import Project="Aderant.Build.IntegrationTesting.targets" />-->
