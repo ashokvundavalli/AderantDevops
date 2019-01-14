@@ -217,6 +217,7 @@ namespace Aderant.Build.Packaging {
 
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("Artifact {0} at {1} will be sent to the cache: {2}", container, artifactPath, sendToArtifactCache);
+            sb.AppendLine();
 
             foreach (PathSpec pathSpec in files) {
                 // Path spec destination is relative.
