@@ -1,19 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
-using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.ProjectSystem {
     internal class BuildDependenciesCollector {
-        private List<IReference> resolvedReferences = new List<IReference>();
-        private List<IUnresolvedReference> unresolvedReferences = new List<IUnresolvedReference>();
+        private SortedList<string, IReference> resolvedReferences = new SortedList<string, IReference>(StringComparer.OrdinalIgnoreCase);
+        private SortedList<string, IUnresolvedReference> unresolvedReferences = new SortedList<string, IUnresolvedReference>(StringComparer.OrdinalIgnoreCase);
 
         public IReadOnlyCollection<IUnresolvedReference> UnresolvedReferences {
             get {
                 lock (this) {
-                    return unresolvedReferences.ToList();
+                    return unresolvedReferences.Values.ToList();
                 }
             }
         }
@@ -31,7 +31,7 @@ namespace Aderant.Build.ProjectSystem {
 
             foreach (var unresolvedReference in references) {
                 lock (this) {
-                    unresolvedReferences.Add(unresolvedReference);
+                    unresolvedReferences.Add(unresolvedReference.Id, unresolvedReference);
                 }
             }
         }
@@ -41,8 +41,8 @@ namespace Aderant.Build.ProjectSystem {
             ErrorUtilities.IsNotNull(dependency, nameof(dependency));
 
             lock (this) {
-                resolvedReferences.Add(dependency);
-                unresolvedReferences.Remove(existingUnresolvedItem);
+                resolvedReferences.Add(dependency.Id, dependency);
+                unresolvedReferences.Remove(existingUnresolvedItem.Id);
             }
         }
     }
