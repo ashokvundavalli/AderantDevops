@@ -40,8 +40,12 @@ namespace Aderant.Build.ProjectSystem {
             FullPath = projectLocation;
 
             // CreateReader from XDocument doesn't work with ProjectRootElement.Create so use the old XmlDocument API
+            XmlReaderSettings xmlReaderSettings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore };
             var projectDocument = new XmlDocument();
-            projectDocument.Load(reader);
+
+            using (XmlReader xmlReader = XmlReader.Create(reader, xmlReaderSettings)) {
+                projectDocument.Load(xmlReader);
+            }
 
             projectElement = new Lazy<ProjectRootElement>(
                 () => {

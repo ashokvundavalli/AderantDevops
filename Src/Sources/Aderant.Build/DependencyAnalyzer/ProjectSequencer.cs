@@ -490,7 +490,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             if (desktopBuild) {
                 if (configuredProject != null) {
-                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags.HasFlag(BuildReasonTypes.CachedBuildNotFound)) {
+                    if (configuredProject.IsDirty && configuredProject.BuildReason.Flags == BuildReasonTypes.CachedBuildNotFound) {
                         return false;
                     }
 
@@ -523,7 +523,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     var children = new List<TreePrinter.Node> {
                         new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, },
-                        new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags, }
+                        new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags, },
                     };
 
                     if (configuredProject.DirtyFiles != null) {
@@ -531,6 +531,14 @@ namespace Aderant.Build.DependencyAnalyzer {
                             new TreePrinter.Node {
                                 Name = "Dirty files",
                                 Children = configuredProject.DirtyFiles.Select(s => new TreePrinter.Node { Name = s }).ToList()
+                            });
+                    }
+
+                    if (configuredProject.BuildReason.ChangedDependentProjects != null) {
+                        children.Add(
+                            new TreePrinter.Node {
+                                Name = "Changed Dependencies",
+                                Children = configuredProject.BuildReason.ChangedDependentProjects.Select(s => new TreePrinter.Node { Name = s }).ToList()
                             });
                     }
 
@@ -548,21 +556,27 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <param name="projectsToFind">The project name hashset to search for.</param>
         /// <returns>The list of projects that gets dirty because they depend on any project found in the search list.</returns>
         internal List<IDependable> MarkDirty(IReadOnlyCollection<IDependable> allProjects, HashSet<string> projectsToFind) {
-            var p = allProjects
-                .Where(
-                    x => (x as ConfiguredProject)?.GetDependencies()
-                         .Select(y => y.Id)
-                         .Intersect(projectsToFind, StringComparer.OrdinalIgnoreCase).Any() == true).ToList();
+            List<IDependable> affectedProjects = new List<IDependable>();
 
+            foreach (var project in allProjects) {
+                ConfiguredProject configuredProject = project as ConfiguredProject;
 
-            foreach (var x in p) {
-                ConfiguredProject project = x as ConfiguredProject;
-                if (project != null) {
-                    MarkDirty("", project, BuildReasonTypes.DependencyChanged);
+                if (configuredProject != null) {
+                    var dependencies = configuredProject.GetDependencies().Select(s => s.Id);
+
+                    var intersect = dependencies.Intersect(projectsToFind, StringComparer.OrdinalIgnoreCase).ToList();
+
+                    if (intersect.Any()) {
+                        MarkDirty("", configuredProject, BuildReasonTypes.DependencyChanged);
+
+                        configuredProject.BuildReason.ChangedDependentProjects = intersect;
+
+                        affectedProjects.Add(configuredProject);
+                    }
                 }
             }
 
-            return p;
+            return affectedProjects;
         }
 
         /// <summary>
