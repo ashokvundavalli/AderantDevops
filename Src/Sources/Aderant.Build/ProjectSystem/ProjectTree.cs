@@ -18,6 +18,7 @@ using Aderant.Build.ProjectSystem.SolutionParser;
 using Aderant.Build.Services;
 using Aderant.Build.Utilities;
 using Microsoft.Build.Construction;
+using Microsoft.Build.Evaluation;
 
 namespace Aderant.Build.ProjectSystem {
 
@@ -109,9 +110,12 @@ namespace Aderant.Build.ProjectSystem {
                     }
                 });
 
-            var defaultCopyParallelism = ParallelismHelper.MaxDegreeOfParallelism();
 
-            ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = defaultCopyParallelism });
+            projectCollection = new ProjectCollection();
+            projectCollection.SkipEvaluation = true;
+
+            var parallelism = ParallelismHelper.MaxDegreeOfParallelism();
+            ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = parallelism });
 
             foreach (var file in files.Keys) {
                 parseBlock.Post(file);
@@ -258,7 +262,7 @@ namespace Aderant.Build.ProjectSystem {
                 do {
                     if (directoryToSearch != null) {
                         var files = Services.FileSystem.GetFiles(directoryToSearch.FullName, "*.sln", false);
-                        
+
                         var exactMatch = files.FirstOrDefault(file => string.Equals(Path.GetFileNameWithoutExtension(file), directoryToSearch.Name, StringComparison.InvariantCultureIgnoreCase));
                         if (exactMatch != null) {
                             files = new[] { exactMatch };
@@ -324,6 +328,8 @@ namespace Aderant.Build.ProjectSystem {
             "packages",
             "dependencies",
         };
+
+        private ProjectCollection projectCollection;
 
         private void GetFilesWithExtensionRecursive(List<string> filePathCollector, string directory) {
             // For performance reasons it is important to avoid known symlink directories so here we do not traverse into them
@@ -391,6 +397,7 @@ namespace Aderant.Build.ProjectSystem {
                     using (var exportLifetimeContext = UnconfiguredProjectFactory.CreateExport()) {
                         unconfiguredProject = exportLifetimeContext.Value;
 
+                        unconfiguredProject.ProjectCollection = projectCollection;
                         unconfiguredProject.Initialize(reader, file);
 
                         loadedUnconfiguredProjects.Add(unconfiguredProject);

@@ -487,6 +487,7 @@ namespace Aderant.Build.ProjectSystem {
     internal class BuildReason {
         public string Description { get; set; }
         public BuildReasonTypes Flags { get; set; }
+        public IReadOnlyCollection<string> ChangedDependentProjects { get; set; }
     }
 
     internal static class BuildReasonExtensions {
