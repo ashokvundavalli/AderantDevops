@@ -256,11 +256,13 @@ foreach(var replacement in replacements){
     </ItemGroup>
 
     <PropertyGroup>
-      <GenerateSeedPackageCache>$(ModuleBuildTempDirectory)GenerateSeedPackage.cache</GenerateSeedPackageCache>
+      <SeedPackagesProduced>$(ModuleBuildTempDirectory)SeedPackagesProduced.cache</SeedPackagesProduced>
     </PropertyGroup>
   </Target>
 
   <Target Name="SeedPackagePacking" Condition="'$(IsCustomBuild)' != 'true' And '$(SolutionDirectoryPath)' != ''"
+          Inputs="@(SeedPackageInputs)"
+          Outputs="$(SeedPackagesProduced)"
           DependsOnTargets="CollectPackageContent">
 
     <Message Condition="'$(SkipPackageValidation)' == 'true'" Text="SeedPackage validation skipped because of the SkipPackageValidation flag." Importance="High" />
@@ -277,8 +279,8 @@ foreach(var replacement in replacements){
         SeedPackageSrc="$(SolutionDirectoryPath)Test\TestPackages"
         SeedPackageDrop="$(SolutionDirectoryPath)Bin\Test\TestPackages" />
 
-    <!--<Touch AlwaysCreate="true" Files="$(GenerateSeedPackageCache)" />-->
-
+    <MakeDir Directories="$(ModuleBuildTempDirectory)" />
+    <Touch AlwaysCreate="true" Files="$(SeedPackagesProduced)" Condition="'$(IsDesktopBuild)' == 'true'" />
   </Target>
 
     <!--
