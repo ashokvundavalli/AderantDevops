@@ -461,26 +461,32 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
             // TODO: Remove this hack as it costs too much perf
             // We need a way to trigger the content deployment of web projects
+            logger.Info("Forcing build of web projects (not workflow) where there is a dirty project in the same grouping.");
 
             ILookup<string, ConfiguredProject> lookup = graph.ProjectsBySolutionRoot;
-            foreach (var grouping in lookup) {
+            foreach (IGrouping<string, ConfiguredProject> grouping in lookup) {
                 List<ConfiguredProject> configuredProjects = grouping.ToList();
 
-                // A forced build is queued if any project within the directory container is also requiring a build
-                var dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
-                if (dirtyProject != null) {
+                logger.Info($"Assessing project grouping: '{grouping.Key}'.");
 
+                // A forced build is queued if any project within the directory container is also requiring a build
+                ConfiguredProject dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
+                if (dirtyProject != null) {
                     foreach (ConfiguredProject project in configuredProjects) {
                         if (project.IsWebProject && !project.IsWorkflowProject()) {
-                            logger.Info($"Quirking! Web project {project.FullPath} requires forced build as {dirtyProject.FullPath} is modified");
+                            logger.Info($"Quirking! Web project: '{project.FullPath}' requires forced build as: '{dirtyProject.FullPath}' is modified.");
                             // Web projects always need to be built as they have paths that reference content that needs to be deployed
                             // during the build.
                             // E.g script tags require that a file exists on disk. It's more reliable to have
                             // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
                             // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
                             MarkDirty("", project, BuildReasonTypes.Forced);
+                        } else {
+                            logger.Info($"Skipping project: '{project.FullPath}' as it does not match criteria for forced build.");
                         }
                     }
+                } else {
+                    logger.Info($"No dirty projects in grouping: '{grouping.Key}'.");
                 }
             }
         }
