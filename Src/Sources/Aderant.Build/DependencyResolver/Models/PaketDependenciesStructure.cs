@@ -82,7 +82,7 @@ namespace Aderant.Build.DependencyResolver.Models {
 
             foreach (DependencyGroup group in dependencyGroups) {
                 if (!group.Name.Equals("Main", StringComparison.OrdinalIgnoreCase)) {
-                    lines.Add(Environment.NewLine);
+                    lines.Add(string.Empty);
                     lines.Add(string.Concat("group ", group.Name));
                 }
 
