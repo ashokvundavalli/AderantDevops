@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Management.Automation;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -104,6 +102,9 @@ namespace Aderant.Build.ProjectSystem {
 
             Parallel.ForEach(
                 directories,
+                new ParallelOptions {
+                    MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism
+                },
                 (path) => {
                     foreach (var file in GrovelForFiles(path, excludeFilterPatterns)) {
                         files.TryAdd(file, 0);
@@ -114,8 +115,7 @@ namespace Aderant.Build.ProjectSystem {
             projectCollection = new ProjectCollection();
             projectCollection.SkipEvaluation = true;
 
-            var parallelism = ParallelismHelper.MaxDegreeOfParallelism();
-            ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = parallelism });
+            ActionBlock<string> parseBlock = new ActionBlock<string>(s => LoadAndParseProjectFile(s), new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism });
 
             foreach (var file in files.Keys) {
                 parseBlock.Post(file);
@@ -363,6 +363,7 @@ namespace Aderant.Build.ProjectSystem {
 
             var comparer = DependencyEqualityComparer.Default;
 
+            // This HashSet is not used for anything?
             HashSet<IDependable> allDependencies = new HashSet<IDependable>(comparer);
 
             ProcessProjects(allDependencies, graph);
@@ -438,5 +439,4 @@ namespace Aderant.Build.ProjectSystem {
 
         BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph);
     }
-
 }

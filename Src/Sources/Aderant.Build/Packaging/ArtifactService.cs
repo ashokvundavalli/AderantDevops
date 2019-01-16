@@ -269,7 +269,7 @@ namespace Aderant.Build.Packaging {
         private void ExtractArtifactArchives(IEnumerable<string> localArtifactArchives) {
             Parallel.ForEach(
                 localArtifactArchives,
-                new ParallelOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism() },
+                new ParallelOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism },
                 archive => {
                     string destination = Path.GetDirectoryName(archive);
 
