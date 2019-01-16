@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -58,7 +57,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                     assumeNoBuildCache = true;
                 }
             }
-
 
             var projectGraph = new ProjectDependencyGraph(graph);
             // Ensure that any additional usages of graph refer to our wrapper
