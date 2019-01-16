@@ -29,24 +29,12 @@ namespace Aderant.Build.ProjectSystem {
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));
 
-            List<Exception> exceptions = new List<Exception>();
-
             foreach (IUnresolvedReference unresolvedReference in references) {
                 lock (this) {
                     if (!unresolvedReferences.ContainsKey(unresolvedReference.Id)) {
                         unresolvedReferences.Add(unresolvedReference.Id, unresolvedReference);
-                    } else {
-                        IUnresolvedReference reference;
-                        unresolvedReferences.TryGetValue(unresolvedReference.Id, out reference);
-                        if (reference != null && !reference.GetAssemblyName().Equals(unresolvedReference.GetAssemblyName(), StringComparison.OrdinalIgnoreCase)) {
-                            exceptions.Add(new Exception($"Attempted to add duplicate reference with id: '{unresolvedReference.Id}'. Existing assembly name: '{reference.GetAssemblyName()}', new assembly name: '{unresolvedReference.GetAssemblyName()}'."));
-                        }
                     }
                 }
-            }
-
-            if (exceptions.Any()) {
-                throw new AggregateException(exceptions);
             }
         }
 
@@ -58,16 +46,8 @@ namespace Aderant.Build.ProjectSystem {
                 if (!resolvedReferences.ContainsKey(dependency.Id)) {
                     resolvedReferences.Add(dependency.Id, dependency);
                     unresolvedReferences.Remove(existingUnresolvedItem.Id);
-                } else {
-                    IReference reference;
-                    resolvedReferences.TryGetValue(dependency.Id, out reference);
-                    if (reference != null && !reference.GetAssemblyName().Equals(dependency.GetAssemblyName(), StringComparison.OrdinalIgnoreCase)) {
-                        throw new Exception($"Attempted to add duplicate resolved reference with id: '{dependency.Id}'. Existing assembly name: '{reference.GetAssemblyName()}', new assembly name: '{dependency.GetAssemblyName()}'.");
-                    }
-
-                    if (unresolvedReferences.ContainsKey(existingUnresolvedItem.Id)) {
-                        unresolvedReferences.Remove(existingUnresolvedItem.Id);
-                    }
+                } else if (unresolvedReferences.ContainsKey(dependency.Id)) {
+                    unresolvedReferences.Remove(dependency.Id);
                 }
             }
         }
