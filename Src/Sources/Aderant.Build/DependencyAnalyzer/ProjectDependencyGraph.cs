@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem;
 
@@ -23,7 +24,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             get {
                 return grouping ?? (grouping = Nodes
                            .OfType<ConfiguredProject>()
-                           .ToLookup(g => g.SolutionRoot, g => g));
+                           .ToLookup(g => g.SolutionRoot, g => g, StringComparer.OrdinalIgnoreCase));
             }
         }
     }

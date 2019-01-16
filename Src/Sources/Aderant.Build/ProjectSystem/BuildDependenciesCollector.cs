@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Aderant.Build.Model;
 using Aderant.Build.ProjectSystem.References;
+using Aderant.Build.VersionControl;
 using Aderant.Build.VersionControl.Model;
 
 namespace Aderant.Build.ProjectSystem {
     internal class BuildDependenciesCollector {
-        private SortedList<string, IReference> resolvedReferences = new SortedList<string, IReference>(StringComparer.OrdinalIgnoreCase);
-        private SortedList<string, IUnresolvedReference> unresolvedReferences = new SortedList<string, IUnresolvedReference>(StringComparer.OrdinalIgnoreCase);
+        private List<IReference> resolvedReferences = new List<IReference>();
+        private List<IUnresolvedReference> unresolvedReferences = new List<IUnresolvedReference>();
 
         public IReadOnlyCollection<IUnresolvedReference> UnresolvedReferences {
             get {
                 lock (this) {
-                    return unresolvedReferences.Values.ToList();
+                    return unresolvedReferences.ToList();
                 }
             }
         }
@@ -29,11 +29,9 @@ namespace Aderant.Build.ProjectSystem {
         public void AddUnresolvedReferences(IReadOnlyCollection<IUnresolvedReference> references) {
             ErrorUtilities.IsNotNull(references, nameof(references));
 
-            foreach (IUnresolvedReference unresolvedReference in references) {
+            foreach (var unresolvedReference in references) {
                 lock (this) {
-                    if (!unresolvedReferences.ContainsKey(unresolvedReference.Id)) {
-                        unresolvedReferences.Add(unresolvedReference.Id, unresolvedReference);
-                    }
+                    unresolvedReferences.Add(unresolvedReference);
                 }
             }
         }
@@ -43,12 +41,8 @@ namespace Aderant.Build.ProjectSystem {
             ErrorUtilities.IsNotNull(dependency, nameof(dependency));
 
             lock (this) {
-                if (!resolvedReferences.ContainsKey(dependency.Id)) {
-                    resolvedReferences.Add(dependency.Id, dependency);
-                    unresolvedReferences.Remove(existingUnresolvedItem.Id);
-                } else if (unresolvedReferences.ContainsKey(dependency.Id)) {
-                    unresolvedReferences.Remove(dependency.Id);
-                }
+                resolvedReferences.Add(dependency);
+                unresolvedReferences.Remove(existingUnresolvedItem);
             }
         }
     }

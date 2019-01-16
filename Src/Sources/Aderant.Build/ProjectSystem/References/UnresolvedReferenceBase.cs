@@ -18,7 +18,7 @@ namespace Aderant.Build.ProjectSystem.References {
             this.service = service;
             this.Moniker = moniker;
         }
-       
+
         /// <summary>
         /// Gets the unique moniker that identifies this dependency within the build.
         /// </summary>
@@ -27,6 +27,6 @@ namespace Aderant.Build.ProjectSystem.References {
         protected TMoniker Moniker { get; private set; }
     }
 
-    public interface IUnresolvedDependency : IDependable {
+    public interface IUnresolvedDependency {
     }
 }

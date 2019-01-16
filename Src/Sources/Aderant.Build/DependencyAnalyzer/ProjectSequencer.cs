@@ -59,7 +59,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             var projectGraph = new ProjectDependencyGraph(graph);
-            // Ensure that any additional usages of graph refer to our wrapper
+            // Ensure that any further usages of graph refer to our wrapper
             graph = projectGraph;
 
             AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
@@ -103,7 +103,7 @@ namespace Aderant.Build.DependencyAnalyzer {
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
-            List<List<IDependable>> groups = graph.GetBuildGroups(filteredProjects);
+            List<List<IDependable>> groups = projectGraph.GetBuildGroups(filteredProjects);
 
             PrintBuildTree(groups);
 
