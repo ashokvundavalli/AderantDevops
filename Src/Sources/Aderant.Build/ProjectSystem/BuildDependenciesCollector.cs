@@ -58,9 +58,13 @@ namespace Aderant.Build.ProjectSystem {
                     resolvedReferences.Add(dependency.Id, dependency);
                     unresolvedReferences.Remove(existingUnresolvedItem.Id);
                 } else {
-                    unresolvedReferences.TryGetValue(dependency.Id, out IUnresolvedReference reference);
+                    resolvedReferences.TryGetValue(dependency.Id, out IReference reference);
                     if (reference != null && !reference.Equals(dependency)) {
                         throw new Exception($"Attempted to add duplicate resolved reference with id: '{dependency.Id}'. Existing assembly name: '{reference.GetAssemblyName()}', new assembly name: '{dependency.GetAssemblyName()}'.");
+                    }
+
+                    if (unresolvedReferences.ContainsKey(existingUnresolvedItem.Id)) {
+                        unresolvedReferences.Remove(existingUnresolvedItem.Id);
                     }
                 }
             }
