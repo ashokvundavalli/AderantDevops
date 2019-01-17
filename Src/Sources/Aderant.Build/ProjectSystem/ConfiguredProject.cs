@@ -401,6 +401,7 @@ namespace Aderant.Build.ProjectSystem {
         private void AddResolvedAssemblyDependency(BuildDependenciesCollector collector, ResolvedDependency<IUnresolvedAssemblyReference, IAssemblyReference> reference) {
             IResolvedDependency resolvedDependency = AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
             AddTextTemplateDependency(reference, resolvedDependency);
+
             collector.AddResolvedDependency(reference.ExistingUnresolvedItem, reference.ResolvedReference);
         }
 

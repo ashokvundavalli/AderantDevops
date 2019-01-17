@@ -83,11 +83,11 @@ namespace Aderant.Build.ProjectSystem {
 
         public ISolutionManager SolutionManager { get; set; }
 
-        public void LoadProjects(string directory, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
-            LoadProjects(new[] { directory }, recursive, excludeFilterPatterns);
+        public void LoadProjects(string directory, IReadOnlyCollection<string> excludeFilterPatterns) {
+            LoadProjects(new[] { directory }, excludeFilterPatterns);
         }
 
-        public void LoadProjects(IReadOnlyCollection<string> directories, bool recursive, IReadOnlyCollection<string> excludeFilterPatterns) {
+        public void LoadProjects(IReadOnlyCollection<string> directories, IReadOnlyCollection<string> excludeFilterPatterns) {
             EnsureUnconfiguredProjects();
 
             ConcurrentDictionary<string, byte> files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);

@@ -28,7 +28,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public string MetaprojectXml { get; set; }
 
-        public Project GenerateProject(List<List<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
+        public Project GenerateProject(IReadOnlyList<IReadOnlyList<IDependable>> projectGroups, OrchestrationFiles orchestrationFiles, string buildFrom) {
             CaptureCommandLine();
 
             Project project = new Project();
@@ -49,7 +49,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             for (int i = 0; i < projectGroups.Count; i++) {
                 buildGroupCount++;
 
-                List<IDependable> projectGroup = projectGroups[i];
+                IReadOnlyList<IDependable> projectGroup = projectGroups[i];
 
                 // If there are no projects in the item group, no point generating any Xml for this build node
                 if (!projectGroup.Any()) {
@@ -134,7 +134,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             return "ProjectsToBuild" + buildGroupCount;
         }
 
-        private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, List<IDependable> projectGroup, int buildGroup) {
+        private IEnumerable<ItemGroupItem> CreateItemGroupMembers(string beforeProjectFile, string afterProjectFile, IReadOnlyList<IDependable> projectGroup, int buildGroup) {
             return projectGroup.Select(
                 studioProject => {
                     SetUseCommonOutputDirectory(projectGroup.OfType<ConfiguredProject>());

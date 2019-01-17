@@ -20,29 +20,24 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Topologically sort artifacts to determine a reasonable order in which they must be built.
         /// </summary>
-        public List<IDependable> GetDependencyOrder() {
-            return artifacts.TopologicalSort<IDependable>(
-                dependable => {
-                    var artifact = dependable as IArtifact;
-                    if (artifact != null) {
-                        var dependencies = artifact.GetDependencies();
-
-                        return dependencies;
-                    }
-                    return Enumerable.Empty<IDependable>();
-                }).ToList();
+        public IReadOnlyList<IDependable> GetDependencyOrder() {
+            return TopologicalSort.IterativeSort(Nodes, dependable => (dependable as IArtifact)?.GetDependencies());
         }
 
-        public List<List<IDependable>> GetBuildGroups(IReadOnlyCollection<IDependable> projects) {
+        /// <summary>
+        /// Returns the objects grouped into sets that do not depend on each other. Assumes the list is sorted.
+        /// </summary>
+        /// <param name="projects"></param>
+        public IReadOnlyList<IReadOnlyList<IDependable>> GetBuildGroups(IReadOnlyList<IDependable> projects) {
             return GetBuildGroupsInternal(projects);
         }
 
-        private static List<List<IDependable>> GetBuildGroupsInternal(IReadOnlyCollection<IDependable> sortedQueue) {
+        private static List<List<IDependable>> GetBuildGroupsInternal(IReadOnlyList<IDependable> sortedQueue) {
             // Now find critical path...
             // What we do here is iterate the sorted list looking for elements with no dependencies. These are the zero level modules.
             // Then we iterate again and check if the module depends on any of the zero level modules but not on anything else. These are the
             // level 1 elements. Then we iterate again and check if the module depends on any of the 0 or 1 level modules etc.
-            // This places modules into levels which allows for maximum parallelism based on dependency.
+            // This places modules into levels which partitioning the groups to gain execution parallelism.
             IDictionary<int, HashSet<IDependable>> levels = new Dictionary<int, HashSet<IDependable>>();
 
             Queue<IDependable> projects = new Queue<IDependable>(sortedQueue);

@@ -1,66 +1,100 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 
 namespace Aderant.Build.Utilities {
-    internal static class TopologicalSorter {
-        public static IEnumerable<T> TopologicalSort<T>(this IEnumerable<T> items, Func<T, IEnumerable<T>> itemsBefore) {
-            var result = new List<T>();
-            var visited = new HashSet<T>();
 
-            foreach (var item in items) {
-                Visit(item, itemsBefore, result, visited);
+    internal static class TopologicalSortExtensions {
+        public static IReadOnlyList<TNode> TopologicalSort<TNode>(this IEnumerable<TNode> nodes, Func<TNode, IEnumerable<TNode>> successors) {
+            return Aderant.Build.Utilities.TopologicalSort.IterativeSort(nodes, successors);
+        }
+    }
+
+    /// <summary>
+    /// A helper class that contains a topological sort algorithm.
+    /// </summary>
+    internal static class TopologicalSort {
+
+        /// <summary>
+        /// Produce a topological sort of a given directed acyclic graph.
+        /// </summary>
+        /// <typeparam name="TNode">The type of the node</typeparam>
+        /// <param name="nodes">Any subset of the nodes that includes all nodes with no predecessors</param>
+        /// <param name="successors">A function mapping a node to its set of successors</param>
+        /// <returns>A list of all reachable nodes, in which each node always precedes its successors</returns>
+        /// <remarks>Uplifted from the Roslyn compiler project</remarks>
+        public static IReadOnlyList<TNode> IterativeSort<TNode>(IEnumerable<TNode> nodes, Func<TNode, IEnumerable<TNode>> successors) {
+            // First, count the predecessors of each node
+            IReadOnlyCollection<TNode> allNodes;
+            var predecessorCounts = PredecessorCounts(nodes, successors, out allNodes);
+
+            // Initialize the ready set with those nodes that have no predecessors
+            var ready = new Stack<TNode>();
+            foreach (TNode node in allNodes) {
+                if (predecessorCounts[node] == 0) {
+                    ready.Push(node);
+                }
             }
 
-            return result;
+            // Process the ready set. Output a node, and decrement the predecessor count of its successors.
+            var resultBuilder = new List<TNode>();
+            while (ready.Count != 0) {
+                var node = ready.Pop();
+                resultBuilder.Add(node);
+
+                foreach (var succ in successors(node)) {
+                    var count = predecessorCounts[succ];
+                    Debug.Assert(count != 0);
+                    predecessorCounts[succ] = count - 1;
+                    if (count == 1) {
+                        ready.Push(succ);
+                    }
+                }
+            }
+
+            // At this point all the nodes should have been output, otherwise there was a cycle
+            if (predecessorCounts.Count != resultBuilder.Count) {
+                throw new ArgumentException("Cycle in the input graph");
+            }
+
+            resultBuilder.Reverse();
+
+            return resultBuilder;
         }
 
-        public static IEnumerable<T> TopologicalSort<T>(this IEnumerable<T> items, Func<T, IEnumerable<T>> itemsBefore, Func<T, IEnumerable<T>> itemsAfter) {
-            var combinedItemsBefore = CreateCombinedItemsBefore(items, itemsBefore, itemsAfter);
-            return TopologicalSort(items, combinedItemsBefore);
-        }
+        private static Dictionary<TNode, int> PredecessorCounts<TNode>(
+            IEnumerable<TNode> nodes,
+            Func<TNode, IEnumerable<TNode>> successors,
+            out IReadOnlyCollection<TNode> allNodes) {
+            var predecessorCounts = new Dictionary<TNode, int>();
+            var counted = new HashSet<TNode>();
+            var toCount = new Stack<TNode>(nodes);
+            var allNodesBuilder = new List<TNode>();
 
-        private static void Visit<T>(
-            T item,
-            Func<T, IEnumerable<T>> itemsBefore,
-            List<T> result,
-            HashSet<T> visited) {
-            if (visited.Add(item)) {
-                foreach (var before in itemsBefore(item)) {
-                    Visit(before, itemsBefore, result, visited);
+            while (toCount.Count != 0) {
+                var n = toCount.Pop();
+                if (!counted.Add(n)) {
+                    continue;
                 }
 
-                result.Add(item);
-            }
-        }
+                allNodesBuilder.Add(n);
+                if (!predecessorCounts.ContainsKey(n)) {
+                    predecessorCounts.Add(n, 0);
+                }
 
-        private static Func<T, IEnumerable<T>> CreateCombinedItemsBefore<T>(IEnumerable<T> items, Func<T, IEnumerable<T>> itemsBefore, Func<T, IEnumerable<T>> itemsAfter) {
-            // create initial list
-            var itemToItemsBefore = items.ToDictionary(
-                item => item,
-                item => {
-                    var naturalItemsBefore = itemsBefore != null ? itemsBefore(item) : null;
-                    if (naturalItemsBefore != null) {
-                        return naturalItemsBefore.ToList();
+                foreach (var succ in successors(n)) {
+                    toCount.Push(succ);
+                    int succPredecessorCount;
+                    if (predecessorCounts.TryGetValue(succ, out succPredecessorCount)) {
+                        predecessorCounts[succ] = succPredecessorCount + 1;
                     } else {
-                        return new List<T>();
-                    }
-                });
-
-            // add items after by making the after items explicitly list the item as before it
-            if (itemsAfter != null) {
-                foreach (var item in items) {
-                    var naturalItemsAfter = itemsAfter(item);
-                    if (naturalItemsAfter != null) {
-                        foreach (var itemAfter in naturalItemsAfter) {
-                            var itemsAfterBeforeList = itemToItemsBefore[itemAfter];
-                            itemsAfterBeforeList.Add(item);
-                        }
+                        predecessorCounts.Add(succ, 1);
                     }
                 }
             }
 
-            return item => itemToItemsBefore[item];
+            allNodes = allNodesBuilder;
+            return predecessorCounts;
         }
     }
 }

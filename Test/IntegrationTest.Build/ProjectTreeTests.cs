@@ -31,14 +31,14 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public void LoadProjectsAsync_sets_LoadedUnconfiguredProjects() {
-            projectTree.LoadProjects(deploymentDirectory, true, null);
+            projectTree.LoadProjects(deploymentDirectory, null);
 
             Assert.AreEqual(5, projectTree.LoadedUnconfiguredProjects.Count);
         }
 
         [TestMethod]
         public void AssemblyReference_captures_hint_path() {
-            projectTree.LoadProjects(deploymentDirectory, true, null);
+            projectTree.LoadProjects(deploymentDirectory, null);
 
             ConfiguredProject configuredProject = projectTree.LoadedUnconfiguredProjects.First(p => p.ProjectGuid == new Guid("{E0E257CE-8CD9-4D58-9C08-6CB6B9A87B92}"))
                 .LoadConfiguredProject(projectTree);
@@ -52,7 +52,7 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task BuildDependencyModel_sets_IncludeInBuild() {
-            projectTree.LoadProjects(deploymentDirectory, true, null);
+            projectTree.LoadProjects(deploymentDirectory, null);
 
             var collector = new BuildDependenciesCollector();
             collector.ProjectConfiguration = ConfigurationToBuild.Default;
@@ -63,7 +63,7 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task Dependency_sorting() {
-            projectTree.LoadProjects(deploymentDirectory, true, null);
+            projectTree.LoadProjects(deploymentDirectory, null);
 
             var collector = new BuildDependenciesCollector {
                 ProjectConfiguration = ConfigurationToBuild.Default
@@ -100,7 +100,7 @@ namespace IntegrationTest.Build {
 
         [TestMethod]
         public async Task Project_dependencies_are_discovered() {
-            projectTree.LoadProjects(deploymentDirectory, true, null);
+            projectTree.LoadProjects(deploymentDirectory, null);
 
             var collector = new BuildDependenciesCollector {
                 ProjectConfiguration = ConfigurationToBuild.Default

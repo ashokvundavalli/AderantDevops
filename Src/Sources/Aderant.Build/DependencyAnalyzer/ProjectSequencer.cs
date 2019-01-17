@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -42,12 +43,6 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string MetaprojectXml { get; set; }
 
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
-            bool customSorting = false;
-            if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_SOURCEBRANCH"), "refs/heads/TFS-207832-Merge821", StringComparison.OrdinalIgnoreCase)) {
-                customSorting = true;
-                System.Diagnostics.Debugger.Launch();
-            }
-
             isDesktopBuild = context.IsDesktopBuild;
 
             bool assumeNoBuildCache = false;
@@ -70,20 +65,7 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
 
-            List<IDependable> projectsInDependencyOrder = projectGraph.GetDependencyOrder();
-
-            if (customSorting) {
-                ILookup<string, IDependable> lookup = projectGraph.Nodes.ToLookup(s => s.Id, dependable => dependable);
-
-                var list = projectGraph.Nodes.Select(l => l.Id).TopologicalSort<string>(
-                    dependable => {
-                        var d = lookup[dependable];
-                        return d.SelectMany(s => (s as IArtifact).GetDependencies().Select(s1 => s1.Id));
-                    }).ToList();
-
-
-                IReadOnlyCollection<IDependable> readOnlyCollection = TopologicalSort.IterativeSort(projectGraph.Nodes, dependable => (dependable as IArtifact)?.GetDependencies());
-            }
+            var projectsInDependencyOrder = projectGraph.GetDependencyOrder();
 
             List<string> directoriesInBuild = new List<string>();
 
@@ -122,9 +104,16 @@ namespace Aderant.Build.DependencyAnalyzer {
                 context.GetChangeConsiderationMode(),
                 context.GetRelationshipProcessingMode());
 
-            List<List<IDependable>> groups = projectGraph.GetBuildGroups(filteredProjects);
+            var groups = projectGraph.GetBuildGroups(filteredProjects);
 
-            PrintBuildTree(groups);
+            var treeText = PrintBuildTree(groups);
+            if (logger != null) {
+                logger.Info(treeText);
+            }
+
+            if (isDesktopBuild) {
+                Thread.Sleep(2000);
+            }
 
             var planGenerator = new BuildPlanGenerator(fileSystem);
             planGenerator.MetaprojectXml = MetaprojectXml;
@@ -246,7 +235,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         /// <summary>
         /// Synthesizes the nodes for all directories whether they contain a solution or not.
-        /// We want to run any custom directory targets as these may invoke actions we cannot gain insight into and so need to schedule
+        /// We want to run any custom directory targets as these may invoke actions we cannot gain insight into and so need to
+        /// schedule
         /// them as part of the sequence
         /// </summary>
         private static void SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
@@ -428,9 +418,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Build the directly affected downstream projects, or recursively search for all
         /// downstream projects, or none?
         /// </param>
-        internal IReadOnlyCollection<IDependable> GetProjectsBuildList(
+        internal IReadOnlyList<IDependable> GetProjectsBuildList(
             ProjectDependencyGraph graph,
-            IReadOnlyCollection<IDependable> visualStudioProjects,
+            IReadOnlyList<IDependable> visualStudioProjects,
             OrchestrationFiles orchestrationFiles,
             ChangesToConsider changesToConsider,
             DependencyRelationshipProcessing dependencyProcessing) {
@@ -465,7 +455,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
 
             // Get all projects that are either visualStudio projects and dirty, or not visualStudio projects. Or say, skipped the unchanged csproj projects.
-            IReadOnlyCollection<IDependable> filteredProjects;
+            IReadOnlyList<IDependable> filteredProjects;
             if (changesToConsider == ChangesToConsider.None) {
                 filteredProjects = visualStudioProjects;
             } else {
@@ -542,7 +532,6 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                     var children = new List<TreePrinter.Node> {
                         new TreePrinter.Node { Name = "Path: " + configuredProject.FullPath, },
-                        new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags, },
                     };
 
                     if (configuredProject.DirtyFiles != null) {
@@ -553,7 +542,9 @@ namespace Aderant.Build.DependencyAnalyzer {
                             });
                     }
 
-                    if (configuredProject.BuildReason.ChangedDependentProjects != null) {
+                    if (configuredProject.BuildReason != null) {
+                        children.Add(new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags });
+
                         children.Add(
                             new TreePrinter.Node {
                                 Name = "Changed Dependencies",
@@ -615,34 +606,28 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        private void PrintBuildTree(List<List<IDependable>> groups) {
-            if (logger != null) {
-                var topLevelNodes = new List<TreePrinter.Node>();
+        internal static string PrintBuildTree(IReadOnlyList<IReadOnlyList<IDependable>> groups) {
+            var topLevelNodes = new List<TreePrinter.Node>();
 
-                int i = 0;
-                foreach (var group in groups) {
-                    var topLevelNode = new TreePrinter.Node();
-                    topLevelNode.Name = "Group " + i;
-                    topLevelNode.Children = group.Select(
-                        s =>
-                            new TreePrinter.Node {
-                                Name = s.Id,
-                                Children = DescribeChanges(s)
-                            }).ToList();
-                    i++;
+            int i = 0;
+            foreach (var group in groups) {
+                var topLevelNode = new TreePrinter.Node();
+                topLevelNode.Name = "Group " + i;
+                topLevelNode.Children = group.Select(
+                    s =>
+                        new TreePrinter.Node {
+                            Name = s.Id,
+                            Children = DescribeChanges(s)
+                        }).ToList();
+                i++;
 
-                    topLevelNodes.Add(topLevelNode);
-                }
-
-                StringBuilder sb = new StringBuilder();
-                TreePrinter.Print(topLevelNodes, message => sb.Append(message));
-
-                logger.Info(sb.ToString());
-
-                if (isDesktopBuild) {
-                    Thread.Sleep(2000);
-                }
+                topLevelNodes.Add(topLevelNode);
             }
+
+            StringBuilder sb = new StringBuilder();
+            TreePrinter.Print(topLevelNodes, message => sb.Append(message));
+
+            return sb.ToString();
         }
     }
 
