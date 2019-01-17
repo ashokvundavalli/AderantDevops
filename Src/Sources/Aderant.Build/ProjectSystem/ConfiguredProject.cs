@@ -247,7 +247,8 @@ namespace Aderant.Build.ProjectSystem {
             return new Lazy<Project>(
                 () => {
                     IDictionary<string, string> globalProperties = new Dictionary<string, string> {
-                        { "WebDependencyVersion", "-1" }
+                        { "WebDependencyVersion", "-1" },
+                        { "SolutionDir", ""}
                     };
 
                     return new Project(projectElement.Value, globalProperties, null, CreateProjectCollection(), ProjectLoadSettings.IgnoreMissingImports);

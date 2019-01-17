@@ -246,8 +246,6 @@ namespace Aderant.Build.ProjectSystem {
         }
 
         public SolutionSearchResult GetSolutionForProject(string projectFilePath, Guid projectGuid) {
-            var parser = InitializeSolutionParser();
-
             ProjectInSolution projectInSolution;
             projectsByGuid.TryGetValue(projectGuid, out projectInSolution);
 
@@ -273,7 +271,18 @@ namespace Aderant.Build.ProjectSystem {
                                 continue;
                             }
 
+                            var parser = InitializeSolutionParser();
                             ParseResult parseResult = parser.Parse(file);
+
+                            foreach (var p in parseResult.ProjectsByGuid) {
+                                if (!projectToSolutionMap.ContainsKey(p.Key)) {
+                                    projectToSolutionMap.Add(p.Key, parseResult.SolutionFile);
+                                }
+
+                                if (!projectsByGuid.ContainsKey(p.Key)) {
+                                    projectsByGuid.Add(p.Key, p.Value);
+                                }
+                            }
 
                             if (parseResult.ProjectsByGuid.TryGetValue(projectGuid, out projectInSolution)) {
                                 if (exactMatch != null) {
@@ -281,9 +290,6 @@ namespace Aderant.Build.ProjectSystem {
                                 } else {
                                     logger.Info($"Found inexact solution match for project {projectFilePath} -> {file}");
                                 }
-
-                                projectsByGuid.Add(projectGuid, projectInSolution);
-                                projectToSolutionMap.Add(projectGuid, parseResult.SolutionFile);
 
                                 solutionFile = parseResult.SolutionFile;
                                 directoryToSearch = null;

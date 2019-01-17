@@ -42,6 +42,10 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string MetaprojectXml { get; set; }
 
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
+            if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_SOURCEBRANCH"), "refs/heads/TFS-207832-Merge821", StringComparison.OrdinalIgnoreCase)) {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             isDesktopBuild = context.IsDesktopBuild;
 
             bool assumeNoBuildCache = false;
@@ -459,13 +463,11 @@ namespace Aderant.Build.DependencyAnalyzer {
         private void MarkWebProjectsDirty(ProjectDependencyGraph graph) {
             // TODO: Remove this hack as it costs too much perf
             // We need a way to trigger the content deployment of web projects
-            logger.Info("Forcing build of web projects (not workflow) where there is a dirty project in the same grouping.");
 
             ILookup<string, ConfiguredProject> lookup = graph.ProjectsBySolutionRoot;
+
             foreach (IGrouping<string, ConfiguredProject> grouping in lookup) {
                 List<ConfiguredProject> configuredProjects = grouping.ToList();
-
-                logger.Info($"Assessing project grouping: '{grouping.Key}'.");
 
                 // A forced build is queued if any project within the directory container is also requiring a build
                 ConfiguredProject dirtyProject = configuredProjects.FirstOrDefault(g => g.IsDirty);
@@ -479,8 +481,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                             // web pipeline restore this content for us than try and restore it as part of the generic build reuse process.
                             // <script type="text/javascript" src="../Scripts/ThirdParty.Jquery/jquery-2.2.4.js"></script>
                             MarkDirty("", project, BuildReasonTypes.Forced);
-                        } else {
-                            logger.Info($"Skipping project: '{project.FullPath}' as it does not match criteria for forced build.");
                         }
                     }
                 } else {
