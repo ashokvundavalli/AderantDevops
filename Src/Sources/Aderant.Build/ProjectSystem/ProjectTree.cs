@@ -322,7 +322,7 @@ namespace Aderant.Build.ProjectSystem {
 
             GetFilesWithExtensionRecursive(filePathCollector, directory);
 
-            return DirectoryGroveler.FilterFiles(filePathCollector, excludeFilterPatterns);
+            return filePathCollector.Where(s => !Traverse.DoesPathContainExcludeFilterSegment(s, excludeFilterPatterns));
         }
 
         string[] extensions = new[] {
