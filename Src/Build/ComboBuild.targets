@@ -94,6 +94,7 @@
       <ExcludePaths Include=".git" />
       <ExcludePaths Include="$" />
       <ExcludePaths Include="\_" />
+      <ExcludePaths Include="$(ArtifactStagingDirectory)" />
       <ExcludePaths Include="TempTemplateTransform\" />
       <ExcludePaths Include="Applications.MatterCenterIntegration\" />
       <ExcludePaths Include="Applications.DocuDraftAddIn\" />
@@ -122,6 +123,9 @@
       <Output TaskParameter="DirectoryMakeFiles" ItemName="DirectoryMakeFiles" />
       <Output TaskParameter="ProjectFiles" ItemName="ProjectFiles" />
     </GatherProjectsToBuild>
+
+    <Message Text="Using directories:" />
+    <Message Text="%(DirectoriesInBuild.FullPath)" />
 
   </Target>
 

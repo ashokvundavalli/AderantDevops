@@ -9,7 +9,7 @@ namespace Aderant.Build.DependencyAnalyzer {
     /// Occurs when circular references are detected
     /// </summary>
     [Serializable]
-    public class CircularDependencyException : Exception {
+    public class CircularDependencyException : ArgumentException {
         private string[] conflicts;
 
         /// <summary>
@@ -22,18 +22,20 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// Initializes a new instance of the <see cref="CircularDependencyException"/> class.
         /// </summary>
         /// <param name="message">The dependencies.</param>
-        public CircularDependencyException(string message) : base(message) {
+        public CircularDependencyException(string message)
+            : base(message) {
         }
 
         protected CircularDependencyException(SerializationInfo info, StreamingContext context)
             : base(info, context) {
         }
 
-        public CircularDependencyException(IEnumerable<string> conflicts) : this("There is a circular dependency between the following: " + string.Join(", ", conflicts.ToArray())) {
+        public CircularDependencyException(IEnumerable<string> conflicts)
+            : this("There is a circular dependency between the following: " + string.Join(", ", conflicts.ToArray())) {
             this.conflicts = conflicts.ToArray();
         }
 
-        public string[] Conflicts {
+        public ICollection<string> Conflicts {
             get { return conflicts; }
         }
     }

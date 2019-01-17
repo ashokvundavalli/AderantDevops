@@ -452,6 +452,15 @@ namespace Aderant.Build {
             ZipFile.ExtractToDirectory(sourceArchiveFileName, destination);
         }
 
+        public bool IsSymlink(string directory) {
+            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
+            if (directoryInfo.Exists) {
+                return directoryInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+            }
+
+            return false;
+        }
+
         private void TryCopyViaLink(string fileLocation, string fileDestination, CreateSymlinkLink createLink) {
             // CreateHardLink and CreateSymbolicLink cannot overwrite an existing file or link
             // so we need to delete the existing entry before we create the hard or symbolic link.

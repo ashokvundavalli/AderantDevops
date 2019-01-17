@@ -140,8 +140,8 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            // Now we need to add a dependency for each module that points to itself. 
-            // If we have the case where all of a given module's dependencies are external to the branch, 
+            // Now we need to add a dependency for each module that points to itself.
+            // If we have the case where all of a given module's dependencies are external to the branch,
             // the restriction filter will exclude not only the external dependencies but also the module itself
             var consumers = dependencies.Select(m => m.Consumer);
             foreach (var module in consumers) {
@@ -152,7 +152,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         }
 
         // Compatibility. Here we implement a simple grouping or alias mechanism where a single module can be known by
-        // many names. This gives us the ability to partition a module into smaller components 
+        // many names. This gives us the ability to partition a module into smaller components
         private bool LookupGroupOrAlias(ExpertModule expertModule, out ExpertModule container) {
             IModuleGroupingSupport groupingSupport = moduleProvider as IModuleGroupingSupport;
 
@@ -362,7 +362,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             }
         }
 
-        public bool TryGetTree(bool restrictToModulesInBranch, out IEnumerable<Build> tree, out string[] conflicts) {
+        public bool TryGetTree(bool restrictToModulesInBranch, out IEnumerable<Build> tree, out ICollection<string> conflicts) {
             conflicts = null;
             tree = null;
 
@@ -445,7 +445,7 @@ namespace Aderant.Build.DependencyAnalyzer {
             for (int i = input.Count - 1; i >= 0; i--) {
                 ExpertModule module = input[i];
 
-                // Add the module itself - this ensures we capture modules which are vertices 
+                // Add the module itself - this ensures we capture modules which are vertices
                 collector.Add(module);
 
                 List<ExpertModule> dependents = GetDependents(module, moduleDependencies).ToList();

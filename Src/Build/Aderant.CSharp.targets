@@ -20,6 +20,7 @@
   <PropertyGroup>
     <WebContentProject Condition="'$(WebContentProject)' == ''">$(BuildScriptsDirectory)Aderant.wpp.Content.proj</WebContentProject>
 
+    <!--This property is defined in Microsoft.Web.Publishing.targets-->
     <OnAfterPackageUsingManifest>$(OnAfterPackageUsingManifest);ReplicateOutputs</OnAfterPackageUsingManifest>
 
     <SignApplications Condition="'$(SignApplications)' == '' And Exists('$(MSBuildThisFileDirectory)\Aderant.CodeSigning.targets')">true</SignApplications>

@@ -236,8 +236,7 @@ namespace Aderant.Build.DependencyAnalyzer {
         /// <summary>
         /// Synthesizes the nodes for all directories whether they contain a solution or not.
         /// We want to run any custom directory targets as these may invoke actions we cannot gain insight into and so need to
-        /// schedule
-        /// them as part of the sequence
+        /// schedule them as part of the sequence.
         /// </summary>
         private static void SynthesizeNodesForAllDirectories(IReadOnlyCollection<string> makeFiles, DependencyGraph graph) {
             if (makeFiles != null) {
@@ -545,11 +544,12 @@ namespace Aderant.Build.DependencyAnalyzer {
                     if (configuredProject.BuildReason != null) {
                         children.Add(new TreePrinter.Node { Name = "Flags: " + configuredProject.BuildReason.Flags });
 
-                        children.Add(
-                            new TreePrinter.Node {
-                                Name = "Changed Dependencies",
-                                Children = configuredProject.BuildReason.ChangedDependentProjects.Select(s => new TreePrinter.Node { Name = s }).ToList()
-                            });
+                        if (configuredProject.BuildReason.ChangedDependentProjects != null)
+                            children.Add(
+                                new TreePrinter.Node {
+                                    Name = "Changed Dependencies",
+                                    Children = configuredProject.BuildReason.ChangedDependentProjects.Select(s => new TreePrinter.Node { Name = s }).ToList()
+                                });
                     }
 
                     return children;

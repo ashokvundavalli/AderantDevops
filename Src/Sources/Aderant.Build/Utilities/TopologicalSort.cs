@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using Aderant.Build.DependencyAnalyzer;
 
 namespace Aderant.Build.Utilities {
 
@@ -29,7 +31,7 @@ namespace Aderant.Build.Utilities {
             var predecessorCounts = PredecessorCounts(nodes, successors, out allNodes);
 
             // Initialize the ready set with those nodes that have no predecessors
-            var ready = new Stack<TNode>();
+            var ready = new Stack<TNode>(predecessorCounts.Count);
             foreach (TNode node in allNodes) {
                 if (predecessorCounts[node] == 0) {
                     ready.Push(node);
@@ -37,7 +39,7 @@ namespace Aderant.Build.Utilities {
             }
 
             // Process the ready set. Output a node, and decrement the predecessor count of its successors.
-            var resultBuilder = new List<TNode>();
+            var resultBuilder = new List<TNode>(predecessorCounts.Count);
             while (ready.Count != 0) {
                 var node = ready.Pop();
                 resultBuilder.Add(node);
@@ -54,7 +56,7 @@ namespace Aderant.Build.Utilities {
 
             // At this point all the nodes should have been output, otherwise there was a cycle
             if (predecessorCounts.Count != resultBuilder.Count) {
-                throw new ArgumentException("Cycle in the input graph");
+                var unsortedNodes = predecessorCounts.Keys.Except(resultBuilder);
             }
 
             resultBuilder.Reverse();
