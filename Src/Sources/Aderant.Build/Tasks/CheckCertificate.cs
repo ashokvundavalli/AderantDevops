@@ -35,7 +35,8 @@ namespace Aderant.Build.Tasks {
 
                     var currentCertificate = collection[0];
 
-                    var expirationDate = DateTime.Parse(currentCertificate.GetExpirationDateString(), CultureInfo.InvariantCulture);
+                    // GetExpirationDateString returns the date format in the current culture
+                    var expirationDate = DateTime.Parse(currentCertificate.GetExpirationDateString(), CultureInfo.CurrentCulture);
                     var name = currentCertificate.Subject;
 
                     if (expirationDate < DateTime.Now) {
