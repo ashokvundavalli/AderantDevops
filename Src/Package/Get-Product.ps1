@@ -191,8 +191,8 @@ begin {
                 [string]$expertSourceDirectory = Join-Path -Path $binariesDirectory -ChildPath 'ExpertSource'
                 [string]$logDirectory = Join-Path -Path $binariesDirectory -ChildPath 'Logs'
 
-                New-Item -Path $logDirectory -ItemType Directory | Out-Null
-                New-Item -Path $expertSourceDirectory -ItemType Directory | Out-Null
+                New-Item -Path $logDirectory -ItemType Directory -Force | Out-Null
+                New-Item -Path $expertSourceDirectory -ItemType Directory -Force | Out-Null
             }
 
             Add-Type -AssemblyName 'System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'

@@ -71,6 +71,8 @@
     <UsingTask TaskName="Aderant.Build.Tasks.CreateDependencyLinks"                               AssemblyFile="$(BuildAssembly)" />
     <UsingTask TaskName="Aderant.Build.Tasks.GatherProjectsToBuild"                               AssemblyFile="$(BuildAssembly)" />
 
+    <UsingTask TaskName="Aderant.Build.Tasks.ZipBuildScripts"                                     AssemblyFile="$(BuildAssembly)" />
+
     <!-- Debugging task -->
     <UsingTask TaskName="Aderant.Build.Tasks.InspectItemGroup"                                    AssemblyFile="$(BuildAssembly)" />
 </Project>

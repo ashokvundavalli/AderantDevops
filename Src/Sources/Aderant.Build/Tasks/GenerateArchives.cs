@@ -106,7 +106,7 @@ namespace Aderant.Build.Tasks {
         internal static void ProcessDirectories(IList<PathSpec> directoriesToArchive, CompressionLevel compressionLevel) {
             Parallel.ForEach(
                 directoriesToArchive,
-                new ParallelOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism() },
+                new ParallelOptions { MaxDegreeOfParallelism = ParallelismHelper.MaxDegreeOfParallelism },
                 directory => {
                     string temp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
@@ -120,5 +120,4 @@ namespace Aderant.Build.Tasks {
                 });
         }
     }
-
 }

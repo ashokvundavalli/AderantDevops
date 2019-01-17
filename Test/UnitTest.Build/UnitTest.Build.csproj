@@ -126,6 +126,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="ServerImage\DependencyGenerationTests.cs" />
+    <Compile Include="Tasks\ZipBuildScriptsTests.cs" />
     <Compile Include="Utilities\MemoizerTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
@@ -210,6 +211,7 @@
     <Compile Include="TextTemplateAnalysis\TextTemplateAnalyzerTests.cs" />
     <Compile Include="TopologicalSortTests.cs" />
     <Compile Include="ArtifactStagingPathBuilderTests.cs" />
+    <Compile Include="Utilities\ParallelismHelperTests.cs" />
     <Compile Include="VersionRequirementTests.cs" />
   </ItemGroup>
   <ItemGroup>
