@@ -410,7 +410,9 @@ namespace Aderant.Build.ProjectSystem {
                     textTemplateDependencies = new List<IResolvedDependency>();
                 }
 
-                textTemplateDependencies.Add(resolvedDependency);
+                if (!textTemplateDependencies.Contains(resolvedDependency)) {
+                    textTemplateDependencies.Add(resolvedDependency);
+                }
             }
         }
 

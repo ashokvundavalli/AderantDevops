@@ -64,6 +64,10 @@ namespace Aderant.Build.DependencyAnalyzer {
 
             // At this point all the nodes should have been output, otherwise there was a cycle
             if (predecessorCounts.Count != resultBuilder.Count) {
+
+                var readOnlyCollection = IterativeSort<TNode>(predecessorCounts.Keys.Except(resultBuilder), successors);
+
+
                 throw new ArgumentException("Cycle in the input graph");
             }
 
