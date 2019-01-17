@@ -126,6 +126,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="ServerImage\DependencyGenerationTests.cs" />
+    <Compile Include="Tasks\ZipBuildScriptsTests.cs" />
     <Compile Include="Utilities\MemoizerTests.cs" />
     <Compile Include="DependencyAnalyzer\ProjectSequencerTests.cs" />
     <Compile Include="DependencyAnalyzer\FakeVisualStudioProject.cs" />
