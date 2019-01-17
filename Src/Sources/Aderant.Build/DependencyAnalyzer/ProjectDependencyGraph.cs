@@ -36,7 +36,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
         public static IReadOnlyCollection<TNode> IterativeSort<TNode>(IEnumerable<TNode> nodes, Func<TNode, IEnumerable<TNode>> successors) {
             // First, count the predecessors of each node
-            var predecessorCounts = PredecessorCounts(nodes, successors, out IReadOnlyCollection<TNode> allNodes);
+            IReadOnlyCollection<TNode> allNodes;
+            var predecessorCounts = PredecessorCounts(nodes, successors, out allNodes);
 
             // Initialize the ready set with those nodes that have no predecessors
             var ready = new Stack<TNode>();
@@ -94,7 +95,8 @@ namespace Aderant.Build.DependencyAnalyzer {
 
                 foreach (var succ in successors(n)) {
                     toCount.Push(succ);
-                    if (predecessorCounts.TryGetValue(succ, out int succPredecessorCount)) {
+                    int succPredecessorCount;
+                    if (predecessorCounts.TryGetValue(succ, out succPredecessorCount)) {
                         predecessorCounts[succ] = succPredecessorCount + 1;
                     } else {
                         predecessorCounts.Add(succ, 1);
