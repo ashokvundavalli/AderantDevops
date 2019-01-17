@@ -42,7 +42,9 @@ namespace Aderant.Build.DependencyAnalyzer {
         public string MetaprojectXml { get; set; }
 
         public BuildPlan CreatePlan(BuildOperationContext context, OrchestrationFiles files, DependencyGraph graph) {
+            bool customSorting = false;
             if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_SOURCEBRANCH"), "refs/heads/TFS-207832-Merge821", StringComparison.OrdinalIgnoreCase)) {
+                customSorting = true;
                 System.Diagnostics.Debugger.Launch();
             }
 
@@ -69,6 +71,19 @@ namespace Aderant.Build.DependencyAnalyzer {
             AddInitializeAndCompletionNodes(context.Switches.ChangedFilesOnly, files.MakeFiles, projectGraph);
 
             List<IDependable> projectsInDependencyOrder = projectGraph.GetDependencyOrder();
+
+            if (customSorting) {
+                ILookup<string, IDependable> lookup = projectGraph.Nodes.ToLookup(s => s.Id, dependable => dependable);
+
+                var list = projectGraph.Nodes.Select(l => l.Id).TopologicalSort<string>(
+                    dependable => {
+                        var d = lookup[dependable];
+                        return d.SelectMany(s => (s as IArtifact).GetDependencies().Select(s1 => s1.Id));
+                    }).ToList();
+
+
+                IReadOnlyCollection<IDependable> readOnlyCollection = TopologicalSort.IterativeSort(projectGraph.Nodes, dependable => (dependable as IArtifact)?.GetDependencies());
+            }
 
             List<string> directoriesInBuild = new List<string>();
 
