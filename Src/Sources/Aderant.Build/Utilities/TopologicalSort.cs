@@ -57,6 +57,7 @@ namespace Aderant.Build.Utilities {
             // At this point all the nodes should have been output, otherwise there was a cycle
             if (predecessorCounts.Count != resultBuilder.Count) {
                 var unsortedNodes = predecessorCounts.Keys.Except(resultBuilder);
+                throw new ArgumentException("FATAL: Cycle in dependency graph.");
             }
 
             resultBuilder.Reverse();
