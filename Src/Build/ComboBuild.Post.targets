@@ -23,7 +23,7 @@
       PublishModule;
       IndexSourcesAndPublishSymbols;
       MobileBuild;-->
-      PostBuild
+      PostBuild;
       RunBuildExtensions;
       SignInstallers;
       PackageArtifactsCore;
