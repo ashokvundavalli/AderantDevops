@@ -253,24 +253,24 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         if ($metadata.IsPullRequest) {
             $targetBranch = $metadata.PullRequest.TargetBranch
 
-            Write-Host "Calculating changes between $sourceBranch and $targetBranch"
+            Write-Information "Calculating changes between $sourceBranch and $targetBranch"
         }
     }
 
     $context.SourceTreeMetadata = Get-SourceTreeMetadata -SourceDirectory $repositoryPath -SourceBranch $sourceBranch -TargetBranch $targetBranch -IncludeLocalChanges:$context.IsDesktopBuild
 
-    Write-Host "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
-    Write-Host "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
+    Write-Information "$indent1 Build caching info:"
+    Write-Information "$indent1 New commit: $($context.SourceTreeMetadata.NewCommitDescription)"
+    Write-Information "$indent1 Old commit: $($context.SourceTreeMetadata.OldCommitDescription)"
     if ($context.SourceTreeMetadata.CommonAncestor) {
-        Write-Host "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
+        Write-Information "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
     }
 
-    if ($context.SourceTreeMetadata.Changes -ne $null -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
-        Write-Host ""
-        Write-Host "$indent1 Changes..."
+    if ($null -ne $context.SourceTreeMetadata.Changes -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
+        Write-Debug "$indent1 Changes..."
         foreach ($change in $context.SourceTreeMetadata.Changes) {
             if ($change.Status -ne "Untracked") {
-                Write-Host "$indent2 $($change.Path):$($change.Status)"
+                Write-Debug "$indent2 $($change.Path):$($change.Status)"
             }
         }
     }

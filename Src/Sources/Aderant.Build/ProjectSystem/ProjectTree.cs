@@ -44,6 +44,10 @@ namespace Aderant.Build.ProjectSystem {
         private Dictionary<Guid, ProjectInSolution> projectsByGuid = new Dictionary<Guid, ProjectInSolution>();
         private Dictionary<Guid, string> projectToSolutionMap = new Dictionary<Guid, string>();
 
+        // Tracks the solution files and what project guids they think they are tracking.
+        private Dictionary<Guid, string> solutionProjectView = new Dictionary<Guid, string>();
+
+
         public ProjectTree() {
 
         }
@@ -271,16 +275,30 @@ namespace Aderant.Build.ProjectSystem {
                                 continue;
                             }
 
+                            if (projectToSolutionMap.Values.FirstOrDefault(s => string.Equals(s, file, StringComparison.OrdinalIgnoreCase)) != null) {
+                                // Already seen this file - project must be orphaned
+                                break;
+                            }
+
                             var parser = InitializeSolutionParser();
                             ParseResult parseResult = parser.Parse(file);
 
                             foreach (var p in parseResult.ProjectsByGuid) {
-                                if (!projectToSolutionMap.ContainsKey(p.Key)) {
-                                    projectToSolutionMap.Add(p.Key, parseResult.SolutionFile);
+                                if (p.Value.ProjectType == SolutionProjectType.SolutionFolder) {
+                                    continue;
                                 }
 
-                                if (!projectsByGuid.ContainsKey(p.Key)) {
-                                    projectsByGuid.Add(p.Key, p.Value);
+                                Guid key = p.Key;
+
+                                if (!projectToSolutionMap.ContainsKey(key)) {
+                                    projectToSolutionMap.Add(key, parseResult.SolutionFile);
+                                } else {
+                                    string solutionAlreadyTrackingThisProject = projectToSolutionMap[key];
+                                    throw new DuplicateGuidException(key, $"The project guid {key} as part of {file} is already tracked by {solutionAlreadyTrackingThisProject}.");
+                                }
+
+                                if (!projectsByGuid.ContainsKey(key)) {
+                                    projectsByGuid.Add(key, p.Value);
                                 }
                             }
 

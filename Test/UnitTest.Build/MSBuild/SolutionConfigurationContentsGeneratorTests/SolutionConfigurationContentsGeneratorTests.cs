@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Xml.Linq;
 using Aderant.Build.ProjectSystem;
 using Aderant.Build.ProjectSystem.SolutionParser;
-using Microsoft.Build.Construction;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest.Build.MSBuild {
