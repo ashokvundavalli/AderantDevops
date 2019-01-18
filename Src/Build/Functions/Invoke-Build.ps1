@@ -1,4 +1,6 @@
-﻿[string]$indent1 = "  "
+﻿$InformationPreference = 'Continue'
+
+[string]$indent1 = "  "
 [string]$indent2 = "        "
 
 
@@ -266,11 +268,13 @@ function GetSourceTreeMetadata($context, $repositoryPath) {
         Write-Information "$indent1 CommonAncestor: $($context.SourceTreeMetadata.CommonAncestor)"
     }
 
-    if ($null -ne $context.SourceTreeMetadata.Changes -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
-        Write-Debug "$indent1 Changes..."
-        foreach ($change in $context.SourceTreeMetadata.Changes) {
-            if ($change.Status -ne "Untracked") {
-                Write-Debug "$indent2 $($change.Path):$($change.Status)"
+    if ($context.IsDesktopBuild) {
+        if ($null -ne $context.SourceTreeMetadata.Changes -and $context.SourceTreeMetadata.Changes.Count -gt 0) {
+            Write-Information "$indent1 Changes..."
+            foreach ($change in $context.SourceTreeMetadata.Changes) {
+                if ($change.Status -ne "Untracked") {
+                    Write-Information "$indent2 $($change.Path):$($change.Status)"
+                }
             }
         }
     }
