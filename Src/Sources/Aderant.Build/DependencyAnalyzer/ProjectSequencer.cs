@@ -195,10 +195,6 @@ namespace Aderant.Build.DependencyAnalyzer {
                 }
             }
 
-            if (string.Equals(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID"), "22913", StringComparison.Ordinal)) {
-                System.Diagnostics.Debugger.Launch();
-            }
-
             SynthesizeNodesForAllDirectories(makeFiles, graph);
 
             var grouping = graph.ProjectsBySolutionRoot;
