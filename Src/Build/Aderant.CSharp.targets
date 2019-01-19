@@ -179,7 +179,11 @@
 
     <StringCache Condition="'$(_PackageDirectoriesHasValue)' != 'true'"
                  Key="$(NugetPackageCacheKey)"
-                 Value="@(_PackageDirectories)" />
+                 Value="@(_PackageDirectories)">
+      <!--Output value always as there is a cache miss the first time-->
+      <Output TaskParameter="Value" PropertyName="_PackageDirectories" />
+    </StringCache>
+
   </Target>
 
 
@@ -218,7 +222,7 @@
       <AssemblySearchPaths>
         $(AlternativeOutputDirectory);
         $(RootFolder)\Dependencies\;
-        @(_PackageDirectories);
+        $(_PackageDirectories);
         $(AssemblySearchPaths);
       </AssemblySearchPaths>
     </PropertyGroup>
